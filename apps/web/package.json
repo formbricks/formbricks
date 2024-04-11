@@ -22,6 +22,7 @@
     "@formbricks/tailwind-config": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@formbricks/ui": "workspace:*",
+    "@formbricks/email": "workspace:*",
     "@headlessui/react": "^1.7.18",
     "@json2csv/node": "^7.0.6",
     "@opentelemetry/auto-instrumentations-node": "^0.44.0",

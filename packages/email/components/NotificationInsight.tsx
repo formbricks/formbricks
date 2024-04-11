@@ -1,6 +1,7 @@
-import { TInsights } from "@/app/api/cron/weekly-summary/types";
 import { Column, Container, Row, Section, Text } from "@react-email/components";
 import React from "react";
+
+import { TInsights } from "@formbricks/types/weeklySummary";
 
 interface NotificationInsightProps {
   insights: TInsights;

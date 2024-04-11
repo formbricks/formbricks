@@ -1,8 +1,10 @@
-import { TNotificationDataSurvey, TSurveyResponseData } from "@/app/api/cron/weekly-summary/types";
 import { Container, Hr, Link, Tailwind, Text } from "@react-email/components";
+import React from "react";
 
-import { EmailButton } from "@formbricks/lib/emails/EmailButton";
-import { renderEmailResponseValue } from "@formbricks/lib/emails/ResponseFinishedEmail";
+import { TNotificationDataSurvey, TSurveyResponseData } from "@formbricks/types/weeklySummary";
+
+import { EmailButton } from "./EmailButton";
+import { renderEmailResponseValue } from "./ResponseFinishedEmail";
 
 const getButtonLabel = (count: number): string => {
   if (count === 1) {
@@ -70,8 +72,8 @@ export const LiveSurveyNotification = ({
 
   return surveys.map((survey, index) => {
     const displayStatus = convertSurveyStatus(survey.status);
-    const isLive = displayStatus === "Live";
-    const noResponseLastWeek = isLive && survey.responses.length === 0;
+    const isInProgress = displayStatus === "Live";
+    const noResponseLastWeek = isInProgress && survey.responses.length === 0;
     return (
       <Tailwind key={index}>
         <Container className="mt-12">
@@ -84,7 +86,7 @@ export const LiveSurveyNotification = ({
           </Text>
 
           <Text
-            className={`ml-2 inline ${isLive ? "bg-green-400 text-gray-100" : "bg-gray-300 text-blue-800"} rounded-full px-2 py-1 text-sm`}>
+            className={`ml-2 inline ${isInProgress ? "bg-green-400 text-gray-100" : "bg-gray-300 text-blue-800"} rounded-full px-2 py-1 text-sm`}>
             {displayStatus}
           </Text>
           {noResponseLastWeek ? (

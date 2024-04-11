@@ -18,7 +18,7 @@ import {
 } from "@formbricks/types/invites";
 
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { sendInviteMemberEmail } from "../emails/emails";
+import { sendInviteMemberEmail } from "../email";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";

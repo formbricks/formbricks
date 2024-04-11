@@ -1,6 +1,7 @@
 import { Body, Column, Container, Html, Img, Link, Row, Section } from "@react-email/components";
 import { Tailwind } from "@react-email/components";
 import { Fragment } from "react";
+import React from "react";
 
 interface EmailTemplateProps {
   content: JSX.Element;

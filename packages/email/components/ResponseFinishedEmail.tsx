@@ -5,11 +5,10 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTeam } from "@formbricks/types/teams";
 
-import { getQuestionResponseMapping } from "../responses";
-import { getOriginalFileNameFromUrl } from "../storage/utils";
+import { getOriginalFileNameFromUrl, getQuestionResponseMapping } from "../lib/util";
 import { EmailButton } from "./EmailButton";
 
-export const renderEmailResponseValue = (response: string | string[], questionType: TSurveyQuestionType) => {
+export const renderEmailResponseValue = (response: string | string[], questionType: string) => {
   switch (questionType) {
     case TSurveyQuestionType.FileUpload:
       return (

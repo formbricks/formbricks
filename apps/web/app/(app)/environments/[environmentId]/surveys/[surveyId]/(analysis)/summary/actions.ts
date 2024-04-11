@@ -5,7 +5,7 @@ import { customAlphabet } from "nanoid";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import { sendEmbedSurveyPreviewEmail } from "@formbricks/lib/emails/emails";
+import { sendEmbedSurveyPreviewEmail } from "@formbricks/lib/email";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { formatSurveyDateFields } from "@formbricks/lib/survey/util";

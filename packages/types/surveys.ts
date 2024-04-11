@@ -428,7 +428,7 @@ export const ZSurveyType = z.enum(["web", "email", "link", "mobile"]);
 
 export type TSurveyType = z.infer<typeof ZSurveyType>;
 
-const ZSurveyStatus = z.enum(["draft", "scheduled", "inProgress", "paused", "completed"]);
+export const ZSurveyStatus = z.enum(["draft", "scheduled", "inProgress", "paused", "completed"]);
 
 export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 

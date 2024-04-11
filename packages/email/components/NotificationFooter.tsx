@@ -1,5 +1,6 @@
 import { Container, Link, Text } from "@react-email/components";
 import { Tailwind } from "@react-email/components";
+import React from "react";
 
 interface NotificatonFooterProps {
   webAppUrl: string;

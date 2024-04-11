@@ -1,8 +1,23 @@
 import { render } from "@react-email/render";
 import nodemailer from "nodemailer";
 
+import {
+  EmailTemplate,
+  EmbedSurveyPreviewEmail,
+  ForgotPasswordEmail,
+  InviteAcceptedEmail,
+  InviteEmail,
+  LinkSurveyEmail,
+  NoLiveSurveyNotificationEmail,
+  OnboardingInviteEmail,
+  PasswordResetNotifyEmail,
+  ResponseFinishedEmail,
+  VerificationEmail,
+  WeeklySummaryNotificationEmail,
+} from "@formbricks/email";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
+import { TNotificationResponse } from "@formbricks/types/weeklySummary";
 
 import {
   DEBUG,
@@ -16,16 +31,6 @@ import {
 } from "../constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "../jwt";
 import { getTeamByEnvironmentId } from "../team/service";
-import { EmailTemplate } from "./EmailTemplate";
-import { EmbedSurveyPreviewEmail } from "./EmbedSurveyPreviewEmail";
-import { ForgotPasswordEmail } from "./ForgotPasswordEmail";
-import { InviteAcceptedEmail } from "./InviteAcceptedEmail";
-import { InviteEmail } from "./InviteEmail";
-import { LinkSurveyEmail } from "./LinkSurveyEmail";
-import { OnboardingInviteEmail } from "./OnboardingInviteEmail";
-import { PasswordResetNotifyEmail } from "./PasswordResetNotifyEmail";
-import { ResponseFinishedEmail } from "./ResponseFinishedEmail";
-import { VerificationEmail } from "./VerificationEmail";
 
 export const IS_SMTP_CONFIGURED: boolean =
   SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASSWORD ? true : false;
@@ -55,6 +60,12 @@ export interface LinkSurveyEmailData {
     | null
     | undefined;
 }
+
+const getEmailSubject = (productName: string): string => {
+  return `${productName} User Insights - Last Week by Formbricks`;
+};
+
+const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export const sendEmail = async (emailData: sendEmailData) => {
   try {
@@ -93,13 +104,7 @@ export const sendVerificationEmail = async (user: TEmailUser) => {
   await sendEmail({
     to: user.email,
     subject: "Please verify your email to use Formbricks",
-    html: render(
-      <EmailTemplate
-        content={
-          <VerificationEmail verifyLink={verifyLink} verificationRequestLink={verificationRequestLink} />
-        }
-      />
-    ),
+    html: render(EmailTemplate({ content: VerificationEmail({ verificationRequestLink, verifyLink }) })),
   });
 };
 
@@ -111,7 +116,7 @@ export const sendForgotPasswordEmail = async (user: TEmailUser) => {
   await sendEmail({
     to: user.email,
     subject: "Reset your Formbricks password",
-    html: render(<EmailTemplate content={<ForgotPasswordEmail verifyLink={verifyLink} />} />),
+    html: render(EmailTemplate({ content: ForgotPasswordEmail({ verifyLink }) })),
   });
 };
 
@@ -119,7 +124,7 @@ export const sendPasswordResetNotifyEmail = async (user: TEmailUser) => {
   await sendEmail({
     to: user.email,
     subject: "Your Formbricks password has been changed",
-    html: render(<EmailTemplate content={<PasswordResetNotifyEmail />} />),
+    html: render(EmailTemplate({ content: PasswordResetNotifyEmail() })),
   });
 };
 
@@ -142,28 +147,14 @@ export const sendInviteMemberEmail = async (
       to: email,
       subject: `${inviterName} needs a hand setting up Formbricks.  Can you help out?`,
       html: render(
-        <EmailTemplate
-          content={
-            <OnboardingInviteEmail
-              verifyLink={verifyLink}
-              inviteMessage={inviteMessage}
-              inviterName={inviterName}
-            />
-          }
-        />
+        EmailTemplate({ content: OnboardingInviteEmail({ verifyLink, inviteMessage, inviterName }) })
       ),
     });
   } else {
     await sendEmail({
       to: email,
       subject: `You're invited to collaborate on Formbricks!`,
-      html: render(
-        <EmailTemplate
-          content={
-            <InviteEmail inviteeName={inviteeName} inviterName={inviterName} verifyLink={verifyLink} />
-          }
-        />
-      ),
+      html: render(EmailTemplate({ content: InviteEmail({ inviteeName, inviterName, verifyLink }) })),
     });
   }
 };
@@ -172,9 +163,7 @@ export const sendInviteAcceptedEmail = async (inviterName: string, inviteeName: 
   await sendEmail({
     to: email,
     subject: `You've got a new team member!`,
-    html: render(
-      <EmailTemplate content={<InviteAcceptedEmail inviteeName={inviteeName} inviterName={inviterName} />} />
-    ),
+    html: render(EmailTemplate({ content: InviteAcceptedEmail({ inviteeName, inviterName }) })),
   });
 };
 
@@ -195,28 +184,18 @@ export const sendResponseFinishedEmail = async (
       : `A response for ${survey.name} was completed ✅`,
     replyTo: personEmail?.toString() || MAIL_FROM,
     html: render(
-      <EmailTemplate
-        content={
-          <ResponseFinishedEmail
-            survey={survey}
-            responseCount={responseCount}
-            response={response}
-            WEBAPP_URL={WEBAPP_URL}
-            environmentId={environmentId}
-            team={team}
-          />
-        }
-      />
+      EmailTemplate({
+        content: ResponseFinishedEmail({ survey, responseCount, response, WEBAPP_URL, environmentId, team }),
+      })
     ),
   });
 };
 
 export const sendEmbedSurveyPreviewEmail = async (to: string, subject: string, html: string) => {
-  const previewElement = <div dangerouslySetInnerHTML={{ __html: html }}></div>;
   await sendEmail({
     to: to,
     subject: subject,
-    html: render(<EmailTemplate content={<EmbedSurveyPreviewEmail previewElement={previewElement} />} />),
+    html: render(EmailTemplate({ content: EmbedSurveyPreviewEmail({ html }) })),
   });
 };
 
@@ -235,8 +214,66 @@ export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) =
   await sendEmail({
     to: data.email,
     subject: "Your Formbricks Survey",
+    html: render(EmailTemplate({ content: LinkSurveyEmail({ surveyData, getSurveyLink }) })),
+  });
+};
+
+export const sendWeeklySummaryNotificationEmail = async (
+  email: string,
+  notificationData: TNotificationResponse
+) => {
+  const startDate = `${notificationData.lastWeekDate.getDate()} ${
+    monthNames[notificationData.lastWeekDate.getMonth()]
+  }`;
+  const endDate = `${notificationData.currentDate.getDate()} ${
+    monthNames[notificationData.currentDate.getMonth()]
+  }`;
+  const startYear = notificationData.lastWeekDate.getFullYear();
+  const endYear = notificationData.currentDate.getFullYear();
+  await sendEmail({
+    to: email,
+    subject: getEmailSubject(notificationData.productName),
     html: render(
-      <EmailTemplate content={<LinkSurveyEmail surveyData={surveyData} getSurveyLink={getSurveyLink} />} />
+      EmailTemplate({
+        content: WeeklySummaryNotificationEmail({
+          notificationData,
+          startDate,
+          endDate,
+          startYear,
+          endYear,
+          WEBAPP_URL,
+        }),
+      })
+    ),
+  });
+};
+
+export const sendNoLiveSurveyNotificationEmail = async (
+  email: string,
+  notificationData: TNotificationResponse
+) => {
+  const startDate = `${notificationData.lastWeekDate.getDate()} ${
+    monthNames[notificationData.lastWeekDate.getMonth()]
+  }`;
+  const endDate = `${notificationData.currentDate.getDate()} ${
+    monthNames[notificationData.currentDate.getMonth()]
+  }`;
+  const startYear = notificationData.lastWeekDate.getFullYear();
+  const endYear = notificationData.currentDate.getFullYear();
+  await sendEmail({
+    to: email,
+    subject: getEmailSubject(notificationData.productName),
+    html: render(
+      EmailTemplate({
+        content: NoLiveSurveyNotificationEmail({
+          notificationData,
+          WEBAPP_URL,
+          startDate,
+          endDate,
+          startYear,
+          endYear,
+        }),
+      })
     ),
   });
 };

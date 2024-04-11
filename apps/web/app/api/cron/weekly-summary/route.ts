@@ -2,19 +2,18 @@ import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
 
 import { prisma } from "@formbricks/database";
+import { convertResponseValue } from "@formbricks/email/lib/util";
 import { CRON_SECRET } from "@formbricks/lib/constants";
+import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "@formbricks/lib/email";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { getResponseValue } from "@formbricks/lib/responses";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
-
-import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
 import {
-  EnvironmentData,
-  ProductData,
+  TEnvironmentData,
   TNotificationDataSurvey,
   TNotificationResponse,
+  TProductData,
   TSurveyResponseData,
-} from "./types";
+} from "@formbricks/types/weeklySummary";
 
 const BATCH_SIZE = 500;
 
@@ -80,7 +79,7 @@ const getTeamIds = async (): Promise<string[]> => {
   return teams.map((team) => team.id);
 };
 
-const getProductsByTeamId = async (teamId: string): Promise<ProductData[]> => {
+const getProductsByTeamId = async (teamId: string): Promise<TProductData[]> => {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -172,7 +171,7 @@ const getProductsByTeamId = async (teamId: string): Promise<ProductData[]> => {
 };
 
 const getNotificationResponse = (
-  environment: EnvironmentData,
+  environment: TEnvironmentData,
   productName: string
 ): TNotificationResponse => {
   const insights = {
@@ -203,7 +202,7 @@ const getNotificationResponse = (
       const surveyResponses: TSurveyResponseData[] = [];
       for (const question of parsedSurvey.questions) {
         const headline = question.headline;
-        const responseValue = getResponseValue(response.data[question.id], question);
+        const responseValue = convertResponseValue(response.data[question.id], question);
         const surveyResponse: TSurveyResponseData = {
           headline: getLocalizedValue(headline, "default"),
           responseValue,

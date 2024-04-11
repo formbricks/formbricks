@@ -1,8 +1,10 @@
-import { NotificationFooter } from "@/app/api/cron/weekly-summary/components/NotificationFooter";
-import { TNotificationResponse } from "@/app/api/cron/weekly-summary/types";
 import { Container, Text } from "@react-email/components";
+import React from "react";
 
-import { EmailButton } from "@formbricks/lib/emails/EmailButton";
+import { TNotificationResponse } from "@formbricks/types/weeklySummary";
+
+import { EmailButton } from "./EmailButton";
+import { NotificationFooter } from "./NotificationFooter";
 
 interface CreateReminderNotificationBodyProps {
   webAppUrl: string;

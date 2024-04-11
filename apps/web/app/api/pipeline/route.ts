@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
-import { sendResponseFinishedEmail } from "@formbricks/lib/emails/emails";
+import { sendResponseFinishedEmail } from "@formbricks/lib/email";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
