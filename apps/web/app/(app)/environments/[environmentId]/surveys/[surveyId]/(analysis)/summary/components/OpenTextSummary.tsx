@@ -33,7 +33,7 @@ export const OpenTextSummary = ({ questionSummary, environmentId }: OpenTextSumm
           <div className="col-span-2 pl-4 md:pl-6">Response</div>
           <div className="px-4 md:px-6">Time</div>
         </div>
-        <div className="h-[62vh] w-full overflow-y-auto">
+        <div className="max-h-[62vh] w-full overflow-y-auto">
           {questionSummary.samples.slice(0, visibleResponses).map((response) => (
             <div
               key={response.id}
