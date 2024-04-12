@@ -56,7 +56,7 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({ survey }: CustomFilterProps) => {
+export const CustomFilter = ({ survey }: CustomFilterProps) => {
   const params = useParams();
   const isSharingPage = !!params.sharingKey;
 
@@ -324,5 +324,3 @@ const CustomFilter = ({ survey }: CustomFilterProps) => {
     </>
   );
 };
-
-export default CustomFilter;

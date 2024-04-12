@@ -1,7 +1,7 @@
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
 import { timeSinceConditionally } from "@formbricks/lib/time";
-import { TSurveySummary } from "@formbricks/types/responses";
+import { TSurveySummary } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
@@ -49,12 +49,12 @@ function formatTime(ttc) {
   return formattedValue;
 }
 
-export default function SummaryMetadata({
+export const SummaryMetadata = ({
   survey,
   setShowDropOffs,
   showDropOffs,
   surveySummary,
-}: SummaryMetadataProps) {
+}: SummaryMetadataProps) => {
   const {
     completedPercentage,
     completedResponses,
@@ -116,4 +116,4 @@ export default function SummaryMetadata({
       </div>
     </div>
   );
-}
+};

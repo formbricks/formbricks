@@ -12,7 +12,10 @@ export const processResponseData = (
 
     case "object":
       if (Array.isArray(responseData)) {
-        return responseData.join("; ");
+        responseData = responseData
+          .filter((item) => item !== null && item !== undefined && item !== "")
+          .join(", ");
+        return responseData;
       } else {
         const formattedString = Object.entries(responseData)
           .filter(([_, value]) => value.trim() !== "") // Filter out entries with empty string values

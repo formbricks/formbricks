@@ -15,7 +15,7 @@ import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { TSurvey, TSurveyTSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
@@ -23,7 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover"
 import QuestionsComboBox, { OptionsType, QuestionOption } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
-  type: TSurveyTSurveyQuestionType | "Attributes" | "Tags" | "Languages";
+  type: TSurveyQuestionType | "Attributes" | "Tags" | "Languages";
   filterOptions: string[];
   filterComboBoxOptions: string[];
   id: string;

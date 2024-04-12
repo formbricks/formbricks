@@ -17,7 +17,7 @@ interface ConsentQuestionFormProps {
   isInvalid: boolean;
 }
 
-export default function ConsentQuestionForm({
+export const ConsentQuestionForm = ({
   question,
   questionIdx,
   updateQuestion,
@@ -25,7 +25,7 @@ export default function ConsentQuestionForm({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: ConsentQuestionFormProps): JSX.Element {
+}: ConsentQuestionFormProps): JSX.Element => {
   const [firstRender, setFirstRender] = useState(true);
 
   return (
@@ -73,4 +73,4 @@ export default function ConsentQuestionForm({
       />
     </form>
   );
-}
+};
