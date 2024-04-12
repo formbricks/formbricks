@@ -34,11 +34,11 @@ export const ZInviteUpdateInput = z.object({
 });
 export type TInviteUpdateInput = z.infer<typeof ZInviteUpdateInput>;
 
-export const ZInviteeMembers = z.array(
+export const ZInviteMembers = z.array(
   z.object({
     name: z.string(),
     email: z.string().email(),
     role: ZMembershipRole,
   })
 );
-export type TInviteeMembers = z.infer<typeof ZInviteeMembers>;
+export type TInviteMembers = z.infer<typeof ZInviteMembers>;

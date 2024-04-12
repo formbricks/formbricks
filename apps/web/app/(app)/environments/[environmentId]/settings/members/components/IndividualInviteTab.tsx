@@ -8,12 +8,7 @@ import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
-enum MembershipRole {
-  Admin = "admin",
-  Editor = "editor",
-  Developer = "developer",
-  Viewer = "viewer",
-}
+import { MembershipRole } from "./AddMemberModal";
 
 interface MemberModalProps {
   setOpen: (v: boolean) => void;
@@ -22,13 +17,13 @@ interface MemberModalProps {
   isFormbricksCloud: boolean;
   environmentId: string;
 }
-export default function IndividualInviteTab({
+export const IndividualInviteTab = ({
   setOpen,
   onSubmit,
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
-}: MemberModalProps) {
+}: MemberModalProps) => {
   const { register, getValues, handleSubmit, reset, control } = useForm<{
     name: string;
     email: string;
@@ -44,7 +39,7 @@ export default function IndividualInviteTab({
   };
   return (
     <form onSubmit={handleSubmit(submitEventClass)}>
-      <div className="flex justify-between rounded-lg p-6">
+      <div className="flex justify-between rounded-lg px-6 py-3">
         <div className="w-full space-y-4">
           <div>
             <Label htmlFor="memberNameInput">Full Name</Label>
@@ -99,4 +94,4 @@ export default function IndividualInviteTab({
       </div>
     </form>
   );
-}
+};

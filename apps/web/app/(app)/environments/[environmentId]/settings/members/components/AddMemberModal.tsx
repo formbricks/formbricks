@@ -2,10 +2,10 @@
 
 import ModalWithTabs from "@formbricks/ui/ModalWithTabs";
 
-import BulkImportTab from "./BulkImportTab";
-import IndividualInviteTab from "./IndividualInviteTab";
+import { BulkInviteTab } from "./BulkInviteTab";
+import { IndividualInviteTab } from "./IndividualInviteTab";
 
-enum MembershipRole {
+export enum MembershipRole {
   Admin = "admin",
   Editor = "editor",
   Developer = "developer",
@@ -44,7 +44,7 @@ export default function AddMemberModal({
     {
       title: "Bulk Import",
       children: (
-        <BulkImportTab setOpen={setOpen} onSubmit={onSubmit} canDoRoleManagement={canDoRoleManagement} />
+        <BulkInviteTab setOpen={setOpen} onSubmit={onSubmit} canDoRoleManagement={canDoRoleManagement} />
       ),
     },
   ];
@@ -56,7 +56,7 @@ export default function AddMemberModal({
         setOpen={setOpen}
         tabs={tabs}
         label={"Invite Team Member"}
-        closeOnOutsideClick={false}
+        closeOnOutsideClick={true}
       />
     </>
   );

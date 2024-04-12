@@ -6,22 +6,19 @@ import Papa, { type ParseResult } from "papaparse";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-import { ZInviteeMembers } from "@formbricks/types/invites";
+import { ZInviteMembers } from "@formbricks/types/invites";
+import { Alert, AlertDescription } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
 
-enum MembershipRole {
-  Admin = "admin",
-  Editor = "editor",
-  Developer = "developer",
-  Viewer = "viewer",
-}
+import { MembershipRole } from "./AddMemberModal";
+
 interface MemberModalProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: MembershipRole }[]) => void;
   canDoRoleManagement: boolean;
 }
 
-export default function BulkImportTab({ setOpen, onSubmit, canDoRoleManagement }: MemberModalProps) {
+export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: MemberModalProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [csvFile, setCSVFile] = useState<File>();
   const onFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,9 +47,8 @@ export default function BulkImportTab({ setOpen, onSubmit, canDoRoleManagement }
           };
         });
         try {
-          ZInviteeMembers.parse(members);
+          ZInviteMembers.parse(members);
           onSubmit(members);
-          console.log(members);
         } catch (err) {
           console.error(err.message);
           toast.error("Please check the CSV file and make sure it is according to our format");
@@ -71,17 +67,28 @@ export default function BulkImportTab({ setOpen, onSubmit, canDoRoleManagement }
         <span className="text-sm text-neutral-500">{csvFile ? csvFile.name : "Click here to upload"}</span>
         <input onChange={onFileInputChange} type="file" ref={fileInputRef} accept=".csv" hidden />
       </div>
+      <div>
+        {!canDoRoleManagement && (
+          <Alert variant="destructive" className="mt-1.5 flex items-start bg-slate-50">
+            <AlertDescription className="ml-2">
+              <p className="text-sm text-amber-700 ">
+                <strong>Warning: </strong> Please note that on the Free Plan, all team members are
+                automatically assigned the &quot;Admin&quot; role regardless of the role specified in the CSV
+                file.
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
       <div className="flex justify-end pt-6">
         <div className="flex space-x-2">
-          <Button variant="secondary">
-            <Link
-              download
-              href="/sample-csv/formbricks-team-members-template.csv"
-              target="_blank"
-              rel="noopener noreferrer">
-              Template
-            </Link>
-          </Button>
+          <Link
+            download
+            href="/sample-csv/formbricks-team-members-template.csv"
+            target="_blank"
+            rel="noopener noreferrer">
+            <Button variant="minimal">Download CSV template</Button>
+          </Link>
           <Button onClick={onImport} variant="darkCTA" disabled={!csvFile}>
             Import
           </Button>
@@ -89,4 +96,4 @@ export default function BulkImportTab({ setOpen, onSubmit, canDoRoleManagement }
       </div>
     </div>
   );
-}
+};
