@@ -37,7 +37,7 @@ interface OpenQuestionFormProps {
   isInvalid: boolean;
 }
 
-export default function MultipleChoiceMultiForm({
+export const MultipleChoiceMultiForm = ({
   question,
   questionIdx,
   updateQuestion,
@@ -45,7 +45,7 @@ export default function MultipleChoiceMultiForm({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: OpenQuestionFormProps): JSX.Element {
+}: OpenQuestionFormProps): JSX.Element => {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
@@ -357,4 +357,4 @@ export default function MultipleChoiceMultiForm({
       </div>
     </form>
   );
-}
+};
