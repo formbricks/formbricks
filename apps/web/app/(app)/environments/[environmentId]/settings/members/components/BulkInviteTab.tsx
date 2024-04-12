@@ -12,15 +12,16 @@ import { Button } from "@formbricks/ui/Button";
 
 import { MembershipRole } from "./AddMemberModal";
 
-interface MemberModalProps {
+interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: MembershipRole }[]) => void;
   canDoRoleManagement: boolean;
 }
 
-export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: MemberModalProps) => {
+export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkInviteTabProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [csvFile, setCSVFile] = useState<File>();
+
   const onFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) {
       return;
@@ -61,6 +62,10 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: Member
   const removeFile = (event: React.MouseEvent<SVGElement>) => {
     event.stopPropagation();
     setCSVFile(undefined);
+    // Reset the file input value to ensure it can detect the same file if re-selected
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
@@ -76,7 +81,6 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: Member
         ) : (
           <UploadIcon className="h-6 w-6 text-neutral-500" />
         )}
-
         <span className="text-sm text-neutral-500">{csvFile ? csvFile.name : "Click here to upload"}</span>
         <input onChange={onFileInputChange} type="file" ref={fileInputRef} accept=".csv" hidden />
       </div>

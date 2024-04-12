@@ -1,6 +1,6 @@
 "use client";
 
-import ModalWithTabs from "@formbricks/ui/ModalWithTabs";
+import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
 
 import { BulkInviteTab } from "./BulkInviteTab";
 import { IndividualInviteTab } from "./IndividualInviteTab";
@@ -11,7 +11,7 @@ export enum MembershipRole {
   Developer = "developer",
   Viewer = "viewer",
 }
-interface MemberModalProps {
+interface AddMemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: MembershipRole }[]) => void;
@@ -27,7 +27,7 @@ export default function AddMemberModal({
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
-}: MemberModalProps) {
+}: AddMemberModalProps) {
   const tabs = [
     {
       title: "Individual Invite",
