@@ -1,6 +1,6 @@
 "use client";
 
-import { UploadIcon } from "lucide-react";
+import { UploadIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import Papa, { type ParseResult } from "papaparse";
 import { useRef, useState } from "react";
@@ -58,12 +58,25 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: Member
     });
   };
 
+  const removeFile = (event: React.MouseEvent<SVGElement>) => {
+    event.stopPropagation();
+    setCSVFile(undefined);
+  };
+
   return (
     <div className="space-y-4">
       <div
-        className="flex h-52 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-gray-300"
+        className="relative flex h-52 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-gray-300"
         onClick={() => fileInputRef.current?.click()}>
-        <UploadIcon className="h-7 w-7 text-neutral-500" />
+        {csvFile ? (
+          <XIcon
+            className="absolute right-4 top-4 h-6 w-6  cursor-pointer text-neutral-500"
+            onClick={removeFile}
+          />
+        ) : (
+          <UploadIcon className="h-6 w-6 text-neutral-500" />
+        )}
+
         <span className="text-sm text-neutral-500">{csvFile ? csvFile.name : "Click here to upload"}</span>
         <input onChange={onFileInputChange} type="file" ref={fileInputRef} accept=".csv" hidden />
       </div>
@@ -71,7 +84,7 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: Member
         {!canDoRoleManagement && (
           <Alert variant="destructive" className="mt-1.5 flex items-start bg-slate-50">
             <AlertDescription className="ml-2">
-              <p className="text-sm text-amber-700 ">
+              <p className="text-sm text-slate-700 ">
                 <strong>Warning: </strong> Please note that on the Free Plan, all team members are
                 automatically assigned the &quot;Admin&quot; role regardless of the role specified in the CSV
                 file.

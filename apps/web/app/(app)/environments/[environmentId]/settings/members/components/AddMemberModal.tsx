@@ -30,7 +30,7 @@ export default function AddMemberModal({
 }: MemberModalProps) {
   const tabs = [
     {
-      title: "Invite Individual",
+      title: "Individual Invite",
       children: (
         <IndividualInviteTab
           setOpen={setOpen}
