@@ -10,7 +10,7 @@ import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 import { MembershipRole } from "./AddMemberModal";
 
-interface MemberModalProps {
+interface IndividualInviteTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: MembershipRole }[]) => void;
   canDoRoleManagement: boolean;
@@ -23,7 +23,7 @@ export const IndividualInviteTab = ({
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
-}: MemberModalProps) => {
+}: IndividualInviteTabProps) => {
   const { register, getValues, handleSubmit, reset, control } = useForm<{
     name: string;
     email: string;
