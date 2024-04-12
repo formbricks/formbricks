@@ -87,14 +87,15 @@ export async function GET(
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);
+
     if (!product) {
       throw new Error("Product not found");
     }
 
     // Common filter condition for selecting surveys that are in progress, are of type 'website' and have no active segment filtering.
-    let filteredSurveys = surveys.filter(
+    const filteredSurveys = surveys.filter(
       (survey) => survey.status === "inProgress" && survey.type === "website"
-      // TODO: Find out if this required anymore.
+      // TODO: Find out if this required anymore. Most likely not.
       // && (!survey.segment || survey.segment.filters.length === 0)
     );
 

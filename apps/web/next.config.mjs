@@ -83,6 +83,11 @@ const nextConfig = {
         destination: "/api/v1/management/me",
         permanent: true,
       },
+      {
+        source: "/api/v1/client/:environmentId/in-app/sync",
+        destination: "/api/v1/client/:environmentId/website/sync",
+        permanent: true,
+      },
     ];
   },
   async headers() {
