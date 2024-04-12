@@ -11,7 +11,6 @@ interface NoLiveSurveyNotificationEmailProps {
   endDate: string;
   startYear: number;
   endYear: number;
-  WEBAPP_URL: string;
 }
 
 export const NoLiveSurveyNotificationEmail = ({
@@ -20,7 +19,6 @@ export const NoLiveSurveyNotificationEmail = ({
   endDate,
   startYear,
   endYear,
-  WEBAPP_URL,
 }: NoLiveSurveyNotificationEmailProps) => {
   return (
     <div>
@@ -31,7 +29,7 @@ export const NoLiveSurveyNotificationEmail = ({
         startYear={startYear}
         endYear={endYear}
       />
-      <CreateReminderNotificationBody webAppUrl={WEBAPP_URL} notificationData={notificationData} />
+      <CreateReminderNotificationBody notificationData={notificationData} />
     </div>
   );
 };

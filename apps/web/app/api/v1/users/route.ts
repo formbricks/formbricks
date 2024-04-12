@@ -1,4 +1,5 @@
 import { prisma } from "@formbricks/database";
+import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/email";
 import {
   DEFAULT_TEAM_ID,
   DEFAULT_TEAM_ROLE,
@@ -7,7 +8,6 @@ import {
   INVITE_DISABLED,
   SIGNUP_ENABLED,
 } from "@formbricks/lib/constants";
-import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/lib/email";
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";

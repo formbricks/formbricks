@@ -7,8 +7,13 @@
     "clean": "rimraf .turbo node_modules dist"
   },
   "dependencies": {
+    "@formbricks/lib": "workspace:*",
     "@formbricks/types": "workspace:*",
+    "@formbricks/ui": "workspace:*",
+    "@react-email/components": "^0.0.16",
     "@react-email/render": "^0.0.12",
-    "nodemailer": "^6.9.13"
+    "lucide-react": "^0.365.0",
+    "nodemailer": "^6.9.13",
+    "react-email": "^2.1.1"
   }
 }

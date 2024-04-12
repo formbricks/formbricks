@@ -1,7 +1,7 @@
 import { Container, Text } from "@react-email/components";
 import React from "react";
 
-import { EmailFooter } from "./EmailFooter";
+import { EmailFooter } from "../general/EmailFooter";
 
 interface InviteAcceptedEmailProps {
   inviterName: string;

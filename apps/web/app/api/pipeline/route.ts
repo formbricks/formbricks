@@ -3,8 +3,8 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { headers } from "next/headers";
 
 import { prisma } from "@formbricks/database";
+import { sendResponseFinishedEmail } from "@formbricks/email";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
-import { sendResponseFinishedEmail } from "@formbricks/lib/email";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";

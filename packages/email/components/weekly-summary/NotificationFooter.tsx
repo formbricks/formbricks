@@ -2,11 +2,12 @@ import { Container, Link, Text } from "@react-email/components";
 import { Tailwind } from "@react-email/components";
 import React from "react";
 
+import { WEBAPP_URL } from "@formbricks/lib/constants";
+
 interface NotificatonFooterProps {
-  webAppUrl: string;
   environmentId: string;
 }
-export const NotificationFooter = ({ webAppUrl, environmentId }: NotificatonFooterProps) => {
+export const NotificationFooter = ({ environmentId }: NotificatonFooterProps) => {
   return (
     <Tailwind>
       <Container className="w-full">
@@ -18,7 +19,7 @@ export const NotificationFooter = ({ webAppUrl, environmentId }: NotificatonFoot
           <Text>
             To halt Weekly Updates,{" "}
             <Link
-              href={`${webAppUrl}/environments/${environmentId}/settings/notifications`}
+              href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications`}
               className="text-black underline">
               please turn them off
             </Link>{" "}

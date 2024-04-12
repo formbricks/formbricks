@@ -1,10 +1,11 @@
 import { Container, Hr, Link, Tailwind, Text } from "@react-email/components";
 import React from "react";
 
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { TNotificationDataSurvey, TSurveyResponseData } from "@formbricks/types/weeklySummary";
 
-import { EmailButton } from "./EmailButton";
-import { renderEmailResponseValue } from "./ResponseFinishedEmail";
+import { EmailButton } from "../general/EmailButton";
+import { renderEmailResponseValue } from "../survey/ResponseFinishedEmail";
 
 const getButtonLabel = (count: number): string => {
   if (count === 1) {
@@ -15,7 +16,7 @@ const getButtonLabel = (count: number): string => {
 
 const convertSurveyStatus = (status: string): string => {
   const statusMap = {
-    inProgress: "Live",
+    inProgress: "In Progress",
     paused: "Paused",
     completed: "Completed",
     draft: "Draft",
@@ -26,16 +27,11 @@ const convertSurveyStatus = (status: string): string => {
 };
 
 interface LiveSurveyNotificationProps {
-  webAppUrl: string;
   environmentId: string;
   surveys: TNotificationDataSurvey[];
 }
 
-export const LiveSurveyNotification = ({
-  webAppUrl,
-  environmentId,
-  surveys,
-}: LiveSurveyNotificationProps) => {
+export const LiveSurveyNotification = ({ environmentId, surveys }: LiveSurveyNotificationProps) => {
   const createSurveyFields = (surveyResponses: TSurveyResponseData[]) => {
     if (surveyResponses.length === 0) {
       return (
@@ -68,18 +64,18 @@ export const LiveSurveyNotification = ({
     return surveyFields;
   };
 
-  if (!surveys.length) return ` `;
+  if (!surveys.length) return "";
 
   return surveys.map((survey, index) => {
     const displayStatus = convertSurveyStatus(survey.status);
-    const isInProgress = displayStatus === "Live";
+    const isInProgress = displayStatus === "In Progress";
     const noResponseLastWeek = isInProgress && survey.responses.length === 0;
     return (
       <Tailwind key={index}>
         <Container className="mt-12">
           <Text className="mb-0 inline">
             <Link
-              href={`${webAppUrl}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
+              href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
               className="text-xl text-black underline">
               {survey.name}
             </Link>
@@ -98,7 +94,7 @@ export const LiveSurveyNotification = ({
             <Container className="mt-4 block">
               <EmailButton
                 label={noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responseCount)}
-                href={`${webAppUrl}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
+                href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
               />
             </Container>
           )}

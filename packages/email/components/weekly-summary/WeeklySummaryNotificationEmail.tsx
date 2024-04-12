@@ -13,7 +13,6 @@ interface WeeklySummaryNotificationEmailProps {
   endDate: string;
   startYear: number;
   endYear: number;
-  WEBAPP_URL: string;
 }
 
 export const WeeklySummaryNotificationEmail = ({
@@ -22,7 +21,6 @@ export const WeeklySummaryNotificationEmail = ({
   endDate,
   startYear,
   endYear,
-  WEBAPP_URL,
 }: WeeklySummaryNotificationEmailProps) => {
   return (
     <div>
@@ -35,11 +33,10 @@ export const WeeklySummaryNotificationEmail = ({
       />
       <NotificationInsight insights={notificationData.insights} />
       <LiveSurveyNotification
-        webAppUrl={WEBAPP_URL}
         surveys={notificationData.surveys}
         environmentId={notificationData.environmentId}
       />
-      <NotificationFooter webAppUrl={WEBAPP_URL} environmentId={notificationData.environmentId} />
+      <NotificationFooter environmentId={notificationData.environmentId} />
     </div>
   );
 };

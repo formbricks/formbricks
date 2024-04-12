@@ -1,12 +1,13 @@
 import { Column, Container, Hr, Img, Link, Row, Section, Text } from "@react-email/components";
 import React from "react";
 
+import { getQuestionResponseMapping } from "@formbricks/lib/responses";
+import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTeam } from "@formbricks/types/teams";
 
-import { getOriginalFileNameFromUrl, getQuestionResponseMapping } from "../lib/util";
-import { EmailButton } from "./EmailButton";
+import { EmailButton } from "../general/EmailButton";
 
 export const renderEmailResponseValue = (response: string | string[], questionType: string) => {
   switch (questionType) {

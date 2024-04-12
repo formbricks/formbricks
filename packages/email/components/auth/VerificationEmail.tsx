@@ -1,8 +1,8 @@
 import { Container, Heading, Link, Text } from "@react-email/components";
 import React from "react";
 
-import { EmailButton } from "./EmailButton";
-import { EmailFooter } from "./EmailFooter";
+import { EmailButton } from "../general/EmailButton";
+import { EmailFooter } from "../general/EmailFooter";
 
 interface VerificationEmailProps {
   verifyLink: string;
