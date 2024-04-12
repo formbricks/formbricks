@@ -31,7 +31,7 @@ export default async function SegmentsPage({ params }) {
     throw new Error("Team not found");
   }
 
-  const isAdvancedTargetingAllowed = getAdvancedTargetingPermission(team);
+  const isAdvancedTargetingAllowed = await getAdvancedTargetingPermission(team);
 
   if (!segments) {
     throw new Error("Failed to fetch segments");
