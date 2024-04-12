@@ -11,6 +11,12 @@ Embedding Formbricks surveys directly into your web pages allows you to integrat
 
 ## How to Use it?
 
+<video autoplay loop muted>
+  <source src="embed-iframe.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+  </source>
+</video>
+
 1. Create and publish a link survey.
 
 2. Open survey summary page and click on **share** button on the top right.
@@ -41,11 +47,11 @@ Embedding Formbricks surveys directly into your web pages allows you to integrat
 
 ## Iframe Events
 
-We also fire a **formbricksSurveyCompleted** event when a user finishes a survey within the embedded iframe. This event can be captured through a message listener in your webpage's JavaScript
+The iframe fires a **formbricksSurveyCompleted** event when a user finishes a survey within the embedded iframe. This event can be captured through a message listener in your webpage's JavaScript
 
 ### How to Use it?
 
-1. Embed the Formbricks survey on your webpage using the iframe method as described in previous documentation.
+1. Embed the Formbricks survey on your webpage using the iframe method as described above.
 
 2. Add an event listener to your webpage’s JavaScript that listens for `message` events from the iframe.
 
