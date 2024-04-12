@@ -685,7 +685,7 @@ export const getQuestionWiseSummary = (
   survey: TSurvey,
   responses: TResponse[]
 ): TSurveySummary["summary"] => {
-  const VALUES_LIMIT = 10;
+  const VALUES_LIMIT = 50;
   let summary: TSurveySummary["summary"] = [];
 
   survey.questions.forEach((question) => {

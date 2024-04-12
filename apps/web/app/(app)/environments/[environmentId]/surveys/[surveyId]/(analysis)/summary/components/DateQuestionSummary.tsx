@@ -2,6 +2,7 @@ import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId
 import { questionTypes } from "@/app/lib/questions";
 import { InboxIcon } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
@@ -9,6 +10,7 @@ import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 import { TSurveySummaryDate } from "@formbricks/types/responses";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { Button } from "@formbricks/ui/Button";
 
 interface DateQuestionSummary {
   questionSummary: TSurveySummaryDate;
@@ -16,7 +18,16 @@ interface DateQuestionSummary {
 }
 
 export const DateQuestionSummary = ({ questionSummary, environmentId }: DateQuestionSummary) => {
+  const [visibleResponses, setVisibleResponses] = useState(10);
+
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
+
+  const handleLoadMore = () => {
+    // Increase the number of visible responses by 10, not exceeding the total number of responses
+    setVisibleResponses((prevVisibleResponses) =>
+      Math.min(prevVisibleResponses + 10, questionSummary.samples.length)
+    );
+  };
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -42,7 +53,7 @@ export const DateQuestionSummary = ({ questionSummary, environmentId }: DateQues
           <div className="col-span-2 pl-4 md:pl-6">Response</div>
           <div className="px-4 md:px-6">Time</div>
         </div>
-        {questionSummary.samples.map((response) => (
+        {questionSummary.samples.slice(0, visibleResponses).map((response) => (
           <div
             key={response.id}
             className="grid grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
@@ -75,6 +86,13 @@ export const DateQuestionSummary = ({ questionSummary, environmentId }: DateQues
             </div>
           </div>
         ))}
+        {visibleResponses < questionSummary.samples.length && (
+          <div className="flex justify-center py-4">
+            <Button onClick={handleLoadMore} variant="secondary" size="sm">
+              Load more
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
