@@ -19,9 +19,9 @@ const BATCH_SIZE = 500;
 
 export async function POST(): Promise<Response> {
   // Check authentication
-  // if (headers().get("x-api-key") !== CRON_SECRET) {
-  //   return responses.notAuthenticatedResponse();
-  // }
+  if (headers().get("x-api-key") !== CRON_SECRET) {
+    return responses.notAuthenticatedResponse();
+  }
 
   const emailSendingPromises: Promise<void>[] = [];
 
