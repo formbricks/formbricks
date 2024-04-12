@@ -10,6 +10,8 @@ export default function Modal({
   placement,
   previewMode,
   highlightBorderColor,
+  clickOutsideClose,
+  darkOverlay,
   borderRadius,
   background,
 }: {
@@ -18,10 +20,12 @@ export default function Modal({
   placement: TPlacement;
   previewMode: string;
   highlightBorderColor: string | null | undefined;
+  clickOutsideClose: boolean;
+  darkOverlay: boolean;
   borderRadius?: number;
   background?: string;
 }) {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(true);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -61,6 +65,7 @@ export default function Modal({
   };
 
   const scalingClasses = calculateScaling();
+  const overlayStyle = darkOverlay ? "bg-gray-700/80" : "bg-white/50";
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -68,11 +73,23 @@ export default function Modal({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Handle click outside to close the modal
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (clickOutsideClose && modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        setTimeout(() => {
+          setShow(false);
+        }, 1000);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [clickOutsideClose]);
+
   const highlightBorderColorStyle = useMemo(() => {
-    if (!highlightBorderColor)
-      return {
-        overflow: "auto",
-      };
+    if (!highlightBorderColor) return { overflow: "auto" };
 
     return {
       border: `2px solid ${highlightBorderColor}`,
@@ -102,8 +119,15 @@ export default function Modal({
           : "-bottom-full"
         : "";
 
+  if (!show) return null;
   return (
-    <div aria-live="assertive" className="relative h-full w-full overflow-hidden bg-slate-300">
+    <div
+      aria-live="assertive"
+      className={cn(
+        "relative h-full w-full overflow-hidden",
+        overlayStyle,
+        "transition-all duration-500 ease-in-out"
+      )}>
       <div
         ref={modalRef}
         style={{
