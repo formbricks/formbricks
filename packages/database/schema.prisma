@@ -371,6 +371,7 @@ enum IntegrationType {
   googleSheets
   notion
   airtable
+  slack
 }
 
 model Integration {

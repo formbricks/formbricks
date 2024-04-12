@@ -3,27 +3,25 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 
 import { TPerson } from "@formbricks/types/people";
-import {
-  TResponse,
-  TResponseFilterCriteria,
-  TResponseTtc,
-  TSurveySummary,
-  TSurveySummaryDate,
-  TSurveySummaryFileUpload,
-  TSurveySummaryHiddenField,
-  TSurveySummaryMultipleChoice,
-  TSurveySummaryOpenText,
-  TSurveySummaryPictureSelection,
-  TSurveySummaryRating,
-} from "@formbricks/types/responses";
+import { TResponse, TResponseFilterCriteria, TResponseTtc } from "@formbricks/types/responses";
 import {
   TSurvey,
+  TSurveyLanguage,
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
+  TSurveyQuestionSummaryAddress,
+  TSurveyQuestionSummaryDate,
+  TSurveyQuestionSummaryFileUpload,
+  TSurveyQuestionSummaryHiddenFields,
+  TSurveyQuestionSummaryMultipleChoice,
+  TSurveyQuestionSummaryOpenText,
+  TSurveyQuestionSummaryPictureSelection,
+  TSurveyQuestionSummaryRating,
   TSurveyQuestionType,
+  TSurveySummary,
 } from "@formbricks/types/surveys";
 
-import { getLanguageCode, getLocalizedValue } from "../i18n/utils";
+import { getLocalizedValue } from "../i18n/utils";
 import { processResponseData } from "../responses";
 import { sanitizeString } from "../strings";
 import { getTodaysDateTimeFormatted } from "../time";
@@ -37,7 +35,8 @@ export function calculateTtcTotal(ttc: TResponseTtc) {
 }
 
 export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
-  const whereClause: Record<string, any>[] = [];
+  const whereClause: Prisma.ResponseWhereInput["AND"] = [];
+
   // For finished
   if (filterCriteria?.finished !== undefined) {
     whereClause.push({
@@ -128,19 +127,56 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
     });
   }
 
-  // For Metadata
-  if (filterCriteria?.metadata) {
-    const metadata: Prisma.ResponseWhereInput[] = [];
+  // for meta
+  if (filterCriteria?.meta) {
+    const meta: Prisma.ResponseWhereInput[] = [];
 
-    Object.entries(filterCriteria.metadata).forEach(([key, val]) => {
+    Object.entries(filterCriteria.meta).forEach(([key, val]) => {
+      let updatedKey: string[] = [];
+      if (["browser", "os", "device"].includes(key)) {
+        updatedKey = ["userAgent", key];
+      } else {
+        updatedKey = [key];
+      }
+
       switch (val.op) {
         case "equals":
-          metadata.push({
+          meta.push({
+            meta: {
+              path: updatedKey,
+              equals: val.value,
+            },
+          });
+          break;
+        case "notEquals":
+          meta.push({
+            meta: {
+              path: updatedKey,
+              not: val.value,
+            },
+          });
+          break;
+      }
+    });
+
+    whereClause.push({
+      AND: meta,
+    });
+  }
+
+  // For Language
+  if (filterCriteria?.others) {
+    const others: Prisma.ResponseWhereInput[] = [];
+
+    Object.entries(filterCriteria.others).forEach(([key, val]) => {
+      switch (val.op) {
+        case "equals":
+          others.push({
             [key.toLocaleLowerCase()]: val.value,
           });
           break;
         case "notEquals":
-          metadata.push({
+          others.push({
             [key.toLocaleLowerCase()]: {
               not: val.value,
             },
@@ -149,7 +185,7 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
       }
     });
     whereClause.push({
-      AND: metadata,
+      AND: others,
     });
   }
 
@@ -180,6 +216,13 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
                 data: {
                   path: [key],
                   equals: "dismissed",
+                },
+              },
+              // For address question
+              {
+                data: {
+                  path: [key],
+                  equals: [],
                 },
               },
             ],
@@ -327,15 +370,6 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
             },
           });
           break;
-        case "matrix":
-          const rowLabel = Object.keys(val.value)[0];
-          data.push({
-            data: {
-              path: [key, rowLabel],
-              equals: val.value[rowLabel],
-            },
-          });
-          break;
       }
     });
 
@@ -372,9 +406,7 @@ export const extracMetadataKeys = (obj: TResponse["meta"]) => {
 
 export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) => {
   const metaDataFields = responses.length > 0 ? extracMetadataKeys(responses[0].meta) : [];
-  const questions = survey.questions.map(
-    (question, idx) => `${idx + 1}. ${getLocalizedValue(question.headline, "default")}`
-  );
+  const questions = survey.questions.map((question, idx) => `${idx + 1}. ${question.headline}`);
   const hiddenFields = survey.hiddenFields?.fieldIds || [];
   const userAttributes = Array.from(
     new Set(responses.map((response) => Object.keys(response.personAttributes ?? {})).flat())
@@ -612,6 +644,12 @@ export const getSurveySummaryDropOff = (
   return dropOff;
 };
 
+const getLanguageCode = (surveyLanguages: TSurveyLanguage[], languageCode: string | null) => {
+  if (!surveyLanguages?.length || !languageCode) return "default";
+  const language = surveyLanguages.find((surveyLanguage) => surveyLanguage.language.code === languageCode);
+  return language?.default ? "default" : language?.language.code || "default";
+};
+
 const checkForI18n = (response: TResponse, id: string, survey: TSurvey, languageCode: string) => {
   const question = survey.questions.find((question) => question.id === id);
 
@@ -647,13 +685,13 @@ export const getQuestionWiseSummary = (
   survey: TSurvey,
   responses: TResponse[]
 ): TSurveySummary["summary"] => {
-  const VALUES_LIMIT = 10;
+  const VALUES_LIMIT = 50;
   let summary: TSurveySummary["summary"] = [];
 
   survey.questions.forEach((question) => {
     switch (question.type) {
       case TSurveyQuestionType.OpenText: {
-        let values: TSurveySummaryOpenText["samples"] = [];
+        let values: TSurveyQuestionSummaryOpenText["samples"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
           if (answer && typeof answer === "string") {
@@ -678,7 +716,7 @@ export const getQuestionWiseSummary = (
       }
       case TSurveyQuestionType.MultipleChoiceSingle:
       case TSurveyQuestionType.MultipleChoiceMulti: {
-        let values: TSurveySummaryMultipleChoice["choices"] = [];
+        let values: TSurveyQuestionSummaryMultipleChoice["choices"] = [];
         // check last choice is others or not
         const lastChoice = question.choices[question.choices.length - 1];
         const isOthersEnabled = lastChoice.id === "other";
@@ -736,13 +774,14 @@ export const getQuestionWiseSummary = (
           });
         });
 
-        // Push all other values
-        values.push({
-          value: "Other",
-          count: otherValues.length,
-          percentage: convertFloatTo2Decimal((otherValues.length / totalResponseCount) * 100),
-          others: otherValues.slice(0, VALUES_LIMIT),
-        });
+        if (isOthersEnabled) {
+          values.push({
+            value: getLocalizedValue(lastChoice.label, "default") || "Other",
+            count: otherValues.length,
+            percentage: convertFloatTo2Decimal((otherValues.length / totalResponseCount) * 100),
+            others: otherValues.slice(0, VALUES_LIMIT),
+          });
+        }
 
         summary.push({
           type: question.type,
@@ -755,7 +794,7 @@ export const getQuestionWiseSummary = (
         break;
       }
       case TSurveyQuestionType.PictureSelection: {
-        let values: TSurveySummaryPictureSelection["choices"] = [];
+        let values: TSurveyQuestionSummaryPictureSelection["choices"] = [];
         const choiceCountMap: Record<string, number> = {};
 
         question.choices.forEach((choice) => {
@@ -796,7 +835,7 @@ export const getQuestionWiseSummary = (
         break;
       }
       case TSurveyQuestionType.Rating: {
-        let values: TSurveySummaryRating["choices"] = [];
+        let values: TSurveyQuestionSummaryRating["choices"] = [];
         const choiceCountMap: Record<number, number> = {};
         const range = question.range;
 
@@ -967,7 +1006,7 @@ export const getQuestionWiseSummary = (
         break;
       }
       case TSurveyQuestionType.Date: {
-        let values: TSurveySummaryDate["samples"] = [];
+        let values: TSurveyQuestionSummaryDate["samples"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
           if (answer && typeof answer === "string") {
@@ -991,7 +1030,7 @@ export const getQuestionWiseSummary = (
         break;
       }
       case TSurveyQuestionType.FileUpload: {
-        let values: TSurveySummaryFileUpload["files"] = [];
+        let values: TSurveyQuestionSummaryFileUpload["files"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
           if (Array.isArray(answer)) {
@@ -1104,13 +1143,37 @@ export const getQuestionWiseSummary = (
         });
         break;
       }
+      case TSurveyQuestionType.Address: {
+        let values: TSurveyQuestionSummaryAddress["samples"] = [];
+        responses.forEach((response) => {
+          const answer = response.data[question.id];
+          if (Array.isArray(answer) && answer.length > 0) {
+            values.push({
+              id: response.id,
+              updatedAt: response.updatedAt,
+              value: answer,
+              person: response.person,
+            });
+          }
+        });
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: values.length,
+          samples: values.slice(0, VALUES_LIMIT),
+        });
+
+        values = [];
+        break;
+      }
     }
   });
 
-  survey.hiddenFields?.fieldIds?.forEach((question) => {
-    let values: TSurveySummaryHiddenField["samples"] = [];
+  survey.hiddenFields?.fieldIds?.forEach((hiddenFieldId) => {
+    let values: TSurveyQuestionSummaryHiddenFields["samples"] = [];
     responses.forEach((response) => {
-      const answer = response.data[question];
+      const answer = response.data[hiddenFieldId];
       if (answer && typeof answer === "string") {
         values.push({
           updatedAt: response.updatedAt,
@@ -1122,7 +1185,7 @@ export const getQuestionWiseSummary = (
 
     summary.push({
       type: "hiddenField",
-      question,
+      id: hiddenFieldId,
       responseCount: values.length,
       samples: values.slice(0, VALUES_LIMIT),
     });

@@ -2,12 +2,12 @@
 
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { LoadingSkeleton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LoadingSkeleton";
-import StylingView from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/StylingView";
+import { StylingView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/StylingView";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
-import useDocumentVisibility from "@formbricks/lib/useDocumentVisibility";
+import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -53,7 +53,7 @@ export default function SurveyEditor({
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-  const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(survey);
+  const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
   const [invalidQuestions, setInvalidQuestions] = useState<string[] | null>(null);
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);

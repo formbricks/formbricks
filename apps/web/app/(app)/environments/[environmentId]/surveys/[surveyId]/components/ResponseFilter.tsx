@@ -4,14 +4,18 @@ import {
   SelectedFilterValue,
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import QuestionFilterComboBox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
+import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
+import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/action";
 import clsx from "clsx";
 import { isEqual } from "lodash";
 import { TrashIcon } from "lucide-react";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { TSurveyTSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
@@ -19,16 +23,45 @@ import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover"
 import QuestionsComboBox, { OptionsType, QuestionOption } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
-  type: TSurveyTSurveyQuestionType | "Attributes" | "Tags" | "Languages";
+  type: TSurveyQuestionType | "Attributes" | "Tags" | "Languages";
   filterOptions: string[];
   filterComboBoxOptions: string[];
   id: string;
 };
 
-const ResponseFilter = () => {
+interface ResponseFilterProps {
+  survey: TSurvey;
+}
+
+const ResponseFilter = ({ survey }: ResponseFilterProps) => {
+  const params = useParams();
+  const sharingKey = params.sharingKey as string;
+  const isSharingPage = !!sharingKey;
+
+  const { selectedFilter, setSelectedFilter, selectedOptions, setSelectedOptions } = useResponseFilter();
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const { selectedFilter, setSelectedFilter, selectedOptions } = useResponseFilter();
   const [filterValue, setFilterValue] = useState<SelectedFilterValue>(selectedFilter);
+
+  useEffect(() => {
+    // Fetch the initial data for the filter and load it into the state
+    const handleInitialData = async () => {
+      if (isOpen) {
+        const { attributes, meta, environmentTags } = isSharingPage
+          ? await getSurveyFilterDataBySurveySharingKeyAction(sharingKey, survey.environmentId)
+          : await getSurveyFilterDataAction(survey.id, survey.environmentId);
+
+        const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
+          survey,
+          environmentTags,
+          attributes,
+          meta
+        );
+        setSelectedOptions({ questionFilterOptions, questionOptions });
+      }
+    };
+
+    handleInitialData();
+  }, [isOpen, isSharingPage, setSelectedOptions, sharingKey, survey]);
 
   const handleOnChangeQuestionComboBoxValue = (value: QuestionOption, index: number) => {
     if (filterValue.filter[index].questionType) {

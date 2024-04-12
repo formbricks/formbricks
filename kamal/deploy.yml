@@ -29,8 +29,9 @@ registry:
 env:
   # clear:
   #   DB_HOST: 192.168.0.2
-  # clear:
-  # REDIS_CLIENT_URL: redis://default:password@172.31.40.79:6379
+  clear:
+    REDIS_URL: redis://default:password@172.31.40.79:6379
+    REDIS_HTTP_URL: http://172.31.40.79:7379
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
@@ -64,6 +65,8 @@ env:
     - ASSET_PREFIX_URL
     - NOTION_OAUTH_CLIENT_ID
     - NOTION_OAUTH_CLIENT_SECRET
+    - SLACK_CLIENT_ID
+    - SLACK_CLIENT_SECRET
     - STRIPE_SECRET_KEY
     - STRIPE_WEBHOOK_SECRET
     - GOOGLE_SHEETS_CLIENT_ID
@@ -168,6 +171,21 @@ accessories:
     port: "172.31.40.79:6379:6379"
     directories:
       - data:/data
+
+  webdis:
+    image: nicolas/webdis:0.1.22
+    host: 18.196.187.144
+    cmd: >
+      sh -c "
+      wget -O /usr/local/bin/webdis.json https://github.com/nicolasff/webdis/raw/0.1.22/webdis.json &&
+      awk '/\"redis_host\":/ {print \"\\t\\\"redis_host\\\": \\\"172.31.40.79\\\",\"; next} /\"logfile\":/ {print \"\\t\\\"logfile\\\": \\\"/dev/stderr\\\"\"; next} {print}' /usr/local/bin/webdis.json > /usr/local/bin/webdis_modified.json &&
+      mv /usr/local/bin/webdis_modified.json /usr/local/bin/webdis.json &&
+      /usr/local/bin/webdis /usr/local/bin/webdis.json"
+
+    port: "172.31.40.79:7379:7379"
+    directories:
+      - data:/data
+
   pgbouncer:
     image: edoburu/pgbouncer:latest
     host: 18.196.187.144
@@ -177,7 +195,7 @@ accessories:
         LISTEN_PORT: "5432"
         POOL_MODE: "transaction"
         MAX_CLIENT_CONN: "300"
-        DEFAULT_POOL_SIZE: "70"
+        DEFAULT_POOL_SIZE: "100"
         AUTH_TYPE: "scram-sha-256"
       secret:
         - DB_USER

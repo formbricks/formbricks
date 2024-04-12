@@ -55,6 +55,10 @@ export const SIGNUP_ENABLED = env.SIGNUP_DISABLED !== "1";
 export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";
 export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 
+export const SLACK_CLIENT_SECRET = env.SLACK_CLIENT_SECRET;
+export const SLACK_CLIENT_ID = env.SLACK_CLIENT_ID;
+export const SLACK_AUTH_URL = `https://slack.com/oauth/v2/authorize?client_id=${env.SLACK_CLIENT_ID}&scope=channels:read,chat:write,chat:write.public,chat:write.customize`;
+
 export const GOOGLE_SHEETS_CLIENT_ID = env.GOOGLE_SHEETS_CLIENT_ID;
 export const GOOGLE_SHEETS_CLIENT_SECRET = env.GOOGLE_SHEETS_CLIENT_SECRET;
 export const GOOGLE_SHEETS_REDIRECT_URL = env.GOOGLE_SHEETS_REDIRECT_URL;
@@ -75,7 +79,7 @@ export const MAIL_FROM = env.MAIL_FROM;
 
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
 export const ITEMS_PER_PAGE = 50;
-export const SURVEYS_PER_PAGE = 20;
+export const SURVEYS_PER_PAGE = 12;
 export const RESPONSES_PER_PAGE = 10;
 export const TEXT_RESPONSES_PER_PAGE = 5;
 
@@ -146,24 +150,24 @@ export const SURVEY_BG_COLORS = [
 
 // Rate Limiting
 export const SIGNUP_RATE_LIMIT = {
-  interval: 60 * 60 * 1000, // 60 minutes
+  interval: 60 * 60, // 60 minutes
   allowedPerInterval: 30,
 };
 export const LOGIN_RATE_LIMIT = {
-  interval: 15 * 60 * 1000, // 15 minutes
+  interval: 15 * 60, // 15 minutes
   allowedPerInterval: 30,
 };
 export const CLIENT_SIDE_API_RATE_LIMIT = {
-  interval: 5 * 60 * 1000, // 5 minutes
+  interval: 5 * 60, // 5 minutes
   allowedPerInterval: 200,
 };
 export const SHARE_RATE_LIMIT = {
-  interval: 60 * 60 * 1000, // 60 minutes
+  interval: 60 * 60, // 60 minutes
   allowedPerInterval: 30,
 };
 
 export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
-  interval: 60 * 1000, // 1 minute
+  interval: 60, // 1 minute
   allowedPerInterval: 5,
 };
 
@@ -172,7 +176,8 @@ export const DEBUG = env.DEBUG === "1";
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
-export const REDIS_CLIENT_URL = env.REDIS_CLIENT_URL;
+export const REDIS_URL = env.REDIS_URL;
+export const REDIS_HTTP_URL = env.REDIS_HTTP_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 
 export const CUSTOMER_IO_SITE_ID = env.CUSTOMER_IO_SITE_ID;

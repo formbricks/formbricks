@@ -19,16 +19,16 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 
-import ShareEmbedSurvey from "../(analysis)/summary/components/ShareEmbedSurvey";
-import ShareSurveyResults from "../(analysis)/summary/components/ShareSurveyResults";
+import { ShareEmbedSurvey } from "../(analysis)/summary/components/ShareEmbedSurvey";
+import { ShareSurveyResults } from "../(analysis)/summary/components/ShareSurveyResults";
 
 interface ResultsShareButtonProps {
   survey: TSurvey;
   webAppUrl: string;
-  user: TUser;
+  user?: TUser;
 }
 
-export default function ResultsShareButton({ survey, webAppUrl, user }: ResultsShareButtonProps) {
+export const ResultsShareButton = ({ survey, webAppUrl, user }: ResultsShareButtonProps) => {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
@@ -138,7 +138,7 @@ export default function ResultsShareButton({ survey, webAppUrl, user }: ResultsS
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {showLinkModal && (
+      {showLinkModal && user && (
         <ShareEmbedSurvey
           survey={survey}
           open={showLinkModal}
@@ -159,4 +159,4 @@ export default function ResultsShareButton({ survey, webAppUrl, user }: ResultsS
       )}
     </div>
   );
-}
+};

@@ -36,6 +36,10 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "avatars.slack-edge.com",
+      },
+      {
+        protocol: "https",
         hostname: "lh3.googleusercontent.com",
       },
       {
@@ -112,7 +116,16 @@ const nextConfig = {
         ],
       },
       {
-        source: "/(.*)",
+        source: "/environments/(.*)",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
+          },
+        ],
+      },
+      {
+        source: "/auth/(.*)",
         headers: [
           {
             key: "X-Frame-Options",
