@@ -59,7 +59,7 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: Member
   };
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-4">
       <div
         className="flex h-52 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-gray-300"
         onClick={() => fileInputRef.current?.click()}>

@@ -39,7 +39,7 @@ export const IndividualInviteTab = ({
   };
   return (
     <form onSubmit={handleSubmit(submitEventClass)}>
-      <div className="flex justify-between rounded-lg px-6 py-3">
+      <div className="flex justify-between rounded-lg ">
         <div className="w-full space-y-4">
           <div>
             <Label htmlFor="memberNameInput">Full Name</Label>
