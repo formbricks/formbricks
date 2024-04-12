@@ -6,6 +6,7 @@ import {
   validateQuestion,
   validateSurveyQuestionsInBatch,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
+import { getQuestionDefaults, universalQuestionPresets } from "@/app/lib/questions";
 import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
@@ -285,6 +286,62 @@ export default function QuestionsView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeQuestionId, setActiveQuestionId]);
 
+  const questions = localSurvey?.questions;
+  function questionToText(question) {
+    let text = `\n${question?.headline?.default} ${question?.subheader ? `| ${question.subheader.default}` : ""}`;
+
+    if (question.choices && question.choices.length > 0) {
+      const choicesText = question.choices
+        .map((choice) => {
+          return `${choice?.imageUrl ? choice?.imageUrl : choice?.label?.default}`; // Add space before each choice label
+        })
+        .join("\n"); // Join choices with newline
+      text += `\n${choicesText}`;
+    }
+    return text;
+  }
+
+  const text = questions.map(questionToText).join("\n");
+  function downloadTxtFile() {
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = __filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+
+    const headlineValue = formData.get("myInput");
+    const headlineArray = headlineValue ? headlineValue.toString().split(`\n\n`) : null;
+
+    headlineArray?.forEach((headlineValue) => {
+      // Update the product object with the new headline
+      const updatedProduct = {
+        ...product,
+        headline: {
+          default: headlineValue, // Update the headline field with the new value
+        },
+      };
+
+      // Add a question for each headline value
+      addQuestion({
+        ...universalQuestionPresets,
+        ...getQuestionDefaults("openText", updatedProduct), // Pass updatedProduct here
+        id: createId(),
+        type: "openText",
+      });
+    });
+  }
+
   return (
     <div className="mt-16 px-5 py-4">
       <div className="mb-5 flex flex-col gap-5">
@@ -328,6 +385,40 @@ export default function QuestionsView({
           </StrictModeDroppable>
         </div>
       </DragDropContext>
+      <div className="flex flex-row">
+        <div className="btnDiv flex">
+          <button
+            className="mx-2 inline-flex items-center rounded p-0.5 px-4 py-2 font-medium text-slate-700 last:mb-2 hover:bg-slate-100 hover:text-slate-800"
+            id="downloadBtn"
+            onClick={downloadTxtFile}
+            value="download">
+            Download
+          </button>
+        </div>
+        <form method="post" onSubmit={handleSubmit}>
+          <label>
+            Text input: <textarea name="myInput" />
+          </label>
+          <button
+            className="mx-2 inline-flex items-center rounded p-0.5 px-4 py-2 font-medium text-slate-700 last:mb-2 hover:bg-slate-100 hover:text-slate-800"
+            type="reset"
+            onClick={() => {
+              const textarea = document.querySelector(
+                'textarea[name="myInput"]'
+              ) as HTMLTextAreaElement | null;
+              if (textarea !== null) {
+                textarea.value = "";
+              }
+            }}>
+            Reset
+          </button>
+          <button
+            className="mx-2 inline-flex items-center rounded p-0.5 px-4 py-2 font-medium text-slate-700 last:mb-2 hover:bg-slate-100 hover:text-slate-800"
+            type="submit">
+            submit
+          </button>
+        </form>
+      </div>
       <AddQuestionButton addQuestion={addQuestion} product={product} />
       <div className="mt-5 flex flex-col gap-5">
         <EditThankYouCard

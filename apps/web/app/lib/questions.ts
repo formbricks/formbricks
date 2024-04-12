@@ -224,7 +224,13 @@ export const universalQuestionPresets = {
 
 export const getQuestionDefaults = (id: string, product: any) => {
   const questionType = questionTypes.find((questionType) => questionType.id === id);
-  return replaceQuestionPresetPlaceholders(questionType?.preset, product);
+  const newHeadline = product.headline;
+
+  const tempPresent = {
+    ...questionType?.preset,
+    headline: newHeadline,
+  };
+  return replaceQuestionPresetPlaceholders(newHeadline ? tempPresent : questionType?.preset, product);
 };
 
 export const getTSurveyQuestionTypeName = (id: string) => {
