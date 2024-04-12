@@ -36,8 +36,7 @@ tasks:
       sed -i -r "s#^(NEXTAUTH_URL=).*#\1 $(gp url 3000)#" .env &&
       RANDOM_ENCRYPTION_KEY=$(openssl rand -hex 32) &&
       sed -i 's/^ENCRYPTION_KEY=.*/ENCRYPTION_KEY='"$RANDOM_ENCRYPTION_KEY"'/' .env &&
-      pnpm clean && pnpm i &&
-      turbo --filter "@formbricks/web" go
+      pnpm clean && pnpm i && pnpm go
 
 image:
   file: .gitpod.Dockerfile
