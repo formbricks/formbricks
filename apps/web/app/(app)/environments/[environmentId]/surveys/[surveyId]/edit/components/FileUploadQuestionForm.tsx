@@ -27,7 +27,7 @@ interface FileUploadFormProps {
   isInvalid: boolean;
 }
 
-export default function FileUploadQuestionForm({
+export const FileUploadQuestionForm = ({
   localSurvey,
   question,
   questionIdx,
@@ -36,7 +36,7 @@ export default function FileUploadQuestionForm({
   product,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: FileUploadFormProps): JSX.Element {
+}: FileUploadFormProps): JSX.Element => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [extension, setExtension] = useState("");
   const {
@@ -252,4 +252,4 @@ export default function FileUploadQuestionForm({
       </div>
     </form>
   );
-}
+};
