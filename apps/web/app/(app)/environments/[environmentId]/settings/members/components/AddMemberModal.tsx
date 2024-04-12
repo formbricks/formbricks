@@ -42,7 +42,7 @@ export default function AddMemberModal({
       ),
     },
     {
-      title: "Bulk Import",
+      title: "Bulk Invite",
       children: (
         <BulkInviteTab setOpen={setOpen} onSubmit={onSubmit} canDoRoleManagement={canDoRoleManagement} />
       ),
