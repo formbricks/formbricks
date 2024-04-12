@@ -10,7 +10,7 @@ type Options = {
 const inMemoryRateLimiter = (options: Options) => {
   const tokenCache = new LRUCache<string, number>({
     max: 1000,
-    ttl: options.interval,
+    ttl: options.interval * 1000, // converts to expected input of milliseconds
   });
 
   return async (token: string) => {
