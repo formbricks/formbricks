@@ -261,6 +261,8 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
           };
         }
 
+        // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
+        // @ts-expect-error
         const transformedSurvey: TSurvey = {
           ...surveyPrisma,
           triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
@@ -540,6 +542,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       };
     }
 
+    // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
+    // @ts-expect-error
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
       triggers: updatedSurvey.triggers ? updatedSurvey.triggers : [], // Include triggers from updatedSurvey
@@ -623,7 +627,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     attributeFilters: undefined,
   };
 
-  if (surveyBody.type === "web" && data.thankYouCard) {
+  if ((surveyBody.type === "website" || surveyBody.type === "inApp") && data.thankYouCard) {
     data.thankYouCard.buttonLabel = undefined;
     data.thankYouCard.buttonLink = undefined;
   }
@@ -648,6 +652,8 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     select: selectSurvey,
   });
 
+  // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
+  // @ts-expect-error
   const transformedSurvey: TSurvey = {
     ...survey,
     triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
@@ -812,7 +818,7 @@ export const getSyncSurveys = async (
       let surveys: TSurvey[] | TLegacySurvey[] = await getSurveys(environmentId);
 
       // filtered surveys for running and web
-      surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web");
+      surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "inApp");
 
       // if no surveys are left, return an empty array
       if (surveys.length === 0) {
@@ -1019,6 +1025,8 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       };
     }
 
+    // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
+    // @ts-expect-error
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
       triggers: prismaSurvey.triggers.map((trigger) => trigger.actionClass.name),
@@ -1056,6 +1064,8 @@ export const getSurveysBySegmentId = async (segmentId: string): Promise<TSurvey[
             };
           }
 
+          // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
+          // @ts-expect-error
           const transformedSurvey: TSurvey = {
             ...surveyPrisma,
             triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),

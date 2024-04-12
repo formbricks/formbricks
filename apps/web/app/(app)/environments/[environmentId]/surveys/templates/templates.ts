@@ -2602,7 +2602,7 @@ export const minimalSurvey: TSurvey = {
   createdAt: new Date(),
   updatedAt: new Date(),
   name: "Minimal Survey",
-  type: "web",
+  type: "inApp",
   environmentId: "someEnvId1",
   createdBy: null,
   status: "draft",

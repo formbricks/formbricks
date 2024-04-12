@@ -36,6 +36,7 @@ const CardStylingSettings = ({
   localProduct,
   setOpen,
 }: CardStylingSettingsProps) => {
+  const isAppSurvey = surveyType === "inApp" || surveyType === "website";
   const cardBgColor = styling?.cardBackgroundColor?.light || COLOR_DEFAULTS.cardBackgroundColor;
 
   const isLogoHidden = styling?.isLogoHidden ?? false;
@@ -231,14 +232,14 @@ const CardStylingSettings = ({
               </div>
             )}
 
-            {(!surveyType || surveyType === "web") && (
+            {(!surveyType || isAppSurvey) && (
               <div className="flex max-w-xs flex-col gap-4">
                 <div className="flex items-center gap-2">
                   <Switch checked={isHighlightBorderAllowed} onCheckedChange={setIsHighlightBorderAllowed} />
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-semibold text-slate-700">Add highlight border</h3>
-                      <Badge text="In-App Surveys" type="gray" size="normal" />
+                      <Badge text="In-App and Website Surveys" type="gray" size="normal" />
                     </div>
                     <p className="text-xs text-slate-500">Add an outer border to your survey card.</p>
                   </div>

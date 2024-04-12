@@ -38,7 +38,9 @@ export default function WhenToSendCard({
   propActionClasses,
   membershipRole,
 }: WhenToSendCardProps) {
-  const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
+  const [open, setOpen] = useState(
+    localSurvey.type === "inApp" || localSurvey.type === "website" ? true : false
+  );
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);

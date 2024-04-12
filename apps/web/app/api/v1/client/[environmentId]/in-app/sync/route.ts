@@ -91,12 +91,11 @@ export async function GET(
       throw new Error("Product not found");
     }
 
-    // Common filter condition for selecting surveys that are in progress, are of type 'web' and have no active segment filtering.
+    // Common filter condition for selecting surveys that are in progress, are of type 'website' and have no active segment filtering.
     let filteredSurveys = surveys.filter(
-      (survey) =>
-        survey.status === "inProgress" &&
-        survey.type === "web" &&
-        (!survey.segment || survey.segment.filters.length === 0)
+      (survey) => survey.status === "inProgress" && survey.type === "website"
+      // TODO: Find out if this required anymore.
+      // && (!survey.segment || survey.segment.filters.length === 0)
     );
 
     // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.

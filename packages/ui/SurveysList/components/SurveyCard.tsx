@@ -1,4 +1,4 @@
-import { Code, Link2Icon } from "lucide-react";
+import { Code, EarthIcon, Link2Icon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -57,14 +57,23 @@ export default function SurveyCard({
       : `/environments/${environment.id}/surveys/${survey.id}/summary`;
   }, [survey.status, survey.id, environment.id]);
 
-  const SurveyTypeIndicator = ({ type }: { type: string }) => (
+  const SurveyTypeIndicator = ({ type }: { type: TSurvey["type"] }) => (
     <div className="flex items-center space-x-2 text-sm text-slate-600">
-      {type === "web" ? (
+      {type === "inApp" && (
         <>
           <Code className="h-4 w-4" />
           <span> In-app</span>
         </>
-      ) : (
+      )}
+
+      {type === "website" && (
+        <>
+          <EarthIcon className="h-4 w-4" />
+          <span> Website</span>
+        </>
+      )}
+
+      {type === "link" && (
         <>
           <Link2Icon className="h-4 w-4" />
           <span> Link</span>
