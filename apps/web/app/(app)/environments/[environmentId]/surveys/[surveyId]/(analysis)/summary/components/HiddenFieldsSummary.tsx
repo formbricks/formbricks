@@ -1,23 +1,24 @@
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { InboxIcon, Link, MessageSquareTextIcon } from "lucide-react";
 import { FC } from "react";
 
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurveySummaryHiddenField } from "@formbricks/types/responses";
+import { TSurveyQuestionSummaryHiddenFields } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 
 interface HiddenFieldsSummaryProps {
   environment: TEnvironment;
-  questionSummary: TSurveySummaryHiddenField;
+  questionSummary: TSurveyQuestionSummaryHiddenFields;
 }
 
 export const HiddenFieldsSummary: FC<HiddenFieldsSummaryProps> = ({ environment, questionSummary }) => {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={questionSummary.question} />
+        <div className={"align-center flex justify-between gap-4 "}>
+          <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">{questionSummary.id}</h3>
+        </div>
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2 ">

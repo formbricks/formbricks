@@ -22,7 +22,7 @@ interface PictureSelectionFormProps {
   isInvalid: boolean;
 }
 
-export default function PictureSelectionForm({
+export const PictureSelectionForm = ({
   localSurvey,
   question,
   questionIdx,
@@ -30,7 +30,7 @@ export default function PictureSelectionForm({
   selectedLanguageCode,
   setSelectedLanguageCode,
   isInvalid,
-}: PictureSelectionFormProps): JSX.Element {
+}: PictureSelectionFormProps): JSX.Element => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const environmentId = localSurvey.environmentId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -134,4 +134,4 @@ export default function PictureSelectionForm({
       </div>
     </form>
   );
-}
+};

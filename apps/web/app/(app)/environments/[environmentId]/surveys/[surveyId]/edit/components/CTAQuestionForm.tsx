@@ -20,7 +20,7 @@ interface CTAQuestionFormProps {
   isInvalid: boolean;
 }
 
-export default function CTAQuestionForm({
+export const CTAQuestionForm = ({
   question,
   questionIdx,
   updateQuestion,
@@ -29,7 +29,7 @@ export default function CTAQuestionForm({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: CTAQuestionFormProps): JSX.Element {
+}: CTAQuestionFormProps): JSX.Element => {
   const [firstRender, setFirstRender] = useState(true);
 
   return (
@@ -149,4 +149,4 @@ export default function CTAQuestionForm({
       )}
     </form>
   );
-}
+};

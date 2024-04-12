@@ -115,7 +115,7 @@ services:
       GOOGLE_CLIENT_ID: *google_client_id
       GOOGLE_CLIENT_SECRET: *google_client_secret
       CRON_SECRET: *cron_secret
-      REDIS_CLIENT_URL: *redis_url
+      REDIS_URL: *redis_url
 
     volumes:
       - uploads:/home/nextjs/apps/web/uploads/
