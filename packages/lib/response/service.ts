@@ -101,6 +101,61 @@ export const responseSelection = {
   },
 };
 
+export const getResponsesByPersonIdBySurveyId = (
+  personId: string,
+  surveyId: string,
+  page?: number
+): Promise<Array<TResponse> | null> =>
+  cache(
+    async () => {
+      validateInputs([personId, ZId], [page, ZOptionalNumber]);
+
+      try {
+        const responsePrisma = await prisma.response.findMany({
+          where: {
+            personId,
+            surveyId,
+          },
+          select: responseSelection,
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          orderBy: {
+            updatedAt: "asc",
+          },
+        });
+
+        if (!responsePrisma) {
+          throw new ResourceNotFoundError("Response from PersonId", personId);
+        }
+
+        let responses: Array<TResponse> = [];
+
+        await Promise.all(
+          responsePrisma.map(async (response) => {
+            const responseNotes = await getResponseNotes(response.id);
+            responses.push({
+              ...response,
+              notes: responseNotes,
+              tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+            });
+          })
+        );
+
+        return responses;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
+    },
+    [`getResponsesByPersonId-${personId}-${page}`],
+    {
+      tags: [responseCache.tag.byPersonId(personId)],
+    }
+  )();
+
 export const getResponsesByPersonId = (personId: string, page?: number): Promise<Array<TResponse> | null> =>
   cache(
     async () => {

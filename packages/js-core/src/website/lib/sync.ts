@@ -98,14 +98,28 @@ export const filterPublicSurveys = (state: TJsWebsiteState): TJsWebsiteState => 
     return state;
   }
 
+  const displaysForSurvey = (surveyId: string) => displays.filter((display) => display.surveyId === surveyId);
+
   // filter surveys that meet the displayOption criteria
   let filteredSurveys = surveys.filter((survey) => {
     if (survey.displayOption === "respondMultiple") {
       return true;
     } else if (survey.displayOption === "displayOnce") {
-      return displays.filter((display) => display.surveyId === survey.id).length === 0;
+      return displaysForSurvey(survey.id).length === 0;
     } else if (survey.displayOption === "displayMultiple") {
-      return displays.filter((display) => display.surveyId === survey.id && display.responded).length === 0;
+      return displaysForSurvey(survey.id).filter((display) => display.responded).length === 0;
+    } else if (survey.displayOption === "displaySome") {
+      if (survey.recontactSessions === null) {
+        return true;
+      }
+
+      const displays = displaysForSurvey(survey.id);
+
+      if (displays.length !== 0 && displays.some((display) => display.responded)) {
+        return false;
+      }
+
+      return displays.length <= survey.recontactSessions;
     } else {
       throw Error("Invalid displayOption");
     }
@@ -118,7 +132,7 @@ export const filterPublicSurveys = (state: TJsWebsiteState): TJsWebsiteState => 
     if (!latestDisplay) {
       return true;
     } else if (survey.recontactDays !== null) {
-      const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
+      const lastDisplaySurvey = displaysForSurvey(survey.id)[0];
       if (!lastDisplaySurvey) {
         return true;
       }

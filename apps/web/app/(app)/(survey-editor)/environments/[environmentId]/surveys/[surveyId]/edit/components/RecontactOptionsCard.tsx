@@ -12,7 +12,7 @@ import { Label } from "@formbricks/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 
 interface DisplayOption {
-  id: "displayOnce" | "displayMultiple" | "respondMultiple";
+  id: "displayOnce" | "displayMultiple" | "respondMultiple" | "displaySome";
   name: string;
   description: string;
 }
@@ -27,6 +27,11 @@ const displayOptions: DisplayOption[] = [
     id: "displayMultiple",
     name: "Until they submit a response",
     description: "If you really want that answer, ask until you get it.",
+  },
+  {
+    id: "displaySome",
+    name: "Show a few times",
+    description: "The survey will be shown a few times until they respond",
   },
   {
     id: "respondMultiple",
@@ -51,6 +56,9 @@ export const RecontactOptionsCard = ({
   const [inputDays, setInputDays] = useState(
     localSurvey.recontactDays !== null ? localSurvey.recontactDays : 1
   );
+  const [recontactSessions, setRecontactSessions] = useState(
+    localSurvey.recontactSessions !== null ? localSurvey.recontactSessions : 1
+  );
 
   const handleCheckMark = () => {
     if (ignoreWaiting) {
@@ -67,6 +75,14 @@ export const RecontactOptionsCard = ({
     setInputDays(value);
 
     const updatedSurvey = { ...localSurvey, recontactDays: value };
+    setLocalSurvey(updatedSurvey);
+  };
+
+  const handleRecontactSessionDaysChange = (event) => {
+    const value = Number(event.target.value);
+    setRecontactSessions(value);
+
+    const updatedSurvey = { ...localSurvey, recontactSessions: value } satisfies TSurvey;
     setLocalSurvey(updatedSurvey);
   };
 
@@ -115,24 +131,49 @@ export const RecontactOptionsCard = ({
               if (v === "displayOnce" || v === "displayMultiple" || v === "respondMultiple") {
                 const updatedSurvey: TSurvey = { ...localSurvey, displayOption: v };
                 setLocalSurvey(updatedSurvey);
+              } else if (v === "displaySome") {
+                const updatedSurvey: TSurvey = {
+                  ...localSurvey,
+                  displayOption: v,
+                  recontactSessions,
+                };
+                setLocalSurvey(updatedSurvey);
               }
             }}>
             {displayOptions.map((option) => (
-              <Label
-                key={option.name}
-                htmlFor={option.name}
-                className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
-                <RadioGroupItem
-                  value={option.id}
-                  id={option.name}
-                  className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
-                />
-                <div>
-                  <p className="font-semibold text-slate-700">{option.name}</p>
+              <>
+                <Label
+                  key={option.name}
+                  htmlFor={option.name}
+                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
+                  <RadioGroupItem
+                    value={option.id}
+                    id={option.name}
+                    className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
+                  />
+                  <div>
+                    <p className="font-semibold text-slate-700">{option.name}</p>
 
-                  <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
-                </div>
-              </Label>
+                    <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
+                  </div>
+                </Label>
+                {option.id === "displaySome" && localSurvey.displayOption === "displaySome" && (
+                  <label htmlFor="recontactSessions" className="cursor-pointer p-4">
+                    <p className="text-sm font-semibold text-slate-700">
+                      Show survey maximum of
+                      <Input
+                        type="number"
+                        min="1"
+                        id="recontactSessions"
+                        value={recontactSessions.toString()}
+                        onChange={(e) => handleRecontactSessionDaysChange(e)}
+                        className="mx-2 inline w-16 bg-white text-center text-sm"
+                      />
+                      times.
+                    </p>
+                  </label>
+                )}
+              </>
             ))}
           </RadioGroup>
         </div>

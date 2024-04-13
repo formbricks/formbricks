@@ -7,7 +7,7 @@ export const makeRequest = async <T>(
   method: "GET" | "POST" | "PUT" | "DELETE",
   data?: any
 ): Promise<Result<T, NetworkError | Error>> => {
-  const url = new URL(endpoint, apiHost);
+  const url = new URL(apiHost + endpoint);
   const body = JSON.stringify(data);
 
   const res = wrapThrows(fetch)(url.toString(), {
