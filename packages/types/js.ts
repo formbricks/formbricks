@@ -2,9 +2,17 @@ import z from "zod";
 
 import { ZLegacySurvey } from "./LegacySurvey";
 import { ZActionClass } from "./actionClasses";
-import { ZPerson, ZPersonAttributes, ZPersonClient } from "./people";
+import { ZAttributes } from "./attributes";
+import { ZPerson } from "./people";
 import { ZProduct } from "./product";
 import { ZSurvey } from "./surveys";
+
+export const ZJsPerson = z.object({
+  id: z.string().cuid2().optional(),
+  userId: z.string().optional(),
+});
+
+export type TJsPerson = z.infer<typeof ZJsPerson>;
 
 const ZSurveyWithTriggers = ZSurvey.extend({
   triggers: z.array(ZActionClass).or(z.array(z.string())),
@@ -21,7 +29,7 @@ export const ZJSStateDisplay = z.object({
 export type TJSStateDisplay = z.infer<typeof ZJSStateDisplay>;
 
 export const ZJsStateSync = z.object({
-  person: ZPersonClient.nullish(),
+  person: ZJsPerson.nullish(),
   surveys: z.union([z.array(ZSurvey), z.array(ZLegacySurvey)]),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
@@ -30,7 +38,7 @@ export const ZJsStateSync = z.object({
 export type TJsStateSync = z.infer<typeof ZJsStateSync>;
 
 export const ZJsState = z.object({
-  attributes: ZPersonAttributes,
+  attributes: ZAttributes,
   surveys: z.array(ZSurvey),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
@@ -101,7 +109,7 @@ export const ZJsConfigInput = z.object({
   apiHost: z.string(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
   userId: z.string().optional(),
-  attributes: ZPersonAttributes.optional(),
+  attributes: ZAttributes.optional(),
 });
 
 export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;

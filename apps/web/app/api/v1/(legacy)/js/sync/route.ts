@@ -3,7 +3,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 
 import { ZJsSyncLegacyInput } from "@formbricks/types/js";
-import { TPersonClient } from "@formbricks/types/people";
+import { TJsPerson } from "@formbricks/types/people";
 
 export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
@@ -28,7 +28,7 @@ export async function POST(req: Request): Promise<Response> {
 
     const state = await getUpdatedState(environmentId, personId);
 
-    let person: TPersonClient | null = null;
+    let person: TJsPerson | null = null;
     if (state.person && "id" in state.person && "userId" in state.person) {
       person = {
         id: state.person.id,

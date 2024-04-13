@@ -7,7 +7,7 @@ import { personCache } from "@formbricks/lib/person/cache";
 import { getPerson, updatePersonAttribute } from "@formbricks/lib/person/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { ZJsPeopleLegacyAttributeInput } from "@formbricks/types/js";
-import { TPersonClient } from "@formbricks/types/people";
+import { TJsPerson } from "@formbricks/types/people";
 
 export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
@@ -67,7 +67,7 @@ export async function POST(req: Request, { params }): Promise<Response> {
 
     const state = await getUpdatedState(environmentId, personId);
 
-    let person: TPersonClient | null = null;
+    let person: TJsPerson | null = null;
     if (state.person && "id" in state.person && "userId" in state.person) {
       person = {
         id: state.person.id,

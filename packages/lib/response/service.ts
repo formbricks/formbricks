@@ -71,16 +71,6 @@ export const responseSelection = {
       createdAt: true,
       updatedAt: true,
       environmentId: true,
-      attributes: {
-        select: {
-          value: true,
-          attributeClass: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      },
     },
   },
   tags: {
