@@ -33,6 +33,7 @@ export const ZJsStateSync = z.object({
   surveys: z.union([z.array(ZSurvey), z.array(ZLegacySurvey)]),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
+  language: z.string().optional(),
 });
 
 export type TJsStateSync = z.infer<typeof ZJsStateSync>;

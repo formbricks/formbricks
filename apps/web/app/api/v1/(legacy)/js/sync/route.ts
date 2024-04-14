@@ -3,7 +3,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 
 import { ZJsSyncLegacyInput } from "@formbricks/types/js";
-import { TJsPerson } from "@formbricks/types/people";
+import { TJsPerson } from "@formbricks/types/js";
 
 export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);

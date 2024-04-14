@@ -1,5 +1,5 @@
 import { FormbricksAPI } from "@formbricks/api";
-import { TPersonAttributes, TPersonUpdateInput } from "@formbricks/types/people";
+import { TAttributes } from "@formbricks/types/attributes";
 
 import { Config } from "./config";
 import {
@@ -45,7 +45,7 @@ export const updatePersonAttribute = async (
     });
   }
 
-  const input: TPersonUpdateInput = {
+  const input = {
     attributes: {
       [key]: value,
     },
@@ -79,8 +79,8 @@ export const updatePersonAttributes = async (
   apiHost: string,
   environmentId: string,
   userId: string,
-  attributes: TPersonAttributes
-): Promise<Result<TPersonAttributes, NetworkError | MissingPersonError>> => {
+  attributes: TAttributes
+): Promise<Result<TAttributes, NetworkError | MissingPersonError>> => {
   // clean attributes and remove existing attributes if config already exists
   const updatedAttributes = { ...attributes };
 
@@ -105,7 +105,7 @@ export const updatePersonAttributes = async (
 
   logger.debug("Updating attributes: " + JSON.stringify(updatedAttributes));
 
-  const input: TPersonUpdateInput = {
+  const input = {
     attributes: updatedAttributes,
   };
 

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
+import { getAttributes } from "attribute/service";
 import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
@@ -836,7 +837,9 @@ export const getSyncSurveys = async (
       const personActionClassIds = Array.from(
         new Set(personActions?.map((action) => action.actionClass?.id ?? ""))
       );
-      const personUserId = person.userId ?? person.attributes?.userId ?? "";
+      const personUserId = person.userId ?? "";
+
+      const attributes = await getAttributes(person.id);
 
       // the surveys now have segment filters, so we need to evaluate them
       const surveyPromises = surveys.map(async (survey) => {
@@ -863,7 +866,7 @@ export const getSyncSurveys = async (
 
           // we check if the person meets the attribute filters for all the attribute filters
           const isEligible = attributeFilters.every((attributeFilter) => {
-            const personAttributeValue = person?.attributes?.[attributeFilter.attributeClassName];
+            const personAttributeValue = attributes[attributeFilter.attributeClassName];
             if (!personAttributeValue) {
               return false;
             }
@@ -884,7 +887,7 @@ export const getSyncSurveys = async (
         // Evaluate the segment filters
         const result = await evaluateSegment(
           {
-            attributes: person.attributes ?? {},
+            attributes: attributes ?? {},
             actionIds: personActionClassIds,
             deviceType,
             environmentId,

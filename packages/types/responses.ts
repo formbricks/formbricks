@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { ZPerson, ZPersonAttributes } from "./people";
+import { ZAttributes } from "./attributes";
+import { ZPerson } from "./people";
 import { ZSurvey, ZSurveyLogicCondition } from "./surveys";
 import { ZTag } from "./tags";
 
@@ -14,7 +15,7 @@ export const ZResponseTtc = z.record(z.number());
 
 export type TResponseTtc = z.infer<typeof ZResponseTtc>;
 
-export const ZResponsePersonAttributes = ZPersonAttributes.nullable();
+export const ZResponsePersonAttributes = ZAttributes.nullable();
 
 export type TResponsePersonAttributes = z.infer<typeof ZResponsePersonAttributes>;
 

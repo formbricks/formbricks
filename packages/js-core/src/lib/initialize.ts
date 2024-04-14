@@ -1,5 +1,5 @@
+import { TAttributes } from "@formbricks/types/attributes";
 import type { TJsConfig, TJsConfigInput } from "@formbricks/types/js";
-import { TPersonAttributes } from "@formbricks/types/people";
 
 import { trackAction } from "./actions";
 import { Config, LOCAL_STORAGE_KEY } from "./config";
@@ -86,7 +86,7 @@ export const initialize = async (
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
 
-  let updatedAttributes: TPersonAttributes | null = null;
+  let updatedAttributes: TAttributes | null = null;
   if (c.attributes) {
     if (!c.userId) {
       // Allow setting attributes for unidentified users
