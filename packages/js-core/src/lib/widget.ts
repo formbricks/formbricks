@@ -35,7 +35,7 @@ export const triggerSurvey = async (survey: TSurvey, action?: string): Promise<v
   if (survey.displayPercentage) {
     const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
     if (!shouldDisplaySurvey) {
-      logger.debug("Survey display skipped based on displayPercentage.");
+      logger.debug(`Survey of "${survey.name}" display skipped based on displayPercentage.`);
       return; // skip displaying the survey
     }
   }
@@ -50,7 +50,7 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
   setIsSurveyRunning(true);
 
   if (survey.delay) {
-    logger.debug(`Delaying survey by ${survey.delay} seconds.`);
+    logger.debug(`Delaying survey "${survey.name}" by ${survey.delay} seconds.`);
   }
 
   const product = config.get().state.product;
@@ -63,7 +63,7 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
     const displayLanguage = getLanguageCode(survey, attributes);
     //if survey is not available in selected language, survey wont be shown
     if (!displayLanguage) {
-      logger.debug("Survey not available in specified language.");
+      logger.debug(`Survey "${survey.name}" not available in specified language.`);
       setIsSurveyRunning(true);
       return;
     }
