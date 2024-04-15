@@ -7,38 +7,39 @@ import { hashString } from "@formbricks/lib/hashString";
 import { TTeam } from "@formbricks/types/teams";
 
 export const getIsEnterpriseEdition = async (): Promise<boolean> => {
-  if (ENTERPRISE_LICENSE_KEY && ENTERPRISE_LICENSE_KEY.length > 0) {
-    const hashedKey = hashString(ENTERPRISE_LICENSE_KEY);
-
-    const res = await unstable_cache(
-      async () => {
-        try {
-          const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
-            body: JSON.stringify({ licenseKey: ENTERPRISE_LICENSE_KEY }),
-            headers: { "Content-Type": "application/json" },
-            method: "POST",
-          });
-
-          let isValid = false;
-
-          if (res.ok) {
-            const responseJson = await res.json();
-            isValid = responseJson.data.status === "active";
-          }
-
-          return isValid;
-        } catch (error) {
-          console.error("Error while checking license", error);
-        }
-      },
-      [`getIsEnterpriseEdition-${hashedKey}`],
-      { revalidate: 60 * 60 * 24 }
-    )();
-
-    return res ?? false;
+  if (!ENTERPRISE_LICENSE_KEY || ENTERPRISE_LICENSE_KEY.length === 0) {
+    return false;
   }
 
-  return false;
+  const hashedKey = hashString(ENTERPRISE_LICENSE_KEY);
+
+  const isValid = await unstable_cache(
+    async () => {
+      try {
+        const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
+          body: JSON.stringify({ licenseKey: ENTERPRISE_LICENSE_KEY }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        });
+
+        let isValid = false;
+
+        if (res.ok) {
+          const responseJson = await res.json();
+          isValid = responseJson.data.status === "active";
+        }
+
+        return isValid;
+      } catch (error) {
+        console.error("Error while checking license", error);
+        return false;
+      }
+    },
+    [`getIsEnterpriseEdition-${hashedKey}`],
+    { revalidate: 60 * 60 * 24 }
+  )();
+
+  return isValid;
 };
 
 export const getRemoveInAppBrandingPermission = (team: TTeam): boolean => {
