@@ -10,7 +10,8 @@ import {
 import { getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { TResponse, TResponseFilterCriteria, TSurveySummary } from "@formbricks/types/responses";
+import { TResponse, TResponseFilterCriteria } from "@formbricks/types/responses";
+import { TSurveySummary } from "@formbricks/types/surveys";
 
 export async function getResponsesBySurveySharingKeyAction(
   sharingKey: string,
