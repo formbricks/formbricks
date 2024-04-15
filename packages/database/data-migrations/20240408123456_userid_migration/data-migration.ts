@@ -24,7 +24,9 @@ async function main() {
       // });
       let updatedPeopleCount = 0;
       let notUpdatedPeopleCount = 0;
-      let personsToPrint = 0;
+
+      let userIdSameCount = 0;
+      let userIdDifferentCount = 0;
 
       const userIdAttributeClasses = await tx.attributeClass.findMany({
         where: {
@@ -42,21 +44,15 @@ async function main() {
       for (let attributeClass of userIdAttributeClasses) {
         for (let attribute of attributeClass.attributes) {
           if (attribute.person.userId) {
-            if (personsToPrint < 5) {
-              console.log(
-                "SKIPPING >>> Person already has a userId: " + JSON.stringify(attribute.person, null, 2)
-              );
-              console.log("\n");
-              console.log("Attribute: " + JSON.stringify(attribute, null, 2));
-              console.log("\n");
+            if (attribute.person.userId === attribute.value) {
+              userIdSameCount += 1;
+            } else {
+              userIdDifferentCount += 1;
             }
 
-            personsToPrint += 1;
             notUpdatedPeopleCount += 1;
             continue;
           }
-
-          console.log("UPDATING >>> " + JSON.stringify(attribute.person, null, 2));
 
           await tx.person.update({
             where: {
@@ -70,6 +66,9 @@ async function main() {
           updatedPeopleCount += 1;
         }
       }
+
+      console.log("userIdSameCount " + userIdSameCount);
+      console.log("userIdDifferentCount " + userIdDifferentCount);
 
       console.log("NOT UPDATED " + notUpdatedPeopleCount + " people");
       console.log("Updated " + updatedPeopleCount + " people");
