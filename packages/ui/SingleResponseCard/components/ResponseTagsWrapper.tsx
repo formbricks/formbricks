@@ -21,6 +21,7 @@ interface ResponseTagsWrapperProps {
   responseId: string;
   environmentTags: TTag[];
   updateFetchedResponses: () => void;
+  isViewer?: boolean;
 }
 
 const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
@@ -29,6 +30,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   responseId,
   environmentTags,
   updateFetchedResponses,
+  isViewer,
 }) => {
   const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
@@ -76,64 +78,67 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
             tags={tagsState}
             setTagsState={setTagsState}
             highlight={tagIdToHighlight === tag.tagId}
+            allowDelete={!isViewer}
           />
         ))}
 
-        <TagsCombobox
-          open={open}
-          setOpen={setOpen}
-          searchValue={searchValue}
-          setSearchValue={setSearchValue}
-          tags={environmentTags?.map((tag) => ({ value: tag.id, label: tag.name })) ?? []}
-          currentTags={tagsState.map((tag) => ({ value: tag.tagId, label: tag.tagName }))}
-          createTag={async (tagName) => {
-            await createTagAction(environmentId, tagName?.trim() ?? "")
-              .then((tag) => {
-                setTagsState((prevTags) => [
-                  ...prevTags,
-                  {
-                    tagId: tag.id,
-                    tagName: tag.name,
-                  },
-                ]);
-                createTagToResponeAction(responseId, tag.id).then(() => {
-                  updateFetchedResponses();
+        {!isViewer && (
+          <TagsCombobox
+            open={open}
+            setOpen={setOpen}
+            searchValue={searchValue}
+            setSearchValue={setSearchValue}
+            tags={environmentTags?.map((tag) => ({ value: tag.id, label: tag.name })) ?? []}
+            currentTags={tagsState.map((tag) => ({ value: tag.tagId, label: tag.tagName }))}
+            createTag={async (tagName) => {
+              await createTagAction(environmentId, tagName?.trim() ?? "")
+                .then((tag) => {
+                  setTagsState((prevTags) => [
+                    ...prevTags,
+                    {
+                      tagId: tag.id,
+                      tagName: tag.name,
+                    },
+                  ]);
+                  createTagToResponeAction(responseId, tag.id).then(() => {
+                    updateFetchedResponses();
+                    setSearchValue("");
+                    setOpen(false);
+                  });
+                })
+                .catch((err) => {
+                  if (err?.message.includes("Unique constraint failed on the fields")) {
+                    toast.error("Tag already exists", {
+                      duration: 2000,
+                      icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
+                    });
+                  } else {
+                    toast.error(err?.message ?? "Something went wrong", {
+                      duration: 2000,
+                    });
+                  }
+
                   setSearchValue("");
                   setOpen(false);
                 });
-              })
-              .catch((err) => {
-                if (err?.message.includes("Unique constraint failed on the fields")) {
-                  toast.error("Tag already exists", {
-                    duration: 2000,
-                    icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
-                  });
-                } else {
-                  toast.error(err?.message ?? "Something went wrong", {
-                    duration: 2000,
-                  });
-                }
+            }}
+            addTag={(tagId) => {
+              setTagsState((prevTags) => [
+                ...prevTags,
+                {
+                  tagId,
+                  tagName: environmentTags?.find((tag) => tag.id === tagId)?.name ?? "",
+                },
+              ]);
 
+              createTagToResponeAction(responseId, tagId).then(() => {
+                updateFetchedResponses();
                 setSearchValue("");
                 setOpen(false);
               });
-          }}
-          addTag={(tagId) => {
-            setTagsState((prevTags) => [
-              ...prevTags,
-              {
-                tagId,
-                tagName: environmentTags?.find((tag) => tag.id === tagId)?.name ?? "",
-              },
-            ]);
-
-            createTagToResponeAction(responseId, tagId).then(() => {
-              updateFetchedResponses();
-              setSearchValue("");
-              setOpen(false);
-            });
-          }}
-        />
+            }}
+          />
+        )}
       </div>
     </div>
   );
