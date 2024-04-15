@@ -1,5 +1,3 @@
-"use client";
-
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { CheckCircle2Icon, PauseCircleIcon, PlayCircleIcon } from "lucide-react";
 import toast from "react-hot-toast";
@@ -16,11 +14,11 @@ interface SurveyStatusDropdownProps {
   survey: TSurvey;
 }
 
-export default function SurveyStatusDropdown({
+export const SurveyStatusDropdown = ({
   environment,
   updateLocalSurveyStatus,
   survey,
-}: SurveyStatusDropdownProps) {
+}: SurveyStatusDropdownProps) => {
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
   const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
   const isStatusChangeDisabled =
@@ -101,4 +99,4 @@ export default function SurveyStatusDropdown({
       )}
     </>
   );
-}
+};

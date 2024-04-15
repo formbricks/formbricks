@@ -264,8 +264,17 @@ export const createSurvey = async (
   await page.locator("#column-3").click();
   await page.locator("#column-3").fill(params.matrix.columns[3]);
 
+  // File Address Question
+  await page
+    .locator("div")
+    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .nth(1)
+    .click();
+  await page.getByRole("button", { name: "Address" }).click();
+  await page.getByLabel("Question").fill(params.address.question);
+
   // Thank You Card
-  await page.getByText("Thank You CardShownShow").click();
+  await page.getByText("Thank You CardShown").click();
   await page.getByLabel("Question").fill(params.thankYouCard.headline);
   await page.getByLabel("Description").fill(params.thankYouCard.description);
 };

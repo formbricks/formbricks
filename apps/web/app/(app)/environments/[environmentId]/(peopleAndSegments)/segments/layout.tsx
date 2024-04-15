@@ -3,7 +3,7 @@ import { Metadata } from "next";
 
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
 
 export const metadata: Metadata = {
   title: "Segments",

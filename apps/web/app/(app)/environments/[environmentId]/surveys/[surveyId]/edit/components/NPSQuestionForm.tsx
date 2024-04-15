@@ -19,7 +19,7 @@ interface NPSQuestionFormProps {
   isInvalid: boolean;
 }
 
-export default function NPSQuestionForm({
+export const NPSQuestionForm = ({
   question,
   questionIdx,
   updateQuestion,
@@ -28,7 +28,7 @@ export default function NPSQuestionForm({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: NPSQuestionFormProps): JSX.Element {
+}: NPSQuestionFormProps): JSX.Element => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   return (
@@ -133,4 +133,4 @@ export default function NPSQuestionForm({
       )}
     </form>
   );
-}
+};

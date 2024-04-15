@@ -12,12 +12,12 @@ interface SurveyResultsTabProps {
   responseCount: number | null;
 }
 
-export default function SurveyResultsTab({
+export const SurveyResultsTabs = ({
   activeId,
   environmentId,
   surveyId,
   responseCount,
-}: SurveyResultsTabProps) {
+}: SurveyResultsTabProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
   const isSharingPage = !!sharingKey;
@@ -65,4 +65,4 @@ export default function SurveyResultsTab({
       </div>
     </div>
   );
-}
+};

@@ -1,13 +1,13 @@
 import { TimerIcon } from "lucide-react";
 
-import { TSurveySummary } from "@formbricks/types/responses";
+import { TSurveySummary } from "@formbricks/types/surveys";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 interface SummaryDropOffsProps {
   dropOff: TSurveySummary["dropOff"];
 }
 
-export default function SummaryDropOffs({ dropOff }: SummaryDropOffsProps) {
+export const SummaryDropOffs = ({ dropOff }: SummaryDropOffsProps) => {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="rounded-b-lg bg-white ">
@@ -46,4 +46,4 @@ export default function SummaryDropOffs({ dropOff }: SummaryDropOffsProps) {
       </div>
     </div>
   );
-}
+};

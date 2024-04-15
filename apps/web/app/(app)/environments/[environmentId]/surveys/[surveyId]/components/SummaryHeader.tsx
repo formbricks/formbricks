@@ -1,8 +1,8 @@
 "use client";
 
-import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
-import ResultsShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
-import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
+import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
+import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { CircleEllipsisIcon, ShareIcon, SquarePenIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -31,7 +31,7 @@ import {
 } from "@formbricks/ui/DropdownMenu";
 import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
 
-import ShareEmbedSurvey from "../(analysis)/summary/components/ShareEmbedSurvey";
+import { ShareEmbedSurvey } from "../(analysis)/summary/components/ShareEmbedSurvey";
 
 interface SummaryHeaderProps {
   surveyId: string;
@@ -42,7 +42,7 @@ interface SummaryHeaderProps {
   user?: TUser;
   membershipRole?: TMembershipRole;
 }
-const SummaryHeader = ({
+export const SummaryHeader = ({
   surveyId,
   environment,
   survey,
@@ -208,5 +208,3 @@ const SummaryHeader = ({
     </div>
   );
 };
-
-export default SummaryHeader;

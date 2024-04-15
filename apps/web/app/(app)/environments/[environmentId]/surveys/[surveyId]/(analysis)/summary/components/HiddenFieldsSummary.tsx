@@ -1,23 +1,33 @@
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { InboxIcon, Link, MessageSquareTextIcon } from "lucide-react";
-import { FC } from "react";
+import { useState } from "react";
 
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurveySummaryHiddenField } from "@formbricks/types/responses";
+import { TSurveyQuestionSummaryHiddenFields } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { Button } from "@formbricks/ui/Button";
 
 interface HiddenFieldsSummaryProps {
   environment: TEnvironment;
-  questionSummary: TSurveySummaryHiddenField;
+  questionSummary: TSurveyQuestionSummaryHiddenFields;
 }
 
-export const HiddenFieldsSummary: FC<HiddenFieldsSummaryProps> = ({ environment, questionSummary }) => {
+export const HiddenFieldsSummary = ({ environment, questionSummary }: HiddenFieldsSummaryProps) => {
+  const [visibleResponses, setVisibleResponses] = useState(10);
+
+  const handleLoadMore = () => {
+    // Increase the number of visible responses by 10, not exceeding the total number of responses
+    setVisibleResponses((prevVisibleResponses) =>
+      Math.min(prevVisibleResponses + 10, questionSummary.samples.length)
+    );
+  };
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={questionSummary.question} />
+        <div className={"align-center flex justify-between gap-4 "}>
+          <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">{questionSummary.id}</h3>
+        </div>
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
@@ -36,7 +46,7 @@ export const HiddenFieldsSummary: FC<HiddenFieldsSummaryProps> = ({ environment,
           <div className="col-span-2 pl-4 md:pl-6">Response</div>
           <div className="px-4 md:px-6">Time</div>
         </div>
-        {questionSummary.samples.map((response) => (
+        {questionSummary.samples.slice(0, visibleResponses).map((response) => (
           <div
             key={response.value}
             className="grid  grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
@@ -69,6 +79,13 @@ export const HiddenFieldsSummary: FC<HiddenFieldsSummaryProps> = ({ environment,
             </div>
           </div>
         ))}
+        {visibleResponses < questionSummary.samples.length && (
+          <div className="flex justify-center py-4">
+            <Button onClick={handleLoadMore} variant="secondary" size="sm">
+              Load more
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
