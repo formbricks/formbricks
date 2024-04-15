@@ -73,7 +73,7 @@ export default function Home({
             setSelectedIntegration(null);
             setOpenAddIntegrationModal(true);
           }}>
-          Map new Channel
+          Link channel
         </Button>
       </div>
       {!integrationArray || integrationArray.length === 0 ? (
@@ -82,7 +82,7 @@ export default function Home({
             type="table"
             environment={environment}
             noWidgetRequired={true}
-            emptyMessage="Your Slack channel mappings will appear here as soon as you add them. ⏲️"
+            emptyMessage="Connect your first Slack channel to get started."
           />
         </div>
       ) : (
@@ -99,7 +99,7 @@ export default function Home({
                 return (
                   <div
                     key={index}
-                    className="m-2 grid h-16 grid-cols-8 content-center rounded-lg hover:bg-slate-100"
+                    className="m-2 grid h-16 grid-cols-8 content-center rounded-lg text-slate-700 hover:cursor-pointer hover:bg-slate-100"
                     onClick={() => {
                       editIntegration(index);
                     }}>

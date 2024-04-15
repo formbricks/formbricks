@@ -358,8 +358,7 @@ model Action {
 
   @@index([personId, actionClassId, createdAt])
   @@index([actionClassId, createdAt])
-  @@index([personId])
-  @@index([createdAt])
+  @@index([personId, createdAt])
 }
 
 enum EnvironmentType {
