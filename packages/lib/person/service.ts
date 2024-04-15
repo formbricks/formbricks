@@ -325,50 +325,7 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
         return transformPrismaPerson(personWithUserId);
       }
 
-      // Check if a person with the userId attribute exists
-      let personWithUserIdAttribute = await prisma.person.findFirst({
-        where: {
-          environmentId,
-          attributes: {
-            some: {
-              attributeClass: {
-                name: "userId",
-              },
-              value: userId,
-            },
-          },
-        },
-        select: selectPerson,
-      });
-
-      const userIdAttributeClassId = personWithUserIdAttribute?.attributes.find(
-        (attr) => attr.attributeClass.name === "userId" && attr.value === userId
-      )?.attributeClass.id;
-
-      if (!personWithUserIdAttribute) {
-        return null;
-      }
-
-      personWithUserIdAttribute = await prisma.person.update({
-        where: {
-          id: personWithUserIdAttribute.id,
-        },
-        data: {
-          userId,
-          attributes: {
-            deleteMany: { attributeClassId: userIdAttributeClassId },
-          },
-        },
-        select: selectPerson,
-      });
-
-      personCache.revalidate({
-        id: personWithUserIdAttribute.id,
-        environmentId,
-        userId,
-      });
-
-      return transformPrismaPerson(personWithUserIdAttribute);
+      return null;
     },
     [`getPersonByUserId-${environmentId}-${userId}`],
     {
@@ -380,7 +337,7 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
 };
 
 /**
- * @deprecated This function is deprecated and only used in legacy endpoints. Use updatePerson instead.
+ * @deprecated This function is deprecated and only used in legacy endpoints. Use `updatePerson` instead.
  */
 export const updatePersonAttribute = async (
   personId: string,
