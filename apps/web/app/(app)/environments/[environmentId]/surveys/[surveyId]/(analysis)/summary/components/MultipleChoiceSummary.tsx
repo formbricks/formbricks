@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { useState } from "react";
 
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { TSurveyQuestionSummaryMultipleChoice } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { Button } from "@formbricks/ui/Button";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
 import { convertFloatToNDecimal } from "../lib/util";
@@ -19,14 +21,27 @@ export const MultipleChoiceSummary = ({
   environmentId,
   surveyType,
 }: MultipleChoiceSummaryProps) => {
+  const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
+
   // sort by count and transform to array
   const results = Object.values(questionSummary.choices).sort((a, b) => {
     if (a.others) return 1; // Always put a after b if a has 'others'
     if (b.others) return -1; // Always put b after a if b has 'others'
 
-    // Sort by count
-    return b.count - a.count;
+    return b.count - a.count; // Sort by count
   });
+
+  const handleLoadMore = () => {
+    const lastChoice = results[results.length - 1];
+    const hasOthers = lastChoice.others && lastChoice.others.length > 0;
+
+    if (!hasOthers) return; // If there are no 'others' to show, don't increase the visible options
+
+    // Increase the number of visible responses by 10, not exceeding the total number of responses
+    setVisibleOtherResponses((prevVisibleOptions) =>
+      Math.min(prevVisibleOptions + 10, lastChoice.others?.length || 0)
+    );
+  };
 
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -58,6 +73,7 @@ export const MultipleChoiceSummary = ({
                 </div>
                 {result.others
                   .filter((otherValue) => otherValue.value !== "")
+                  .slice(0, visibleOtherResponses)
                   .map((otherValue, idx) => (
                     <div key={idx}>
                       {surveyType === "link" && (
@@ -87,6 +103,13 @@ export const MultipleChoiceSummary = ({
                       )}
                     </div>
                   ))}
+                {visibleOtherResponses < result.others.length && (
+                  <div className="flex justify-center py-4">
+                    <Button onClick={handleLoadMore} variant="secondary" size="sm">
+                      Load more
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
