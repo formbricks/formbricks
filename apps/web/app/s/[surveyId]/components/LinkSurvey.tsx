@@ -118,6 +118,7 @@ export default function LinkSurvey({
     if (startAt && isStartAtValid) {
       setQuestionId(startAt);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hiddenFieldsRecord = useMemo<Record<string, string | number | string[]> | null>(() => {

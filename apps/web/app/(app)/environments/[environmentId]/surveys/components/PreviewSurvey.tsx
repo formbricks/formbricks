@@ -5,7 +5,7 @@ import TabOption from "@/app/(app)/environments/[environmentId]/surveys/componen
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import { Variants, motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, RefreshCcwIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
@@ -135,22 +135,29 @@ export const PreviewSurvey = ({
     return product.styling;
   }, [product.styling, survey.styling]);
 
+  const updateQuestionId = useCallback(
+    (newQuestionId: string) => {
+      if (!newQuestionId || newQuestionId === "hidden" || newQuestionId === "multiLanguage") return;
+      if (newQuestionId === "start" && !survey.welcomeCard.enabled) return;
+      setQuestionId(newQuestionId);
+    },
+    [survey.welcomeCard.enabled]
+  );
+
   useEffect(() => {
+    if (questionId) {
+      updateQuestionId(questionId);
+    }
+
     // close modal if there are no questions left
-    if (questionId && questionId !== "hidden" && questionId !== "multiLanguage") {
-      if (questionId === "start" && !survey.welcomeCard.enabled) return;
-      setQuestionId(questionId);
+    if (survey.type === "web" && !survey.thankYouCard.enabled && questionId === "end") {
+      setIsModalOpen(false);
+      setTimeout(() => {
+        setQuestionId(survey.questions[0]?.id);
+        setIsModalOpen(true);
+      }, 500);
     }
-    if (survey.type === "web" && !survey.thankYouCard.enabled) {
-      if (questionId === "end") {
-        setIsModalOpen(false);
-        setTimeout(() => {
-          setQuestionId(survey.questions[0]?.id);
-          setIsModalOpen(true);
-        }, 500);
-      }
-    }
-  }, [questionId, survey.type, survey, setQuestionId]);
+  }, [questionId, survey.type, survey.thankYouCard.enabled, survey.questions, updateQuestionId]);
 
   // this useEffect is fo refreshing the survey preview only if user is switching between templates on survey templates page and hence we are checking for survey.id === "someUniqeId1" which is a common Id for all templates
   useEffect(() => {
