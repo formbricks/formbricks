@@ -22,6 +22,7 @@ async function main() {
       //     },
       //   },
       // });
+      let updatedPeopleCount = 0;
 
       const userIdAttributeClasses = await tx.attributeClass.findMany({
         where: {
@@ -32,8 +33,6 @@ async function main() {
             include: { person: true },
           },
         },
-        // get the first 1k
-        take: 1000,
       });
 
       console.log("FOUND " + userIdAttributeClasses.length + " userId attribute classes");
@@ -52,10 +51,13 @@ async function main() {
               userId: attribute.value,
             },
           });
+
+          updatedPeopleCount += 1;
         }
       }
 
       console.log("DONE!");
+      console.log("Updated " + updatedPeopleCount + " people");
 
       // for (let person of personsWithUserIdAttribute) {
       //   // If the person already has a userId, skip it
