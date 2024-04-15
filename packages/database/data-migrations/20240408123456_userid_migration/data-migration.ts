@@ -36,6 +36,8 @@ async function main() {
         take: 1000,
       });
 
+      console.log("FOUND " + userIdAttributeClasses.length + " userId attribute classes");
+
       for (let attributeClass of userIdAttributeClasses) {
         for (let attribute of attributeClass.attributes) {
           if (attribute.person.userId) {
