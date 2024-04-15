@@ -3,58 +3,63 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  await prisma.$transaction(async (tx) => {
-    // get all the persons that have an attribute class with the name "userId"
-    const personsWithUserIdAttribute = await tx.person.findMany({
-      where: {
-        attributes: {
-          some: {
-            attributeClass: {
-              name: "userId",
+  await prisma.$transaction(
+    async (tx) => {
+      // get all the persons that have an attribute class with the name "userId"
+      const personsWithUserIdAttribute = await tx.person.findMany({
+        where: {
+          attributes: {
+            some: {
+              attributeClass: {
+                name: "userId",
+              },
             },
           },
         },
-      },
-      include: {
-        attributes: {
-          include: { attributeClass: true },
+        include: {
+          attributes: {
+            include: { attributeClass: true },
+          },
         },
-      },
-    });
+      });
 
-    for (let person of personsWithUserIdAttribute) {
-      // If the person already has a userId, skip it
-      if (person.userId) {
-        continue;
-      }
-
-      const userIdAttributeValue = person.attributes.find((attribute) => {
-        if (attribute.attributeClass.name === "userId") {
-          return attribute;
+      for (let person of personsWithUserIdAttribute) {
+        // If the person already has a userId, skip it
+        if (person.userId) {
+          continue;
         }
-      });
 
-      if (!userIdAttributeValue) {
-        continue;
+        const userIdAttributeValue = person.attributes.find((attribute) => {
+          if (attribute.attributeClass.name === "userId") {
+            return attribute;
+          }
+        });
+
+        if (!userIdAttributeValue) {
+          continue;
+        }
+
+        await tx.person.update({
+          where: {
+            id: person.id,
+          },
+          data: {
+            userId: userIdAttributeValue.value,
+          },
+        });
       }
 
-      await tx.person.update({
+      // Delete all attributeClasses with the name "userId"
+      await tx.attributeClass.deleteMany({
         where: {
-          id: person.id,
-        },
-        data: {
-          userId: userIdAttributeValue.value,
+          name: "userId",
         },
       });
+    },
+    {
+      timeout: 100000,
     }
-
-    // Delete all attributeClasses with the name "userId"
-    await tx.attributeClass.deleteMany({
-      where: {
-        name: "userId",
-      },
-    });
-  });
+  );
 }
 main()
   .catch(async (e) => {
