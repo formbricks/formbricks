@@ -35,7 +35,7 @@ export const triggerSurvey = async (survey: TSurvey, action?: string): Promise<v
   if (survey.displayPercentage) {
     const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
     if (!shouldDisplaySurvey) {
-      logger.debug(`Survey of "${survey.name}" display skipped based on displayPercentage.`);
+      logger.debug(`Survey display of "${survey.name}" skipped based on displayPercentage.`);
       return; // skip displaying the survey
     }
   }
