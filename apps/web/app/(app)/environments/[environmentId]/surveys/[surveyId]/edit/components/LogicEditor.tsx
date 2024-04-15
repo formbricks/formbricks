@@ -91,6 +91,7 @@ export default function LogicEditor({
     fileUpload: ["uploaded", "notUploaded"],
     cal: ["skipped", "booked"],
     matrix: ["isCompletelySubmitted", "isPartiallySubmitted", "skipped"],
+    address: ["submitted", "skipped"],
   };
 
   const logicConditions: LogicConditions = {

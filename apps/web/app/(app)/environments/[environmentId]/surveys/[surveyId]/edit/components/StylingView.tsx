@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
-import AlertDialog from "@formbricks/ui/AlertDialog";
+import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { Switch } from "@formbricks/ui/Switch";
 
@@ -26,7 +26,7 @@ type StylingViewProps = {
   isUnsplashConfigured: boolean;
 };
 
-const StylingView = ({
+export const StylingView = ({
   colors,
   environment,
   product,
@@ -204,5 +204,3 @@ const StylingView = ({
     </div>
   );
 };
-
-export default StylingView;

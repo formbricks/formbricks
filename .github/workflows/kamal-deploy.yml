@@ -4,6 +4,7 @@ concurrency:
   cancel-in-progress: false
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main

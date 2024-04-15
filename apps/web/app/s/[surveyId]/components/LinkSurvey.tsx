@@ -15,7 +15,7 @@ import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/res
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 let setIsError = (_: boolean) => {};

@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import { COLOR_DEFAULTS, PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
-import AlertDialog from "@formbricks/ui/AlertDialog";
+import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { Switch } from "@formbricks/ui/Switch";
 

@@ -1,17 +1,17 @@
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
-import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/util";
-import { questionTypes } from "@/app/lib/questions";
-import { InboxIcon } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
-import { TSurveySummaryMultipleChoice } from "@formbricks/types/responses";
+import { TSurveyQuestionSummaryMultipleChoice } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { Button } from "@formbricks/ui/Button";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
+import { convertFloatToNDecimal } from "../lib/util";
+import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
+
 interface MultipleChoiceSummaryProps {
-  questionSummary: TSurveySummaryMultipleChoice;
+  questionSummary: TSurveyQuestionSummaryMultipleChoice;
   environmentId: string;
   surveyType: string;
 }
@@ -21,40 +21,31 @@ export const MultipleChoiceSummary = ({
   environmentId,
   surveyType,
 }: MultipleChoiceSummaryProps) => {
-  const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
+  const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
 
   // sort by count and transform to array
   const results = Object.values(questionSummary.choices).sort((a, b) => {
     if (a.others) return 1; // Always put a after b if a has 'others'
     if (b.others) return -1; // Always put b after a if b has 'others'
 
-    // Sort by count
-    return b.count - a.count;
+    return b.count - a.count; // Sort by count
   });
+
+  const handleLoadMore = () => {
+    const lastChoice = results[results.length - 1];
+    const hasOthers = lastChoice.others && lastChoice.others.length > 0;
+
+    if (!hasOthers) return; // If there are no 'others' to show, don't increase the visible options
+
+    // Increase the number of visible responses by 10, not exceeding the total number of responses
+    setVisibleOtherResponses((prevVisibleOptions) =>
+      Math.min(prevVisibleOptions + 10, lastChoice.others?.length || 0)
+    );
+  };
 
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
-      <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={getLocalizedValue(questionSummary.question.headline, "default")} />
-
-        <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
-          <div className="flex items-center rounded-lg bg-slate-100 p-2">
-            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
-            Multiple-Choice {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
-          </div>
-          <div className="flex items-center rounded-lg bg-slate-100 p-2">
-            <InboxIcon className="mr-2 h-4 w-4 " />
-            {questionSummary.responseCount} responses
-          </div>
-          {!questionSummary.question.required && (
-            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
-          )}
-          {/*           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
-            <ArrowTrendingUpIcon className="mr-2 h-4 w-4" />
-            2.8 average
-          </div> */}
-        </div>
-      </div>
+      <QuestionSummaryHeader questionSummary={questionSummary} />
       <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => (
           <div key={result.value}>
@@ -82,6 +73,7 @@ export const MultipleChoiceSummary = ({
                 </div>
                 {result.others
                   .filter((otherValue) => otherValue.value !== "")
+                  .slice(0, visibleOtherResponses)
                   .map((otherValue, idx) => (
                     <div key={idx}>
                       {surveyType === "link" && (
@@ -111,6 +103,13 @@ export const MultipleChoiceSummary = ({
                       )}
                     </div>
                   ))}
+                {visibleOtherResponses < result.others.length && (
+                  <div className="flex justify-center py-4">
+                    <Button onClick={handleLoadMore} variant="secondary" size="sm">
+                      Load more
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>

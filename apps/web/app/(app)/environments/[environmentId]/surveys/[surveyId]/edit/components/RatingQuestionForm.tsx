@@ -20,7 +20,7 @@ interface RatingQuestionFormProps {
   isInvalid: boolean;
 }
 
-export default function RatingQuestionForm({
+export const RatingQuestionForm = ({
   question,
   questionIdx,
   updateQuestion,
@@ -28,7 +28,7 @@ export default function RatingQuestionForm({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: RatingQuestionFormProps) {
+}: RatingQuestionFormProps) => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
@@ -171,4 +171,4 @@ export default function RatingQuestionForm({
       </div>
     </form>
   );
-}
+};
