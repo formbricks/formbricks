@@ -20,6 +20,7 @@ import { SurveyInline } from "@formbricks/ui/Survey";
 
 let setIsError = (_: boolean) => {};
 let setIsResponseSendingFinished = (_: boolean) => {};
+let setQuestionId = (_: string) => {};
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -76,10 +77,6 @@ export default function LinkSurvey({
 
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
-  const [activeQuestionId, setActiveQuestionId] = useState<string>(
-    startAt && isStartAtValid ? startAt : survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
-  );
-
   const prefillResponseData: TResponseData | undefined = prefillAnswer
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer, languageCode)
     : undefined;
@@ -117,6 +114,9 @@ export default function LinkSurvey({
   useEffect(() => {
     if (window.self === window.top) {
       setAutofocus(true);
+    }
+    if (startAt && isStartAtValid) {
+      setQuestionId(startAt);
     }
   }, []);
 
@@ -190,9 +190,7 @@ export default function LinkSurvey({
             <button
               type="button"
               className="flex items-center rounded-full bg-slate-500 px-3 py-1 hover:bg-slate-400"
-              onClick={() =>
-                setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
-              }>
+              onClick={() => setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)}>
               Restart <RefreshCcwIcon className="ml-2 h-4 w-4" />
             </button>
           </div>
@@ -263,11 +261,12 @@ export default function LinkSurvey({
             const uploadedUrl = await api.client.storage.uploadFile(file, params);
             return uploadedUrl;
           }}
-          onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
-          activeQuestionId={activeQuestionId}
           autoFocus={autoFocus}
           prefillResponseData={prefillResponseData}
           responseCount={responseCount}
+          getSetQuestionId={(f: (value: string) => void) => {
+            setQuestionId = f;
+          }}
         />
       </ContentWrapper>
     </div>

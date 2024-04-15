@@ -20,8 +20,7 @@ type TPreviewType = "modal" | "fullwidth" | "email";
 
 interface PreviewSurveyProps {
   survey: TSurvey;
-  setActiveQuestionId: (id: string | null) => void;
-  activeQuestionId?: string | null;
+  questionId?: string | null;
   previewType?: TPreviewType;
   product: TProduct;
   environment: TEnvironment;
@@ -58,16 +57,17 @@ const previewParentContainerVariant: Variants = {
   },
 };
 
-export default function PreviewSurvey({
-  setActiveQuestionId,
-  activeQuestionId,
+let setQuestionId = (_: string) => {};
+
+export const PreviewSurvey = ({
+  questionId,
   survey,
   previewType,
   product,
   environment,
   languageCode,
   onFileUpload,
-}: PreviewSurveyProps) {
+}: PreviewSurveyProps) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
@@ -76,7 +76,6 @@ export default function PreviewSurvey({
   const ContentRef = useRef<HTMLDivElement | null>(null);
   const [shrink, setShrink] = useState(false);
   const { productOverwrites } = survey || {};
-
   const previewScreenVariants: Variants = {
     expanded: {
       right: "5%",
@@ -138,16 +137,20 @@ export default function PreviewSurvey({
 
   useEffect(() => {
     // close modal if there are no questions left
+    if (questionId && questionId !== "hidden" && questionId !== "multiLanguage") {
+      if (questionId === "start" && !survey.welcomeCard.enabled) return;
+      setQuestionId(questionId);
+    }
     if (survey.type === "web" && !survey.thankYouCard.enabled) {
-      if (activeQuestionId === "end") {
+      if (questionId === "end") {
         setIsModalOpen(false);
         setTimeout(() => {
-          setActiveQuestionId(survey.questions[0]?.id);
+          setQuestionId(survey.questions[0]?.id);
           setIsModalOpen(true);
         }, 500);
       }
     }
-  }, [activeQuestionId, survey.type, survey, setActiveQuestionId]);
+  }, [questionId, survey.type, survey, setQuestionId]);
 
   // this useEffect is fo refreshing the survey preview only if user is switching between templates on survey templates page and hence we are checking for survey.id === "someUniqeId1" which is a common Id for all templates
   useEffect(() => {
@@ -165,7 +168,7 @@ export default function PreviewSurvey({
       setPreviewMode(storePreviewMode);
     }, 10);
 
-    setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
+    setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
   };
 
   useEffect(() => {
@@ -186,7 +189,7 @@ export default function PreviewSurvey({
   if (!previewType) {
     previewType = widgetSetupCompleted ? "modal" : "fullwidth";
 
-    if (!activeQuestionId) {
+    if (!questionId) {
       return <></>;
     }
   }
@@ -228,15 +231,16 @@ export default function PreviewSurvey({
                   background={styling?.cardBackgroundColor?.light}>
                   <SurveyInline
                     survey={survey}
-                    activeQuestionId={activeQuestionId || undefined}
                     isBrandingEnabled={product.inAppSurveyBranding}
-                    onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     languageCode={languageCode}
                     onFileUpload={onFileUpload}
                     styling={styling}
                     isCardBorderVisible={!styling.highlightBorderColor?.light}
                     onClose={handlePreviewModalClose}
+                    getSetQuestionId={(f: (value: string) => void) => {
+                      setQuestionId = f;
+                    }}
                   />
                 </Modal>
               ) : (
@@ -249,13 +253,14 @@ export default function PreviewSurvey({
                   <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
-                      activeQuestionId={activeQuestionId || undefined}
                       isBrandingEnabled={product.linkSurveyBranding}
-                      onActiveQuestionChange={setActiveQuestionId}
                       onFileUpload={onFileUpload}
                       languageCode={languageCode}
                       responseCount={42}
                       styling={styling}
+                      getSetQuestionId={(f: (value: string) => void) => {
+                        setQuestionId = f;
+                      }}
                     />
                   </div>
                 </div>
@@ -309,15 +314,16 @@ export default function PreviewSurvey({
                 background={styling.cardBackgroundColor?.light}>
                 <SurveyInline
                   survey={survey}
-                  activeQuestionId={activeQuestionId || undefined}
                   isBrandingEnabled={product.inAppSurveyBranding}
-                  onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                   languageCode={languageCode}
                   onFileUpload={onFileUpload}
                   styling={styling}
                   isCardBorderVisible={!styling.highlightBorderColor?.light}
                   onClose={handlePreviewModalClose}
+                  getSetQuestionId={(f: (value: string) => void) => {
+                    setQuestionId = f;
+                  }}
                 />
               </Modal>
             ) : (
@@ -330,14 +336,15 @@ export default function PreviewSurvey({
                 <div className="z-0 w-full max-w-md rounded-lg border-transparent">
                   <SurveyInline
                     survey={survey}
-                    activeQuestionId={activeQuestionId || undefined}
                     isBrandingEnabled={product.linkSurveyBranding}
-                    onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
                     languageCode={languageCode}
                     responseCount={42}
                     styling={styling}
+                    getSetQuestionId={(f: (value: string) => void) => {
+                      setQuestionId = f;
+                    }}
                   />
                 </div>
               </MediaBackground>
@@ -361,7 +368,7 @@ export default function PreviewSurvey({
       </div>
     </div>
   );
-}
+};
 
 function ResetProgressButton({ resetQuestionProgress }) {
   return (

@@ -14,8 +14,7 @@ import { SurveyInline } from "@formbricks/ui/Survey";
 
 interface ThemeStylingPreviewSurveyProps {
   survey: TSurvey;
-  setActiveQuestionId: (id: string | null) => void;
-  activeQuestionId?: string | null;
+  setQuestionId: (_: string) => void;
   product: TProduct;
   previewType: "link" | "web";
   setPreviewType: (type: "link" | "web") => void;
@@ -49,12 +48,11 @@ const previewParentContainerVariant: Variants = {
 };
 
 export const ThemeStylingPreviewSurvey = ({
-  setActiveQuestionId,
-  activeQuestionId,
   survey,
   product,
   previewType,
   setPreviewType,
+  setQuestionId,
 }: ThemeStylingPreviewSurveyProps) => {
   const [isFullScreenPreview] = useState(false);
   const [previewPosition] = useState("relative");
@@ -105,7 +103,7 @@ export const ThemeStylingPreviewSurvey = ({
   const highlightBorderColor = product.styling.highlightBorderColor?.light;
 
   function resetQuestionProgress() {
-    setActiveQuestionId(survey?.questions[0]?.id);
+    setQuestionId(survey?.questions[0]?.id);
   }
 
   const onFileUpload = async (file: File) => file.name;
@@ -154,14 +152,15 @@ export const ThemeStylingPreviewSurvey = ({
               borderRadius={product.styling.roundness ?? 8}>
               <SurveyInline
                 survey={survey}
-                activeQuestionId={activeQuestionId || undefined}
                 isBrandingEnabled={product.inAppSurveyBranding}
-                onActiveQuestionChange={setActiveQuestionId}
                 isRedirectDisabled={true}
                 onFileUpload={onFileUpload}
                 styling={product.styling}
                 isCardBorderVisible={!highlightBorderColor}
                 languageCode="default"
+                getSetQuestionId={(f: (value: string) => void) => {
+                  setQuestionId = f;
+                }}
               />
             </Modal>
           ) : (
@@ -175,14 +174,15 @@ export const ThemeStylingPreviewSurvey = ({
                 className={`${product.logo?.url && !product.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0  w-full max-w-md rounded-lg p-4`}>
                 <SurveyInline
                   survey={survey}
-                  activeQuestionId={activeQuestionId || undefined}
                   isBrandingEnabled={product.linkSurveyBranding}
-                  onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                   onFileUpload={onFileUpload}
                   responseCount={42}
                   styling={product.styling}
                   languageCode="default"
+                  getSetQuestionId={(f: (value: string) => void) => {
+                    setQuestionId = f;
+                  }}
                 />
               </div>
             </MediaBackground>

@@ -37,7 +37,7 @@ interface QuestionsViewProps {
   isFormbricksCloud: boolean;
 }
 
-export default function QuestionsView({
+export const QuestionsView = ({
   activeQuestionId,
   setActiveQuestionId,
   localSurvey,
@@ -49,7 +49,7 @@ export default function QuestionsView({
   selectedLanguageCode,
   isMultiLanguageAllowed,
   isFormbricksCloud,
-}: QuestionsViewProps) {
+}: QuestionsViewProps) => {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
       acc[question.id] = createId();
@@ -362,4 +362,4 @@ export default function QuestionsView({
       </div>
     </div>
   );
-}
+};
