@@ -1,7 +1,6 @@
 "use client";
 
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
-import { addUnsplashImageToStorage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/addUnsplashImageToStorage";
 import {
   isCardValid,
   isSurveyLogicCyclic,
@@ -355,20 +354,6 @@ export default function SurveyMenuBar({
       setIsSurveySaving(false);
       toast.error("Survey cannot have both custom and saved actions, please remove one.");
       return;
-    }
-
-    if (
-      strippedSurvey.styling &&
-      strippedSurvey.styling.background?.bg &&
-      strippedSurvey.styling.background?.bgType === "image"
-    ) {
-      const unsplashUrl = await addUnsplashImageToStorage(
-        environment.id,
-        strippedSurvey.styling.background?.bg
-      );
-      if (unsplashUrl) {
-        strippedSurvey.styling.background.bg = unsplashUrl;
-      }
     }
 
     strippedSurvey.triggers = strippedSurvey.triggers.filter((trigger) => Boolean(trigger));

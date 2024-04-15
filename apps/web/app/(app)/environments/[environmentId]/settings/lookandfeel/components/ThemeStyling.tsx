@@ -4,7 +4,6 @@ import { ThemeStylingPreviewSurvey } from "@/app/(app)/environments/[environment
 import BackgroundStylingCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/BackgroundStylingCard";
 import CardStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CardStylingSettings";
 import FormStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
-import { addUnsplashImageToStorage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/addUnsplashImageToStorage";
 import { RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -64,24 +63,13 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
   }, [product]);
 
   const onSave = useCallback(async () => {
-    if (
-      localProduct.styling &&
-      localProduct.styling.background?.bg &&
-      localProduct.styling.background?.bgType === "image"
-    ) {
-      const unsplashUrl = await addUnsplashImageToStorage(environmentId, localProduct.styling.background?.bg);
-      if (localProduct.styling.background?.bg && unsplashUrl) {
-        localProduct.styling.background.bg = unsplashUrl;
-      }
-    }
-
     await updateProductAction(product.id, {
       styling: localProduct.styling,
     });
 
     toast.success("Styling updated successfully.");
     router.refresh();
-  }, [localProduct, product.id, environmentId, router]);
+  }, [localProduct, product.id, router]);
 
   const onReset = useCallback(async () => {
     await updateProductAction(product.id, {

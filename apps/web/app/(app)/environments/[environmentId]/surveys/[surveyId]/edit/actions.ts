@@ -214,7 +214,22 @@ export async function getImagesFromUnsplashAction(searchQuery: string) {
       const json = await res.json();
       throw Error(json.error);
     }
-    return await res.json();
+    const { results } = await res.json();
+    return results.map((result) => ({
+      id: result.id,
+      alt_description: result.alt_description,
+      urls: {
+        regularWithAttribution:
+          result.urls.regular +
+          "&authorLink=" +
+          result.user.links.html +
+          "&authorName=" +
+          result.user.first_name +
+          "%20" +
+          result.user.last_name +
+          "&utm_source=formbricks&utm_medium=referral",
+      },
+    }));
   } catch (error) {
     throw new Error("Error getting images from Unsplash");
   }

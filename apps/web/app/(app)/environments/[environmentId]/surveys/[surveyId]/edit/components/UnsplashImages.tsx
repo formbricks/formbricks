@@ -19,8 +19,9 @@ interface UnsplashImage {
   id: string;
   alt_description: string;
   urls: {
-    regular: string;
+    regularWithAttribution: string;
   };
+  authorName?: string;
 }
 
 const defaultImages = [
@@ -28,84 +29,84 @@ const defaultImages = [
     id: "dog-1",
     alt_description: "Dog",
     urls: {
-      regular: "/image-backgrounds/dogs.webp",
+      regularWithAttribution: "/image-backgrounds/dogs.webp",
     },
   },
   {
     id: "pencil",
     alt_description: "Pencil",
     urls: {
-      regular: "/image-backgrounds/pencil.webp",
+      regularWithAttribution: "/image-backgrounds/pencil.webp",
     },
   },
   {
     id: "plant",
     alt_description: "Plant",
     urls: {
-      regular: "/image-backgrounds/plant.webp",
+      regularWithAttribution: "/image-backgrounds/plant.webp",
     },
   },
   {
     id: "dog-2",
     alt_description: "Another Dog",
     urls: {
-      regular: "/image-backgrounds/dog-2.webp",
+      regularWithAttribution: "/image-backgrounds/dog-2.webp",
     },
   },
   {
     id: "kitten-2",
     alt_description: "Another Kitten",
     urls: {
-      regular: "/image-backgrounds/kitten-2.webp",
+      regularWithAttribution: "/image-backgrounds/kitten-2.webp",
     },
   },
   {
     id: "lollipop",
     alt_description: "Lollipop",
     urls: {
-      regular: "/image-backgrounds/lolipop.webp",
+      regularWithAttribution: "/image-backgrounds/lolipop.webp",
     },
   },
   {
     id: "oranges",
     alt_description: "Oranges",
     urls: {
-      regular: "/image-backgrounds/oranges.webp",
+      regularWithAttribution: "/image-backgrounds/oranges.webp",
     },
   },
   {
     id: "flower",
     alt_description: "Flower",
     urls: {
-      regular: "/image-backgrounds/flowers.webp",
+      regularWithAttribution: "/image-backgrounds/flowers.webp",
     },
   },
   {
     id: "supermario",
     alt_description: "Super Mario",
     urls: {
-      regular: "/image-backgrounds/supermario.webp",
+      regularWithAttribution: "/image-backgrounds/supermario.webp",
     },
   },
   {
     id: "shapes",
     alt_description: "Shapes",
     urls: {
-      regular: "/image-backgrounds/shapes.webp",
+      regularWithAttribution: "/image-backgrounds/shapes.webp",
     },
   },
   {
     id: "waves",
     alt_description: "Waves",
     urls: {
-      regular: "/image-backgrounds/waves.webp",
+      regularWithAttribution: "/image-backgrounds/waves.webp",
     },
   },
   {
     id: "kitten-1",
     alt_description: "Kitten",
     urls: {
-      regular: "/image-backgrounds/kittens.webp",
+      regularWithAttribution: "/image-backgrounds/kittens.webp",
     },
   },
 ];
@@ -120,8 +121,14 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
     const fetchData = async (searchQuery: string) => {
       try {
         setIsLoading(true);
-        const data = await getImagesFromUnsplashAction(searchQuery);
-        setImages(data.results);
+        const imagesFromUnsplash = await getImagesFromUnsplashAction(searchQuery);
+        for (let i = 0; i < imagesFromUnsplash.length; i++) {
+          const authorName = new URL(imagesFromUnsplash[i].urls.regularWithAttribution).searchParams.get(
+            "authorName"
+          );
+          imagesFromUnsplash[i].authorName = authorName;
+        }
+        setImages(imagesFromUnsplash);
       } catch (error) {
         toast.error(error.message);
       } finally {
@@ -177,15 +184,21 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
         )}
         {images.length > 0
           ? images.map((image) => (
-              <UnsplashImage
-                key={image.id}
-                width={300}
-                height={200}
-                src={image.urls.regular}
-                alt={image.alt_description}
-                onClick={() => handleImageSelected(image.urls.regular)}
-                className="h-full cursor-pointer rounded-lg object-cover"
-              />
+              <div key={image.id} className="group relative">
+                <UnsplashImage
+                  width={300}
+                  height={200}
+                  src={image.urls.regularWithAttribution}
+                  alt={image.alt_description}
+                  onClick={() => handleImageSelected(image.urls.regularWithAttribution)}
+                  className="h-full cursor-pointer rounded-lg object-cover"
+                />
+                {image.authorName && (
+                  <span className="absolute bottom-1 right-1 hidden rounded bg-black bg-opacity-75 px-2 py-1 text-xs text-white group-hover:block">
+                    {image.authorName}
+                  </span>
+                )}
+              </div>
             ))
           : !isLoading &&
             query.trim() !== "" && (
