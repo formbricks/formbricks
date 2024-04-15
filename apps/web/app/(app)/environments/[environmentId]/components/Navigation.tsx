@@ -15,6 +15,7 @@ import {
   LogOutIcon,
   MailIcon,
   MenuIcon,
+  MessageSquareDotIcon,
   MessageSquareTextIcon,
   PlusIcon,
   SlidersIcon,
@@ -57,6 +58,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { CustomersIcon, DashboardIcon, FilterIcon, FormIcon, SettingsIcon } from "@formbricks/ui/icons";
 
+import { SaturnSupport } from "../components/SaturnSupport";
 import AddProductModal from "./AddProductModal";
 import UrlShortenerModal from "./UrlShortenerModal";
 
@@ -96,7 +98,9 @@ export default function Navigation({
   const product = products.find((product) => product.id === environment.productId);
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
   const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
+  const [openSaturn, setOpenSaturn] = useState(false);
   const isPricingDisabled = !isOwner && !isAdmin;
+  console.log("openSaturn in nav", openSaturn);
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -224,6 +228,14 @@ export default function Navigation({
           label: "Developer Docs",
           href: "https://formbricks.com/docs",
           target: "_blank",
+        },
+        {
+          icon: MessageSquareDotIcon,
+          label: "Open Chat",
+          href: pathname,
+          onClick: () => {
+            setOpenSaturn(true);
+          },
         },
         {
           icon: HeartIcon,
@@ -564,6 +576,16 @@ export default function Navigation({
             setOpen={(val) => setShowLinkShortenerModal(val)}
             webAppUrl={webAppUrl}
           />
+
+          {openSaturn && (
+            <SaturnSupport
+              userId={session.user.id}
+              email={session.user.email}
+              name={session.user.name}
+              teamId={team.id}
+              teamName={team.name}
+            />
+          )}
         </nav>
       )}
     </>
