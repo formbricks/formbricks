@@ -59,15 +59,17 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
   return (
     <div className="flex items-center gap-3 p-6">
-      <Button
-        variant="minimal"
-        size="sm"
-        className="cursor-pointer p-0"
-        onClick={() => {
-          router.push(`/environments/${environmentId}/settings/tags`);
-        }}>
-        <SettingsIcon className="h-5 w-5 text-slate-300 hover:text-slate-400" />
-      </Button>
+      {!isViewer && (
+        <Button
+          variant="minimal"
+          size="sm"
+          className="cursor-pointer p-0"
+          onClick={() => {
+            router.push(`/environments/${environmentId}/settings/tags`);
+          }}>
+          <SettingsIcon className="h-5 w-5 text-slate-300 hover:text-slate-400" />
+        </Button>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         {tagsState?.map((tag) => (
           <Tag
