@@ -57,7 +57,7 @@ async function main() {
       });
     },
     {
-      timeout: 100000,
+      timeout: 60000 * 3, // 3 minutes
     }
   );
 }
