@@ -30,18 +30,18 @@ export default function AppPage({}) {
         window.history.replaceState({}, "", newUrl);
       }
     };
+
     addFormbricksDebugParam();
 
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
-      const isUserId = window.location.href.includes("userId=true");
       const defaultAttributes = {
         language: "gu",
       };
+
       const userInitAttributes = { "Init Attribute 1": "eight", "Init Attribute 2": "two" };
 
-      const attributes = isUserId ? { ...defaultAttributes, ...userInitAttributes } : defaultAttributes;
-      // const userId = isUserId ? "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING" : undefined;
-      const userId = "some-uuid-1234-5678-9012-345678901234";
+      const attributes = { ...defaultAttributes, ...userInitAttributes };
+      const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
       formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,

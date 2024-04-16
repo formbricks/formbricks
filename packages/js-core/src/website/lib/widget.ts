@@ -6,7 +6,7 @@ import { TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 
 import { Logger } from "../../shared/logger";
-import { getDefaultLanguageCode } from "../../shared/utils";
+import { getDefaultLanguageCode, getLanguageCode } from "../../shared/utils";
 import { WebsiteConfig } from "./config";
 import { filterPublicSurveys } from "./sync";
 
@@ -52,20 +52,21 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
   }
 
   const product = websiteConfig.get().state.product;
+  const attributes = websiteConfig.get().state.attributes;
 
-  // const isMultiLanguageSurvey = survey.languages.length > 1;
+  const isMultiLanguageSurvey = survey.languages.length > 1;
   let languageCode = "default";
 
-  // if (isMultiLanguageSurvey) {
-  //   const displayLanguage = getLanguageCode(survey, attributes);
-  //   //if survey is not available in selected language, survey wont be shown
-  //   if (!displayLanguage) {
-  //     logger.debug("Survey not available in specified language.");
-  //     setIsSurveyRunning(true);
-  //     return;
-  //   }
-  //   languageCode = displayLanguage;
-  // }
+  if (isMultiLanguageSurvey && attributes) {
+    const displayLanguage = getLanguageCode(survey, attributes);
+    //if survey is not available in selected language, survey wont be shown
+    if (!displayLanguage) {
+      logger.debug("Survey not available in specified language.");
+      setIsSurveyRunning(true);
+      return;
+    }
+    languageCode = displayLanguage;
+  }
 
   const surveyState = new SurveyState(survey.id, null, null);
 

@@ -21,7 +21,7 @@ const config = () => {
       lib: {
         entry: resolve(__dirname, "src/in-app/index.ts"),
         name: "formbricks",
-        formats: ["es", "umd"],
+        formats: ["umd"],
         fileName: "in-app",
       },
     },

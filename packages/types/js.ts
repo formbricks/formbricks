@@ -46,7 +46,8 @@ export const ZJsWebsiteState = z.object({
   surveys: z.array(ZSurvey),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
-  displays: z.array(ZJSWebsiteStateDisplay).optional(),
+  displays: z.array(ZJSWebsiteStateDisplay),
+  attributes: ZPersonAttributes.optional(),
 });
 
 export type TJsWebsiteState = z.infer<typeof ZJsWebsiteState>;
@@ -124,6 +125,7 @@ export const ZJsWebsiteConfigInput = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
+  attributes: ZPersonAttributes.optional(),
 });
 
 export type TJsWebsiteConfigInput = z.infer<typeof ZJsWebsiteConfigInput>;

@@ -64,15 +64,11 @@ export const sync = async (params: TJsWebsiteSyncParams, noCache = false): Promi
     } catch (e) {
       // ignore error
     }
+
     let state: TJsWebsiteState = {
       surveys: syncResult.value.surveys as TSurvey[],
       noCodeActionClasses: syncResult.value.noCodeActionClasses,
       product: syncResult.value.product,
-      // attributes: syncResult.value.person?.attributes || {},
-    };
-
-    state = {
-      ...state,
       displays: oldState?.displays || [],
     };
 

@@ -84,6 +84,11 @@ export const initialize = async (
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
 
+  // let updatedAttributes: TPersonAttributes | null = null;
+  // if (configInput.attributes) {
+  //   updatedAttributes = { ...configInput.attributes };
+  // }
+
   if (
     existingConfig &&
     existingConfig.state &&
@@ -122,6 +127,21 @@ export const initialize = async (
     } catch (e) {
       handleErrorOnFirstInit();
     }
+
+    if (configInput.attributes) {
+      const currentWebsiteConfig = websiteConfig.get();
+
+      websiteConfig.update({
+        environmentId: currentWebsiteConfig.environmentId,
+        apiHost: currentWebsiteConfig.apiHost,
+        state: {
+          ...websiteConfig.get().state,
+          attributes: { ...websiteConfig.get().state.attributes, ...configInput.attributes },
+        },
+        expiresAt: websiteConfig.get().expiresAt,
+      });
+    }
+
     // and track the new session event
     await trackAction("New Session");
   }
