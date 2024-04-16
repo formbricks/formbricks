@@ -1,4 +1,5 @@
 import AuthorJohannes from "@/images/blog/johannes-co-founder-formbricks-small.jpg";
+import AuthorOla from "@/images/blog/ola-content-writer.jpg";
 import AuthorShubham from "@/images/blog/shubham-engineer.png";
 import AuthorSudhanshu from "@/images/blog/sudhanshu-engineer.jpeg";
 import Image from "next/image";
@@ -16,6 +17,7 @@ const authorImages = {
   Johannes: AuthorJohannes,
   Shubham: AuthorShubham,
   Sudhanshu: AuthorSudhanshu,
+  Olasunkanmi: AuthorOla,
 };
 
 export default function AuthorBox({ name, title, date, duration, author }: AuthorBoxProps) {
