@@ -3,7 +3,7 @@ import {
   addScrollDepthListener,
   removeExitIntentListener,
   removeScrollDepthListener,
-} from "./automaticActions";
+} from "../../shared/automaticActions";
 import {
   addClickEventListener,
   addPageUrlEventListeners,
@@ -19,7 +19,7 @@ export const addEventListeners = (): void => {
   addPageUrlEventListeners();
   addClickEventListener();
   addExitIntentListener();
-  addScrollDepthListener();
+  addScrollDepthListener("in-app");
 };
 
 export const addCleanupEventListeners = (): void => {
@@ -29,7 +29,7 @@ export const addCleanupEventListeners = (): void => {
     removePageUrlEventListeners();
     removeClickEventListener();
     removeExitIntentListener();
-    removeScrollDepthListener();
+    removeScrollDepthListener("in-app");
   });
   areRemoveEventListenersAdded = true;
 };
@@ -41,7 +41,7 @@ export const removeCleanupEventListeners = (): void => {
     removePageUrlEventListeners();
     removeClickEventListener();
     removeExitIntentListener();
-    removeScrollDepthListener();
+    removeScrollDepthListener("in-app");
   });
   areRemoveEventListenersAdded = false;
 };
@@ -51,6 +51,6 @@ export const removeAllEventListeners = (): void => {
   removePageUrlEventListeners();
   removeClickEventListener();
   removeExitIntentListener();
-  removeScrollDepthListener();
+  removeScrollDepthListener("in-app");
   removeCleanupEventListeners();
 };

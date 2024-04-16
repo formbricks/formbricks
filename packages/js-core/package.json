@@ -33,6 +33,8 @@
   "scripts": {
     "dev": "vite build --watch --mode dev",
     "build": "tsc && vite build",
+    "build:in-app": "tsc && vite build --mode in-app",
+    "build:website": "tsc && vite build --mode website",
     "build:dev": "tsc && vite build --mode dev",
     "go": "vite build --watch --mode dev",
     "lint": "eslint ./src --fix",

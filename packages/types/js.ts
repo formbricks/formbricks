@@ -12,32 +12,44 @@ const ZSurveyWithTriggers = ZSurvey.extend({
 
 export type TSurveyWithTriggers = z.infer<typeof ZSurveyWithTriggers>;
 
-export const ZJSStateDisplay = z.object({
+export const ZJSWebsiteStateDisplay = z.object({
   createdAt: z.date(),
   surveyId: z.string().cuid(),
   responded: z.boolean(),
 });
 
-export type TJSStateDisplay = z.infer<typeof ZJSStateDisplay>;
+export type TJSWebsiteStateDisplay = z.infer<typeof ZJSWebsiteStateDisplay>;
 
-export const ZJsStateSync = z.object({
+export const ZJsInAppStateSync = z.object({
   person: ZPersonClient.nullish(),
   surveys: z.union([z.array(ZSurvey), z.array(ZLegacySurvey)]),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
 });
 
-export type TJsStateSync = z.infer<typeof ZJsStateSync>;
+export type TJsInAppStateSync = z.infer<typeof ZJsInAppStateSync>;
 
-export const ZJsState = z.object({
+export const ZJsWebsiteStateSync = ZJsInAppStateSync.omit({ person: true });
+
+export type TJsWebsiteStateSync = z.infer<typeof ZJsWebsiteStateSync>;
+
+export const ZJsInAppState = z.object({
   attributes: ZPersonAttributes,
   surveys: z.array(ZSurvey),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
-  displays: z.array(ZJSStateDisplay).optional(),
 });
 
-export type TJsState = z.infer<typeof ZJsState>;
+export type TJsInAppState = z.infer<typeof ZJsInAppState>;
+
+export const ZJsWebsiteState = z.object({
+  surveys: z.array(ZSurvey),
+  noCodeActionClasses: z.array(ZActionClass),
+  product: ZProduct,
+  displays: z.array(ZJSWebsiteStateDisplay).optional(),
+});
+
+export type TJsWebsiteState = z.infer<typeof ZJsWebsiteState>;
 
 export const ZJsLegacyState = z.object({
   person: ZPerson.nullable().or(z.object({})),
@@ -45,25 +57,17 @@ export const ZJsLegacyState = z.object({
   surveys: z.array(ZSurveyWithTriggers),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
-  displays: z.array(ZJSStateDisplay).optional(),
+  displays: z.array(ZJSWebsiteStateDisplay).optional(),
 });
 
 export type TJsLegacyState = z.infer<typeof ZJsLegacyState>;
 
-export const ZJsPublicSyncInput = z.object({
+export const ZJsWebsiteSyncInput = z.object({
   environmentId: z.string().cuid(),
   version: z.string().optional(),
 });
 
-export type TJsPublicSyncInput = z.infer<typeof ZJsPublicSyncInput>;
-
-export const ZJsSyncInput = z.object({
-  environmentId: z.string().cuid(),
-  userId: z.string().optional().optional(),
-  jsVersion: z.string().optional(),
-});
-
-export type TJsSyncInput = z.infer<typeof ZJsSyncInput>;
+export type TJsWebsiteSyncInput = z.infer<typeof ZJsWebsiteSyncInput>;
 
 export const ZJsSyncLegacyInput = z.object({
   environmentId: z.string().cuid(),
@@ -74,37 +78,65 @@ export const ZJsSyncLegacyInput = z.object({
 
 export type TJsSyncLegacyInput = z.infer<typeof ZJsSyncLegacyInput>;
 
-export const ZJsConfig = z.object({
+export const ZJsWebsiteConfig = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
-  userId: z.string().optional(),
-  state: ZJsState,
+  state: ZJsWebsiteState,
   expiresAt: z.date(),
   status: z.enum(["success", "error"]).optional(),
 });
 
-export type TJsConfig = z.infer<typeof ZJsConfig>;
+export type TJsWebsiteConfig = z.infer<typeof ZJsWebsiteConfig>;
 
-export const ZJsConfigUpdateInput = z.object({
+export const ZJSInAppConfig = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
-  userId: z.string().optional(),
-  state: ZJsState,
+  userId: z.string(),
+  state: ZJsInAppState,
   expiresAt: z.date(),
   status: z.enum(["success", "error"]).optional(),
 });
 
-export type TJsConfigUpdateInput = z.infer<typeof ZJsConfigUpdateInput>;
+export type TJSInAppConfig = z.infer<typeof ZJSInAppConfig>;
 
-export const ZJsConfigInput = z.object({
+export const ZJsWebsiteConfigUpdateInput = z.object({
+  environmentId: z.string().cuid(),
+  apiHost: z.string(),
+  state: ZJsWebsiteState,
+  expiresAt: z.date(),
+  status: z.enum(["success", "error"]).optional(),
+});
+
+export type TJsWebsiteConfigUpdateInput = z.infer<typeof ZJsWebsiteConfigUpdateInput>;
+
+export const ZJsInAppConfigUpdateInput = z.object({
+  environmentId: z.string().cuid(),
+  apiHost: z.string(),
+  userId: z.string(),
+  state: ZJsInAppState,
+  expiresAt: z.date(),
+  status: z.enum(["success", "error"]).optional(),
+});
+
+export type TJsInAppConfigUpdateInput = z.infer<typeof ZJsInAppConfigUpdateInput>;
+
+export const ZJsWebsiteConfigInput = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
-  userId: z.string().optional(),
+});
+
+export type TJsWebsiteConfigInput = z.infer<typeof ZJsWebsiteConfigInput>;
+
+export const ZJsInAppConfigInput = z.object({
+  environmentId: z.string().cuid(),
+  apiHost: z.string(),
+  errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
+  userId: z.string(),
   attributes: ZPersonAttributes.optional(),
 });
 
-export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;
+export type TJsInAppConfigInput = z.infer<typeof ZJsInAppConfigInput>;
 
 export const ZJsPeopleUserIdInput = z.object({
   environmentId: z.string().cuid(),
@@ -137,13 +169,21 @@ export const ZJsActionInput = z.object({
 
 export type TJsActionInput = z.infer<typeof ZJsActionInput>;
 
-export const ZJsSyncParams = z.object({
+export const ZJsWesbiteActionInput = ZJsActionInput.omit({ userId: true });
+
+export type TJsWesbiteActionInput = z.infer<typeof ZJsWesbiteActionInput>;
+
+export const ZJSInAppSyncParams = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
-  userId: z.string().optional(),
+  userId: z.string(),
 });
 
-export type TJsSyncParams = z.infer<typeof ZJsSyncParams>;
+export type TJsInAppSyncParams = z.infer<typeof ZJSInAppSyncParams>;
+
+export const ZJsWebsiteSyncParams = ZJSInAppSyncParams.omit({ userId: true });
+
+export type TJsWebsiteSyncParams = z.infer<typeof ZJsWebsiteSyncParams>;
 
 const ZJsSettingsSurvey = ZSurvey.pick({
   id: true,
@@ -174,3 +214,7 @@ export const ZJsSettings = z.object({
 });
 
 export type TSettings = z.infer<typeof ZJsSettings>;
+
+export const ZJsPackageType = z.union([z.literal("in-app"), z.literal("website")]);
+
+export type TJsPackageType = z.infer<typeof ZJsPackageType>;

@@ -1,0 +1,57 @@
+import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
+import { TJsWebsiteConfigInput } from "@formbricks/types/js";
+
+// Shared imports
+import { CommandQueue } from "../shared/commandQueue";
+import { ErrorHandler } from "../shared/errors";
+import { Logger } from "../shared/logger";
+// Website package specific imports
+import { trackAction } from "./lib/actions";
+import { resetConfig } from "./lib/common";
+import { initialize } from "./lib/initialize";
+import { checkPageUrl } from "./lib/noCodeActions";
+
+declare global {
+  interface Window {
+    formbricksSurveys: {
+      renderSurveyInline: (props: SurveyInlineProps) => void;
+      renderSurveyModal: (props: SurveyModalProps) => void;
+    };
+  }
+}
+
+const logger = Logger.getInstance();
+
+logger.debug("Create command queue");
+const queue = new CommandQueue();
+
+const init = async (initConfig: TJsWebsiteConfigInput) => {
+  ErrorHandler.init(initConfig.errorHandler);
+  queue.add(false, "website", initialize, initConfig);
+  await queue.wait();
+};
+
+const reset = async (): Promise<void> => {
+  queue.add(true, "website", resetConfig);
+  await queue.wait();
+};
+
+const track = async (name: string, properties: any = {}): Promise<void> => {
+  queue.add<any>(true, "website", trackAction, name, properties);
+  await queue.wait();
+};
+
+const registerRouteChange = async (): Promise<void> => {
+  queue.add(true, "website", checkPageUrl);
+  await queue.wait();
+};
+
+const formbricks = {
+  init,
+  track,
+  reset,
+  registerRouteChange,
+};
+
+export type TFormbricksWebsite = typeof formbricks;
+export default formbricks as TFormbricksWebsite;

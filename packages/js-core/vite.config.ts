@@ -15,10 +15,12 @@ const config = () => {
       sourcemap: true,
       lib: {
         // Could also be a dictionary or array of multiple entry points
-        entry: resolve(__dirname, "src/index.ts"),
+        entry: {
+          "in-app": resolve(__dirname, "src/in-app/index.ts"),
+          website: resolve(__dirname, "src/website/index.ts"),
+        },
         name: "formbricks",
-        formats: ["es", "umd"],
-        // the proper extensions will be added
+        formats: ["es"],
         fileName: "index",
       },
     },

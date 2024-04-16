@@ -1,49 +1,20 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { TPersonAttributes, TPersonUpdateInput } from "@formbricks/types/people";
 
-import { Config } from "./config";
-import {
-  AttributeAlreadyExistsError,
-  MissingPersonError,
-  NetworkError,
-  Result,
-  err,
-  ok,
-  okVoid,
-} from "./errors";
+import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "../../shared/errors";
+import { Logger } from "../../shared/logger";
+import { InAppConfig } from "./config";
 import { deinitalize, initialize } from "./initialize";
-import { Logger } from "./logger";
 import { closeSurvey } from "./widget";
 
-const config = Config.getInstance();
+const inAppConfig = InAppConfig.getInstance();
 const logger = Logger.getInstance();
 
 export const updatePersonAttribute = async (
   key: string,
   value: string
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
-  const { apiHost, environmentId, userId } = config.get();
-
-  if (!userId) {
-    const previousConfig = config.get();
-    if (key === "language") {
-      config.update({
-        ...previousConfig,
-        state: {
-          ...previousConfig.state,
-          attributes: {
-            ...previousConfig.state.attributes,
-            language: value,
-          },
-        },
-      });
-      return okVoid();
-    }
-    return err({
-      code: "missing_person",
-      message: "Unable to update attribute. User identification deactivated. No userId set.",
-    });
-  }
+  const { apiHost, environmentId, userId } = inAppConfig.get();
 
   const input: TPersonUpdateInput = {
     attributes: {
@@ -63,7 +34,7 @@ export const updatePersonAttribute = async (
       code: "network_error",
       status: 500,
       message: `Error updating person with userId ${userId}`,
-      url: `${config.get().apiHost}/api/v1/client/${environmentId}/people/${userId}`,
+      url: `${inAppConfig.get().apiHost}/api/v1/client/${environmentId}/people/${userId}`,
       responseMessage: res.error.message,
     });
   }
@@ -85,7 +56,7 @@ export const updatePersonAttributes = async (
   const updatedAttributes = { ...attributes };
 
   try {
-    const existingAttributes = config.get()?.state?.attributes;
+    const existingAttributes = inAppConfig.get()?.state?.attributes;
     if (existingAttributes) {
       for (const [key, value] of Object.entries(existingAttributes)) {
         if (updatedAttributes[key] === value) {
@@ -130,17 +101,10 @@ export const updatePersonAttributes = async (
 };
 
 export const isExistingAttribute = (key: string, value: string): boolean => {
-  if (config.get().state.attributes[key] === value) {
+  if (inAppConfig.get().state.attributes[key] === value) {
     return true;
   }
   return false;
-};
-
-export const setPersonUserId = async (): Promise<
-  Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>
-> => {
-  console.error("'setUserId' is no longer supported. Please set the userId in the init call instead.");
-  return okVoid();
 };
 
 export const setPersonAttribute = async (
@@ -158,18 +122,18 @@ export const setPersonAttribute = async (
 
   if (result.ok) {
     // udpdate attribute in config
-    config.update({
-      environmentId: config.get().environmentId,
-      apiHost: config.get().apiHost,
-      userId: config.get().userId,
+    inAppConfig.update({
+      environmentId: inAppConfig.get().environmentId,
+      apiHost: inAppConfig.get().apiHost,
+      userId: inAppConfig.get().userId,
       state: {
-        ...config.get().state,
+        ...inAppConfig.get().state,
         attributes: {
-          ...config.get().state.attributes,
+          ...inAppConfig.get().state.attributes,
           [key]: value.toString(),
         },
       },
-      expiresAt: config.get().expiresAt,
+      expiresAt: inAppConfig.get().expiresAt,
     });
     return okVoid();
   }
@@ -179,17 +143,17 @@ export const setPersonAttribute = async (
 
 export const logoutPerson = async (): Promise<void> => {
   deinitalize();
-  config.resetConfig();
+  inAppConfig.resetConfig();
 };
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
   closeSurvey();
   const syncParams = {
-    environmentId: config.get().environmentId,
-    apiHost: config.get().apiHost,
-    userId: config.get().userId,
-    attributes: config.get().state.attributes,
+    environmentId: inAppConfig.get().environmentId,
+    apiHost: inAppConfig.get().apiHost,
+    userId: inAppConfig.get().userId,
+    attributes: inAppConfig.get().state.attributes,
   };
   await logoutPerson();
   try {

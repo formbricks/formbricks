@@ -17,7 +17,7 @@ import { createSurvey, getSurveys, transformToLegacySurvey } from "@formbricks/l
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
-import { TJsStateSync, ZJsPublicSyncInput } from "@formbricks/types/js";
+import { TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
@@ -35,7 +35,7 @@ export async function GET(
       searchParams.get("version") === "undefined" || searchParams.get("version") === null
         ? undefined
         : searchParams.get("version");
-    const syncInputValidation = ZJsPublicSyncInput.safeParse({
+    const syncInputValidation = ZJsWebsiteSyncInput.safeParse({
       environmentId: params.environmentId,
     });
 
@@ -127,11 +127,10 @@ export async function GET(
     };
 
     // Create the 'state' object with surveys, noCodeActionClasses, product, and person.
-    const state: TJsStateSync = {
+    const state: TJsWebsiteStateSync = {
       surveys: isInAppSurveyLimitReached ? [] : transformedSurveys,
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product: updatedProduct,
-      person: null,
     };
 
     return responses.successResponse(

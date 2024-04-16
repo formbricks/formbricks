@@ -1,22 +1,20 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import SurveyState from "@formbricks/lib/surveyState";
-import { TJSStateDisplay } from "@formbricks/types/js";
+import { TJSWebsiteStateDisplay } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 
-import { Config } from "./config";
-import { ErrorHandler } from "./errors";
-import { putFormbricksInErrorState } from "./initialize";
-import { Logger } from "./logger";
-import { filterPublicSurveys, sync } from "./sync";
-import { getDefaultLanguageCode, getLanguageCode } from "./utils";
+import { Logger } from "../../shared/logger";
+import { getDefaultLanguageCode } from "../../shared/utils";
+import { WebsiteConfig } from "./config";
+import { filterPublicSurveys } from "./sync";
 
 const containerId = "formbricks-web-container";
 
-const config = Config.getInstance();
+const websiteConfig = WebsiteConfig.getInstance();
 const logger = Logger.getInstance();
-const errorHandler = ErrorHandler.getInstance();
+
 let isSurveyRunning = false;
 let setIsError = (_: boolean) => {};
 let setIsResponseSendingFinished = (_: boolean) => {};
@@ -53,29 +51,28 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
     logger.debug(`Delaying survey by ${survey.delay} seconds.`);
   }
 
-  const product = config.get().state.product;
-  const attributes = config.get().state.attributes;
+  const product = websiteConfig.get().state.product;
 
-  const isMultiLanguageSurvey = survey.languages.length > 1;
+  // const isMultiLanguageSurvey = survey.languages.length > 1;
   let languageCode = "default";
 
-  if (isMultiLanguageSurvey) {
-    const displayLanguage = getLanguageCode(survey, attributes);
-    //if survey is not available in selected language, survey wont be shown
-    if (!displayLanguage) {
-      logger.debug("Survey not available in specified language.");
-      setIsSurveyRunning(true);
-      return;
-    }
-    languageCode = displayLanguage;
-  }
+  // if (isMultiLanguageSurvey) {
+  //   const displayLanguage = getLanguageCode(survey, attributes);
+  //   //if survey is not available in selected language, survey wont be shown
+  //   if (!displayLanguage) {
+  //     logger.debug("Survey not available in specified language.");
+  //     setIsSurveyRunning(true);
+  //     return;
+  //   }
+  //   languageCode = displayLanguage;
+  // }
 
-  const surveyState = new SurveyState(survey.id, null, null, config.get().userId);
+  const surveyState = new SurveyState(survey.id, null, null);
 
   const responseQueue = new ResponseQueue(
     {
-      apiHost: config.get().apiHost,
-      environmentId: config.get().environmentId,
+      apiHost: websiteConfig.get().apiHost,
+      environmentId: websiteConfig.get().environmentId,
       retryAttempts: 2,
       onResponseSendingFailed: () => {
         setIsError(true);
@@ -129,71 +126,49 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
         setIsResponseSendingFinished = f;
       },
       onDisplay: async () => {
-        const { userId } = config.get();
-        // if config does not have a person, we store the displays in local storage
-        if (!userId) {
-          const localDisplay: TJSStateDisplay = {
-            createdAt: new Date(),
-            surveyId: survey.id,
-            responded: false,
-          };
+        const localDisplay: TJSWebsiteStateDisplay = {
+          createdAt: new Date(),
+          surveyId: survey.id,
+          responded: false,
+        };
 
-          const existingDisplays = config.get().state.displays;
-          const displays = existingDisplays ? [...existingDisplays, localDisplay] : [localDisplay];
-          const previousConfig = config.get();
+        const existingDisplays = websiteConfig.get().state.displays;
+        const displays = existingDisplays ? [...existingDisplays, localDisplay] : [localDisplay];
+        const previousConfig = websiteConfig.get();
+
+        let state = filterPublicSurveys({
+          ...previousConfig.state,
+          displays,
+        });
+
+        websiteConfig.update({
+          ...previousConfig,
+          state,
+        });
+
+        responseQueue.updateSurveyState(surveyState);
+      },
+      onResponse: (responseUpdate: TResponseUpdate) => {
+        const displays = websiteConfig.get().state.displays;
+        const lastDisplay = displays && displays[displays.length - 1];
+        if (!lastDisplay) {
+          throw new Error("No lastDisplay found");
+        }
+        if (!lastDisplay.responded) {
+          lastDisplay.responded = true;
+          const previousConfig = websiteConfig.get();
           let state = filterPublicSurveys({
             ...previousConfig.state,
             displays,
           });
-          config.update({
+          websiteConfig.update({
             ...previousConfig,
             state,
           });
         }
 
-        const api = new FormbricksAPI({
-          apiHost: config.get().apiHost,
-          environmentId: config.get().environmentId,
-        });
-        const res = await api.client.display.create({
-          surveyId: survey.id,
-          userId,
-        });
-        if (!res.ok) {
-          throw new Error("Could not create display");
-        }
-        const { id } = res.data;
-
-        surveyState.updateDisplayId(id);
         responseQueue.updateSurveyState(surveyState);
-      },
-      onResponse: (responseUpdate: TResponseUpdate) => {
-        const { userId } = config.get();
-        // if user is unidentified, update the display in local storage if not already updated
-        if (!userId) {
-          const displays = config.get().state.displays;
-          const lastDisplay = displays && displays[displays.length - 1];
-          if (!lastDisplay) {
-            throw new Error("No lastDisplay found");
-          }
-          if (!lastDisplay.responded) {
-            lastDisplay.responded = true;
-            const previousConfig = config.get();
-            let state = filterPublicSurveys({
-              ...previousConfig.state,
-              displays,
-            });
-            config.update({
-              ...previousConfig,
-              state,
-            });
-          }
-        }
 
-        if (userId) {
-          surveyState.updateUserId(userId);
-        }
-        responseQueue.updateSurveyState(surveyState);
         responseQueue.add({
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
@@ -208,8 +183,8 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
       onClose: closeSurvey,
       onFileUpload: async (file: File, params) => {
         const api = new FormbricksAPI({
-          apiHost: config.get().apiHost,
-          environmentId: config.get().environmentId,
+          apiHost: websiteConfig.get().apiHost,
+          environmentId: websiteConfig.get().environmentId,
         });
 
         return await api.client.storage.uploadFile(file, params);
@@ -227,33 +202,14 @@ export const closeSurvey = async (): Promise<void> => {
   removeWidgetContainer();
   addWidgetContainer();
 
-  // if unidentified user, refilter the surveys
-  if (!config.get().userId) {
-    const state = config.get().state;
-    const updatedState = filterPublicSurveys(state);
-    config.update({
-      ...config.get(),
-      state: updatedState,
-    });
-    setIsSurveyRunning(false);
-    return;
-  }
-
-  // for identified users we sync to get the latest surveys
-  try {
-    await sync(
-      {
-        apiHost: config.get().apiHost,
-        environmentId: config.get().environmentId,
-        userId: config.get().userId,
-      },
-      true
-    );
-    setIsSurveyRunning(false);
-  } catch (e: any) {
-    errorHandler.handle(e);
-    putFormbricksInErrorState();
-  }
+  const state = websiteConfig.get().state;
+  const updatedState = filterPublicSurveys(state);
+  websiteConfig.update({
+    ...websiteConfig.get(),
+    state: updatedState,
+  });
+  setIsSurveyRunning(false);
+  return;
 };
 
 export const addWidgetContainer = (): void => {
@@ -272,7 +228,7 @@ const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurv
       resolve(window.formbricksSurveys);
     } else {
       const script = document.createElement("script");
-      script.src = `${config.get().apiHost}/api/packages/surveys`;
+      script.src = `${websiteConfig.get().apiHost}/api/packages/surveys`;
       script.async = true;
       script.onload = () => resolve(window.formbricksSurveys);
       script.onerror = (error) => {

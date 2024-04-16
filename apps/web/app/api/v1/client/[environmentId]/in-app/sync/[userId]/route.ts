@@ -25,7 +25,7 @@ import { updateUser } from "@formbricks/lib/user/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TJsStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
+import { TJsInAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
@@ -190,7 +190,7 @@ export async function GET(
     };
 
     // return state
-    const state: TJsStateSync = {
+    const state: TJsInAppStateSync = {
       person: personData,
       surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),

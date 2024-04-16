@@ -1,12 +1,12 @@
-import { TJsConfig, TJsConfigUpdateInput } from "@formbricks/types/js";
+import { TJSInAppConfig, TJsInAppConfigUpdateInput } from "@formbricks/types/js";
 
-import { Result, err, ok, wrapThrows } from "./errors";
+import { Result, err, ok, wrapThrows } from "../../shared/errors";
 
-export const LOCAL_STORAGE_KEY = "formbricks-js";
+export const IN_APP_LOCAL_STORAGE_KEY = "formbricks-js-in-app";
 
-export class Config {
-  private static instance: Config | undefined;
-  private config: TJsConfig | null = null;
+export class InAppConfig {
+  private static instance: InAppConfig | undefined;
+  private config: TJSInAppConfig | null = null;
 
   private constructor() {
     const localConfig = this.loadFromLocalStorage();
@@ -16,14 +16,14 @@ export class Config {
     }
   }
 
-  static getInstance(): Config {
-    if (!Config.instance) {
-      Config.instance = new Config();
+  static getInstance(): InAppConfig {
+    if (!InAppConfig.instance) {
+      InAppConfig.instance = new InAppConfig();
     }
-    return Config.instance;
+    return InAppConfig.instance;
   }
 
-  public update(newConfig: TJsConfigUpdateInput): void {
+  public update(newConfig: TJsInAppConfigUpdateInput): void {
     if (newConfig) {
       this.config = {
         ...this.config,
@@ -35,28 +35,28 @@ export class Config {
     }
   }
 
-  public get(): TJsConfig {
+  public get(): TJSInAppConfig {
     if (!this.config) {
       throw new Error("config is null, maybe the init function was not called?");
     }
     return this.config;
   }
 
-  public loadFromLocalStorage(): Result<TJsConfig, Error> {
+  public loadFromLocalStorage(): Result<TJSInAppConfig, Error> {
     if (typeof window !== "undefined") {
-      const savedConfig = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const savedConfig = localStorage.getItem(IN_APP_LOCAL_STORAGE_KEY);
       if (savedConfig) {
         // TODO: validate config
         // This is a hack to get around the fact that we don't have a proper
         // way to validate the config yet.
-        const parsedConfig = JSON.parse(savedConfig) as TJsConfig;
+        const parsedConfig = JSON.parse(savedConfig) as TJSInAppConfig;
 
         // check if the config has expired
         if (parsedConfig.expiresAt && new Date(parsedConfig.expiresAt) <= new Date()) {
           return err(new Error("Config in local storage has expired"));
         }
 
-        return ok(JSON.parse(savedConfig) as TJsConfig);
+        return ok(JSON.parse(savedConfig) as TJSInAppConfig);
       }
     }
 
@@ -64,7 +64,7 @@ export class Config {
   }
 
   private saveToLocalStorage(): Result<void, Error> {
-    return wrapThrows(() => localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.config)))();
+    return wrapThrows(() => localStorage.setItem(IN_APP_LOCAL_STORAGE_KEY, JSON.stringify(this.config)))();
   }
 
   // reset the config
@@ -72,6 +72,6 @@ export class Config {
   public resetConfig(): Result<void, Error> {
     this.config = null;
 
-    return wrapThrows(() => localStorage.removeItem(LOCAL_STORAGE_KEY))();
+    return wrapThrows(() => localStorage.removeItem(IN_APP_LOCAL_STORAGE_KEY))();
   }
 }

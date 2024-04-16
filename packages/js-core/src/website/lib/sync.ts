@@ -1,23 +1,23 @@
 import { diffInDays } from "@formbricks/lib/utils/datetime";
-import { TJsState, TJsStateSync, TJsSyncParams } from "@formbricks/types/js";
+import { TJsWebsiteState, TJsWebsiteSyncParams } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys";
 
-import { Config } from "./config";
-import { NetworkError, Result, err, ok } from "./errors";
-import { Logger } from "./logger";
-import { getIsDebug } from "./utils";
+import { NetworkError, Result, err, ok } from "../../shared/errors";
+import { Logger } from "../../shared/logger";
+import { getIsDebug } from "../../shared/utils";
+import { WebsiteConfig } from "./config";
 
-const config = Config.getInstance();
+const websiteConfig = WebsiteConfig.getInstance();
 const logger = Logger.getInstance();
 
 let syncIntervalId: number | null = null;
 
 const syncWithBackend = async (
-  { apiHost, environmentId, userId }: TJsSyncParams,
+  { apiHost, environmentId }: TJsWebsiteSyncParams,
   noCache: boolean
-): Promise<Result<TJsStateSync, NetworkError>> => {
+): Promise<Result<TJsWebsiteState, NetworkError>> => {
   try {
-    const baseUrl = `${apiHost}/api/v1/client/${environmentId}/in-app/sync`;
+    const baseUrl = `${apiHost}/api/v1/client/${environmentId}/website/sync`;
     const urlSuffix = `?version=${import.meta.env.VERSION}`;
 
     let fetchOptions: RequestInit = {};
@@ -28,30 +28,8 @@ const syncWithBackend = async (
     }
 
     // if user id is not available
-    if (!userId) {
-      const url = baseUrl + urlSuffix;
-      // public survey
-      const response = await fetch(url, fetchOptions);
-
-      if (!response.ok) {
-        const jsonRes = await response.json();
-
-        return err({
-          code: "network_error",
-          status: response.status,
-          message: "Error syncing with backend",
-          url,
-          responseMessage: jsonRes.message,
-        });
-      }
-
-      return ok((await response.json()).data as TJsState);
-    }
-
-    // userId is available, call the api with the `userId` param
-
-    const url = `${baseUrl}/${userId}${urlSuffix}`;
-
+    const url = baseUrl + urlSuffix;
+    // public survey
     const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
@@ -66,16 +44,13 @@ const syncWithBackend = async (
       });
     }
 
-    const data = await response.json();
-    const { data: state } = data;
-
-    return ok(state as TJsStateSync);
+    return ok((await response.json()).data as TJsWebsiteState);
   } catch (e) {
     return err(e as NetworkError);
   }
 };
 
-export const sync = async (params: TJsSyncParams, noCache = false): Promise<void> => {
+export const sync = async (params: TJsWebsiteSyncParams, noCache = false): Promise<void> => {
   try {
     const syncResult = await syncWithBackend(params, noCache);
 
@@ -83,39 +58,32 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
       throw syncResult.error;
     }
 
-    let oldState: TJsState | undefined;
+    let oldState: TJsWebsiteState | undefined;
     try {
-      oldState = config.get().state;
+      oldState = websiteConfig.get().state;
     } catch (e) {
       // ignore error
     }
-    let state: TJsState = {
+    let state: TJsWebsiteState = {
       surveys: syncResult.value.surveys as TSurvey[],
       noCodeActionClasses: syncResult.value.noCodeActionClasses,
       product: syncResult.value.product,
-      attributes: syncResult.value.person?.attributes || {},
+      // attributes: syncResult.value.person?.attributes || {},
     };
 
-    if (!params.userId) {
-      // unidentified user
-      // set the displays and filter out surveys
-      state = {
-        ...state,
-        displays: oldState?.displays || [],
-      };
-      state = filterPublicSurveys(state);
+    state = {
+      ...state,
+      displays: oldState?.displays || [],
+    };
 
-      const surveyNames = state.surveys.map((s) => s.name);
-      logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames.join(", "));
-    } else {
-      const surveyNames = state.surveys.map((s) => s.name);
-      logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames.join(", "));
-    }
+    state = filterPublicSurveys(state);
 
-    config.update({
+    const surveyNames = state.surveys.map((s) => s.name);
+    logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames.join(", "));
+
+    websiteConfig.update({
       apiHost: params.apiHost,
       environmentId: params.environmentId,
-      userId: params.userId,
       state,
       expiresAt: new Date(new Date().getTime() + 2 * 60000), // 2 minutes in the future
     });
@@ -125,7 +93,7 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
   }
 };
 
-export const filterPublicSurveys = (state: TJsState): TJsState => {
+export const filterPublicSurveys = (state: TJsWebsiteState): TJsWebsiteState => {
   const { displays, product } = state;
 
   let { surveys } = state;
@@ -179,20 +147,19 @@ export const addExpiryCheckListener = (): void => {
     syncIntervalId = window.setInterval(async () => {
       try {
         // check if the config has not expired yet
-        if (config.get().expiresAt && new Date(config.get().expiresAt) >= new Date()) {
+        if (websiteConfig.get().expiresAt && new Date(websiteConfig.get().expiresAt) >= new Date()) {
           return;
         }
         logger.debug("Config has expired. Starting sync.");
         await sync({
-          apiHost: config.get().apiHost,
-          environmentId: config.get().environmentId,
-          userId: config.get().userId,
+          apiHost: websiteConfig.get().apiHost,
+          environmentId: websiteConfig.get().environmentId,
         });
       } catch (e) {
         console.error(`Error during expiry check: ${e}`);
         logger.debug("Extending config and try again later.");
-        const existingConfig = config.get();
-        config.update(existingConfig);
+        const existingConfig = websiteConfig.get();
+        websiteConfig.update(existingConfig);
       }
     }, updateInterval);
   }
