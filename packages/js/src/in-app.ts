@@ -1,5 +1,5 @@
-import { TFormbricksInApp } from "@formbricks/js-core/dist/in-app";
-import { TFormbricksWebsite } from "@formbricks/js-core/dist/website";
+import { TFormbricksInApp } from "@formbricks/js-core/in-app";
+import { TFormbricksWebsite } from "@formbricks/js-core/website";
 
 declare global {
   interface Window {

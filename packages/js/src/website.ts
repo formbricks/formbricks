@@ -1,4 +1,4 @@
-import { TFormbricksWebsite } from "@formbricks/js-core/dist/website";
+import { TFormbricksWebsite } from "@formbricks/js-core/website";
 
 let sdkLoadingPromise: Promise<void> | null = null;
 let isErrorLoadingSdk = false;
