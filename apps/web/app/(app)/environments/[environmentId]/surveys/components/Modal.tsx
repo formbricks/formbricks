@@ -73,20 +73,28 @@ export default function Modal({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Handle click outside to close the modal
   useEffect(() => {
+    if (!clickOutsideClose) setShow(true);
+    const previewBase = document.getElementById("preview-survey-base");
     function handleClickOutside(e: MouseEvent) {
-      if (clickOutsideClose && modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      if (
+        scalingClasses.transformOrigin === "" &&
+        clickOutsideClose &&
+        modalRef.current &&
+        previewBase &&
+        previewBase.contains(e.target as Node) &&
+        !modalRef.current.contains(e.target as Node)
+      ) {
         setTimeout(() => {
           setShow(false);
-        }, 1000);
+        }, 500);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [clickOutsideClose]);
+  }, [clickOutsideClose, scalingClasses.transformOrigin]);
 
   const highlightBorderColorStyle = useMemo(() => {
     if (!highlightBorderColor) return { overflow: "auto" };
@@ -119,9 +127,9 @@ export default function Modal({
           : "-bottom-full"
         : "";
 
-  if (!show) return null;
   return (
     <div
+      id="preview-survey-base"
       aria-live="assertive"
       className={cn(
         "relative h-full w-full overflow-hidden",
