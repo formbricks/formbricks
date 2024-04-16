@@ -9,7 +9,7 @@ declare global {
   }
 }
 
-interface InitialiseSaturnProps {
+interface SaturnChatProps {
   userId: string;
   email: string;
   name: string | null;
@@ -17,7 +17,7 @@ interface InitialiseSaturnProps {
   teamName: string;
 }
 
-export function SaturnSupport({ userId, email, name, teamId, teamName }: InitialiseSaturnProps) {
+export function SaturnChat({ userId, email, name, teamId, teamName }: SaturnChatProps) {
   useEffect(() => {
     const scriptElem = document.createElement("script");
     const BASE_URL = "https://app.saturnhq.io";
@@ -61,7 +61,6 @@ export function SaturnSupport({ userId, email, name, teamId, teamName }: Initial
     if (window?.$saturn && window?.$saturn?.isLoaded) {
       setUser();
       window.$saturn.open();
-      document.addEventListener("mousedown", handleOutsideClick);
     } else {
       window.addEventListener(
         "saturn:ready",
@@ -71,8 +70,8 @@ export function SaturnSupport({ userId, email, name, teamId, teamName }: Initial
         },
         { once: true }
       );
-      document.addEventListener("mousedown", handleOutsideClick);
     }
+    document.addEventListener("mousedown", handleOutsideClick);
   }, [userId, email, name, teamId, teamName]);
 
   return <></>;

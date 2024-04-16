@@ -15,7 +15,7 @@ import {
   LogOutIcon,
   MailIcon,
   MenuIcon,
-  MessageSquareDotIcon,
+  MessageSquareIcon,
   MessageSquareTextIcon,
   PlusIcon,
   SlidersIcon,
@@ -28,6 +28,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
@@ -58,7 +59,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { CustomersIcon, DashboardIcon, FilterIcon, FormIcon, SettingsIcon } from "@formbricks/ui/icons";
 
-import { SaturnSupport } from "../components/SaturnSupport";
+import { SaturnChat } from "../components/SaturnSupport";
 import AddProductModal from "./AddProductModal";
 import UrlShortenerModal from "./UrlShortenerModal";
 
@@ -230,10 +231,14 @@ export default function Navigation({
           target: "_blank",
         },
         {
-          icon: MessageSquareDotIcon,
+          icon: MessageSquareIcon,
           label: "Open Chat",
           href: pathname,
           onClick: () => {
+            if (openSaturn) {
+              toast.success("Chat is already open on the bottom right corner.");
+              return;
+            }
             setOpenSaturn(true);
           },
         },
@@ -578,7 +583,7 @@ export default function Navigation({
           />
 
           {openSaturn && (
-            <SaturnSupport
+            <SaturnChat
               userId={session.user.id}
               email={session.user.email}
               name={session.user.name}
