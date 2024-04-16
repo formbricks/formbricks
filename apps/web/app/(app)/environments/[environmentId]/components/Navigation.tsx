@@ -211,7 +211,7 @@ export default function Navigation({
       links: [
         {
           icon: FileCheckIcon,
-          label: "Setup checklist",
+          label: "Setup Checklist",
           href: `/environments/${environment.id}/settings/setup`,
           hidden: widgetSetupCompleted,
         },
@@ -231,7 +231,7 @@ export default function Navigation({
         },
         {
           icon: MessageSquareIcon,
-          label: "Open Chat",
+          label: "Chat with us",
           href: pathname,
           onClick: () => {
             if (openSaturn) {
