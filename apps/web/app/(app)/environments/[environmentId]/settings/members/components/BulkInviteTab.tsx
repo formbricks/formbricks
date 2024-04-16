@@ -6,7 +6,7 @@ import Papa, { type ParseResult } from "papaparse";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-import { ZInviteMembers } from "@formbricks/types/invites";
+import { ZInvitees } from "@formbricks/types/invites";
 import { Alert, AlertDescription } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
 
@@ -48,7 +48,7 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
           };
         });
         try {
-          ZInviteMembers.parse(members);
+          ZInvitees.parse(members);
           onSubmit(members);
         } catch (err) {
           console.error(err.message);

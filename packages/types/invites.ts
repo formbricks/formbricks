@@ -18,10 +18,12 @@ export type TInvite = z.infer<typeof ZInvite>;
 
 export const ZInvitee = z.object({
   email: z.string().email(),
-  name: z.string().nullable(),
+  name: z.string(),
   role: ZMembershipRole,
 });
 export type TInvitee = z.infer<typeof ZInvitee>;
+
+export const ZInvitees = z.array(ZInvitee);
 
 export const ZCurrentUser = z.object({
   id: z.string(),
@@ -33,12 +35,3 @@ export const ZInviteUpdateInput = z.object({
   role: ZMembershipRole,
 });
 export type TInviteUpdateInput = z.infer<typeof ZInviteUpdateInput>;
-
-export const ZInviteMembers = z.array(
-  z.object({
-    name: z.string(),
-    email: z.string().email(),
-    role: ZMembershipRole,
-  })
-);
-export type TInviteMembers = z.infer<typeof ZInviteMembers>;
