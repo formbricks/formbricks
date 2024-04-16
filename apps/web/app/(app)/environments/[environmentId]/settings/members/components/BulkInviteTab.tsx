@@ -36,7 +36,7 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
     }
     Papa.parse(csvFile, {
       skipEmptyLines: true,
-      comments: "Full name,Email Address,Role",
+      comments: "Full Name,Email Address,Role",
       complete: (results: ParseResult<string[]>) => {
         const members = results.data.map((csv) => {
           const [name, email, role] = csv;
