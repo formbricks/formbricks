@@ -272,16 +272,8 @@ export const authOptions: NextAuthOptions = {
           const role = isNewTeam ? "owner" : DEFAULT_TEAM_ROLE || "admin";
           await createMembership(team.id, userProfile.id, { role, accepted: true });
           await createAccount({
+            ...account,
             userId: userProfile.id,
-            type: account.type,
-            provider: account.provider,
-            providerAccountId: account.providerAccountId,
-            access_token: ('access_token' in account) ? account.access_token : undefined,
-            refresh_token: ('refresh_token' in account) ? account.refresh_token : undefined,
-            expires_at: ('expires_at' in account) ? account.expires_at : undefined,
-            scope: ('scope' in account) ? account.scope : undefined,
-            token_type: ('token_type' in account) ? account.token_type : undefined,
-            id_token: ('id_token' in account) ? account.id_token : undefined,
           });
           return true;
         }
@@ -290,16 +282,8 @@ export const authOptions: NextAuthOptions = {
           const team = await createTeam({ name: userProfile.name + "'s Team" });
           await createMembership(team.id, userProfile.id, { role: "owner", accepted: true });
           await createAccount({
+            ...account,
             userId: userProfile.id,
-            type: account.type,
-            provider: account.provider,
-            providerAccountId: account.providerAccountId,
-            access_token: ('access_token' in account) ? account.access_token : undefined,
-            refresh_token: ('refresh_token' in account) ? account.refresh_token : undefined,
-            expires_at: ('expires_at' in account) ? account.expires_at : undefined,
-            scope: ('scope' in account) ? account.scope : undefined,
-            token_type: ('token_type' in account) ? account.token_type : undefined,
-            id_token: ('id_token' in account) ? account.id_token : undefined,
           });
           const product = await createProduct(team.id, { name: "My Product" });
           const updatedNotificationSettings = {
