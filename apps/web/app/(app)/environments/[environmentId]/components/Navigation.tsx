@@ -101,7 +101,6 @@ export default function Navigation({
   const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
   const [openSaturn, setOpenSaturn] = useState(false);
   const isPricingDisabled = !isOwner && !isAdmin;
-  console.log("openSaturn in nav", openSaturn);
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
