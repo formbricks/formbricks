@@ -34,6 +34,7 @@ export const Survey = ({
   onFileUpload,
   responseCount,
   isCardBorderVisible = true,
+  startAtQuestionId,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
   const [questionId, setQuestionId] = useState(
@@ -75,6 +76,9 @@ export const Survey = ({
     onDisplay();
     if (prefillResponseData) {
       onSubmit(prefillResponseData, {}, true);
+    }
+    if (startAtQuestionId && !prefillResponseData) {
+      setQuestionId(startAtQuestionId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -170,6 +174,11 @@ export const Survey = ({
           return logic.destination;
         }
       }
+    }
+    if (startAtQuestionId) {
+      if (isFormPrefilling && currIdxTemp === 0) return startAtQuestionId;
+      const startAtQuestionIdx = questions.findIndex((q) => q.id === startAtQuestionId);
+      if (startAtQuestionIdx > currIdxTemp + 1) return questions[startAtQuestionIdx].id;
     }
     return questions[currIdxTemp + 1]?.id || "end";
   };

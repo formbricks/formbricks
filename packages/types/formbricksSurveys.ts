@@ -22,6 +22,7 @@ export interface SurveyBaseProps {
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
   isCardBorderVisible?: boolean;
+  startAtQuestionId?: string;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

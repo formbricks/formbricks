@@ -115,9 +115,6 @@ export default function LinkSurvey({
     if (window.self === window.top) {
       setAutofocus(true);
     }
-    if (startAt && isStartAtValid) {
-      setQuestionId(startAt);
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -268,6 +265,7 @@ export default function LinkSurvey({
           getSetQuestionId={(f: (value: string) => void) => {
             setQuestionId = f;
           }}
+          startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
         />
       </ContentWrapper>
     </div>
