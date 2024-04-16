@@ -141,7 +141,7 @@ const nextConfig = {
 };
 
 // set custom cache handler
-if (process.env.CUSTOM_CACHE_DISABLED) {
+if (process.env.CUSTOM_CACHE_DISABLED !== "1") {
   nextConfig.cacheHandler = require.resolve("./cache-handler.mjs");
 }
 
