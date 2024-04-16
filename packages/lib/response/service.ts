@@ -229,7 +229,17 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
-  const { environmentId, language, userId, surveyId, finished, data, meta, singleUseId } = responseInput;
+  const {
+    environmentId,
+    language,
+    userId,
+    surveyId,
+    finished,
+    data,
+    meta,
+    singleUseId,
+    ttc: initialTtc,
+  } = responseInput;
   try {
     let person: TPerson | null = null;
 
@@ -240,6 +250,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         person = await createPerson(environmentId, userId);
       }
     }
+
+    const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
     const responsePrisma = await prisma.response.create({
       data: {
@@ -261,6 +273,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         }),
         ...(meta && ({ meta } as Prisma.JsonObject)),
         singleUseId,
+        ttc: ttc,
       },
       select: responseSelection,
     });
