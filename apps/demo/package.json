@@ -18,6 +18,7 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "eslint-config-formbricks": "workspace:*"
+    "eslint-config-formbricks": "workspace:*",
+    "@formbricks/tsconfig": "workspace:*"
   }
 }
