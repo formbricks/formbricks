@@ -28,6 +28,7 @@ export default function Modal({
   const [show, setShow] = useState(true);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [overlayVisible, setOverlayVisible] = useState(true);
 
   const calculateScaling = () => {
     let scaleValue = "1";
@@ -65,7 +66,7 @@ export default function Modal({
   };
 
   const scalingClasses = calculateScaling();
-  const overlayStyle = darkOverlay ? "bg-gray-700/80" : "bg-white/50";
+  const overlayStyle = overlayVisible && darkOverlay ? "bg-gray-700/80" : "bg-white/50";
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -74,9 +75,13 @@ export default function Modal({
   }, []);
 
   useEffect(() => {
-    if (!clickOutsideClose) setShow(true);
+    if (!clickOutsideClose) {
+      setOverlayVisible(true);
+      setShow(true);
+    }
     const previewBase = document.getElementById("preview-survey-base");
     function handleClickOutside(e: MouseEvent) {
+      // Checks if the positioning is center, clickOutsideClose is set & if the click is inside the preview screen but outside the survey modal
       if (
         scalingClasses.transformOrigin === "" &&
         clickOutsideClose &&
@@ -86,6 +91,7 @@ export default function Modal({
         !modalRef.current.contains(e.target as Node)
       ) {
         setTimeout(() => {
+          setOverlayVisible(false);
           setShow(false);
         }, 500);
       }
