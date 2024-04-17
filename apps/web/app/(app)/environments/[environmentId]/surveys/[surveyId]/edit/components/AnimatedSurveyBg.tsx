@@ -47,7 +47,7 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
     try {
       type === "play" ? video.play() : video.pause();
     } catch (error) {
-      console.error(index, error);
+      console.error(error);
     }
   };
 

@@ -20,7 +20,7 @@ export const TabBar: React.FC<TabBarProps> = ({
   const Nav = () => {
     if (tabStyle === "bar") {
       return (
-        <nav className="flex h-full items-center space-x-4" aria-label="Tabs" key="bar">
+        <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -42,7 +42,7 @@ export const TabBar: React.FC<TabBarProps> = ({
 
     if (tabStyle === "button") {
       return (
-        <nav className="flex h-full w-full flex-1 items-center space-x-4" aria-label="Tabs" key="button">
+        <nav className="flex h-full w-full flex-1 items-center space-x-4" aria-label="Tabs">
           {tabs.map((tab) => (
             <div className="flex h-full flex-1 justify-center px-3 py-2" key={tab.id}>
               <button
