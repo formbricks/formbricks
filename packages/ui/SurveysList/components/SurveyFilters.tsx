@@ -42,7 +42,8 @@ const statusOptions = [
 ];
 const typeOptions = [
   { label: "Link", value: "link" },
-  { label: "In-app", value: "web" },
+  { label: "In-app", value: "in-app" },
+  { label: "Website", value: "website" },
 ];
 
 const sortOptions = [

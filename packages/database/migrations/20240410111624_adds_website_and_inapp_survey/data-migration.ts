@@ -61,7 +61,7 @@ async function main() {
             }
           }
 
-          // find All the segments that are private and have the title as the webSurvey's id
+          // find All the segments that are private and have the title as the webSurvey's id (should ideally be only one)
           await tx.segment.deleteMany({
             where: {
               title: webSurvey.id,

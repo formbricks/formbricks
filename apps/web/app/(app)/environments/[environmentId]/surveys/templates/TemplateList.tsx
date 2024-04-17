@@ -28,6 +28,7 @@ type TemplateList = {
 
 const ALL_CATEGORY_NAME = "All";
 const RECOMMENDED_CATEGORY_NAME = "For you";
+
 export default function TemplateList({
   environmentId,
   user,
@@ -66,7 +67,7 @@ export default function TemplateList({
 
   const addSurvey = async (activeTemplate) => {
     setLoading(true);
-    const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
+    const surveyType = environment?.widgetSetupCompleted ? "inApp" : "link";
     const augmentedTemplate: TSurveyInput = {
       ...activeTemplate.preset,
       type: surveyType,

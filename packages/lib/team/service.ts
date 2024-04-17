@@ -364,8 +364,7 @@ export const getMonthlyTeamResponseCount = async (teamId: string): Promise<numbe
         where: {
           AND: [
             { survey: { environmentId: { in: environmentIds } } },
-            // ? Should we also filter by survey type "website"?
-            { survey: { type: "inApp" } },
+            { survey: { type: { in: ["inApp", "website"] } } },
             { createdAt: { gte: firstDayOfMonth } },
           ],
         },

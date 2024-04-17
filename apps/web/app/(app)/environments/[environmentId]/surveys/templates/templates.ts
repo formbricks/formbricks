@@ -2653,7 +2653,7 @@ export const getExampleSurveyTemplate = (webAppUrl: string) => ({
       }) as TSurveyCTAQuestion
   ),
   name: "Example survey",
-  type: "web" as TSurveyType,
+  type: "website" as TSurveyType,
   autoComplete: 2,
   triggers: ["New Session"],
   status: "inProgress" as TSurveyStatus,

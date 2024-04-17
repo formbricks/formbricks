@@ -72,26 +72,29 @@ export default function AppPage({}) {
   return (
     <div className="h-screen bg-white px-12 py-6 dark:bg-slate-800">
       <div className="flex flex-col justify-between md:flex-row">
-        <div className="flex items-center gap-2 rounded-lg border border-slate-900 p-2">
-          <EarthIcon className="h-10 w-10" />
-          <button
-            className="text-slate-700 dark:text-slate-300"
-            onClick={() => {
-              removeFormbricksContainer();
-              window.location.href = "/app/website";
-            }}>
-            Website Demo
-          </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 rounded-lg border border-slate-900 p-2">
+            <EarthIcon className="h-10 w-10" />
+            <button
+              className="text-slate-700 dark:text-slate-300"
+              onClick={() => {
+                removeFormbricksContainer();
+                window.location.href = "/app/website";
+              }}>
+              Website Demo
+            </button>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Formbricks In-product Survey Demo App
+            </h1>
+            <p className="text-slate-700 dark:text-slate-300">
+              This app helps you test your in-app surveys. You can create and test user actions, create and
+              update user attributes, etc.
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Formbricks In-product Survey Demo App
-          </h1>
-          <p className="text-slate-700 dark:text-slate-300">
-            This app helps you test your in-app surveys. You can create and test user actions, create and
-            update user attributes, etc.
-          </p>
-        </div>
+
         <button
           className="mt-2 rounded-lg bg-slate-200 px-6 py-1 dark:bg-slate-700 dark:text-slate-100"
           onClick={() => setDarkMode(!darkMode)}>
