@@ -1,3 +1,4 @@
+import { debounce } from "lodash";
 import { useState } from "react";
 
 interface AnimatedSurveyBgProps {
@@ -7,7 +8,6 @@ interface AnimatedSurveyBgProps {
 
 export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyBgProps) => {
   const [animation, setAnimation] = useState(background);
-  const [hoveredVideo, setHoveredVideo] = useState<number | null>(null);
 
   const animationFiles = {
     "/animated-bgs/Thumbnails/1_Thumb.mp4": "/animated-bgs/4K/1_4k.mp4",
@@ -42,31 +42,16 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
     "/animated-bgs/Thumbnails/30_Thumb.mp4": "/animated-bgs/4K/30_4k.mp4",
   };
 
-  const handleMouseEnter = (index: number) => {
-    setHoveredVideo(index);
-    playVideo(index);
-  };
-
-  const handleMouseLeave = (index: number) => {
-    setHoveredVideo(null);
-    pauseVideo(index);
-  };
-
-  // Function to play the video
-  const playVideo = (index: number) => {
+  const togglePlayback = (index: number, type: "play" | "pause") => {
     const video = document.getElementById(`video-${index}`) as HTMLVideoElement;
-    if (video) {
-      video.play();
+    try {
+      type === "play" ? video.play() : video.pause();
+    } catch (error) {
+      console.error(index, error);
     }
   };
 
-  // Function to pause the video
-  const pauseVideo = (index: number) => {
-    const video = document.getElementById(`video-${index}`) as HTMLVideoElement;
-    if (video) {
-      video.pause();
-    }
-  };
+  const debouncedManagePlayback = debounce(togglePlayback, 150);
 
   const handleBg = (x: string) => {
     setAnimation(x);
@@ -81,14 +66,13 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
           return (
             <div
               key={index}
-              onMouseEnter={() => handleMouseEnter(index)}
-              onMouseLeave={() => handleMouseLeave(index)}
+              onMouseEnter={() => debouncedManagePlayback(index, "play")}
+              onMouseLeave={() => debouncedManagePlayback(index, "pause")}
               onClick={() => handleBg(value)}
               className="relative cursor-pointer overflow-hidden rounded-lg">
               <video
                 disablePictureInPicture
                 id={`video-${index}`}
-                autoPlay={hoveredVideo === index}
                 className="h-46 w-96 origin-center scale-105 transform">
                 <source src={`${key}`} type="video/mp4" />
               </video>
