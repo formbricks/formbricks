@@ -4,7 +4,7 @@ import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/M
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import { Variants, motion } from "framer-motion";
-import { ExpandIcon, MonitorIcon, RefreshCcwIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
+import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
@@ -12,8 +12,8 @@ import type { TProduct } from "@formbricks/types/product";
 import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui/Button";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
+import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
@@ -148,16 +148,18 @@ export const PreviewSurvey = ({
     if (questionId) {
       updateQuestionId(questionId);
     }
+  }, [questionId, updateQuestionId]);
 
+  const onFinished = () => {
     // close modal if there are no questions left
-    if (survey.type === "web" && !survey.thankYouCard.enabled && questionId === "end") {
+    if (survey.type === "web" && !survey.thankYouCard.enabled) {
       setIsModalOpen(false);
       setTimeout(() => {
         setQuestionId(survey.questions[0]?.id);
         setIsModalOpen(true);
       }, 500);
     }
-  }, [questionId, survey.type, survey.thankYouCard.enabled, survey.questions, updateQuestionId]);
+  };
 
   // this useEffect is fo refreshing the survey preview only if user is switching between templates on survey templates page and hence we are checking for survey.id === "someUniqeId1" which is a common Id for all templates
   useEffect(() => {
@@ -225,7 +227,7 @@ export const PreviewSurvey = ({
               Preview
             </p>
             <div className="absolute right-0 top-0 m-2">
-              <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
+              <ResetProgressButton onClick={resetQuestionProgress} />
             </div>
             <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isMobilePreview>
               {previewType === "modal" ? (
@@ -248,6 +250,7 @@ export const PreviewSurvey = ({
                     getSetQuestionId={(f: (value: string) => void) => {
                       setQuestionId = f;
                     }}
+                    onFinished={onFinished}
                   />
                 </Modal>
               ) : (
@@ -306,7 +309,7 @@ export const PreviewSurvey = ({
                       }}
                     />
                   )}
-                  <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
+                  <ResetProgressButton onClick={resetQuestionProgress} />
                 </div>
               </div>
             </div>
@@ -331,6 +334,7 @@ export const PreviewSurvey = ({
                   getSetQuestionId={(f: (value: string) => void) => {
                     setQuestionId = f;
                   }}
+                  onFinished={onFinished}
                 />
               </Modal>
             ) : (
@@ -376,15 +380,3 @@ export const PreviewSurvey = ({
     </div>
   );
 };
-
-function ResetProgressButton({ resetQuestionProgress }) {
-  return (
-    <Button
-      variant="minimal"
-      className="py-0.2 mr-2 bg-white px-2 font-sans text-sm text-slate-500"
-      onClick={resetQuestionProgress}>
-      Restart
-      <RefreshCcwIcon className="ml-2 h-4 w-4" />
-    </Button>
-  );
-}
