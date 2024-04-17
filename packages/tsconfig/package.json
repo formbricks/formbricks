@@ -7,9 +7,9 @@
     "clean": "rimraf node_modules dist turbo"
   },
   "devDependencies": {
-    "@types/node": "20.12.4",
-    "@types/react": "18.2.74",
-    "@types/react-dom": "18.2.24",
+    "@types/node": "20.12.7",
+    "@types/react": "18.2.79",
+    "@types/react-dom": "18.2.25",
     "typescript": "5.3.3"
   }
 }
