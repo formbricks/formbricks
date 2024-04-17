@@ -113,8 +113,12 @@ export default function PreviewSurvey({
   };
 
   const { placement: surveyPlacement } = productOverwrites || {};
+  const { darkOverlay: surveyDarkOverlay } = productOverwrites || {};
+  const { clickOutsideClose: surveyClickOutsideClose } = productOverwrites || {};
 
   const placement = surveyPlacement || product.placement;
+  const darkOverlay = surveyDarkOverlay ?? product.darkOverlay;
+  const clickOutsideClose = surveyClickOutsideClose ?? product.clickOutsideClose;
 
   const styling: TSurveyStyling | TProductStyling = useMemo(() => {
     // allow style overwrite is disabled from the product
@@ -224,6 +228,8 @@ export default function PreviewSurvey({
                   placement={placement}
                   highlightBorderColor={styling.highlightBorderColor?.light}
                   previewMode="mobile"
+                  darkOverlay={darkOverlay}
+                  clickOutsideClose={clickOutsideClose}
                   borderRadius={styling?.roundness ?? 8}
                   background={styling?.cardBackgroundColor?.light}>
                   <SurveyInline
@@ -304,6 +310,8 @@ export default function PreviewSurvey({
                 isOpen={isModalOpen}
                 placement={placement}
                 highlightBorderColor={styling.highlightBorderColor?.light}
+                clickOutsideClose={clickOutsideClose}
+                darkOverlay={darkOverlay}
                 previewMode="desktop"
                 borderRadius={styling.roundness ?? 8}
                 background={styling.cardBackgroundColor?.light}>
