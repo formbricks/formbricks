@@ -58,6 +58,9 @@ importers:
       '@formbricks/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
+      '@formbricks/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       eslint-config-formbricks:
         specifier: workspace:*
         version: link:../../packages/eslint-config-formbricks

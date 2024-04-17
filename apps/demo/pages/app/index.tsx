@@ -35,20 +35,14 @@ export default function AppPage({}) {
     addFormbricksDebugParam();
 
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
-      const defaultAttributes = {
-        language: "de",
-      };
-
-      const userInitAttributes = { "Init Attribute 1": "eight", "Init Attribute 2": "two" };
-
-      const attributes = { ...defaultAttributes, ...userInitAttributes };
       const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
+      const userInitAttributes = { language: "de", "Init Attribute 1": "eight", "Init Attribute 2": "two" };
 
       formbricksInApp.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         userId,
-        attributes,
+        attributes: userInitAttributes,
       });
     }
 
@@ -73,17 +67,17 @@ export default function AppPage({}) {
     <div className="h-screen bg-white px-12 py-6 dark:bg-slate-800">
       <div className="flex flex-col justify-between md:flex-row">
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 rounded-lg border border-slate-900 p-2">
-            <EarthIcon className="h-10 w-10" />
-            <button
-              className="text-slate-700 dark:text-slate-300"
-              onClick={() => {
-                removeFormbricksContainer();
-                window.location.href = "/app/website";
-              }}>
-              Website Demo
-            </button>
-          </div>
+          <button
+            className="rounded-lg bg-[#038178] p-2 text-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1"
+            onClick={() => {
+              removeFormbricksContainer();
+              window.location.href = "/app/website";
+            }}>
+            <div className="flex items-center gap-2">
+              <EarthIcon className="h-10 w-10" />
+              <span>Website Demo</span>
+            </div>
+          </button>
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
               Formbricks In-product Survey Demo App
@@ -269,41 +263,6 @@ export default function AppPage({}) {
                   user email
                 </a>{" "}
                 &apos;test@web.com&apos;
-              </p>
-            </div>
-          </div>
-          <div className="p-6">
-            {router.query.userId === "true" ? (
-              <div>
-                <button
-                  onClick={() => {
-                    window.location.href = "/app";
-                  }}
-                  className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
-                  Deactivate User Identification
-                </button>
-              </div>
-            ) : (
-              <div>
-                <button
-                  onClick={() => {
-                    window.location.href = "/app?userId=true";
-                  }}
-                  className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
-                  Activate User Identification
-                </button>
-              </div>
-            )}
-            <div>
-              <p className="text-xs text-slate-700 dark:text-slate-300">
-                This button activates/deactivates{" "}
-                <a
-                  href="https://formbricks.com/docs/attributes/identify-users"
-                  target="_blank"
-                  className="underline dark:text-blue-500">
-                  user identification
-                </a>{" "}
-                with the userId &apos;THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING&apos;
               </p>
             </div>
           </div>
