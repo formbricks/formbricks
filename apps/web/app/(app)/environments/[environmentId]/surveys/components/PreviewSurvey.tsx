@@ -148,16 +148,18 @@ export const PreviewSurvey = ({
     if (questionId) {
       updateQuestionId(questionId);
     }
+  }, [questionId, survey.type, survey.thankYouCard.enabled, survey.questions, updateQuestionId]);
 
+  const onFinished = () => {
     // close modal if there are no questions left
-    if (survey.type === "web" && !survey.thankYouCard.enabled && questionId === "end") {
+    if (survey.type === "web" && !survey.thankYouCard.enabled) {
       setIsModalOpen(false);
       setTimeout(() => {
         setQuestionId(survey.questions[0]?.id);
         setIsModalOpen(true);
       }, 500);
     }
-  }, [questionId, survey.type, survey.thankYouCard.enabled, survey.questions, updateQuestionId]);
+  };
 
   // this useEffect is fo refreshing the survey preview only if user is switching between templates on survey templates page and hence we are checking for survey.id === "someUniqeId1" which is a common Id for all templates
   useEffect(() => {
@@ -248,6 +250,7 @@ export const PreviewSurvey = ({
                     getSetQuestionId={(f: (value: string) => void) => {
                       setQuestionId = f;
                     }}
+                    onFinished={onFinished}
                   />
                 </Modal>
               ) : (
@@ -331,6 +334,7 @@ export const PreviewSurvey = ({
                   getSetQuestionId={(f: (value: string) => void) => {
                     setQuestionId = f;
                   }}
+                  onFinished={onFinished}
                 />
               </Modal>
             ) : (
