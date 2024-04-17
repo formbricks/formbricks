@@ -64,7 +64,6 @@ export default function MetaInformation({
         content="Formbricks, Privacy-first Experience Management, Create your survey, open-source typeform alternative, form with data insights"
       />
       <meta name="theme-color" content="#00C4B8" />
-      <meta name="google-site-verification" content="VMinmdQfLA8S6fiu8Yd3XBLixcHEjGLG5n-jOYY-qxc" />
     </Head>
   );
 }
