@@ -148,7 +148,7 @@ export const PreviewSurvey = ({
     if (questionId) {
       updateQuestionId(questionId);
     }
-  }, [questionId, survey.type, survey.thankYouCard.enabled, survey.questions, updateQuestionId]);
+  }, [questionId, updateQuestionId]);
 
   const onFinished = () => {
     // close modal if there are no questions left
