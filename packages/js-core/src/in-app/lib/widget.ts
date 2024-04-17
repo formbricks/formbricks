@@ -11,7 +11,7 @@ import { InAppConfig } from "./config";
 import { putFormbricksInErrorState } from "./initialize";
 import { sync } from "./sync";
 
-const containerId = "formbricks-web-container";
+const containerId = "formbricks-in-app-container";
 
 const inAppConfig = InAppConfig.getInstance();
 const logger = Logger.getInstance();

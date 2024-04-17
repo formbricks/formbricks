@@ -18,7 +18,7 @@ export const addEventListeners = (): void => {
   addExpiryCheckListener();
   addPageUrlEventListeners();
   addClickEventListener();
-  addExitIntentListener();
+  addExitIntentListener("in-app");
   addScrollDepthListener("in-app");
 };
 
@@ -28,7 +28,7 @@ export const addCleanupEventListeners = (): void => {
     removeExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
-    removeExitIntentListener();
+    removeExitIntentListener("in-app");
     removeScrollDepthListener("in-app");
   });
   areRemoveEventListenersAdded = true;
@@ -40,7 +40,7 @@ export const removeCleanupEventListeners = (): void => {
     removeExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
-    removeExitIntentListener();
+    removeExitIntentListener("in-app");
     removeScrollDepthListener("in-app");
   });
   areRemoveEventListenersAdded = false;
@@ -50,7 +50,7 @@ export const removeAllEventListeners = (): void => {
   removeExpiryCheckListener();
   removePageUrlEventListeners();
   removeClickEventListener();
-  removeExitIntentListener();
+  removeExitIntentListener("in-app");
   removeScrollDepthListener("in-app");
   removeCleanupEventListeners();
 };

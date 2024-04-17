@@ -1,8 +1,9 @@
+import { EarthIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
-import formbricks from "@formbricks/js/in-app";
+import formbricksInApp from "@formbricks/js/in-app";
 
 import fbsetup from "../../public/fb-setup.png";
 
@@ -35,14 +36,15 @@ export default function AppPage({}) {
 
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
       const defaultAttributes = {
-        language: "gu",
+        language: "de",
       };
 
       const userInitAttributes = { "Init Attribute 1": "eight", "Init Attribute 2": "two" };
 
       const attributes = { ...defaultAttributes, ...userInitAttributes };
       const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
-      formbricks.init({
+
+      formbricksInApp.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         userId,
@@ -52,7 +54,7 @@ export default function AppPage({}) {
 
     // Connect next.js router to Formbricks
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
-      const handleRouteChange = formbricks?.registerRouteChange;
+      const handleRouteChange = formbricksInApp?.registerRouteChange;
       router.events.on("routeChangeComplete", handleRouteChange);
 
       return () => {
@@ -61,9 +63,26 @@ export default function AppPage({}) {
     }
   });
 
+  const removeFormbricksContainer = () => {
+    document.getElementById("formbricks-modal-container")?.remove();
+    document.getElementById("formbricks-in-app-container")?.remove();
+    localStorage.removeItem("formbricks-js-in-app");
+  };
+
   return (
     <div className="h-screen bg-white px-12 py-6 dark:bg-slate-800">
       <div className="flex flex-col justify-between md:flex-row">
+        <div className="flex items-center gap-2 rounded-lg border border-slate-900 p-2">
+          <EarthIcon className="h-10 w-10" />
+          <button
+            className="text-slate-700 dark:text-slate-300"
+            onClick={() => {
+              removeFormbricksContainer();
+              window.location.href = "/app/website";
+            }}>
+            Website Demo
+          </button>
+        </div>
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
             Formbricks In-product Survey Demo App
@@ -126,7 +145,7 @@ export default function AppPage({}) {
             <button
               className="my-4 rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
               onClick={() => {
-                formbricks.reset();
+                formbricksInApp.reset();
               }}>
               Reset
             </button>
@@ -141,7 +160,7 @@ export default function AppPage({}) {
               <button
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
                 onClick={() => {
-                  formbricks.track("Code Action");
+                  formbricksInApp.track("Code Action");
                 }}>
                 Code Action
               </button>
@@ -185,7 +204,7 @@ export default function AppPage({}) {
             <div>
               <button
                 onClick={() => {
-                  formbricks.setAttribute("Plan", "Free");
+                  formbricksInApp.setAttribute("Plan", "Free");
                 }}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Plan to &apos;Free&apos;
@@ -208,7 +227,7 @@ export default function AppPage({}) {
             <div>
               <button
                 onClick={() => {
-                  formbricks.setAttribute("Plan", "Paid");
+                  formbricksInApp.setAttribute("Plan", "Paid");
                 }}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Plan to &apos;Paid&apos;
@@ -231,7 +250,7 @@ export default function AppPage({}) {
             <div>
               <button
                 onClick={() => {
-                  formbricks.setEmail("test@web.com");
+                  formbricksInApp.setEmail("test@web.com");
                 }}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Email

@@ -6,7 +6,7 @@ import { err } from "./errors";
 
 let exitIntentListenerAdded = false;
 
-let exitIntentListenerWrapper = async function (e: MouseEvent, packageType: TJsPackageType = "in-app") {
+let exitIntentListenerWrapper = async function (e: MouseEvent, packageType: TJsPackageType) {
   if (e.clientY <= 0) {
     const trackResult =
       packageType === "in-app"
@@ -19,7 +19,7 @@ let exitIntentListenerWrapper = async function (e: MouseEvent, packageType: TJsP
   }
 };
 
-export const addExitIntentListener = (packageType: TJsPackageType = "in-app"): void => {
+export const addExitIntentListener = (packageType: TJsPackageType): void => {
   if (typeof document !== "undefined" && !exitIntentListenerAdded) {
     document
       .querySelector("body")!
@@ -28,9 +28,9 @@ export const addExitIntentListener = (packageType: TJsPackageType = "in-app"): v
   }
 };
 
-export const removeExitIntentListener = (): void => {
+export const removeExitIntentListener = (packageType: TJsPackageType): void => {
   if (exitIntentListenerAdded) {
-    document.removeEventListener("mouseleave", exitIntentListenerWrapper);
+    document.removeEventListener("mouseleave", (e) => exitIntentListenerWrapper(e, packageType));
     exitIntentListenerAdded = false;
   }
 };
@@ -38,7 +38,7 @@ export const removeExitIntentListener = (): void => {
 let scrollDepthListenerAdded = false;
 let scrollDepthTriggered = false;
 
-let scrollDepthListenerWrapper = async (packageType: TJsPackageType = "in-app") => {
+let scrollDepthListenerWrapper = async (packageType: TJsPackageType) => {
   const scrollPosition = window.scrollY;
   const windowSize = window.innerHeight;
   const bodyHeight = document.documentElement.scrollHeight;

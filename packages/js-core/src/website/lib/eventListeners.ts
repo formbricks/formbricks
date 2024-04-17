@@ -18,7 +18,7 @@ export const addEventListeners = (): void => {
   addExpiryCheckListener();
   addPageUrlEventListeners();
   addClickEventListener();
-  addExitIntentListener();
+  addExitIntentListener("website");
   addScrollDepthListener("website");
 };
 
@@ -28,7 +28,7 @@ export const addCleanupEventListeners = (): void => {
     removeExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
-    removeExitIntentListener();
+    removeExitIntentListener("website");
     removeScrollDepthListener("website");
   });
   areRemoveEventListenersAdded = true;
@@ -40,7 +40,7 @@ export const removeCleanupEventListeners = (): void => {
     removeExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
-    removeExitIntentListener();
+    removeExitIntentListener("website");
     removeScrollDepthListener("website");
   });
   areRemoveEventListenersAdded = false;
@@ -50,7 +50,7 @@ export const removeAllEventListeners = (): void => {
   removeExpiryCheckListener();
   removePageUrlEventListeners();
   removeClickEventListener();
-  removeExitIntentListener();
+  removeExitIntentListener("website");
   removeScrollDepthListener("website");
   removeCleanupEventListeners();
 };

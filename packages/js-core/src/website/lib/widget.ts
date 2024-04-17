@@ -10,7 +10,7 @@ import { getDefaultLanguageCode, getLanguageCode } from "../../shared/utils";
 import { WebsiteConfig } from "./config";
 import { filterPublicSurveys } from "./sync";
 
-const containerId = "formbricks-web-container";
+const containerId = "formbricks-website-container";
 
 const websiteConfig = WebsiteConfig.getInstance();
 const logger = Logger.getInstance();
