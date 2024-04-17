@@ -96,8 +96,12 @@ export const ThemeStylingPreviewSurvey = ({
   };
 
   const { placement: surveyPlacement } = productOverwrites || {};
+  const { darkOverlay: surveyDarkOverlay } = productOverwrites || {};
+  const { clickOutsideClose: surveyClickOutsideClose } = productOverwrites || {};
 
   const placement = surveyPlacement || product.placement;
+  const darkOverlay = surveyDarkOverlay ?? product.darkOverlay;
+  const clickOutsideClose = surveyClickOutsideClose ?? product.clickOutsideClose;
 
   const highlightBorderColor = product.styling.highlightBorderColor?.light;
 
@@ -146,6 +150,8 @@ export const ThemeStylingPreviewSurvey = ({
               isOpen
               placement={placement}
               highlightBorderColor={highlightBorderColor}
+              clickOutsideClose={clickOutsideClose}
+              darkOverlay={darkOverlay}
               previewMode="desktop"
               background={product.styling.cardBackgroundColor?.light}
               borderRadius={product.styling.roundness ?? 8}>
