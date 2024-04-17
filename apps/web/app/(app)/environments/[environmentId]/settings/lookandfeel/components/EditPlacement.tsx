@@ -31,6 +31,8 @@ export function EditPlacement({ product }: EditPlacementProps) {
   const [overlay, setOverlay] = useState(product.darkOverlay ? "darkOverlay" : "lightOverlay");
   const [clickOutside, setClickOutside] = useState(product.clickOutsideClose ? "allow" : "disallow");
   const [updatingPlacement, setUpdatingPlacement] = useState(false);
+  const overlayStyle =
+    currentPlacement === "center" && overlay === "darkOverlay" ? "bg-gray-700/80" : "bg-slate-200";
 
   const handleUpdatePlacement = async () => {
     try {
@@ -58,18 +60,21 @@ export function EditPlacement({ product }: EditPlacementProps) {
           {placements.map((placement) => (
             <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap">
               <RadioGroupItem id={placement.value} value={placement.value} disabled={placement.disabled} />
-              <Label
-                htmlFor={placement.value}
-                className={cn(placement.disabled ? "cursor-not-allowed text-slate-500" : "text-slate-900")}>
+              <Label htmlFor={placement.value} className="text-slate-900">
                 {placement.name}
               </Label>
             </div>
           ))}
         </RadioGroup>
-        <div className="relative ml-8 h-40 w-full rounded bg-slate-200">
+        <div
+          className={cn(
+            clickOutside === "disallow" ? "cursor-not-allowed" : "",
+            "relative ml-8 h-40 w-full rounded",
+            overlayStyle
+          )}>
           <div
             className={cn(
-              "absolute h-16 w-16 rounded bg-slate-700",
+              "absolute h-16 w-16 cursor-default rounded bg-slate-700",
               getPlacementStyle(currentPlacement)
             )}></div>
         </div>
