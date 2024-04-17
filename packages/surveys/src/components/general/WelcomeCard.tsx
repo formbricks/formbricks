@@ -125,21 +125,21 @@ export default function WelcomeCard({
       </div>
 
       {timeToFinish && !showResponseCount ? (
-        <div className="item-center mt-4 flex text-slate-500">
+        <div className="item-center text-subheading mt-4 flex">
           <TimerIcon />
           <p className="pt-1 text-xs">
             <span> Takes {calculateTimeToComplete()} </span>
           </p>
         </div>
       ) : showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
-        <div className="item-center mt-4 flex text-slate-500">
+        <div className="item-center text-subheading mt-4 flex">
           <UsersIcon />
           <p className="pt-1 text-xs">
             <span>{`${responseCount} people responded`}</span>
           </p>
         </div>
       ) : timeToFinish && showResponseCount ? (
-        <div className="item-center mt-4 flex text-slate-500">
+        <div className="item-center text-subheading mt-4 flex">
           <TimerIcon />
           <p className="pt-1 text-xs">
             <span> Takes {calculateTimeToComplete()} </span>

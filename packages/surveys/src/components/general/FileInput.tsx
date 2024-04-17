@@ -254,7 +254,7 @@ export default function FileInput({
       <div>
         {isUploading && (
           <div className="inset-0 flex animate-pulse items-center justify-center rounded-lg py-4">
-            <label htmlFor="selectedFile" className="text-sm font-medium text-slate-500">
+            <label htmlFor="selectedFile" className="text-subheading text-sm font-medium">
               Uploading...
             </label>
           </div>
