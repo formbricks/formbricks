@@ -175,10 +175,10 @@ export const Survey = ({
         }
       }
     }
-    if (startAtQuestionId) {
-      if (isFormPrefilling && currIdxTemp === 0) return startAtQuestionId;
-      const startAtQuestionIdx = questions.findIndex((q) => q.id === startAtQuestionId);
-      if (startAtQuestionIdx > currIdxTemp + 1) return questions[startAtQuestionIdx].id;
+    // Code to handle case where prefilling and startAt, both are included
+    if (startAtQuestionId && isFormPrefilling && currIdxTemp === 0) {
+      // if isFormPrefilling enabled, then instead of going to the next question in sequence, we go to startAtQuestionId
+      return startAtQuestionId;
     }
     return questions[currIdxTemp + 1]?.id || "end";
   };

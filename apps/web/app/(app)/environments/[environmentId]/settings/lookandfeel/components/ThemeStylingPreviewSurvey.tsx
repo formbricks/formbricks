@@ -3,13 +3,12 @@
 import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import { Variants, motion } from "framer-motion";
-import { Repeat2 } from "lucide-react";
 import { useRef, useState } from "react";
 
 import type { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui/Button";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
+import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 interface ThemeStylingPreviewSurveyProps {
@@ -137,7 +136,7 @@ export const ThemeStylingPreviewSurvey = ({
               <p>{previewType === "web" ? "Your web app" : "Preview"}</p>
 
               <div className="flex items-center">
-                <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
+                <ResetProgressButton onClick={resetQuestionProgress} />
               </div>
             </div>
           </div>
@@ -205,17 +204,5 @@ export const ThemeStylingPreviewSurvey = ({
         </div>
       </div>
     </div>
-  );
-};
-
-const ResetProgressButton = ({ resetQuestionProgress }: { resetQuestionProgress: () => void }) => {
-  return (
-    <Button
-      variant="minimal"
-      className="py-0.2 mr-2 bg-white px-2 font-sans text-sm text-slate-500"
-      onClick={resetQuestionProgress}>
-      Restart
-      <Repeat2 className="ml-2 h-4 w-4" />
-    </Button>
   );
 };
