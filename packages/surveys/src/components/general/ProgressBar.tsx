@@ -10,7 +10,7 @@ interface ProgressBarProps {
   questionId: string;
 }
 
-export default function ProgressBar({ survey, questionId }: ProgressBarProps) {
+export const ProgressBar = ({ survey, questionId }: ProgressBarProps) => {
   const currentQuestionIdx = useMemo(
     () => survey.questions.findIndex((e) => e.id === questionId),
     [survey, questionId]
@@ -43,4 +43,4 @@ export default function ProgressBar({ survey, questionId }: ProgressBarProps) {
   }, [calculateProgress, survey]);
 
   return <Progress progress={questionId === "end" ? 1 : progressArray[currentQuestionIdx]} />;
-}
+};

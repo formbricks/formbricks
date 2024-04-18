@@ -45,7 +45,7 @@ interface SurveyMenuBarProps {
   setSelectedLanguageCode: (selectedLanguage: string) => void;
 }
 
-export default function SurveyMenuBar({
+export const SurveyMenuBar = ({
   localSurvey,
   survey,
   environment,
@@ -57,7 +57,7 @@ export default function SurveyMenuBar({
   responseCount,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: SurveyMenuBarProps) {
+}: SurveyMenuBarProps) => {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -497,4 +497,4 @@ export default function SurveyMenuBar({
       </div>
     </>
   );
-}
+};
