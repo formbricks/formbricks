@@ -1,4 +1,4 @@
-export default function FormbricksBranding() {
+export const FormbricksBranding = () => {
   return (
     <a
       href="https://formbricks.com?utm_source=survey_branding"
@@ -13,4 +13,4 @@ export default function FormbricksBranding() {
       </p>
     </a>
   );
-}
+};

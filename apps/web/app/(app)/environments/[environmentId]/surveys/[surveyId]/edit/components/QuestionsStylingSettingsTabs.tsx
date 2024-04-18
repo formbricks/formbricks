@@ -4,11 +4,11 @@ import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TSurveyEditorTabs } from "@formbricks/types/surveys";
 
-type Tab = {
+interface Tab {
   id: TSurveyEditorTabs;
   label: string;
   icon: JSX.Element;
-};
+}
 
 const tabs: Tab[] = [
   {
@@ -34,11 +34,11 @@ interface QuestionsAudienceTabsProps {
   isStylingTabVisible?: boolean;
 }
 
-export default function QuestionsAudienceTabs({
+export const QuestionsAudienceTabs = ({
   activeId,
   setActiveId,
   isStylingTabVisible,
-}: QuestionsAudienceTabsProps) {
+}: QuestionsAudienceTabsProps) => {
   const tabsComputed = useMemo(() => {
     if (isStylingTabVisible) {
       return tabs;
@@ -68,4 +68,4 @@ export default function QuestionsAudienceTabs({
       </nav>
     </div>
   );
-}
+};

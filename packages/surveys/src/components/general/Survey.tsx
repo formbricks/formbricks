@@ -1,6 +1,9 @@
-import FormbricksBranding from "@/components/general/FormbricksBranding";
-import ProgressBar from "@/components/general/ProgressBar";
+import { FormbricksBranding } from "@/components/general/FormbricksBranding";
+import { ProgressBar } from "@/components/general/ProgressBar";
+import { QuestionConditional } from "@/components/general/QuestionConditional";
 import { ResponseErrorComponent } from "@/components/general/ResponseErrorComponent";
+import { ThankYouCard } from "@/components/general/ThankYouCard";
+import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
@@ -13,17 +16,11 @@ import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 
-import QuestionConditional from "./QuestionConditional";
-import ThankYouCard from "./ThankYouCard";
-import WelcomeCard from "./WelcomeCard";
-
-export function Survey({
+export const Survey = ({
   survey,
   styling,
   isBrandingEnabled,
-  activeQuestionId,
   onDisplay = () => {},
-  onActiveQuestionChange = () => {},
   onResponse = () => {},
   onClose = () => {},
   onFinished = () => {},
@@ -33,13 +30,15 @@ export function Survey({
   languageCode,
   getSetIsError,
   getSetIsResponseSendingFinished,
+  getSetQuestionId,
   onFileUpload,
   responseCount,
   isCardBorderVisible = true,
-}: SurveyBaseProps) {
+  startAtQuestionId,
+}: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
   const [questionId, setQuestionId] = useState(
-    activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
+    survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
   const [showError, setShowError] = useState(false);
   // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
@@ -66,15 +65,6 @@ export function Survey({
   const showProgressBar = !styling.hideProgressBar;
 
   useEffect(() => {
-    if (activeQuestionId === "hidden" || activeQuestionId === "multiLanguage") return;
-    if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
-      setQuestionId(survey?.questions[0]?.id);
-      return;
-    }
-    setQuestionId(activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id));
-  }, [activeQuestionId, survey.questions, survey.welcomeCard.enabled]);
-
-  useEffect(() => {
     // scroll to top when question changes
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
@@ -87,6 +77,9 @@ export function Survey({
     if (prefillResponseData) {
       onSubmit(prefillResponseData, {}, true);
     }
+    if (startAtQuestionId && !prefillResponseData) {
+      setQuestionId(startAtQuestionId);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -97,6 +90,14 @@ export function Survey({
       });
     }
   }, [getSetIsError]);
+
+  useEffect(() => {
+    if (getSetQuestionId) {
+      getSetQuestionId((value: string) => {
+        setQuestionId(value);
+      });
+    }
+  }, [getSetQuestionId]);
 
   useEffect(() => {
     if (getSetIsResponseSendingFinished) {
@@ -174,6 +175,11 @@ export function Survey({
         }
       }
     }
+    // Code to handle case where prefilling and startAt, both are included
+    if (startAtQuestionId && isFormPrefilling && currIdxTemp === 0) {
+      // if isFormPrefilling enabled, then instead of going to the next question in sequence, we go to startAtQuestionId
+      return startAtQuestionId;
+    }
     return questions[currIdxTemp + 1]?.id || "end";
   };
 
@@ -184,7 +190,7 @@ export function Survey({
 
   const onSubmit = (responseData: TResponseData, ttc: TResponseTtc, isFormPrefilling: Boolean = false) => {
     const questionId = Object.keys(responseData)[0];
-    if (isFormPrefilling && questionId === survey.questions[0].id) {
+    if (isFormPrefilling) {
       onChange(responseData);
     }
     setLoadingElement(true);
@@ -200,7 +206,6 @@ export function Survey({
     // add to history
     setHistory([...history, questionId]);
     setLoadingElement(false);
-    onActiveQuestionChange(nextQuestionId);
   };
 
   const replaceRecallInfo = (text: string): string => {
@@ -256,7 +261,6 @@ export function Survey({
     }
     if (!prevQuestionId) throw new Error("Question not found");
     setQuestionId(prevQuestionId);
-    onActiveQuestionChange(prevQuestionId);
   };
 
   const getCardContent = (): JSX.Element | undefined => {
@@ -348,4 +352,4 @@ export function Survey({
       </AutoCloseWrapper>
     </>
   );
-}
+};
