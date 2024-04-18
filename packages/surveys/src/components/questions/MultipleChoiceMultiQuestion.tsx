@@ -134,133 +134,134 @@ export const MultipleChoiceMultiQuestion = ({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-      <Headline
-        headline={getLocalizedValue(question.headline, languageCode)}
-        questionId={question.id}
-        required={question.required}
-      />
-      <Subheader
-        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-        questionId={question.id}
-      />
-      <div className="mt-4">
-        <fieldset>
-          <legend className="sr-only">Options</legend>
-          <div
-            className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto py-0.5 pr-2"
-            ref={choicesContainerRef}>
-            {questionChoices.map((choice, idx) => (
-              <label
-                key={choice.id}
-                tabIndex={idx + 1}
-                className={cn(
-                  value === choice.label ? "border-border bg-input-selected-bg z-10" : "border-border",
-                  "text-heading bg-input-bg focus-within:border-brand hover:bg-input-bg-selected focus:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
-                )}
-                onKeyDown={(e) => {
-                  // Accessibility: if spacebar was pressed pass this down to the input
-                  if (e.key === " ") {
-                    e.preventDefault();
-                    document.getElementById(choice.id)?.click();
-                    document.getElementById(choice.id)?.focus();
-                  }
-                }}
-                autoFocus={idx === 0 && !isInIframe}>
-                <span className="flex items-center text-sm">
-                  <input
-                    type="checkbox"
-                    id={choice.id}
-                    name={question.id}
-                    tabIndex={-1}
-                    value={choice.label}
-                    className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
-                    aria-labelledby={`${choice.id}-label`}
-                    onChange={(e) => {
-                      if ((e.target as HTMLInputElement)?.checked) {
-                        addItem(getLocalizedValue(choice.label, languageCode));
-                      } else {
-                        removeItem(getLocalizedValue(choice.label, languageCode));
+      <div className="max-h-[40vh] overflow-auto">
+        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
+        <div className="mt-4">
+          <fieldset>
+            <legend className="sr-only">Options</legend>
+            <div className="bg-survey-bg relative space-y-2 py-0.5 pr-2" ref={choicesContainerRef}>
+              {questionChoices.map((choice, idx) => (
+                <label
+                  key={choice.id}
+                  tabIndex={idx + 1}
+                  className={cn(
+                    value === choice.label ? "border-border bg-input-selected-bg z-10" : "border-border",
+                    "text-heading bg-input-bg focus-within:border-brand hover:bg-input-bg-selected focus:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                  )}
+                  onKeyDown={(e) => {
+                    // Accessibility: if spacebar was pressed pass this down to the input
+                    if (e.key === " ") {
+                      e.preventDefault();
+                      document.getElementById(choice.id)?.click();
+                      document.getElementById(choice.id)?.focus();
+                    }
+                  }}
+                  autoFocus={idx === 0 && !isInIframe}>
+                  <span className="flex items-center text-sm">
+                    <input
+                      type="checkbox"
+                      id={choice.id}
+                      name={question.id}
+                      tabIndex={-1}
+                      value={choice.label}
+                      className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
+                      aria-labelledby={`${choice.id}-label`}
+                      onChange={(e) => {
+                        if ((e.target as HTMLInputElement)?.checked) {
+                          addItem(getLocalizedValue(choice.label, languageCode));
+                        } else {
+                          removeItem(getLocalizedValue(choice.label, languageCode));
+                        }
+                      }}
+                      checked={
+                        Array.isArray(value) && value.includes(getLocalizedValue(choice.label, languageCode))
                       }
-                    }}
-                    checked={
-                      Array.isArray(value) && value.includes(getLocalizedValue(choice.label, languageCode))
-                    }
-                    required={
-                      question.required && Array.isArray(value) && value.length ? false : question.required
-                    }
-                  />
-                  <span id={`${choice.id}-label`} className="ml-3 font-medium">
-                    {getLocalizedValue(choice.label, languageCode)}
-                  </span>
-                </span>
-              </label>
-            ))}
-            {otherOption && (
-              <label
-                tabIndex={questionChoices.length + 1}
-                className={cn(
-                  value.includes(getLocalizedValue(otherOption.label, languageCode))
-                    ? "border-border bg-input-selected-bg z-10"
-                    : "border-border",
-                  "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
-                )}
-                onKeyDown={(e) => {
-                  // Accessibility: if spacebar was pressed pass this down to the input
-                  if (e.key === " ") {
-                    if (otherSelected) return;
-                    document.getElementById(otherOption.id)?.click();
-                    document.getElementById(otherOption.id)?.focus();
-                  }
-                }}>
-                <span className="flex items-center text-sm">
-                  <input
-                    type="checkbox"
-                    tabIndex={-1}
-                    id={otherOption.id}
-                    name={question.id}
-                    value={getLocalizedValue(otherOption.label, languageCode)}
-                    className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
-                    aria-labelledby={`${otherOption.id}-label`}
-                    onChange={(e) => {
-                      setOtherSelected(!otherSelected);
-                      if ((e.target as HTMLInputElement)?.checked) {
-                        if (!otherValue) return;
-                        addItem(otherValue);
-                      } else {
-                        removeItem(otherValue);
+                      required={
+                        question.required && Array.isArray(value) && value.length ? false : question.required
                       }
-                    }}
-                    checked={otherSelected}
-                  />
-                  <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
-                    {getLocalizedValue(otherOption.label, languageCode)}
+                    />
+                    <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                      {getLocalizedValue(choice.label, languageCode)}
+                    </span>
                   </span>
-                </span>
-                {otherSelected && (
-                  <input
-                    ref={otherSpecify}
-                    id={`${otherOption.id}-label`}
-                    name={question.id}
-                    tabIndex={questionChoices.length + 1}
-                    value={otherValue}
-                    onChange={(e) => {
-                      setOtherValue(e.currentTarget.value);
-                      addItem(e.currentTarget.value);
-                    }}
-                    className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus rounded-custom mt-3 flex h-10 w-full border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder={
-                      getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
+                </label>
+              ))}
+              {otherOption && (
+                <label
+                  tabIndex={questionChoices.length + 1}
+                  className={cn(
+                    value.includes(getLocalizedValue(otherOption.label, languageCode))
+                      ? "border-border bg-input-selected-bg z-10"
+                      : "border-border",
+                    "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                  )}
+                  onKeyDown={(e) => {
+                    // Accessibility: if spacebar was pressed pass this down to the input
+                    if (e.key === " ") {
+                      if (otherSelected) return;
+                      document.getElementById(otherOption.id)?.click();
+                      document.getElementById(otherOption.id)?.focus();
                     }
-                    required={question.required}
-                    aria-labelledby={`${otherOption.id}-label`}
-                  />
-                )}
-              </label>
-            )}
-          </div>
-        </fieldset>
+                  }}>
+                  <span className="flex items-center text-sm">
+                    <input
+                      type="checkbox"
+                      tabIndex={-1}
+                      id={otherOption.id}
+                      name={question.id}
+                      value={getLocalizedValue(otherOption.label, languageCode)}
+                      className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
+                      aria-labelledby={`${otherOption.id}-label`}
+                      onChange={(e) => {
+                        setOtherSelected(!otherSelected);
+                        if ((e.target as HTMLInputElement)?.checked) {
+                          if (!otherValue) return;
+                          addItem(otherValue);
+                        } else {
+                          removeItem(otherValue);
+                        }
+                      }}
+                      checked={otherSelected}
+                    />
+                    <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
+                      {getLocalizedValue(otherOption.label, languageCode)}
+                    </span>
+                  </span>
+                  {otherSelected && (
+                    <input
+                      ref={otherSpecify}
+                      id={`${otherOption.id}-label`}
+                      name={question.id}
+                      tabIndex={questionChoices.length + 1}
+                      value={otherValue}
+                      onChange={(e) => {
+                        setOtherValue(e.currentTarget.value);
+                        addItem(e.currentTarget.value);
+                      }}
+                      className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus rounded-custom mt-3 flex h-10 w-full border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder={
+                        getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
+                      }
+                      required={question.required}
+                      aria-labelledby={`${otherOption.id}-label`}
+                    />
+                  )}
+                </label>
+              )}
+            </div>
+          </fieldset>
+        </div>
       </div>
+
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton

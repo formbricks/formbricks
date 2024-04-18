@@ -129,33 +129,35 @@ export default function AddressQuestion({
 
   return (
     <form key={question.id} onSubmit={handleSubmit} className="w-full" ref={formRef}>
-      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-      <Headline
-        headline={getLocalizedValue(question.headline, languageCode)}
-        questionId={question.id}
-        required={question.required}
-      />
-      <Subheader
-        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-        questionId={question.id}
-      />
-      <div className="mt-4 space-y-2">
-        {inputConfig.map(({ name, placeholder, required }, index) => (
-          <input
-            ref={index === 0 ? addressTextRef : null}
-            key={index}
-            name={name}
-            autoComplete={name}
-            id={`${question.id}-${index}`}
-            placeholder={placeholder}
-            tabIndex={index + 1}
-            required={required}
-            value={safeValue[index] || ""}
-            onInput={(e) => handleInputChange(e.currentTarget.value, index)}
-            autoFocus={!isInIframe && index === 0}
-            className="border-border placeholder:text-placeholder text-subheading focus:border-border-highlight bg-input-bg rounded-custom block w-full border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
-          />
-        ))}
+      <div className="max-h-[40vh] overflow-y-auto">
+        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
+        <div className="mt-4 space-y-2">
+          {inputConfig.map(({ name, placeholder, required }, index) => (
+            <input
+              ref={index === 0 ? addressTextRef : null}
+              key={index}
+              name={name}
+              autoComplete={name}
+              id={`${question.id}-${index}`}
+              placeholder={placeholder}
+              tabIndex={index + 1}
+              required={required}
+              value={safeValue[index] || ""}
+              onInput={(e) => handleInputChange(e.currentTarget.value, index)}
+              autoFocus={!isInIframe && index === 0}
+              className="border-border placeholder:text-placeholder text-subheading focus:border-border-highlight bg-input-bg rounded-custom block w-full border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
+            />
+          ))}
+        </div>
       </div>
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (

@@ -49,7 +49,12 @@ export const ConsentQuestion = ({
         questionId={question.id}
         required={question.required}
       />
-      <HtmlBody htmlString={getLocalizedValue(question.html, languageCode) || ""} questionId={question.id} />
+      <div className="max-h-[30vh] overflow-auto">
+        <HtmlBody
+          htmlString={getLocalizedValue(question.html, languageCode) || ""}
+          questionId={question.id}
+        />
+      </div>
       <form
         onSubmit={(e) => {
           e.preventDefault();

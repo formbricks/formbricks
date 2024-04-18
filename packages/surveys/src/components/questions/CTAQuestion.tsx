@@ -50,7 +50,9 @@ export const CTAQuestion = ({
         questionId={question.id}
         required={question.required}
       />
-      <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} questionId={question.id} />
+      <div className="max-h-[33vh] overflow-auto">
+        <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} questionId={question.id} />
+      </div>
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton

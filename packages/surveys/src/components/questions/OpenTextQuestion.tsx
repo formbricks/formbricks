@@ -77,55 +77,57 @@ export const OpenTextQuestion = ({
         onSubmit({ [question.id]: value, inputType: question.inputType }, updatedttc);
       }}
       className="w-full">
-      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-      <Headline
-        headline={getLocalizedValue(question.headline, languageCode)}
-        questionId={question.id}
-        required={question.required}
-      />
-      <Subheader
-        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-        questionId={question.id}
-      />
-      <div className="mt-4">
-        {question.longAnswer === false ? (
-          <input
-            ref={openTextRef}
-            tabIndex={1}
-            name={question.id}
-            id={question.id}
-            placeholder={getLocalizedValue(question.placeholder, languageCode)}
-            step={"any"}
-            required={question.required}
-            value={value ? (value as string) : ""}
-            type={question.inputType}
-            onInput={(e) => handleInputChange(e.currentTarget.value)}
-            autoFocus={!isInIframe}
-            className="border-border placeholder:text-placeholder text-subheading focus:border-border-highlight bg-input-bg rounded-custom block w-full border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
-            pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
-            title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
-          />
-        ) : (
-          <textarea
-            ref={openTextRef}
-            rows={3}
-            name={question.id}
-            tabIndex={1}
-            id={question.id}
-            placeholder={getLocalizedValue(question.placeholder, languageCode)}
-            required={question.required}
-            value={value as string}
-            type={question.inputType}
-            onInput={(e) => {
-              handleInputChange(e.currentTarget.value);
-              handleInputResize(e);
-            }}
-            autoFocus={!isInIframe}
-            className="border-border placeholder:text-placeholder bg-input-bg text-subheading focus:border-border-highlight rounded-custom block w-full border p-2 shadow-sm  focus:ring-0 sm:text-sm"
-            pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
-            title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
-          />
-        )}
+      <div className="no-scrollbar max-h-[40vh] overflow-auto">
+        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
+        <div className="mt-4">
+          {question.longAnswer === false ? (
+            <input
+              ref={openTextRef}
+              tabIndex={1}
+              name={question.id}
+              id={question.id}
+              placeholder={getLocalizedValue(question.placeholder, languageCode)}
+              step={"any"}
+              required={question.required}
+              value={value ? (value as string) : ""}
+              type={question.inputType}
+              onInput={(e) => handleInputChange(e.currentTarget.value)}
+              autoFocus={!isInIframe}
+              className="border-border placeholder:text-placeholder text-subheading focus:border-border-highlight bg-input-bg rounded-custom block w-full border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
+              pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
+              title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
+            />
+          ) : (
+            <textarea
+              ref={openTextRef}
+              rows={3}
+              name={question.id}
+              tabIndex={1}
+              id={question.id}
+              placeholder={getLocalizedValue(question.placeholder, languageCode)}
+              required={question.required}
+              value={value as string}
+              type={question.inputType}
+              onInput={(e) => {
+                handleInputChange(e.currentTarget.value);
+                handleInputResize(e);
+              }}
+              autoFocus={!isInIframe}
+              className="border-border placeholder:text-placeholder bg-input-bg text-subheading focus:border-border-highlight rounded-custom block w-full border p-2 shadow-sm  focus:ring-0 sm:text-sm"
+              pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
+              title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
+            />
+          )}
+        </div>
       </div>
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (

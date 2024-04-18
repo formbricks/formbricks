@@ -67,21 +67,22 @@ export const CalQuestion = ({
         onSubmit({ [question.id]: value }, updatedttc);
       }}
       className="w-full">
-      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-      <Headline
-        headline={getLocalizedValue(question.headline, languageCode)}
-        questionId={question.id}
-        required={question.required}
-      />
-      <Subheader
-        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-        questionId={question.id}
-      />
-      <>
-        {errorMessage && <span className="text-red-500">{errorMessage}</span>}
-        <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
-      </>
-
+      <div className="max-h-[40vh] overflow-y-auto">
+        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
+        <>
+          {errorMessage && <span className="text-red-500">{errorMessage}</span>}
+          <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
+        </>
+      </div>
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton

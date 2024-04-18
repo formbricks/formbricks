@@ -110,9 +110,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   };
 
   const renderContent = () => (
-    <div className="no-scrollbar absolute flex h-full w-full items-center justify-center overflow-y-auto">
-      {children}
-    </div>
+    <div className="no-scrollbar absolute flex h-full w-full items-center justify-center">{children}</div>
   );
 
   if (isMobilePreview) {
