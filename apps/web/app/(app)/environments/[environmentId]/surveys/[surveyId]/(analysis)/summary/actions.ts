@@ -11,22 +11,33 @@ import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 
-type TSendEmailActionArgs = {
-  to: string;
-  subject: string;
-  html: string;
-};
-
-export const sendEmailAction = async ({ html, subject, to }: TSendEmailActionArgs) => {
+export const sendEmbedSurveyPreviewEmailAction = async (surveyId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new AuthenticationError("Not authenticated");
   }
-  if (session.user.email !== to) {
-    throw new AuthorizationError("Not authorized");
+
+  const survey = await getSurvey(surveyId);
+  if (!survey) {
+    throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  return await sendEmbedSurveyPreviewEmail(to, subject, html);
+  const isUserAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
+  if (!isUserAuthorized) {
+    throw new AuthorizationError("Not authorized");
+  }
+  const rawEmailHtml = await getEmailTemplateHtml(surveyId);
+  const emailHtml = rawEmailHtml
+    .replaceAll("?preview=true&amp;", "?")
+    .replaceAll("?preview=true&;", "?")
+    .replaceAll("?preview=true", "");
+
+  return await sendEmbedSurveyPreviewEmail(
+    session.user.email,
+    "Formbricks Email Survey Preview",
+    emailHtml,
+    survey.environmentId
+  );
 };
 
 export async function generateResultShareUrlAction(surveyId: string): Promise<string> {
