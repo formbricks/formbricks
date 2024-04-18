@@ -39,9 +39,7 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
 
   const sendPreviewEmail = async () => {
     try {
-      await sendEmbedSurveyPreviewEmailAction({
-        surveyId,
-      });
+      await sendEmbedSurveyPreviewEmailAction(surveyId);
       toast.success("Email sent!");
     } catch (err) {
       if (err instanceof AuthenticationError) {

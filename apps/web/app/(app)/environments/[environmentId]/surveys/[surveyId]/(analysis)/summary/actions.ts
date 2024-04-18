@@ -11,7 +11,7 @@ import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 
-export const sendEmbedSurveyPreviewEmailAction = async ({ surveyId }: { surveyId: string }) => {
+export const sendEmbedSurveyPreviewEmailAction = async (surveyId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new AuthenticationError("Not authenticated");
