@@ -3,6 +3,7 @@ import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, shuffleQuestions } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
@@ -134,7 +135,7 @@ export const MultipleChoiceMultiQuestion = ({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      <div className="max-h-[40vh] overflow-auto">
+      <ScrollableContainer>
         {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
         <Headline
           headline={getLocalizedValue(question.headline, languageCode)}
@@ -260,9 +261,9 @@ export const MultipleChoiceMultiQuestion = ({
             </div>
           </fieldset>
         </div>
-      </div>
+      </ScrollableContainer>
 
-      <div className="mt-4 flex w-full justify-between">
+      <div className="flex w-full justify-between px-6">
         {!isFirstQuestion && (
           <BackButton
             tabIndex={questionChoices.length + 3}

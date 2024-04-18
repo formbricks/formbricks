@@ -4,6 +4,7 @@ import CalEmbed from "@/components/general/CalEmbed";
 import Headline from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useState } from "preact/hooks";
 
@@ -67,7 +68,7 @@ export const CalQuestion = ({
         onSubmit({ [question.id]: value }, updatedttc);
       }}
       className="w-full">
-      <div className="max-h-[40vh] overflow-y-auto">
+      <ScrollableContainer>
         {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
         <Headline
           headline={getLocalizedValue(question.headline, languageCode)}
@@ -82,8 +83,8 @@ export const CalQuestion = ({
           {errorMessage && <span className="text-red-500">{errorMessage}</span>}
           <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
         </>
-      </div>
-      <div className="mt-4 flex w-full justify-between">
+      </ScrollableContainer>
+      <div className="flex w-full justify-between px-6">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

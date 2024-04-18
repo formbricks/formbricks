@@ -1,4 +1,5 @@
 import { QuestionMedia } from "@/components/general/QuestionMedia";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 
@@ -70,7 +71,7 @@ export const FileUploadQuestion = ({
         }
       }}
       className="w-full ">
-      <div className="max-h-[40vh] overflow-y-auto">
+      <ScrollableContainer>
         {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
         <Headline
           headline={getLocalizedValue(question.headline, languageCode)}
@@ -98,8 +99,8 @@ export const FileUploadQuestion = ({
             : {})}
           {...(!!question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
         />
-      </div>
-      <div className="mt-4 flex w-full justify-between">
+      </ScrollableContainer>
+      <div className="flex w-full justify-between px-6">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

@@ -3,6 +3,7 @@ import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 import { useCallback } from "react";
@@ -42,7 +43,6 @@ export const OpenTextQuestion = ({
 }: OpenTextQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const handleInputChange = (inputValue: string) => {
@@ -77,7 +77,7 @@ export const OpenTextQuestion = ({
         onSubmit({ [question.id]: value, inputType: question.inputType }, updatedttc);
       }}
       className="w-full">
-      <div className="no-scrollbar max-h-[40vh] overflow-auto">
+      <ScrollableContainer>
         {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
         <Headline
           headline={getLocalizedValue(question.headline, languageCode)}
@@ -128,8 +128,8 @@ export const OpenTextQuestion = ({
             />
           )}
         </div>
-      </div>
-      <div className="mt-4 flex w-full justify-between">
+      </ScrollableContainer>
+      <div className="flex w-full justify-between px-6">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

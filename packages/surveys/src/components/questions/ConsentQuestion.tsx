@@ -3,6 +3,7 @@ import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import HtmlBody from "@/components/general/HtmlBody";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 
@@ -42,26 +43,26 @@ export const ConsentQuestion = ({
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   return (
-    <div key={question.id}>
-      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-      <Headline
-        headline={getLocalizedValue(question.headline, languageCode)}
-        questionId={question.id}
-        required={question.required}
-      />
-      <div className="max-h-[30vh] overflow-auto">
+    <form
+      key={question.id}
+      onSubmit={(e) => {
+        e.preventDefault();
+        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+        setTtc(updatedTtcObj);
+        onSubmit({ [question.id]: value }, updatedTtcObj);
+      }}>
+      <ScrollableContainer>
+        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
         <HtmlBody
           htmlString={getLocalizedValue(question.html, languageCode) || ""}
           questionId={question.id}
         />
-      </div>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-          setTtc(updatedTtcObj);
-          onSubmit({ [question.id]: value }, updatedTtcObj);
-        }}>
+
         <label
           tabIndex={1}
           id={`${question.id}-label`}
@@ -95,28 +96,27 @@ export const ConsentQuestion = ({
             {getLocalizedValue(question.label, languageCode)}
           </span>
         </label>
-
-        <div className="mt-4 flex w-full justify-between">
-          {!isFirstQuestion && (
-            <BackButton
-              tabIndex={3}
-              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-              onClick={() => {
-                const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                setTtc(updatedTtcObj);
-                onSubmit({ [question.id]: value }, updatedTtcObj);
-                onBack();
-              }}
-            />
-          )}
-          <div />
-          <SubmitButton
-            tabIndex={2}
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-            isLastQuestion={isLastQuestion}
+      </ScrollableContainer>
+      <div className="flex w-full justify-between px-6">
+        {!isFirstQuestion && (
+          <BackButton
+            tabIndex={3}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+            onClick={() => {
+              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedTtcObj);
+              onSubmit({ [question.id]: value }, updatedTtcObj);
+              onBack();
+            }}
           />
-        </div>
-      </form>
-    </div>
+        )}
+        <div />
+        <SubmitButton
+          tabIndex={2}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+        />
+      </div>
+    </form>
   );
 };

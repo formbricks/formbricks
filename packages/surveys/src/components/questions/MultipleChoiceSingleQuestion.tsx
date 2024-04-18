@@ -3,6 +3,7 @@ import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, shuffleQuestions } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
@@ -97,7 +98,7 @@ export const MultipleChoiceSingleQuestion = ({
       }}
       className="w-full">
       {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-      <div className="max-h-[40vh] overflow-y-auto">
+      <ScrollableContainer>
         <Headline
           headline={getLocalizedValue(question.headline, languageCode)}
           questionId={question.id}
@@ -106,7 +107,7 @@ export const MultipleChoiceSingleQuestion = ({
         <Subheader
           subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
           questionId={question.id}
-        />{" "}
+        />
         <div className="mt-4">
           <fieldset>
             <legend className="sr-only">Options</legend>
@@ -213,8 +214,8 @@ export const MultipleChoiceSingleQuestion = ({
             </div>
           </fieldset>
         </div>
-      </div>
-      <div className="mt-4 flex w-full justify-between">
+      </ScrollableContainer>
+      <div className="flex w-full justify-between px-6">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

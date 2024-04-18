@@ -2,6 +2,7 @@ import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
@@ -95,7 +96,7 @@ export const RatingQuestion = ({
         onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}
       className="w-full">
-      <div className="max-h-[40vh] overflow-y-auto">
+      <ScrollableContainer>
         {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
         <Headline
           headline={getLocalizedValue(question.headline, languageCode)}
@@ -207,8 +208,8 @@ export const RatingQuestion = ({
             </div>
           </fieldset>
         </div>
-      </div>
-      <div className="mt-4 flex w-full justify-between">
+      </ScrollableContainer>
+      <div className="flex w-full justify-between px-6">
         {!isFirstQuestion && (
           <BackButton
             tabIndex={!question.required || value ? question.range + 2 : question.range + 1}
