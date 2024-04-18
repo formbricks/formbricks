@@ -64,8 +64,7 @@
     "sharp": "^0.33.3",
     "ua-parser-js": "^1.0.37",
     "webpack": "^5.91.0",
-    "xlsx": "^0.18.5",
-    "@ungap/structured-clone": "^1.2.0"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
@@ -75,7 +74,6 @@
     "@types/markdown-it": "^14.0.1",
     "@types/papaparse": "^5.3.14",
     "@types/qrcode": "^1.5.5",
-    "eslint-config-formbricks": "workspace:*",
-    "@types/ungap__structured-clone": "^1.2.0"
+    "eslint-config-formbricks": "workspace:*"
   }
 }

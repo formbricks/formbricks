@@ -354,9 +354,6 @@ importers:
       '@sentry/nextjs':
         specifier: ^7.110.1
         version: 7.110.1(encoding@0.1.13)(next@14.2.1)(react@18.2.0)(webpack@5.91.0)
-      '@ungap/structured-clone':
-        specifier: ^1.2.0
-        version: 1.2.0
       '@vercel/og':
         specifier: ^0.6.2
         version: 0.6.2
@@ -475,9 +472,6 @@ importers:
       '@types/qrcode':
         specifier: ^1.5.5
         version: 1.5.5
-      '@types/ungap__structured-clone':
-        specifier: ^1.2.0
-        version: 1.2.0
       eslint-config-formbricks:
         specifier: workspace:*
         version: link:../../packages/eslint-config-formbricks
@@ -672,6 +666,9 @@ importers:
       '@t3-oss/env-nextjs':
         specifier: ^0.9.2
         version: 0.9.2(typescript@5.3.3)(zod@3.22.4)
+      '@ungap/structured-clone':
+        specifier: ^1.2.0
+        version: 1.2.0
       aws-crt:
         specifier: ^1.21.2
         version: 1.21.2
@@ -715,6 +712,9 @@ importers:
       '@types/mime-types':
         specifier: ^2.1.4
         version: 2.1.4
+      '@types/ungap__structured-clone':
+        specifier: ^1.2.0
+        version: 1.2.0
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
