@@ -1,5 +1,3 @@
-import structuredClone from "@ungap/structured-clone";
-
 import {
   TLegacySurveyChoice,
   TLegacySurveyQuestion,
