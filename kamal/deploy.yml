@@ -10,6 +10,8 @@ servers:
     hosts:
       - 18.196.187.144
       - 18.196.172.27
+    labels:
+      traefik.http.routers.formbricks-kamal.entrypoints: web
 
 # Credentials for your image host.
 registry:
@@ -119,6 +121,10 @@ builder:
 #   remote:
 #     arch: amd64
 #     host: ssh://app@192.168.0.1
+
+traefik:
+  args:
+    entryPoints.web.address: ":80"
 
 # Use accessory services (secrets come from .env).
 accessories:
