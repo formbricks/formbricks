@@ -120,13 +120,6 @@ builder:
 #     arch: amd64
 #     host: ssh://app@192.168.0.1
 
-traefik:
-  options:
-    publish:
-      - "80:80"
-  args:
-    entryPoints.web.address: ":80"
-
 # Use accessory services (secrets come from .env).
 accessories:
   # db:
