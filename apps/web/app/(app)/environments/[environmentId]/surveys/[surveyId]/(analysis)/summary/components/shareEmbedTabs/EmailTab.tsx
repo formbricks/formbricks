@@ -9,7 +9,7 @@ import { Button } from "@formbricks/ui/Button";
 import CodeBlock from "@formbricks/ui/CodeBlock";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 
-import { getEmailHtmlAction, sendEmailAction } from "../../actions";
+import { getEmailHtmlAction, sendEmbedSurveyPreviewEmailAction } from "../../actions";
 
 interface EmailTabProps {
   surveyId: string;
@@ -35,16 +35,12 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
       const emailHtml = await getEmailHtmlAction(surveyId);
       setEmailHtmlPreview(emailHtml);
     }
-  });
+  }, [surveyId]);
 
-  const subject = "Formbricks Email Survey Preview";
-
-  const sendPreviewEmail = async (html) => {
+  const sendPreviewEmail = async () => {
     try {
-      await sendEmailAction({
-        html,
-        subject,
-        to: email,
+      await sendEmbedSurveyPreviewEmailAction({
+        surveyId,
       });
       toast.success("Email sent!");
     } catch (err) {
@@ -78,7 +74,7 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
               variant="secondary"
               title="send preview email"
               aria-label="send preview email"
-              onClick={() => sendPreviewEmail(emailHtmlPreview)}
+              onClick={() => sendPreviewEmail()}
               EndIcon={MailIcon}
               className="shrink-0">
               Send Preview
@@ -115,7 +111,9 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
           </div>
           <div className="">
             <div className="mb-2 border-b border-slate-200 pb-2 text-sm">To : {email || "user@mail.com"}</div>
-            <div className="border-b border-slate-200 pb-2 text-sm">Subject : {subject}</div>
+            <div className="border-b border-slate-200 pb-2 text-sm">
+              Subject : Formbricks Email Survey Preview
+            </div>
             <div className="p-4">
               {emailHtml ? (
                 <div dangerouslySetInnerHTML={{ __html: emailHtmlPreview }}></div>
