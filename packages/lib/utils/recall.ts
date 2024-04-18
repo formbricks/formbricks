@@ -1,6 +1,7 @@
 import { TI18nString, TSurvey, TSurveyQuestion, TSurveyQuestionsObject } from "@formbricks/types/surveys";
 
 import { getLocalizedValue } from "../i18n/utils";
+import structuredClone from "../structuredClone";
 
 export interface fallbacks {
   [id: string]: string;

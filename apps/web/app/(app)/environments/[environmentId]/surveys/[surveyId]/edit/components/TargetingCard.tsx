@@ -9,6 +9,7 @@ import { toast } from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
 import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
+import structuredClone from "@formbricks/lib/structuredClone";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";

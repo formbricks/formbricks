@@ -11,6 +11,7 @@ import {
 import { RefObject, useEffect, useMemo, useState } from "react";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import structuredClone from "@formbricks/lib/structuredClone";
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 

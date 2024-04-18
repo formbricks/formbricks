@@ -1,5 +1,6 @@
 // migration script to convert range field in rating question from string to number
 import { PrismaClient } from "@prisma/client";
+import structuredClone from "@ungap/structured-clone";
 
 const prisma = new PrismaClient();
 

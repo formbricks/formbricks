@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import structuredClone from "@formbricks/lib/structuredClone";
 import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { deleteSurvey, duplicateSurvey, getSurvey, getSurveys } from "@formbricks/lib/survey/service";

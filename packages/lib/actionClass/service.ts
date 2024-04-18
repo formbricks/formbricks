@@ -17,6 +17,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import structuredClone from "../structuredClone";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";

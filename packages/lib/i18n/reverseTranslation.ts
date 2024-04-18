@@ -3,6 +3,7 @@ import "server-only";
 import { TLegacySurvey, ZLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys";
 
+import structuredClone from "../structuredClone";
 import { isI18nObject } from "./utils";
 
 // Helper function to extract a regular string from an i18nString.

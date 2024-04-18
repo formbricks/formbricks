@@ -1,4 +1,5 @@
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import structuredClone from "@formbricks/lib/structuredClone";
 import { TProduct } from "@formbricks/types/product";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";

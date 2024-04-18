@@ -6,6 +6,7 @@ import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import { extractLanguageCodes, getEnabledLanguages, getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import structuredClone from "@formbricks/lib/structuredClone";
 import { useSyncScroll } from "@formbricks/lib/utils/hooks/useSyncScroll";
 import {
   extractId,

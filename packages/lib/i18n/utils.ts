@@ -37,6 +37,8 @@ import {
   TSurveyQuestion,
 } from "@formbricks/types/surveys";
 
+import structuredClone from "../structuredClone";
+
 // Helper function to create an i18nString from a regular string.
 export const createI18nString = (
   text: string | TI18nString,

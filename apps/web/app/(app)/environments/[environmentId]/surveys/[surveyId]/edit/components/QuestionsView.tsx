@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 
 import { MultiLanguageCard } from "@formbricks/ee/multiLanguage/components/MultiLanguageCard";
 import { extractLanguageCodes, getLocalizedValue, translateQuestion } from "@formbricks/lib/i18n/utils";
+import structuredClone from "@formbricks/lib/structuredClone";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";

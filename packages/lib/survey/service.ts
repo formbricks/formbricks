@@ -32,6 +32,7 @@ import { responseCache } from "../response/cache";
 import { segmentCache } from "../segment/cache";
 import { createSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
+import structuredClone from "../structuredClone";
 import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";

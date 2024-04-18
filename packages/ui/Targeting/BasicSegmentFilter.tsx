@@ -12,6 +12,7 @@ import {
   updateOperatorInFilter,
   updatePersonIdentifierInFilter,
 } from "@formbricks/lib/segment/utils";
+import structuredClone from "@formbricks/lib/structuredClone";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   ARITHMETIC_OPERATORS,

@@ -354,6 +354,9 @@ importers:
       '@sentry/nextjs':
         specifier: ^7.110.1
         version: 7.110.1(encoding@0.1.13)(next@14.2.1)(react@18.2.0)(webpack@5.91.0)
+      '@ungap/structured-clone':
+        specifier: ^1.2.0
+        version: 1.2.0
       '@vercel/og':
         specifier: ^0.6.2
         version: 0.6.2
@@ -472,6 +475,9 @@ importers:
       '@types/qrcode':
         specifier: ^1.5.5
         version: 1.5.5
+      '@types/ungap__structured-clone':
+        specifier: ^1.2.0
+        version: 1.2.0
       eslint-config-formbricks:
         specifier: workspace:*
         version: link:../../packages/eslint-config-formbricks
@@ -9051,6 +9057,10 @@ packages:
 
   /@types/trusted-types@2.0.7:
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
+    dev: true
+
+  /@types/ungap__structured-clone@1.2.0:
+    resolution: {integrity: sha512-ZoaihZNLeZSxESbk9PUAPZOlSpcKx81I1+4emtULDVmBLkYutTcMlCj2K9VNlf9EWODxdO6gkAqEaLorXwZQVA==}
     dev: true
 
   /@types/unist@2.0.10:

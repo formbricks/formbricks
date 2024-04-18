@@ -1,4 +1,5 @@
 import { deleteResource, isResourceFilter, moveResource } from "@formbricks/lib/segment/utils";
+import structuredClone from "@formbricks/lib/structuredClone";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 

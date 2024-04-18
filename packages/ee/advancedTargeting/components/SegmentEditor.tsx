@@ -11,6 +11,7 @@ import {
   moveResource,
   toggleGroupConnector,
 } from "@formbricks/lib/segment/utils";
+import structuredClone from "@formbricks/lib/structuredClone";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TBaseFilters, TSegment, TSegmentConnector } from "@formbricks/types/segment";
