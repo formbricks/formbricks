@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import structuredClone from "@formbricks/lib/structuredClone";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
 import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";

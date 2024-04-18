@@ -7,4 +7,5 @@ if (typeof structuredCloneExport === "undefined") {
   structuredCloneExport = structuredClonePolyfill;
 }
 
-export default structuredCloneExport;
+// export default structuredCloneExport;
+export { structuredCloneExport as structuredClone };

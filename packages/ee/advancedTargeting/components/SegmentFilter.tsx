@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import z from "zod";
 
 import { cn } from "@formbricks/lib/cn";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import {
   convertMetricToText,
   convertOperatorToText,
@@ -25,7 +26,6 @@ import {
   updatePersonIdentifierInFilter,
   updateSegmentIdInFilter,
 } from "@formbricks/lib/segment/utils";
-import structuredClone from "@formbricks/lib/structuredClone";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {

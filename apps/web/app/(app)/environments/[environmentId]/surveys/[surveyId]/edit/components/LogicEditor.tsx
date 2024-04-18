@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import structuredClone from "@formbricks/lib/structuredClone";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import {
   TSurvey,

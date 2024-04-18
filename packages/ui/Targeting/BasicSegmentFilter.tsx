@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import z from "zod";
 
 import { cn } from "@formbricks/lib/cn";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import {
   convertOperatorToText,
   convertOperatorToTitle,
@@ -12,7 +13,6 @@ import {
   updateOperatorInFilter,
   updatePersonIdentifierInFilter,
 } from "@formbricks/lib/segment/utils";
-import structuredClone from "@formbricks/lib/structuredClone";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   ARITHMETIC_OPERATORS,
