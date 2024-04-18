@@ -178,7 +178,7 @@ export default function LinkSurvey({
   };
 
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex h-screen items-center justify-center">
       {!determineStyling().isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
       <ContentWrapper className="w-11/12 p-0 md:max-w-md">
         {isPreview && (
