@@ -7,14 +7,13 @@ export interface SurveyBaseProps {
   survey: TSurvey;
   styling: TSurveyStyling | TProductStyling;
   isBrandingEnabled: boolean;
-  activeQuestionId?: string;
   getSetIsError?: (getSetError: (value: boolean) => void) => void;
   getSetIsResponseSendingFinished?: (getSetIsResponseSendingFinished: (value: boolean) => void) => void;
+  getSetQuestionId?: (getSetQuestionId: (value: string) => void) => void;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
   onFinished?: () => void;
   onClose?: () => void;
-  onActiveQuestionChange?: (questionId: string) => void;
   onRetry?: () => void;
   autoFocus?: boolean;
   isRedirectDisabled?: boolean;
@@ -23,6 +22,7 @@ export interface SurveyBaseProps {
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
   isCardBorderVisible?: boolean;
+  startAtQuestionId?: string;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

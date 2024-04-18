@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { getShortUrl } from "@formbricks/lib/shortUrl/service";
-import { ZShortUrlId } from "@formbricks/types/shortUrl";
+import { TShortUrl, ZShortUrlId } from "@formbricks/types/shortUrl";
 
 export async function generateMetadata({ params }): Promise<Metadata> {
   if (!params.shortUrlId) {
@@ -14,20 +14,20 @@ export async function generateMetadata({ params }): Promise<Metadata> {
     notFound();
   }
 
-  let shortUrl;
-
   try {
-    shortUrl = await getShortUrl(params.shortUrlId);
+    const shortUrl = await getShortUrl(params.shortUrlId);
+
     if (!shortUrl) {
       notFound();
     }
-  } catch (error) {
-    console.error(error);
-  }
 
-  const surveyId = shortUrl.url.substring(shortUrl.url.lastIndexOf("/") + 1);
-  return getMetadataForLinkSurvey(surveyId);
+    const surveyId = shortUrl.url.substring(shortUrl.url.lastIndexOf("/") + 1);
+    return getMetadataForLinkSurvey(surveyId);
+  } catch (error) {
+    notFound();
+  }
 }
+
 export default async function ShortUrlPage({ params }) {
   if (!params.shortUrlId) {
     notFound();
@@ -38,18 +38,18 @@ export default async function ShortUrlPage({ params }) {
     notFound();
   }
 
-  let shortUrl;
+  let shortUrl: TShortUrl | null = null;
 
   try {
     shortUrl = await getShortUrl(params.shortUrlId);
   } catch (error) {
     console.error(error);
+    notFound();
   }
 
   if (shortUrl) {
     redirect(shortUrl.url);
   }
 
-  // return not found if short url not found
   notFound();
 }

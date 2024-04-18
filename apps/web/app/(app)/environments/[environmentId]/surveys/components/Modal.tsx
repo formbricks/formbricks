@@ -10,6 +10,8 @@ export default function Modal({
   placement,
   previewMode,
   highlightBorderColor,
+  clickOutsideClose,
+  darkOverlay,
   borderRadius,
   background,
 }: {
@@ -18,12 +20,15 @@ export default function Modal({
   placement: TPlacement;
   previewMode: string;
   highlightBorderColor: string | null | undefined;
+  clickOutsideClose: boolean;
+  darkOverlay: boolean;
   borderRadius?: number;
   background?: string;
 }) {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(true);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [overlayVisible, setOverlayVisible] = useState(true);
 
   const calculateScaling = () => {
     let scaleValue = "1";
@@ -61,6 +66,7 @@ export default function Modal({
   };
 
   const scalingClasses = calculateScaling();
+  const overlayStyle = overlayVisible && darkOverlay ? "bg-gray-700/80" : "bg-white/50";
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -68,11 +74,36 @@ export default function Modal({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    if (!clickOutsideClose) {
+      setOverlayVisible(true);
+      setShow(true);
+    }
+    const previewBase = document.getElementById("preview-survey-base");
+    function handleClickOutside(e: MouseEvent) {
+      // Checks if the positioning is center, clickOutsideClose is set & if the click is inside the preview screen but outside the survey modal
+      if (
+        scalingClasses.transformOrigin === "" &&
+        clickOutsideClose &&
+        modalRef.current &&
+        previewBase &&
+        previewBase.contains(e.target as Node) &&
+        !modalRef.current.contains(e.target as Node)
+      ) {
+        setTimeout(() => {
+          setOverlayVisible(false);
+          setShow(false);
+        }, 500);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [clickOutsideClose, scalingClasses.transformOrigin]);
+
   const highlightBorderColorStyle = useMemo(() => {
-    if (!highlightBorderColor)
-      return {
-        overflow: "auto",
-      };
+    if (!highlightBorderColor) return { overflow: "auto" };
 
     return {
       border: `2px solid ${highlightBorderColor}`,
@@ -103,7 +134,14 @@ export default function Modal({
         : "";
 
   return (
-    <div aria-live="assertive" className="relative h-full w-full overflow-hidden bg-slate-300">
+    <div
+      id="preview-survey-base"
+      aria-live="assertive"
+      className={cn(
+        "relative h-full w-full overflow-hidden",
+        overlayStyle,
+        "transition-all duration-500 ease-in-out"
+      )}>
       <div
         ref={modalRef}
         style={{

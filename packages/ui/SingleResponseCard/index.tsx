@@ -471,15 +471,14 @@ export default function SingleResponseCard({
           )}
         </div>
 
-        {user && !isViewer && (
-          <ResponseTagsWrapper
-            environmentId={environmentId}
-            responseId={response.id}
-            tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
-            environmentTags={environmentTags}
-            updateFetchedResponses={updateFetchedResponses}
-          />
-        )}
+        <ResponseTagsWrapper
+          environmentId={environmentId}
+          responseId={response.id}
+          tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
+          environmentTags={environmentTags}
+          updateFetchedResponses={updateFetchedResponses}
+          isViewer={isViewer}
+        />
 
         <DeleteDialog
           open={deleteDialogOpen}
