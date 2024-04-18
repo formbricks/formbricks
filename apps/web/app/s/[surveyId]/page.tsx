@@ -153,12 +153,6 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);
   const responseCount = await getResponseCountBySurveyId(survey.id);
 
-  // question pre filling: Check if the first question is prefilled and if it is valid
-  const prefillAnswer = searchParams[survey.questions[0].id];
-  const isPrefilledAnswerValid = prefillAnswer
-    ? checkValidity(survey!.questions[0], prefillAnswer, languageCode)
-    : false;
-
   if (isSurveyPinProtected) {
     return (
       <PinScreen
@@ -166,7 +160,6 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         product={product}
         userId={userId}
         emailVerificationStatus={emailVerificationStatus}
-        prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
         singleUseId={isSingleUseSurvey ? singleUseId : undefined}
         singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
         webAppUrl={WEBAPP_URL}
@@ -187,7 +180,6 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
           product={product}
           userId={userId}
           emailVerificationStatus={emailVerificationStatus}
-          prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
           singleUseId={isSingleUseSurvey ? singleUseId : undefined}
           singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
           webAppUrl={WEBAPP_URL}

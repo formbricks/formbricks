@@ -2,40 +2,66 @@ import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
-export function getPrefillResponseData(
-  currentQuestion: TSurveyQuestion,
+export const handlePrefill = (
   survey: TSurvey,
-  firstQuestionPrefill: string,
+  searchParams: URLSearchParams,
   languageId: string
-): TResponseData | undefined {
-  try {
-    if (firstQuestionPrefill) {
-      if (!currentQuestion) return;
-      const firstQuestionId = survey?.questions[0].id;
-      if (currentQuestion.id !== firstQuestionId) return;
-      const question = survey?.questions.find((q: any) => q.id === firstQuestionId);
-      if (!question) throw new Error("Question not found");
+): TResponseData | undefined => {
+  const prefillAnswer: TResponseData = {};
+  let questionIdxMap: { [key: string]: number } = {};
 
-      const answer = transformAnswer(question, firstQuestionPrefill || "", languageId);
-      const answerObj = { [firstQuestionId]: answer };
+  survey.questions.forEach((q, idx) => {
+    questionIdxMap[q.id] = idx;
+  });
 
-      if (
-        question.type === TSurveyQuestionType.CTA &&
-        question.buttonExternal &&
-        question.buttonUrl &&
-        answer === "clicked"
-      ) {
-        window?.open(question.buttonUrl, "blank");
-      }
+  searchParams.forEach((value, key) => {
+    const questionId = key;
+    const questionIdx = questionIdxMap[questionId];
+    const question = survey.questions[questionIdx];
+    const answer = value;
 
-      return answerObj;
+    if (question && checkValidity(question, answer, languageId)) {
+      prefillAnswer[questionId] = transformAnswer(question, answer, languageId);
     }
-  } catch (error) {
-    console.error(error);
-  }
-}
+  });
 
-export const checkValidity = (question: TSurveyQuestion, answer: any, language: string): boolean => {
+  return Object.keys(prefillAnswer).length > 0 ? prefillAnswer : undefined;
+};
+
+// export function getPrefillResponseData(
+//   currentQuestion: TSurveyQuestion,
+//   survey: TSurvey,
+//   firstQuestionPrefill: string,
+//   languageId: string
+// ): TResponseData | undefined {
+//   try {
+//     if (firstQuestionPrefill) {
+//       if (!currentQuestion) return;
+//       const firstQuestionId = survey?.questions[0].id;
+//       if (currentQuestion.id !== firstQuestionId) return;
+//       const question = survey?.questions.find((q: any) => q.id === firstQuestionId);
+//       if (!question) throw new Error("Question not found");
+
+//       const answer = transformAnswer(question, firstQuestionPrefill || "", languageId);
+//       const answerObj = { [firstQuestionId]: answer };
+
+//       if (
+//         question.type === TSurveyQuestionType.CTA &&
+//         question.buttonExternal &&
+//         question.buttonUrl &&
+//         answer === "clicked"
+//       ) {
+//         window?.open(question.buttonUrl, "blank");
+//       }
+
+//       return answerObj;
+//     }
+//   } catch (error) {
+//     console.error(error);
+//   }
+// }
+
+export const checkValidity = (question: TSurveyQuestion, answer: string, language: string): boolean => {
   if (question.required && (!answer || answer === "")) return false;
   try {
     switch (question.type) {
@@ -56,11 +82,13 @@ export const checkValidity = (question: TSurveyQuestion, answer: any, language: 
         return true;
       }
       case TSurveyQuestionType.MultipleChoiceMulti: {
-        answer = answer.split(",");
+        const answerChoices = answer.split(",");
         const hasOther = question.choices[question.choices.length - 1].id === "other";
         if (!hasOther) {
           if (
-            !answer.every((ans: string) => question.choices.find((choice) => choice.label[language] === ans))
+            !answerChoices.every((ans: string) =>
+              question.choices.find((choice) => choice.label[language] === ans)
+            )
           )
             return false;
           return true;
@@ -92,8 +120,8 @@ export const checkValidity = (question: TSurveyQuestion, answer: any, language: 
         return true;
       }
       case TSurveyQuestionType.PictureSelection: {
-        answer = answer.split(",");
-        if (!answer.every((ans: string) => question.choices.find((choice) => choice.id === ans)))
+        const answerChoices = answer.split(",");
+        if (!answerChoices.every((ans: string) => question.choices.find((choice) => choice.id === ans)))
           return false;
         return true;
       }
@@ -134,9 +162,9 @@ export const transformAnswer = (
       if (!hasOthers) return ansArr;
 
       // answer can be "a,b,c,d" and options can be a,c,others so we are filtering out the options that are not in the options list and sending these non-existing values as a single string(representing others) like "a", "c", "b,d"
-      const options = question.choices.map((o) => o.label);
-      const others = ansArr.filter((a: string) => !options.includes(a[language]));
-      if (others.length > 0) ansArr = ansArr.filter((a: string) => options.includes(a[language]));
+      const options = question.choices.map((o) => o.label[language]);
+      const others = ansArr.filter((a: string) => !options.includes(a));
+      if (others.length > 0) ansArr = ansArr.filter((a: string) => options.includes(a));
       if (others.length > 0) ansArr.push(others.join(","));
       return ansArr;
     }
