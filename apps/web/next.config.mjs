@@ -26,7 +26,6 @@ const nextConfig = {
       "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
     },
   },
-  cacheHandler: process.env.VERCEL !== "1" ? require.resolve("./cache-handler.mjs") : undefined,
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [
@@ -144,6 +143,11 @@ const nextConfig = {
     INTERNAL_SECRET: createId(),
   },
 };
+
+// set custom cache handler
+if (process.env.CUSTOM_CACHE_DISABLED !== "1") {
+  nextConfig.cacheHandler = require.resolve("./cache-handler.mjs");
+}
 
 // set actions allowed origins
 if (process.env.WEBAPP_URL) {

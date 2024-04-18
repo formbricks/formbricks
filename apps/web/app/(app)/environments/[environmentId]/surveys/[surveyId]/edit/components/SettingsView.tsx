@@ -27,7 +27,7 @@ interface SettingsViewProps {
   isFormbricksCloud: boolean;
 }
 
-export default function SettingsView({
+export const SettingsView = ({
   environment,
   localSurvey,
   setLocalSurvey,
@@ -38,7 +38,7 @@ export default function SettingsView({
   membershipRole,
   isUserTargetingAllowed = false,
   isFormbricksCloud,
-}: SettingsViewProps) {
+}: SettingsViewProps) => {
   return (
     <div className="mt-12 space-y-3 p-5">
       <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
@@ -98,4 +98,4 @@ export default function SettingsView({
       )}
     </div>
   );
-}
+};

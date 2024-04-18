@@ -177,8 +177,8 @@ export const ZSurveyConsentLogic = ZSurveyLogicBase.extend({
 });
 
 export const ZSurveyMultipleChoiceSingleLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped", "equals", "notEquals"]).optional(),
-  value: z.string().optional(),
+  condition: z.enum(["submitted", "skipped", "equals", "notEquals", "includesOne"]).optional(),
+  value: z.union([z.array(z.string()), z.string()]).optional(),
 });
 
 export const ZSurveyMultipleChoiceMultiLogic = ZSurveyLogicBase.extend({

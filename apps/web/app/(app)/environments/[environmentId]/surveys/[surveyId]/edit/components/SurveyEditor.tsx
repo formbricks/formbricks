@@ -2,7 +2,12 @@
 
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { LoadingSkeleton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LoadingSkeleton";
+import { QuestionsAudienceTabs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionsStylingSettingsTabs";
+import { QuestionsView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionsView";
+import { SettingsView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/SettingsView";
 import { StylingView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/StylingView";
+import { SurveyMenuBar } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyMenuBar";
+import { PreviewSurvey } from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurvey";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
@@ -15,12 +20,6 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys";
-
-import PreviewSurvey from "../../../components/PreviewSurvey";
-import QuestionsAudienceTabs from "./QuestionsStylingSettingsTabs";
-import QuestionsView from "./QuestionsView";
-import SettingsView from "./SettingsView";
-import SurveyMenuBar from "./SurveyMenuBar";
 
 interface SurveyEditorProps {
   survey: TSurvey;
@@ -235,8 +234,7 @@ export default function SurveyEditor({
           <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6 md:flex md:flex-col">
             <PreviewSurvey
               survey={localSurvey}
-              setActiveQuestionId={setActiveQuestionId}
-              activeQuestionId={activeQuestionId}
+              questionId={activeQuestionId}
               product={localProduct}
               environment={environment}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}

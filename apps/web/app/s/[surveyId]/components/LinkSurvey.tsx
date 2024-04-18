@@ -3,7 +3,6 @@
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
-import { RefreshCcwIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -16,10 +15,12 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
 import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
+import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 let setIsError = (_: boolean) => {};
 let setIsResponseSendingFinished = (_: boolean) => {};
+let setQuestionId = (_: string) => {};
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -76,10 +77,6 @@ export default function LinkSurvey({
 
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
-  const [activeQuestionId, setActiveQuestionId] = useState<string>(
-    startAt && isStartAtValid ? startAt : survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
-  );
-
   const prefillResponseData: TResponseData | undefined = prefillAnswer
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer, languageCode)
     : undefined;
@@ -118,6 +115,7 @@ export default function LinkSurvey({
     if (window.self === window.top) {
       setAutofocus(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hiddenFieldsRecord = useMemo<Record<string, string | number | string[]> | null>(() => {
@@ -187,14 +185,9 @@ export default function LinkSurvey({
           <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
             <div />
             Survey Preview 👀
-            <button
-              type="button"
-              className="flex items-center rounded-full bg-slate-500 px-3 py-1 hover:bg-slate-400"
-              onClick={() =>
-                setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
-              }>
-              Restart <RefreshCcwIcon className="ml-2 h-4 w-4" />
-            </button>
+            <ResetProgressButton
+              onClick={() => setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)}
+            />
           </div>
         )}
 
@@ -263,11 +256,13 @@ export default function LinkSurvey({
             const uploadedUrl = await api.client.storage.uploadFile(file, params);
             return uploadedUrl;
           }}
-          onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
-          activeQuestionId={activeQuestionId}
           autoFocus={autoFocus}
           prefillResponseData={prefillResponseData}
           responseCount={responseCount}
+          getSetQuestionId={(f: (value: string) => void) => {
+            setQuestionId = f;
+          }}
+          startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
         />
       </ContentWrapper>
     </div>

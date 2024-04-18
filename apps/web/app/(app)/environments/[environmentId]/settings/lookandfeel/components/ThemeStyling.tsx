@@ -18,6 +18,8 @@ import { Switch } from "@formbricks/ui/Switch";
 
 import { updateProductAction } from "../actions";
 
+let setQuestionId = (_: string) => {};
+
 type ThemeStylingProps = {
   product: TProduct;
   environmentId: string;
@@ -48,12 +50,10 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
     }));
   };
 
-  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-
   const [styledPreviewSurvey, setStyledPreviewSurvey] = useState<TSurvey>(PREVIEW_SURVEY);
 
   useEffect(() => {
-    setActiveQuestionId(PREVIEW_SURVEY.questions[0].id);
+    setQuestionId(PREVIEW_SURVEY.questions[0].id);
   }, []);
 
   useEffect(() => {
@@ -236,8 +236,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
       <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
         <div className="sticky top-4 mb-4 h-full max-h-[600px]">
           <ThemeStylingPreviewSurvey
-            activeQuestionId={activeQuestionId}
-            setActiveQuestionId={setActiveQuestionId}
+            setQuestionId={setQuestionId}
             survey={styledPreviewSurvey as TSurvey}
             product={localProduct}
             previewType={previewSurveyType}
