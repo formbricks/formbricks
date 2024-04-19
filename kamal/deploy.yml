@@ -121,6 +121,8 @@ builder:
 traefik:
   args:
     entryPoints.web.address: ":80"
+  options:
+    network: "private"
 
 # Use accessory services (secrets come from .env).
 accessories:
