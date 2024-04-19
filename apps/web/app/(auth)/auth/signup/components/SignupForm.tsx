@@ -46,7 +46,6 @@ export const SignupForm = ({
   const [error, setError] = useState<string>("");
   const [signingUp, setSigningUp] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
-  const submitButtonRef = useRef<HTMLButtonElement>(null);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   const inviteToken = searchParams?.get("inviteToken");
@@ -120,11 +119,6 @@ export const SignupForm = ({
         <div className="space-y-2">
           {emailAuthEnabled && (
             <form onSubmit={handleSubmit} ref={formRef} className="space-y-2" onChange={checkFormValidity}>
-              {/* Adding a hidden submit button to submit the form programmatically */}
-              <button type="submit" style={{ display: "none" }} ref={submitButtonRef}>
-                Submit
-              </button>
-
               {showLogin && (
                 <div>
                   <div className="mb-2 transition-all duration-500 ease-in-out">
@@ -189,24 +183,31 @@ export const SignupForm = ({
                   <IsPasswordValid password={password} setIsValid={setIsValid} />
                 </div>
               )}
-              <Button
-                onClick={(e: any) => {
-                  e.preventDefault();
-                  if (!showLogin) {
+              {showLogin && (
+                <Button
+                  type="submit"
+                  variant="darkCTA"
+                  className="w-full justify-center"
+                  loading={signingUp}
+                  disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
+                  Continue with Email
+                </Button>
+              )}
+
+              {!showLogin && (
+                <Button
+                  type="button"
+                  onClick={() => {
                     setShowLogin(true);
                     setButtonEnabled(false);
                     // Add a slight delay before focusing the input field to ensure it's visible
                     setTimeout(() => nameRef.current?.focus(), 100);
-                  } else if (formRef.current && submitButtonRef.current) {
-                    submitButtonRef.current.click();
-                  }
-                }}
-                variant="darkCTA"
-                className="w-full justify-center"
-                loading={signingUp}
-                disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
-                Continue with Email
-              </Button>
+                  }}
+                  variant="darkCTA"
+                  className="w-full justify-center">
+                  Continue with Email
+                </Button>
+              )}
             </form>
           )}
           {googleOAuthEnabled && (
