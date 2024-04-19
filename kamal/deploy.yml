@@ -12,6 +12,8 @@ servers:
       - 18.196.172.27
     labels:
       traefik.http.routers.formbricks-kamal.entrypoints: web
+    options:
+      network: "private"
 
 # Credentials for your image host.
 registry:
@@ -26,7 +28,7 @@ registry:
 # Remember to run `kamal env push` after making changes!
 env:
   clear:
-    REDIS_HTTP_URL: http://172.31.40.79:7379
+    REDIS_HTTP_URL: http://webdis:7379
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
@@ -124,7 +126,8 @@ traefik:
 accessories:
   webdis:
     image: nicolas/webdis:0.1.22
-    host: 18.196.187.144
+    roles:
+      - web
     env:
       secret:
         - REDIS_URL
@@ -135,7 +138,9 @@ accessories:
       sed -i 's/\"redis_host\":.*/\"redis_host\": \"$REDIS_HOST\",/' /usr/local/bin/webdis.json &&
       sed -i 's/\"logfile\":.*/\"logfile\": \"/dev/stderr\"/' /usr/local/bin/webdis.json &&
       /usr/local/bin/webdis /usr/local/bin/webdis.json"
-    port: "172.31.40.79:7379:7379"
+    port: 7379
+    options:
+      network: "private"
 
 healthcheck:
   path: /health
