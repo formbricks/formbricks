@@ -28,7 +28,7 @@ registry:
 # Remember to run `kamal env push` after making changes!
 env:
   clear:
-    REDIS_HTTP_URL: http://webdis:7379
+    REDIS_HTTP_URL: http://formbricks-kamal-webdis:7379
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
