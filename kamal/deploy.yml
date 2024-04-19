@@ -147,6 +147,9 @@ accessories:
   webdis:
     image: nicolas/webdis:0.1.22
     host: 18.196.187.144
+    env:
+      secret:
+        - REDIS_URL
     cmd: >
       sh -c "
       REDIS_HOST=$(echo $REDIS_URL | awk -F '[:/]' '{print $4}') &&
