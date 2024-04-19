@@ -35,6 +35,19 @@ const formbricksProxyHandler: ProxyHandler<any> = {
   get(_target, prop, _receiver) {
     return async (...args: any[]) => {
       if (!window.formbricks && !sdkLoadingPromise && !isErrorLoadingSdk) {
+        // This happens most likely when the user calls a method before `formbricks.init`
+
+        if (prop !== "init") {
+          console.error("🧱 Formbricks - You need to call formbricks.init before calling any other method");
+          return;
+        }
+
+        // still need to check if the apiHost is passed
+        if (!args[0]) {
+          console.error("🧱 Formbricks - You need to pass the apiHost as the first argument");
+          return;
+        }
+
         const { apiHost } = args[0];
         sdkLoadingPromise = loadSDK(apiHost).catch((error) => {
           console.error(`🧱 Formbricks - Error loading SDK: ${error}`);
