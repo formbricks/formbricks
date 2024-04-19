@@ -149,8 +149,9 @@ accessories:
     host: 18.196.187.144
     cmd: >
       sh -c "
+      REDIS_HOST=$(echo $REDIS_URL | awk -F '[:/]' '{print $4}') &&
       wget -O /usr/local/bin/webdis.json https://github.com/nicolasff/webdis/raw/0.1.22/webdis.json &&
-      sed -i 's/\"redis_host\":.*/\"redis_host\": \"formbricks-cloud.4alin3.ng.0001.euc1.cache.amazonaws.com\",/' /usr/local/bin/webdis.json &&
+      sed -i 's/\"redis_host\":.*/\"redis_host\": \"$REDIS_HOST\",/' /usr/local/bin/webdis.json &&
       sed -i 's/\"logfile\":.*/\"logfile\": \"/dev/stderr\"/' /usr/local/bin/webdis.json &&
       /usr/local/bin/webdis /usr/local/bin/webdis.json"
     port: "172.31.40.79:7379:7379"
