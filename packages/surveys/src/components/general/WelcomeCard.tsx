@@ -103,13 +103,15 @@ export const WelcomeCard = ({
   return (
     <div>
       <ScrollableContainer>
-        {fileUrl && (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
-        )}
+        <div>
+          {fileUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
+          )}
 
-        <Headline headline={getLocalizedValue(headline, languageCode)} questionId="welcomeCard" />
-        <HtmlBody htmlString={getLocalizedValue(html, languageCode)} questionId="welcomeCard" />
+          <Headline headline={getLocalizedValue(headline, languageCode)} questionId="welcomeCard" />
+          <HtmlBody htmlString={getLocalizedValue(html, languageCode)} questionId="welcomeCard" />
+        </div>
       </ScrollableContainer>
 
       <div className="mx-6 mt-4 flex w-full justify-between">

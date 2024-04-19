@@ -93,60 +93,65 @@ export const MatrixQuestion = ({
   return (
     <form key={question.id} onSubmit={handleSubmit} className="w-full">
       <ScrollableContainer>
-        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-        <Headline
-          headline={getLocalizedValue(question.headline, languageCode)}
-          questionId={question.id}
-          required={question.required}
-        />
-        <Subheader subheader={getLocalizedValue(question.subheader, languageCode)} questionId={question.id} />
-        <div className="overflow-x-auto">
-          <table className="min-w-full table-auto border-collapse text-sm">
-            <thead>
-              <tr>
-                <th className="px-4 py-2"></th>
-                {columnsHeaders}
-              </tr>
-            </thead>
-            <tbody>
-              {question.rows.map((row, rowIndex) => (
-                // Table rows
-                <tr className={`${rowIndex % 2 === 0 ? "bg-input-bg" : ""}`}>
-                  <td className="text-heading rounded-l-custom max-w-40 break-words px-4 py-2">
-                    {getLocalizedValue(row, languageCode)}
-                  </td>
-                  {question.columns.map((column, columnIndex) => (
-                    <td
-                      key={columnIndex}
-                      className={`px-4 py-2 text-gray-800 ${columnIndex === question.columns.length - 1 ? "rounded-r-custom" : ""}`}
-                      onClick={() =>
-                        handleSelect(
-                          getLocalizedValue(column, languageCode),
-                          getLocalizedValue(row, languageCode)
-                        )
-                      }>
-                      <div className="flex items-center justify-center p-2">
-                        {/* radio input  */}
-                        <input
-                          type="radio"
-                          id={`${row}-${column}`}
-                          name={getLocalizedValue(row, languageCode)}
-                          value={getLocalizedValue(column, languageCode)}
-                          checked={
-                            typeof value === "object" && !Array.isArray(value)
-                              ? value[getLocalizedValue(row, languageCode)] ===
-                                getLocalizedValue(column, languageCode)
-                              : false
-                          }
-                          className="border-brand text-brand h-5 w-5 border focus:ring-0 focus:ring-offset-0"
-                        />
-                      </div>
-                    </td>
-                  ))}
+        <div>
+          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          <Headline
+            headline={getLocalizedValue(question.headline, languageCode)}
+            questionId={question.id}
+            required={question.required}
+          />
+          <Subheader
+            subheader={getLocalizedValue(question.subheader, languageCode)}
+            questionId={question.id}
+          />
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto border-collapse text-sm">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2"></th>
+                  {columnsHeaders}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {question.rows.map((row, rowIndex) => (
+                  // Table rows
+                  <tr className={`${rowIndex % 2 === 0 ? "bg-input-bg" : ""}`}>
+                    <td className="text-heading rounded-l-custom max-w-40 break-words px-4 py-2">
+                      {getLocalizedValue(row, languageCode)}
+                    </td>
+                    {question.columns.map((column, columnIndex) => (
+                      <td
+                        key={columnIndex}
+                        className={`px-4 py-2 text-gray-800 ${columnIndex === question.columns.length - 1 ? "rounded-r-custom" : ""}`}
+                        onClick={() =>
+                          handleSelect(
+                            getLocalizedValue(column, languageCode),
+                            getLocalizedValue(row, languageCode)
+                          )
+                        }>
+                        <div className="flex items-center justify-center p-2">
+                          {/* radio input  */}
+                          <input
+                            type="radio"
+                            id={`${row}-${column}`}
+                            name={getLocalizedValue(row, languageCode)}
+                            value={getLocalizedValue(column, languageCode)}
+                            checked={
+                              typeof value === "object" && !Array.isArray(value)
+                                ? value[getLocalizedValue(row, languageCode)] ===
+                                  getLocalizedValue(column, languageCode)
+                                : false
+                            }
+                            className="border-brand text-brand h-5 w-5 border focus:ring-0 focus:ring-offset-0"
+                          />
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </ScrollableContainer>
       <div className="flex w-full justify-between px-6">

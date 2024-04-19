@@ -99,120 +99,122 @@ export const MultipleChoiceSingleQuestion = ({
       className="w-full">
       {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <ScrollableContainer>
-        <Headline
-          headline={getLocalizedValue(question.headline, languageCode)}
-          questionId={question.id}
-          required={question.required}
-        />
-        <Subheader
-          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-          questionId={question.id}
-        />
-        <div className="mt-4">
-          <fieldset>
-            <legend className="sr-only">Options</legend>
+        <div>
+          <Headline
+            headline={getLocalizedValue(question.headline, languageCode)}
+            questionId={question.id}
+            required={question.required}
+          />
+          <Subheader
+            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+            questionId={question.id}
+          />
+          <div className="mt-4">
+            <fieldset>
+              <legend className="sr-only">Options</legend>
 
-            <div
-              className="bg-survey-bg relative space-y-2 py-0.5 pr-2"
-              role="radiogroup"
-              ref={choicesContainerRef}>
-              {questionChoices.map((choice, idx) => (
-                <label
-                  tabIndex={idx + 1}
-                  key={choice.id}
-                  className={cn(
-                    value === choice.label ? "border-brand z-10" : "border-border",
-                    "text-heading bg-input-bg focus-within:border-brand focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
-                  )}
-                  onKeyDown={(e) => {
-                    // Accessibility: if spacebar was pressed pass this down to the input
-                    if (e.key === " ") {
-                      e.preventDefault();
-                      document.getElementById(choice.id)?.click();
-                      document.getElementById(choice.id)?.focus();
-                    }
-                  }}
-                  autoFocus={idx === 0 && !isInIframe}>
-                  <span className="flex items-center text-sm">
-                    <input
-                      tabIndex={-1}
-                      type="radio"
-                      id={choice.id}
-                      name={question.id}
-                      value={choice.label}
-                      className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
-                      aria-labelledby={`${choice.id}-label`}
-                      onChange={() => {
-                        setOtherSelected(false);
-                        onChange({ [question.id]: getLocalizedValue(choice.label, languageCode) });
-                      }}
-                      checked={value === getLocalizedValue(choice.label, languageCode)}
-                      required={question.required && idx === 0}
-                    />
-                    <span id={`${choice.id}-label`} className="ml-3 font-medium">
-                      {getLocalizedValue(choice.label, languageCode)}
-                    </span>
-                  </span>
-                </label>
-              ))}
-              {otherOption && (
-                <label
-                  tabIndex={questionChoices.length + 1}
-                  className={cn(
-                    value === getLocalizedValue(otherOption.label, languageCode)
-                      ? "border-border bg-input-bg-selected z-10"
-                      : "border-border",
-                    "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
-                  )}
-                  onKeyDown={(e) => {
-                    // Accessibility: if spacebar was pressed pass this down to the input
-                    if (e.key === " ") {
-                      if (otherSelected) return;
-                      document.getElementById(otherOption.id)?.click();
-                      document.getElementById(otherOption.id)?.focus();
-                    }
-                  }}>
-                  <span className="flex items-center text-sm">
-                    <input
-                      type="radio"
-                      id={otherOption.id}
-                      tabIndex={-1}
-                      name={question.id}
-                      value={getLocalizedValue(otherOption.label, languageCode)}
-                      className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
-                      aria-labelledby={`${otherOption.id}-label`}
-                      onChange={() => {
-                        setOtherSelected(!otherSelected);
-                        onChange({ [question.id]: "" });
-                      }}
-                      checked={otherSelected}
-                    />
-                    <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
-                      {getLocalizedValue(otherOption.label, languageCode)}
-                    </span>
-                  </span>
-                  {otherSelected && (
-                    <input
-                      ref={otherSpecify}
-                      tabIndex={questionChoices.length + 1}
-                      id={`${otherOption.id}-label`}
-                      name={question.id}
-                      value={value}
-                      onChange={(e) => {
-                        onChange({ [question.id]: e.currentTarget.value });
-                      }}
-                      className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus rounded-custom mt-3 flex h-10 w-full border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      placeholder={
-                        getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
+              <div
+                className="bg-survey-bg relative space-y-2 py-0.5 pr-2"
+                role="radiogroup"
+                ref={choicesContainerRef}>
+                {questionChoices.map((choice, idx) => (
+                  <label
+                    tabIndex={idx + 1}
+                    key={choice.id}
+                    className={cn(
+                      value === choice.label ? "border-brand z-10" : "border-border",
+                      "text-heading bg-input-bg focus-within:border-brand focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                    )}
+                    onKeyDown={(e) => {
+                      // Accessibility: if spacebar was pressed pass this down to the input
+                      if (e.key === " ") {
+                        e.preventDefault();
+                        document.getElementById(choice.id)?.click();
+                        document.getElementById(choice.id)?.focus();
                       }
-                      required={question.required}
-                      aria-labelledby={`${otherOption.id}-label`}
-                    />
-                  )}
-                </label>
-              )}
-            </div>
-          </fieldset>
+                    }}
+                    autoFocus={idx === 0 && !isInIframe}>
+                    <span className="flex items-center text-sm">
+                      <input
+                        tabIndex={-1}
+                        type="radio"
+                        id={choice.id}
+                        name={question.id}
+                        value={choice.label}
+                        className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
+                        aria-labelledby={`${choice.id}-label`}
+                        onChange={() => {
+                          setOtherSelected(false);
+                          onChange({ [question.id]: getLocalizedValue(choice.label, languageCode) });
+                        }}
+                        checked={value === getLocalizedValue(choice.label, languageCode)}
+                        required={question.required && idx === 0}
+                      />
+                      <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                        {getLocalizedValue(choice.label, languageCode)}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+                {otherOption && (
+                  <label
+                    tabIndex={questionChoices.length + 1}
+                    className={cn(
+                      value === getLocalizedValue(otherOption.label, languageCode)
+                        ? "border-border bg-input-bg-selected z-10"
+                        : "border-border",
+                      "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                    )}
+                    onKeyDown={(e) => {
+                      // Accessibility: if spacebar was pressed pass this down to the input
+                      if (e.key === " ") {
+                        if (otherSelected) return;
+                        document.getElementById(otherOption.id)?.click();
+                        document.getElementById(otherOption.id)?.focus();
+                      }
+                    }}>
+                    <span className="flex items-center text-sm">
+                      <input
+                        type="radio"
+                        id={otherOption.id}
+                        tabIndex={-1}
+                        name={question.id}
+                        value={getLocalizedValue(otherOption.label, languageCode)}
+                        className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
+                        aria-labelledby={`${otherOption.id}-label`}
+                        onChange={() => {
+                          setOtherSelected(!otherSelected);
+                          onChange({ [question.id]: "" });
+                        }}
+                        checked={otherSelected}
+                      />
+                      <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
+                        {getLocalizedValue(otherOption.label, languageCode)}
+                      </span>
+                    </span>
+                    {otherSelected && (
+                      <input
+                        ref={otherSpecify}
+                        tabIndex={questionChoices.length + 1}
+                        id={`${otherOption.id}-label`}
+                        name={question.id}
+                        value={value}
+                        onChange={(e) => {
+                          onChange({ [question.id]: e.currentTarget.value });
+                        }}
+                        className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus rounded-custom mt-3 flex h-10 w-full border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder={
+                          getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
+                        }
+                        required={question.required}
+                        aria-labelledby={`${otherOption.id}-label`}
+                      />
+                    )}
+                  </label>
+                )}
+              </div>
+            </fieldset>
+          </div>
         </div>
       </ScrollableContainer>
       <div className="flex w-full justify-between px-6">

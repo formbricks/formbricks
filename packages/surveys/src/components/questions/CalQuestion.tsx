@@ -69,20 +69,22 @@ export const CalQuestion = ({
       }}
       className="w-full">
       <ScrollableContainer>
-        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-        <Headline
-          headline={getLocalizedValue(question.headline, languageCode)}
-          questionId={question.id}
-          required={question.required}
-        />
-        <Subheader
-          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-          questionId={question.id}
-        />
-        <>
-          {errorMessage && <span className="text-red-500">{errorMessage}</span>}
-          <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
-        </>
+        <div>
+          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          <Headline
+            headline={getLocalizedValue(question.headline, languageCode)}
+            questionId={question.id}
+            required={question.required}
+          />
+          <Subheader
+            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+            questionId={question.id}
+          />
+          <>
+            {errorMessage && <span className="text-red-500">{errorMessage}</span>}
+            <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
+          </>
+        </div>
       </ScrollableContainer>
       <div className="flex w-full justify-between px-6">
         {!isFirstQuestion && (

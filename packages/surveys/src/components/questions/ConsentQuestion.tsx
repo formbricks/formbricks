@@ -52,50 +52,52 @@ export const ConsentQuestion = ({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}>
       <ScrollableContainer>
-        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-        <Headline
-          headline={getLocalizedValue(question.headline, languageCode)}
-          questionId={question.id}
-          required={question.required}
-        />
-        <HtmlBody
-          htmlString={getLocalizedValue(question.html, languageCode) || ""}
-          questionId={question.id}
-        />
-
-        <label
-          tabIndex={1}
-          id={`${question.id}-label`}
-          onKeyDown={(e) => {
-            // Accessibility: if spacebar was pressed pass this down to the input
-            if (e.key === " ") {
-              e.preventDefault();
-              document.getElementById(question.id)?.click();
-              document.getElementById(`${question.id}-label`)?.focus();
-            }
-          }}
-          className="border-border bg-input-bg text-heading hover:bg-input-bg-selected focus:bg-input-bg-selected focus:ring-brand rounded-custom relative z-10 mt-4 flex w-full cursor-pointer items-center border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
-          <input
-            type="checkbox"
-            id={question.id}
-            name={question.id}
-            value={getLocalizedValue(question.label, languageCode)}
-            onChange={(e) => {
-              if (e.target instanceof HTMLInputElement && e.target.checked) {
-                onChange({ [question.id]: "accepted" });
-              } else {
-                onChange({ [question.id]: "dismissed" });
-              }
-            }}
-            checked={value === "accepted"}
-            className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
-            aria-labelledby={`${question.id}-label`}
+        <div>
+          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          <Headline
+            headline={getLocalizedValue(question.headline, languageCode)}
+            questionId={question.id}
             required={question.required}
           />
-          <span id={`${question.id}-label`} className="ml-3 font-medium">
-            {getLocalizedValue(question.label, languageCode)}
-          </span>
-        </label>
+          <HtmlBody
+            htmlString={getLocalizedValue(question.html, languageCode) || ""}
+            questionId={question.id}
+          />
+
+          <label
+            tabIndex={1}
+            id={`${question.id}-label`}
+            onKeyDown={(e) => {
+              // Accessibility: if spacebar was pressed pass this down to the input
+              if (e.key === " ") {
+                e.preventDefault();
+                document.getElementById(question.id)?.click();
+                document.getElementById(`${question.id}-label`)?.focus();
+              }
+            }}
+            className="border-border bg-input-bg text-heading hover:bg-input-bg-selected focus:bg-input-bg-selected focus:ring-brand rounded-custom relative z-10 mt-4 flex w-full cursor-pointer items-center border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
+            <input
+              type="checkbox"
+              id={question.id}
+              name={question.id}
+              value={getLocalizedValue(question.label, languageCode)}
+              onChange={(e) => {
+                if (e.target instanceof HTMLInputElement && e.target.checked) {
+                  onChange({ [question.id]: "accepted" });
+                } else {
+                  onChange({ [question.id]: "dismissed" });
+                }
+              }}
+              checked={value === "accepted"}
+              className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
+              aria-labelledby={`${question.id}-label`}
+              required={question.required}
+            />
+            <span id={`${question.id}-label`} className="ml-3 font-medium">
+              {getLocalizedValue(question.label, languageCode)}
+            </span>
+          </label>
+        </div>
       </ScrollableContainer>
       <div className="flex w-full justify-between px-6">
         {!isFirstQuestion && (

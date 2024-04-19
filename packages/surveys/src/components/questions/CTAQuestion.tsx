@@ -46,13 +46,15 @@ export const CTAQuestion = ({
   return (
     <div key={question.id}>
       <ScrollableContainer>
-        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-        <Headline
-          headline={getLocalizedValue(question.headline, languageCode)}
-          questionId={question.id}
-          required={question.required}
-        />
-        <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} questionId={question.id} />
+        <div>
+          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          <Headline
+            headline={getLocalizedValue(question.headline, languageCode)}
+            questionId={question.id}
+            required={question.required}
+          />
+          <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} questionId={question.id} />
+        </div>
       </ScrollableContainer>
       <div className="flex w-full justify-between px-6">
         {!isFirstQuestion && (

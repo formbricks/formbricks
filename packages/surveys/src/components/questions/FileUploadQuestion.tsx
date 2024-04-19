@@ -72,33 +72,35 @@ export const FileUploadQuestion = ({
       }}
       className="w-full ">
       <ScrollableContainer>
-        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-        <Headline
-          headline={getLocalizedValue(question.headline, languageCode)}
-          questionId={question.id}
-          required={question.required}
-        />
-        <Subheader
-          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-          questionId={question.id}
-        />
-        <FileInput
-          surveyId={surveyId}
-          onFileUpload={onFileUpload}
-          onUploadCallback={(urls: string[]) => {
-            if (urls) {
-              onChange({ [question.id]: urls });
-            } else {
-              onChange({ [question.id]: "skipped" });
-            }
-          }}
-          fileUrls={value as string[]}
-          allowMultipleFiles={question.allowMultipleFiles}
-          {...(!!question.allowedFileExtensions
-            ? { allowedFileExtensions: question.allowedFileExtensions }
-            : {})}
-          {...(!!question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
-        />
+        <div>
+          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          <Headline
+            headline={getLocalizedValue(question.headline, languageCode)}
+            questionId={question.id}
+            required={question.required}
+          />
+          <Subheader
+            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+            questionId={question.id}
+          />
+          <FileInput
+            surveyId={surveyId}
+            onFileUpload={onFileUpload}
+            onUploadCallback={(urls: string[]) => {
+              if (urls) {
+                onChange({ [question.id]: urls });
+              } else {
+                onChange({ [question.id]: "skipped" });
+              }
+            }}
+            fileUrls={value as string[]}
+            allowMultipleFiles={question.allowMultipleFiles}
+            {...(!!question.allowedFileExtensions
+              ? { allowedFileExtensions: question.allowedFileExtensions }
+              : {})}
+            {...(!!question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
+          />
+        </div>
       </ScrollableContainer>
       <div className="flex w-full justify-between px-6">
         {!isFirstQuestion && (

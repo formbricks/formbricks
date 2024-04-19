@@ -1,7 +1,7 @@
 import { useRef, useState } from "preact/hooks";
 
 interface ScrollableContainerProps {
-  children: React.ReactNode;
+  children: JSX.Element;
 }
 
 export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {

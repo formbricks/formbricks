@@ -97,29 +97,31 @@ export const DateQuestion = ({
       }}
       className="w-full">
       <ScrollableContainer>
-        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-        <Headline
-          headline={getLocalizedValue(question.headline, languageCode)}
-          questionId={question.id}
-          required={question.required}
-        />
-        <Subheader
-          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-          questionId={question.id}
-        />
-        <div className={"text-red-600"}>
-          <span>{errorMessage}</span>
-        </div>
-        <div
-          className={cn("my-4", errorMessage && "rounded-lg border-2 border-red-500")}
-          id="date-picker-root">
-          {loading && (
-            <div className="bg-survey-bg border-border text-placeholder relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
-              <span
-                className="h-6 w-6 animate-spin rounded-full border-b-2 border-neutral-900"
-                style={{ borderTopColor: "transparent" }}></span>
-            </div>
-          )}
+        <div>
+          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          <Headline
+            headline={getLocalizedValue(question.headline, languageCode)}
+            questionId={question.id}
+            required={question.required}
+          />
+          <Subheader
+            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+            questionId={question.id}
+          />
+          <div className={"text-red-600"}>
+            <span>{errorMessage}</span>
+          </div>
+          <div
+            className={cn("my-4", errorMessage && "rounded-lg border-2 border-red-500")}
+            id="date-picker-root">
+            {loading && (
+              <div className="bg-survey-bg border-border text-placeholder relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+                <span
+                  className="h-6 w-6 animate-spin rounded-full border-b-2 border-neutral-900"
+                  style={{ borderTopColor: "transparent" }}></span>
+              </div>
+            )}
+          </div>
         </div>
       </ScrollableContainer>
       <div className="flex w-full justify-between px-6">
