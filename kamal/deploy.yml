@@ -28,6 +28,8 @@ registry:
 env:
   # clear:
   #   DB_HOST: 192.168.0.2
+  clear:
+    REDIS_HTTP_URL: http://172.31.40.79:7379
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
@@ -142,6 +144,16 @@ accessories:
   #     - db/production.sql:/docker-entrypoint-initdb.d/setup.sql
   #   directories:
   #     - data:/var/lib/mysql
+  webdis:
+    image: nicolas/webdis:0.1.22
+    host: 18.196.187.144
+    cmd: >
+      sh -c "
+      wget -O /usr/local/bin/webdis.json https://github.com/nicolasff/webdis/raw/0.1.22/webdis.json &&
+      sed -i 's/\"redis_host\":.*/\"redis_host\": \"formbricks-cloud.4alin3.ng.0001.euc1.cache.amazonaws.com\",/' /usr/local/bin/webdis.json &&
+      sed -i 's/\"logfile\":.*/\"logfile\": \"/dev/stderr\"/' /usr/local/bin/webdis.json &&
+      /usr/local/bin/webdis /usr/local/bin/webdis.json"
+    port: "172.31.40.79:7379:7379"
 
 # Configure custom arguments for Traefik
 # traefik:
