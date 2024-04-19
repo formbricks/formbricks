@@ -8,12 +8,17 @@ export const sendFreeLimitReachedEventToPosthogBiWeekly = async (
 ): Promise<string> =>
   unstable_cache(
     async () => {
-      await capturePosthogEnvironmentEvent(environmentId, "free limit reached", {
-        plan,
-      });
-      return "success";
+      try {
+        await capturePosthogEnvironmentEvent(environmentId, "free limit reached", {
+          plan,
+        });
+        return "success";
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
     },
-    [`posthog-${plan}-limitReached-${environmentId}`],
+    [`sendFreeLimitReachedEventToPosthogBiWeekly-${plan}-${environmentId}`],
     {
       revalidate: 60 * 60 * 24 * 15, // 15 days
     }

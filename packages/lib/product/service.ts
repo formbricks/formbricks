@@ -130,6 +130,7 @@ export const updateProduct = async (
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
+    throw error;
   }
 
   try {
@@ -186,61 +187,68 @@ export const getProduct = async (productId: string): Promise<TProduct | null> =>
 };
 
 export const deleteProduct = async (productId: string): Promise<TProduct> => {
-  const product = await prisma.product.delete({
-    where: {
-      id: productId,
-    },
-    select: selectProduct,
-  });
+  try {
+    const product = await prisma.product.delete({
+      where: {
+        id: productId,
+      },
+      select: selectProduct,
+    });
 
-  if (product) {
-    // delete all files from storage related to this product
+    if (product) {
+      // delete all files from storage related to this product
 
-    if (isS3Configured()) {
-      const s3FilesPromises = product.environments.map(async (environment) => {
-        return deleteS3FilesByEnvironmentId(environment.id);
+      if (isS3Configured()) {
+        const s3FilesPromises = product.environments.map(async (environment) => {
+          return deleteS3FilesByEnvironmentId(environment.id);
+        });
+
+        try {
+          await Promise.all(s3FilesPromises);
+        } catch (err) {
+          // fail silently because we don't want to throw an error if the files are not deleted
+          console.error(err);
+        }
+      } else {
+        const localFilesPromises = product.environments.map(async (environment) => {
+          return deleteLocalFilesByEnvironmentId(environment.id);
+        });
+
+        try {
+          await Promise.all(localFilesPromises);
+        } catch (err) {
+          // fail silently because we don't want to throw an error if the files are not deleted
+          console.error(err);
+        }
+      }
+
+      productCache.revalidate({
+        id: product.id,
+        teamId: product.teamId,
       });
 
-      try {
-        await Promise.all(s3FilesPromises);
-      } catch (err) {
-        // fail silently because we don't want to throw an error if the files are not deleted
-        console.error(err);
-      }
-    } else {
-      const localFilesPromises = product.environments.map(async (environment) => {
-        return deleteLocalFilesByEnvironmentId(environment.id);
+      environmentCache.revalidate({
+        productId: product.id,
       });
 
-      try {
-        await Promise.all(localFilesPromises);
-      } catch (err) {
-        // fail silently because we don't want to throw an error if the files are not deleted
-        console.error(err);
-      }
+      product.environments.forEach((environment) => {
+        // revalidate product cache
+        productCache.revalidate({
+          environmentId: environment.id,
+        });
+        environmentCache.revalidate({
+          id: environment.id,
+        });
+      });
     }
 
-    productCache.revalidate({
-      id: product.id,
-      teamId: product.teamId,
-    });
-
-    environmentCache.revalidate({
-      productId: product.id,
-    });
-
-    product.environments.forEach((environment) => {
-      // revalidate product cache
-      productCache.revalidate({
-        environmentId: environment.id,
-      });
-      environmentCache.revalidate({
-        id: environment.id,
-      });
-    });
+    return product;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
   }
-
-  return product;
 };
 
 export const createProduct = async (
@@ -255,24 +263,31 @@ export const createProduct = async (
 
   const { environments, ...data } = productInput;
 
-  let product = await prisma.product.create({
-    data: {
-      ...data,
-      name: productInput.name,
-      teamId,
-    },
-    select: selectProduct,
-  });
+  try {
+    let product = await prisma.product.create({
+      data: {
+        ...data,
+        name: productInput.name,
+        teamId,
+      },
+      select: selectProduct,
+    });
 
-  const devEnvironment = await createEnvironment(product.id, {
-    type: "development",
-  });
+    const devEnvironment = await createEnvironment(product.id, {
+      type: "development",
+    });
 
-  const prodEnvironment = await createEnvironment(product.id, {
-    type: "production",
-  });
+    const prodEnvironment = await createEnvironment(product.id, {
+      type: "production",
+    });
 
-  return await updateProduct(product.id, {
-    environments: [devEnvironment, prodEnvironment],
-  });
+    return await updateProduct(product.id, {
+      environments: [devEnvironment, prodEnvironment],
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
 };
