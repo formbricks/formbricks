@@ -18,7 +18,6 @@ registry:
   # Specify the registry server, if you're not using Docker Hub
   server: ghcr.io
   username: mattinannt
-
   # Always use an access token rather than real password when possible.
   password:
     - KAMAL_REGISTRY_PASSWORD
@@ -26,8 +25,6 @@ registry:
 # Inject ENV variables into containers (secrets come from .env).
 # Remember to run `kamal env push` after making changes!
 env:
-  # clear:
-  #   DB_HOST: 192.168.0.2
   clear:
     REDIS_HTTP_URL: http://172.31.40.79:7379
   secret:
@@ -118,11 +115,6 @@ builder:
   cache:
     type: registry
     options: mode=max,image-manifest=true,oci-mediatypes=true
-#   secrets:
-#     - GITHUB_TOKEN
-#   remote:
-#     arch: amd64
-#     host: ssh://app@192.168.0.1
 
 traefik:
   args:
@@ -130,20 +122,6 @@ traefik:
 
 # Use accessory services (secrets come from .env).
 accessories:
-  # db:
-  #   image: mysql:8.0
-  #   host: 192.168.0.2
-  #   port: 3306
-  #   env:
-  #     clear:
-  #       MYSQL_ROOT_HOST: '%'
-  #     secret:
-  #       - MYSQL_ROOT_PASSWORD
-  #   files:
-  #     - config/mysql/production.cnf:/etc/mysql/my.cnf
-  #     - db/production.sql:/docker-entrypoint-initdb.d/setup.sql
-  #   directories:
-  #     - data:/var/lib/mysql
   webdis:
     image: nicolas/webdis:0.1.22
     host: 18.196.187.144
@@ -159,35 +137,8 @@ accessories:
       /usr/local/bin/webdis /usr/local/bin/webdis.json"
     port: "172.31.40.79:7379:7379"
 
-# Configure custom arguments for Traefik
-# traefik:
-#   args:
-#     accesslog: true
-#     accesslog.format: json
-
 healthcheck:
   path: /health
   port: 3000
   max_attempts: 15
   interval: 20s
-# Bridge fingerprinted assets, like JS and CSS, between versions to avoid
-# hitting 404 on in-flight requests. Combines all files from new and old
-# version inside the asset_path.
-# asset_path: /rails/public/assets
-
-# Configure rolling deploys by setting a wait time between batches of restarts.
-# boot:
-#   limit: 10 # Can also specify as a percentage of total hosts, such as "25%"
-#   wait: 2
-
-# Configure the role used to determine the primary_host. This host takes
-# deploy locks, runs health checks during the deploy, and follow logs, etc.
-#
-# Caution: there's no support for role renaming yet, so be careful to cleanup
-#          the previous role on the deployed hosts.
-# primary_role: web
-
-# Controls if we abort when see a role with no hosts. Disabling this may be
-# useful for more complex deploy configurations.
-#
-# allow_empty_roles: false
