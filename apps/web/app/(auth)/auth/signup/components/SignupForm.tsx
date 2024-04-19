@@ -46,6 +46,7 @@ export const SignupForm = ({
   const [error, setError] = useState<string>("");
   const [signingUp, setSigningUp] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   const inviteToken = searchParams?.get("inviteToken");
@@ -119,6 +120,11 @@ export const SignupForm = ({
         <div className="space-y-2">
           {emailAuthEnabled && (
             <form onSubmit={handleSubmit} ref={formRef} className="space-y-2" onChange={checkFormValidity}>
+              {/* Adding a hidden submit button to submit the form programmatically */}
+              <button type="submit" style={{ display: "none" }} ref={submitButtonRef}>
+                Submit
+              </button>
+
               {showLogin && (
                 <div>
                   <div className="mb-2 transition-all duration-500 ease-in-out">
@@ -191,8 +197,8 @@ export const SignupForm = ({
                     setButtonEnabled(false);
                     // Add a slight delay before focusing the input field to ensure it's visible
                     setTimeout(() => nameRef.current?.focus(), 100);
-                  } else if (formRef.current) {
-                    formRef.current.requestSubmit();
+                  } else if (formRef.current && submitButtonRef.current) {
+                    submitButtonRef.current.click();
                   }
                 }}
                 variant="darkCTA"
