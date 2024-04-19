@@ -115,7 +115,7 @@ export const SurveyMenuBar = ({
     }
   };
 
-  const saveSurveyAction = async (shouldNavigateBack = false) => {
+  const handleSurveySave = async (shouldNavigateBack = false) => {
     setIsSurveySaving(true);
     try {
       if (
@@ -230,7 +230,7 @@ export const SurveyMenuBar = ({
             variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
             className="mr-3"
             loading={isSurveySaving}
-            onClick={() => saveSurveyAction()}>
+            onClick={() => handleSurveySave()}>
             Save
           </Button>
           {localSurvey.status === "draft" && audiencePrompt && (
@@ -266,7 +266,7 @@ export const SurveyMenuBar = ({
             setConfirmDialogOpen(false);
             router.back();
           }}
-          onConfirm={() => saveSurveyAction(true)}
+          onConfirm={() => handleSurveySave(true)}
         />
       </div>
     </>
