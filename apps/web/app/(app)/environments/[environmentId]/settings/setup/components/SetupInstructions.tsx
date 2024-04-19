@@ -31,8 +31,10 @@ export default function SetupInstructions({
       <div className="px-6 py-5">
         {activeTab === "npm" ? (
           <div className="prose prose-slate">
-            <p className="text-lg font-semibold text-slate-800">Step 1: NPM Install</p>
-            <CodeBlock language="sh">npm install @formbricks/js --save</CodeBlock>
+            <p className="text-lg font-semibold text-slate-800">Step 1: Install with NPM or Yarn</p>
+            <CodeBlock language="sh">npm install @formbricks/js</CodeBlock>
+            <p>or</p>
+            <CodeBlock language="sh">yarn add @formbricks/js</CodeBlock>
             <p className="pt-4 text-lg font-semibold text-slate-800">Step 2: Initialize widget</p>
             <p>Import Formbricks and initialize the widget in your Component (e.g. App.tsx):</p>
             <CodeBlock language="js">{`import formbricks from "@formbricks/js";

@@ -26,6 +26,7 @@ import { getDisplaysByPersonId } from "../display/service";
 import { reverseTranslateSurvey } from "../i18n/reverseTranslation";
 import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
+import { structuredClone } from "../pollyfills/structuredClone";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
