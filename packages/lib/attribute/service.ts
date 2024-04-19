@@ -68,10 +68,7 @@ export const getAttributes = async (personId: string): Promise<TAttributes> => {
   )();
 };
 
-export const getAttributesByUserId = async (
-  environmentId: string,
-  userId: string
-): Promise<TAttributes | null> => {
+export const getAttributesByUserId = async (environmentId: string, userId: string): Promise<TAttributes> => {
   return await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId], [userId, ZString]);

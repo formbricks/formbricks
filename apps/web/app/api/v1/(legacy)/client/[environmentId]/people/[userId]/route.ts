@@ -45,7 +45,8 @@ export async function POST(req: Request, context: Context): Promise<Response> {
 
     // Check if the person is already up to date
     const updatedAtttributes = inputValidation.data.attributes;
-    const oldAttributes = getAttributesByUserId(environmentId, userId);
+    const oldAttributes = await getAttributesByUserId(environmentId, userId);
+
     let isUpToDate = true;
     for (const key in updatedAtttributes) {
       if (updatedAtttributes[key] !== oldAttributes[key]) {
@@ -53,6 +54,7 @@ export async function POST(req: Request, context: Context): Promise<Response> {
         break;
       }
     }
+
     if (isUpToDate) {
       return responses.successResponse(
         {
