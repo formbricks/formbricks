@@ -195,13 +195,13 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
           verifiedEmail={verifiedEmail}
           languageCode={languageCode}
         />
+        <LegalFooter
+          IMPRINT_URL={IMPRINT_URL}
+          PRIVACY_URL={PRIVACY_URL}
+          IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+          surveyUrl={WEBAPP_URL + "/s/" + survey.id}
+        />
       </MediaBackground>
-      <LegalFooter
-        IMPRINT_URL={IMPRINT_URL}
-        PRIVACY_URL={PRIVACY_URL}
-        IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-        surveyUrl={WEBAPP_URL + "/s/" + survey.id}
-      />
     </div>
   ) : null;
 }
