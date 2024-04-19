@@ -266,7 +266,7 @@ export const PreviewSurvey = ({
                       <ClientLogo environmentId={environment.id} product={product} previewSurvey />
                     )}
                   </div>
-                  <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
+                  <div className="no-scrollbar z-10 w-full max-w-md rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
                       isBrandingEnabled={product.linkSurveyBranding}
