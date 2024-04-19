@@ -1,9 +1,13 @@
 // extend this object in order to add more validation rules
+import { isEqual } from "lodash";
 import { toast } from "react-hot-toast";
 
 import { extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
+import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TI18nString,
+  TSurvey,
   TSurveyCTAQuestion,
   TSurveyConsentQuestion,
   TSurveyLanguage,
@@ -13,9 +17,12 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestion,
+  TSurveyQuestionType,
   TSurveyQuestions,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
+  ZSurveyInlineTriggers,
+  surveyHasBothTriggers,
 } from "@formbricks/types/surveys";
 
 // Utility function to check if label is valid for all required languages
@@ -265,4 +272,219 @@ export const isSurveyLogicCyclic = (questions: TSurveyQuestions) => {
   }
 
   return false;
+};
+
+export const validateSurvey = (
+  survey: TSurvey,
+  faultyQuestions: string[],
+  setInvalidQuestions: (questions: string[]) => void,
+  selectedLanguageCode: string,
+  setSelectedLanguageCode: (languageCode: string) => void
+) => {
+  const existingQuestionIds = new Set();
+
+  // Ensuring at least one question is added to the survey.
+  if (survey.questions.length === 0) {
+    toast.error("Please add at least one question");
+    return false;
+  }
+
+  // Checking the validity of the welcome and thank-you cards if they are enabled.
+  if (survey.welcomeCard.enabled) {
+    if (!isCardValid(survey.welcomeCard, "start", survey.languages)) {
+      faultyQuestions.push("start");
+    }
+  }
+
+  if (survey.thankYouCard.enabled) {
+    if (!isCardValid(survey.thankYouCard, "end", survey.languages)) {
+      faultyQuestions.push("end");
+    }
+  }
+
+  // Verifying that any provided PIN is exactly four digits long.
+  const pin = survey.pin;
+  if (pin && pin.toString().length !== 4) {
+    toast.error("PIN must be a four digit number.");
+    return false;
+  }
+
+  // Assessing each question for completeness and correctness,
+  for (let index = 0; index < survey.questions.length; index++) {
+    const question = survey.questions[index];
+    const isFirstQuestion = index === 0;
+    const isValid = validateQuestion(question, survey.languages, isFirstQuestion);
+
+    if (!isValid) {
+      faultyQuestions.push(question.id);
+    }
+  }
+
+  // if there are any faulty questions, the user won't be allowed to save the survey
+  if (faultyQuestions.length > 0) {
+    setInvalidQuestions(faultyQuestions);
+    setSelectedLanguageCode("default");
+    toast.error("Please fill all required fields.");
+    return false;
+  }
+
+  for (const question of survey.questions) {
+    const existingLogicConditions = new Set();
+
+    if (existingQuestionIds.has(question.id)) {
+      toast.error("There are 2 identical question IDs. Please update one.");
+      return false;
+    }
+    existingQuestionIds.add(question.id);
+
+    if (
+      question.type === TSurveyQuestionType.MultipleChoiceSingle ||
+      question.type === TSurveyQuestionType.MultipleChoiceMulti
+    ) {
+      const haveSameChoices =
+        question.choices.some((element) => element.label[selectedLanguageCode]?.trim() === "") ||
+        question.choices.some((element, index) =>
+          question.choices
+            .slice(index + 1)
+            .some(
+              (nextElement) =>
+                nextElement.label[selectedLanguageCode]?.trim() === element.label[selectedLanguageCode].trim()
+            )
+        );
+
+      if (haveSameChoices) {
+        toast.error("You have empty or duplicate choices.");
+        return false;
+      }
+    }
+
+    if (question.type === TSurveyQuestionType.Matrix) {
+      const hasDuplicates = (labels: TI18nString[]) => {
+        const flattenedLabels = labels
+          .map((label) => Object.keys(label).map((lang) => `${lang}:${label[lang].trim().toLowerCase()}`))
+          .flat();
+
+        return new Set(flattenedLabels).size !== flattenedLabels.length;
+      };
+
+      // Function to check for empty labels in each language
+      const hasEmptyLabels = (labels: TI18nString[]) => {
+        return labels.some((label) => Object.values(label).some((value) => value.trim() === ""));
+      };
+
+      if (hasEmptyLabels(question.rows) || hasEmptyLabels(question.columns)) {
+        toast.error("Empty row or column labels in one or more languages");
+        setInvalidQuestions([question.id]);
+        return false;
+      }
+
+      if (hasDuplicates(question.rows)) {
+        toast.error("You have duplicate row labels.");
+        return false;
+      }
+
+      if (hasDuplicates(question.columns)) {
+        toast.error("You have duplicate column labels.");
+        return false;
+      }
+    }
+
+    for (const logic of question.logic || []) {
+      const validFields = ["condition", "destination", "value"].filter(
+        (field) => logic[field] !== undefined
+      ).length;
+
+      if (validFields < 2) {
+        setInvalidQuestions([question.id]);
+        toast.error("Incomplete logic jumps detected: Fill or remove them in the Questions tab.");
+        return false;
+      }
+
+      if (question.required && logic.condition === "skipped") {
+        toast.error("A logic condition is missing: Please update or delete it in the Questions tab.");
+        return false;
+      }
+
+      const thisLogic = `${logic.condition}-${logic.value}`;
+      if (existingLogicConditions.has(thisLogic)) {
+        setInvalidQuestions([question.id]);
+        toast.error(
+          "There are two competing logic conditons: Please update or delete one in the Questions tab."
+        );
+        return false;
+      }
+      existingLogicConditions.add(thisLogic);
+    }
+  }
+
+  // Checking the validity of redirection URLs to ensure they are properly formatted.
+  if (
+    survey.redirectUrl &&
+    !survey.redirectUrl.includes("https://") &&
+    !survey.redirectUrl.includes("http://")
+  ) {
+    toast.error("Please enter a valid URL for redirecting respondents.");
+    return false;
+  }
+
+  // validate the user segment filters
+  const localSurveySegment = {
+    id: survey.segment?.id,
+    filters: survey.segment?.filters,
+    title: survey.segment?.title,
+    description: survey.segment?.description,
+  };
+
+  const surveySegment = {
+    id: survey.segment?.id,
+    filters: survey.segment?.filters,
+    title: survey.segment?.title,
+    description: survey.segment?.description,
+  };
+
+  // if the non-private segment in the survey and the strippedSurvey are different, don't save
+  if (!survey.segment?.isPrivate && !isEqual(localSurveySegment, surveySegment)) {
+    toast.error("Please save the audience filters before saving the survey");
+    return false;
+  }
+
+  if (!!survey.segment?.filters?.length) {
+    const parsedFilters = ZSegmentFilters.safeParse(survey.segment.filters);
+    if (!parsedFilters.success) {
+      const errMsg =
+        parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
+        "Invalid targeting: Please check your audience filters";
+      toast.error(errMsg);
+      return false;
+    }
+  }
+
+  // if inlineTriggers are present validate with zod
+  if (!!survey.inlineTriggers) {
+    const parsedInlineTriggers = ZSurveyInlineTriggers.safeParse(survey.inlineTriggers);
+    if (!parsedInlineTriggers.success) {
+      toast.error("Invalid Custom Actions: Please check your custom actions");
+      return false;
+    }
+  }
+
+  // validate that both triggers and inlineTriggers are not present
+  if (surveyHasBothTriggers(survey)) {
+    toast.error("Survey cannot have both custom and saved actions, please remove one.");
+    return false;
+  }
+
+  const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, selectedLanguageCode);
+  if (questionWithEmptyFallback) {
+    toast.error("Fallback missing");
+    return false;
+  }
+
+  // Detecting any cyclic dependencies in survey logic.
+  if (isSurveyLogicCyclic(survey.questions)) {
+    toast.error("Cyclic logic detected. Please fix it before saving.");
+    return false;
+  }
+
+  return true;
 };

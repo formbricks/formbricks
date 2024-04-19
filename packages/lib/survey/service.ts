@@ -405,7 +405,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  const { triggers, environmentId, segment, languages, ...surveyData } = updatedSurvey;
+  const { triggers, environmentId, segment, languages, questions, ...surveyData } = updatedSurvey;
 
   if (languages) {
     // Process languages update logic here
@@ -473,7 +473,10 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
   }
 
-  surveyData.updatedAt = new Date();
+  data.questions = questions.map((question) => {
+    const { isDraft, ...rest } = question;
+    return rest;
+  });
 
   data = {
     ...surveyData,
