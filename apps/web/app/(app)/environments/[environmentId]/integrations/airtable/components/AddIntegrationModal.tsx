@@ -50,8 +50,8 @@ export type IntegrationModalInputs = {
 function NoBaseFoundError() {
   return (
     <Alert>
-      <AlertTitle>No Airbase bases found</AlertTitle>
-      <AlertDescription>create a Airbase base</AlertDescription>
+      <AlertTitle>No Airtable bases found</AlertTitle>
+      <AlertDescription>Please create a base on Airtable</AlertDescription>
     </Alert>
   );
 }
@@ -235,11 +235,11 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
         <div className="flex w-full items-center justify-between p-6">
           <div className="flex items-center space-x-2">
             <div className="mr-1.5 h-6 w-6 text-slate-500">
-              <Image className="w-12" src={AirtableLogo} alt="Airbase logo" />
+              <Image className="w-12" src={AirtableLogo} alt="Airtable logo" />
             </div>
             <div>
-              <div className="text-xl font-medium text-slate-700">Link Airbase Table</div>
-              <div className="text-sm text-slate-500">Sync responses with a Airbase table</div>
+              <div className="text-xl font-medium text-slate-700">Link Airtable Table</div>
+              <div className="text-sm text-slate-500">Sync responses with an Airtable</div>
             </div>
           </div>
         </div>
