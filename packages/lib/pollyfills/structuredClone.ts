@@ -1,11 +1,12 @@
 import structuredClonePolyfill from "@ungap/structured-clone";
 
-let structuredCloneExport = structuredClone;
+let structuredCloneExport: typeof structuredClonePolyfill;
 
-if (typeof structuredCloneExport === "undefined") {
-  // @ts-expect-error
+if (typeof structuredClone === "undefined") {
   structuredCloneExport = structuredClonePolyfill;
+} else {
+  // @ts-expect-error
+  structuredCloneExport = structuredClone;
 }
 
-// export default structuredCloneExport;
 export { structuredCloneExport as structuredClone };
