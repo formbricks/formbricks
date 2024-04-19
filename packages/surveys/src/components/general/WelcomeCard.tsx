@@ -58,7 +58,7 @@ const UsersIcon = () => {
   );
 };
 
-export default function WelcomeCard({
+export const WelcomeCard = ({
   headline,
   html,
   fileUrl,
@@ -68,7 +68,7 @@ export default function WelcomeCard({
   survey,
   responseCount,
   isInIframe,
-}: WelcomeCardProps) {
+}: WelcomeCardProps) => {
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
     if (idx === 0.5) {
@@ -152,4 +152,4 @@ export default function WelcomeCard({
       ) : null}
     </div>
   );
-}
+};

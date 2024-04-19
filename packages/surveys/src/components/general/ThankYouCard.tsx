@@ -23,7 +23,7 @@ interface ThankYouCardProps {
   isInIframe: boolean;
 }
 
-export default function ThankYouCard({
+export const ThankYouCard = ({
   headline,
   subheader,
   redirectUrl,
@@ -36,7 +36,7 @@ export default function ThankYouCard({
   replaceRecallInfo,
   isResponseSendingFinished,
   isInIframe,
-}: ThankYouCardProps) {
+}: ThankYouCardProps) => {
   return (
     <div className="text-center">
       <ScrollableContainer>
@@ -90,4 +90,4 @@ export default function ThankYouCard({
       )}
     </div>
   );
-}
+};

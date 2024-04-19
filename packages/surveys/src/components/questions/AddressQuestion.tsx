@@ -26,7 +26,7 @@ interface AddressQuestionProps {
   isInIframe: boolean;
 }
 
-export default function AddressQuestion({
+export const AddressQuestion = ({
   question,
   value,
   onChange,
@@ -38,7 +38,7 @@ export default function AddressQuestion({
   ttc,
   setTtc,
   isInIframe,
-}: AddressQuestionProps) {
+}: AddressQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [hasFilled, setHasFilled] = useState(false);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -182,4 +182,4 @@ export default function AddressQuestion({
       </div>
     </form>
   );
-}
+};

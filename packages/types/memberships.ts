@@ -15,7 +15,7 @@ export type TMembership = z.infer<typeof ZMembership>;
 
 export const ZMember = z.object({
   name: z.string().nullable(),
-  email: z.string(),
+  email: z.string().email(),
   userId: z.string(),
   accepted: z.boolean(),
   role: ZMembershipRole,
