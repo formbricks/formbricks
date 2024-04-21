@@ -9,7 +9,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
 import { Confetti } from "@formbricks/ui/Confetti";
 
-import ShareEmbedSurvey from "./ShareEmbedSurvey";
+import { ShareEmbedSurvey } from "./ShareEmbedSurvey";
 
 interface SummaryMetadataProps {
   environment: TEnvironment;
@@ -18,7 +18,7 @@ interface SummaryMetadataProps {
   user: TUser;
 }
 
-export default function SuccessMessage({ environment, survey, webAppUrl, user }: SummaryMetadataProps) {
+export const SuccessMessage = ({ environment, survey, webAppUrl, user }: SummaryMetadataProps) => {
   const searchParams = useSearchParams();
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [confetti, setConfetti] = useState(false);
@@ -61,4 +61,4 @@ export default function SuccessMessage({ environment, survey, webAppUrl, user }:
       {confetti && <Confetti />}
     </>
   );
-}
+};

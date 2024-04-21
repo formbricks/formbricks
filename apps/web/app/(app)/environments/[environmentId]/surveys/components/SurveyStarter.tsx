@@ -1,6 +1,6 @@
 "use client";
 
-import TemplateList from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
+import { TemplateList } from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";

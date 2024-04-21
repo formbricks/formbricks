@@ -123,8 +123,8 @@ test.describe("JS Package Test", async () => {
     // Survey should have 1 Response
     await page.waitForTimeout(1000);
     await expect(page.getByRole("button", { name: "Responses50%" })).toBeVisible();
-    await expect(page.getByText("1 responses", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("Clickthrough Rate (CTR)100%")).toBeVisible();
+    await expect(page.getByText("1 Responses", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("Click-through rate (CTR)100%")).toBeVisible();
     await expect(page.getByText("Somewhat disappointed100%")).toBeVisible();
     await expect(page.getByText("Founder100%")).toBeVisible();
     await expect(page.getByText("People who believe that PMF").first()).toBeVisible();

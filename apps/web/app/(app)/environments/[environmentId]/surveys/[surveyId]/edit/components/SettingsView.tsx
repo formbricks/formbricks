@@ -27,7 +27,7 @@ interface SettingsViewProps {
   isFormbricksCloud: boolean;
 }
 
-export default function SettingsView({
+export const SettingsView = ({
   environment,
   localSurvey,
   setLocalSurvey,
@@ -38,7 +38,7 @@ export default function SettingsView({
   membershipRole,
   isUserTargetingAllowed = false,
   isFormbricksCloud,
-}: SettingsViewProps) {
+}: SettingsViewProps) => {
   const isWebSurvey = localSurvey.type === "website" || localSurvey.type === "inApp";
 
   return (
@@ -100,4 +100,4 @@ export default function SettingsView({
       )}
     </div>
   );
-}
+};

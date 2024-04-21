@@ -1,5 +1,3 @@
-"use client";
-
 import { AlertCircleIcon, CheckCircle2Icon } from "lucide-react";
 import { Clipboard } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -15,14 +13,14 @@ interface ShareEmbedSurveyProps {
   showPublishModal: boolean;
   surveyUrl: string;
 }
-export default function ShareSurveyResults({
+export const ShareSurveyResults = ({
   open,
   setOpen,
   handlePublish,
   handleUnpublish,
   showPublishModal,
   surveyUrl,
-}: ShareEmbedSurveyProps) {
+}: ShareEmbedSurveyProps) => {
   return (
     <Dialog
       open={open}
@@ -99,4 +97,4 @@ export default function ShareSurveyResults({
       )}
     </Dialog>
   );
-}
+};

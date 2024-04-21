@@ -1,3 +1,4 @@
+import { AddressQuestion } from "@/components/questions/AddressQuestion";
 import { CTAQuestion } from "@/components/questions/CTAQuestion";
 import { CalQuestion } from "@/components/questions/CalQuestion";
 import { ConsentQuestion } from "@/components/questions/ConsentQuestion";
@@ -31,7 +32,7 @@ interface QuestionConditionalProps {
   isInIframe: boolean;
 }
 
-export default function QuestionConditional({
+export const QuestionConditional = ({
   question,
   value,
   onChange,
@@ -45,7 +46,7 @@ export default function QuestionConditional({
   surveyId,
   onFileUpload,
   isInIframe,
-}: QuestionConditionalProps) {
+}: QuestionConditionalProps) => {
   return question.type === TSurveyQuestionType.OpenText ? (
     <OpenTextQuestion
       key={question.id}
@@ -226,5 +227,19 @@ export default function QuestionConditional({
       ttc={ttc}
       setTtc={setTtc}
     />
+  ) : question.type === TSurveyQuestionType.Address ? (
+    <AddressQuestion
+      question={question}
+      value={Array.isArray(value) ? value : undefined}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      isInIframe={isInIframe}
+    />
   ) : null;
-}
+};

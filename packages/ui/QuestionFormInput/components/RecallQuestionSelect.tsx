@@ -1,5 +1,6 @@
 import {
   CalendarDaysIcon,
+  HomeIcon,
   ListIcon,
   MessageSquareTextIcon,
   PhoneIcon,
@@ -10,6 +11,7 @@ import {
 import { RefObject, useEffect, useMemo, useState } from "react";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
@@ -21,6 +23,7 @@ const questionIconMapping = {
   nps: PresentationIcon,
   date: CalendarDaysIcon,
   cal: PhoneIcon,
+  address: HomeIcon,
 };
 
 interface RecallQuestionSelectProps {

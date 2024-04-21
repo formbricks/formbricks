@@ -5,12 +5,11 @@ import {
   getResponseCountAction,
   getSurveySummaryAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
-import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
-import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryList";
-import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata";
-import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
-import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
+import { SurveyResultsTabs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
+import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
+import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
+import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
+import { SummaryHeader } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import {
   getResponseCountBySurveySharingKeyAction,
@@ -23,12 +22,13 @@ import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
-import { TSurveySummary } from "@formbricks/types/responses";
+import { TSurveySummary } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
 
-import ResultsShareButton from "../../../components/ResultsShareButton";
+import { SummaryList } from "./SummaryList";
+import { SummaryMetadata } from "./SummaryMetadata";
 
 const initialSurveySummary: TSurveySummary = {
   meta: {
@@ -71,40 +71,43 @@ const SummaryPage = ({
   const isSharingPage = !!sharingKey;
 
   const [responseCount, setResponseCount] = useState<number | null>(null);
-  const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
   const [isFetchingSummary, setFetchingSummary] = useState<boolean>(true);
 
+  const { selectedFilter, dateRange, resetState } = useResponseFilter();
+
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
-    [survey, selectedFilter, dateRange]
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedFilter, dateRange]
   );
 
   useEffect(() => {
     const handleInitialData = async () => {
       try {
         setFetchingSummary(true);
-        let responseCount;
+        let updatedResponseCount;
         if (isSharingPage) {
-          responseCount = await getResponseCountBySurveySharingKeyAction(sharingKey, filters);
+          updatedResponseCount = await getResponseCountBySurveySharingKeyAction(sharingKey, filters);
         } else {
-          responseCount = await getResponseCountAction(surveyId, filters);
+          updatedResponseCount = await getResponseCountAction(surveyId, filters);
         }
-        setResponseCount(responseCount);
-        if (responseCount === 0) {
+        setResponseCount(updatedResponseCount);
+        if (updatedResponseCount === 0) {
           setSurveySummary(initialSurveySummary);
           return;
         }
 
-        let response;
+        let updatedSurveySummary;
         if (isSharingPage) {
-          response = await getSummaryBySurveySharingKeyAction(sharingKey, filters);
+          updatedSurveySummary = await getSummaryBySurveySharingKeyAction(sharingKey, filters);
         } else {
-          response = await getSurveySummaryAction(surveyId, filters);
+          updatedSurveySummary = await getSurveySummaryAction(surveyId, filters);
         }
 
-        setSurveySummary(response);
+        setSurveySummary(updatedSurveySummary);
       } finally {
         setFetchingSummary(false);
       }

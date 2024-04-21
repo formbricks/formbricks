@@ -5,10 +5,11 @@ import {
   getResponseCountAction,
   getResponsesAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
+import { SurveyResultsTabs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
-import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
-import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
+import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
+import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
+import { SummaryHeader } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import {
   getResponseCountBySurveySharingKeyAction,
@@ -25,9 +26,7 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
-
-import ResultsShareButton from "../../../components/ResultsShareButton";
+import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
 
 interface ResponsePageProps {
   environment: TEnvironment;
@@ -68,7 +67,9 @@ const ResponsePage = ({
 
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
-    [survey, selectedFilter, dateRange]
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedFilter, dateRange]
   );
 
   const searchParams = useSearchParams();

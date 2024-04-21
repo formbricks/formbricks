@@ -22,7 +22,7 @@ interface ThankYouCardProps {
   isInIframe: boolean;
 }
 
-export default function ThankYouCard({
+export const ThankYouCard = ({
   headline,
   subheader,
   redirectUrl,
@@ -35,7 +35,7 @@ export default function ThankYouCard({
   replaceRecallInfo,
   isResponseSendingFinished,
   isInIframe,
-}: ThankYouCardProps) {
+}: ThankYouCardProps) => {
   return (
     <div className="text-center">
       {imageUrl || videoUrl ? (
@@ -83,10 +83,10 @@ export default function ThankYouCard({
                 window.location.replace(buttonLink);
               }}
             />
-            <p class="text-xs">Press Enter ↵</p>
+            <p class="text-subheading text-xs">Press Enter ↵</p>
           </div>
         )}
       </div>
     </div>
   );
-}
+};

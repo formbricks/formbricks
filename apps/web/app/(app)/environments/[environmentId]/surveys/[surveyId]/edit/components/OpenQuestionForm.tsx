@@ -41,7 +41,7 @@ interface OpenQuestionFormProps {
   isInvalid: boolean;
 }
 
-export default function OpenQuestionForm({
+export const OpenQuestionForm = ({
   question,
   questionIdx,
   updateQuestion,
@@ -49,7 +49,7 @@ export default function OpenQuestionForm({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: OpenQuestionFormProps): JSX.Element {
+}: OpenQuestionFormProps): JSX.Element => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
@@ -147,7 +147,7 @@ export default function OpenQuestionForm({
       </div>
     </form>
   );
-}
+};
 
 function getPlaceholderByInputType(inputType: TSurveyOpenTextQuestionInputType) {
   switch (inputType) {

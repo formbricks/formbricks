@@ -34,7 +34,7 @@ interface OpenQuestionFormProps {
   isInvalid: boolean;
 }
 
-export default function MultipleChoiceSingleForm({
+export const MultipleChoiceSingleForm = ({
   question,
   questionIdx,
   updateQuestion,
@@ -42,7 +42,7 @@ export default function MultipleChoiceSingleForm({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: OpenQuestionFormProps): JSX.Element {
+}: OpenQuestionFormProps): JSX.Element => {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
@@ -97,7 +97,9 @@ export default function MultipleChoiceSingleForm({
     question.logic?.forEach((logic) => {
       let newL: string | string[] | undefined = logic.value;
       if (Array.isArray(logic.value)) {
-        newL = logic.value.map((value) => (value === oldLabel ? newLabel : value));
+        newL = logic.value.map((value) =>
+          value === getLocalizedValue(oldLabel, selectedLanguageCode) ? newLabel : value
+        );
       } else {
         newL = logic.value === getLocalizedValue(oldLabel, selectedLanguageCode) ? newLabel : logic.value;
       }
@@ -351,4 +353,4 @@ export default function MultipleChoiceSingleForm({
       </div>
     </form>
   );
-}
+};

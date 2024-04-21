@@ -26,6 +26,7 @@ import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 
 import { getLanguageLabel } from "../../ee/multiLanguage/lib/isoLanguages";
+import { AddressResponse } from "../AddressResponse";
 import { PersonAvatar } from "../Avatars";
 import { DeleteDialog } from "../DeleteDialog";
 import { FileUploadResponse } from "../FileUploadResponse";
@@ -277,7 +278,10 @@ export default function SingleResponseCard({
             );
           });
         }
-
+      case TSurveyQuestionType.Address:
+        if (Array.isArray(responseData)) {
+          return <AddressResponse value={responseData} />;
+        }
       default:
         if (
           typeof responseData === "string" ||
@@ -467,15 +471,14 @@ export default function SingleResponseCard({
           )}
         </div>
 
-        {user && !isViewer && (
-          <ResponseTagsWrapper
-            environmentId={environmentId}
-            responseId={response.id}
-            tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
-            environmentTags={environmentTags}
-            updateFetchedResponses={updateFetchedResponses}
-          />
-        )}
+        <ResponseTagsWrapper
+          environmentId={environmentId}
+          responseId={response.id}
+          tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
+          environmentTags={environmentTags}
+          updateFetchedResponses={updateFetchedResponses}
+          isViewer={isViewer}
+        />
 
         <DeleteDialog
           open={deleteDialogOpen}

@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import {
   TSurvey,
@@ -91,6 +92,7 @@ export default function LogicEditor({
     fileUpload: ["uploaded", "notUploaded"],
     cal: ["skipped", "booked"],
     matrix: ["isCompletelySubmitted", "isPartiallySubmitted", "skipped"],
+    address: ["submitted", "skipped"],
   };
 
   const logicConditions: LogicConditions = {

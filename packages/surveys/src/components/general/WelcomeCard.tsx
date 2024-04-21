@@ -57,7 +57,7 @@ const UsersIcon = () => {
   );
 };
 
-export default function WelcomeCard({
+export const WelcomeCard = ({
   headline,
   html,
   fileUrl,
@@ -67,7 +67,7 @@ export default function WelcomeCard({
   survey,
   responseCount,
   isInIframe,
-}: WelcomeCardProps) {
+}: WelcomeCardProps) => {
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
     if (idx === 0.5) {
@@ -125,21 +125,21 @@ export default function WelcomeCard({
       </div>
 
       {timeToFinish && !showResponseCount ? (
-        <div className="item-center mt-4 flex text-slate-500">
+        <div className="item-center text-subheading mt-4 flex">
           <TimerIcon />
           <p className="pt-1 text-xs">
             <span> Takes {calculateTimeToComplete()} </span>
           </p>
         </div>
       ) : showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
-        <div className="item-center mt-4 flex text-slate-500">
+        <div className="item-center text-subheading mt-4 flex">
           <UsersIcon />
           <p className="pt-1 text-xs">
             <span>{`${responseCount} people responded`}</span>
           </p>
         </div>
       ) : timeToFinish && showResponseCount ? (
-        <div className="item-center mt-4 flex text-slate-500">
+        <div className="item-center text-subheading mt-4 flex">
           <TimerIcon />
           <p className="pt-1 text-xs">
             <span> Takes {calculateTimeToComplete()} </span>
@@ -149,4 +149,4 @@ export default function WelcomeCard({
       ) : null}
     </div>
   );
-}
+};

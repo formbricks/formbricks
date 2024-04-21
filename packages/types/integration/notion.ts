@@ -17,7 +17,7 @@ export const ZIntegrationNotionCredential = z.object({
         type: z.string(),
         object: z.string(),
         person: z.object({
-          email: z.string(),
+          email: z.string().email(),
         }),
         avatar_url: z.string(),
       })

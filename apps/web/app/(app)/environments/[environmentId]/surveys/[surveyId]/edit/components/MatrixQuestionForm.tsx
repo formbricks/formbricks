@@ -21,7 +21,7 @@ interface MatrixQuestionFormProps {
   isInvalid: boolean;
 }
 
-export default function MatrixQuestionForm({
+export const MatrixQuestionForm = ({
   question,
   questionIdx,
   updateQuestion,
@@ -29,7 +29,7 @@ export default function MatrixQuestionForm({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: MatrixQuestionFormProps): JSX.Element {
+}: MatrixQuestionFormProps): JSX.Element => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   // Function to add a new Label input field
@@ -209,4 +209,4 @@ export default function MatrixQuestionForm({
       </div>
     </form>
   );
-}
+};
