@@ -55,8 +55,8 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
 
   useEffect(() => {
     // when the type changes, we check if a segment is already created or not, if its not we create a new private segment
-    // we do this only for inApp surveys
-    if (localSurvey.type !== "inApp") {
+    // we do this only for app surveys
+    if (localSurvey.type !== "app") {
       return;
     }
 
@@ -88,8 +88,8 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
       alert: !widgetSetupCompleted,
     },
     {
-      id: "inApp",
-      name: "In-App Survey",
+      id: "app",
+      name: "App Survey",
       icon: MonitorIcon,
       description: "Embed a survey in your web app to collect responses.",
       comingSoon: false,
@@ -142,7 +142,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
           <RadioGroup
-            defaultValue="inApp"
+            defaultValue="app"
             value={localSurvey.type}
             onValueChange={setSurveyType}
             className="flex flex-col space-y-3">

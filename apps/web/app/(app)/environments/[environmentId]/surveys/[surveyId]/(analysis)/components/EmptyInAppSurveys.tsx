@@ -6,10 +6,10 @@ import { Button } from "@formbricks/ui/Button";
 
 interface TEmptyAppSurveysProps {
   environment: TEnvironment;
-  surveyType?: "inApp" | "website";
+  surveyType?: "app" | "website";
 }
 
-export const EmptyAppSurveys = ({ environment, surveyType = "inApp" }: TEmptyAppSurveysProps) => {
+export const EmptyAppSurveys = ({ environment, surveyType = "app" }: TEmptyAppSurveysProps) => {
   return (
     <div className="flex w-full items-center justify-center gap-8 bg-slate-100 py-12">
       <div className="flex h-20 w-20 items-center justify-center rounded-full border border-slate-200 bg-white">
@@ -20,8 +20,7 @@ export const EmptyAppSurveys = ({ environment, surveyType = "inApp" }: TEmptyApp
         <h1 className="text-xl font-semibold text-slate-900">You&apos;re not plugged in yet!</h1>
 
         <p className="mt-2 text-sm text-slate-600">
-          Connect your {surveyType === "inApp" ? "app" : "website"} with Formbricks to run{" "}
-          {surveyType === "inApp" ? "in-app" : "website"} surveys.
+          Connect your {surveyType} with Formbricks to run {surveyType} surveys.
         </p>
 
         <Link className="mt-2" href={`/environments/${environment.id}/settings/setup`}>

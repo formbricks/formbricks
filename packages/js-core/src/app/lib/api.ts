@@ -1,9 +1,9 @@
 import { FormbricksAPI } from "@formbricks/api";
 
-import { InAppConfig } from "./config";
+import { AppConfig } from "./config";
 
 export const getApi = (): FormbricksAPI => {
-  const inAppConfig = InAppConfig.getInstance();
+  const inAppConfig = AppConfig.getInstance();
   const { environmentId, apiHost } = inAppConfig.get();
 
   if (!environmentId || !apiHost) {

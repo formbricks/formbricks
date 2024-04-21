@@ -6,7 +6,7 @@
 */
 -- AlterEnum
 BEGIN;
-CREATE TYPE "SurveyType_new" AS ENUM ('link', 'web', 'website', 'inApp');
+CREATE TYPE "SurveyType_new" AS ENUM ('link', 'web', 'website', 'app');
 ALTER TABLE "Survey" ALTER COLUMN "type" DROP DEFAULT;
 ALTER TABLE "Survey" ALTER COLUMN "type" TYPE "SurveyType_new" USING ("type"::text::"SurveyType_new");
 ALTER TYPE "SurveyType" RENAME TO "SurveyType_old";

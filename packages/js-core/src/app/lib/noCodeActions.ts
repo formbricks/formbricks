@@ -14,10 +14,10 @@ import {
 } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import { trackAction } from "./actions";
-import { InAppConfig } from "./config";
+import { AppConfig } from "./config";
 import { triggerSurvey } from "./widget";
 
-const inAppConfig = InAppConfig.getInstance();
+const inAppConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 

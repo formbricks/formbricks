@@ -69,7 +69,7 @@ export const MultipleChoiceSummary = ({
               <div className="mt-4 rounded-lg border border-slate-200">
                 <div className="grid h-12 grid-cols-2 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
                   <div className="col-span-1 pl-6 ">Other values found</div>
-                  <div className="col-span-1 pl-6 ">{surveyType === "inApp" && "User"}</div>
+                  <div className="col-span-1 pl-6 ">{surveyType === "app" && "User"}</div>
                 </div>
                 {result.others
                   .filter((otherValue) => otherValue.value !== "")
@@ -83,7 +83,7 @@ export const MultipleChoiceSummary = ({
                           <span>{otherValue.value}</span>
                         </div>
                       )}
-                      {surveyType === "inApp" && otherValue.person && (
+                      {surveyType === "app" && otherValue.person && (
                         <Link
                           href={
                             otherValue.person.id

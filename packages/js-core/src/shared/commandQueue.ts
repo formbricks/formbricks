@@ -1,13 +1,14 @@
 import { wrapThrowsAsync } from "@formbricks/types/errorHandlers";
+import { TJsPackageType } from "@formbricks/types/js";
 
-import { checkInitialized as checkInitializedInApp } from "../in-app/lib/initialize";
+import { checkInitialized as checkInitializedInApp } from "../app/lib/initialize";
 import { checkInitialized as checkInitializedWebsite } from "../website/lib/initialize";
 import { ErrorHandler, Result } from "./errors";
 
 export class CommandQueue {
   private queue: {
     command: (args: any) => Promise<Result<void, any>> | Result<void, any> | Promise<void>;
-    packageType: "website" | "in-app";
+    packageType: TJsPackageType;
     checkInitialized: boolean;
     commandArgs: any[any];
   }[] = [];
@@ -17,7 +18,7 @@ export class CommandQueue {
 
   public add<A>(
     checkInitialized: boolean = true,
-    packageType: "website" | "in-app" = "in-app",
+    packageType: TJsPackageType,
     command: (...args: A[]) => Promise<Result<void, any>> | Result<void, any> | Promise<void>,
     ...args: A[]
   ) {

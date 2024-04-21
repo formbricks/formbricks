@@ -30,7 +30,7 @@ export default function SurveyStarter({
 
   const newSurveyFromTemplate = async (template: TTemplate) => {
     setIsCreateSurveyLoading(true);
-    const surveyType = environment?.widgetSetupCompleted ? "inApp" : "link";
+    const surveyType = environment?.widgetSetupCompleted ? "app" : "link";
     const augmentedTemplate: TSurveyInput = {
       ...template.preset,
       type: surveyType,

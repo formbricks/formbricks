@@ -48,14 +48,7 @@ export default function AppPage({}) {
 
     // Connect next.js router to Formbricks
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
-      // const handleRouteChange = formbricksWebsite?.registerRouteChange;
-      const handleRouteChange = (url: string) => {
-        formbricksWebsite.registerRouteChange();
-
-        if (url.includes("/app/website")) {
-          removeFormbricksContainer();
-        }
-      };
+      const handleRouteChange = formbricksWebsite?.registerRouteChange;
       router.events.on("routeChangeComplete", handleRouteChange);
 
       return () => {
@@ -82,7 +75,7 @@ export default function AppPage({}) {
             }}>
             <div className="flex items-center gap-2">
               <MonitorIcon className="h-10 w-10" />
-              <span>In-App Demo</span>
+              <span>App Demo</span>
             </div>
           </button>
           <div>
@@ -90,7 +83,7 @@ export default function AppPage({}) {
               Formbricks Website Survey Demo App
             </h1>
             <p className="text-slate-700 dark:text-slate-300">
-              This app helps you test your in-app surveys. You can create and test user actions, create and
+              This app helps you test your app surveys. You can create and test user actions, create and
               update user attributes, etc.
             </p>
           </div>

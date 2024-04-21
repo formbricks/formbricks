@@ -59,7 +59,7 @@ export const SurveyCard = ({
 
   const SurveyTypeIndicator = ({ type }: { type: TSurvey["type"] }) => (
     <div className="flex items-center space-x-2 text-sm text-slate-600">
-      {type === "inApp" && (
+      {type === "app" && (
         <>
           <Code className="h-4 w-4" />
           <span> In-app</span>

@@ -1,4 +1,4 @@
-import type { TJSInAppConfig, TJsInAppConfigInput } from "@formbricks/types/js";
+import type { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
 import { TPersonAttributes } from "@formbricks/types/people";
 
 import {
@@ -15,14 +15,14 @@ import {
 import { Logger } from "../../shared/logger";
 import { getIsDebug } from "../../shared/utils";
 import { trackAction } from "./actions";
-import { IN_APP_LOCAL_STORAGE_KEY, InAppConfig } from "./config";
+import { AppConfig, IN_APP_LOCAL_STORAGE_KEY } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { checkPageUrl } from "./noCodeActions";
 import { updatePersonAttributes } from "./person";
 import { sync } from "./sync";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
-const inAppConfig = InAppConfig.getInstance();
+const inAppConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 
 let isInitialized = false;
@@ -32,7 +32,7 @@ export const setIsInitialized = (value: boolean) => {
 };
 
 export const initialize = async (
-  configInput: TJsInAppConfigInput
+  configInput: TJsAppConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   if (getIsDebug()) {
     logger.configure({ logLevel: "debug" });
@@ -43,7 +43,7 @@ export const initialize = async (
     return okVoid();
   }
 
-  let existingConfig: TJSInAppConfig | undefined;
+  let existingConfig: TJSAppConfig | undefined;
   try {
     existingConfig = inAppConfig.get();
     logger.debug("Found existing configuration.");
@@ -189,7 +189,7 @@ export const initialize = async (
 
 const handleErrorOnFirstInit = () => {
   // put formbricks in error state (by creating a new config) and throw error
-  const initialErrorConfig: Partial<TJSInAppConfig> = {
+  const initialErrorConfig: Partial<TJSAppConfig> = {
     status: "error",
     expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
   };

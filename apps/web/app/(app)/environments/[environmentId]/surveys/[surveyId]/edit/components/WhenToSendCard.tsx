@@ -39,7 +39,7 @@ export default function WhenToSendCard({
   membershipRole,
 }: WhenToSendCardProps) {
   const [open, setOpen] = useState(
-    localSurvey.type === "inApp" || localSurvey.type === "website" ? true : false
+    localSurvey.type === "app" || localSurvey.type === "website" ? true : false
   );
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);

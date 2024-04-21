@@ -40,7 +40,7 @@ export const SummaryList = ({
 }: SummaryListProps) => {
   return (
     <div className="mt-10 space-y-8">
-      {(survey.type === "inApp" || survey.type === "website") &&
+      {(survey.type === "app" || survey.type === "website") &&
       responseCount === 0 &&
       !environment.widgetSetupCompleted ? (
         <EmptyAppSurveys environment={environment} surveyType={survey.type} />

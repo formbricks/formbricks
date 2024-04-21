@@ -3,11 +3,11 @@ import { TPersonAttributes, TPersonUpdateInput } from "@formbricks/types/people"
 
 import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
-import { InAppConfig } from "./config";
+import { AppConfig } from "./config";
 import { deinitalize, initialize } from "./initialize";
 import { closeSurvey } from "./widget";
 
-const inAppConfig = InAppConfig.getInstance();
+const inAppConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 
 export const updatePersonAttribute = async (

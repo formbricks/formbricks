@@ -19,10 +19,10 @@ const config = () => {
       minify: "terser",
       sourcemap: true,
       lib: {
-        entry: resolve(__dirname, "src/in-app/index.ts"),
+        entry: resolve(__dirname, "src/app/index.ts"),
         name: "formbricks",
         formats: ["umd"],
-        fileName: "in-app",
+        fileName: "app",
       },
     },
     plugins: [
@@ -30,7 +30,7 @@ const config = () => {
         rollupTypes: true,
         afterBuild: () => {
           const typesPath = path.resolve(__dirname, "dist", "index.d.ts");
-          const newPath = path.resolve(__dirname, "dist", "in-app.d.ts");
+          const newPath = path.resolve(__dirname, "dist", "app.d.ts");
           fs.renameSync(typesPath, newPath);
         },
       }),

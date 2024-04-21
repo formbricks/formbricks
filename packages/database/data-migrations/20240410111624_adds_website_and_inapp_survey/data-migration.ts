@@ -5,8 +5,8 @@ const prisma = new PrismaClient();
 async function main() {
   await prisma.$transaction(
     async (tx) => {
-      // Move all the previous surveys with type "web" to "inApp" or "website"
-      // If a web survey has a response with personId set, then it should be moved to "inApp"
+      // Move all the previous surveys with type "web" to "app" or "website"
+      // If a web survey has a response with personId set, then it should be moved to "app"
       // otherwise it should be moved to "website"
       const webSurveys = await tx.survey.findMany({
         where: {
@@ -31,7 +31,7 @@ async function main() {
         if (latestResponse?.personId) {
           await tx.survey.update({
             where: { id: webSurvey.id },
-            data: { type: "inApp" },
+            data: { type: "app" },
           });
         } else {
           // This is a website survey, change the type of the survey to "website"

@@ -1,2 +1,2 @@
-export type { TFormbricksInApp } from "./in-app";
+export type { TFormbricksApp } from "./app";
 export type { TFormbricksWebsite } from "./website";

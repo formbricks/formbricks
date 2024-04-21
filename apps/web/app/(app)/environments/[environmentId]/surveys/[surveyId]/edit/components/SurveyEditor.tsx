@@ -200,7 +200,7 @@ export default function SurveyEditor({
               product={localProduct}
               environment={environment}
               previewType={
-                localSurvey.type === "inApp" || localSurvey.type === "website" ? "modal" : "fullwidth"
+                localSurvey.type === "app" || localSurvey.type === "website" ? "modal" : "fullwidth"
               }
               languageCode={selectedLanguageCode}
               onFileUpload={async (file) => file.name}

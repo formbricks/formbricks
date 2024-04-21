@@ -242,7 +242,7 @@ enum SurveyType {
   link
   web
   website
-  inApp
+  app
 }
 
 enum displayOptions {

@@ -7,13 +7,13 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { ErrorHandler } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import { getDefaultLanguageCode, getLanguageCode } from "../../shared/utils";
-import { InAppConfig } from "./config";
+import { AppConfig } from "./config";
 import { putFormbricksInErrorState } from "./initialize";
 import { sync } from "./sync";
 
-const containerId = "formbricks-in-app-container";
+const containerId = "formbricks-app-container";
 
-const inAppConfig = InAppConfig.getInstance();
+const inAppConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let isSurveyRunning = false;

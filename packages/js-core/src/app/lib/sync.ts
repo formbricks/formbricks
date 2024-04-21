@@ -1,20 +1,20 @@
-import { TJsInAppState, TJsInAppStateSync, TJsInAppSyncParams } from "@formbricks/types/js";
+import { TJsAppState, TJsAppStateSync, TJsAppSyncParams } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys";
 
 import { NetworkError, Result, err, ok } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import { getIsDebug } from "../../shared/utils";
-import { InAppConfig } from "./config";
+import { AppConfig } from "./config";
 
-const config = InAppConfig.getInstance();
+const config = AppConfig.getInstance();
 const logger = Logger.getInstance();
 
 let syncIntervalId: number | null = null;
 
 const syncWithBackend = async (
-  { apiHost, environmentId, userId }: TJsInAppSyncParams,
+  { apiHost, environmentId, userId }: TJsAppSyncParams,
   noCache: boolean
-): Promise<Result<TJsInAppStateSync, NetworkError>> => {
+): Promise<Result<TJsAppStateSync, NetworkError>> => {
   try {
     let fetchOptions: RequestInit = {};
 
@@ -42,13 +42,13 @@ const syncWithBackend = async (
     const data = await response.json();
     const { data: state } = data;
 
-    return ok(state as TJsInAppStateSync);
+    return ok(state as TJsAppStateSync);
   } catch (e) {
     return err(e as NetworkError);
   }
 };
 
-export const sync = async (params: TJsInAppSyncParams, noCache = false): Promise<void> => {
+export const sync = async (params: TJsAppSyncParams, noCache = false): Promise<void> => {
   try {
     const syncResult = await syncWithBackend(params, noCache);
 
@@ -56,7 +56,7 @@ export const sync = async (params: TJsInAppSyncParams, noCache = false): Promise
       throw syncResult.error;
     }
 
-    let state: TJsInAppState = {
+    let state: TJsAppState = {
       surveys: syncResult.value.surveys as TSurvey[],
       noCodeActionClasses: syncResult.value.noCodeActionClasses,
       product: syncResult.value.product,

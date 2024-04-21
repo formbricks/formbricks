@@ -24,21 +24,22 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    "./in-app": {
-      "import": "./dist/in-app.js",
-      "require": "./dist/in-app.cjs",
-      "types": "./dist/in-app.d.ts"
+    "./app": {
+      "import": "./dist/app.js",
+      "require": "./dist/app.umd.cjs",
+      "types": "./dist/app.d.ts"
     },
     "./website": {
       "import": "./dist/website.js",
+      "require": "./dist/website.umd.cjs",
       "types": "./dist/website.d.ts"
     }
   },
   "scripts": {
     "dev": "vite build --watch --mode dev",
-    "build:in-app": "tsc && vite build --config in-app.vite.config.ts",
+    "build:app": "tsc && vite build --config app.vite.config.ts",
     "build:website": "tsc && vite build --config website.vite.config.ts",
-    "build": "pnpm build:in-app && pnpm build:website",
+    "build": "pnpm build:app && pnpm build:website",
     "build:dev": "tsc && vite build --mode dev",
     "go": "vite build --watch --mode dev",
     "lint": "eslint ./src --fix",

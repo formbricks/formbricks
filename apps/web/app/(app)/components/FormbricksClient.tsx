@@ -4,7 +4,7 @@ import { formbricksEnabled } from "@/app/lib/formbricks";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
-import formbricks from "@formbricks/js/in-app";
+import formbricks from "@formbricks/js/app";
 import { env } from "@formbricks/lib/env";
 
 type UsageAttributesUpdaterProps = {

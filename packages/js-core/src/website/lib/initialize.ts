@@ -1,4 +1,4 @@
-import type { TJSInAppConfig, TJsWebsiteConfig, TJsWebsiteConfigInput } from "@formbricks/types/js";
+import type { TJSAppConfig, TJsWebsiteConfig, TJsWebsiteConfigInput } from "@formbricks/types/js";
 
 import {
   ErrorHandler,
@@ -161,7 +161,7 @@ export const initialize = async (
 
 const handleErrorOnFirstInit = () => {
   // put formbricks in error state (by creating a new config) and throw error
-  const initialErrorConfig: Partial<TJSInAppConfig> = {
+  const initialErrorConfig: Partial<TJSAppConfig> = {
     status: "error",
     expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
   };

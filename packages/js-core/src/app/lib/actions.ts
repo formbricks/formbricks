@@ -4,12 +4,12 @@ import { TJsActionInput } from "@formbricks/types/js";
 import { NetworkError, Result, err, okVoid } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import { getIsDebug } from "../../shared/utils";
-import { InAppConfig } from "./config";
+import { AppConfig } from "./config";
 import { sync } from "./sync";
 import { triggerSurvey } from "./widget";
 
 const logger = Logger.getInstance();
-const inAppConfig = InAppConfig.getInstance();
+const inAppConfig = AppConfig.getInstance();
 
 const intentsToNotCreateOnApp = ["Exit Intent (Desktop)", "50% Scroll"];
 

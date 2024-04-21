@@ -23,7 +23,7 @@ export const SuccessMessage = ({ environment, survey, webAppUrl, user }: Summary
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [confetti, setConfetti] = useState(false);
 
-  const isAppSurvey = survey.type === "inApp" || survey.type === "website";
+  const isAppSurvey = survey.type === "app" || survey.type === "website";
 
   useEffect(() => {
     const newSurveyParam = searchParams?.get("success");

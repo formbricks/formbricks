@@ -85,7 +85,7 @@ export default function ResponseTimeline({
 
   return (
     <div className="space-y-4">
-      {(survey.type === "inApp" || survey.type === "website") &&
+      {(survey.type === "app" || survey.type === "website") &&
       responses.length === 0 &&
       !environment.widgetSetupCompleted ? (
         <EmptyAppSurveys environment={environment} surveyType={survey.type} />

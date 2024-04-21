@@ -39,13 +39,13 @@ export const SettingsView = ({
   isUserTargetingAllowed = false,
   isFormbricksCloud,
 }: SettingsViewProps) => {
-  const isWebSurvey = localSurvey.type === "website" || localSurvey.type === "inApp";
+  const isWebSurvey = localSurvey.type === "website" || localSurvey.type === "app";
 
   return (
     <div className="mt-12 space-y-3 p-5">
       <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
 
-      {localSurvey.type === "inApp" ? (
+      {localSurvey.type === "app" ? (
         !isUserTargetingAllowed ? (
           <TargetingCard
             key={localSurvey.segment?.id}

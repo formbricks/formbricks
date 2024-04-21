@@ -111,7 +111,7 @@ export const ThemeStylingPreviewSurvey = ({
 
   const onFileUpload = async (file: File) => file.name;
 
-  const isAppSurvey = previewType === "inApp" || previewType === "website";
+  const isAppSurvey = previewType === "app" || previewType === "website";
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-items-center">
@@ -207,7 +207,7 @@ export const ThemeStylingPreviewSurvey = ({
 
         <div
           className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
-          onClick={() => setPreviewType("inApp")}>
+          onClick={() => setPreviewType("app")}>
           In-App survey
         </div>
       </div>

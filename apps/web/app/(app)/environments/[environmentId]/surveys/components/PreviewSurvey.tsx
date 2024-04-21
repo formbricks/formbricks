@@ -156,7 +156,7 @@ export const PreviewSurvey = ({
 
   const onFinished = () => {
     // close modal if there are no questions left
-    if ((survey.type === "website" || survey.type === "inApp") && !survey.thankYouCard.enabled) {
+    if ((survey.type === "website" || survey.type === "app") && !survey.thankYouCard.enabled) {
       setIsModalOpen(false);
       setTimeout(() => {
         setQuestionId(survey.questions[0]?.id);

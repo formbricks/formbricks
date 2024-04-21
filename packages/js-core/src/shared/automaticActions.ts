@@ -1,6 +1,6 @@
 import { TJsPackageType } from "@formbricks/types/js";
 
-import { trackAction as trackInAppAction } from "../in-app/lib/actions";
+import { trackAction as trackInAppAction } from "../app/lib/actions";
 import { trackAction as trackWebsiteAction } from "../website/lib/actions";
 import { err } from "./errors";
 
@@ -9,7 +9,7 @@ let exitIntentListenerAdded = false;
 let exitIntentListenerWrapper = async function (e: MouseEvent, packageType: TJsPackageType) {
   if (e.clientY <= 0) {
     const trackResult =
-      packageType === "in-app"
+      packageType === "app"
         ? await trackInAppAction("Exit Intent (Desktop)")
         : await trackWebsiteAction("Exit Intent (Desktop)");
 
@@ -48,9 +48,7 @@ let scrollDepthListenerWrapper = async (packageType: TJsPackageType) => {
   if (!scrollDepthTriggered && scrollPosition / (bodyHeight - windowSize) >= 0.5) {
     scrollDepthTriggered = true;
     const trackResult =
-      packageType === "in-app"
-        ? await trackInAppAction("50% Scroll")
-        : await trackWebsiteAction("50% Scroll");
+      packageType === "app" ? await trackInAppAction("50% Scroll") : await trackWebsiteAction("50% Scroll");
     if (trackResult.ok !== true) {
       return err(trackResult.error);
     }

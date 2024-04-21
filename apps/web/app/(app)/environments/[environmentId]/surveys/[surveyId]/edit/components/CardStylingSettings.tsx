@@ -36,7 +36,7 @@ const CardStylingSettings = ({
   localProduct,
   setOpen,
 }: CardStylingSettingsProps) => {
-  const isAppSurvey = surveyType === "inApp" || surveyType === "website";
+  const isAppSurvey = surveyType === "app" || surveyType === "website";
   const cardBgColor = styling?.cardBackgroundColor?.light || COLOR_DEFAULTS.cardBackgroundColor;
 
   const isLogoHidden = styling?.isLogoHidden ?? false;

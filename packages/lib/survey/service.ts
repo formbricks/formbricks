@@ -631,7 +631,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     attributeFilters: undefined,
   };
 
-  if ((surveyBody.type === "website" || surveyBody.type === "inApp") && data.thankYouCard) {
+  if ((surveyBody.type === "website" || surveyBody.type === "app") && data.thankYouCard) {
     data.thankYouCard.buttonLabel = undefined;
     data.thankYouCard.buttonLink = undefined;
   }
@@ -821,8 +821,8 @@ export const getSyncSurveys = async (
 
       let surveys: TSurvey[] | TLegacySurvey[] = await getSurveys(environmentId);
 
-      // filtered "inApp" surveys for running and web
-      surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "inApp");
+      // filtered "app" surveys for running and web
+      surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "app");
 
       // if no surveys are left, return an empty array
       if (surveys.length === 0) {

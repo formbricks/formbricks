@@ -18,8 +18,8 @@ export const addEventListeners = (): void => {
   addExpiryCheckListener();
   addPageUrlEventListeners();
   addClickEventListener();
-  addExitIntentListener("in-app");
-  addScrollDepthListener("in-app");
+  addExitIntentListener("app");
+  addScrollDepthListener("app");
 };
 
 export const addCleanupEventListeners = (): void => {
@@ -28,8 +28,8 @@ export const addCleanupEventListeners = (): void => {
     removeExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
-    removeExitIntentListener("in-app");
-    removeScrollDepthListener("in-app");
+    removeExitIntentListener("app");
+    removeScrollDepthListener("app");
   });
   areRemoveEventListenersAdded = true;
 };
@@ -40,8 +40,8 @@ export const removeCleanupEventListeners = (): void => {
     removeExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
-    removeExitIntentListener("in-app");
-    removeScrollDepthListener("in-app");
+    removeExitIntentListener("app");
+    removeScrollDepthListener("app");
   });
   areRemoveEventListenersAdded = false;
 };
@@ -50,7 +50,7 @@ export const removeAllEventListeners = (): void => {
   removeExpiryCheckListener();
   removePageUrlEventListeners();
   removeClickEventListener();
-  removeExitIntentListener("in-app");
-  removeScrollDepthListener("in-app");
+  removeExitIntentListener("app");
+  removeScrollDepthListener("app");
   removeCleanupEventListeners();
 };
