@@ -35,11 +35,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  let ip = request.ip ?? request.headers.get("x-real-ip");
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (!ip && forwardedFor) {
-    ip = forwardedFor.split(",").at(0) ?? null;
-  }
+  let ip =
+    request.headers.get("cf-connecting-ip") ||
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+    request.ip;
 
   if (ip) {
     try {
