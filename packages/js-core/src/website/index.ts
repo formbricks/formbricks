@@ -1,4 +1,3 @@
-import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
 import { TJsWebsiteConfigInput } from "@formbricks/types/js";
 
 // Shared imports
@@ -10,15 +9,6 @@ import { trackAction } from "./lib/actions";
 import { resetConfig } from "./lib/common";
 import { initialize } from "./lib/initialize";
 import { checkPageUrl } from "./lib/noCodeActions";
-
-declare global {
-  interface Window {
-    formbricksSurveys: {
-      renderSurveyInline: (props: SurveyInlineProps) => void;
-      renderSurveyModal: (props: SurveyModalProps) => void;
-    };
-  }
-}
 
 const logger = Logger.getInstance();
 
