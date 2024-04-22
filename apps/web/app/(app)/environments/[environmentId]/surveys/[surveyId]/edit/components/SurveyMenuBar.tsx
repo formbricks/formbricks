@@ -419,6 +419,33 @@ export const SurveyMenuBar = ({
         return;
       }
       const status = localSurvey.runOnDate ? "scheduled" : "inProgress";
+
+      // if the segment has id === "temp", we create a private segment with the same filters.
+      if (localSurvey.type === "app" && localSurvey.segment?.id === "temp") {
+        const { filters } = localSurvey.segment;
+
+        const parsedFilters = ZSegmentFilters.safeParse(filters);
+        if (!parsedFilters.success) {
+          const errMsg =
+            parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
+            "Invalid targeting: Please check your audience filters";
+          setIsSurveySaving(false);
+          toast.error(errMsg);
+          return;
+        }
+
+        // create a new private segment
+        const newSegment = await createSegmentAction({
+          environmentId: environment.id,
+          filters,
+          isPrivate: true,
+          surveyId: localSurvey.id,
+          title: localSurvey.id,
+        });
+
+        localSurvey.segment = newSegment;
+      }
+
       await updateSurveyAction({ ...localSurvey, status });
       router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
