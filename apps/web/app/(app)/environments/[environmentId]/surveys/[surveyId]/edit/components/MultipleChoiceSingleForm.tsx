@@ -97,7 +97,9 @@ export const MultipleChoiceSingleForm = ({
     question.logic?.forEach((logic) => {
       let newL: string | string[] | undefined = logic.value;
       if (Array.isArray(logic.value)) {
-        newL = logic.value.map((value) => (value === oldLabel ? newLabel : value));
+        newL = logic.value.map((value) =>
+          value === getLocalizedValue(oldLabel, selectedLanguageCode) ? newLabel : value
+        );
       } else {
         newL = logic.value === getLocalizedValue(oldLabel, selectedLanguageCode) ? newLabel : logic.value;
       }

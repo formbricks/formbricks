@@ -15,15 +15,19 @@ export const canUserAccessIntegration = async (userId: string, integrationId: st
       validateInputs([userId, ZId], [integrationId, ZId]);
       if (!userId) return false;
 
-      const integration = await getIntegration(integrationId);
-      if (!integration) return false;
+      try {
+        const integration = await getIntegration(integrationId);
+        if (!integration) return false;
 
-      const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, integration.environmentId);
-      if (!hasAccessToEnvironment) return false;
+        const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, integration.environmentId);
+        if (!hasAccessToEnvironment) return false;
 
-      return true;
+        return true;
+      } catch (error) {
+        throw error;
+      }
     },
 
-    [`users-${userId}-integrations-${integrationId}`],
+    [`canUserAccessIntegration-${userId}-${integrationId}`],
     { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [`integrations-${integrationId}`] }
   )();

@@ -1,5 +1,7 @@
 "use client";
 
+import { PreviewSurvey } from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurvey";
+import { TemplateList } from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
 import { replacePresetPlaceholders } from "@/app/lib/templates";
 import { useEffect, useState } from "react";
 
@@ -9,8 +11,6 @@ import type { TTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { SearchBox } from "@formbricks/ui/SearchBox";
 
-import PreviewSurvey from "../components/PreviewSurvey";
-import TemplateList from "./TemplateList";
 import { minimalSurvey, templates } from "./templates";
 
 type TemplateContainerWithPreviewProps = {
@@ -73,10 +73,9 @@ export default function TemplateContainerWithPreview({
             <div className="my-6 flex h-[90%] w-full flex-col items-center justify-center">
               <PreviewSurvey
                 survey={{ ...minimalSurvey, ...activeTemplate.preset }}
-                activeQuestionId={activeQuestionId}
+                questionId={activeQuestionId}
                 product={product}
                 environment={environment}
-                setActiveQuestionId={setActiveQuestionId}
                 languageCode={"default"}
                 onFileUpload={async (file) => file.name}
               />

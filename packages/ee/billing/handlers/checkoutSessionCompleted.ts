@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 
+import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import {
   getMonthlyActiveTeamPeopleCount,
@@ -13,7 +14,7 @@ import { reportUsage } from "../lib/reportUsage";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
-  apiVersion: "2023-10-16",
+  apiVersion: STRIPE_API_VERSION,
 });
 
 export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {

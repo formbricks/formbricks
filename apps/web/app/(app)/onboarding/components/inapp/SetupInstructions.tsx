@@ -56,7 +56,11 @@ export default function SetupInstructionsOnboarding({
         {activeTab === "npm" ? (
           <div className="prose prose-slate">
             <CodeBlock customEditorClass="!bg-white border border-slate-200" language="sh">
-              npm install @formbricks/js --save
+              npm install @formbricks/js
+            </CodeBlock>
+            <p>or</p>
+            <CodeBlock customEditorClass="!bg-white border border-slate-200" language="sh">
+              yarn add @formbricks/js
             </CodeBlock>
             <p className="text-sm text-slate-700">
               Import Formbricks and initialize the widget in your Component (e.g. App.tsx):
