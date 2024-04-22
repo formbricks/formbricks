@@ -210,6 +210,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Source Tracking", href: "/docs/link-surveys/source-tracking" },
       { title: "Hidden Fields", href: "/docs/link-surveys/hidden-fields" },
       { title: "Start At Question", href: "/docs/link-surveys/start-at-question" },
+      { title: "Embed Surveys", href: "/docs/link-surveys/embed-surveys" },
     ],
   },
   {
