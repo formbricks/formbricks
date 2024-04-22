@@ -10,6 +10,7 @@ servers:
     hosts:
       - 18.196.187.144
       - 18.196.172.27
+      - 35.157.124.188
     labels:
       traefik.http.routers.formbricks-kamal.entrypoints: web
     options:
