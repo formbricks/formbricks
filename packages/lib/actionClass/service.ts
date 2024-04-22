@@ -86,7 +86,7 @@ export const getActionClassByEnvironmentIdAndName = async (
         throw new DatabaseError(`Database error when fetching action`);
       }
     },
-    [`getActionClass-${environmentId}-${name}`],
+    [`getActionClassByEnvironmentIdAndName-${environmentId}-${name}`],
     {
       tags: [actionClassCache.tag.byNameAndEnvironmentId(name, environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,

@@ -24,34 +24,43 @@ export const getMembersByTeamId = async (teamId: string, page?: number): Promise
     async () => {
       validateInputs([teamId, ZString], [page, ZOptionalNumber]);
 
-      const membersData = await prisma.membership.findMany({
-        where: { teamId },
-        select: {
-          user: {
-            select: {
-              name: true,
-              email: true,
+      try {
+        const membersData = await prisma.membership.findMany({
+          where: { teamId },
+          select: {
+            user: {
+              select: {
+                name: true,
+                email: true,
+              },
             },
+            userId: true,
+            accepted: true,
+            role: true,
           },
-          userId: true,
-          accepted: true,
-          role: true,
-        },
-        take: page ? ITEMS_PER_PAGE : undefined,
-        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-      });
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+        });
 
-      const members = membersData.map((member) => {
-        return {
-          name: member.user?.name || "",
-          email: member.user?.email || "",
-          userId: member.userId,
-          accepted: member.accepted,
-          role: member.role,
-        };
-      });
+        const members = membersData.map((member) => {
+          return {
+            name: member.user?.name || "",
+            email: member.user?.email || "",
+            userId: member.userId,
+            accepted: member.accepted,
+            role: member.role,
+          };
+        });
 
-      return members;
+        return members;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          console.error(error);
+          throw new DatabaseError(error.message);
+        }
+
+        throw new UnknownError("Error while fetching members");
+      }
     },
     [`getMembersByTeamId-${teamId}-${page}`],
     {
@@ -68,18 +77,27 @@ export const getMembershipByUserIdTeamId = async (
     async () => {
       validateInputs([userId, ZString], [teamId, ZString]);
 
-      const membership = await prisma.membership.findUnique({
-        where: {
-          userId_teamId: {
-            userId,
-            teamId,
+      try {
+        const membership = await prisma.membership.findUnique({
+          where: {
+            userId_teamId: {
+              userId,
+              teamId,
+            },
           },
-        },
-      });
+        });
 
-      if (!membership) return null;
+        if (!membership) return null;
 
-      return membership;
+        return membership;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          console.error(error);
+          throw new DatabaseError(error.message);
+        }
+
+        throw new UnknownError("Error while fetching membership");
+      }
     },
     [`getMembershipByUserIdTeamId-${userId}-${teamId}`],
     {
@@ -93,15 +111,23 @@ export const getMembershipsByUserId = async (userId: string, page?: number): Pro
     async () => {
       validateInputs([userId, ZString], [page, ZOptionalNumber]);
 
-      const memberships = await prisma.membership.findMany({
-        where: {
-          userId,
-        },
-        take: page ? ITEMS_PER_PAGE : undefined,
-        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-      });
+      try {
+        const memberships = await prisma.membership.findMany({
+          where: {
+            userId,
+          },
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+        });
 
-      return memberships;
+        return memberships;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
     },
     [`getMembershipsByUserId-${userId}-${page}`],
     {
@@ -137,6 +163,10 @@ export const createMembership = async (
 
     return membership;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
     throw error;
   }
 };
@@ -181,25 +211,33 @@ export const updateMembership = async (
 export const deleteMembership = async (userId: string, teamId: string): Promise<TMembership> => {
   validateInputs([userId, ZString], [teamId, ZString]);
 
-  const deletedMembership = await prisma.membership.delete({
-    where: {
-      userId_teamId: {
-        teamId,
-        userId,
+  try {
+    const deletedMembership = await prisma.membership.delete({
+      where: {
+        userId_teamId: {
+          teamId,
+          userId,
+        },
       },
-    },
-  });
+    });
 
-  teamCache.revalidate({
-    userId,
-  });
+    teamCache.revalidate({
+      userId,
+    });
 
-  membershipCache.revalidate({
-    userId,
-    teamId,
-  });
+    membershipCache.revalidate({
+      userId,
+      teamId,
+    });
 
-  return deletedMembership;
+    return deletedMembership;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };
 
 export const transferOwnership = async (

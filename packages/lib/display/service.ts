@@ -367,10 +367,13 @@ export const getDisplayCountBySurveyId = async (
         });
         return displayCount;
       } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
         throw error;
       }
     },
-    [`getDisplayCountBySurveyId-${surveyId}`],
+    [`getDisplayCountBySurveyId-${surveyId}-${JSON.stringify(filters)}`],
     {
       tags: [displayCache.tag.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
