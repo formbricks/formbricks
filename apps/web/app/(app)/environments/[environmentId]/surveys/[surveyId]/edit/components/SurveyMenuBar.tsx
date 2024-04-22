@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
+import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
@@ -294,7 +295,7 @@ export const SurveyMenuBar = ({
     setIsSurveySaving(true);
 
     // Create a copy of localSurvey with isDraft removed from every question
-    const strippedSurvey: TSurvey = {
+    let strippedSurvey: TSurvey = {
       ...localSurvey,
       questions: localSurvey.questions.map((question) => {
         const { isDraft, ...rest } = question;
@@ -358,6 +359,33 @@ export const SurveyMenuBar = ({
     }
 
     strippedSurvey.triggers = strippedSurvey.triggers.filter((trigger) => Boolean(trigger));
+
+    // if the segment has id === "temp", we create a private segment with the same filters.
+    if (strippedSurvey.type === "app" && strippedSurvey.segment?.id === "temp") {
+      const { filters } = strippedSurvey.segment;
+
+      const parsedFilters = ZSegmentFilters.safeParse(filters);
+      if (!parsedFilters.success) {
+        const errMsg =
+          parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
+          "Invalid targeting: Please check your audience filters";
+        setIsSurveySaving(false);
+        toast.error(errMsg);
+        return;
+      }
+
+      // create a new private segment
+      const newSegment = await createSegmentAction({
+        environmentId: environment.id,
+        filters,
+        isPrivate: true,
+        surveyId: strippedSurvey.id,
+        title: strippedSurvey.id,
+      });
+
+      strippedSurvey.segment = newSegment;
+    }
+
     try {
       const udpatedSurvey = await updateSurveyAction({ ...strippedSurvey });
 

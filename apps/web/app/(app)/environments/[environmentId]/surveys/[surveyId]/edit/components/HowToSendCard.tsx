@@ -5,9 +5,9 @@ import { AlertCircleIcon, CheckIcon, EarthIcon, LinkIcon, MonitorIcon, Smartphon
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
+import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
 import { Label } from "@formbricks/ui/Label";
@@ -31,42 +31,6 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
     }
   }, [environment]);
 
-  const handleCreateSegment = async () => {
-    if (!localSurvey) return;
-
-    try {
-      const createdSegment = await createSegmentAction({
-        title: localSurvey.id,
-        description: "",
-        environmentId: environment.id,
-        surveyId: localSurvey.id,
-        filters: [],
-        isPrivate: true,
-      });
-
-      const localSurveyClone = structuredClone(localSurvey);
-      localSurveyClone.segment = createdSegment;
-      setLocalSurvey(localSurveyClone);
-    } catch (err) {
-      // set the ref to false to retry during the next render
-      // createdSegmentRef.current = false;
-    }
-  };
-
-  useEffect(() => {
-    // when the type changes, we check if a segment is already created or not, if its not we create a new private segment
-    // we do this only for app surveys
-    if (localSurvey.type !== "app") {
-      return;
-    }
-
-    if (!localSurvey.segment) {
-      handleCreateSegment();
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSurvey.type]);
-
   const setSurveyType = (type: TSurveyType) => {
     setLocalSurvey((prevSurvey) => ({
       ...prevSurvey,
@@ -76,6 +40,26 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
         enabled: type === "link" ? true : prevSurvey.thankYouCard.enabled,
       },
     }));
+
+    // if the type is "app" and the local survey does not already have a segment, we create a new temporary segment
+    if (type === "app" && !localSurvey.segment) {
+      const tempSegment: TSegment = {
+        id: "temp",
+        isPrivate: true,
+        title: localSurvey.id,
+        environmentId: environment.id,
+        surveys: [localSurvey.id],
+        filters: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+      };
+
+      setLocalSurvey((prevSurvey) => ({
+        ...prevSurvey,
+        segment: tempSegment,
+      }));
+    }
   };
 
   const options = [

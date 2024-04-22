@@ -31,7 +31,7 @@ import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
 import { segmentCache } from "../segment/cache";
-import { createSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
+import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
 import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
@@ -179,12 +179,9 @@ const processTriggerUpdates = (
   return triggersUpdate;
 };
 
-export const getSurvey = async (surveyId: string, debug?: boolean): Promise<TSurvey | null> => {
+export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
   const survey = await unstable_cache(
     async () => {
-      if (debug) {
-        console.log("THIS IS DEBUG: \n\n\n\n");
-      }
       validateInputs([surveyId, ZId]);
 
       let surveyPrisma;
@@ -419,7 +416,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, environmentId, segment, languages, ...surveyData } = updatedSurvey;
+    const { triggers, environmentId, segment, languages, type, ...surveyData } = updatedSurvey;
 
     if (languages) {
       // Process languages update logic here
@@ -473,19 +470,42 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       data.triggers = processTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
     }
 
+    // if the survey body has type other than "app" but has a private segment, we delete that segment, and if it has a public segment, we disconnect from to the survey
     if (segment) {
-      // parse the segment filters:
-      const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
-      if (!parsedFilters.success) {
-        throw new InvalidInputError("Invalid user segment filters");
+      if (type === "app") {
+        // parse the segment filters:
+        const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
+        if (!parsedFilters.success) {
+          throw new InvalidInputError("Invalid user segment filters");
+        }
+
+        try {
+          await updateSegment(segment.id, segment);
+        } catch (error) {
+          console.error(error);
+          throw new Error("Error updating survey");
+        }
+      } else {
+        if (segment.isPrivate) {
+          await deleteSegment(segment.id);
+        } else {
+          await prisma.survey.update({
+            where: {
+              id: surveyId,
+            },
+            data: {
+              segment: {
+                disconnect: true,
+              },
+            },
+          });
+        }
       }
 
-      try {
-        await updateSegment(segment.id, segment);
-      } catch (error) {
-        console.error(error);
-        throw new Error("Error updating survey");
-      }
+      segmentCache.revalidate({
+        id: segment.id,
+        environmentId: segment.environmentId,
+      });
     }
 
     surveyData.updatedAt = new Date();
@@ -493,6 +513,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     data = {
       ...surveyData,
       ...data,
+      type,
     };
 
     // Remove scheduled status when runOnDate is not set
@@ -557,6 +578,24 @@ export async function deleteSurvey(surveyId: string) {
       },
       select: selectSurvey,
     });
+
+    const deletedSegment = await prisma.segment.delete({
+      where: {
+        title: surveyId,
+        isPrivate: true,
+        environmentId_title: {
+          environmentId: deletedSurvey.environmentId,
+          title: surveyId,
+        },
+      },
+    });
+
+    if (deletedSegment) {
+      segmentCache.revalidate({
+        id: deletedSegment.id,
+        environmentId: deletedSurvey.environmentId,
+      });
+    }
 
     responseCache.revalidate({
       surveyId,
@@ -642,12 +681,46 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
       select: selectSurvey,
     });
 
+    // if the survey created is an "app" survey, we also create a private segment for it.
+    if (survey.type === "app") {
+      const newSegment = await createSegment({
+        environmentId,
+        surveyId: survey.id,
+        filters: [],
+        title: survey.id,
+        isPrivate: true,
+      });
+
+      await prisma.survey.update({
+        where: {
+          id: survey.id,
+        },
+        data: {
+          segment: {
+            connect: {
+              id: newSegment.id,
+            },
+          },
+        },
+      });
+
+      segmentCache.revalidate({
+        id: newSegment.id,
+        environmentId: survey.environmentId,
+      });
+    }
+
     // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
     // @ts-expect-error
     const transformedSurvey: TSurvey = {
       ...survey,
       triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
-      segment: null,
+      ...(survey.segment && {
+        segment: {
+          ...survey.segment,
+          surveys: survey.segment.surveys.map((survey) => survey.id),
+        },
+      }),
     };
 
     await subscribeTeamMembersToSurveyResponses(environmentId, survey.id);
