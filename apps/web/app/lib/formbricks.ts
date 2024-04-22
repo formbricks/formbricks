@@ -1,5 +1,5 @@
 import { FormbricksAPI } from "@formbricks/api";
-import formbricks from "@formbricks/js/in-app";
+import formbricks from "@formbricks/js/app";
 import { env } from "@formbricks/lib/env";
 
 export const formbricksEnabled =

@@ -1,5 +1,5 @@
 import { getExampleSurveyTemplate } from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
-import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
+import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
@@ -25,7 +25,7 @@ import { updateUser } from "@formbricks/lib/user/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TJsInAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
+import { TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
@@ -190,7 +190,7 @@ export async function GET(
     };
 
     // return state
-    const state: TJsInAppStateSync = {
+    const state: TJsAppStateSync = {
       person: personData,
       surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
