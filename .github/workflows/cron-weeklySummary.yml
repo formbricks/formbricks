@@ -1,11 +1,12 @@
 name: Cron - Weekly summary
 
 on:
+  workflow_dispatch:
   # "Scheduled workflows run on the latest commit on the default or base branch."
   # — https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#schedule
-  schedule:
-    # Runs “At 08:00 on Monday.” (see https://crontab.guru)
-    - cron: "0 8 * * 1"
+  # schedule:
+  # Runs “At 08:00 on Monday.” (see https://crontab.guru)
+  # - cron: "0 8 * * 1"
 jobs:
   cron-weeklySummary:
     env:
