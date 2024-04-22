@@ -2,10 +2,10 @@ import { prisma } from "../../__mocks__/database";
 
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it } from "vitest";
+import { testInputValidation } from "vitestSetup";
 
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
-import { testInputValidation } from "../../vitestSetup";
 import {
   createSurvey,
   deleteSurvey,
@@ -52,7 +52,7 @@ describe("Tests for getSurvey", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getSurvey, "123");
+    testInputValidation(getSurvey, "123#");
 
     it("should throw a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
@@ -88,7 +88,7 @@ describe("Tests for getSurveysByActionClassId", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getSurveysByActionClassId, "123");
+    testInputValidation(getSurveysByActionClassId, "123#");
 
     it("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
@@ -115,7 +115,7 @@ describe("Tests for getSurveys", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getSurveysByActionClassId, "123");
+    testInputValidation(getSurveysByActionClassId, "123#");
 
     it("should throw a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
@@ -150,7 +150,7 @@ describe("Tests for updateSurvey", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(updateSurvey, "123");
+    testInputValidation(updateSurvey, "123#");
 
     it("Throws ResourceNotFoundError if the survey does not exist", async () => {
       prisma.survey.findUnique.mockRejectedValueOnce(
@@ -189,7 +189,7 @@ describe("Tests for deleteSurvey", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(deleteSurvey, "123");
+    testInputValidation(deleteSurvey, "123#");
 
     it("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
@@ -236,7 +236,7 @@ describe("Tests for createSurvey", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(createSurvey, "123", createSurveyInput);
+    testInputValidation(createSurvey, "123#", createSurveyInput);
 
     it("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
@@ -261,7 +261,7 @@ describe("Tests for duplicateSurvey", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(duplicateSurvey, "123", "123");
+    testInputValidation(duplicateSurvey, "123#", "123#");
 
     it("Throws ResourceNotFoundError if the survey does not exist", async () => {
       prisma.survey.findUnique.mockRejectedValueOnce(new ResourceNotFoundError("Survey", mockId));
@@ -279,7 +279,12 @@ describe("Tests for duplicateSurvey", () => {
 describe("Tests for getSyncedSurveys", () => {
   describe("Happy Path", () => {
     beforeEach(() => {
-      prisma.product.findFirst.mockResolvedValueOnce(mockProduct);
+      prisma.product.findFirst.mockResolvedValueOnce({
+        ...mockProduct,
+        brandColor: null,
+        highlightBorderColor: null,
+        logo: null,
+      });
       prisma.display.findMany.mockResolvedValueOnce([mockDisplay]);
       prisma.attributeClass.findMany.mockResolvedValueOnce([mockAttributeClass]);
     });
@@ -304,7 +309,7 @@ describe("Tests for getSyncedSurveys", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getSyncSurveys, "123", {});
+    testInputValidation(getSyncSurveys, "123#", {});
 
     it("does not find a Product", async () => {
       prisma.product.findFirst.mockResolvedValueOnce(null);
@@ -340,7 +345,7 @@ describe("Tests for getSurveyCount service", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getSurveyCount, "123");
+    testInputValidation(getSurveyCount, "123#");
 
     it("Throws a generic Error for other unexpected issues", async () => {
       const mockErrorMessage = "Mock error message";

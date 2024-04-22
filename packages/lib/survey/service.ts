@@ -179,9 +179,12 @@ const processTriggerUpdates = (
   return triggersUpdate;
 };
 
-export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
+export const getSurvey = async (surveyId: string, debug?: boolean): Promise<TSurvey | null> => {
   const survey = await unstable_cache(
     async () => {
+      if (debug) {
+        console.log("THIS IS DEBUG: \n\n\n\n");
+      }
       validateInputs([surveyId, ZId]);
 
       let surveyPrisma;

@@ -73,6 +73,9 @@ export const mockProduct: TProduct = {
   darkOverlay: false,
   environments: [],
   languages: [],
+  styling: {
+    allowStyleOverwrite: false,
+  },
 };
 
 export const mockDisplay = {
@@ -102,6 +105,7 @@ export const mockUser: TUser = {
     weeklySummary: {},
     unsubscribedTeamIds: [],
   },
+  role: "other",
 };
 
 export const mockPrismaPerson: Prisma.PersonGetPayload<{
@@ -208,7 +212,7 @@ export const mockTeamOutput: TTeam = {
 };
 
 export const mockSurveyOutput: SurveyMock = {
-  type: "web",
+  type: "app",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
@@ -227,7 +231,7 @@ export const mockSurveyOutput: SurveyMock = {
 };
 
 export const createSurveyInput: TSurveyInput = {
-  type: "web",
+  type: "website",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [mockActionClass.name],
@@ -235,7 +239,7 @@ export const createSurveyInput: TSurveyInput = {
 };
 
 export const updateSurveyInput: TSurvey = {
-  type: "web",
+  type: "website",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [mockActionClass.name],
