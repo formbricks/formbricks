@@ -17,15 +17,19 @@ export const canUserAccessTag = async (userId: string, tagId: string): Promise<b
     async () => {
       validateInputs([userId, ZId], [tagId, ZId]);
 
-      const tag = await getTag(tagId);
-      if (!tag) return false;
+      try {
+        const tag = await getTag(tagId);
+        if (!tag) return false;
 
-      const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, tag.environmentId);
-      if (!hasAccessToEnvironment) return false;
+        const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, tag.environmentId);
+        if (!hasAccessToEnvironment) return false;
 
-      return true;
+        return true;
+      } catch (error) {
+        throw error;
+      }
     },
-    [`${userId}-${tagId}`],
+    [`canUserAccessTag-${userId}-${tagId}`],
     {
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }

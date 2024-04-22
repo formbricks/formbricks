@@ -83,7 +83,10 @@ export const getApiKeys = async (environmentId: string, page?: number): Promise<
 
 export const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
 
-export async function createApiKey(environmentId: string, apiKeyData: TApiKeyCreateInput): Promise<TApiKey> {
+export const createApiKey = async (
+  environmentId: string,
+  apiKeyData: TApiKeyCreateInput
+): Promise<TApiKey> => {
   validateInputs([environmentId, ZId], [apiKeyData, ZApiKeyCreateInput]);
   try {
     const key = randomBytes(16).toString("hex");
@@ -110,7 +113,7 @@ export async function createApiKey(environmentId: string, apiKeyData: TApiKeyCre
     }
     throw error;
   }
-}
+};
 
 export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> => {
   const hashedKey = getHash(apiKey);

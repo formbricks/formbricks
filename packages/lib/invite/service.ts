@@ -47,12 +47,22 @@ export const getInvitesByTeamId = async (teamId: string, page?: number): Promise
     async () => {
       validateInputs([teamId, ZString], [page, ZOptionalNumber]);
 
-      return prisma.invite.findMany({
-        where: { teamId },
-        select: inviteSelect,
-        take: page ? ITEMS_PER_PAGE : undefined,
-        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-      });
+      try {
+        const invites = await prisma.invite.findMany({
+          where: { teamId },
+          select: inviteSelect,
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+        });
+
+        return invites;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
     },
     [`getInvitesByTeamId-${teamId}-${page}`],
     {
@@ -126,21 +136,29 @@ export const getInvite = async (inviteId: string): Promise<InviteWithCreator | n
     async () => {
       validateInputs([inviteId, ZString]);
 
-      const invite = await prisma.invite.findUnique({
-        where: {
-          id: inviteId,
-        },
-        include: {
-          creator: {
-            select: {
-              name: true,
-              email: true,
+      try {
+        const invite = await prisma.invite.findUnique({
+          where: {
+            id: inviteId,
+          },
+          include: {
+            creator: {
+              select: {
+                name: true,
+                email: true,
+              },
             },
           },
-        },
-      });
+        });
 
-      return invite;
+        return invite;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
     },
     [`getInvite-${inviteId}`],
     { tags: [inviteCache.tag.byId(inviteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
@@ -156,38 +174,47 @@ export const getInvite = async (inviteId: string): Promise<InviteWithCreator | n
 
 export const resendInvite = async (inviteId: string): Promise<TInvite> => {
   validateInputs([inviteId, ZString]);
-  const invite = await prisma.invite.findUnique({
-    where: {
-      id: inviteId,
-    },
-    select: {
-      email: true,
-      name: true,
-      creator: true,
-    },
-  });
 
-  if (!invite) {
-    throw new ResourceNotFoundError("Invite", inviteId);
+  try {
+    const invite = await prisma.invite.findUnique({
+      where: {
+        id: inviteId,
+      },
+      select: {
+        email: true,
+        name: true,
+        creator: true,
+      },
+    });
+
+    if (!invite) {
+      throw new ResourceNotFoundError("Invite", inviteId);
+    }
+
+    await sendInviteMemberEmail(inviteId, invite.email, invite.creator?.name ?? "", invite.name ?? "");
+
+    const updatedInvite = await prisma.invite.update({
+      where: {
+        id: inviteId,
+      },
+      data: {
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+      },
+    });
+
+    inviteCache.revalidate({
+      id: updatedInvite.id,
+      teamId: updatedInvite.teamId,
+    });
+
+    return updatedInvite;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
   }
-
-  await sendInviteMemberEmail(inviteId, invite.email, invite.creator?.name ?? "", invite.name ?? "");
-
-  const updatedInvite = await prisma.invite.update({
-    where: {
-      id: inviteId,
-    },
-    data: {
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-    },
-  });
-
-  inviteCache.revalidate({
-    id: updatedInvite.id,
-    teamId: updatedInvite.teamId,
-  });
-
-  return updatedInvite;
 };
 
 export const inviteUser = async ({
@@ -205,44 +232,52 @@ export const inviteUser = async ({
 }): Promise<TInvite> => {
   validateInputs([teamId, ZString], [invitee, ZInvitee], [currentUser, ZCurrentUser]);
 
-  const { name, email, role } = invitee;
-  const { id: currentUserId, name: currentUserName } = currentUser;
-  const existingInvite = await prisma.invite.findFirst({ where: { email, teamId } });
+  try {
+    const { name, email, role } = invitee;
+    const { id: currentUserId, name: currentUserName } = currentUser;
+    const existingInvite = await prisma.invite.findFirst({ where: { email, teamId } });
 
-  if (existingInvite) {
-    throw new ValidationError("Invite already exists");
-  }
-
-  const user = await prisma.user.findUnique({ where: { email } });
-
-  if (user) {
-    const member = await getMembershipByUserIdTeamId(user.id, teamId);
-
-    if (member) {
-      throw new ValidationError("User is already a member of this team");
+    if (existingInvite) {
+      throw new ValidationError("Invite already exists");
     }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (user) {
+      const member = await getMembershipByUserIdTeamId(user.id, teamId);
+
+      if (member) {
+        throw new ValidationError("User is already a member of this team");
+      }
+    }
+
+    const expiresIn = 7 * 24 * 60 * 60 * 1000; // 7 days
+    const expiresAt = new Date(Date.now() + expiresIn);
+
+    const invite = await prisma.invite.create({
+      data: {
+        email,
+        name,
+        team: { connect: { id: teamId } },
+        creator: { connect: { id: currentUserId } },
+        acceptor: user ? { connect: { id: user.id } } : undefined,
+        role,
+        expiresAt,
+      },
+    });
+
+    inviteCache.revalidate({
+      id: invite.id,
+      teamId: invite.teamId,
+    });
+
+    await sendInviteMemberEmail(invite.id, email, currentUserName, name, isOnboardingInvite, inviteMessage);
+    return invite;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
   }
-
-  const expiresIn = 7 * 24 * 60 * 60 * 1000; // 7 days
-  const expiresAt = new Date(Date.now() + expiresIn);
-
-  const invite = await prisma.invite.create({
-    data: {
-      email,
-      name,
-      team: { connect: { id: teamId } },
-      creator: { connect: { id: currentUserId } },
-      acceptor: user ? { connect: { id: user.id } } : undefined,
-      role,
-      expiresAt,
-    },
-  });
-
-  inviteCache.revalidate({
-    id: invite.id,
-    teamId: invite.teamId,
-  });
-
-  await sendInviteMemberEmail(invite.id, email, currentUserName, name, isOnboardingInvite, inviteMessage);
-  return invite;
 };

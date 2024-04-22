@@ -161,6 +161,10 @@ export const createTeam = async (teamInput: TTeamCreateInput): Promise<TTeam> =>
 
     return team;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
     throw error;
   }
 };
@@ -205,9 +209,8 @@ export const updateTeam = async (teamId: string, data: Partial<TTeamUpdateInput>
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
       throw new ResourceNotFoundError("Team", teamId);
-    } else {
-      throw error; // Re-throw any other errors
     }
+    throw error; // Re-throw any other errors
   }
 };
 
@@ -308,34 +311,42 @@ export const getMonthlyActiveTeamPeopleCount = async (teamId: string): Promise<n
     async () => {
       validateInputs([teamId, ZId]);
 
-      // Define the start of the month
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      try {
+        // Define the start of the month
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // Get all environment IDs for the team
-      const products = await getProducts(teamId);
-      const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
+        // Get all environment IDs for the team
+        const products = await getProducts(teamId);
+        const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
 
-      // Aggregate the count of active people across all environments
-      const peopleAggregations = await prisma.person.aggregate({
-        _count: {
-          id: true,
-        },
-        where: {
-          AND: [
-            { environmentId: { in: environmentIds } },
-            {
-              actions: {
-                some: {
-                  createdAt: { gte: firstDayOfMonth },
+        // Aggregate the count of active people across all environments
+        const peopleAggregations = await prisma.person.aggregate({
+          _count: {
+            id: true,
+          },
+          where: {
+            AND: [
+              { environmentId: { in: environmentIds } },
+              {
+                actions: {
+                  some: {
+                    createdAt: { gte: firstDayOfMonth },
+                  },
                 },
               },
-            },
-          ],
-        },
-      });
+            ],
+          },
+        });
 
-      return peopleAggregations._count.id;
+        return peopleAggregations._count.id;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
     },
     [`getMonthlyActiveTeamPeopleCount-${teamId}`],
     {
@@ -348,30 +359,38 @@ export const getMonthlyTeamResponseCount = async (teamId: string): Promise<numbe
     async () => {
       validateInputs([teamId, ZId]);
 
-      // Define the start of the month
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      try {
+        // Define the start of the month
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // Get all environment IDs for the team
-      const products = await getProducts(teamId);
-      const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
+        // Get all environment IDs for the team
+        const products = await getProducts(teamId);
+        const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
 
-      // Use Prisma's aggregate to count responses for all environments
-      const responseAggregations = await prisma.response.aggregate({
-        _count: {
-          id: true,
-        },
-        where: {
-          AND: [
-            { survey: { environmentId: { in: environmentIds } } },
-            { survey: { type: { in: ["app", "website"] } } },
-            { createdAt: { gte: firstDayOfMonth } },
-          ],
-        },
-      });
+        // Use Prisma's aggregate to count responses for all environments
+        const responseAggregations = await prisma.response.aggregate({
+          _count: {
+            id: true,
+          },
+          where: {
+            AND: [
+              { survey: { environmentId: { in: environmentIds } } },
+              { survey: { type: { in: ["app", "website"] } } },
+              { createdAt: { gte: firstDayOfMonth } },
+            ],
+          },
+        });
 
-      // The result is an aggregation of the total count
-      return responseAggregations._count.id;
+        // The result is an aggregation of the total count
+        return responseAggregations._count.id;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
     },
     [`getMonthlyTeamResponseCount-${teamId}`],
     {
@@ -382,13 +401,23 @@ export const getMonthlyTeamResponseCount = async (teamId: string): Promise<numbe
 export const getTeamBillingInfo = async (teamId: string): Promise<TTeamBilling | null> =>
   await unstable_cache(
     async () => {
-      const billingInfo = await prisma.team.findUnique({
-        where: {
-          id: teamId,
-        },
-      });
+      validateInputs([teamId, ZId]);
 
-      return billingInfo?.billing ?? null;
+      try {
+        const billingInfo = await prisma.team.findUnique({
+          where: {
+            id: teamId,
+          },
+        });
+
+        return billingInfo?.billing ?? null;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
     },
     [`getTeamBillingInfo-${teamId}`],
     {
