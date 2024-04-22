@@ -33,6 +33,7 @@ import {
   getTotalOccurrencesForAction,
 } from "../action/service";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { structuredClone } from "../pollyfills/structuredClone";
 import { surveyCache } from "../survey/cache";
 import { getSurvey } from "../survey/service";
 import { validateInputs } from "../utils/validate";
