@@ -131,6 +131,11 @@ export const SurveyMenuBar = ({
         return;
       }
       localSurvey.triggers = localSurvey.triggers.filter((trigger) => Boolean(trigger));
+      localSurvey.questions = localSurvey.questions.map((question) => {
+        const { isDraft, ...rest } = question;
+        return rest;
+      });
+
       await updateSurveyAction({ ...localSurvey });
       setIsSurveySaving(false);
       setLocalSurvey(localSurvey);
