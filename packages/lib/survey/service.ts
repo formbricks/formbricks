@@ -579,22 +579,24 @@ export async function deleteSurvey(surveyId: string) {
       select: selectSurvey,
     });
 
-    const deletedSegment = await prisma.segment.delete({
-      where: {
-        title: surveyId,
-        isPrivate: true,
-        environmentId_title: {
-          environmentId: deletedSurvey.environmentId,
+    if (deletedSurvey.type === "app") {
+      const deletedSegment = await prisma.segment.delete({
+        where: {
           title: surveyId,
+          isPrivate: true,
+          environmentId_title: {
+            environmentId: deletedSurvey.environmentId,
+            title: surveyId,
+          },
         },
-      },
-    });
-
-    if (deletedSegment) {
-      segmentCache.revalidate({
-        id: deletedSegment.id,
-        environmentId: deletedSurvey.environmentId,
       });
+
+      if (deletedSegment) {
+        segmentCache.revalidate({
+          id: deletedSegment.id,
+          environmentId: deletedSurvey.environmentId,
+        });
+      }
     }
 
     responseCache.revalidate({
