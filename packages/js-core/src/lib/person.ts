@@ -147,6 +147,11 @@ export const setPersonAttribute = async (
   key: string,
   value: any
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
+  if (key === "userId") {
+    logger.error("Setting userId is no longer supported. Please set the userId in the init call instead.");
+    return okVoid();
+  }
+
   logger.debug("Setting attribute: " + key + " to value: " + value);
   // check if attribute already exists with this value
   if (isExistingAttribute(key, value.toString())) {
