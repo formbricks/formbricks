@@ -29,7 +29,11 @@ export const getWebhooks = async (environmentId: string, page?: number): Promise
         });
         return webhooks;
       } catch (error) {
-        throw new DatabaseError(`Database error when fetching webhooks for environment ${environmentId}`);
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
       }
     },
     [`getWebhooks-${environmentId}-${page}`],
@@ -58,10 +62,14 @@ export const getWebhookCountBySource = async (
         });
         return count;
       } catch (error) {
-        throw new DatabaseError(`Database error when fetching webhooks for environment ${environmentId}`);
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
       }
     },
-    [`getCountOfWebhooksBasedOnSource-${environmentId}-${source}`],
+    [`getWebhookCountBySource-${environmentId}-${source}`],
     {
       tags: [webhookCache.tag.byEnvironmentIdAndSource(environmentId, source)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
@@ -73,12 +81,20 @@ export const getWebhook = async (id: string): Promise<TWebhook | null> => {
     async () => {
       validateInputs([id, ZId]);
 
-      const webhook = await prisma.webhook.findUnique({
-        where: {
-          id,
-        },
-      });
-      return webhook;
+      try {
+        const webhook = await prisma.webhook.findUnique({
+          where: {
+            id,
+          },
+        });
+        return webhook;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
     },
     [`getWebhook-${id}`],
     {
@@ -119,6 +135,11 @@ export const createWebhook = async (
     if (!(error instanceof InvalidInputError)) {
       throw new DatabaseError(`Database error when creating webhook for environment ${environmentId}`);
     }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
     throw error;
   }
 };
@@ -150,9 +171,11 @@ export const updateWebhook = async (
 
     return updatedWebhook;
   } catch (error) {
-    throw new DatabaseError(
-      `Database error when updating webhook with ID ${webhookId} for environment ${environmentId}`
-    );
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
   }
 };
 
