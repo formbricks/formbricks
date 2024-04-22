@@ -62,7 +62,7 @@ export const SurveyCard = ({
       {type === "app" && (
         <>
           <Code className="h-4 w-4" />
-          <span> In-app</span>
+          <span>App</span>
         </>
       )}
 

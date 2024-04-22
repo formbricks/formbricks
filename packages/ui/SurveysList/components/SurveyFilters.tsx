@@ -32,7 +32,7 @@ const statusOptions: TFilterOption[] = [
 ];
 const typeOptions: TFilterOption[] = [
   { label: "Link", value: "link" },
-  { label: "In-app", value: "in-app" },
+  { label: "App", value: "app" },
   { label: "Website", value: "website" },
 ];
 
@@ -100,7 +100,7 @@ export const SurveyFilters = ({
   };
 
   const handleTypeChange = (value: string) => {
-    if (value === "link" || value === "web") {
+    if (value === "link" || value === "app" || value === "website") {
       if (type.includes(value)) {
         setSurveyFilters((prev) => ({ ...prev, type: prev.type.filter((v) => v !== value) }));
       } else {
