@@ -187,6 +187,10 @@ export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
 
     return user;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new DatabaseError("User with this email already exists");
+    }
+
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
