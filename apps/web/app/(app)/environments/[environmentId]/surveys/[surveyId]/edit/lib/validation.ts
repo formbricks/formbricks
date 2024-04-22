@@ -274,7 +274,7 @@ export const isSurveyLogicCyclic = (questions: TSurveyQuestions) => {
   return false;
 };
 
-export const validateSurvey = (
+export const isSurveyValid = (
   survey: TSurvey,
   faultyQuestions: string[],
   setInvalidQuestions: (questions: string[]) => void,

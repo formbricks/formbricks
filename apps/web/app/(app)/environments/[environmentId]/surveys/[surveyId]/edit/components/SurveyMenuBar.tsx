@@ -1,7 +1,7 @@
 "use client";
 
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
-import { validateSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
+import { isSurveyValid } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import { isEqual } from "lodash";
 import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -119,7 +119,7 @@ export const SurveyMenuBar = ({
     setIsSurveySaving(true);
     try {
       if (
-        !validateSurvey(
+        !isSurveyValid(
           localSurvey,
           faultyQuestions,
           setInvalidQuestions,
@@ -150,7 +150,7 @@ export const SurveyMenuBar = ({
     setIsSurveyPublishing(true);
     try {
       if (
-        !validateSurvey(
+        !isSurveyValid(
           localSurvey,
           faultyQuestions,
           setInvalidQuestions,
