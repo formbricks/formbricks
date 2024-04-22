@@ -666,6 +666,9 @@ importers:
       '@t3-oss/env-nextjs':
         specifier: ^0.9.2
         version: 0.9.2(typescript@5.3.3)(zod@3.22.4)
+      '@ungap/structured-clone':
+        specifier: ^1.2.0
+        version: 1.2.0
       aws-crt:
         specifier: ^1.21.2
         version: 1.21.2
@@ -709,6 +712,9 @@ importers:
       '@types/mime-types':
         specifier: ^2.1.4
         version: 2.1.4
+      '@types/ungap__structured-clone':
+        specifier: ^1.2.0
+        version: 1.2.0
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -9051,6 +9057,10 @@ packages:
 
   /@types/trusted-types@2.0.7:
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
+    dev: true
+
+  /@types/ungap__structured-clone@1.2.0:
+    resolution: {integrity: sha512-ZoaihZNLeZSxESbk9PUAPZOlSpcKx81I1+4emtULDVmBLkYutTcMlCj2K9VNlf9EWODxdO6gkAqEaLorXwZQVA==}
     dev: true
 
   /@types/unist@2.0.10:

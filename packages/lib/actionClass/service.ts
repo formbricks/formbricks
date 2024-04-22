@@ -17,6 +17,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { structuredClone } from "../pollyfills/structuredClone";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
@@ -85,7 +86,7 @@ export const getActionClassByEnvironmentIdAndName = async (
         throw new DatabaseError(`Database error when fetching action`);
       }
     },
-    [`getActionClass-${environmentId}-${name}`],
+    [`getActionClassByEnvironmentIdAndName-${environmentId}-${name}`],
     {
       tags: [actionClassCache.tag.byNameAndEnvironmentId(name, environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,

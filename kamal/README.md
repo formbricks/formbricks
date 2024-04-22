@@ -1,6 +1,7 @@
 # Kamal Setup
 
-1. Initiate a Linux instance & Get it's 
+1. Initiate a Linux instance & Get it's
+
    - Public IP address
    - SSH credentials
 
@@ -13,43 +14,50 @@
 
 4. If the above returns a non-zero error code, run the below:
 
-    ```sh
-    eval `ssh-agent -s`
-    ssh-add <path-to-your-key>.pem
-    ```
+   ```sh
+   eval `ssh-agent -s`
+   ssh-add <path-to-your-key>.pem
+   ```
 
 5. Now test the SSH status again:
 
-    ```sh
-    kamal lock status
-    ```
+   ```sh
+   kamal lock status
+   ```
 
-    This should now run successfully & exit with 0.
+   This should now run successfully & exit with 0.
 
 6. Generate a Classic Personal Access Token for `container:write` & `container:read` for your Image Registry (DockerHub, GHCR, etc.) & add it to your environment variables (.env file). Also update the Registry details in the `deploy.yml`.
 
 7. If your SSH user is a non-root user, run the below command to add the user to the docker group:
 
-    ```sh
-    sudo usermod -aG docker ${USER}
-    ```
+   ```sh
+   sudo usermod -aG docker ${USER}
+   ```
 
-    > Note: The above needs to be ran on the Cloud VM. There is an open Issue on Kamal for the same [here](https://github.com/basecamp/kamal/issues/405)
+   > Note: The above needs to be ran on the Cloud VM. There is an open Issue on Kamal for the same [here](https://github.com/basecamp/kamal/issues/405)
 
 > Run the below for SSL config the first time
+
 ```sh
 sudo mkdir -p /letsencrypt && sudo touch /letsencrypt/acme.json && sudo chmod 600 /letsencrypt/acme.json
+```
+
+> Run this command to create the private bridge network used by kamal to reference containers on one instance
+
+```sh
+docker network create -d bridge private
 ```
 
 8. Make sure you have docker buildx locally on your machine where you run the kamal CLI from!
 
 9. Voila! You are all set to deploy your application to the cloud with Kamal! 🚀
 
-    ```sh
-    kamal setup -c kamal/deploy.yml
-    ```
+   ```sh
+   kamal setup -c kamal/deploy.yml
+   ```
 
-    This will setup the cloud VM with all the necessary tools & dependencies to run your application.
+   This will setup the cloud VM with all the necessary tools & dependencies to run your application.
 
 > Make sure to run `kamal env push` before a `kamal deploy` to push the latest environment variables to the cloud VM.
 
@@ -57,28 +65,29 @@ sudo mkdir -p /letsencrypt && sudo touch /letsencrypt/acme.json && sudo chmod 60
 
 - If you run into an error such as:
 
-    ```sh
-    failed to solve: cannot copy to non-directory:
-    ```
+  ```sh
+  failed to solve: cannot copy to non-directory:
+  ```
 
-    Then simply run `pnpm clean` & try again.
+  Then simply run `pnpm clean` & try again.
 
 - Make sure your Database accepts connection from the cloud VM. You can do this by adding the VM's IP address to the `Allowed Hosts` in your Database settings.
 
 - If you get an error such as:
 
-    ```sh
-    Lock failed: failed to acquire lock: lockfile already exists
-    ```
+  ```sh
+  Lock failed: failed to acquire lock: lockfile already exists
+  ```
 
-    Then simply run `kamal lock release -c kamal/deploy.yml` & try again.
+  Then simply run `kamal lock release -c kamal/deploy.yml` & try again.
 
 - If you run into:
-    ```sh
-    No config found
-    ```
 
-    Then simply add the following at the end of the command: `-c kamal/deploy.yml`
+  ```sh
+  No config found
+  ```
+
+  Then simply add the following at the end of the command: `-c kamal/deploy.yml`
 
 For further details, refer to the [Kamal Documentation](https://kamal-deploy.org/docs/configuration) or reach out to us on our [Discord](https://formbricks.com/discord)
 

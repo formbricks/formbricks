@@ -31,6 +31,9 @@ export async function POST(req: Request, context: Context): Promise<Response> {
       );
     }
 
+    // remove userId from attributes because it is not allowed to be updated
+    const { userId: userIdAttr, ...updatedAttributes } = inputValidation.data.attributes;
+
     let person = await getPersonByUserId(environmentId, userId);
 
     if (!person) {
@@ -40,11 +43,10 @@ export async function POST(req: Request, context: Context): Promise<Response> {
     }
 
     // Check if the person is already up to date
-    const updatedAtttributes = inputValidation.data.attributes;
     const oldAttributes = person.attributes;
     let isUpToDate = true;
-    for (const key in updatedAtttributes) {
-      if (updatedAtttributes[key] !== oldAttributes[key]) {
+    for (const key in updatedAttributes) {
+      if (updatedAttributes[key] !== oldAttributes[key]) {
         isUpToDate = false;
         break;
       }
