@@ -101,7 +101,9 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
     surveys = await getSyncSurveys(environmentId, (person as TPerson).id);
   } else {
     surveys = await getSurveys(environmentId);
-    surveys = surveys.filter((survey) => survey.type === "web" && survey.status === "inProgress");
+    surveys = surveys.filter(
+      (survey) => (survey.type === "app" || survey.type === "website") && survey.status === "inProgress"
+    );
   }
 
   surveys = transformLegacySurveys(surveys);
