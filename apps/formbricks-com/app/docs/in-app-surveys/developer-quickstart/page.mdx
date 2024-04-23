@@ -1,0 +1,179 @@
+import DemoPreview from "@/components/dummyUI/DemoPreview";
+import { MdxImage } from "@/components/shared/MdxImage";
+
+export const metadata = {
+  title: "Quickstart for Frontend Developers: Displaying Surveys in Frontend Apps",
+  description: 
+    "An overview of all available options for frontend developers to integrate and display surveys in web applications. Learn the key methods, configuration settings, and best practices.",
+};
+
+# Quickstart for Frontend Developers: Displaying Surveys in Frontend Apps
+
+An overview of all available options for frontend developers to integrate and display surveys in web applications. Learn the key methods, configuration settings, and best practices.
+
+## Formbricks Integration
+
+Integrating Formbricks into your web application is straightforward, but it's important to follow the correct steps to ensure proper setup and functionality. For detailed instructions tailored to your development environment, please refer to our [Framework Guides](/docs/getting-started/framework-guides).
+
+## Check Availability
+
+Before using Formbricks, it's best practice to confirm it's available on the current web page. You can use a simple check to ensure Formbricks is not null:
+
+<Col>
+<CodeGroup title="Check Formbricks Availability">
+
+```javascript
+if (window.formbricks !== null) {
+  console.log("Formbricks is available");
+} else {
+  console.error("Formbricks is not available");
+}
+```
+
+</CodeGroup>
+</Col>
+
+If Formbricks is not available, ensure it's properly integrated into your web application according to the installation guide.
+
+## Initializing Formbricks
+
+To start using Formbricks features, you must initialize it with the necessary environment information. This can be done with or without user identification. 
+For comprehensive guidance on setting up user identification, please consult our [User Identification Guide](/docs/in-app-surveys/user-identification).
+
+### Initialization Without User ID
+
+If you do not need user-specific tracking (e.g. on public facing websites with a lot of traffic), you can initialize Formbricks with just the `environmentId` and `apiHost`:
+
+<Col>
+<CodeGroup title="Initialize Without User ID">
+
+```javascript
+formbricks.init({
+  environmentId: "<your-environment-id>",
+  apiHost: "<your-api-host>",
+});
+```
+
+</CodeGroup>
+</Col>
+
+### Initialization With User ID
+
+If you need user-specific tracking, initialize Formbricks with a `userId` in addition to the `environmentId` and `apiHost`:
+
+<Col>
+<CodeGroup title="Initialize With User ID">
+
+```javascript
+formbricks.init({
+  environmentId: "<your-environment-id>",
+  apiHost: "<your-api-host>",
+  userId: "<user-id>",
+});
+```
+
+</CodeGroup>
+</Col>
+
+This setup allows you to associate interactions with specific users, enabling detailed tracking and user-specific functionality.
+
+## Tracking Code Actions
+
+Formbricks allows you to track code-based actions, which is useful for logging events or user interactions in your application. 
+For detailed information on using code-based actions, please visit our [Code Actions Guide](/docs/in-app-surveys/actions#code-actions).
+
+<Col>
+<CodeGroup title="Track Code Action">
+
+```javascript
+formbricks.track("Code Action");
+```
+
+</CodeGroup>
+</Col>
+
+The parameter "Code Action" can be customized to represent various actions, providing flexibility for different tracking scenarios.
+
+## Setting User Attributes
+
+<Note>
+  Please note that this function requires user identification to be active. Ensure you've initialized Formbricks with a `userId` before attempting to use this function.
+</Note>
+
+If user identification is active, you can set custom attributes for the identified user. This can be helpful for segmenting users based on specific characteristics or properties.
+To learn how to set custom user attributes, please check out our [User Attributes Guide](/docs/in-app-surveys/attributes#setting-custom-user-attributes).
+
+<Col>
+<CodeGroup title="Set User Attribute">
+
+```javascript
+formbricks.setAttribute("Plan", "Paid");
+```
+
+</CodeGroup>
+</Col>
+
+In this example, the "Plan" attribute is set to "Paid", indicating the user's subscription status. You can set multiple attributes to capture additional user information. These attributes can be used to target surveys to specific users. You cannot set `userId` via this function.
+
+
+
+## Setting User Email
+
+<Note>
+  Please note that this function requires user identification to be active. Ensure you've initialized Formbricks with a `userId` before attempting to use this function.
+</Note>
+
+To associate an email address with an identified user, you can use the `setEmail` function. This is useful for linking a user's email with their interactions:
+
+<Col>
+<CodeGroup title="Set User Email">
+
+```javascript
+formbricks.setEmail("test@example.com");
+```
+
+</CodeGroup>
+</Col>
+
+Setting the email can facilitate user communication and integration with other systems, enabling a more seamless user experience.
+
+## Logout
+
+To log out and deinitialize Formbricks, use the `formbricks.logout()` function. This action clears the current initialization configuration and erases stored frontend information, such as the surveys a user has viewed or completed. It's an important step when a user logs out of your application or when you want to reset Formbricks.
+
+<Col>
+<CodeGroup title="Logout User">
+
+```javascript
+formbricks.logout();
+```
+
+</CodeGroup>
+</Col>
+
+<Note>
+    After calling `formbricks.logout()`, you'll need to reinitialize Formbricks before using any of its features again. Ensure that you properly reinitialize Formbricks to avoid unexpected errors or behavior in your application.
+</Note>
+
+## Resetting Formbricks
+
+The `formbricks.reset()` function is a convenient way to clear current Formbricks data, and then reinitialize Formbricks. This action not only removes stored frontend information, such as the surveys a user has viewed or completed, but also reinitializes Formbricks with the settings used during the original initialization.
+
+<Col>
+<CodeGroup title="Reset Formbricks">
+
+```javascript
+formbricks.reset();
+```
+
+</CodeGroup>
+</Col>
+
+After calling `formbricks.reset()`, Formbricks is reinitialized, meaning you can continue using its features without additional setup. Be aware that any custom attributes, tracking, or user-specific data will be cleared and restored to the initial state.
+
+## Deprecated Function
+
+Please be aware that the following function is deprecated and should not be used in new code or maintained projects:
+
+- `formbricks.setUserId()`: Instead of using this function, set the `userId` during the initialization of Formbricks. This change ensures a more consistent approach to user identification and reduces the risk of errors due to inconsistent user context.
+
