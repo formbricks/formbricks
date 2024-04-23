@@ -117,7 +117,17 @@ export const MatrixQuestion = ({
                   {question.columns.map((column, columnIndex) => (
                     <td
                       key={columnIndex}
+                      tabIndex={0}
                       className={`px-4 py-2 text-gray-800 ${columnIndex === question.columns.length - 1 ? "rounded-r-custom" : ""}`}
+                      onKeyDown={(e) => {
+                        if (e.key === " ") {
+                          e.preventDefault();
+                          handleSelect(
+                            getLocalizedValue(column, languageCode),
+                            getLocalizedValue(row, languageCode)
+                          );
+                        }
+                      }}
                       onClick={() =>
                         handleSelect(
                           getLocalizedValue(column, languageCode),
@@ -127,6 +137,7 @@ export const MatrixQuestion = ({
                       <div className="flex items-center justify-center p-2">
                         {/* radio input  */}
                         <input
+                          tabIndex={-1}
                           type="radio"
                           id={`${row}-${column}`}
                           name={getLocalizedValue(row, languageCode)}
@@ -153,6 +164,7 @@ export const MatrixQuestion = ({
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={handleBackButtonClick}
+            tabIndex={0}
           />
         )}
         <div></div>
@@ -161,6 +173,7 @@ export const MatrixQuestion = ({
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
+            tabIndex={0}
           />
         )}
       </div>
