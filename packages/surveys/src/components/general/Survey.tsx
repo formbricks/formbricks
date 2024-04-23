@@ -244,11 +244,7 @@ export const Survey = ({
     if (history?.length > 0) {
       const newHistory = [...history];
       prevQuestionId = newHistory.pop();
-      if (
-        // prefillResponseData &&
-        prevQuestionId === survey.questions[0].id
-      )
-        return;
+      if (prevQuestionId === survey.questions[0].id) return;
       setHistory(newHistory);
     } else {
       // otherwise go back to previous question in array

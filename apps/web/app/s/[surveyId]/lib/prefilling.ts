@@ -88,9 +88,7 @@ export const checkValidity = (question: TSurveyQuestion, answer: string, languag
       }
       case TSurveyQuestionType.PictureSelection: {
         const answerChoices = answer.split(",");
-        if (!answerChoices.every((ans: string) => question.choices.find((choice) => choice.id === ans)))
-          return false;
-        return true;
+        return answerChoices.every((ans: string) => !isNaN(Number(ans)));
       }
       default:
         return false;
@@ -120,7 +118,15 @@ export const transformAnswer = (
     }
 
     case TSurveyQuestionType.PictureSelection: {
-      return answer.split(",");
+      const answerChoicesIdx = answer.split(",");
+      const answerArr: string[] = [];
+
+      answerChoicesIdx.forEach((ansIdx) => {
+        if (question.choices[ansIdx]) answerArr.push(question.choices[ansIdx].id);
+      });
+
+      if (question.allowMulti) return answerArr;
+      return answerArr.slice(0, 1);
     }
 
     case TSurveyQuestionType.MultipleChoiceMulti: {

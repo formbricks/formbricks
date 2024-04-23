@@ -12,7 +12,7 @@ export const metadata = {
 
 # Data Prefilling in Link Surveys
 
-Data prefilling via the URL allows you to increase conversion rate by prefilling data you already have in a different system.
+Data prefilling via the URL allows you to increase conversion rate by prefilling data you already have in a different system. It allows you to prefill multiple questions in a survey.
 
 ## Purpose
 
@@ -28,19 +28,19 @@ URL prefilling of data comes in handy when you:
 <CodeGroup title="Example URL">
 
 ```sh
-https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?question_id=5
+https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?question_id_1=answer_1&question_id_2=answer_2
 ```
 
 </CodeGroup>
 </Col>
 ## How it works
 
-To prefill the first question of a survey, append `?question_id=answer` at the end of the survey URL. The answer has to match the expected type of the question. For example, if the first question is a rating question, the answer has to be a number. If the first question is a single select question, the answer has to be a string.
+To prefill the questions of a survey, add query parameters to the survey URL. The query parameter should be in the format `questionId=answer`. The answer has to match the expected type of the question. For example, if the first question is a rating question, the answer has to be a number. If the first question is a single select question, the answer has to be a string.
 
 Please make sure the answer is [URL encoded](https://www.urlencoder.org/).
 
 <Note>
-  ## Prefill only the first question Currently, you can only prefill the first question of a link survey.
+  ## Prefill multiple questions: You can prefill multiple questions in a survey by adding multiple query parameters to the URL. The order of the query parameters does not matter.
 </Note>
 
 ## Where do I find my question Id?
@@ -69,7 +69,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?rating_question_id=5
 
 </CodeGroup>
 </Col>
+
 ### NPS Question
+
 <Col>
 <CodeGroup title="Translates to an NPS rating of 10">
 
@@ -79,7 +81,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?nps_question_id=10
 
 </CodeGroup>
 </Col>
+
 ### Single Select Question (Radio)
+
 <Col>
 <CodeGroup title="Chooses the option 'Very disappointed' in the single select question. The string has to be identical to the option in your question">
 
@@ -89,7 +93,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?single_select_question_id
 
 </CodeGroup>
 </Col>
+
 ### Multi Select Question (Checkbox)
+
 <Col>
 <CodeGroup title="Selects three options 'Sun, Palms and Beach' in the multi select question. The strings have to be identical to the options in your question">
 
@@ -99,7 +105,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?multi_select_question_id=
 
 </CodeGroup>
 </Col>
+
 ### Open Text Question
+
 <Col>
 <CodeGroup title="Adds 'I love Formbricks' as the answer to the open text question">
 
@@ -109,7 +117,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?openText_question_id=I%20
 
 </CodeGroup>
 </Col>
+
 ### CTA Question
+
 <Col>
 <CodeGroup title="Adds 'clicked' as the answer to the CTA question. Alternatively, you can set it to 'dismissed' to skip the question.">
 
@@ -119,15 +129,41 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?cta_question_id=clicked
 
 </CodeGroup>
 </Col>
+
+### Consent Question
+
+<Col>
+<CodeGroup title="Adds 'accepted' as the answer to the Consent question. Alternatively, you can set it to 'dismissed' to skip the question.">
+
+```txt
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?consent_question_id=accepted
+```
+
+</CodeGroup>
+</Col>
+
+### Picture Selection Question
+
+<Col>
+<CodeGroup title="Adds index of the selected image(s) as the answer to the Picture Selection question. The index starts from 1.">
+
+```txt
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?pictureSelection_question_id=1,2,3
+```
+
+</CodeGroup>
+</Col>
+
 ## Validation
 
-Make sure that the answer in the URL matches the expected type for the first question.
+Make sure that the answer in the URL matches the expected type for the questions.
 
 The URL validation works as follows:
 
 - For Rating or NPS questions, the response is parsed as a number and verified if it's accepted by the schema.
 - For CTA type questions, the valid values are "clicked" (main CTA) and "dismissed" (skip CTA).
 - For Consent type questions, the valid values are "accepted" (consent given) and "dismissed" (consent not given).
+- For Picture Selection type questions, the response is parsed as an array of numbers and verified if it's accepted by the schema.
 - All other question types are strings.
 
 ### You’re good to go! 🎉
