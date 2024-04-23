@@ -5,84 +5,90 @@ const prisma = new PrismaClient();
 async function main() {
   await prisma.$transaction(
     async (tx) => {
-      // Move all the previous surveys with type "web" to "app" or "website"
-      // If a web survey has a response with personId set, then it should be moved to "app"
-      // otherwise it should be moved to "website"
+      // Retrieve all surveys of type "web" with necessary fields for efficient processing
       const webSurveys = await tx.survey.findMany({
-        where: {
-          type: "web",
-        },
-        include: {
-          segment: true,
+        where: { type: "web" },
+        select: {
+          id: true,
+          segment: {
+            select: {
+              id: true,
+              isPrivate: true,
+            },
+          },
         },
       });
 
-      const operations = [];
+      const updateOperations = [];
+      const segmentDeletionIds = [];
+      const surveyTitlesForDeletion = [];
 
       for (const webSurvey of webSurveys) {
-        // get the latest response
         const latestResponse = await tx.response.findFirst({
-          where: {
-            surveyId: webSurvey.id,
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
+          where: { surveyId: webSurvey.id },
+          orderBy: { createdAt: "desc" },
+          select: { personId: true },
         });
 
         const newType = latestResponse?.personId ? "app" : "website";
-
-        // Safely update survey type
-        operations.push(
+        updateOperations.push(
           tx.survey.update({
             where: { id: webSurvey.id },
             data: { type: newType },
           })
         );
 
-        if (newType === "website" && webSurvey.segment) {
-          if (webSurvey.segment.isPrivate) {
-            // Safely delete private segments
-            operations.push(
-              tx.segment.delete({
-                where: { id: webSurvey.segment.id },
-              })
-            );
-          } else {
-            // Disconnect segment from survey if not private
-            operations.push(
-              tx.survey.update({
-                where: { id: webSurvey.id },
-                data: {
-                  segment: { disconnect: true },
-                },
-              })
-            );
+        if (newType === "website") {
+          if (webSurvey.segment) {
+            if (webSurvey.segment.isPrivate) {
+              segmentDeletionIds.push(webSurvey.segment.id);
+            } else {
+              updateOperations.push(
+                tx.survey.update({
+                  where: { id: webSurvey.id },
+                  data: {
+                    segment: { disconnect: true },
+                  },
+                })
+              );
+            }
           }
 
-          // Conditionally delete segments based on their title and privacy
-          operations.push(
-            tx.segment.deleteMany({
-              where: {
-                title: webSurvey.id,
-                isPrivate: true,
-              },
-            })
-          );
+          surveyTitlesForDeletion.push(webSurvey.id);
         }
       }
 
-      // Execute all operations in parallel for efficiency
-      await Promise.all(operations);
+      await Promise.all(updateOperations);
+
+      if (segmentDeletionIds.length > 0) {
+        await tx.segment.deleteMany({
+          where: {
+            id: { in: segmentDeletionIds },
+          },
+        });
+      }
+
+      if (surveyTitlesForDeletion.length > 0) {
+        await tx.segment.deleteMany({
+          where: {
+            title: { in: surveyTitlesForDeletion },
+            isPrivate: true,
+          },
+        });
+      }
     },
     {
       timeout: 50000,
     }
   );
 }
+
 main()
-  .catch(async (e) => {
-    console.error(e);
+  .catch((e: Error) => {
+    console.error("Error during migration: ", e.message);
     process.exit(1);
   })
-  .finally(async () => await prisma.$disconnect());
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+1;
