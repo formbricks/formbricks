@@ -56,7 +56,7 @@ export const CTAQuestion = ({
           <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} questionId={question.id} />
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-2">
+      <div className="flex w-full justify-between px-6 py-4">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

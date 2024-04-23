@@ -208,7 +208,7 @@ export const PreviewSurvey = ({
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-items-center">
+    <div className="flex h-full w-full flex-col items-center justify-items-center" id="survey-preview">
       <motion.div
         variants={previewParentContainerVariant}
         className="fixed hidden h-[95%] w-5/6"

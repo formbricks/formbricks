@@ -104,8 +104,8 @@ export const MatrixQuestion = ({
             subheader={getLocalizedValue(question.subheader, languageCode)}
             questionId={question.id}
           />
-          <div className=" overflow-x-auto">
-            <table className="min-w-full table-auto border-collapse text-sm">
+          <div className="overflow-x-auto">
+            <table className="no-scrollbar min-w-full table-auto border-collapse text-sm">
               <thead>
                 <tr>
                   <th className="px-4 py-2"></th>

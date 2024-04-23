@@ -5,46 +5,37 @@ interface ScrollableContainerProps {
 }
 
 export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
-  const [overflow, setOverflow] = useState("hidden");
+  const [isOverflowHidden, setIsOverflowHidden] = useState(true);
   const [isAtBottom, setIsAtBottom] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const setOverFlowToAuto = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    setOverflow("auto");
-    checkScroll(); // Check scroll position every time the overflow is set to auto
-  };
-
-  const setOverFlowToHidden = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    timeoutRef.current = setTimeout(() => {
-      setOverflow("hidden");
-    }, 1500);
-  };
+  const isSurveyPreview = !!document.getElementById("survey-preview");
 
   const checkScroll = () => {
-    if (containerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-      setIsAtBottom(Math.round(scrollTop) + clientHeight >= scrollHeight);
+    if (!containerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+    setIsAtBottom(Math.round(scrollTop) + clientHeight >= scrollHeight);
+  };
+
+  const toggleOverflow = (hide: boolean) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (hide) {
+      timeoutRef.current = setTimeout(() => setIsOverflowHidden(true), 1500);
+    } else {
+      setIsOverflowHidden(false);
+      checkScroll();
     }
   };
 
   useEffect(() => {
-    checkScroll();
     const element = containerRef.current;
-    if (element) {
-      element.addEventListener("scroll", checkScroll);
-    }
+    if (!element) return;
+
+    const handleScroll = () => checkScroll();
+    element.addEventListener("scroll", handleScroll);
 
     return () => {
-      if (element) {
-        element.removeEventListener("scroll", checkScroll);
-      }
+      element.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
@@ -56,16 +47,19 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
     <div className="relative">
       <div
         ref={containerRef}
-        style={{ scrollbarGutter: "stable" }}
-        className={`overflow-${overflow} max-h-[40vh] p-5`}
-        onMouseEnter={setOverFlowToAuto}
-        onTouchStart={setOverFlowToAuto}
-        onTouchEnd={setOverFlowToHidden}
-        onMouseLeave={setOverFlowToHidden}>
+        style={{
+          scrollbarGutter: "stable",
+          maxHeight: isSurveyPreview ? "40vh" : "60vh",
+        }}
+        className={`overflow-${isOverflowHidden ? "hidden" : "auto"} p-5`}
+        onMouseEnter={() => toggleOverflow(false)}
+        onTouchStart={() => toggleOverflow(false)}
+        onTouchEnd={() => toggleOverflow(true)}
+        onMouseLeave={() => toggleOverflow(true)}>
         {children}
       </div>
       {!isAtBottom && (
-        <div className="from-survey-bg absolute bottom-0 left-0 right-2 h-16 bg-gradient-to-t from-40% to-transparent"></div>
+        <div className="from-survey-bg absolute -bottom-2 left-0 right-2 h-16 bg-gradient-to-t to-transparent"></div>
       )}
     </div>
   );

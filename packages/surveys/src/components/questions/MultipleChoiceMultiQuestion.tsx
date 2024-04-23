@@ -268,7 +268,7 @@ export const MultipleChoiceMultiQuestion = ({
         </div>
       </ScrollableContainer>
 
-      <div className="flex w-full justify-between px-6">
+      <div className="flex w-full justify-between px-6 py-4">
         {!isFirstQuestion && (
           <BackButton
             tabIndex={questionChoices.length + 3}
