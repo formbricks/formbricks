@@ -65,7 +65,7 @@ export default function UpdateQuestionId({
           disabled={localSurvey.status !== "draft" && !question.isDraft}
           className={`h-10 ${isInputInvalid ? "border-red-300 focus:border-red-300" : ""}`}
         />
-        <Button variant="secondary" onClick={saveAction} disabled={isButtonDisabled()}>
+        <Button variant="darkCTA" size="sm" onClick={saveAction} disabled={isButtonDisabled()}>
           Save
         </Button>
       </div>
