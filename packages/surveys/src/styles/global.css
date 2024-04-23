@@ -20,7 +20,7 @@
 }
 
 #fbjs *::-webkit-scrollbar-thumb {
-  background-color: #64748B ;
+  background-color: var(--fb-brand-color) ;
   border: none;
   border-radius: 10px 
 }
