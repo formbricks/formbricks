@@ -13,10 +13,10 @@ import {
 
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it } from "vitest";
+import { testInputValidation } from "vitestSetup";
 
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
-import { testInputValidation } from "../../vitestSetup";
 import {
   cloneSegment,
   createSegment,
@@ -153,7 +153,7 @@ describe("Tests for getSegments service", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getSegments, "123");
+    testInputValidation(getSegments, "123#");
 
     it("Throws a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
@@ -185,7 +185,7 @@ describe("Tests for getSegment service", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getSegment, "123");
+    testInputValidation(getSegment, "123#");
 
     it("Throws a ResourceNotFoundError error if the user segment does not exist", async () => {
       prisma.segment.findUnique.mockResolvedValue(null);
@@ -225,7 +225,7 @@ describe("Tests for updateSegment service", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(updateSegment, "123", {});
+    testInputValidation(updateSegment, "123#", {});
 
     it("Throws a ResourceNotFoundError error if the user segment does not exist", async () => {
       prisma.segment.findUnique.mockResolvedValue(null);
@@ -265,7 +265,7 @@ describe("Tests for deleteSegment service", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(deleteSegment, "123");
+    testInputValidation(deleteSegment, "123#");
 
     it("Throws a ResourceNotFoundError error if the user segment does not exist", async () => {
       prisma.segment.findUnique.mockResolvedValue(null);
@@ -309,7 +309,7 @@ describe("Tests for cloneSegment service", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(cloneSegment, "123", "123");
+    testInputValidation(cloneSegment, "123#", "123#");
 
     it("Throws a ResourceNotFoundError error if the user segment does not exist", async () => {
       prisma.segment.findUnique.mockResolvedValue(null);

@@ -105,7 +105,7 @@ export const mockUser: TUser = {
     weeklySummary: {},
     unsubscribedTeamIds: [],
   },
-  role: "engineer",
+  role: "other",
 };
 
 export const mockPrismaPerson: Prisma.PersonGetPayload<{
@@ -211,8 +211,27 @@ export const mockTeamOutput: TTeam = {
   },
 };
 
+export const mockSyncSurveyOutput: SurveyMock = {
+  type: "app",
+  status: "inProgress",
+  displayOption: "respondMultiple",
+  triggers: [{ actionClass: mockActionClass }],
+  productOverwrites: null,
+  singleUse: null,
+  styling: null,
+  displayPercentage: null,
+  createdBy: null,
+  pin: null,
+  segment: null,
+  segmentId: null,
+  resultShareKey: null,
+  inlineTriggers: null,
+  languages: mockSurveyLanguages,
+  ...baseSurveyProperties,
+};
+
 export const mockSurveyOutput: SurveyMock = {
-  type: "web",
+  type: "website",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
@@ -231,7 +250,7 @@ export const mockSurveyOutput: SurveyMock = {
 };
 
 export const createSurveyInput: TSurveyInput = {
-  type: "web",
+  type: "website",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [mockActionClass.name],
@@ -239,7 +258,7 @@ export const createSurveyInput: TSurveyInput = {
 };
 
 export const updateSurveyInput: TSurvey = {
-  type: "web",
+  type: "website",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [mockActionClass.name],
@@ -259,5 +278,10 @@ export const updateSurveyInput: TSurvey = {
 
 export const mockTransformedSurveyOutput = {
   ...mockSurveyOutput,
+  triggers: mockSurveyOutput.triggers.map((trigger) => trigger.actionClass.name),
+};
+
+export const mockTransformedSyncSurveyOutput = {
+  ...mockSyncSurveyOutput,
   triggers: mockSurveyOutput.triggers.map((trigger) => trigger.actionClass.name),
 };
