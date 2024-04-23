@@ -2,19 +2,28 @@ import type { TActionClass } from "@formbricks/types/actionClasses";
 import type { TActionClassPageUrlRule } from "@formbricks/types/actionClasses";
 import { TSurveyInlineTriggers } from "@formbricks/types/surveys";
 
+import {
+  ErrorHandler,
+  InvalidMatchTypeError,
+  NetworkError,
+  Result,
+  err,
+  match,
+  ok,
+  okVoid,
+} from "../../shared/errors";
+import { Logger } from "../../shared/logger";
 import { trackAction } from "./actions";
-import { Config } from "./config";
-import { ErrorHandler, InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
-import { Logger } from "./logger";
+import { WebsiteConfig } from "./config";
 import { triggerSurvey } from "./widget";
 
-const config = Config.getInstance();
+const websiteConfig = WebsiteConfig.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 
 export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError | NetworkError>> => {
   logger.debug(`Checking page url: ${window.location.href}`);
-  const { state } = config.get();
+  const { state } = websiteConfig.get();
   const { noCodeActionClasses = [], surveys = [] } = state ?? {};
 
   const actionsWithPageUrl: TActionClass[] = noCodeActionClasses.filter((action) => {
@@ -148,7 +157,7 @@ const evaluateNoCodeConfig = (
 };
 
 export const checkClickMatch = (event: MouseEvent) => {
-  const { state } = config.get();
+  const { state } = websiteConfig.get();
   if (!state) {
     return;
   }
