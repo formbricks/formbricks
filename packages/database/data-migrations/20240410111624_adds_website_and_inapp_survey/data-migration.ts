@@ -35,93 +35,97 @@ async function main() {
       const segmentDeletionIds = [];
       const surveyTitlesForDeletion = [];
 
-      for (const webSurvey of webSurveys) {
-        const latestResponse = await tx.response.findFirst({
-          where: { surveyId: webSurvey.id },
-          orderBy: { createdAt: "desc" },
-          select: { personId: true },
-        });
+      if (webSurveys?.length > 0) {
+        for (const webSurvey of webSurveys) {
+          const latestResponse = await tx.response.findFirst({
+            where: { surveyId: webSurvey.id },
+            orderBy: { createdAt: "desc" },
+            select: { personId: true },
+          });
 
-        const newType = latestResponse?.personId ? "app" : "website";
-        updateOperations.push(
-          tx.survey.update({
-            where: { id: webSurvey.id },
-            data: { type: newType },
-          })
-        );
-
-        if (newType === "website") {
-          if (webSurvey.segment) {
-            if (webSurvey.segment.isPrivate) {
-              segmentDeletionIds.push(webSurvey.segment.id);
-            } else {
-              updateOperations.push(
-                tx.survey.update({
-                  where: { id: webSurvey.id },
-                  data: {
-                    segment: { disconnect: true },
-                  },
-                })
-              );
-            }
-          }
-
-          surveyTitlesForDeletion.push(webSurvey.id);
-        }
-      }
-
-      await Promise.all(updateOperations);
-
-      if (segmentDeletionIds.length > 0) {
-        await tx.segment.deleteMany({
-          where: {
-            id: { in: segmentDeletionIds },
-          },
-        });
-      }
-
-      if (surveyTitlesForDeletion.length > 0) {
-        await tx.segment.deleteMany({
-          where: {
-            title: { in: surveyTitlesForDeletion },
-            isPrivate: true,
-          },
-        });
-      }
-
-      const linkSurveySegmentDeletionIds = [];
-      const linkSurveySegmentUpdateOperations = [];
-
-      for (const linkSurvey of linkSurveysWithSegment) {
-        const { segment } = linkSurvey;
-        if (segment) {
-          linkSurveySegmentUpdateOperations.push(
+          const newType = latestResponse?.personId ? "app" : "website";
+          updateOperations.push(
             tx.survey.update({
-              where: {
-                id: linkSurvey.id,
-              },
-              data: {
-                segment: {
-                  disconnect: true,
-                },
-              },
+              where: { id: webSurvey.id },
+              data: { type: newType },
             })
           );
 
-          if (segment.isPrivate) {
-            linkSurveySegmentDeletionIds.push(segment.id);
+          if (newType === "website") {
+            if (webSurvey.segment) {
+              if (webSurvey.segment.isPrivate) {
+                segmentDeletionIds.push(webSurvey.segment.id);
+              } else {
+                updateOperations.push(
+                  tx.survey.update({
+                    where: { id: webSurvey.id },
+                    data: {
+                      segment: { disconnect: true },
+                    },
+                  })
+                );
+              }
+            }
+
+            surveyTitlesForDeletion.push(webSurvey.id);
           }
+        }
+
+        await Promise.all(updateOperations);
+
+        if (segmentDeletionIds.length > 0) {
+          await tx.segment.deleteMany({
+            where: {
+              id: { in: segmentDeletionIds },
+            },
+          });
+        }
+
+        if (surveyTitlesForDeletion.length > 0) {
+          await tx.segment.deleteMany({
+            where: {
+              title: { in: surveyTitlesForDeletion },
+              isPrivate: true,
+            },
+          });
         }
       }
 
-      await Promise.all(linkSurveySegmentUpdateOperations);
+      if (linkSurveysWithSegment?.length > 0) {
+        const linkSurveySegmentDeletionIds = [];
+        const linkSurveySegmentUpdateOperations = [];
 
-      if (linkSurveySegmentDeletionIds.length > 0) {
-        await tx.segment.deleteMany({
-          where: {
-            id: { in: linkSurveySegmentDeletionIds },
-          },
-        });
+        for (const linkSurvey of linkSurveysWithSegment) {
+          const { segment } = linkSurvey;
+          if (segment) {
+            linkSurveySegmentUpdateOperations.push(
+              tx.survey.update({
+                where: {
+                  id: linkSurvey.id,
+                },
+                data: {
+                  segment: {
+                    disconnect: true,
+                  },
+                },
+              })
+            );
+
+            if (segment.isPrivate) {
+              linkSurveySegmentDeletionIds.push(segment.id);
+            }
+          }
+        }
+
+        await Promise.all(linkSurveySegmentUpdateOperations);
+
+        if (linkSurveySegmentDeletionIds.length > 0) {
+          await tx.segment.deleteMany({
+            where: {
+              id: { in: linkSurveySegmentDeletionIds },
+            },
+          });
+        }
       }
     },
     {
