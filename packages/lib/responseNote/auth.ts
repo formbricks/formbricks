@@ -14,12 +14,16 @@ export const canUserModifyResponseNote = async (userId: string, responseNoteId: 
 
       if (!userId || !responseNoteId) return false;
 
-      const responseNote = await getResponseNote(responseNoteId);
-      if (!responseNote) return false;
+      try {
+        const responseNote = await getResponseNote(responseNoteId);
+        if (!responseNote) return false;
 
-      return responseNote.user.id === userId;
+        return responseNote.user.id === userId;
+      } catch (error) {
+        throw error;
+      }
     },
-    [`users-${userId}-responseNotes-${responseNoteId}`],
+    [`canUserModifyResponseNote-${userId}-${responseNoteId}`],
     { revalidate: 30 * 60, tags: [`responseNotes-${responseNoteId}`] }
   )(); // 30 minutes
 
@@ -34,22 +38,26 @@ export const canUserResolveResponseNote = async (
 
       if (!userId || !responseId || !responseNoteId) return false;
 
-      const response = await getResponse(responseId);
+      try {
+        const response = await getResponse(responseId);
 
-      let noteExistsOnResponse = false;
+        let noteExistsOnResponse = false;
 
-      response?.notes.forEach((note) => {
-        if (note.id === responseNoteId) {
-          noteExistsOnResponse = true;
-        }
-      });
+        response?.notes.forEach((note) => {
+          if (note.id === responseNoteId) {
+            noteExistsOnResponse = true;
+          }
+        });
 
-      if (!noteExistsOnResponse) return false;
+        if (!noteExistsOnResponse) return false;
 
-      const canAccessResponse = await canUserAccessResponse(userId, responseId);
+        const canAccessResponse = await canUserAccessResponse(userId, responseId);
 
-      return canAccessResponse;
+        return canAccessResponse;
+      } catch (error) {
+        throw error;
+      }
     },
-    [`users-${userId}-responseNotes-${responseNoteId}`],
+    [`canUserResolveResponseNote-${userId}-${responseNoteId}`],
     { revalidate: 30 * 60, tags: [`responseNotes-${responseNoteId}`] }
   )(); // 30 minutes

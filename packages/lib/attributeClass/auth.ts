@@ -18,15 +18,19 @@ export const canUserAccessAttributeClass = async (
       validateInputs([userId, ZId], [attributeClassId, ZId]);
       if (!userId) return false;
 
-      const attributeClass = await getAttributeClass(attributeClassId);
-      if (!attributeClass) return false;
+      try {
+        const attributeClass = await getAttributeClass(attributeClassId);
+        if (!attributeClass) return false;
 
-      const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, attributeClass.environmentId);
-      if (!hasAccessToEnvironment) return false;
+        const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, attributeClass.environmentId);
+        if (!hasAccessToEnvironment) return false;
 
-      return true;
+        return true;
+      } catch (error) {
+        throw error;
+      }
     },
 
-    [`users-${userId}-attributeClasses-${attributeClassId}`],
+    [`canUserAccessAttributeClass-${userId}-${attributeClassId}`],
     { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [`attributeClasses-${attributeClassId}`] }
   )();
