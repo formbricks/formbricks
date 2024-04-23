@@ -1,13 +1,13 @@
 import Stripe from "stripe";
 
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { STRIPE_API_VERSION, WEBAPP_URL } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getTeam } from "@formbricks/lib/team/service";
 
 import { StripePriceLookupKeys } from "./constants";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
+  apiVersion: STRIPE_API_VERSION,
 });
 
 const baseUrl = process.env.NODE_ENV === "production" ? WEBAPP_URL : "http://localhost:3000";

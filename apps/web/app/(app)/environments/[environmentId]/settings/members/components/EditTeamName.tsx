@@ -13,24 +13,24 @@ import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 
-type TEditTeamNameForm = {
+interface EditTeamNameForm {
   name: string;
-};
+}
 
-type TEditTeamNameProps = {
+interface EditTeamNameProps {
   environmentId: string;
   team: TTeam;
   membershipRole?: TMembershipRole;
-};
+}
 
-export default function EditTeamName({ team, membershipRole }: TEditTeamNameProps) {
+export default function EditTeamName({ team, membershipRole }: EditTeamNameProps) {
   const router = useRouter();
   const {
     register,
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<TEditTeamNameForm>({
+  } = useForm<EditTeamNameForm>({
     defaultValues: {
       name: team.name,
     },
@@ -47,7 +47,7 @@ export default function EditTeamName({ team, membershipRole }: TEditTeamNameProp
   const currentTeamName = teamName?.trim().toLowerCase() ?? "";
   const previousTeamName = team?.name?.trim().toLowerCase() ?? "";
 
-  const handleUpdateTeamName: SubmitHandler<TEditTeamNameForm> = async (data) => {
+  const handleUpdateTeamName: SubmitHandler<EditTeamNameForm> = async (data) => {
     try {
       data.name = data.name.trim();
       setIsUpdatingTeam(true);

@@ -152,7 +152,7 @@ export default function Navigation({
       },
       {
         name: "Settings",
-        href: `/environments/${environment.id}/settings/profile`,
+        href: `/environments/${environment.id}/settings/product`,
         icon: SettingsIcon,
         current: pathname?.includes("/settings"),
         hidden: false,
@@ -362,31 +362,27 @@ export default function Navigation({
 
                     <DropdownMenuSeparator />
 
-                    {/* Team Switch */}
+                    {/* Environment Switch */}
 
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>
                         <div>
-                          <p>{currentTeamName}</p>
-                          <p className="block text-xs text-slate-500">Team</p>
+                          <p>{capitalizeFirstLetter(environment?.type)}</p>
+                          <p className=" block text-xs text-slate-500">Environment</p>
                         </div>
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
                         <DropdownMenuSubContent>
                           <DropdownMenuRadioGroup
-                            value={currentTeamId}
-                            onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
-                            {teams?.map((team) => (
-                              <DropdownMenuRadioItem value={team.id} className="cursor-pointer" key={team.id}>
-                                {team.name}
-                              </DropdownMenuRadioItem>
-                            ))}
+                            value={environment?.type}
+                            onValueChange={(v) => handleEnvironmentChange(v as "production" | "development")}>
+                            <DropdownMenuRadioItem value="production" className="cursor-pointer">
+                              Production
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="development" className="cursor-pointer">
+                              Development
+                            </DropdownMenuRadioItem>
                           </DropdownMenuRadioGroup>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setShowCreateTeamModal(true)}>
-                            <PlusIcon className="mr-2 h-4 w-4" />
-                            <span>Create team</span>
-                          </DropdownMenuItem>
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
                     </DropdownMenuSub>
@@ -465,31 +461,6 @@ export default function Navigation({
                             <PlusIcon className="mr-2 h-4 w-4" />
                             <span>Create team</span>
                           </DropdownMenuItem>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuPortal>
-                    </DropdownMenuSub>
-
-                    {/* Environment Switch */}
-
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <div>
-                          <p>{capitalizeFirstLetter(environment?.type)}</p>
-                          <p className=" block text-xs text-slate-500">Environment</p>
-                        </div>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                          <DropdownMenuRadioGroup
-                            value={environment?.type}
-                            onValueChange={(v) => handleEnvironmentChange(v as "production" | "development")}>
-                            <DropdownMenuRadioItem value="production" className="cursor-pointer">
-                              Production
-                            </DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="development" className="cursor-pointer">
-                              Development
-                            </DropdownMenuRadioItem>
-                          </DropdownMenuRadioGroup>
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
                     </DropdownMenuSub>

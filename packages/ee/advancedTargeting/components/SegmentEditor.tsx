@@ -2,6 +2,7 @@ import { MoreVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import {
   addFilterBelow,
   addFilterInGroup,

@@ -22,12 +22,16 @@ export const canUserAccessTagOnResponse = async (
     async () => {
       validateInputs([userId, ZId], [tagId, ZId], [responseId, ZId]);
 
-      const isAuthorizedForTag = await canUserAccessTag(userId, tagId);
-      const isAuthorizedForResponse = await canUserAccessResponse(userId, responseId);
+      try {
+        const isAuthorizedForTag = await canUserAccessTag(userId, tagId);
+        const isAuthorizedForResponse = await canUserAccessResponse(userId, responseId);
 
-      return isAuthorizedForTag && isAuthorizedForResponse;
+        return isAuthorizedForTag && isAuthorizedForResponse;
+      } catch (error) {
+        throw error;
+      }
     },
-    [`users-${userId}-tagOnResponse-${tagId}-${responseId}`],
+    [`canUserAccessTagOnResponse-${userId}-${tagId}-${responseId}`],
     {
       revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [tagOnResponseCache.tag.byResponseIdAndTagId(responseId, tagId)],

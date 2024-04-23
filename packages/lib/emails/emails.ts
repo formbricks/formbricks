@@ -252,14 +252,21 @@ export const sendResponseFinishedEmail = async (
   });
 };
 
-export const sendEmbedSurveyPreviewEmail = async (to: string, subject: string, html: string) => {
+export const sendEmbedSurveyPreviewEmail = async (
+  to: string,
+  subject: string,
+  html: string,
+  environmentId: string
+) => {
   await sendEmail({
     to: to,
     subject: subject,
     html: withEmailTemplate(`
-    <h1>Preview Email Embed</h1>
-    <p>This is how the code snippet looks embedded into an email:</p>
-    ${html}`),
+    <h1>Preview</h1>
+    <p>This is how the code snippet looks embedded into an email 👇</p>
+    <p style="font-size:0.8em;"><b>Didn't request this?</b> Help us fight spam and forward this mail to hola@formbricks.com</p>
+    ${html}
+    <p style="font-size:0.8em; color:gray; text-align:center">Environment ID: ${environmentId}</p>`),
   });
 };
 
