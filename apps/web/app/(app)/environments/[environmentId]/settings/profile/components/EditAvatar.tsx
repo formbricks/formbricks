@@ -52,6 +52,9 @@ export function EditAvatar({ session, environmentId }: { session: Session; envir
       toast.error("Avatar update failed. Please try again.");
     } finally {
       setIsLoading(false);
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
     }
   };
 

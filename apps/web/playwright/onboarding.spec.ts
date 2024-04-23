@@ -20,12 +20,12 @@ test.describe("Onboarding Flow Test", async () => {
     await expect(page.getByText(productName)).toBeVisible();
   });
 
-  test("In app survey", async ({ page }) => {
+  test("website survey", async ({ page }) => {
     const { name, email, password } = users.onboarding[1];
     await signUpAndLogin(page, name, email, password);
     await page.waitForURL("/onboarding");
     await expect(page).toHaveURL("/onboarding");
-    await page.getByRole("button", { name: "In-app Surveys Run a survey" }).click();
+    await page.getByRole("button", { name: "Website Surveys Run a survey" }).click();
 
     await page.getByRole("button", { name: "Skip" }).click();
     await page.getByRole("button", { name: "Skip" }).click();

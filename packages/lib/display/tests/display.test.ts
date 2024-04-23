@@ -17,8 +17,9 @@ import {
 
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { testInputValidation } from "vitestSetup";
 
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 
 import {
   createDisplay,
@@ -40,12 +41,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.clearAllMocks();
 });
-
-const testInputValidation = async (service: Function, ...args: any[]): Promise<void> => {
-  it("it should throw a ValidationError if the inputs are invalid", async () => {
-    await expect(service(...args)).rejects.toThrow(ValidationError);
-  });
-};
 
 beforeEach(() => {
   prisma.person.findFirst.mockResolvedValue(mockPerson);
@@ -83,7 +78,7 @@ describe("Tests for getDisplay", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getDisplaysByPersonId, "123", 1);
+    testInputValidation(getDisplaysByPersonId, "123#", 1);
 
     it("Throws a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";

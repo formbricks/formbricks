@@ -137,47 +137,66 @@ export const updateUser = async (personId: string, data: TUserUpdateInput): Prom
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
       throw new ResourceNotFoundError("User", personId);
-    } else {
-      throw error; // Re-throw any other errors
     }
+    throw error; // Re-throw any other errors
   }
 };
 
 const deleteUserById = async (id: string): Promise<TUser> => {
   validateInputs([id, ZId]);
 
-  const user = await prisma.user.delete({
-    where: {
+  try {
+    const user = await prisma.user.delete({
+      where: {
+        id,
+      },
+      select: responseSelection,
+    });
+
+    userCache.revalidate({
+      email: user.email,
       id,
-    },
-    select: responseSelection,
-  });
+    });
 
-  userCache.revalidate({
-    email: user.email,
-    id,
-  });
+    return user;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
 
-  return user;
+    throw error;
+  }
 };
 
 export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
   validateInputs([data, ZUserUpdateInput]);
 
-  const user = await prisma.user.create({
-    data: data,
-    select: responseSelection,
-  });
+  try {
+    const user = await prisma.user.create({
+      data: data,
+      select: responseSelection,
+    });
 
-  userCache.revalidate({
-    email: user.email,
-    id: user.id,
-  });
+    userCache.revalidate({
+      email: user.email,
+      id: user.id,
+    });
 
-  // send new user customer.io to customer.io
-  createCustomerIoCustomer(user);
+    // send new user customer.io to customer.io
+    createCustomerIoCustomer(user);
 
-  return user;
+    return user;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new DatabaseError("User with this email already exists");
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };
 
 // function to delete a user's user including teams
@@ -236,34 +255,51 @@ export const deleteUser = async (id: string): Promise<TUser> => {
 export const getUsersWithTeam = async (teamId: string): Promise<TUser[]> => {
   validateInputs([teamId, ZId]);
 
-  const users = await prisma.user.findMany({
-    where: {
-      memberships: {
-        some: {
-          teamId,
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        memberships: {
+          some: {
+            teamId,
+          },
         },
       },
-    },
-    select: responseSelection,
-  });
+      select: responseSelection,
+    });
 
-  return users;
+    return users;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };
 
 export const userIdRelatedToApiKey = async (apiKey: string) => {
-  const userId = await prisma.apiKey.findUnique({
-    where: { id: apiKey },
-    select: {
-      environment: {
-        select: {
-          people: {
-            select: {
-              userId: true,
+  validateInputs([apiKey, z.string()]);
+
+  try {
+    const userId = await prisma.apiKey.findUnique({
+      where: { id: apiKey },
+      select: {
+        environment: {
+          select: {
+            people: {
+              select: {
+                userId: true,
+              },
             },
           },
         },
       },
-    },
-  });
-  return userId;
+    });
+    return userId;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
 };

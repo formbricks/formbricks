@@ -10,6 +10,11 @@ servers:
     hosts:
       - 18.196.187.144
       - 18.196.172.27
+      - 35.157.124.188
+      - 18.199.207.103
+      - ec2-18-194-217-29.eu-central-1.compute.amazonaws.com
+      - ec2-3-64-56-61.eu-central-1.compute.amazonaws.com
+      - ec2-3-122-60-81.eu-central-1.compute.amazonaws.com
     labels:
       traefik.http.routers.formbricks-kamal.entrypoints: web
     options:
