@@ -138,4 +138,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-1;
