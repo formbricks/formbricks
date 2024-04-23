@@ -2,7 +2,7 @@ import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
-export const handlePrefill = (
+export const getPrefillValue = (
   survey: TSurvey,
   searchParams: URLSearchParams,
   languageId: string
@@ -27,39 +27,6 @@ export const handlePrefill = (
 
   return Object.keys(prefillAnswer).length > 0 ? prefillAnswer : undefined;
 };
-
-// export function getPrefillResponseData(
-//   currentQuestion: TSurveyQuestion,
-//   survey: TSurvey,
-//   firstQuestionPrefill: string,
-//   languageId: string
-// ): TResponseData | undefined {
-//   try {
-//     if (firstQuestionPrefill) {
-//       if (!currentQuestion) return;
-//       const firstQuestionId = survey?.questions[0].id;
-//       if (currentQuestion.id !== firstQuestionId) return;
-//       const question = survey?.questions.find((q: any) => q.id === firstQuestionId);
-//       if (!question) throw new Error("Question not found");
-
-//       const answer = transformAnswer(question, firstQuestionPrefill || "", languageId);
-//       const answerObj = { [firstQuestionId]: answer };
-
-//       if (
-//         question.type === TSurveyQuestionType.CTA &&
-//         question.buttonExternal &&
-//         question.buttonUrl &&
-//         answer === "clicked"
-//       ) {
-//         window?.open(question.buttonUrl, "blank");
-//       }
-
-//       return answerObj;
-//     }
-//   } catch (error) {
-//     console.error(error);
-//   }
-// }
 
 export const checkValidity = (question: TSurveyQuestion, answer: string, language: string): boolean => {
   if (question.required && (!answer || answer === "")) return false;

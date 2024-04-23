@@ -78,10 +78,7 @@ export const Survey = ({
     if (prefillResponseData) {
       onChange(prefillResponseData);
     }
-    if (
-      startAtQuestionId
-      // && !prefillResponseData
-    ) {
+    if (startAtQuestionId) {
       setQuestionId(startAtQuestionId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -114,21 +111,12 @@ export const Survey = ({
   let currIdxTemp = currentQuestionIndex;
   let currQuesTemp = currentQuestion;
 
-  const getNextQuestionId = (
-    data: TResponseData
-    // , isFormPrefilling: Boolean = false
-  ): string => {
+  const getNextQuestionId = (data: TResponseData): string => {
     const questions = survey.questions;
     const responseValue = data[questionId];
 
-    if (questionId === "start") {
-      // if (!isFormPrefilling) {
-      return questions[0]?.id || "end";
-      // } else {
-      //   currIdxTemp = 0;
-      //   currQuesTemp = questions[0];
-      // }
-    }
+    if (questionId === "start") return questions[0]?.id || "end";
+
     if (currIdxTemp === -1) throw new Error("Question not found");
     if (currQuesTemp?.logic && currQuesTemp?.logic.length > 0 && currentQuestion) {
       for (let logic of currQuesTemp.logic) {
@@ -182,13 +170,8 @@ export const Survey = ({
         }
       }
     }
-    // Code to handle case where prefilling and startAt, both are included
-    if (
-      startAtQuestionId &&
-      //  isFormPrefilling &&
-      currIdxTemp === 0
-    ) {
-      // if isFormPrefilling enabled, then instead of going to the next question in sequence, we go to startAtQuestionId
+    // Code to handle startAt
+    if (startAtQuestionId && currIdxTemp === 0) {
       return startAtQuestionId;
     }
     return questions[currIdxTemp + 1]?.id || "end";
@@ -199,20 +182,10 @@ export const Survey = ({
     setResponseData(updatedResponseData);
   };
 
-  const onSubmit = (
-    responseData: TResponseData,
-    ttc: TResponseTtc
-    // , isFormPrefilling: Boolean = false
-  ) => {
+  const onSubmit = (responseData: TResponseData, ttc: TResponseTtc) => {
     const questionId = Object.keys(responseData)[0];
-    // if (isFormPrefilling) {
-    //   onChange(responseData);
-    // }
     setLoadingElement(true);
-    const nextQuestionId = getNextQuestionId(
-      responseData
-      // , isFormPrefilling
-    );
+    const nextQuestionId = getNextQuestionId(responseData);
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, ttc, finished });
     if (finished) {
@@ -337,8 +310,7 @@ export const Survey = ({
             onFileUpload={onFileUpload}
             isFirstQuestion={
               history
-                ? // && prefillResponseData
-                  history[history.length - 1] === survey.questions[0].id
+                ? history[history.length - 1] === survey.questions[0].id
                 : currentQuestion.id === survey?.questions[0]?.id
             }
             isLastQuestion={currentQuestion.id === survey.questions[survey.questions.length - 1].id}

@@ -2,7 +2,7 @@
 
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
-import { handlePrefill as getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
+import { getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
