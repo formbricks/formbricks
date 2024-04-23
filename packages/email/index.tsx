@@ -189,11 +189,16 @@ export const sendResponseFinishedEmail = async (
   });
 };
 
-export const sendEmbedSurveyPreviewEmail = async (to: string, subject: string, html: string) => {
+export const sendEmbedSurveyPreviewEmail = async (
+  to: string,
+  subject: string,
+  html: string,
+  environmentId: string
+) => {
   await sendEmail({
     to: to,
     subject: subject,
-    html: render(EmailTemplate({ content: EmbedSurveyPreviewEmail({ html }) })),
+    html: render(EmailTemplate({ content: EmbedSurveyPreviewEmail({ html, environmentId }) })),
   });
 };
 

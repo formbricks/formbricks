@@ -15,7 +15,7 @@ export const EmbedSurveyPreviewEmail = ({ html, environmentId }: EmbedSurveyPrev
         <b>Didn&apos;t request this?</b> Help us fight spam and forward this mail to hola@formbricks.com
       </Text>
       <div dangerouslySetInnerHTML={{ __html: html }}></div>
-      <Text className="bg-slate-700 text-center text-sm">Environment ID: ${environmentId}</Text>
+      <Text className="text-center text-sm text-slate-700">Environment ID: {environmentId}</Text>
     </Container>
   );
 };
