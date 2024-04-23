@@ -147,6 +147,21 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
           state,
         });
 
+        const api = new FormbricksAPI({
+          apiHost: websiteConfig.get().apiHost,
+          environmentId: websiteConfig.get().environmentId,
+        });
+        const res = await api.client.display.create({
+          surveyId: survey.id,
+        });
+
+        if (!res.ok) {
+          throw new Error("Could not create display");
+        }
+
+        const { id } = res.data;
+
+        surveyState.updateDisplayId(id);
         responseQueue.updateSurveyState(surveyState);
       },
       onResponse: (responseUpdate: TResponseUpdate) => {

@@ -28,11 +28,6 @@ const config = () => {
     plugins: [
       dts({
         rollupTypes: true,
-        afterBuild: () => {
-          const typesPath = path.resolve(__dirname, "dist", "index.d.ts");
-          const newPath = path.resolve(__dirname, "dist", "website.d.ts");
-          fs.renameSync(typesPath, newPath);
-        },
       }),
     ],
   });

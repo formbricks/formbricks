@@ -15,7 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 
 interface HowToSendCardProps {
   localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey | ((TSurvey) => TSurvey)) => void;
+  setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
   environment: TEnvironment;
 }
 
@@ -58,6 +58,14 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
       setLocalSurvey((prevSurvey) => ({
         ...prevSurvey,
         segment: tempSegment,
+      }));
+    }
+
+    // if the type is anything other than "app" and the local survey has a temporary segment, we remove it
+    if (type !== "app" && localSurvey.segment?.id === "temp") {
+      setLocalSurvey((prevSurvey) => ({
+        ...prevSurvey,
+        segment: null,
       }));
     }
   };

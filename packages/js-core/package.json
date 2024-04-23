@@ -19,10 +19,6 @@
   "files": [
     "dist"
   ],
-  "source": "src/index.ts",
-  "main": "dist/index.umd.cjs",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
   "exports": {
     "./app": {
       "import": "./dist/app.js",
