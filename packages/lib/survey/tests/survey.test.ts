@@ -26,8 +26,10 @@ import {
   mockPrismaPerson,
   mockProduct,
   mockSurveyOutput,
+  mockSyncSurveyOutput,
   mockTeamOutput,
   mockTransformedSurveyOutput,
+  mockTransformedSyncSurveyOutput,
   mockUser,
   updateSurveyInput,
 } from "./__mock__/survey.mock";
@@ -276,7 +278,7 @@ describe("Tests for duplicateSurvey", () => {
   });
 });
 
-describe("Tests for getSyncedSurveys", () => {
+describe("Tests for getSyncSurveys", () => {
   describe("Happy Path", () => {
     beforeEach(() => {
       prisma.product.findFirst.mockResolvedValueOnce({
@@ -290,12 +292,12 @@ describe("Tests for getSyncedSurveys", () => {
     });
 
     it("Returns synced surveys", async () => {
-      prisma.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
+      prisma.survey.findMany.mockResolvedValueOnce([mockSyncSurveyOutput]);
       prisma.person.findUnique.mockResolvedValueOnce(mockPrismaPerson);
       const surveys = await getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", {
         version: "1.7.0",
       });
-      expect(surveys).toEqual([mockTransformedSurveyOutput]);
+      expect(surveys).toEqual([mockTransformedSyncSurveyOutput]);
     });
 
     it("Returns an empty array if no surveys are found", async () => {

@@ -211,8 +211,27 @@ export const mockTeamOutput: TTeam = {
   },
 };
 
-export const mockSurveyOutput: SurveyMock = {
+export const mockSyncSurveyOutput: SurveyMock = {
   type: "app",
+  status: "inProgress",
+  displayOption: "respondMultiple",
+  triggers: [{ actionClass: mockActionClass }],
+  productOverwrites: null,
+  singleUse: null,
+  styling: null,
+  displayPercentage: null,
+  createdBy: null,
+  pin: null,
+  segment: null,
+  segmentId: null,
+  resultShareKey: null,
+  inlineTriggers: null,
+  languages: mockSurveyLanguages,
+  ...baseSurveyProperties,
+};
+
+export const mockSurveyOutput: SurveyMock = {
+  type: "website",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
@@ -259,5 +278,10 @@ export const updateSurveyInput: TSurvey = {
 
 export const mockTransformedSurveyOutput = {
   ...mockSurveyOutput,
+  triggers: mockSurveyOutput.triggers.map((trigger) => trigger.actionClass.name),
+};
+
+export const mockTransformedSyncSurveyOutput = {
+  ...mockSyncSurveyOutput,
   triggers: mockSurveyOutput.triggers.map((trigger) => trigger.actionClass.name),
 };
