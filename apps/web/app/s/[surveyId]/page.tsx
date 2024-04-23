@@ -4,7 +4,6 @@ import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
-import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
 import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
