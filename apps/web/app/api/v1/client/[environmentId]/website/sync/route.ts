@@ -1,5 +1,5 @@
 import { getExampleSurveyTemplate } from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
-import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
+import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
@@ -17,7 +17,7 @@ import { createSurvey, getSurveys, transformToLegacySurvey } from "@formbricks/l
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
-import { TJsStateSync, ZJsPublicSyncInput } from "@formbricks/types/js";
+import { TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
@@ -35,7 +35,7 @@ export async function GET(
       searchParams.get("version") === "undefined" || searchParams.get("version") === null
         ? undefined
         : searchParams.get("version");
-    const syncInputValidation = ZJsPublicSyncInput.safeParse({
+    const syncInputValidation = ZJsWebsiteSyncInput.safeParse({
       environmentId: params.environmentId,
     });
 
@@ -87,16 +87,16 @@ export async function GET(
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);
+
     if (!product) {
       throw new Error("Product not found");
     }
 
-    // Common filter condition for selecting surveys that are in progress, are of type 'web' and have no active segment filtering.
-    let filteredSurveys = surveys.filter(
-      (survey) =>
-        survey.status === "inProgress" &&
-        survey.type === "web" &&
-        (!survey.segment || survey.segment.filters.length === 0)
+    // Common filter condition for selecting surveys that are in progress, are of type 'website' and have no active segment filtering.
+    const filteredSurveys = surveys.filter(
+      (survey) => survey.status === "inProgress" && survey.type === "website"
+      // TODO: Find out if this required anymore. Most likely not.
+      // && (!survey.segment || survey.segment.filters.length === 0)
     );
 
     // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
@@ -127,11 +127,10 @@ export async function GET(
     };
 
     // Create the 'state' object with surveys, noCodeActionClasses, product, and person.
-    const state: TJsStateSync = {
+    const state: TJsWebsiteStateSync = {
       surveys: isInAppSurveyLimitReached ? [] : transformedSurveys,
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product: updatedProduct,
-      person: null,
     };
 
     return responses.successResponse(
