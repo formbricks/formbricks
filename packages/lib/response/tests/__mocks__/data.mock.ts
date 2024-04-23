@@ -7,9 +7,8 @@ import {
   TResponseFilterCriteria,
   TResponseUpdateInput,
   TSurveyPersonAttributes,
-  TSurveySummary,
 } from "@formbricks/types/responses";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurveyQuestionType, TSurveySummary } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
 import { transformPrismaPerson } from "../../../person/service";
@@ -480,7 +479,7 @@ export const mockSurveySummaryOutput: TSurveySummary = {
       headline: "Question Text",
       questionId: "ars2tjk8hsi8oqk1uac00mo8",
       ttc: 0,
-      views: 0,
+      impressions: 0,
     },
   ],
   meta: {

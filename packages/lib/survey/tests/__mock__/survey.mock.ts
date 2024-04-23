@@ -73,6 +73,9 @@ export const mockProduct: TProduct = {
   darkOverlay: false,
   environments: [],
   languages: [],
+  styling: {
+    allowStyleOverwrite: false,
+  },
 };
 
 export const mockDisplay = {
@@ -102,6 +105,7 @@ export const mockUser: TUser = {
     weeklySummary: {},
     unsubscribedTeamIds: [],
   },
+  role: "engineer",
 };
 
 export const mockPrismaPerson: Prisma.PersonGetPayload<{

@@ -627,11 +627,12 @@ export const getSurveySummary = (
           createdAt: filterCriteria?.createdAt,
         });
 
-        const meta = getSurveySummaryMeta(responses, displayCount);
         const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
+        const meta = getSurveySummaryMeta(responses, displayCount);
         const questionWiseSummary = getQuestionWiseSummary(
           checkForRecallInHeadline(survey, "default"),
-          responses
+          responses,
+          dropOff
         );
 
         return { meta, dropOff, summary: questionWiseSummary };
