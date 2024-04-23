@@ -966,12 +966,12 @@ export const getQuestionWiseSummary = (
           type: question.type,
           question,
           impressions,
-          clicks: totalResponses,
+          clicks: data.clicked,
           skips: data.dismissed,
           responseCount: totalResponses,
           ctr: {
-            count: totalResponses,
-            percentage: impressions > 0 ? convertFloatTo2Decimal((totalResponses / impressions) * 100) : 0,
+            count: data.clicked,
+            percentage: impressions > 0 ? convertFloatTo2Decimal((data.clicked / impressions) * 100) : 0,
           },
         });
         break;
