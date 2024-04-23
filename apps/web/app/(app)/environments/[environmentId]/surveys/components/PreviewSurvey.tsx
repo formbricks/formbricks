@@ -28,7 +28,7 @@ interface PreviewSurveyProps {
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
 }
 
-let surveyNameTemp;
+let surveyNameTemp: string;
 
 const previewParentContainerVariant: Variants = {
   expanded: {
@@ -156,7 +156,7 @@ export const PreviewSurvey = ({
 
   const onFinished = () => {
     // close modal if there are no questions left
-    if (survey.type === "web" && !survey.thankYouCard.enabled) {
+    if ((survey.type === "website" || survey.type === "app") && !survey.thankYouCard.enabled) {
       setIsModalOpen(false);
       setTimeout(() => {
         setQuestionId(survey.questions[0]?.id);
@@ -165,7 +165,7 @@ export const PreviewSurvey = ({
     }
   };
 
-  // this useEffect is fo refreshing the survey preview only if user is switching between templates on survey templates page and hence we are checking for survey.id === "someUniqeId1" which is a common Id for all templates
+  // this useEffect is for refreshing the survey preview only if user is switching between templates on survey templates page and hence we are checking for survey.id === "someUniqeId1" which is a common Id for all templates
   useEffect(() => {
     if (survey.name !== surveyNameTemp && survey.id === "someUniqueId1") {
       resetQuestionProgress();
