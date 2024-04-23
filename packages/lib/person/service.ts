@@ -312,63 +312,28 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
     async () => {
       validateInputs([environmentId, ZId], [userId, ZString]);
 
-      // check if userId exists as a column
-      const personWithUserId = await prisma.person.findFirst({
-        where: {
-          environmentId,
-          userId,
-        },
-        select: selectPerson,
-      });
-
-      if (personWithUserId) {
-        return transformPrismaPerson(personWithUserId);
-      }
-
-      // Check if a person with the userId attribute exists
-      let personWithUserIdAttribute = await prisma.person.findFirst({
-        where: {
-          environmentId,
-          attributes: {
-            some: {
-              attributeClass: {
-                name: "userId",
-              },
-              value: userId,
-            },
+      try {
+        // check if userId exists as a column
+        const personWithUserId = await prisma.person.findFirst({
+          where: {
+            environmentId,
+            userId,
           },
-        },
-        select: selectPerson,
-      });
+          select: selectPerson,
+        });
 
-      const userIdAttributeClassId = personWithUserIdAttribute?.attributes.find(
-        (attr) => attr.attributeClass.name === "userId" && attr.value === userId
-      )?.attributeClass.id;
+        if (personWithUserId) {
+          return transformPrismaPerson(personWithUserId);
+        }
 
-      if (!personWithUserIdAttribute) {
         return null;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
       }
-
-      personWithUserIdAttribute = await prisma.person.update({
-        where: {
-          id: personWithUserIdAttribute.id,
-        },
-        data: {
-          userId,
-          attributes: {
-            deleteMany: { attributeClassId: userIdAttributeClassId },
-          },
-        },
-        select: selectPerson,
-      });
-
-      personCache.revalidate({
-        id: personWithUserIdAttribute.id,
-        environmentId,
-        userId,
-      });
-
-      return transformPrismaPerson(personWithUserIdAttribute);
     },
     [`getPersonByUserId-${environmentId}-${userId}`],
     {
@@ -380,7 +345,7 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
 };
 
 /**
- * @deprecated This function is deprecated and only used in legacy endpoints. Use updatePerson instead.
+ * @deprecated This function is deprecated and only used in legacy endpoints. Use `updatePerson` instead.
  */
 export const updatePersonAttribute = async (
   personId: string,
@@ -389,58 +354,74 @@ export const updatePersonAttribute = async (
 ): Promise<Partial<TPerson>> => {
   validateInputs([personId, ZId], [attributeClassId, ZId], [value, ZString]);
 
-  const attributes = await prisma.attribute.upsert({
-    where: {
-      personId_attributeClassId: {
-        attributeClassId,
-        personId,
-      },
-    },
-    update: {
-      value,
-    },
-    create: {
-      attributeClass: {
-        connect: {
-          id: attributeClassId,
+  try {
+    const attributes = await prisma.attribute.upsert({
+      where: {
+        personId_attributeClassId: {
+          attributeClassId,
+          personId,
         },
       },
-      person: {
-        connect: {
-          id: personId,
-        },
+      update: {
+        value,
       },
-      value,
-    },
-  });
+      create: {
+        attributeClass: {
+          connect: {
+            id: attributeClassId,
+          },
+        },
+        person: {
+          connect: {
+            id: personId,
+          },
+        },
+        value,
+      },
+    });
 
-  personCache.revalidate({
-    id: personId,
-  });
+    personCache.revalidate({
+      id: personId,
+    });
 
-  return attributes;
+    return attributes;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };
 
 export const getIsPersonMonthlyActive = async (personId: string): Promise<boolean> =>
   unstable_cache(
     async () => {
-      const latestAction = await prisma.action.findFirst({
-        where: {
-          personId,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        select: {
-          createdAt: true,
-        },
-      });
-      if (!latestAction || new Date(latestAction.createdAt).getMonth() !== new Date().getMonth()) {
-        return false;
+      try {
+        const latestAction = await prisma.action.findFirst({
+          where: {
+            personId,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          select: {
+            createdAt: true,
+          },
+        });
+        if (!latestAction || new Date(latestAction.createdAt).getMonth() !== new Date().getMonth()) {
+          return false;
+        }
+        return true;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
       }
-      return true;
     },
-    [`isPersonActive-${personId}`],
+    [`getIsPersonMonthlyActive-${personId}`],
     {
       tags: [activePersonCache.tag.byId(personId)],
       revalidate: 60 * 60 * 24, // 24 hours

@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import {

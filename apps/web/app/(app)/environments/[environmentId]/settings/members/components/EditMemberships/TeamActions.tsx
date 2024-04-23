@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TInvitee } from "@formbricks/types/invites";
 import { TTeam } from "@formbricks/types/teams";
 import { Button } from "@formbricks/ui/Button";
 import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
@@ -57,9 +57,13 @@ export default function TeamActions({
     }
   };
 
-  const handleAddMember = async (data: { name: string; email: string; role: TMembershipRole }) => {
+  const handleAddMembers = async (data: TInvitee[]) => {
     try {
-      await inviteUserAction(team.id, data.email, data.name, data.role);
+      await Promise.all(
+        data.map(async ({ name, email, role }) => {
+          await inviteUserAction(team.id, email, name, role);
+        })
+      );
       toast.success("Member invited successfully");
     } catch (err) {
       toast.error(`Error: ${err.message}`);
@@ -102,7 +106,7 @@ export default function TeamActions({
       <AddMemberModal
         open={isAddMemberModalOpen}
         setOpen={setAddMemberModalOpen}
-        onSubmit={handleAddMember}
+        onSubmit={handleAddMembers}
         canDoRoleManagement={canDoRoleManagement}
         isFormbricksCloud={isFormbricksCloud}
         environmentId={environmentId}

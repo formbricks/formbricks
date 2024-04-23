@@ -104,7 +104,7 @@ export async function POST(request: Request) {
 
     return Response.json(user);
   } catch (e) {
-    if (e.code === "P2002") {
+    if (e.message === "User with this email already exists") {
       return Response.json(
         {
           error: "user with this email address already exists",
