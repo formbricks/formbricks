@@ -19,6 +19,18 @@ async function main() {
         },
       });
 
+      const linkSurveysWithSegment = await tx.survey.findMany({
+        where: {
+          type: "link",
+          segmentId: {
+            not: null,
+          },
+        },
+        include: {
+          segment: true,
+        },
+      });
+
       const updateOperations = [];
       const segmentDeletionIds = [];
       const surveyTitlesForDeletion = [];
@@ -73,6 +85,41 @@ async function main() {
           where: {
             title: { in: surveyTitlesForDeletion },
             isPrivate: true,
+          },
+        });
+      }
+
+      const linkSurveySegmentDeletionIds = [];
+      const linkSurveySegmentUpdateOperations = [];
+
+      for (const linkSurvey of linkSurveysWithSegment) {
+        const { segment } = linkSurvey;
+        if (segment) {
+          linkSurveySegmentUpdateOperations.push(
+            tx.survey.update({
+              where: {
+                id: linkSurvey.id,
+              },
+              data: {
+                segment: {
+                  disconnect: true,
+                },
+              },
+            })
+          );
+
+          if (segment.isPrivate) {
+            linkSurveySegmentDeletionIds.push(segment.id);
+          }
+        }
+      }
+
+      await Promise.all(linkSurveySegmentUpdateOperations);
+
+      if (linkSurveySegmentDeletionIds.length > 0) {
+        await tx.segment.deleteMany({
+          where: {
+            id: { in: linkSurveySegmentDeletionIds },
           },
         });
       }
