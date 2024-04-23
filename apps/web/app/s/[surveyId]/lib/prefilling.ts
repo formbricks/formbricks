@@ -122,7 +122,8 @@ export const transformAnswer = (
       const answerArr: string[] = [];
 
       answerChoicesIdx.forEach((ansIdx) => {
-        if (question.choices[ansIdx]) answerArr.push(question.choices[ansIdx].id);
+        const choice = question.choices[Number(ansIdx) - 1];
+        if (choice) answerArr.push(choice.id);
       });
 
       if (question.allowMulti) return answerArr;
