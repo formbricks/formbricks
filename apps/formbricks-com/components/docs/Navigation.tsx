@@ -214,7 +214,10 @@ export const navigation: Array<NavGroup> = [
   },
   {
     title: "Additional Features",
-    links: [{ title: "Multi Language Surveys", href: "/docs/additional-features/multi-language-surveys" }],
+    links: [
+      { title: "Multi Language Surveys", href: "/docs/additional-features/multi-language-surveys" },
+      { title: "API", href: "/docs/additional-features/api" },
+    ],
   },
   {
     title: "Best Practices",
@@ -264,29 +267,6 @@ export const navigation: Array<NavGroup> = [
       { title: "How to create a service", href: "/docs/contributing/creating-a-service" },
       { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },
       { title: "FAQ", href: "/docs/faq" },
-    ],
-  },
-  {
-    title: "Client API",
-    links: [
-      { title: "Overview", href: "/docs/api/client/overview" },
-      { title: "Actions", href: "/docs/api/client/actions" },
-      { title: "Displays", href: "/docs/api/client/displays" },
-      { title: "People", href: "/docs/api/client/people" },
-      { title: "Responses", href: "/docs/api/client/responses" },
-    ],
-  },
-  {
-    title: "Management API",
-    links: [
-      { title: "API Key Setup", href: "/docs/api/management/api-key-setup" },
-      { title: "Action Classes", href: "/docs/api/management/action-classes" },
-      { title: "Attribute Classes", href: "/docs/api/management/attribute-classes" },
-      { title: "Me", href: "/docs/api/management/me" },
-      { title: "People", href: "/docs/api/management/people" },
-      { title: "Responses", href: "/docs/api/management/responses" },
-      { title: "Surveys", href: "/docs/api/management/surveys" },
-      { title: "Webhooks", href: "/docs/api/management/webhooks" },
     ],
   },
 ];
