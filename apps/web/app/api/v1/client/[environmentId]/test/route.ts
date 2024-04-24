@@ -7,6 +7,7 @@ export async function GET(
   { params }: { params: { environmentId: string } }
 ): Promise<Response> {
   const environmentId = params.environmentId;
+  console.log("calling endpoint");
   const environment = await getEnvironment(environmentId);
 
   return Response.json(environment);

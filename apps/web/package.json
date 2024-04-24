@@ -46,7 +46,7 @@
     "lru-cache": "^10.2.0",
     "lucide-react": "^0.373.0",
     "mime": "^4.0.2",
-    "next": "14.2.2",
+    "next": "14.2.3",
     "nodemailer": "^6.9.13",
     "otplib": "^12.0.1",
     "papaparse": "^5.4.1",
