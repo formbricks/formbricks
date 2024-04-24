@@ -1,10 +1,10 @@
 import { Column, Container, Row, Section, Text } from "@react-email/components";
 import React from "react";
 
-import { TInsights } from "@formbricks/types/weeklySummary";
+import { TWeeklySummaryInsights } from "@formbricks/types/weeklySummary";
 
 interface NotificationInsightProps {
-  insights: TInsights;
+  insights: TWeeklySummaryInsights;
 }
 
 export const NotificationInsight = ({ insights }: NotificationInsightProps) => {

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { TNotificationResponse } from "@formbricks/types/weeklySummary";
+import { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
 
 import { LiveSurveyNotification } from "./LiveSurveyNotification";
 import { NotificationFooter } from "./NotificationFooter";
@@ -8,7 +8,7 @@ import { NotificationHeader } from "./NotificationHeader";
 import { NotificationInsight } from "./NotificationInsight";
 
 interface WeeklySummaryNotificationEmailProps {
-  notificationData: TNotificationResponse;
+  notificationData: TWeeklySummaryNotificationResponse;
   startDate: string;
   endDate: string;
   startYear: number;

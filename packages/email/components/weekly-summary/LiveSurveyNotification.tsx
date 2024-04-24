@@ -2,7 +2,10 @@ import { Container, Hr, Link, Tailwind, Text } from "@react-email/components";
 import React from "react";
 
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { TNotificationDataSurvey, TSurveyResponseData } from "@formbricks/types/weeklySummary";
+import {
+  TWeeklySummaryNotificationDataSurvey,
+  TWeeklySummarySurveyResponseData,
+} from "@formbricks/types/weeklySummary";
 
 import { EmailButton } from "../general/EmailButton";
 import { renderEmailResponseValue } from "../survey/ResponseFinishedEmail";
@@ -28,11 +31,11 @@ const convertSurveyStatus = (status: string): string => {
 
 interface LiveSurveyNotificationProps {
   environmentId: string;
-  surveys: TNotificationDataSurvey[];
+  surveys: TWeeklySummaryNotificationDataSurvey[];
 }
 
 export const LiveSurveyNotification = ({ environmentId, surveys }: LiveSurveyNotificationProps) => {
-  const createSurveyFields = (surveyResponses: TSurveyResponseData[]) => {
+  const createSurveyFields = (surveyResponses: TWeeklySummarySurveyResponseData[]) => {
     if (surveyResponses.length === 0) {
       return (
         <Container className="mt-4">

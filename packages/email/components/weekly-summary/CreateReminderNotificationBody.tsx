@@ -2,13 +2,13 @@ import { Container, Text } from "@react-email/components";
 import React from "react";
 
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { TNotificationResponse } from "@formbricks/types/weeklySummary";
+import { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
 
 import { EmailButton } from "../general/EmailButton";
 import { NotificationFooter } from "./NotificationFooter";
 
 interface CreateReminderNotificationBodyProps {
-  notificationData: TNotificationResponse;
+  notificationData: TWeeklySummaryNotificationResponse;
 }
 
 export const CreateReminderNotificationBody = ({ notificationData }: CreateReminderNotificationBodyProps) => {

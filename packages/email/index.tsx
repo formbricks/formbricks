@@ -15,7 +15,7 @@ import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formb
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TNotificationResponse } from "@formbricks/types/weeklySummary";
+import { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
 
 import { ForgotPasswordEmail } from "./components/auth/ForgotPasswordEmail";
 import { PasswordResetNotifyEmail } from "./components/auth/PasswordResetNotifyEmail";
@@ -223,7 +223,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) =
 
 export const sendWeeklySummaryNotificationEmail = async (
   email: string,
-  notificationData: TNotificationResponse
+  notificationData: TWeeklySummaryNotificationResponse
 ) => {
   const startDate = `${notificationData.lastWeekDate.getDate()} ${
     monthNames[notificationData.lastWeekDate.getMonth()]
@@ -252,7 +252,7 @@ export const sendWeeklySummaryNotificationEmail = async (
 
 export const sendNoLiveSurveyNotificationEmail = async (
   email: string,
-  notificationData: TNotificationResponse
+  notificationData: TWeeklySummaryNotificationResponse
 ) => {
   const startDate = `${notificationData.lastWeekDate.getDate()} ${
     monthNames[notificationData.lastWeekDate.getMonth()]

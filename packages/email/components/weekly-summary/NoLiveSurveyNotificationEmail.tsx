@@ -1,12 +1,12 @@
 import React from "react";
 
-import { TNotificationResponse } from "@formbricks/types/weeklySummary";
+import { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
 
 import { CreateReminderNotificationBody } from "./CreateReminderNotificationBody";
 import { NotificationHeader } from "./NotificationHeader";
 
 interface NoLiveSurveyNotificationEmailProps {
-  notificationData: TNotificationResponse;
+  notificationData: TWeeklySummaryNotificationResponse;
   startDate: string;
   endDate: string;
   startYear: number;
