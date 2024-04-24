@@ -38,8 +38,8 @@ export const ThankYouCard = ({
   isInIframe,
 }: ThankYouCardProps) => {
   return (
-    <div className="text-center">
-      <ScrollableContainer>
+    <ScrollableContainer>
+      <div className="text-center">
         {imageUrl || videoUrl ? (
           <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} />
         ) : (
@@ -89,7 +89,7 @@ export const ThankYouCard = ({
             </div>
           )}
         </div>
-      </ScrollableContainer>
-    </div>
+      </div>
+    </ScrollableContainer>
   );
 };
