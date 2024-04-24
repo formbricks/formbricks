@@ -95,10 +95,6 @@ const SummaryPage = ({
           updatedResponseCount = await getResponseCountAction(surveyId, filters);
         }
         setResponseCount(updatedResponseCount);
-        if (updatedResponseCount === 0) {
-          setSurveySummary(initialSurveySummary);
-          return;
-        }
 
         let updatedSurveySummary;
         if (isSharingPage) {
