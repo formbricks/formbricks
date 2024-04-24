@@ -112,7 +112,7 @@ export const DateQuestion = ({
             <span>{errorMessage}</span>
           </div>
           <div
-            className={cn("my-4 ", errorMessage && "rounded-lg border-2 border-red-500")}
+            className={cn("mt-4", errorMessage && "rounded-lg border-2 border-red-500")}
             id="date-picker-root">
             {loading && (
               <div className="bg-survey-bg border-border text-placeholder relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">

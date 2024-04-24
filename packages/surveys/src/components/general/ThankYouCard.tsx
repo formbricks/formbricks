@@ -77,7 +77,7 @@ export const ThankYouCard = ({
       </ScrollableContainer>
 
       {buttonLabel && isResponseSendingFinished && (
-        <div className=" mt-4 flex w-full flex-col items-center justify-center space-y-4">
+        <div className=" flex w-full flex-col items-center justify-center space-y-4">
           <Button
             buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
             isLastQuestion={false}
