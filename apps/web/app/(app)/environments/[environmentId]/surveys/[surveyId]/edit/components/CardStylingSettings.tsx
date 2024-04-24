@@ -7,12 +7,13 @@ import React, { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
+import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
 import { Slider } from "@formbricks/ui/Slider";
-import { ColorSelectorWithLabel } from "@formbricks/ui/Styling";
+import { CardArrangement, ColorSelectorWithLabel } from "@formbricks/ui/Styling";
 import { Switch } from "@formbricks/ui/Switch";
 
 type CardStylingSettingsProps = {
@@ -42,6 +43,10 @@ const CardStylingSettings = ({
   const isLogoHidden = styling?.isLogoHidden ?? false;
 
   const isLogoVisible = !!localProduct.logo?.url;
+
+  const linkSurveyCardArrangement = styling?.cardArrangement?.linkSurveys ?? "casual";
+
+  const inAppSurveyCardArrangement = styling?.cardArrangement?.inAppSurveys ?? "casual";
 
   const setCardBgColor = (color: string) => {
     setStyling((prev) => ({
@@ -111,6 +116,29 @@ const CardStylingSettings = ({
       ...prev,
       roundness: value,
     }));
+  };
+
+  const setCardArrangement = (arrangement: TCardArrangementOptions, surveyType: TSurveyType) => {
+    if (surveyType === "link") {
+      const newCardArrangement = {
+        linkSurveys: arrangement,
+        inAppSurveys: inAppSurveyCardArrangement,
+      };
+      setStyling((prev) => ({
+        ...prev,
+        cardArrangement: newCardArrangement,
+      }));
+    }
+    if (surveyType === "app" || surveyType === "website") {
+      const newCardArrangement = {
+        inAppSurveys: arrangement,
+        linkSurveys: linkSurveyCardArrangement,
+      };
+      setStyling((prev) => ({
+        ...prev,
+        cardArrangement: newCardArrangement,
+      }));
+    }
   };
 
   const toggleProgressBarVisibility = (hideProgressBar: boolean) => {
@@ -196,6 +224,18 @@ const CardStylingSettings = ({
             color={cardShadowColor}
             setColor={setCardShadowColor}
             description="Change the shadow color of the card."
+          />
+
+          <CardArrangement
+            surveyType={"link"}
+            activeCardArrangement={linkSurveyCardArrangement}
+            setActiveCardArrangement={setCardArrangement}
+          />
+
+          <CardArrangement
+            surveyType={"web"}
+            activeCardArrangement={inAppSurveyCardArrangement}
+            setActiveCardArrangement={setCardArrangement}
           />
 
           <>
