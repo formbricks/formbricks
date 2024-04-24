@@ -150,7 +150,7 @@ export const MultipleChoiceMultiQuestion = ({
           <div className="mt-4">
             <fieldset>
               <legend className="sr-only">Options</legend>
-              <div className="bg-survey-bg relative space-y-2 py-0.5 pr-2" ref={choicesContainerRef}>
+              <div className="bg-survey-bg relative space-y-2" ref={choicesContainerRef}>
                 {questionChoices.map((choice, idx) => (
                   <label
                     key={choice.id}

@@ -44,14 +44,14 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
   }, [children]);
 
   return (
-    <div className="relative">
+    <div className="rounded-t-custom relative overflow-hidden">
       <div
         ref={containerRef}
         style={{
           scrollbarGutter: "stable",
           maxHeight: isSurveyPreview ? "40vh" : "60vh",
         }}
-        className={`overflow-${isOverflowHidden ? "hidden" : "auto"} p-5`}
+        className={`overflow-${isOverflowHidden ? "hidden" : "auto"} rounded-t-custom pl-6 pr-4 pt-6`}
         onMouseEnter={() => toggleOverflow(false)}
         onTouchStart={() => toggleOverflow(false)}
         onTouchEnd={() => toggleOverflow(true)}
@@ -59,7 +59,7 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
         {children}
       </div>
       {!isAtBottom && (
-        <div className="from-survey-bg absolute -bottom-2 left-0 right-2 h-16 bg-gradient-to-t to-transparent"></div>
+        <div className="from-survey-bg absolute -bottom-2 left-0 right-2 h-8 bg-gradient-to-t to-transparent"></div>
       )}
     </div>
   );

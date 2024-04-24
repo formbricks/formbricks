@@ -113,10 +113,7 @@ export const MultipleChoiceSingleQuestion = ({
             <fieldset>
               <legend className="sr-only">Options</legend>
 
-              <div
-                className="bg-survey-bg relative space-y-2 py-0.5 pr-2"
-                role="radiogroup"
-                ref={choicesContainerRef}>
+              <div className="bg-survey-bg relative space-y-2" role="radiogroup" ref={choicesContainerRef}>
                 {questionChoices.map((choice, idx) => (
                   <label
                     tabIndex={idx + 1}
