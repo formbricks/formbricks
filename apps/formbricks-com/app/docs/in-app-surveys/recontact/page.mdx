@@ -1,0 +1,102 @@
+import { MdxImage } from "@/components/shared/MdxImage";
+
+import AppSurvey from "./app-survey.webp";
+import GlobalWaitTime from "./global-wait-time.webp";
+import SurveyRecontact from "./survey-recontact.webp";
+import IgnoreWaitTime from "./ignore-wait-time.webp";
+
+export const metadata = {
+  title: "Recontact Options in Formbricks: When to show a survey again to a user",
+  description:
+    "Explore how to configure Recontact options in Formbricks to control the frequency of survey exposure to users, ensuring effective feedback collection without compromising user experience.",
+};
+
+#### In-App Surveys
+
+# Recontact Options
+
+Recontact options in Formbricks enable you to manage how often and under what conditions a survey is shown to a user. This feature is crucial for balancing effective feedback collection with a positive user experience by preventing survey fatigue.
+
+## When do Recontact Options come into play?
+
+Recontact options are applicable under the following conditions:
+
+- A survey is **already triggered** based on user actions or other specified conditions.
+- The user **qualifies for the survey again** if any targeting criteria are set.
+
+If both conditions are met, the specified Recontact Options determine if and when the survey will be re-displayed to the user.
+
+## Survey Recontact Options
+
+<Note>By default, a survey is shown to a user only once.</Note>
+
+You can adjust this behavior by modifying the Recontact Options in the survey settings:
+
+1. Open the Survey Editor for the survey you want to see & modify the Recontact Options for.
+2. Select the Settings Tab.
+3. Ensure your Survey type is set to **App Survey**.
+
+<MdxImage
+  src={AppSurvey}
+  alt="Choose Survey Type as App Survey"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+4. Scroll down to the Recontact Options section.
+
+Available Recontact Options include:
+
+- **Show only once**: Displays the survey a single time, regardless of whether it was completed.
+- **Until they Submit a Response**: Continuously shows the survey until the user submits a response. Ideal for critical feedback.
+- **Keep Showing while Conditions Match**: Repeats the survey while specific conditions are met. Useful for continuous feedback collection, such as in [Docs Feedback Survey](/docs/best-practices/docs-feedback).
+
+<MdxImage
+  src={SurveyRecontact}
+  alt="Choose Recontanct Options for the Survey"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+## Product-wide Global Waiting Time
+
+<Note>
+  The default interval between surveys for the same user across the product is set to 7 days to prevent
+  over-surveying.
+</Note>
+
+To adjust the Global Waiting Time:
+
+1. Visit Formbricks Settings
+2. Go to Product Settings
+3. Find the **Recontact Waiting Time** section
+4. Modify the interval (in Days) as needed.
+
+<MdxImage
+  src={GlobalWaitTime}
+  alt="Formbricks Product-Wide Wait Time"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+## Overriding Global Waiting Time for a Specific Survey
+
+For specific surveys, you may need to override the default waiting time. Below is how you can do that:
+
+1. In the Survey Editor, access the Settings Tab.
+2. Find the Ignore Waiting Time between Surveys toggle under Recontact Options.
+3. Enable this toggle to bypass the global setting.
+4. Set a custom recontact period:
+   - **Always Show Survey**: Displays the survey whenever triggered, ignoring the waiting time.
+   - **Wait `X` days before showing this survey again**: Sets a specific interval before the survey can be shown again.
+
+<MdxImage
+  src={IgnoreWaitTime}
+  alt="Ignore Global Waiting Time for a Specific Survey"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+---
+
+Still struggling or something not working as expected? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!
