@@ -1,6 +1,5 @@
 "use client";
 
-import { getImagesFromUnsplashAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { debounce } from "lodash";
 import { SearchIcon } from "lucide-react";
 import UnsplashImage from "next/image";
@@ -12,6 +11,8 @@ import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 
+import { getImagesFromUnsplashAction, triggerDownloadUnsplashImageAction } from "../actions";
+
 interface ImageFromUnsplashSurveyBgProps {
   handleBgChange: (url: string, bgType: TSurveyBackgroundBgType) => void;
 }
@@ -21,6 +22,7 @@ interface UnsplashImage {
   alt_description: string;
   urls: {
     regularWithAttribution: string;
+    download?: string;
   };
   authorName?: string;
 }
@@ -130,7 +132,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
           );
           imagesFromUnsplash[i].authorName = authorName;
         }
-        setImages((prevImages) => [...prevImages, ...imagesFromUnsplash]); // Append new images
+        setImages((prevImages) => [...prevImages, ...imagesFromUnsplash]);
       } catch (error) {
         toast.error(error.message);
       } finally {
@@ -159,9 +161,12 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
     setImages([]);
   };
 
-  const handleImageSelected = async (imageUrl: string) => {
+  const handleImageSelected = async (imageUrl: string, downloadImageUrl?: string) => {
     try {
       handleBgChange(imageUrl, "image");
+      if (downloadImageUrl) {
+        await triggerDownloadUnsplashImageAction(downloadImageUrl);
+      }
     } catch (error) {
       toast.error(error.message);
     }
@@ -193,7 +198,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
                 height={200}
                 src={image.urls.regularWithAttribution}
                 alt={image.alt_description}
-                onClick={() => handleImageSelected(image.urls.regularWithAttribution)}
+                onClick={() => handleImageSelected(image.urls.regularWithAttribution, image.urls.download)}
                 className="h-full cursor-pointer rounded-lg object-cover"
               />
               {image.authorName && (

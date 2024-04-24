@@ -232,10 +232,29 @@ export async function getImagesFromUnsplashAction(searchQuery: string, page: num
         alt_description: result.alt_description,
         urls: {
           regularWithAttribution: `${result.urls.regular}&dpr=2&authorLink=${authorLink}&authorName=${authorName}&utm_source=formbricks&utm_medium=referral`,
+          download: result.links.download_location,
         },
       };
     });
   } catch (error) {
     throw new Error("Error getting images from Unsplash");
+  }
+}
+
+export async function triggerDownloadUnsplashImageAction(downloadUrl: string) {
+  try {
+    const response = await fetch(`${downloadUrl}/?client_id=${UNSPLASH_ACCESS_KEY}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to download image from Unsplash");
+    }
+
+    return;
+  } catch (error) {
+    throw new Error("Error downloading image from Unsplash");
   }
 }

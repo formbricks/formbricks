@@ -65,6 +65,8 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
             authorName: new URL(background?.bg!).searchParams.get("authorName") || "",
             authorURL: new URL(background?.bg!).searchParams.get("authorLink") || "",
           });
+        } else {
+          setAuthorDetailsForUnsplash({ authorName: "", authorURL: "" });
         }
       }
       // For images, we create a new Image object to listen for the 'load' event
