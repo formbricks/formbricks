@@ -1,10 +1,10 @@
 import { FormbricksAPI } from "@formbricks/api";
 
-import { Config } from "./config";
+import { AppConfig } from "./config";
 
 export const getApi = (): FormbricksAPI => {
-  const config = Config.getInstance();
-  const { environmentId, apiHost } = config.get();
+  const inAppConfig = AppConfig.getInstance();
+  const { environmentId, apiHost } = inAppConfig.get();
 
   if (!environmentId || !apiHost) {
     throw new Error("formbricks.init() must be called before getApi()");
