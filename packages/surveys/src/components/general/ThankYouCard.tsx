@@ -59,7 +59,7 @@ export const ThankYouCard = ({
 
   return (
     <div className="text-center">
-      {!isResponseSendingFinished ? (
+      {isResponseSendingFinished ? (
         <>
           {media || checkmark}
           <Headline
