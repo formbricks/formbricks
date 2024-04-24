@@ -1,5 +1,6 @@
 import Button from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
+import { LoadingSpinner } from "@/components/general/LoadingSpinner";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import RedirectCountDown from "@/components/general/RedirectCountdown";
 import Subheader from "@/components/general/Subheader";
@@ -40,6 +41,8 @@ export const ThankYouCard = ({
     <div className="text-center">
       {imageUrl || videoUrl ? (
         <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} />
+      ) : !isResponseSendingFinished ? (
+        <LoadingSpinner />
       ) : (
         <div>
           <div className="text-brand flex items-center justify-center">
@@ -61,32 +64,36 @@ export const ThankYouCard = ({
         </div>
       )}
 
-      <div>
-        <Headline
-          alignTextCenter={true}
-          headline={replaceRecallInfo(getLocalizedValue(headline, languageCode))}
-          questionId="thankYouCard"
-        />
-        <Subheader
-          subheader={replaceRecallInfo(getLocalizedValue(subheader, languageCode))}
-          questionId="thankYouCard"
-        />
-        <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
-        {buttonLabel && isResponseSendingFinished && (
-          <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
-            <Button
-              buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
-              isLastQuestion={false}
-              focus={!isInIframe}
-              onClick={() => {
-                if (!buttonLink) return;
-                window.location.replace(buttonLink);
-              }}
-            />
-            <p class="text-subheading text-xs">Press Enter ↵</p>
-          </div>
-        )}
-      </div>
+      {isResponseSendingFinished ? (
+        <div>
+          <Headline
+            alignTextCenter={true}
+            headline={replaceRecallInfo(getLocalizedValue(headline, languageCode))}
+            questionId="thankYouCard"
+          />
+          <Subheader
+            subheader={replaceRecallInfo(getLocalizedValue(subheader, languageCode))}
+            questionId="thankYouCard"
+          />
+          <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
+          {buttonLabel && isResponseSendingFinished && (
+            <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
+              <Button
+                buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
+                isLastQuestion={false}
+                focus={!isInIframe}
+                onClick={() => {
+                  if (!buttonLink) return;
+                  window.location.replace(buttonLink);
+                }}
+              />
+              <p class="text-subheading text-xs">Press Enter ↵</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <h1>sending responses, please wait for a while</h1>
+      )}
     </div>
   );
 };
