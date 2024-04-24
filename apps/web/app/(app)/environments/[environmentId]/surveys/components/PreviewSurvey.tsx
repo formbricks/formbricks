@@ -260,7 +260,7 @@ export const PreviewSurvey = ({
                   />
                 </Modal>
               ) : (
-                <div className="w-full px-3">
+                <div className="h-full w-full">
                   <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && product.logo?.url && (
                       <ClientLogo environmentId={environment.id} product={product} previewSurvey />
