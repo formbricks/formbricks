@@ -26,6 +26,8 @@ export const getActionsByPersonId = async (personId: string, page?: number): Pro
     async () => {
       validateInputs([personId, ZId], [page, ZOptionalNumber]);
 
+      console.log("RUNNING!!!!");
+
       try {
         const actionsPrisma = await prisma.action.findMany({
           where: {
