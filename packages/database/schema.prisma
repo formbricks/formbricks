@@ -8,7 +8,7 @@ datasource db {
 
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-3.0.x"] // debian-openssl-3.0.x is the target for AWS Lambda / Vercel
+  binaryTargets = ["native", "rhel-openssl-1.0.x"] // rhel-openssl-1.0.x is the target for AWS Lambda / Vercel
 }
 
 // generator dbml {
