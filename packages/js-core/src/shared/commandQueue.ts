@@ -1,11 +1,14 @@
 import { wrapThrowsAsync } from "@formbricks/types/errorHandlers";
+import { TJsPackageType } from "@formbricks/types/js";
 
+import { checkInitialized as checkInitializedInApp } from "../app/lib/initialize";
+import { checkInitialized as checkInitializedWebsite } from "../website/lib/initialize";
 import { ErrorHandler, Result } from "./errors";
-import { checkInitialized } from "./initialize";
 
 export class CommandQueue {
   private queue: {
     command: (args: any) => Promise<Result<void, any>> | Result<void, any> | Promise<void>;
+    packageType: TJsPackageType;
     checkInitialized: boolean;
     commandArgs: any[any];
   }[] = [];
@@ -15,10 +18,11 @@ export class CommandQueue {
 
   public add<A>(
     checkInitialized: boolean = true,
+    packageType: TJsPackageType,
     command: (...args: A[]) => Promise<Result<void, any>> | Result<void, any> | Promise<void>,
     ...args: A[]
   ) {
-    this.queue.push({ command, checkInitialized, commandArgs: args });
+    this.queue.push({ command, checkInitialized, commandArgs: args, packageType });
 
     if (!this.running) {
       this.commandPromise = new Promise((resolve) => {
@@ -44,7 +48,9 @@ export class CommandQueue {
 
       // make sure formbricks is initialized
       if (currentItem.checkInitialized) {
-        const initResult = checkInitialized();
+        // call different function based on package type
+        const initResult =
+          currentItem.packageType === "website" ? checkInitializedWebsite() : checkInitializedInApp();
 
         if (initResult && initResult.ok !== true) {
           errorHandler.handle(initResult.error);

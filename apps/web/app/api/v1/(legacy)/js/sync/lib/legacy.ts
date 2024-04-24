@@ -1,6 +1,6 @@
-import { TJsLegacyState, TJsState } from "@formbricks/types/js";
+import { TJsAppState, TJsLegacyState } from "@formbricks/types/js";
 
-export const transformLegacySurveys = (state: TJsState): TJsLegacyState => {
+export const transformLegacySurveys = (state: TJsAppState): TJsLegacyState => {
   const updatedState: any = { ...state };
   updatedState.surveys = updatedState.surveys.map((survey) => {
     const updatedSurvey = { ...survey };

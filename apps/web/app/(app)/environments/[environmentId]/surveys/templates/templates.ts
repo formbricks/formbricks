@@ -2602,7 +2602,7 @@ export const minimalSurvey: TSurvey = {
   createdAt: new Date(),
   updatedAt: new Date(),
   name: "Minimal Survey",
-  type: "web",
+  type: "app",
   environmentId: "someEnvId1",
   createdBy: null,
   status: "draft",
@@ -2653,7 +2653,7 @@ export const getExampleSurveyTemplate = (webAppUrl: string) => ({
       }) as TSurveyCTAQuestion
   ),
   name: "Example survey",
-  type: "web" as TSurveyType,
+  type: "website" as TSurveyType,
   autoComplete: 2,
   triggers: ["New Session"],
   status: "inProgress" as TSurveyStatus,
