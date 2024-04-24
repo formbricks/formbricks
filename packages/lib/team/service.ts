@@ -376,7 +376,7 @@ export const getMonthlyTeamResponseCount = async (teamId: string): Promise<numbe
           where: {
             AND: [
               { survey: { environmentId: { in: environmentIds } } },
-              { survey: { type: "web" } },
+              { survey: { type: { in: ["app", "website"] } } },
               { createdAt: { gte: firstDayOfMonth } },
             ],
           },

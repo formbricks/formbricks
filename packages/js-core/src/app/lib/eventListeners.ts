@@ -3,7 +3,7 @@ import {
   addScrollDepthListener,
   removeExitIntentListener,
   removeScrollDepthListener,
-} from "./automaticActions";
+} from "../../shared/automaticActions";
 import {
   addClickEventListener,
   addPageUrlEventListeners,
@@ -18,8 +18,8 @@ export const addEventListeners = (): void => {
   addExpiryCheckListener();
   addPageUrlEventListeners();
   addClickEventListener();
-  addExitIntentListener();
-  addScrollDepthListener();
+  addExitIntentListener("app");
+  addScrollDepthListener("app");
 };
 
 export const addCleanupEventListeners = (): void => {
@@ -28,8 +28,8 @@ export const addCleanupEventListeners = (): void => {
     removeExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
-    removeExitIntentListener();
-    removeScrollDepthListener();
+    removeExitIntentListener("app");
+    removeScrollDepthListener("app");
   });
   areRemoveEventListenersAdded = true;
 };
@@ -40,8 +40,8 @@ export const removeCleanupEventListeners = (): void => {
     removeExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
-    removeExitIntentListener();
-    removeScrollDepthListener();
+    removeExitIntentListener("app");
+    removeScrollDepthListener("app");
   });
   areRemoveEventListenersAdded = false;
 };
@@ -50,7 +50,7 @@ export const removeAllEventListeners = (): void => {
   removeExpiryCheckListener();
   removePageUrlEventListeners();
   removeClickEventListener();
-  removeExitIntentListener();
-  removeScrollDepthListener();
+  removeExitIntentListener("app");
+  removeScrollDepthListener("app");
   removeCleanupEventListeners();
 };

@@ -1,8 +1,6 @@
-import type { TJsConfig, TJsConfigInput } from "@formbricks/types/js";
+import type { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
 import { TPersonAttributes } from "@formbricks/types/people";
 
-import { trackAction } from "./actions";
-import { Config, LOCAL_STORAGE_KEY } from "./config";
 import {
   ErrorHandler,
   MissingFieldError,
@@ -13,16 +11,18 @@ import {
   err,
   okVoid,
   wrapThrows,
-} from "./errors";
+} from "../../shared/errors";
+import { Logger } from "../../shared/logger";
+import { getIsDebug } from "../../shared/utils";
+import { trackAction } from "./actions";
+import { AppConfig, IN_APP_LOCAL_STORAGE_KEY } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
-import { Logger } from "./logger";
 import { checkPageUrl } from "./noCodeActions";
 import { updatePersonAttributes } from "./person";
 import { sync } from "./sync";
-import { getIsDebug } from "./utils";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
-const config = Config.getInstance();
+const inAppConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 
 let isInitialized = false;
@@ -32,7 +32,7 @@ export const setIsInitialized = (value: boolean) => {
 };
 
 export const initialize = async (
-  c: TJsConfigInput
+  configInput: TJsAppConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   if (getIsDebug()) {
     logger.configure({ logLevel: "debug" });
@@ -43,9 +43,9 @@ export const initialize = async (
     return okVoid();
   }
 
-  let existingConfig: TJsConfig | undefined;
+  let existingConfig: TJSAppConfig | undefined;
   try {
-    existingConfig = config.get();
+    existingConfig = inAppConfig.get();
     logger.debug("Found existing configuration.");
   } catch (e) {
     logger.debug("No existing configuration found.");
@@ -66,7 +66,7 @@ export const initialize = async (
 
   logger.debug("Start initialize");
 
-  if (!c.environmentId) {
+  if (!configInput.environmentId) {
     logger.debug("No environmentId provided");
     return err({
       code: "missing_field",
@@ -74,7 +74,7 @@ export const initialize = async (
     });
   }
 
-  if (!c.apiHost) {
+  if (!configInput.apiHost) {
     logger.debug("No apiHost provided");
 
     return err({
@@ -83,18 +83,32 @@ export const initialize = async (
     });
   }
 
+  if (!configInput.userId) {
+    logger.debug("No userId provided");
+
+    return err({
+      code: "missing_field",
+      field: "userId",
+    });
+  }
+
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
 
   let updatedAttributes: TPersonAttributes | null = null;
-  if (c.attributes) {
-    if (!c.userId) {
+  if (configInput.attributes) {
+    if (!configInput.userId) {
       // Allow setting attributes for unidentified users
-      updatedAttributes = { ...c.attributes };
+      updatedAttributes = { ...configInput.attributes };
     }
     // If userId is available, update attributes in backend
     else {
-      const res = await updatePersonAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
+      const res = await updatePersonAttributes(
+        configInput.apiHost,
+        configInput.environmentId,
+        configInput.userId,
+        configInput.attributes
+      );
       if (res.ok !== true) {
         return err(res.error);
       }
@@ -105,9 +119,9 @@ export const initialize = async (
   if (
     existingConfig &&
     existingConfig.state &&
-    existingConfig.environmentId === c.environmentId &&
-    existingConfig.apiHost === c.apiHost &&
-    existingConfig.userId === c.userId &&
+    existingConfig.environmentId === configInput.environmentId &&
+    existingConfig.apiHost === configInput.apiHost &&
+    existingConfig.userId === configInput.userId &&
     existingConfig.expiresAt // only accept config when they follow new config version with expiresAt
   ) {
     logger.debug("Configuration fits init parameters.");
@@ -116,29 +130,29 @@ export const initialize = async (
 
       try {
         await sync({
-          apiHost: c.apiHost,
-          environmentId: c.environmentId,
-          userId: c.userId,
+          apiHost: configInput.apiHost,
+          environmentId: configInput.environmentId,
+          userId: configInput.userId,
         });
       } catch (e) {
         putFormbricksInErrorState();
       }
     } else {
       logger.debug("Configuration not expired. Extending expiration.");
-      config.update(existingConfig);
+      inAppConfig.update(existingConfig);
     }
   } else {
     logger.debug(
       "No valid configuration found or it has been expired. Resetting config and creating new one."
     );
-    config.resetConfig();
+    inAppConfig.resetConfig();
     logger.debug("Syncing.");
 
     try {
       await sync({
-        apiHost: c.apiHost,
-        environmentId: c.environmentId,
-        userId: c.userId,
+        apiHost: configInput.apiHost,
+        environmentId: configInput.environmentId,
+        userId: configInput.userId,
       });
     } catch (e) {
       handleErrorOnFirstInit();
@@ -148,15 +162,15 @@ export const initialize = async (
   }
   // update attributes in config
   if (updatedAttributes && Object.keys(updatedAttributes).length > 0) {
-    config.update({
-      environmentId: config.get().environmentId,
-      apiHost: config.get().apiHost,
-      userId: config.get().userId,
+    inAppConfig.update({
+      environmentId: inAppConfig.get().environmentId,
+      apiHost: inAppConfig.get().apiHost,
+      userId: inAppConfig.get().userId,
       state: {
-        ...config.get().state,
-        attributes: { ...config.get().state.attributes, ...c.attributes },
+        ...inAppConfig.get().state,
+        attributes: { ...inAppConfig.get().state.attributes, ...configInput.attributes },
       },
-      expiresAt: config.get().expiresAt,
+      expiresAt: inAppConfig.get().expiresAt,
     });
   }
 
@@ -175,12 +189,12 @@ export const initialize = async (
 
 const handleErrorOnFirstInit = () => {
   // put formbricks in error state (by creating a new config) and throw error
-  const initialErrorConfig: Partial<TJsConfig> = {
+  const initialErrorConfig: Partial<TJSAppConfig> = {
     status: "error",
     expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
   };
   // can't use config.update here because the config is not yet initialized
-  wrapThrows(() => localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
+  wrapThrows(() => localStorage.setItem(IN_APP_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
   throw new Error("Could not initialize formbricks");
 };
 
@@ -207,8 +221,8 @@ export const deinitalize = (): void => {
 export const putFormbricksInErrorState = (): void => {
   logger.debug("Putting formbricks in error state");
   // change formbricks status to error
-  config.update({
-    ...config.get(),
+  inAppConfig.update({
+    ...inAppConfig.get(),
     status: "error",
     expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
   });
