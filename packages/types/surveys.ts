@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { ZNoCodeConfig } from "./actionClasses";
+import { ZAttributes } from "./attributes";
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { ZPerson } from "./people";
 import { ZLanguage } from "./product";
@@ -585,6 +586,7 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
       updatedAt: z.date(),
       value: z.string(),
       person: ZPerson.nullable(),
+      personAttributes: ZAttributes.nullable(),
     })
   ),
 });
@@ -605,6 +607,7 @@ export const ZSurveyQuestionSummaryMultipleChoice = z.object({
           z.object({
             value: z.string(),
             person: ZPerson.nullable(),
+            personAttributes: ZAttributes.nullable(),
           })
         )
         .optional(),
@@ -714,6 +717,7 @@ export const ZSurveyQuestionSummaryDate = z.object({
       updatedAt: z.date(),
       value: z.string(),
       person: ZPerson.nullable(),
+      personAttributes: ZAttributes.nullable(),
     })
   ),
 });
@@ -730,6 +734,7 @@ export const ZSurveyQuestionSummaryFileUpload = z.object({
       updatedAt: z.date(),
       value: z.array(z.string()),
       person: ZPerson.nullable(),
+      personAttributes: ZAttributes.nullable(),
     })
   ),
 });
@@ -776,6 +781,7 @@ export const ZSurveyQuestionSummaryHiddenFields = z.object({
       updatedAt: z.date(),
       value: z.string(),
       person: ZPerson.nullable(),
+      personAttributes: ZAttributes.nullable(),
     })
   ),
 });
@@ -789,10 +795,10 @@ export const ZSurveyQuestionSummaryAddress = z.object({
   samples: z.array(
     z.object({
       id: z.string(),
-
       updatedAt: z.date(),
       value: z.array(z.string()),
       person: ZPerson.nullable(),
+      personAttributes: ZAttributes.nullable(),
     })
   ),
 });
