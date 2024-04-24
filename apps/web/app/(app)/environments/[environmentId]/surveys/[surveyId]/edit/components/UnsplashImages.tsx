@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { TSurveyBackgroundBgType } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 
@@ -116,19 +117,20 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
   const [isLoading, setIsLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [images, setImages] = useState<UnsplashImage[]>(defaultImages);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    const fetchData = async (searchQuery: string) => {
+    const fetchData = async (searchQuery: string, currentPage: number) => {
       try {
         setIsLoading(true);
-        const imagesFromUnsplash = await getImagesFromUnsplashAction(searchQuery);
+        const imagesFromUnsplash = await getImagesFromUnsplashAction(searchQuery, currentPage);
         for (let i = 0; i < imagesFromUnsplash.length; i++) {
           const authorName = new URL(imagesFromUnsplash[i].urls.regularWithAttribution).searchParams.get(
             "authorName"
           );
           imagesFromUnsplash[i].authorName = authorName;
         }
-        setImages(imagesFromUnsplash);
+        setImages((prevImages) => [...prevImages, ...imagesFromUnsplash]); // Append new images
       } catch (error) {
         toast.error(error.message);
       } finally {
@@ -136,7 +138,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
       }
     };
 
-    const debouncedFetchData = debounce(fetchData, 500);
+    const debouncedFetchData = debounce((q) => fetchData(q, page), 500);
 
     if (query.trim() !== "") {
       debouncedFetchData(query);
@@ -145,7 +147,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
     return () => {
       debouncedFetchData.cancel();
     };
-  }, [query, setImages]);
+  }, [query, page, setImages]);
 
   useEffect(() => {
     inputFocus.current?.focus();
@@ -153,6 +155,8 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value);
+    setPage(1);
+    setImages([]);
   };
 
   const handleImageSelected = async (imageUrl: string) => {
@@ -161,6 +165,10 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
     } catch (error) {
       toast.error(error.message);
     }
+  };
+
+  const handleLoadMore = () => {
+    setPage((prevPage) => prevPage + 1);
   };
 
   return (
@@ -177,35 +185,44 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
         />
       </div>
       <div className="relative mt-4 grid grid-cols-3 gap-1">
+        {images.length > 0 &&
+          images.map((image) => (
+            <div key={image.id} className="group relative">
+              <UnsplashImage
+                width={300}
+                height={200}
+                src={image.urls.regularWithAttribution}
+                alt={image.alt_description}
+                onClick={() => handleImageSelected(image.urls.regularWithAttribution)}
+                className="h-full cursor-pointer rounded-lg object-cover"
+              />
+              {image.authorName && (
+                <span className="absolute bottom-1 right-1 hidden rounded bg-black bg-opacity-75 px-2 py-1 text-xs text-white group-hover:block">
+                  {image.authorName}
+                </span>
+              )}
+            </div>
+          ))}
         {isLoading && (
-          <div className="col-span-3 flex items-center justify-center p-4">
+          <div className="col-span-3 flex items-center justify-center p-3">
             <LoadingSpinner />
           </div>
         )}
-        {images.length > 0
-          ? images.map((image) => (
-              <div key={image.id} className="group relative">
-                <UnsplashImage
-                  width={300}
-                  height={200}
-                  src={image.urls.regularWithAttribution}
-                  alt={image.alt_description}
-                  onClick={() => handleImageSelected(image.urls.regularWithAttribution)}
-                  className="h-full cursor-pointer rounded-lg object-cover"
-                />
-                {image.authorName && (
-                  <span className="absolute bottom-1 right-1 hidden rounded bg-black bg-opacity-75 px-2 py-1 text-xs text-white group-hover:block">
-                    {image.authorName}
-                  </span>
-                )}
-              </div>
-            ))
-          : !isLoading &&
-            query.trim() !== "" && (
-              <div className="col-span-3 flex items-center justify-center text-sm text-slate-500">
-                No images found for &apos;{query}&apos;
-              </div>
-            )}
+        {images.length > 0 && !isLoading && query.trim() !== "" && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="col-span-3 mt-3 flex items-center justify-center"
+            type="button"
+            onClick={handleLoadMore}>
+            Load More
+          </Button>
+        )}
+        {!isLoading && images.length === 0 && query.trim() !== "" && (
+          <div className="col-span-3 flex items-center justify-center text-sm text-slate-500">
+            No images found for &apos;{query}&apos;
+          </div>
+        )}
       </div>
     </div>
   );

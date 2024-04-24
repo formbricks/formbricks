@@ -201,35 +201,40 @@ export const resetBasicSegmentFiltersAction = async (surveyId: string) => {
   return await resetSegmentInSurvey(surveyId);
 };
 
-export async function getImagesFromUnsplashAction(searchQuery: string) {
+export async function getImagesFromUnsplashAction(searchQuery: string, page: number = 1) {
+  const baseUrl = "https://api.unsplash.com/search/photos";
+  const params = new URLSearchParams({
+    query: searchQuery,
+    client_id: UNSPLASH_ACCESS_KEY,
+    orientation: "landscape",
+    per_page: "9",
+    page: page.toString(),
+  });
+
   try {
-    const res = await fetch(
-      `https://api.unsplash.com/search/photos?query=${searchQuery}&client_id=${UNSPLASH_ACCESS_KEY}&orientation=landscape&w=1920&h=1080`,
-      {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-    if (res.status !== 200) {
-      const json = await res.json();
-      throw Error(json.error);
+    const response = await fetch(`${baseUrl}?${params}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to fetch images from Unsplash");
     }
-    const { results } = await res.json();
-    return results.map((result) => ({
-      id: result.id,
-      alt_description: result.alt_description,
-      urls: {
-        regularWithAttribution:
-          result.urls.regular +
-          "&authorLink=" +
-          result.user.links.html +
-          "&authorName=" +
-          result.user.first_name +
-          "%20" +
-          result.user.last_name +
-          "&utm_source=formbricks&utm_medium=referral",
-      },
-    }));
+
+    const { results } = await response.json();
+    return results.map((result) => {
+      const authorName = encodeURIComponent(result.user.first_name + " " + result.user.last_name);
+      const authorLink = encodeURIComponent(result.user.links.html);
+
+      return {
+        id: result.id,
+        alt_description: result.alt_description,
+        urls: {
+          regularWithAttribution: `${result.urls.regular}&dpr=2&authorLink=${authorLink}&authorName=${authorName}&utm_source=formbricks&utm_medium=referral`,
+        },
+      };
+    });
   } catch (error) {
     throw new Error("Error getting images from Unsplash");
   }

@@ -59,10 +59,13 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
       return () => video.removeEventListener("canplaythrough", onCanPlayThrough);
     } else if ((background?.bgType === "image" || background?.bgType === "upload") && background?.bg) {
       if (background?.bgType === "image") {
-        setAuthorDetailsForUnsplash({
-          authorName: new URL(background?.bg!).searchParams.get("authorName") || "",
-          authorURL: new URL(background?.bg!).searchParams.get("authorLink") || "",
-        });
+        // To not set for Default Images as they have relative URL & are not from Unsplash
+        if (!background?.bg.startsWith("/")) {
+          setAuthorDetailsForUnsplash({
+            authorName: new URL(background?.bg!).searchParams.get("authorName") || "",
+            authorURL: new URL(background?.bg!).searchParams.get("authorLink") || "",
+          });
+        }
       }
       // For images, we create a new Image object to listen for the 'load' event
       const img = new Image();
@@ -113,7 +116,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
               style={{ backgroundImage: `url(${background?.bg})`, filter: `${filterStyle}` }}></div>
             <div className={`absolute bottom-6 z-10 h-12 w-full lg:bottom-0`}>
               <div className="mx-auto max-w-full p-3 text-center text-xs text-slate-400 lg:text-right">
-                {authorDetailsForUnsplash && (
+                {authorDetailsForUnsplash.authorName && (
                   <div className="ml-auto w-max">
                     <span>Photo by </span>
                     <Link
