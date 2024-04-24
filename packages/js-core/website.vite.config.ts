@@ -1,4 +1,6 @@
+import fs from "fs";
 import { resolve } from "path";
+import path from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
@@ -10,19 +12,24 @@ const config = () => {
       "import.meta.env.VERSION": JSON.stringify(webPackageJson.version),
     },
     build: {
+      rollupOptions: {
+        output: { inlineDynamicImports: true },
+      },
       emptyOutDir: false, // keep the dist folder to avoid errors with pnpm go when folder is empty during build
       minify: "terser",
       sourcemap: true,
       lib: {
-        // Could also be a dictionary or array of multiple entry points
-        entry: resolve(__dirname, "src/index.ts"),
+        entry: resolve(__dirname, "src/website/index.ts"),
         name: "formbricks",
-        formats: ["es", "umd"],
-        // the proper extensions will be added
-        fileName: "index",
+        formats: ["umd"],
+        fileName: "website",
       },
     },
-    plugins: [dts({ rollupTypes: true })],
+    plugins: [
+      dts({
+        rollupTypes: true,
+      }),
+    ],
   });
 };
 

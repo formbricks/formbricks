@@ -1,6 +1,6 @@
 "use client";
 
-import { EmptyInAppSurveys } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
+import { EmptyAppSurveys } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import { useEffect, useRef, useState } from "react";
 
 import { getMembershipByUserIdTeamIdAction } from "@formbricks/lib/membership/hooks/actions";
@@ -85,8 +85,10 @@ export default function ResponseTimeline({
 
   return (
     <div className="space-y-4">
-      {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
-        <EmptyInAppSurveys environment={environment} />
+      {(survey.type === "app" || survey.type === "website") &&
+      responses.length === 0 &&
+      !environment.widgetSetupCompleted ? (
+        <EmptyAppSurveys environment={environment} surveyType={survey.type} />
       ) : isFetchingFirstPage ? (
         <SkeletonLoader type="response" />
       ) : responseCount === 0 ? (

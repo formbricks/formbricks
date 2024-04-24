@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
+import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyEditorTabs } from "@formbricks/types/surveys";
@@ -76,7 +77,7 @@ export const SurveyMenuBar = ({
   }, [localSurvey, survey]);
 
   const containsEmptyTriggers = useMemo(() => {
-    if (localSurvey.type !== "web") return false;
+    if (localSurvey.type === "link") return false;
 
     const noTriggers = !localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0];
     const noInlineTriggers =
@@ -115,6 +116,22 @@ export const SurveyMenuBar = ({
     }
   };
 
+  const handleSegmentWithIdTemp = async () => {
+    if (localSurvey.segment && localSurvey.type === "app" && localSurvey.segment?.id === "temp") {
+      const { filters } = localSurvey.segment;
+      // create a new private segment
+      const newSegment = await createSegmentAction({
+        environmentId: localSurvey.environmentId,
+        filters,
+        isPrivate: true,
+        surveyId: localSurvey.id,
+        title: localSurvey.id,
+      });
+
+      return newSegment;
+    }
+  };
+
   const handleSurveySave = async (shouldNavigateBack = false) => {
     setIsSurveySaving(true);
     try {
@@ -135,8 +152,8 @@ export const SurveyMenuBar = ({
         const { isDraft, ...rest } = question;
         return rest;
       });
-
-      await updateSurveyAction({ ...localSurvey });
+      const segment = (await handleSegmentWithIdTemp()) ?? null;
+      await updateSurveyAction({ ...localSurvey, segment });
       setIsSurveySaving(false);
       setLocalSurvey(localSurvey);
       toast.success("Changes saved.");
@@ -167,7 +184,12 @@ export const SurveyMenuBar = ({
         return;
       }
       const status = localSurvey.runOnDate ? "scheduled" : "inProgress";
-      await updateSurveyAction({ ...localSurvey, status });
+      const segment = (await handleSegmentWithIdTemp()) ?? null;
+      await updateSurveyAction({
+        ...localSurvey,
+        status,
+        segment,
+      });
       setIsSurveyPublishing(false);
       router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {

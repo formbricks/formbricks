@@ -486,5 +486,18 @@ export const isSurveyValid = (
     return false;
   }
 
+  if (survey.type === "app" && survey.segment?.id === "temp") {
+    const { filters } = survey.segment;
+
+    const parsedFilters = ZSegmentFilters.safeParse(filters);
+    if (!parsedFilters.success) {
+      const errMsg =
+        parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
+        "Invalid targeting: Please check your audience filters";
+      toast.error(errMsg);
+      return;
+    }
+  }
+
   return true;
 };
