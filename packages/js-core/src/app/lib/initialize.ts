@@ -15,14 +15,14 @@ import {
 import { Logger } from "../../shared/logger";
 import { getIsDebug } from "../../shared/utils";
 import { trackAction } from "./actions";
+import { updateAttributes } from "./attributes";
 import { AppConfig, IN_APP_LOCAL_STORAGE_KEY } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { checkPageUrl } from "./noCodeActions";
-import { updatePersonAttributes } from "./person";
 import { sync } from "./sync";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
-const inAppConfig = AppConfig.getInstance();
+const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 
 let isInitialized = false;
@@ -45,7 +45,7 @@ export const initialize = async (
 
   let existingConfig: TJSAppConfig | undefined;
   try {
-    existingConfig = inAppConfig.get();
+    existingConfig = appConfig.get();
     logger.debug("Found existing configuration.");
   } catch (e) {
     logger.debug("No existing configuration found.");
@@ -97,23 +97,16 @@ export const initialize = async (
 
   let updatedAttributes: TAttributes | null = null;
   if (configInput.attributes) {
-    if (!configInput.userId) {
-      // Allow setting attributes for unidentified users
-      updatedAttributes = { ...configInput.attributes };
+    const res = await updateAttributes(
+      configInput.apiHost,
+      configInput.environmentId,
+      configInput.userId,
+      configInput.attributes
+    );
+    if (res.ok !== true) {
+      return err(res.error);
     }
-    // If userId is available, update attributes in backend
-    else {
-      const res = await updatePersonAttributes(
-        configInput.apiHost,
-        configInput.environmentId,
-        configInput.userId,
-        configInput.attributes
-      );
-      if (res.ok !== true) {
-        return err(res.error);
-      }
-      updatedAttributes = res.value;
-    }
+    updatedAttributes = res.value;
   }
 
   if (
@@ -139,13 +132,13 @@ export const initialize = async (
       }
     } else {
       logger.debug("Configuration not expired. Extending expiration.");
-      inAppConfig.update(existingConfig);
+      appConfig.update(existingConfig);
     }
   } else {
     logger.debug(
       "No valid configuration found or it has been expired. Resetting config and creating new one."
     );
-    inAppConfig.resetConfig();
+    appConfig.resetConfig();
     logger.debug("Syncing.");
 
     try {
@@ -162,15 +155,15 @@ export const initialize = async (
   }
   // update attributes in config
   if (updatedAttributes && Object.keys(updatedAttributes).length > 0) {
-    inAppConfig.update({
-      environmentId: inAppConfig.get().environmentId,
-      apiHost: inAppConfig.get().apiHost,
-      userId: inAppConfig.get().userId,
+    appConfig.update({
+      environmentId: appConfig.get().environmentId,
+      apiHost: appConfig.get().apiHost,
+      userId: appConfig.get().userId,
       state: {
-        ...inAppConfig.get().state,
-        attributes: { ...inAppConfig.get().state.attributes, ...configInput.attributes },
+        ...appConfig.get().state,
+        attributes: { ...appConfig.get().state.attributes, ...configInput.attributes },
       },
-      expiresAt: inAppConfig.get().expiresAt,
+      expiresAt: appConfig.get().expiresAt,
     });
   }
 
@@ -195,7 +188,7 @@ const handleErrorOnFirstInit = () => {
   };
   // can't use config.update here because the config is not yet initialized
   wrapThrows(() => localStorage.setItem(IN_APP_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
-  throw new Error("Could not initialize formbricks");
+  throw new Error("FROM LMAO - Could not initialize formbricks");
 };
 
 export const checkInitialized = (): Result<void, NotInitializedError> => {
@@ -221,8 +214,8 @@ export const deinitalize = (): void => {
 export const putFormbricksInErrorState = (): void => {
   logger.debug("Putting formbricks in error state");
   // change formbricks status to error
-  inAppConfig.update({
-    ...inAppConfig.get(),
+  appConfig.update({
+    ...appConfig.get(),
     status: "error",
     expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
   });

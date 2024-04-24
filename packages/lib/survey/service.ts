@@ -1,8 +1,6 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { attributeCache } from "attribute/cache";
-import { getAttributes } from "attribute/service";
 import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
@@ -22,6 +20,8 @@ import {
 
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
+import { attributeCache } from "../attribute/cache";
+import { getAttributes } from "../attribute/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";

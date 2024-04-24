@@ -155,6 +155,12 @@ export const ZJsPeopleUserIdInput = z.object({
   version: z.string().optional(),
 });
 
+export const ZJsPeopleUpdateAttributeInput = z.object({
+  attributes: ZAttributes,
+});
+
+export type TJsPeopleUpdateAttributeInput = z.infer<typeof ZJsPeopleUpdateAttributeInput>;
+
 export type TJsPeopleUserIdInput = z.infer<typeof ZJsPeopleUserIdInput>;
 
 export const ZJsPeopleAttributeInput = z.object({
@@ -188,6 +194,7 @@ export const ZJsAppSyncParams = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
   userId: z.string(),
+  attributes: ZAttributes.optional(),
 });
 
 export type TJsAppSyncParams = z.infer<typeof ZJsAppSyncParams>;

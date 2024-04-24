@@ -22,6 +22,39 @@ export const selectPerson = {
   environmentId: true,
 };
 
+type TransformPersonInput = {
+  id: string;
+  userId: string;
+  environmentId: string;
+  attributes: {
+    value: string;
+    attributeClass: {
+      name: string;
+    };
+  }[];
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export const transformPrismaPerson = (person: TransformPersonInput): TPerson => {
+  const attributes = person.attributes.reduce(
+    (acc, attr) => {
+      acc[attr.attributeClass.name] = attr.value;
+      return acc;
+    },
+    {} as Record<string, string | number>
+  );
+
+  return {
+    id: person.id,
+    userId: person.userId,
+    attributes: attributes,
+    environmentId: person.environmentId,
+    createdAt: new Date(person.createdAt),
+    updatedAt: new Date(person.updatedAt),
+  } as TPerson;
+};
+
 export const getPerson = async (personId: string): Promise<TPerson | null> => {
   const prismaPerson = await unstable_cache(
     async () => {

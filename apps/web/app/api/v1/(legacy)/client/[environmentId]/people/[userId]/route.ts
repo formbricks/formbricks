@@ -46,8 +46,6 @@ export async function POST(req: Request, context: Context): Promise<Response> {
       person = await createPerson(environmentId, userId);
     }
 
-    // Check if the person is already up to date
-    const updatedAtttributes = inputValidation.data.attributes;
     const oldAttributes = await getAttributesByUserId(environmentId, userId);
 
     let isUpToDate = true;
@@ -68,7 +66,7 @@ export async function POST(req: Request, context: Context): Promise<Response> {
       );
     }
 
-    await updateAttributes(person.id, inputValidation.data.attributes);
+    await updateAttributes(person.id, updatedAttributes);
 
     return responses.successResponse(
       {

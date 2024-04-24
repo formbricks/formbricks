@@ -1,21 +1,20 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { attributeCache } from "attribute/cache";
-import { attributeClassCache } from "attributeClass/cache";
-import { createAttributeClass, getAttributeClassByName } from "attributeClass/service";
 import { unstable_cache } from "next/cache";
-import { getPerson, getPersonByUserId } from "person/service";
-import { validateInputs } from "utils/validate";
 
 import { prisma } from "@formbricks/database";
-import { TAttributeClassType, ZAttributeClassType } from "@formbricks/types/attributeClasses";
 import { TAttributes, ZAttributes } from "@formbricks/types/attributes";
 import { ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 
+import { attributeCache } from "../attribute/cache";
+import { attributeClassCache } from "../attributeClass/cache";
+import { getAttributeClassByName } from "../attributeClass/service";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { getPerson, getPersonByUserId } from "../person/service";
+import { validateInputs } from "../utils/validate";
 
 export const selectAttribute: Prisma.AttributeSelect = {
   value: true,
@@ -147,12 +146,8 @@ export const getAttribute = async (name: string, personId: string): Promise<stri
   )();
 };
 
-export const updateAttributes = async (
-  personId: string,
-  attributes: TAttributes,
-  attributeClassType: TAttributeClassType = "code"
-): Promise<boolean> => {
-  validateInputs([personId, ZId], [attributes, ZAttributes], [attributeClassType, ZAttributeClassType]);
+export const updateAttributes = async (personId: string, attributes: TAttributes): Promise<boolean> => {
+  validateInputs([personId, ZId], [attributes, ZAttributes]);
 
   const person = await getPerson(personId);
 
@@ -181,7 +176,9 @@ export const updateAttributes = async (
       upsertOperations.push(
         prisma.attribute
           .upsert({
-            select: {},
+            select: {
+              id: true,
+            },
             where: {
               personId_attributeClassId: {
                 personId,
