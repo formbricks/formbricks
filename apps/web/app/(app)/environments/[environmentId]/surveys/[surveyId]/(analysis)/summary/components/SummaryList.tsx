@@ -1,4 +1,4 @@
-import { EmptyInAppSurveys } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
+import { EmptyAppSurveys } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import { CTASummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CTASummary";
 import { CalSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CalSummary";
 import { ConsentSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
@@ -40,8 +40,10 @@ export const SummaryList = ({
 }: SummaryListProps) => {
   return (
     <div className="mt-10 space-y-8">
-      {survey.type === "web" && responseCount === 0 && !environment.widgetSetupCompleted ? (
-        <EmptyInAppSurveys environment={environment} />
+      {(survey.type === "app" || survey.type === "website") &&
+      responseCount === 0 &&
+      !environment.widgetSetupCompleted ? (
+        <EmptyAppSurveys environment={environment} surveyType={survey.type} />
       ) : fetchingSummary ? (
         <SkeletonLoader type="summary" />
       ) : responseCount === 0 ? (

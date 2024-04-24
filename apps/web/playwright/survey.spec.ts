@@ -32,7 +32,7 @@ test.describe("Survey Create & Submit Response", async () => {
     // Save & Publish Survey
     await page.getByRole("button", { name: "Continue to Settings" }).click();
     await page.locator("#howToSendCardTrigger").click();
-    await page.locator("#howToSendCardOption-web").click();
+    await page.locator("#howToSendCardOption-website").click();
     await page.getByRole("button", { name: "Custom Actions" }).click();
 
     await expect(page.locator("#codeAction")).toBeVisible();

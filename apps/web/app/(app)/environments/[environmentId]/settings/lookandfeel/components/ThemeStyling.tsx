@@ -11,7 +11,7 @@ import toast from "react-hot-toast";
 
 import { COLOR_DEFAULTS, PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
 import { TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { Switch } from "@formbricks/ui/Switch";
@@ -30,7 +30,7 @@ type ThemeStylingProps = {
 export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigured }: ThemeStylingProps) => {
   const router = useRouter();
   const [localProduct, setLocalProduct] = useState(product);
-  const [previewSurveyType, setPreviewSurveyType] = useState<"link" | "web">("link");
+  const [previewSurveyType, setPreviewSurveyType] = useState<TSurveyType>("link");
   const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
 
   const [styling, setStyling] = useState(product.styling);

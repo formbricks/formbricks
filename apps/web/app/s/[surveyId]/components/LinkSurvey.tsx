@@ -76,7 +76,10 @@ export default function LinkSurvey({
   }, [survey, startAt]);
 
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
-  const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
+  let surveyState = useMemo(() => {
+    return new SurveyState(survey.id, singleUseId, responseId, userId);
+  }, [survey.id, singleUseId, responseId, userId]);
+
   const prefillResponseData: TResponseData | undefined = prefillAnswer
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer, languageCode)
     : undefined;
@@ -95,7 +98,6 @@ export default function LinkSurvey({
             // when response of current question is processed successfully
             setIsResponseSendingFinished(true);
           },
-          setSurveyState: setSurveyState,
         },
         surveyState
       ),
@@ -149,6 +151,7 @@ export default function LinkSurvey({
   if (!surveyState.isResponseFinished() && hasFinishedSingleUseResponse) {
     return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
   }
+
   if (survey.verifyEmail && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
       return <VerifyEmail survey={survey} isErrorComponent={true} languageCode={languageCode} />;
@@ -224,9 +227,8 @@ export default function LinkSurvey({
               }
               const { id } = res.data;
 
-              const newSurveyState = surveyState.copy();
-              newSurveyState.updateDisplayId(id);
-              setSurveyState(newSurveyState);
+              surveyState.updateDisplayId(id);
+              responseQueue.updateSurveyState(surveyState);
             }
           }}
           onResponse={(responseUpdate: TResponseUpdate) => {
