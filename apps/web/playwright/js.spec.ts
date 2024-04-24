@@ -24,12 +24,11 @@ test.describe("JS Package Test", async () => {
     await expect(page.locator("#howToSendCardTrigger")).toBeVisible();
     await page.locator("#howToSendCardTrigger").click();
 
-    await expect(page.locator("#howToSendCardOption-web")).toBeVisible();
-    await page.locator("#howToSendCardOption-web").click();
-    await page.locator("#howToSendCardOption-web").click();
+    await expect(page.locator("#howToSendCardOption-website")).toBeVisible();
+    await page.locator("#howToSendCardOption-website").click();
+    await page.locator("#howToSendCardOption-website").click();
 
     await expect(page.getByText("Survey Trigger")).toBeVisible();
-    // await page.getByText("Survey Trigger").click();
 
     await page.getByRole("combobox").click();
     await page.getByLabel("New Session").click();
@@ -50,13 +49,13 @@ test.describe("JS Package Test", async () => {
 
   test("JS Display Survey on Page", async ({ page }) => {
     let currentDir = process.cwd();
-    let htmlFilePath = currentDir + "/packages/js-core/index.html";
+    let htmlFilePath = currentDir + "/packages/js/index.html";
 
     let htmlFile = replaceEnvironmentIdInHtml(htmlFilePath, environmentId);
     await page.goto(htmlFile);
 
     // Formbricks In App Sync has happened
-    const syncApi = await page.waitForResponse((response) => response.url().includes("/in-app/sync"));
+    const syncApi = await page.waitForResponse((response) => response.url().includes("/website/sync"));
     expect(syncApi.status()).toBe(200);
 
     // Formbricks Modal exists in the DOM
@@ -74,14 +73,14 @@ test.describe("JS Package Test", async () => {
 
   test("JS submits Response to Survey", async ({ page }) => {
     let currentDir = process.cwd();
-    let htmlFilePath = currentDir + "/packages/js-core/index.html";
+    let htmlFilePath = currentDir + "/packages/js/index.html";
 
     let htmlFile = "file:///" + htmlFilePath;
 
     await page.goto(htmlFile);
 
     // Formbricks In App Sync has happened
-    const syncApi = await page.waitForResponse((response) => response.url().includes("/in-app/sync"));
+    const syncApi = await page.waitForResponse((response) => response.url().includes("/website/sync"));
     expect(syncApi.status()).toBe(200);
 
     // Formbricks Modal exists in the DOM
@@ -113,7 +112,7 @@ test.describe("JS Package Test", async () => {
   test("Admin validates Displays & Response", async ({ page }) => {
     await login(page, email, password);
 
-    await page.getByRole("link", { name: "In-app Open options Product" }).click();
+    await page.getByRole("link", { name: "Website Open options Product" }).click();
     (await page.waitForSelector("text=Responses")).isVisible();
 
     // Survey should have 2 Displays
@@ -124,7 +123,7 @@ test.describe("JS Package Test", async () => {
     await page.waitForTimeout(1000);
     await expect(page.getByRole("button", { name: "Responses50%" })).toBeVisible();
     await expect(page.getByText("1 Responses", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("Clickthrough Rate (CTR)100%")).toBeVisible();
+    await expect(page.getByText("Click-through rate (CTR)100%")).toBeVisible();
     await expect(page.getByText("Somewhat disappointed100%")).toBeVisible();
     await expect(page.getByText("Founder100%")).toBeVisible();
     await expect(page.getByText("People who believe that PMF").first()).toBeVisible();

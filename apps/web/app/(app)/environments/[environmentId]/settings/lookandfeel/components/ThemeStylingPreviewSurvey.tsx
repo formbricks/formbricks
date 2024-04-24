@@ -3,22 +3,20 @@
 import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import { Variants, motion } from "framer-motion";
-import { Repeat2 } from "lucide-react";
 import { useRef, useState } from "react";
 
 import type { TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui/Button";
+import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
+import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 interface ThemeStylingPreviewSurveyProps {
   survey: TSurvey;
-  setActiveQuestionId: (id: string | null) => void;
-  activeQuestionId?: string | null;
+  setQuestionId: (_: string) => void;
   product: TProduct;
-  previewType: "link" | "web";
-  setPreviewType: (type: "link" | "web") => void;
+  previewType: TSurveyType;
+  setPreviewType: (type: TSurveyType) => void;
 }
 
 const previewParentContainerVariant: Variants = {
@@ -49,12 +47,11 @@ const previewParentContainerVariant: Variants = {
 };
 
 export const ThemeStylingPreviewSurvey = ({
-  setActiveQuestionId,
-  activeQuestionId,
   survey,
   product,
   previewType,
   setPreviewType,
+  setQuestionId,
 }: ThemeStylingPreviewSurveyProps) => {
   const [isFullScreenPreview] = useState(false);
   const [previewPosition] = useState("relative");
@@ -99,16 +96,22 @@ export const ThemeStylingPreviewSurvey = ({
   };
 
   const { placement: surveyPlacement } = productOverwrites || {};
+  const { darkOverlay: surveyDarkOverlay } = productOverwrites || {};
+  const { clickOutsideClose: surveyClickOutsideClose } = productOverwrites || {};
 
   const placement = surveyPlacement || product.placement;
+  const darkOverlay = surveyDarkOverlay ?? product.darkOverlay;
+  const clickOutsideClose = surveyClickOutsideClose ?? product.clickOutsideClose;
 
   const highlightBorderColor = product.styling.highlightBorderColor?.light;
 
   function resetQuestionProgress() {
-    setActiveQuestionId(survey?.questions[0]?.id);
+    setQuestionId(survey?.questions[0]?.id);
   }
 
   const onFileUpload = async (file: File) => file.name;
+
+  const isAppSurvey = previewType === "app" || previewType === "website";
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-items-center">
@@ -136,32 +139,35 @@ export const ThemeStylingPreviewSurvey = ({
               <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
             </div>
             <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-              <p>{previewType === "web" ? "Your web app" : "Preview"}</p>
+              <p>{isAppSurvey ? "Your web app" : "Preview"}</p>
 
               <div className="flex items-center">
-                <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
+                <ResetProgressButton onClick={resetQuestionProgress} />
               </div>
             </div>
           </div>
 
-          {previewType === "web" ? (
+          {isAppSurvey ? (
             <Modal
               isOpen
               placement={placement}
               highlightBorderColor={highlightBorderColor}
+              clickOutsideClose={clickOutsideClose}
+              darkOverlay={darkOverlay}
               previewMode="desktop"
               background={product.styling.cardBackgroundColor?.light}
               borderRadius={product.styling.roundness ?? 8}>
               <SurveyInline
                 survey={survey}
-                activeQuestionId={activeQuestionId || undefined}
                 isBrandingEnabled={product.inAppSurveyBranding}
-                onActiveQuestionChange={setActiveQuestionId}
                 isRedirectDisabled={true}
                 onFileUpload={onFileUpload}
                 styling={product.styling}
                 isCardBorderVisible={!highlightBorderColor}
                 languageCode="default"
+                getSetQuestionId={(f: (value: string) => void) => {
+                  setQuestionId = f;
+                }}
               />
             </Modal>
           ) : (
@@ -175,14 +181,15 @@ export const ThemeStylingPreviewSurvey = ({
                 className={`${product.logo?.url && !product.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0  w-full max-w-md rounded-lg p-4`}>
                 <SurveyInline
                   survey={survey}
-                  activeQuestionId={activeQuestionId || undefined}
                   isBrandingEnabled={product.linkSurveyBranding}
-                  onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                   onFileUpload={onFileUpload}
                   responseCount={42}
                   styling={product.styling}
                   languageCode="default"
+                  getSetQuestionId={(f: (value: string) => void) => {
+                    setQuestionId = f;
+                  }}
                 />
               </div>
             </MediaBackground>
@@ -199,23 +206,11 @@ export const ThemeStylingPreviewSurvey = ({
         </div>
 
         <div
-          className={`${previewType === "web" ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
-          onClick={() => setPreviewType("web")}>
-          In-App survey
+          className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
+          onClick={() => setPreviewType("app")}>
+          App survey
         </div>
       </div>
     </div>
-  );
-};
-
-const ResetProgressButton = ({ resetQuestionProgress }: { resetQuestionProgress: () => void }) => {
-  return (
-    <Button
-      variant="minimal"
-      className="py-0.2 mr-2 bg-white px-2 font-sans text-sm text-slate-500"
-      onClick={resetQuestionProgress}>
-      Restart
-      <Repeat2 className="ml-2 h-4 w-4" />
-    </Button>
   );
 };

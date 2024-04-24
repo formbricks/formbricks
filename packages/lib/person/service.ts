@@ -216,23 +216,31 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
 export const getIsPersonMonthlyActive = async (personId: string): Promise<boolean> =>
   unstable_cache(
     async () => {
-      const latestAction = await prisma.action.findFirst({
-        where: {
-          personId,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        select: {
-          createdAt: true,
-        },
-      });
-      if (!latestAction || new Date(latestAction.createdAt).getMonth() !== new Date().getMonth()) {
-        return false;
+      try {
+        const latestAction = await prisma.action.findFirst({
+          where: {
+            personId,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          select: {
+            createdAt: true,
+          },
+        });
+        if (!latestAction || new Date(latestAction.createdAt).getMonth() !== new Date().getMonth()) {
+          return false;
+        }
+        return true;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
       }
-      return true;
     },
-    [`isPersonActive-${personId}`],
+    [`getIsPersonMonthlyActive-${personId}`],
     {
       tags: [activePersonCache.tag.byId(personId)],
       revalidate: 60 * 60 * 24, // 24 hours

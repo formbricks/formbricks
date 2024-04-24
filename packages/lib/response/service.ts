@@ -438,7 +438,7 @@ export const getResponsePersonAttributes = async (surveyId: string): Promise<TSu
         throw error;
       }
     },
-    [`getAttributesFromResponses-${surveyId}`],
+    [`getResponsePersonAttributes-${surveyId}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
@@ -582,35 +582,43 @@ export const getSurveySummary = (
     async () => {
       validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
 
-      const survey = await getSurvey(surveyId);
+      try {
+        const survey = await getSurvey(surveyId);
 
-      if (!survey) {
-        throw new ResourceNotFoundError("Survey", surveyId);
+        if (!survey) {
+          throw new ResourceNotFoundError("Survey", surveyId);
+        }
+
+        const batchSize = 3000;
+        const responseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
+        const pages = Math.ceil(responseCount / batchSize);
+
+        const responsesArray = await Promise.all(
+          Array.from({ length: pages }, (_, i) => {
+            return getResponses(surveyId, i + 1, batchSize, filterCriteria);
+          })
+        );
+        const responses = responsesArray.flat();
+
+        const displayCount = await getDisplayCountBySurveyId(surveyId, {
+          createdAt: filterCriteria?.createdAt,
+        });
+
+        const meta = getSurveySummaryMeta(responses, displayCount);
+        const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
+        const questionWiseSummary = getQuestionWiseSummary(
+          checkForRecallInHeadline(survey, "default"),
+          responses
+        );
+
+        return { meta, dropOff, summary: questionWiseSummary };
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
       }
-
-      const batchSize = 3000;
-      const responseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
-      const pages = Math.ceil(responseCount / batchSize);
-
-      const responsesArray = await Promise.all(
-        Array.from({ length: pages }, (_, i) => {
-          return getResponses(surveyId, i + 1, batchSize, filterCriteria);
-        })
-      );
-      const responses = responsesArray.flat();
-
-      const displayCount = await getDisplayCountBySurveyId(surveyId, {
-        createdAt: filterCriteria?.createdAt,
-      });
-
-      const meta = getSurveySummaryMeta(responses, displayCount);
-      const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
-      const questionWiseSummary = getQuestionWiseSummary(
-        checkForRecallInHeadline(survey, "default"),
-        responses
-      );
-
-      return { meta, dropOff, summary: questionWiseSummary };
     },
     [`getSurveySummary-${surveyId}-${JSON.stringify(filterCriteria)}`],
     {
@@ -627,8 +635,8 @@ export const getResponseDownloadUrl = async (
   format: "csv" | "xlsx",
   filterCriteria?: TResponseFilterCriteria
 ): Promise<string> => {
+  validateInputs([surveyId, ZId], [format, ZString], [filterCriteria, ZResponseFilterCriteria.optional()]);
   try {
-    validateInputs([surveyId, ZId], [format, ZString], [filterCriteria, ZResponseFilterCriteria.optional()]);
     const survey = await getSurvey(surveyId);
 
     if (!survey) {
@@ -737,7 +745,7 @@ export const getResponsesByEnvironmentId = async (
         throw error;
       }
     },
-    [`getResponsesByEnvironmentId-${environmentId}`],
+    [`getResponsesByEnvironmentId-${environmentId}-${page}`],
     {
       tags: [responseCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
@@ -881,6 +889,10 @@ export const getResponseCountBySurveyId = async (
         });
         return responseCount;
       } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
         throw error;
       }
     },

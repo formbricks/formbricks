@@ -26,7 +26,6 @@ const nextConfig = {
       "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
     },
   },
-  cacheHandler: process.env.VERCEL !== "1" ? require.resolve("./cache-handler.mjs") : undefined,
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [
@@ -55,6 +54,18 @@ const nextConfig = {
         hostname: "formbricks-cdn.s3.eu-central-1.amazonaws.com",
       },
     ],
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/api/v1/client/:environmentId/in-app/sync",
+        destination: "/api/v1/client/:environmentId/website/sync",
+      },
+      {
+        source: "/api/v1/client/:environmentId/in-app/sync/:userId",
+        destination: "/api/v1/client/:environmentId/app/sync/:userId",
+      },
+    ];
   },
   async redirects() {
     return [
@@ -140,6 +151,11 @@ const nextConfig = {
     INTERNAL_SECRET: createId(),
   },
 };
+
+// set custom cache handler
+if (process.env.CUSTOM_CACHE_DISABLED !== "1") {
+  nextConfig.cacheHandler = require.resolve("./cache-handler.mjs");
+}
 
 // set actions allowed origins
 if (process.env.WEBAPP_URL) {

@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
+import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
@@ -45,7 +46,7 @@ interface SurveyMenuBarProps {
   setSelectedLanguageCode: (selectedLanguage: string) => void;
 }
 
-export default function SurveyMenuBar({
+export const SurveyMenuBar = ({
   localSurvey,
   survey,
   environment,
@@ -57,7 +58,7 @@ export default function SurveyMenuBar({
   responseCount,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: SurveyMenuBarProps) {
+}: SurveyMenuBarProps) => {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -89,7 +90,7 @@ export default function SurveyMenuBar({
   }, [localSurvey, survey]);
 
   const containsEmptyTriggers = useMemo(() => {
-    if (localSurvey.type !== "web") return false;
+    if (localSurvey.type === "link") return false;
 
     const noTriggers = !localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0];
     const noInlineTriggers =
@@ -292,8 +293,9 @@ export default function SurveyMenuBar({
     }
 
     setIsSurveySaving(true);
+
     // Create a copy of localSurvey with isDraft removed from every question
-    const strippedSurvey: TSurvey = {
+    let strippedSurvey: TSurvey = {
       ...localSurvey,
       questions: localSurvey.questions.map((question) => {
         const { isDraft, ...rest } = question;
@@ -357,11 +359,39 @@ export default function SurveyMenuBar({
     }
 
     strippedSurvey.triggers = strippedSurvey.triggers.filter((trigger) => Boolean(trigger));
+
+    // if the segment has id === "temp", we create a private segment with the same filters.
+    if (strippedSurvey.type === "app" && strippedSurvey.segment?.id === "temp") {
+      const { filters } = strippedSurvey.segment;
+
+      const parsedFilters = ZSegmentFilters.safeParse(filters);
+      if (!parsedFilters.success) {
+        const errMsg =
+          parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
+          "Invalid targeting: Please check your audience filters";
+        setIsSurveySaving(false);
+        toast.error(errMsg);
+        return;
+      }
+
+      // create a new private segment
+      const newSegment = await createSegmentAction({
+        environmentId: environment.id,
+        filters,
+        isPrivate: true,
+        surveyId: strippedSurvey.id,
+        title: strippedSurvey.id,
+      });
+
+      strippedSurvey.segment = newSegment;
+    }
+
     try {
-      await updateSurveyAction({ ...strippedSurvey });
+      const udpatedSurvey = await updateSurveyAction({ ...strippedSurvey });
 
       setIsSurveySaving(false);
-      setLocalSurvey(strippedSurvey);
+      setLocalSurvey({ ...strippedSurvey, segment: udpatedSurvey.segment });
+
       toast.success("Changes saved.");
       if (shouldNavigateBack) {
         router.back();
@@ -389,6 +419,33 @@ export default function SurveyMenuBar({
         return;
       }
       const status = localSurvey.runOnDate ? "scheduled" : "inProgress";
+
+      // if the segment has id === "temp", we create a private segment with the same filters.
+      if (localSurvey.type === "app" && localSurvey.segment?.id === "temp") {
+        const { filters } = localSurvey.segment;
+
+        const parsedFilters = ZSegmentFilters.safeParse(filters);
+        if (!parsedFilters.success) {
+          const errMsg =
+            parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
+            "Invalid targeting: Please check your audience filters";
+          setIsSurveySaving(false);
+          toast.error(errMsg);
+          return;
+        }
+
+        // create a new private segment
+        const newSegment = await createSegmentAction({
+          environmentId: environment.id,
+          filters,
+          isPrivate: true,
+          surveyId: localSurvey.id,
+          title: localSurvey.id,
+        });
+
+        localSurvey.segment = newSegment;
+      }
+
       await updateSurveyAction({ ...localSurvey, status });
       router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
@@ -497,4 +554,4 @@ export default function SurveyMenuBar({
       </div>
     </>
   );
-}
+};

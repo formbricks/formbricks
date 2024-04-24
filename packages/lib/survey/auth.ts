@@ -18,13 +18,17 @@ export const canUserAccessSurvey = async (userId: string, surveyId: string): Pro
 
       if (!userId) return false;
 
-      const survey = await getSurvey(surveyId);
-      if (!survey) throw new Error("Survey not found");
+      try {
+        const survey = await getSurvey(surveyId);
+        if (!survey) throw new Error("Survey not found");
 
-      const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, survey.environmentId);
-      if (!hasAccessToEnvironment) return false;
+        const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, survey.environmentId);
+        if (!hasAccessToEnvironment) return false;
 
-      return true;
+        return true;
+      } catch (error) {
+        throw error;
+      }
     },
     [`canUserAccessSurvey-${userId}-${surveyId}`],
     { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [surveyCache.tag.byId(surveyId)] }

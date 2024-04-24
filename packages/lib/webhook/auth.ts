@@ -13,13 +13,17 @@ export const canUserAccessWebhook = async (userId: string, webhookId: string): P
     async () => {
       validateInputs([userId, ZId], [webhookId, ZId]);
 
-      const webhook = await getWebhook(webhookId);
-      if (!webhook) return false;
+      try {
+        const webhook = await getWebhook(webhookId);
+        if (!webhook) return false;
 
-      const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, webhook.environmentId);
-      if (!hasAccessToEnvironment) return false;
+        const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, webhook.environmentId);
+        if (!hasAccessToEnvironment) return false;
 
-      return true;
+        return true;
+      } catch (error) {
+        throw error;
+      }
     },
     [`canUserAccessWebhook-${userId}-${webhookId}`],
     {

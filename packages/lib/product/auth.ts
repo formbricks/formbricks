@@ -17,11 +17,15 @@ export const canUserAccessProduct = async (userId: string, productId: string): P
 
       if (!userId || !productId) return false;
 
-      const product = await getProduct(productId);
-      if (!product) return false;
+      try {
+        const product = await getProduct(productId);
+        if (!product) return false;
 
-      const teamIds = (await getTeamsByUserId(userId)).map((team) => team.id);
-      return teamIds.includes(product.teamId);
+        const teamIds = (await getTeamsByUserId(userId)).map((team) => team.id);
+        return teamIds.includes(product.teamId);
+      } catch (error) {
+        throw error;
+      }
     },
     [`canUserAccessProduct-${userId}-${productId}`],
     {

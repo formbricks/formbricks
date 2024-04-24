@@ -17,7 +17,7 @@ export const ZAttributeClass = z.object({
 
 export const ZAttributeClassInput = z.object({
   name: z.string(),
-  description: z.string(),
+  description: z.string().optional(),
   type: z.enum(["code"]),
   environmentId: z.string(),
 });
