@@ -30,6 +30,8 @@ Adds an Actions for a given User by their User ID
     <Properties>
       <Property name="userId" type="string">
         The id of the user for whom the action is being created.
+        
+        Note: A user with this ID must exist in your environment in Formbricks.
       </Property>
       <Property name="name" type="string">
         The name of the Action being created.
@@ -63,7 +65,7 @@ Adds an Actions for a given User by their User ID
 
     ```json {{ title: '200 Success' }}
     {
-    "data": {}
+        "data": {}
     }
     ```
 
@@ -77,6 +79,13 @@ Adds an Actions for a given User by their User ID
     }
     ```
 
+    ```json {{ title: '500 Internal Server Error' }}
+    {
+        "code": "internal_server_error",
+        "message": "Unable to handle the request: Database operation failed",
+        "details": {}
+    }
+    ```
     </CodeGroup>
 
   </Col>

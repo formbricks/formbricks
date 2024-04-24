@@ -1,9 +1,11 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
+import { DatabaseError } from "@formbricks/types/errors";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
 
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
@@ -48,6 +50,10 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
       tagId,
     };
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
     throw error;
   }
 };
@@ -82,6 +88,9 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
       responseId,
     };
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
     throw error;
   }
 };
@@ -110,6 +119,9 @@ export const getTagsOnResponsesCount = async (environmentId: string): Promise<TT
 
         return tagsCount.map((tagCount) => ({ tagId: tagCount.tagId, count: tagCount._count._all }));
       } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
         throw error;
       }
     },
