@@ -19,13 +19,13 @@ export default async function ActivitySection({
   }
 
   // On Formbricks Cloud only render the timeline if the user targeting feature is booked
-  const isActionTimelineEnabled = IS_FORMBRICKS_CLOUD
+  const isUserTargetingEnabled = IS_FORMBRICKS_CLOUD
     ? team.billing.features.userTargeting.status === "active"
     : true;
 
   const [environment, actions] = await Promise.all([
     getEnvironment(environmentId),
-    isActionTimelineEnabled ? getActionsByPersonId(personId, 1) : [],
+    isUserTargetingEnabled ? getActionsByPersonId(personId, 1) : [],
   ]);
 
   if (!environment) {
@@ -37,7 +37,7 @@ export default async function ActivitySection({
       <ActivityTimeline
         environment={environment}
         actions={actions.slice(0, 10)}
-        isActionTimelineEnabled={isActionTimelineEnabled}
+        isUserTargetingEnabled={isUserTargetingEnabled}
       />
     </div>
   );

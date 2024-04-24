@@ -8,13 +8,13 @@ import { ActivityItemContent, ActivityItemIcon, ActivityItemPopover } from "./Ac
 interface IActivityTimelineProps {
   environment: TEnvironment;
   actions: TAction[];
-  isActionTimelineEnabled: boolean;
+  isUserTargetingEnabled: boolean;
 }
 
 export default function ActivityTimeline({
   environment,
   actions,
-  isActionTimelineEnabled,
+  isUserTargetingEnabled,
 }: IActivityTimelineProps) {
   return (
     <>
@@ -22,9 +22,9 @@ export default function ActivityTimeline({
         <h2 className="text-lg font-bold text-slate-700">Actions Timeline</h2>
       </div>
 
-      {!isActionTimelineEnabled ? (
+      {!isUserTargetingEnabled ? (
         <UpgradePlanNotice
-          message="Upgrade to the User Identification plan to store action history."
+          message="Upgrade to the User Targeting plan to store action history."
           textForUrl="Upgrade now."
           url={`/environments/${environment.id}/settings/billing`}
         />
