@@ -30,6 +30,8 @@ export const getEnvironment = async (environmentId: string): Promise<TEnvironmen
     async () => {
       validateInputs([environmentId, ZId]);
 
+      console.log("CALLING WITHOUT CACHE!!!");
+
       try {
         const environment = await prisma.environment.findUnique({
           where: {
