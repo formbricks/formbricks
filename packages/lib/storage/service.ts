@@ -43,7 +43,7 @@ export const getS3Client = () => {
     s3ClientInstance = new S3Client({
       credentials,
       region: S3_REGION,
-      endpoint: S3_ENDPOINT_URL,
+      ...(S3_ENDPOINT_URL && { endpoint: S3_ENDPOINT_URL }),
     });
   }
 

@@ -67,7 +67,7 @@ export const TemplateList = ({
 
   const addSurvey = async (activeTemplate) => {
     setLoading(true);
-    const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
+    const surveyType = environment?.widgetSetupCompleted ? "app" : "link";
     const augmentedTemplate: TSurveyInput = {
       ...activeTemplate.preset,
       type: surveyType,

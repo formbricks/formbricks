@@ -67,7 +67,7 @@ export async function PUT(request: Request, { params }: { params: { surveyId: st
         transformErrorToDetails(inputValidation.error)
       );
     }
-    return responses.successResponse(await updateSurvey(inputValidation.data));
+    return responses.successResponse(await updateSurvey({ ...inputValidation.data, id: params.surveyId }));
   } catch (error) {
     return handleErrorResponse(error);
   }
