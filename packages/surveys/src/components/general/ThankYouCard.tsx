@@ -37,35 +37,31 @@ export const ThankYouCard = ({
   isResponseSendingFinished,
   isInIframe,
 }: ThankYouCardProps) => {
+  const media = imageUrl || videoUrl ? <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} /> : null;
+  const checkmark = (
+    <div className="text-brand flex flex-col items-center justify-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+        class="h-24 w-24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+      <span className="bg-brand mb-[10px] inline-block h-1 w-16 rounded-[100%]"></span>
+    </div>
+  );
+
   return (
     <div className="text-center">
-      {imageUrl || videoUrl ? (
-        <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} />
-      ) : !isResponseSendingFinished ? (
-        <LoadingSpinner />
-      ) : (
-        <div>
-          <div className="text-brand flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="h-24 w-24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          <span className="bg-brand mb-[10px] inline-block h-1 w-16 rounded-[100%]"></span>
-        </div>
-      )}
-
-      {isResponseSendingFinished ? (
-        <div>
+      {!isResponseSendingFinished ? (
+        <>
+          {media || checkmark}
           <Headline
             alignTextCenter={true}
             headline={replaceRecallInfo(getLocalizedValue(headline, languageCode))}
@@ -76,7 +72,7 @@ export const ThankYouCard = ({
             questionId="thankYouCard"
           />
           <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
-          {buttonLabel && isResponseSendingFinished && (
+          {buttonLabel && (
             <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
               <Button
                 buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
@@ -87,12 +83,17 @@ export const ThankYouCard = ({
                   window.location.replace(buttonLink);
                 }}
               />
-              <p class="text-subheading text-xs">Press Enter ↵</p>
+              <p className="text-subheading text-xs">Press Enter ↵</p>
             </div>
           )}
-        </div>
+        </>
       ) : (
-        <h1>sending responses, please wait for a while</h1>
+        <>
+          <div className="my-3">
+            <LoadingSpinner />
+          </div>
+          <h1 className="text-brand">Sending responses...</h1>
+        </>
       )}
     </div>
   );
