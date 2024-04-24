@@ -5,15 +5,6 @@ import { h, render } from "preact";
 
 import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
 
-declare global {
-  interface Window {
-    formbricksSurveys: {
-      renderSurveyInline: (props: SurveyInlineProps) => void;
-      renderSurveyModal: (props: SurveyModalProps) => void;
-    };
-  }
-}
-
 export const renderSurveyInline = (props: SurveyInlineProps) => {
   addStylesToDom();
   addCustomThemeToDom({ styling: props.styling });
