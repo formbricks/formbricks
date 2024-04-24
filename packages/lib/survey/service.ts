@@ -418,7 +418,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, environmentId, segment, languages, type, ...surveyData } = updatedSurvey;
+    const { triggers, environmentId, segment, questions, languages, type, ...surveyData } = updatedSurvey;
 
     if (languages) {
       // Process languages update logic here
@@ -471,7 +471,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     if (triggers) {
       data.triggers = processTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
     }
-
     // if the survey body has type other than "app" but has a private segment, we delete that segment, and if it has a public segment, we disconnect from to the survey
     if (segment) {
       if (type === "app") {
@@ -509,6 +508,10 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
         environmentId: segment.environmentId,
       });
     }
+    data.questions = questions.map((question) => {
+      const { isDraft, ...rest } = question;
+      return rest;
+    });
 
     surveyData.updatedAt = new Date();
 
