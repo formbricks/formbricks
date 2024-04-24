@@ -7,6 +7,7 @@ interface ScrollableContainerProps {
 export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
   const [isOverflowHidden, setIsOverflowHidden] = useState(true);
   const [isAtBottom, setIsAtBottom] = useState(false);
+  const [isAtTop, setIsAtTop] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isSurveyPreview = !!document.getElementById("survey-preview");
@@ -14,7 +15,10 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
   const checkScroll = () => {
     if (!containerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+
     setIsAtBottom(Math.round(scrollTop) + clientHeight >= scrollHeight);
+
+    setIsAtTop(scrollTop === 0);
   };
 
   const toggleOverflow = (hide: boolean) => {
@@ -44,14 +48,17 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
   }, [children]);
 
   return (
-    <div className="rounded-t-custom relative overflow-hidden">
+    <div className="relative pt-6">
+      {!isAtTop && (
+        <div className="from-survey-bg absolute left-0 right-2 top-6 z-10 h-4 bg-gradient-to-b to-transparent"></div>
+      )}
       <div
         ref={containerRef}
         style={{
           scrollbarGutter: "stable",
           maxHeight: isSurveyPreview ? "40vh" : "60vh",
         }}
-        className={`overflow-${isOverflowHidden ? "hidden" : "auto"} rounded-t-custom pl-6 pr-4 pt-6`}
+        className={`overflow-${isOverflowHidden ? "hidden" : "auto"} pb-1 pl-6 pr-4`}
         onMouseEnter={() => toggleOverflow(false)}
         onTouchStart={() => toggleOverflow(false)}
         onTouchEnd={() => toggleOverflow(true)}

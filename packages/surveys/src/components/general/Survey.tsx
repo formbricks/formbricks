@@ -344,7 +344,7 @@ export const Survey = ({
               getCardContent()
             )}
           </div>
-          <div className="m-6">
+          <div className="mx-6 mb-6 mt-2 space-y-3 md:mt-6">
             {isBrandingEnabled && <FormbricksBranding />}
             {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
           </div>

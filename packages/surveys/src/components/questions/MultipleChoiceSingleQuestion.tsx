@@ -97,9 +97,9 @@ export const MultipleChoiceSingleQuestion = ({
         onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}
       className="w-full">
-      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <ScrollableContainer>
         <div>
+          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}

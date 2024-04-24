@@ -260,13 +260,13 @@ export const PreviewSurvey = ({
                   />
                 </Modal>
               ) : (
-                <div className="h-full w-full">
+                <div className="flex h-full w-full flex-col justify-end">
                   <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && product.logo?.url && (
                       <ClientLogo environmentId={environment.id} product={product} previewSurvey />
                     )}
                   </div>
-                  <div className="no-scrollbar z-10 w-full max-w-md rounded-lg border border-transparent">
+                  <div className="no-scrollbar z-10 w-full border border-transparent">
                     <SurveyInline
                       survey={survey}
                       isBrandingEnabled={product.linkSurveyBranding}
