@@ -243,7 +243,6 @@ export const Survey = ({
     if (history?.length > 0) {
       const newHistory = [...history];
       prevQuestionId = newHistory.pop();
-      if (prevQuestionId === survey.questions[0].id) return;
       setHistory(newHistory);
     } else {
       // otherwise go back to previous question in array
@@ -303,11 +302,7 @@ export const Survey = ({
             ttc={ttc}
             setTtc={setTtc}
             onFileUpload={onFileUpload}
-            isFirstQuestion={
-              history
-                ? history[history.length - 1] === survey.questions[0].id
-                : currentQuestion.id === survey?.questions[0]?.id
-            }
+            isFirstQuestion={currentQuestion.id === survey?.questions[0]?.id}
             isLastQuestion={currentQuestion.id === survey.questions[survey.questions.length - 1].id}
             languageCode={languageCode}
             isInIframe={isInIframe}
