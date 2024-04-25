@@ -2,12 +2,18 @@ import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
 
 import { prisma } from "@formbricks/database";
+import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "@formbricks/email";
 import { CRON_SECRET } from "@formbricks/lib/constants";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { convertResponseValue } from "@formbricks/lib/responses";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
-
-import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
-import { EnvironmentData, NotificationResponse, ProductData, Survey, SurveyResponse } from "./types";
+import {
+  TWeeklySummaryEnvironmentData,
+  TWeeklySummaryNotificationDataSurvey,
+  TWeeklySummaryNotificationResponse,
+  TWeeklySummaryProductData,
+  TWeeklySummarySurveyResponseData,
+} from "@formbricks/types/weeklySummary";
 
 const BATCH_SIZE = 500;
 
@@ -73,7 +79,7 @@ const getTeamIds = async (): Promise<string[]> => {
   return teams.map((team) => team.id);
 };
 
-const getProductsByTeamId = async (teamId: string): Promise<ProductData[]> => {
+const getProductsByTeamId = async (teamId: string): Promise<TWeeklySummaryProductData[]> => {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -164,7 +170,10 @@ const getProductsByTeamId = async (teamId: string): Promise<ProductData[]> => {
   });
 };
 
-const getNotificationResponse = (environment: EnvironmentData, productName: string): NotificationResponse => {
+const getNotificationResponse = (
+  environment: TWeeklySummaryEnvironmentData,
+  productName: string
+): TWeeklySummaryNotificationResponse => {
   const insights = {
     totalCompletedResponses: 0,
     totalDisplays: 0,
@@ -173,11 +182,11 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
     numLiveSurvey: 0,
   };
 
-  const surveys: Survey[] = [];
+  const surveys: TWeeklySummaryNotificationDataSurvey[] = [];
   // iterate through the surveys and calculate the overall insights
   for (const survey of environment.surveys) {
     const parsedSurvey = checkForRecallInHeadline(survey, "default");
-    const surveyData: Survey = {
+    const surveyData: TWeeklySummaryNotificationDataSurvey = {
       id: parsedSurvey.id,
       name: parsedSurvey.name,
       status: parsedSurvey.status,
@@ -187,19 +196,21 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
     // iterate through the responses and calculate the survey insights
     for (const response of parsedSurvey.responses) {
       // only take the first 3 responses
-      if (surveyData.responses.length >= 1) {
+      if (surveyData.responses.length >= 3) {
         break;
       }
-      const surveyResponse: SurveyResponse = {};
+      const surveyResponses: TWeeklySummarySurveyResponseData[] = [];
       for (const question of parsedSurvey.questions) {
         const headline = question.headline;
-        const answer = response.data[question.id]?.toString() || null;
-        if (answer === null || answer === "" || answer?.length === 0) {
-          continue;
-        }
-        surveyResponse[getLocalizedValue(headline, "default")] = answer;
+        const responseValue = convertResponseValue(response.data[question.id], question);
+        const surveyResponse: TWeeklySummarySurveyResponseData = {
+          headline: getLocalizedValue(headline, "default"),
+          responseValue,
+          questionType: question.type,
+        };
+        surveyResponses.push(surveyResponse);
       }
-      surveyData.responses.push(surveyResponse);
+      surveyData.responses = surveyResponses;
     }
     surveys.push(surveyData);
     // calculate the overall insights
