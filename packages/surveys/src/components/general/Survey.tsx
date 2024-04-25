@@ -342,14 +342,14 @@ export const Survey = ({
       <AutoCloseWrapper survey={survey} onClose={onClose}>
         <div
           className={cn(
-            "no-scrollbar rounded-custom bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden px-6 pb-3 pt-6 transition-all duration-500 ease-in-out",
+            "no-scrollbar md:rounded-custom rounded-t-custo bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-500 ease-in-out",
             isCardBorderVisible ? "border-survey-border border" : "",
             survey.type === "link" ? "fb-survey-shadow" : ""
           )}>
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {content()}
           </div>
-          <div className="mt-4">
+          <div className="mx-6 mb-6 mt-2 space-y-3 md:mt-6">
             {isBrandingEnabled && <FormbricksBranding />}
             {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
           </div>

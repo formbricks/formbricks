@@ -208,7 +208,7 @@ export const PreviewSurvey = ({
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-items-center">
+    <div className="flex h-full w-full flex-col items-center justify-items-center" id="survey-preview">
       <motion.div
         variants={previewParentContainerVariant}
         className="fixed hidden h-[95%] w-5/6"
@@ -260,7 +260,7 @@ export const PreviewSurvey = ({
                   />
                 </Modal>
               ) : (
-                <div className="w-full px-3">
+                <div className="flex h-full w-full flex-col justify-end">
                   <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && product.logo?.url && (
                       <ClientLogo environmentId={environment.id} product={product} previewSurvey />

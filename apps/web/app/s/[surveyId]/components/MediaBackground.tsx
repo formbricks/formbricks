@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import { TProduct } from "@formbricks/types/product";
@@ -24,6 +25,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
 }) => {
   const animatedBackgroundRef = useRef<HTMLVideoElement>(null);
   const [backgroundLoaded, setBackgroundLoaded] = useState(false);
+  const [authorDetailsForUnsplash, setAuthorDetailsForUnsplash] = useState({ authorName: "", authorURL: "" });
 
   // get the background from either the survey or the product styling
   const background = useMemo(() => {
@@ -55,7 +57,18 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
 
       // Cleanup
       return () => video.removeEventListener("canplaythrough", onCanPlayThrough);
-    } else if (background?.bgType === "image" && background?.bg) {
+    } else if ((background?.bgType === "image" || background?.bgType === "upload") && background?.bg) {
+      if (background?.bgType === "image") {
+        // To not set for Default Images as they have relative URL & are not from Unsplash
+        if (!background?.bg.startsWith("/")) {
+          setAuthorDetailsForUnsplash({
+            authorName: new URL(background?.bg!).searchParams.get("authorName") || "",
+            authorURL: new URL(background?.bg!).searchParams.get("authorLink") || "",
+          });
+        } else {
+          setAuthorDetailsForUnsplash({ authorName: "", authorURL: "" });
+        }
+      }
       // For images, we create a new Image object to listen for the 'load' event
       const img = new Image();
       img.onload = () => setBackgroundLoaded(true);
@@ -99,9 +112,39 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
         );
       case "image":
         return (
+          <>
+            <div
+              className={`${baseClasses} ${loadedClass} bg-cover bg-center`}
+              style={{ backgroundImage: `url(${background?.bg})`, filter: `${filterStyle}` }}></div>
+            <div className={`absolute bottom-6 z-10 h-12 w-full lg:bottom-0`}>
+              <div className="mx-auto max-w-full p-3 text-center text-xs text-slate-400 lg:text-right">
+                {authorDetailsForUnsplash.authorName && (
+                  <div className="ml-auto w-max">
+                    <span>Photo by </span>
+                    <Link
+                      href={authorDetailsForUnsplash.authorURL + "?utm_source=formbricks&utm_medium=referral"}
+                      target="_blank"
+                      className="hover:underline">
+                      {authorDetailsForUnsplash.authorName}
+                    </Link>
+                    <span> on </span>
+                    <Link
+                      href="https://unsplash.com/?utm_source=formbricks&utm_medium=referral"
+                      target="_blank"
+                      className="hover:underline">
+                      Unsplash
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        );
+      case "upload":
+        return (
           <div
             className={`${baseClasses} ${loadedClass} bg-cover bg-center`}
-            style={{ backgroundImage: `url(${background?.bg})`, filter: `${filterStyle}` }}
+            style={{ backgroundImage: `url(${survey.styling?.background?.bg})`, filter: `${filterStyle}` }}
           />
         );
       default:

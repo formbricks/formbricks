@@ -24,9 +24,10 @@ type ThemeStylingProps = {
   product: TProduct;
   environmentId: string;
   colors: string[];
+  isUnsplashConfigured: boolean;
 };
 
-export const ThemeStyling = ({ product, environmentId, colors }: ThemeStylingProps) => {
+export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigured }: ThemeStylingProps) => {
   const router = useRouter();
   const [localProduct, setLocalProduct] = useState(product);
   const [previewSurveyType, setPreviewSurveyType] = useState<TSurveyType>("link");
@@ -211,6 +212,7 @@ export const ThemeStyling = ({ product, environmentId, colors }: ThemeStylingPro
               colors={colors}
               key={styling.background?.bg}
               hideCheckmark
+              isUnsplashConfigured={isUnsplashConfigured}
             />
           </div>
         </div>

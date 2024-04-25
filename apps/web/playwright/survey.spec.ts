@@ -187,6 +187,8 @@ test.describe("Survey Create & Submit Response", async () => {
     await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder).fill("This is my Address");
     await page.getByRole("button", { name: "Finish" }).click();
 
+    await page.waitForTimeout(500);
+
     // Thank You Card
     await expect(page.getByText(surveys.createAndSubmit.thankYouCard.headline)).toBeVisible();
     await expect(page.getByText(surveys.createAndSubmit.thankYouCard.description)).toBeVisible();

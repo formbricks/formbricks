@@ -11,7 +11,6 @@ declare global {
     selectedDate: Date;
   }
 }
-
 const addStylesToDom = () => {
   if (document.getElementById("formbricks__question_date_css") === null) {
     const styleElement = document.createElement("style");
