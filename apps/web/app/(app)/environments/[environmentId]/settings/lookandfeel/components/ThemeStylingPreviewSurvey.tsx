@@ -6,7 +6,7 @@ import { Variants, motion } from "framer-motion";
 import { useRef, useState } from "react";
 
 import type { TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
 import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
 import { SurveyInline } from "@formbricks/ui/Survey";
@@ -15,8 +15,8 @@ interface ThemeStylingPreviewSurveyProps {
   survey: TSurvey;
   setQuestionId: (_: string) => void;
   product: TProduct;
-  previewType: "link" | "web";
-  setPreviewType: (type: "link" | "web") => void;
+  previewType: TSurveyType;
+  setPreviewType: (type: TSurveyType) => void;
 }
 
 const previewParentContainerVariant: Variants = {
@@ -111,6 +111,8 @@ export const ThemeStylingPreviewSurvey = ({
 
   const onFileUpload = async (file: File) => file.name;
 
+  const isAppSurvey = previewType === "app" || previewType === "website";
+
   return (
     <div className="flex h-full w-full flex-col items-center justify-items-center">
       <motion.div
@@ -137,7 +139,7 @@ export const ThemeStylingPreviewSurvey = ({
               <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
             </div>
             <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-              <p>{previewType === "web" ? "Your web app" : "Preview"}</p>
+              <p>{isAppSurvey ? "Your web app" : "Preview"}</p>
 
               <div className="flex items-center">
                 <ResetProgressButton onClick={resetQuestionProgress} />
@@ -145,7 +147,7 @@ export const ThemeStylingPreviewSurvey = ({
             </div>
           </div>
 
-          {previewType === "web" ? (
+          {isAppSurvey ? (
             <Modal
               isOpen
               placement={placement}
@@ -204,9 +206,9 @@ export const ThemeStylingPreviewSurvey = ({
         </div>
 
         <div
-          className={`${previewType === "web" ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
-          onClick={() => setPreviewType("web")}>
-          In-App survey
+          className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
+          onClick={() => setPreviewType("app")}>
+          App survey
         </div>
       </div>
     </div>

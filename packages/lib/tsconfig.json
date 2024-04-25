@@ -1,7 +1,7 @@
 {
   "extends": "@formbricks/tsconfig/nextjs.json",
   "include": ["."],
-  "exclude": ["dist", "build", "node_modules"],
+  "exclude": ["dist", "build", "node_modules", "../../packages/types/surveys.d.ts"],
   "compilerOptions": {
     "downlevelIteration": true,
     "baseUrl": ".",

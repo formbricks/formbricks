@@ -64,7 +64,7 @@ export const finishOnboarding = async (page: Page, deleteExampleSurvey: boolean 
   await expect(page.getByText("My Product")).toBeVisible();
 
   let currentDir = process.cwd();
-  let htmlFilePath = currentDir + "/packages/js-core/index.html";
+  let htmlFilePath = currentDir + "/packages/js/index.html";
 
   const environmentId =
     /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
@@ -75,8 +75,8 @@ export const finishOnboarding = async (page: Page, deleteExampleSurvey: boolean 
   let htmlFile = replaceEnvironmentIdInHtml(htmlFilePath, environmentId);
   await page.goto(htmlFile);
 
-  // Formbricks In App Sync has happened
-  const syncApi = await page.waitForResponse((response) => response.url().includes("/in-app/sync"));
+  // Formbricks Website Sync has happened
+  const syncApi = await page.waitForResponse((response) => response.url().includes("/website/sync"));
   expect(syncApi.status()).toBe(200);
 
   await page.goto("/");
@@ -96,7 +96,7 @@ export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: stri
   let htmlContent = readFileSync(filePath, "utf-8");
   htmlContent = htmlContent.replace(/environmentId: ".*?"/, `environmentId: "${environmentId}"`);
 
-  writeFileSync(filePath, htmlContent);
+  writeFileSync(filePath, htmlContent, { mode: 1 });
   return "file:///" + filePath;
 };
 
@@ -275,6 +275,6 @@ export const createSurvey = async (
 
   // Thank You Card
   await page.getByText("Thank You CardShown").click();
-  await page.getByLabel("Question").fill(params.thankYouCard.headline);
+  await page.getByLabel("Headline").fill(params.thankYouCard.headline);
   await page.getByLabel("Description").fill(params.thankYouCard.description);
 };

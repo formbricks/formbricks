@@ -10,7 +10,6 @@ import { SurveyMenuBar } from "@/app/(app)/environments/[environmentId]/surveys/
 import { PreviewSurvey } from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurvey";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
@@ -35,6 +34,7 @@ interface SurveyEditorProps {
   isUserTargetingAllowed?: boolean;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
+  isUnsplashConfigured: boolean;
 }
 
 export default function SurveyEditor({
@@ -50,6 +50,7 @@ export default function SurveyEditor({
   isMultiLanguageAllowed,
   isUserTargetingAllowed = false,
   isFormbricksCloud,
+  isUnsplashConfigured,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -61,8 +62,6 @@ export default function SurveyEditor({
 
   const [styling, setStyling] = useState(localSurvey?.styling);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
-
-  const createdSegmentRef = useRef(false);
 
   const fetchLatestProduct = useCallback(async () => {
     const latestProduct = await refetchProduct(localProduct.id);
@@ -113,39 +112,6 @@ export default function SurveyEditor({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type, survey?.questions]);
-
-  const handleCreateSegment = async () => {
-    if (!localSurvey) return;
-
-    try {
-      const createdSegment = await createSegmentAction({
-        title: localSurvey.id,
-        description: "",
-        environmentId: environment.id,
-        surveyId: localSurvey.id,
-        filters: [],
-        isPrivate: true,
-      });
-
-      const localSurveyClone = structuredClone(localSurvey);
-      localSurveyClone.segment = createdSegment;
-      setLocalSurvey(localSurveyClone);
-    } catch (err) {
-      // set the ref to false to retry during the next render
-      createdSegmentRef.current = false;
-    }
-  };
-
-  useEffect(() => {
-    if (!localSurvey || localSurvey.type !== "web" || !!localSurvey.segment || createdSegmentRef.current) {
-      return;
-    }
-
-    createdSegmentRef.current = true;
-    handleCreateSegment();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSurvey]);
 
   useEffect(() => {
     if (!localSurvey?.languages) return;
@@ -210,6 +176,7 @@ export default function SurveyEditor({
                 setStyling={setStyling}
                 localStylingChanges={localStylingChanges}
                 setLocalStylingChanges={setLocalStylingChanges}
+                isUnsplashConfigured={isUnsplashConfigured}
               />
             )}
 
@@ -235,7 +202,9 @@ export default function SurveyEditor({
               questionId={activeQuestionId}
               product={localProduct}
               environment={environment}
-              previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
+              previewType={
+                localSurvey.type === "app" || localSurvey.type === "website" ? "modal" : "fullwidth"
+              }
               languageCode={selectedLanguageCode}
               onFileUpload={async (file) => file.name}
             />

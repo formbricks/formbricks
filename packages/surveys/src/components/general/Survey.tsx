@@ -333,7 +333,7 @@ export const Survey = ({
       <AutoCloseWrapper survey={survey} onClose={onClose}>
         <div
           className={cn(
-            "no-scrollbar rounded-custom bg-survey-bg flex h-full w-full flex-col justify-between px-6 pb-3 pt-6",
+            "no-scrollbar md:rounded-custom bg-survey-bg rounded-t-custom flex h-full w-full flex-col justify-between  rounded-b-none px-6 py-6 md:pb-3 md:pt-6",
             isCardBorderVisible ? "border-survey-border border" : "",
             survey.type === "link" ? "fb-survey-shadow" : ""
           )}>

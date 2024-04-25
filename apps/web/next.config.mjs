@@ -53,7 +53,23 @@ const nextConfig = {
         protocol: "https",
         hostname: "formbricks-cdn.s3.eu-central-1.amazonaws.com",
       },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
     ],
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/api/v1/client/:environmentId/in-app/sync",
+        destination: "/api/v1/client/:environmentId/website/sync",
+      },
+      {
+        source: "/api/v1/client/:environmentId/in-app/sync/:userId",
+        destination: "/api/v1/client/:environmentId/app/sync/:userId",
+      },
+    ];
   },
   async redirects() {
     return [

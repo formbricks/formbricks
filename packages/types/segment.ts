@@ -275,6 +275,7 @@ export type TBaseFilter = {
   connector: TSegmentConnector;
   resource: TSegmentFilter | TBaseFilters;
 };
+
 export type TBaseFilters = TBaseFilter[];
 
 // here again, we refine the filters to make sure that the filters are valid
@@ -301,15 +302,15 @@ const refineFilters = (filters: TBaseFilters): boolean => {
 // The filters can be nested, so we need to use z.lazy to define the type
 // more on recusrsive types -> https://zod.dev/?id=recursive-types
 
+// TODO: Figure out why this is not working, and then remove the ts-ignore
+// @ts-ignore
 export const ZSegmentFilters: z.ZodType<TBaseFilters> = z
-  .lazy(() =>
-    z.array(
-      z.object({
-        id: z.string().cuid2(),
-        connector: ZSegmentConnector,
-        resource: z.union([ZSegmentFilter, ZSegmentFilters]),
-      })
-    )
+  .array(
+    z.object({
+      id: z.string().cuid2(),
+      connector: ZSegmentConnector,
+      resource: z.union([ZSegmentFilter, z.lazy(() => ZSegmentFilters)]),
+    })
   )
   .refine(refineFilters, {
     message: "Invalid filters applied",

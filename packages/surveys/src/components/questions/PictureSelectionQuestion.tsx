@@ -125,7 +125,7 @@ export const PictureSelectionQuestion = ({
                   Array.isArray(value) && value.includes(choice.id)
                     ? `border-brand text-brand z-10 border-4 shadow-xl`
                     : "",
-                  "focus:border-brand relative inline-block h-28 w-full cursor-pointer overflow-hidden rounded-xl border focus:border-4 focus:outline-none"
+                  "focus:border-brand group/image relative inline-block h-28 w-full cursor-pointer overflow-hidden rounded-xl border focus:border-4 focus:outline-none"
                 )}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
