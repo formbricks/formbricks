@@ -27,6 +27,7 @@ import { TSurveySummary } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL, WEBAPP_URL } from "../constants";
+import { displayCache } from "../display/cache";
 import { deleteDisplayByResponseId, getDisplayCountBySurveyId } from "../display/service";
 import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
 import {
@@ -646,7 +647,7 @@ export const getSurveySummary = (
     },
     [`getSurveySummary-${surveyId}-${JSON.stringify(filterCriteria)}`],
     {
-      tags: [responseCache.tag.bySurveyId(surveyId)],
+      tags: [responseCache.tag.bySurveyId(surveyId), displayCache.tag.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

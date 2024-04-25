@@ -4,7 +4,7 @@ export const FormbricksBranding = () => {
       href="https://formbricks.com?utm_source=survey_branding"
       target="_blank"
       tabIndex={-1}
-      className="mb-5 mt-2 flex justify-center">
+      className="my-2 flex justify-center">
       <p className="text-signature text-xs">
         Powered by{" "}
         <b>

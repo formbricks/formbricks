@@ -210,6 +210,11 @@ const nextConfig = {
         destination: "/blog",
         permanent: true,
       },
+      {
+        source: '/docs/api/:slug*',
+        destination: '/docs/additional-features/api',
+        permanent: false,
+      }
     ];
   },
 };

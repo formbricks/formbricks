@@ -275,6 +275,6 @@ export const createSurvey = async (
 
   // Thank You Card
   await page.getByText("Thank You CardShown").click();
-  await page.getByLabel("Question").fill(params.thankYouCard.headline);
+  await page.getByLabel("Headline").fill(params.thankYouCard.headline);
   await page.getByLabel("Description").fill(params.thankYouCard.description);
 };

@@ -5,6 +5,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 
@@ -45,10 +46,15 @@ export default function UpdateQuestionId({
     }
   };
 
+  const isButtonDisabled = () => {
+    if (currentValue === question.id || currentValue.trim() === "") return true;
+    else return false;
+  };
+
   return (
     <div>
       <Label htmlFor="questionId">Question ID</Label>
-      <div className="mt-2 inline-flex w-full">
+      <div className="mt-2 inline-flex w-full space-x-2">
         <Input
           id="questionId"
           name="questionId"
@@ -56,10 +62,12 @@ export default function UpdateQuestionId({
           onChange={(e) => {
             setCurrentValue(e.target.value);
           }}
-          onBlur={saveAction}
-          disabled={!(localSurvey.status === "draft" || question.isDraft)}
-          className={isInputInvalid ? "border-red-300 focus:border-red-300" : ""}
+          disabled={localSurvey.status !== "draft" && !question.isDraft}
+          className={`h-10 ${isInputInvalid ? "border-red-300 focus:border-red-300" : ""}`}
         />
+        <Button variant="darkCTA" size="sm" onClick={saveAction} disabled={isButtonDisabled()}>
+          Save
+        </Button>
       </div>
     </div>
   );
