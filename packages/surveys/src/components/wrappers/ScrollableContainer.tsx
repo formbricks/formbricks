@@ -56,7 +56,7 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
         ref={containerRef}
         style={{
           scrollbarGutter: "stable",
-          maxHeight: isSurveyPreview ? "40vh" : "60vh",
+          maxHeight: isSurveyPreview ? "41vh" : "60vh",
         }}
         className={`overflow-${isOverflowHidden ? "hidden" : "auto"} pb-1 pl-6 pr-4`}
         onMouseEnter={() => toggleOverflow(false)}

@@ -12,7 +12,7 @@ type ResponseErrorComponentProps = {
 
 export const ResponseErrorComponent = ({ questions, responseData, onRetry }: ResponseErrorComponentProps) => {
   return (
-    <div className={"flex flex-col bg-white"}>
+    <div className={"flex flex-col bg-white p-4"}>
       <span className={"mb-1.5 text-base font-bold leading-6 text-slate-900"}>
         {"Your feedback is stuck :("}
       </span>
