@@ -38,7 +38,7 @@ export const StackedCardsContainer = ({
     return survey.questions.findIndex((question) => question.id === currentQuestionId);
   }, [currentQuestionId, survey.welcomeCard.enabled, survey.thankYouCard.enabled]);
 
-  const getTransformClasses = (offset: number) => {
+  const calculateCardTransform = (offset: number) => {
     switch (cardArrangement) {
       case "casual":
         return offset < 0 ? `translateX(100vw)` : `translateX(0) rotate(-${(hovered ? 4 : 2) * offset}deg)`;
@@ -70,7 +70,7 @@ export const StackedCardsContainer = ({
               key={index}
               style={{
                 zIndex: 1000 - index,
-                transform: getTransformClasses(offset),
+                transform: calculateCardTransform(offset),
                 opacity: isHidden ? 0 : (100 - 30 * offset) / 100,
               }}
               className="absolute inset-0 top-0 rounded-xl border border-slate-200 bg-white backdrop-blur-md transition-all duration-1000 ease-in-out">
