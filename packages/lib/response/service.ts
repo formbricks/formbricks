@@ -71,9 +71,6 @@ export const responseSelection = {
     select: {
       id: true,
       userId: true,
-      createdAt: true,
-      updatedAt: true,
-      environmentId: true,
     },
   },
   tags: {
