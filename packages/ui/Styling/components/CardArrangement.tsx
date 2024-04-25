@@ -21,7 +21,7 @@ export const CardArrangement = ({
   disabled = false,
 }: CardArrangementProps) => {
   const surveyTypeDerived = useMemo(() => {
-    return surveyType == "link" ? "Link" : "In App";
+    return surveyType == "link" ? "Link" : "App / Website";
   }, [surveyType]);
   const cardArrangementTypes: TCardArrangementOptions[] = ["casual", "straight", "simple"];
 

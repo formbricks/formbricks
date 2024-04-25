@@ -1,6 +1,5 @@
 "use client";
 
-// import { motion } from "framer-motion";
 import { useMemo } from "preact/hooks";
 
 import { TCardArrangementOptions } from "@formbricks/types/styling";
@@ -27,79 +26,50 @@ export const StackedCardsContainer = ({
     if (survey.thankYouCard.enabled) {
       cardIndexTemp.push(survey.questions.length);
     }
-    console.log(cardIndexTemp);
     return cardIndexTemp;
   }, [survey]);
 
-  cardIndexes;
   const questionIdx = useMemo(() => {
-    if (currentQuestionId === "start") return -1;
-    else if (currentQuestionId === "end") return survey.questions.length;
+    if (currentQuestionId === "start" && survey.welcomeCard.enabled) return -1;
+    else if (currentQuestionId === "start" && !survey.welcomeCard.enabled) return 0;
+    else if (currentQuestionId === "end" && survey.thankYouCard.enabled) return survey.questions.length;
+    else if (currentQuestionId === "end" && !survey.thankYouCard.enabled) return 0;
     return survey.questions.findIndex((question) => question.id === currentQuestionId);
-  }, [currentQuestionId]);
-  console.log(questionIdx);
-  switch (cardArrangement) {
-    case "casual":
-      return (
-        <div className="group relative">
-          <div className="opacity-0">{getCardContent(questionIdx)}</div>
-          {questionIdx !== undefined &&
-            cardIndexes.map((_, idx) => {
-              const index = survey.welcomeCard.enabled ? idx - 1 : idx;
-              return (
-                <div
-                  id={`questionCard-${index}`}
-                  key={index}
-                  style={{ zIndex: 1000 - index }}
-                  className={`absolute inset-x-0 h-[${100 - 5 * (index - questionIdx)}%] w-[${100 - 2 * (index - questionIdx)}%] -rotate-${3 * (index - questionIdx)} rounded-xl border border-slate-200 bg-white opacity-${100 - 30 * (index - questionIdx)} top-0 backdrop-blur-md transition-all duration-1000 ease-in-out ${index - questionIdx < 0 ? "translate-x-[50rem] opacity-0" : `scale-100 opacity-${100 - 30 * (index - questionIdx)}`} inset-0`}>
-                  {getCardContent(index)}
-                </div>
-              );
-            })}
-        </div>
-      );
-    case "straight":
-      return (
-        <div className="group relative">
-          <div className="opacity-0">{getCardContent(questionIdx)}</div>
-          {questionIdx !== undefined &&
-            cardIndexes.map((_, idx) => {
-              const index = survey.welcomeCard.enabled ? idx - 1 : idx;
-              return (
-                <div
-                  id={`questionCard-${index}`}
-                  key={index}
-                  style={{
-                    zIndex: 1000 - index,
-                  }}
-                  className={`absolute w-full -translate-y-${3 * (index - questionIdx)} rounded-xl border border-slate-200 bg-white opacity-${100 - 30 * (index - questionIdx)} top-0 backdrop-blur-md transition-all duration-1000 ease-in-out ${index - questionIdx < 0 ? "translate-x-[50rem] opacity-0" : `scale-100 opacity-${100 - 30 * (index - questionIdx)}`} inset-y-0`}>
-                  {getCardContent(index)}
-                </div>
-              );
-            })}
-        </div>
-      );
+  }, [currentQuestionId, survey.welcomeCard.enabled, survey.thankYouCard.enabled]);
 
-    default:
-      return (
-        <div className="group relative">
-          <div className="opacity-0">{getCardContent(questionIdx)}</div>
-          {questionIdx !== undefined &&
-            cardIndexes.map((_, idx) => {
-              const index = survey.welcomeCard.enabled ? idx - 1 : idx;
-              return (
-                <div
-                  id={`questionCard-${index}`}
-                  key={index}
-                  style={{
-                    zIndex: 1000 - index,
-                  }}
-                  className={`absolute w-full rounded-xl border border-slate-200 bg-white opacity-${100 - 30 * (index - questionIdx)} top-0 backdrop-blur-md transition-all duration-1000 ease-in-out ${index - questionIdx < 0 ? "translate-x-[50rem] opacity-0" : `scale-100 opacity-${100 - 30 * (index - questionIdx)}`} inset-y-0`}>
-                  {getCardContent(index)}
-                </div>
-              );
-            })}
-        </div>
-      );
-  }
+  const getTransformClasses = (offset: number) => {
+    switch (cardArrangement) {
+      case "casual":
+        return offset < 0 ? `translateX(100vw)` : `translateX(0) rotate(-${3 * offset}deg)`;
+      case "straight":
+        return offset < 0 ? `translateX(100vw)` : `translateX(0) translateY(-${10 * offset}px)`;
+      default:
+        return offset < 0 ? `translateX(100vw)` : `translateX(0)`;
+    }
+  };
+
+  return (
+    <div className="group relative">
+      <div className="opacity-0">{getCardContent(questionIdx)}</div>
+      {questionIdx !== undefined &&
+        cardIndexes.map((_, idx) => {
+          const index = survey.welcomeCard.enabled ? idx - 1 : idx;
+          const offset = index - questionIdx;
+          const isHidden = offset < 0;
+          return (
+            <div
+              id={`questionCard-${index}`}
+              key={index}
+              style={{
+                zIndex: 1000 - index,
+                transform: getTransformClasses(offset),
+                opacity: isHidden ? 0 : (100 - 30 * offset) / 100,
+              }}
+              className="absolute inset-0 top-0 rounded-xl border border-slate-200 bg-white backdrop-blur-md transition-all duration-1000 ease-in-out">
+              {getCardContent(index)}
+            </div>
+          );
+        })}
+    </div>
+  );
 };

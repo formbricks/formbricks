@@ -13,7 +13,7 @@ export type TCardArrangementOptions = z.infer<typeof ZCardArrangementOptions>;
 
 export const ZCardArrangement = z.object({
   linkSurveys: ZCardArrangementOptions,
-  inAppSurveys: ZCardArrangementOptions,
+  appSurveys: ZCardArrangementOptions,
 });
 
 export const ZSurveyStylingBackground = z.object({

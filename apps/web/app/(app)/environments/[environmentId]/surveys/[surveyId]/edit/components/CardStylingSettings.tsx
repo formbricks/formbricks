@@ -46,7 +46,7 @@ const CardStylingSettings = ({
 
   const linkSurveyCardArrangement = styling?.cardArrangement?.linkSurveys ?? "casual";
 
-  const inAppSurveyCardArrangement = styling?.cardArrangement?.inAppSurveys ?? "casual";
+  const inAppSurveyCardArrangement = styling?.cardArrangement?.appSurveys ?? "casual";
 
   const setCardBgColor = (color: string) => {
     setStyling((prev) => ({
@@ -122,7 +122,7 @@ const CardStylingSettings = ({
     if (surveyType === "link") {
       const newCardArrangement = {
         linkSurveys: arrangement,
-        inAppSurveys: inAppSurveyCardArrangement,
+        appSurveys: inAppSurveyCardArrangement,
       };
       setStyling((prev) => ({
         ...prev,
@@ -131,7 +131,7 @@ const CardStylingSettings = ({
     }
     if (surveyType === "app" || surveyType === "website") {
       const newCardArrangement = {
-        inAppSurveys: arrangement,
+        appSurveys: arrangement,
         linkSurveys: linkSurveyCardArrangement,
       };
       setStyling((prev) => ({
@@ -233,7 +233,7 @@ const CardStylingSettings = ({
           />
 
           <CardArrangement
-            surveyType={"web"}
+            surveyType={"app"}
             activeCardArrangement={inAppSurveyCardArrangement}
             setActiveCardArrangement={setCardArrangement}
           />

@@ -98,7 +98,7 @@ export const ThemeStyling = ({ product, environmentId, colors }: ThemeStylingPro
         roundness: 8,
         cardArrangement: {
           linkSurveys: "simple",
-          inAppSurveys: "simple",
+          appSurveys: "simple",
         },
       },
     });
@@ -131,7 +131,7 @@ export const ThemeStyling = ({ product, environmentId, colors }: ThemeStylingPro
       roundness: 8,
       cardArrangement: {
         linkSurveys: "simple",
-        inAppSurveys: "simple",
+        appSurveys: "simple",
       },
     });
 

@@ -56,9 +56,9 @@ export const Survey = ({
     if (survey.type === "link") {
       return styling.cardArrangement?.linkSurveys ?? "casual";
     } else {
-      return styling.cardArrangement?.inAppSurveys ?? "casual";
+      return styling.cardArrangement?.appSurveys ?? "casual";
     }
-  }, [survey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.inAppSurveys]);
+  }, [survey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.appSurveys]);
 
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = useMemo(() => {
