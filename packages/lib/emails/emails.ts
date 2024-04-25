@@ -188,7 +188,7 @@ export const sendResponseFinishedEmail = async (
   response: TResponse,
   responseCount: number
 ) => {
-  const personEmail = response.person?.attributes["email"];
+  const personEmail = response.personAttributes?.email;
   const team = await getTeamByEnvironmentId(environmentId);
   const product = await getProductByEnvironmentId(environmentId);
   if (!product) return;

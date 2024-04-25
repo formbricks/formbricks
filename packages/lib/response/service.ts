@@ -30,7 +30,7 @@ import { TTag } from "@formbricks/types/tags";
 import { getAttributes } from "../attribute/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL, WEBAPP_URL } from "../constants";
 import { deleteDisplayByResponseId, getDisplayCountBySurveyId } from "../display/service";
-import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
+import { createPerson, getPerson, getPersonByUserId } from "../person/service";
 import {
   buildWhereClause,
   calculateTtcTotal,
@@ -333,7 +333,7 @@ export const createResponseLegacy = async (responseInput: TResponseLegacyInput):
               id: responseInput.personId,
             },
           },
-          personAttributes: person,
+          personAttributes: attributes,
         }),
 
         ...(responseInput.meta && ({ meta: responseInput?.meta } as Prisma.JsonObject)),
