@@ -280,7 +280,6 @@ export const Survey = ({
     }
     const content = () => {
       if (questionIdx === -1) {
-        console.log("returing welcome card");
         return (
           <WelcomeCard
             headline={survey.welcomeCard.headline}

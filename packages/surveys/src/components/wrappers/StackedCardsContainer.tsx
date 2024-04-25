@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "preact/hooks";
+import { useMemo, useState } from "preact/hooks";
 
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -18,6 +18,7 @@ export const StackedCardsContainer = ({
   survey,
   getCardContent,
 }: StackedCardsContainerProps) => {
+  const [hovered, setHovered] = useState(false);
   const cardIndexes = useMemo(() => {
     let cardIndexTemp = survey.questions.map((_, index) => index);
     if (survey.welcomeCard.enabled) {
@@ -40,16 +41,23 @@ export const StackedCardsContainer = ({
   const getTransformClasses = (offset: number) => {
     switch (cardArrangement) {
       case "casual":
-        return offset < 0 ? `translateX(100vw)` : `translateX(0) rotate(-${3 * offset}deg)`;
+        return offset < 0 ? `translateX(100vw)` : `translateX(0) rotate(-${(hovered ? 4 : 2) * offset}deg)`;
       case "straight":
-        return offset < 0 ? `translateX(100vw)` : `translateX(0) translateY(-${10 * offset}px)`;
+        return offset < 0
+          ? `translateX(100vw)`
+          : `translateX(0) translateY(-${(hovered ? 12 : 10) * offset}px)`;
       default:
         return offset < 0 ? `translateX(100vw)` : `translateX(0)`;
     }
   };
 
   return (
-    <div className="group relative">
+    <div
+      className="group relative"
+      onMouseEnter={() => {
+        setHovered(true);
+      }}
+      onMouseLeave={() => setHovered(false)}>
       <div className="opacity-0">{getCardContent(questionIdx)}</div>
       {questionIdx !== undefined &&
         cardIndexes.map((_, idx) => {
