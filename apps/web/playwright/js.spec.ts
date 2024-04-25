@@ -117,7 +117,7 @@ test.describe("JS Package Test", async () => {
 
     // Survey should have 2 Displays
     await page.waitForTimeout(1000);
-    await expect(page.getByText("Displays2")).toBeVisible();
+    await expect(page.getByText("Impressions2")).toBeVisible();
 
     // Survey should have 1 Response
     await page.waitForTimeout(1000);
