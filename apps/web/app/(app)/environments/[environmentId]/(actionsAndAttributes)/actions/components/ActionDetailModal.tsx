@@ -13,6 +13,7 @@ interface ActionDetailModalProps {
   setOpen: (v: boolean) => void;
   actionClass: TActionClass;
   membershipRole?: TMembershipRole;
+  isUserTargetingEnabled: boolean;
 }
 
 export default function ActionDetailModal({
@@ -21,11 +22,18 @@ export default function ActionDetailModal({
   setOpen,
   actionClass,
   membershipRole,
+  isUserTargetingEnabled,
 }: ActionDetailModalProps) {
   const tabs = [
     {
       title: "Activity",
-      children: <EventActivityTab actionClass={actionClass} environmentId={environmentId} />,
+      children: (
+        <EventActivityTab
+          actionClass={actionClass}
+          environmentId={environmentId}
+          isUserTargetingEnabled={isUserTargetingEnabled}
+        />
+      ),
     },
     {
       title: "Settings",

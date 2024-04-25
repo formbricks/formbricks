@@ -1,7 +1,11 @@
+import CCPALogo from "@/images/ccpa.svg";
+import GPDRLogo from "@/images/gdpr.svg";
+import Image from "next/image";
 import Link from "next/link";
 import { FaDiscord, FaGithub, FaXTwitter } from "react-icons/fa6";
 
 import { FooterLogo } from "./Logo";
+import SourceForgeBadge from "./SourceForgeBadge";
 
 const navigation = {
   products: [
@@ -88,6 +92,11 @@ export default function Footer() {
                 <item.icon className="h-6 w-6" aria-hidden="true" />
               </Link>
             ))}
+          </div>
+          <div className="flex space-x-4">
+            <SourceForgeBadge />
+            <Image src={GPDRLogo} alt="GDPR Logo" width={50} />
+            <Image src={CCPALogo} alt="CCPA Logo" width={50} />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-8 lg:col-span-2 lg:grid-cols-4">

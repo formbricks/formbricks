@@ -109,6 +109,7 @@ export default function EditThankYouCard({
           <form>
             <QuestionFormInput
               id="headline"
+              label="Headline"
               value={localSurvey?.thankYouCard?.headline}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}

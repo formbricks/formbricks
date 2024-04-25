@@ -51,7 +51,6 @@ export const Survey = ({
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
   const [ttc, setTtc] = useState<TResponseTtc>({});
-
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = useMemo(() => {
     if (questionId === "end" && !survey.thankYouCard.enabled) {
@@ -323,7 +322,7 @@ export const Survey = ({
       <AutoCloseWrapper survey={survey} onClose={onClose}>
         <div
           className={cn(
-            "no-scrollbar rounded-custom bg-survey-bg flex h-full w-full flex-col justify-between px-6 pb-3 pt-6",
+            "no-scrollbar md:rounded-custom bg-survey-bg rounded-t-custom flex h-full w-full flex-col justify-between",
             isCardBorderVisible ? "border-survey-border border" : "",
             survey.type === "link" ? "fb-survey-shadow" : ""
           )}>
@@ -335,7 +334,7 @@ export const Survey = ({
               getCardContent()
             )}
           </div>
-          <div className="mt-4">
+          <div className="mx-6 mb-6 mt-2 space-y-3 md:mt-6">
             {isBrandingEnabled && <FormbricksBranding />}
             {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
           </div>
