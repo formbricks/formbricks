@@ -216,8 +216,8 @@ export const updateAttributes = async (personId: string, attributes: TAttributes
             },
           })
           .then(({ id }) => {
-            attributeClassCache.revalidate({ environmentId, name });
-            attributeCache.revalidate({ id, environmentId, personId, userId, name });
+            attributeClassCache.revalidate({ id, environmentId, name });
+            attributeCache.revalidate({ environmentId, personId, userId, name });
           })
       );
     }
