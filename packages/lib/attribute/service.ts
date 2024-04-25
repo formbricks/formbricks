@@ -161,6 +161,7 @@ export const updateAttributes = async (personId: string, attributes: TAttributes
   const attributeClassNames = Object.keys(attributes);
   const existingClasses = await prisma.attributeClass.findMany({
     where: {
+      environmentId,
       name: { in: attributeClassNames },
     },
   });
