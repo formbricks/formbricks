@@ -4,8 +4,8 @@ import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/s
 import { customAlphabet } from "nanoid";
 import { getServerSession } from "next-auth";
 
+import { sendEmbedSurveyPreviewEmail } from "@formbricks/email";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { sendEmbedSurveyPreviewEmail } from "@formbricks/lib/emails/emails";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
