@@ -153,7 +153,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   };
 
   const renderContent = () => (
-    <div className="no-scrollbar absolute flex h-full w-full items-center justify-center overflow-y-auto overflow-x-hidden">
+    <div className="no-scrollbar absolute flex h-full w-full items-center justify-center overflow-hidden">
       {children}
     </div>
   );
@@ -171,9 +171,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     );
   } else if (isEditorView) {
     return (
-      <div
-        ref={ContentRef}
-        className="flex flex-grow flex-col overflow-y-auto overflow-x-hidden rounded-b-lg">
+      <div ref={ContentRef} className="overflow-hiddem flex flex-grow flex-col rounded-b-lg">
         <div className="relative flex w-full flex-grow flex-col items-center justify-center p-4 py-6">
           {renderBackground()}
           <div className="flex h-full w-full items-center justify-center">{children}</div>

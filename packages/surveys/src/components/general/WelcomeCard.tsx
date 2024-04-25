@@ -114,7 +114,7 @@ export const WelcomeCard = ({
         </div>
       </ScrollableContainer>
 
-      <div className="mx-6 mt-4 flex w-full justify-between">
+      <div className="mx-6 mt-4 flex w-full justify-between py-4">
         <div className="flex w-full justify-start gap-4">
           <SubmitButton
             buttonLabel={getLocalizedValue(buttonLabel, languageCode)}

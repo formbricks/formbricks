@@ -342,7 +342,7 @@ export const Survey = ({
       <AutoCloseWrapper survey={survey} onClose={onClose}>
         <div
           className={cn(
-            "no-scrollbar md:rounded-custom rounded-t-custo bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-500 ease-in-out",
+            "no-scrollbar md:rounded-custom rounded-t-custom bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-500 ease-in-out",
             isCardBorderVisible ? "border-survey-border border" : "",
             survey.type === "link" ? "fb-survey-shadow" : ""
           )}>
@@ -359,13 +359,11 @@ export const Survey = ({
   };
 
   return (
-    <>
-      <StackedCardsContainer
-        cardArrangement={cardArrangement}
-        currentQuestionId={questionId}
-        getCardContent={getCardContent}
-        survey={survey}
-      />
-    </>
+    <StackedCardsContainer
+      cardArrangement={cardArrangement}
+      currentQuestionId={questionId}
+      getCardContent={getCardContent}
+      survey={survey}
+    />
   );
 };
