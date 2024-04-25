@@ -119,26 +119,21 @@ const CardStylingSettings = ({
   };
 
   const setCardArrangement = (arrangement: TCardArrangementOptions, surveyType: TSurveyType) => {
+    const newCardArrangement = {
+      linkSurveys: linkSurveyCardArrangement,
+      appSurveys: inAppSurveyCardArrangement,
+    };
+
     if (surveyType === "link") {
-      const newCardArrangement = {
-        linkSurveys: arrangement,
-        appSurveys: inAppSurveyCardArrangement,
-      };
-      setStyling((prev) => ({
-        ...prev,
-        cardArrangement: newCardArrangement,
-      }));
+      newCardArrangement.linkSurveys = arrangement;
+    } else if (surveyType === "app" || surveyType === "website") {
+      newCardArrangement.appSurveys = arrangement;
     }
-    if (surveyType === "app" || surveyType === "website") {
-      const newCardArrangement = {
-        appSurveys: arrangement,
-        linkSurveys: linkSurveyCardArrangement,
-      };
-      setStyling((prev) => ({
-        ...prev,
-        cardArrangement: newCardArrangement,
-      }));
-    }
+
+    setStyling((prev) => ({
+      ...prev,
+      cardArrangement: newCardArrangement,
+    }));
   };
 
   const toggleProgressBarVisibility = (hideProgressBar: boolean) => {
