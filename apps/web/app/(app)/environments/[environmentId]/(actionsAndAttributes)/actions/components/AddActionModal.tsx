@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
+import { testURLmatch } from "@formbricks/lib/utils/textUrlMatch";
 import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
@@ -15,8 +16,6 @@ import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
 import { TabBar } from "@formbricks/ui/TabBar";
-
-import { testURLmatch } from "../lib/testURLmatch";
 
 interface AddNoCodeActionModalProps {
   environmentId: string;

@@ -1,7 +1,7 @@
-import { MatchType } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/lib/testURLmatch";
 import { HelpCircleIcon } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 
+import { MatchType } from "@formbricks/lib/utils/textUrlMatch";
 import { TSurvey, TSurveyInlineTriggers } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Input } from "@formbricks/ui/Input";

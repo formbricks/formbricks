@@ -1,9 +1,12 @@
 "use client";
 
+import { createId } from "@paralleldrive/cuid2";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon, Terminal } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 
+import { MatchType, testURLmatch } from "@formbricks/lib/utils/textUrlMatch";
 import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TSurvey } from "@formbricks/types/surveys";
 
@@ -138,18 +141,44 @@ function isValidCssSelector(selector?: string) {
 interface CreateNewActionTabProps {
   actionClasses: TActionClass[];
   isViewer: boolean;
+  localSurvey: TSurvey;
+  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const CreateNewActionTab = ({ actionClasses, setOpen, isViewer }: CreateNewActionTabProps) => {
-  const { register, control, handleSubmit, watch, reset } = useForm();
+const CreateNewActionTab = ({
+  actionClasses,
+  setOpen,
+  isViewer,
+  localSurvey,
+  setLocalSurvey,
+}: CreateNewActionTabProps) => {
+  const { register, control, handleSubmit, watch, reset } = useForm<TActionClassInput>({
+    defaultValues: {
+      name: "",
+      description: "",
+      type: "noCode",
+      noCodeConfig: {
+        pageUrl: {
+          rule: "contains",
+          value: "",
+        },
+        cssSelector: {
+          value: "",
+        },
+        innerHtml: {
+          value: "",
+        },
+      },
+    },
+  });
+
   const [type, setType] = useState("noCode");
   const [visibility, setVisibility] = useState("public");
 
   const [isPageUrl, setIsPageUrl] = useState(false);
   const [isCssSelector, setIsCssSelector] = useState(false);
   const [isInnerHtml, setIsInnerText] = useState(false);
-  const [isCreatingAction, setIsCreatingAction] = useState(false);
   const [testUrl, setTestUrl] = useState("");
   const [isMatch, setIsMatch] = useState("");
   const actionClassNames = actionClasses.map((actionClass) => actionClass.name);
@@ -172,45 +201,48 @@ const CreateNewActionTab = ({ actionClasses, setOpen, isViewer }: CreateNewActio
   };
 
   const handleMatchClick = () => {
-    // const match = testURLmatch(
-    //   testUrl,
-    //   watch("noCodeConfig.[pageUrl].value"),
-    //   watch("noCodeConfig.[pageUrl].rule")
-    // );
-    // setIsMatch(match);
-    // if (match === "yes") toast.success("Your survey would be shown on this URL.");
-    // if (match === "no") toast.error("Your survey would not be shown.");
+    const match = testURLmatch(
+      testUrl,
+      watch("noCodeConfig.pageUrl.value"),
+      watch("noCodeConfig.pageUrl.rule") as MatchType
+    );
+
+    setIsMatch(match);
+    if (match === "yes") toast.success("Your survey would be shown on this URL.");
+    if (match === "no") toast.error("Your survey would not be shown.");
   };
 
   const submitHandler = (data: Partial<TActionClassInput>) => {
     const { noCodeConfig } = data;
     if (isViewer) {
-      throw new Error("You are not authorised to perform this action.");
+      return toast.error("You are not authorised to perform this action.");
     }
     if (!data.name || data.name?.trim() === "") {
-      throw new Error("Please give your action a name");
+      return toast.error("Please give your action a name");
     }
     if (data.name && actionClassNames.includes(data.name)) {
-      throw new Error(`Action with name ${data.name} already exist`);
+      return toast.error(`Action with name ${data.name} already exist`);
     }
     if (type === "noCode") {
       if (!isPageUrl && !isCssSelector && !isInnerHtml)
-        throw new Error("Please select at least one selector");
+        return toast.error("Please select at least one selector");
 
       if (isCssSelector && !isValidCssSelector(noCodeConfig?.cssSelector?.value)) {
-        throw new Error("Please enter a valid CSS Selector");
+        return toast.error("Please enter a valid CSS Selector");
       }
 
       if (isPageUrl && noCodeConfig?.pageUrl?.rule === undefined) {
-        throw new Error("Please select a rule for page URL");
+        return toast.error("Please select a rule for page URL");
       }
     }
 
-    const updatedAction: Partial<TActionClassInput> = {
+    const updatedAction: Partial<TActionClassInput> & { id: string; _isDraft: boolean } = {
+      id: createId(),
       name: data.name,
       description: data.description,
       type: type as TActionClass["type"],
       isPrivate: visibility === "private",
+      _isDraft: true,
     };
 
     if (type === "noCode") {
@@ -218,13 +250,13 @@ const CreateNewActionTab = ({ actionClasses, setOpen, isViewer }: CreateNewActio
       updatedAction.noCodeConfig = filteredNoCodeConfig;
     }
 
-    // const newActionClass: TActionClass = await createActionClassAction(updatedAction);
-    // if (setActionClasses) {
-    //   setActionClasses((prevActionClasses: TActionClass[]) => [...prevActionClasses, newActionClass]);
-    // }
+    setLocalSurvey((prev) => ({
+      ...prev,
+      triggers: prev.triggers.concat(updatedAction),
+    }));
 
-    // reset();
-    // resetAllStates(false);
+    reset();
+    resetAllStates();
   };
 
   const resetAllStates = () => {
@@ -359,7 +391,7 @@ const CreateNewActionTab = ({ actionClasses, setOpen, isViewer }: CreateNewActio
             <Button type="button" variant="minimal" onClick={resetAllStates}>
               Cancel
             </Button>
-            <Button variant="darkCTA" type="submit" loading={isCreatingAction}>
+            <Button variant="darkCTA" type="submit">
               Create Action
             </Button>
           </div>
@@ -404,7 +436,15 @@ export const AddActionModal = ({
     },
     {
       title: "Create new action",
-      children: <CreateNewActionTab actionClasses={actionClasses} setOpen={setOpen} isViewer={isViewer} />,
+      children: (
+        <CreateNewActionTab
+          actionClasses={actionClasses}
+          setOpen={setOpen}
+          isViewer={isViewer}
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+        />
+      ),
     },
   ];
   return (

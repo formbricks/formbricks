@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { testURLmatch } from "@formbricks/lib/utils/textUrlMatch";
 import { TActionClassInput, TActionClassNoCodeConfig, TNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
@@ -18,8 +19,6 @@ import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-
-import { testURLmatch } from "../lib/testURLmatch";
 
 interface ActionSettingsTabProps {
   environmentId: string;
