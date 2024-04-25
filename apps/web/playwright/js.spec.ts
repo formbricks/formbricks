@@ -99,7 +99,7 @@ test.describe("JS Package Test", async () => {
     await page.getByRole("button", { name: "Next" }).click();
     await page.getByLabel("").fill("Much higher response rates!");
     await page.getByRole("button", { name: "Next" }).click();
-    await page.getByLabel("Please be as specific as").fill("Make this end to end test pass!");
+    await page.getByLabel("How can we improve My Product").fill("Make this end to end test pass!");
     await page.getByRole("button", { name: "Finish" }).click();
     await page.getByText("Thank you!").click();
 

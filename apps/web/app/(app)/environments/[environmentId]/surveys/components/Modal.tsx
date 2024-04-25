@@ -103,11 +103,10 @@ export default function Modal({
   }, [clickOutsideClose, scalingClasses.transformOrigin]);
 
   const highlightBorderColorStyle = useMemo(() => {
-    if (!highlightBorderColor) return { overflow: "auto" };
+    if (!highlightBorderColor) return;
 
     return {
       border: `2px solid ${highlightBorderColor}`,
-      overflow: "auto",
     };
   }, [highlightBorderColor]);
 
@@ -155,7 +154,7 @@ export default function Modal({
           }),
         }}
         className={cn(
-          "no-scrollbar pointer-events-auto absolute h-fit max-h-[90%] w-full max-w-sm overflow-y-auto bg-white shadow-lg transition-all duration-500 ease-in-out ",
+          "no-scrollbar pointer-events-auto absolute h-fit max-h-[90%] w-full max-w-sm bg-white shadow-lg transition-all duration-500 ease-in-out ",
           previewMode === "desktop" ? getPlacementStyle(placement) : "max-w-full",
           slidingAnimationClass
         )}>
