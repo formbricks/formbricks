@@ -122,7 +122,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
         className={`dp-input-root rounded-custom ${!datePickerOpen ? "wrapper-hide" : ""}
           ${hideInvalid ? "hide-invalid" : ""}
         `}
-        calendarClassName="calendar-root w-80 rounded-lg border border-[#e5e7eb] p-3 shadow-md"
+        calendarClassName="calendar-root w-80 rounded-lg border border-[#e5e7eb] p-3 shadow-md h-40 overflow-auto"
         clearIcon={null}
         onCalendarOpen={() => {
           setDatePickerOpen(true);
