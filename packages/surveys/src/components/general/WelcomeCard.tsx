@@ -114,37 +114,35 @@ export const WelcomeCard = ({
         </div>
       </ScrollableContainer>
 
-      <div className="mx-6 mt-4 flex w-full justify-between">
-        <div className="flex w-full justify-start gap-4">
-          <SubmitButton
-            buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
-            isLastQuestion={false}
-            focus={!isInIframe}
-            onClick={() => {
-              onSubmit({ ["welcomeCard"]: "clicked" }, {});
-            }}
-            type="button"
-          />
-          <div className="text-subheading flex items-center text-xs">Press Enter ↵</div>
-        </div>
+      <div className="mx-6 mt-4 flex  gap-4">
+        <SubmitButton
+          buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
+          isLastQuestion={false}
+          focus={!isInIframe}
+          onClick={() => {
+            onSubmit({ ["welcomeCard"]: "clicked" }, {});
+          }}
+          type="button"
+        />
+        <div className="text-subheading hidden items-center text-xs md:flex">Press Enter ↵</div>
       </div>
 
       {timeToFinish && !showResponseCount ? (
-        <div className="item-center text-subheading mt-4 flex">
+        <div className="item-center text-subheading my-4 ml-6 flex">
           <TimerIcon />
           <p className="pt-1 text-xs">
             <span> Takes {calculateTimeToComplete()} </span>
           </p>
         </div>
       ) : showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
-        <div className="item-center text-subheading mt-4 flex">
+        <div className="item-center text-subheading my-4 ml-6 flex">
           <UsersIcon />
           <p className="pt-1 text-xs">
             <span>{`${responseCount} people responded`}</span>
           </p>
         </div>
       ) : timeToFinish && showResponseCount ? (
-        <div className="item-center text-subheading mt-4 flex">
+        <div className="item-center text-subheading my-4 ml-6 flex">
           <TimerIcon />
           <p className="pt-1 text-xs">
             <span> Takes {calculateTimeToComplete()} </span>
