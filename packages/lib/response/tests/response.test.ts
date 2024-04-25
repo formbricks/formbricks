@@ -33,7 +33,7 @@ import {
 } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 
-import { selectPerson, transformPrismaPerson } from "../../person/service";
+import { selectPerson } from "../../person/service";
 import { mockSurveyOutput } from "../../survey/tests/__mock__/survey.mock";
 import {
   createResponse,
@@ -61,7 +61,7 @@ const expectedResponseWithoutPerson: TResponse = {
 
 const expectedResponseWithPerson: TResponse = {
   ...mockResponse,
-  person: transformPrismaPerson(mockPerson),
+  person: mockPerson,
   tags: mockTags?.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
 };
 
@@ -209,6 +209,7 @@ describe("Tests for getResponsesBySingleUseId", () => {
 describe("Tests for createResponse service", () => {
   describe("Happy Path", () => {
     it("Creates a response linked to an existing user", async () => {
+      prisma.attribute.findMany.mockResolvedValue([]);
       const response = await createResponse(mockResponseInputWithUserId);
       expect(response).toEqual(expectedResponseWithPerson);
     });
@@ -221,6 +222,7 @@ describe("Tests for createResponse service", () => {
     it("Creates a new person and response when the person does not exist", async () => {
       prisma.person.findFirst.mockResolvedValue(null);
       prisma.person.create.mockResolvedValue(mockPerson);
+      prisma.attribute.findMany.mockResolvedValue([]);
       const response = await createResponse(mockResponseInputWithUserId);
 
       expect(response).toEqual(expectedResponseWithPerson);
@@ -249,6 +251,7 @@ describe("Tests for createResponse service", () => {
       });
 
       prisma.response.create.mockRejectedValue(errToThrow);
+      prisma.attribute.findMany.mockResolvedValue([]);
 
       await expect(createResponse(mockResponseInputWithUserId)).rejects.toThrow(DatabaseError);
     });
