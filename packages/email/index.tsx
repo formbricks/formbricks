@@ -172,7 +172,7 @@ export const sendResponseFinishedEmail = async (
   response: TResponse,
   responseCount: number
 ) => {
-  const personEmail = response.person?.attributes["email"];
+  const personEmail = response.personAttributes?.email;
   const team = await getTeamByEnvironmentId(environmentId);
 
   await sendEmail({
