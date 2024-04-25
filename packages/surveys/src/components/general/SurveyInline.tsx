@@ -20,7 +20,7 @@ export function SurveyInline(props: SurveyInlineProps) {
     <div id="fbjs" className="formbricks-form h-full w-full">
       {isMobile ? (
         <div className="flex h-screen w-full flex-col justify-end overflow-hidden">
-          <div className="max-h-[90vh] overflow-auto">
+          <div className="overflow-auto pt-[10vh]">
             <Survey {...props} />
           </div>
         </div>

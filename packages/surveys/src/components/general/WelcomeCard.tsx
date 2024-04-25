@@ -1,4 +1,5 @@
 import SubmitButton from "@/components/buttons/SubmitButton";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { calculateElementIdx } from "@/lib/utils";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -101,15 +102,19 @@ export const WelcomeCard = ({
 
   return (
     <div>
-      {fileUrl && (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
-      )}
+      <ScrollableContainer>
+        <div>
+          {fileUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
+          )}
 
-      <Headline headline={getLocalizedValue(headline, languageCode)} questionId="welcomeCard" />
-      <HtmlBody htmlString={getLocalizedValue(html, languageCode)} questionId="welcomeCard" />
+          <Headline headline={getLocalizedValue(headline, languageCode)} questionId="welcomeCard" />
+          <HtmlBody htmlString={getLocalizedValue(html, languageCode)} questionId="welcomeCard" />
+        </div>
+      </ScrollableContainer>
 
-      <div className="mt-10 flex w-full justify-between">
+      <div className="mx-6 mt-4 flex w-full justify-between">
         <div className="flex w-full justify-start gap-4">
           <SubmitButton
             buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
