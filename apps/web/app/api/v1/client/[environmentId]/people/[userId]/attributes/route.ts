@@ -3,7 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
 
 import { getAttributesByUserId, updateAttributes } from "@formbricks/lib/attribute/service";
-import { getPersonByUserId } from "@formbricks/lib/person/service";
+import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { ZJsPeopleUpdateAttributeInput } from "@formbricks/types/js";
 
 export async function OPTIONS() {
@@ -36,9 +36,12 @@ export async function PUT(req: NextRequest, context: { params: { environmentId: 
 
     const { userId: userIdAttr, ...updatedAttributes } = parsedInput.data.attributes;
 
-    const person = await getPersonByUserId(environmentId, userId);
+    let person = await getPersonByUserId(environmentId, userId);
+
     if (!person) {
-      return responses.notFoundResponse("Person not found", "personId");
+      // return responses.notFoundResponse("PersonByUserId", userId, true);
+      // HOTFIX: create person if not found to work around caching issue
+      person = await createPerson(environmentId, userId);
     }
 
     const oldAttributes = await getAttributesByUserId(environmentId, userId);
