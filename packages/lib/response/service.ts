@@ -137,7 +137,6 @@ export const getResponsesByPersonId = async (
             responses.push({
               ...response,
               notes: responseNotes,
-              person: response.person ? { id: response.person.id, userId: response.person.userId } : null,
               tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
             });
           })
@@ -187,9 +186,6 @@ export const getResponseBySingleUseId = async (
 
         const response: TResponse = {
           ...responsePrisma,
-          person: responsePrisma.person
-            ? { id: responsePrisma.person.id, userId: responsePrisma.person.userId }
-            : null,
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
         };
 
@@ -277,9 +273,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     const response: TResponse = {
       ...responsePrisma,
-      person: responsePrisma.person
-        ? { id: responsePrisma.person.id, userId: responsePrisma.person.userId }
-        : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
@@ -358,9 +351,6 @@ export const createResponseLegacy = async (responseInput: TResponseLegacyInput):
 
     const response: TResponse = {
       ...responsePrisma,
-      person: responsePrisma.person
-        ? { id: responsePrisma.person.id, userId: responsePrisma.person.userId }
-        : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
@@ -402,9 +392,6 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
 
         const response: TResponse = {
           ...responsePrisma,
-          person: responsePrisma.person
-            ? { id: responsePrisma.person.id, userId: responsePrisma.person.userId }
-            : null,
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
         };
 
@@ -580,9 +567,6 @@ export const getResponses = async (
           responses.map((responsePrisma) => {
             return {
               ...responsePrisma,
-              person: responsePrisma.person
-                ? { id: responsePrisma.person.id, userId: responsePrisma.person.userId }
-                : null,
               tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
             };
           })
@@ -767,9 +751,6 @@ export const getResponsesByEnvironmentId = async (
           responses.map(async (responsePrisma) => {
             return {
               ...responsePrisma,
-              person: responsePrisma.person
-                ? { id: responsePrisma.person.id, userId: responsePrisma.person.userId }
-                : null,
               tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
             };
           })
@@ -844,9 +825,6 @@ export const updateResponse = async (
 
     const response: TResponse = {
       ...responsePrisma,
-      person: responsePrisma.person
-        ? { id: responsePrisma.person.id, userId: responsePrisma.person.userId }
-        : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
@@ -884,9 +862,6 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
     const response: TResponse = {
       ...responsePrisma,
       notes: responseNotes,
-      person: responsePrisma.person
-        ? { id: responsePrisma.person.id, userId: responsePrisma.person.userId }
-        : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
