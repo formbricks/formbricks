@@ -3,7 +3,16 @@
 import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddActionModal";
 import InlineTriggers from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/InlineTriggers";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { CheckIcon, PlusIcon, TrashIcon } from "lucide-react";
+import {
+  CheckIcon,
+  Code2Icon,
+  MousePointerClickIcon,
+  PlusIcon,
+  Settings,
+  SparklesIcon,
+  Trash2Icon,
+  TrashIcon,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -22,6 +31,7 @@ import {
   SelectValue,
 } from "@formbricks/ui/Select";
 import { TabBar } from "@formbricks/ui/TabBar";
+import { AddActionModal } from "@formbricks/ui/Trigger/AddActionModal";
 
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
@@ -42,6 +52,7 @@ export default function WhenToSendCard({
     localSurvey.type === "app" || localSurvey.type === "website" ? true : false
   );
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
+  const [isAddTriggerActionModalOpen, setAddTriggerActionModalOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
@@ -65,12 +76,6 @@ export default function WhenToSendCard({
   const autoClose = localSurvey.autoClose !== null;
   const delay = localSurvey.delay !== 0;
 
-  const addTriggerEvent = useCallback(() => {
-    const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers = [...localSurvey.triggers, ""];
-    setLocalSurvey(updatedSurvey);
-  }, [localSurvey, setLocalSurvey]);
-
   const setTriggerEvent = useCallback(
     (idx: number, actionClassName: string) => {
       const updatedSurvey = { ...localSurvey };
@@ -80,15 +85,15 @@ export default function WhenToSendCard({
       if (!newActionClass) {
         throw new Error("Action class not found");
       }
-      updatedSurvey.triggers[idx] = newActionClass.name;
+      // updatedSurvey.triggers[idx] = newActionClass.name;
       setLocalSurvey(updatedSurvey);
     },
     [actionClasses, localSurvey, setLocalSurvey]
   );
 
-  const removeTriggerEvent = (idx: number) => {
+  const handleRemoveTriggerEvent = (id: string) => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers = [...localSurvey.triggers.slice(0, idx), ...localSurvey.triggers.slice(idx + 1)];
+    updatedSurvey.triggers = updatedSurvey.triggers.filter((trigger) => trigger.id !== id);
     setLocalSurvey(updatedSurvey);
   };
 
@@ -150,9 +155,9 @@ export default function WhenToSendCard({
       const newActionClass = actionClasses[actionClasses.length - 1].name;
       const currentActionClass = localSurvey.triggers[activeIndex];
 
-      if (newActionClass !== currentActionClass) {
-        setTriggerEvent(activeIndex, newActionClass);
-      }
+      // if (newActionClass !== currentActionClass) {
+      //   setTriggerEvent(activeIndex, newActionClass);
+      // }
 
       setActiveIndex(null);
     }
@@ -163,13 +168,6 @@ export default function WhenToSendCard({
       setOpen(false);
     }
   }, [localSurvey.type]);
-
-  //create new empty trigger on page load, remove one click for user
-  useEffect(() => {
-    if (localSurvey.triggers.length === 0) {
-      addTriggerEvent();
-    }
-  }, [addTriggerEvent, localSurvey.triggers.length]);
 
   const containsEmptyTriggers = useMemo(() => {
     const noTriggers = !localSurvey.triggers || !localSurvey.triggers.length || !localSurvey.triggers[0];
@@ -237,7 +235,55 @@ export default function WhenToSendCard({
           <hr className="py-1 text-slate-600" />
 
           <div className="px-3 pb-3 pt-1">
-            <div className="flex flex-col overflow-hidden rounded-lg border-2 border-slate-100">
+            <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-800">
+                Trigger survey when one of the actions is fired...
+              </p>
+
+              {localSurvey.triggers.filter(Boolean).map((trigger, idx) => (
+                <div className="flex items-center gap-2">
+                  {idx !== 0 && <p className="ml-1 text-sm font-bold">or</p>}
+                  <div
+                    key={trigger.id}
+                    className="flex grow items-center justify-between rounded-sm border border-slate-300 bg-white p-2 px-3">
+                    <div>
+                      <div className="mt-1 flex items-center">
+                        <div className="mr-1.5 h-4 w-4 text-slate-600">
+                          {trigger.type === "code" ? (
+                            <Code2Icon className="h-4 w-4" />
+                          ) : trigger.type === "noCode" ? (
+                            <MousePointerClickIcon className="h-4 w-4" />
+                          ) : trigger.type === "automatic" ? (
+                            <SparklesIcon className="h-4 w-4" />
+                          ) : null}
+                        </div>
+
+                        <h4 className="text-sm font-semibold text-slate-600">{trigger.name}</h4>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">{trigger.description}</p>
+                    </div>
+                    <Settings className="h-6 w-6 cursor-pointer rounded-md bg-slate-100 p-1 text-slate-600" />
+                  </div>
+                  <Trash2Icon
+                    className="h-4 w-4 cursor-pointer text-slate-600"
+                    onClick={() => handleRemoveTriggerEvent(trigger.id || "")}
+                  />
+                </div>
+              ))}
+
+              <div className="py-4">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setAddTriggerActionModalOpen(true);
+                  }}>
+                  <PlusIcon className="mr-2 h-4 w-4" />
+                  Add action
+                </Button>
+              </div>
+            </div>
+
+            {/* <div className="flex flex-col overflow-hidden rounded-lg border-2 border-slate-100">
               <TabBar
                 tabs={tabs}
                 activeId={activeTriggerTab}
@@ -252,7 +298,7 @@ export default function WhenToSendCard({
                   </div>
                 ) : (
                   <>
-                    {!isAddEventModalOpen &&
+                     {!isAddEventModalOpen &&
                       localSurvey.triggers?.map((triggerEventClass, idx) => (
                         <div className="mt-2" key={idx}>
                           <div className="inline-flex items-center">
@@ -292,7 +338,7 @@ export default function WhenToSendCard({
                             </button>
                           </div>
                         </div>
-                      ))}
+                      ))} 
                     <div className="px-6 py-4">
                       <Button
                         variant="secondary"
@@ -306,8 +352,9 @@ export default function WhenToSendCard({
                   </>
                 )}
               </div>
-            </div>
+            </div> */}
 
+            {/* Survey Display Settings */}
             <div className="mb-4 mt-8 space-y-1 px-4">
               <h3 className="font-semibold text-slate-800">Survey Display Settings</h3>
               <p className="text-sm text-slate-500">Add a delay or auto-close the survey</p>
@@ -387,13 +434,23 @@ export default function WhenToSendCard({
           </div>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
-      <AddNoCodeActionModal
+      {/* <AddNoCodeActionModal
         environmentId={environmentId}
         open={isAddEventModalOpen}
         setOpen={setAddEventModalOpen}
         actionClasses={actionClasses}
         setActionClasses={setActionClasses}
         isViewer={isViewer}
+      /> */}
+      <AddActionModal
+        environmentId={environmentId}
+        open={isAddTriggerActionModalOpen}
+        setOpen={setAddTriggerActionModalOpen}
+        actionClasses={actionClasses}
+        setActionClasses={setActionClasses}
+        isViewer={isViewer}
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
       />
     </>
   );

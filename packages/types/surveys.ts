@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ZNoCodeConfig } from "./actionClasses";
+import { ZActionClass, ZNoCodeConfig } from "./actionClasses";
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { ZPerson } from "./people";
 import { ZLanguage } from "./product";
@@ -460,9 +460,9 @@ export type TSurveyInlineTriggers = z.infer<typeof ZSurveyInlineTriggers>;
 
 export const surveyHasBothTriggers = (survey: TSurvey) => {
   // if the triggers array has a single empty string, it means the survey has no triggers
-  if (survey.triggers?.[0] === "") {
-    return false;
-  }
+  // if (survey.triggers?.[0] === "") {
+  //   return false;
+  // }
 
   const hasTriggers = survey.triggers?.length > 0;
   const hasInlineTriggers = !!survey.inlineTriggers?.codeConfig || !!survey.inlineTriggers?.noCodeConfig;
@@ -486,7 +486,8 @@ export const ZSurvey = z.object({
   status: ZSurveyStatus,
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
-  triggers: z.array(z.string()),
+  // triggers: z.array(z.string()),
+  triggers: z.array(ZActionClass.partial()),
   inlineTriggers: ZSurveyInlineTriggers.nullable(),
   redirectUrl: z.string().url().nullable(),
   recontactDays: z.number().nullable(),

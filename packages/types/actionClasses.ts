@@ -57,6 +57,7 @@ export const ZActionClassInput = z.object({
   environmentId: z.string(),
   name: z.string(),
   description: z.string().optional(),
+  isPrivate: z.boolean().optional(),
   noCodeConfig: ZActionClassNoCodeConfig.nullish(),
   type: z.enum(["code", "noCode", "automatic"]),
 });

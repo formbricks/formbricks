@@ -176,6 +176,7 @@ const processTriggerUpdates = (
     };
   }
   revalidateSurveyByActionClassName(actionClasses, [...newTriggers, ...removedTriggers]);
+
   return triggersUpdate;
 };
 
@@ -217,7 +218,13 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
 
       const transformedSurvey: TSurvey = {
         ...surveyPrisma,
-        triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
+        triggers: surveyPrisma.triggers.map((trigger) => ({
+          id: trigger.actionClass.id,
+          isPrivate: false,
+          name: trigger.actionClass.name,
+          description: trigger.actionClass.description,
+          type: trigger.actionClass.type,
+        })),
         segment: surveySegment,
       };
 
@@ -409,7 +416,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     const surveyId = updatedSurvey.id;
     let data: any = {};
 
-    const actionClasses = await getActionClasses(updatedSurvey.environmentId);
+    // const actionClasses = await getActionClasses(updatedSurvey.environmentId);
     const currentSurvey = await getSurvey(surveyId);
 
     if (!currentSurvey) {
@@ -467,7 +474,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
 
     if (triggers) {
-      data.triggers = processTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
+      // data.triggers = processTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
+      data.triggers = triggers.map((trigger) => trigger.id);
     }
     // if the survey body has type other than "app" but has a private segment, we delete that segment, and if it has a public segment, we disconnect from to the survey
     if (segment) {
@@ -719,7 +727,13 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     // @ts-expect-error
     const transformedSurvey: TSurvey = {
       ...survey,
-      triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
+      triggers: survey.triggers.map((trigger) => ({
+        id: trigger.actionClass.id,
+        isPrivate: false,
+        name: trigger.actionClass.name,
+        description: trigger.actionClass.description,
+        type: trigger.actionClass.type,
+      })),
       ...(survey.segment && {
         segment: {
           ...survey.segment,
@@ -781,7 +795,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
         },
         triggers: {
           create: existingSurvey.triggers.map((trigger) => ({
-            actionClassId: getActionClassIdFromName(actionClasses, trigger),
+            actionClassId: trigger?.id || "",
           })),
         },
         inlineTriggers: existingSurvey.inlineTriggers ?? undefined,
@@ -865,8 +879,11 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
       environmentId: newSurvey.environmentId,
     });
 
-    // Revalidate surveys by actionClassId
-    revalidateSurveyByActionClassName(actionClasses, existingSurvey.triggers);
+    existingSurvey.triggers.forEach((trigger) => {
+      surveyCache.revalidate({
+        actionClassId: trigger.id,
+      });
+    });
 
     return newSurvey;
   } catch (error) {
@@ -1125,7 +1142,15 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
     // @ts-expect-error
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
-      triggers: prismaSurvey.triggers.map((trigger) => trigger.actionClass.name),
+      // triggers: prismaSurvey.triggers.map((trigger) => trigger.actionClass.name),
+      triggers: prismaSurvey.triggers.map((trigger) => ({
+        id: trigger.actionClass.id,
+        isPrivate: false,
+        name: trigger.actionClass.name,
+        description: trigger.actionClass.description,
+        type: trigger.actionClass.type,
+      })),
+
       segment: surveySegment,
     };
 
@@ -1163,8 +1188,15 @@ export const getSurveysBySegmentId = async (segmentId: string): Promise<TSurvey[
           // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
           // @ts-expect-error
           const transformedSurvey: TSurvey = {
+            // triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
             ...surveyPrisma,
-            triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
+            triggers: surveyPrisma.triggers.map((trigger) => ({
+              id: trigger.actionClass.id,
+              isPrivate: false,
+              name: trigger.actionClass.name,
+              description: trigger.actionClass.description,
+              type: trigger.actionClass.type,
+            })),
             segment,
           };
           surveys.push(transformedSurvey);

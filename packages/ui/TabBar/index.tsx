@@ -7,6 +7,7 @@ interface TabBarProps {
   activeId: string;
   setActiveId: (id: string) => void;
   className?: string;
+  activeTabClassName?: string;
   tabStyle?: "bar" | "button";
 }
 
@@ -15,6 +16,7 @@ export const TabBar: React.FC<TabBarProps> = ({
   activeId,
   setActiveId,
   className = "",
+  activeTabClassName,
   tabStyle = "bar",
 }) => {
   const Nav = () => {
@@ -27,7 +29,7 @@ export const TabBar: React.FC<TabBarProps> = ({
               onClick={() => setActiveId(tab.id)}
               className={cn(
                 tab.id === activeId
-                  ? " border-brand-dark border-b-2 font-semibold text-slate-900"
+                  ? `border-brand-dark border-b-2 font-semibold text-slate-900 ${activeTabClassName}`
                   : "text-slate-500 hover:text-slate-700",
                 "flex h-full items-center px-3 text-sm font-medium"
               )}
@@ -49,7 +51,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                 onClick={() => setActiveId(tab.id)}
                 className={cn(
                   tab.id === activeId
-                    ? "bg-white font-semibold text-slate-900"
+                    ? `bg-white font-semibold text-slate-900 ${activeTabClassName}`
                     : "text-slate-500 hover:text-slate-700",
                   "h-full w-full items-center rounded-lg text-center text-sm font-medium"
                 )}
