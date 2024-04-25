@@ -92,7 +92,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
           onKeyDown={(e) => {
             if (e.key === " ") setDatePickerOpen(true);
           }}
-          className="bg-input-bg hover:bg-input-bg-selected border-border text-placeholder relative flex h-40 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+          className="focus:outline-brand bg-input-bg hover:bg-input-bg-selected border-border text-placeholder relative flex h-40 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border text-left text-base font-normal">
           <div className="flex items-center gap-2">
             {selectedDate ? (
               <div className="flex items-center gap-2">
@@ -130,6 +130,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
         clearIcon={null}
         onCalendarOpen={() => {
           setDatePickerOpen(true);
+          setSelectedDate(selectedDate);
         }}
         onCalendarClose={() => {
           // reset state

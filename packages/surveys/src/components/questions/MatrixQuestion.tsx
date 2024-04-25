@@ -118,7 +118,7 @@ export const MatrixQuestion = ({
                     <td
                       key={columnIndex}
                       tabIndex={0}
-                      className={`px-4 py-2 text-gray-800 ${columnIndex === question.columns.length - 1 ? "rounded-r-custom" : ""}`}
+                      className={`focus:outline-brand px-4 py-2 text-gray-800 ${columnIndex === question.columns.length - 1 ? "rounded-r-custom" : ""}`}
                       onKeyDown={(e) => {
                         if (e.key === " ") {
                           e.preventDefault();
