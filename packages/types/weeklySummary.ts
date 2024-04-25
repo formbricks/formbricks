@@ -4,7 +4,7 @@ import { ZResponseData } from "./responses";
 import { ZSurveyQuestion, ZSurveyStatus } from "./surveys";
 import { ZUserNotificationSettings } from "./user";
 
-const ZInsights = z.object({
+const ZWeeklySummaryInsights = z.object({
   totalCompletedResponses: z.number(),
   totalDisplays: z.number(),
   totalResponses: z.number(),
@@ -12,36 +12,36 @@ const ZInsights = z.object({
   numLiveSurvey: z.number(),
 });
 
-export type TInsights = z.infer<typeof ZInsights>;
+export type TWeeklySummaryInsights = z.infer<typeof ZWeeklySummaryInsights>;
 
-export const ZSurveyResponseData = z.object({
+export const ZWeeklySummarySurveyResponseData = z.object({
   headline: z.string(),
   responseValue: z.union([z.string(), z.array(z.string())]),
   questionType: z.string(),
 });
 
-export type TSurveyResponseData = z.infer<typeof ZSurveyResponseData>;
+export type TWeeklySummarySurveyResponseData = z.infer<typeof ZWeeklySummarySurveyResponseData>;
 
-export const ZNotificationDataSurvey = z.object({
+export const ZWeeklySummaryNotificationDataSurvey = z.object({
   id: z.string(),
   name: z.string(),
-  responses: z.array(ZSurveyResponseData),
+  responses: z.array(ZWeeklySummarySurveyResponseData),
   responseCount: z.number(),
   status: z.string(),
 });
 
-export type TNotificationDataSurvey = z.infer<typeof ZNotificationDataSurvey>;
+export type TWeeklySummaryNotificationDataSurvey = z.infer<typeof ZWeeklySummaryNotificationDataSurvey>;
 
-export const ZNotificationResponse = z.object({
+export const ZWeeklySummaryNotificationResponse = z.object({
   environmentId: z.string(),
   currentDate: z.date(),
   lastWeekDate: z.date(),
   productName: z.string(),
-  surveys: z.array(ZNotificationDataSurvey),
-  insights: ZInsights,
+  surveys: z.array(ZWeeklySummaryNotificationDataSurvey),
+  insights: ZWeeklySummaryInsights,
 });
 
-export type TNotificationResponse = z.infer<typeof ZNotificationResponse>;
+export type TWeeklySummaryNotificationResponse = z.infer<typeof ZWeeklySummaryNotificationResponse>;
 
 export const ZWeeklyEmailResponseData = z.object({
   id: z.string(),
@@ -51,7 +51,9 @@ export const ZWeeklyEmailResponseData = z.object({
   data: ZResponseData,
 });
 
-export const ZSurveyData = z.object({
+export type TWeeklyEmailResponseData = z.infer<typeof ZWeeklyEmailResponseData>;
+
+export const ZWeeklySummarySurveyData = z.object({
   id: z.string(),
   name: z.string(),
   questions: z.array(ZSurveyQuestion),
@@ -60,34 +62,39 @@ export const ZSurveyData = z.object({
   displays: z.array(z.object({ id: z.string() })),
 });
 
-export const ZEnvironmentData = z.object({
+export type TWeeklySummarySurveyData = z.infer<typeof ZWeeklySummarySurveyData>;
+
+export const ZWeeklySummaryEnvironmentData = z.object({
   id: z.string(),
-  surveys: z.array(ZSurveyData),
+  surveys: z.array(ZWeeklySummarySurveyData),
 });
 
-export type TEnvironmentData = z.infer<typeof ZEnvironmentData>;
+export type TWeeklySummaryEnvironmentData = z.infer<typeof ZWeeklySummaryEnvironmentData>;
 
-export const ZWeeklyemailUserData = z.object({
+export const ZWeeklySummaryUserData = z.object({
   email: z.string(),
   notificationSettings: ZUserNotificationSettings,
 });
 
-export const ZWeeklyEmailMembershipData = z.object({
-  user: ZWeeklyemailUserData,
+export type TWeeklySummaryUserData = z.infer<typeof ZWeeklySummaryUserData>;
+
+export const ZWeeklySummaryMembershipData = z.object({
+  user: ZWeeklySummaryUserData,
 });
+
+export type TWeeklySummaryMembershipData = z.infer<typeof ZWeeklySummaryMembershipData>;
+
 export const ZWeeklyEmailTeamData = z.object({
-  memberships: z.array(ZWeeklyEmailMembershipData),
+  memberships: z.array(ZWeeklySummaryMembershipData),
 });
 
-export const ZTeamData = z.object({
-  memberships: z.array(ZWeeklyEmailMembershipData),
-});
+export type TWeeklyEmailTeamData = z.infer<typeof ZWeeklyEmailTeamData>;
 
-export const ZProductData = z.object({
+export const ZWeeklySummaryProductData = z.object({
   id: z.string(),
   name: z.string(),
-  environments: z.array(ZEnvironmentData),
+  environments: z.array(ZWeeklySummaryEnvironmentData),
   team: ZWeeklyEmailTeamData,
 });
 
-export type TProductData = z.infer<typeof ZProductData>;
+export type TWeeklySummaryProductData = z.infer<typeof ZWeeklySummaryProductData>;

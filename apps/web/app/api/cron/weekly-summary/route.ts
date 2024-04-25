@@ -8,11 +8,11 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { convertResponseValue } from "@formbricks/lib/responses";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import {
-  TEnvironmentData,
-  TNotificationDataSurvey,
-  TNotificationResponse,
-  TProductData,
-  TSurveyResponseData,
+  TWeeklySummaryEnvironmentData,
+  TWeeklySummaryNotificationDataSurvey,
+  TWeeklySummaryNotificationResponse,
+  TWeeklySummaryProductData,
+  TWeeklySummarySurveyResponseData,
 } from "@formbricks/types/weeklySummary";
 
 const BATCH_SIZE = 500;
@@ -79,7 +79,7 @@ const getTeamIds = async (): Promise<string[]> => {
   return teams.map((team) => team.id);
 };
 
-const getProductsByTeamId = async (teamId: string): Promise<TProductData[]> => {
+const getProductsByTeamId = async (teamId: string): Promise<TWeeklySummaryProductData[]> => {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -171,9 +171,9 @@ const getProductsByTeamId = async (teamId: string): Promise<TProductData[]> => {
 };
 
 const getNotificationResponse = (
-  environment: TEnvironmentData,
+  environment: TWeeklySummaryEnvironmentData,
   productName: string
-): TNotificationResponse => {
+): TWeeklySummaryNotificationResponse => {
   const insights = {
     totalCompletedResponses: 0,
     totalDisplays: 0,
@@ -182,11 +182,11 @@ const getNotificationResponse = (
     numLiveSurvey: 0,
   };
 
-  const surveys: TNotificationDataSurvey[] = [];
+  const surveys: TWeeklySummaryNotificationDataSurvey[] = [];
   // iterate through the surveys and calculate the overall insights
   for (const survey of environment.surveys) {
     const parsedSurvey = checkForRecallInHeadline(survey, "default");
-    const surveyData: TNotificationDataSurvey = {
+    const surveyData: TWeeklySummaryNotificationDataSurvey = {
       id: parsedSurvey.id,
       name: parsedSurvey.name,
       status: parsedSurvey.status,
@@ -199,11 +199,11 @@ const getNotificationResponse = (
       if (surveyData.responses.length >= 3) {
         break;
       }
-      const surveyResponses: TSurveyResponseData[] = [];
+      const surveyResponses: TWeeklySummarySurveyResponseData[] = [];
       for (const question of parsedSurvey.questions) {
         const headline = question.headline;
         const responseValue = convertResponseValue(response.data[question.id], question);
-        const surveyResponse: TSurveyResponseData = {
+        const surveyResponse: TWeeklySummarySurveyResponseData = {
           headline: getLocalizedValue(headline, "default"),
           responseValue,
           questionType: question.type,
