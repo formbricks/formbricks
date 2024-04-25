@@ -7,12 +7,10 @@ import {
   TResponseFilterCriteria,
   TResponseUpdateInput,
   TSurveyPersonAttributes,
-  TSurveySummary,
 } from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
-import { transformPrismaPerson } from "../../../person/service";
 import { responseNoteSelect } from "../../../responseNote/service";
 import { responseSelection } from "../../service";
 import { constantsForTests } from "../constants";
@@ -70,14 +68,14 @@ export const mockPerson: ResponsePersonMock = {
   createdAt: new Date(),
   updatedAt: new Date(),
   environmentId: mockEnvironmentId,
-  attributes: [
-    {
-      value: "attribute1",
-      attributeClass: {
-        name: "attributeClass1",
-      },
-    },
-  ],
+  // attributes: [
+  //   {
+  //     value: "attribute1",
+  //     attributeClass: {
+  //       name: "attributeClass1",
+  //     },
+  //   },
+  // ],
 };
 
 export const mockTags = [
@@ -443,7 +441,7 @@ export const getFilteredMockResponses = (
   if (format) {
     return result.map((response) => ({
       ...response,
-      person: response.person ? transformPrismaPerson(response.person) : null,
+      person: response.person ? { id: response.person.id, userId: response.person.userId } : null,
       tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     }));
   }
@@ -472,7 +470,7 @@ export const getMockUpdateResponseInput = (finished: boolean = false): TResponse
   finished,
 });
 
-export const mockSurveySummaryOutput: TSurveySummary = {
+export const mockSurveySummaryOutput = {
   dropOff: [
     {
       dropOffCount: 0,

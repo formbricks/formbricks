@@ -7,7 +7,7 @@ import { TPerson } from "@formbricks/types/people";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { Pagination } from "@formbricks/ui/Pagination";
 
-import PersonCard from "./components/PersonCard";
+import { PersonCard } from "./components/PersonCard";
 
 export default async function PeoplePage({
   params,

@@ -3,14 +3,13 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { updateAttributes } from "@formbricks/lib/attribute/service";
-// import { createAttributeClass, getAttributeClassByName } from "@formbricks/lib/attributeClass/service";
 import { personCache } from "@formbricks/lib/person/cache";
 import { getPerson } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { TJsAppStateSync, ZJsPeopleAttributeInput } from "@formbricks/types/js";
+import { ZJsPeopleAttributeInput } from "@formbricks/types/js";
 
 interface Context {
   params: {
@@ -48,19 +47,6 @@ export async function POST(req: Request, context: Context): Promise<Response> {
       return responses.notFoundResponse("Person", personId, true);
     }
 
-    // let attributeClass = await getAttributeClassByName(environmentId, key);
-
-    // // create new attribute class if not found
-    // if (attributeClass === null) {
-    //   attributeClass = await createAttributeClass(environmentId, key, "code");
-    // }
-
-    // if (!attributeClass) {
-    //   return responses.internalServerErrorResponse("Unable to create attribute class", true);
-    // }
-
-    // upsert attribute (update or create)
-    // await updatePersonAttribute(personId, attributeClass.id, value);
     await updateAttributes(personId, { [key]: value });
 
     personCache.revalidate({
@@ -89,7 +75,7 @@ export async function POST(req: Request, context: Context): Promise<Response> {
     }
 
     // return state
-    const state: TJsAppStateSync = {
+    const state = {
       person: { id: person.id, userId: person.userId },
       surveys,
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),

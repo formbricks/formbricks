@@ -2,10 +2,11 @@ import Link from "next/link";
 import React from "react";
 
 import { getAttributes } from "@formbricks/lib/attribute/service";
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { TPerson } from "@formbricks/types/people";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 
-const PersonCard = async ({ person }: { person: TPerson }) => {
+export const PersonCard = async ({ person }: { person: TPerson }) => {
   const attributes = await getAttributes(person.id);
 
   return (
@@ -21,7 +22,7 @@ const PersonCard = async ({ person }: { person: TPerson }) => {
             </div>
             <div className="ml-4">
               <div className="ph-no-capture font-medium text-slate-900">
-                {attributes.email ? <span>{attributes.email}</span> : <span>{person.id}</span>}
+                <span>{getPersonIdentifier({ id: person.id, userId: person.userId }, attributes)}</span>
               </div>
             </div>
           </div>
@@ -36,5 +37,3 @@ const PersonCard = async ({ person }: { person: TPerson }) => {
     </Link>
   );
 };
-
-export default PersonCard;

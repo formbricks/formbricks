@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { ZAttributes } from "./attributes";
-import { ZPerson } from "./people";
+import { ZId } from "./environment";
 import { ZSurvey, ZSurveyLogicCondition } from "./surveys";
 import { ZTag } from "./tags";
 
@@ -167,6 +167,13 @@ export const ZResponseFilterCriteria = z.object({
     .optional(),
 });
 
+export const ZResponsePerson = z.object({
+  id: ZId,
+  userId: z.string(),
+});
+
+export type TResponsePerson = z.infer<typeof ZResponsePerson>;
+
 export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
 
 export const ZResponseNoteUser = z.object({
@@ -209,7 +216,7 @@ export const ZResponse = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   surveyId: z.string().cuid2(),
-  person: ZPerson.nullable(),
+  person: ZResponsePerson.nullable(),
   personAttributes: ZResponsePersonAttributes,
   finished: z.boolean(),
   data: ZResponseData,

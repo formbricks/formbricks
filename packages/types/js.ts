@@ -30,6 +30,7 @@ export type TJSWebsiteStateDisplay = z.infer<typeof ZJSWebsiteStateDisplay>;
 
 export const ZJsAppStateSync = z.object({
   person: ZJsPerson.nullish(),
+  userId: z.string().optional(),
   surveys: z.union([z.array(ZSurvey), z.array(ZLegacySurvey)]),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,

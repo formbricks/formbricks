@@ -182,7 +182,9 @@ export async function GET(
 
     // return state
     const state: TJsAppStateSync = {
-      person,
+      ...(version && isVersionGreaterThanOrEqualTo(version, "2.0.0")
+        ? { person }
+        : { userId: person.userId }),
       surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       language,

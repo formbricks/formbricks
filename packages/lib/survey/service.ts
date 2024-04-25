@@ -969,7 +969,7 @@ export const getSyncSurveys = async (
         );
 
         const attributes = await getAttributes(person.id);
-        const personUserId = person.userId ?? "";
+        const personUserId = person.userId;
 
         // the surveys now have segment filters, so we need to evaluate them
         const surveyPromises = surveys.map(async (survey) => {

@@ -2,8 +2,6 @@ import "server-only";
 
 import { Prisma } from "@prisma/client";
 
-import { TAttributes } from "@formbricks/types/attributes";
-import { TPerson } from "@formbricks/types/people";
 import { TResponse, TResponseFilterCriteria, TResponseTtc } from "@formbricks/types/responses";
 import {
   TSurvey,
@@ -733,8 +731,8 @@ export const getQuestionWiseSummary = (
           acc[choice] = 0;
           return acc;
         }, {});
-        const otherValues: { value: string; person: TPerson | null; personAttributes: TAttributes | null }[] =
-          [];
+
+        const otherValues: TSurveyQuestionSummaryMultipleChoice["choices"][number]["others"] = [];
         responses.forEach((response) => {
           const responseLanguageCode = getLanguageCode(survey.languages, response.language);
 

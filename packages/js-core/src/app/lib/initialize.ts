@@ -188,7 +188,7 @@ const handleErrorOnFirstInit = () => {
   };
   // can't use config.update here because the config is not yet initialized
   wrapThrows(() => localStorage.setItem(IN_APP_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
-  throw new Error("FROM LMAO - Could not initialize formbricks");
+  throw new Error("Could not initialize formbricks");
 };
 
 export const checkInitialized = (): Result<void, NotInitializedError> => {

@@ -3,8 +3,8 @@ import { z } from "zod";
 import { ZNoCodeConfig } from "./actionClasses";
 import { ZAttributes } from "./attributes";
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
-import { ZPerson } from "./people";
 import { ZLanguage } from "./product";
+import { ZResponsePerson } from "./responses";
 import { ZSegment } from "./segment";
 import { ZBaseStyling } from "./styling";
 
@@ -585,7 +585,7 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.string(),
-      person: ZPerson.nullable(),
+      person: ZResponsePerson.nullable(),
       personAttributes: ZAttributes.nullable(),
     })
   ),
@@ -606,7 +606,7 @@ export const ZSurveyQuestionSummaryMultipleChoice = z.object({
         .array(
           z.object({
             value: z.string(),
-            person: ZPerson.nullable(),
+            person: ZResponsePerson.nullable(),
             personAttributes: ZAttributes.nullable(),
           })
         )
@@ -716,7 +716,7 @@ export const ZSurveyQuestionSummaryDate = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.string(),
-      person: ZPerson.nullable(),
+      person: ZResponsePerson.nullable(),
       personAttributes: ZAttributes.nullable(),
     })
   ),
@@ -733,7 +733,7 @@ export const ZSurveyQuestionSummaryFileUpload = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.array(z.string()),
-      person: ZPerson.nullable(),
+      person: ZResponsePerson.nullable(),
       personAttributes: ZAttributes.nullable(),
     })
   ),
@@ -780,7 +780,7 @@ export const ZSurveyQuestionSummaryHiddenFields = z.object({
     z.object({
       updatedAt: z.date(),
       value: z.string(),
-      person: ZPerson.nullable(),
+      person: ZResponsePerson.nullable(),
       personAttributes: ZAttributes.nullable(),
     })
   ),
@@ -797,7 +797,7 @@ export const ZSurveyQuestionSummaryAddress = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.array(z.string()),
-      person: ZPerson.nullable(),
+      person: ZResponsePerson.nullable(),
       personAttributes: ZAttributes.nullable(),
     })
   ),

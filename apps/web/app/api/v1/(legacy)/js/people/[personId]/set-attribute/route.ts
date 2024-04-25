@@ -3,12 +3,10 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 
 import { updateAttributes } from "@formbricks/lib/attribute/service";
-// import { createAttributeClass, getAttributeClassByName } from "@formbricks/lib/attributeClass/service";
 import { personCache } from "@formbricks/lib/person/cache";
 import { getPerson } from "@formbricks/lib/person/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { ZJsPeopleLegacyAttributeInput } from "@formbricks/types/js";
-import { TJsPerson } from "@formbricks/types/js";
 
 export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
@@ -43,17 +41,6 @@ export async function POST(req: Request, { params }): Promise<Response> {
       return responses.notFoundResponse("Person", personId, true);
     }
 
-    // let attributeClass = await getAttributeClassByName(environmentId, key);
-
-    // // create new attribute class if not found
-    // if (attributeClass === null) {
-    //   attributeClass = await createAttributeClass(environmentId, key, "code");
-    // }
-
-    // if (!attributeClass) {
-    //   return responses.internalServerErrorResponse("Unable to create attribute class", true);
-    // }
-
     await updateAttributes(personId, { [key]: value });
 
     personCache.revalidate({
@@ -67,7 +54,7 @@ export async function POST(req: Request, { params }): Promise<Response> {
 
     const state = await getUpdatedState(environmentId, personId);
 
-    let person: TJsPerson | null = null;
+    let person: { id: string; userId: string } | null = null;
     if (state.person && "id" in state.person && "userId" in state.person) {
       person = {
         id: state.person.id,
