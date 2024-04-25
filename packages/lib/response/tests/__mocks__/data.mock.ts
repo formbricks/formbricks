@@ -8,7 +8,7 @@ import {
   TResponseUpdateInput,
   TSurveyPersonAttributes,
 } from "@formbricks/types/responses";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurveyQuestionType, TSurveySummary } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
 import { responseNoteSelect } from "../../../responseNote/service";
@@ -478,7 +478,7 @@ export const mockSurveySummaryOutput = {
       headline: "Question Text",
       questionId: "ars2tjk8hsi8oqk1uac00mo8",
       ttc: 0,
-      views: 0,
+      impressions: 0,
     },
   ],
   meta: {

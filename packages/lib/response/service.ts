@@ -224,7 +224,17 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
-  const { environmentId, language, userId, surveyId, finished, data, meta, singleUseId } = responseInput;
+  const {
+    environmentId,
+    language,
+    userId,
+    surveyId,
+    finished,
+    data,
+    meta,
+    singleUseId,
+    ttc: initialTtc,
+  } = responseInput;
   try {
     let person: TPerson | null = null;
     let attributes: TAttributes | null = null;
@@ -240,6 +250,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     if (person?.id) {
       attributes = await getAttributes(person?.id as string);
     }
+
+    const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
     const responsePrisma = await prisma.response.create({
       data: {
@@ -261,6 +273,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         }),
         ...(meta && ({ meta } as Prisma.JsonObject)),
         singleUseId,
+        ttc: ttc,
       },
       select: responseSelection,
     });
@@ -630,11 +643,12 @@ export const getSurveySummary = (
           createdAt: filterCriteria?.createdAt,
         });
 
-        const meta = getSurveySummaryMeta(responses, displayCount);
         const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
+        const meta = getSurveySummaryMeta(responses, displayCount);
         const questionWiseSummary = getQuestionWiseSummary(
           checkForRecallInHeadline(survey, "default"),
-          responses
+          responses,
+          dropOff
         );
 
         return { meta, dropOff, summary: questionWiseSummary };
