@@ -114,7 +114,7 @@ export const ThemeStylingPreviewSurvey = ({
   const isAppSurvey = previewType === "app" || previewType === "website";
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-items-center">
+    <div className="flex h-full w-full flex-col items-center justify-items-center overflow-hidden">
       <motion.div
         variants={previewParentContainerVariant}
         className="fixed hidden h-[95%] w-5/6"
