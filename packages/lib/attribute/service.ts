@@ -11,7 +11,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 
 import { attributeCache } from "../attribute/cache";
 import { attributeClassCache } from "../attributeClass/cache";
-import { getAttributeClassByName } from "../attributeClass/service";
+import { getAttributeClassByName, getAttributeClasses } from "../attributeClass/service";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getPerson, getPersonByUserId } from "../person/service";
 import { validateInputs } from "../utils/validate";
@@ -158,15 +158,9 @@ export const updateAttributes = async (personId: string, attributes: TAttributes
   const environmentId = person.environmentId;
   const userId = person.userId;
 
-  const attributeClassNames = Object.keys(attributes);
-  const existingClasses = await prisma.attributeClass.findMany({
-    where: {
-      environmentId,
-      name: { in: attributeClassNames },
-    },
-  });
+  const attributeClasses = await getAttributeClasses(environmentId);
 
-  const attributeClassMap = new Map(existingClasses.map((ac) => [ac.name, ac.id]));
+  const attributeClassMap = new Map(attributeClasses.map((ac) => [ac.name, ac.id]));
   const upsertOperations: Promise<any>[] = [];
 
   for (const [name, value] of Object.entries(attributes)) {
