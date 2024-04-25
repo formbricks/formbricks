@@ -68,6 +68,7 @@ export const trackAction = async (name: string): Promise<Result<void, NetworkErr
           environmentId: inAppConfig.get().environmentId,
           apiHost: inAppConfig.get().apiHost,
           userId,
+          attributes: inAppConfig.get().state.attributes,
         },
         true
       );

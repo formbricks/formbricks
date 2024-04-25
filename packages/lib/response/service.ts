@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
+import { TAttributes } from "@formbricks/types/attributes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -26,10 +27,11 @@ import {
 import { TSurveySummary } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
+import { getAttributes } from "../attribute/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL, WEBAPP_URL } from "../constants";
 import { displayCache } from "../display/cache";
 import { deleteDisplayByResponseId, getDisplayCountBySurveyId } from "../display/service";
-import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
+import { createPerson, getPerson, getPersonByUserId } from "../person/service";
 import {
   buildWhereClause,
   calculateTtcTotal,
@@ -69,19 +71,6 @@ export const responseSelection = {
     select: {
       id: true,
       userId: true,
-      createdAt: true,
-      updatedAt: true,
-      environmentId: true,
-      attributes: {
-        select: {
-          value: true,
-          attributeClass: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      },
     },
   },
   tags: {
@@ -148,7 +137,6 @@ export const getResponsesByPersonId = async (
             responses.push({
               ...response,
               notes: responseNotes,
-              person: response.person ? transformPrismaPerson(response.person) : null,
               tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
             });
           })
@@ -198,7 +186,6 @@ export const getResponseBySingleUseId = async (
 
         const response: TResponse = {
           ...responsePrisma,
-          person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
         };
 
@@ -243,6 +230,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
   } = responseInput;
   try {
     let person: TPerson | null = null;
+    let attributes: TAttributes | null = null;
 
     if (userId) {
       person = await getPersonByUserId(environmentId, userId);
@@ -250,6 +238,10 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         // create person if it does not exist
         person = await createPerson(environmentId, userId);
       }
+    }
+
+    if (person?.id) {
+      attributes = await getAttributes(person?.id as string);
     }
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
@@ -270,7 +262,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
               id: person.id,
             },
           },
-          personAttributes: person?.attributes,
+          personAttributes: attributes,
         }),
         ...(meta && ({ meta } as Prisma.JsonObject)),
         singleUseId,
@@ -281,7 +273,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     const response: TResponse = {
       ...responsePrisma,
-      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
@@ -313,6 +304,7 @@ export const createResponseLegacy = async (responseInput: TResponseLegacyInput):
 
   try {
     let person: TPerson | null = null;
+    let attributes: TAttributes | null = null;
 
     if (responseInput.personId) {
       person = await getPerson(responseInput.personId);
@@ -326,6 +318,11 @@ export const createResponseLegacy = async (responseInput: TResponseLegacyInput):
             _total: ttcTemp[questionId], // Add _total property with the same value
           }
         : ttcTemp;
+
+    if (person?.id) {
+      attributes = await getAttributes(person?.id as string);
+    }
+
     const responsePrisma = await prisma.response.create({
       data: {
         survey: {
@@ -342,7 +339,7 @@ export const createResponseLegacy = async (responseInput: TResponseLegacyInput):
               id: responseInput.personId,
             },
           },
-          personAttributes: person?.attributes,
+          personAttributes: attributes,
         }),
 
         ...(responseInput.meta && ({ meta: responseInput?.meta } as Prisma.JsonObject)),
@@ -351,9 +348,9 @@ export const createResponseLegacy = async (responseInput: TResponseLegacyInput):
       },
       select: responseSelection,
     });
+
     const response: TResponse = {
       ...responsePrisma,
-      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
@@ -395,7 +392,6 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
 
         const response: TResponse = {
           ...responsePrisma,
-          person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
         };
 
@@ -571,7 +567,6 @@ export const getResponses = async (
           responses.map((responsePrisma) => {
             return {
               ...responsePrisma,
-              person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
               tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
             };
           })
@@ -592,6 +587,7 @@ export const getResponses = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+
   return responses.map((response) => ({
     ...formatDateFields(response, ZResponse),
     notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
@@ -755,7 +751,6 @@ export const getResponsesByEnvironmentId = async (
           responses.map(async (responsePrisma) => {
             return {
               ...responsePrisma,
-              person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
               tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
             };
           })
@@ -830,7 +825,6 @@ export const updateResponse = async (
 
     const response: TResponse = {
       ...responsePrisma,
-      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
@@ -868,7 +862,6 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
     const response: TResponse = {
       ...responsePrisma,
       notes: responseNotes,
-      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
