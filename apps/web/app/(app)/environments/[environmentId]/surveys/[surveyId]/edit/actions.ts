@@ -202,6 +202,9 @@ export const resetBasicSegmentFiltersAction = async (surveyId: string) => {
 };
 
 export async function getImagesFromUnsplashAction(searchQuery: string, page: number = 1) {
+  if (!UNSPLASH_ACCESS_KEY) {
+    throw new Error("Unsplash access key is not set");
+  }
   const baseUrl = "https://api.unsplash.com/search/photos";
   const params = new URLSearchParams({
     query: searchQuery,
