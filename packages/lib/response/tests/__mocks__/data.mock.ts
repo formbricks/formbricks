@@ -8,7 +8,7 @@ import {
   TResponseUpdateInput,
   TSurveyPersonAttributes,
 } from "@formbricks/types/responses";
-import { TSurveyQuestionType, TSurveySummary } from "@formbricks/types/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
 import { responseNoteSelect } from "../../../responseNote/service";
@@ -20,9 +20,6 @@ type ResponseMock = Prisma.ResponseGetPayload<{
 }>;
 type ResponseNoteMock = Prisma.ResponseNoteGetPayload<{
   include: typeof responseNoteSelect;
-}>;
-type ResponsePersonMock = Prisma.PersonGetPayload<{
-  select: typeof responseSelection.person.select;
 }>;
 
 export const mockEnvironmentId = "ars2tjk8hsi8oqk1uac00mo7";
@@ -62,20 +59,9 @@ export const mockResponseNote: ResponseNoteMock = {
   },
 };
 
-export const mockPerson: ResponsePersonMock = {
+export const mockPerson = {
   id: mockPersonId,
   userId: mockUserId,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  environmentId: mockEnvironmentId,
-  // attributes: [
-  //   {
-  //     value: "attribute1",
-  //     attributeClass: {
-  //       name: "attributeClass1",
-  //     },
-  //   },
-  // ],
 };
 
 export const mockTags = [
