@@ -965,9 +965,9 @@ export const getQuestionWiseSummary = (
         summary.push({
           type: question.type,
           question,
-          impressions,
-          clicks: data.clicked,
-          skips: data.dismissed,
+          impressionCount: impressions,
+          clickCount: data.clicked,
+          skipCount: data.dismissed,
           responseCount: totalResponses,
           ctr: {
             count: data.clicked,

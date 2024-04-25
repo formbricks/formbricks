@@ -679,9 +679,9 @@ export type TSurveyQuestionSummaryNps = z.infer<typeof ZSurveyQuestionSummaryNps
 export const ZSurveyQuestionSummaryCta = z.object({
   type: z.literal("cta"),
   question: ZSurveyCTAQuestion,
-  impressions: z.number(),
-  clicks: z.number(),
-  skips: z.number(),
+  impressionCount: z.number(),
+  clickCount: z.number(),
+  skipCount: z.number(),
   responseCount: z.number(),
   ctr: z.object({
     count: z.number(),
