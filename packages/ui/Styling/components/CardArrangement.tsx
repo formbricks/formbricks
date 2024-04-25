@@ -6,6 +6,11 @@ import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyType } from "@formbricks/types/surveys";
 
 import { Button } from "../../Button";
+import {
+  CasualCardArrangementIcon,
+  NoCardsArrangementIcon,
+  StraightCardArrangementIcon,
+} from "./CardArrangementIcons";
 
 interface CardArrangementProps {
   surveyType: TSurveyType;
@@ -30,6 +35,17 @@ export const CardArrangement = ({
     setActiveCardArrangement(arrangement, surveyType);
   };
 
+  const getCardArrangementIcon = (cardArrangement: string) => {
+    switch (cardArrangement) {
+      case "casual":
+        return <CasualCardArrangementIcon />;
+      case "straight":
+        return <StraightCardArrangementIcon />;
+      default:
+        return <NoCardsArrangementIcon />;
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col">
@@ -48,12 +64,13 @@ export const CardArrangement = ({
               variant="minimal"
               size="sm"
               className={cn(
-                "flex flex-1 justify-center bg-white text-center",
+                "flex flex-1 justify-center space-x-4 bg-white text-center",
                 activeCardArrangement === cardArrangement && "bg-slate-200"
               )}
               disabled={disabled}
               onClick={() => handleCardArrangementChange(cardArrangement)}>
-              {capitalizeFirstLetter(cardArrangement)}
+              <p> {capitalizeFirstLetter(cardArrangement)}</p>
+              {getCardArrangementIcon(cardArrangement)}
             </Button>
           );
         })}
