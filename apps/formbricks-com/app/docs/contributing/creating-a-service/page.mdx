@@ -209,12 +209,12 @@ We will rewrite the function `getApiKey` we created in the `service.ts` file to 
 <CodeGroup title="packages/lib/apiKey/service.ts">
 
 ```ts
-import { unstable_cache } from "next/cache";
+import { cache } from "@formbricks/lib/cache";
 
 import { apiKeyCache } from "./cache";
 
-export const getApiKey = async (apiKeyId: string): Promise<TApiKey> =>
-  unstable_cache(
+export const getApiKey = (apiKeyId: string): Promise<TApiKey> =>
+  cache(
     async () => {
       validateInputs([apiKeyId, ZString]);
 

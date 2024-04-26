@@ -1,17 +1,16 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
-
 import { ZId } from "@formbricks/types/environment";
 
+import { cache } from "../cache";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
 import { teamCache } from "../team/cache";
 import { validateInputs } from "../utils/validate";
 import { getTeamsByUserId } from "./service";
 
-export const canUserAccessTeam = async (userId: string, teamId: string): Promise<boolean> =>
-  await unstable_cache(
+export const canUserAccessTeam = (userId: string, teamId: string): Promise<boolean> =>
+  cache(
     async () => {
       validateInputs([userId, ZId], [teamId, ZId]);
 

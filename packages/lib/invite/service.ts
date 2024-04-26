@@ -1,7 +1,6 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -12,14 +11,13 @@ import {
   TInviteUpdateInput,
   TInvitee,
   ZCurrentUser,
-  ZInvite,
   ZInviteUpdateInput,
   ZInvitee,
 } from "@formbricks/types/invites";
 
+import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { getMembershipByUserIdTeamId } from "../membership/service";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { inviteCache } from "./cache";
 
@@ -41,8 +39,8 @@ interface InviteWithCreator extends TInvite {
     email: string;
   };
 }
-export const getInvitesByTeamId = async (teamId: string, page?: number): Promise<TInvite[]> => {
-  const invites = await unstable_cache(
+export const getInvitesByTeamId = (teamId: string, page?: number): Promise<TInvite[]> =>
+  cache(
     async () => {
       validateInputs([teamId, ZString], [page, ZOptionalNumber]);
 
@@ -68,8 +66,6 @@ export const getInvitesByTeamId = async (teamId: string, page?: number): Promise
       tags: [inviteCache.tag.byTeamId(teamId)],
     }
   )();
-  return invites.map((invite: TInvite) => formatDateFields(invite, ZInvite));
-};
 
 export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): Promise<TInvite | null> => {
   validateInputs([inviteId, ZString], [data, ZInviteUpdateInput]);
@@ -129,8 +125,8 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
   }
 };
 
-export const getInvite = async (inviteId: string): Promise<InviteWithCreator | null> => {
-  const invite = await unstable_cache(
+export const getInvite = (inviteId: string): Promise<InviteWithCreator | null> =>
+  cache(
     async () => {
       validateInputs([inviteId, ZString]);
 
@@ -163,14 +159,6 @@ export const getInvite = async (inviteId: string): Promise<InviteWithCreator | n
       tags: [inviteCache.tag.byId(inviteId)],
     }
   )();
-
-  return invite
-    ? {
-        ...formatDateFields(invite, ZInvite),
-        creator: invite.creator,
-      }
-    : null;
-};
 
 export const resendInvite = async (inviteId: string): Promise<TInvite> => {
   validateInputs([inviteId, ZString]);

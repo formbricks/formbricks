@@ -8,7 +8,6 @@ import { sendEmbedSurveyPreviewEmail } from "@formbricks/email";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
-import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const sendEmbedSurveyPreviewEmailAction = async (surveyId: string) => {
@@ -57,7 +56,7 @@ export async function generateResultShareUrlAction(surveyId: string): Promise<st
     20
   )();
 
-  await updateSurvey({ ...formatSurveyDateFields(survey), resultShareKey });
+  await updateSurvey({ ...survey, resultShareKey });
 
   return resultShareKey;
 }
@@ -89,7 +88,7 @@ export async function deleteResultShareUrlAction(surveyId: string): Promise<void
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  await updateSurvey({ ...formatSurveyDateFields(survey), resultShareKey: null });
+  await updateSurvey({ ...survey, resultShareKey: null });
 }
 
 export const getEmailHtmlAction = async (surveyId: string) => {

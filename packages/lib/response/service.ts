@@ -1,7 +1,6 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
@@ -17,17 +16,16 @@ import {
   TResponseUpdateInput,
   TSurveyMetaFieldFilter,
   TSurveyPersonAttributes,
-  ZResponse,
   ZResponseFilterCriteria,
   ZResponseInput,
   ZResponseLegacyInput,
-  ZResponseNote,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
 import { TSurveySummary } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
 import { getAttributes } from "../attribute/service";
+import { cache } from "../cache";
 import { ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { displayCache } from "../display/cache";
 import { deleteDisplayByResponseId, getDisplayCountBySurveyId } from "../display/service";
@@ -47,7 +45,6 @@ import { getResponseNotes } from "../responseNote/service";
 import { putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
-import { formatDateFields } from "../utils/datetime";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
 import { checkForRecallInHeadline } from "../utils/recall";
 import { validateInputs } from "../utils/validate";
@@ -104,11 +101,8 @@ export const responseSelection = {
   },
 };
 
-export const getResponsesByPersonId = async (
-  personId: string,
-  page?: number
-): Promise<Array<TResponse> | null> => {
-  const responses = await unstable_cache(
+export const getResponsesByPersonId = (personId: string, page?: number): Promise<Array<TResponse> | null> =>
+  cache(
     async () => {
       validateInputs([personId, ZId], [page, ZOptionalNumber]);
 
@@ -157,17 +151,8 @@ export const getResponsesByPersonId = async (
     }
   )();
 
-  return responses.map((response) => ({
-    ...formatDateFields(response, ZResponse),
-    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
-  }));
-};
-
-export const getResponseBySingleUseId = async (
-  surveyId: string,
-  singleUseId: string
-): Promise<TResponse | null> => {
-  const response = await unstable_cache(
+export const getResponseBySingleUseId = (surveyId: string, singleUseId: string): Promise<TResponse | null> =>
+  cache(
     async () => {
       validateInputs([surveyId, ZId], [singleUseId, ZString]);
 
@@ -202,14 +187,6 @@ export const getResponseBySingleUseId = async (
       tags: [responseCache.tag.bySingleUseId(surveyId, singleUseId)],
     }
   )();
-
-  return response
-    ? {
-        ...formatDateFields(response, ZResponse),
-        notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
-      }
-    : null;
-};
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
@@ -371,8 +348,8 @@ export const createResponseLegacy = async (responseInput: TResponseLegacyInput):
   }
 };
 
-export const getResponse = async (responseId: string): Promise<TResponse | null> => {
-  const response = await unstable_cache(
+export const getResponse = (responseId: string): Promise<TResponse | null> =>
+  cache(
     async () => {
       validateInputs([responseId, ZId]);
 
@@ -408,16 +385,8 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
     }
   )();
 
-  return response
-    ? ({
-        ...formatDateFields(response, ZResponse),
-        notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
-      } as TResponse)
-    : null;
-};
-
-export const getResponsePersonAttributes = async (surveyId: string): Promise<TSurveyPersonAttributes> => {
-  const responses = await unstable_cache(
+export const getResponsePersonAttributes = (surveyId: string): Promise<TSurveyPersonAttributes> =>
+  cache(
     async () => {
       validateInputs([surveyId, ZId]);
 
@@ -461,11 +430,8 @@ export const getResponsePersonAttributes = async (surveyId: string): Promise<TSu
     }
   )();
 
-  return responses;
-};
-
-export const getResponseMeta = async (surveyId: string): Promise<TSurveyMetaFieldFilter> => {
-  const meta = await unstable_cache(
+export const getResponseMeta = (surveyId: string): Promise<TSurveyMetaFieldFilter> =>
+  cache(
     async () => {
       validateInputs([surveyId, ZId]);
 
@@ -524,16 +490,13 @@ export const getResponseMeta = async (surveyId: string): Promise<TSurveyMetaFiel
     }
   )();
 
-  return meta;
-};
-
-export const getResponses = async (
+export const getResponses = (
   surveyId: string,
   page?: number,
   batchSize?: number,
   filterCriteria?: TResponseFilterCriteria
-): Promise<TResponse[]> => {
-  const responses = await unstable_cache(
+): Promise<TResponse[]> =>
+  cache(
     async () => {
       validateInputs(
         [surveyId, ZId],
@@ -582,17 +545,11 @@ export const getResponses = async (
     }
   )();
 
-  return responses.map((response) => ({
-    ...formatDateFields(response, ZResponse),
-    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
-  }));
-};
-
 export const getSurveySummary = (
   surveyId: string,
   filterCriteria?: TResponseFilterCriteria
-): Promise<TSurveySummary> => {
-  const summary = unstable_cache(
+): Promise<TSurveySummary> =>
+  cache(
     async () => {
       validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
 
@@ -640,9 +597,6 @@ export const getSurveySummary = (
       tags: [responseCache.tag.bySurveyId(surveyId), displayCache.tag.bySurveyId(surveyId)],
     }
   )();
-
-  return summary;
-};
 
 export const getResponseDownloadUrl = async (
   surveyId: string,
@@ -715,11 +669,8 @@ export const getResponseDownloadUrl = async (
   }
 };
 
-export const getResponsesByEnvironmentId = async (
-  environmentId: string,
-  page?: number
-): Promise<TResponse[]> => {
-  const responses = await unstable_cache(
+export const getResponsesByEnvironmentId = (environmentId: string, page?: number): Promise<TResponse[]> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -763,12 +714,6 @@ export const getResponsesByEnvironmentId = async (
       tags: [responseCache.tag.byEnvironmentId(environmentId)],
     }
   )();
-
-  return responses.map((response) => ({
-    ...formatDateFields(response, ZResponse),
-    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
-  }));
-};
 
 export const updateResponse = async (
   responseId: string,
@@ -882,11 +827,11 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
   }
 };
 
-export const getResponseCountBySurveyId = async (
+export const getResponseCountBySurveyId = (
   surveyId: string,
   filterCriteria?: TResponseFilterCriteria
 ): Promise<number> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
 

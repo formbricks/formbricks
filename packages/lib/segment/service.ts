@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
+import { ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import {
@@ -32,6 +32,7 @@ import {
   getLastOccurrenceDaysAgo,
   getTotalOccurrencesForAction,
 } from "../action/service";
+import { cache } from "../cache";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { surveyCache } from "../survey/cache";
 import { getSurvey } from "../survey/service";
@@ -115,11 +116,10 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
   }
 };
 
-export const getSegments = async (environmentId: string): Promise<TSegment[]> => {
-  validateInputs([environmentId, ZId]);
-
-  const segments = await unstable_cache(
+export const getSegments = (environmentId: string): Promise<TSegment[]> =>
+  cache(
     async () => {
+      validateInputs([environmentId, ZId]);
       try {
         const segments = await prisma.segment.findMany({
           where: {
@@ -147,14 +147,10 @@ export const getSegments = async (environmentId: string): Promise<TSegment[]> =>
     }
   )();
 
-  return segments;
-};
-
-export const getSegment = async (segmentId: string): Promise<TSegment> => {
-  validateInputs([segmentId, ZId]);
-
-  const segment = await unstable_cache(
+export const getSegment = (segmentId: string): Promise<TSegment> =>
+  cache(
     async () => {
+      validateInputs([segmentId, ZId]);
       try {
         const segment = await prisma.segment.findUnique({
           where: {
@@ -181,9 +177,6 @@ export const getSegment = async (segmentId: string): Promise<TSegment> => {
       tags: [segmentCache.tag.byId(segmentId)],
     }
   )();
-
-  return segment;
-};
 
 export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput): Promise<TSegment> => {
   validateInputs([segmentId, ZId], [data, ZSegmentUpdateInput]);
@@ -230,6 +223,8 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
 };
 
 export const deleteSegment = async (segmentId: string): Promise<TSegment> => {
+  validateInputs([segmentId, ZId]);
+
   try {
     const currentSegment = await getSegment(segmentId);
     if (!currentSegment) {
@@ -273,6 +268,8 @@ export const deleteSegment = async (segmentId: string): Promise<TSegment> => {
 };
 
 export const cloneSegment = async (segmentId: string, surveyId: string): Promise<TSegment> => {
+  validateInputs([segmentId, ZId], [surveyId, ZId]);
+
   try {
     const segment = await getSegment(segmentId);
     if (!segment) {
@@ -333,9 +330,11 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
   }
 };
 
-export const getSegmentsByAttributeClassName = async (environmentId: string, attributeClassName: string) => {
-  const segments = await unstable_cache(
+export const getSegmentsByAttributeClassName = (environmentId: string, attributeClassName: string) =>
+  cache(
     async () => {
+      validateInputs([environmentId, ZId], [attributeClassName, ZString]);
+
       try {
         const segments = await prisma.segment.findMany({
           where: {
@@ -369,10 +368,9 @@ export const getSegmentsByAttributeClassName = async (environmentId: string, att
     }
   )();
 
-  return segments;
-};
-
 export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> => {
+  validateInputs([surveyId, ZId]);
+
   const survey = await getSurvey(surveyId);
   if (!survey) {
     throw new ResourceNotFoundError("survey", surveyId);

@@ -17,18 +17,15 @@ import {
 } from "@formbricks/lib/segment/service";
 import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { deleteSurvey, getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
-import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
-import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
-import { formatDateFields } from "@formbricks/lib/utils/datetime";
+import {
+  deleteSurvey,
+  getSurvey,
+  loadNewSegmentInSurvey,
+  updateSurvey,
+} from "@formbricks/lib/survey/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TProduct } from "@formbricks/types/product";
-import {
-  TBaseFilters,
-  TSegmentUpdateInput,
-  ZSegmentFilters,
-  ZSegmentUpdateInput,
-} from "@formbricks/types/segment";
+import { TBaseFilters, TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export async function surveyMutateAction(survey: TSurvey): Promise<TSurvey> {
@@ -45,12 +42,7 @@ export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
   const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(survey.environmentId, session.user.id);
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
-  const _survey = {
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  };
-
-  return await updateSurvey(_survey);
+  return await updateSurvey(survey);
 }
 
 export const deleteSurveyAction = async (surveyId: string) => {
@@ -142,12 +134,7 @@ export const updateBasicSegmentAction = async (
     }
   }
 
-  const _data = {
-    ...data,
-    ...formatDateFields(data, ZSegmentUpdateInput),
-  };
-
-  return await updateSegment(segmentId, _data);
+  return await updateSegment(segmentId, data);
 };
 
 export const loadNewBasicSegmentAction = async (surveyId: string, segmentId: string) => {

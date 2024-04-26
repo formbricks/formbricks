@@ -1,21 +1,20 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TWebhook, TWebhookInput, ZWebhook, ZWebhookInput } from "@formbricks/types/webhooks";
+import { TWebhook, TWebhookInput, ZWebhookInput } from "@formbricks/types/webhooks";
 
+import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { webhookCache } from "./cache";
 
-export const getWebhooks = async (environmentId: string, page?: number): Promise<TWebhook[]> => {
-  const webhooks = await unstable_cache(
+export const getWebhooks = (environmentId: string, page?: number): Promise<TWebhook[]> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -41,14 +40,12 @@ export const getWebhooks = async (environmentId: string, page?: number): Promise
       tags: [webhookCache.tag.byEnvironmentId(environmentId)],
     }
   )();
-  return webhooks.map((webhook) => formatDateFields(webhook, ZWebhook));
-};
 
-export const getWebhookCountBySource = async (
+export const getWebhookCountBySource = (
   environmentId: string,
   source: TWebhookInput["source"]
 ): Promise<number> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [source, ZId]);
 
@@ -74,8 +71,8 @@ export const getWebhookCountBySource = async (
     }
   )();
 
-export const getWebhook = async (id: string): Promise<TWebhook | null> => {
-  const webhook = await unstable_cache(
+export const getWebhook = async (id: string): Promise<TWebhook | null> =>
+  cache(
     async () => {
       validateInputs([id, ZId]);
 
@@ -99,8 +96,6 @@ export const getWebhook = async (id: string): Promise<TWebhook | null> => {
       tags: [webhookCache.tag.byId(id)],
     }
   )();
-  return webhook ? formatDateFields(webhook, ZWebhook) : null;
-};
 
 export const createWebhook = async (
   environmentId: string,
