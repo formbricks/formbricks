@@ -1,8 +1,8 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
+import { cache } from "cache";
 import { differenceInDays } from "date-fns";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { TActionClassType } from "@formbricks/types/actionClasses";
@@ -22,7 +22,7 @@ import { actionCache } from "./cache";
 import { getStartDateOfLastMonth, getStartDateOfLastQuarter, getStartDateOfLastWeek } from "./utils";
 
 export const getActionsByPersonId = async (personId: string, page?: number): Promise<TAction[]> => {
-  const actions = await unstable_cache(
+  const actions = await cache(
     async () => {
       validateInputs([personId, ZId], [page, ZOptionalNumber]);
 
@@ -70,7 +70,7 @@ export const getActionsByPersonId = async (personId: string, page?: number): Pro
 };
 
 export const getActionsByEnvironmentId = async (environmentId: string, page?: number): Promise<TAction[]> => {
-  const actions = await unstable_cache(
+  const actions = await cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -190,7 +190,7 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
 };
 
 export const getActionCountInLastHour = async (actionClassId: string): Promise<number> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([actionClassId, ZId]);
 
@@ -216,7 +216,7 @@ export const getActionCountInLastHour = async (actionClassId: string): Promise<n
   )();
 
 export const getActionCountInLast24Hours = async (actionClassId: string): Promise<number> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([actionClassId, ZId]);
 
@@ -242,7 +242,7 @@ export const getActionCountInLast24Hours = async (actionClassId: string): Promis
   )();
 
 export const getActionCountInLast7Days = async (actionClassId: string): Promise<number> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([actionClassId, ZId]);
 
@@ -268,7 +268,7 @@ export const getActionCountInLast7Days = async (actionClassId: string): Promise<
   )();
 
 export const getActionCountInLastQuarter = async (actionClassId: string, personId: string): Promise<number> =>
-  await unstable_cache(
+  await cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -298,7 +298,7 @@ export const getActionCountInLastQuarter = async (actionClassId: string, personI
   )();
 
 export const getActionCountInLastMonth = async (actionClassId: string, personId: string): Promise<number> =>
-  await unstable_cache(
+  await cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -328,7 +328,7 @@ export const getActionCountInLastMonth = async (actionClassId: string, personId:
   )();
 
 export const getActionCountInLastWeek = async (actionClassId: string, personId: string): Promise<number> =>
-  await unstable_cache(
+  await cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -360,7 +360,7 @@ export const getTotalOccurrencesForAction = async (
   actionClassId: string,
   personId: string
 ): Promise<number> =>
-  await unstable_cache(
+  await cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -390,7 +390,7 @@ export const getLastOccurrenceDaysAgo = async (
   actionClassId: string,
   personId: string
 ): Promise<number | null> =>
-  await unstable_cache(
+  await cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -427,7 +427,7 @@ export const getFirstOccurrenceDaysAgo = async (
   actionClassId: string,
   personId: string
 ): Promise<number | null> =>
-  await unstable_cache(
+  await cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 

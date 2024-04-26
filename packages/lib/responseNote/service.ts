@@ -1,17 +1,15 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TResponseNote, ZResponseNote } from "@formbricks/types/responses";
+import { TResponseNote } from "@formbricks/types/responses";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
 import { responseCache } from "../response/cache";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { responseNoteCache } from "./cache";
 
@@ -73,8 +71,8 @@ export const createResponseNote = async (
   }
 };
 
-export const getResponseNote = async (responseNoteId: string): Promise<TResponseNote | null> => {
-  const responseNote = await unstable_cache(
+export const getResponseNote = (responseNoteId: string): Promise<TResponseNote | null> =>
+  cache(
     async () => {
       try {
         const responseNote = await prisma.responseNote.findUnique({
@@ -94,13 +92,11 @@ export const getResponseNote = async (responseNoteId: string): Promise<TResponse
       }
     },
     [`getResponseNote-${responseNoteId}`],
-    { tags: [responseNoteCache.tag.byId(responseNoteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    { tags: [responseNoteCache.tag.byId(responseNoteId)] }
   )();
-  return responseNote ? formatDateFields(responseNote, ZResponseNote) : null;
-};
 
-export const getResponseNotes = async (responseId: string): Promise<TResponseNote[]> => {
-  const responseNotes = await unstable_cache(
+export const getResponseNotes = (responseId: string): Promise<TResponseNote[]> =>
+  cache(
     async () => {
       try {
         validateInputs([responseId, ZId]);
@@ -125,10 +121,10 @@ export const getResponseNotes = async (responseId: string): Promise<TResponseNot
       }
     },
     [`getResponseNotes-${responseId}`],
-    { tags: [responseNoteCache.tag.byResponseId(responseId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    {
+      tags: [responseNoteCache.tag.byResponseId(responseId)],
+    }
   )();
-  return responseNotes.map((responseNote) => formatDateFields(responseNote, ZResponseNote));
-};
 
 export const updateResponseNote = async (responseNoteId: string, text: string): Promise<TResponseNote> => {
   validateInputs([responseNoteId, ZString], [text, ZString]);

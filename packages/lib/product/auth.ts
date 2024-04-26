@@ -1,7 +1,6 @@
-import { unstable_cache } from "next/cache";
-
 import { ZId } from "@formbricks/types/environment";
 
+import { cache } from "../cache";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
@@ -10,8 +9,8 @@ import { validateInputs } from "../utils/validate";
 import { productCache } from "./cache";
 import { getProduct } from "./service";
 
-export const canUserAccessProduct = async (userId: string, productId: string): Promise<boolean> =>
-  await unstable_cache(
+export const canUserAccessProduct = (userId: string, productId: string): Promise<boolean> =>
+  cache(
     async () => {
       validateInputs([userId, ZId], [productId, ZId]);
 

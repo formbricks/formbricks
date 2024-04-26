@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 
 import { ZId } from "@formbricks/types/environment";
 
+import { cache } from "../cache";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getMembershipByUserIdTeamId } from "../membership/service";
@@ -14,7 +15,7 @@ import { actionClassCache } from "./cache";
 import { getActionClass } from "./service";
 
 export const canUserUpdateActionClass = async (userId: string, actionClassId: string): Promise<boolean> =>
-  await unstable_cache(
+  await cache(
     async () => {
       validateInputs([userId, ZId], [actionClassId, ZId]);
 

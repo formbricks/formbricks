@@ -1,16 +1,15 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TPerson, ZPerson } from "@formbricks/types/people";
+import { TPerson } from "@formbricks/types/people";
 
+import { cache } from "../cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { activePersonCache, personCache } from "./cache";
 
@@ -55,8 +54,8 @@ export const transformPrismaPerson = (person: TransformPersonInput): TPerson => 
   } as TPerson;
 };
 
-export const getPerson = async (personId: string): Promise<TPerson | null> => {
-  const prismaPerson = await unstable_cache(
+export const getPerson = (personId: string): Promise<TPerson | null> =>
+  cache(
     async () => {
       validateInputs([personId, ZId]);
 
@@ -79,11 +78,8 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
     { tags: [personCache.tag.byId(personId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
 
-  return prismaPerson ? formatDateFields(prismaPerson, ZPerson) : null;
-};
-
-export const getPeople = async (environmentId: string, page?: number): Promise<TPerson[]> => {
-  const peoplePrisma = await unstable_cache(
+export const getPeople = (environmentId: string, page?: number): Promise<TPerson[]> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -111,13 +107,8 @@ export const getPeople = async (environmentId: string, page?: number): Promise<T
     }
   )();
 
-  return peoplePrisma
-    .map((prismaPerson) => formatDateFields(prismaPerson, ZPerson))
-    .filter((person: TPerson | null): person is TPerson => person !== null);
-};
-
-export const getPeopleCount = async (environmentId: string): Promise<number> =>
-  unstable_cache(
+export const getPeopleCount = (environmentId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId]);
 
@@ -217,8 +208,8 @@ export const deletePerson = async (personId: string): Promise<TPerson | null> =>
   }
 };
 
-export const getPersonByUserId = async (environmentId: string, userId: string): Promise<TPerson | null> => {
-  const person = await unstable_cache(
+export const getPersonByUserId = (environmentId: string, userId: string): Promise<TPerson | null> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [userId, ZString]);
 
@@ -243,11 +234,9 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return person ? formatDateFields(person, ZPerson) : null;
-};
 
-export const getIsPersonMonthlyActive = async (personId: string): Promise<boolean> =>
-  unstable_cache(
+export const getIsPersonMonthlyActive = (personId: string): Promise<boolean> =>
+  cache(
     async () => {
       try {
         const latestAction = await prisma.action.findFirst({
