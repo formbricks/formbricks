@@ -4,10 +4,11 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
 
 interface EditThankYouCardProps {
@@ -15,6 +16,9 @@ interface EditThankYouCardProps {
   setLocalSurvey: (survey: TSurvey) => void;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId: string | null;
+  isInvalid: boolean;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (languageCode: string) => void;
 }
 
 export default function EditThankYouCard({
@@ -22,11 +26,16 @@ export default function EditThankYouCard({
   setLocalSurvey,
   setActiveQuestionId,
   activeQuestionId,
+  isInvalid,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: EditThankYouCardProps) {
   // const [open, setOpen] = useState(false);
   let open = activeQuestionId == "end";
   const [showThankYouCardCTA, setshowThankYouCardCTA] = useState<boolean>(
-    localSurvey.thankYouCard.buttonLabel || localSurvey.thankYouCard.buttonLink ? true : false
+    getLocalizedValue(localSurvey.thankYouCard.buttonLabel, "default") || localSurvey.thankYouCard.buttonLink
+      ? true
+      : false
   );
   const setOpen = (e) => {
     if (e) {
@@ -37,13 +46,14 @@ export default function EditThankYouCard({
   };
 
   const updateSurvey = (data) => {
-    setLocalSurvey({
+    const updatedSurvey = {
       ...localSurvey,
       thankYouCard: {
         ...localSurvey.thankYouCard,
         ...data,
       },
-    });
+    };
+    setLocalSurvey(updatedSurvey);
   };
 
   return (
@@ -54,8 +64,9 @@ export default function EditThankYouCard({
       )}>
       <div
         className={cn(
-          open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
-          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
+          open ? "bg-slate-50" : "",
+          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none",
+          isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
         <p>🙏</p>
       </div>
@@ -97,28 +108,27 @@ export default function EditThankYouCard({
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <form>
             <QuestionFormInput
+              id="headline"
+              label="Headline"
+              value={localSurvey?.thankYouCard?.headline}
               localSurvey={localSurvey}
-              environmentId={localSurvey.environmentId}
-              isInvalid={false}
-              questionId="end"
               questionIdx={localSurvey.questions.length}
+              isInvalid={isInvalid}
               updateSurvey={updateSurvey}
-              type="headline"
+              selectedLanguageCode={selectedLanguageCode}
+              setSelectedLanguageCode={setSelectedLanguageCode}
             />
 
-            <div>
-              <div className="flex w-full items-center">
-                <QuestionFormInput
-                  localSurvey={localSurvey}
-                  environmentId={localSurvey.environmentId}
-                  isInvalid={false}
-                  questionId="end"
-                  questionIdx={localSurvey.questions.length}
-                  updateSurvey={updateSurvey}
-                  type="subheader"
-                />
-              </div>
-            </div>
+            <QuestionFormInput
+              id="subheader"
+              value={localSurvey.thankYouCard.subheader}
+              localSurvey={localSurvey}
+              questionIdx={localSurvey.questions.length}
+              isInvalid={isInvalid}
+              updateSurvey={updateSurvey}
+              selectedLanguageCode={selectedLanguageCode}
+              setSelectedLanguageCode={setSelectedLanguageCode}
+            />
             <div className="mt-4">
               <div className="flex items-center space-x-1">
                 <Switch
@@ -129,7 +139,7 @@ export default function EditThankYouCard({
                       updateSurvey({ buttonLabel: undefined, buttonLink: undefined });
                     } else {
                       updateSurvey({
-                        buttonLabel: "Create your own Survey",
+                        buttonLabel: { default: "Create your own Survey" },
                         buttonLink: "https://formbricks.com/signup",
                       });
                     }
@@ -146,16 +156,20 @@ export default function EditThankYouCard({
                 </Label>
               </div>
               {showThankYouCardCTA && (
-                <div className="border-1 mt-4 space-y-4 rounded-md border bg-slate-100 p-4">
+                <div className="border-1 mt-4 space-y-4 rounded-md border bg-slate-100 p-4 pt-2">
                   <div className="space-y-2">
-                    <Label>Button Label</Label>
-                    <Input
+                    <QuestionFormInput
                       id="buttonLabel"
-                      name="buttonLabel"
-                      className="bg-white"
+                      label="Button Label"
                       placeholder="Create your own Survey"
+                      className="bg-white"
                       value={localSurvey.thankYouCard.buttonLabel}
-                      onChange={(e) => updateSurvey({ buttonLabel: e.target.value })}
+                      localSurvey={localSurvey}
+                      questionIdx={localSurvey.questions.length}
+                      isInvalid={isInvalid}
+                      updateSurvey={updateSurvey}
+                      selectedLanguageCode={selectedLanguageCode}
+                      setSelectedLanguageCode={setSelectedLanguageCode}
                     />
                   </div>
                   <div className="space-y-2">

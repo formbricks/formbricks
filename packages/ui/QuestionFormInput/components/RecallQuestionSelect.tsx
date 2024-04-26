@@ -1,5 +1,6 @@
 import {
   CalendarDaysIcon,
+  HomeIcon,
   ListIcon,
   MessageSquareTextIcon,
   PhoneIcon,
@@ -9,6 +10,8 @@ import {
 } from "lucide-react";
 import { RefObject, useEffect, useMemo, useState } from "react";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
@@ -20,6 +23,7 @@ const questionIconMapping = {
   nps: PresentationIcon,
   date: CalendarDaysIcon,
   cal: PhoneIcon,
+  address: HomeIcon,
 };
 
 interface RecallQuestionSelectProps {
@@ -30,6 +34,7 @@ interface RecallQuestionSelectProps {
   showQuestionSelect: boolean;
   inputRef: RefObject<HTMLInputElement>;
   recallQuestions: TSurveyQuestion[];
+  selectedLanguageCode: string;
 }
 
 export default function RecallQuestionSelect({
@@ -40,6 +45,7 @@ export default function RecallQuestionSelect({
   showQuestionSelect,
   inputRef,
   recallQuestions,
+  selectedLanguageCode,
 }: RecallQuestionSelectProps) {
   const [focusedQuestionIdx, setFocusedQuestionIdx] = useState(0); // New state for managing focus
   const isNotAllowedQuestionType = (question: TSurveyQuestion) => {
@@ -48,7 +54,8 @@ export default function RecallQuestionSelect({
       question.type === "cta" ||
       question.type === "consent" ||
       question.type === "pictureSelection" ||
-      question.type === "cal"
+      question.type === "cal" ||
+      question.type === "matrix"
     );
   };
 
@@ -73,8 +80,8 @@ export default function RecallQuestionSelect({
 
   // function to modify headline (recallInfo to corresponding headline)
   const getRecallHeadline = (question: TSurveyQuestion): TSurveyQuestion => {
-    let questionTemp = { ...question };
-    questionTemp = replaceRecallInfoWithUnderline(questionTemp);
+    let questionTemp = structuredClone(question);
+    questionTemp = replaceRecallInfoWithUnderline(questionTemp, selectedLanguageCode);
     return questionTemp;
   };
 
@@ -110,7 +117,7 @@ export default function RecallQuestionSelect({
   }, [showQuestionSelect, localSurvey.questions, focusedQuestionIdx]);
 
   return (
-    <div className="absolute z-30 mt-1 flex max-h-[50%] max-w-[85%] flex-col overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3  text-xs ">
+    <div className="absolute z-30 mt-1 flex max-w-[85%] flex-col overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3  text-xs ">
       {filteredRecallQuestions.length === 0 ? (
         <p className="font-medium text-slate-900">There is no information to recall yet 🤷</p>
       ) : (
@@ -132,7 +139,7 @@ export default function RecallQuestionSelect({
               }}>
               <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
               <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
-                {getRecallHeadline(q).headline}
+                {getLocalizedValue(getRecallHeadline(q).headline, selectedLanguageCode)}
               </div>
             </div>
           );

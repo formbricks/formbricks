@@ -1,42 +1,100 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys";
 
 import { Button } from "../v2/Button";
-import SurveyCard from "./components/SurveyCard";
-import SurveyFilters from "./components/SurveyFilters";
+import { getSurveysAction } from "./actions";
+import { SurveyCard } from "./components/SurveyCard";
+import { SurveyFilters } from "./components/SurveyFilters";
+import { getFormattedFilters } from "./util";
 
 interface SurveysListProps {
   environment: TEnvironment;
-  surveys: TSurvey[];
   otherEnvironment: TEnvironment;
   isViewer: boolean;
   WEBAPP_URL: string;
   userId: string;
+  surveysPerPage: number;
 }
 
-export default function SurveysList({
+export const initialFilters: TSurveyFilters = {
+  name: "",
+  createdBy: [],
+  status: [],
+  type: [],
+  sortBy: "updatedAt",
+};
+
+export const SurveysList = ({
   environment,
-  surveys,
   otherEnvironment,
   isViewer,
   WEBAPP_URL,
   userId,
-}: SurveysListProps) {
-  const [filteredSurveys, setFilteredSurveys] = useState<TSurvey[]>(surveys);
-  // Initialize orientation state with a function that checks if window is defined
-  const [orientation, setOrientation] = useState(() =>
-    typeof localStorage !== "undefined" ? localStorage.getItem("surveyOrientation") || "grid" : "grid"
-  );
+  surveysPerPage: surveysLimit,
+}: SurveysListProps) => {
+  const [surveys, setSurveys] = useState<TSurvey[]>([]);
+  const [isFetching, setIsFetching] = useState(true);
+  const [hasMore, setHasMore] = useState<boolean>(true);
 
-  // Save orientation to localStorage
+  const [surveyFilters, setSurveyFilters] = useState<TSurveyFilters>(initialFilters);
+
+  const filters = useMemo(() => getFormattedFilters(surveyFilters, userId), [surveyFilters, userId]);
+
+  const [orientation, setOrientation] = useState("");
+
   useEffect(() => {
-    localStorage.setItem("surveyOrientation", orientation);
-  }, [orientation]);
+    // Initialize orientation state with a function that checks if window is defined
+    const orientationFromLocalStorage = localStorage.getItem("surveyOrientation");
+    if (orientationFromLocalStorage) {
+      setOrientation(orientationFromLocalStorage);
+    } else {
+      setOrientation("grid");
+      localStorage.setItem("surveyOrientation", "grid");
+    }
+  }, []);
+
+  useEffect(() => {
+    async function fetchInitialSurveys() {
+      setIsFetching(true);
+      const res = await getSurveysAction(environment.id, surveysLimit, undefined, filters);
+      if (res.length < surveysLimit) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
+      setSurveys(res);
+      setIsFetching(false);
+    }
+    fetchInitialSurveys();
+  }, [environment.id, surveysLimit, filters]);
+
+  const fetchNextPage = useCallback(async () => {
+    setIsFetching(true);
+    const newSurveys = await getSurveysAction(environment.id, surveysLimit, surveys.length, filters);
+    if (newSurveys.length === 0 || newSurveys.length < surveysLimit) {
+      setHasMore(false);
+    } else {
+      setHasMore(true);
+    }
+
+    setSurveys([...surveys, ...newSurveys]);
+    setIsFetching(false);
+  }, [environment.id, surveys, surveysLimit, filters]);
+
+  const handleDeleteSurvey = async (surveyId: string) => {
+    const newSurveys = surveys.filter((survey) => survey.id !== surveyId);
+    setSurveys(newSurveys);
+  };
+
+  const handleDuplicateSurvey = async (survey: TSurvey) => {
+    const newSurveys = [survey, ...surveys];
+    setSurveys(newSurveys);
+  };
 
   return (
     <div className="space-y-4">
@@ -50,13 +108,12 @@ export default function SurveysList({
         </Button>
       </div>
       <SurveyFilters
-        surveys={surveys}
-        setFilteredSurveys={setFilteredSurveys}
         orientation={orientation}
         setOrientation={setOrientation}
-        userId={userId}
+        surveyFilters={surveyFilters}
+        setSurveyFilters={setSurveyFilters}
       />
-      {filteredSurveys.length > 0 ? (
+      {surveys.length > 0 ? (
         <div>
           {orientation === "list" && (
             <div className="flex-col space-y-3">
@@ -67,7 +124,7 @@ export default function SurveysList({
                   <div className="col-span-2">Updated at</div>
                 </div>
               </div>
-              {filteredSurveys.map((survey) => {
+              {surveys.map((survey) => {
                 return (
                   <SurveyCard
                     key={survey.id}
@@ -77,6 +134,8 @@ export default function SurveysList({
                     isViewer={isViewer}
                     WEBAPP_URL={WEBAPP_URL}
                     orientation={orientation}
+                    duplicateSurvey={handleDuplicateSurvey}
+                    deleteSurvey={handleDeleteSurvey}
                   />
                 );
               })}
@@ -84,7 +143,7 @@ export default function SurveysList({
           )}
           {orientation === "grid" && (
             <div className="grid grid-cols-4 place-content-stretch gap-4 lg:grid-cols-6 ">
-              {filteredSurveys.map((survey) => {
+              {surveys.map((survey) => {
                 return (
                   <SurveyCard
                     key={survey.id}
@@ -94,9 +153,19 @@ export default function SurveysList({
                     isViewer={isViewer}
                     WEBAPP_URL={WEBAPP_URL}
                     orientation={orientation}
+                    duplicateSurvey={handleDuplicateSurvey}
+                    deleteSurvey={handleDeleteSurvey}
                   />
                 );
               })}
+            </div>
+          )}
+
+          {hasMore && (
+            <div className="flex justify-center py-5">
+              <Button onClick={fetchNextPage} variant="secondary" size="sm" loading={isFetching}>
+                Load more
+              </Button>
             </div>
           )}
         </div>
@@ -104,9 +173,9 @@ export default function SurveysList({
         <div className="flex h-full flex-col items-center justify-center">
           <span className="mb-4 h-24 w-24 rounded-full bg-slate-100 p-6 text-5xl">🕵️</span>
 
-          <div className="text-slate-600">No surveys found</div>
+          <div className="text-slate-600">{isFetching ? "Fetching surveys..." : "No surveys found"}</div>
         </div>
       )}
     </div>
   );
-}
+};

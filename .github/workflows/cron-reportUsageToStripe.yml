@@ -1,11 +1,12 @@
-name: Cron - reportUsageToStripe
+name: Cron - Report usage to Stripe
 
 on:
+  workflow_dispatch:
   # "Scheduled workflows run on the latest commit on the default or base branch."
   # — https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#schedule
-  schedule:
-    # This will run the job at 20:00 UTC every day of every month.
-    - cron: "0 20 * * *"
+  # schedule:
+  # This will run the job at 20:00 UTC every day of every month.
+  # - cron: "0 20 * * *"
 jobs:
   cron-reportUsageToStripe:
     env:

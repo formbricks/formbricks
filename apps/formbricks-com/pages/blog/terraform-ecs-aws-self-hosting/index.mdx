@@ -1,0 +1,97 @@
+import AuthorBox from "@/components/shared/AuthorBox";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import Image from "next/image";
+
+import Img1 from "./1-self-hosting-formbricks-on-aws-ecs-with-terraform.png";
+import Img2 from "./2-self-hosting-formbricks-on-aws-ecs-with-terraform.png";
+
+export const meta = {
+  title: "Self-Hosting Formbricks on AWS ECS: A Step-by-Step Guide",
+  description:
+    "In an internal experiment, we at Formbricks have been exploring how to build a scalable and highly available cluster for our open source survey and experience management solution using AWS ECS.",
+  date: "2024-03-26",
+  publishedTime: "2024-03-26T12:00:00",
+  authors: ["Sudhanshu Pandey"],
+  section: "AWS ECS",
+  tags: ["AWS ECS", "Terraform", "Self-hosting XM"],
+  ogImage: "/blog/aws-ecs.png"
+};
+
+<Image
+  src={Img1}
+  alt="Hosting Formbricks Open Source Survey Platform with ECS AWS and Terraform"
+  className="rounded-lg"
+/>
+
+<AuthorBox
+  name="Sudhanshu"
+  title="Cloud Engineer"
+  date="March 26th, 2024"
+  duration="6"
+  author={"Sudhanshu"}
+/>
+_The excitement and support from our vibrant community for hosting Formbricks through Docker containers have been overwhelming._
+
+In an internal experiment, we at Formbricks have been exploring how to build a scalable and highly available cluster for our open source survey and experience management solution using AWS ECS. And in true open source fashion, we would like to share our learnings (and code) with the community!
+
+In a nutshell, our approach includes AWS Elastic Container Service (ECS) to run the cluster and Terraform to deploy and update the infrastructure.
+
+Let's dive in!
+
+## Why Choose ECS?
+
+Opting for AWS ECS to self-host Formbricks streamlines scalability and operational efficiency, eliminating the complexity of setting up and managing a Kubernetes cluster. ECS offers a simplified method for deploying, managing, and scaling containerized applications, making it perfectly suited for both developers and businesses.
+
+**ECS Provides Several Key Advantages:**
+
+- **Streamlined Management**: ECS reduces the complexities of container orchestration.
+- **Flexibility in Scaling**: Adjust your scale effortlessly as demand changes, with ECS ensuring optimal distribution and availability.
+- **Enhanced Integration**: Leverage seamless integration with AWS's ecosystem for improved monitoring, security, and networking. 
+
+<Image
+  src={Img2}
+  alt="Hosting Formbricks Open Source Experience Management Platform with ECS AWS and Terraform"
+  className="rounded-lg"
+/>
+
+## The Role of Terraform
+
+Our choice of Terraform for AWS resource provisioning reflects our dedication to simplifying the self-hosting process for Formbricks. Terraform's infrastructure as code (IaC) model enables consistent, repeatable, and swift setup of resources. This focus on Terraform allows users to concentrate on their primary objectives rather than intricate infrastructure configurations.
+
+Terraform's declarative nature lets you define your infrastructure's desired state, automating the planning and application of changes to reach that state. This ensures your infrastructure remains consistent and current across various environments, facilitating deployment and maintenance.
+
+**Terraform Offers Notable Benefits:**
+
+- **Efficient Automation**: Streamline AWS resource provisioning with exact configuration control.
+- **Version Control Integration**: Maintain your infrastructure in a version control system for simplified change tracking and collaboration.
+- **Provider Flexibility**: Though our guide focuses on AWS, Terraform's support for numerous cloud providers and services offers long-term infrastructure adaptability.
+- **Leveraging Open Source**: Our Terraform configuration draws from the open-source [Amazon ECS Blueprints](https://github.com/aws-ia/ecs-blueprints) project, ensuring you're deploying with proven architecture patterns and best practices.
+
+Our integration of Terraform and the Amazon ECS Blueprints project delivers a scalable, robust, and straightforward self-hosting solution for Formbricks on AWS ECS.
+
+### Getting Started
+
+Follow these steps to self-host Formbricks on AWS ECS with our Terraform setup:
+
+1. **Repository Cloning**: Start by cloning the [GitHub repository](https://github.com/formbricks/AWSInfra) to your machine. It houses the necessary Terraform code for ECS setup.
+2. **AWS Credentials Configuration**: Verify that your AWS credentials are set up on your machine, typically involving AWS CLI setup with your access key, secret key, and chosen region.
+3. **Core Infrastructure Deployment**:
+    - Move to the **`terraform/core-infra`** directory within your cloned repository.
+    - Examine the Terraform files to grasp the foundational elements being set up, like the ECS cluster, VPC, subnets, and security groups.
+    - Initialize the Terraform workspace and apply the configuration to establish the core infrastructure components.
+4. **Web Application Deployment**:
+    - With the foundational infrastructure ready, deploy the Formbricks web app next.
+    - The provided Terraform configuration will establish an ECS service, task definition, and the necessary application load balancer.
+    - Adhere to the **`terraform/webapp-service`** directory guidelines for web app deployment, tailoring the setup as required.
+
+## Outcome: A Fully Operational Formbricks Instance on AWS ECS
+
+By following these outlined steps, you'll achieve a fully operational Formbricks setup on AWS ECS, facilitated by Terraform for efficient infrastructure management. This method not only eases deployment but also sets the stage for scalable, manageable, and secure self-hosting solutions.
+
+We're keen to witness how our community utilizes this open-source initiative to customize and expand upon Formbricks. Enjoy hosting!
+
+Have questions or feedback? [Email us](mailto:hola@formbricks.com) or [join our Discord community](https://formbricks.com/discord)!
+
+[Try Formbricks](https://app.formbricks.com/auth/signup) today - it's free to get started! Measure your user or customer experience without limits.
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;

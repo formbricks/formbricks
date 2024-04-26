@@ -12,12 +12,12 @@ interface ModalWithTabsProps {
   closeOnOutsideClick?: boolean;
 }
 
-type TabProps = {
+interface TabProps {
   title: string;
   children: React.ReactNode;
-};
+}
 
-export default function ModalWithTabs({
+export const ModalWithTabs = ({
   open,
   setOpen,
   tabs,
@@ -25,7 +25,7 @@ export default function ModalWithTabs({
   label,
   description,
   closeOnOutsideClick,
-}: ModalWithTabsProps) {
+}: ModalWithTabsProps) => {
   const [activeTab, setActiveTab] = useState(0);
 
   const handleTabClick = (index: number) => {
@@ -52,7 +52,7 @@ export default function ModalWithTabs({
             </div>
           </div>
         </div>
-        <div className="flex  h-full  items-center space-x-2 border-b border-slate-200 px-6 ">
+        <div className="flex  h-full w-full items-center  justify-center space-x-2 border-b border-slate-200 px-6 ">
           {tabs.map((tab, index) => (
             <button
               key={index}
@@ -70,4 +70,4 @@ export default function ModalWithTabs({
       </div>
     </Modal>
   );
-}
+};

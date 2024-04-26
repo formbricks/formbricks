@@ -6,12 +6,12 @@ import Image from "next/image";
 import { OptionCard } from "@formbricks/ui/OptionCard";
 
 interface PathwaySelectProps {
-  setSelectedPathway: (pathway: "link" | "in-app" | null) => void;
+  setSelectedPathway: (pathway: "link" | "website" | null) => void;
   setCurrentStep: (currentStep: number) => void;
   isFormbricksCloud: boolean;
 }
 
-type PathwayOptionType = "link" | "in-app";
+type PathwayOptionType = "link" | "website";
 
 export default function PathwaySelect({
   setSelectedPathway,
@@ -29,7 +29,7 @@ export default function PathwaySelect({
         localStorage.setItem("onboardingCurrentStep", "5");
       }
     } else {
-      localStorage.setItem("onboardingPathway", "in-app");
+      localStorage.setItem("onboardingPathway", "website");
       setCurrentStep(2);
       localStorage.setItem("onboardingCurrentStep", "2");
     }
@@ -37,7 +37,7 @@ export default function PathwaySelect({
   };
 
   return (
-    <div className="space-y-16 text-center">
+    <div className="space-y-16 p-6 text-center">
       <OnboardingTitle
         title="How would you like to start?"
         subtitle="You can always use all types of surveys later on."
@@ -54,12 +54,12 @@ export default function PathwaySelect({
           <Image src={LinkMockup} alt="" height={350} />
         </OptionCard>
         <OptionCard
-          cssId="onboarding-inapp-survey-card"
+          cssId="onboarding-website-survey-card"
           size="lg"
-          title="In-app Surveys"
-          description="Run a survey on a website or in-app."
+          title="Website Surveys"
+          description="Run a survey on a website."
           onSelect={() => {
-            handleSelect("in-app");
+            handleSelect("website");
           }}>
           <Image src={InappMockup} alt="" height={350} />
         </OptionCard>

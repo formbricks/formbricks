@@ -1,24 +1,20 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
 
-import { AddMemberRole } from "@formbricks/ee/RoleManagement/components/AddMemberRole";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { Modal } from "@formbricks/ui/Modal";
-import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
+import { BulkInviteTab } from "./BulkInviteTab";
+import { IndividualInviteTab } from "./IndividualInviteTab";
 
-enum MembershipRole {
+export enum MembershipRole {
   Admin = "admin",
   Editor = "editor",
   Developer = "developer",
   Viewer = "viewer",
 }
-interface MemberModalProps {
+interface AddMemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
-  onSubmit: (data: { name: string; email: string; role: MembershipRole }) => void;
+  onSubmit: (data: { name: string; email: string; role: MembershipRole }[]) => void;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
@@ -31,87 +27,37 @@ export default function AddMemberModal({
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
-}: MemberModalProps) {
-  const { register, getValues, handleSubmit, reset, control } = useForm<{
-    name: string;
-    email: string;
-    role: MembershipRole;
-  }>();
-
-  const submitEventClass = async () => {
-    const data = getValues();
-    data.role = data.role || MembershipRole.Admin;
-    onSubmit(data);
-    setOpen(false);
-    reset();
-  };
+}: AddMemberModalProps) {
+  const tabs = [
+    {
+      title: "Individual Invite",
+      children: (
+        <IndividualInviteTab
+          setOpen={setOpen}
+          environmentId={environmentId}
+          onSubmit={onSubmit}
+          canDoRoleManagement={canDoRoleManagement}
+          isFormbricksCloud={isFormbricksCloud}
+        />
+      ),
+    },
+    {
+      title: "Bulk Invite",
+      children: (
+        <BulkInviteTab setOpen={setOpen} onSubmit={onSubmit} canDoRoleManagement={canDoRoleManagement} />
+      ),
+    },
+  ];
 
   return (
-    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false}>
-      <div className="flex h-full flex-col rounded-lg">
-        <div className="rounded-t-lg bg-slate-100">
-          <div className="flex items-center justify-between p-6">
-            <div className="flex items-center space-x-2">
-              <div className="text-xl font-medium text-slate-700">Invite Team Member</div>
-            </div>
-          </div>
-        </div>
-        <form onSubmit={handleSubmit(submitEventClass)}>
-          <div className="flex justify-between rounded-lg p-6">
-            <div className="w-full space-y-4">
-              <div>
-                <Label htmlFor="memberNameInput">Full Name</Label>
-                <Input
-                  id="memberNameInput"
-                  placeholder="e.g. Hans Wurst"
-                  {...register("name", { required: true, validate: (value) => value.trim() !== "" })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="memberEmailInput">Email Address</Label>
-                <Input
-                  id="memberEmailInput"
-                  type="email"
-                  placeholder="hans@wurst.com"
-                  {...register("email", { required: true })}
-                />
-              </div>
-              <div>
-                <AddMemberRole control={control} canDoRoleManagement={canDoRoleManagement} />
-                {!canDoRoleManagement &&
-                  (isFormbricksCloud ? (
-                    <UpgradePlanNotice
-                      message="To manage access roles,"
-                      url={`/environments/${environmentId}/settings/billing`}
-                      textForUrl="please add your credit card (free)."
-                    />
-                  ) : (
-                    <UpgradePlanNotice
-                      message="To manage access roles for your team,"
-                      url="https://formbricks.com/docs/self-hosting/enterprise"
-                      textForUrl="get a self-hosting license (free)."
-                    />
-                  ))}
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-end border-t border-slate-200 p-6">
-            <div className="flex space-x-2">
-              <Button
-                type="button"
-                variant="minimal"
-                onClick={() => {
-                  setOpen(false);
-                }}>
-                Cancel
-              </Button>
-              <Button variant="darkCTA" type="submit">
-                Send Invitation
-              </Button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </Modal>
+    <>
+      <ModalWithTabs
+        open={open}
+        setOpen={setOpen}
+        tabs={tabs}
+        label={"Invite Team Member"}
+        closeOnOutsideClick={true}
+      />
+    </>
   );
 }

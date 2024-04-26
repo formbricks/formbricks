@@ -1,37 +1,19 @@
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
-import { questionTypes } from "@/app/lib/questions";
-import { InboxIcon } from "lucide-react";
+import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/util";
 
-import { TSurveySummaryCal } from "@formbricks/types/responses";
+import { TSurveyQuestionSummaryCal } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
+import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
+
 interface CalSummaryProps {
-  questionSummary: TSurveySummaryCal;
+  questionSummary: TSurveyQuestionSummaryCal;
   environmentId: string;
 }
 
-export default function CalSummary({ questionSummary }: CalSummaryProps) {
-  const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
-
+export const CalSummary = ({ questionSummary }: CalSummaryProps) => {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
-      <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={questionSummary.question.headline} />
-
-        <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
-          <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
-            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
-            {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
-          </div>
-          <div className=" flex items-center rounded-lg bg-slate-100 p-2">
-            <InboxIcon className="mr-2 h-4 w-4" />
-            {questionSummary.responseCount} Responses
-          </div>
-          {!questionSummary.question.required && (
-            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
-          )}
-        </div>
-      </div>
+      <QuestionSummaryHeader questionSummary={questionSummary} />
       <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         <div>
           <div className="text flex justify-between px-2 pb-2">
@@ -39,7 +21,7 @@ export default function CalSummary({ questionSummary }: CalSummaryProps) {
               <p className="font-semibold text-slate-700">Booked</p>
               <div>
                 <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                  {Math.round(questionSummary.booked.percentage)}%
+                  {convertFloatToNDecimal(questionSummary.booked.percentage, 1)}%
                 </p>
               </div>
             </div>
@@ -55,7 +37,7 @@ export default function CalSummary({ questionSummary }: CalSummaryProps) {
               <p className="font-semibold text-slate-700">Dismissed</p>
               <div>
                 <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                  {Math.round(questionSummary.skipped.percentage)}%
+                  {convertFloatToNDecimal(questionSummary.skipped.percentage, 1)}%
                 </p>
               </div>
             </div>
@@ -68,4 +50,4 @@ export default function CalSummary({ questionSummary }: CalSummaryProps) {
       </div>
     </div>
   );
-}
+};

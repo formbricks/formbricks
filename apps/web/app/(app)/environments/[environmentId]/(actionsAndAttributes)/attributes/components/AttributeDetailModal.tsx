@@ -1,7 +1,7 @@
 import { TagIcon } from "lucide-react";
 
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import ModalWithTabs from "@formbricks/ui/ModalWithTabs";
+import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
 
 import AttributeActivityTab from "./AttributeActivityTab";
 import AttributeSettingsTab from "./AttributeSettingsTab";
@@ -12,7 +12,7 @@ interface AttributeDetailModalProps {
   attributeClass: TAttributeClass;
 }
 
-export default function AttributeDetailModal({ open, setOpen, attributeClass }: AttributeDetailModalProps) {
+export const AttributeDetailModal = ({ open, setOpen, attributeClass }: AttributeDetailModalProps) => {
   const tabs = [
     {
       title: "Activity",
@@ -36,4 +36,4 @@ export default function AttributeDetailModal({ open, setOpen, attributeClass }: 
       />
     </>
   );
-}
+};

@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import {
   TSurvey,
@@ -46,12 +48,12 @@ export default function LogicEditor({
   updateQuestion,
 }: LogicEditorProps): JSX.Element {
   localSurvey = useMemo(() => {
-    return checkForRecallInHeadline(localSurvey);
+    return checkForRecallInHeadline(localSurvey, "default");
   }, [localSurvey]);
 
   const questionValues = useMemo(() => {
     if ("choices" in question) {
-      return question.choices.map((choice) => choice.label);
+      return question.choices.map((choice) => getLocalizedValue(choice.label, "default"));
     } else if ("range" in question) {
       return Array.from({ length: question.range ? question.range : 0 }, (_, i) => (i + 1).toString());
     } else if (question.type === TSurveyQuestionType.NPS) {
@@ -89,6 +91,8 @@ export default function LogicEditor({
     pictureSelection: ["submitted", "skipped"],
     fileUpload: ["uploaded", "notUploaded"],
     cal: ["skipped", "booked"],
+    matrix: ["isCompletelySubmitted", "isPartiallySubmitted", "skipped"],
+    address: ["submitted", "skipped"],
   };
 
   const logicConditions: LogicConditions = {
@@ -158,6 +162,16 @@ export default function LogicEditor({
     },
     booked: {
       label: "has a call booked",
+      values: null,
+      unique: true,
+    },
+    isCompletelySubmitted: {
+      label: "is completely submitted",
+      values: null,
+      unique: true,
+    },
+    isPartiallySubmitted: {
+      label: "is partially submitted",
       values: null,
       unique: true,
     },
@@ -238,7 +252,7 @@ export default function LogicEditor({
   };
 
   const deleteLogic = (logicIdx: number) => {
-    const updatedLogic = !question.logic ? [] : JSON.parse(JSON.stringify(question.logic));
+    const updatedLogic = !question.logic ? [] : structuredClone(question.logic);
     updatedLogic.splice(logicIdx, 1);
     updateQuestion(questionIdx, { logic: updatedLogic });
   };
@@ -348,9 +362,14 @@ export default function LogicEditor({
                   {localSurvey.questions.map(
                     (question, idx) =>
                       idx !== questionIdx && (
-                        <SelectItem key={question.id} value={question.id} title={question.headline}>
-                          <div className="max-w-[6rem]">
-                            <p className="truncate text-left">{question.headline}</p>
+                        <SelectItem
+                          key={question.id}
+                          value={question.id}
+                          title={getLocalizedValue(question.headline, "default")}>
+                          <div className="w-40">
+                            <p className="truncate text-left">
+                              {getLocalizedValue(question.headline, "default")}
+                            </p>
                           </div>
                         </SelectItem>
                       )

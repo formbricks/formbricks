@@ -5,11 +5,16 @@ import {
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import {
   OptionsType,
+  QuestionOption,
   QuestionOptions,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
 
-import { TResponseFilterCriteria, TSurveyPersonAttributes } from "@formbricks/types/responses";
+import {
+  TResponseFilterCriteria,
+  TSurveyMetaFieldFilter,
+  TSurveyPersonAttributes,
+} from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
@@ -22,9 +27,12 @@ const conditionOptions = {
   rating: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped"],
   cta: ["is"],
   tags: ["is"],
+  languages: ["Equals", "Not equals"],
   pictureSelection: ["Includes all", "Includes either"],
   userAttributes: ["Equals", "Not equals"],
   consent: ["is"],
+  matrix: [""],
+  address: ["is"],
 };
 const filterOptions = {
   openText: ["Filled out", "Skipped"],
@@ -33,18 +41,20 @@ const filterOptions = {
   cta: ["Clicked", "Dismissed"],
   tags: ["Applied", "Not applied"],
   consent: ["Accepted", "Dismissed"],
+  address: ["Filled out", "Skipped"],
 };
 
-// creating the options for the filtering to be selected there are three types questions, attributes and tags
+// creating the options for the filtering to be selected there are 4 types questions, attributes, tags and metadata
 export const generateQuestionAndFilterOptions = (
   survey: TSurvey,
   environmentTags: TTag[] | undefined,
-  attributes: TSurveyPersonAttributes
+  attributes: TSurveyPersonAttributes,
+  meta: TSurveyMetaFieldFilter
 ): {
   questionOptions: QuestionOptions[];
   questionFilterOptions: QuestionFilterOptions[];
 } => {
-  let questionOptions: any = [];
+  let questionOptions: QuestionOptions[] = [];
   let questionFilterOptions: any = [];
 
   let questionsOptions: any = [];
@@ -69,7 +79,9 @@ export const generateQuestionAndFilterOptions = (
         questionFilterOptions.push({
           type: q.type,
           filterOptions: conditionOptions[q.type],
-          filterComboBoxOptions: q?.choices ? q?.choices?.map((c) => c?.label) : [""],
+          filterComboBoxOptions: q?.choices
+            ? q?.choices?.filter((c) => c.id !== "other")?.map((c) => c?.label)
+            : [""],
           id: q.id,
         });
       } else if (q.type === TSurveyQuestionType.PictureSelection) {
@@ -77,6 +89,13 @@ export const generateQuestionAndFilterOptions = (
           type: q.type,
           filterOptions: conditionOptions[q.type],
           filterComboBoxOptions: q?.choices ? q?.choices?.map((_, idx) => `Picture ${idx + 1}`) : [""],
+          id: q.id,
+        });
+      } else if (q.type === TSurveyQuestionType.Matrix) {
+        questionFilterOptions.push({
+          type: q.type,
+          filterOptions: q.rows.flatMap((row) => Object.values(row)),
+          filterComboBoxOptions: q.columns.flatMap((column) => Object.values(column)),
           id: q.id,
         });
       } else {
@@ -125,6 +144,41 @@ export const generateQuestionAndFilterOptions = (
     });
   }
 
+  if (meta) {
+    questionOptions = [
+      ...questionOptions,
+      {
+        header: OptionsType.META,
+        option: Object.keys(meta).map((m) => {
+          return { label: m, type: OptionsType.META, id: m };
+        }),
+      },
+    ];
+    Object.keys(meta).forEach((m) => {
+      questionFilterOptions.push({
+        type: "Meta",
+        filterOptions: ["Equals", "Not equals"],
+        filterComboBoxOptions: meta[m],
+        id: m,
+      });
+    });
+  }
+
+  let languageQuestion: QuestionOption[] = [];
+
+  //can be extended to include more properties
+  if (survey.languages?.length > 0) {
+    languageQuestion.push({ label: "Language", type: OptionsType.OTHERS, id: "language" });
+    const languageOptions = survey.languages.map((sl) => sl.language.code);
+    questionFilterOptions.push({
+      type: OptionsType.OTHERS,
+      filterOptions: conditionOptions.languages,
+      filterComboBoxOptions: languageOptions,
+      id: "language",
+    });
+  }
+  questionOptions = [...questionOptions, { header: OptionsType.OTHERS, option: languageQuestion }];
+
   return { questionOptions: [...questionOptions], questionFilterOptions: [...questionFilterOptions] };
 };
 
@@ -135,19 +189,22 @@ export const getFormattedFilters = (
   dateRange: DateRange
 ): TResponseFilterCriteria => {
   const filters: TResponseFilterCriteria = {};
-
-  const [questions, tags, attributes] = selectedFilter.filter.reduce(
-    (result: [FilterValue[], FilterValue[], FilterValue[]], filter) => {
+  const [questions, tags, attributes, others, meta] = selectedFilter.filter.reduce(
+    (result: [FilterValue[], FilterValue[], FilterValue[], FilterValue[], FilterValue[]], filter) => {
       if (filter.questionType?.type === "Questions") {
         result[0].push(filter);
       } else if (filter.questionType?.type === "Tags") {
         result[1].push(filter);
       } else if (filter.questionType?.type === "Attributes") {
         result[2].push(filter);
+      } else if (filter.questionType?.type === "Other Filters") {
+        result[3].push(filter);
+      } else if (filter.questionType?.type === "Meta") {
+        result[4].push(filter);
       }
       return result;
     },
-    [[], [], []]
+    [[], [], [], [], []]
   );
 
   // for completed responses
@@ -183,7 +240,8 @@ export const getFormattedFilters = (
     questions.forEach(({ filterType, questionType }) => {
       if (!filters.data) filters.data = {};
       switch (questionType.questionType) {
-        case TSurveyQuestionType.OpenText: {
+        case TSurveyQuestionType.OpenText:
+        case TSurveyQuestionType.Address: {
           if (filterType.filterComboBoxValue === "Filled out") {
             filters.data[questionType.id ?? ""] = {
               op: "submitted",
@@ -285,10 +343,23 @@ export const getFormattedFilters = (
             };
           }
         }
+        case TSurveyQuestionType.Matrix: {
+          if (
+            filterType.filterValue &&
+            filterType.filterComboBoxValue &&
+            typeof filterType.filterComboBoxValue === "string"
+          ) {
+            filters.data[questionType.id ?? ""] = {
+              op: "matrix",
+              value: { [filterType.filterValue]: filterType.filterComboBoxValue },
+            };
+          }
+        }
       }
     });
   }
 
+  // for attributes
   if (attributes.length) {
     attributes.forEach(({ filterType, questionType }) => {
       if (!filters.personAttributes) filters.personAttributes = {};
@@ -299,6 +370,42 @@ export const getFormattedFilters = (
         };
       } else if (filterType.filterValue === "Not equals") {
         filters.personAttributes[questionType.label ?? ""] = {
+          op: "notEquals",
+          value: filterType.filterComboBoxValue as string,
+        };
+      }
+    });
+  }
+
+  // for others
+  if (others.length) {
+    others.forEach(({ filterType, questionType }) => {
+      if (!filters.others) filters.others = {};
+      if (filterType.filterValue === "Equals") {
+        filters.others[questionType.label ?? ""] = {
+          op: "equals",
+          value: filterType.filterComboBoxValue as string,
+        };
+      } else if (filterType.filterValue === "Not equals") {
+        filters.others[questionType.label ?? ""] = {
+          op: "notEquals",
+          value: filterType.filterComboBoxValue as string,
+        };
+      }
+    });
+  }
+
+  // for meta
+  if (meta.length) {
+    meta.forEach(({ filterType, questionType }) => {
+      if (!filters.meta) filters.meta = {};
+      if (filterType.filterValue === "Equals") {
+        filters.meta[questionType.label ?? ""] = {
+          op: "equals",
+          value: filterType.filterComboBoxValue as string,
+        };
+      } else if (filterType.filterValue === "Not equals") {
+        filters.meta[questionType.label ?? ""] = {
           op: "notEquals",
           value: filterType.filterComboBoxValue as string,
         };

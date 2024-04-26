@@ -202,9 +202,9 @@ const FAQ = [
       "The commercial plan is for features who break the OSS WIN-WIN Loop or incur additional cost. We charge 30$ if you want a custom domain, remove Formbricks branding, collect large files in surveys or collect payments. We think that’s fair :)",
   },
   {
-    question: "Are your in app surveys also free forever?",
+    question: "Are your in-app surveys also free forever?",
     answer:
-      "The in app surveys you can run with Formbricks are not part of this Deal. We offer a generous free plan but keep full control over the pricing in the long run. In app surveys are really powerful for products with thousands of users and something has to bring in the dollars.",
+      "The in-app surveys you can run with Formbricks are not part of this Deal. We offer a generous free plan but keep full control over the pricing in the long run. In-app surveys are really powerful for products with thousands of users and something has to bring in the dollars.",
   },
 
   {
@@ -472,7 +472,7 @@ const members = [
     imgUrl: "https://avatars.githubusercontent.com/u/17407010?v=4",
   },
   {
-    name: "Olasunkanmi Balogun",
+    name: "Johannes Dancker",
     githubId: "SiR-PENt",
     points: "100",
     level: "rookie",

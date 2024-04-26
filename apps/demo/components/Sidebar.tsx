@@ -1,4 +1,3 @@
-import { classNames } from "@/lib/utils";
 import {
   ClockIcon,
   CogIcon,
@@ -10,6 +9,8 @@ import {
   ShieldCheckIcon,
   UsersIcon,
 } from "lucide-react";
+
+import { classNames } from "../lib/utils";
 
 const navigation = [
   { name: "Home", href: "#", icon: HomeIcon, current: true },

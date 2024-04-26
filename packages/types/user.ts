@@ -24,7 +24,7 @@ export type TUserNotificationSettings = z.infer<typeof ZUserNotificationSettings
 export const ZUser = z.object({
   id: z.string(),
   name: z.string().nullable(),
-  email: z.string(),
+  email: z.string().email(),
   emailVerified: z.date().nullable(),
   imageUrl: z.string().url().nullable(),
   twoFactorEnabled: z.boolean(),
@@ -32,6 +32,7 @@ export const ZUser = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   onboardingCompleted: z.boolean(),
+  role: ZRole.nullable(),
   objective: ZUserObjective.nullable(),
   notificationSettings: ZUserNotificationSettings,
 });
@@ -40,7 +41,7 @@ export type TUser = z.infer<typeof ZUser>;
 
 export const ZUserUpdateInput = z.object({
   name: z.string().nullish(),
-  email: z.string().optional(),
+  email: z.string().email().optional(),
   emailVerified: z.date().nullish(),
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
@@ -53,7 +54,7 @@ export type TUserUpdateInput = z.infer<typeof ZUserUpdateInput>;
 
 export const ZUserCreateInput = z.object({
   name: z.string().optional(),
-  email: z.string(),
+  email: z.string().email(),
   emailVerified: z.date().optional(),
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),

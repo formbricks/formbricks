@@ -3,6 +3,7 @@ export const loginRoute = (url: string) => url === "/api/auth/callback/credentia
 export const signupRoute = (url: string) => url === "/api/v1/users";
 
 export const clientSideApiRoute = (url: string): boolean => {
+  if (url.includes("/api/packages/")) return true;
   if (url.includes("/api/v1/js/actions")) return true;
   if (url.includes("/api/v1/client/storage")) return true;
   const regex = /^\/api\/v\d+\/client\//;
@@ -20,7 +21,7 @@ export const isWebAppRoute = (url: string): boolean =>
 export const isSyncWithUserIdentificationEndpoint = (
   url: string
 ): { environmentId: string; userId: string } | false => {
-  const regex = /\/api\/v1\/client\/([^/]+)\/in-app\/sync\/([^/]+)/;
+  const regex = /\/api\/v1\/client\/([^/]+)\/app\/sync\/([^/]+)/;
   const match = url.match(regex);
   return match ? { environmentId: match[1], userId: match[2] } : false;
 };

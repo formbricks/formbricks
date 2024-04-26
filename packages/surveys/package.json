@@ -1,63 +1,58 @@
 {
   "name": "@formbricks/surveys",
   "license": "MIT",
-  "version": "1.6.1",
-  "description": "Formbricks-surveys is a helper library to embed surveys into your application",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Formbricks-surveys is a helper library to embed surveys into your application.",
   "homepage": "https://formbricks.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/formbricks/formbricks"
   },
   "sideEffects": false,
-  "source": "./src/index.ts",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "source": "src/index.ts",
+  "main": "dist/index.umd.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.umd.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.cjs",
+      "types": "./dist/index.d.ts"
     }
   },
   "scripts": {
     "dev": "vite build --watch --mode dev",
     "serve": "serve dist -p 3003",
-    "build": "pnpm run build:surveys && pnpm run build:question-date",
-    "build:dev": "pnpm run build:surveys:dev && pnpm run build:question-date:dev",
-    "build:surveys": "tsc && SURVEYS_PACKAGE_BUILD=surveys vite build",
-    "build:surveys:dev": "tsc && SURVEYS_PACKAGE_BUILD=surveys vite build --mode dev",
-    "build:question-date": "tsc && SURVEYS_PACKAGE_BUILD=question-date vite build",
-    "build:question-date:dev": "tsc && SURVEYS_PACKAGE_BUILD=question-date vite build --mode dev",
-    "go": "concurrently \"pnpm dev\" \"pnpm serve\"",
+    "build": "tsc && vite build",
+    "build:dev": "tsc && vite build --mode dev",
+    "go": "vite build --watch --mode dev",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview",
     "clean": "rimraf .turbo node_modules dist"
   },
   "devDependencies": {
-    "@calcom/embed-snippet": "1.1.3",
+    "@calcom/embed-snippet": "1.2.0",
     "@formbricks/lib": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "@preact/preset-vite": "^2.8.1",
-    "autoprefixer": "^10.4.18",
+    "@preact/preset-vite": "^2.8.2",
+    "autoprefixer": "^10.4.19",
     "concurrently": "8.2.2",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "1.10.12",
-    "isomorphic-dompurify": "^2.4.0",
-    "postcss": "^8.4.35",
-    "preact": "^10.19.6",
+    "eslint-config-formbricks": "workspace:*",
+    "isomorphic-dompurify": "^2.7.0",
+    "postcss": "^8.4.38",
+    "preact": "^10.20.2",
     "react-date-picker": "^10.6.0",
-    "serve": "14.2.1",
-    "tailwindcss": "^3.4.1",
-    "terser": "^5.28.1",
-    "vite": "^5.1.4",
-    "vite-plugin-dts": "^3.7.3",
-    "vite-tsconfig-paths": "^4.3.1"
-  },
-  "dependencies": {
-    "@t3-oss/env-nextjs": "^0.9.2"
+    "serve": "14.2.2",
+    "tailwindcss": "^3.4.3",
+    "terser": "^5.30.4",
+    "vite": "^5.2.10",
+    "vite-plugin-dts": "^3.9.0",
+    "vite-tsconfig-paths": "^4.3.2"
   }
 }

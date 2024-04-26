@@ -1,22 +1,32 @@
 "use client";
 
 import clsx from "clsx";
-import { CheckCircle2Icon, MailIcon, TrashIcon } from "lucide-react";
+import { CheckCircle2Icon, LanguagesIcon, MailIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getLanguageCode } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import {
+  TSurvey,
+  TSurveyMatrixQuestion,
+  TSurveyPictureSelectionQuestion,
+  TSurveyQuestion,
+  TSurveyQuestionType,
+} from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 
+import { getLanguageLabel } from "../../ee/multiLanguage/lib/isoLanguages";
+import { AddressResponse } from "../AddressResponse";
 import { PersonAvatar } from "../Avatars";
 import { DeleteDialog } from "../DeleteDialog";
 import { FileUploadResponse } from "../FileUploadResponse";
@@ -24,11 +34,17 @@ import { PictureSelectionResponse } from "../PictureSelectionResponse";
 import { RatingResponse } from "../RatingResponse";
 import { SurveyStatusIndicator } from "../SurveyStatusIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
-import { deleteResponseAction } from "./actions";
-import { getResponseAction } from "./actions";
+import { deleteResponseAction, getResponseAction } from "./actions";
 import QuestionSkip from "./components/QuestionSkip";
 import ResponseNotes from "./components/ResponseNote";
 import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
+
+const isSubmissionTimeMoreThan5Minutes = (submissionTimeISOString: Date) => {
+  const submissionTime: Date = new Date(submissionTimeISOString);
+  const currentTime: Date = new Date();
+  const timeDifference: number = (currentTime.getTime() - submissionTime.getTime()) / (1000 * 60); // Convert milliseconds to minutes
+  return timeDifference > 5;
+};
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
@@ -84,7 +100,9 @@ export default function SingleResponseCard({
 }: SingleResponseCardProps) {
   const environmentId = survey.environmentId;
   const router = useRouter();
-  const displayIdentifier = response.person ? getPersonIdentifier(response.person) : null;
+  const displayIdentifier = response.person
+    ? getPersonIdentifier(response.person, response.personAttributes)
+    : null;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -96,17 +114,18 @@ export default function SingleResponseCard({
 
   const isFirstQuestionAnswered = response.data[survey.questions[0].id] ? true : false;
 
-  function isValidValue(value: any) {
+  const isValidValue = (value: any) => {
     return (
       (typeof value === "string" && value.trim() !== "") ||
       (Array.isArray(value) && value.length > 0) ||
-      typeof value === "number"
+      typeof value === "number" ||
+      (typeof value === "object" && Object.entries(value).length > 0)
     );
-  }
+  };
 
   if (response.finished) {
     survey.questions.forEach((question) => {
-      if (!response.data[question.id]) {
+      if (!isValidValue(response.data[question.id])) {
         temp.push(question.id);
       } else {
         if (temp.length > 0) {
@@ -138,13 +157,13 @@ export default function SingleResponseCard({
     skippedQuestions.push(temp);
   }
 
-  function handleArray(data: string | number | string[]): string {
+  const handleArray = (data: string | number | string[]): string => {
     if (Array.isArray(data)) {
       return data.join(", ");
     } else {
       return String(data);
     }
-  }
+  };
 
   const handleDeleteResponse = async () => {
     setIsDeleting(true);
@@ -169,13 +188,6 @@ export default function SingleResponseCard({
     (response.personAttributes && Object.keys(response.personAttributes).length > 0) ||
       (response.meta.userAgent && Object.keys(response.meta.userAgent).length > 0)
   );
-
-  function isSubmissionTimeMoreThan5Minutes(submissionTimeISOString: Date) {
-    const submissionTime: Date = new Date(submissionTimeISOString);
-    const currentTime: Date = new Date();
-    const timeDifference: number = (currentTime.getTime() - submissionTime.getTime()) / (1000 * 60); // Convert milliseconds to minutes
-    return timeDifference > 5;
-  }
 
   const tooltipContent = (
     <>
@@ -211,6 +223,8 @@ export default function SingleResponseCard({
               {response.meta.userAgent.device ? response.meta.userAgent.device : "PC / Generic device"}
             </p>
           )}
+          {response.meta.url && <p>URL: {response.meta.url}</p>}
+          {response.meta.action && <p>Action: {response.meta.action}</p>}
           {response.meta.source && <p>Source: {response.meta.source}</p>}
           {response.meta.country && <p>Country: {response.meta.country}</p>}
         </div>
@@ -229,6 +243,61 @@ export default function SingleResponseCard({
     }
   };
 
+  const renderResponse = (
+    questionType: TSurveyQuestionType,
+    responseData: string | number | string[] | Record<string, string>,
+    question: TSurveyQuestion
+  ) => {
+    switch (questionType) {
+      case TSurveyQuestionType.Rating:
+        if (typeof responseData === "number")
+          return <RatingResponse scale={question.scale} answer={responseData} range={question.range} />;
+      case TSurveyQuestionType.Date:
+        if (typeof responseData === "string") return <DateResponse date={responseData} />;
+      case TSurveyQuestionType.Cal:
+        if (typeof responseData === "string")
+          return <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">{responseData}</p>;
+      case TSurveyQuestionType.PictureSelection:
+        if (Array.isArray(responseData))
+          return (
+            <PictureSelectionResponse
+              choices={(question as TSurveyPictureSelectionQuestion).choices}
+              selected={responseData}
+            />
+          );
+      case TSurveyQuestionType.FileUpload:
+        if (Array.isArray(responseData)) return <FileUploadResponse selected={responseData} />;
+      case TSurveyQuestionType.Matrix:
+        if (typeof responseData === "object" && !Array.isArray(responseData)) {
+          return (question as TSurveyMatrixQuestion).rows.map((row) => {
+            const languagCode = getLanguageCode(survey.languages, response.language);
+            const rowValueInSelectedLanguage = getLocalizedValue(row, languagCode);
+            if (!responseData[rowValueInSelectedLanguage]) return;
+            return (
+              <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">
+                {rowValueInSelectedLanguage}: {responseData[rowValueInSelectedLanguage]}
+              </p>
+            );
+          });
+        }
+      case TSurveyQuestionType.Address:
+        if (Array.isArray(responseData)) {
+          return <AddressResponse value={responseData} />;
+        }
+      default:
+        if (
+          typeof responseData === "string" ||
+          typeof responseData === "number" ||
+          Array.isArray(responseData)
+        )
+          return (
+            <p className="ph-no-capture my-1 whitespace-pre-line font-semibold text-slate-700">
+              {Array.isArray(responseData) ? handleArray(responseData) : responseData}
+            </p>
+          );
+    }
+  };
+
   return (
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
       <div
@@ -243,53 +312,61 @@ export default function SingleResponseCard({
         )}>
         <div className="space-y-2 px-6 pb-5 pt-6">
           <div className="flex items-center justify-between">
-            {pageType === "response" && (
-              <div>
-                {response.person?.id ? (
-                  user ? (
-                    <Link
-                      className="group flex items-center"
-                      href={`/environments/${environmentId}/people/${response.person.id}`}>
-                      <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
-                        <PersonAvatar personId={response.person.id} />
-                      </TooltipRenderer>
-                      <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
-                        {displayIdentifier}
-                      </h3>
-                    </Link>
+            <div className="flex items-center justify-center space-x-4">
+              {pageType === "response" && (
+                <div>
+                  {response.person?.id ? (
+                    user ? (
+                      <Link
+                        className="group flex items-center"
+                        href={`/environments/${environmentId}/people/${response.person.id}`}>
+                        <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                          <PersonAvatar personId={response.person.id} />
+                        </TooltipRenderer>
+                        <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
+                          {displayIdentifier}
+                        </h3>
+                      </Link>
+                    ) : (
+                      <div className="group flex items-center">
+                        <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                          <PersonAvatar personId={response.person.id} />
+                        </TooltipRenderer>
+                        <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600">
+                          {displayIdentifier}
+                        </h3>
+                      </div>
+                    )
                   ) : (
                     <div className="group flex items-center">
                       <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
-                        <PersonAvatar personId={response.person.id} />
+                        <PersonAvatar personId="anonymous" />
                       </TooltipRenderer>
-                      <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600">
-                        {displayIdentifier}
-                      </h3>
+                      <h3 className="ml-4 pb-1 font-semibold text-slate-600">Anonymous</h3>
                     </div>
-                  )
-                ) : (
-                  <div className="group flex items-center">
-                    <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
-                      <PersonAvatar personId="anonymous" />
-                    </TooltipRenderer>
-                    <h3 className="ml-4 pb-1 font-semibold text-slate-600">Anonymous</h3>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
 
-            {pageType === "people" && (
-              <div className="flex items-center justify-center space-x-2 rounded-full bg-slate-100 p-1 px-2 text-sm text-slate-600">
-                {(survey.type === "link" || environment.widgetSetupCompleted) && (
-                  <SurveyStatusIndicator status={survey.status} />
-                )}
-                <Link
-                  className="hover:underline"
-                  href={`/environments/${environmentId}/surveys/${survey.id}/summary`}>
-                  {survey.name}
-                </Link>
-              </div>
-            )}
+              {pageType === "people" && (
+                <div className="flex items-center justify-center space-x-2 rounded-full bg-slate-100 p-1 px-2 text-sm text-slate-600">
+                  {(survey.type === "link" || environment.widgetSetupCompleted) && (
+                    <SurveyStatusIndicator status={survey.status} />
+                  )}
+                  <Link
+                    className="hover:underline"
+                    href={`/environments/${environmentId}/surveys/${survey.id}/summary`}>
+                    {survey.name}
+                  </Link>
+                </div>
+              )}
+              {response.language && response.language !== "default" && (
+                <div className="flex space-x-2 rounded-full bg-slate-700 px-2 py-1 text-xs text-white">
+                  <div>{getLanguageLabel(response.language)}</div>
+                  <LanguagesIcon className="h-4 w-4" />
+                </div>
+              )}
+            </div>
 
             <div className="flex space-x-4 text-sm">
               <time className="text-slate-500" dateTime={timeSince(response.updatedAt.toISOString())}>
@@ -334,7 +411,7 @@ export default function SingleResponseCard({
                   <span>Verified Email</span>
                 </p>
                 <p className="ph-no-capture my-1 font-semibold text-slate-700">
-                  {response.data["verifiedEmail"]}
+                  {typeof response.data["verifiedEmail"] === "string" ? response.data["verifiedEmail"] : ""}
                 </p>
               </div>
             )}
@@ -351,7 +428,12 @@ export default function SingleResponseCard({
               return (
                 <div key={`${question.id}`}>
                   {isValidValue(response.data[question.id]) ? (
-                    <p className="text-sm text-slate-500">{question.headline}</p>
+                    <div>
+                      <p className="text-sm text-slate-500">
+                        {getLocalizedValue(question.headline, "default")}
+                      </p>
+                      {renderResponse(question.type, response.data[question.id], question)}
+                    </div>
                   ) : (
                     <QuestionSkip
                       skippedQuestions={skipped}
@@ -365,38 +447,6 @@ export default function SingleResponseCard({
                       }
                     />
                   )}
-                  {typeof response.data[question.id] !== "object" ? (
-                    question.type === TSurveyQuestionType.Rating ? (
-                      <div>
-                        <RatingResponse
-                          scale={question.scale}
-                          answer={response.data[question.id]}
-                          range={question.range}
-                        />
-                      </div>
-                    ) : question.type === TSurveyQuestionType.Date ? (
-                      <DateResponse date={response.data[question.id] as string} />
-                    ) : question.type === TSurveyQuestionType.Cal ? (
-                      <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">
-                        {response.data[question.id]}
-                      </p>
-                    ) : (
-                      <p className="ph-no-capture my-1 whitespace-pre-line font-semibold text-slate-700">
-                        {response.data[question.id]}
-                      </p>
-                    )
-                  ) : question.type === TSurveyQuestionType.PictureSelection ? (
-                    <PictureSelectionResponse
-                      choices={question.choices}
-                      selected={response.data[question.id]}
-                    />
-                  ) : question.type === TSurveyQuestionType.FileUpload ? (
-                    <FileUploadResponse selected={response.data[question.id]} />
-                  ) : (
-                    <p className="ph-no-capture my-1 font-semibold text-slate-700">
-                      {handleArray(response.data[question.id])}
-                    </p>
-                  )}
                 </div>
               );
             })}
@@ -407,7 +457,9 @@ export default function SingleResponseCard({
                 return (
                   <div key={field}>
                     <p className="text-sm text-slate-500">Hidden Field: {field}</p>
-                    <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.data[field]}</p>
+                    <p className="ph-no-capture my-1 font-semibold text-slate-700">
+                      {typeof response.data[field] === "string" ? (response.data[field] as string) : ""}
+                    </p>
                   </div>
                 );
               })}
@@ -421,15 +473,14 @@ export default function SingleResponseCard({
           )}
         </div>
 
-        {user && !isViewer && (
-          <ResponseTagsWrapper
-            environmentId={environmentId}
-            responseId={response.id}
-            tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
-            environmentTags={environmentTags}
-            updateFetchedResponses={updateFetchedResponses}
-          />
-        )}
+        <ResponseTagsWrapper
+          environmentId={environmentId}
+          responseId={response.id}
+          tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
+          environmentTags={environmentTags}
+          updateFetchedResponses={updateFetchedResponses}
+          isViewer={isViewer}
+        />
 
         <DeleteDialog
           open={deleteDialogOpen}

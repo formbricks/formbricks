@@ -4,14 +4,23 @@ import HeadingSection from "@/app/(app)/environments/[environmentId]/(peopleAndS
 import ResponseSection from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/components/ResponseSection";
 
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 
 export default async function PersonPage({ params }) {
-  const environment = await getEnvironment(params.environmentId);
-  const environmentTags = await getTagsByEnvironmentId(params.environmentId);
+  const [environment, environmentTags, product] = await Promise.all([
+    getEnvironment(params.environmentId),
+    getTagsByEnvironmentId(params.environmentId),
+    getProductByEnvironmentId(params.environmentId),
+  ]);
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
   if (!environment) {
     throw new Error("Environment not found");
   }
+
   return (
     <div>
       <main className="mx-auto px-4 sm:px-6 lg:px-8">

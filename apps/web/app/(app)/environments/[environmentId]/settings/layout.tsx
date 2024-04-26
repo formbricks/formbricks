@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 
+import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
@@ -19,9 +20,11 @@ export default async function SettingsLayout({ children, params }) {
     getProductByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
   ]);
+
   if (!team) {
     throw new Error("Team not found");
   }
+
   if (!product) {
     throw new Error("Product not found");
   }
@@ -29,6 +32,8 @@ export default async function SettingsLayout({ children, params }) {
   if (!session) {
     throw new Error("Unauthenticated");
   }
+
+  const isMultiLanguageAllowed = getMultiLanguagePermission(team);
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
@@ -41,9 +46,10 @@ export default async function SettingsLayout({ children, params }) {
           team={team}
           product={product}
           membershipRole={currentUserMembership?.role}
+          isMultiLanguageAllowed={isMultiLanguageAllowed}
         />
         <div className="w-full md:ml-64">
-          <div className="max-w-4xl px-20 pb-6 pt-14 md:pt-6">
+          <div className="max-w-7xl px-20 pb-6 pt-14 md:pt-6">
             <div>{children}</div>
           </div>
         </div>

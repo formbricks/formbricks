@@ -16,13 +16,17 @@ export const canUserAccessTeam = async (userId: string, teamId: string): Promise
     async () => {
       validateInputs([userId, ZId], [teamId, ZId]);
 
-      const userTeams = await getTeamsByUserId(userId);
+      try {
+        const userTeams = await getTeamsByUserId(userId);
 
-      const givenTeamExists = userTeams.filter((team) => (team.id = teamId));
-      if (!givenTeamExists) {
-        return false;
+        const givenTeamExists = userTeams.filter((team) => (team.id = teamId));
+        if (!givenTeamExists) {
+          return false;
+        }
+        return true;
+      } catch (error) {
+        throw error;
       }
-      return true;
     },
     [`canUserAccessTeam-${userId}-${teamId}`],
     { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [teamCache.tag.byId(teamId)] }

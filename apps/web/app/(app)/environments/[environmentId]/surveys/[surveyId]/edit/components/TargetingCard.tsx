@@ -1,19 +1,19 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
-import AlertDialog from "@formbricks/ui/AlertDialog";
+import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import BasicAddFilterModal from "@formbricks/ui/Targeting/BasicAddFilterModal";
 import BasicSegmentEditor from "@formbricks/ui/Targeting/BasicSegmentEditor";
@@ -160,7 +160,7 @@ export default function TargetingCard({
           <div className="flex items-center pl-2 pr-5">
             <CheckIcon
               strokeWidth={3}
-              className="h-7 w-7 rounded-full border bg-green-400 p-1.5 text-white"
+              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
             />
           </div>
           <div>

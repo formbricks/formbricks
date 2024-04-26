@@ -1,6 +1,7 @@
 "use client";
 
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
+import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -66,13 +67,7 @@ export default function Home({
       <div className="flex w-full justify-end">
         <div className="mr-6 flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
-          <span
-            className="cursor-pointer text-slate-500"
-            onClick={() => {
-              setIsDeleteIntegrationModalOpen(true);
-            }}>
-            Connected with {googleSheetIntegration.config.email}
-          </span>
+          <span className="text-slate-500">Connected with {googleSheetIntegration.config.email}</span>
         </div>
         <Button
           variant="darkCTA"
@@ -121,6 +116,14 @@ export default function Home({
           </div>
         </div>
       )}
+      <Button
+        variant="minimal"
+        onClick={() => setIsDeleteIntegrationModalOpen(true)}
+        className="mt-4"
+        StartIcon={Trash2Icon}
+        startIconClassName="h-5 w-5 mr-2">
+        Delete Integration
+      </Button>
 
       <DeleteDialog
         open={isDeleteIntegrationModalOpen}

@@ -28,7 +28,7 @@
 
 .dark {
   /* Brand Colors */
-  --formbricks-brand: #038178; 
+  --formbricks-brand: #038178;
 
   /* Fill Colors */
   --formbricks-fill-primary: #0f172a;
@@ -50,17 +50,10 @@
   --formbricks-error: #d13a3a;
 }
 
-
 @layer base {
   [data-nextjs-scroll-focus-boundary] {
     display: contents;
   }
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #e2e8f0;
 }
 
 /* Chrome, Edge, and Safari */
@@ -124,7 +117,7 @@ input[type="search"]::-ms-reveal {
   display: none;
 }
 
-.surveyFilterDropdown[data-state="open"]{
+.surveyFilterDropdown[data-state="open"] {
   background-color: #0f172a;
   color: white;
 }
@@ -133,10 +126,10 @@ input[type="search"]::-ms-reveal {
   color: white;
 }
 
-input[type='range']::-webkit-slider-thumb {
+input[type="range"]::-webkit-slider-thumb {
   background: #0f172a;
   height: 20px;
-  width: 20px; 
+  width: 20px;
   border-radius: 50%;
   -webkit-appearance: none;
 }

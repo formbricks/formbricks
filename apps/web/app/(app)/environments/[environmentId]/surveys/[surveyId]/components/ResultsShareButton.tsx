@@ -10,7 +10,6 @@ import { DownloadIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
 import {
@@ -20,18 +19,16 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 
-import ShareEmbedSurvey from "../(analysis)/summary/components/ShareEmbedSurvey";
-import ShareSurveyResults from "../(analysis)/summary/components/ShareSurveyResults";
+import { ShareEmbedSurvey } from "../(analysis)/summary/components/ShareEmbedSurvey";
+import { ShareSurveyResults } from "../(analysis)/summary/components/ShareSurveyResults";
 
 interface ResultsShareButtonProps {
   survey: TSurvey;
-  className?: string;
   webAppUrl: string;
-  product: TProduct;
-  user: TUser;
+  user?: TUser;
 }
 
-export default function ResultsShareButton({ survey, webAppUrl, product, user }: ResultsShareButtonProps) {
+export const ResultsShareButton = ({ survey, webAppUrl, user }: ResultsShareButtonProps) => {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
@@ -141,12 +138,11 @@ export default function ResultsShareButton({ survey, webAppUrl, product, user }:
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {showLinkModal && (
+      {showLinkModal && user && (
         <ShareEmbedSurvey
           survey={survey}
           open={showLinkModal}
           setOpen={setShowLinkModal}
-          product={product}
           webAppUrl={webAppUrl}
           user={user}
         />
@@ -163,4 +159,4 @@ export default function ResultsShareButton({ survey, webAppUrl, product, user }:
       )}
     </div>
   );
-}
+};

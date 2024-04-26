@@ -33,6 +33,7 @@ import {
   getTotalOccurrencesForAction,
 } from "../action/service";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { structuredClone } from "../pollyfills/structuredClone";
 import { surveyCache } from "../survey/cache";
 import { getSurvey } from "../survey/service";
 import { validateInputs } from "../utils/validate";
@@ -76,22 +77,29 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
   validateInputs([segmentCreateInput, ZSegmentCreateInput]);
 
   const { description, environmentId, filters, isPrivate, surveyId, title } = segmentCreateInput;
+
+  let data: Prisma.SegmentCreateArgs["data"] = {
+    environmentId,
+    title,
+    description,
+    isPrivate,
+    filters,
+  };
+
+  if (surveyId) {
+    data = {
+      ...data,
+      surveys: {
+        connect: {
+          id: surveyId,
+        },
+      },
+    };
+  }
+
   try {
     const segment = await prisma.segment.create({
-      data: {
-        environmentId,
-        title,
-        description,
-        isPrivate,
-        filters,
-        ...(surveyId && {
-          surveys: {
-            connect: {
-              id: surveyId,
-            },
-          },
-        }),
-      },
+      data,
       select: selectSegment,
     });
 
@@ -511,13 +519,17 @@ const evaluateActionFilter = async (
     return false;
   }
 
-  // we have the action metric and we'll need to find out the values for those metrics from the db
-  const actionValue = await getResolvedActionValue(actionClassId, personId, metric);
+  try {
+    // we have the action metric and we'll need to find out the values for those metrics from the db
+    const actionValue = await getResolvedActionValue(actionClassId, personId, metric);
 
-  const actionResult =
-    actionValue !== undefined && compareValues(actionValue ?? 0, value, qualifier.operator);
+    const actionResult =
+      actionValue !== undefined && compareValues(actionValue ?? 0, value, qualifier.operator);
 
-  return actionResult;
+    return actionResult;
+  } catch (error) {
+    throw error;
+  }
 };
 
 const evaluateSegmentFilter = async (
@@ -603,88 +615,92 @@ export const evaluateSegment = async (
 ): Promise<boolean> => {
   let resultPairs: ResultConnectorPair[] = [];
 
-  for (let filterItem of filters) {
-    const { resource } = filterItem;
+  try {
+    for (let filterItem of filters) {
+      const { resource } = filterItem;
 
-    let result: boolean;
+      let result: boolean;
 
-    if (isResourceFilter(resource)) {
-      const { root } = resource;
-      const { type } = root;
+      if (isResourceFilter(resource)) {
+        const { root } = resource;
+        const { type } = root;
 
-      if (type === "attribute") {
-        result = evaluateAttributeFilter(userData.attributes, resource as TSegmentAttributeFilter);
+        if (type === "attribute") {
+          result = evaluateAttributeFilter(userData.attributes, resource as TSegmentAttributeFilter);
+          resultPairs.push({
+            result,
+            connector: filterItem.connector,
+          });
+        }
+
+        if (type === "person") {
+          result = evaluatePersonFilter(userData.userId, resource as TSegmentPersonFilter);
+          resultPairs.push({
+            result,
+            connector: filterItem.connector,
+          });
+        }
+
+        if (type === "action") {
+          result = await evaluateActionFilter(
+            userData.actionIds,
+            resource as TSegmentActionFilter,
+            userData.personId
+          );
+
+          resultPairs.push({
+            result,
+            connector: filterItem.connector,
+          });
+        }
+
+        if (type === "segment") {
+          result = await evaluateSegmentFilter(userData, resource as TSegmentSegmentFilter);
+          resultPairs.push({
+            result,
+            connector: filterItem.connector,
+          });
+        }
+
+        if (type === "device") {
+          result = evaluateDeviceFilter(userData.deviceType, resource as TSegmentDeviceFilter);
+          resultPairs.push({
+            result,
+            connector: filterItem.connector,
+          });
+        }
+      } else {
+        result = await evaluateSegment(userData, resource);
+
+        // this is a sub-group and we need to evaluate the sub-group
         resultPairs.push({
           result,
           connector: filterItem.connector,
         });
       }
-
-      if (type === "person") {
-        result = evaluatePersonFilter(userData.userId, resource as TSegmentPersonFilter);
-        resultPairs.push({
-          result,
-          connector: filterItem.connector,
-        });
-      }
-
-      if (type === "action") {
-        result = await evaluateActionFilter(
-          userData.actionIds,
-          resource as TSegmentActionFilter,
-          userData.personId
-        );
-
-        resultPairs.push({
-          result,
-          connector: filterItem.connector,
-        });
-      }
-
-      if (type === "segment") {
-        result = await evaluateSegmentFilter(userData, resource as TSegmentSegmentFilter);
-        resultPairs.push({
-          result,
-          connector: filterItem.connector,
-        });
-      }
-
-      if (type === "device") {
-        result = evaluateDeviceFilter(userData.deviceType, resource as TSegmentDeviceFilter);
-        resultPairs.push({
-          result,
-          connector: filterItem.connector,
-        });
-      }
-    } else {
-      result = await evaluateSegment(userData, resource);
-
-      // this is a sub-group and we need to evaluate the sub-group
-      resultPairs.push({
-        result,
-        connector: filterItem.connector,
-      });
     }
-  }
 
-  if (!resultPairs.length) {
-    return false;
-  }
-
-  // Given that the first filter in every group/sub-group always has a connector value of "null",
-  // we initialize the finalResult with the result of the first filter.
-
-  let finalResult = resultPairs[0].result;
-
-  for (let i = 1; i < resultPairs.length; i++) {
-    const { result, connector } = resultPairs[i];
-
-    if (connector === "and") {
-      finalResult = finalResult && result;
-    } else if (connector === "or") {
-      finalResult = finalResult || result;
+    if (!resultPairs.length) {
+      return false;
     }
-  }
 
-  return finalResult;
+    // Given that the first filter in every group/sub-group always has a connector value of "null",
+    // we initialize the finalResult with the result of the first filter.
+
+    let finalResult = resultPairs[0].result;
+
+    for (let i = 1; i < resultPairs.length; i++) {
+      const { result, connector } = resultPairs[i];
+
+      if (connector === "and") {
+        finalResult = finalResult && result;
+      } else if (connector === "or") {
+        finalResult = finalResult || result;
+      }
+    }
+
+    return finalResult;
+  } catch (error) {
+    throw error;
+  }
 };

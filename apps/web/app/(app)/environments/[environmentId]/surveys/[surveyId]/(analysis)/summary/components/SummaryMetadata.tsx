@@ -1,8 +1,7 @@
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
 import { timeSinceConditionally } from "@formbricks/lib/time";
-import { TSurveySummary } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveySummary } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
@@ -49,12 +48,12 @@ function formatTime(ttc) {
   return formattedValue;
 }
 
-export default function SummaryMetadata({
+export const SummaryMetadata = ({
   survey,
   setShowDropOffs,
   showDropOffs,
   surveySummary,
-}: SummaryMetadataProps) {
+}: SummaryMetadataProps) => {
   const {
     completedPercentage,
     completedResponses,
@@ -71,7 +70,7 @@ export default function SummaryMetadata({
       <div className="flex flex-col-reverse gap-y-2 lg:grid lg:grid-cols-3 lg:gap-x-2">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-x-2 lg:col-span-2">
           <StatCard
-            label="Displays"
+            label="Impressions"
             percentage={null}
             value={displayCount === 0 ? <span>-</span> : displayCount}
             tooltipText="Number of times the survey has been viewed."
@@ -89,7 +88,7 @@ export default function SummaryMetadata({
             tooltipText="Number of times the survey has been completed."
           />
           <StatCard
-            label="Drop Offs"
+            label="Drop-Offs"
             percentage={`${Math.round(dropOffPercentage)}%`}
             value={dropOffCount === 0 ? <span>-</span> : dropOffCount}
             tooltipText="Number of times the survey has been started but not completed."
@@ -103,17 +102,17 @@ export default function SummaryMetadata({
         </div>
         <div className="flex flex-col justify-between gap-2 lg:col-span-1">
           <div className="text-right text-xs text-slate-400">
-            Last updated: {timeSinceConditionally(survey.updatedAt.toISOString())}
+            Last updated: {timeSinceConditionally(survey.updatedAt.toString())}
           </div>
           <Button
             variant="minimal"
             className="w-max self-start"
             EndIcon={showDropOffs ? ChevronDownIcon : ChevronUpIcon}
             onClick={() => setShowDropOffs(!showDropOffs)}>
-            Analyze Drop Offs
+            Analyze Drop-Offs
           </Button>
         </div>
       </div>
     </div>
   );
-}
+};

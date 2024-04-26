@@ -6,6 +6,7 @@ import { TProduct } from "@formbricks/types/product";
 import {
   TSurvey,
   TSurveyInput,
+  TSurveyLanguage,
   TSurveyQuestion,
   TSurveyQuestionType,
   TSurveyWelcomeCard,
@@ -31,6 +32,31 @@ type SurveyMock = Prisma.SurveyGetPayload<{
   include: typeof selectSurvey;
 }>;
 
+export const mockSurveyLanguages: TSurveyLanguage[] = [
+  {
+    default: true,
+    enabled: true,
+    language: {
+      id: "rp2di001zicbm3mk8je1ue9u",
+      code: "en",
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  },
+  {
+    default: false,
+    enabled: true,
+    language: {
+      id: "cuuxfzls09sjkueg6lm6n7i0",
+      code: "de",
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  },
+];
+
 export const mockProduct: TProduct = {
   id: mockId,
   createdAt: currentDate,
@@ -46,6 +72,10 @@ export const mockProduct: TProduct = {
   clickOutsideClose: false,
   darkOverlay: false,
   environments: [],
+  languages: [],
+  styling: {
+    allowStyleOverwrite: false,
+  },
 };
 
 export const mockDisplay = {
@@ -75,19 +105,20 @@ export const mockUser: TUser = {
     weeklySummary: {},
     unsubscribedTeamIds: [],
   },
+  role: "other",
 };
 
-export const mockPerson: Prisma.PersonGetPayload<{
+export const mockPrismaPerson: Prisma.PersonGetPayload<{
   include: typeof selectPerson;
 }> = {
   id: mockId,
   userId: mockId,
   attributes: [
     {
-      value: "value",
+      value: "de",
       attributeClass: {
         id: mockId,
-        name: "test",
+        name: "language",
       },
     },
   ],
@@ -115,14 +146,14 @@ export const mockAttributeClass: TAttributeClass = {
 const mockQuestion: TSurveyQuestion = {
   id: mockId,
   type: TSurveyQuestionType.OpenText,
-  headline: "Question Text",
+  headline: { default: "Question Text", de: "Fragetext" },
   required: false,
   inputType: "text",
 };
 
 const mockWelcomeCard: TSurveyWelcomeCard = {
   enabled: false,
-  headline: "My welcome card",
+  headline: { default: "My welcome card", de: "Meine Willkommenskarte" },
   timeToFinish: false,
   showResponseCount: false,
 };
@@ -133,6 +164,7 @@ const baseSurveyProperties = {
   autoClose: 10,
   delay: 0,
   autoComplete: 7,
+  runOnDate: null,
   closeOnDate: currentDate,
   redirectUrl: "http://github.com/formbricks/formbricks",
   recontactDays: 3,
@@ -171,12 +203,16 @@ export const mockTeamOutput: TTeam = {
         status: "inactive",
         unlimited: false,
       },
+      multiLanguage: {
+        status: "inactive",
+        unlimited: false,
+      },
     },
   },
 };
 
-export const mockSurveyOutput: SurveyMock = {
-  type: "web",
+export const mockSyncSurveyOutput: SurveyMock = {
+  type: "app",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
@@ -190,11 +226,31 @@ export const mockSurveyOutput: SurveyMock = {
   segmentId: null,
   resultShareKey: null,
   inlineTriggers: null,
+  languages: mockSurveyLanguages,
+  ...baseSurveyProperties,
+};
+
+export const mockSurveyOutput: SurveyMock = {
+  type: "website",
+  status: "inProgress",
+  displayOption: "respondMultiple",
+  triggers: [{ actionClass: mockActionClass }],
+  productOverwrites: null,
+  singleUse: null,
+  styling: null,
+  displayPercentage: null,
+  createdBy: null,
+  pin: null,
+  segment: null,
+  segmentId: null,
+  resultShareKey: null,
+  inlineTriggers: null,
+  languages: mockSurveyLanguages,
   ...baseSurveyProperties,
 };
 
 export const createSurveyInput: TSurveyInput = {
-  type: "web",
+  type: "website",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [mockActionClass.name],
@@ -202,7 +258,7 @@ export const createSurveyInput: TSurveyInput = {
 };
 
 export const updateSurveyInput: TSurvey = {
-  type: "web",
+  type: "website",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [mockActionClass.name],
@@ -215,11 +271,17 @@ export const updateSurveyInput: TSurvey = {
   resultShareKey: null,
   segment: null,
   inlineTriggers: null,
+  languages: [],
   ...commonMockProperties,
   ...baseSurveyProperties,
 };
 
 export const mockTransformedSurveyOutput = {
   ...mockSurveyOutput,
+  triggers: mockSurveyOutput.triggers.map((trigger) => trigger.actionClass.name),
+};
+
+export const mockTransformedSyncSurveyOutput = {
+  ...mockSyncSurveyOutput,
   triggers: mockSurveyOutput.triggers.map((trigger) => trigger.actionClass.name),
 };

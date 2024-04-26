@@ -31,43 +31,39 @@ export async function middleware(request: NextRequest) {
   if (token && callbackUrl) {
     return NextResponse.redirect(WEBAPP_URL + callbackUrl);
   }
-
   if (process.env.NODE_ENV !== "production" || RATE_LIMITING_DISABLED) {
     return NextResponse.next();
   }
 
-  const res = NextResponse.next();
-  let ip = request.ip ?? request.headers.get("x-real-ip");
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (!ip && forwardedFor) {
-    ip = forwardedFor.split(",").at(0) ?? null;
-  }
+  let ip =
+    request.headers.get("cf-connecting-ip") ||
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+    request.ip;
 
   if (ip) {
     try {
       if (loginRoute(request.nextUrl.pathname)) {
-        await loginLimiter.check(ip);
+        await loginLimiter(`login-${ip}`);
       } else if (signupRoute(request.nextUrl.pathname)) {
-        await signUpLimiter.check(ip);
+        await signUpLimiter(`signup-${ip}`);
       } else if (clientSideApiRoute(request.nextUrl.pathname)) {
-        await clientSideApiEndpointsLimiter.check(ip);
+        await clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
 
         const envIdAndUserId = isSyncWithUserIdentificationEndpoint(request.nextUrl.pathname);
         if (envIdAndUserId) {
           const { environmentId, userId } = envIdAndUserId;
-          await syncUserIdentificationLimiter.check(`${environmentId}-${userId}`);
+          await syncUserIdentificationLimiter(`sync-${environmentId}-${userId}`);
         }
       } else if (shareUrlRoute(request.nextUrl.pathname)) {
-        await shareUrlLimiter.check(ip);
+        await shareUrlLimiter(`share-${ip}`);
       }
-      return res;
-    } catch (_e) {
-      console.log("Rate Limiting IP: ", ip);
-
+      return NextResponse.next();
+    } catch (e) {
+      console.log(`Rate Limiting IP: ${ip}`);
       return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
     }
   }
-  return res;
+  return NextResponse.next();
 }
 
 export const config = {
@@ -81,5 +77,6 @@ export const config = {
     "/environments/:path*",
     "/api/auth/signout",
     "/auth/login",
+    "/api/packages/:path*",
   ],
 };

@@ -10,16 +10,17 @@ import {
   CreditCardIcon,
   FileCheckIcon,
   HeartIcon,
+  LanguagesIcon,
   LinkIcon,
   LogOutIcon,
   MailIcon,
+  MenuIcon,
   MessageSquareTextIcon,
   PlusIcon,
   SlidersIcon,
   UserCircleIcon,
   UsersIcon,
 } from "lucide-react";
-import { MenuIcon } from "lucide-react";
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -27,7 +28,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-import formbricks from "@formbricks/js";
+import formbricks from "@formbricks/js/app";
 import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter, truncate } from "@formbricks/lib/strings";
@@ -69,6 +70,7 @@ interface NavigationProps {
   isFormbricksCloud: boolean;
   webAppUrl: string;
   membershipRole?: TMembershipRole;
+  isMultiLanguageAllowed: boolean;
 }
 
 export default function Navigation({
@@ -81,6 +83,7 @@ export default function Navigation({
   isFormbricksCloud,
   webAppUrl,
   membershipRole,
+  isMultiLanguageAllowed,
 }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -109,6 +112,14 @@ export default function Navigation({
       setCurrentTeamId(team.id);
     }
   }, [team]);
+
+  const sortedProducts = useMemo(() => {
+    return [...products].sort((a, b) => a.name.localeCompare(b.name));
+  }, [products]);
+
+  const sortedTeams = useMemo(() => {
+    return [...teams].sort((a, b) => a.name.localeCompare(b.name));
+  }, [teams]);
 
   const navigation = useMemo(
     () => [
@@ -141,7 +152,7 @@ export default function Navigation({
       },
       {
         name: "Settings",
-        href: `/environments/${environment.id}/settings/profile`,
+        href: `/environments/${environment.id}/settings/product`,
         icon: SettingsIcon,
         current: pathname?.includes("/settings"),
         hidden: false,
@@ -165,6 +176,12 @@ export default function Navigation({
           label: "Look & Feel",
           href: `/environments/${environment.id}/settings/lookandfeel`,
           hidden: isViewer,
+        },
+        {
+          icon: LanguagesIcon,
+          label: "Survey Languages",
+          href: `/environments/${environment.id}/settings/language`,
+          hidden: !isMultiLanguageAllowed,
         },
       ],
     },
@@ -313,17 +330,7 @@ export default function Navigation({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild id="userDropdownTrigger">
                     <div tabIndex={0} className="flex cursor-pointer flex-row items-center space-x-5">
-                      {session.user.imageUrl ? (
-                        <Image
-                          src={session.user.imageUrl}
-                          width="40"
-                          height="40"
-                          className="ph-no-capture h-10 w-10 rounded-full"
-                          alt="Profile picture"
-                        />
-                      ) : (
-                        <ProfileAvatar userId={session.user.id} />
-                      )}
+                      <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
 
                       <div>
                         <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">
@@ -355,6 +362,31 @@ export default function Navigation({
 
                     <DropdownMenuSeparator />
 
+                    {/* Environment Switch */}
+
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <div>
+                          <p>{capitalizeFirstLetter(environment?.type)}</p>
+                          <p className=" block text-xs text-slate-500">Environment</p>
+                        </div>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                          <DropdownMenuRadioGroup
+                            value={environment?.type}
+                            onValueChange={(v) => handleEnvironmentChange(v as "production" | "development")}>
+                            <DropdownMenuRadioItem value="production" className="cursor-pointer">
+                              Production
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="development" className="cursor-pointer">
+                              Development
+                            </DropdownMenuRadioItem>
+                          </DropdownMenuRadioGroup>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+
                     {/* Product Switch */}
 
                     <DropdownMenuSub>
@@ -383,7 +415,7 @@ export default function Navigation({
                           <DropdownMenuRadioGroup
                             value={product!.id}
                             onValueChange={(v) => handleEnvironmentChangeByProduct(v)}>
-                            {products.map((product) => (
+                            {sortedProducts.map((product) => (
                               <DropdownMenuRadioItem
                                 value={product.id}
                                 className="cursor-pointer break-all"
@@ -418,7 +450,7 @@ export default function Navigation({
                           <DropdownMenuRadioGroup
                             value={currentTeamId}
                             onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
-                            {teams?.map((team) => (
+                            {sortedTeams.map((team) => (
                               <DropdownMenuRadioItem value={team.id} className="cursor-pointer" key={team.id}>
                                 {team.name}
                               </DropdownMenuRadioItem>
@@ -429,31 +461,6 @@ export default function Navigation({
                             <PlusIcon className="mr-2 h-4 w-4" />
                             <span>Create team</span>
                           </DropdownMenuItem>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuPortal>
-                    </DropdownMenuSub>
-
-                    {/* Environment Switch */}
-
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <div>
-                          <p>{capitalizeFirstLetter(environment?.type)}</p>
-                          <p className=" block text-xs text-slate-500">Environment</p>
-                        </div>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                          <DropdownMenuRadioGroup
-                            value={environment?.type}
-                            onValueChange={(v) => handleEnvironmentChange(v as "production" | "development")}>
-                            <DropdownMenuRadioItem value="production" className="cursor-pointer">
-                              Production
-                            </DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="development" className="cursor-pointer">
-                              Development
-                            </DropdownMenuRadioItem>
-                          </DropdownMenuRadioGroup>
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
                     </DropdownMenuSub>

@@ -35,6 +35,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: "/demo",
+        destination: "/",
+        permanent: false,
+      },
+      {
         source: "/discord",
         destination: "https://discord.gg/3YFcABF2Ts",
         permanent: true,
@@ -205,19 +210,12 @@ const nextConfig = {
         destination: "/blog",
         permanent: true,
       },
+      {
+        source: '/docs/api/:slug*',
+        destination: '/docs/additional-features/api',
+        permanent: false,
+      }
     ];
-  },
-  async rewrites() {
-    return {
-      fallback: [
-        // These rewrites are checked after both pages/public files
-        // and dynamic routes are checked
-        {
-          source: "/:path*",
-          destination: `https://app.formbricks.com/s/:path*`,
-        },
-      ],
-    };
   },
 };
 

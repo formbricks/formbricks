@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 
+import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 
 import { handleCheckoutSessionCompleted } from "../handlers/checkoutSessionCompleted";
@@ -7,7 +8,7 @@ import { handleSubscriptionUpdatedOrCreated } from "../handlers/subscriptionCrea
 import { handleSubscriptionDeleted } from "../handlers/subscriptionDeleted";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
+  apiVersion: STRIPE_API_VERSION,
 });
 
 const webhookSecret: string = env.STRIPE_WEBHOOK_SECRET!;
@@ -19,7 +20,7 @@ const webhookHandler = async (requestBody: string, stripeSignature: string) => {
     event = stripe.webhooks.constructEvent(requestBody, stripeSignature, webhookSecret);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
-    if (err! instanceof Error) console.log(err);
+    if (err! instanceof Error) console.error(err);
     return { status: 400, message: `Webhook Error: ${errorMessage}` };
   }
 

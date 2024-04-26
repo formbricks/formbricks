@@ -44,9 +44,8 @@ export const TabBar: React.FC<TabBarProps> = ({
       return (
         <nav className="flex h-full w-full flex-1 items-center space-x-4" aria-label="Tabs">
           {tabs.map((tab) => (
-            <div className="flex h-full flex-1 justify-center px-3 py-2">
+            <div className="flex h-full flex-1 justify-center px-3 py-2" key={tab.id}>
               <button
-                key={tab.id}
                 onClick={() => setActiveId(tab.id)}
                 className={cn(
                   tab.id === activeId
@@ -65,7 +64,11 @@ export const TabBar: React.FC<TabBarProps> = ({
   };
 
   return (
-    <div className={cn("flex h-14 w-full items-center justify-center border-b bg-slate-50", className)}>
+    <div
+      className={cn(
+        "flex h-14 w-full items-center justify-center rounded-t-md border border-slate-200 bg-slate-100",
+        className
+      )}>
       <Nav />
     </div>
   );

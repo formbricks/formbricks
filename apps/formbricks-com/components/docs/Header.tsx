@@ -1,6 +1,7 @@
 "use client";
 
 import { FooterLogo } from "@/components/shared/Logo";
+import { Search } from "@/components/shared/Search";
 import clsx from "clsx";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
@@ -8,7 +9,6 @@ import { forwardRef } from "react";
 
 import { Button } from "./Button";
 import { MobileNavigation, useIsInsideMobileNavigation, useMobileNavigationStore } from "./MobileNavigation";
-import { MobileSearch, Search } from "./Search";
 import { ThemeToggle } from "./ThemeToggle";
 
 function TopLevelNavItem({ href, children }: { href: string; children: React.ReactNode }) {
@@ -57,7 +57,9 @@ export const Header = forwardRef<React.ElementRef<"div">, { className?: string }
           (isInsideMobileNavigation || !mobileNavIsOpen) && "bg-slate-900/7.5 dark:bg-white/7.5"
         )}
       />
-      <Search />
+      <div className="hidden md:block">
+        <Search />
+      </div>
       <div className="flex items-center gap-5 lg:hidden">
         <MobileNavigation />
         <Link href="/" aria-label="Home">
@@ -75,7 +77,9 @@ export const Header = forwardRef<React.ElementRef<"div">, { className?: string }
         </nav>
         <div className="hidden md:block md:h-5 md:w-px md:bg-slate-900/10 md:dark:bg-white/15" />
         <div className="flex gap-4">
-          <MobileSearch />
+          <div className="block md:hidden">
+            <Search />
+          </div>
           <ThemeToggle />
         </div>
         <div className="hidden min-[416px]:contents">

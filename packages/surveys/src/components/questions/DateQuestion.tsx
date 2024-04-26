@@ -1,29 +1,35 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion } from "@formbricks/types/surveys";
 
+import { initDatePicker } from "../../sideload/question-date/index";
+
 interface DateQuestionProps {
   question: TSurveyDateQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   autoFocus?: boolean;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
-export default function DateQuestion({
+export const DateQuestion = ({
   question,
   value,
   onSubmit,
@@ -31,53 +37,23 @@ export default function DateQuestion({
   isFirstQuestion,
   isLastQuestion,
   onChange,
+  languageCode,
   setTtc,
   ttc,
-}: DateQuestionProps) {
+}: DateQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const defaultDate = value ? new Date(value as string) : undefined;
-  const datePickerScriptSrc = import.meta.env.DATE_PICKER_SCRIPT_SRC;
-
   useEffect(() => {
-    // Check if the DatePicker has already been loaded
-
-    if (!window.initDatePicker) {
-      const script = document.createElement("script");
-
-      script.src = datePickerScriptSrc;
-
-      script.async = true;
-
-      document.body.appendChild(script);
-
-      script.onload = () => {
-        // Initialize the DatePicker once the script is loaded
-        window.initDatePicker(document.getElementById("date-picker-root")!, defaultDate, question.format);
-        setLoading(false);
-      };
-
-      return () => {
-        document.body.removeChild(script);
-      };
-    } else {
-      // If already loaded, remove the date picker and re-initialize it
-      setLoading(false);
-
-      const datePickerContainer = document.getElementById("datePickerContainer");
-      if (datePickerContainer) {
-        datePickerContainer.remove();
-      }
-
-      window.initDatePicker(document.getElementById("date-picker-root")!, defaultDate, question.format);
-    }
+    initDatePicker(document.getElementById("date-picker-root")!, defaultDate, question.format);
+    setLoading(false);
 
     return () => {};
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.format, question.id]);
 
@@ -120,29 +96,39 @@ export default function DateQuestion({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
-
-      <div className={"text-red-600"}>
-        <span>{errorMessage}</span>
-      </div>
-
-      <div className={cn("my-4", errorMessage && "rounded-lg border-2 border-red-500")} id="date-picker-root">
-        {loading && (
-          <div className="relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-base font-normal text-slate-900 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
-            <span
-              className="h-6 w-6 animate-spin rounded-full border-b-2 border-neutral-900"
-              style={{ borderTopColor: "transparent" }}></span>
+      <ScrollableContainer>
+        <div>
+          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          <Headline
+            headline={getLocalizedValue(question.headline, languageCode)}
+            questionId={question.id}
+            required={question.required}
+          />
+          <Subheader
+            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+            questionId={question.id}
+          />
+          <div className={"text-red-600"}>
+            <span>{errorMessage}</span>
           </div>
-        )}
-      </div>
-
-      <div className="mt-4 flex w-full justify-between">
+          <div
+            className={cn("mt-4", errorMessage && "rounded-lg border-2 border-red-500")}
+            id="date-picker-root">
+            {loading && (
+              <div className="bg-survey-bg border-border text-placeholder relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+                <span
+                  className="h-6 w-6 animate-spin rounded-full border-b-2 border-neutral-900"
+                  style={{ borderTopColor: "transparent" }}></span>
+              </div>
+            )}
+          </div>
+        </div>
+      </ScrollableContainer>
+      <div className="flex w-full justify-between px-6 py-4">
         <div>
           {!isFirstQuestion && (
             <BackButton
-              backButtonLabel={question.backButtonLabel}
+              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
               onClick={() => {
                 const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
                 setTtc(updatedTtcObj);
@@ -152,8 +138,11 @@ export default function DateQuestion({
           )}
         </div>
 
-        <SubmitButton isLastQuestion={isLastQuestion} onClick={() => {}} buttonLabel={question.buttonLabel} />
+        <SubmitButton
+          isLastQuestion={isLastQuestion}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+        />
       </div>
     </form>
   );
-}
+};

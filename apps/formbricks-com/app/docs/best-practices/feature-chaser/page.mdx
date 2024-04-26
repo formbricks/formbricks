@@ -1,5 +1,5 @@
 import DemoPreview from "@/components/dummyUI/DemoPreview";
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
 
 import ActionCSS from "./action-css.webp";
 import ActionText from "./action-text.webp";
@@ -43,8 +43,7 @@ To run the Feature Chaser survey in your app you want to proceed as follows:
 2. Setup a user action to display survey at the right point in time
 
 <Note>
-  ## Formbricks Widget running? 
-  We assume that you have already installed the Formbricks Widget in your web
+  ## Formbricks Widget running? We assume that you have already installed the Formbricks Widget in your web
   app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide
   (takes 15mins max.)](/docs/getting-started/quickstart-in-app-survey)
 </Note>
@@ -55,7 +54,7 @@ If you don't have an account yet, create one at [app.formbricks.com](https://app
 
 Click on "Create Survey" and choose the template “Feature Chaser”:
 
-<Image
+<MdxImage
   src={CreateSurvey}
   alt="Create survey by template"
   quality="100"
@@ -66,7 +65,7 @@ Click on "Create Survey" and choose the template “Feature Chaser”:
 
 The questions you want to ask are dependent on your feature and can be very specific. In the template, we suggest a high-level check on how easy it was for the user to achieve their goal. We also add an opportunity to provide context:
 
-<Image
+<MdxImage
   src={ChangeText}
   alt="Change text content"
   quality="100"
@@ -85,7 +84,7 @@ There are two ways to track a button:
 
 1. **Trigger by innerText:** You might have a button with a unique text at the end of your feature e.g. "Export Report". You can setup a user Action with the according `innerText` to trigger the survey, like so:
 
-<Image
+<MdxImage
   src={ActionText}
   alt="Set the trigger by inner Text"
   quality="100"
@@ -94,7 +93,7 @@ There are two ways to track a button:
 
 2. **Trigger by CSS Selector:** In case you have more than one button saying “Export Report” in your app and only want to display the survey when one of them is clicked, you want to be more specific. The best way to do that is to give this button the HTML `id=“export-report-featurename”` and set your user action up like so:
 
-<Image
+<MdxImage
   src={ActionCSS}
   alt="Set the trigger by CSS Selector"
   quality="100"
@@ -105,7 +104,7 @@ Please follow our [Actions manual](/docs/actions/why) for an in-depth descriptio
 
 ### 4. Select Action in the “When to ask” card
 
-<Image
+<MdxImage
   src={SelectAction}
   alt="Select PMF trigger button action"
   quality="100"
@@ -116,7 +115,7 @@ Please follow our [Actions manual](/docs/actions/why) for an in-depth descriptio
 
 Lastly, scroll down to “Recontact Options”. Here you have full freedom to decide who you want to ask. Generally, you only want to ask every user once and prevent survey fatigue. It's up to you to decide if you want to ask again, when the user did not yet reply:
 
-<Image
+<MdxImage
   src={RecontactOptions}
   alt="Set recontact options"
   quality="100"
@@ -125,11 +124,10 @@ Lastly, scroll down to “Recontact Options”. Here you have full freedom to de
 
 ### 7. Congrats! You’re ready to publish your survey 💃
 
-<Image src={Publish} alt="Publish survey" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
+<MdxImage src={Publish} alt="Publish survey" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 <Note>
-  ## Formbricks Widget running?
-   You need to have the Formbricks Widget installed to display the Feature Chaser
+  ## Formbricks Widget running? You need to have the Formbricks Widget installed to display the Feature Chaser
   in your app. Please follow [this tutorial (Step 4 onwards)](/docs/getting-started/quickstart-in-app-survey)
   to install the widget.
 </Note>

@@ -23,12 +23,11 @@ interface SetupInstructionsOnboardingProps {
 export default function SetupInstructionsOnboarding({
   environmentId,
   webAppUrl,
-  jsPackageVersion,
 }: SetupInstructionsOnboardingProps) {
   const [activeTab, setActiveId] = useState(tabs[0].id);
   const htmlSnippet = `<!-- START Formbricks Surveys -->
 <script type="text/javascript">
-!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^${jsPackageVersion}/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
+!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.6.5/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
 </script>
 <!-- END Formbricks Surveys -->`;
 
@@ -57,7 +56,11 @@ export default function SetupInstructionsOnboarding({
         {activeTab === "npm" ? (
           <div className="prose prose-slate">
             <CodeBlock customEditorClass="!bg-white border border-slate-200" language="sh">
-              npm install @formbricks/js --save
+              npm install @formbricks/js
+            </CodeBlock>
+            <p>or</p>
+            <CodeBlock customEditorClass="!bg-white border border-slate-200" language="sh">
+              yarn add @formbricks/js
             </CodeBlock>
             <p className="text-sm text-slate-700">
               Import Formbricks and initialize the widget in your Component (e.g. App.tsx):

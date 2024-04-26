@@ -86,7 +86,7 @@ test.describe("Invite, accept and remove team member", async () => {
     await page.getByRole("link", { name: "Create account" }).click();
 
     await signupUsingInviteToken(page, name, email, password);
-    await finishOnboarding(page);
+    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
   });
 
   test("Remove member", async ({ page }) => {

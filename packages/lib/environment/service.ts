@@ -134,25 +134,29 @@ export const updateEnvironment = async (
 };
 
 export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvironment | null> => {
-  const teams = await getTeamsByUserId(userId);
-  if (teams.length === 0) {
-    throw new Error(`Unable to get first environment: User ${userId} has no teams`);
-  }
-  const firstTeam = teams[0];
-  const products = await getProducts(firstTeam.id);
-  if (products.length === 0) {
-    throw new Error(`Unable to get first environment: Team ${firstTeam.id} has no products`);
-  }
-  const firstProduct = products[0];
-  const productionEnvironment = firstProduct.environments.find(
-    (environment) => environment.type === "production"
-  );
-  if (!productionEnvironment) {
-    throw new Error(
-      `Unable to get first environment: Product ${firstProduct.id} has no production environment`
+  try {
+    const teams = await getTeamsByUserId(userId);
+    if (teams.length === 0) {
+      throw new Error(`Unable to get first environment: User ${userId} has no teams`);
+    }
+    const firstTeam = teams[0];
+    const products = await getProducts(firstTeam.id);
+    if (products.length === 0) {
+      throw new Error(`Unable to get first environment: Team ${firstTeam.id} has no products`);
+    }
+    const firstProduct = products[0];
+    const productionEnvironment = firstProduct.environments.find(
+      (environment) => environment.type === "production"
     );
+    if (!productionEnvironment) {
+      throw new Error(
+        `Unable to get first environment: Product ${firstProduct.id} has no production environment`
+      );
+    }
+    return productionEnvironment;
+  } catch (error) {
+    throw error;
   }
-  return productionEnvironment;
 };
 
 export const createEnvironment = async (
@@ -161,43 +165,51 @@ export const createEnvironment = async (
 ): Promise<TEnvironment> => {
   validateInputs([productId, ZId], [environmentInput, ZEnvironmentCreateInput]);
 
-  const environment = await prisma.environment.create({
-    data: {
-      type: environmentInput.type || "development",
-      product: { connect: { id: productId } },
-      widgetSetupCompleted: environmentInput.widgetSetupCompleted || false,
-      actionClasses: {
-        create: [
-          {
-            name: "New Session",
-            description: "Gets fired when a new session is created",
-            type: "automatic",
-          },
-          {
-            name: "Exit Intent (Desktop)",
-            description: "A user on Desktop leaves the website with the cursor.",
-            type: "automatic",
-          },
-          {
-            name: "50% Scroll",
-            description: "A user scrolled 50% of the current page",
-            type: "automatic",
-          },
-        ],
+  try {
+    const environment = await prisma.environment.create({
+      data: {
+        type: environmentInput.type || "development",
+        product: { connect: { id: productId } },
+        widgetSetupCompleted: environmentInput.widgetSetupCompleted || false,
+        actionClasses: {
+          create: [
+            {
+              name: "New Session",
+              description: "Gets fired when a new session is created",
+              type: "automatic",
+            },
+            {
+              name: "Exit Intent (Desktop)",
+              description: "A user on Desktop leaves the website with the cursor.",
+              type: "automatic",
+            },
+            {
+              name: "50% Scroll",
+              description: "A user scrolled 50% of the current page",
+              type: "automatic",
+            },
+          ],
+        },
+        attributeClasses: {
+          create: [
+            // { name: "userId", description: "The internal ID of the person", type: "automatic" },
+            { name: "email", description: "The email of the person", type: "automatic" },
+            { name: "language", description: "The language used by the person", type: "automatic" },
+          ],
+        },
       },
-      attributeClasses: {
-        create: [
-          // { name: "userId", description: "The internal ID of the person", type: "automatic" },
-          { name: "email", description: "The email of the person", type: "automatic" },
-        ],
-      },
-    },
-  });
+    });
 
-  environmentCache.revalidate({
-    id: environment.id,
-    productId: environment.productId,
-  });
+    environmentCache.revalidate({
+      id: environment.id,
+      productId: environment.productId,
+    });
 
-  return environment;
+    return environment;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
 };

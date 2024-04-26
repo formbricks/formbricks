@@ -197,6 +197,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Identify Users", href: "/docs/in-app-surveys/user-identification" },
       { title: "Actions", href: "/docs/in-app-surveys/actions" },
       { title: "Attributes", href: "/docs/in-app-surveys/attributes" },
+      { title: "Advanced Targeting", href: "/docs/in-app-surveys/advanced-targeting" },
     ],
   },
   {
@@ -208,6 +209,15 @@ export const navigation: Array<NavGroup> = [
       { title: "Single Use Links", href: "/docs/link-surveys/single-use-links" },
       { title: "Source Tracking", href: "/docs/link-surveys/source-tracking" },
       { title: "Hidden Fields", href: "/docs/link-surveys/hidden-fields" },
+      { title: "Start At Question", href: "/docs/link-surveys/start-at-question" },
+      { title: "Embed Surveys", href: "/docs/link-surveys/embed-surveys" },
+    ],
+  },
+  {
+    title: "Additional Features",
+    links: [
+      { title: "Multi Language Surveys", href: "/docs/additional-features/multi-language-surveys" },
+      { title: "API", href: "/docs/additional-features/api" },
     ],
   },
   {
@@ -231,6 +241,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Notion", href: "/docs/integrations/notion" },
       { title: "Make.com", href: "/docs/integrations/make" },
       { title: "n8n", href: "/docs/integrations/n8n" },
+      { title: "Slack", href: "/docs/integrations/slack" },
       { title: "Wordpress", href: "/docs/integrations/wordpress" },
       { title: "Zapier", href: "/docs/integrations/zapier" },
     ],
@@ -257,29 +268,6 @@ export const navigation: Array<NavGroup> = [
       { title: "How to create a service", href: "/docs/contributing/creating-a-service" },
       { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },
       { title: "FAQ", href: "/docs/faq" },
-    ],
-  },
-  {
-    title: "Client API",
-    links: [
-      { title: "Overview", href: "/docs/api/client/overview" },
-      { title: "Actions", href: "/docs/api/client/actions" },
-      { title: "Displays", href: "/docs/api/client/displays" },
-      { title: "People", href: "/docs/api/client/people" },
-      { title: "Responses", href: "/docs/api/client/responses" },
-    ],
-  },
-  {
-    title: "Management API",
-    links: [
-      { title: "API Key Setup", href: "/docs/api/management/api-key-setup" },
-      { title: "Action Classes", href: "/docs/api/management/action-classes" },
-      { title: "Attribute Classes", href: "/docs/api/management/attribute-classes" },
-      { title: "Me", href: "/docs/api/management/me" },
-      { title: "People", href: "/docs/api/management/people" },
-      { title: "Responses", href: "/docs/api/management/responses" },
-      { title: "Surveys", href: "/docs/api/management/surveys" },
-      { title: "Webhooks", href: "/docs/api/management/webhooks" },
     ],
   },
 ];

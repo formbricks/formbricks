@@ -1,43 +1,40 @@
 "use client";
 
-import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { isSurveyValid } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import { isEqual } from "lodash";
 import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
+import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
-import { ZSegmentFilters } from "@formbricks/types/segment";
-import {
-  TSurvey,
-  TSurveyQuestionType,
-  ZSurveyInlineTriggers,
-  surveyHasBothTriggers,
-} from "@formbricks/types/surveys";
-import AlertDialog from "@formbricks/ui/AlertDialog";
+import { TSegment } from "@formbricks/types/segment";
+import { TSurvey, TSurveyEditorTabs } from "@formbricks/types/surveys";
+import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 import { updateSurveyAction } from "../actions";
-import { isValidUrl, validateQuestion } from "./Validation";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
   survey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   environment: TEnvironment;
-  activeId: "questions" | "settings";
-  setActiveId: (id: "questions" | "settings") => void;
-  setInvalidQuestions: (invalidQuestions: String[]) => void;
+  activeId: TSurveyEditorTabs;
+  setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
+  setInvalidQuestions: (invalidQuestions: string[]) => void;
   product: TProduct;
   responseCount: number;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (selectedLanguage: string) => void;
 }
 
-export default function SurveyMenuBar({
+export const SurveyMenuBar = ({
   localSurvey,
   survey,
   environment,
@@ -47,7 +44,9 @@ export default function SurveyMenuBar({
   setInvalidQuestions,
   product,
   responseCount,
-}: SurveyMenuBarProps) {
+  selectedLanguageCode,
+  setSelectedLanguageCode,
+}: SurveyMenuBarProps) => {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -55,7 +54,7 @@ export default function SurveyMenuBar({
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const cautionText = "This survey received responses, make changes with caution.";
 
-  let faultyQuestions: String[] = [];
+  const faultyQuestions: string[] = [];
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -79,7 +78,7 @@ export default function SurveyMenuBar({
   }, [localSurvey, survey]);
 
   const containsEmptyTriggers = useMemo(() => {
-    if (localSurvey.type !== "web") return false;
+    if (localSurvey.type === "link") return false;
 
     const noTriggers = !localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0];
     const noInlineTriggers =
@@ -107,210 +106,68 @@ export default function SurveyMenuBar({
   };
 
   const handleBack = () => {
-    if (!isEqual(localSurvey, survey)) {
+    const { updatedAt, ...localSurveyRest } = localSurvey;
+    const { updatedAt: _, ...surveyRest } = survey;
+    localSurveyRest.triggers = localSurveyRest.triggers.filter((trigger) => Boolean(trigger));
+
+    if (!isEqual(localSurveyRest, surveyRest)) {
       setConfirmDialogOpen(true);
     } else {
       router.back();
     }
   };
 
-  const validateSurvey = (survey: TSurvey) => {
-    const existingQuestionIds = new Set();
+  const handleTemporarySegment = async () => {
+    if (localSurvey.segment && localSurvey.type === "app" && localSurvey.segment?.id === "temp") {
+      const { filters } = localSurvey.segment;
 
-    if (survey.questions.length === 0) {
-      toast.error("Please add at least one question");
-      return;
+      // create a new private segment
+      const newSegment = await createSegmentAction({
+        environmentId: localSurvey.environmentId,
+        filters,
+        isPrivate: true,
+        surveyId: localSurvey.id,
+        title: localSurvey.id,
+      });
+
+      return newSegment;
     }
-
-    let pin = survey?.pin;
-    if (pin !== null && pin!.toString().length !== 4) {
-      toast.error("PIN must be a four digit number.");
-      return;
-    }
-
-    const { thankYouCard } = localSurvey;
-    if (thankYouCard.enabled) {
-      const { buttonLabel, buttonLink } = thankYouCard;
-
-      if (buttonLabel && !buttonLink) {
-        toast.error("Button Link missing on Thank you card.");
-        return;
-      }
-
-      if (!buttonLabel && buttonLink) {
-        toast.error("Button Label missing on Thank you card.");
-        return;
-      }
-
-      if (buttonLink && !isValidUrl(buttonLink)) {
-        toast.error("Invalid URL on Thank You card.");
-        return;
-      }
-    }
-
-    faultyQuestions = [];
-    for (let index = 0; index < survey.questions.length; index++) {
-      const question = survey.questions[index];
-      const isValid = validateQuestion(question);
-
-      if (!isValid) {
-        faultyQuestions.push(question.id);
-      }
-    }
-
-    // if there are any faulty questions, the user won't be allowed to save the survey
-    if (faultyQuestions.length > 0) {
-      setInvalidQuestions(faultyQuestions);
-      toast.error("Please fill all required fields.");
-      return false;
-    }
-
-    for (const question of survey.questions) {
-      const existingLogicConditions = new Set();
-
-      if (existingQuestionIds.has(question.id)) {
-        toast.error("There are 2 identical question IDs. Please update one.");
-        return false;
-      }
-      existingQuestionIds.add(question.id);
-
-      if (
-        question.type === TSurveyQuestionType.MultipleChoiceSingle ||
-        question.type === TSurveyQuestionType.MultipleChoiceMulti
-      ) {
-        const haveSameChoices =
-          question.choices.some((element) => element.label.trim() === "") ||
-          question.choices.some((element, index) =>
-            question.choices
-              .slice(index + 1)
-              .some((nextElement) => nextElement.label.trim() === element.label.trim())
-          );
-
-        if (haveSameChoices) {
-          toast.error("You have two identical choices.");
-          return false;
-        }
-      }
-
-      for (const logic of question.logic || []) {
-        const validFields = ["condition", "destination", "value"].filter(
-          (field) => logic[field] !== undefined
-        ).length;
-
-        if (validFields < 2) {
-          setInvalidQuestions([question.id]);
-          toast.error("Incomplete logic jumps detected: Fill or remove them in the Questions tab.");
-          return false;
-        }
-
-        if (question.required && logic.condition === "skipped") {
-          toast.error("A logic condition is missing: Please update or delete it in the Questions tab.");
-          return false;
-        }
-
-        const thisLogic = `${logic.condition}-${logic.value}`;
-        if (existingLogicConditions.has(thisLogic)) {
-          setInvalidQuestions([question.id]);
-          toast.error(
-            "There are two competing logic conditons: Please update or delete one in the Questions tab."
-          );
-          return false;
-        }
-        existingLogicConditions.add(thisLogic);
-      }
-    }
-
-    if (
-      survey.redirectUrl &&
-      !survey.redirectUrl.includes("https://") &&
-      !survey.redirectUrl.includes("http://")
-    ) {
-      toast.error("Please enter a valid URL for redirecting respondents.");
-      return false;
-    }
-
-    return true;
   };
 
-  const saveSurveyAction = async (shouldNavigateBack = false) => {
-    if (localSurvey.questions.length === 0) {
-      toast.error("Please add at least one question.");
-      return;
-    }
-    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey);
-    if (questionWithEmptyFallback) {
-      toast.error("Fallback missing");
-      return;
+  const handleSegmentUpdate = async (): Promise<TSegment | null> => {
+    if (localSurvey.segment && localSurvey.segment.id === "temp") {
+      const segment = await handleTemporarySegment();
+      return segment ?? null;
     }
 
+    return localSurvey.segment;
+  };
+
+  const handleSurveySave = async (shouldNavigateBack = false) => {
     setIsSurveySaving(true);
-    // Create a copy of localSurvey with isDraft removed from every question
-    const strippedSurvey: TSurvey = {
-      ...localSurvey,
-      questions: localSurvey.questions.map((question) => {
+    try {
+      if (
+        !isSurveyValid(
+          localSurvey,
+          faultyQuestions,
+          setInvalidQuestions,
+          selectedLanguageCode,
+          setSelectedLanguageCode
+        )
+      ) {
+        setIsSurveySaving(false);
+        return;
+      }
+      localSurvey.triggers = localSurvey.triggers.filter((trigger) => Boolean(trigger));
+      localSurvey.questions = localSurvey.questions.map((question) => {
         const { isDraft, ...rest } = question;
         return rest;
-      }),
-    };
+      });
 
-    if (!validateSurvey(localSurvey)) {
+      const segment = await handleSegmentUpdate();
+      await updateSurveyAction({ ...localSurvey, segment });
       setIsSurveySaving(false);
-      return;
-    }
-
-    // validate the user segment filters
-    const localSurveySegment = {
-      id: strippedSurvey.segment?.id,
-      filters: strippedSurvey.segment?.filters,
-      title: strippedSurvey.segment?.title,
-      description: strippedSurvey.segment?.description,
-    };
-
-    const surveySegment = {
-      id: survey.segment?.id,
-      filters: survey.segment?.filters,
-      title: survey.segment?.title,
-      description: survey.segment?.description,
-    };
-
-    // if the non-private segment in the survey and the strippedSurvey are different, don't save
-    if (!strippedSurvey.segment?.isPrivate && !isEqual(localSurveySegment, surveySegment)) {
-      toast.error("Please save the audience filters before saving the survey");
-      setIsSurveySaving(false);
-      return;
-    }
-
-    if (!!strippedSurvey.segment?.filters?.length) {
-      const parsedFilters = ZSegmentFilters.safeParse(strippedSurvey.segment.filters);
-      if (!parsedFilters.success) {
-        const errMsg =
-          parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
-          "Invalid targeting: Please check your audience filters";
-        setIsSurveySaving(false);
-        toast.error(errMsg);
-        return;
-      }
-    }
-
-    // if inlineTriggers are present validate with zod
-    if (!!strippedSurvey.inlineTriggers) {
-      const parsedInlineTriggers = ZSurveyInlineTriggers.safeParse(strippedSurvey.inlineTriggers);
-      if (!parsedInlineTriggers.success) {
-        toast.error("Invalid Custom Actions: Please check your custom actions");
-        return;
-      }
-    }
-
-    // validate that both triggers and inlineTriggers are not present
-    if (surveyHasBothTriggers(strippedSurvey)) {
-      setIsSurveySaving(false);
-      toast.error("Survey cannot have both custom and saved actions, please remove one.");
-      return;
-    }
-
-    try {
-      await updateSurveyAction({ ...strippedSurvey });
-      setIsSurveySaving(false);
+      setLocalSurvey(localSurvey);
       toast.success("Changes saved.");
       if (shouldNavigateBack) {
         router.back();
@@ -324,13 +181,29 @@ export default function SurveyMenuBar({
   };
 
   const handleSurveyPublish = async () => {
+    setIsSurveyPublishing(true);
     try {
-      setIsSurveyPublishing(true);
-      if (!validateSurvey(localSurvey)) {
+      if (
+        !isSurveyValid(
+          localSurvey,
+          faultyQuestions,
+          setInvalidQuestions,
+          selectedLanguageCode,
+          setSelectedLanguageCode
+        )
+      ) {
         setIsSurveyPublishing(false);
         return;
       }
-      await updateSurveyAction({ ...localSurvey, status: "inProgress" });
+      const status = localSurvey.runOnDate ? "scheduled" : "inProgress";
+      const segment = await handleSegmentUpdate();
+
+      await updateSurveyAction({
+        ...localSurvey,
+        status,
+        segment,
+      });
+      setIsSurveyPublishing(false);
       router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
       toast.error("An error occured while publishing the survey.");
@@ -393,12 +266,11 @@ export default function SurveyMenuBar({
             />
           </div>
           <Button
-            // disabled={isSurveyPublishing || (localSurvey.status !== "draft" && containsEmptyTriggers())}
             disabled={disableSave}
             variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
             className="mr-3"
             loading={isSurveySaving}
-            onClick={() => saveSurveyAction()}>
+            onClick={() => handleSurveySave()}>
             Save
           </Button>
           {localSurvey.status === "draft" && audiencePrompt && (
@@ -434,9 +306,9 @@ export default function SurveyMenuBar({
             setConfirmDialogOpen(false);
             router.back();
           }}
-          onConfirm={() => saveSurveyAction(true)}
+          onConfirm={() => handleSurveySave(true)}
         />
       </div>
     </>
   );
-}
+};

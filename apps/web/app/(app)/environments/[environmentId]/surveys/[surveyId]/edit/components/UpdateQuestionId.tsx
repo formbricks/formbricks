@@ -1,9 +1,11 @@
 "use client";
 
+import { validateId } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 
@@ -33,53 +35,39 @@ export default function UpdateQuestionId({
     }
 
     const questionIds = localSurvey.questions.map((q) => q.id);
-    if (questionIds.includes(currentValue)) {
-      setIsInputInvalid(true);
-      toast.error("IDs have to be unique per survey.");
-    } else if (currentValue.trim() === "" || currentValue.includes(" ")) {
-      setCurrentValue(prevValue);
-      updateQuestion(questionIdx, { id: prevValue });
-      toast.error("ID should not be empty.");
-      return;
-    } else if (
-      ["userId", "source", "suid", "end", "start", "welcomeCard", "hidden", "verifiedEmail"].includes(
-        currentValue
-      )
-    ) {
-      setCurrentValue(prevValue);
-      updateQuestion(questionIdx, { id: prevValue });
-      toast.error("Reserved words cannot be used as question ID");
-      return;
-    } else {
+    const hiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
+    if (validateId("Question", currentValue, questionIds, hiddenFieldIds)) {
       setIsInputInvalid(false);
       toast.success("Question ID updated.");
+      updateQuestion(questionIdx, { id: currentValue });
+      setPrevValue(currentValue); // after successful update, set current value as previous value
+    } else {
+      setCurrentValue(prevValue);
     }
+  };
 
-    updateQuestion(questionIdx, { id: currentValue });
-    setPrevValue(currentValue); // after successful update, set current value as previous value
+  const isButtonDisabled = () => {
+    if (currentValue === question.id || currentValue.trim() === "") return true;
+    else return false;
   };
 
   return (
     <div>
       <Label htmlFor="questionId">Question ID</Label>
-      <div className="mt-2 inline-flex w-full">
+      <div className="mt-2 inline-flex w-full space-x-2">
         <Input
           id="questionId"
           name="questionId"
           value={currentValue}
           onChange={(e) => {
             setCurrentValue(e.target.value);
-            localSurvey.hiddenFields?.fieldIds?.forEach((field) => {
-              if (field === e.target.value) {
-                setIsInputInvalid(true);
-                toast.error("QuestionID can't be equal to hidden fields");
-              }
-            });
           }}
-          onBlur={saveAction}
-          disabled={!(localSurvey.status === "draft" || question.isDraft)}
-          className={isInputInvalid ? "border-red-300 focus:border-red-300" : ""}
+          disabled={localSurvey.status !== "draft" && !question.isDraft}
+          className={`h-10 ${isInputInvalid ? "border-red-300 focus:border-red-300" : ""}`}
         />
+        <Button variant="darkCTA" size="sm" onClick={saveAction} disabled={isButtonDisabled()}>
+          Save
+        </Button>
       </div>
     </div>
   );

@@ -1,13 +1,13 @@
 import { TimerIcon } from "lucide-react";
 
-import { TSurveySummary } from "@formbricks/types/responses";
+import { TSurveySummary } from "@formbricks/types/surveys";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 interface SummaryDropOffsProps {
   dropOff: TSurveySummary["dropOff"];
 }
 
-export default function SummaryDropOffs({ dropOff }: SummaryDropOffsProps) {
+export const SummaryDropOffs = ({ dropOff }: SummaryDropOffsProps) => {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="rounded-b-lg bg-white ">
@@ -25,8 +25,8 @@ export default function SummaryDropOffs({ dropOff }: SummaryDropOffsProps) {
               </Tooltip>
             </TooltipProvider>
           </div>
-          <div className="px-4 text-center md:px-6">Views</div>
-          <div className="pr-6 text-center md:pl-6">Drop Offs</div>
+          <div className="px-4 text-center md:px-6">Impressions</div>
+          <div className="pr-6 text-center md:pl-6">Drop-Offs</div>
         </div>
         {dropOff.map((quesDropOff) => (
           <div
@@ -36,9 +36,9 @@ export default function SummaryDropOffs({ dropOff }: SummaryDropOffsProps) {
             <div className="whitespace-pre-wrap text-center font-semibold">
               {quesDropOff.ttc > 0 ? (quesDropOff.ttc / 1000).toFixed(2) + "s" : "N/A"}
             </div>
-            <div className="whitespace-pre-wrap text-center font-semibold">{quesDropOff.views}</div>
+            <div className="whitespace-pre-wrap text-center font-semibold">{quesDropOff.impressions}</div>
             <div className=" pl-6 text-center md:px-6">
-              <span className="font-semibold">{quesDropOff.dropOffCount}</span>
+              <span className="mr-1.5 font-semibold">{quesDropOff.dropOffCount}</span>
               <span>({Math.round(quesDropOff.dropOffPercentage)}%)</span>
             </div>
           </div>
@@ -46,4 +46,4 @@ export default function SummaryDropOffs({ dropOff }: SummaryDropOffsProps) {
       </div>
     </div>
   );
-}
+};

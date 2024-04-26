@@ -5,27 +5,30 @@ import {
   getResponseCountAction,
   getSurveySummaryAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
-import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
-import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryList";
-import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata";
-import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
-import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
+import { SurveyResultsTabs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
+import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
+import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
+import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
+import { SummaryHeader } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
-import { useSearchParams } from "next/navigation";
+import {
+  getResponseCountBySurveySharingKeyAction,
+  getSummaryBySurveySharingKeyAction,
+} from "@/app/share/[sharingKey]/action";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
-import { TSurveyPersonAttributes, TSurveySummary } from "@formbricks/types/responses";
+import { TSurveySummary } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
 
-import ResultsShareButton from "../../../components/ResultsShareButton";
+import { SummaryList } from "./SummaryList";
+import { SummaryMetadata } from "./SummaryMetadata";
 
 const initialSurveySummary: TSurveySummary = {
   meta: {
@@ -48,51 +51,71 @@ interface SummaryPageProps {
   surveyId: string;
   webAppUrl: string;
   product: TProduct;
-  user: TUser;
-  environmentTags: TTag[];
-  attributes: TSurveyPersonAttributes;
+  user?: TUser;
   membershipRole?: TMembershipRole;
+  totalResponseCount: number;
 }
 
 const SummaryPage = ({
   environment,
   survey,
   surveyId,
-  webAppUrl,
   product,
+  webAppUrl,
   user,
-  environmentTags,
-  attributes,
   membershipRole,
+  totalResponseCount,
 }: SummaryPageProps) => {
+  const params = useParams();
+  const sharingKey = params.sharingKey as string;
+  const isSharingPage = !!sharingKey;
+
   const [responseCount, setResponseCount] = useState<number | null>(null);
-  const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
+  const [isFetchingSummary, setFetchingSummary] = useState<boolean>(true);
+
+  const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
-    [survey, selectedFilter, dateRange]
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedFilter, dateRange]
   );
 
   useEffect(() => {
     const handleInitialData = async () => {
-      const responseCount = await getResponseCountAction(surveyId, filters);
-      setResponseCount(responseCount);
-      if (responseCount === 0) {
-        setSurveySummary(initialSurveySummary);
-        return;
+      try {
+        setFetchingSummary(true);
+        let updatedResponseCount;
+        if (isSharingPage) {
+          updatedResponseCount = await getResponseCountBySurveySharingKeyAction(sharingKey, filters);
+        } else {
+          updatedResponseCount = await getResponseCountAction(surveyId, filters);
+        }
+        setResponseCount(updatedResponseCount);
+
+        let updatedSurveySummary;
+        if (isSharingPage) {
+          updatedSurveySummary = await getSummaryBySurveySharingKeyAction(sharingKey, filters);
+        } else {
+          updatedSurveySummary = await getSurveySummaryAction(surveyId, filters);
+        }
+
+        setSurveySummary(updatedSurveySummary);
+      } finally {
+        setFetchingSummary(false);
       }
-      const response = await getSurveySummaryAction(surveyId, filters);
-      setSurveySummary(response);
     };
 
     handleInitialData();
-  }, [filters, surveyId]);
+  }, [filters, isSharingPage, sharingKey, surveyId]);
 
   const searchParams = useSearchParams();
+
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey);
+    return checkForRecallInHeadline(survey, "default");
   }, [survey]);
 
   useEffect(() => {
@@ -113,8 +136,8 @@ const SummaryPage = ({
         membershipRole={membershipRole}
       />
       <div className="flex gap-1.5">
-        <CustomFilter environmentTags={environmentTags} attributes={attributes} survey={survey} />
-        <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
+        <CustomFilter survey={survey} />
+        {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />}
       </div>
       <SurveyResultsTabs
         activeId="summary"
@@ -134,6 +157,8 @@ const SummaryPage = ({
         responseCount={responseCount}
         survey={survey}
         environment={environment}
+        fetchingSummary={isFetchingSummary}
+        totalResponseCount={totalResponseCount}
       />
     </ContentWrapper>
   );

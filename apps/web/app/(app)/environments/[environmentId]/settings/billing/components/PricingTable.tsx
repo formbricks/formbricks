@@ -11,7 +11,7 @@ import toast from "react-hot-toast";
 
 import { ProductFeatureKeys, StripePriceLookupKeys } from "@formbricks/ee/billing/lib/constants";
 import { TTeam } from "@formbricks/types/teams";
-import AlertDialog from "@formbricks/ui/AlertDialog";
+import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 import { PricingCard } from "@formbricks/ui/PricingCard";
@@ -113,7 +113,7 @@ export default function PricingTableComponent({
     },
     {
       title: "Multi-Language Surveys",
-      comingSoon: true,
+      comingSoon: false,
     },
     {
       title: "Unlimited Responses",
@@ -162,7 +162,7 @@ export default function PricingTableComponent({
     },
     {
       title: "Multi-Language Surveys",
-      comingSoon: true,
+      comingSoon: false,
     },
   ];
 

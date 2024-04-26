@@ -3,6 +3,8 @@ import {
   ArrowUpFromLine,
   CalendarDaysIcon,
   CheckIcon,
+  Grid3X3Icon,
+  HomeIcon,
   ImageIcon,
   ListIcon,
   MessageSquareTextIcon,
@@ -13,7 +15,22 @@ import {
   StarIcon,
 } from "lucide-react";
 
-import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
+import {
+  TSurveyQuestionType as QuestionId,
+  TSurveyAddressQuestion,
+  TSurveyCTAQuestion,
+  TSurveyCalQuestion,
+  TSurveyConsentQuestion,
+  TSurveyDateQuestion,
+  TSurveyFileUploadQuestion,
+  TSurveyMatrixQuestion,
+  TSurveyMultipleChoiceMultiQuestion,
+  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyNPSQuestion,
+  TSurveyOpenTextQuestion,
+  TSurveyPictureSelectionQuestion,
+  TSurveyRatingQuestion,
+} from "@formbricks/types/surveys";
 
 import { replaceQuestionPresetPlaceholders } from "./templates";
 
@@ -32,12 +49,12 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Ask for a text-based answer",
     icon: MessageSquareTextIcon,
     preset: {
-      headline: "Who let the dogs out?",
-      subheader: "Who? Who? Who?",
-      placeholder: "Type your answer here...",
+      headline: { default: "Who let the dogs out?" },
+      subheader: { default: "Who? Who? Who?" },
+      placeholder: { default: "Type your answer here..." },
       longAnswer: true,
       inputType: "text",
-    },
+    } as Partial<TSurveyOpenTextQuestion>,
   },
   {
     id: QuestionId.MultipleChoiceSingle,
@@ -45,14 +62,14 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "A single choice from a list of options (radio buttons)",
     icon: Rows3Icon,
     preset: {
-      headline: "What do you do?",
-      subheader: "Can't do both.",
+      headline: { default: "What do you do?" },
+      subheader: { default: "Can't do both." },
       choices: [
-        { id: createId(), label: "Eat the cake 🍰" },
-        { id: createId(), label: "Have the cake 🎂" },
+        { id: createId(), label: { default: "Eat the cake 🍰" } },
+        { id: createId(), label: { default: "Have the cake 🎂" } },
       ],
       shuffleOption: "none",
-    },
+    } as Partial<TSurveyMultipleChoiceSingleQuestion>,
   },
   {
     id: QuestionId.MultipleChoiceMulti,
@@ -60,14 +77,14 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Number of choices from a list of options (checkboxes)",
     icon: ListIcon,
     preset: {
-      headline: "What's important on vacay?",
+      headline: { default: "What's important on vacay?" },
       choices: [
-        { id: createId(), label: "Sun ☀️" },
-        { id: createId(), label: "Ocean 🌊" },
-        { id: createId(), label: "Palms 🌴" },
+        { id: createId(), label: { default: "Sun ☀️" } },
+        { id: createId(), label: { default: "Ocean 🌊" } },
+        { id: createId(), label: { default: "Palms 🌴" } },
       ],
       shuffleOption: "none",
-    },
+    } as Partial<TSurveyMultipleChoiceMultiQuestion>,
   },
   {
     id: QuestionId.PictureSelection,
@@ -75,8 +92,8 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Ask respondents to select one or more pictures",
     icon: ImageIcon,
     preset: {
-      headline: "Which is the cutest puppy?",
-      subheader: "You can also pick both.",
+      headline: { default: "Which is the cutest puppy?" },
+      subheader: { default: "You can also pick both." },
       allowMulti: true,
       choices: [
         {
@@ -88,7 +105,7 @@ export const questionTypes: TSurveyQuestionType[] = [
           imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg",
         },
       ],
-    },
+    } as Partial<TSurveyPictureSelectionQuestion>,
   },
   {
     id: QuestionId.Rating,
@@ -96,13 +113,13 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Ask respondents for a rating",
     icon: StarIcon,
     preset: {
-      headline: "How would you rate {{productName}}",
-      subheader: "Don't worry, be honest.",
+      headline: { default: "How would you rate {{productName}}" },
+      subheader: { default: "Don't worry, be honest." },
       scale: "star",
       range: 5,
-      lowerLabel: "Not good",
-      upperLabel: "Very good",
-    },
+      lowerLabel: { default: "Not good" },
+      upperLabel: { default: "Very good" },
+    } as Partial<TSurveyRatingQuestion>,
   },
   {
     id: QuestionId.NPS,
@@ -110,10 +127,10 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Rate satisfaction on a 0-10 scale",
     icon: PresentationIcon,
     preset: {
-      headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
-      lowerLabel: "Not at all likely",
-      upperLabel: "Extremely likely",
-    },
+      headline: { default: "How likely are you to recommend {{productName}} to a friend or colleague?" },
+      lowerLabel: { default: "Not at all likely" },
+      upperLabel: { default: "Extremely likely" },
+    } as Partial<TSurveyNPSQuestion>,
   },
   {
     id: QuestionId.CTA,
@@ -121,11 +138,15 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Prompt respondents to perform an action",
     icon: MousePointerClickIcon,
     preset: {
-      headline: "You are one of our power users!",
-      buttonLabel: "Book interview",
+      headline: { default: "You are one of our power users!" },
+      html: {
+        default:
+          '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot.</span></p>',
+      },
+      buttonLabel: { default: "Book interview" },
       buttonExternal: false,
-      dismissButtonLabel: "Skip",
-    },
+      dismissButtonLabel: { default: "Skip" },
+    } as Partial<TSurveyCTAQuestion>,
   },
   {
     id: QuestionId.Consent,
@@ -133,10 +154,10 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Ask respondents for consent",
     icon: CheckIcon,
     preset: {
-      headline: "Terms and Conditions",
-      label: "I agree to the terms and conditions",
-      dismissButtonLabel: "Skip",
-    },
+      headline: { default: "Terms and Conditions" },
+      html: { default: "" },
+      label: { default: "I agree to the terms and conditions" },
+    } as Partial<TSurveyConsentQuestion>,
   },
   {
     id: QuestionId.Date,
@@ -144,9 +165,9 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Ask your users to select a date",
     icon: CalendarDaysIcon,
     preset: {
-      headline: "When is your birthday?",
+      headline: { default: "When is your birthday?" },
       format: "M-d-y",
-    },
+    } as Partial<TSurveyDateQuestion>,
   },
   {
     id: QuestionId.FileUpload,
@@ -154,9 +175,9 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Allow respondents to upload a file",
     icon: ArrowUpFromLine,
     preset: {
-      headline: "File Upload",
+      headline: { default: "File Upload" },
       allowMultipleFiles: false,
-    },
+    } as Partial<TSurveyFileUploadQuestion>,
   },
   {
     id: QuestionId.Cal,
@@ -164,10 +185,36 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Allow respondents to schedule a meet",
     icon: PhoneIcon,
     preset: {
-      headline: "Schedule a call with me",
-      buttonLabel: "Skip",
+      headline: { default: "Schedule a call with me" },
       calUserName: "rick/get-rick-rolled",
-    },
+    } as Partial<TSurveyCalQuestion>,
+  },
+  {
+    id: QuestionId.Matrix,
+    label: "Matrix",
+    description: "This is a matrix question",
+    icon: Grid3X3Icon,
+    preset: {
+      headline: { default: "How much do you love these flowers?" },
+      subheader: { default: "0: Not at all, 3: Love it" },
+      rows: [{ default: "Rose 🌹" }, { default: "Sunflower 🌻" }, { default: "Hibiscus 🌺" }],
+      columns: [{ default: "0" }, { default: "1" }, { default: "2" }, { default: "3" }],
+    } as Partial<TSurveyMatrixQuestion>,
+  },
+  {
+    id: QuestionId.Address,
+    label: "Address",
+    description: "Allow respondents to provide their address",
+    icon: HomeIcon,
+    preset: {
+      headline: { default: "Where do you live?" },
+      isAddressLine1Required: false,
+      isAddressLine2Required: false,
+      isCityRequired: false,
+      isStateRequired: false,
+      isZipRequired: false,
+      isCountryRequired: false,
+    } as Partial<TSurveyAddressQuestion>,
   },
 ];
 

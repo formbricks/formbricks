@@ -38,7 +38,9 @@ export default function WhenToSendCard({
   propActionClasses,
   membershipRole,
 }: WhenToSendCardProps) {
-  const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
+  const [open, setOpen] = useState(
+    localSurvey.type === "app" || localSurvey.type === "website" ? true : false
+  );
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
@@ -215,11 +217,11 @@ export default function WhenToSendCard({
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
               {containsEmptyTriggers ? (
-                <div className="h-8 w-8 rounded-full border border-amber-500 bg-amber-50" />
+                <div className="h-7 w-7 rounded-full border border-amber-500 bg-amber-50" />
               ) : (
                 <CheckIcon
                   strokeWidth={3}
-                  className="h-7 w-7 rounded-full border bg-green-400 p-1.5 text-white"
+                  className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
                 />
               )}
             </div>

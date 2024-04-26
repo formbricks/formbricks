@@ -30,6 +30,7 @@ ENV NEXTAUTH_SECRET="placeholder_for_next_auth_of_64_chars_get_overwritten_at_ru
 ENV ENCRYPTION_KEY="placeholder_for_build_key_of_64_chars_get_overwritten_at_runtime"
 
 ARG NEXT_PUBLIC_SENTRY_DSN
+ARG SENTRY_AUTH_TOKEN
 
 # Set the working directory
 WORKDIR /app
@@ -74,6 +75,7 @@ COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma ./packages/database/schema.prisma
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json ./packages/database/package.json
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migrations ./packages/database/migrations
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
@@ -90,5 +92,5 @@ RUN mkdir -p /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/uploads/
 
 CMD supercronic -quiet /app/docker/cronjobs & \
-    prisma migrate deploy && \
+    (cd packages/database && pnpm db:migrate:deploy) && \
     exec node apps/web/server.js

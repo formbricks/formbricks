@@ -75,7 +75,7 @@ export default function Modal({
       };
 
     return {
-      borderRadius: "8px",
+      borderRadius: "var(--fb-border-radius)",
       border: "2px solid",
       borderColor: highlightBorderColor,
     };
@@ -104,7 +104,7 @@ export default function Modal({
           className={cn(
             getPlacementStyle(placement),
             show ? "opacity-100" : "opacity-0",
-            "border-border pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible rounded-lg border bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
+            "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
           )}>
           {!isCenter && (
             <div class="absolute right-0 top-0 block pr-2 pt-2">
@@ -117,10 +117,10 @@ export default function Modal({
                   class="h-4 w-4"
                   fill="none"
                   viewBox="0 0 24 24"
-                  stroke-width="2"
+                  strokeWidth="2"
                   stroke="currentColor"
                   aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4L20 20M4 20L20 4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4L20 20M4 20L20 4" />
                 </svg>
               </button>
             </div>

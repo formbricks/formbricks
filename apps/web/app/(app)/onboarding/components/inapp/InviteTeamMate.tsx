@@ -1,7 +1,6 @@
 "use client";
 
 import OnboardingTitle from "@/app/(app)/onboarding/components/OnboardingTitle";
-import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -108,21 +107,22 @@ export function InviteTeamMate({ team, environmentId, setCurrentStep }: InviteTe
             <Button id="onboarding-inapp-invite-back" variant="minimal" onClick={() => goBackToConnectPage()}>
               Back
             </Button>
-            <Button id="onboarding-inapp-invite-send-invite" variant="darkCTA" onClick={handleInvite}>
-              Invite
-            </Button>
+            <div className="space-x-2">
+              <Button
+                id="onboarding-inapp-invite-have-a-look-first"
+                className="font-normal text-slate-400"
+                variant="minimal"
+                onClick={goToProduct}
+                loading={isLoading}>
+                Skip
+              </Button>
+              <Button id="onboarding-inapp-invite-send-invite" variant="darkCTA" onClick={handleInvite}>
+                Invite
+              </Button>
+            </div>
           </div>
         </div>
-        <div className="mt-auto flex justify-center">
-          <Button
-            id="onboarding-inapp-invite-have-a-look-first"
-            className="font-normal text-slate-400"
-            variant="minimal"
-            onClick={goToProduct}
-            loading={isLoading}>
-            I want to have a look around first <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
+        <div className="mt-auto flex justify-center"></div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Code, Link2Icon } from "lucide-react";
+import { Code, EarthIcon, Link2Icon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -9,7 +9,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 
 import { SurveyStatusIndicator } from "../../SurveyStatusIndicator";
 import { generateSingleUseIdAction } from "../actions";
-import SurveyDropDownMenu from "./SurveyDropdownMenu";
+import { SurveyDropDownMenu } from "./SurveyDropdownMenu";
 
 interface SurveyCardProps {
   survey: TSurvey;
@@ -18,19 +18,24 @@ interface SurveyCardProps {
   isViewer: boolean;
   WEBAPP_URL: string;
   orientation: string;
+  duplicateSurvey: (survey: TSurvey) => void;
+  deleteSurvey: (surveyId: string) => void;
 }
-export default function SurveyCard({
+export const SurveyCard = ({
   survey,
   environment,
   otherEnvironment,
   isViewer,
   WEBAPP_URL,
   orientation,
-}: SurveyCardProps) {
+  deleteSurvey,
+  duplicateSurvey,
+}: SurveyCardProps) => {
   const isSurveyCreationDeletionDisabled = isViewer;
 
   const surveyStatusLabel = useMemo(() => {
-    if (survey.status === "inProgress") return "Active";
+    if (survey.status === "inProgress") return "In Progress";
+    else if (survey.status === "scheduled") return "Scheduled";
     else if (survey.status === "completed") return "Completed";
     else if (survey.status === "draft") return "Draft";
     else if (survey.status === "paused") return "Paused";
@@ -52,14 +57,23 @@ export default function SurveyCard({
       : `/environments/${environment.id}/surveys/${survey.id}/summary`;
   }, [survey.status, survey.id, environment.id]);
 
-  const SurveyTypeIndicator = ({ type }: { type: string }) => (
+  const SurveyTypeIndicator = ({ type }: { type: TSurvey["type"] }) => (
     <div className="flex items-center space-x-2 text-sm text-slate-600">
-      {type === "web" ? (
+      {type === "app" && (
         <>
           <Code className="h-4 w-4" />
-          <span> In-app</span>
+          <span>App</span>
         </>
-      ) : (
+      )}
+
+      {type === "website" && (
+        <>
+          <EarthIcon className="h-4 w-4" />
+          <span> Website</span>
+        </>
+      )}
+
+      {type === "link" && (
         <>
           <Link2Icon className="h-4 w-4" />
           <span> Link</span>
@@ -85,6 +99,8 @@ export default function SurveyCard({
             webAppUrl={WEBAPP_URL}
             singleUseId={singleUseId}
             isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
+            duplicateSurvey={duplicateSurvey}
+            deleteSurvey={deleteSurvey}
           />
         </div>
         <div>
@@ -92,7 +108,8 @@ export default function SurveyCard({
           <div
             className={cn(
               "mt-3 flex w-fit items-center gap-2 rounded-full py-1 pl-1 pr-2 text-xs text-slate-800",
-              surveyStatusLabel === "Active" && "bg-emerald-50",
+              surveyStatusLabel === "Scheduled" && "bg-slate-200",
+              surveyStatusLabel === "In Progress" && "bg-emerald-50",
               surveyStatusLabel === "Completed" && "bg-slate-200",
               surveyStatusLabel === "Draft" && "bg-slate-100",
               surveyStatusLabel === "Paused" && "bg-slate-100"
@@ -111,13 +128,14 @@ export default function SurveyCard({
         key={survey.id}
         className="relative grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4
     shadow-sm transition-all ease-in-out hover:scale-[101%]">
-        <div className="col-span-2 flex items-center justify-self-start overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium text-slate-900">
+        <div className="col-span-2 flex max-w-full items-center justify-self-start truncate whitespace-nowrap text-sm font-medium text-slate-900">
           {survey.name}
         </div>
         <div
           className={cn(
             "flex w-fit items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm text-slate-800",
-            surveyStatusLabel === "Active" && "bg-emerald-50",
+            surveyStatusLabel === "Scheduled" && "bg-slate-200",
+            surveyStatusLabel === "In Progress" && "bg-emerald-50",
             surveyStatusLabel === "Completed" && "bg-slate-200",
             surveyStatusLabel === "Draft" && "bg-slate-100",
             surveyStatusLabel === "Paused" && "bg-slate-100"
@@ -145,12 +163,16 @@ export default function SurveyCard({
               webAppUrl={WEBAPP_URL}
               singleUseId={singleUseId}
               isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
+              duplicateSurvey={duplicateSurvey}
+              deleteSurvey={deleteSurvey}
             />
           </div>
         </div>
       </Link>
     );
   };
-  if (orientation === "grid") return renderGridContent();
-  else return renderListContent();
-}
+
+  if (orientation === "grid") {
+    return renderGridContent();
+  } else return renderListContent();
+};

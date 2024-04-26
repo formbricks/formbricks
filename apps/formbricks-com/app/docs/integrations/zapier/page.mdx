@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
 
 import AddNewZap from "./add-new-zap.webp";
 import ChooseEvent from "./choose-event.webp";
@@ -16,7 +16,8 @@ import ZapierMessage from "./zapier-message.webp";
 
 export const metadata = {
   title: "Step-by-Step Guide to Integrating Formbricks with Zapier",
-  description: "Master the integration of Formbricks with Zapier using our detailed guide. Seamlessly connect your surveys to 5000+ apps, automate data transfers, and enhance feedback management. Start optimizing your workflow today.",
+  description:
+    "Master the integration of Formbricks with Zapier using our detailed guide. Seamlessly connect your surveys to 5000+ apps, automate data transfers, and enhance feedback management. Start optimizing your workflow today.",
 };
 
 #### Integrations
@@ -26,33 +27,31 @@ export const metadata = {
 Zapier is a powerful ally. Hook up Formbricks with Zapier and you can send your data to 5000+ other apps. Here is how to do it.
 
 <Note>
-  ### Nail down your survey first? 
-  Any changes in the survey cause additional work in the Zap. It makes sense to first settle on the survey you
-  want to run and then get to setting up Zapier.
+  ### Nail down your survey first? Any changes in the survey cause additional work in the Zap. It makes sense
+  to first settle on the survey you want to run and then get to setting up Zapier.
 </Note>
 
 ## Step 1: Setup your survey incl. `questionId` for every question
 
 When setting up the Zap your life will be easier when you change the `questionId`s of your survey questions. You can only do so **before** you publish your survey.
 
-<Image
+<MdxImage
   src={UpdateQuestionId}
   alt="Update Question ID"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 _In every question card in the Advanced Settings you find the Question ID field. Update it so that you’ll recognize the response tied to this question._
 
 <Note>
-  ### Already published? Duplicate survey 
-  You can only update the questionId when the survey was not yet published. Already published it? Just **duplicate
-  it** to update the questionIds.
-  <Image
+  ### Already published? Duplicate survey You can only update the questionId when the survey was not yet
+  published. Already published it? Just **duplicate it** to update the questionIds.
+  <MdxImage
     src={DuplicateSurvey}
     alt="Duplicate Survey"
     quality="100"
-    className="rounded-lg max-w-full sm:max-w-3xl"
+    className="max-w-full rounded-lg sm:max-w-3xl"
   />
 </Note>
 
@@ -60,66 +59,71 @@ _In every question card in the Advanced Settings you find the Question ID field.
 
 In order to set up Zapier you’ll need a test response. This allows you to select the individual values of each response in your Zap. If you have Formbricks running locally and you want to set up an in-app survey, you can use our [Demo App](/docs/contributing/demo) to trigger a survey and submit a response.
 
-<Image
+<MdxImage
   src={SubmitTestResponse}
   alt="Submit Test Response"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ## Step 3: Setup your Zap
 
 Go to [zapier.com](https://zapier.com) and create a new Zap. Search for “Formbricks” to get started:
 
-<Image src={AddNewZap} alt="Add New Zap" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<MdxImage src={AddNewZap} alt="Add New Zap" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 Then, choose the event you want to trigger the Zap on:
 
-<Image src={ChooseEvent} alt="Choose Event" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<MdxImage src={ChooseEvent} alt="Choose Event" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 ## Step 4: Connect Formbricks with Zapier
 
 Now, you have to connect Zapier with Formbricks via an API Key:
 
-<Image
+<MdxImage
   src={ConnectWithFB1}
   alt="Connect with Formbricks - 1"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
-<Image
+<MdxImage
   src={ConnectWithFB2}
   alt="Connect with Formbricks - 2"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-Now you need an API key. Please refer to the [API Key Setup](/docs/api/management/api-key-setup) page to learn how to create one.
+Now you need an API key. Please refer to the [API Key Setup](/docs/additional-features/api#how-to-generate-an-api-key) page to learn how to create one.
 
 Once you copied it in the newly opened Zapier window, you will be connected:
 
-<Image
+<MdxImage
   src={SuccessConnection}
   alt="Successful Connection"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ## Step 5: Select Survey
 
 Next, you can choose from all the surveys you have created in this environment:
 
-<Image src={SelectSurvey} alt="Select Survey" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<MdxImage
+  src={SelectSurvey}
+  alt="Select Survey"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
 
 ## Step 6: Test your trigger
 
 Once you hit “Test” you will see the three most recent submissions for this survey. If you don’t have any submissions in the survey, submit one to continue setting up your Zap:
 
-<Image
+<MdxImage
   src={TestSubmission}
   alt="Test Submission"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 _Now you're happy that you updated the questionId's_
 
@@ -127,22 +131,22 @@ _Now you're happy that you updated the questionId's_
 
 Now you have all the data you need at hand. The next steps depend on what you want to do with it. In this tutorial, we will send submissions to a Slack channel:
 
-<Image
+<MdxImage
   src={SlackChannelMsg}
   alt="Slack Channel Message"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 In the action itself we can determine the data and layout of the message. Here, we only choose the submission data. You can also refer to the meta data of the submission and the [attributes](/docs/attributes/why) of the person who submitted the survey.
 
-<Image src={SlackMsg} alt="Slack Message" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<MdxImage src={SlackMsg} alt="Slack Message" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 We now receive a notifcation in our Slack channel whenever a Churn survey is completed:
 
-<Image
+<MdxImage
   src={ZapierMessage}
   alt="Zapier Message"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
