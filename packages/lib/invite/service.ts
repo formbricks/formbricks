@@ -17,7 +17,7 @@ import {
   ZInvitee,
 } from "@formbricks/types/invites";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
@@ -66,7 +66,6 @@ export const getInvitesByTeamId = async (teamId: string, page?: number): Promise
     [`getInvitesByTeamId-${teamId}-${page}`],
     {
       tags: [inviteCache.tag.byTeamId(teamId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return invites.map((invite: TInvite) => formatDateFields(invite, ZInvite));
@@ -160,7 +159,9 @@ export const getInvite = async (inviteId: string): Promise<InviteWithCreator | n
       }
     },
     [`getInvite-${inviteId}`],
-    { tags: [inviteCache.tag.byId(inviteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    {
+      tags: [inviteCache.tag.byId(inviteId)],
+    }
   )();
 
   return invite

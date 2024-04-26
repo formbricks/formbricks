@@ -12,7 +12,6 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { attributeCache } from "../attribute/cache";
 import { attributeClassCache } from "../attributeClass/cache";
 import { getAttributeClassByName, getAttributeClasses } from "../attributeClass/service";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getPerson, getPersonByUserId } from "../person/service";
 import { validateInputs } from "../utils/validate";
 
@@ -62,7 +61,6 @@ export const getAttributes = async (personId: string): Promise<TAttributes> => {
     [`getAttributes-${personId}`],
     {
       tags: [attributeCache.tag.byPersonId(personId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 };
@@ -98,7 +96,6 @@ export const getAttributesByUserId = async (environmentId: string, userId: strin
     [`getAttributesByUserId-${environmentId}-${userId}`],
     {
       tags: [attributeCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 };
@@ -141,7 +138,6 @@ export const getAttribute = async (name: string, personId: string): Promise<stri
     [`getAttribute-${name}-${personId}`],
     {
       tags: [attributeCache.tag.byNameAndPersonId(name, personId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 };

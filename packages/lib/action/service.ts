@@ -13,7 +13,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 
 import { actionClassCache } from "../actionClass/cache";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { activePersonCache } from "../person/cache";
 import { getIsPersonMonthlyActive } from "../person/service";
 import { formatDateFields } from "../utils/datetime";
@@ -61,7 +61,6 @@ export const getActionsByPersonId = async (personId: string, page?: number): Pro
     [`getActionsByPersonId-${personId}-${page}`],
     {
       tags: [actionCache.tag.byPersonId(personId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -114,7 +113,6 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
     [`getActionsByEnvironmentId-${environmentId}-${page}`],
     {
       tags: [actionCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -211,7 +209,6 @@ export const getActionCountInLastHour = async (actionClassId: string): Promise<n
     [`getActionCountInLastHour-${actionClassId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -237,7 +234,6 @@ export const getActionCountInLast24Hours = async (actionClassId: string): Promis
     [`getActionCountInLast24Hours-${actionClassId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -263,7 +259,6 @@ export const getActionCountInLast7Days = async (actionClassId: string): Promise<
     [`getActionCountInLast7Days-${actionClassId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -293,7 +288,6 @@ export const getActionCountInLastQuarter = async (actionClassId: string, personI
     [`getActionCountInLastQuarter-${actionClassId}-${personId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -323,7 +317,6 @@ export const getActionCountInLastMonth = async (actionClassId: string, personId:
     [`getActionCountInLastMonth-${actionClassId}-${personId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -352,7 +345,6 @@ export const getActionCountInLastWeek = async (actionClassId: string, personId: 
     [`getActionCountInLastWeek-${actionClassId}-${personId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -382,7 +374,6 @@ export const getTotalOccurrencesForAction = async (
     [`getTotalOccurrencesForAction-${actionClassId}-${personId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -419,7 +410,6 @@ export const getLastOccurrenceDaysAgo = async (
     [`getLastOccurrenceDaysAgo-${actionClassId}-${personId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -456,6 +446,5 @@ export const getFirstOccurrenceDaysAgo = async (
     [`getFirstOccurrenceDaysAgo-${actionClassId}-${personId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

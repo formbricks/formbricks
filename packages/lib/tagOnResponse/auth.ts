@@ -4,7 +4,6 @@ import { unstable_cache } from "next/cache";
 
 import { ZId } from "@formbricks/types/environment";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
 import { canUserAccessResponse } from "../response/auth";
@@ -33,7 +32,6 @@ export const canUserAccessTagOnResponse = async (
     },
     [`canUserAccessTagOnResponse-${userId}-${tagId}-${responseId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [tagOnResponseCache.tag.byResponseIdAndTagId(responseId, tagId)],
     }
   )();

@@ -4,7 +4,6 @@ import { unstable_cache } from "next/cache";
 
 import { ZId } from "@formbricks/types/environment";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { validateInputs } from "../utils/validate";
 import { apiKeyCache } from "./cache";
@@ -29,5 +28,5 @@ export const canUserAccessApiKey = async (userId: string, apiKeyId: string): Pro
     },
 
     [`canUserAccessApiKey-${userId}-${apiKeyId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [apiKeyCache.tag.byId(apiKeyId)] }
+    { tags: [apiKeyCache.tag.byId(apiKeyId)] }
   )();
