@@ -52,7 +52,7 @@ export const ConsentQuestion = ({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}>
       <ScrollableContainer>
-        <div className="">
+        <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
