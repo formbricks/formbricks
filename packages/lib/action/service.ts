@@ -6,7 +6,7 @@ import { differenceInDays } from "date-fns";
 
 import { prisma } from "@formbricks/database";
 import { TActionClassType } from "@formbricks/types/actionClasses";
-import { TAction, TActionInput, ZAction, ZActionInput } from "@formbricks/types/actions";
+import { TAction, TActionInput, ZActionInput } from "@formbricks/types/actions";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -16,13 +16,12 @@ import { createActionClass, getActionClassByEnvironmentIdAndName } from "../acti
 import { ITEMS_PER_PAGE } from "../constants";
 import { activePersonCache } from "../person/cache";
 import { getIsPersonMonthlyActive } from "../person/service";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
 import { getStartDateOfLastMonth, getStartDateOfLastQuarter, getStartDateOfLastWeek } from "./utils";
 
-export const getActionsByPersonId = async (personId: string, page?: number): Promise<TAction[]> => {
-  const actions = await cache(
+export const getActionsByPersonId = (personId: string, page?: number): Promise<TAction[]> =>
+  cache(
     async () => {
       validateInputs([personId, ZId], [page, ZOptionalNumber]);
 
@@ -64,12 +63,8 @@ export const getActionsByPersonId = async (personId: string, page?: number): Pro
     }
   )();
 
-  // Deserialize dates if caching does not support deserialization
-  return actions.map((action) => formatDateFields(action, ZAction));
-};
-
-export const getActionsByEnvironmentId = async (environmentId: string, page?: number): Promise<TAction[]> => {
-  const actions = await cache(
+export const getActionsByEnvironmentId = (environmentId: string, page?: number): Promise<TAction[]> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -115,12 +110,6 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
       tags: [actionCache.tag.byEnvironmentId(environmentId)],
     }
   )();
-
-  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
-  // https://github.com/vercel/next.js/issues/51613
-
-  return actions.map((action) => formatDateFields(action, ZAction));
-};
 
 export const createAction = async (data: TActionInput): Promise<TAction> => {
   validateInputs([data, ZActionInput]);

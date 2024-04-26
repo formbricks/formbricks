@@ -1,7 +1,6 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { TLegacySurvey, ZLegacySurvey } from "@formbricks/types/LegacySurvey";
@@ -22,6 +21,7 @@ import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
 import { attributeCache } from "../attribute/cache";
 import { getAttributes } from "../attribute/service";
+import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
@@ -39,7 +39,7 @@ import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { anySurveyHasFilters, buildOrderByClause, buildWhereClause, formatSurveyDateFields } from "./util";
+import { anySurveyHasFilters, buildOrderByClause, buildWhereClause } from "./util";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -181,8 +181,8 @@ const processTriggerUpdates = (
   return triggersUpdate;
 };
 
-export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
-  const survey = await unstable_cache(
+export const getSurvey = (surveyId: string): Promise<TSurvey | null> =>
+  cache(
     async () => {
       validateInputs([surveyId, ZId]);
 
@@ -231,13 +231,8 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
     }
   )();
 
-  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
-  // https://github.com/vercel/next.js/issues/51613
-  return survey ? formatSurveyDateFields(survey) : null;
-};
-
-export const getSurveysByActionClassId = async (actionClassId: string, page?: number): Promise<TSurvey[]> => {
-  const surveys = await unstable_cache(
+export const getSurveysByActionClassId = (actionClassId: string, page?: number): Promise<TSurvey[]> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId], [page, ZOptionalNumber]);
 
@@ -293,16 +288,14 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
       tags: [surveyCache.tag.byActionClassId(actionClassId)],
     }
   )();
-  return surveys.map((survey) => formatSurveyDateFields(survey));
-};
 
-export const getSurveys = async (
+export const getSurveys = (
   environmentId: string,
   limit?: number,
   offset?: number,
   filterCriteria?: TSurveyFilterCriteria
-): Promise<TSurvey[]> => {
-  const surveys = await unstable_cache(
+): Promise<TSurvey[]> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
       let surveysPrisma;
@@ -355,11 +348,6 @@ export const getSurveys = async (
     }
   )();
 
-  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
-  // https://github.com/vercel/next.js/issues/51613
-  return surveys.map((survey) => formatSurveyDateFields(survey));
-};
-
 export const transformToLegacySurvey = async (
   survey: TSurvey,
   languageCode?: string
@@ -370,8 +358,8 @@ export const transformToLegacySurvey = async (
   return formatDateFields(transformedSurvey, ZLegacySurvey);
 };
 
-export const getSurveyCount = async (environmentId: string): Promise<number> => {
-  const count = await unstable_cache(
+export const getSurveyCount = async (environmentId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId]);
       try {
@@ -396,9 +384,6 @@ export const getSurveyCount = async (environmentId: string): Promise<number> => 
       tags: [surveyCache.tag.byEnvironmentId(environmentId)],
     }
   )();
-
-  return count;
-};
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   validateInputs([updatedSurvey, ZSurveyWithRefinements]);
@@ -877,18 +862,17 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
   }
 };
 
-export const getSyncSurveys = async (
+export const getSyncSurveys = (
   environmentId: string,
   personId: string,
   deviceType: "phone" | "desktop" = "desktop",
   options?: {
     version?: string;
   }
-): Promise<TSurvey[] | TLegacySurvey[]> => {
-  validateInputs([environmentId, ZId]);
-
-  const surveys = await unstable_cache(
+): Promise<TSurvey[] | TLegacySurvey[]> =>
+  cache(
     async () => {
+      validateInputs([environmentId, ZId]);
       try {
         const product = await getProductByEnvironmentId(environmentId);
 
@@ -1055,9 +1039,6 @@ export const getSyncSurveys = async (
     }
   )();
 
-  return surveys.map((survey) => formatSurveyDateFields(survey));
-};
-
 export const getSurveyIdByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
   try {
     const survey = await prisma.survey.findFirst({
@@ -1139,8 +1120,8 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
   }
 };
 
-export const getSurveysBySegmentId = async (segmentId: string): Promise<TSurvey[]> => {
-  const surveys = await unstable_cache(
+export const getSurveysBySegmentId = (segmentId: string): Promise<TSurvey[]> =>
+  cache(
     async () => {
       try {
         const surveysPrisma = await prisma.survey.findMany({
@@ -1184,6 +1165,3 @@ export const getSurveysBySegmentId = async (segmentId: string): Promise<TSurvey[
       tags: [surveyCache.tag.bySegmentId(segmentId), segmentCache.tag.byId(segmentId)],
     }
   )();
-
-  return surveys;
-};
