@@ -1,3 +1,4 @@
+import { getMonthName, getOrdinalDate } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import DatePicker from "react-date-picker";
 
@@ -71,41 +72,6 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
 
   const formattedDate = useMemo(() => {
     if (!selectedDate) return "";
-
-    // Helper function to get the month name
-    const getMonthName = (monthIndex: number) => {
-      const months = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-      ];
-      return months[monthIndex];
-    };
-
-    // Helper function to format the date with an ordinal suffix
-    const getOrdinalDate = (date: number) => {
-      const j = date % 10,
-        k = date % 100;
-      if (j === 1 && k !== 11) {
-        return date + "st";
-      }
-      if (j === 2 && k !== 12) {
-        return date + "nd";
-      }
-      if (j === 3 && k !== 13) {
-        return date + "rd";
-      }
-      return date + "th";
-    };
 
     const day = selectedDate.getDate();
     const monthIndex = selectedDate.getMonth();

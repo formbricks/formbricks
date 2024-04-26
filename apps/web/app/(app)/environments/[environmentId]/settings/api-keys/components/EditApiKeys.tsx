@@ -96,7 +96,7 @@ export default function EditAPIKeys({
           <div className="col-span-4 sm:col-span-2">Label</div>
           <div className="col-span-4 hidden sm:col-span-5 sm:block">API Key</div>
           <div className="col-span-4 sm:col-span-2">Created at</div>
-          <div className=""></div>
+          <div></div>
         </div>
         <div className="grid-cols-9">
           {apiKeysLocal && apiKeysLocal.length === 0 ? (
