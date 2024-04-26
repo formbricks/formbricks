@@ -23,8 +23,8 @@ Embedding Formbricks surveys directly into your emails allows you to collect val
 To embed a Formbricks survey in an email, first, create a survey and publish it. Follow these steps to generate the embed code:
 
 1. **Create and Publish a Survey**: Start by creating a link survey and publish it once ready.
-2. **Access the Share Options**: Go to the survey summary page and click the Share button.
-3. **Get the Embed Code**: Click on Embed Survey at the bottom of the share modal, navigate to the Embed in an Email tab, and click Copy Code.
+2. **Access the Share Options**: Go to the survey summary page and click the Share button (see below).
+3. **Get the Embed Code**: Click on Embed Survey at the bottom of the share modal, navigate to the `Embed in an Email` tab, and click `Copy Code`.
 4. **Preview and Test**: Before sending it to your users, click on Send Preview to receive a test email. This helps ensure the survey appears correctly.
 
 <TellaVideo tellaVideoIdentifier="clvex3puw05oi0gl4bp1qgc3s" />
@@ -40,7 +40,9 @@ Below are some of the methods and services that we know that allows HTML embeddi
   mentioned below.
 </Note>
 
-1. **Gmail**: Gmail does not support HTML embedding natively. It's a WYSIWYG (What You See Is What You Get) editor. However, you can use a free plugin like [HTML Editor for Gmail by cloudHQ](https://chromewebstore.google.com/detail/free-html-editor-for-gmai/ioinaaeeacahcmbgfmeaaofhfkijpdeb) to embed HTML in your emails.
+### 1. Gmail
+
+Gmail does not support HTML embedding natively. It's a WYSIWYG (What You See Is What You Get) editor. However, you can use a free plugin like [HTML Editor for Gmail by cloudHQ](https://chromewebstore.google.com/detail/free-html-editor-for-gmai/ioinaaeeacahcmbgfmeaaofhfkijpdeb) to embed HTML in your emails.
 
    - Install the plugin from the Chrome Web Store.
    - Open Gmail and compose a new email.
@@ -83,17 +85,23 @@ Below are some of the methods and services that we know that allows HTML embeddi
 
    - Voila! You have successfully embedded the survey in your email.
 
-2. **Sendgrid**: Sendgrid supports HTML content in emails directly:
+### 2. Sendgrid
+
+Sendgrid supports HTML content in emails directly:
 
    - Compose Your Email: Use Sendgrid's email composition tools to embed the HTML directly into your email body.
    - Reference: For detailed steps, refer to Sendgrid's official documentation [here](https://sendgrid.com/en-us/solutions/email-marketing/email-design) or API docs [here](https://sendgrid.com/docs/for-developers/sending-email/api-getting-started/)
 
-3. **Mailchimp**: Available in their Standard plan and above, Mailchimp allows HTML content embedding:
+### 3. Mailchimp
+
+Available in their Standard plan and above, Mailchimp allows HTML content embedding:
 
    - Use the Code Block: Drag a code block into your email template and paste the HTML code for the survey.
    - Reference: Check out Mailchimp's guide on pasting in custom HTML [here](https://mailchimp.com/help/paste-in-html-to-create-an-email/)
 
-4. **Nodemailer**: Nodemailer is a Node.js module that allows you to send emails with HTML content.
+### 4. Notemailer
+
+Nodemailer is a Node.js module that allows you to send emails with HTML content.
 
    - If you use Node.js to send emails, just attach the `html` parameter in your email message.
    - Reference: Take a look at Nodemailer's official message documentation [here](https://nodemailer.com/message/)
@@ -104,7 +112,7 @@ Below are some of the methods and services that we know that allows HTML embeddi
 
 ## Example: Email Footer Survey
 
-Our CEO does it and we recommend you should too 😄! Embed a survey link in your email signature to collect feedback subtly yet effectively. Here’s how you can integrate it:
+Embed a survey link in your email signature to collect feedback subtly yet effectively. Here’s how:
 
 <MdxImage
   src={JoSignature}
