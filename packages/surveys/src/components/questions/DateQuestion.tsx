@@ -3,6 +3,7 @@ import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
@@ -95,29 +96,35 @@ export const DateQuestion = ({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-      <Headline
-        headline={getLocalizedValue(question.headline, languageCode)}
-        questionId={question.id}
-        required={question.required}
-      />
-      <Subheader
-        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-        questionId={question.id}
-      />
-      <div className={"text-red-600"}>
-        <span>{errorMessage}</span>
-      </div>
-      <div className={cn("my-4", errorMessage && "rounded-lg border-2 border-red-500")} id="date-picker-root">
-        {loading && (
-          <div className="bg-survey-bg border-border text-placeholder relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
-            <span
-              className="h-6 w-6 animate-spin rounded-full border-b-2 border-neutral-900"
-              style={{ borderTopColor: "transparent" }}></span>
+      <ScrollableContainer>
+        <div>
+          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          <Headline
+            headline={getLocalizedValue(question.headline, languageCode)}
+            questionId={question.id}
+            required={question.required}
+          />
+          <Subheader
+            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+            questionId={question.id}
+          />
+          <div className={"text-red-600"}>
+            <span>{errorMessage}</span>
           </div>
-        )}
-      </div>
-      <div className="mt-4 flex w-full justify-between">
+          <div
+            className={cn("mt-4", errorMessage && "rounded-lg border-2 border-red-500")}
+            id="date-picker-root">
+            {loading && (
+              <div className="bg-survey-bg border-border text-placeholder relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+                <span
+                  className="h-6 w-6 animate-spin rounded-full border-b-2 border-neutral-900"
+                  style={{ borderTopColor: "transparent" }}></span>
+              </div>
+            )}
+          </div>
+        </div>
+      </ScrollableContainer>
+      <div className="flex w-full justify-between px-6 py-4">
         <div>
           {!isFirstQuestion && (
             <BackButton

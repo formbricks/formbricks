@@ -146,7 +146,8 @@
         "UPLOADS_DIR",
         "VERCEL",
         "VERCEL_URL",
-        "WEBAPP_URL"
+        "WEBAPP_URL",
+        "UNSPLASH_ACCESS_KEY"
       ]
     },
     "build:dev": {

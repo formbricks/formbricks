@@ -3,6 +3,7 @@ import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 
@@ -129,35 +130,39 @@ export const AddressQuestion = ({
 
   return (
     <form key={question.id} onSubmit={handleSubmit} className="w-full" ref={formRef}>
-      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-      <Headline
-        headline={getLocalizedValue(question.headline, languageCode)}
-        questionId={question.id}
-        required={question.required}
-      />
-      <Subheader
-        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-        questionId={question.id}
-      />
-      <div className="mt-4 space-y-2">
-        {inputConfig.map(({ name, placeholder, required }, index) => (
-          <input
-            ref={index === 0 ? addressTextRef : null}
-            key={index}
-            name={name}
-            autoComplete={name}
-            id={`${question.id}-${index}`}
-            placeholder={placeholder}
-            tabIndex={index + 1}
-            required={required}
-            value={safeValue[index] || ""}
-            onInput={(e) => handleInputChange(e.currentTarget.value, index)}
-            autoFocus={!isInIframe && index === 0}
-            className="border-border placeholder:text-placeholder text-subheading bg-input-bg rounded-custom focus:outline-brand block w-full border p-2 shadow-sm focus:ring-0 sm:text-sm"
+      <ScrollableContainer>
+        <div>
+          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          <Headline
+            headline={getLocalizedValue(question.headline, languageCode)}
+            questionId={question.id}
+            required={question.required}
           />
-        ))}
-      </div>
-      <div className="mt-4 flex w-full justify-between">
+          <Subheader
+            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+            questionId={question.id}
+          />
+          <div className="mt-4 space-y-2">
+            {inputConfig.map(({ name, placeholder, required }, index) => (
+              <input
+                ref={index === 0 ? addressTextRef : null}
+                key={index}
+                name={name}
+                autoComplete={name}
+                id={`${question.id}-${index}`}
+                placeholder={placeholder}
+                tabIndex={index + 1}
+                required={required}
+                value={safeValue[index] || ""}
+                onInput={(e) => handleInputChange(e.currentTarget.value, index)}
+                autoFocus={!isInIframe && index === 0}
+                className="border-border focus:border-brand placeholder:text-placeholder text-subheading bg-input-bg rounded-custom block w-full border p-2 shadow-sm sm:text-sm"
+              />
+            ))}
+          </div>
+        </div>
+      </ScrollableContainer>
+      <div className="flex w-full justify-between px-6 py-4">
         {!isFirstQuestion && (
           <BackButton
             tabIndex={8}
