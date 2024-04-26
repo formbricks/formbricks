@@ -2,7 +2,6 @@ import { unstable_cache } from "next/cache";
 
 import { ZId } from "@formbricks/types/environment";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
 import { getTeamsByUserId } from "../team/service";
@@ -29,7 +28,6 @@ export const canUserAccessProduct = async (userId: string, productId: string): P
     },
     [`canUserAccessProduct-${userId}-${productId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [productCache.tag.byId(productId), productCache.tag.byUserId(userId)],
     }
   )();

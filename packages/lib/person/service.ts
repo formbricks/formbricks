@@ -9,7 +9,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TPerson, ZPerson } from "@formbricks/types/people";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { activePersonCache, personCache } from "./cache";
@@ -76,7 +76,9 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
       }
     },
     [`getPerson-${personId}`],
-    { tags: [personCache.tag.byId(personId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    {
+      tags: [personCache.tag.byId(personId)],
+    }
   )();
 
   return prismaPerson ? formatDateFields(prismaPerson, ZPerson) : null;
@@ -107,7 +109,6 @@ export const getPeople = async (environmentId: string, page?: number): Promise<T
     [`getPeople-${environmentId}-${page}`],
     {
       tags: [personCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -138,7 +139,6 @@ export const getPeopleCount = async (environmentId: string): Promise<number> =>
     [`getPeopleCount-${environmentId}`],
     {
       tags: [personCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -240,7 +240,6 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
     [`getPersonByUserId-${environmentId}-${userId}`],
     {
       tags: [personCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return person ? formatDateFields(person, ZPerson) : null;

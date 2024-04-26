@@ -8,7 +8,6 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { responseCache } from "../response/cache";
 import { getResponse } from "../response/service";
 import { validateInputs } from "../utils/validate";
@@ -128,6 +127,5 @@ export const getTagsOnResponsesCount = async (environmentId: string): Promise<TT
     [`getTagsOnResponsesCount-${environmentId}`],
     {
       tags: [tagOnResponseCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

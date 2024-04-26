@@ -9,7 +9,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TWebhook, TWebhookInput, ZWebhook, ZWebhookInput } from "@formbricks/types/webhooks";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { webhookCache } from "./cache";
@@ -39,7 +39,6 @@ export const getWebhooks = async (environmentId: string, page?: number): Promise
     [`getWebhooks-${environmentId}-${page}`],
     {
       tags: [webhookCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return webhooks.map((webhook) => formatDateFields(webhook, ZWebhook));
@@ -72,7 +71,6 @@ export const getWebhookCountBySource = async (
     [`getWebhookCountBySource-${environmentId}-${source}`],
     {
       tags: [webhookCache.tag.byEnvironmentIdAndSource(environmentId, source)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -99,7 +97,6 @@ export const getWebhook = async (id: string): Promise<TWebhook | null> => {
     [`getWebhook-${id}`],
     {
       tags: [webhookCache.tag.byId(id)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return webhook ? formatDateFields(webhook, ZWebhook) : null;
