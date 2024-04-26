@@ -156,14 +156,15 @@ export const MatrixQuestionForm = ({
               </div>
             ))}
             <Button
-              variant="minimal"
-              className="mt-2 space-x-2"
+              variant="secondary"
+              size="sm"
+              className="mt-3"
+              StartIcon={PlusIcon}
               onClick={(e) => {
                 e.preventDefault();
                 handleAddLabel("row");
               }}>
-              <PlusIcon className="h-4 w-4" />
-              <span>Add Row</span>
+              <span>Add row</span>
             </Button>
           </div>
         </div>
@@ -195,14 +196,15 @@ export const MatrixQuestionForm = ({
               </div>
             ))}
             <Button
-              variant="minimal"
-              className="mt-2 space-x-2"
+              variant="secondary"
+              size="sm"
+              className="mt-3"
+              StartIcon={PlusIcon}
               onClick={(e) => {
                 e.preventDefault();
                 handleAddLabel("column");
               }}>
-              <PlusIcon className="h-4 w-4" />
-              <span>Add Column</span>
+              <span>Add column</span>
             </Button>
           </div>
         </div>
