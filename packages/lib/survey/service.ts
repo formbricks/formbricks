@@ -39,7 +39,7 @@ import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { anySurveyHasFilters, buildOrderByClause, buildWhereClause } from "./util";
+import { anySurveyHasFilters, buildOrderByClause, buildWhereClause, transformPrismaSurvey } from "./util";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -206,12 +206,7 @@ export const getSurvey = (surveyId: string): Promise<TSurvey | null> =>
         return null;
       }
 
-      const transformedSurvey: TSurvey = {
-        ...surveyPrisma,
-        triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
-      };
-
-      return transformedSurvey;
+      return transformPrismaSurvey(surveyPrisma);
     },
     [`getSurvey-${surveyId}`],
     {
@@ -252,20 +247,7 @@ export const getSurveysByActionClassId = (actionClassId: string, page?: number):
       const surveys: TSurvey[] = [];
 
       for (const surveyPrisma of surveysPrisma) {
-        let segment: TSegment | null = null;
-
-        if (surveyPrisma.segment) {
-          segment = {
-            ...surveyPrisma.segment,
-            surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
-          };
-        }
-
-        const transformedSurvey: TSurvey = {
-          ...surveyPrisma,
-          triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
-          segment,
-        };
+        const transformedSurvey = transformPrismaSurvey(surveyPrisma);
         surveys.push(transformedSurvey);
       }
 
@@ -311,21 +293,7 @@ export const getSurveys = (
       const surveys: TSurvey[] = [];
 
       for (const surveyPrisma of surveysPrisma) {
-        let segment: TSegment | null = null;
-
-        if (surveyPrisma.segment) {
-          segment = {
-            ...surveyPrisma.segment,
-            surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
-          };
-        }
-
-        const transformedSurvey: TSurvey = {
-          ...surveyPrisma,
-          triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
-          segment,
-        };
-
+        const transformedSurvey = transformPrismaSurvey(surveyPrisma);
         surveys.push(transformedSurvey);
       }
       return surveys;
@@ -1120,22 +1088,7 @@ export const getSurveysBySegmentId = (segmentId: string): Promise<TSurvey[]> =>
         const surveys: TSurvey[] = [];
 
         for (const surveyPrisma of surveysPrisma) {
-          let segment: TSegment | null = null;
-
-          if (surveyPrisma.segment) {
-            segment = {
-              ...surveyPrisma.segment,
-              surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
-            };
-          }
-
-          // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
-          // @ts-expect-error
-          const transformedSurvey: TSurvey = {
-            ...surveyPrisma,
-            triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
-            segment,
-          };
+          const transformedSurvey = transformPrismaSurvey(surveyPrisma);
           surveys.push(transformedSurvey);
         }
 

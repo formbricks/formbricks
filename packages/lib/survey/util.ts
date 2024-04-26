@@ -3,7 +3,27 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
+import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys";
+
+export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
+  let segment: TSegment | null = null;
+
+  if (surveyPrisma.segment) {
+    segment = {
+      ...surveyPrisma.segment,
+      surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
+    };
+  }
+
+  const transformedSurvey: TSurvey = {
+    ...surveyPrisma,
+    triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
+    segment,
+  };
+
+  return transformedSurvey;
+};
 
 export const buildWhereClause = (filterCriteria?: TSurveyFilterCriteria) => {
   const whereClause: Prisma.SurveyWhereInput["AND"] = [];
