@@ -148,7 +148,7 @@ export const SurveyMenuBar = ({
     return localSurvey.segment;
   };
 
-  const handleSurveySave = async (shouldNavigateBack = false) => {
+  const handleSurveySave = async () => {
     setIsSurveySaving(true);
     try {
       if (
@@ -174,9 +174,6 @@ export const SurveyMenuBar = ({
       setIsSurveySaving(false);
       setLocalSurvey(localSurvey);
       toast.success("Changes saved.");
-      if (shouldNavigateBack) {
-        router.back();
-      }
     } catch (e) {
       console.error(e);
       setIsSurveySaving(false);
@@ -186,7 +183,7 @@ export const SurveyMenuBar = ({
   };
 
   const handleSaveAndGoBack = async () => {
-    await handleSurveySave(true);
+    await handleSurveySave();
     router.back();
   };
 
@@ -327,7 +324,7 @@ export const SurveyMenuBar = ({
             setConfirmDialogOpen(false);
             router.back();
           }}
-          onConfirm={() => handleSurveySave(true)}
+          onConfirm={() => handleSaveAndGoBack()}
         />
       </div>
     </>
