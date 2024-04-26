@@ -52,3 +52,38 @@ export const calculateElementIdx = (survey: TSurvey, currentQustionIdx: number):
   if (possibleNextQuestions.includes("end")) elementIdx = middleIdx;
   return elementIdx;
 };
+
+// Helper function to get the month name
+export const getMonthName = (monthIndex: number) => {
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  return months[monthIndex];
+};
+
+// Helper function to format the date with an ordinal suffix
+export const getOrdinalDate = (date: number) => {
+  const j = date % 10,
+    k = date % 100;
+  if (j === 1 && k !== 11) {
+    return date + "st";
+  }
+  if (j === 2 && k !== 12) {
+    return date + "nd";
+  }
+  if (j === 3 && k !== 13) {
+    return date + "rd";
+  }
+  return date + "th";
+};
