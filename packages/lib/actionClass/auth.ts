@@ -1,9 +1,8 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
-
 import { ZId } from "@formbricks/types/environment";
 
+import { cache } from "../cache";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
@@ -12,8 +11,8 @@ import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
 import { getActionClass } from "./service";
 
-export const canUserUpdateActionClass = async (userId: string, actionClassId: string): Promise<boolean> =>
-  await unstable_cache(
+export const canUserUpdateActionClass = (userId: string, actionClassId: string): Promise<boolean> =>
+  cache(
     async () => {
       validateInputs([userId, ZId], [actionClassId, ZId]);
 

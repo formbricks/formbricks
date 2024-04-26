@@ -3,22 +3,16 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
-import {
-  TActionClass,
-  TActionClassInput,
-  ZActionClass,
-  ZActionClassInput,
-} from "@formbricks/types/actionClasses";
+import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/actionClasses";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
+import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { structuredClone } from "../pollyfills/structuredClone";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
 
@@ -33,13 +27,13 @@ const select = {
   environmentId: true,
 };
 
-export const getActionClasses = async (environmentId: string, page?: number): Promise<TActionClass[]> => {
-  const actionClasses = await unstable_cache(
+export const getActionClasses = (environmentId: string, page?: number): Promise<TActionClass[]> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
       try {
-        const actionClasses = await prisma.actionClass.findMany({
+        return await prisma.actionClass.findMany({
           where: {
             environmentId: environmentId,
           },
@@ -50,7 +44,6 @@ export const getActionClasses = async (environmentId: string, page?: number): Pr
             createdAt: "asc",
           },
         });
-        return actionClasses.map((actionClass) => formatDateFields(actionClass, ZActionClass));
       } catch (error) {
         throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
       }
@@ -60,14 +53,12 @@ export const getActionClasses = async (environmentId: string, page?: number): Pr
       tags: [actionClassCache.tag.byEnvironmentId(environmentId)],
     }
   )();
-  return actionClasses.map((actionClass) => formatDateFields(actionClass, ZActionClass));
-};
 
-export const getActionClassByEnvironmentIdAndName = async (
+export const getActionClassByEnvironmentIdAndName = (
   environmentId: string,
   name: string
-): Promise<TActionClass | null> => {
-  const actionClass = await unstable_cache(
+): Promise<TActionClass | null> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [name, ZString]);
 
@@ -90,11 +81,9 @@ export const getActionClassByEnvironmentIdAndName = async (
       tags: [actionClassCache.tag.byNameAndEnvironmentId(name, environmentId)],
     }
   )();
-  return actionClass ? formatDateFields(actionClass, ZActionClass) : null;
-};
 
-export const getActionClass = async (actionClassId: string): Promise<TActionClass | null> => {
-  const actionClass = await unstable_cache(
+export const getActionClass = (actionClassId: string): Promise<TActionClass | null> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId]);
 
@@ -116,8 +105,6 @@ export const getActionClass = async (actionClassId: string): Promise<TActionClas
       tags: [actionClassCache.tag.byId(actionClassId)],
     }
   )();
-  return actionClass ? formatDateFields(actionClass, ZActionClass) : null;
-};
 
 export const deleteActionClass = async (
   environmentId: string,
