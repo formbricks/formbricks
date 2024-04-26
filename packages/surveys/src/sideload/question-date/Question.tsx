@@ -53,6 +53,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
 
   useEffect(() => {
     if (datePickerOpen) {
+      if (!selectedDate) setSelectedDate(new Date());
       const input = document.querySelector(".react-date-picker__inputGroup__input") as HTMLInputElement;
       if (input) {
         input.focus();
@@ -130,7 +131,6 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
         clearIcon={null}
         onCalendarOpen={() => {
           setDatePickerOpen(true);
-          setSelectedDate(selectedDate);
         }}
         onCalendarClose={() => {
           // reset state
