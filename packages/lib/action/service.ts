@@ -251,8 +251,8 @@ export const getActionCountInLast7Days = async (actionClassId: string): Promise<
     }
   )();
 
-export const getActionCountInLastQuarter = async (actionClassId: string, personId: string): Promise<number> =>
-  await cache(
+export const getActionCountInLastQuarter = (actionClassId: string, personId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -280,8 +280,8 @@ export const getActionCountInLastQuarter = async (actionClassId: string, personI
     }
   )();
 
-export const getActionCountInLastMonth = async (actionClassId: string, personId: string): Promise<number> =>
-  await cache(
+export const getActionCountInLastMonth = (actionClassId: string, personId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -309,8 +309,8 @@ export const getActionCountInLastMonth = async (actionClassId: string, personId:
     }
   )();
 
-export const getActionCountInLastWeek = async (actionClassId: string, personId: string): Promise<number> =>
-  await cache(
+export const getActionCountInLastWeek = (actionClassId: string, personId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -337,11 +337,8 @@ export const getActionCountInLastWeek = async (actionClassId: string, personId: 
     }
   )();
 
-export const getTotalOccurrencesForAction = async (
-  actionClassId: string,
-  personId: string
-): Promise<number> =>
-  await cache(
+export const getTotalOccurrencesForAction = (actionClassId: string, personId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -366,11 +363,8 @@ export const getTotalOccurrencesForAction = async (
     }
   )();
 
-export const getLastOccurrenceDaysAgo = async (
-  actionClassId: string,
-  personId: string
-): Promise<number | null> =>
-  await cache(
+export const getLastOccurrenceDaysAgo = (actionClassId: string, personId: string): Promise<number | null> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -402,11 +396,8 @@ export const getLastOccurrenceDaysAgo = async (
     }
   )();
 
-export const getFirstOccurrenceDaysAgo = async (
-  actionClassId: string,
-  personId: string
-): Promise<number | null> =>
-  await cache(
+export const getFirstOccurrenceDaysAgo = (actionClassId: string, personId: string): Promise<number | null> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 

@@ -27,8 +27,8 @@ const select = {
   environmentId: true,
 };
 
-export const getActionClasses = async (environmentId: string, page?: number): Promise<TActionClass[]> =>
-  await cache(
+export const getActionClasses = (environmentId: string, page?: number): Promise<TActionClass[]> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -54,11 +54,11 @@ export const getActionClasses = async (environmentId: string, page?: number): Pr
     }
   )();
 
-export const getActionClassByEnvironmentIdAndName = async (
+export const getActionClassByEnvironmentIdAndName = (
   environmentId: string,
   name: string
 ): Promise<TActionClass | null> =>
-  await cache(
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [name, ZString]);
 
@@ -82,8 +82,8 @@ export const getActionClassByEnvironmentIdAndName = async (
     }
   )();
 
-export const getActionClass = async (actionClassId: string): Promise<TActionClass | null> =>
-  await cache(
+export const getActionClass = (actionClassId: string): Promise<TActionClass | null> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId]);
 

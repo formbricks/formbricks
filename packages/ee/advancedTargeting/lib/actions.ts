@@ -34,7 +34,7 @@ export const createSegmentAction = async ({
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
+  const environmentAccess = await hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!environmentAccess) throw new AuthorizationError("Not authorized");
 
   const parsedFilters = ZSegmentFilters.safeParse(filters);
@@ -65,7 +65,7 @@ export const updateSegmentAction = async (
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
+  const environmentAccess = await hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!environmentAccess) throw new AuthorizationError("Not authorized");
 
   const { filters } = data;
