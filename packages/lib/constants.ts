@@ -86,9 +86,6 @@ export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE;
 export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED === "1";
 
 // Storage constants
-export const AWS_ACCESS_KEY_ID = env.AWS_ACCESS_KEY_ID;
-export const AWS_SECRET_ACCESS_KEY = env.AWS_SECRET_ACCESS_KEY;
-export const AWS_REGION = env.AWS_REGION;
 export const S3_ACCESS_KEY = env.S3_ACCESS_KEY;
 export const S3_SECRET_KEY = env.S3_SECRET_KEY;
 export const S3_REGION = env.S3_REGION;
