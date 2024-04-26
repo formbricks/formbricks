@@ -64,7 +64,7 @@ Before the next step, make sure that you have a Formbricks Survey with at least 
 
 </Note>
 
-5. Now click on the "Link New Sheet" button to link a new Google Sheet with Formbricks and a modal will open up.
+5. Now click on the "Link New Sheet" button to link a Google Sheet with Formbricks and a modal will open up.
 
 <MdxImage
   src={LinkSurveyWithSheet}
@@ -91,7 +91,23 @@ Before the next step, make sure that you have a Formbricks Survey with at least 
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-Congratulations! You have successfully linked a Google Sheet with Formbricks. Now whenever a response is submitted for the linked Survey, it will be automatically added to the linked Google Sheet.
+Congratulations! You have successfully linked a Google Sheet with Formbricks. Now whenever a response is submitted for the linked survey, it will be automatically added to the linked Google Sheet.
+
+## Remove Integration with Google Account
+
+To remove the integration with Google Account,
+
+1. Visit the Integrations tab in your Formbricks Cloud dashboard.
+2. Select **Manage Sheets** button in the Google Sheets card.
+3. Click on the **Delete Integration** button.
+4. It will now ask for a confirmation to remove the integration. Click on the **Delete** button to remove the integration. You can always come back and connect again with the same Google Account.
+
+<MdxImage
+  src={DeleteConnection}
+  alt="Delete Google Integration with Formbricks"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
 
 ## Setup in self-hosted Formbricks
 
@@ -141,7 +157,7 @@ Integrating Google Sheets with a self-hosted Formbricks instance requires config
    - Go to the **APIs & Services** section and click on the **Enable APIs and Services** button.
    - Search for **Google Drive API** and enable it.
 
-### By now, your environment variables should include the below ones as well:
+By now, your **environment variables** should include the below ones as well:
 
 - `GOOGLE_SHEETS_CLIENT_ID`
 - `GOOGLE_SHEETS_CLIENT_SECRET`
@@ -149,23 +165,7 @@ Integrating Google Sheets with a self-hosted Formbricks instance requires config
 
 Voila! You have successfully enabled the Google Sheets integration in your self-hosted Formbricks instance. Now you can follow the steps mentioned in the [Formbricks Cloud](#formbricks-cloud) section to link a Google Sheet with Formbricks.
 
-## Remove Integration with Google Account
-
-To remove the integration with Google Account,
-
-1. Visit the Integrations tab in your Formbricks Cloud dashboard.
-2. Select **Manage Sheets** button in the Google Sheets card.
-3. Click on the **Delete Integration** button.
-4. It will now ask for a confirmation to remove the integration. Click on the **Delete** button to remove the integration. You can always come back and connect again with the same Google Account.
-
-<MdxImage
-  src={DeleteConnection}
-  alt="Delete Google Integration with Formbricks"
-  quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl"
-/>
-
-## What data do you need?
+## What info do you need?
 
 - Your **Email ID** for authentication (We use this to identify you)
 - Your **Google Sheets Names and IDs** (We fetch this to list and show you the options of choosing a sheet to integrate with)
@@ -178,8 +178,7 @@ For the above, we ask for:
 1. **Google Spreadsheet API**: To write to the spreadsheet you select (that's it, nothing else, we're opensource, see this method in our codebase [here](https://github.com/formbricks/formbricks/blob/main/packages/lib/googleSheet/service.ts#L70))
 
 <Note>
-  We do not store any other information of yours! We value Privacy more than you and rest assured you're safe
-  with us!
+  We store as little personal information as possible.
 </Note>
 
 Still struggling or something not working as expected? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!
