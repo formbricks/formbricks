@@ -91,9 +91,9 @@ export default function WhenToSendCard({
     [actionClasses, localSurvey, setLocalSurvey]
   );
 
-  const handleRemoveTriggerEvent = (id: string) => {
+  const handleRemoveTriggerEvent = (idx: number) => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers = updatedSurvey.triggers.filter((trigger) => trigger.id !== id);
+    updatedSurvey.triggers.splice(idx, 1);
     setLocalSurvey(updatedSurvey);
   };
 
@@ -266,7 +266,7 @@ export default function WhenToSendCard({
                   </div>
                   <Trash2Icon
                     className="h-4 w-4 cursor-pointer text-slate-600"
-                    onClick={() => handleRemoveTriggerEvent(trigger.id || "")}
+                    onClick={() => handleRemoveTriggerEvent(idx)}
                   />
                 </div>
               ))}

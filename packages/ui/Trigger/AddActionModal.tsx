@@ -83,7 +83,7 @@ const SavedActionsTab = ({
           );
         }}
         className="mb-2 bg-white"
-        placeholder="search actions"
+        placeholder="Search actions"
         id="search-actions"
       />
       <div className="max-h-96 overflow-y-auto">
@@ -236,8 +236,7 @@ const CreateNewActionTab = ({
       }
     }
 
-    const updatedAction: Partial<TActionClassInput> & { id: string; _isDraft: boolean } = {
-      id: createId(),
+    const updatedAction: Partial<TActionClassInput> & { _isDraft: boolean } = {
       name: data.name,
       description: data.description,
       type: type as TActionClass["type"],
