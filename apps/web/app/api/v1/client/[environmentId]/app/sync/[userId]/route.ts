@@ -5,6 +5,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
 
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
+import { getAttribute } from "@formbricks/lib/attribute/service";
 import {
   IS_FORMBRICKS_CLOUD,
   PRICING_APPSURVEYS_FREE_RESPONSES,
@@ -149,18 +150,6 @@ export async function GET(
     if (!product) {
       throw new Error("Product not found");
     }
-    const languageAttribute = person.attributes.language;
-    const isLanguageAvailable = Boolean(languageAttribute);
-
-    const personData = version
-      ? {
-          ...(isLanguageAvailable && { attributes: { language: languageAttribute } }),
-        }
-      : {
-          id: person.id,
-          userId: person.userId,
-          ...(isLanguageAvailable && { attributes: { language: languageAttribute } }),
-        };
 
     // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
     let transformedSurveys: TLegacySurvey[] | TSurvey[];
@@ -189,11 +178,14 @@ export async function GET(
       }),
     };
 
+    const language = await getAttribute("language", person.id);
+
     // return state
     const state: TJsAppStateSync = {
-      person: personData,
+      ...(version && !isVersionGreaterThanOrEqualTo(version, "2.0.0") && { person }),
       surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
+      language,
       product: updatedProduct,
     };
 

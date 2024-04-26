@@ -24,7 +24,9 @@ export const canUserModifyResponseNote = async (userId: string, responseNoteId: 
       }
     },
     [`canUserModifyResponseNote-${userId}-${responseNoteId}`],
-    { revalidate: 30 * 60, tags: [`responseNotes-${responseNoteId}`] }
+    {
+      tags: [`responseNotes-${responseNoteId}`],
+    }
   )(); // 30 minutes
 
 export const canUserResolveResponseNote = async (
@@ -59,5 +61,7 @@ export const canUserResolveResponseNote = async (
       }
     },
     [`canUserResolveResponseNote-${userId}-${responseNoteId}`],
-    { revalidate: 30 * 60, tags: [`responseNotes-${responseNoteId}`] }
+    {
+      tags: [`responseNotes-${responseNoteId}`],
+    }
   )(); // 30 minutes

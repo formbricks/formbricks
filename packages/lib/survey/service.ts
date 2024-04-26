@@ -20,7 +20,9 @@ import {
 
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { attributeCache } from "../attribute/cache";
+import { getAttributes } from "../attribute/service";
+import { ITEMS_PER_PAGE } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
 import { reverseTranslateSurvey } from "../i18n/reverseTranslation";
@@ -226,7 +228,6 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
     [`getSurvey-${surveyId}`],
     {
       tags: [surveyCache.tag.byId(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -290,7 +291,6 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
     [`getSurveysByActionClassId-${actionClassId}-${page}`],
     {
       tags: [surveyCache.tag.byActionClassId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return surveys.map((survey) => formatSurveyDateFields(survey));
@@ -352,7 +352,6 @@ export const getSurveys = async (
     [`getSurveys-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [surveyCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -395,7 +394,6 @@ export const getSurveyCount = async (environmentId: string): Promise<number> => 
     [`getSurveyCount-${environmentId}`],
     {
       tags: [surveyCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -965,7 +963,9 @@ export const getSyncSurveys = async (
         const personActionClassIds = Array.from(
           new Set(personActions?.map((action) => action.actionClass?.id ?? ""))
         );
-        const personUserId = person.userId ?? person.attributes?.userId ?? "";
+
+        const attributes = await getAttributes(person.id);
+        const personUserId = person.userId;
 
         // the surveys now have segment filters, so we need to evaluate them
         const surveyPromises = surveys.map(async (survey) => {
@@ -992,7 +992,7 @@ export const getSyncSurveys = async (
 
             // we check if the person meets the attribute filters for all the attribute filters
             const isEligible = attributeFilters.every((attributeFilter) => {
-              const personAttributeValue = person?.attributes?.[attributeFilter.attributeClassName];
+              const personAttributeValue = attributes[attributeFilter.attributeClassName];
               if (!personAttributeValue) {
                 return false;
               }
@@ -1013,7 +1013,7 @@ export const getSyncSurveys = async (
           // Evaluate the segment filters
           const result = await evaluateSegment(
             {
-              attributes: person.attributes ?? {},
+              attributes: attributes ?? {},
               actionIds: personActionClassIds,
               deviceType,
               environmentId,
@@ -1050,8 +1050,8 @@ export const getSyncSurveys = async (
         displayCache.tag.byPersonId(personId),
         surveyCache.tag.byEnvironmentId(environmentId),
         productCache.tag.byEnvironmentId(environmentId),
+        attributeCache.tag.byPersonId(personId),
       ],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -1182,7 +1182,6 @@ export const getSurveysBySegmentId = async (segmentId: string): Promise<TSurvey[
     [`getSurveysBySegmentId-${segmentId}`],
     {
       tags: [surveyCache.tag.bySegmentId(segmentId), segmentCache.tag.byId(segmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 

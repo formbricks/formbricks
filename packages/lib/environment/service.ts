@@ -18,7 +18,6 @@ import {
 } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getProducts } from "../product/service";
 import { getTeamsByUserId } from "../team/service";
 import { formatDateFields } from "../utils/datetime";
@@ -49,7 +48,6 @@ export const getEnvironment = async (environmentId: string): Promise<TEnvironmen
     [`getEnvironment-${environmentId}`],
     {
       tags: [environmentCache.tag.byId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return environment ? formatDateFields(environment, ZEnvironment) : null;
@@ -98,7 +96,6 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
     [`getEnvironments-${productId}`],
     {
       tags: [environmentCache.tag.byProductId(productId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return environments.map((environment) => formatDateFields(environment, ZEnvironment));
