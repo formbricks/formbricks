@@ -1,13 +1,13 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
 
+import { cache } from "../cache";
 import { responseCache } from "../response/cache";
 import { getResponse } from "../response/service";
 import { validateInputs } from "../utils/validate";
@@ -95,7 +95,7 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
 };
 
 export const getTagsOnResponsesCount = async (environmentId: string): Promise<TTagsCount> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([environmentId, ZId]);
 

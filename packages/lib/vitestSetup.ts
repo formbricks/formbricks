@@ -5,10 +5,8 @@ import { ValidationError } from "@formbricks/types/errors";
 
 vi.mock("next/cache", () => ({
   __esModule: true,
-  unstable_cache: (fn: () => {}) => {
-    return async () => {
-      return fn();
-    };
+  unstable_cache: (fn: (params: unknown[]) => {}) => {
+    return async (params: unknown[]) => fn(params);
   },
   revalidateTag: vi.fn(),
 }));

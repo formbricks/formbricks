@@ -1,16 +1,15 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
-
 import { ZId } from "@formbricks/types/environment";
 
+import { cache } from "../cache";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { validateInputs } from "../utils/validate";
 import { apiKeyCache } from "./cache";
 import { getApiKey } from "./service";
 
-export const canUserAccessApiKey = async (userId: string, apiKeyId: string): Promise<boolean> =>
-  await unstable_cache(
+export const canUserAccessApiKey = (userId: string, apiKeyId: string): Promise<boolean> =>
+  cache(
     async () => {
       validateInputs([userId, ZId], [apiKeyId, ZId]);
 
