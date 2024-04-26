@@ -41,7 +41,7 @@ export default function AttributeSettingsTab({ attributeClass, setOpen }: Attrib
   return (
     <div>
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-        <div className="">
+        <div>
           <Label className="text-slate-600">Name</Label>
           <Input
             type="text"
@@ -51,7 +51,7 @@ export default function AttributeSettingsTab({ attributeClass, setOpen }: Attrib
             })}
           />
         </div>
-        <div className="">
+        <div>
           <Label className="text-slate-600">Description</Label>
           <Input
             type="text"

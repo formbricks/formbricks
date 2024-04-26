@@ -61,7 +61,7 @@ export default function LinkTab({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
           ))}
         </div>
       </div>
-      <div className="">
+      <div>
         <p className="mb-2 pt-2 font-semibold text-slate-700">Survey link got too long? Shorten it!</p>
         <div className="rounded-md border border-slate-200 bg-white">
           <UrlShortenerForm webAppUrl={webAppUrl} />

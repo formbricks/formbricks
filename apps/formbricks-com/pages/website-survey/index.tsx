@@ -266,7 +266,7 @@ export default function WebsiteSurveyPage() {
         headline="All clear? Run your first website survey 👉"
         subheadline="Targeted website surveys, all privacy-first. Run professional research without compromising data privacy."
       />
-      <div className="">
+      <div>
         <HeadingCentered
           heading={
             <span>
