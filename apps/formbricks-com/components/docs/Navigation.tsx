@@ -198,6 +198,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Actions", href: "/docs/in-app-surveys/actions" },
       { title: "Attributes", href: "/docs/in-app-surveys/attributes" },
       { title: "Advanced Targeting", href: "/docs/in-app-surveys/advanced-targeting" },
+      { title: "Recontact Options", href: "/docs/in-app-surveys/recontact" },
     ],
   },
   {
