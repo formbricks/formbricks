@@ -1,21 +1,15 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
-import {
-  TIntegration,
-  TIntegrationInput,
-  ZIntegration,
-  ZIntegrationType,
-} from "@formbricks/types/integration";
+import { TIntegration, TIntegrationInput, ZIntegrationType } from "@formbricks/types/integration";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { formatDateFields } from "../utils/datetime";
+import { cache } from "../cache";
+import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { integrationCache } from "./cache";
 
@@ -57,8 +51,8 @@ export async function createOrUpdateIntegration(
   }
 }
 
-export const getIntegrations = async (environmentId: string, page?: number): Promise<TIntegration[]> => {
-  const integrations = await unstable_cache(
+export const getIntegrations = (environmentId: string, page?: number): Promise<TIntegration[]> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -81,14 +75,11 @@ export const getIntegrations = async (environmentId: string, page?: number): Pro
     [`getIntegrations-${environmentId}-${page}`],
     {
       tags: [integrationCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return integrations.map((integration) => formatDateFields(integration, ZIntegration));
-};
 
-export const getIntegration = async (integrationId: string): Promise<TIntegration | null> => {
-  const integration = await unstable_cache(
+export const getIntegration = (integrationId: string): Promise<TIntegration | null> =>
+  cache(
     async () => {
       try {
         const integration = await prisma.integration.findUnique({
@@ -105,16 +96,16 @@ export const getIntegration = async (integrationId: string): Promise<TIntegratio
       }
     },
     [`getIntegration-${integrationId}`],
-    { tags: [integrationCache.tag.byId(integrationId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    {
+      tags: [integrationCache.tag.byId(integrationId)],
+    }
   )();
-  return integration ? formatDateFields(integration, ZIntegration) : null;
-};
 
-export const getIntegrationByType = async (
+export const getIntegrationByType = (
   environmentId: string,
   type: TIntegrationInput["type"]
-): Promise<TIntegration | null> => {
-  const integration = await unstable_cache(
+): Promise<TIntegration | null> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [type, ZIntegrationType]);
 
@@ -138,11 +129,8 @@ export const getIntegrationByType = async (
     [`getIntegrationByType-${environmentId}-${type}`],
     {
       tags: [integrationCache.tag.byEnvironmentIdAndType(environmentId, type)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return integration ? formatDateFields(integration, ZIntegration) : null;
-};
 
 export const deleteIntegration = async (integrationId: string): Promise<TIntegration> => {
   validateInputs([integrationId, ZString]);

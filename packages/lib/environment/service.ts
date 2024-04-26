@@ -1,7 +1,6 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 import { z } from "zod";
 
 import { prisma } from "@formbricks/database";
@@ -18,15 +17,14 @@ import {
 } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
 import { getProducts } from "../product/service";
 import { getTeamsByUserId } from "../team/service";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
 
-export const getEnvironment = async (environmentId: string): Promise<TEnvironment | null> => {
-  const environment = await unstable_cache(
+export const getEnvironment = (environmentId: string): Promise<TEnvironment | null> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId]);
 
@@ -49,14 +47,11 @@ export const getEnvironment = async (environmentId: string): Promise<TEnvironmen
     [`getEnvironment-${environmentId}`],
     {
       tags: [environmentCache.tag.byId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return environment ? formatDateFields(environment, ZEnvironment) : null;
-};
 
-export const getEnvironments = async (productId: string): Promise<TEnvironment[]> => {
-  const environments = await unstable_cache(
+export const getEnvironments = async (productId: string): Promise<TEnvironment[]> =>
+  cache(
     async (): Promise<TEnvironment[]> => {
       validateInputs([productId, ZId]);
       let productPrisma;
@@ -98,11 +93,8 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
     [`getEnvironments-${productId}`],
     {
       tags: [environmentCache.tag.byProductId(productId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return environments.map((environment) => formatDateFields(environment, ZEnvironment));
-};
 
 export const updateEnvironment = async (
   environmentId: string,

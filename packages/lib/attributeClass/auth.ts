@@ -1,10 +1,8 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
-
 import { ZId } from "@formbricks/types/environment";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { validateInputs } from "../utils/validate";
 import { getAttributeClass } from "./service";
@@ -13,7 +11,7 @@ export const canUserAccessAttributeClass = async (
   userId: string,
   attributeClassId: string
 ): Promise<boolean> =>
-  await unstable_cache(
+  cache(
     async () => {
       validateInputs([userId, ZId], [attributeClassId, ZId]);
       if (!userId) return false;
@@ -32,5 +30,5 @@ export const canUserAccessAttributeClass = async (
     },
 
     [`canUserAccessAttributeClass-${userId}-${attributeClassId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [`attributeClasses-${attributeClassId}`] }
+    { tags: [`attributeClasses-${attributeClassId}`] }
   )();

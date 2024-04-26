@@ -6,13 +6,11 @@ import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedTargeting/lib/constan
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
-import { IS_FORMBRICKS_CLOUD, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
-
-export const revalidate = REVALIDATION_INTERVAL;
 
 export default async function SegmentsPage({ params }) {
   const [environment, segments, attributeClasses, actionClassesFromServer, team] = await Promise.all([
