@@ -4,7 +4,6 @@ import { unstable_cache } from "next/cache";
 
 import { ZId } from "@formbricks/types/environment";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
 import { teamCache } from "../team/cache";
@@ -29,7 +28,9 @@ export const canUserAccessTeam = async (userId: string, teamId: string): Promise
       }
     },
     [`canUserAccessTeam-${userId}-${teamId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [teamCache.tag.byId(teamId)] }
+    {
+      tags: [teamCache.tag.byId(teamId)],
+    }
   )();
 
 export const verifyUserRoleAccess = async (

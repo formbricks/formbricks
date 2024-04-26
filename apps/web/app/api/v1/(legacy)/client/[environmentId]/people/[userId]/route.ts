@@ -1,8 +1,12 @@
+// Deprecated since 2024-04-13
+// last supported js version 1.6.5
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { z } from "zod";
 
-import { createPerson, getPersonByUserId, updatePerson } from "@formbricks/lib/person/service";
-import { ZPersonUpdateInput } from "@formbricks/types/people";
+import { getAttributesByUserId, updateAttributes } from "@formbricks/lib/attribute/service";
+import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
+import { ZAttributes } from "@formbricks/types/attributes";
 
 interface Context {
   params: {
@@ -21,7 +25,7 @@ export async function POST(req: Request, context: Context): Promise<Response> {
     const jsonInput = await req.json();
 
     // validate using zod
-    const inputValidation = ZPersonUpdateInput.safeParse(jsonInput);
+    const inputValidation = z.object({ attributes: ZAttributes }).safeParse(jsonInput);
 
     if (!inputValidation.success) {
       return responses.badRequestResponse(
@@ -42,8 +46,8 @@ export async function POST(req: Request, context: Context): Promise<Response> {
       person = await createPerson(environmentId, userId);
     }
 
-    // Check if the person is already up to date
-    const oldAttributes = person.attributes;
+    const oldAttributes = await getAttributesByUserId(environmentId, userId);
+
     let isUpToDate = true;
     for (const key in updatedAttributes) {
       if (updatedAttributes[key] !== oldAttributes[key]) {
@@ -51,6 +55,7 @@ export async function POST(req: Request, context: Context): Promise<Response> {
         break;
       }
     }
+
     if (isUpToDate) {
       return responses.successResponse(
         {
@@ -61,7 +66,7 @@ export async function POST(req: Request, context: Context): Promise<Response> {
       );
     }
 
-    await updatePerson(person.id, inputValidation.data);
+    await updateAttributes(person.id, updatedAttributes);
 
     return responses.successResponse(
       {

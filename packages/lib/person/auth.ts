@@ -4,7 +4,6 @@ import { unstable_cache } from "next/cache";
 
 import { ZId } from "@formbricks/types/environment";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { validateInputs } from "../utils/validate";
 import { personCache } from "./cache";
@@ -30,7 +29,6 @@ export const canUserAccessPerson = async (userId: string, personId: string): Pro
     },
     [`canUserAccessPerson-${userId}-people-${personId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [personCache.tag.byId(personId)],
     }
   )();

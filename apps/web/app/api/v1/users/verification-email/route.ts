@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { sendVerificationEmail } from "@formbricks/lib/emails/emails";
+import { sendVerificationEmail } from "@formbricks/email";
 
 export async function POST(request: Request) {
   const { email } = await request.json();
