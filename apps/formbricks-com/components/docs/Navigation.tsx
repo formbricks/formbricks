@@ -192,6 +192,7 @@ export const navigation: Array<NavGroup> = [
     title: "In-App Surveys",
     links: [
       { title: "Quickstart", href: "/docs/getting-started/quickstart-in-app-survey" },
+      { title: "Developer Quickstart", href: "/docs/in-app-surveys/developer-quickstart" },
       { title: "Framework Guides", href: "/docs/getting-started/framework-guides" },
       { title: "Troubleshooting", href: "/docs/getting-started/troubleshooting" },
       { title: "Identify Users", href: "/docs/in-app-surveys/user-identification" },
