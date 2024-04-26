@@ -97,7 +97,7 @@ export const MultipleChoiceSummary = ({
                           </div>
                           <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
                             {otherValue.person.id && <PersonAvatar personId={otherValue.person.id} />}
-                            <span>{getPersonIdentifier(otherValue.person)}</span>
+                            <span>{getPersonIdentifier(otherValue.person, otherValue.personAttributes)}</span>
                           </div>
                         </Link>
                       )}

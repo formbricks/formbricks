@@ -2,6 +2,7 @@
 
 import { getServerSession } from "next-auth";
 
+import { sendInviteMemberEmail } from "@formbricks/email";
 import { hasTeamAuthority } from "@formbricks/lib/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
@@ -109,8 +110,36 @@ export const createInviteTokenAction = async (inviteId: string) => {
   return { inviteToken: encodeURIComponent(inviteToken) };
 };
 
-export const resendInviteAction = async (inviteId: string) => {
-  return await resendInvite(inviteId);
+export const resendInviteAction = async (inviteId: string, teamId: string) => {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    throw new AuthenticationError("Not authenticated");
+  }
+
+  const isUserAuthorized = await hasTeamAuthority(session.user.id, teamId);
+
+  if (INVITE_DISABLED) {
+    throw new AuthenticationError("Invite disabled");
+  }
+
+  if (!isUserAuthorized) {
+    throw new AuthenticationError("Not authorized");
+  }
+
+  const { hasCreateOrUpdateMembersAccess } = await verifyUserRoleAccess(teamId, session.user.id);
+  if (!hasCreateOrUpdateMembersAccess) {
+    throw new AuthenticationError("Not authorized");
+  }
+  const invite = await getInvite(inviteId);
+
+  const updatedInvite = await resendInvite(inviteId);
+  await sendInviteMemberEmail(
+    inviteId,
+    updatedInvite.email,
+    invite?.creator.name ?? "",
+    updatedInvite.name ?? ""
+  );
 };
 
 export const inviteUserAction = async (
@@ -149,6 +178,10 @@ export const inviteUserAction = async (
       role,
     },
   });
+
+  if (invite) {
+    await sendInviteMemberEmail(invite.id, email, session.user.name ?? "", name ?? "", false);
+  }
 
   return invite;
 };

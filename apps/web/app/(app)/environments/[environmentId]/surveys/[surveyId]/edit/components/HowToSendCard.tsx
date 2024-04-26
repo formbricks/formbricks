@@ -83,7 +83,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
       id: "app",
       name: "App Survey",
       icon: MonitorIcon,
-      description: "Embed a survey in your web app to collect responses.",
+      description: "Embed a survey in your web app to collect responses with user identification.",
       comingSoon: false,
       alert: !widgetSetupCompleted,
     },

@@ -1,9 +1,9 @@
-import { TPersonAttributes } from "@formbricks/types/people";
+import { TAttributes } from "@formbricks/types/attributes";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export const getIsDebug = () => window.location.search.includes("formbricksDebug=true");
 
-export const getLanguageCode = (survey: TSurvey, attributes: TPersonAttributes): string | undefined => {
+export const getLanguageCode = (survey: TSurvey, attributes: TAttributes): string | undefined => {
   const language = attributes.language;
   const availableLanguageCodes = survey.languages.map((surveyLanguage) => surveyLanguage.language.code);
   if (!language) return "default";
