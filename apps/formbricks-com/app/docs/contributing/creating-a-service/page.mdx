@@ -213,7 +213,7 @@ import { cache } from "@formbricks/lib/cache";
 
 import { apiKeyCache } from "./cache";
 
-export const getApiKey = async (apiKeyId: string): Promise<TApiKey> =>
+export const getApiKey = (apiKeyId: string): Promise<TApiKey> =>
   cache(
     async () => {
       validateInputs([apiKeyId, ZString]);

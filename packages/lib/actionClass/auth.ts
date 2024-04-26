@@ -11,8 +11,8 @@ import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
 import { getActionClass } from "./service";
 
-export const canUserUpdateActionClass = async (userId: string, actionClassId: string): Promise<boolean> =>
-  await cache(
+export const canUserUpdateActionClass = (userId: string, actionClassId: string): Promise<boolean> =>
+  cache(
     async () => {
       validateInputs([userId, ZId], [actionClassId, ZId]);
 

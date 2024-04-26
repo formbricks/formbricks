@@ -3,13 +3,13 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@formbricks/database";
-import { TLegacySurvey, ZLegacySurvey } from "@formbricks/types/LegacySurvey";
+import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
-import { TSegment, ZSegment, ZSegmentFilters } from "@formbricks/types/segment";
+import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TSurvey,
   TSurveyFilterCriteria,
@@ -36,7 +36,7 @@ import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
 import { subscribeTeamMembersToSurveyResponses } from "../team/service";
-import { diffInDays, formatDateFields } from "../utils/datetime";
+import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
 import { anySurveyHasFilters, buildOrderByClause, buildWhereClause } from "./util";
@@ -206,21 +206,9 @@ export const getSurvey = (surveyId: string): Promise<TSurvey | null> =>
         return null;
       }
 
-      let surveySegment: TSegment | null = null;
-      if (surveyPrisma.segment) {
-        surveySegment = formatDateFields(
-          {
-            ...surveyPrisma.segment,
-            surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
-          },
-          ZSegment
-        );
-      }
-
       const transformedSurvey: TSurvey = {
         ...surveyPrisma,
         triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
-        segment: surveySegment,
       };
 
       return transformedSurvey;
@@ -355,7 +343,7 @@ export const transformToLegacySurvey = async (
   const targetLanguage = languageCode ?? "default";
   const transformedSurvey = reverseTranslateSurvey(survey, targetLanguage);
 
-  return formatDateFields(transformedSurvey, ZLegacySurvey);
+  return transformedSurvey;
 };
 
 export const getSurveyCount = async (environmentId: string): Promise<number> =>
