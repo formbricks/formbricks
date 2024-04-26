@@ -9,6 +9,7 @@ import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { FileInput } from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
 
@@ -24,6 +25,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
   const [logoUrl, setLogoUrl] = useState<string | undefined>(product.logo?.url || undefined);
   const [logoBgColor, setLogoBgColor] = useState<string | undefined>(product.logo?.bgColor || undefined);
   const [isBgColorEnabled, setIsBgColorEnabled] = useState<boolean>(!!product.logo?.bgColor);
+  const [confirmRemoveLogoModalOpen, setconfirmRemoveLogoModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,26 +74,25 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
   };
 
   const removeLogo = async () => {
-    if (window.confirm("Are you sure you want to remove the logo?")) {
-      setLogoUrl(undefined);
-      if (!isEditing) {
-        setIsEditing(true);
-        return;
-      }
+    setLogoUrl(undefined);
+    if (!isEditing) {
+      setIsEditing(true);
+      return;
+    }
 
-      setIsLoading(true);
-      try {
-        const updatedProduct: Partial<TProductUpdateInput> = {
-          logo: { url: undefined, bgColor: undefined },
-        };
-        await updateProductAction(product.id, updatedProduct);
-        toast.success("Logo removed successfully", { icon: "🗑️" });
-      } catch (error) {
-        toast.error("Failed to remove the logo");
-      } finally {
-        setIsEditing(false);
-        setIsLoading(false);
-      }
+    setIsLoading(true);
+    try {
+      const updatedProduct: Partial<TProductUpdateInput> = {
+        logo: { url: undefined, bgColor: undefined },
+      };
+      await updateProductAction(product.id, updatedProduct);
+      toast.success("Logo removed successfully", { icon: "🗑️" });
+    } catch (error) {
+      toast.error("Failed to remove the logo");
+    } finally {
+      setIsEditing(false);
+      setIsLoading(false);
+      setconfirmRemoveLogoModalOpen(false);
     }
   };
 
@@ -105,7 +106,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
   };
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-8" id="edit-logo">
       {logoUrl ? (
         <Image
           src={logoUrl}
@@ -134,7 +135,11 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
             <Button onClick={() => fileInputRef.current?.click()} variant="secondary" size="sm">
               Replace Logo
             </Button>
-            <Button variant="warn" size="sm" onClick={removeLogo} disabled={!isEditing}>
+            <Button
+              variant="warn"
+              size="sm"
+              onClick={() => setconfirmRemoveLogoModalOpen(true)}
+              disabled={!isEditing}>
               Remove Logo
             </Button>
           </div>
@@ -164,6 +169,13 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
           {isEditing ? "Save" : "Edit"}
         </Button>
       )}
+      <DeleteDialog
+        open={confirmRemoveLogoModalOpen}
+        setOpen={setconfirmRemoveLogoModalOpen}
+        deleteWhat="Logo"
+        text="Are you sure you want to remove the logo?"
+        onDelete={removeLogo}
+      />
     </div>
   );
 };

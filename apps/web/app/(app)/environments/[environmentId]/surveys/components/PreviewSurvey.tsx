@@ -262,7 +262,7 @@ export const PreviewSurvey = ({
               ) : (
                 <div className="flex h-full w-full flex-col justify-end">
                   <div className="absolute left-5 top-5">
-                    {!styling.isLogoHidden && product.logo?.url && (
+                    {!styling.isLogoHidden && (
                       <ClientLogo environmentId={environment.id} product={product} previewSurvey />
                     )}
                   </div>
@@ -348,7 +348,7 @@ export const PreviewSurvey = ({
             ) : (
               <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
                 <div className="absolute left-5 top-5">
-                  {!styling.isLogoHidden && product.logo?.url && (
+                  {!styling.isLogoHidden && (
                     <ClientLogo environmentId={environment.id} product={product} previewSurvey />
                   )}
                 </div>
