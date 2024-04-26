@@ -273,6 +273,11 @@ export const createProduct = async (
       select: selectProduct,
     });
 
+    productCache.revalidate({
+      id: product.id,
+      teamId: product.teamId,
+    });
+
     const devEnvironment = await createEnvironment(product.id, {
       type: "development",
     });
@@ -281,9 +286,11 @@ export const createProduct = async (
       type: "production",
     });
 
-    return await updateProduct(product.id, {
+    const updatedProduct = await updateProduct(product.id, {
       environments: [devEnvironment, prodEnvironment],
     });
+
+    return updatedProduct;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
