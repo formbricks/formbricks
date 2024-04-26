@@ -1,8 +1,9 @@
 import { z } from "zod";
 
 import { ZNoCodeConfig } from "./actionClasses";
+import { ZAttributes } from "./attributes";
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
-import { ZPerson } from "./people";
+import { ZId } from "./environment";
 import { ZLanguage } from "./product";
 import { ZSegment } from "./segment";
 import { ZBaseStyling } from "./styling";
@@ -69,7 +70,7 @@ export const ZSurveyProductOverwrites = z.object({
 
 export type TSurveyProductOverwrites = z.infer<typeof ZSurveyProductOverwrites>;
 
-export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "image"]);
+export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "upload", "image"]);
 
 export type TSurveyBackgroundBgType = z.infer<typeof ZSurveyBackgroundBgType>;
 
@@ -447,7 +448,7 @@ export const ZSurveyType = z.enum(["link", "app", "website"]);
 
 export type TSurveyType = z.infer<typeof ZSurveyType>;
 
-const ZSurveyStatus = z.enum(["draft", "scheduled", "inProgress", "paused", "completed"]);
+export const ZSurveyStatus = z.enum(["draft", "scheduled", "inProgress", "paused", "completed"]);
 
 export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
@@ -584,7 +585,13 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.string(),
-      person: ZPerson.nullable(),
+      person: z
+        .object({
+          id: ZId,
+          userId: z.string(),
+        })
+        .nullable(),
+      personAttributes: ZAttributes.nullable(),
     })
   ),
 });
@@ -604,7 +611,13 @@ export const ZSurveyQuestionSummaryMultipleChoice = z.object({
         .array(
           z.object({
             value: z.string(),
-            person: ZPerson.nullable(),
+            person: z
+              .object({
+                id: ZId,
+                userId: z.string(),
+              })
+              .nullable(),
+            personAttributes: ZAttributes.nullable(),
           })
         )
         .optional(),
@@ -679,6 +692,9 @@ export type TSurveyQuestionSummaryNps = z.infer<typeof ZSurveyQuestionSummaryNps
 export const ZSurveyQuestionSummaryCta = z.object({
   type: z.literal("cta"),
   question: ZSurveyCTAQuestion,
+  impressionCount: z.number(),
+  clickCount: z.number(),
+  skipCount: z.number(),
   responseCount: z.number(),
   ctr: z.object({
     count: z.number(),
@@ -713,7 +729,13 @@ export const ZSurveyQuestionSummaryDate = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.string(),
-      person: ZPerson.nullable(),
+      person: z
+        .object({
+          id: ZId,
+          userId: z.string(),
+        })
+        .nullable(),
+      personAttributes: ZAttributes.nullable(),
     })
   ),
 });
@@ -729,7 +751,13 @@ export const ZSurveyQuestionSummaryFileUpload = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.array(z.string()),
-      person: ZPerson.nullable(),
+      person: z
+        .object({
+          id: ZId,
+          userId: z.string(),
+        })
+        .nullable(),
+      personAttributes: ZAttributes.nullable(),
     })
   ),
 });
@@ -775,7 +803,13 @@ export const ZSurveyQuestionSummaryHiddenFields = z.object({
     z.object({
       updatedAt: z.date(),
       value: z.string(),
-      person: ZPerson.nullable(),
+      person: z
+        .object({
+          id: ZId,
+          userId: z.string(),
+        })
+        .nullable(),
+      personAttributes: ZAttributes.nullable(),
     })
   ),
 });
@@ -789,10 +823,15 @@ export const ZSurveyQuestionSummaryAddress = z.object({
   samples: z.array(
     z.object({
       id: z.string(),
-
       updatedAt: z.date(),
       value: z.array(z.string()),
-      person: ZPerson.nullable(),
+      person: z
+        .object({
+          id: ZId,
+          userId: z.string(),
+        })
+        .nullable(),
+      personAttributes: ZAttributes.nullable(),
     })
   ),
 });
@@ -832,7 +871,7 @@ export const ZSurveySummary = z.object({
       questionId: z.string().cuid2(),
       headline: z.string(),
       ttc: z.number(),
-      views: z.number(),
+      impressions: z.number(),
       dropOffCount: z.number(),
       dropOffPercentage: z.number(),
     })

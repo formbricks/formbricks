@@ -20,9 +20,14 @@ import {
 interface ActivityTabProps {
   actionClass: TActionClass;
   environmentId: string;
+  isUserTargetingEnabled: boolean;
 }
 
-export default function EventActivityTab({ actionClass, environmentId }: ActivityTabProps) {
+export default function EventActivityTab({
+  actionClass,
+  environmentId,
+  isUserTargetingEnabled,
+}: ActivityTabProps) {
   // const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, actionClass.id);
 
   const [numEventsLastHour, setNumEventsLastHour] = useState<number | undefined>();
@@ -46,9 +51,9 @@ export default function EventActivityTab({ actionClass, environmentId }: Activit
           numEventsLast7DaysData,
           activeInactiveSurveys,
         ] = await Promise.all([
-          getActionCountInLastHourAction(actionClass.id, environmentId),
-          getActionCountInLast24HoursAction(actionClass.id, environmentId),
-          getActionCountInLast7DaysAction(actionClass.id, environmentId),
+          isUserTargetingEnabled ? getActionCountInLastHourAction(actionClass.id, environmentId) : 0,
+          isUserTargetingEnabled ? getActionCountInLast24HoursAction(actionClass.id, environmentId) : 0,
+          isUserTargetingEnabled ? getActionCountInLast7DaysAction(actionClass.id, environmentId) : 0,
           getActiveInactiveSurveysAction(actionClass.id, environmentId),
         ]);
         setNumEventsLastHour(numEventsLastHourData);
@@ -62,7 +67,7 @@ export default function EventActivityTab({ actionClass, environmentId }: Activit
         setLoading(false);
       }
     }
-  }, [actionClass.id, environmentId]);
+  }, [actionClass.id, environmentId, isUserTargetingEnabled]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorComponent />;
@@ -70,23 +75,25 @@ export default function EventActivityTab({ actionClass, environmentId }: Activit
   return (
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">
-        <div>
-          <Label className="text-slate-500">Ocurrances</Label>
-          <div className="mt-1 grid w-fit grid-cols-3 rounded-lg border-slate-100 bg-slate-50">
-            <div className="border-r border-slate-200 px-4 py-2 text-center">
-              <p className="font-bold text-slate-800">{numEventsLastHour}</p>
-              <p className="text-xs text-slate-500">last hour</p>
-            </div>
-            <div className="border-r border-slate-200 px-4 py-2 text-center">
-              <p className="font-bold text-slate-800">{numEventsLast24Hours}</p>
-              <p className="text-xs text-slate-500">last 24 hours</p>
-            </div>
-            <div className="px-4 py-2 text-center">
-              <p className="font-bold text-slate-800">{numEventsLast7Days}</p>
-              <p className="text-xs text-slate-500">last week</p>
+        {isUserTargetingEnabled && (
+          <div>
+            <Label className="text-slate-500">Ocurrances</Label>
+            <div className="mt-1 grid w-fit grid-cols-3 rounded-lg border-slate-100 bg-slate-50">
+              <div className="border-r border-slate-200 px-4 py-2 text-center">
+                <p className="font-bold text-slate-800">{numEventsLastHour}</p>
+                <p className="text-xs text-slate-500">last hour</p>
+              </div>
+              <div className="border-r border-slate-200 px-4 py-2 text-center">
+                <p className="font-bold text-slate-800">{numEventsLast24Hours}</p>
+                <p className="text-xs text-slate-500">last 24 hours</p>
+              </div>
+              <div className="px-4 py-2 text-center">
+                <p className="font-bold text-slate-800">{numEventsLast7Days}</p>
+                <p className="text-xs text-slate-500">last week</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div>
           <Label className="text-slate-500">Active surveys</Label>

@@ -1,10 +1,10 @@
-import { EarthIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 import formbricksApp from "@formbricks/js/app";
 
+import { SurveySwitch } from "../../components/SurveySwitch";
 import fbsetup from "../../public/fb-setup.png";
 
 declare const window: any;
@@ -57,27 +57,11 @@ export default function AppPage({}) {
     }
   });
 
-  const removeFormbricksContainer = () => {
-    document.getElementById("formbricks-modal-container")?.remove();
-    document.getElementById("formbricks-app-container")?.remove();
-    localStorage.removeItem("formbricks-js-app");
-  };
-
   return (
     <div className="h-screen bg-white px-12 py-6 dark:bg-slate-800">
       <div className="flex flex-col justify-between md:flex-row">
         <div className="flex items-center gap-2">
-          <button
-            className="rounded-lg bg-[#038178] p-2 text-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1"
-            onClick={() => {
-              removeFormbricksContainer();
-              window.location.href = "/website";
-            }}>
-            <div className="flex items-center gap-2">
-              <EarthIcon className="h-10 w-10" />
-              <span>Website Demo</span>
-            </div>
-          </button>
+          <SurveySwitch value="app" formbricks={formbricksApp} />
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
               Formbricks In-product Survey Demo App

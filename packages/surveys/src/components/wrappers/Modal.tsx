@@ -117,10 +117,10 @@ export default function Modal({
                   class="h-4 w-4"
                   fill="none"
                   viewBox="0 0 24 24"
-                  stroke-width="2"
+                  strokeWidth="2"
                   stroke="currentColor"
                   aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4L20 20M4 20L20 4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4L20 20M4 20L20 4" />
                 </svg>
               </button>
             </div>

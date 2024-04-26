@@ -6,7 +6,7 @@ import {
   getRemoveLinkBrandingPermission,
 } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { SURVEY_BG_COLORS } from "@formbricks/lib/constants";
+import { SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -53,7 +53,12 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         title="Theme"
         className="max-w-7xl"
         description="Create a style theme for all surveys. You can enable custom styling for each survey.">
-        <ThemeStyling environmentId={params.environmentId} product={product} colors={SURVEY_BG_COLORS} />
+        <ThemeStyling
+          environmentId={params.environmentId}
+          product={product}
+          colors={SURVEY_BG_COLORS}
+          isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
+        />
       </SettingsCard>{" "}
       <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">
         <EditLogo product={product} environmentId={params.environmentId} isViewer={isViewer} />
