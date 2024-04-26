@@ -49,6 +49,7 @@ export const SurveyMenuBar = ({
 }: SurveyMenuBarProps) => {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
+  const [isLinkSurvey, setIsLinkSurvey] = useState(true);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
@@ -61,6 +62,10 @@ export const SurveyMenuBar = ({
       setAudiencePrompt(false);
     }
   }, [activeId, audiencePrompt]);
+
+  useEffect(() => {
+    setIsLinkSurvey(localSurvey.type === "link");
+  }, [localSurvey.type]);
 
   useEffect(() => {
     const warningText = "You have unsaved changes - are you sure you wish to leave this page?";
@@ -180,6 +185,11 @@ export const SurveyMenuBar = ({
     }
   };
 
+  const handleSaveAndGoBack = async () => {
+    await handleSurveySave(true);
+    router.back();
+  };
+
   const handleSurveyPublish = async () => {
     setIsSurveyPublishing(true);
     try {
@@ -267,13 +277,23 @@ export const SurveyMenuBar = ({
           </div>
           <Button
             disabled={disableSave}
-            variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
+            variant="secondary"
             className="mr-3"
             loading={isSurveySaving}
             onClick={() => handleSurveySave()}>
             Save
           </Button>
-          {localSurvey.status === "draft" && audiencePrompt && (
+          {localSurvey.status !== "draft" && (
+            <Button
+              disabled={disableSave}
+              variant="darkCTA"
+              className="mr-3"
+              loading={isSurveySaving}
+              onClick={() => handleSaveAndGoBack()}>
+              Save & Close
+            </Button>
+          )}
+          {localSurvey.status === "draft" && audiencePrompt && !isLinkSurvey && (
             <Button
               variant="darkCTA"
               onClick={() => {
@@ -284,7 +304,8 @@ export const SurveyMenuBar = ({
               Continue to Settings
             </Button>
           )}
-          {localSurvey.status === "draft" && !audiencePrompt && (
+          {/* Always display Publish button for link surveys for better CR */}
+          {localSurvey.status === "draft" && (!audiencePrompt || isLinkSurvey) && (
             <Button
               disabled={isSurveySaving || containsEmptyTriggers}
               variant="darkCTA"
