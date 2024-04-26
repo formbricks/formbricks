@@ -185,7 +185,7 @@ export default function LinkSurvey({
   };
 
   return (
-    <div className="flex h-screen items-center justify-center" style={{ height: "90svh" }}>
+    <div className="flex h-screen items-end justify-center md:items-center">
       {!determineStyling().isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
       <ContentWrapper className="w-full p-0 md:max-w-md">
         {isPreview && (

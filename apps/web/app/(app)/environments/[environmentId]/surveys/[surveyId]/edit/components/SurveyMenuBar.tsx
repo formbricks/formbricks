@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
+import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs } from "@formbricks/types/surveys";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
@@ -116,9 +117,10 @@ export const SurveyMenuBar = ({
     }
   };
 
-  const handleSegmentWithIdTemp = async () => {
+  const handleTemporarySegment = async () => {
     if (localSurvey.segment && localSurvey.type === "app" && localSurvey.segment?.id === "temp") {
       const { filters } = localSurvey.segment;
+
       // create a new private segment
       const newSegment = await createSegmentAction({
         environmentId: localSurvey.environmentId,
@@ -130,6 +132,15 @@ export const SurveyMenuBar = ({
 
       return newSegment;
     }
+  };
+
+  const handleSegmentUpdate = async (): Promise<TSegment | null> => {
+    if (localSurvey.segment && localSurvey.segment.id === "temp") {
+      const segment = await handleTemporarySegment();
+      return segment ?? null;
+    }
+
+    return localSurvey.segment;
   };
 
   const handleSurveySave = async (shouldNavigateBack = false) => {
@@ -152,7 +163,8 @@ export const SurveyMenuBar = ({
         const { isDraft, ...rest } = question;
         return rest;
       });
-      const segment = (await handleSegmentWithIdTemp()) ?? null;
+
+      const segment = await handleSegmentUpdate();
       await updateSurveyAction({ ...localSurvey, segment });
       setIsSurveySaving(false);
       setLocalSurvey(localSurvey);
@@ -184,7 +196,8 @@ export const SurveyMenuBar = ({
         return;
       }
       const status = localSurvey.runOnDate ? "scheduled" : "inProgress";
-      const segment = (await handleSegmentWithIdTemp()) ?? null;
+      const segment = await handleSegmentUpdate();
+
       await updateSurveyAction({
         ...localSurvey,
         status,

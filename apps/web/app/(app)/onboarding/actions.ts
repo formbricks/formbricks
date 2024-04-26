@@ -2,6 +2,7 @@
 
 import { getServerSession } from "next-auth";
 
+import { sendInviteMemberEmail } from "@formbricks/email";
 import { hasTeamAuthority } from "@formbricks/lib/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
@@ -55,9 +56,18 @@ export const inviteTeamMateAction = async (
       name: "",
       role,
     },
-    isOnboardingInvite: true,
-    inviteMessage: inviteMessage,
   });
+
+  if (invite) {
+    await sendInviteMemberEmail(
+      invite.id,
+      email,
+      session.user.name ?? "",
+      "",
+      true, // is onboarding invite
+      inviteMessage
+    );
+  }
 
   return invite;
 };

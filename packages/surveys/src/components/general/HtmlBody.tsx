@@ -22,7 +22,7 @@ export default function HtmlBody({ htmlString, questionId }: HtmlBodyProps) {
   return (
     <label
       htmlFor={questionId}
-      className="fb-htmlbody" // styles are in global.css
+      className="fb-htmlbody break-words" // styles are in global.css
       dangerouslySetInnerHTML={{ __html: safeHtml }}></label>
   );
 }

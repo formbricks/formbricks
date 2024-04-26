@@ -38,7 +38,7 @@ export const AddressSummary = ({ questionSummary, environmentId }: AddressSummar
                         <PersonAvatar personId={response.person.id} />
                       </div>
                       <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
-                        {getPersonIdentifier(response.person)}
+                        {getPersonIdentifier(response.person, response.personAttributes)}
                       </p>
                     </Link>
                   ) : (

@@ -1,3 +1,4 @@
+import { TAttributes } from "@formbricks/types/attributes";
 import { TJsAppState, TJsAppStateSync, TJsAppSyncParams } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys";
 
@@ -6,7 +7,7 @@ import { Logger } from "../../shared/logger";
 import { getIsDebug } from "../../shared/utils";
 import { AppConfig } from "./config";
 
-const config = AppConfig.getInstance();
+const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 
 let syncIntervalId: number | null = null;
@@ -56,17 +57,23 @@ export const sync = async (params: TJsAppSyncParams, noCache = false): Promise<v
       throw syncResult.error;
     }
 
+    let attributes: TAttributes = params.attributes || {};
+
+    if (syncResult.value.language) {
+      attributes.language = syncResult.value.language;
+    }
+
     let state: TJsAppState = {
       surveys: syncResult.value.surveys as TSurvey[],
       noCodeActionClasses: syncResult.value.noCodeActionClasses,
       product: syncResult.value.product,
-      attributes: syncResult.value.person?.attributes || {},
+      attributes,
     };
 
     const surveyNames = state.surveys.map((s) => s.name);
     logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames.join(", "));
 
-    config.update({
+    appConfig.update({
       apiHost: params.apiHost,
       environmentId: params.environmentId,
       userId: params.userId,
@@ -86,20 +93,21 @@ export const addExpiryCheckListener = (): void => {
     syncIntervalId = window.setInterval(async () => {
       try {
         // check if the config has not expired yet
-        if (config.get().expiresAt && new Date(config.get().expiresAt) >= new Date()) {
+        if (appConfig.get().expiresAt && new Date(appConfig.get().expiresAt) >= new Date()) {
           return;
         }
         logger.debug("Config has expired. Starting sync.");
         await sync({
-          apiHost: config.get().apiHost,
-          environmentId: config.get().environmentId,
-          userId: config.get().userId,
+          apiHost: appConfig.get().apiHost,
+          environmentId: appConfig.get().environmentId,
+          userId: appConfig.get().userId,
+          attributes: appConfig.get().state.attributes,
         });
       } catch (e) {
         console.error(`Error during expiry check: ${e}`);
         logger.debug("Extending config and try again later.");
-        const existingConfig = config.get();
-        config.update(existingConfig);
+        const existingConfig = appConfig.get();
+        appConfig.update(existingConfig);
       }
     }, updateInterval);
   }
