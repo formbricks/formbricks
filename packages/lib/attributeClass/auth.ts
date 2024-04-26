@@ -3,7 +3,6 @@ import "server-only";
 import { ZId } from "@formbricks/types/environment";
 
 import { cache } from "../cache";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { validateInputs } from "../utils/validate";
 import { getAttributeClass } from "./service";
@@ -31,5 +30,5 @@ export const canUserAccessAttributeClass = async (
     },
 
     [`canUserAccessAttributeClass-${userId}-${attributeClassId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [`attributeClasses-${attributeClassId}`] }
+    { tags: [`attributeClasses-${attributeClassId}`] }
   )();

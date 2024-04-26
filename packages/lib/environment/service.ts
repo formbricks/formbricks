@@ -18,7 +18,6 @@ import {
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 
 import { cache } from "../cache";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getProducts } from "../product/service";
 import { getTeamsByUserId } from "../team/service";
 import { validateInputs } from "../utils/validate";
@@ -48,7 +47,6 @@ export const getEnvironment = (environmentId: string): Promise<TEnvironment | nu
     [`getEnvironment-${environmentId}`],
     {
       tags: [environmentCache.tag.byId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -95,7 +93,6 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
     [`getEnvironments-${productId}`],
     {
       tags: [environmentCache.tag.byProductId(productId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 

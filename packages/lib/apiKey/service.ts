@@ -10,7 +10,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
 import { cache } from "../cache";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { getHash } from "../crypto";
 import { validateInputs } from "../utils/validate";
 import { apiKeyCache } from "./cache";
@@ -43,7 +43,6 @@ export const getApiKey = (apiKeyId: string): Promise<TApiKey | null> =>
     [`getApiKey-${apiKeyId}`],
     {
       tags: [apiKeyCache.tag.byId(apiKeyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -72,7 +71,6 @@ export const getApiKeys = (environmentId: string, page?: number): Promise<TApiKe
     [`getApiKeys-${environmentId}-${page}`],
     {
       tags: [apiKeyCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -140,7 +138,6 @@ export const getApiKeyFromKey = (apiKey: string): Promise<TApiKey | null> => {
     [`getApiKeyFromKey-${apiKey}`],
     {
       tags: [apiKeyCache.tag.byHashedKey(hashedKey)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 };

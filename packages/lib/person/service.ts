@@ -9,7 +9,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 
 import { cache } from "../cache";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { activePersonCache, personCache } from "./cache";
 
@@ -75,7 +75,9 @@ export const getPerson = (personId: string): Promise<TPerson | null> =>
       }
     },
     [`getPerson-${personId}`],
-    { tags: [personCache.tag.byId(personId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    {
+      tags: [personCache.tag.byId(personId)],
+    }
   )();
 
 export const getPeople = (environmentId: string, page?: number): Promise<TPerson[]> =>
@@ -103,7 +105,6 @@ export const getPeople = (environmentId: string, page?: number): Promise<TPerson
     [`getPeople-${environmentId}-${page}`],
     {
       tags: [personCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -129,7 +130,6 @@ export const getPeopleCount = (environmentId: string): Promise<number> =>
     [`getPeopleCount-${environmentId}`],
     {
       tags: [personCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -231,7 +231,6 @@ export const getPersonByUserId = (environmentId: string, userId: string): Promis
     [`getPersonByUserId-${environmentId}-${userId}`],
     {
       tags: [personCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 

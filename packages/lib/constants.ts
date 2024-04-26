@@ -3,8 +3,6 @@ import "server-only";
 import { env } from "./env";
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
-export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
-export const SERVICES_REVALIDATION_INTERVAL = 60 * 60 * 24; // 24 hours
 export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 9000 : 1000000;
 
 // URLs

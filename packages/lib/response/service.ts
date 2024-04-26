@@ -26,7 +26,7 @@ import { TTag } from "@formbricks/types/tags";
 
 import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL, WEBAPP_URL } from "../constants";
+import { ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { displayCache } from "../display/cache";
 import { deleteDisplayByResponseId, getDisplayCountBySurveyId } from "../display/service";
 import { createPerson, getPerson, getPersonByUserId } from "../person/service";
@@ -148,7 +148,6 @@ export const getResponsesByPersonId = (personId: string, page?: number): Promise
     [`getResponsesByPersonId-${personId}-${page}`],
     {
       tags: [responseCache.tag.byPersonId(personId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -186,7 +185,6 @@ export const getResponseBySingleUseId = (surveyId: string, singleUseId: string):
     [`getResponseBySingleUseId-${surveyId}-${singleUseId}`],
     {
       tags: [responseCache.tag.bySingleUseId(surveyId, singleUseId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -384,7 +382,6 @@ export const getResponse = (responseId: string): Promise<TResponse | null> =>
     [`getResponse-${responseId}`],
     {
       tags: [responseCache.tag.byId(responseId), responseNoteCache.tag.byResponseId(responseId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -430,7 +427,6 @@ export const getResponsePersonAttributes = (surveyId: string): Promise<TSurveyPe
     [`getResponsePersonAttributes-${surveyId}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -491,7 +487,6 @@ export const getResponseMeta = (surveyId: string): Promise<TSurveyMetaFieldFilte
     [`getResponseMeta-${surveyId}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -547,7 +542,6 @@ export const getResponses = (
     [`getResponses-${surveyId}-${page}-${batchSize}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -601,7 +595,6 @@ export const getSurveySummary = (
     [`getSurveySummary-${surveyId}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId), displayCache.tag.bySurveyId(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -719,7 +712,6 @@ export const getResponsesByEnvironmentId = (environmentId: string, page?: number
     [`getResponsesByEnvironmentId-${environmentId}-${page}`],
     {
       tags: [responseCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -862,6 +854,5 @@ export const getResponseCountBySurveyId = (
     [`getResponseCountBySurveyId-${surveyId}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

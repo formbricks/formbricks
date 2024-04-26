@@ -14,7 +14,7 @@ import {
 } from "@formbricks/types/memberships";
 
 import { cache } from "../cache";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { teamCache } from "../team/cache";
 import { validateInputs } from "../utils/validate";
 import { membershipCache } from "./cache";
@@ -65,7 +65,6 @@ export const getMembersByTeamId = async (teamId: string, page?: number): Promise
     [`getMembersByTeamId-${teamId}-${page}`],
     {
       tags: [membershipCache.tag.byTeamId(teamId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -102,7 +101,6 @@ export const getMembershipByUserIdTeamId = async (
     [`getMembershipByUserIdTeamId-${userId}-${teamId}`],
     {
       tags: [membershipCache.tag.byUserId(userId), membershipCache.tag.byTeamId(teamId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -132,7 +130,6 @@ export const getMembershipsByUserId = async (userId: string, page?: number): Pro
     [`getMembershipsByUserId-${userId}-${page}`],
     {
       tags: [membershipCache.tag.byUserId(userId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 

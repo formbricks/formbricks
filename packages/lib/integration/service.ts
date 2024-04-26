@@ -9,7 +9,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationInput, ZIntegrationType } from "@formbricks/types/integration";
 
 import { cache } from "../cache";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { integrationCache } from "./cache";
 
@@ -75,7 +75,6 @@ export const getIntegrations = (environmentId: string, page?: number): Promise<T
     [`getIntegrations-${environmentId}-${page}`],
     {
       tags: [integrationCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -97,7 +96,9 @@ export const getIntegration = (integrationId: string): Promise<TIntegration | nu
       }
     },
     [`getIntegration-${integrationId}`],
-    { tags: [integrationCache.tag.byId(integrationId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    {
+      tags: [integrationCache.tag.byId(integrationId)],
+    }
   )();
 
 export const getIntegrationByType = (
@@ -128,7 +129,6 @@ export const getIntegrationByType = (
     [`getIntegrationByType-${environmentId}-${type}`],
     {
       tags: [integrationCache.tag.byEnvironmentIdAndType(environmentId, type)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 

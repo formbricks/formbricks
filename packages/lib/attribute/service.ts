@@ -12,7 +12,6 @@ import { attributeCache } from "../attribute/cache";
 import { attributeClassCache } from "../attributeClass/cache";
 import { getAttributeClassByName, getAttributeClasses } from "../attributeClass/service";
 import { cache } from "../cache";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getPerson, getPersonByUserId } from "../person/service";
 import { validateInputs } from "../utils/validate";
 
@@ -62,7 +61,6 @@ export const getAttributes = (personId: string): Promise<TAttributes> =>
     [`getAttributes-${personId}`],
     {
       tags: [attributeCache.tag.byPersonId(personId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -97,7 +95,6 @@ export const getAttributesByUserId = (environmentId: string, userId: string): Pr
     [`getAttributesByUserId-${environmentId}-${userId}`],
     {
       tags: [attributeCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -139,7 +136,6 @@ export const getAttribute = (name: string, personId: string): Promise<string | u
     [`getAttribute-${name}-${personId}`],
     {
       tags: [attributeCache.tag.byNameAndPersonId(name, personId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 

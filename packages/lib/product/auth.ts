@@ -1,7 +1,6 @@
 import { ZId } from "@formbricks/types/environment";
 
 import { cache } from "../cache";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
 import { getTeamsByUserId } from "../team/service";
@@ -28,7 +27,6 @@ export const canUserAccessProduct = (userId: string, productId: string): Promise
     },
     [`canUserAccessProduct-${userId}-${productId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [productCache.tag.byId(productId), productCache.tag.byUserId(userId)],
     }
   )();

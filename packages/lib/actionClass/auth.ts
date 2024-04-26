@@ -1,11 +1,8 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
-
 import { ZId } from "@formbricks/types/environment";
 
 import { cache } from "../cache";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
@@ -37,7 +34,6 @@ export const canUserUpdateActionClass = async (userId: string, actionClassId: st
 
     [`canUserUpdateActionClass-${userId}-${actionClassId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [actionClassCache.tag.byId(actionClassId)],
     }
   )();

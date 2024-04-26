@@ -32,7 +32,6 @@ import {
   getLastOccurrenceDaysAgo,
   getTotalOccurrencesForAction,
 } from "../action/service";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { surveyCache } from "../survey/cache";
 import { getSurvey } from "../survey/service";
@@ -145,7 +144,6 @@ export const getSegments = async (environmentId: string): Promise<TSegment[]> =>
     [`getSegments-${environmentId}`],
     {
       tags: [segmentCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -181,7 +179,6 @@ export const getSegment = async (segmentId: string): Promise<TSegment> => {
     [`getSegment-${segmentId}`],
     {
       tags: [segmentCache.tag.byId(segmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -369,7 +366,6 @@ export const getSegmentsByAttributeClassName = async (environmentId: string, att
         segmentCache.tag.byEnvironmentId(environmentId),
         segmentCache.tag.byAttributeClassName(attributeClassName),
       ],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 

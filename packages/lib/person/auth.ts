@@ -3,7 +3,6 @@ import "server-only";
 import { ZId } from "@formbricks/types/environment";
 
 import { cache } from "../cache";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { validateInputs } from "../utils/validate";
 import { personCache } from "./cache";
@@ -29,7 +28,6 @@ export const canUserAccessPerson = (userId: string, personId: string): Promise<b
     },
     [`canUserAccessPerson-${userId}-people-${personId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [personCache.tag.byId(personId)],
     }
   )();

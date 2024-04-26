@@ -16,7 +16,7 @@ import {
 } from "@formbricks/types/invites";
 
 import { cache } from "../cache";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { validateInputs } from "../utils/validate";
 import { inviteCache } from "./cache";
@@ -64,7 +64,6 @@ export const getInvitesByTeamId = (teamId: string, page?: number): Promise<TInvi
     [`getInvitesByTeamId-${teamId}-${page}`],
     {
       tags: [inviteCache.tag.byTeamId(teamId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -156,7 +155,9 @@ export const getInvite = (inviteId: string): Promise<InviteWithCreator | null> =
       }
     },
     [`getInvite-${inviteId}`],
-    { tags: [inviteCache.tag.byId(inviteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    {
+      tags: [inviteCache.tag.byId(inviteId)],
+    }
   )();
 
 export const resendInvite = async (inviteId: string): Promise<TInvite> => {

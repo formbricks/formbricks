@@ -92,7 +92,9 @@ export const getResponseNote = (responseNoteId: string): Promise<TResponseNote |
       }
     },
     [`getResponseNote-${responseNoteId}`],
-    { tags: [responseNoteCache.tag.byId(responseNoteId)] }
+    {
+      tags: [responseNoteCache.tag.byId(responseNoteId)],
+    }
   )();
 
 export const getResponseNotes = (responseId: string): Promise<TResponseNote[]> =>

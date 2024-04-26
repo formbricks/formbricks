@@ -3,7 +3,6 @@ import "server-only";
 import { ZId } from "@formbricks/types/environment";
 
 import { cache } from "../cache";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { validateInputs } from "../utils/validate";
 import { apiKeyCache } from "./cache";
@@ -28,5 +27,5 @@ export const canUserAccessApiKey = (userId: string, apiKeyId: string): Promise<b
     },
 
     [`canUserAccessApiKey-${userId}-${apiKeyId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [apiKeyCache.tag.byId(apiKeyId)] }
+    { tags: [apiKeyCache.tag.byId(apiKeyId)] }
   )();

@@ -11,7 +11,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 import { cache } from "../cache";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
@@ -51,7 +51,6 @@ export const getActionClasses = async (environmentId: string, page?: number): Pr
     [`getActionClasses-${environmentId}-${page}`],
     {
       tags: [actionClassCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -80,7 +79,6 @@ export const getActionClassByEnvironmentIdAndName = async (
     [`getActionClassByEnvironmentIdAndName-${environmentId}-${name}`],
     {
       tags: [actionClassCache.tag.byNameAndEnvironmentId(name, environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -105,7 +103,6 @@ export const getActionClass = async (actionClassId: string): Promise<TActionClas
     [`getActionClass-${actionClassId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 

@@ -5,7 +5,6 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 
 import { cache } from "../cache";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { teamCache } from "../team/cache";
 import { validateInputs } from "../utils/validate";
 
@@ -47,7 +46,6 @@ export const hasUserEnvironmentAccess = async (userId: string, environmentId: st
     },
     [`hasUserEnvironmentAccess-${userId}-${environmentId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [teamCache.tag.byEnvironmentId(environmentId), teamCache.tag.byUserId(userId)],
     }
   )();

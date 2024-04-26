@@ -3,7 +3,6 @@ import "server-only";
 import { ZId } from "@formbricks/types/environment";
 
 import { cache } from "../cache";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { validateInputs } from "../utils/validate";
 import { getIntegration } from "./service";
@@ -28,5 +27,7 @@ export const canUserAccessIntegration = async (userId: string, integrationId: st
     },
 
     [`canUserAccessIntegration-${userId}-${integrationId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [`integrations-${integrationId}`] }
+    {
+      tags: [`integrations-${integrationId}`],
+    }
   )();

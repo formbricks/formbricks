@@ -22,7 +22,7 @@ import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
 import { attributeCache } from "../attribute/cache";
 import { getAttributes } from "../attribute/service";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
 import { reverseTranslateSurvey } from "../i18n/reverseTranslation";
@@ -228,7 +228,6 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
     [`getSurvey-${surveyId}`],
     {
       tags: [surveyCache.tag.byId(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -292,7 +291,6 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
     [`getSurveysByActionClassId-${actionClassId}-${page}`],
     {
       tags: [surveyCache.tag.byActionClassId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return surveys.map((survey) => formatSurveyDateFields(survey));
@@ -354,7 +352,6 @@ export const getSurveys = async (
     [`getSurveys-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [surveyCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -397,7 +394,6 @@ export const getSurveyCount = async (environmentId: string): Promise<number> => 
     [`getSurveyCount-${environmentId}`],
     {
       tags: [surveyCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -1054,10 +1050,8 @@ export const getSyncSurveys = async (
         displayCache.tag.byPersonId(personId),
         surveyCache.tag.byEnvironmentId(environmentId),
         productCache.tag.byEnvironmentId(environmentId),
-        // ? Should this be included?
         attributeCache.tag.byPersonId(personId),
       ],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -1188,7 +1182,6 @@ export const getSurveysBySegmentId = async (segmentId: string): Promise<TSurvey[
     [`getSurveysBySegmentId-${segmentId}`],
     {
       tags: [surveyCache.tag.bySegmentId(segmentId), segmentCache.tag.byId(segmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
