@@ -22,7 +22,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { createPerson, getPersonByUserId } from "../person/service";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
@@ -63,7 +63,6 @@ export const getDisplay = async (displayId: string): Promise<TDisplay | null> =>
     [`getDisplay-${displayId}`],
     {
       tags: [displayCache.tag.byId(displayId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return display ? formatDateFields(display, ZDisplay) : null;
@@ -310,7 +309,6 @@ export const getDisplaysByPersonId = async (personId: string, page?: number): Pr
     [`getDisplaysByPersonId-${personId}-${page}`],
     {
       tags: [displayCache.tag.byPersonId(personId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return displays.map((display) => formatDateFields(display, ZDisplay));
@@ -376,6 +374,5 @@ export const getDisplayCountBySurveyId = async (
     [`getDisplayCountBySurveyId-${surveyId}-${JSON.stringify(filters)}`],
     {
       tags: [displayCache.tag.bySurveyId(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

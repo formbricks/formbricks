@@ -18,7 +18,7 @@ import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { attributeClassCache } from "./cache";
@@ -46,7 +46,6 @@ export const getAttributeClass = async (attributeClassId: string): Promise<TAttr
     [`getAttributeClass-${attributeClassId}`],
     {
       tags: [attributeClassCache.tag.byId(attributeClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -90,7 +89,6 @@ export const getAttributeClasses = async (
     [`getAttributeClasses-${environmentId}-${page}`],
     {
       tags: [attributeClassCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return attributeClasses.map((attributeClass) => formatDateFields(attributeClass, ZAttributeClass));
@@ -152,7 +150,6 @@ export const getAttributeClassByName = async (environmentId: string, name: strin
     [`getAttributeClassByName-${environmentId}-${name}`],
     {
       tags: [attributeClassCache.tag.byEnvironmentIdAndName(environmentId, name)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return attributeClass ? formatDateFields(attributeClass, ZAttributeClass) : null;

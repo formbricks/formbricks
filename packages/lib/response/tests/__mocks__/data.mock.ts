@@ -8,10 +8,9 @@ import {
   TResponseUpdateInput,
   TSurveyPersonAttributes,
 } from "@formbricks/types/responses";
-import { TSurveyQuestionType, TSurveySummary } from "@formbricks/types/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
-import { transformPrismaPerson } from "../../../person/service";
 import { responseNoteSelect } from "../../../responseNote/service";
 import { responseSelection } from "../../service";
 import { constantsForTests } from "../constants";
@@ -21,9 +20,6 @@ type ResponseMock = Prisma.ResponseGetPayload<{
 }>;
 type ResponseNoteMock = Prisma.ResponseNoteGetPayload<{
   include: typeof responseNoteSelect;
-}>;
-type ResponsePersonMock = Prisma.PersonGetPayload<{
-  select: typeof responseSelection.person.select;
 }>;
 
 export const mockEnvironmentId = "ars2tjk8hsi8oqk1uac00mo7";
@@ -63,20 +59,9 @@ export const mockResponseNote: ResponseNoteMock = {
   },
 };
 
-export const mockPerson: ResponsePersonMock = {
+export const mockPerson = {
   id: mockPersonId,
   userId: mockUserId,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  environmentId: mockEnvironmentId,
-  attributes: [
-    {
-      value: "attribute1",
-      attributeClass: {
-        name: "attributeClass1",
-      },
-    },
-  ],
 };
 
 export const mockTags = [
@@ -442,7 +427,7 @@ export const getFilteredMockResponses = (
   if (format) {
     return result.map((response) => ({
       ...response,
-      person: response.person ? transformPrismaPerson(response.person) : null,
+      person: response.person ? { id: response.person.id, userId: response.person.userId } : null,
       tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     }));
   }
@@ -471,7 +456,7 @@ export const getMockUpdateResponseInput = (finished: boolean = false): TResponse
   finished,
 });
 
-export const mockSurveySummaryOutput: TSurveySummary = {
+export const mockSurveySummaryOutput = {
   dropOff: [
     {
       dropOffCount: 0,

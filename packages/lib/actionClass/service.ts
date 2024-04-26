@@ -16,7 +16,7 @@ import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
@@ -58,7 +58,6 @@ export const getActionClasses = async (environmentId: string, page?: number): Pr
     [`getActionClasses-${environmentId}-${page}`],
     {
       tags: [actionClassCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return actionClasses.map((actionClass) => formatDateFields(actionClass, ZActionClass));
@@ -89,7 +88,6 @@ export const getActionClassByEnvironmentIdAndName = async (
     [`getActionClassByEnvironmentIdAndName-${environmentId}-${name}`],
     {
       tags: [actionClassCache.tag.byNameAndEnvironmentId(name, environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return actionClass ? formatDateFields(actionClass, ZActionClass) : null;
@@ -116,7 +114,6 @@ export const getActionClass = async (actionClassId: string): Promise<TActionClas
     [`getActionClass-${actionClassId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return actionClass ? formatDateFields(actionClass, ZActionClass) : null;
