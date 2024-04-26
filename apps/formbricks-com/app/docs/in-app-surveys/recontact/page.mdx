@@ -19,18 +19,24 @@ Recontact options in Formbricks enable you to manage how often and under what co
 
 ## When do Recontact Options come into play?
 
-Recontact options are applicable under the following conditions:
+Recontact options are the last layer of the logic that determines if a survey is shown to the current user. The logic goes as follows:
 
-- A survey is **already triggered** based on user actions or other specified conditions.
-- The user **qualifies for the survey again** if any targeting criteria are set.
+1. Targeting: Does the current user targeted to fill out this survey? If yes...
+2. Trigger: Is the survey triggered? If yes...
+3. **Recontact Options:** Should the survey be shown (again) to this user? That's dependent on:
+- Did the user see any survey recently (meaning, has Global Waiting Time passed)?
+- Did the user see this specific survey already?
+- How many times did the user see this specific survey already?
+- Has the user already responded to this survey?
 
-If both conditions are met, the specified Recontact Options determine if and when the survey will be re-displayed to the user.
+As you can see, there are a lot of different cases to cover. Let's have a closer look 👇
 
-## Survey Recontact Options
 
-<Note>By default, a survey is shown to a user only once.</Note>
+## Recontact Options
 
-You can adjust this behavior by modifying the Recontact Options in the survey settings:
+<Note>By default, a survey is shown to each user only once.</Note>
+
+You can adjust the default behavior by modifying the Recontact Options for each survey in the settings:
 
 1. Open the Survey Editor for the survey you want to see & modify the Recontact Options for.
 2. Select the Settings Tab.
@@ -47,9 +53,9 @@ You can adjust this behavior by modifying the Recontact Options in the survey se
 
 Available Recontact Options include:
 
-- **Show only once**: Displays the survey a single time, regardless of whether it was completed.
-- **Until they Submit a Response**: Continuously shows the survey until the user submits a response. Ideal for critical feedback.
-- **Keep Showing while Conditions Match**: Repeats the survey while specific conditions are met. Useful for continuous feedback collection, such as in [Docs Feedback Survey](/docs/best-practices/docs-feedback).
+- **Show only once**: (default) Displays the survey a single time, regardless of whether it was completed.
+- **Until they Submit a Response**: If tareting matches and trigger fires, Formbricks keeps showing the survey until the user submits a response.
+- **Keep Showing while Conditions Match**: Always shows the survey while specific conditions are met. Useful for continuous feedback collection, such as in [Docs Feedback Survey](/docs/best-practices/docs-feedback) or the [Feedback Box](/docs/best-practices/feedback-box).
 
 <MdxImage
   src={SurveyRecontact}
@@ -59,10 +65,10 @@ Available Recontact Options include:
 />
 
 ## Product-wide Global Waiting Time
+The Global Waiting Time is a universal blocker to make sure that no user sees too many surveys. This is particularly helpful when several teams of large organisations use Formbricks at the same time.
 
 <Note>
-  The default interval between surveys for the same user across the product is set to 7 days to prevent
-  over-surveying.
+  The default Global Waiting Time is set to 7 days.
 </Note>
 
 To adjust the Global Waiting Time:
@@ -70,7 +76,7 @@ To adjust the Global Waiting Time:
 1. Visit Formbricks Settings
 2. Go to Product Settings
 3. Find the **Recontact Waiting Time** section
-4. Modify the interval (in Days) as needed.
+4. Modify the interval (in days) as needed.
 
 <MdxImage
   src={GlobalWaitTime}
