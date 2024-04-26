@@ -215,7 +215,10 @@ export const navigation: Array<NavGroup> = [
   },
   {
     title: "Additional Features",
-    links: [{ title: "Multi Language Surveys", href: "/docs/additional-features/multi-language-surveys" }],
+    links: [
+      { title: "Multi-Language Surveys", href: "/docs/additional-features/multi-language-surveys" },
+      { title: "Metadata", href: "/docs/additional-features/metadata" },
+    ],
   },
   {
     title: "Best Practices",
