@@ -1,6 +1,7 @@
-import { getMonthName, getOrdinalDate } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import DatePicker from "react-date-picker";
+
+import { getMonthName, getOrdinalDate } from "@formbricks/lib/utils/datetime";
 
 const CalendarIcon = () => (
   <svg
