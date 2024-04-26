@@ -459,21 +459,6 @@ export const isSurveyValid = (
     }
   }
 
-  // if inlineTriggers are present validate with zod
-  if (!!survey.inlineTriggers) {
-    const parsedInlineTriggers = ZSurveyInlineTriggers.safeParse(survey.inlineTriggers);
-    if (!parsedInlineTriggers.success) {
-      toast.error("Invalid Custom Actions: Please check your custom actions");
-      return false;
-    }
-  }
-
-  // validate that both triggers and inlineTriggers are not present
-  if (surveyHasBothTriggers(survey)) {
-    toast.error("Survey cannot have both custom and saved actions, please remove one.");
-    return false;
-  }
-
   const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, selectedLanguageCode);
   if (questionWithEmptyFallback) {
     toast.error("Fallback missing");

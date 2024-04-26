@@ -42,6 +42,7 @@ export const getActionClasses = async (environmentId: string, page?: number): Pr
         const actionClasses = await prisma.actionClass.findMany({
           where: {
             environmentId: environmentId,
+            isPrivate: false,
           },
           select,
           take: page ? ITEMS_PER_PAGE : undefined,

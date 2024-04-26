@@ -81,13 +81,8 @@ export const SurveyMenuBar = ({
     if (localSurvey.type === "link") return false;
 
     const noTriggers = !localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0];
-    const noInlineTriggers =
-      !localSurvey.inlineTriggers ||
-      (!localSurvey.inlineTriggers?.codeConfig && !localSurvey.inlineTriggers?.noCodeConfig);
 
-    if (noTriggers && noInlineTriggers) {
-      return true;
-    }
+    if (noTriggers) return true;
 
     return false;
   }, [localSurvey]);
@@ -158,7 +153,7 @@ export const SurveyMenuBar = ({
         setIsSurveySaving(false);
         return;
       }
-      localSurvey.triggers = localSurvey.triggers.filter((trigger) => Boolean(trigger));
+
       localSurvey.questions = localSurvey.questions.map((question) => {
         const { isDraft, ...rest } = question;
         return rest;

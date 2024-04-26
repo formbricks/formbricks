@@ -182,6 +182,79 @@ const processTriggerUpdates = (
   return triggersUpdate;
 };
 
+const handleTriggerUpdates = async (
+  triggers: TSurveyInput["triggers"],
+  currentTriggers: TSurveyInput["triggers"]
+) => {
+  const currentTriggerIds = currentTriggers.map((trigger) => trigger.id);
+  const newTriggerIds = triggers.map((trigger) => trigger.id);
+
+  // new, add, update, delete-2
+
+  // new triggers are triggers that are draft
+  const newTriggers = triggers.filter((trigger) => trigger?._isDraft);
+
+  // convert above to a promise.all
+  const createdTriggerIds = await Promise.all(
+    newTriggers.map(async (trigger) => {
+      const actionClass = await prisma.actionClass.create({
+        data: {
+          name: trigger.name || "",
+          description: trigger.description,
+          type: trigger.type || "code",
+          environment: { connect: { id: trigger.environmentId || "" } },
+          isPrivate: trigger.isPrivate,
+          ...(trigger.type === "noCode" ? { noCodeConfig: trigger.noCodeConfig } : { key: trigger.key }),
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      return actionClass.id;
+    })
+  );
+
+  // added triggers are triggers that are not in the current triggers and are there in the new triggers and are not draft
+  const addedTriggers = triggers.filter(
+    (trigger) => !currentTriggerIds.includes(trigger.id) && !trigger._isDraft
+  );
+  let addedTriggerIds = addedTriggers.map((trigger) => trigger.id || "");
+  addedTriggerIds = [...addedTriggerIds, ...createdTriggerIds];
+
+  // updated triggers - TBD(just need to update the action class, nothing to do with trigger)
+
+  // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
+  const deletedTriggers = currentTriggers.filter((trigger) => !newTriggerIds.includes(trigger.id));
+  const deletedTriggerIds = deletedTriggers.map((trigger) => trigger.id || "");
+
+  // Construct the triggers update object
+  const triggersUpdate: TriggerUpdate = {};
+
+  console.log({ addedTriggerIds, deletedTriggerIds });
+  if (addedTriggerIds.length > 0) {
+    triggersUpdate.create = addedTriggerIds.map((trigger) => ({
+      actionClassId: trigger,
+    }));
+  }
+
+  if (deletedTriggerIds.length > 0) {
+    triggersUpdate.deleteMany = {
+      actionClassId: {
+        in: deletedTriggerIds,
+      },
+    };
+  }
+
+  [...addedTriggers, ...deletedTriggers].forEach((trigger) => {
+    surveyCache.revalidate({
+      actionClassId: trigger.id,
+    });
+  });
+
+  return triggersUpdate;
+};
+
 export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
   const survey = await unstable_cache(
     async () => {
@@ -411,8 +484,8 @@ export const getSurveyCount = async (environmentId: string): Promise<number> => 
   return count;
 };
 
-export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
-  validateInputs([updatedSurvey, ZSurveyWithRefinements]);
+export const updateSurvey = async (updatedSurvey: TSurveyInput): Promise<TSurvey> => {
+  // validateInputs([updatedSurvey, ZSurveyWithRefinements]);
 
   try {
     const surveyId = updatedSurvey.id;
@@ -426,6 +499,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
 
     const { triggers, environmentId, segment, questions, languages, type, ...surveyData } = updatedSurvey;
+
+    console.log("🍻🍻🍻🍻🍻🍻🍻🍻🍻🍻", { triggers });
 
     if (languages) {
       // Process languages update logic here
@@ -476,9 +551,13 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
 
     if (triggers) {
+      data.triggers = await handleTriggerUpdates(triggers, currentSurvey.triggers);
       // data.triggers = processTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
-      data.triggers = triggers.map((trigger) => trigger.id);
+      // data.triggers = triggers.map((trigger) => trigger.id);
     }
+
+    console.log({ trigu: JSON.stringify(data.triggers, null, 2) });
+
     // if the survey body has type other than "app" but has a private segment, we delete that segment, and if it has a public segment, we disconnect from to the survey
     if (segment) {
       if (type === "app") {

@@ -488,7 +488,7 @@ export const ZSurvey = z.object({
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
   // triggers: z.array(z.string()),
-  triggers: z.array(ZActionClass.partial()),
+  triggers: z.array(ZActionClass),
   inlineTriggers: ZSurveyInlineTriggers.nullable(),
   redirectUrl: z.string().url().nullable(),
   recontactDays: z.number().nullable(),
@@ -516,53 +516,38 @@ export const ZSurveyWithRefinements = ZSurvey.refine((survey) => !surveyHasBothT
   message: "Survey cannot have both triggers and inlineTriggers",
 });
 
-export const ZSurveyInput = z
-  .object({
-    name: z.string(),
-    type: ZSurveyType.optional(),
-    createdBy: z.string().cuid().nullish(),
-    status: ZSurveyStatus.optional(),
-    displayOption: ZSurveyDisplayOption.optional(),
-    autoClose: z.number().nullish(),
-    redirectUrl: z.string().url().nullish(),
-    recontactDays: z.number().nullish(),
-    welcomeCard: ZSurveyWelcomeCard.optional(),
-    questions: ZSurveyQuestions.optional(),
-    thankYouCard: ZSurveyThankYouCard.optional(),
-    hiddenFields: ZSurveyHiddenFields.optional(),
-    delay: z.number().optional(),
-    autoComplete: z.number().nullish(),
-    runOnDate: z.date().nullish(),
-    closeOnDate: z.date().nullish(),
-    styling: ZSurveyStyling.optional(),
-    surveyClosedMessage: ZSurveyClosedMessage.nullish(),
-    singleUse: ZSurveySingleUse.nullish(),
-    verifyEmail: ZSurveyVerifyEmail.optional(),
-    pin: z.string().nullish(),
-    resultShareKey: z.string().nullish(),
-    displayPercentage: z.number().min(1).max(100).nullish(),
-    triggers: z.array(z.string()).optional(),
-    inlineTriggers: ZSurveyInlineTriggers.optional(),
-  })
-  .refine(
-    (survey) => {
-      // if the triggers array has a single empty string, it means the survey has no triggers
-      if (survey.triggers?.[0] === "") {
-        return true;
-      }
-
-      const hasTriggers = !!survey.triggers?.length;
-      const hasInlineTriggers = !!survey.inlineTriggers?.codeConfig || !!survey.inlineTriggers?.noCodeConfig;
-
-      // Survey cannot have both triggers and inlineTriggers
-      if (hasTriggers && hasInlineTriggers) {
-        return false;
-      }
-
-      return true;
-    },
-    { message: "Survey cannot have both triggers and inlineTriggers" }
-  );
+export const ZSurveyInput = z.object({
+  name: z.string(),
+  type: ZSurveyType.optional(),
+  createdBy: z.string().cuid().nullish(),
+  status: ZSurveyStatus.optional(),
+  displayOption: ZSurveyDisplayOption.optional(),
+  autoClose: z.number().nullish(),
+  redirectUrl: z.string().url().nullish(),
+  recontactDays: z.number().nullish(),
+  welcomeCard: ZSurveyWelcomeCard.optional(),
+  questions: ZSurveyQuestions.optional(),
+  thankYouCard: ZSurveyThankYouCard.optional(),
+  hiddenFields: ZSurveyHiddenFields.optional(),
+  delay: z.number().optional(),
+  autoComplete: z.number().nullish(),
+  runOnDate: z.date().nullish(),
+  closeOnDate: z.date().nullish(),
+  styling: ZSurveyStyling.optional(),
+  surveyClosedMessage: ZSurveyClosedMessage.nullish(),
+  singleUse: ZSurveySingleUse.nullish(),
+  verifyEmail: ZSurveyVerifyEmail.optional(),
+  pin: z.string().nullish(),
+  resultShareKey: z.string().nullish(),
+  displayPercentage: z.number().min(1).max(100).nullish(),
+  triggers: z.array(
+    ZActionClass.extend({
+      _isDraft: z.boolean().optional(),
+      _isEdited: z.boolean().optional(),
+    }).partial()
+  ),
+  inlineTriggers: ZSurveyInlineTriggers.optional(),
+});
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 

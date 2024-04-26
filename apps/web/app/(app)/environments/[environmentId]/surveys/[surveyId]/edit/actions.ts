@@ -29,7 +29,7 @@ import {
   ZSegmentFilters,
   ZSegmentUpdateInput,
 } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyInput } from "@formbricks/types/surveys";
 
 export async function surveyMutateAction(survey: TSurvey): Promise<TSurvey> {
   return await updateSurvey(survey);

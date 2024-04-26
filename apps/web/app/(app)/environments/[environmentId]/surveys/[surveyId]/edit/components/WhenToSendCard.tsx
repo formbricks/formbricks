@@ -32,6 +32,7 @@ import {
 } from "@formbricks/ui/Select";
 import { TabBar } from "@formbricks/ui/TabBar";
 import { AddActionModal } from "@formbricks/ui/Trigger/AddActionModal";
+import { EditActionModal } from "@formbricks/ui/Trigger/EditActionModal";
 
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
@@ -52,7 +53,9 @@ export default function WhenToSendCard({
     localSurvey.type === "app" || localSurvey.type === "website" ? true : false
   );
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
-  const [isAddTriggerActionModalOpen, setAddTriggerActionModalOpen] = useState(false);
+  const [selectedAction, setSelectedAction] = useState<TActionClass | null>(null);
+  const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
+  const [isEditActionModalOpen, setEditActionModalOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
@@ -262,7 +265,15 @@ export default function WhenToSendCard({
                       </div>
                       <p className="mt-1 text-xs text-gray-500">{trigger.description}</p>
                     </div>
-                    <Settings className="h-6 w-6 cursor-pointer rounded-md bg-slate-100 p-1 text-slate-600" />
+                    {trigger.type !== "automatic" && (
+                      <Settings
+                        className="h-6 w-6 cursor-pointer rounded-md bg-slate-100 p-1 text-slate-600"
+                        onClick={() => {
+                          setEditActionModalOpen(true);
+                          setSelectedAction(trigger);
+                        }}
+                      />
+                    )}
                   </div>
                   <Trash2Icon
                     className="h-4 w-4 cursor-pointer text-slate-600"
@@ -275,7 +286,7 @@ export default function WhenToSendCard({
                 <Button
                   variant="secondary"
                   onClick={() => {
-                    setAddTriggerActionModalOpen(true);
+                    setAddActionModalOpen(true);
                   }}>
                   <PlusIcon className="mr-2 h-4 w-4" />
                   Add action
@@ -444,14 +455,27 @@ export default function WhenToSendCard({
       /> */}
       <AddActionModal
         environmentId={environmentId}
-        open={isAddTriggerActionModalOpen}
-        setOpen={setAddTriggerActionModalOpen}
+        open={isAddActionModalOpen}
+        setOpen={setAddActionModalOpen}
         actionClasses={actionClasses}
         setActionClasses={setActionClasses}
         isViewer={isViewer}
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
       />
+      {selectedAction && (
+        <EditActionModal
+          key={selectedAction.id}
+          selectedAction={selectedAction}
+          setSelectedAction={setSelectedAction}
+          actionClasses={actionClasses}
+          isViewer={isViewer}
+          setLocalSurvey={setLocalSurvey}
+          open={isEditActionModalOpen}
+          environmentId={environmentId}
+          setOpen={setEditActionModalOpen}
+        />
+      )}
     </>
   );
 }

@@ -18,7 +18,7 @@ import { Label } from "../Label";
 import { ModalWithTabs } from "../ModalWithTabs";
 import { TabBar } from "../TabBar";
 
-interface SavedActionsTabProps {
+interface SavedActionsProps {
   actionClasses: TActionClass[];
   setActionClasses: (v: TActionClass[]) => void;
   localSurvey: TSurvey;
@@ -26,13 +26,13 @@ interface SavedActionsTabProps {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const SavedActionsTab = ({
+const SavedActions = ({
   actionClasses,
   setActionClasses,
   localSurvey,
   setLocalSurvey,
   setOpen,
-}: SavedActionsTabProps) => {
+}: SavedActionsProps) => {
   // diff actions that are not in local survey triggers
   const diffActions = actionClasses.filter(
     (actionClass) => !localSurvey.triggers.some((trigger) => trigger.id === actionClass.id)
@@ -64,7 +64,6 @@ const SavedActionsTab = ({
         id: action.id,
         name: action.name,
         type: action.type,
-        // isPrivate: false,
         description: action.description,
       }),
     }));
@@ -138,7 +137,7 @@ function isValidCssSelector(selector?: string) {
   return true;
 }
 
-interface CreateNewActionTabProps {
+interface CreateNewActionProps {
   actionClasses: TActionClass[];
   isViewer: boolean;
   localSurvey: TSurvey;
@@ -146,18 +145,19 @@ interface CreateNewActionTabProps {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const CreateNewActionTab = ({
+const CreateNewAction = ({
   actionClasses,
   setOpen,
   isViewer,
   localSurvey,
   setLocalSurvey,
-}: CreateNewActionTabProps) => {
+}: CreateNewActionProps) => {
   const { register, control, handleSubmit, watch, reset } = useForm<TActionClassInput>({
     defaultValues: {
       name: "",
       description: "",
       type: "noCode",
+      key: "",
       noCodeConfig: {
         pageUrl: {
           rule: "contains",
@@ -235,8 +235,11 @@ const CreateNewActionTab = ({
         return toast.error("Please select a rule for page URL");
       }
     }
-
-    const updatedAction: Partial<TActionClassInput> & { _isDraft: boolean } = {
+    if (type === "code" && !data.key) {
+      return toast.error("Please enter a code key");
+    }
+    const updatedAction: Partial<TActionClassInput> & { id: string; _isDraft: boolean } = {
+      id: createId(),
       name: data.name,
       description: data.description,
       type: type as TActionClass["type"],
@@ -247,6 +250,8 @@ const CreateNewActionTab = ({
     if (type === "noCode") {
       const filteredNoCodeConfig = filterNoCodeConfig(noCodeConfig as TActionClassNoCodeConfig);
       updatedAction.noCodeConfig = filteredNoCodeConfig;
+    } else {
+      updatedAction.key = data.key;
     }
 
     setLocalSurvey((prev) => ({
@@ -276,12 +281,8 @@ const CreateNewActionTab = ({
         <div className="w-full space-y-4">
           <div className="grid w-full grid-cols-2 gap-x-4">
             <div className="col-span-1">
-              <Label htmlFor="actionNameInput">{type === "code" ? "Code" : "What did your user do?"}</Label>
-              <Input
-                id="actionNameInput"
-                placeholder={type === "code" ? "E.g. clicked-download" : "E.g. Clicked Download"}
-                {...register("name")}
-              />
+              <Label htmlFor="actionNameInput">What did your user do?</Label>
+              <Input id="actionNameInput" placeholder="E.g. Clicked Download" {...register("name")} />
             </div>
             <div className="col-span-1">
               <Label htmlFor="actionDescriptionInput">Description</Label>
@@ -315,7 +316,7 @@ const CreateNewActionTab = ({
             </div>
           </div>
 
-          <div>
+          <div onClick={(e) => e.stopPropagation()}>
             <Label>Type</Label>
             <div className="w-3/5">
               <TabBar
@@ -340,21 +341,32 @@ const CreateNewActionTab = ({
 
           <div className="max-h-60 overflow-y-auto">
             {type === "code" ? (
-              <Alert>
-                <Terminal className="h-4 w-4" />
-                <AlertTitle>How do Code Actions work?</AlertTitle>
-                <AlertDescription>
-                  You can track code action anywhere in your app using{" "}
-                  <span className="rounded bg-slate-100 px-2 py-1 text-xs">
-                    formbricks.track(&quot;{watch("name")}&quot;)
-                  </span>{" "}
-                  in your code. Read more in our{" "}
-                  <a href="https://formbricks.com/docs/actions/code" target="_blank" className="underline">
-                    docs
-                  </a>
-                  .
-                </AlertDescription>
-              </Alert>
+              <>
+                <div className="col-span-1">
+                  <Label htmlFor="codeKeyInput">Code</Label>
+                  <Input
+                    id="codeKeyInput"
+                    placeholder="Enter your code key"
+                    {...register("key")}
+                    className="mb-2 w-1/2"
+                  />
+                </div>
+                <Alert>
+                  <Terminal className="h-4 w-4" />
+                  <AlertTitle>How do Code Actions work?</AlertTitle>
+                  <AlertDescription>
+                    You can track code action anywhere in your app using{" "}
+                    <span className="rounded bg-slate-100 px-2 py-1 text-xs">
+                      formbricks.track(&quot;{watch("key")}&quot;)
+                    </span>{" "}
+                    in your code. Read more in our{" "}
+                    <a href="https://formbricks.com/docs/actions/code" target="_blank" className="underline">
+                      docs
+                    </a>
+                    .
+                  </AlertDescription>
+                </Alert>
+              </>
             ) : (
               <>
                 <div>
@@ -424,7 +436,7 @@ export const AddActionModal = ({
     {
       title: "Select saved action",
       children: (
-        <SavedActionsTab
+        <SavedActions
           actionClasses={actionClasses}
           setActionClasses={setActionClasses}
           localSurvey={localSurvey}
@@ -436,7 +448,7 @@ export const AddActionModal = ({
     {
       title: "Create new action",
       children: (
-        <CreateNewActionTab
+        <CreateNewAction
           actionClasses={actionClasses}
           setOpen={setOpen}
           isViewer={isViewer}

@@ -49,6 +49,7 @@ export const TabBar: React.FC<TabBarProps> = ({
             <div className="flex h-full flex-1 justify-center px-3 py-2" key={tab.id}>
               <button
                 onClick={() => setActiveId(tab.id)}
+                type="button"
                 className={cn(
                   tab.id === activeId
                     ? `bg-white font-semibold text-slate-900 ${activeTabClassName}`
