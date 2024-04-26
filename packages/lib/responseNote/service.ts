@@ -9,7 +9,6 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseNote, ZResponseNote } from "@formbricks/types/responses";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { responseCache } from "../response/cache";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
@@ -94,7 +93,9 @@ export const getResponseNote = async (responseNoteId: string): Promise<TResponse
       }
     },
     [`getResponseNote-${responseNoteId}`],
-    { tags: [responseNoteCache.tag.byId(responseNoteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    {
+      tags: [responseNoteCache.tag.byId(responseNoteId)],
+    }
   )();
   return responseNote ? formatDateFields(responseNote, ZResponseNote) : null;
 };
@@ -125,7 +126,9 @@ export const getResponseNotes = async (responseId: string): Promise<TResponseNot
       }
     },
     [`getResponseNotes-${responseId}`],
-    { tags: [responseNoteCache.tag.byResponseId(responseId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    {
+      tags: [responseNoteCache.tag.byResponseId(responseId)],
+    }
   )();
   return responseNotes.map((responseNote) => formatDateFields(responseNote, ZResponseNote));
 };

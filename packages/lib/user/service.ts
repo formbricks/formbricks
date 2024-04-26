@@ -10,7 +10,6 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { TUser, TUserCreateInput, TUserUpdateInput, ZUser, ZUserUpdateInput } from "@formbricks/types/user";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { createCustomerIoCustomer } from "../customerio";
 import { deleteMembership, updateMembership } from "../membership/service";
 import { deleteTeam } from "../team/service";
@@ -63,7 +62,6 @@ export const getUser = async (id: string): Promise<TUser | null> => {
     [`getUser-${id}`],
     {
       tags: [userCache.tag.byId(id)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -100,7 +98,6 @@ export const getUserByEmail = async (email: string): Promise<TUser | null> => {
     [`getUserByEmail-${email}`],
     {
       tags: [userCache.tag.byEmail(email)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 

@@ -11,7 +11,7 @@ import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL, isS3Configured } from "../constants";
+import { ITEMS_PER_PAGE, isS3Configured } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { createEnvironment } from "../environment/service";
 import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "../storage/service";
@@ -63,7 +63,6 @@ export const getProducts = async (teamId: string, page?: number): Promise<TProdu
     [`getProducts-${teamId}-${page}`],
     {
       tags: [productCache.tag.byTeamId(teamId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return products.map((product) => formatDateFields(product, ZProduct));
@@ -100,7 +99,6 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
     [`getProductByEnvironmentId-${environmentId}`],
     {
       tags: [productCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return product ? formatDateFields(product, ZProduct) : null;
@@ -180,7 +178,6 @@ export const getProduct = async (productId: string): Promise<TProduct | null> =>
     [`getProduct-${productId}`],
     {
       tags: [productCache.tag.byId(productId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return product ? formatDateFields(product, ZProduct) : null;
@@ -273,6 +270,11 @@ export const createProduct = async (
       select: selectProduct,
     });
 
+    productCache.revalidate({
+      id: product.id,
+      teamId: product.teamId,
+    });
+
     const devEnvironment = await createEnvironment(product.id, {
       type: "development",
     });
@@ -281,9 +283,11 @@ export const createProduct = async (
       type: "production",
     });
 
-    return await updateProduct(product.id, {
+    const updatedProduct = await updateProduct(product.id, {
       environments: [devEnvironment, prodEnvironment],
     });
+
+    return updatedProduct;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
