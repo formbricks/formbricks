@@ -1,7 +1,6 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { cache } from "cache";
 import { differenceInDays } from "date-fns";
 
 import { prisma } from "@formbricks/database";
@@ -13,6 +12,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 
 import { actionClassCache } from "../actionClass/cache";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
+import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { activePersonCache } from "../person/cache";
 import { getIsPersonMonthlyActive } from "../person/service";

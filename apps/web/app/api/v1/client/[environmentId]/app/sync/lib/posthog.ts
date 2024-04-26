@@ -1,5 +1,4 @@
-import { cache } from "@formrbricks/lib/cache";
-
+import { cache } from "@formbricks/lib/cache";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 
 export const sendFreeLimitReachedEventToPosthogBiWeekly = (
