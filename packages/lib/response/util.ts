@@ -2,7 +2,6 @@ import "server-only";
 
 import { Prisma } from "@prisma/client";
 
-import { TPerson } from "@formbricks/types/people";
 import { TResponse, TResponseFilterCriteria, TResponseTtc } from "@formbricks/types/responses";
 import {
   TSurvey,
@@ -526,7 +525,7 @@ export const getSurveySummaryDropOff = (
   let responseCounts = { ...initialTtc };
 
   let dropOffArr = new Array(survey.questions.length).fill(0) as number[];
-  let viewsArr = new Array(survey.questions.length).fill(0) as number[];
+  let impressionsArr = new Array(survey.questions.length).fill(0) as number[];
   let dropOffPercentageArr = new Array(survey.questions.length).fill(0) as number[];
 
   responses.forEach((response) => {
@@ -546,7 +545,7 @@ export const getSurveySummaryDropOff = (
 
       if (!currQues.required) {
         if (!response.data[currQues.id]) {
-          viewsArr[currQuesIdx]++;
+          impressionsArr[currQuesIdx]++;
 
           if (currQuesIdx === survey.questions.length - 1 && !response.finished) {
             dropOffArr[currQuesIdx]++;
@@ -577,11 +576,11 @@ export const getSurveySummaryDropOff = (
         (currQues.required && !response.data[currQues.id])
       ) {
         dropOffArr[currQuesIdx]++;
-        viewsArr[currQuesIdx]++;
+        impressionsArr[currQuesIdx]++;
         break;
       }
 
-      viewsArr[currQuesIdx]++;
+      impressionsArr[currQuesIdx]++;
 
       let nextQuesIdx = currQuesIdx + 1;
       const questionHasCustomLogic = currQues.logic;
@@ -598,7 +597,7 @@ export const getSurveySummaryDropOff = (
 
       if (!response.data[survey.questions[nextQuesIdx]?.id] && !response.finished) {
         dropOffArr[nextQuesIdx]++;
-        viewsArr[nextQuesIdx]++;
+        impressionsArr[nextQuesIdx]++;
         break;
       }
 
@@ -613,20 +612,22 @@ export const getSurveySummaryDropOff = (
   });
 
   if (!survey.welcomeCard.enabled) {
-    dropOffArr[0] = displayCount - viewsArr[0];
-    if (viewsArr[0] > displayCount) dropOffPercentageArr[0] = 0;
+    dropOffArr[0] = displayCount - impressionsArr[0];
+    if (impressionsArr[0] > displayCount) dropOffPercentageArr[0] = 0;
 
     dropOffPercentageArr[0] =
-      viewsArr[0] - displayCount >= 0 ? 0 : ((displayCount - viewsArr[0]) / displayCount) * 100 || 0;
+      impressionsArr[0] - displayCount >= 0
+        ? 0
+        : ((displayCount - impressionsArr[0]) / displayCount) * 100 || 0;
 
-    viewsArr[0] = displayCount;
+    impressionsArr[0] = displayCount;
   } else {
-    dropOffPercentageArr[0] = (dropOffArr[0] / viewsArr[0]) * 100;
+    dropOffPercentageArr[0] = (dropOffArr[0] / impressionsArr[0]) * 100;
   }
 
   for (let i = 1; i < survey.questions.length; i++) {
-    if (viewsArr[i] !== 0) {
-      dropOffPercentageArr[i] = (dropOffArr[i] / viewsArr[i]) * 100;
+    if (impressionsArr[i] !== 0) {
+      dropOffPercentageArr[i] = (dropOffArr[i] / impressionsArr[i]) * 100;
     }
   }
 
@@ -635,7 +636,7 @@ export const getSurveySummaryDropOff = (
       questionId: question.id,
       headline: getLocalizedValue(question.headline, "default"),
       ttc: convertFloatTo2Decimal(totalTtc[question.id]) || 0,
-      views: viewsArr[index] || 0,
+      impressions: impressionsArr[index] || 0,
       dropOffCount: dropOffArr[index] || 0,
       dropOffPercentage: convertFloatTo2Decimal(dropOffPercentageArr[index]) || 0,
     };
@@ -683,12 +684,13 @@ const checkForI18n = (response: TResponse, id: string, survey: TSurvey, language
 
 export const getQuestionWiseSummary = (
   survey: TSurvey,
-  responses: TResponse[]
+  responses: TResponse[],
+  dropOff: TSurveySummary["dropOff"]
 ): TSurveySummary["summary"] => {
   const VALUES_LIMIT = 50;
   let summary: TSurveySummary["summary"] = [];
 
-  survey.questions.forEach((question) => {
+  survey.questions.forEach((question, idx) => {
     switch (question.type) {
       case TSurveyQuestionType.OpenText: {
         let values: TSurveyQuestionSummaryOpenText["samples"] = [];
@@ -700,6 +702,7 @@ export const getQuestionWiseSummary = (
               updatedAt: response.updatedAt,
               value: answer,
               person: response.person,
+              personAttributes: response.personAttributes,
             });
           }
         });
@@ -731,7 +734,8 @@ export const getQuestionWiseSummary = (
           acc[choice] = 0;
           return acc;
         }, {});
-        const otherValues: { value: string; person: TPerson | null }[] = [];
+
+        const otherValues: TSurveyQuestionSummaryMultipleChoice["choices"][number]["others"] = [];
         responses.forEach((response) => {
           const responseLanguageCode = getLanguageCode(survey.languages, response.language);
 
@@ -749,6 +753,7 @@ export const getQuestionWiseSummary = (
                 otherValues.push({
                   value,
                   person: response.person,
+                  personAttributes: response.personAttributes,
                 });
               }
             });
@@ -760,6 +765,7 @@ export const getQuestionWiseSummary = (
               otherValues.push({
                 value: answer,
                 person: response.person,
+                personAttributes: response.personAttributes,
               });
             }
           }
@@ -957,15 +963,18 @@ export const getQuestionWiseSummary = (
         });
 
         const totalResponses = data.clicked + data.dismissed;
+        const impressions = dropOff[idx].impressions;
 
         summary.push({
           type: question.type,
           question,
+          impressionCount: impressions,
+          clickCount: data.clicked,
+          skipCount: data.dismissed,
           responseCount: totalResponses,
           ctr: {
             count: data.clicked,
-            percentage:
-              totalResponses > 0 ? convertFloatTo2Decimal((data.clicked / totalResponses) * 100) : 0,
+            percentage: impressions > 0 ? convertFloatTo2Decimal((data.clicked / impressions) * 100) : 0,
           },
         });
         break;
@@ -1015,6 +1024,7 @@ export const getQuestionWiseSummary = (
               updatedAt: response.updatedAt,
               value: answer,
               person: response.person,
+              personAttributes: response.personAttributes,
             });
           }
         });
@@ -1039,6 +1049,7 @@ export const getQuestionWiseSummary = (
               updatedAt: response.updatedAt,
               value: answer,
               person: response.person,
+              personAttributes: response.personAttributes,
             });
           }
         });
@@ -1153,6 +1164,7 @@ export const getQuestionWiseSummary = (
               updatedAt: response.updatedAt,
               value: answer,
               person: response.person,
+              personAttributes: response.personAttributes,
             });
           }
         });
@@ -1179,6 +1191,7 @@ export const getQuestionWiseSummary = (
           updatedAt: response.updatedAt,
           value: answer,
           person: response.person,
+          personAttributes: response.personAttributes,
         });
       }
     });

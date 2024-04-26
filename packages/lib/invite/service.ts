@@ -18,7 +18,6 @@ import {
 } from "@formbricks/types/invites";
 
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { sendInviteMemberEmail } from "../emails/emails";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
@@ -191,8 +190,6 @@ export const resendInvite = async (inviteId: string): Promise<TInvite> => {
       throw new ResourceNotFoundError("Invite", inviteId);
     }
 
-    await sendInviteMemberEmail(inviteId, invite.email, invite.creator?.name ?? "", invite.name ?? "");
-
     const updatedInvite = await prisma.invite.update({
       where: {
         id: inviteId,
@@ -221,20 +218,16 @@ export const inviteUser = async ({
   currentUser,
   invitee,
   teamId,
-  isOnboardingInvite,
-  inviteMessage,
 }: {
   teamId: string;
   invitee: TInvitee;
   currentUser: TCurrentUser;
-  isOnboardingInvite?: boolean;
-  inviteMessage?: string;
 }): Promise<TInvite> => {
   validateInputs([teamId, ZString], [invitee, ZInvitee], [currentUser, ZCurrentUser]);
 
   try {
     const { name, email, role } = invitee;
-    const { id: currentUserId, name: currentUserName } = currentUser;
+    const { id: currentUserId } = currentUser;
     const existingInvite = await prisma.invite.findFirst({ where: { email, teamId } });
 
     if (existingInvite) {
@@ -271,7 +264,6 @@ export const inviteUser = async ({
       teamId: invite.teamId,
     });
 
-    await sendInviteMemberEmail(invite.id, email, currentUserName, name, isOnboardingInvite, inviteMessage);
     return invite;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

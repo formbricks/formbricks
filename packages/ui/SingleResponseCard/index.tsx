@@ -100,7 +100,9 @@ export default function SingleResponseCard({
 }: SingleResponseCardProps) {
   const environmentId = survey.environmentId;
   const router = useRouter();
-  const displayIdentifier = response.person ? getPersonIdentifier(response.person) : null;
+  const displayIdentifier = response.person
+    ? getPersonIdentifier(response.person, response.personAttributes)
+    : null;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
