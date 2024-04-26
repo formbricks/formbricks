@@ -16,6 +16,7 @@ async function main() {
 
       if (surveys.length === 0) {
         // stop the migration if there are no surveys
+        console.log("Stopping migration, no surveys found");
         return;
       }
       let count = 0;
