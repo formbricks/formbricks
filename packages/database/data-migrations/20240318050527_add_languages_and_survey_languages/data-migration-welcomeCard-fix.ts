@@ -25,7 +25,7 @@ async function main() {
         if (
           updatedSurvey.welcomeCard &&
           updatedSurvey.welcomeCard.headline &&
-          !updatedSurvey.welcomeCard.headline.hasOwnProperty("default")
+          Object.keys(updatedSurvey.welcomeCard.headline).length === 0
         ) {
           updatedSurvey.welcomeCard.headline["default"] = "";
           count++;
