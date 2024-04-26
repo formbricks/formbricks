@@ -17,7 +17,7 @@ import {
 } from "@formbricks/types/teams";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { getProducts } from "../product/service";
 import { getUsersWithTeam, updateUser } from "../user/service";
@@ -70,7 +70,6 @@ export const getTeamsByUserId = async (userId: string, page?: number): Promise<T
     [`getTeamsByUserId-${userId}-${page}`],
     {
       tags: [teamCache.tag.byUserId(userId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return teams.map((team) => formatDateFields(team, ZTeam));
@@ -110,7 +109,6 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
     [`getTeamByEnvironmentId-${environmentId}`],
     {
       tags: [teamCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return team ? formatDateFields(team, ZTeam) : null;
@@ -140,7 +138,6 @@ export const getTeam = async (teamId: string): Promise<TTeam | null> => {
     [`getTeam-${teamId}`],
     {
       tags: [teamCache.tag.byId(teamId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return team ? formatDateFields(team, ZTeam) : null;
@@ -299,7 +296,6 @@ export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
     ["getTeamsWithPaidPlan"],
     {
       tags: [],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -350,7 +346,7 @@ export const getMonthlyActiveTeamPeopleCount = async (teamId: string): Promise<n
     },
     [`getMonthlyActiveTeamPeopleCount-${teamId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
+      revalidate: 60 * 60 * 2, // 2 hours
     }
   )();
 
@@ -376,7 +372,7 @@ export const getMonthlyTeamResponseCount = async (teamId: string): Promise<numbe
           where: {
             AND: [
               { survey: { environmentId: { in: environmentIds } } },
-              { survey: { type: "web" } },
+              { survey: { type: { in: ["app", "website"] } } },
               { createdAt: { gte: firstDayOfMonth } },
             ],
           },
@@ -394,7 +390,7 @@ export const getMonthlyTeamResponseCount = async (teamId: string): Promise<numbe
     },
     [`getMonthlyTeamResponseCount-${teamId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
+      revalidate: 60 * 60 * 2, // 2 hours
     }
   )();
 
@@ -421,7 +417,6 @@ export const getTeamBillingInfo = async (teamId: string): Promise<TTeamBilling |
     },
     [`getTeamBillingInfo-${teamId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [teamCache.tag.byId(teamId)],
     }
   )();

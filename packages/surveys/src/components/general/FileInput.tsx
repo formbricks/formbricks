@@ -1,4 +1,5 @@
 import { useMemo } from "preact/hooks";
+// @ts-expect-error
 import { JSXInternal } from "preact/src/jsx";
 import { useState } from "react";
 
@@ -89,7 +90,6 @@ export default function FileInput({
     e.preventDefault();
     e.stopPropagation();
 
-    // @ts-expect-error
     e.dataTransfer.dropEffect = "copy";
   };
 
@@ -97,7 +97,6 @@ export default function FileInput({
     e.preventDefault();
     e.stopPropagation();
 
-    // @ts-expect-error
     const files = Array.from(e.dataTransfer.files);
 
     if (!allowMultipleFiles && files.length > 1) {
@@ -109,6 +108,7 @@ export default function FileInput({
       const validFiles = files.filter((file) =>
         allowedFileExtensions && allowedFileExtensions.length > 0
           ? allowedFileExtensions.includes(
+              // @ts-expect-error
               file.type.substring(file.type.lastIndexOf("/") + 1) as TAllowedFileExtension
             )
           : true
@@ -119,6 +119,7 @@ export default function FileInput({
 
         for (const file of validFiles) {
           if (maxSizeInMB) {
+            // @ts-expect-error
             const fileBuffer = await file.arrayBuffer();
 
             const bufferBytes = fileBuffer.byteLength;
@@ -129,7 +130,9 @@ export default function FileInput({
             } else {
               setIsUploading(true);
               try {
+                // @ts-expect-error
                 const response = await onFileUpload(file, { allowedFileExtensions, surveyId });
+                // @ts-expect-error
                 setSelectedFiles([...selectedFiles, file]);
 
                 uploadedUrls.push(response);
@@ -145,7 +148,9 @@ export default function FileInput({
           } else {
             setIsUploading(true);
             try {
+              // @ts-expect-error
               const response = await onFileUpload(file, { allowedFileExtensions, surveyId });
+              // @ts-expect-error
               setSelectedFiles([...selectedFiles, file]);
 
               uploadedUrls.push(response);
@@ -234,9 +239,9 @@ export default function FileInput({
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     class="lucide lucide-file"
                     className="text-heading h-6">
                     <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />

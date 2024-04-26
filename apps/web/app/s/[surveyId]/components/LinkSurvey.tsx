@@ -117,6 +117,10 @@ export default function LinkSurvey({
     if (window.self === window.top) {
       setAutofocus(true);
     }
+    // For safari on mobile devices, scroll is a bit off due to dynamic height of address bar, so on inital load, we scroll to the bottom
+    window.scrollTo({
+      top: document.body.scrollHeight,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -181,9 +185,9 @@ export default function LinkSurvey({
   };
 
   return (
-    <div className="flex h-screen items-center justify-center">
+    <div className="flex h-screen items-end justify-center md:items-center">
       {!determineStyling().isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
-      <ContentWrapper className="w-11/12 p-0 md:max-w-md">
+      <ContentWrapper className="w-full p-0 md:max-w-md">
         {isPreview && (
           <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
             <div />

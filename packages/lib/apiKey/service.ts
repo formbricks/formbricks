@@ -10,7 +10,7 @@ import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { getHash } from "../crypto";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
@@ -44,7 +44,6 @@ export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> => {
     [`getApiKey-${apiKeyId}`],
     {
       tags: [apiKeyCache.tag.byId(apiKeyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return apiKey ? formatDateFields(apiKey, ZApiKey) : null;
@@ -75,7 +74,6 @@ export const getApiKeys = async (environmentId: string, page?: number): Promise<
     [`getApiKeys-${environmentId}-${page}`],
     {
       tags: [apiKeyCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return apiKeys.map((apiKey) => formatDateFields(apiKey, ZApiKey));
@@ -145,7 +143,6 @@ export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> 
     [`getApiKeyFromKey-${apiKey}`],
     {
       tags: [apiKeyCache.tag.byHashedKey(hashedKey)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return apiKeyData ? formatDateFields(apiKeyData, ZApiKey) : null;

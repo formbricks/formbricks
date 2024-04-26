@@ -1,4 +1,5 @@
 import { prisma } from "@formbricks/database";
+import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/email";
 import {
   DEFAULT_TEAM_ID,
   DEFAULT_TEAM_ROLE,
@@ -7,7 +8,6 @@ import {
   INVITE_DISABLED,
   SIGNUP_ENABLED,
 } from "@formbricks/lib/constants";
-import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/lib/emails/emails";
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
@@ -20,17 +20,13 @@ export async function POST(request: Request) {
   if (!EMAIL_AUTH_ENABLED || inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED) {
     return Response.json({ error: "Signup disabled" }, { status: 403 });
   }
-  user = { ...user, ...{ email: user.email.toLowerCase() } };
 
   let inviteId;
 
   try {
     let invite;
+    let isInviteValid = false;
 
-    // create the user
-    user = await createUser(user);
-
-    // User is invited to team
     if (inviteToken) {
       let inviteTokenData = await verifyInviteToken(inviteToken);
       inviteId = inviteTokenData?.inviteId;
@@ -45,7 +41,20 @@ export async function POST(request: Request) {
       if (!invite) {
         return Response.json({ error: "Invalid invite ID" }, { status: 400 });
       }
+      isInviteValid = true;
+    }
 
+    user = {
+      ...user,
+      ...{ email: user.email.toLowerCase() },
+      onboardingCompleted: isInviteValid,
+    };
+
+    // create the user
+    user = await createUser(user);
+
+    // User is invited to team
+    if (isInviteValid) {
       // assign user to existing team
       await createMembership(invite.teamId, user.id, {
         accepted: true,

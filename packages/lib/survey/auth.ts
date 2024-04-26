@@ -2,7 +2,6 @@ import { unstable_cache } from "next/cache";
 
 import { ZId } from "@formbricks/types/environment";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
@@ -31,7 +30,9 @@ export const canUserAccessSurvey = async (userId: string, surveyId: string): Pro
       }
     },
     [`canUserAccessSurvey-${userId}-${surveyId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [surveyCache.tag.byId(surveyId)] }
+    {
+      tags: [surveyCache.tag.byId(surveyId)],
+    }
   )();
 
 export const verifyUserRoleAccess = async (

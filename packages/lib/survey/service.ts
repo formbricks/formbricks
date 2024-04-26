@@ -20,7 +20,9 @@ import {
 
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { attributeCache } from "../attribute/cache";
+import { getAttributes } from "../attribute/service";
+import { ITEMS_PER_PAGE } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
 import { reverseTranslateSurvey } from "../i18n/reverseTranslation";
@@ -31,7 +33,7 @@ import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
 import { segmentCache } from "../segment/cache";
-import { createSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
+import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
 import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
@@ -226,7 +228,6 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
     [`getSurvey-${surveyId}`],
     {
       tags: [surveyCache.tag.byId(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -290,7 +291,6 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
     [`getSurveysByActionClassId-${actionClassId}-${page}`],
     {
       tags: [surveyCache.tag.byActionClassId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
   return surveys.map((survey) => formatSurveyDateFields(survey));
@@ -352,7 +352,6 @@ export const getSurveys = async (
     [`getSurveys-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [surveyCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -395,7 +394,6 @@ export const getSurveyCount = async (environmentId: string): Promise<number> => 
     [`getSurveyCount-${environmentId}`],
     {
       tags: [surveyCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -416,7 +414,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, environmentId, segment, languages, ...surveyData } = updatedSurvey;
+    const { triggers, environmentId, segment, questions, languages, type, ...surveyData } = updatedSurvey;
 
     if (languages) {
       // Process languages update logic here
@@ -469,27 +467,54 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     if (triggers) {
       data.triggers = processTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
     }
-
+    // if the survey body has type other than "app" but has a private segment, we delete that segment, and if it has a public segment, we disconnect from to the survey
     if (segment) {
-      // parse the segment filters:
-      const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
-      if (!parsedFilters.success) {
-        throw new InvalidInputError("Invalid user segment filters");
+      if (type === "app") {
+        // parse the segment filters:
+        const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
+        if (!parsedFilters.success) {
+          throw new InvalidInputError("Invalid user segment filters");
+        }
+
+        try {
+          await updateSegment(segment.id, segment);
+        } catch (error) {
+          console.error(error);
+          throw new Error("Error updating survey");
+        }
+      } else {
+        if (segment.isPrivate) {
+          await deleteSegment(segment.id);
+        } else {
+          await prisma.survey.update({
+            where: {
+              id: surveyId,
+            },
+            data: {
+              segment: {
+                disconnect: true,
+              },
+            },
+          });
+        }
       }
 
-      try {
-        await updateSegment(segment.id, segment);
-      } catch (error) {
-        console.error(error);
-        throw new Error("Error updating survey");
-      }
+      segmentCache.revalidate({
+        id: segment.id,
+        environmentId: segment.environmentId,
+      });
     }
+    data.questions = questions.map((question) => {
+      const { isDraft, ...rest } = question;
+      return rest;
+    });
 
     surveyData.updatedAt = new Date();
 
     data = {
       ...surveyData,
       ...data,
+      type,
     };
 
     // Remove scheduled status when runOnDate is not set
@@ -519,6 +544,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       };
     }
 
+    // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
+    // @ts-expect-error
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
       triggers: updatedSurvey.triggers ? updatedSurvey.triggers : [], // Include triggers from updatedSurvey
@@ -530,6 +557,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       environmentId: modifiedSurvey.environmentId,
       segmentId: modifiedSurvey.segment?.id,
     });
+
     return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -551,6 +579,26 @@ export async function deleteSurvey(surveyId: string) {
       },
       select: selectSurvey,
     });
+
+    if (deletedSurvey.type === "app") {
+      const deletedSegment = await prisma.segment.delete({
+        where: {
+          title: surveyId,
+          isPrivate: true,
+          environmentId_title: {
+            environmentId: deletedSurvey.environmentId,
+            title: surveyId,
+          },
+        },
+      });
+
+      if (deletedSegment) {
+        segmentCache.revalidate({
+          id: deletedSegment.id,
+          environmentId: deletedSurvey.environmentId,
+        });
+      }
+    }
 
     responseCache.revalidate({
       surveyId,
@@ -611,7 +659,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
       attributeFilters: undefined,
     };
 
-    if (surveyBody.type === "web" && data.thankYouCard) {
+    if ((surveyBody.type === "website" || surveyBody.type === "app") && data.thankYouCard) {
       data.thankYouCard.buttonLabel = undefined;
       data.thankYouCard.buttonLink = undefined;
     }
@@ -636,10 +684,46 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
       select: selectSurvey,
     });
 
+    // if the survey created is an "app" survey, we also create a private segment for it.
+    if (survey.type === "app") {
+      const newSegment = await createSegment({
+        environmentId,
+        surveyId: survey.id,
+        filters: [],
+        title: survey.id,
+        isPrivate: true,
+      });
+
+      await prisma.survey.update({
+        where: {
+          id: survey.id,
+        },
+        data: {
+          segment: {
+            connect: {
+              id: newSegment.id,
+            },
+          },
+        },
+      });
+
+      segmentCache.revalidate({
+        id: newSegment.id,
+        environmentId: survey.environmentId,
+      });
+    }
+
+    // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
+    // @ts-expect-error
     const transformedSurvey: TSurvey = {
       ...survey,
       triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
-      segment: null,
+      ...(survey.segment && {
+        segment: {
+          ...survey.segment,
+          surveys: survey.segment.surveys.map((survey) => survey.id),
+        },
+      }),
     };
 
     await subscribeTeamMembersToSurveyResponses(environmentId, survey.id);
@@ -821,7 +905,7 @@ export const getSyncSurveys = async (
         let surveys: TSurvey[] | TLegacySurvey[] = await getSurveys(environmentId);
 
         // filtered surveys for running and web
-        surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web");
+        surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "app");
 
         // if no surveys are left, return an empty array
         if (surveys.length === 0) {
@@ -879,7 +963,9 @@ export const getSyncSurveys = async (
         const personActionClassIds = Array.from(
           new Set(personActions?.map((action) => action.actionClass?.id ?? ""))
         );
-        const personUserId = person.userId ?? person.attributes?.userId ?? "";
+
+        const attributes = await getAttributes(person.id);
+        const personUserId = person.userId;
 
         // the surveys now have segment filters, so we need to evaluate them
         const surveyPromises = surveys.map(async (survey) => {
@@ -906,7 +992,7 @@ export const getSyncSurveys = async (
 
             // we check if the person meets the attribute filters for all the attribute filters
             const isEligible = attributeFilters.every((attributeFilter) => {
-              const personAttributeValue = person?.attributes?.[attributeFilter.attributeClassName];
+              const personAttributeValue = attributes[attributeFilter.attributeClassName];
               if (!personAttributeValue) {
                 return false;
               }
@@ -927,7 +1013,7 @@ export const getSyncSurveys = async (
           // Evaluate the segment filters
           const result = await evaluateSegment(
             {
-              attributes: person.attributes ?? {},
+              attributes: attributes ?? {},
               actionIds: personActionClassIds,
               deviceType,
               environmentId,
@@ -964,8 +1050,8 @@ export const getSyncSurveys = async (
         displayCache.tag.byPersonId(personId),
         surveyCache.tag.byEnvironmentId(environmentId),
         productCache.tag.byEnvironmentId(environmentId),
+        attributeCache.tag.byPersonId(personId),
       ],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -1035,6 +1121,8 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       };
     }
 
+    // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
+    // @ts-expect-error
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
       triggers: prismaSurvey.triggers.map((trigger) => trigger.actionClass.name),
@@ -1072,6 +1160,8 @@ export const getSurveysBySegmentId = async (segmentId: string): Promise<TSurvey[
             };
           }
 
+          // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
+          // @ts-expect-error
           const transformedSurvey: TSurvey = {
             ...surveyPrisma,
             triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
@@ -1092,7 +1182,6 @@ export const getSurveysBySegmentId = async (segmentId: string): Promise<TSurvey[
     [`getSurveysBySegmentId-${segmentId}`],
     {
       tags: [surveyCache.tag.bySegmentId(segmentId), segmentCache.tag.byId(segmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 

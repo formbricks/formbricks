@@ -28,7 +28,7 @@ interface PreviewSurveyProps {
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
 }
 
-let surveyNameTemp;
+let surveyNameTemp: string;
 
 const previewParentContainerVariant: Variants = {
   expanded: {
@@ -156,7 +156,7 @@ export const PreviewSurvey = ({
 
   const onFinished = () => {
     // close modal if there are no questions left
-    if (survey.type === "web" && !survey.thankYouCard.enabled) {
+    if ((survey.type === "website" || survey.type === "app") && !survey.thankYouCard.enabled) {
       setIsModalOpen(false);
       setTimeout(() => {
         setQuestionId(survey.questions[0]?.id);
@@ -165,7 +165,7 @@ export const PreviewSurvey = ({
     }
   };
 
-  // this useEffect is fo refreshing the survey preview only if user is switching between templates on survey templates page and hence we are checking for survey.id === "someUniqeId1" which is a common Id for all templates
+  // this useEffect is for refreshing the survey preview only if user is switching between templates on survey templates page and hence we are checking for survey.id === "someUniqeId1" which is a common Id for all templates
   useEffect(() => {
     if (survey.name !== surveyNameTemp && survey.id === "someUniqueId1") {
       resetQuestionProgress();
@@ -208,7 +208,7 @@ export const PreviewSurvey = ({
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-items-center">
+    <div className="flex h-full w-full flex-col items-center justify-items-center" id="survey-preview">
       <motion.div
         variants={previewParentContainerVariant}
         className="fixed hidden h-[95%] w-5/6"
@@ -260,13 +260,13 @@ export const PreviewSurvey = ({
                   />
                 </Modal>
               ) : (
-                <div className="w-full px-3">
+                <div className="flex h-full w-full flex-col justify-end">
                   <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && product.logo?.url && (
                       <ClientLogo environmentId={environment.id} product={product} previewSurvey />
                     )}
                   </div>
-                  <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
+                  <div className="no-scrollbar z-10 w-full border border-transparent">
                     <SurveyInline
                       survey={survey}
                       isBrandingEnabled={product.linkSurveyBranding}

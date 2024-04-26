@@ -3,8 +3,6 @@ import "server-only";
 import { env } from "./env";
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
-export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
-export const SERVICES_REVALIDATION_INTERVAL = 60 * 60 * 24; // 24 hours
 export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 9000 : 1000000;
 
 // URLs
@@ -177,5 +175,6 @@ export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 
 export const CUSTOMER_IO_SITE_ID = env.CUSTOMER_IO_SITE_ID;
 export const CUSTOMER_IO_API_KEY = env.CUSTOMER_IO_API_KEY;
+export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;
 
 export const STRIPE_API_VERSION = "2024-04-10";
