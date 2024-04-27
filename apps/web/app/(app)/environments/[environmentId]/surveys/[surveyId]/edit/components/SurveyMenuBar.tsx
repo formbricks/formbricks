@@ -170,9 +170,11 @@ export const SurveyMenuBar = ({
       });
 
       const segment = await handleSegmentUpdate();
-      await updateSurveyAction({ ...localSurvey, segment });
+      const updatedSurvey = await updateSurveyAction({ ...localSurvey, segment });
+
       setIsSurveySaving(false);
-      setLocalSurvey(localSurvey);
+      setLocalSurvey(updatedSurvey);
+
       toast.success("Changes saved.");
     } catch (e) {
       console.error(e);

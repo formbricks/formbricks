@@ -393,7 +393,7 @@ export default function Navigation({
                       <DropdownMenuSubTrigger>
                         <div>
                           <div className="flex items-center space-x-1">
-                            <p className="">{truncate(product!.name, 20)}</p>
+                            <p>{truncate(product!.name, 20)}</p>
                             {!widgetSetupCompleted && (
                               <TooltipProvider delayDuration={50}>
                                 <Tooltip>

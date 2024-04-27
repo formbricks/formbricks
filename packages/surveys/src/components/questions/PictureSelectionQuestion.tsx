@@ -109,7 +109,7 @@ export const PictureSelectionQuestion = ({
           <div className="mt-4">
             <fieldset>
               <legend className="sr-only">Options</legend>
-              <div className="rounded-m bg-survey-bg relative grid max-h-[33vh] grid-cols-2 gap-x-5 gap-y-4 overflow-y-auto">
+              <div className="bg-survey-bg relative grid grid-cols-2 gap-x-5 gap-y-4">
                 {questionChoices.map((choice, idx) => (
                   <label
                     key={choice.id}
@@ -128,7 +128,7 @@ export const PictureSelectionQuestion = ({
                       Array.isArray(value) && value.includes(choice.id)
                         ? `border-brand text-brand z-10 border-4 shadow-xl`
                         : "",
-                      "focus:border-brand group/image relative inline-block h-28 w-full cursor-pointer overflow-hidden rounded-xl border focus:border-4 focus:outline-none"
+                      "focus:border-brand group/image rounded-custom relative inline-block h-28 w-full cursor-pointer overflow-hidden border focus:border-4 focus:outline-none"
                     )}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -170,7 +170,7 @@ export const PictureSelectionQuestion = ({
                         tabIndex={-1}
                         checked={value.includes(choice.id)}
                         className={cn(
-                          "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded border",
+                          "border-border rounded-custom pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 border",
                           value.includes(choice.id) ? "border-brand text-brand" : ""
                         )}
                         required={question.required && value.length ? false : question.required}

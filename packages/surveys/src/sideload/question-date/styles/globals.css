@@ -50,12 +50,14 @@
 .react-date-picker__calendar--open {
   position: absolute !important;
   top: 0 !important;
+  width: 100% !important;
 }
 
 .calendar-root {
   position: absolute !important;
   top: 0 !important;
   background: var(--fb-survey-background-color) !important;
+  width: 100% !important;
 }
 
 .calendar-root [class$="navigation"] {

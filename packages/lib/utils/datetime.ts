@@ -1,7 +1,27 @@
+const monthNames = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
 // Helper function to calculate difference in days between two dates
 export const diffInDays = (date1: Date, date2: Date) => {
   const diffTime = Math.abs(date2.getTime() - date1.getTime());
   return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+};
+
+// Helper function to get the month name
+export const getMonthName = (monthIndex: number) => {
+  return monthNames[monthIndex];
 };
 
 export const formatDateWithOrdinal = (date: Date): string => {
@@ -12,20 +32,6 @@ export const formatDateWithOrdinal = (date: Date): string => {
   };
 
   const dayOfWeekNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
 
   const dayOfWeek = dayOfWeekNames[date.getDay()];
   const day = date.getDate();
@@ -33,6 +39,22 @@ export const formatDateWithOrdinal = (date: Date): string => {
   const year = date.getFullYear();
 
   return `${dayOfWeek}, ${monthNames[monthIndex]} ${day}${getOrdinalSuffix(day)}, ${year}`;
+};
+
+// Helper function to format the date with an ordinal suffix
+export const getOrdinalDate = (date: number) => {
+  const j = date % 10,
+    k = date % 100;
+  if (j === 1 && k !== 11) {
+    return date + "st";
+  }
+  if (j === 2 && k !== 12) {
+    return date + "nd";
+  }
+  if (j === 3 && k !== 13) {
+    return date + "rd";
+  }
+  return date + "th";
 };
 
 export function isValidDateString(value: string) {
