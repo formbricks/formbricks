@@ -1,7 +1,7 @@
 import { TFormbricksApp } from "@formbricks/js-core/app";
 import { TFormbricksWebsite } from "@formbricks/js-core/website";
 
-import { Result } from "../../types/errorHandlers";
+import { Result, wrapThrowsAsync } from "../../types/errorHandlers";
 
 declare global {
   interface Window {
@@ -76,14 +76,15 @@ const formbricksProxyHandler: ProxyHandler<TFormbricksWebsite> = {
         }
 
         const { apiHost } = args[0];
-        const loadSDKResult = await loadFormbricksWebsiteSDK(apiHost);
+        const loadSDKResult = await wrapThrowsAsync(loadFormbricksWebsiteSDK)(apiHost);
+
         if (!loadSDKResult.ok) {
           console.error(`🧱 Formbricks - Global error: ${loadSDKResult.error.message}`);
           return;
         }
       }
 
-      if (typeof window.formbricks[prop as FormbricksWebsiteMethods] !== "function") {
+      if (window.formbricks && typeof window.formbricks[prop as FormbricksWebsiteMethods] !== "function") {
         console.error(
           `🧱 Formbricks - Global error: Formbricks Website SDK does not support method ${String(prop)}`
         );
