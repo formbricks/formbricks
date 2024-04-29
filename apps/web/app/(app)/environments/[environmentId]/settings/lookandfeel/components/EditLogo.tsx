@@ -25,7 +25,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
   const [logoUrl, setLogoUrl] = useState<string | undefined>(product.logo?.url || undefined);
   const [logoBgColor, setLogoBgColor] = useState<string | undefined>(product.logo?.bgColor || undefined);
   const [isBgColorEnabled, setIsBgColorEnabled] = useState<boolean>(!!product.logo?.bgColor);
-  const [confirmRemoveLogoModalOpen, setconfirmRemoveLogoModalOpen] = useState(false);
+  const [confirmRemoveLogoModalOpen, setConfirmRemoveLogoModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -60,7 +60,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
 
     setIsLoading(true);
     try {
-      const updatedProduct: Partial<TProductUpdateInput> = {
+      const updatedProduct: TProductUpdateInput = {
         logo: { url: logoUrl, bgColor: isBgColorEnabled ? logoBgColor : undefined },
       };
       await updateProductAction(product.id, updatedProduct);
@@ -82,7 +82,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
 
     setIsLoading(true);
     try {
-      const updatedProduct: Partial<TProductUpdateInput> = {
+      const updatedProduct: TProductUpdateInput = {
         logo: { url: undefined, bgColor: undefined },
       };
       await updateProductAction(product.id, updatedProduct);
@@ -92,7 +92,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
     } finally {
       setIsEditing(false);
       setIsLoading(false);
-      setconfirmRemoveLogoModalOpen(false);
+      setConfirmRemoveLogoModalOpen(false);
     }
   };
 
@@ -138,7 +138,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
             <Button
               variant="warn"
               size="sm"
-              onClick={() => setconfirmRemoveLogoModalOpen(true)}
+              onClick={() => setConfirmRemoveLogoModalOpen(true)}
               disabled={!isEditing}>
               Remove Logo
             </Button>
@@ -171,7 +171,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
       )}
       <DeleteDialog
         open={confirmRemoveLogoModalOpen}
-        setOpen={setconfirmRemoveLogoModalOpen}
+        setOpen={setConfirmRemoveLogoModalOpen}
         deleteWhat="Logo"
         text="Are you sure you want to remove the logo?"
         onDelete={removeLogo}
