@@ -191,7 +191,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
               setOpen={setFormStylingOpen}
               styling={styling}
               setStyling={setStyling}
-              hideCheckmark
+              isSettingsPage
             />
 
             <CardStylingSettings
@@ -199,7 +199,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
               setOpen={setCardStylingOpen}
               styling={styling}
               setStyling={setStyling}
-              hideCheckmark
+              isSettingsPage
               localProduct={localProduct}
             />
 
@@ -211,7 +211,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
               environmentId={environmentId}
               colors={colors}
               key={styling.background?.bg}
-              hideCheckmark
+              isSettingsPage
               isUnsplashConfigured={isUnsplashConfigured}
             />
           </div>
