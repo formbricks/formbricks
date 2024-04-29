@@ -1,15 +1,14 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
-import { TLegacySurvey, ZLegacySurvey } from "@formbricks/types/LegacySurvey";
+import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
-import { TSegment, ZSegment, ZSegmentFilters } from "@formbricks/types/segment";
+import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TSurvey,
   TSurveyFilterCriteria,
@@ -21,7 +20,8 @@ import {
 import { getActionsByPersonId } from "../action/service";
 import { attributeCache } from "../attribute/cache";
 import { getAttributes } from "../attribute/service";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
+import { ITEMS_PER_PAGE } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
 import { reverseTranslateSurvey } from "../i18n/reverseTranslation";
@@ -35,10 +35,10 @@ import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
 import { subscribeTeamMembersToSurveyResponses } from "../team/service";
-import { diffInDays, formatDateFields } from "../utils/datetime";
+import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { anySurveyHasFilters, buildOrderByClause, buildWhereClause, formatSurveyDateFields } from "./util";
+import { anySurveyHasFilters, buildOrderByClause, buildWhereClause, transformPrismaSurvey } from "./util";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -205,8 +205,8 @@ const handleTriggerUpdates = async (
   return triggersUpdate;
 };
 
-export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
-  const survey = await unstable_cache(
+export const getSurvey = (surveyId: string): Promise<TSurvey | null> =>
+  cache(
     async () => {
       validateInputs([surveyId, ZId]);
 
@@ -230,39 +230,16 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         return null;
       }
 
-      let surveySegment: TSegment | null = null;
-      if (surveyPrisma.segment) {
-        surveySegment = formatDateFields(
-          {
-            ...surveyPrisma.segment,
-            surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
-          },
-          ZSegment
-        );
-      }
-
-      const transformedSurvey: TSurvey = {
-        ...surveyPrisma,
-        triggers: surveyPrisma.triggers.map((trigger) => ({ ...trigger.actionClass })),
-        segment: surveySegment,
-      };
-
-      return transformedSurvey;
+      return transformPrismaSurvey(surveyPrisma);
     },
     [`getSurvey-${surveyId}`],
     {
       tags: [surveyCache.tag.byId(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
-  // https://github.com/vercel/next.js/issues/51613
-  return survey ? formatSurveyDateFields(survey) : null;
-};
-
-export const getSurveysByActionClassId = async (actionClassId: string, page?: number): Promise<TSurvey[]> => {
-  const surveys = await unstable_cache(
+export const getSurveysByActionClassId = (actionClassId: string, page?: number): Promise<TSurvey[]> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId], [page, ZOptionalNumber]);
 
@@ -294,21 +271,7 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
       const surveys: TSurvey[] = [];
 
       for (const surveyPrisma of surveysPrisma) {
-        let segment: TSegment | null = null;
-
-        if (surveyPrisma.segment) {
-          segment = {
-            ...surveyPrisma.segment,
-            surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
-          };
-        }
-
-        const transformedSurvey: TSurvey = {
-          ...surveyPrisma,
-          triggers: surveyPrisma.triggers.map((trigger) => ({ ...trigger.actionClass })),
-
-          segment,
-        };
+        const transformedSurvey = transformPrismaSurvey(surveyPrisma);
         surveys.push(transformedSurvey);
       }
 
@@ -317,19 +280,16 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
     [`getSurveysByActionClassId-${actionClassId}-${page}`],
     {
       tags: [surveyCache.tag.byActionClassId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return surveys.map((survey) => formatSurveyDateFields(survey));
-};
 
-export const getSurveys = async (
+export const getSurveys = (
   environmentId: string,
   limit?: number,
   offset?: number,
   filterCriteria?: TSurveyFilterCriteria
-): Promise<TSurvey[]> => {
-  const surveys = await unstable_cache(
+): Promise<TSurvey[]> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
       let surveysPrisma;
@@ -357,22 +317,7 @@ export const getSurveys = async (
       const surveys: TSurvey[] = [];
 
       for (const surveyPrisma of surveysPrisma) {
-        let segment: TSegment | null = null;
-
-        if (surveyPrisma.segment) {
-          segment = {
-            ...surveyPrisma.segment,
-            surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
-          };
-        }
-
-        const transformedSurvey: TSurvey = {
-          ...surveyPrisma,
-          triggers: surveyPrisma.triggers.map((trigger) => ({ ...trigger.actionClass })),
-
-          segment,
-        };
-
+        const transformedSurvey = transformPrismaSurvey(surveyPrisma);
         surveys.push(transformedSurvey);
       }
       return surveys;
@@ -380,14 +325,8 @@ export const getSurveys = async (
     [`getSurveys-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [surveyCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
-  // https://github.com/vercel/next.js/issues/51613
-  return surveys.map((survey) => formatSurveyDateFields(survey));
-};
 
 export const transformToLegacySurvey = async (
   survey: TSurvey,
@@ -396,11 +335,11 @@ export const transformToLegacySurvey = async (
   const targetLanguage = languageCode ?? "default";
   const transformedSurvey = reverseTranslateSurvey(survey, targetLanguage);
 
-  return formatDateFields(transformedSurvey, ZLegacySurvey);
+  return transformedSurvey;
 };
 
-export const getSurveyCount = async (environmentId: string): Promise<number> => {
-  const count = await unstable_cache(
+export const getSurveyCount = async (environmentId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId]);
       try {
@@ -423,12 +362,8 @@ export const getSurveyCount = async (environmentId: string): Promise<number> => 
     [`getSurveyCount-${environmentId}`],
     {
       tags: [surveyCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  return count;
-};
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   validateInputs([updatedSurvey, ZSurveyWithRefinements]);
@@ -900,18 +835,17 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
   }
 };
 
-export const getSyncSurveys = async (
+export const getSyncSurveys = (
   environmentId: string,
   personId: string,
   deviceType: "phone" | "desktop" = "desktop",
   options?: {
     version?: string;
   }
-): Promise<TSurvey[] | TLegacySurvey[]> => {
-  validateInputs([environmentId, ZId]);
-
-  const surveys = await unstable_cache(
+): Promise<TSurvey[] | TLegacySurvey[]> =>
+  cache(
     async () => {
+      validateInputs([environmentId, ZId]);
       try {
         const product = await getProductByEnvironmentId(environmentId);
 
@@ -1073,15 +1007,10 @@ export const getSyncSurveys = async (
         displayCache.tag.byPersonId(personId),
         surveyCache.tag.byEnvironmentId(environmentId),
         productCache.tag.byEnvironmentId(environmentId),
-        // ? Should this be included?
         attributeCache.tag.byPersonId(personId),
       ],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  return surveys.map((survey) => formatSurveyDateFields(survey));
-};
 
 export const getSurveyIdByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
   try {
@@ -1164,8 +1093,8 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
   }
 };
 
-export const getSurveysBySegmentId = async (segmentId: string): Promise<TSurvey[]> => {
-  const surveys = await unstable_cache(
+export const getSurveysBySegmentId = (segmentId: string): Promise<TSurvey[]> =>
+  cache(
     async () => {
       try {
         const surveysPrisma = await prisma.survey.findMany({
@@ -1176,22 +1105,7 @@ export const getSurveysBySegmentId = async (segmentId: string): Promise<TSurvey[
         const surveys: TSurvey[] = [];
 
         for (const surveyPrisma of surveysPrisma) {
-          let segment: TSegment | null = null;
-
-          if (surveyPrisma.segment) {
-            segment = {
-              ...surveyPrisma.segment,
-              surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
-            };
-          }
-
-          // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
-          // @ts-expect-error
-          const transformedSurvey: TSurvey = {
-            ...surveyPrisma,
-            triggers: surveyPrisma.triggers.map((trigger) => ({ ...trigger.actionClass })),
-            segment,
-          };
+          const transformedSurvey = transformPrismaSurvey(surveyPrisma);
           surveys.push(transformedSurvey);
         }
 
@@ -1207,9 +1121,5 @@ export const getSurveysBySegmentId = async (segmentId: string): Promise<TSurvey[
     [`getSurveysBySegmentId-${segmentId}`],
     {
       tags: [surveyCache.tag.bySegmentId(segmentId), segmentCache.tag.byId(segmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  return surveys;
-};

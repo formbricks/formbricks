@@ -74,14 +74,6 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
     }
   };
 
-  const transformLanguageDateFields = (language: TLanguage): TLanguage => {
-    return {
-      ...language,
-      createdAt: new Date(language.createdAt),
-      updatedAt: new Date(language.updatedAt),
-    };
-  };
-
   const updateSurveyTranslations = (survey: TSurvey, updatedLanguages: TSurveyLanguage[]) => {
     const translatedSurveyResult = translateSurvey(survey, extractLanguageCodes(updatedLanguages));
     try {
@@ -111,7 +103,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         {
           enabled: true,
           default: false,
-          language: transformLanguageDateFields(language),
+          language,
         },
       ];
     }
@@ -143,7 +135,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         newLanguages.push({
           enabled: true,
           default: true,
-          language: transformLanguageDateFields(language),
+          language,
         });
       }
 

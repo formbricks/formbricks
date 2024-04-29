@@ -1,7 +1,6 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber } from "@formbricks/types/common";
@@ -12,7 +11,6 @@ import {
   TDisplayLegacyCreateInput,
   TDisplayLegacyUpdateInput,
   TDisplayUpdateInput,
-  ZDisplay,
   ZDisplayCreateInput,
   ZDisplayLegacyCreateInput,
   ZDisplayLegacyUpdateInput,
@@ -22,9 +20,9 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
+import { ITEMS_PER_PAGE } from "../constants";
 import { createPerson, getPersonByUserId } from "../person/service";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
 
@@ -38,8 +36,8 @@ export const selectDisplay = {
   status: true,
 };
 
-export const getDisplay = async (displayId: string): Promise<TDisplay | null> => {
-  const display = await unstable_cache(
+export const getDisplay = (displayId: string): Promise<TDisplay | null> =>
+  cache(
     async () => {
       validateInputs([displayId, ZId]);
 
@@ -63,11 +61,8 @@ export const getDisplay = async (displayId: string): Promise<TDisplay | null> =>
     [`getDisplay-${displayId}`],
     {
       tags: [displayCache.tag.byId(displayId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return display ? formatDateFields(display, ZDisplay) : null;
-};
 
 export const updateDisplay = async (
   displayId: string,
@@ -280,8 +275,8 @@ export const markDisplayRespondedLegacy = async (displayId: string): Promise<TDi
   }
 };
 
-export const getDisplaysByPersonId = async (personId: string, page?: number): Promise<TDisplay[]> => {
-  const displays = await unstable_cache(
+export const getDisplaysByPersonId = (personId: string, page?: number): Promise<TDisplay[]> =>
+  cache(
     async () => {
       validateInputs([personId, ZId], [page, ZOptionalNumber]);
 
@@ -310,11 +305,8 @@ export const getDisplaysByPersonId = async (personId: string, page?: number): Pr
     [`getDisplaysByPersonId-${personId}-${page}`],
     {
       tags: [displayCache.tag.byPersonId(personId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return displays.map((display) => formatDateFields(display, ZDisplay));
-};
 
 export const deleteDisplayByResponseId = async (
   responseId: string,
@@ -344,11 +336,8 @@ export const deleteDisplayByResponseId = async (
   }
 };
 
-export const getDisplayCountBySurveyId = async (
-  surveyId: string,
-  filters?: TDisplayFilters
-): Promise<number> =>
-  unstable_cache(
+export const getDisplayCountBySurveyId = (surveyId: string, filters?: TDisplayFilters): Promise<number> =>
+  cache(
     async () => {
       validateInputs([surveyId, ZId]);
 
@@ -376,6 +365,5 @@ export const getDisplayCountBySurveyId = async (
     [`getDisplayCountBySurveyId-${surveyId}-${JSON.stringify(filters)}`],
     {
       tags: [displayCache.tag.bySurveyId(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

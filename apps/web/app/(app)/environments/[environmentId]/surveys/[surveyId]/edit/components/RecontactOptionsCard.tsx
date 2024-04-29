@@ -127,7 +127,7 @@ export default function RecontactOptionsCard({
                   id={option.name}
                   className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
                 />
-                <div className="">
+                <div>
                   <p className="font-semibold text-slate-700">{option.name}</p>
 
                   <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
@@ -188,7 +188,7 @@ export default function RecontactOptionsCard({
                   id="newDays"
                   className="aria-checked:border-brand-dark mx-4 disabled:border-slate-400 aria-checked:border-2"
                 />
-                <div className="">
+                <div>
                   <p className="text-sm font-semibold text-slate-700">
                     Wait
                     <Input

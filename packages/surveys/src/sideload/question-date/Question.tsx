@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import DatePicker from "react-date-picker";
 
+import { getMonthName, getOrdinalDate } from "@formbricks/lib/utils/datetime";
+
 const CalendarIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -53,6 +55,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
 
   useEffect(() => {
     if (datePickerOpen) {
+      if (!selectedDate) setSelectedDate(new Date());
       const input = document.querySelector(".react-date-picker__inputGroup__input") as HTMLInputElement;
       if (input) {
         input.focus();
@@ -72,23 +75,23 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
   const formattedDate = useMemo(() => {
     if (!selectedDate) return "";
 
-    if (format === "M-d-y") {
-      return `${selectedDate?.getMonth() + 1}-${selectedDate?.getDate()}-${selectedDate?.getFullYear()}`;
-    }
+    const day = selectedDate.getDate();
+    const monthIndex = selectedDate.getMonth();
+    const year = selectedDate.getFullYear();
 
-    if (format === "d-M-y") {
-      return `${selectedDate?.getDate()}-${selectedDate?.getMonth() + 1}-${selectedDate?.getFullYear()}`;
-    }
-
-    return `${selectedDate?.getFullYear()}-${selectedDate?.getMonth() + 1}-${selectedDate?.getDate()}`;
-  }, [format, selectedDate]);
+    return `${getOrdinalDate(day)} of ${getMonthName(monthIndex)}, ${year}`;
+  }, [selectedDate]);
 
   return (
-    <div className="relative h-40">
+    <div className="relative">
       {!datePickerOpen && (
         <div
           onClick={() => setDatePickerOpen(true)}
-          className="bg-input-bg hover:bg-input-bg-selected border-border text-placeholder relative flex h-40 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === " ") setDatePickerOpen(true);
+          }}
+          className="focus:outline-brand bg-input-bg hover:bg-input-bg-selected border-border text-heading rounded-custom relative flex h-[12dvh] w-full cursor-pointer appearance-none items-center justify-center border text-left text-base font-normal">
           <div className="flex items-center gap-2">
             {selectedDate ? (
               <div className="flex items-center gap-2">
@@ -119,10 +122,10 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
         monthPlaceholder="MM"
         yearPlaceholder="YYYY"
         format={format ?? "M-d-y"}
-        className={`dp-input-root rounded-custom ${!datePickerOpen ? "wrapper-hide" : ""}
+        className={`dp-input-root rounded-custom wrapper-hide ${!datePickerOpen ? "" : "h-[46dvh] sm:h-[34dvh]"}
           ${hideInvalid ? "hide-invalid" : ""}
         `}
-        calendarClassName="calendar-root w-80 rounded-lg border border-[#e5e7eb] p-3 shadow-md h-40 overflow-auto"
+        calendarClassName="calendar-root !bg-input-bg border border-border rounded-custom p-3 h-[46dvh] sm:h-[33dvh] overflow-auto"
         clearIcon={null}
         onCalendarOpen={() => {
           setDatePickerOpen(true);
@@ -136,14 +139,14 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
         calendarIcon={<CalendarIcon />}
         tileClassName={({ date }) => {
           const baseClass =
-            "hover:bg-slate-200 rounded-md h-9 p-0 mt-1 font-normal text-slate-900 aria-selected:opacity-100";
+            "hover:bg-input-bg-selected rounded-custom h-9 p-0 mt-1 font-normal text-heading aria-selected:opacity-100 focus:ring-2 focus:bg-slate-200";
           // today's date class
           if (
             date.getDate() === new Date().getDate() &&
             date.getMonth() === new Date().getMonth() &&
             date.getFullYear() === new Date().getFullYear()
           ) {
-            return `${baseClass} bg-slate-100`;
+            return `${baseClass} border border-input-border`;
           }
           // active date class
           if (
@@ -151,7 +154,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
             date.getMonth() === selectedDate?.getMonth() &&
             date.getFullYear() === selectedDate?.getFullYear()
           ) {
-            return `${baseClass} !bg-slate-900 !text-slate-100`;
+            return `${baseClass} !bg-brand !border-border-highlight !text-heading focus:ring-2 focus:bg-slate-200`;
           }
 
           return baseClass;
@@ -159,6 +162,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
         formatShortWeekday={(_, date) => {
           return date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
         }}
+        navi
         showNeighboringMonth={false}
         showLeadingZeros={false}
       />

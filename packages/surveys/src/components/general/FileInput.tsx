@@ -209,7 +209,7 @@ export default function FileInput({
   return (
     <div
       className={`items-left bg-input-bg hover:bg-input-bg-selected border-border relative mt-3 flex w-full flex-col justify-center rounded-lg border-2 border-dashed dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800`}>
-      <div className="max-h-[30vh] overflow-auto">
+      <div>
         {fileUrls &&
           fileUrls?.map((file, index) => {
             const fileName = getOriginalFileNameFromUrl(file);
@@ -268,7 +268,7 @@ export default function FileInput({
         <label htmlFor="selectedFile" onDragOver={(e) => handleDragOver(e)} onDrop={(e) => handleDrop(e)}>
           {showUploader && (
             <div
-              className="flex flex-col items-center justify-center py-6 hover:cursor-pointer focus:border-2 focus:outline-none"
+              className="focus:outline-brand flex flex-col items-center justify-center py-6 hover:cursor-pointer"
               tabIndex={1}
               onKeyDown={(e) => {
                 // Accessibility: if spacebar was pressed pass this down to the input

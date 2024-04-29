@@ -3,44 +3,26 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
+import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys";
 
-export const formatSurveyDateFields = (survey: TSurvey): TSurvey => {
-  if (typeof survey.createdAt === "string") {
-    survey.createdAt = new Date(survey.createdAt);
-  }
-  if (typeof survey.updatedAt === "string") {
-    survey.updatedAt = new Date(survey.updatedAt);
-  }
-  if (typeof survey.runOnDate === "string") {
-    survey.runOnDate = new Date(survey.runOnDate);
-  }
-  if (typeof survey.closeOnDate === "string") {
-    survey.closeOnDate = new Date(survey.closeOnDate);
+export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
+  let segment: TSegment | null = null;
+
+  if (surveyPrisma.segment) {
+    segment = {
+      ...surveyPrisma.segment,
+      surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
+    };
   }
 
-  if (survey.segment) {
-    if (typeof survey.segment.createdAt === "string") {
-      survey.segment.createdAt = new Date(survey.segment.createdAt);
-    }
+  const transformedSurvey: TSurvey = {
+    ...surveyPrisma,
+    triggers: surveyPrisma.triggers.map((trigger) => ({ ...trigger.actionClass })),
+    segment,
+  };
 
-    if (typeof survey.segment.updatedAt === "string") {
-      survey.segment.updatedAt = new Date(survey.segment.updatedAt);
-    }
-  }
-
-  if (survey.languages) {
-    survey.languages.forEach((surveyLanguage) => {
-      if (typeof surveyLanguage.language.createdAt === "string") {
-        surveyLanguage.language.createdAt = new Date(surveyLanguage.language.createdAt);
-      }
-      if (typeof surveyLanguage.language.updatedAt === "string") {
-        surveyLanguage.language.updatedAt = new Date(surveyLanguage.language.updatedAt);
-      }
-    });
-  }
-
-  return survey;
+  return transformedSurvey;
 };
 
 export const buildWhereClause = (filterCriteria?: TSurveyFilterCriteria) => {

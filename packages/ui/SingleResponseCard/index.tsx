@@ -8,8 +8,7 @@ import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { getLanguageCode } from "@formbricks/lib/i18n/utils";
+import { getLanguageCode, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
@@ -314,38 +313,34 @@ export default function SingleResponseCard({
           <div className="flex items-center justify-between">
             <div className="flex items-center justify-center space-x-4">
               {pageType === "response" && (
-                <div>
-                  {response.person?.id ? (
-                    user ? (
-                      <Link
-                        className="group flex items-center"
-                        href={`/environments/${environmentId}/people/${response.person.id}`}>
-                        <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                  <div className="group">
+                    {response.person?.id ? (
+                      user ? (
+                        <Link
+                          className="flex items-center"
+                          href={`/environments/${environmentId}/people/${response.person.id}`}>
                           <PersonAvatar personId={response.person.id} />
-                        </TooltipRenderer>
-                        <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
-                          {displayIdentifier}
-                        </h3>
-                      </Link>
+                          <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
+                            {displayIdentifier}
+                          </h3>
+                        </Link>
+                      ) : (
+                        <div className="flex items-center">
+                          <PersonAvatar personId={response.person.id} />
+                          <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600">
+                            {displayIdentifier}
+                          </h3>
+                        </div>
+                      )
                     ) : (
-                      <div className="group flex items-center">
-                        <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
-                          <PersonAvatar personId={response.person.id} />
-                        </TooltipRenderer>
-                        <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600">
-                          {displayIdentifier}
-                        </h3>
-                      </div>
-                    )
-                  ) : (
-                    <div className="group flex items-center">
-                      <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                      <div className="flex items-center">
                         <PersonAvatar personId="anonymous" />
-                      </TooltipRenderer>
-                      <h3 className="ml-4 pb-1 font-semibold text-slate-600">Anonymous</h3>
-                    </div>
-                  )}
-                </div>
+                        <h3 className="ml-4 pb-1 font-semibold text-slate-600">Anonymous</h3>
+                      </div>
+                    )}
+                  </div>
+                </TooltipRenderer>
               )}
 
               {pageType === "people" && (
@@ -368,7 +363,7 @@ export default function SingleResponseCard({
               )}
             </div>
 
-            <div className="flex space-x-4 text-sm">
+            <div className="flex items-center space-x-4 text-sm">
               <time className="text-slate-500" dateTime={timeSince(response.updatedAt.toISOString())}>
                 {timeSince(response.updatedAt.toISOString())}
               </time>
