@@ -562,15 +562,15 @@ export default function FormTribeHackathon() {
         <div className="max-w-8xl mt-8 grid grid-cols-3 gap-4 px-56">
           <div className="px-8">
             <p className="h-0 text-lg font-bold text-slate-300">+ Sticker Set</p>
-            <Image src={ArrowSticker} alt="rookie batch" className="" />
+            <Image src={ArrowSticker} alt="rookie batch" />
           </div>
           <div className="px-8">
             <p className="h-0 text-lg font-bold text-slate-300">+ Hoodie</p>
-            <Image src={HoodieSticker} alt="rookie batch" className="" />
+            <Image src={HoodieSticker} alt="rookie batch" />
           </div>
           <div className="px-8">
             <p className="h-0 text-lg font-bold text-slate-300">+ Handmade Gift</p>
-            <Image src={ArrowGift} alt="rookie batch" className="" />
+            <Image src={ArrowGift} alt="rookie batch" />
           </div>
         </div>
       </div>
@@ -754,7 +754,7 @@ export default function FormTribeHackathon() {
           </div>
 
           {FAQ.map((question) => (
-            <div key={question.question} className="">
+            <div key={question.question}>
               <div>
                 <h3 className="mt-6 text-lg font-bold text-slate-700">{question.question} </h3>
                 <p className="text-slate-600">{question.answer}</p>

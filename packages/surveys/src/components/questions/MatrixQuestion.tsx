@@ -104,7 +104,7 @@ export const MatrixQuestion = ({
             subheader={getLocalizedValue(question.subheader, languageCode)}
             questionId={question.id}
           />
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto py-4">
             <table className="no-scrollbar min-w-full table-auto border-collapse text-sm">
               <thead>
                 <tr>
@@ -165,7 +165,7 @@ export const MatrixQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6">
+      <div className="flex w-full justify-between px-6 py-4">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

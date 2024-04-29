@@ -11,8 +11,8 @@
 
 /* Chrome, Edge, and Safari */
 #fbjs *::-webkit-scrollbar {
-  width: 8px ;
-  background: transparent ; 
+  width: 6px;
+  background: transparent; 
 }
 
 #fbjs *::-webkit-scrollbar-track {
@@ -23,6 +23,12 @@
   background-color: var(--fb-brand-color) ;
   border: none;
   border-radius: 10px 
+}
+
+/* Firefox */
+#fbjs * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--fb-brand-color) transparent;
 }
 
 

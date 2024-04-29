@@ -1,7 +1,6 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { TAttributes, ZAttributes } from "@formbricks/types/attributes";
@@ -12,7 +11,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { attributeCache } from "../attribute/cache";
 import { attributeClassCache } from "../attributeClass/cache";
 import { getAttributeClassByName, getAttributeClasses } from "../attributeClass/service";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
 import { getPerson, getPersonByUserId } from "../person/service";
 import { validateInputs } from "../utils/validate";
 
@@ -37,8 +36,8 @@ const convertPrismaAttributes = (prismaAttributes: any): TAttributes => {
   );
 };
 
-export const getAttributes = async (personId: string): Promise<TAttributes> => {
-  return await unstable_cache(
+export const getAttributes = (personId: string): Promise<TAttributes> =>
+  cache(
     async () => {
       validateInputs([personId, ZId]);
 
@@ -62,13 +61,11 @@ export const getAttributes = async (personId: string): Promise<TAttributes> => {
     [`getAttributes-${personId}`],
     {
       tags: [attributeCache.tag.byPersonId(personId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-};
 
-export const getAttributesByUserId = async (environmentId: string, userId: string): Promise<TAttributes> => {
-  return await unstable_cache(
+export const getAttributesByUserId = (environmentId: string, userId: string): Promise<TAttributes> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [userId, ZString]);
 
@@ -98,13 +95,11 @@ export const getAttributesByUserId = async (environmentId: string, userId: strin
     [`getAttributesByUserId-${environmentId}-${userId}`],
     {
       tags: [attributeCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-};
 
-export const getAttribute = async (name: string, personId: string): Promise<string | undefined> => {
-  return await unstable_cache(
+export const getAttribute = (name: string, personId: string): Promise<string | undefined> =>
+  cache(
     async () => {
       validateInputs([name, ZString], [personId, ZId]);
 
@@ -141,10 +136,8 @@ export const getAttribute = async (name: string, personId: string): Promise<stri
     [`getAttribute-${name}-${personId}`],
     {
       tags: [attributeCache.tag.byNameAndPersonId(name, personId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-};
 
 export const updateAttributes = async (personId: string, attributes: TAttributes): Promise<boolean> => {
   validateInputs([personId, ZId], [attributes, ZAttributes]);
