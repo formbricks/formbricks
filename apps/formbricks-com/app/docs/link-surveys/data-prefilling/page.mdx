@@ -37,11 +37,11 @@ https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?question_id_1=answer_1&qu
 ## How it works
 
 To prefill the questions of a survey, add query parameters to the survey URL. The query parameter should be in the format `questionId=answer`. The answer has to match the expected type of the question to pass through the [validation](/docs/link-surveys/data-prefilling#validation). For example, if the first question is a rating question, the answer has to be a number. If the first question is a single select question, the answer has to be a string identical to one of the answer options.
-<Note>
-Please make sure the answer is [URL encoded](https://www.urlencoder.org/).
-</Note>
+
+<Note>Please make sure the answer is [URL encoded](https://www.urlencoder.org/).</Note>
 
 ## Prefilling multiple values
+
 Formbricks let's you prefill as many values as you want. You can combine multiple values in the URL using `&` so for example `name=Bernadette&age=18`. The order of the query parameters does not matter so you can always move around questions or add new ones without having to worry about the order of the query parameters.
 
 ## Where do I find my question Id?
@@ -60,7 +60,9 @@ You find the `questionId` in the **Advanced Settings** toggle at the bottom of e
 Here are a few examples to get you started:
 
 ### Rating Question
+
 Translates to 5 stars / points / emojis:
+
 <Col>
 <CodeGroup title="Rating Question">
 
@@ -72,6 +74,7 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?rating_question_id=5
 </Col>
 
 ### NPS Question
+
 Translates to an NPS rating of 10:
 
 <Col>
@@ -85,7 +88,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?nps_question_id=10
 </Col>
 
 ### Single Select Question (Radio)
+
 Chooses the option 'Very disappointed' in the single select question. The string has to be identical to the option in your question:
+
 <Col>
 <CodeGroup title="Single-select Question">
 
@@ -97,7 +102,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?single_select_question_id
 </Col>
 
 ### Multi Select Question (Checkbox)
+
 Selects three options 'Sun, Palms and Beach' in the multi select question. The strings have to be identical to the options in your question:
+
 <Col>
 <CodeGroup title="Multi-select Question">
 
@@ -109,7 +116,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?multi_select_question_id=
 </Col>
 
 ### Open Text Question
+
 Adds 'I love Formbricks' as the answer to the open text question:
+
 <Col>
 <CodeGroup title="Open Text Question">
 
@@ -121,7 +130,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?openText_question_id=I%20
 </Col>
 
 ### CTA Question
+
 Adds 'clicked' as the answer to the CTA question. Alternatively, you can set it to 'dismissed' to skip the question:
+
 <Col>
 <CodeGroup title="CTA Question">
 
@@ -133,7 +144,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?cta_question_id=clicked
 </Col>
 
 ### Consent Question
+
 Adds 'accepted' as the answer to the Consent question. Alternatively, you can set it to 'dismissed' to skip the question.
+
 <Col>
 <CodeGroup title="Consent Question">
 
@@ -145,7 +158,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?consent_question_id=accep
 </Col>
 
 ### Picture Selection Question
+
 Adds index of the selected image(s) as the answer to the Picture Selection question. The index starts from 1
+
 <Col>
 <CodeGroup title="Picture Selection Question.">
 
@@ -172,5 +187,5 @@ The URL validation works as follows:
 - All other question types are strings.
 
 <Note>
-If an answer is invalid, the prefilling will be ignored and the question is presented as if not prefilled.
+  If an answer is invalid, the prefilling will be ignored and the question is presented as if not prefilled.
 </Note>
