@@ -2,7 +2,7 @@
 
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
-import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
+import { getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -10,7 +10,7 @@ import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/product";
-import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
+import { TResponse, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
@@ -27,7 +27,6 @@ interface LinkSurveyProps {
   product: TProduct;
   userId?: string;
   emailVerificationStatus?: string;
-  prefillAnswer?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
   webAppUrl: string;
@@ -41,7 +40,6 @@ export default function LinkSurvey({
   product,
   userId,
   emailVerificationStatus,
-  prefillAnswer,
   singleUseId,
   singleUseResponse,
   webAppUrl,
@@ -80,9 +78,7 @@ export default function LinkSurvey({
     return new SurveyState(survey.id, singleUseId, responseId, userId);
   }, [survey.id, singleUseId, responseId, userId]);
 
-  const prefillResponseData: TResponseData | undefined = prefillAnswer
-    ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer, languageCode)
-    : undefined;
+  const prefillValue = getPrefillValue(survey, searchParams, languageCode);
 
   const responseQueue = useMemo(
     () =>
@@ -263,7 +259,7 @@ export default function LinkSurvey({
             return uploadedUrl;
           }}
           autoFocus={autoFocus}
-          prefillResponseData={prefillResponseData}
+          prefillResponseData={prefillValue}
           responseCount={responseCount}
           getSetQuestionId={(f: (value: string) => void) => {
             setQuestionId = f;
