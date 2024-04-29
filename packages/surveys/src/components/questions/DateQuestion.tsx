@@ -6,13 +6,15 @@ import Subheader from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useMemo, useState } from "preact/hooks";
+import DatePicker from "react-date-picker";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getMonthName, getOrdinalDate } from "@formbricks/lib/utils/datetime";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion } from "@formbricks/types/surveys";
 
-import { initDatePicker } from "../../sideload/question-date/index";
+import "../../styles/date-picker.css";
 
 interface DateQuestionProps {
   question: TSurveyDateQuestion;
@@ -29,6 +31,51 @@ interface DateQuestionProps {
   isInIframe: boolean;
 }
 
+const CalendarIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    class="lucide lucide-calendar-days">
+    <path d="M8 2v4" />
+    <path d="M16 2v4" />
+    <rect width="18" height="18" x="3" y="4" rx="2" />
+    <path d="M3 10h18" />
+    <path d="M8 14h.01" />
+    <path d="M12 14h.01" />
+    <path d="M16 14h.01" />
+    <path d="M8 18h.01" />
+    <path d="M12 18h.01" />
+    <path d="M16 18h.01" />
+  </svg>
+);
+
+const CalendarCheckIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    class="lucide lucide-calendar-check">
+    <path d="M8 2v4" />
+    <path d="M16 2v4" />
+    <rect width="18" height="18" x="3" y="4" rx="2" />
+    <path d="M3 10h18" />
+    <path d="m9 16 2 2 4-4" />
+  </svg>
+);
+
 export const DateQuestion = ({
   question,
   value,
@@ -43,44 +90,41 @@ export const DateQuestion = ({
 }: DateQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
-  const [loading, setLoading] = useState(true);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
-  const defaultDate = value ? new Date(value as string) : undefined;
-  useEffect(() => {
-    initDatePicker(document.getElementById("date-picker-root")!, defaultDate, question.format);
-    setLoading(false);
-
-    return () => {};
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [question.format, question.id]);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
+  const [hideInvalid, setHideInvalid] = useState(!selectedDate);
 
   useEffect(() => {
-    window.addEventListener("dateChange", (e) => {
-      // @ts-expect-error
-      const date = e.detail as Date;
-
-      // Get the timezone offset in minutes and convert it to milliseconds
-      const timezoneOffset = date.getTimezoneOffset() * 60000;
-
-      // Adjust the date by subtracting the timezone offset
-      const adjustedDate = new Date(date.getTime() - timezoneOffset);
-
-      // Format the date as YYYY-MM-DD
-      const dateString = adjustedDate.toISOString().split("T")[0];
-
-      onChange({ [question.id]: dateString });
-    });
-  }, [onChange, question.id]);
+    if (datePickerOpen) {
+      const input = document.querySelector(".react-date-picker__inputGroup__input") as HTMLInputElement;
+      if (input) {
+        input.focus();
+      }
+    }
+  }, [datePickerOpen]);
 
   useEffect(() => {
-    if (value && errorMessage) {
-      setErrorMessage("");
+    if (!!selectedDate) {
+      if (hideInvalid) {
+        setHideInvalid(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+  }, [selectedDate]);
+
+  const formattedDate = useMemo(() => {
+    if (!selectedDate) return "";
+
+    const day = selectedDate.getDate();
+    const monthIndex = selectedDate.getMonth();
+    const year = selectedDate.getFullYear();
+
+    return `${getOrdinalDate(day)} of ${getMonthName(monthIndex)}, ${year}`;
+  }, [selectedDate]);
 
   return (
     <form
@@ -114,13 +158,97 @@ export const DateQuestion = ({
           <div
             className={cn("mt-4 w-full", errorMessage && "rounded-lg border-2 border-red-500")}
             id="date-picker-root">
-            {loading && (
-              <div className="bg-survey-bg border-border text-placeholder relative flex h-16 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
-                <span
-                  className="h-6 w-6 animate-spin rounded-full border-b-2 border-neutral-900"
-                  style={{ borderTopColor: "transparent" }}></span>
-              </div>
-            )}
+            <div className="relative">
+              {!datePickerOpen && (
+                <div
+                  onClick={() => setDatePickerOpen(true)}
+                  className="bg-input-bg hover:bg-input-bg-selected border-border text-heading rounded-custom relative flex h-[12dvh] w-full cursor-pointer appearance-none items-center justify-center border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+                  <div className="flex items-center gap-2">
+                    {selectedDate ? (
+                      <div className="flex items-center gap-2">
+                        <CalendarCheckIcon /> <span>{formattedDate}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon /> <span>Select a date</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* @ts-expect-error */}
+              <DatePicker
+                key={datePickerOpen}
+                value={selectedDate}
+                isOpen={datePickerOpen}
+                onChange={(value) => {
+                  const date = value as Date;
+                  setSelectedDate(date);
+
+                  // Get the timezone offset in minutes and convert it to milliseconds
+                  const timezoneOffset = date.getTimezoneOffset() * 60000;
+
+                  // Adjust the date by subtracting the timezone offset
+                  const adjustedDate = new Date(date.getTime() - timezoneOffset);
+
+                  // Format the date as YYYY-MM-DD
+                  const dateString = adjustedDate.toISOString().split("T")[0];
+
+                  onChange({ [question.id]: dateString });
+                }}
+                minDate={
+                  new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())
+                }
+                maxDate={new Date("3000-12-31")}
+                dayPlaceholder="DD"
+                monthPlaceholder="MM"
+                yearPlaceholder="YYYY"
+                format={question.format ?? "M-d-y"}
+                className={`dp-input-root rounded-custom wrapper-hide ${!datePickerOpen ? "" : "h-[46dvh] sm:h-[34dvh]"}
+          ${hideInvalid ? "hide-invalid" : ""}
+        `}
+                calendarClassName="calendar-root !bg-input-bg border border-border rounded-custom p-3 h-[46dvh] sm:h-[33dvh] overflow-auto"
+                clearIcon={null}
+                onCalendarOpen={() => {
+                  setDatePickerOpen(true);
+                }}
+                onCalendarClose={() => {
+                  // reset state
+                  setDatePickerOpen(false);
+                  setSelectedDate(selectedDate);
+                }}
+                // @ts-expect-error
+                calendarIcon={<CalendarIcon />}
+                tileClassName={({ date }) => {
+                  const baseClass =
+                    "hover:bg-input-bg-selected rounded-custom h-9 p-0 mt-1 font-normal text-heading aria-selected:opacity-100";
+                  // today's date class
+                  if (
+                    date.getDate() === new Date().getDate() &&
+                    date.getMonth() === new Date().getMonth() &&
+                    date.getFullYear() === new Date().getFullYear()
+                  ) {
+                    return `${baseClass} border border-input-border`;
+                  }
+                  // active date class
+                  if (
+                    date.getDate() === selectedDate?.getDate() &&
+                    date.getMonth() === selectedDate?.getMonth() &&
+                    date.getFullYear() === selectedDate?.getFullYear()
+                  ) {
+                    return `${baseClass} !bg-accent-selected-bg !border-border-highlight !text-heading`;
+                  }
+
+                  return baseClass;
+                }}
+                formatShortWeekday={(_, date) => {
+                  return date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
+                }}
+                showNeighboringMonth={false}
+                showLeadingZeros={false}
+              />
+            </div>
           </div>
         </div>
       </ScrollableContainer>
