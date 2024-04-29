@@ -1,7 +1,6 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -14,13 +13,14 @@ import {
   ZMembershipUpdateInput,
 } from "@formbricks/types/memberships";
 
+import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { teamCache } from "../team/cache";
 import { validateInputs } from "../utils/validate";
 import { membershipCache } from "./cache";
 
 export const getMembersByTeamId = async (teamId: string, page?: number): Promise<TMember[]> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([teamId, ZString], [page, ZOptionalNumber]);
 
@@ -72,7 +72,7 @@ export const getMembershipByUserIdTeamId = async (
   userId: string,
   teamId: string
 ): Promise<TMembership | null> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([userId, ZString], [teamId, ZString]);
 
@@ -105,7 +105,7 @@ export const getMembershipByUserIdTeamId = async (
   )();
 
 export const getMembershipsByUserId = async (userId: string, page?: number): Promise<TMembership[]> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([userId, ZString], [page, ZOptionalNumber]);
 

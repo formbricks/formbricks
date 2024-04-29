@@ -124,7 +124,7 @@ export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: Sha
                 ))}
               </div>
               <div className="col-span-4 h-full overflow-y-auto bg-slate-50 px-4 py-6 lg:col-span-3 lg:p-6">
-                <div className="">
+                <div>
                   {activeId === "email" ? (
                     <EmailTab surveyId={survey.id} email={email} />
                   ) : activeId === "webpage" ? (

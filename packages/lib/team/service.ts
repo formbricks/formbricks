@@ -1,7 +1,6 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -12,16 +11,15 @@ import {
   TTeamBilling,
   TTeamCreateInput,
   TTeamUpdateInput,
-  ZTeam,
   ZTeamCreateInput,
 } from "@formbricks/types/teams";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
+import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { getProducts } from "../product/service";
 import { getUsersWithTeam, updateUser } from "../user/service";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { teamCache } from "./cache";
 
@@ -37,8 +35,8 @@ export const getTeamsTag = (teamId: string) => `teams-${teamId}`;
 export const getTeamsByUserIdCacheTag = (userId: string) => `users-${userId}-teams`;
 export const getTeamByEnvironmentIdCacheTag = (environmentId: string) => `environments-${environmentId}-team`;
 
-export const getTeamsByUserId = async (userId: string, page?: number): Promise<TTeam[]> => {
-  const teams = await unstable_cache(
+export const getTeamsByUserId = (userId: string, page?: number): Promise<TTeam[]> =>
+  cache(
     async () => {
       validateInputs([userId, ZString], [page, ZOptionalNumber]);
 
@@ -72,11 +70,9 @@ export const getTeamsByUserId = async (userId: string, page?: number): Promise<T
       tags: [teamCache.tag.byUserId(userId)],
     }
   )();
-  return teams.map((team) => formatDateFields(team, ZTeam));
-};
 
-export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTeam | null> => {
-  const team = await unstable_cache(
+export const getTeamByEnvironmentId = (environmentId: string): Promise<TTeam | null> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId]);
 
@@ -111,11 +107,9 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
       tags: [teamCache.tag.byEnvironmentId(environmentId)],
     }
   )();
-  return team ? formatDateFields(team, ZTeam) : null;
-};
 
-export const getTeam = async (teamId: string): Promise<TTeam | null> => {
-  const team = await unstable_cache(
+export const getTeam = (teamId: string): Promise<TTeam | null> =>
+  cache(
     async () => {
       validateInputs([teamId, ZString]);
 
@@ -140,8 +134,6 @@ export const getTeam = async (teamId: string): Promise<TTeam | null> => {
       tags: [teamCache.tag.byId(teamId)],
     }
   )();
-  return team ? formatDateFields(team, ZTeam) : null;
-};
 
 export const createTeam = async (teamInput: TTeamCreateInput): Promise<TTeam> => {
   try {
@@ -261,8 +253,8 @@ export const deleteTeam = async (teamId: string): Promise<TTeam> => {
   }
 };
 
-export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
-  const teams = await unstable_cache(
+export const getTeamsWithPaidPlan = (): Promise<TTeam[]> =>
+  cache(
     async () => {
       try {
         const fetchedTeams = await prisma.team.findMany({
@@ -299,11 +291,8 @@ export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
     }
   )();
 
-  return teams.map((team) => formatDateFields(team, ZTeam));
-};
-
-export const getMonthlyActiveTeamPeopleCount = async (teamId: string): Promise<number> =>
-  await unstable_cache(
+export const getMonthlyActiveTeamPeopleCount = (teamId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([teamId, ZId]);
 
@@ -350,8 +339,8 @@ export const getMonthlyActiveTeamPeopleCount = async (teamId: string): Promise<n
     }
   )();
 
-export const getMonthlyTeamResponseCount = async (teamId: string): Promise<number> =>
-  await unstable_cache(
+export const getMonthlyTeamResponseCount = (teamId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([teamId, ZId]);
 
@@ -394,8 +383,8 @@ export const getMonthlyTeamResponseCount = async (teamId: string): Promise<numbe
     }
   )();
 
-export const getTeamBillingInfo = async (teamId: string): Promise<TTeamBilling | null> =>
-  await unstable_cache(
+export const getTeamBillingInfo = (teamId: string): Promise<TTeamBilling | null> =>
+  cache(
     async () => {
       validateInputs([teamId, ZId]);
 

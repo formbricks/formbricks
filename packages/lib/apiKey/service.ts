@@ -2,22 +2,21 @@ import "server-only";
 
 import { Prisma } from "@prisma/client";
 import { createHash, randomBytes } from "crypto";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
-import { TApiKey, TApiKeyCreateInput, ZApiKey, ZApiKeyCreateInput } from "@formbricks/types/apiKeys";
+import { TApiKey, TApiKeyCreateInput, ZApiKeyCreateInput } from "@formbricks/types/apiKeys";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
+import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { getHash } from "../crypto";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { apiKeyCache } from "./cache";
 
-export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> => {
-  const apiKey = await unstable_cache(
+export const getApiKey = (apiKeyId: string): Promise<TApiKey | null> =>
+  cache(
     async () => {
       validateInputs([apiKeyId, ZString]);
 
@@ -46,11 +45,9 @@ export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> => {
       tags: [apiKeyCache.tag.byId(apiKeyId)],
     }
   )();
-  return apiKey ? formatDateFields(apiKey, ZApiKey) : null;
-};
 
-export const getApiKeys = async (environmentId: string, page?: number): Promise<TApiKey[]> => {
-  const apiKeys = await unstable_cache(
+export const getApiKeys = (environmentId: string, page?: number): Promise<TApiKey[]> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -76,8 +73,6 @@ export const getApiKeys = async (environmentId: string, page?: number): Promise<
       tags: [apiKeyCache.tag.byEnvironmentId(environmentId)],
     }
   )();
-  return apiKeys.map((apiKey) => formatDateFields(apiKey, ZApiKey));
-};
 
 export const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
 
@@ -113,10 +108,10 @@ export const createApiKey = async (
   }
 };
 
-export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> => {
+export const getApiKeyFromKey = (apiKey: string): Promise<TApiKey | null> => {
   const hashedKey = getHash(apiKey);
 
-  const apiKeyData = await unstable_cache(
+  return cache(
     async () => {
       validateInputs([apiKey, ZString]);
 
@@ -145,7 +140,6 @@ export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> 
       tags: [apiKeyCache.tag.byHashedKey(hashedKey)],
     }
   )();
-  return apiKeyData ? formatDateFields(apiKeyData, ZApiKey) : null;
 };
 
 export const deleteApiKey = async (id: string): Promise<TApiKey | null> => {

@@ -22,6 +22,7 @@
     "@formbricks/types": "*",
     "@paralleldrive/cuid2": "^2.2.2",
     "@t3-oss/env-nextjs": "^0.10.1",
+    "@ungap/structured-clone": "^1.2.0",
     "aws-crt": "^1.21.2",
     "date-fns": "^3.6.0",
     "jsonwebtoken": "^9.0.2",
@@ -31,18 +32,18 @@
     "next-auth": "^4.24.7",
     "posthog-node": "^4.0.0",
     "server-only": "^0.0.1",
-    "tailwind-merge": "^2.3.0",
-    "@ungap/structured-clone": "^1.2.0"
+    "superjson": "^2.2.1",
+    "tailwind-merge": "^2.3.0"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "*",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/mime-types": "^2.1.4",
+    "@types/ungap__structured-clone": "^1.2.0",
     "dotenv": "^16.4.5",
     "eslint-config-formbricks": "workspace:*",
     "ts-node": "^10.9.2",
     "vitest": "^1.5.1",
-    "vitest-mock-extended": "^1.3.1",
-    "@types/ungap__structured-clone": "^1.2.0"
+    "vitest-mock-extended": "^1.3.1"
   }
 }

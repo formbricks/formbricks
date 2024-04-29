@@ -1,14 +1,14 @@
-import { unstable_cache } from "next/cache";
-
 import { ZId } from "@formbricks/types/environment";
 
+import { cache } from "../cache";
 import { canUserAccessResponse } from "../response/auth";
 import { getResponse } from "../response/service";
 import { validateInputs } from "../utils/validate";
+import { responseNoteCache } from "./cache";
 import { getResponseNote } from "./service";
 
 export const canUserModifyResponseNote = async (userId: string, responseNoteId: string): Promise<boolean> =>
-  await unstable_cache(
+  cache(
     async () => {
       validateInputs([userId, ZId], [responseNoteId, ZId]);
 
@@ -25,16 +25,16 @@ export const canUserModifyResponseNote = async (userId: string, responseNoteId: 
     },
     [`canUserModifyResponseNote-${userId}-${responseNoteId}`],
     {
-      tags: [`responseNotes-${responseNoteId}`],
+      tags: [responseNoteCache.tag.byId(responseNoteId)],
     }
-  )(); // 30 minutes
+  )();
 
 export const canUserResolveResponseNote = async (
   userId: string,
   responseId: string,
   responseNoteId: string
 ): Promise<boolean> =>
-  await unstable_cache(
+  cache(
     async () => {
       validateInputs([userId, ZId], [responseNoteId, ZId]);
 
@@ -62,6 +62,6 @@ export const canUserResolveResponseNote = async (
     },
     [`canUserResolveResponseNote-${userId}-${responseNoteId}`],
     {
-      tags: [`responseNotes-${responseNoteId}`],
+      tags: [responseNoteCache.tag.byId(responseNoteId)],
     }
-  )(); // 30 minutes
+  )();

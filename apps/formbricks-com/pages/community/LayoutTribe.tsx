@@ -13,7 +13,7 @@ export default function Layout({ title, description, children }: LayoutProps) {
     <div className="mx-auto bg-gradient-to-br from-slate-800 via-slate-900 to-slate-900">
       <MetaInformation title={title} description={description} />
       <HeaderTribe />
-      <main className="">{children}</main>
+      <main>{children}</main>
       <Footer />
     </div>
   );
