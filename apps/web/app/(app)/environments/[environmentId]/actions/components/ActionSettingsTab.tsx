@@ -3,7 +3,7 @@
 import {
   deleteActionClassAction,
   updateActionClassAction,
-} from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
+} from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
