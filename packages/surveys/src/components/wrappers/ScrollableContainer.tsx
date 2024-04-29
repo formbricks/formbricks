@@ -24,7 +24,7 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
   const toggleOverflow = (hide: boolean) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (hide) {
-      timeoutRef.current = setTimeout(() => setIsOverflowHidden(true), 1500);
+      timeoutRef.current = setTimeout(() => setIsOverflowHidden(true), 1000);
     } else {
       setIsOverflowHidden(false);
       checkScroll();
@@ -55,10 +55,10 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
       <div
         ref={containerRef}
         style={{
-          scrollbarGutter: "stable",
-          maxHeight: isSurveyPreview ? "40vh" : "60vh",
+          scrollbarGutter: "stable both-edges",
+          maxHeight: isSurveyPreview ? "40dvh" : "60dvh",
         }}
-        className={`overflow-${isOverflowHidden ? "hidden" : "auto"} pb-1 pl-6 pr-4`}
+        className={`overflow-${isOverflowHidden ? "hidden" : "auto"} px-4 pb-1`}
         onMouseEnter={() => toggleOverflow(false)}
         onTouchStart={() => toggleOverflow(false)}
         onTouchEnd={() => toggleOverflow(true)}

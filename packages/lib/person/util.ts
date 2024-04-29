@@ -1,5 +1,9 @@
-import { TPerson } from "@formbricks/types/people";
+import { TAttributes } from "@formbricks/types/attributes";
+import { TResponsePerson } from "@formbricks/types/responses";
 
-export const getPersonIdentifier = (person: TPerson): string | number | null => {
-  return person.attributes.email || person.userId;
+export const getPersonIdentifier = (
+  person: TResponsePerson | null,
+  personAttributes: TAttributes | null
+): string => {
+  return personAttributes?.email || person?.userId || "";
 };

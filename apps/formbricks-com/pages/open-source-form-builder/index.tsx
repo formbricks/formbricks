@@ -415,7 +415,7 @@ export default function LinkSurveyPage() {
         headline="Try THE open source form builder 💪"
         subheadline="Convinced that Formbricks is a good open source Typeform alternative? Try it now!"
       />
-      <div className="">
+      <div>
         <HeadingCentered
           heading="All form builder features"
           teaser="Build open source forms like never before"
@@ -440,7 +440,7 @@ export default function LinkSurveyPage() {
         imgAlt="Peer Richelsen, Co-Founder and CEO of Cal.com"
         textSize="large"
       />
-      <div className="">
+      <div>
         <HeadingCentered heading="All question types included" teaser="A complete open source form builder" />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {allQuestionTypes.map((feature) => {

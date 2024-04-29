@@ -56,9 +56,6 @@
       "env": [
         "AIRTABLE_CLIENT_ID",
         "ASSET_PREFIX_URL",
-        "AWS_ACCESS_KEY_ID",
-        "AWS_SECRET_ACCESS_KEY",
-        "AWS_REGION",
         "AZUREAD_CLIENT_ID",
         "AZUREAD_CLIENT_SECRET",
         "AZUREAD_TENANT_ID",

@@ -194,6 +194,7 @@ export const closeSurvey = async (): Promise<void> => {
         apiHost: inAppConfig.get().apiHost,
         environmentId: inAppConfig.get().environmentId,
         userId: inAppConfig.get().userId,
+        attributes: inAppConfig.get().state.attributes,
       },
       true
     );

@@ -209,7 +209,7 @@ export default function FileInput({
   return (
     <div
       className={`items-left bg-input-bg hover:bg-input-bg-selected border-border relative mt-3 flex w-full flex-col justify-center rounded-lg border-2 border-dashed dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800`}>
-      <div className="max-h-[30vh] overflow-auto">
+      <div>
         {fileUrls &&
           fileUrls?.map((file, index) => {
             const fileName = getOriginalFileNameFromUrl(file);
@@ -239,9 +239,9 @@ export default function FileInput({
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     class="lucide lucide-file"
                     className="text-heading h-6">
                     <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />

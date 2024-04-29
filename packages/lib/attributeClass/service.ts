@@ -3,14 +3,12 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import {
   TAttributeClass,
   TAttributeClassType,
   TAttributeClassUpdateInput,
-  ZAttributeClass,
   ZAttributeClassType,
   ZAttributeClassUpdateInput,
 } from "@formbricks/types/attributeClasses";
@@ -18,13 +16,13 @@ import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { formatDateFields } from "../utils/datetime";
+import { cache } from "../cache";
+import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { attributeClassCache } from "./cache";
 
-export const getAttributeClass = async (attributeClassId: string): Promise<TAttributeClass | null> => {
-  const attributeClass = await unstable_cache(
+export const getAttributeClass = async (attributeClassId: string): Promise<TAttributeClass | null> =>
+  cache(
     async () => {
       validateInputs([attributeClassId, ZId]);
 
@@ -46,18 +44,11 @@ export const getAttributeClass = async (attributeClassId: string): Promise<TAttr
     [`getAttributeClass-${attributeClassId}`],
     {
       tags: [attributeClassCache.tag.byId(attributeClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-  return attributeClass ? formatDateFields(attributeClass, ZAttributeClass) : null;
-};
-
-export const getAttributeClasses = async (
-  environmentId: string,
-  page?: number
-): Promise<TAttributeClass[]> => {
-  const attributeClasses = await unstable_cache(
+export const getAttributeClasses = async (environmentId: string, page?: number): Promise<TAttributeClass[]> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -90,11 +81,8 @@ export const getAttributeClasses = async (
     [`getAttributeClasses-${environmentId}-${page}`],
     {
       tags: [attributeClassCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return attributeClasses.map((attributeClass) => formatDateFields(attributeClass, ZAttributeClass));
-};
 
 export const updateAttributeClass = async (
   attributeClassId: string,
@@ -128,8 +116,8 @@ export const updateAttributeClass = async (
   }
 };
 
-export const getAttributeClassByName = async (environmentId: string, name: string) => {
-  const attributeClass = await unstable_cache(
+export const getAttributeClassByName = async (environmentId: string, name: string) =>
+  cache(
     async (): Promise<TAttributeClass | null> => {
       validateInputs([environmentId, ZId], [name, ZString]);
 
@@ -152,11 +140,8 @@ export const getAttributeClassByName = async (environmentId: string, name: strin
     [`getAttributeClassByName-${environmentId}-${name}`],
     {
       tags: [attributeClassCache.tag.byEnvironmentIdAndName(environmentId, name)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return attributeClass ? formatDateFields(attributeClass, ZAttributeClass) : null;
-};
 
 export const createAttributeClass = async (
   environmentId: string,

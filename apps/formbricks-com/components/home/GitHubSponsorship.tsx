@@ -36,7 +36,7 @@ export const GitHubSponsorship: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center justify-end">
-          {/* <Image src={PHIcon} alt="Product Hunt Logo" width={80} className="" /> */}
+          {/* <Image src={PHIcon} alt="Product Hunt Logo" width={80}  /> */}
         </div>
       </div>
     </Link>

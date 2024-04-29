@@ -192,12 +192,14 @@ export const navigation: Array<NavGroup> = [
     title: "In-App Surveys",
     links: [
       { title: "Quickstart", href: "/docs/getting-started/quickstart-in-app-survey" },
+      { title: "Developer Quickstart", href: "/docs/in-app-surveys/developer-quickstart" },
       { title: "Framework Guides", href: "/docs/getting-started/framework-guides" },
       { title: "Troubleshooting", href: "/docs/getting-started/troubleshooting" },
       { title: "Identify Users", href: "/docs/in-app-surveys/user-identification" },
       { title: "Actions", href: "/docs/in-app-surveys/actions" },
       { title: "Attributes", href: "/docs/in-app-surveys/attributes" },
       { title: "Advanced Targeting", href: "/docs/in-app-surveys/advanced-targeting" },
+      { title: "Recontact Options", href: "/docs/in-app-surveys/recontact" },
     ],
   },
   {
@@ -210,14 +212,16 @@ export const navigation: Array<NavGroup> = [
       { title: "Source Tracking", href: "/docs/link-surveys/source-tracking" },
       { title: "Hidden Fields", href: "/docs/link-surveys/hidden-fields" },
       { title: "Start At Question", href: "/docs/link-surveys/start-at-question" },
-      { title: "Embed Surveys", href: "/docs/link-surveys/embed-surveys" },
+      { title: "Embed Surveys in Website", href: "/docs/link-surveys/embed-surveys" },
+      { title: "Embed Surveys in Email", href: "/docs/link-surveys/embed-in-email" },
     ],
   },
   {
     title: "Additional Features",
     links: [
-      { title: "Multi Language Surveys", href: "/docs/additional-features/multi-language-surveys" },
       { title: "API", href: "/docs/additional-features/api" },
+      { title: "Multi-Language Surveys", href: "/docs/additional-features/multi-language-surveys" },
+      { title: "Metadata", href: "/docs/additional-features/metadata" },
     ],
   },
   {

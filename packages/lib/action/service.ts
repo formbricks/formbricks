@@ -2,27 +2,26 @@ import "server-only";
 
 import { Prisma } from "@prisma/client";
 import { differenceInDays } from "date-fns";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { TActionClassType } from "@formbricks/types/actionClasses";
-import { TAction, TActionInput, ZAction, ZActionInput } from "@formbricks/types/actions";
+import { TAction, TActionInput, ZActionInput } from "@formbricks/types/actions";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 
 import { actionClassCache } from "../actionClass/cache";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
+import { ITEMS_PER_PAGE } from "../constants";
 import { activePersonCache } from "../person/cache";
 import { getIsPersonMonthlyActive } from "../person/service";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
 import { getStartDateOfLastMonth, getStartDateOfLastQuarter, getStartDateOfLastWeek } from "./utils";
 
-export const getActionsByPersonId = async (personId: string, page?: number): Promise<TAction[]> => {
-  const actions = await unstable_cache(
+export const getActionsByPersonId = (personId: string, page?: number): Promise<TAction[]> =>
+  cache(
     async () => {
       validateInputs([personId, ZId], [page, ZOptionalNumber]);
 
@@ -61,16 +60,11 @@ export const getActionsByPersonId = async (personId: string, page?: number): Pro
     [`getActionsByPersonId-${personId}-${page}`],
     {
       tags: [actionCache.tag.byPersonId(personId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-  // Deserialize dates if caching does not support deserialization
-  return actions.map((action) => formatDateFields(action, ZAction));
-};
-
-export const getActionsByEnvironmentId = async (environmentId: string, page?: number): Promise<TAction[]> => {
-  const actions = await unstable_cache(
+export const getActionsByEnvironmentId = (environmentId: string, page?: number): Promise<TAction[]> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -114,15 +108,8 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
     [`getActionsByEnvironmentId-${environmentId}-${page}`],
     {
       tags: [actionCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
-  // https://github.com/vercel/next.js/issues/51613
-
-  return actions.map((action) => formatDateFields(action, ZAction));
-};
 
 export const createAction = async (data: TActionInput): Promise<TAction> => {
   validateInputs([data, ZActionInput]);
@@ -190,7 +177,7 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
 };
 
 export const getActionCountInLastHour = async (actionClassId: string): Promise<number> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([actionClassId, ZId]);
 
@@ -211,12 +198,11 @@ export const getActionCountInLastHour = async (actionClassId: string): Promise<n
     [`getActionCountInLastHour-${actionClassId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
 export const getActionCountInLast24Hours = async (actionClassId: string): Promise<number> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([actionClassId, ZId]);
 
@@ -237,12 +223,11 @@ export const getActionCountInLast24Hours = async (actionClassId: string): Promis
     [`getActionCountInLast24Hours-${actionClassId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
 export const getActionCountInLast7Days = async (actionClassId: string): Promise<number> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([actionClassId, ZId]);
 
@@ -263,12 +248,11 @@ export const getActionCountInLast7Days = async (actionClassId: string): Promise<
     [`getActionCountInLast7Days-${actionClassId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-export const getActionCountInLastQuarter = async (actionClassId: string, personId: string): Promise<number> =>
-  await unstable_cache(
+export const getActionCountInLastQuarter = (actionClassId: string, personId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -293,12 +277,11 @@ export const getActionCountInLastQuarter = async (actionClassId: string, personI
     [`getActionCountInLastQuarter-${actionClassId}-${personId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-export const getActionCountInLastMonth = async (actionClassId: string, personId: string): Promise<number> =>
-  await unstable_cache(
+export const getActionCountInLastMonth = (actionClassId: string, personId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -323,12 +306,11 @@ export const getActionCountInLastMonth = async (actionClassId: string, personId:
     [`getActionCountInLastMonth-${actionClassId}-${personId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-export const getActionCountInLastWeek = async (actionClassId: string, personId: string): Promise<number> =>
-  await unstable_cache(
+export const getActionCountInLastWeek = (actionClassId: string, personId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -352,15 +334,11 @@ export const getActionCountInLastWeek = async (actionClassId: string, personId: 
     [`getActionCountInLastWeek-${actionClassId}-${personId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-export const getTotalOccurrencesForAction = async (
-  actionClassId: string,
-  personId: string
-): Promise<number> =>
-  await unstable_cache(
+export const getTotalOccurrencesForAction = (actionClassId: string, personId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -382,15 +360,11 @@ export const getTotalOccurrencesForAction = async (
     [`getTotalOccurrencesForAction-${actionClassId}-${personId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-export const getLastOccurrenceDaysAgo = async (
-  actionClassId: string,
-  personId: string
-): Promise<number | null> =>
-  await unstable_cache(
+export const getLastOccurrenceDaysAgo = (actionClassId: string, personId: string): Promise<number | null> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -419,15 +393,11 @@ export const getLastOccurrenceDaysAgo = async (
     [`getLastOccurrenceDaysAgo-${actionClassId}-${personId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-export const getFirstOccurrenceDaysAgo = async (
-  actionClassId: string,
-  personId: string
-): Promise<number | null> =>
-  await unstable_cache(
+export const getFirstOccurrenceDaysAgo = (actionClassId: string, personId: string): Promise<number | null> =>
+  cache(
     async () => {
       validateInputs([actionClassId, ZId], [personId, ZId]);
 
@@ -456,6 +426,5 @@ export const getFirstOccurrenceDaysAgo = async (
     [`getFirstOccurrenceDaysAgo-${actionClassId}-${personId}`],
     {
       tags: [actionClassCache.tag.byId(actionClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
