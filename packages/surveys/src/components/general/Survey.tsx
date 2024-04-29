@@ -169,10 +169,7 @@ export const Survey = ({
         }
       }
     }
-    // Code to handle startAt
-    if (startAtQuestionId && currIdxTemp === 0) {
-      return startAtQuestionId;
-    }
+
     return questions[currIdxTemp + 1]?.id || "end";
   };
 
