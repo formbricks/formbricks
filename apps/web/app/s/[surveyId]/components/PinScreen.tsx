@@ -19,7 +19,6 @@ interface LinkSurveyPinScreenProps {
   product: TProduct;
   userId?: string;
   emailVerificationStatus?: string;
-  prefillAnswer?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
   webAppUrl: string;
@@ -37,7 +36,6 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
     webAppUrl,
     emailVerificationStatus,
     userId,
-    prefillAnswer,
     singleUseId,
     singleUseResponse,
     IMPRINT_URL,
@@ -120,7 +118,6 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
           product={product}
           userId={userId}
           emailVerificationStatus={emailVerificationStatus}
-          prefillAnswer={prefillAnswer}
           singleUseId={singleUseId}
           singleUseResponse={singleUseResponse}
           webAppUrl={webAppUrl}
