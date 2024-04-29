@@ -1,7 +1,5 @@
 "use client";
 
-import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddActionModal";
-import InlineTriggers from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/InlineTriggers";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
   CheckIcon,
@@ -11,9 +9,8 @@ import {
   Settings,
   SparklesIcon,
   Trash2Icon,
-  TrashIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
@@ -22,15 +19,6 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui/Select";
-import { TabBar } from "@formbricks/ui/TabBar";
 import { AddActionModal } from "@formbricks/ui/Trigger/AddActionModal";
 import { EditActionModal } from "@formbricks/ui/Trigger/EditActionModal";
 
@@ -52,47 +40,16 @@ export default function WhenToSendCard({
   const [open, setOpen] = useState(
     localSurvey.type === "app" || localSurvey.type === "website" ? true : false
   );
-  const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
-  const [selectedAction, setSelectedAction] = useState<TActionClass | null>(null);
+  const [selectedAction, setSelectedAction] = useState<(TActionClass & { _isDraft?: boolean }) | null>(null);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
   const [isEditActionModalOpen, setEditActionModalOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
-
-  const [activeTriggerTab, setActiveTriggerTab] = useState(
-    !!localSurvey?.inlineTriggers ? "inline" : "relation"
-  );
-  const tabs = [
-    {
-      id: "relation",
-      label: "Saved Actions",
-    },
-    {
-      id: "inline",
-      label: "Custom Actions",
-    },
-  ];
 
   const { isViewer } = getAccessFlags(membershipRole);
 
   const autoClose = localSurvey.autoClose !== null;
   const delay = localSurvey.delay !== 0;
-
-  const setTriggerEvent = useCallback(
-    (idx: number, actionClassName: string) => {
-      const updatedSurvey = { ...localSurvey };
-      const newActionClass = actionClasses!.find((actionClass) => {
-        return actionClass.name === actionClassName;
-      });
-      if (!newActionClass) {
-        throw new Error("Action class not found");
-      }
-      // updatedSurvey.triggers[idx] = newActionClass.name;
-      setLocalSurvey(updatedSurvey);
-    },
-    [actionClasses, localSurvey, setLocalSurvey]
-  );
 
   const handleRemoveTriggerEvent = (idx: number) => {
     const updatedSurvey = { ...localSurvey };
@@ -150,21 +107,6 @@ export default function WhenToSendCard({
     const updatedSurvey = { ...localSurvey, displayPercentage: parseInt(e.target.value) };
     setLocalSurvey(updatedSurvey);
   };
-
-  useEffect(() => {
-    if (isAddEventModalOpen) return;
-
-    if (activeIndex !== null) {
-      const newActionClass = actionClasses[actionClasses.length - 1].name;
-      const currentActionClass = localSurvey.triggers[activeIndex];
-
-      // if (newActionClass !== currentActionClass) {
-      //   setTriggerEvent(activeIndex, newActionClass);
-      // }
-
-      setActiveIndex(null);
-    }
-  }, [actionClasses, activeIndex, setTriggerEvent, isAddEventModalOpen, localSurvey.triggers]);
 
   useEffect(() => {
     if (localSurvey.type === "link") {
@@ -294,77 +236,6 @@ export default function WhenToSendCard({
               </div>
             </div>
 
-            {/* <div className="flex flex-col overflow-hidden rounded-lg border-2 border-slate-100">
-              <TabBar
-                tabs={tabs}
-                activeId={activeTriggerTab}
-                setActiveId={setActiveTriggerTab}
-                tabStyle="button"
-                className="bg-slate-100"
-              />
-              <div className="p-3">
-                {activeTriggerTab === "inline" ? (
-                  <div className="flex flex-col">
-                    <InlineTriggers localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
-                  </div>
-                ) : (
-                  <>
-                     {!isAddEventModalOpen &&
-                      localSurvey.triggers?.map((triggerEventClass, idx) => (
-                        <div className="mt-2" key={idx}>
-                          <div className="inline-flex items-center">
-                            <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
-                            <Select
-                              value={triggerEventClass}
-                              onValueChange={(actionClassName) => setTriggerEvent(idx, actionClassName)}>
-                              <SelectTrigger className="w-[240px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <button
-                                  type="button"
-                                  className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
-                                  value="none"
-                                  onClick={() => {
-                                    setAddEventModalOpen(true);
-                                    setActiveIndex(idx);
-                                  }}>
-                                  <PlusIcon className="mr-1 h-5 w-5" />
-                                  Add Action
-                                </button>
-                                <SelectSeparator />
-                                {actionClasses.map((actionClass) => (
-                                  <SelectItem
-                                    value={actionClass.name}
-                                    key={actionClass.name}
-                                    title={actionClass.description ? actionClass.description : ""}>
-                                    {actionClass.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <p className="mx-2 text-sm">action is performed</p>
-                            <button type="button" onClick={() => removeTriggerEvent(idx)}>
-                              <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
-                            </button>
-                          </div>
-                        </div>
-                      ))} 
-                    <div className="px-6 py-4">
-                      <Button
-                        variant="secondary"
-                        onClick={() => {
-                          addTriggerEvent();
-                        }}>
-                        <PlusIcon className="mr-2 h-4 w-4" />
-                        Add condition
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div> */}
-
             {/* Survey Display Settings */}
             <div className="mb-4 mt-8 space-y-1 px-4">
               <h3 className="font-semibold text-slate-800">Survey Display Settings</h3>
@@ -445,14 +316,6 @@ export default function WhenToSendCard({
           </div>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
-      {/* <AddNoCodeActionModal
-        environmentId={environmentId}
-        open={isAddEventModalOpen}
-        setOpen={setAddEventModalOpen}
-        actionClasses={actionClasses}
-        setActionClasses={setActionClasses}
-        isViewer={isViewer}
-      /> */}
       <AddActionModal
         environmentId={environmentId}
         open={isAddActionModalOpen}

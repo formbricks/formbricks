@@ -29,7 +29,7 @@ function isValidCssSelector(selector?: string) {
 }
 
 interface EditActionModalProps {
-  selectedAction: TActionClass;
+  selectedAction: TActionClass & { _isDraft?: boolean };
   setSelectedAction: React.Dispatch<React.SetStateAction<(TActionClass & { _isDraft: boolean }) | null>>;
   actionClasses: TActionClass[];
   isViewer: boolean;

@@ -51,7 +51,6 @@ export const ZActionClass = z.object({
   environmentId: z.string(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
-  _isDraft: z.boolean().optional(),
 });
 
 export type TActionClass = z.infer<typeof ZActionClass>;

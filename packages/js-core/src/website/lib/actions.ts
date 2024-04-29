@@ -30,7 +30,7 @@ export const trackAction = async (name: string): Promise<Result<void, NetworkErr
   if (!!activeSurveys && activeSurveys.length > 0) {
     for (const survey of activeSurveys) {
       for (const trigger of survey.triggers) {
-        if (trigger === name) {
+        if (trigger.key === name) {
           await triggerSurvey(survey, name);
         }
       }

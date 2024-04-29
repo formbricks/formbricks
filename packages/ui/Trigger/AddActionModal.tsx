@@ -65,6 +65,7 @@ const SavedActions = ({
         name: action.name,
         type: action.type,
         description: action.description,
+        environmentId: action.environmentId,
       }),
     }));
     setOpen(false);
@@ -143,6 +144,7 @@ interface CreateNewActionProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  environmentId: string;
 }
 
 const CreateNewAction = ({
@@ -151,6 +153,7 @@ const CreateNewAction = ({
   isViewer,
   localSurvey,
   setLocalSurvey,
+  environmentId,
 }: CreateNewActionProps) => {
   const { register, control, handleSubmit, watch, reset } = useForm<TActionClassInput>({
     defaultValues: {
@@ -245,6 +248,7 @@ const CreateNewAction = ({
       type: type as TActionClass["type"],
       isPrivate: visibility === "private",
       _isDraft: true,
+      environmentId,
     };
 
     if (type === "noCode") {
@@ -431,6 +435,7 @@ export const AddActionModal = ({
   localSurvey,
   setLocalSurvey,
   isViewer,
+  environmentId,
 }: AddActionModalProps) => {
   const tabs = [
     {
@@ -454,6 +459,7 @@ export const AddActionModal = ({
           isViewer={isViewer}
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
+          environmentId={environmentId}
         />
       ),
     },

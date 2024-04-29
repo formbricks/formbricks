@@ -5,7 +5,6 @@ import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { TLegacySurvey, ZLegacySurvey } from "@formbricks/types/LegacySurvey";
-import { TActionClass } from "@formbricks/types/actionClasses";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -15,11 +14,11 @@ import {
   TSurvey,
   TSurveyFilterCriteria,
   TSurveyInput,
+  TSurveyWithRefinements,
   ZSurveyWithRefinements,
 } from "@formbricks/types/surveys";
 
 import { getActionsByPersonId } from "../action/service";
-import { getActionClasses } from "../actionClass/service";
 import { attributeCache } from "../attribute/cache";
 import { getAttributes } from "../attribute/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
@@ -105,6 +104,8 @@ export const selectSurvey = {
           name: true,
           description: true,
           type: true,
+          key: true,
+          isPrivate: true,
           noCodeConfig: true,
         },
       },
@@ -122,74 +123,14 @@ export const selectSurvey = {
   },
 };
 
-const getActionClassIdFromName = (actionClasses: TActionClass[], actionClassName: string): string => {
-  return actionClasses.find((actionClass) => actionClass.name === actionClassName)!.id;
-};
-
-const revalidateSurveyByActionClassName = (
-  actionClasses: TActionClass[],
-  actionClassNames: string[]
-): void => {
-  for (const actionClassName of actionClassNames) {
-    const actionClassId: string = getActionClassIdFromName(actionClasses, actionClassName);
-    surveyCache.revalidate({
-      actionClassId,
-    });
-  }
-};
-
-const processTriggerUpdates = (
-  triggers: string[],
-  currentSurveyTriggers: string[],
-  actionClasses: TActionClass[]
-) => {
-  const newTriggers: string[] = [];
-  const removedTriggers: string[] = [];
-
-  // find added triggers
-  for (const trigger of triggers) {
-    if (!trigger || currentSurveyTriggers.includes(trigger)) {
-      continue;
-    }
-    newTriggers.push(trigger);
-  }
-
-  // find removed triggers
-  for (const trigger of currentSurveyTriggers) {
-    if (!triggers.includes(trigger)) {
-      removedTriggers.push(trigger);
-    }
-  }
-
-  // Construct the triggers update object
-  const triggersUpdate: TriggerUpdate = {};
-
-  if (newTriggers.length > 0) {
-    triggersUpdate.create = newTriggers.map((trigger) => ({
-      actionClassId: getActionClassIdFromName(actionClasses, trigger),
-    }));
-  }
-
-  if (removedTriggers.length > 0) {
-    triggersUpdate.deleteMany = {
-      actionClassId: {
-        in: removedTriggers.map((trigger) => getActionClassIdFromName(actionClasses, trigger)),
-      },
-    };
-  }
-  revalidateSurveyByActionClassName(actionClasses, [...newTriggers, ...removedTriggers]);
-
-  return triggersUpdate;
-};
-
 const handleTriggerUpdates = async (
-  triggers: TSurveyInput["triggers"],
-  currentTriggers: TSurveyInput["triggers"]
+  triggers: TSurveyWithRefinements["triggers"],
+  currentTriggers: TSurvey["triggers"]
 ) => {
+  if (!triggers) return {};
+
   const currentTriggerIds = currentTriggers.map((trigger) => trigger.id);
   const newTriggerIds = triggers.map((trigger) => trigger.id);
-
-  // new, add, update, delete-2
 
   // new triggers are triggers that are draft
   const newTriggers = triggers.filter((trigger) => trigger?._isDraft);
@@ -200,11 +141,13 @@ const handleTriggerUpdates = async (
       const actionClass = await prisma.actionClass.create({
         data: {
           name: trigger.name || "",
-          description: trigger.description,
+          description: trigger.description || "",
           type: trigger.type || "code",
           environment: { connect: { id: trigger.environmentId || "" } },
           isPrivate: trigger.isPrivate,
-          ...(trigger.type === "noCode" ? { noCodeConfig: trigger.noCodeConfig } : { key: trigger.key }),
+          ...(trigger.type === "noCode"
+            ? { noCodeConfig: trigger.noCodeConfig || {} }
+            : { key: trigger.key }),
         },
         select: {
           id: true,
@@ -215,38 +158,45 @@ const handleTriggerUpdates = async (
     })
   );
 
-  // added triggers are triggers that are not in the current triggers and are there in the new triggers and are not draft
   const addedTriggers = triggers.filter(
     (trigger) => !currentTriggerIds.includes(trigger.id) && !trigger._isDraft
   );
   let addedTriggerIds = addedTriggers.map((trigger) => trigger.id || "");
   addedTriggerIds = [...addedTriggerIds, ...createdTriggerIds];
 
-  // updated triggers - TBD(just need to update the action class, nothing to do with trigger)
+  //TODO: updated triggers - TBD(just need to update the action class, nothing to do with trigger)
 
   // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
   const deletedTriggers = currentTriggers.filter((trigger) => !newTriggerIds.includes(trigger.id));
-  const deletedTriggerIds = deletedTriggers.map((trigger) => trigger.id || "");
+  const inlineTriggers = deletedTriggers.filter((trigger) => trigger.isPrivate);
+  const savedTriggers = deletedTriggers.filter((trigger) => !trigger.isPrivate);
+
+  await prisma.actionClass.deleteMany({
+    where: {
+      id: {
+        in: inlineTriggers.map((trigger) => trigger.id || ""),
+      },
+    },
+  });
 
   // Construct the triggers update object
   const triggersUpdate: TriggerUpdate = {};
 
-  console.log({ addedTriggerIds, deletedTriggerIds });
   if (addedTriggerIds.length > 0) {
     triggersUpdate.create = addedTriggerIds.map((trigger) => ({
       actionClassId: trigger,
     }));
   }
 
-  if (deletedTriggerIds.length > 0) {
+  if (savedTriggers.length > 0) {
     triggersUpdate.deleteMany = {
       actionClassId: {
-        in: deletedTriggerIds,
+        in: savedTriggers.map((trigger) => trigger.id || ""),
       },
     };
   }
 
-  [...addedTriggers, ...deletedTriggers].forEach((trigger) => {
+  [...addedTriggers, ...savedTriggers].forEach((trigger) => {
     surveyCache.revalidate({
       actionClassId: trigger.id,
     });
@@ -293,13 +243,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
 
       const transformedSurvey: TSurvey = {
         ...surveyPrisma,
-        triggers: surveyPrisma.triggers.map((trigger) => ({
-          id: trigger.actionClass.id,
-          isPrivate: false,
-          name: trigger.actionClass.name,
-          description: trigger.actionClass.description,
-          type: trigger.actionClass.type,
-        })),
+        triggers: surveyPrisma.triggers.map((trigger) => ({ ...trigger.actionClass })),
         segment: surveySegment,
       };
 
@@ -361,7 +305,8 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
 
         const transformedSurvey: TSurvey = {
           ...surveyPrisma,
-          triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
+          triggers: surveyPrisma.triggers.map((trigger) => ({ ...trigger.actionClass })),
+
           segment,
         };
         surveys.push(transformedSurvey);
@@ -423,7 +368,8 @@ export const getSurveys = async (
 
         const transformedSurvey: TSurvey = {
           ...surveyPrisma,
-          triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
+          triggers: surveyPrisma.triggers.map((trigger) => ({ ...trigger.actionClass })),
+
           segment,
         };
 
@@ -484,8 +430,8 @@ export const getSurveyCount = async (environmentId: string): Promise<number> => 
   return count;
 };
 
-export const updateSurvey = async (updatedSurvey: TSurveyInput): Promise<TSurvey> => {
-  // validateInputs([updatedSurvey, ZSurveyWithRefinements]);
+export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
+  validateInputs([updatedSurvey, ZSurveyWithRefinements]);
 
   try {
     const surveyId = updatedSurvey.id;
@@ -499,8 +445,6 @@ export const updateSurvey = async (updatedSurvey: TSurveyInput): Promise<TSurvey
     }
 
     const { triggers, environmentId, segment, questions, languages, type, ...surveyData } = updatedSurvey;
-
-    console.log("🍻🍻🍻🍻🍻🍻🍻🍻🍻🍻", { triggers });
 
     if (languages) {
       // Process languages update logic here
@@ -555,8 +499,6 @@ export const updateSurvey = async (updatedSurvey: TSurveyInput): Promise<TSurvey
       // data.triggers = processTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
       // data.triggers = triggers.map((trigger) => trigger.id);
     }
-
-    console.log({ trigu: JSON.stringify(data.triggers, null, 2) });
 
     // if the survey body has type other than "app" but has a private segment, we delete that segment, and if it has a public segment, we disconnect from to the survey
     if (segment) {
@@ -729,24 +671,13 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
   validateInputs([environmentId, ZId]);
 
   try {
-    // if the survey body has both triggers and inlineTriggers, we throw an error
-    if (surveyBody.triggers && surveyBody.inlineTriggers) {
-      throw new InvalidInputError("Survey body cannot have both triggers and inlineTriggers");
-    }
-
-    if (surveyBody.triggers) {
-      const actionClasses = await getActionClasses(environmentId);
-      revalidateSurveyByActionClassName(actionClasses, surveyBody.triggers);
-    }
     const createdBy = surveyBody.createdBy;
     delete surveyBody.createdBy;
 
     const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
       ...surveyBody,
       // TODO: Create with attributeFilters
-      triggers: surveyBody.triggers
-        ? processTriggerUpdates(surveyBody.triggers, [], await getActionClasses(environmentId))
-        : undefined,
+      triggers: surveyBody.triggers ? await handleTriggerUpdates(surveyBody.triggers, []) : undefined,
       attributeFilters: undefined,
     };
 
@@ -808,13 +739,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     // @ts-expect-error
     const transformedSurvey: TSurvey = {
       ...survey,
-      triggers: survey.triggers.map((trigger) => ({
-        id: trigger.actionClass.id,
-        isPrivate: false,
-        name: trigger.actionClass.name,
-        description: trigger.actionClass.description,
-        type: trigger.actionClass.type,
-      })),
+      triggers: survey.triggers.map((trigger) => ({ ...trigger.actionClass })),
       ...(survey.segment && {
         segment: {
           ...survey.segment,
@@ -853,8 +778,6 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
 
     const defaultLanguageId = existingSurvey.languages.find((l) => l.default)?.language.id;
 
-    const actionClasses = await getActionClasses(environmentId);
-
     // create new survey with the data of the existing survey
     const newSurvey = await prisma.survey.create({
       data: {
@@ -876,7 +799,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
         },
         triggers: {
           create: existingSurvey.triggers.map((trigger) => ({
-            actionClassId: trigger?.id || "",
+            actionClassId: trigger.id,
           })),
         },
         inlineTriggers: existingSurvey.inlineTriggers ?? undefined,
@@ -1227,15 +1150,7 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
     // @ts-expect-error
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
-      // triggers: prismaSurvey.triggers.map((trigger) => trigger.actionClass.name),
-      triggers: prismaSurvey.triggers.map((trigger) => ({
-        id: trigger.actionClass.id,
-        isPrivate: false,
-        name: trigger.actionClass.name,
-        description: trigger.actionClass.description,
-        type: trigger.actionClass.type,
-      })),
-
+      triggers: prismaSurvey.triggers.map((trigger) => ({ ...trigger.actionClass })),
       segment: surveySegment,
     };
 
@@ -1273,15 +1188,8 @@ export const getSurveysBySegmentId = async (segmentId: string): Promise<TSurvey[
           // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
           // @ts-expect-error
           const transformedSurvey: TSurvey = {
-            // triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
             ...surveyPrisma,
-            triggers: surveyPrisma.triggers.map((trigger) => ({
-              id: trigger.actionClass.id,
-              isPrivate: false,
-              name: trigger.actionClass.name,
-              description: trigger.actionClass.description,
-              type: trigger.actionClass.type,
-            })),
+            triggers: surveyPrisma.triggers.map((trigger) => ({ ...trigger.actionClass })),
             segment,
           };
           surveys.push(transformedSurvey);

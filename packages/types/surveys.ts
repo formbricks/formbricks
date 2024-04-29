@@ -487,7 +487,6 @@ export const ZSurvey = z.object({
   status: ZSurveyStatus,
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
-  // triggers: z.array(z.string()),
   triggers: z.array(ZActionClass),
   inlineTriggers: ZSurveyInlineTriggers.nullable(),
   redirectUrl: z.string().url().nullable(),
@@ -512,9 +511,17 @@ export const ZSurvey = z.object({
   languages: z.array(ZSurveyLanguage),
 });
 
-export const ZSurveyWithRefinements = ZSurvey.refine((survey) => !surveyHasBothTriggers(survey), {
-  message: "Survey cannot have both triggers and inlineTriggers",
+export const ZSurveyWithRefinements = ZSurvey.extend({
+  triggers: z
+    .array(
+      ZActionClass.extend({
+        _isDraft: z.boolean().optional(),
+      })
+    )
+    .optional(),
 });
+
+export type TSurveyWithRefinements = z.infer<typeof ZSurveyWithRefinements>;
 
 export const ZSurveyInput = z.object({
   name: z.string(),
@@ -540,12 +547,13 @@ export const ZSurveyInput = z.object({
   pin: z.string().nullish(),
   resultShareKey: z.string().nullish(),
   displayPercentage: z.number().min(1).max(100).nullish(),
-  triggers: z.array(
-    ZActionClass.extend({
-      _isDraft: z.boolean().optional(),
-      _isEdited: z.boolean().optional(),
-    }).partial()
-  ),
+  triggers: z
+    .array(
+      ZActionClass.extend({
+        _isDraft: z.boolean().optional(),
+      })
+    )
+    .optional(),
   inlineTriggers: ZSurveyInlineTriggers.optional(),
 });
 

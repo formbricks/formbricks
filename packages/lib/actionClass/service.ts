@@ -29,6 +29,8 @@ const select = {
   name: true,
   description: true,
   type: true,
+  isPrivate: true,
+  key: true,
   noCodeConfig: true,
   environmentId: true,
 };
