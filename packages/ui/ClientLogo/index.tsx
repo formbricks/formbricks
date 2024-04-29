@@ -16,7 +16,7 @@ interface ClientLogoProps {
 export const ClientLogo = ({ environmentId, product, previewSurvey = false }: ClientLogoProps) => {
   return (
     <div
-      className={cn(previewSurvey ? "" : "left-5 top-5 md:left-7 md:top-7", "group absolute z-0 rounded-lg")}
+      className={cn(previewSurvey ? "" : "left-3 top-3 md:left-7 md:top-7", "group absolute z-0 rounded-lg")}
       style={{ backgroundColor: product.logo?.bgColor }}>
       {previewSurvey && environmentId && (
         <Link

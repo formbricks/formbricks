@@ -34,7 +34,6 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
       {showCopyToClipboard && (
         <div className="absolute right-2 top-2 z-20 h-8 w-8 cursor-pointer rounded-md bg-slate-100 p-1.5 text-slate-600 hover:bg-slate-200">
           <CopyIcon
-            className=""
             onClick={() => {
               const childText = children?.toString() || "";
               navigator.clipboard.writeText(childText);
