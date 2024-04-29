@@ -100,6 +100,7 @@ export const DateQuestion = ({
 
   useEffect(() => {
     if (datePickerOpen) {
+      if (!selectedDate) setSelectedDate(new Date());
       const input = document.querySelector(".react-date-picker__inputGroup__input") as HTMLInputElement;
       if (input) {
         input.focus();
@@ -162,7 +163,11 @@ export const DateQuestion = ({
               {!datePickerOpen && (
                 <div
                   onClick={() => setDatePickerOpen(true)}
-                  className="bg-input-bg hover:bg-input-bg-selected border-border text-heading rounded-custom relative flex h-[12dvh] w-full cursor-pointer appearance-none items-center justify-center border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === " ") setDatePickerOpen(true);
+                  }}
+                  className="focus:outline-brand bg-input-bg hover:bg-input-bg-selected border-border text-heading rounded-custom relative flex h-[12dvh] w-full cursor-pointer appearance-none items-center justify-center border text-left text-base font-normal">
                   <div className="flex items-center gap-2">
                     {selectedDate ? (
                       <div className="flex items-center gap-2">
@@ -222,14 +227,14 @@ export const DateQuestion = ({
                 calendarIcon={<CalendarIcon />}
                 tileClassName={({ date }) => {
                   const baseClass =
-                    "hover:bg-input-bg-selected rounded-custom h-9 p-0 mt-1 font-normal text-heading aria-selected:opacity-100";
+                    "hover:bg-input-bg-selected rounded-custom h-9 p-0 mt-1 font-normal text-heading aria-selected:opacity-100 focus:ring-2 focus:bg-slate-200";
                   // today's date class
                   if (
                     date.getDate() === new Date().getDate() &&
                     date.getMonth() === new Date().getMonth() &&
                     date.getFullYear() === new Date().getFullYear()
                   ) {
-                    return `${baseClass} border border-input-border`;
+                    return `${baseClass} !bg-brand !border-border-highlight !text-heading focus:ring-2 focus:bg-slate-200`;
                   }
                   // active date class
                   if (
@@ -237,7 +242,7 @@ export const DateQuestion = ({
                     date.getMonth() === selectedDate?.getMonth() &&
                     date.getFullYear() === selectedDate?.getFullYear()
                   ) {
-                    return `${baseClass} !bg-accent-selected-bg !border-border-highlight !text-heading`;
+                    return `${baseClass} !bg-brand !border-border-highlight !text-heading`;
                   }
 
                   return baseClass;
