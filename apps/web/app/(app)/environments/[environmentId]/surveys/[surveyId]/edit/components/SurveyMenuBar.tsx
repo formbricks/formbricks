@@ -57,10 +57,13 @@ export const SurveyMenuBar = ({
   const faultyQuestions: string[] = [];
 
   useEffect(() => {
-    if (audiencePrompt && activeId === "settings") {
+    // Automatically disable the audience prompt for link surveys
+    if (localSurvey.type === "link") {
+      setAudiencePrompt(false);
+    } else if (audiencePrompt && activeId === "settings") {
       setAudiencePrompt(false);
     }
-  }, [activeId, audiencePrompt]);
+  }, [activeId, audiencePrompt, localSurvey.type]);
 
   useEffect(() => {
     const warningText = "You have unsaved changes - are you sure you wish to leave this page?";
