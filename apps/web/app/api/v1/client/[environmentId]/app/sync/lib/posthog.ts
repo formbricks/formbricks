@@ -1,12 +1,11 @@
-import { unstable_cache } from "next/cache";
-
+import { cache } from "@formbricks/lib/cache";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 
-export const sendFreeLimitReachedEventToPosthogBiWeekly = async (
+export const sendFreeLimitReachedEventToPosthogBiWeekly = (
   environmentId: string,
   plan: "inAppSurvey" | "userTargeting"
 ): Promise<string> =>
-  unstable_cache(
+  cache(
     async () => {
       try {
         await capturePosthogEnvironmentEvent(environmentId, "free limit reached", {

@@ -1,19 +1,18 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 import { z } from "zod";
 
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
-import { TUser, TUserCreateInput, TUserUpdateInput, ZUser, ZUserUpdateInput } from "@formbricks/types/user";
+import { TUser, TUserCreateInput, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
 
+import { cache } from "../cache";
 import { createCustomerIoCustomer } from "../customerio";
 import { deleteMembership, updateMembership } from "../membership/service";
 import { deleteTeam } from "../team/service";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { userCache } from "./cache";
 
@@ -34,8 +33,8 @@ const responseSelection = {
 };
 
 // function to retrive basic information about a user's user
-export const getUser = async (id: string): Promise<TUser | null> => {
-  const user = await unstable_cache(
+export const getUser = (id: string): Promise<TUser | null> =>
+  cache(
     async () => {
       validateInputs([id, ZId]);
 
@@ -65,16 +64,8 @@ export const getUser = async (id: string): Promise<TUser | null> => {
     }
   )();
 
-  return user
-    ? {
-        ...user,
-        ...formatDateFields(user, ZUser),
-      }
-    : null;
-};
-
-export const getUserByEmail = async (email: string): Promise<TUser | null> => {
-  const user = await unstable_cache(
+export const getUserByEmail = (email: string): Promise<TUser | null> =>
+  cache(
     async () => {
       validateInputs([email, z.string().email()]);
 
@@ -100,14 +91,6 @@ export const getUserByEmail = async (email: string): Promise<TUser | null> => {
       tags: [userCache.tag.byEmail(email)],
     }
   )();
-
-  return user
-    ? {
-        ...user,
-        ...formatDateFields(user, ZUser),
-      }
-    : null;
-};
 
 const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>
   memberships.filter((membership) => membership.role === "admin");

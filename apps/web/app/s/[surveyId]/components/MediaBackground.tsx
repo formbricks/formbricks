@@ -116,28 +116,25 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
             <div
               className={`${baseClasses} ${loadedClass} bg-cover bg-center`}
               style={{ backgroundImage: `url(${background?.bg})`, filter: `${filterStyle}` }}></div>
-            <div className={`absolute bottom-6 z-10 h-12 w-full lg:bottom-0`}>
-              <div className="mx-auto max-w-full p-3 text-center text-xs text-slate-400 lg:text-right">
-                {authorDetailsForUnsplash.authorName && (
-                  <div className="ml-auto w-max">
-                    <span>Photo by </span>
-                    <Link
-                      href={authorDetailsForUnsplash.authorURL + "?utm_source=formbricks&utm_medium=referral"}
-                      target="_blank"
-                      className="hover:underline">
-                      {authorDetailsForUnsplash.authorName}
-                    </Link>
-                    <span> on </span>
-                    <Link
-                      href="https://unsplash.com/?utm_source=formbricks&utm_medium=referral"
-                      target="_blank"
-                      className="hover:underline">
-                      Unsplash
-                    </Link>
-                  </div>
-                )}
+
+            {authorDetailsForUnsplash.authorName && (
+              <div className="absolute bottom-4 right-6 z-10 ml-auto hidden w-max text-xs text-slate-400 md:block">
+                <span>Photo by </span>
+                <Link
+                  href={authorDetailsForUnsplash.authorURL + "?utm_source=formbricks&utm_medium=referral"}
+                  target="_blank"
+                  className="hover:underline">
+                  {authorDetailsForUnsplash.authorName}
+                </Link>
+                <span> on </span>
+                <Link
+                  href="https://unsplash.com/?utm_source=formbricks&utm_medium=referral"
+                  target="_blank"
+                  className="hover:underline">
+                  Unsplash
+                </Link>
               </div>
-            </div>
+            )}
           </>
         );
       case "upload":
@@ -180,7 +177,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     );
   } else {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
+      <div className="flex min-h-dvh flex-col items-center justify-center">
         {renderBackground()}
         <div className="relative w-full">{children}</div>
       </div>
