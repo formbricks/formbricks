@@ -46,11 +46,34 @@ const handleI18nCheckForMultipleChoice = (
   return question.choices.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
 };
 
+const hasDuplicates = (labels: TI18nString[]) => {
+  const flattenedLabels = labels
+    .map((label) =>
+      Object.keys(label)
+        .map((lang) => {
+          const text = label[lang].trim().toLowerCase();
+          return text && `${lang}:${text}`;
+        })
+        .filter((text) => text)
+    )
+    .flat();
+  const uniqueLabels = new Set(flattenedLabels);
+  return uniqueLabels.size !== flattenedLabels.length;
+};
+
 const handleI18nCheckForMatrixLabels = (
   question: TSurveyMatrixQuestion,
   languages: TSurveyLanguage[]
 ): boolean => {
   const rowsAndColumns = [...question.rows, ...question.columns];
+
+  if (hasDuplicates(question.rows)) {
+    return false;
+  }
+
+  if (hasDuplicates(question.columns)) {
+    return false;
+  }
   return rowsAndColumns.every((label) => isLabelValidForAllLanguages(label, languages));
 };
 
@@ -324,7 +347,7 @@ export const isSurveyValid = (
   if (faultyQuestions.length > 0) {
     setInvalidQuestions(faultyQuestions);
     setSelectedLanguageCode("default");
-    toast.error("Please fill all required fields.");
+    toast.error("Please check for empty fields or duplicate labels");
     return false;
   }
 
@@ -354,37 +377,6 @@ export const isSurveyValid = (
 
       if (haveSameChoices) {
         toast.error("You have empty or duplicate choices.");
-        return false;
-      }
-    }
-
-    if (question.type === TSurveyQuestionType.Matrix) {
-      const hasDuplicates = (labels: TI18nString[]) => {
-        const flattenedLabels = labels
-          .map((label) => Object.keys(label).map((lang) => `${lang}:${label[lang].trim().toLowerCase()}`))
-          .flat();
-
-        return new Set(flattenedLabels).size !== flattenedLabels.length;
-      };
-
-      // Function to check for empty labels in each language
-      const hasEmptyLabels = (labels: TI18nString[]) => {
-        return labels.some((label) => Object.values(label).some((value) => value.trim() === ""));
-      };
-
-      if (hasEmptyLabels(question.rows) || hasEmptyLabels(question.columns)) {
-        toast.error("Empty row or column labels in one or more languages");
-        setInvalidQuestions([question.id]);
-        return false;
-      }
-
-      if (hasDuplicates(question.rows)) {
-        toast.error("You have duplicate row labels.");
-        return false;
-      }
-
-      if (hasDuplicates(question.columns)) {
-        toast.error("You have duplicate column labels.");
         return false;
       }
     }
