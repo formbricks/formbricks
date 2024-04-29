@@ -1,5 +1,5 @@
-import SecondNavbar from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/SecondNavbar";
-import { UserIcon, UsersIcon } from "lucide-react";
+import SecondNavbar from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/attributes/components/SecondNavbar";
+import { TagIcon, UserIcon, UsersIcon } from "lucide-react";
 
 interface PeopleSegmentsTabsProps {
   activeId: string;
@@ -20,6 +20,12 @@ export default function PeopleSegmentsTabs({ activeId, environmentId }: PeopleSe
       label: "Segments",
       icon: <UsersIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/segments`,
+    },
+    {
+      id: "attributes",
+      label: "Attributes",
+      icon: <TagIcon className="h-5 w-5" />,
+      href: `/environments/${environmentId}/attributes`,
     },
   ];
 
