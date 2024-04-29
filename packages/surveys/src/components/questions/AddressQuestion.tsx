@@ -156,7 +156,7 @@ export const AddressQuestion = ({
                 value={safeValue[index] || ""}
                 onInput={(e) => handleInputChange(e.currentTarget.value, index)}
                 autoFocus={!isInIframe && index === 0}
-                className="border-border placeholder:text-placeholder text-subheading focus:border-border-highlight bg-input-bg rounded-custom block w-full border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
+                className="border-border focus:border-brand placeholder:text-placeholder text-subheading bg-input-bg rounded-custom block w-full border p-2 shadow-sm sm:text-sm"
               />
             ))}
           </div>
