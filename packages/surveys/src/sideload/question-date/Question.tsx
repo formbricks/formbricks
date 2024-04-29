@@ -139,7 +139,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
         calendarIcon={<CalendarIcon />}
         tileClassName={({ date }) => {
           const baseClass =
-            "hover:bg-input-bg-selected rounded-custom h-9 p-0 mt-1 font-normal text-heading aria-selected:opacity-100";
+            "hover:bg-input-bg-selected rounded-custom h-9 p-0 mt-1 font-normal text-heading aria-selected:opacity-100 focus:ring-2 focus:bg-slate-200";
           // today's date class
           if (
             date.getDate() === new Date().getDate() &&
@@ -154,7 +154,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
             date.getMonth() === selectedDate?.getMonth() &&
             date.getFullYear() === selectedDate?.getFullYear()
           ) {
-            return `${baseClass} !bg-accent-selected-bg !border-border-highlight !text-heading`;
+            return `${baseClass} !bg-brand !border-border-highlight !text-heading focus:ring-2 focus:bg-slate-200`;
           }
 
           return baseClass;
