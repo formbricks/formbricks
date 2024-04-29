@@ -141,6 +141,7 @@ export const DateQuestion = ({
         <SubmitButton
           isLastQuestion={isLastQuestion}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          tabIndex={0}
         />
       </div>
     </form>
