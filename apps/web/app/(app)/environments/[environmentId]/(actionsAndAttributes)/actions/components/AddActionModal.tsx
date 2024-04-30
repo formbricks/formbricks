@@ -47,7 +47,26 @@ export default function AddNoCodeActionModal({
   setActionClasses,
   isViewer,
 }: AddNoCodeActionModalProps) {
-  const { register, control, handleSubmit, watch, reset } = useForm();
+  const { register, control, handleSubmit, watch, reset } = useForm<TActionClassInput>({
+    defaultValues: {
+      name: "",
+      description: "",
+      type: "noCode",
+      key: "",
+      noCodeConfig: {
+        pageUrl: {
+          rule: "contains",
+          value: "",
+        },
+        cssSelector: {
+          value: "",
+        },
+        innerHtml: {
+          value: "",
+        },
+      },
+    },
+  });
   const [isPageUrl, setIsPageUrl] = useState(false);
   const [isCssSelector, setIsCssSelector] = useState(false);
   const [isInnerHtml, setIsInnerText] = useState(false);
@@ -77,8 +96,8 @@ export default function AddNoCodeActionModal({
   const handleMatchClick = () => {
     const match = testURLmatch(
       testUrl,
-      watch("noCodeConfig.[pageUrl].value"),
-      watch("noCodeConfig.[pageUrl].rule")
+      watch("noCodeConfig.pageUrl.value"),
+      watch("noCodeConfig.pageUrl.rule")
     );
     setIsMatch(match);
     if (match === "yes") toast.success("Your survey would be shown on this URL.");
@@ -121,6 +140,8 @@ export default function AddNoCodeActionModal({
       if (type === "noCode") {
         const filteredNoCodeConfig = filterNoCodeConfig(noCodeConfig as TActionClassNoCodeConfig);
         updatedAction.noCodeConfig = filteredNoCodeConfig;
+      } else {
+        updatedAction.key = data.key;
       }
 
       const newActionClass: TActionClass = await createActionClassAction(updatedAction);
@@ -251,13 +272,23 @@ export default function AddNoCodeActionModal({
                   </div>
                 </div>
                 <hr />
+
+                <div className="col-span-1">
+                  <Label htmlFor="codeKeyInput">Code</Label>
+                  <Input
+                    id="codeKeyInput"
+                    placeholder="Enter your code key"
+                    {...register("key")}
+                    className="mb-2 w-1/2"
+                  />
+                </div>
                 <Alert>
                   <Terminal className="h-4 w-4" />
                   <AlertTitle>How do Code Actions work?</AlertTitle>
                   <AlertDescription>
                     You can track code action anywhere in your app using{" "}
                     <span className="rounded bg-slate-100 px-2 py-1 text-xs">
-                      formbricks.track(&quot;{watch("name")}&quot;)
+                      formbricks.track(&quot;{watch("key")}&quot;)
                     </span>{" "}
                     in your code. Read more in our{" "}
                     <a href="https://formbricks.com/docs/actions/code" target="_blank" className="underline">

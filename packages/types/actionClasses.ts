@@ -49,8 +49,8 @@ export const ZActionClass = z.object({
   key: z.string().nullable(),
   noCodeConfig: z.union([ZActionClassNoCodeConfig, z.null()]),
   environmentId: z.string(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
 });
 
 export type TActionClass = z.infer<typeof ZActionClass>;
@@ -59,9 +59,9 @@ export const ZActionClassInput = z.object({
   id: z.string().optional(),
   environmentId: z.string(),
   name: z.string(),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(),
   isPrivate: z.boolean().optional(),
-  key: z.string().optional(),
+  key: z.string().optional().nullable(),
   noCodeConfig: ZActionClassNoCodeConfig.nullish(),
   type: z.enum(["code", "noCode", "automatic"]),
   _isDraft: z.boolean().optional(),

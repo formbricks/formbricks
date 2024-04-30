@@ -21,8 +21,6 @@ import {
   TSurveyQuestions,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
-  ZSurveyInlineTriggers,
-  surveyHasBothTriggers,
 } from "@formbricks/types/surveys";
 
 // Utility function to check if label is valid for all required languages

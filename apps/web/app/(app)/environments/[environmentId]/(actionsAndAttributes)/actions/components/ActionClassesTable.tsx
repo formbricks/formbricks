@@ -35,6 +35,8 @@ export default function ActionClassesTable({
     id: "",
     name: "",
     type: "noCode",
+    isPrivate: false,
+    key: "",
     description: "",
     noCodeConfig: null,
     createdAt: new Date(),

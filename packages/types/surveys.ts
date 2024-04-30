@@ -459,23 +459,6 @@ export const ZSurveyInlineTriggers = z.object({
 
 export type TSurveyInlineTriggers = z.infer<typeof ZSurveyInlineTriggers>;
 
-export const surveyHasBothTriggers = (survey: TSurvey) => {
-  // if the triggers array has a single empty string, it means the survey has no triggers
-  // if (survey.triggers?.[0] === "") {
-  //   return false;
-  // }
-
-  const hasTriggers = survey.triggers?.length > 0;
-  const hasInlineTriggers = !!survey.inlineTriggers?.codeConfig || !!survey.inlineTriggers?.noCodeConfig;
-
-  // Survey cannot have both triggers and inlineTriggers
-  if (hasTriggers && hasInlineTriggers) {
-    return true;
-  }
-
-  return false;
-};
-
 export const ZSurvey = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
@@ -516,13 +499,12 @@ export const ZSurveyWithRefinements = ZSurvey.extend({
     .array(
       ZActionClass.extend({
         _isDraft: z.boolean().optional(),
-      })
+      }).partial({ createdAt: true, description: true, noCodeConfig: true, updatedAt: true })
     )
     .optional(),
 });
 
 export type TSurveyWithRefinements = z.infer<typeof ZSurveyWithRefinements>;
-
 export const ZSurveyInput = z.object({
   name: z.string(),
   type: ZSurveyType.optional(),

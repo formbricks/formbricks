@@ -4,7 +4,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
 
-import { getActionClasses } from "@formbricks/lib/actionClass/service";
+import { getActionClassByEnvironmentIdAndName, getActionClasses } from "@formbricks/lib/actionClass/service";
 import {
   IS_FORMBRICKS_CLOUD,
   PRICING_APPSURVEYS_FREE_RESPONSES,
@@ -77,7 +77,11 @@ export async function GET(
     }
 
     if (!environment?.widgetSetupCompleted) {
-      const firstSurvey = getExampleSurveyTemplate(WEBAPP_URL);
+      const exampleTrigger = await getActionClassByEnvironmentIdAndName(environmentId, "New Session");
+      if (!exampleTrigger) {
+        throw new Error("Example trigger not found");
+      }
+      const firstSurvey = getExampleSurveyTemplate(WEBAPP_URL, exampleTrigger);
       await createSurvey(environmentId, firstSurvey);
       await updateEnvironment(environment.id, { widgetSetupCompleted: true });
     }

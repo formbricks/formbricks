@@ -43,7 +43,8 @@ export default function WhenToSendCard({
   const [selectedAction, setSelectedAction] = useState<(TActionClass & { _isDraft?: boolean }) | null>(null);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
   const [isEditActionModalOpen, setEditActionModalOpen] = useState(false);
-  const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
+  // const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
+  const actionClasses = propActionClasses;
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
 
   const { isViewer } = getAccessFlags(membershipRole);
@@ -321,7 +322,6 @@ export default function WhenToSendCard({
         open={isAddActionModalOpen}
         setOpen={setAddActionModalOpen}
         actionClasses={actionClasses}
-        setActionClasses={setActionClasses}
         isViewer={isViewer}
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}

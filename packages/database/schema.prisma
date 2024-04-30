@@ -342,7 +342,7 @@ model ActionClass {
   surveys       SurveyTrigger[]
   actions       Action[]
 
-  @@unique([name, environmentId])
+  @@unique([key, environmentId])
   @@index([environmentId, createdAt])
 }
 

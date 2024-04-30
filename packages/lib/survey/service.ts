@@ -165,6 +165,20 @@ const handleTriggerUpdates = async (
   addedTriggerIds = [...addedTriggerIds, ...createdTriggerIds];
 
   //TODO: updated triggers - TBD(just need to update the action class, nothing to do with trigger)
+  // const [updatedTriggersOld, updatedTriggersNew] = triggers.reduce(
+  //   (acc, trigger) => {
+  //     if (!trigger._isDraft && currentTriggerIds.includes(trigger.id)) {
+  //       const currentTrigger = currentTriggers.find((t) => t.id === trigger.id);
+  //       if (currentTrigger) {
+  //         acc[0].push(currentTrigger);
+  //         acc[1].push(trigger);
+  //       }
+  //     }
+  //     return acc;
+  //   },
+  //   [[], []] as [TSurvey["triggers"], TSurveyWithRefinements["triggers"]]
+  // );
+  // compare the trigger changes and check with zod schema
 
   // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
   const deletedTriggers = currentTriggers.filter((trigger) => !newTriggerIds.includes(trigger.id));

@@ -58,6 +58,8 @@ export const EditActionModal = ({
     },
   });
 
+  const isDraft = selectedAction._isDraft;
+
   const [type, setType] = useState<string>(selectedAction.type);
   const [visibility, setVisibility] = useState(selectedAction.isPrivate ? "private" : "public");
 
@@ -237,6 +239,7 @@ export const EditActionModal = ({
                   tabStyle="button"
                   className="bg-white"
                   activeTabClassName="bg-slate-100"
+                  disabled={!isDraft}
                 />
               </div>
             </div>
@@ -261,6 +264,7 @@ export const EditActionModal = ({
                   tabStyle="button"
                   className="bg-white"
                   activeTabClassName="bg-slate-100"
+                  disabled={!isDraft}
                 />
               </div>
             </div>
@@ -273,7 +277,9 @@ export const EditActionModal = ({
                     <Input
                       id="codeKeyInput"
                       placeholder="Enter your code key"
-                      {...register("key")}
+                      {...register("key", {
+                        disabled: !isDraft,
+                      })}
                       className="mb-2 w-1/2"
                     />
                   </div>

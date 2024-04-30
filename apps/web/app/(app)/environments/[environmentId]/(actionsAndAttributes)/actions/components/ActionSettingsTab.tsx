@@ -48,6 +48,7 @@ export default function ActionSettingsTab({
     defaultValues: {
       name: actionClass.name,
       description: actionClass.description,
+      key: actionClass.key,
       noCodeConfig: actionClass.noCodeConfig,
     },
   });
@@ -133,7 +134,7 @@ export default function ActionSettingsTab({
               placeholder="E.g. Clicked Download"
               {...register("name", {
                 value: actionClass.name,
-                disabled: actionClass.type === "automatic" || actionClass.type === "code" ? true : false,
+                disabled: actionClass.type === "automatic" ? true : false,
               })}
             />
           </div>
@@ -147,6 +148,17 @@ export default function ActionSettingsTab({
                   value: actionClass.description,
                   disabled: actionClass.type === "automatic" ? true : false,
                 })}
+              />
+            </div>
+          )}
+
+          {actionClass.type === "code" && (
+            <div className="col-span-1">
+              <Label htmlFor="actionKeySettingsInput">Code</Label>
+              <Input
+                id="actionKeySettingsInput"
+                placeholder="E.g. download_button_clicked"
+                {...register("key", { disabled: true })}
               />
             </div>
           )}

@@ -20,26 +20,16 @@ import { TabBar } from "../TabBar";
 
 interface SavedActionsProps {
   actionClasses: TActionClass[];
-  setActionClasses: (v: TActionClass[]) => void;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const SavedActions = ({
-  actionClasses,
-  setActionClasses,
-  localSurvey,
-  setLocalSurvey,
-  setOpen,
-}: SavedActionsProps) => {
-  // diff actions that are not in local survey triggers
+const SavedActions = ({ actionClasses, localSurvey, setLocalSurvey, setOpen }: SavedActionsProps) => {
   const diffActions = actionClasses.filter(
     (actionClass) => !localSurvey.triggers.some((trigger) => trigger.id === actionClass.id)
   );
   const [filteredActionClasses, setFilteredActionClasses] = useState<TActionClass[]>(diffActions);
-
-  // const [filteredActionClasses, setFilteredActionClasses] = useState<TActionClass[]>(actionClasses);
 
   const [code, noCode, automatic] = filteredActionClasses.reduce(
     (acc, actionClass) => {
@@ -60,6 +50,7 @@ const SavedActions = ({
   const handleActionClick = (action: TActionClass) => {
     setLocalSurvey((prev) => ({
       ...prev,
+      // @ts-expect-error
       triggers: prev.triggers.concat({
         id: action.id,
         name: action.name,
@@ -141,7 +132,6 @@ function isValidCssSelector(selector?: string) {
 interface CreateNewActionProps {
   actionClasses: TActionClass[];
   isViewer: boolean;
-  localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   environmentId: string;
@@ -151,7 +141,6 @@ const CreateNewAction = ({
   actionClasses,
   setOpen,
   isViewer,
-  localSurvey,
   setLocalSurvey,
   environmentId,
 }: CreateNewActionProps) => {
@@ -260,6 +249,7 @@ const CreateNewAction = ({
 
     setLocalSurvey((prev) => ({
       ...prev,
+      // @ts-expect-error
       triggers: prev.triggers.concat(updatedAction),
     }));
 
@@ -421,7 +411,6 @@ interface AddActionModalProps {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   environmentId: string;
   actionClasses: TActionClass[];
-  setActionClasses: (v: TActionClass[]) => void;
   isViewer: boolean;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
@@ -431,7 +420,6 @@ export const AddActionModal = ({
   open,
   setOpen,
   actionClasses,
-  setActionClasses,
   localSurvey,
   setLocalSurvey,
   isViewer,
@@ -443,7 +431,6 @@ export const AddActionModal = ({
       children: (
         <SavedActions
           actionClasses={actionClasses}
-          setActionClasses={setActionClasses}
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
           setOpen={setOpen}
@@ -457,7 +444,6 @@ export const AddActionModal = ({
           actionClasses={actionClasses}
           setOpen={setOpen}
           isViewer={isViewer}
-          localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
           environmentId={environmentId}
         />
