@@ -1,5 +1,5 @@
 import { MousePointerClickIcon, Terminal } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -32,6 +32,7 @@ interface EditActionModalProps {
   selectedAction: TActionClass;
   setSelectedAction: React.Dispatch<React.SetStateAction<(TActionClass & { _isDraft: boolean }) | null>>;
   actionClasses: TActionClass[];
+  setActionClasses?: React.Dispatch<React.SetStateAction<TActionClass[]>>;
   isViewer: boolean;
   environmentId: string;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
@@ -43,6 +44,7 @@ export const EditActionModal = ({
   selectedAction,
   setSelectedAction,
   actionClasses,
+  setActionClasses,
   environmentId,
   setOpen,
   isViewer,
@@ -69,7 +71,21 @@ export const EditActionModal = ({
   const [testUrl, setTestUrl] = useState("");
   const [isMatch, setIsMatch] = useState("");
 
-  const actionClassNames = actionClasses.map((actionClass) => actionClass.name);
+  const actionClassNames = useMemo(
+    () =>
+      actionClasses
+        .filter((actionClass) => !actionClass.isPrivate && actionClass.id !== selectedAction.id)
+        .map((actionClass) => actionClass.name),
+    [actionClasses, selectedAction]
+  );
+
+  const actionClassKeys = useMemo(
+    () =>
+      actionClasses
+        .filter((actionClass) => actionClass.type === "code" && actionClass.id !== selectedAction.id)
+        .map((actionClass) => actionClass.key),
+    [actionClasses, selectedAction]
+  );
 
   const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
     const { pageUrl, innerHtml, cssSelector } = noCodeConfig;
@@ -102,68 +118,78 @@ export const EditActionModal = ({
 
   const submitHandler = (data: Partial<TActionClass>) => {
     const { noCodeConfig } = data;
-    if (isViewer) {
-      return toast.error("You are not authorised to perform this action.");
-    }
-    if (!data.name || data.name?.trim() === "") {
-      return toast.error("Please give your action a name");
-    }
-    if (data.name && actionClassNames.includes(data.name)) {
-      return toast.error(`Action with name ${data.name} already exist`);
-    }
-    const isPrivate = visibility === "private";
-
-    if (isPrivate !== selectedAction.isPrivate) {
-      return toast.error("You can't change the visibility of an existing action.");
-    }
-
-    if (type === "noCode") {
-      if (!isPageUrl && !isCssSelector && !isInnerHtml)
-        return toast.error("Please select at least one selector");
-
-      if (isCssSelector && !isValidCssSelector(noCodeConfig?.cssSelector?.value)) {
-        return toast.error("Please enter a valid CSS Selector");
+    try {
+      if (isViewer) {
+        throw new Error("You are not authorised to perform this action.");
+      }
+      if (!data.name || data.name?.trim() === "") {
+        throw new Error("Please give your action a name");
+      }
+      if (data.name && actionClassNames.includes(data.name)) {
+        throw new Error(`Action with name ${data.name} already exist`);
+      }
+      const isPrivate = visibility === "private";
+      if (isPrivate !== selectedAction.isPrivate) {
+        throw new Error("You can't change the visibility of an existing action.");
       }
 
-      if (isPageUrl && noCodeConfig?.pageUrl?.rule === undefined) {
-        return toast.error("Please select a rule for page URL");
+      if (type === "noCode") {
+        if (!isPageUrl && !isCssSelector && !isInnerHtml)
+          throw new Error("Please select at least one selector");
+
+        if (isCssSelector && !isValidCssSelector(noCodeConfig?.cssSelector?.value))
+          throw new Error("Please enter a valid CSS Selector");
+
+        if (isPageUrl && noCodeConfig?.pageUrl?.rule === undefined)
+          throw new Error("Please select a rule for page URL");
       }
+      if (type === "code" && !data.key) {
+        throw new Error("Please enter a code key");
+      }
+      if (data.key && actionClassKeys.includes(data.key)) {
+        throw new Error(`Action with key ${data.key} already exist`);
+      }
+
+      const updatedAction: TActionClass = {
+        id: selectedAction.id,
+        name: data.name,
+        description: data.description,
+        environmentId,
+        type: type as TActionClass["type"],
+        isPrivate,
+        createdAt: selectedAction.createdAt,
+        updatedAt: new Date(),
+      };
+
+      if (type === "noCode") {
+        const filteredNoCodeConfig = filterNoCodeConfig(noCodeConfig as TActionClassNoCodeConfig);
+        updatedAction.noCodeConfig = filteredNoCodeConfig;
+      } else {
+        updatedAction.key = data.key;
+      }
+
+      if (selectedAction._isDraft) {
+        updatedAction._isDraft = selectedAction._isDraft;
+      }
+
+      setLocalSurvey((prev) => ({
+        ...prev,
+        triggers: prev.triggers.map((trigger) =>
+          trigger.id === selectedAction.id ? updatedAction : trigger
+        ),
+      }));
+
+      if (setActionClasses) {
+        setActionClasses((prev) =>
+          prev.map((actionClass) => (actionClass.id === selectedAction.id ? updatedAction : actionClass))
+        );
+      }
+
+      reset();
+      resetAllStates();
+    } catch (e: any) {
+      toast.error(e.message);
     }
-    if (type === "code" && !data.key) {
-      return toast.error("Please enter a code key");
-    }
-
-    const updatedAction: TActionClass = {
-      id: selectedAction.id,
-      name: data.name,
-      description: data.description,
-      environmentId,
-      type: type as TActionClass["type"],
-      isPrivate,
-      createdAt: selectedAction.createdAt,
-      updatedAt: new Date(),
-    };
-
-    if (type === "noCode") {
-      const filteredNoCodeConfig = filterNoCodeConfig(noCodeConfig as TActionClassNoCodeConfig);
-      updatedAction.noCodeConfig = filteredNoCodeConfig;
-    } else {
-      updatedAction.key = data.key;
-    }
-
-    if (selectedAction._isDraft) {
-      updatedAction._isDraft = selectedAction._isDraft;
-    }
-
-    setLocalSurvey((prev) => ({
-      ...prev,
-      triggers: prev.triggers.map((trigger) => (trigger.id === selectedAction.id ? updatedAction : trigger)),
-    }));
-
-    setOpen(false);
-
-    reset();
-    resetAllStates();
   };
 
   const resetAllStates = () => {

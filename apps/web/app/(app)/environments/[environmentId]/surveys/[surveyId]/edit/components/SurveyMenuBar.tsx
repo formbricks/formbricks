@@ -100,12 +100,46 @@ export const SurveyMenuBar = ({
     setLocalSurvey(updatedSurvey);
   };
 
-  const handleBack = () => {
-    const { updatedAt, ...localSurveyRest } = localSurvey;
-    const { updatedAt: _, ...surveyRest } = survey;
-    localSurveyRest.triggers = localSurveyRest.triggers.filter((trigger) => Boolean(trigger));
+  const getFormattedTriggers = (
+    beforeSaveTriggers: TSurvey["triggers"],
+    afterSaveTriggers: TSurvey["triggers"]
+  ) => {
+    let newLocalTriggers = beforeSaveTriggers.map((trigger, idx) => {
+      const { updatedAt, createdAt, _isDraft, key, noCodeConfig, ...rest } = trigger;
 
-    if (!isEqual(localSurveyRest, surveyRest)) {
+      if (trigger._isDraft) rest.id = afterSaveTriggers[idx].id;
+
+      return {
+        ...rest,
+        ...(trigger.type === "code"
+          ? { key: trigger.key }
+          : trigger.type === "noCode"
+            ? { noCodeConfig: trigger.noCodeConfig }
+            : {}),
+      };
+    });
+
+    let newTriggers = afterSaveTriggers.map((trigger) => {
+      const { updatedAt, createdAt, key, noCodeConfig, ...rest } = trigger;
+      return {
+        ...rest,
+        ...(trigger.type === "code"
+          ? { key: trigger.key }
+          : trigger.type === "noCode"
+            ? { noCodeConfig: trigger.noCodeConfig }
+            : {}),
+      };
+    });
+
+    return { beforeSaveTriggers: newLocalTriggers, afterSaveTriggers: newTriggers };
+  };
+
+  const handleBack = () => {
+    const { updatedAt, triggers: localTriggers, ...localSurveyRest } = localSurvey;
+    const { updatedAt: _, triggers, ...surveyRest } = survey;
+    const { beforeSaveTriggers, afterSaveTriggers } = getFormattedTriggers(localTriggers, triggers);
+
+    if (!isEqual(localSurveyRest, surveyRest) || !isEqual(beforeSaveTriggers, afterSaveTriggers)) {
       setConfirmDialogOpen(true);
     } else {
       router.back();

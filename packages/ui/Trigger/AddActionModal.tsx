@@ -2,7 +2,7 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon, Terminal } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -124,6 +124,7 @@ function isValidCssSelector(selector?: string) {
 
 interface CreateNewActionProps {
   actionClasses: TActionClass[];
+  setActionClasses?: React.Dispatch<React.SetStateAction<TActionClass[]>>;
   isViewer: boolean;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -132,6 +133,7 @@ interface CreateNewActionProps {
 
 const CreateNewAction = ({
   actionClasses,
+  setActionClasses,
   setOpen,
   isViewer,
   setLocalSurvey,
@@ -166,7 +168,19 @@ const CreateNewAction = ({
   const [isInnerHtml, setIsInnerText] = useState(false);
   const [testUrl, setTestUrl] = useState("");
   const [isMatch, setIsMatch] = useState("");
-  const actionClassNames = actionClasses.map((actionClass) => actionClass.name);
+  const actionClassNames = useMemo(
+    () =>
+      actionClasses.filter((actionClass) => !actionClass.isPrivate).map((actionClass) => actionClass.name),
+    [actionClasses]
+  );
+
+  const actionClassKeys = useMemo(
+    () =>
+      actionClasses
+        .filter((actionClass) => actionClass.type === "code")
+        .map((actionClass) => actionClass.key),
+    [actionClasses]
+  );
 
   const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
     const { pageUrl, innerHtml, cssSelector } = noCodeConfig;
@@ -199,56 +213,66 @@ const CreateNewAction = ({
 
   const submitHandler = (data: Partial<TActionClass>) => {
     const { noCodeConfig } = data;
-    if (isViewer) {
-      return toast.error("You are not authorised to perform this action.");
-    }
-    if (!data.name || data.name?.trim() === "") {
-      return toast.error("Please give your action a name");
-    }
-    if (data.name && actionClassNames.includes(data.name)) {
-      return toast.error(`Action with name ${data.name} already exist`);
-    }
-    if (type === "noCode") {
-      if (!isPageUrl && !isCssSelector && !isInnerHtml)
-        return toast.error("Please select at least one selector");
+    try {
+      if (isViewer) {
+        throw new Error("You are not authorised to perform this action.");
+      }
+      if (!data.name || data.name?.trim() === "") {
+        throw new Error("Please give your action a name");
+      }
+      if (data.name && actionClassNames.includes(data.name)) {
+        throw new Error(`Action with name ${data.name} already exist`);
+      }
+      if (type === "noCode") {
+        if (!isPageUrl && !isCssSelector && !isInnerHtml)
+          throw new Error("Please select at least one selector");
 
-      if (isCssSelector && !isValidCssSelector(noCodeConfig?.cssSelector?.value)) {
-        return toast.error("Please enter a valid CSS Selector");
+        if (isCssSelector && !isValidCssSelector(noCodeConfig?.cssSelector?.value))
+          throw new Error("Please enter a valid CSS Selector");
+
+        if (isPageUrl && noCodeConfig?.pageUrl?.rule === undefined)
+          throw new Error("Please select a rule for page URL");
+      }
+      if (type === "code" && !data.key) {
+        throw new Error("Please enter a code key");
+      }
+      if (data.key && actionClassKeys.includes(data.key)) {
+        throw new Error(`Action with key ${data.key} already exist`);
       }
 
-      if (isPageUrl && noCodeConfig?.pageUrl?.rule === undefined) {
-        return toast.error("Please select a rule for page URL");
+      const updatedAction: TActionClass = {
+        id: createId(),
+        name: data.name,
+        description: data.description,
+        type: type as TActionClass["type"],
+        isPrivate: visibility === "private",
+        _isDraft: true,
+        environmentId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      if (type === "noCode") {
+        const filteredNoCodeConfig = filterNoCodeConfig(noCodeConfig as TActionClassNoCodeConfig);
+        updatedAction.noCodeConfig = filteredNoCodeConfig;
+      } else {
+        updatedAction.key = data.key;
       }
-    }
-    if (type === "code" && !data.key) {
-      return toast.error("Please enter a code key");
-    }
-    const updatedAction: TActionClass = {
-      id: createId(),
-      name: data.name,
-      description: data.description,
-      type: type as TActionClass["type"],
-      isPrivate: visibility === "private",
-      _isDraft: true,
-      environmentId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
 
-    if (type === "noCode") {
-      const filteredNoCodeConfig = filterNoCodeConfig(noCodeConfig as TActionClassNoCodeConfig);
-      updatedAction.noCodeConfig = filteredNoCodeConfig;
-    } else {
-      updatedAction.key = data.key;
+      setLocalSurvey((prev) => ({
+        ...prev,
+        triggers: prev.triggers.concat(updatedAction),
+      }));
+
+      if (setActionClasses) {
+        setActionClasses((prevActionClasses: TActionClass[]) => [...prevActionClasses, updatedAction]);
+      }
+
+      reset();
+      resetAllStates();
+    } catch (e: any) {
+      toast.error(e.message);
     }
-
-    setLocalSurvey((prev) => ({
-      ...prev,
-      triggers: prev.triggers.concat(updatedAction),
-    }));
-
-    reset();
-    resetAllStates();
   };
 
   const resetAllStates = () => {
@@ -405,6 +429,7 @@ interface AddActionModalProps {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   environmentId: string;
   actionClasses: TActionClass[];
+  setActionClasses?: React.Dispatch<React.SetStateAction<TActionClass[]>>;
   isViewer: boolean;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
@@ -414,6 +439,7 @@ export const AddActionModal = ({
   open,
   setOpen,
   actionClasses,
+  setActionClasses,
   localSurvey,
   setLocalSurvey,
   isViewer,
@@ -436,6 +462,7 @@ export const AddActionModal = ({
       children: (
         <CreateNewAction
           actionClasses={actionClasses}
+          setActionClasses={setActionClasses}
           setOpen={setOpen}
           isViewer={isViewer}
           setLocalSurvey={setLocalSurvey}
