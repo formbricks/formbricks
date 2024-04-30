@@ -1,4 +1,4 @@
-import SurveyNavBarName from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/SurveyNavBarName";
+import SurveyNavBarName from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/attributes/components/SurveyNavBarName";
 import Link from "next/link";
 
 import { cn } from "@formbricks/lib/cn";
