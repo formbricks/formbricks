@@ -10,7 +10,7 @@ import {
   Text,
 } from "@react-email/components";
 import { render } from "@react-email/render";
-import { CalendarDaysIcon, Star } from "lucide-react";
+import { CalendarDaysIcon } from "lucide-react";
 import React from "react";
 
 import { cn } from "@formbricks/lib/cn";
@@ -50,7 +50,7 @@ export const PreviewEmailTemplate = ({ survey, surveyUrl, styling }: PreviewEmai
           <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
             {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
-          <Section className="border-input-border-color mt-4 block h-20 w-full rounded-lg border border-solid bg-slate-50" />
+          <Section className="border-input-border-color rounded-custom mt-4 block h-20 w-full border border-solid bg-slate-50" />
           <EmailFooter />
         </EmailTemplateWrapper>
       );
@@ -68,7 +68,7 @@ export const PreviewEmailTemplate = ({ survey, surveyUrl, styling }: PreviewEmai
               }}></Text>
           </Container>
 
-          <Container className="border-input-border-color bg-input-color m-0 mt-4 block w-full max-w-none rounded-lg border border-solid p-4 font-medium text-slate-800">
+          <Container className="border-input-border-color bg-input-color rounded-custom m-0 mt-4 block w-full max-w-none border border-solid p-4 font-medium text-slate-800">
             <Text className="text-question-color m-0 inline-block">
               {getLocalizedValue(firstQuestion.label, defaultLanguageCode)}
             </Text>
@@ -77,14 +77,14 @@ export const PreviewEmailTemplate = ({ survey, surveyUrl, styling }: PreviewEmai
             {!firstQuestion.required && (
               <EmailButton
                 href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
-                className="inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-black">
+                className="rounded-custom inline-flex cursor-pointer appearance-none px-6 py-3 text-sm font-medium text-black">
                 Reject
               </EmailButton>
             )}
             <EmailButton
               href={`${urlWithPrefilling}${firstQuestion.id}=accepted`}
               className={cn(
-                "bg-brand-color ml-2 inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
+                "bg-brand-color rounded-custom ml-2 inline-flex cursor-pointer appearance-none px-6 py-3 text-sm font-medium",
                 isLight(brandColor) ? "text-black" : "text-white"
               )}>
               Accept
@@ -104,7 +104,7 @@ export const PreviewEmailTemplate = ({ survey, surveyUrl, styling }: PreviewEmai
               {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
             </Text>
             <Container className="mx-0 mt-4 flex w-max flex-col">
-              <Section className="border-input-border-color block overflow-hidden rounded-md border">
+              <Section className="border-input-border-color rounded-custom block overflow-hidden border">
                 {Array.from({ length: 11 }, (_, i) => (
                   <EmailButton
                     key={i}
@@ -151,14 +151,14 @@ export const PreviewEmailTemplate = ({ survey, surveyUrl, styling }: PreviewEmai
             {!firstQuestion.required && (
               <EmailButton
                 href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
-                className="inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-black">
+                className="rounded-custom inline-flex cursor-pointer appearance-none px-6 py-3 text-sm font-medium text-black">
                 {getLocalizedValue(firstQuestion.dismissButtonLabel, defaultLanguageCode) || "Skip"}
               </EmailButton>
             )}
             <EmailButton
               href={`${urlWithPrefilling}${firstQuestion.id}=clicked`}
               className={cn(
-                "bg-brand-color inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
+                "bg-brand-color rounded-custom inline-flex cursor-pointer appearance-none px-6 py-3 text-sm font-medium",
                 isLight(brandColor) ? "text-black" : "text-white"
               )}>
               {getLocalizedValue(firstQuestion.buttonLabel, defaultLanguageCode)}
@@ -179,7 +179,7 @@ export const PreviewEmailTemplate = ({ survey, surveyUrl, styling }: PreviewEmai
             </Text>
             <Container className="mx-0 mt-4 w-full items-center justify-center">
               <Section
-                className={cn("w-full overflow-hidden rounded-md", {
+                className={cn("rounded-custom w-full overflow-hidden", {
                   ["border border-solid border-gray-200"]: firstQuestion.scale === "number",
                 })}>
                 <Column className="mb-4 flex w-full justify-around">
@@ -235,7 +235,7 @@ export const PreviewEmailTemplate = ({ survey, surveyUrl, styling }: PreviewEmai
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices.map((choice) => (
               <Section
-                className="border-input-border-color bg-input-color text-question-color mt-2 block w-full rounded-lg border border-solid p-4"
+                className="border-input-border-color bg-input-color text-question-color rounded-custom mt-2 block w-full border border-solid p-4"
                 key={choice.id}>
                 {getLocalizedValue(choice.label, defaultLanguageCode)}
               </Section>
@@ -257,7 +257,7 @@ export const PreviewEmailTemplate = ({ survey, surveyUrl, styling }: PreviewEmai
             {firstQuestion.choices.map((choice) => (
               <Link
                 key={choice.id}
-                className="border-input-border-color bg-input-color text-question-color mt-2 block rounded-lg border border-solid p-4 hover:bg-slate-100"
+                className="border-input-border-color bg-input-color text-question-color rounded-custom mt-2 block border border-solid p-4 hover:bg-slate-100"
                 href={`${urlWithPrefilling}${firstQuestion.id}=${getLocalizedValue(choice.label, defaultLanguageCode)}`}>
                 {getLocalizedValue(choice.label, defaultLanguageCode)}
               </Link>
@@ -280,14 +280,14 @@ export const PreviewEmailTemplate = ({ survey, surveyUrl, styling }: PreviewEmai
               firstQuestion.allowMulti ? (
                 <Img
                   src={choice.imageUrl}
-                  className="mb-1 mr-1 inline-block h-[110px] w-[220px] rounded-lg"
+                  className="rounded-custom mb-1 mr-1 inline-block h-[110px] w-[220px]"
                 />
               ) : (
                 <Link
                   href={`${urlWithPrefilling}${firstQuestion.id}=${choice.id}`}
                   target="_blank"
-                  className="mb-1 mr-1 inline-block h-[110px] w-[220px] rounded-lg">
-                  <Img src={choice.imageUrl} className="h-full w-full rounded-lg" />
+                  className="rounded-custom mb-1 mr-1 inline-block h-[110px] w-[220px]">
+                  <Img src={choice.imageUrl} className="rounded-custom h-full w-full" />
                 </Link>
               )
             )}
@@ -307,7 +307,7 @@ export const PreviewEmailTemplate = ({ survey, surveyUrl, styling }: PreviewEmai
             </Text>
             <EmailButton
               className={cn(
-                "bg-brand-color mx-auto block w-max cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium ",
+                "bg-brand-color rounded-custom mx-auto block w-max cursor-pointer appearance-none px-6 py-3 text-sm font-medium ",
                 isLight(brandColor) ? "text-black" : "text-white"
               )}>
               Schedule your meeting
@@ -325,7 +325,7 @@ export const PreviewEmailTemplate = ({ survey, surveyUrl, styling }: PreviewEmai
           <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
             {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
-          <Section className="border-input-border-color bg-input-color mt-4 flex h-12 w-full items-center justify-center rounded-lg border border-solid">
+          <Section className="border-input-border-color bg-input-color rounded-custom mt-4 flex h-12 w-full items-center justify-center border border-solid">
             <CalendarDaysIcon className="text-question-color inline h-4 w-4" />
             <Text className="text-question-color inline text-sm font-medium">Select a date</Text>
           </Section>
@@ -357,7 +357,9 @@ export const PreviewEmailTemplate = ({ survey, surveyUrl, styling }: PreviewEmai
               </Row>
               {firstQuestion.rows.map((row, rowIndex) => {
                 return (
-                  <Row key={rowIndex} className={`${rowIndex % 2 === 0 ? "bg-input-color" : ""} rounded-lg`}>
+                  <Row
+                    key={rowIndex}
+                    className={`${rowIndex % 2 === 0 ? "bg-input-color" : ""} rounded-custom`}>
                     <Column className="w-40 break-words px-4 py-2">
                       {getLocalizedValue(row, "default")}
                     </Column>
@@ -388,7 +390,7 @@ export const PreviewEmailTemplate = ({ survey, surveyUrl, styling }: PreviewEmai
           {Array.from({ length: 6 }).map((_, index) => (
             <Section
               key={index}
-              className="border-input-border-color bg-input-color mt-4 block h-10 w-full rounded-lg border border-solid"
+              className="border-input-border-color bg-input-color rounded-custom mt-4 block h-10 w-full border border-solid"
             />
           ))}
           <EmailFooter />
@@ -431,13 +433,16 @@ const EmailTemplateWrapper = ({
               ...colors,
               "signature-color": signatureColor,
             },
+            borderRadius: {
+              custom: styling.roundness ?? 8,
+            },
           },
         },
       }}>
       <Link
         href={surveyUrl}
         target="_blank"
-        className="bg-card-bg-color border-card-border-color mx-0 my-2 block overflow-auto rounded-lg border border-solid p-8 font-sans text-inherit">
+        className="bg-card-bg-color border-card-border-color rounded-custom mx-0 my-2 block overflow-auto border border-solid p-8 font-sans text-inherit">
         {children}
       </Link>
     </Tailwind>

@@ -1,7 +1,8 @@
-import { getPreviewEmailTemplateHtml } from "@formbricks/email/components/survey/PreviewEmailTemplste";
+import { getPreviewEmailTemplateHtml } from "@formbricks/email/components/survey/PreviewEmailTemplate";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { getStyling } from "@formbricks/lib/utils/styling";
 
 export const getEmailTemplateHtml = async (surveyId: string) => {
   const survey = await getSurvey(surveyId);
@@ -13,27 +14,7 @@ export const getEmailTemplateHtml = async (surveyId: string) => {
     throw new Error("Product not found");
   }
 
-  const getStyling = () => {
-    // allow style overwrite is disabled from the product
-    if (!product.styling.allowStyleOverwrite) {
-      return product.styling;
-    }
-
-    // allow style overwrite is enabled from the product
-    if (product.styling.allowStyleOverwrite) {
-      // survey style overwrite is disabled
-      if (!survey.styling?.overwriteThemeStyling) {
-        return product.styling;
-      }
-
-      // survey style overwrite is enabled
-      return survey.styling;
-    }
-
-    return product.styling;
-  };
-
-  const styling = getStyling();
+  const styling = getStyling(product, survey);
   const surveyUrl = WEBAPP_URL + "/s/" + survey.id;
   const html = getPreviewEmailTemplateHtml(survey, surveyUrl, styling);
   const doctype =
