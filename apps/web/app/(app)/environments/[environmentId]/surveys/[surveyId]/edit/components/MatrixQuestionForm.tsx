@@ -3,8 +3,9 @@
 import { isLabelValidForAllLanguages } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
-import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
+import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
@@ -78,6 +79,25 @@ export const MatrixQuestionForm = ({
     }
   };
 
+  const checkForDuplicateLabels = () => {
+    const rowLabels = question.rows
+      .map((row) => getLocalizedValue(row, selectedLanguageCode))
+      .filter((label) => label.trim() !== "");
+
+    const columnLabels = question.columns
+      .map((column) => getLocalizedValue(column, selectedLanguageCode))
+      .filter((label) => label.trim() !== "");
+
+    const duplicateRowLabels = rowLabels.filter((label, index, array) => array.indexOf(label) !== index);
+    const duplicateColumnLabels = columnLabels.filter(
+      (label, index, array) => array.indexOf(label) !== index
+    );
+
+    if (duplicateRowLabels.length > 0 || duplicateColumnLabels.length > 0) {
+      toast.error("Duplicate row or column labels");
+    }
+  };
+
   return (
     <form>
       <QuestionFormInput
@@ -143,6 +163,7 @@ export const MatrixQuestionForm = ({
                   updateMatrixLabel={updateMatrixLabel}
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
+                  onBlur={checkForDuplicateLabels}
                   isInvalid={
                     isInvalid && !isLabelValidForAllLanguages(question.rows[index], localSurvey.languages)
                   }
@@ -183,6 +204,7 @@ export const MatrixQuestionForm = ({
                   updateMatrixLabel={updateMatrixLabel}
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
+                  onBlur={checkForDuplicateLabels}
                   isInvalid={
                     isInvalid && !isLabelValidForAllLanguages(question.columns[index], localSurvey.languages)
                   }

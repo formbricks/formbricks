@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { MatchType, testURLmatch } from "@formbricks/lib/utils/textUrlMatch";
+import { MatchType, testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
 import { TActionClass, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TSurvey } from "@formbricks/types/surveys";
 

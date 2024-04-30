@@ -3,7 +3,7 @@
 import {
   deleteActionClassAction,
   updateActionClassAction,
-} from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
+} from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { testURLmatch } from "@formbricks/lib/utils/textUrlMatch";
+import { testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
 import { TActionClassInput, TActionClassNoCodeConfig, TNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";

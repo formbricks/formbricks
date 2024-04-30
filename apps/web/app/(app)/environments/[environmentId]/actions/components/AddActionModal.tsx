@@ -1,13 +1,13 @@
 "use client";
 
-import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
+import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { MousePointerClickIcon } from "lucide-react";
 import { Terminal } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { testURLmatch } from "@formbricks/lib/utils/textUrlMatch";
+import { testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
 import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";

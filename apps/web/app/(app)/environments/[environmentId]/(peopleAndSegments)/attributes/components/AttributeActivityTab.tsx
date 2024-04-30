@@ -1,6 +1,5 @@
 "use client";
 
-import { getSegmentsByAttributeClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/actions";
 import { TagIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -10,6 +9,8 @@ import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { Label } from "@formbricks/ui/Label";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+
+import { getSegmentsByAttributeClassAction } from "../actions";
 
 interface EventActivityTabProps {
   attributeClass: TAttributeClass;

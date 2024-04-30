@@ -14,7 +14,6 @@ test.describe("Onboarding Flow Test", async () => {
 
     await page.getByRole("button", { name: "Link Surveys Create a new" }).click();
     await page.getByRole("button", { name: "Collect Feedback Collect" }).click();
-    await page.getByRole("button", { name: "Continue to Settings" }).click();
     await page.getByRole("button", { name: "Publish" }).click();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
