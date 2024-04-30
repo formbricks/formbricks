@@ -1,15 +1,6 @@
-import CalLogoLight from "@/images/clients/cal-logo-light.svg";
-import CrowdLogoLight from "@/images/clients/crowd-logo-light.svg";
-import FlixbusLogo from "@/images/clients/flixbus-white.svg";
-import GumtreeLogo from "@/images/clients/gumtree.png";
-import LelyLogo from "@/images/clients/lely-logo.webp";
-import NILogoDark from "@/images/clients/niLogoDark.svg";
-import OpinodoLogo from "@/images/clients/opinodo.png";
-import OptimoleLogo from "@/images/clients/optimole-logo.svg";
-import ThemeisleLogo from "@/images/clients/themeisle-logo.webp";
+import LogoBar from "@/components/salespage/LogoBar";
 import { ShieldCheckIcon, StarIcon } from "lucide-react";
 import { usePlausible } from "next-plausible";
-import Image from "next/image";
 import { useRouter } from "next/router";
 
 import { Button } from "@formbricks/ui/Button";
@@ -43,21 +34,9 @@ export const Hero: React.FC = ({}) => {
             know what your customers need.
           </span>
         </p>
-        <div className="mx-auto mt-5 max-w-xl items-center px-4 sm:flex sm:justify-center md:mt-6 md:space-x-8 md:px-0 lg:max-w-5xl">
-          <div className="grid grid-cols-3  items-center gap-8 pt-2 md:grid-cols-3 lg:grid-cols-9">
-            <Image src={FlixbusLogo} alt="Flixbus Flix Flixtrain Logo" className="rounded-md" width={200} />
-            <Image src={GumtreeLogo} alt="Gumtree Logo" width={200} />
-            <Image src={LelyLogo} alt="Lely Logo" width={200} />
-            <Image src={CalLogoLight} alt="Cal Logo" width={170} />
-            <Image src={ThemeisleLogo} alt="ThemeIsle Logo" width={200} />
-            <Image src={OpinodoLogo} alt="Opinodo.com Logo" width={200} />
-            <Image src={CrowdLogoLight} alt="Crowd.dev Logo" width={200} />
-            <Image src={OptimoleLogo} alt="Optimole Logo" width={200} />
-            <Image src={NILogoDark} alt="Neverinstall Logo" width={200} />
-          </div>
-        </div>
+        <LogoBar />
 
-        <div className="hidden pt-14 md:block">
+        <div className="hidden pt-7 md:block">
           <Button
             variant="darkCTA"
             className="mr-3 px-6"
