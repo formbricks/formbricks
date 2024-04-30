@@ -109,7 +109,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
         );
       case "image":
         if (!background?.bg) {
-          return <div className="default-background">No background image found.</div>;
+          return <div>No background image found.</div>;
         }
 
         return (
@@ -120,7 +120,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
                 alt="Background image"
                 layout="fill"
                 objectFit="cover"
-                className={filterStyle}
+                style={{ filter: `${filterStyle}` }}
                 onLoadingComplete={() => setBackgroundLoaded(true)}
               />
               {authorDetailsForUnsplash.authorName && (
@@ -145,11 +145,20 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
           </>
         );
       case "upload":
+        if (!background?.bg) {
+          return <div>No background image found.</div>;
+        }
         return (
-          <div
-            className={`${baseClasses} ${loadedClass} bg-cover bg-center`}
-            style={{ backgroundImage: `url(${survey.styling?.background?.bg})`, filter: `${filterStyle}` }}
-          />
+          <div className={`${baseClasses} ${loadedClass} bg-cover bg-center`}>
+            <Image
+              src={background?.bg}
+              alt="Background image"
+              layout="fill"
+              objectFit="cover"
+              style={{ filter: `${filterStyle}` }}
+              onLoadingComplete={() => setBackgroundLoaded(true)}
+            />
+          </div>
         );
       default:
         return <div className={`${baseClasses} ${loadedClass} bg-white`} />;
