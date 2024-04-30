@@ -18,7 +18,7 @@ const config = () => {
         formats: ["es", "cjs"],
       },
     },
-    plugins: [dts({ rollupTypes: true })],
+    plugins: [dts({ rollupTypes: true, bundledPackages: ["@formbricks/js-core"] })],
   });
 };
 
