@@ -1,4 +1,4 @@
-import { MousePointerClickIcon, Terminal } from "lucide-react";
+import { MousePointerClickIcon, Paperclip, Terminal } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -213,20 +213,21 @@ export const EditActionModal = ({
       closeOnOutsideClick={false}>
       <div className="rounded-t-lg bg-slate-100">
         <div className="flex w-full items-center justify-between p-6">
-          <div className="flex items-center space-x-2">
-            <div className="mr-1.5 h-6 w-6 text-slate-500">
-              <MousePointerClickIcon className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xl font-medium text-slate-700">Track New User Action</div>
-              <div className="text-sm text-slate-500">
-                Track a user action to display surveys or create user segment.
-              </div>
-            </div>
+          <div>
+            <div className="text-xl font-medium text-slate-700">Edit &quot;{selectedAction.name}&quot;</div>
+            <div className="text-sm text-slate-500">{selectedAction.description}</div>
           </div>
         </div>
       </div>
+
       <div className="flex h-full flex-col rounded-lg px-6 py-4">
+        <div className="mb-4 flex items-center space-x-2 rounded-md border border-slate-300 bg-slate-100 px-2 py-1">
+          <Paperclip className="h-3 w-3 text-slate-400" />
+
+          <div className="text-xs text-slate-500">
+            This action might be used to trigger several surveys. Make changes with caution.
+          </div>
+        </div>
         <form onSubmit={handleSubmit(submitHandler)}>
           <div className="w-full space-y-4">
             <div className="grid w-full grid-cols-2 gap-x-4">

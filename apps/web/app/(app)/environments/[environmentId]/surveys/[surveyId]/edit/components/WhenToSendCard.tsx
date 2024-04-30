@@ -164,7 +164,7 @@ export default function WhenToSendCard({
               </p>
 
               {localSurvey.triggers.filter(Boolean).map((trigger, idx) => (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" key={trigger.id}>
                   {idx !== 0 && <p className="ml-1 text-sm font-bold">or</p>}
                   <div
                     key={trigger.id}
@@ -185,7 +185,7 @@ export default function WhenToSendCard({
                       </div>
                       <p className="mt-1 text-xs text-gray-500">{trigger.description}</p>
                     </div>
-                    {trigger.type !== "automatic" && (
+                    {trigger.type !== "automatic" && !isViewer && (
                       <Settings
                         className="h-6 w-6 cursor-pointer rounded-md bg-slate-100 p-1 text-slate-600"
                         onClick={() => {

@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "@formbricks/database";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
+import { TActionClass } from "@formbricks/types/actionClasses";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -17,6 +18,7 @@ import {
 } from "@formbricks/types/surveys";
 
 import { getActionsByPersonId } from "../action/service";
+import { getActionClasses } from "../actionClass/service";
 import { attributeCache } from "../attribute/cache";
 import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
@@ -121,8 +123,67 @@ export const selectSurvey = {
   },
 };
 
-const handleTriggerUpdates = async (triggers: TSurvey["triggers"], currentTriggers: TSurvey["triggers"]) => {
+const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TActionClass[]) => {
+  if (!triggers) return;
+
+  // check if all the triggers are valid
+  triggers.forEach((trigger) => {
+    if (!trigger._isDraft && !actionClasses.find((actionClass) => actionClass.id === trigger.id)) {
+      throw new InvalidInputError("Invalid trigger id");
+    }
+  });
+
+  // check if all the triggers are unique
+  const triggerIds = triggers.map((trigger) => trigger.id);
+
+  if (new Set(triggerIds).size !== triggerIds.length) {
+    throw new InvalidInputError("Duplicate trigger id");
+  }
+
+  // check if all public trigger names are unique and does not conflict with any action class name
+  const publicTriggers = triggers.filter((trigger) => !trigger.isPrivate);
+  const publicTriggerNames = publicTriggers.map((trigger) => trigger.name);
+  if (new Set(publicTriggerNames).size !== publicTriggerNames.length) {
+    throw new InvalidInputError("Duplicate trigger name");
+  }
+
+  const actionClassNames = actionClasses
+    .filter((actionClass) => !actionClass.isPrivate)
+    .map((actionClass) => actionClass.name);
+
+  publicTriggers.forEach((trigger) => {
+    if (actionClassNames.includes(trigger.name)) {
+      throw new InvalidInputError("Trigger name already exists");
+    }
+  });
+
+  // check if all the key in the code type triggers are unique
+  const codeTriggers = triggers.filter((trigger) => trigger.type === "code");
+  const codeTriggerKeys = codeTriggers.map((trigger) => trigger.key);
+
+  if (new Set(codeTriggerKeys).size !== codeTriggerKeys.length) {
+    throw new InvalidInputError("Duplicate trigger key");
+  }
+
+  const actionClassKeys = actionClasses
+    .filter((actionClass) => actionClass.type === "code")
+    .map((actionClass) => actionClass.key);
+
+  codeTriggers.forEach((trigger) => {
+    if (actionClassKeys.includes(trigger.key)) {
+      throw new InvalidInputError("Trigger key already exists");
+    }
+  });
+};
+
+const handleTriggerUpdates = async (
+  triggers: TSurvey["triggers"],
+  currentTriggers: TSurvey["triggers"],
+  actionClasses: TActionClass[]
+) => {
   if (!triggers) return {};
+
+  checkTriggersValidity(triggers, actionClasses);
 
   const currentTriggerIds = currentTriggers.map((trigger) => trigger.id);
   const newTriggerIds = triggers.map((trigger) => trigger.id);
@@ -174,7 +235,6 @@ const handleTriggerUpdates = async (triggers: TSurvey["triggers"], currentTrigge
     }
   }
 
-  // convert above to a promise.all
   const createdTriggerIds = await Promise.all(
     newTriggers.map(async (trigger) => {
       const actionClass = await prisma.actionClass.create({
@@ -410,7 +470,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     const surveyId = updatedSurvey.id;
     let data: any = {};
 
-    // const actionClasses = await getActionClasses(updatedSurvey.environmentId);
+    const actionClasses = await getActionClasses(updatedSurvey.environmentId);
     const currentSurvey = await getSurvey(surveyId);
 
     if (!currentSurvey) {
@@ -468,7 +528,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
 
     if (triggers) {
-      data.triggers = await handleTriggerUpdates(triggers, currentSurvey.triggers);
+      data.triggers = await handleTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
     }
 
     // if the survey body has type other than "app" but has a private segment, we delete that segment, and if it has a public segment, we disconnect from to the survey
@@ -657,10 +717,13 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     const createdBy = surveyBody.createdBy;
     delete surveyBody.createdBy;
 
+    const actionClasses = await getActionClasses(environmentId);
     const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
       ...surveyBody,
       // TODO: Create with attributeFilters
-      triggers: surveyBody.triggers ? await handleTriggerUpdates(surveyBody.triggers, []) : undefined,
+      triggers: surveyBody.triggers
+        ? await handleTriggerUpdates(surveyBody.triggers, [], actionClasses)
+        : undefined,
       attributeFilters: undefined,
     };
 
@@ -869,6 +932,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
     existingSurvey.triggers.forEach((trigger) => {
       surveyCache.revalidate({
         actionClassId: trigger.id,
+        // TODO: @gupta-piyush19
       });
     });
 
