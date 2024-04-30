@@ -7,21 +7,6 @@ const logger = Logger.getInstance();
 const websiteConfig = WebsiteConfig.getInstance();
 
 export const trackAction = async (name: string): Promise<Result<void, NetworkError>> => {
-  const {
-    state: { surveys = [] },
-  } = websiteConfig.get();
-
-  // if surveys have a inline triggers, we need to check the name of the action in the code action config
-  surveys.forEach(async (survey) => {
-    const { inlineTriggers } = survey;
-    const { codeConfig } = inlineTriggers ?? {};
-
-    if (name === codeConfig?.identifier) {
-      await triggerSurvey(survey);
-      return;
-    }
-  });
-
   logger.debug(`Formbricks: Action "${name}" tracked`);
 
   // get a list of surveys that are collecting insights

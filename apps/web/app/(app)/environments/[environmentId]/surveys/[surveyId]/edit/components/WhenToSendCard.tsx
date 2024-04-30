@@ -40,7 +40,7 @@ export default function WhenToSendCard({
   const [open, setOpen] = useState(
     localSurvey.type === "app" || localSurvey.type === "website" ? true : false
   );
-  const [selectedAction, setSelectedAction] = useState<(TActionClass & { _isDraft?: boolean }) | null>(null);
+  const [selectedAction, setSelectedAction] = useState<TActionClass | null>(null);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
   const [isEditActionModalOpen, setEditActionModalOpen] = useState(false);
   // const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
@@ -116,30 +116,8 @@ export default function WhenToSendCard({
   }, [localSurvey.type]);
 
   const containsEmptyTriggers = useMemo(() => {
-    const noTriggers = !localSurvey.triggers || !localSurvey.triggers.length || !localSurvey.triggers[0];
-    const noInlineTriggers =
-      !localSurvey.inlineTriggers ||
-      (!localSurvey.inlineTriggers?.codeConfig && !localSurvey.inlineTriggers?.noCodeConfig);
-
-    if (noTriggers && noInlineTriggers) {
-      return true;
-    }
-
-    return false;
+    return !localSurvey.triggers || !localSurvey.triggers.length || !localSurvey.triggers[0];
   }, [localSurvey]);
-
-  // for inline triggers, if both the codeConfig and noCodeConfig are empty, we consider it as empty
-  useEffect(() => {
-    const inlineTriggers = localSurvey?.inlineTriggers ?? {};
-    if (Object.keys(inlineTriggers).length === 0) {
-      setLocalSurvey((prevSurvey) => {
-        return {
-          ...prevSurvey,
-          inlineTriggers: null,
-        };
-      });
-    }
-  }, [localSurvey?.inlineTriggers, setLocalSurvey]);
 
   if (localSurvey.type === "link") {
     return null; // Hide card completely

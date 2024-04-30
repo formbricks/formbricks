@@ -471,7 +471,6 @@ export const ZSurvey = z.object({
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
   triggers: z.array(ZActionClass),
-  inlineTriggers: ZSurveyInlineTriggers.nullable(),
   redirectUrl: z.string().url().nullable(),
   recontactDays: z.number().nullable(),
   welcomeCard: ZSurveyWelcomeCard,
@@ -497,9 +496,10 @@ export const ZSurvey = z.object({
 export const ZSurveyWithRefinements = ZSurvey.extend({
   triggers: z
     .array(
-      ZActionClass.extend({
-        _isDraft: z.boolean().optional(),
-      }).partial({ createdAt: true, description: true, noCodeConfig: true, updatedAt: true })
+      ZActionClass.partial({
+        description: true,
+        noCodeConfig: true,
+      })
     )
     .optional(),
 });
@@ -532,11 +532,10 @@ export const ZSurveyInput = z.object({
   triggers: z
     .array(
       ZActionClass.extend({
-        _isDraft: z.boolean().optional(),
+        _isDraft: z.boolean().nullish(),
       })
     )
     .optional(),
-  inlineTriggers: ZSurveyInlineTriggers.optional(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;

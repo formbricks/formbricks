@@ -131,6 +131,7 @@ export const mockActionClass: TActionClass = {
   type: "code",
   description: "mock desc",
   noCodeConfig: null,
+  isPrivate: false,
   ...commonMockProperties,
 };
 

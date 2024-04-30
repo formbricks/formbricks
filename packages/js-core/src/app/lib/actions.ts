@@ -14,21 +14,7 @@ const inAppConfig = AppConfig.getInstance();
 const intentsToNotCreateOnApp = ["Exit Intent (Desktop)", "50% Scroll"];
 
 export const trackAction = async (name: string): Promise<Result<void, NetworkError>> => {
-  const {
-    userId,
-    state: { surveys = [] },
-  } = inAppConfig.get();
-
-  // if surveys have a inline triggers, we need to check the name of the action in the code action config
-  surveys.forEach(async (survey) => {
-    const { inlineTriggers } = survey;
-    const { codeConfig } = inlineTriggers ?? {};
-
-    if (name === codeConfig?.identifier) {
-      await triggerSurvey(survey);
-      return;
-    }
-  });
+  const { userId } = inAppConfig.get();
 
   const input: TJsActionInput = {
     environmentId: inAppConfig.get().environmentId,

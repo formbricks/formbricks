@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { MatchType, testURLmatch } from "@formbricks/lib/utils/textUrlMatch";
-import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+import { TActionClass, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TSurvey } from "@formbricks/types/surveys";
 
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "../Actions";
@@ -50,14 +50,7 @@ const SavedActions = ({ actionClasses, localSurvey, setLocalSurvey, setOpen }: S
   const handleActionClick = (action: TActionClass) => {
     setLocalSurvey((prev) => ({
       ...prev,
-      // @ts-expect-error
-      triggers: prev.triggers.concat({
-        id: action.id,
-        name: action.name,
-        type: action.type,
-        description: action.description,
-        environmentId: action.environmentId,
-      }),
+      triggers: prev.triggers.concat(action),
     }));
     setOpen(false);
   };
@@ -144,7 +137,7 @@ const CreateNewAction = ({
   setLocalSurvey,
   environmentId,
 }: CreateNewActionProps) => {
-  const { register, control, handleSubmit, watch, reset } = useForm<TActionClassInput>({
+  const { register, control, handleSubmit, watch, reset } = useForm<TActionClass>({
     defaultValues: {
       name: "",
       description: "",
@@ -204,7 +197,7 @@ const CreateNewAction = ({
     if (match === "no") toast.error("Your survey would not be shown.");
   };
 
-  const submitHandler = (data: Partial<TActionClassInput>) => {
+  const submitHandler = (data: Partial<TActionClass>) => {
     const { noCodeConfig } = data;
     if (isViewer) {
       return toast.error("You are not authorised to perform this action.");
@@ -230,7 +223,7 @@ const CreateNewAction = ({
     if (type === "code" && !data.key) {
       return toast.error("Please enter a code key");
     }
-    const updatedAction: Partial<TActionClassInput> & { id: string; _isDraft: boolean } = {
+    const updatedAction: TActionClass = {
       id: createId(),
       name: data.name,
       description: data.description,
@@ -238,6 +231,8 @@ const CreateNewAction = ({
       isPrivate: visibility === "private",
       _isDraft: true,
       environmentId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     if (type === "noCode") {
@@ -249,7 +244,6 @@ const CreateNewAction = ({
 
     setLocalSurvey((prev) => ({
       ...prev,
-      // @ts-expect-error
       triggers: prev.triggers.concat(updatedAction),
     }));
 

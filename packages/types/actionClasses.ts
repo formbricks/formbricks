@@ -43,14 +43,15 @@ export type TActionClassType = z.infer<typeof ZActionClassType>;
 export const ZActionClass = z.object({
   id: z.string().cuid2(),
   name: z.string(),
-  description: z.string().nullable(),
+  description: z.string().nullish(),
   type: ZActionClassType,
   isPrivate: z.boolean(),
-  key: z.string().nullable(),
-  noCodeConfig: z.union([ZActionClassNoCodeConfig, z.null()]),
+  key: z.string().nullish(),
+  noCodeConfig: ZActionClassNoCodeConfig.nullish(),
   environmentId: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  _isDraft: z.boolean().nullish(),
 });
 
 export type TActionClass = z.infer<typeof ZActionClass>;
@@ -64,7 +65,7 @@ export const ZActionClassInput = z.object({
   key: z.string().optional().nullable(),
   noCodeConfig: ZActionClassNoCodeConfig.nullish(),
   type: z.enum(["code", "noCode", "automatic"]),
-  _isDraft: z.boolean().optional(),
+  _isDraft: z.boolean().nullish(),
 });
 
 export const ZActionClassAutomaticInput = z.object({

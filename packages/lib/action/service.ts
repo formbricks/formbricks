@@ -129,6 +129,7 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
         name,
         type: actionType,
         environmentId,
+        ...(actionType === "code" ? { key: name } : {}),
       });
     }
 

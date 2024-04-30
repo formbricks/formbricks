@@ -3,7 +3,7 @@
 import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
 import { MousePointerClickIcon } from "lucide-react";
 import { Terminal } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -74,7 +74,19 @@ export default function AddNoCodeActionModal({
   const [testUrl, setTestUrl] = useState("");
   const [isMatch, setIsMatch] = useState("");
   const [type, setType] = useState("noCode");
-  const actionClassNames = actionClasses.map((actionClass) => actionClass.name);
+  const actionClassNames = useMemo(
+    () =>
+      actionClasses.filter((actionClass) => !actionClass.isPrivate).map((actionClass) => actionClass.name),
+    [actionClasses]
+  );
+
+  const actionClassKeys = useMemo(
+    () =>
+      actionClasses
+        .filter((actionClass) => actionClass.type === "code")
+        .map((actionClass) => actionClass.key),
+    [actionClasses]
+  );
 
   const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
     const { pageUrl, innerHtml, cssSelector } = noCodeConfig;
@@ -128,6 +140,12 @@ export default function AddNoCodeActionModal({
         if (isPageUrl && noCodeConfig?.pageUrl?.rule === undefined) {
           throw new Error("Please select a rule for page URL");
         }
+      }
+      if (type === "code" && !data.key) {
+        throw new Error("Please enter a code key");
+      }
+      if (data.key && actionClassKeys.includes(data.key)) {
+        throw new Error(`Action with key ${data.key} already exist`);
       }
 
       const updatedAction: TActionClassInput = {

@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { MatchType, testURLmatch } from "@formbricks/lib/utils/textUrlMatch";
-import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+import { TActionClass, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TSurvey } from "@formbricks/types/surveys";
 
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "../Actions";
@@ -29,7 +29,7 @@ function isValidCssSelector(selector?: string) {
 }
 
 interface EditActionModalProps {
-  selectedAction: TActionClass & { _isDraft?: boolean };
+  selectedAction: TActionClass;
   setSelectedAction: React.Dispatch<React.SetStateAction<(TActionClass & { _isDraft: boolean }) | null>>;
   actionClasses: TActionClass[];
   isViewer: boolean;
@@ -49,7 +49,7 @@ export const EditActionModal = ({
   open,
   setLocalSurvey,
 }: EditActionModalProps) => {
-  const { register, control, handleSubmit, watch, reset } = useForm<TActionClassInput>({
+  const { register, control, handleSubmit, watch, reset } = useForm<TActionClass>({
     defaultValues: {
       name: selectedAction.name,
       description: selectedAction.description || "",
@@ -100,7 +100,7 @@ export const EditActionModal = ({
     if (match === "no") toast.error("Your survey would not be shown.");
   };
 
-  const submitHandler = (data: Partial<TActionClassInput>) => {
+  const submitHandler = (data: Partial<TActionClass>) => {
     const { noCodeConfig } = data;
     if (isViewer) {
       return toast.error("You are not authorised to perform this action.");
@@ -133,13 +133,15 @@ export const EditActionModal = ({
       return toast.error("Please enter a code key");
     }
 
-    const updatedAction: TActionClassInput = {
+    const updatedAction: TActionClass = {
       id: selectedAction.id,
       name: data.name,
       description: data.description,
       environmentId,
       type: type as TActionClass["type"],
       isPrivate,
+      createdAt: selectedAction.createdAt,
+      updatedAt: new Date(),
     };
 
     if (type === "noCode") {
@@ -153,7 +155,6 @@ export const EditActionModal = ({
       updatedAction._isDraft = selectedAction._isDraft;
     }
 
-    // @ts-expect-error
     setLocalSurvey((prev) => ({
       ...prev,
       triggers: prev.triggers.map((trigger) => (trigger.id === selectedAction.id ? updatedAction : trigger)),
@@ -244,7 +245,7 @@ export const EditActionModal = ({
               </div>
             </div>
 
-            <div onClick={(e) => e.stopPropagation()}>
+            <div>
               <Label>Type</Label>
               <div className="w-3/5">
                 <TabBar
@@ -277,9 +278,8 @@ export const EditActionModal = ({
                     <Input
                       id="codeKeyInput"
                       placeholder="Enter your code key"
-                      {...register("key", {
-                        disabled: !isDraft,
-                      })}
+                      disabled={!isDraft}
+                      {...register("key")}
                       className="mb-2 w-1/2"
                     />
                   </div>

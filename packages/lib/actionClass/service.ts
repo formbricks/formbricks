@@ -6,12 +6,11 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "@formbricks/database";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/actionClasses";
-import { ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 import { cache } from "../cache";
-import { ITEMS_PER_PAGE } from "../constants";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
@@ -29,20 +28,18 @@ const select = {
   environmentId: true,
 };
 
-export const getActionClasses = (environmentId: string, page?: number): Promise<TActionClass[]> =>
+// this function is used to get all actions for a given environment, it shouldn't be paginated as it also returns the private actions
+export const getActionClasses = (environmentId: string): Promise<TActionClass[]> =>
   cache(
     async () => {
-      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+      validateInputs([environmentId, ZId]);
 
       try {
         return await prisma.actionClass.findMany({
           where: {
             environmentId: environmentId,
-            isPrivate: false,
           },
           select,
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
           orderBy: {
             createdAt: "asc",
           },
@@ -51,12 +48,13 @@ export const getActionClasses = (environmentId: string, page?: number): Promise<
         throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
       }
     },
-    [`getActionClasses-${environmentId}-${page}`],
+    [`getActionClasses-${environmentId}`],
     {
       tags: [actionClassCache.tag.byEnvironmentId(environmentId)],
     }
   )();
 
+// This function is used to get an action by its name and environmentId(it can return private actions as well)
 export const getActionClassByEnvironmentIdAndName = (
   environmentId: string,
   name: string
@@ -150,6 +148,7 @@ export const createActionClass = async (
         name: actionClass.name,
         description: actionClass.description,
         type: actionClass.type,
+        isPrivate: actionClass.isPrivate,
         key: actionClass.type === "code" ? actionClass.key : undefined,
         noCodeConfig: actionClass.noCodeConfig ? structuredClone(actionClass.noCodeConfig) : undefined,
         environment: { connect: { id: environmentId } },
@@ -186,9 +185,14 @@ export const updateActionClass = async (
         name: inputActionClass.name,
         description: inputActionClass.description,
         type: inputActionClass.type,
-        noCodeConfig: inputActionClass.noCodeConfig
-          ? structuredClone(inputActionClass.noCodeConfig)
-          : undefined,
+
+        ...(inputActionClass.type === "code"
+          ? { key: inputActionClass.key }
+          : {
+              noCodeConfig: inputActionClass.noCodeConfig
+                ? structuredClone(inputActionClass.noCodeConfig)
+                : undefined,
+            }),
       },
       select,
     });

@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 
-import { TActionClassInput } from "@formbricks/types/actionClasses";
+import { TActionClass } from "@formbricks/types/actionClasses";
 import {
   TSurvey,
   TSurveyCTAQuestion,
@@ -2615,7 +2615,6 @@ export const minimalSurvey: TSurvey = {
   recontactDays: null,
   welcomeCard: welcomeCardDefault,
   questions: [],
-  inlineTriggers: null,
   thankYouCard: {
     enabled: false,
   },
@@ -2638,7 +2637,7 @@ export const minimalSurvey: TSurvey = {
   languages: [],
 };
 
-export const getExampleSurveyTemplate = (webAppUrl: string, trigger: TActionClassInput): TSurveyInput => ({
+export const getExampleSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
   ...customSurvey.preset,
   questions: customSurvey.preset.questions.map(
     (question) =>
@@ -2657,7 +2656,6 @@ export const getExampleSurveyTemplate = (webAppUrl: string, trigger: TActionClas
   name: "Example survey",
   type: "website" as TSurveyType,
   autoComplete: 2,
-  // @ts-expect-error
   triggers: [trigger],
   status: "inProgress" as TSurveyStatus,
   displayOption: "respondMultiple" as TSurveyDisplayOption,
