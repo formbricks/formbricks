@@ -9,12 +9,18 @@ import OptimoleLogo from "@/images/clients/optimole-logo.svg";
 import ThemeisleLogo from "@/images/clients/themeisle-logo.webp";
 import Image from "next/image";
 
-export default function LogoBar() {
+interface LogoBarProps {
+  hideTeamsClaim?: boolean;
+}
+
+export default function LogoBar({ hideTeamsClaim = false }: LogoBarProps) {
   return (
     <div className="mx-auto max-w-5xl">
-      <p className="text-center text-lg text-slate-700">
-        10,000+ teams at the world’s best companies trust Formbricks
-      </p>
+      {!hideTeamsClaim && (
+        <p className="text-center text-lg text-slate-700">
+          10,000+ teams at the world’s best companies trust Formbricks
+        </p>
+      )}
       <div className="mt-5 flex justify-center">
         <div className="w-full overflow-hidden">
           <div className="animate-scroll flex items-center space-x-20">

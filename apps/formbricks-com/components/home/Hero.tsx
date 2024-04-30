@@ -34,7 +34,7 @@ export const Hero: React.FC = ({}) => {
             know what your customers need.
           </span>
         </p>
-        <LogoBar />
+        <LogoBar hideTeamsClaim />
 
         <div className="hidden pt-7 md:block">
           <Button
