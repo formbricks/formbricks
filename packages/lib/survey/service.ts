@@ -1039,7 +1039,8 @@ export const getSyncSurveys = (
         // the surveys now have segment filters, so we need to evaluate them
         const surveyPromises = surveys.map(async (survey) => {
           const { segment } = survey;
-          if (!segment) {
+          // if the survey has no segment, or the segment has no filters, we return the survey
+          if (!segment || !segment.filters?.length) {
             return survey;
           }
 
