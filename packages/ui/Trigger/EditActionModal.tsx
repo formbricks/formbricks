@@ -129,9 +129,6 @@ export const EditActionModal = ({
         throw new Error(`Action with name ${data.name} already exist`);
       }
       const isPrivate = visibility === "private";
-      if (isPrivate !== selectedAction.isPrivate) {
-        throw new Error("You can't change the visibility of an existing action.");
-      }
 
       if (type === "noCode") {
         if (!isPageUrl && !isCssSelector && !isInnerHtml)

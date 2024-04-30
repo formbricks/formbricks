@@ -107,7 +107,7 @@ export const SurveyMenuBar = ({
     let newLocalTriggers = beforeSaveTriggers.map((trigger, idx) => {
       const { updatedAt, createdAt, _isDraft, key, noCodeConfig, ...rest } = trigger;
 
-      if (trigger._isDraft) rest.id = afterSaveTriggers[idx].id;
+      if (trigger._isDraft) rest.id = afterSaveTriggers[idx]?.id;
 
       return {
         ...rest,

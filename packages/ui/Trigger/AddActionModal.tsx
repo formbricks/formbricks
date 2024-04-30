@@ -31,21 +31,23 @@ const SavedActions = ({ actionClasses, localSurvey, setLocalSurvey, setOpen }: S
   );
   const [filteredActionClasses, setFilteredActionClasses] = useState<TActionClass[]>(diffActions);
 
-  const [code, noCode, automatic] = filteredActionClasses.reduce(
-    (acc, actionClass) => {
-      if (actionClass.type === "code") {
-        acc[0].push(actionClass);
-      }
-      if (actionClass.type === "noCode") {
-        acc[1].push(actionClass);
-      }
-      if (actionClass.type === "automatic") {
-        acc[2].push(actionClass);
-      }
-      return acc;
-    },
-    [[], [], []] as [TActionClass[], TActionClass[], TActionClass[]]
-  );
+  const [code, noCode, automatic] = filteredActionClasses
+    .filter((actionClass) => !actionClass.isPrivate)
+    .reduce(
+      (acc, actionClass) => {
+        if (actionClass.type === "code") {
+          acc[0].push(actionClass);
+        }
+        if (actionClass.type === "noCode") {
+          acc[1].push(actionClass);
+        }
+        if (actionClass.type === "automatic") {
+          acc[2].push(actionClass);
+        }
+        return acc;
+      },
+      [[], [], []] as [TActionClass[], TActionClass[], TActionClass[]]
+    );
 
   const handleActionClick = (action: TActionClass) => {
     setLocalSurvey((prev) => ({
