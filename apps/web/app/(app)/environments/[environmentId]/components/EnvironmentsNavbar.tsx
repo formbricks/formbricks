@@ -1,5 +1,8 @@
-import Navigation from "@/app/(app)/environments/[environmentId]/components/Navigation";
+import VerticalNavigation from "@/app/(app)/environments/[environmentId]/components/VerticalNavigation";
+import FBLogo from "@/images/Formbricks-wordmark.svg";
 import type { Session } from "next-auth";
+import Image from "next/image";
+import Link from "next/link";
 
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -38,17 +41,23 @@ export default async function EnvironmentsNavbar({ environmentId, session }: Env
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
   return (
-    <Navigation
-      environment={environment}
-      team={team}
-      teams={teams}
-      products={products}
-      environments={environments}
-      session={session}
-      isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-      webAppUrl={WEBAPP_URL}
-      membershipRole={currentUserMembership?.role}
-      isMultiLanguageAllowed={isMultiLanguageAllowed}
-    />
+    <div className="fixed top-1/2 z-10 flex h-screen w-64 -translate-y-1/2 flex-col justify-between">
+      <Link href={`/environments/${environment.id}/surveys/`} className="p-2">
+        <Image src={FBLogo} width={200} height={30} alt="Formbricks wordmark" />
+      </Link>
+      <VerticalNavigation
+        environment={environment}
+        team={team}
+        teams={teams}
+        products={products}
+        environments={environments}
+        session={session}
+        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+        webAppUrl={WEBAPP_URL}
+        membershipRole={currentUserMembership?.role}
+        isMultiLanguageAllowed={isMultiLanguageAllowed}
+      />
+      <div className="h-[50px]"></div>
+    </div>
   );
 }
