@@ -35,7 +35,6 @@ export const Survey = ({
   getSetQuestionId,
   onFileUpload,
   responseCount,
-  isCardBorderVisible = true,
   startAtQuestionId,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
@@ -54,9 +53,9 @@ export const Survey = ({
   const [ttc, setTtc] = useState<TResponseTtc>({});
   const cardArrangement = useMemo(() => {
     if (survey.type === "link") {
-      return styling.cardArrangement?.linkSurveys ?? "casual";
+      return styling.cardArrangement?.linkSurveys ?? "straight";
     } else {
-      return styling.cardArrangement?.appSurveys ?? "casual";
+      return styling.cardArrangement?.appSurveys ?? "straight";
     }
   }, [survey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.appSurveys]);
 

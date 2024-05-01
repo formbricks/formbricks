@@ -4,14 +4,14 @@ import { useMemo, useState } from "preact/hooks";
 
 import { TProductStyling } from "@formbricks/types/product";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
-import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys";
 
 interface StackedCardsContainerProps {
   cardArrangement: TCardArrangementOptions;
   currentQuestionId: string;
   survey: TSurvey;
   getCardContent: (questionIdx: number, offset: number) => JSX.Element | undefined;
-  styling: TProductStyling;
+  styling: TProductStyling | TSurveyStyling;
 }
 
 export const StackedCardsContainer = ({
@@ -66,8 +66,6 @@ export const StackedCardsContainer = ({
   };
 
   const borderStyles = (surveyType: TSurveyType) => {
-    console.log("Current surveyType:", surveyType); // This will show you what value is being passed
-
     if (surveyType === "link") {
       return {
         border: "2px solid",
@@ -75,9 +73,7 @@ export const StackedCardsContainer = ({
         borderRadius: "var(--fb-border-radius)",
       };
     } else {
-      console.log("in else");
       if (!!highlightBorderColor) {
-        console.log("here");
         return {
           border: "2px solid",
           borderColor: highlightBorderColor,
@@ -100,7 +96,6 @@ export const StackedCardsContainer = ({
         setHovered(true);
       }}
       onMouseLeave={() => setHovered(false)}>
-      {console.log(highlightBorderColor)}
       <div className="opacity-0">{getCardContent(questionIdx, 0)}</div>
       {questionIdx !== undefined &&
         cardIndexes.map((_, idx) => {
