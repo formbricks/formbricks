@@ -5,7 +5,9 @@ import { ENTERPRISE_LICENSE_KEY, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/con
 import { hashString } from "@formbricks/lib/hashString";
 import { TTeam } from "@formbricks/types/teams";
 
-export const getIsEnterpriseEdition = async (): Promise<boolean> => {
+import { prisma } from "../../database/src";
+
+export const getIsEnterpriseEdition = async (teamId: string): Promise<boolean> => {
   if (!ENTERPRISE_LICENSE_KEY || ENTERPRISE_LICENSE_KEY.length === 0) {
     return false;
   }
@@ -15,8 +17,32 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
   const isValid = await cache(
     async () => {
       try {
-        const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
-          body: JSON.stringify({ licenseKey: ENTERPRISE_LICENSE_KEY }),
+        const now = new Date();
+        const startOfYear = new Date(now.getFullYear(), 0, 1); // January 1st of the current year
+        const endOfYear = new Date(now.getFullYear() + 1, 0, 0); // December 31st of the current year
+
+        const responseCountForTeam = await prisma.response.count({
+          where: {
+            createdAt: {
+              gte: startOfYear,
+              lt: endOfYear,
+            },
+            survey: {
+              environment: {
+                product: {
+                  teamId,
+                },
+              },
+            },
+          },
+        });
+
+        // const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
+        const res = await fetch("http://localhost:8080/api/licenses/check", {
+          body: JSON.stringify({
+            licenseKey: ENTERPRISE_LICENSE_KEY,
+            usage: { responseCount: responseCountForTeam },
+          }),
           headers: { "Content-Type": "application/json" },
           method: "POST",
         });
@@ -53,18 +79,18 @@ export const getRemoveLinkBrandingPermission = (team: TTeam): boolean => {
 
 export const getRoleManagementPermission = async (team: TTeam): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return team.billing.features.inAppSurvey.status !== "inactive";
-  else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
+  else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition(team.id);
   else return false;
 };
 
 export const getAdvancedTargetingPermission = async (team: TTeam): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return team.billing.features.userTargeting.status !== "inactive";
-  else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
+  else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition(team.id);
   else return false;
 };
 
 export const getMultiLanguagePermission = async (team: TTeam): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return team.billing.features.inAppSurvey.status !== "inactive";
-  else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
+  else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition(team.id);
   else return false;
 };
