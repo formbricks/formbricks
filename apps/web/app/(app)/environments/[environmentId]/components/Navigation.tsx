@@ -131,13 +131,13 @@ export default function Navigation({
         hidden: false,
       },
       {
-        name: "People & Segments",
+        name: "People",
         href: `/environments/${environment.id}/people`,
         icon: CustomersIcon,
         current: pathname?.includes("/people") || pathname?.includes("/segments"),
       },
       {
-        name: "Actions & Attributes",
+        name: "Actions",
         href: `/environments/${environment.id}/actions`,
         icon: FilterIcon,
         current: pathname?.includes("/actions") || pathname?.includes("/attributes"),
@@ -393,7 +393,7 @@ export default function Navigation({
                       <DropdownMenuSubTrigger>
                         <div>
                           <div className="flex items-center space-x-1">
-                            <p className="">{truncate(product!.name, 20)}</p>
+                            <p>{truncate(product!.name, 20)}</p>
                             {!widgetSetupCompleted && (
                               <TooltipProvider delayDuration={50}>
                                 <Tooltip>

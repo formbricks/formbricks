@@ -2,7 +2,7 @@
 
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
-import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
+import { getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -10,7 +10,7 @@ import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/product";
-import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
+import { TResponse, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
@@ -27,7 +27,6 @@ interface LinkSurveyProps {
   product: TProduct;
   userId?: string;
   emailVerificationStatus?: string;
-  prefillAnswer?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
   webAppUrl: string;
@@ -41,7 +40,6 @@ export default function LinkSurvey({
   product,
   userId,
   emailVerificationStatus,
-  prefillAnswer,
   singleUseId,
   singleUseResponse,
   webAppUrl,
@@ -80,9 +78,7 @@ export default function LinkSurvey({
     return new SurveyState(survey.id, singleUseId, responseId, userId);
   }, [survey.id, singleUseId, responseId, userId]);
 
-  const prefillResponseData: TResponseData | undefined = prefillAnswer
-    ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer, languageCode)
-    : undefined;
+  const prefillValue = getPrefillValue(survey, searchParams, languageCode);
 
   const responseQueue = useMemo(
     () =>
@@ -118,9 +114,9 @@ export default function LinkSurvey({
       setAutofocus(true);
     }
     // For safari on mobile devices, scroll is a bit off due to dynamic height of address bar, so on inital load, we scroll to the bottom
-    window.scrollTo({
-      top: document.body.scrollHeight,
-    });
+    // window.scrollTo({
+    //   top: document.body.scrollHeight,
+    // });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -185,7 +181,7 @@ export default function LinkSurvey({
   };
 
   return (
-    <div className="flex h-screen items-end justify-center overflow-hidden md:items-center">
+    <div className="flex max-h-dvh min-h-dvh items-end justify-center overflow-clip md:items-center">
       {!determineStyling().isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
       <ContentWrapper className="w-full p-0 md:max-w-md">
         {isPreview && (
@@ -262,7 +258,7 @@ export default function LinkSurvey({
             return uploadedUrl;
           }}
           autoFocus={autoFocus}
-          prefillResponseData={prefillResponseData}
+          prefillResponseData={prefillValue}
           responseCount={responseCount}
           getSetQuestionId={(f: (value: string) => void) => {
             setQuestionId = f;

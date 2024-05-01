@@ -1,8 +1,7 @@
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
 import { timeSinceConditionally } from "@formbricks/lib/time";
-import { TSurveySummary } from "@formbricks/types/surveys";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveySummary } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
@@ -71,7 +70,7 @@ export const SummaryMetadata = ({
       <div className="flex flex-col-reverse gap-y-2 lg:grid lg:grid-cols-3 lg:gap-x-2">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-x-2 lg:col-span-2">
           <StatCard
-            label="Displays"
+            label="Impressions"
             percentage={null}
             value={displayCount === 0 ? <span>-</span> : displayCount}
             tooltipText="Number of times the survey has been viewed."
@@ -89,7 +88,7 @@ export const SummaryMetadata = ({
             tooltipText="Number of times the survey has been completed."
           />
           <StatCard
-            label="Drop Offs"
+            label="Drop-Offs"
             percentage={`${Math.round(dropOffPercentage)}%`}
             value={dropOffCount === 0 ? <span>-</span> : dropOffCount}
             tooltipText="Number of times the survey has been started but not completed."
@@ -110,7 +109,7 @@ export const SummaryMetadata = ({
             className="w-max self-start"
             EndIcon={showDropOffs ? ChevronDownIcon : ChevronUpIcon}
             onClick={() => setShowDropOffs(!showDropOffs)}>
-            Analyze Drop Offs
+            Analyze Drop-Offs
           </Button>
         </div>
       </div>

@@ -87,7 +87,7 @@ export default function MemberActions({ team, member, invite, showDeleteButton }
     try {
       if (!invite) return;
 
-      await resendInviteAction(invite.id);
+      await resendInviteAction(invite.id, team.id);
       toast.success("Invitation sent once more.");
     } catch (err) {
       toast.error(`Error: ${err.message}`);

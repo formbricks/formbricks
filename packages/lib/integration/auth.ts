@@ -1,16 +1,14 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
-
 import { ZId } from "@formbricks/types/environment";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { validateInputs } from "../utils/validate";
 import { getIntegration } from "./service";
 
 export const canUserAccessIntegration = async (userId: string, integrationId: string): Promise<boolean> =>
-  await unstable_cache(
+  cache(
     async () => {
       validateInputs([userId, ZId], [integrationId, ZId]);
       if (!userId) return false;
@@ -29,5 +27,7 @@ export const canUserAccessIntegration = async (userId: string, integrationId: st
     },
 
     [`canUserAccessIntegration-${userId}-${integrationId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [`integrations-${integrationId}`] }
+    {
+      tags: [`integrations-${integrationId}`],
+    }
   )();

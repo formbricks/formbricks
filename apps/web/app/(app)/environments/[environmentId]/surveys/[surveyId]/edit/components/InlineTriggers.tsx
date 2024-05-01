@@ -1,4 +1,4 @@
-import { MatchType } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/lib/testURLmatch";
+import { MatchType } from "@/app/(app)/environments/[environmentId]/actions/lib/testURLmatch";
 import { HelpCircleIcon } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 

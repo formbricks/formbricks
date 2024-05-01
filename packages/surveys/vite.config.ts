@@ -14,7 +14,6 @@ const config = ({ mode }) => {
     build: {
       emptyOutDir: false,
       minify: "terser",
-      sourcemap: true,
       rollupOptions: {
         output: {
           inlineDynamicImports: true,

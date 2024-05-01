@@ -1,27 +1,25 @@
-import { getExampleSurveyTemplate } from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
 import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
 
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
+import { getAttribute } from "@formbricks/lib/attribute/service";
 import {
   IS_FORMBRICKS_CLOUD,
   PRICING_APPSURVEYS_FREE_RESPONSES,
   PRICING_USERTARGETING_FREE_MTU,
-  WEBAPP_URL,
 } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { createSurvey, getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
+import { getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import {
   getMonthlyActiveTeamPeopleCount,
   getMonthlyTeamResponseCount,
   getTeamByEnvironmentId,
 } from "@formbricks/lib/team/service";
-import { updateUser } from "@formbricks/lib/user/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -72,12 +70,11 @@ export async function GET(
     if (!environment) {
       throw new Error("Environment does not exist");
     }
-    if (!environment?.widgetSetupCompleted) {
-      const firstSurvey = getExampleSurveyTemplate(WEBAPP_URL);
-      await createSurvey(environmentId, firstSurvey);
+
+    if (!environment.widgetSetupCompleted) {
       await updateEnvironment(environment.id, { widgetSetupCompleted: true });
-      await updateUser(userId, { onboardingCompleted: true });
     }
+
     // check team subscriptions
     const team = await getTeamByEnvironmentId(environmentId);
 
@@ -149,18 +146,6 @@ export async function GET(
     if (!product) {
       throw new Error("Product not found");
     }
-    const languageAttribute = person.attributes.language;
-    const isLanguageAvailable = Boolean(languageAttribute);
-
-    const personData = version
-      ? {
-          ...(isLanguageAvailable && { attributes: { language: languageAttribute } }),
-        }
-      : {
-          id: person.id,
-          userId: person.userId,
-          ...(isLanguageAvailable && { attributes: { language: languageAttribute } }),
-        };
 
     // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
     let transformedSurveys: TLegacySurvey[] | TSurvey[];
@@ -189,11 +174,14 @@ export async function GET(
       }),
     };
 
+    const language = await getAttribute("language", person.id);
+
     // return state
     const state: TJsAppStateSync = {
-      person: personData,
+      ...(version && !isVersionGreaterThanOrEqualTo(version, "2.0.0") && { person }),
       surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
+      language,
       product: updatedProduct,
     };
 

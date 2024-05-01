@@ -1,6 +1,6 @@
 "use client";
 
-import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddActionModal";
+import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/actions/components/AddActionModal";
 import InlineTriggers from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/InlineTriggers";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon, PlusIcon, TrashIcon } from "lucide-react";
@@ -322,7 +322,7 @@ export default function WhenToSendCard({
               <label
                 htmlFor="triggerDelay"
                 className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-                <div className="">
+                <div>
                   <p className="text-sm font-semibold text-slate-700">
                     Wait
                     <Input

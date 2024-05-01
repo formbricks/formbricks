@@ -203,11 +203,11 @@ export const FileInput: React.FC<FileInputProps> = ({
 
   return (
     <div className="w-full cursor-default">
-      <div className="">
+      <div>
         {isVideoAllowed && (
           <TabBar tabs={tabs} activeId={activeTab} setActiveId={setActiveTab} tabStyle="button" />
         )}
-        <div className="">
+        <div>
           {activeTab === "video" && (
             <div className={cn(isVideoAllowed && "rounded-b-lg border-x border-b border-slate-200 p-4")}>
               <VideoSettings

@@ -8,23 +8,27 @@
   font-size: 16px;
 }
 
-
 /* Chrome, Edge, and Safari */
 #fbjs *::-webkit-scrollbar {
-  width: 8px ;
-  background: transparent ; 
+  width: 6px;
+  background: transparent;
 }
 
 #fbjs *::-webkit-scrollbar-track {
-  background: transparent  
+  background: transparent;
 }
 
 #fbjs *::-webkit-scrollbar-thumb {
-  background-color: var(--fb-brand-color) ;
+  background-color: var(--fb-brand-color);
   border: none;
-  border-radius: 10px 
+  border-radius: 10px;
 }
 
+/* Firefox */
+#fbjs * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--fb-brand-color) transparent;
+}
 
 /* this is for styling the HtmlBody component */
 .fb-htmlbody {

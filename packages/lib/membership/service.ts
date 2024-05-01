@@ -1,7 +1,6 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -14,13 +13,14 @@ import {
   ZMembershipUpdateInput,
 } from "@formbricks/types/memberships";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
+import { ITEMS_PER_PAGE } from "../constants";
 import { teamCache } from "../team/cache";
 import { validateInputs } from "../utils/validate";
 import { membershipCache } from "./cache";
 
 export const getMembersByTeamId = async (teamId: string, page?: number): Promise<TMember[]> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([teamId, ZString], [page, ZOptionalNumber]);
 
@@ -65,7 +65,6 @@ export const getMembersByTeamId = async (teamId: string, page?: number): Promise
     [`getMembersByTeamId-${teamId}-${page}`],
     {
       tags: [membershipCache.tag.byTeamId(teamId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -73,7 +72,7 @@ export const getMembershipByUserIdTeamId = async (
   userId: string,
   teamId: string
 ): Promise<TMembership | null> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([userId, ZString], [teamId, ZString]);
 
@@ -102,12 +101,11 @@ export const getMembershipByUserIdTeamId = async (
     [`getMembershipByUserIdTeamId-${userId}-${teamId}`],
     {
       tags: [membershipCache.tag.byUserId(userId), membershipCache.tag.byTeamId(teamId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
 export const getMembershipsByUserId = async (userId: string, page?: number): Promise<TMembership[]> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([userId, ZString], [page, ZOptionalNumber]);
 
@@ -132,7 +130,6 @@ export const getMembershipsByUserId = async (userId: string, page?: number): Pro
     [`getMembershipsByUserId-${userId}-${page}`],
     {
       tags: [membershipCache.tag.byUserId(userId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 

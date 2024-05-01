@@ -107,7 +107,7 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
             <div className="h-3 w-3 rounded-full bg-amber-500"></div>
             <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
           </div>
-          <div className="">
+          <div>
             <div className="mb-2 border-b border-slate-200 pb-2 text-sm">To : {email || "user@mail.com"}</div>
             <div className="border-b border-slate-200 pb-2 text-sm">
               Subject : Formbricks Email Survey Preview

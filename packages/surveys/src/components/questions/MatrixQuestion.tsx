@@ -104,7 +104,7 @@ export const MatrixQuestion = ({
             subheader={getLocalizedValue(question.subheader, languageCode)}
             questionId={question.id}
           />
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto py-4">
             <table className="no-scrollbar min-w-full table-auto border-collapse text-sm">
               <thead>
                 <tr>
@@ -122,17 +122,28 @@ export const MatrixQuestion = ({
                     {question.columns.map((column, columnIndex) => (
                       <td
                         key={columnIndex}
-                        className={`px-4 py-2 text-gray-800 ${columnIndex === question.columns.length - 1 ? "rounded-r-custom" : ""}`}
+                        tabIndex={0}
+                        className={`outline-brand px-4 py-2 text-gray-800 ${columnIndex === question.columns.length - 1 ? "rounded-r-custom" : ""}`}
                         onClick={() =>
                           handleSelect(
                             getLocalizedValue(column, languageCode),
                             getLocalizedValue(row, languageCode)
                           )
-                        }>
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === " ") {
+                            e.preventDefault();
+                            handleSelect(
+                              getLocalizedValue(column, languageCode),
+                              getLocalizedValue(row, languageCode)
+                            );
+                          }
+                        }}>
                         <div className="flex items-center justify-center p-2">
                           {/* radio input  */}
                           <input
                             type="radio"
+                            tabIndex={-1}
                             id={`${row}-${column}`}
                             name={getLocalizedValue(row, languageCode)}
                             value={getLocalizedValue(column, languageCode)}
@@ -154,11 +165,12 @@ export const MatrixQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6">
+      <div className="flex w-full justify-between px-6 py-4">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={handleBackButtonClick}
+            tabIndex={0}
           />
         )}
         <div></div>
@@ -167,6 +179,7 @@ export const MatrixQuestion = ({
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
+            tabIndex={0}
           />
         )}
       </div>

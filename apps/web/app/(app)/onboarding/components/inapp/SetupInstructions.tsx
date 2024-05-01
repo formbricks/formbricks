@@ -52,7 +52,7 @@ export default function SetupInstructionsOnboarding({
           ))}
         </nav>
       </div>
-      <div className="">
+      <div>
         {activeTab === "npm" ? (
           <div className="prose prose-slate">
             <CodeBlock customEditorClass="!bg-white border border-slate-200" language="sh">
