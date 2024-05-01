@@ -1,7 +1,6 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
-
+import { cache } from "@formbricks/lib/cache";
 import { ENTERPRISE_LICENSE_KEY, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { hashString } from "@formbricks/lib/hashString";
 import { TTeam } from "@formbricks/types/teams";
@@ -13,7 +12,7 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
 
   const hashedKey = hashString(ENTERPRISE_LICENSE_KEY);
 
-  const isValid = await unstable_cache(
+  const isValid = await cache(
     async () => {
       try {
         const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
@@ -22,16 +21,14 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
           method: "POST",
         });
 
-        let isValid = false;
-
         if (res.ok) {
           const responseJson = await res.json();
-          isValid = responseJson.data.status === "active";
+          return responseJson.data.status === "active";
         }
 
-        return isValid;
+        return false;
       } catch (error) {
-        console.error("Error while checking license", error);
+        console.error("Error while checking license: ", error);
         return false;
       }
     },
@@ -56,7 +53,7 @@ export const getRemoveLinkBrandingPermission = (team: TTeam): boolean => {
 
 export const getRoleManagementPermission = async (team: TTeam): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return team.billing.features.inAppSurvey.status !== "inactive";
-  else if (!IS_FORMBRICKS_CLOUD) return getIsEnterpriseEdition();
+  else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
   else return false;
 };
 
