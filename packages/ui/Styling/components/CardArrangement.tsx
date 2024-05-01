@@ -49,10 +49,10 @@ export const CardArrangement = ({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col">
-        <h3 className="text-base font-semibold text-slate-900">
+        <h3 className="text-sm font-semibold text-slate-700">
           Card Arrangement for {surveyTypeDerived} Surveys
         </h3>
-        <p className="text-sm text-slate-800">
+        <p className="text-xs text-slate-500">
           How funky do you want your cards in {surveyTypeDerived} Surveys
         </p>
       </div>
