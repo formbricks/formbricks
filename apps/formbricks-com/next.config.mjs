@@ -126,11 +126,6 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: "/docs/quickstart",
-        destination: "/docs/quickstart-in-app-survey",
-        permanent: true,
-      },
-      {
         source: "/pmf",
         destination: "/",
         permanent: true,
@@ -210,19 +205,12 @@ const nextConfig = {
         destination: "/blog",
         permanent: true,
       },
+      {
+        source: '/docs/api/:slug*',
+        destination: '/docs/additional-features/api',
+        permanent: false,
+      }
     ];
-  },
-  async rewrites() {
-    return {
-      fallback: [
-        // These rewrites are checked after both pages/public files
-        // and dynamic routes are checked
-        {
-          source: "/:path*",
-          destination: `https://app.formbricks.com/s/:path*`,
-        },
-      ],
-    };
   },
 };
 

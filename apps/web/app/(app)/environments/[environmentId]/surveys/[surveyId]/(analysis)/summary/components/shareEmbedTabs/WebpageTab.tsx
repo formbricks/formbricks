@@ -17,7 +17,7 @@ export default function WebpageTab({ surveyUrl }) {
   return (
     <div className="flex h-full grow flex-col">
       <div className="flex justify-between">
-        <div className=""></div>
+        <div></div>
         <Button
           variant="darkCTA"
           title="Embed survey in your website"

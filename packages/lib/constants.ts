@@ -3,8 +3,6 @@ import "server-only";
 import { env } from "./env";
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
-export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
-export const SERVICES_REVALIDATION_INTERVAL = 60 * 60 * 24; // 24 hours
 export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 9000 : 1000000;
 
 // URLs
@@ -88,9 +86,6 @@ export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE;
 export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED === "1";
 
 // Storage constants
-export const AWS_ACCESS_KEY_ID = env.AWS_ACCESS_KEY_ID;
-export const AWS_SECRET_ACCESS_KEY = env.AWS_SECRET_ACCESS_KEY;
-export const AWS_REGION = env.AWS_REGION;
 export const S3_ACCESS_KEY = env.S3_ACCESS_KEY;
 export const S3_SECRET_KEY = env.S3_SECRET_KEY;
 export const S3_REGION = env.S3_REGION;
@@ -103,17 +98,12 @@ export const MAX_SIZES = {
   pro: 1024 * 1024 * 1024, // 1GB
 } as const;
 
+// Function to check if the necessary S3 configuration is set up
 export const isS3Configured = () => {
-  // for aws sdk, it can pick up the creds for access key, secret key and the region from the environment variables
-  if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY && AWS_REGION) {
-    // so we only need to check if the bucket name is set
-    return !!S3_BUCKET_NAME;
-  }
-
-  // for other s3 compatible services, we need to provide the access key and secret key
-  return S3_ACCESS_KEY && S3_SECRET_KEY && (S3_ENDPOINT_URL ? S3_REGION : true) && S3_BUCKET_NAME
-    ? true
-    : false;
+  // This function checks if the S3 bucket name environment variable is defined.
+  // The AWS SDK automatically resolves credentials through a chain,
+  // so we do not need to explicitly check for AWS credentials like access key, secret key, or region.
+  return !!S3_BUCKET_NAME;
 };
 
 // Pricing
@@ -182,3 +172,6 @@ export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 
 export const CUSTOMER_IO_SITE_ID = env.CUSTOMER_IO_SITE_ID;
 export const CUSTOMER_IO_API_KEY = env.CUSTOMER_IO_API_KEY;
+export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;
+
+export const STRIPE_API_VERSION = "2024-04-10";

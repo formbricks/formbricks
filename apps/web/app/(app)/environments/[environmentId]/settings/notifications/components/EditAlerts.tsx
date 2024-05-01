@@ -52,7 +52,7 @@ export default function EditAlerts({
                 <Tooltip>
                   <TooltipTrigger>
                     <div className="col-span-1 flex cursor-default items-center justify-center space-x-2">
-                      <span className="">Every Response</span>
+                      <span>Every Response</span>
                       <HelpCircleIcon className="h-4 w-4 flex-shrink-0 text-slate-500" />
                     </div>
                   </TooltipTrigger>

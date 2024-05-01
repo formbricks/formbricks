@@ -32,7 +32,7 @@ test.describe("Survey Create & Submit Response", async () => {
     // Save & Publish Survey
     await page.getByRole("button", { name: "Continue to Settings" }).click();
     await page.locator("#howToSendCardTrigger").click();
-    await page.locator("#howToSendCardOption-web").click();
+    await page.locator("#howToSendCardOption-website").click();
     await page.getByRole("button", { name: "Custom Actions" }).click();
 
     await expect(page.locator("#codeAction")).toBeVisible();
@@ -186,6 +186,8 @@ test.describe("Survey Create & Submit Response", async () => {
     await expect(page.getByPlaceholder(surveys.createAndSubmit.address.placeholder)).toBeVisible();
     await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder).fill("This is my Address");
     await page.getByRole("button", { name: "Finish" }).click();
+
+    await page.waitForTimeout(500);
 
     // Thank You Card
     await expect(page.getByText(surveys.createAndSubmit.thankYouCard.headline)).toBeVisible();

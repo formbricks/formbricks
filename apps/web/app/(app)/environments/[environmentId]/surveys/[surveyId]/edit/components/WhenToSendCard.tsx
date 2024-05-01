@@ -1,6 +1,6 @@
 "use client";
 
-import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddActionModal";
+import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/actions/components/AddActionModal";
 import InlineTriggers from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/InlineTriggers";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon, PlusIcon, TrashIcon } from "lucide-react";
@@ -38,7 +38,9 @@ export default function WhenToSendCard({
   propActionClasses,
   membershipRole,
 }: WhenToSendCardProps) {
-  const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
+  const [open, setOpen] = useState(
+    localSurvey.type === "app" || localSurvey.type === "website" ? true : false
+  );
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
@@ -320,7 +322,7 @@ export default function WhenToSendCard({
               <label
                 htmlFor="triggerDelay"
                 className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-                <div className="">
+                <div>
                   <p className="text-sm font-semibold text-slate-700">
                     Wait
                     <Input

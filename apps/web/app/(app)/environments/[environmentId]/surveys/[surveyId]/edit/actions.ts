@@ -3,6 +3,7 @@
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { canUserAccessProduct } from "@formbricks/lib/product/auth";
 import { getProduct } from "@formbricks/lib/product/service";
@@ -16,18 +17,15 @@ import {
 } from "@formbricks/lib/segment/service";
 import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { deleteSurvey, getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
-import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
-import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
-import { formatDateFields } from "@formbricks/lib/utils/datetime";
+import {
+  deleteSurvey,
+  getSurvey,
+  loadNewSegmentInSurvey,
+  updateSurvey,
+} from "@formbricks/lib/survey/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TProduct } from "@formbricks/types/product";
-import {
-  TBaseFilters,
-  TSegmentUpdateInput,
-  ZSegmentFilters,
-  ZSegmentUpdateInput,
-} from "@formbricks/types/segment";
+import { TBaseFilters, TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export async function surveyMutateAction(survey: TSurvey): Promise<TSurvey> {
@@ -44,12 +42,7 @@ export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
   const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(survey.environmentId, session.user.id);
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
-  const _survey = {
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  };
-
-  return await updateSurvey(_survey);
+  return await updateSurvey(survey);
 }
 
 export const deleteSurveyAction = async (surveyId: string) => {
@@ -141,12 +134,7 @@ export const updateBasicSegmentAction = async (
     }
   }
 
-  const _data = {
-    ...data,
-    ...formatDateFields(data, ZSegmentUpdateInput),
-  };
-
-  return await updateSegment(segmentId, _data);
+  return await updateSegment(segmentId, data);
 };
 
 export const loadNewBasicSegmentAction = async (surveyId: string, segmentId: string) => {
@@ -199,3 +187,64 @@ export const resetBasicSegmentFiltersAction = async (surveyId: string) => {
 
   return await resetSegmentInSurvey(surveyId);
 };
+
+export async function getImagesFromUnsplashAction(searchQuery: string, page: number = 1) {
+  if (!UNSPLASH_ACCESS_KEY) {
+    throw new Error("Unsplash access key is not set");
+  }
+  const baseUrl = "https://api.unsplash.com/search/photos";
+  const params = new URLSearchParams({
+    query: searchQuery,
+    client_id: UNSPLASH_ACCESS_KEY,
+    orientation: "landscape",
+    per_page: "9",
+    page: page.toString(),
+  });
+
+  try {
+    const response = await fetch(`${baseUrl}?${params}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to fetch images from Unsplash");
+    }
+
+    const { results } = await response.json();
+    return results.map((result) => {
+      const authorName = encodeURIComponent(result.user.first_name + " " + result.user.last_name);
+      const authorLink = encodeURIComponent(result.user.links.html);
+
+      return {
+        id: result.id,
+        alt_description: result.alt_description,
+        urls: {
+          regularWithAttribution: `${result.urls.regular}&dpr=2&authorLink=${authorLink}&authorName=${authorName}&utm_source=formbricks&utm_medium=referral`,
+          download: result.links.download_location,
+        },
+      };
+    });
+  } catch (error) {
+    throw new Error("Error getting images from Unsplash");
+  }
+}
+
+export async function triggerDownloadUnsplashImageAction(downloadUrl: string) {
+  try {
+    const response = await fetch(`${downloadUrl}/?client_id=${UNSPLASH_ACCESS_KEY}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to download image from Unsplash");
+    }
+
+    return;
+  } catch (error) {
+    throw new Error("Error downloading image from Unsplash");
+  }
+}

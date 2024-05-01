@@ -1,12 +1,13 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
+import { Prisma } from "@prisma/client";
 
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
+import { DatabaseError } from "@formbricks/types/errors";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
 import { responseCache } from "../response/cache";
 import { getResponse } from "../response/service";
 import { validateInputs } from "../utils/validate";
@@ -48,6 +49,10 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
       tagId,
     };
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
     throw error;
   }
 };
@@ -82,12 +87,15 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
       responseId,
     };
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
     throw error;
   }
 };
 
 export const getTagsOnResponsesCount = async (environmentId: string): Promise<TTagsCount> =>
-  unstable_cache(
+  cache(
     async () => {
       validateInputs([environmentId, ZId]);
 
@@ -110,12 +118,14 @@ export const getTagsOnResponsesCount = async (environmentId: string): Promise<TT
 
         return tagsCount.map((tagCount) => ({ tagId: tagCount.tagId, count: tagCount._count._all }));
       } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
         throw error;
       }
     },
     [`getTagsOnResponsesCount-${environmentId}`],
     {
       tags: [tagOnResponseCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

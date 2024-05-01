@@ -2,7 +2,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
-import { TSurveyQuestionSummaryMultipleChoice } from "@formbricks/types/surveys";
+import { TSurveyQuestionSummaryMultipleChoice, TSurveyType } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
@@ -13,7 +13,7 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface MultipleChoiceSummaryProps {
   questionSummary: TSurveyQuestionSummaryMultipleChoice;
   environmentId: string;
-  surveyType: string;
+  surveyType: TSurveyType;
 }
 
 export const MultipleChoiceSummary = ({
@@ -69,7 +69,7 @@ export const MultipleChoiceSummary = ({
               <div className="mt-4 rounded-lg border border-slate-200">
                 <div className="grid h-12 grid-cols-2 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
                   <div className="col-span-1 pl-6 ">Other values found</div>
-                  <div className="col-span-1 pl-6 ">{surveyType === "web" && "User"}</div>
+                  <div className="col-span-1 pl-6 ">{surveyType === "app" && "User"}</div>
                 </div>
                 {result.others
                   .filter((otherValue) => otherValue.value !== "")
@@ -83,7 +83,7 @@ export const MultipleChoiceSummary = ({
                           <span>{otherValue.value}</span>
                         </div>
                       )}
-                      {surveyType === "web" && otherValue.person && (
+                      {surveyType === "app" && otherValue.person && (
                         <Link
                           href={
                             otherValue.person.id
@@ -97,7 +97,7 @@ export const MultipleChoiceSummary = ({
                           </div>
                           <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
                             {otherValue.person.id && <PersonAvatar personId={otherValue.person.id} />}
-                            <span>{getPersonIdentifier(otherValue.person)}</span>
+                            <span>{getPersonIdentifier(otherValue.person, otherValue.personAttributes)}</span>
                           </div>
                         </Link>
                       )}

@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/js",
   "license": "MIT",
-  "version": "1.7.3",
+  "version": "2.0.0-beta.1",
   "description": "Formbricks-js allows you to connect your app to Formbricks, display surveys and trigger events.",
   "homepage": "https://formbricks.com",
   "repository": {
@@ -18,15 +18,16 @@
     "dist"
   ],
   "type": "module",
-  "source": "src/index.ts",
-  "main": "dist/index.umd.cjs",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
   "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.umd.cjs",
-      "types": "./dist/index.d.ts"
+    "./app": {
+      "import": "./dist/app.js",
+      "require": "./dist/app.cjs",
+      "types": "./dist/app.d.ts"
+    },
+    "./website": {
+      "import": "./dist/website.js",
+      "require": "./dist/website.cjs",
+      "types": "./dist/website.d.ts"
     }
   },
   "scripts": {
@@ -39,10 +40,11 @@
   },
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {
+    "@formbricks/js-core": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "eslint-config-formbricks": "workspace:*",
-    "terser": "^5.30.3",
-    "vite": "^5.2.8",
-    "vite-plugin-dts": "^3.8.1"
+    "terser": "^5.30.4",
+    "vite": "^5.2.10",
+    "vite-plugin-dts": "^3.9.0"
   }
 }

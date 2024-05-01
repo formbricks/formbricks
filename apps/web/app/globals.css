@@ -56,12 +56,6 @@
   }
 }
 
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #e2e8f0;
-}
-
 /* Chrome, Edge, and Safari */
 *::-webkit-scrollbar {
   width: 10px;

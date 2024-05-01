@@ -8,27 +8,26 @@
   font-size: 16px;
 }
 
-/* Firefox */
-#fbjs * {
-  scrollbar-width: thin;
-  scrollbar-color: #e2e8f0;
-}
-
 /* Chrome, Edge, and Safari */
 #fbjs *::-webkit-scrollbar {
-  width: 8px;
-  border-radius: 99px;
+  width: 6px;
+  background: transparent;
 }
 
 #fbjs *::-webkit-scrollbar-track {
-  background: #e2e8f0;
-  border-radius: 99px;
+  background: transparent;
 }
 
 #fbjs *::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
-  border: 3px solid #cbd5e1;
-  border-radius: 99px;
+  background-color: var(--fb-brand-color);
+  border: none;
+  border-radius: 10px;
+}
+
+/* Firefox */
+#fbjs * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--fb-brand-color) transparent;
 }
 
 /* this is for styling the HtmlBody component */
@@ -40,6 +39,7 @@
 /* without this, it wont override the color */
 p.fb-editor-paragraph {
   color: var(--fb-subheading-color) !important;
+  overflow-wrap: break-word;
 }
 
 .fb-survey-shadow {

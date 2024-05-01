@@ -3,6 +3,7 @@ import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
@@ -91,68 +92,85 @@ export const MatrixQuestion = ({
 
   return (
     <form key={question.id} onSubmit={handleSubmit} className="w-full">
-      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-      <Headline
-        headline={getLocalizedValue(question.headline, languageCode)}
-        questionId={question.id}
-        required={question.required}
-      />
-      <Subheader subheader={getLocalizedValue(question.subheader, languageCode)} questionId={question.id} />
-      <div className="mt-4 max-h-[33vh] overflow-auto">
-        <div className="min-w-full table-auto overflow-auto">
-          <table className="min-w-full table-auto border-collapse text-sm">
-            <thead>
-              <tr>
-                <th className="px-4 py-2"></th>
-                {columnsHeaders}
-              </tr>
-            </thead>
-            <tbody>
-              {question.rows.map((row, rowIndex) => (
-                // Table rows
-                <tr className={`${rowIndex % 2 === 0 ? "bg-input-bg" : ""}`}>
-                  <td className="text-heading rounded-l-custom max-w-40 break-words px-4 py-2">
-                    {getLocalizedValue(row, languageCode)}
-                  </td>
-                  {question.columns.map((column, columnIndex) => (
-                    <td
-                      key={columnIndex}
-                      className={`px-4 py-2 text-gray-800 ${columnIndex === question.columns.length - 1 ? "rounded-r-custom" : ""}`}
-                      onClick={() =>
-                        handleSelect(
-                          getLocalizedValue(column, languageCode),
-                          getLocalizedValue(row, languageCode)
-                        )
-                      }>
-                      <div className="flex items-center justify-center p-2">
-                        {/* radio input  */}
-                        <input
-                          type="radio"
-                          id={`${row}-${column}`}
-                          name={getLocalizedValue(row, languageCode)}
-                          value={getLocalizedValue(column, languageCode)}
-                          checked={
-                            typeof value === "object" && !Array.isArray(value)
-                              ? value[getLocalizedValue(row, languageCode)] ===
-                                getLocalizedValue(column, languageCode)
-                              : false
-                          }
-                          className="border-brand text-brand h-5 w-5 border focus:ring-0 focus:ring-offset-0"
-                        />
-                      </div>
-                    </td>
-                  ))}
+      <ScrollableContainer>
+        <div>
+          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          <Headline
+            headline={getLocalizedValue(question.headline, languageCode)}
+            questionId={question.id}
+            required={question.required}
+          />
+          <Subheader
+            subheader={getLocalizedValue(question.subheader, languageCode)}
+            questionId={question.id}
+          />
+          <div className="overflow-x-auto py-4">
+            <table className="no-scrollbar min-w-full table-auto border-collapse text-sm">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2"></th>
+                  {columnsHeaders}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {question.rows.map((row, rowIndex) => (
+                  // Table rows
+                  <tr className={`${rowIndex % 2 === 0 ? "bg-input-bg" : ""}`}>
+                    <td className="text-heading rounded-l-custom max-w-40 break-words px-4 py-2">
+                      {getLocalizedValue(row, languageCode)}
+                    </td>
+                    {question.columns.map((column, columnIndex) => (
+                      <td
+                        key={columnIndex}
+                        tabIndex={0}
+                        className={`outline-brand px-4 py-2 text-gray-800 ${columnIndex === question.columns.length - 1 ? "rounded-r-custom" : ""}`}
+                        onClick={() =>
+                          handleSelect(
+                            getLocalizedValue(column, languageCode),
+                            getLocalizedValue(row, languageCode)
+                          )
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === " ") {
+                            e.preventDefault();
+                            handleSelect(
+                              getLocalizedValue(column, languageCode),
+                              getLocalizedValue(row, languageCode)
+                            );
+                          }
+                        }}>
+                        <div className="flex items-center justify-center p-2">
+                          {/* radio input  */}
+                          <input
+                            type="radio"
+                            tabIndex={-1}
+                            id={`${row}-${column}`}
+                            name={getLocalizedValue(row, languageCode)}
+                            value={getLocalizedValue(column, languageCode)}
+                            checked={
+                              typeof value === "object" && !Array.isArray(value)
+                                ? value[getLocalizedValue(row, languageCode)] ===
+                                  getLocalizedValue(column, languageCode)
+                                : false
+                            }
+                            className="border-brand text-brand h-5 w-5 border focus:ring-0 focus:ring-offset-0"
+                          />
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-      <div className="mt-4 flex w-full justify-between">
+      </ScrollableContainer>
+      <div className="flex w-full justify-between px-6 py-4">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={handleBackButtonClick}
+            tabIndex={0}
           />
         )}
         <div></div>
@@ -161,6 +179,7 @@ export const MatrixQuestion = ({
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
+            tabIndex={0}
           />
         )}
       </div>

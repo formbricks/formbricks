@@ -24,8 +24,8 @@ export default function LegalFooter({
   };
 
   return (
-    <div className={`absolute bottom-0 h-12 w-full`}>
-      <div className="mx-auto max-w-lg p-3 text-center text-xs text-slate-400">
+    <div className="absolute bottom-0 h-10 w-full">
+      <div className="mx-auto max-w-lg p-2 text-center text-xs text-slate-400 text-opacity-50">
         {IMPRINT_URL && (
           <Link href={IMPRINT_URL} target="_blank" className="hover:underline">
             Imprint

@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
