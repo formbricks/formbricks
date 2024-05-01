@@ -2,14 +2,16 @@
 
 import { useMemo, useState } from "preact/hooks";
 
+import { TProductStyling } from "@formbricks/types/product";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
 
 interface StackedCardsContainerProps {
   cardArrangement: TCardArrangementOptions;
   currentQuestionId: string;
   survey: TSurvey;
-  getCardContent: (questionIdx: number) => JSX.Element | undefined;
+  getCardContent: (questionIdx: number, offset: number) => JSX.Element | undefined;
+  styling: TProductStyling;
 }
 
 export const StackedCardsContainer = ({
@@ -17,8 +19,13 @@ export const StackedCardsContainer = ({
   currentQuestionId,
   survey,
   getCardContent,
+  styling,
 }: StackedCardsContainerProps) => {
   const [hovered, setHovered] = useState(false);
+  const highlightBorderColor =
+    survey.styling?.highlightBorderColor?.light || styling.highlightBorderColor?.light;
+  const cardBorderColor = survey.styling?.cardBorderColor?.light || styling.cardBorderColor?.light;
+
   const cardIndexes = useMemo(() => {
     let cardIndexTemp = survey.questions.map((_, index) => index);
     if (survey.welcomeCard.enabled) {
@@ -41,13 +48,48 @@ export const StackedCardsContainer = ({
   const calculateCardTransform = (offset: number) => {
     switch (cardArrangement) {
       case "casual":
-        return offset < 0 ? `translateX(100vw)` : `translateX(0) rotate(-${(hovered ? 4 : 2) * offset}deg)`;
+        return offset < 0 ? `translateX(100%)` : `translateX(0) rotate(-${(hovered ? 4 : 2) * offset}deg)`;
       case "straight":
-        return offset < 0
-          ? `translateX(100vw)`
-          : `translateX(0) translateY(-${(hovered ? 12 : 10) * offset}px)`;
+        return offset < 0 ? `translatey(100%)` : `translateY(-${(hovered ? 12 : 10) * offset}px)`;
       default:
-        return offset < 0 ? `translateX(100vw)` : `translateX(0)`;
+        return offset < 0 ? `translateX(100%)` : `translateX(0)`;
+    }
+  };
+
+  const straightCardArrangementClasses = (offset: number) => {
+    if (cardArrangement === "straight") {
+      return {
+        width: `${100 - 2 * offset}%`,
+        margin: "auto",
+      };
+    }
+  };
+
+  const borderStyles = (surveyType: TSurveyType) => {
+    console.log("Current surveyType:", surveyType); // This will show you what value is being passed
+
+    if (surveyType === "link") {
+      return {
+        border: "2px solid",
+        borderColor: cardBorderColor,
+        borderRadius: "var(--fb-border-radius)",
+      };
+    } else {
+      console.log("in else");
+      if (!!highlightBorderColor) {
+        console.log("here");
+        return {
+          border: "2px solid",
+          borderColor: highlightBorderColor,
+          borderRadius: "var(--fb-border-radius)",
+        };
+      } else {
+        return {
+          border: "2px solid",
+          borderColor: cardBorderColor,
+          borderRadius: "var(--fb-border-radius)",
+        };
+      }
     }
   };
 
@@ -58,7 +100,8 @@ export const StackedCardsContainer = ({
         setHovered(true);
       }}
       onMouseLeave={() => setHovered(false)}>
-      <div className="opacity-0">{getCardContent(questionIdx)}</div>
+      {console.log(highlightBorderColor)}
+      <div className="opacity-0">{getCardContent(questionIdx, 0)}</div>
       {questionIdx !== undefined &&
         cardIndexes.map((_, idx) => {
           const index = survey.welcomeCard.enabled ? idx - 1 : idx;
@@ -72,9 +115,12 @@ export const StackedCardsContainer = ({
                 zIndex: 1000 - index,
                 transform: calculateCardTransform(offset),
                 opacity: isHidden ? 0 : (100 - 30 * offset) / 100,
+                pointerEvents: isHidden ? "none" : "auto",
+                ...straightCardArrangementClasses(offset),
+                ...borderStyles(survey.type),
               }}
-              className="absolute inset-0 top-0 rounded-xl border border-slate-200 bg-white backdrop-blur-md transition-all duration-1000 ease-in-out">
-              {getCardContent(index)}
+              className="pointer rounded-custom absolute inset-0 top-0 backdrop-blur-md transition-all duration-1000 ease-in-out  ">
+              {getCardContent(index, offset)}
             </div>
           );
         })}

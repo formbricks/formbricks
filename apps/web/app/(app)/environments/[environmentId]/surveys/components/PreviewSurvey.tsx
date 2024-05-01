@@ -238,7 +238,6 @@ export const PreviewSurvey = ({
                 <Modal
                   isOpen={isModalOpen}
                   placement={placement}
-                  highlightBorderColor={styling.highlightBorderColor?.light}
                   previewMode="mobile"
                   darkOverlay={darkOverlay}
                   clickOutsideClose={clickOutsideClose}
@@ -324,7 +323,6 @@ export const PreviewSurvey = ({
               <Modal
                 isOpen={isModalOpen}
                 placement={placement}
-                highlightBorderColor={styling.highlightBorderColor?.light}
                 clickOutsideClose={clickOutsideClose}
                 darkOverlay={darkOverlay}
                 previewMode="desktop"

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { VNode } from "preact";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 
 import { TPlacement } from "@formbricks/types/common";
 
@@ -20,7 +20,6 @@ export default function Modal({
   placement,
   clickOutside,
   darkOverlay,
-  highlightBorderColor,
   onClose,
 }: ModalProps) {
   const [show, setShow] = useState(false);
@@ -68,19 +67,6 @@ export default function Modal({
     }
   };
 
-  const highlightBorderColorStyle = useMemo(() => {
-    if (!highlightBorderColor)
-      return {
-        overflow: "visible",
-      };
-
-    return {
-      borderRadius: "var(--fb-border-radius)",
-      border: "2px solid",
-      borderColor: highlightBorderColor,
-    };
-  }, [highlightBorderColor]);
-
   if (!show) return null;
 
   return (
@@ -125,7 +111,7 @@ export default function Modal({
               </button>
             </div>
           )}
-          <div style={highlightBorderColorStyle}>{children}</div>
+          <div>{children}</div>
         </div>
       </div>
     </div>

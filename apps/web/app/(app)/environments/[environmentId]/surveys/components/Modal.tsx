@@ -1,5 +1,5 @@
 import { getPlacementStyle } from "@/app/lib/preview";
-import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
@@ -9,7 +9,6 @@ export default function Modal({
   isOpen,
   placement,
   previewMode,
-  highlightBorderColor,
   clickOutsideClose,
   darkOverlay,
   borderRadius,
@@ -19,7 +18,6 @@ export default function Modal({
   isOpen: boolean;
   placement: TPlacement;
   previewMode: string;
-  highlightBorderColor: string | null | undefined;
   clickOutsideClose: boolean;
   darkOverlay: boolean;
   borderRadius?: number;
@@ -102,14 +100,6 @@ export default function Modal({
     };
   }, [clickOutsideClose, scalingClasses.transformOrigin]);
 
-  const highlightBorderColorStyle = useMemo(() => {
-    if (!highlightBorderColor) return;
-
-    return {
-      border: `2px solid ${highlightBorderColor}`,
-    };
-  }, [highlightBorderColor]);
-
   useEffect(() => {
     setShow(isOpen);
   }, [isOpen]);
@@ -144,7 +134,6 @@ export default function Modal({
       <div
         ref={modalRef}
         style={{
-          ...highlightBorderColorStyle,
           ...scalingClasses,
           ...(borderRadius && {
             borderRadius: `${borderRadius}px`,
@@ -154,7 +143,7 @@ export default function Modal({
           }),
         }}
         className={cn(
-          "no-scrollbar pointer-events-auto absolute h-fit max-h-[90%] w-full max-w-sm bg-white shadow-lg transition-all duration-500 ease-in-out ",
+          "no-scrollbar pointer-events-auto absolute h-fit max-h-[90%] w-full max-w-sm transition-all duration-500 ease-in-out ",
           previewMode === "desktop" ? getPlacementStyle(placement) : "max-w-full",
           slidingAnimationClass
         )}>

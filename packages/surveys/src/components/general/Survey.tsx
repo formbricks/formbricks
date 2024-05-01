@@ -258,7 +258,7 @@ export const Survey = ({
     setQuestionId(prevQuestionId);
   };
 
-  const getCardContent = (questionIdx: number): JSX.Element | undefined => {
+  const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
     if (showError) {
       return (
         <ResponseErrorComponent responseData={responseData} questions={survey.questions} onRetry={onRetry} />
@@ -328,7 +328,6 @@ export const Survey = ({
         <div
           className={cn(
             "no-scrollbar md:rounded-custom rounded-t-custom bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-500 ease-in-out",
-            isCardBorderVisible ? "border-survey-border border" : "",
             survey.type === "link" ? "fb-survey-shadow" : ""
           )}>
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
@@ -336,7 +335,7 @@ export const Survey = ({
           </div>
           <div className="mx-6 mb-10 mt-2 space-y-3 md:mb-6 md:mt-6">
             {isBrandingEnabled && <FormbricksBranding />}
-            {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
+            {showProgressBar && offset === 0 && <ProgressBar survey={survey} questionId={questionId} />}
           </div>
         </div>
       </AutoCloseWrapper>
@@ -349,6 +348,7 @@ export const Survey = ({
       currentQuestionId={questionId}
       getCardContent={getCardContent}
       survey={survey}
+      styling={styling}
     />
   );
 };
