@@ -6,9 +6,10 @@ import {
   validateQuestion,
   validateSurveyQuestionsInBatch,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
+import { animations } from "@formkit/drag-and-drop";
+import { useDragAndDrop } from "@formkit/drag-and-drop/react";
 import { createId } from "@paralleldrive/cuid2";
-import { useEffect, useMemo, useState } from "react";
-import { DragDropContext } from "react-beautiful-dnd";
+import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { MultiLanguageCard } from "@formbricks/ee/multiLanguage/components/MultiLanguageCard";
@@ -22,11 +23,10 @@ import AddQuestionButton from "./AddQuestionButton";
 import EditThankYouCard from "./EditThankYouCard";
 import EditWelcomeCard from "./EditWelcomeCard";
 import QuestionCard from "./QuestionCard";
-import { StrictModeDroppable } from "./StrictModeDroppable";
 
 interface QuestionsViewProps {
   localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
+  setLocalSurvey: React.Dispatch<SetStateAction<TSurvey>>;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   product: TProduct;
@@ -51,6 +51,13 @@ export const QuestionsView = ({
   isMultiLanguageAllowed,
   isFormbricksCloud,
 }: QuestionsViewProps) => {
+  const [draggableParent, questionsDraggable] = useDragAndDrop<HTMLDivElement, TSurveyQuestion>(
+    localSurvey.questions,
+    {
+      plugins: [animations({ duration: 100 })],
+    }
+  );
+
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
       acc[question.id] = createId();
@@ -194,17 +201,6 @@ export const QuestionsView = ({
     internalQuestionIdMap[question.id] = createId();
   };
 
-  const onDragEnd = (result) => {
-    if (!result.destination) {
-      return;
-    }
-    const newQuestions = Array.from(localSurvey.questions);
-    const [reorderedQuestion] = newQuestions.splice(result.source.index, 1);
-    newQuestions.splice(result.destination.index, 0, reorderedQuestion);
-    const updatedSurvey = { ...localSurvey, questions: newQuestions };
-    setLocalSurvey(updatedSurvey);
-  };
-
   const moveQuestion = (questionIndex: number, up: boolean) => {
     const newQuestions = Array.from(localSurvey.questions);
     const [reorderedQuestion] = newQuestions.splice(questionIndex, 1);
@@ -286,6 +282,13 @@ export const QuestionsView = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeQuestionId, setActiveQuestionId]);
 
+  useEffect(() => {
+    setLocalSurvey((prev) => ({
+      ...prev,
+      questions: questionsDraggable,
+    }));
+  }, [questionsDraggable, setLocalSurvey]);
+
   return (
     <div className="mt-16 px-5 py-4">
       <div className="mb-5 flex flex-col gap-5">
@@ -299,36 +302,28 @@ export const QuestionsView = ({
           selectedLanguageCode={selectedLanguageCode}
         />
       </div>
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="mb-5 grid grid-cols-1 gap-5 ">
-          <StrictModeDroppable droppableId="questionsList">
-            {(provided) => (
-              <div className="grid w-full gap-5" ref={provided.innerRef} {...provided.droppableProps}>
-                {localSurvey.questions.map((question, questionIdx) => (
-                  // display a question form
-                  <QuestionCard
-                    key={internalQuestionIdMap[question.id]}
-                    localSurvey={localSurvey}
-                    product={product}
-                    questionIdx={questionIdx}
-                    moveQuestion={moveQuestion}
-                    updateQuestion={updateQuestion}
-                    duplicateQuestion={duplicateQuestion}
-                    selectedLanguageCode={selectedLanguageCode}
-                    setSelectedLanguageCode={setSelectedLanguageCode}
-                    deleteQuestion={deleteQuestion}
-                    activeQuestionId={activeQuestionId}
-                    setActiveQuestionId={setActiveQuestionId}
-                    lastQuestion={questionIdx === localSurvey.questions.length - 1}
-                    isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
-                  />
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </StrictModeDroppable>
-        </div>
-      </DragDropContext>
+
+      <div className="mb-5 grid w-full gap-5" ref={draggableParent}>
+        {questionsDraggable.map((question, questionIdx) => (
+          <QuestionCard
+            key={internalQuestionIdMap[question.id]}
+            localSurvey={localSurvey}
+            product={product}
+            questionIdx={questionIdx}
+            moveQuestion={moveQuestion}
+            updateQuestion={updateQuestion}
+            duplicateQuestion={duplicateQuestion}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
+            deleteQuestion={deleteQuestion}
+            activeQuestionId={activeQuestionId}
+            setActiveQuestionId={setActiveQuestionId}
+            lastQuestion={questionIdx === localSurvey.questions.length - 1}
+            isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
+          />
+        ))}
+      </div>
+
       <AddQuestionButton addQuestion={addQuestion} product={product} />
       <div className="mt-5 flex flex-col gap-5">
         <EditThankYouCard
