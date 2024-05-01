@@ -141,23 +141,35 @@ const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TAc
   }
 
   // check if all public trigger names are unique and does not conflict with any action class name
+  // first check: if all the names are unique
   const publicTriggers = triggers.filter((trigger) => !trigger.isPrivate);
   const publicTriggerNames = publicTriggers.map((trigger) => trigger.name);
   if (new Set(publicTriggerNames).size !== publicTriggerNames.length) {
     throw new InvalidInputError("Duplicate trigger name");
   }
 
+  // second check: if all the names are not conflicting with any action class name after saving in DB
   const actionClassNames = actionClasses
     .filter((actionClass) => !actionClass.isPrivate)
-    .map((actionClass) => actionClass.name);
+    .map((actionClass) => {
+      const trigger = publicTriggers.find((trigger) => trigger.id === actionClass.id);
+      if (trigger) {
+        return trigger.name;
+      }
+      return actionClass.name;
+    });
 
-  publicTriggers.forEach((trigger) => {
-    if (actionClassNames.includes(trigger.name)) {
-      throw new InvalidInputError("Trigger name already exists");
-    }
-  });
+  const combinedActionClassNames = actionClassNames.concat(
+    publicTriggers.filter((trigger) => trigger._isDraft).map((trigger) => trigger.name)
+  );
+
+  if (new Set(combinedActionClassNames).size !== combinedActionClassNames.length) {
+    // rare case where the name of an existing action class is the changed using API endpoint
+    throw new InvalidInputError("Duplicate action class name");
+  }
 
   // check if all the key in the code type triggers are unique
+  // first check: if all the input keys are unique
   const codeTriggers = triggers.filter((trigger) => trigger.type === "code");
   const codeTriggerKeys = codeTriggers.map((trigger) => trigger.key);
 
@@ -165,15 +177,25 @@ const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TAc
     throw new InvalidInputError("Duplicate trigger key");
   }
 
+  // second check: if all the keys are not conflicting with any action class key after saving in DB
   const actionClassKeys = actionClasses
     .filter((actionClass) => actionClass.type === "code")
-    .map((actionClass) => actionClass.key);
+    .map((actionClass) => {
+      const trigger = codeTriggers.find((trigger) => trigger.id === actionClass.id);
+      if (trigger && trigger.key !== actionClass.key) {
+        throw new InvalidInputError("Trigger key cannot be updated");
+      }
+      return actionClass.key;
+    });
 
-  codeTriggers.forEach((trigger) => {
-    if (actionClassKeys.includes(trigger.key)) {
-      throw new InvalidInputError("Trigger key already exists");
-    }
-  });
+  const combinedActionClassKeys = actionClassKeys.concat(
+    codeTriggers.filter((trigger) => trigger._isDraft).map((trigger) => trigger.key)
+  );
+
+  if (new Set(combinedActionClassKeys).size !== combinedActionClassKeys.length) {
+    // rare case where the key of an existing action class is the changed using API endpoint
+    throw new InvalidInputError("Duplicate action class key");
+  }
 };
 
 const handleTriggerUpdates = async (
@@ -612,7 +634,9 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     // @ts-expect-error
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
-      triggers: updatedSurvey.triggers ? updatedSurvey.triggers : [], // Include triggers from updatedSurvey
+      triggers: prismaSurvey.triggers
+        ? prismaSurvey.triggers.map((trigger) => ({ ...trigger.actionClass }))
+        : [],
       segment: surveySegment,
     };
 

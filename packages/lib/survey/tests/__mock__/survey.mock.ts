@@ -254,7 +254,7 @@ export const createSurveyInput: TSurveyInput = {
   type: "website",
   status: "inProgress",
   displayOption: "respondMultiple",
-  triggers: [mockActionClass.name],
+  triggers: [mockActionClass],
   ...baseSurveyProperties,
 };
 
@@ -262,7 +262,7 @@ export const updateSurveyInput: TSurvey = {
   type: "website",
   status: "inProgress",
   displayOption: "respondMultiple",
-  triggers: [mockActionClass.name],
+  triggers: [mockActionClass],
   productOverwrites: null,
   styling: null,
   singleUse: null,
@@ -271,7 +271,6 @@ export const updateSurveyInput: TSurvey = {
   pin: null,
   resultShareKey: null,
   segment: null,
-  inlineTriggers: null,
   languages: [],
   ...commonMockProperties,
   ...baseSurveyProperties,
@@ -279,10 +278,10 @@ export const updateSurveyInput: TSurvey = {
 
 export const mockTransformedSurveyOutput = {
   ...mockSurveyOutput,
-  triggers: mockSurveyOutput.triggers.map((trigger) => trigger.actionClass.name),
+  triggers: mockSurveyOutput.triggers.map((trigger) => ({ ...trigger.actionClass })),
 };
 
 export const mockTransformedSyncSurveyOutput = {
   ...mockSyncSurveyOutput,
-  triggers: mockSurveyOutput.triggers.map((trigger) => trigger.actionClass.name),
+  triggers: mockSurveyOutput.triggers.map((trigger) => ({ ...trigger.actionClass })),
 };
