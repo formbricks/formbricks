@@ -90,7 +90,6 @@ export const copyToOtherEnvironmentAction = async (
         ...(trigger.actionClass.type === "code"
           ? { key: trigger.actionClass.key }
           : { name: trigger.actionClass.name }),
-        isPrivate: false,
         environment: {
           id: targetEnvironmentId,
         },
@@ -108,7 +107,6 @@ export const copyToOtherEnvironmentAction = async (
           },
           description: trigger.actionClass.description,
           type: trigger.actionClass.type,
-          isPrivate: trigger.actionClass.isPrivate,
           ...(trigger.actionClass.type === "code"
             ? { key: trigger.actionClass.key }
             : {

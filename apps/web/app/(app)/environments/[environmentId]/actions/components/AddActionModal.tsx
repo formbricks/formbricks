@@ -75,8 +75,7 @@ export default function AddNoCodeActionModal({
   const [isMatch, setIsMatch] = useState("");
   const [type, setType] = useState("noCode");
   const actionClassNames = useMemo(
-    () =>
-      actionClasses.filter((actionClass) => !actionClass.isPrivate).map((actionClass) => actionClass.name),
+    () => actionClasses.map((actionClass) => actionClass.name),
     [actionClasses]
   );
 
@@ -152,8 +151,8 @@ export default function AddNoCodeActionModal({
         name: data.name,
         description: data.description,
         environmentId,
-        type,
-      } as TActionClassInput;
+        type: type as TActionClass["type"],
+      };
 
       if (type === "noCode") {
         const filteredNoCodeConfig = filterNoCodeConfig(noCodeConfig as TActionClassNoCodeConfig);

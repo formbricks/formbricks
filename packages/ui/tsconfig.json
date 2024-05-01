@@ -1,6 +1,10 @@
 {
   "extends": "@formbricks/tsconfig/react-library.json",
-  "include": [".", "../types/*.d.ts"],
+  "include": [
+    ".",
+    "../types/*.d.ts",
+    "../../apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddActionModal.tsx"
+  ],
   "exclude": ["build", "node_modules"],
   "compilerOptions": {
     "lib": ["ES2021.String"]

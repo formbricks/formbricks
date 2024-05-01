@@ -45,13 +45,11 @@ export const ZActionClass = z.object({
   name: z.string(),
   description: z.string().nullish(),
   type: ZActionClassType,
-  isPrivate: z.boolean(),
   key: z.string().nullish(),
   noCodeConfig: ZActionClassNoCodeConfig.nullish(),
   environmentId: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  _isDraft: z.boolean().nullish(),
 });
 
 export type TActionClass = z.infer<typeof ZActionClass>;
@@ -61,11 +59,9 @@ export const ZActionClassInput = z.object({
   environmentId: z.string(),
   name: z.string(),
   description: z.string().optional().nullable(),
-  isPrivate: z.boolean().optional(),
   key: z.string().optional().nullable(),
   noCodeConfig: ZActionClassNoCodeConfig.nullish(),
   type: z.enum(["code", "noCode", "automatic"]),
-  _isDraft: z.boolean().nullish(),
 });
 
 export const ZActionClassAutomaticInput = z.object({

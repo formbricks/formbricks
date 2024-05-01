@@ -106,7 +106,6 @@ export const selectSurvey = {
           description: true,
           type: true,
           key: true,
-          isPrivate: true,
           noCodeConfig: true,
         },
       },
@@ -128,7 +127,7 @@ const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TAc
 
   // check if all the triggers are valid
   triggers.forEach((trigger) => {
-    if (!trigger._isDraft && !actionClasses.find((actionClass) => actionClass.id === trigger.id)) {
+    if (!actionClasses.find((actionClass) => actionClass.id === trigger.id)) {
       throw new InvalidInputError("Invalid trigger id");
     }
   });
@@ -139,184 +138,44 @@ const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TAc
   if (new Set(triggerIds).size !== triggerIds.length) {
     throw new InvalidInputError("Duplicate trigger id");
   }
-
-  // check if all public trigger names are unique and does not conflict with any action class name
-  // first check: if all the names are unique
-  const publicTriggers = triggers.filter((trigger) => !trigger.isPrivate);
-  const publicTriggerNames = publicTriggers.map((trigger) => trigger.name);
-  if (new Set(publicTriggerNames).size !== publicTriggerNames.length) {
-    throw new InvalidInputError("Duplicate trigger name");
-  }
-
-  // second check: if all the names are not conflicting with any action class name after saving in DB
-  const actionClassNames = actionClasses
-    .filter((actionClass) => !actionClass.isPrivate)
-    .map((actionClass) => {
-      const trigger = publicTriggers.find((trigger) => trigger.id === actionClass.id);
-      if (trigger) {
-        return trigger.name;
-      }
-      return actionClass.name;
-    });
-
-  const combinedActionClassNames = actionClassNames.concat(
-    publicTriggers.filter((trigger) => trigger._isDraft).map((trigger) => trigger.name)
-  );
-
-  if (new Set(combinedActionClassNames).size !== combinedActionClassNames.length) {
-    // rare case where the name of an existing action class is the changed using API endpoint
-    throw new InvalidInputError("Duplicate action class name");
-  }
-
-  // check if all the key in the code type triggers are unique
-  // first check: if all the input keys are unique
-  const codeTriggers = triggers.filter((trigger) => trigger.type === "code");
-  const codeTriggerKeys = codeTriggers.map((trigger) => trigger.key);
-
-  if (new Set(codeTriggerKeys).size !== codeTriggerKeys.length) {
-    throw new InvalidInputError("Duplicate trigger key");
-  }
-
-  // second check: if all the keys are not conflicting with any action class key after saving in DB
-  const actionClassKeys = actionClasses
-    .filter((actionClass) => actionClass.type === "code")
-    .map((actionClass) => {
-      const trigger = codeTriggers.find((trigger) => trigger.id === actionClass.id);
-      if (trigger && trigger.key !== actionClass.key) {
-        throw new InvalidInputError("Trigger key cannot be updated");
-      }
-      return actionClass.key;
-    });
-
-  const combinedActionClassKeys = actionClassKeys.concat(
-    codeTriggers.filter((trigger) => trigger._isDraft).map((trigger) => trigger.key)
-  );
-
-  if (new Set(combinedActionClassKeys).size !== combinedActionClassKeys.length) {
-    // rare case where the key of an existing action class is the changed using API endpoint
-    throw new InvalidInputError("Duplicate action class key");
-  }
 };
 
 const handleTriggerUpdates = async (
-  triggers: TSurvey["triggers"],
+  updatedTriggers: TSurvey["triggers"],
   currentTriggers: TSurvey["triggers"],
   actionClasses: TActionClass[]
 ) => {
-  if (!triggers) return {};
-
-  checkTriggersValidity(triggers, actionClasses);
+  if (!updatedTriggers) return {};
+  checkTriggersValidity(updatedTriggers, actionClasses);
 
   const currentTriggerIds = currentTriggers.map((trigger) => trigger.id);
-  const newTriggerIds = triggers.map((trigger) => trigger.id);
+  const updatedTriggerIds = updatedTriggers.map((trigger) => trigger.id);
 
-  // new triggers are triggers that are draft
-  const newTriggers = triggers.filter((trigger) => trigger?._isDraft);
-
-  const [updatedTriggersOld, updatedTriggersNew] = triggers.reduce(
-    (acc, trigger) => {
-      if (!trigger._isDraft && currentTriggerIds.includes(trigger.id)) {
-        const currentTrigger = currentTriggers.find((t) => t.id === trigger.id);
-        if (currentTrigger) {
-          acc[0].push(currentTrigger);
-          acc[1].push(trigger);
-        }
-      }
-      return acc;
-    },
-    [[], []] as [TSurvey["triggers"], TSurvey["triggers"]]
-  );
-
-  if (updatedTriggersNew.length !== updatedTriggersOld.length) {
-    throw new InvalidInputError("Invalid trigger update");
-  }
-
-  if (updatedTriggersNew.length > 0) {
-    for (let idx = 0; idx < updatedTriggersNew.length; idx++) {
-      const newTrigger = updatedTriggersNew[idx];
-      const oldTrigger = updatedTriggersOld[idx];
-      if (newTrigger.type !== oldTrigger.type) {
-        throw new InvalidInputError("Trigger type cannot be updated");
-      }
-      if (newTrigger.isPrivate !== oldTrigger.isPrivate) {
-        throw new InvalidInputError("Trigger privacy cannot be updated");
-      }
-
-      await prisma.actionClass.update({
-        where: {
-          id: newTrigger.id,
-        },
-        data: {
-          name: newTrigger.name,
-          description: newTrigger.description,
-          ...(newTrigger.type === "noCode"
-            ? { noCodeConfig: newTrigger.noCodeConfig || {} }
-            : { key: newTrigger.key }),
-        },
-      });
-    }
-  }
-
-  const createdTriggerIds = await Promise.all(
-    newTriggers.map(async (trigger) => {
-      const actionClass = await prisma.actionClass.create({
-        data: {
-          name: trigger.name,
-          description: trigger.description,
-          type: trigger.type || "code",
-          environment: { connect: { id: trigger.environmentId } },
-          isPrivate: trigger.isPrivate,
-          ...(trigger.type === "noCode"
-            ? { noCodeConfig: trigger.noCodeConfig || {} }
-            : { key: trigger.key }),
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      return actionClass.id;
-    })
-  );
-
-  const addedTriggers = triggers.filter(
-    (trigger) => !currentTriggerIds.includes(trigger.id) && !trigger._isDraft
-  );
-  let addedTriggerIds = addedTriggers.map((trigger) => trigger.id || "");
-  addedTriggerIds = [...addedTriggerIds, ...createdTriggerIds];
+  // added triggers are triggers that are not in the current triggers and are there in the new triggers
+  const addedTriggers = updatedTriggers.filter((trigger) => !currentTriggerIds.includes(trigger.id));
 
   // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
-  const deletedTriggers = currentTriggers.filter((trigger) => !newTriggerIds.includes(trigger.id));
-  const privateTriggers = deletedTriggers.filter((trigger) => trigger.isPrivate);
-  const publicTriggers = deletedTriggers.filter((trigger) => !trigger.isPrivate);
-
-  await prisma.actionClass.deleteMany({
-    where: {
-      id: {
-        in: privateTriggers.map((trigger) => trigger.id),
-      },
-    },
-  });
+  const deletedTriggers = currentTriggers.filter((trigger) => !updatedTriggerIds.includes(trigger.id));
 
   // Construct the triggers update object
   const triggersUpdate: TriggerUpdate = {};
 
-  if (addedTriggerIds.length > 0) {
-    triggersUpdate.create = addedTriggerIds.map((trigger) => ({
-      actionClassId: trigger,
+  if (addedTriggers.length > 0) {
+    triggersUpdate.create = addedTriggers.map((trigger) => ({
+      actionClassId: trigger.id,
     }));
   }
 
-  if (publicTriggers.length > 0) {
+  if (deletedTriggers.length > 0) {
     // disconnect the public triggers from the survey
     triggersUpdate.deleteMany = {
       actionClassId: {
-        in: publicTriggers.map((trigger) => trigger.id),
+        in: deletedTriggers.map((trigger) => trigger.id),
       },
     };
   }
 
-  [...addedTriggers, ...publicTriggers].forEach((trigger) => {
+  [...addedTriggers, ...deletedTriggers].forEach((trigger) => {
     surveyCache.revalidate({
       actionClassId: trigger.id,
     });
@@ -704,24 +563,12 @@ export async function deleteSurvey(surveyId: string) {
       });
     }
 
-    // delete private triggers
-    const privateTriggers = deletedSurvey.triggers.filter((trigger) => trigger.actionClass.isPrivate);
-    await prisma.actionClass.deleteMany({
-      where: {
-        id: {
-          in: privateTriggers.map((trigger) => trigger.actionClass.id),
-        },
-      },
-    });
-
     // Revalidate public triggers by actionClassId
-    deletedSurvey.triggers
-      .filter((trigger) => !trigger.actionClass.isPrivate)
-      .forEach((trigger) => {
-        surveyCache.revalidate({
-          actionClassId: trigger.actionClass.id,
-        });
+    deletedSurvey.triggers.forEach((trigger) => {
+      surveyCache.revalidate({
+        actionClassId: trigger.actionClass.id,
       });
+    });
 
     return deletedSurvey;
   } catch (error) {

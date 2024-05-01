@@ -333,7 +333,6 @@ model ActionClass {
   description   String?
   type          ActionType
   key           String?
-  isPrivate     Boolean         @default(false)
   /// @zod.custom(imports.ZActionClassNoCodeConfig)
   /// [ActionClassNoCodeConfig]
   noCodeConfig  Json?
@@ -343,6 +342,7 @@ model ActionClass {
   actions       Action[]
 
   @@unique([key, environmentId])
+  @@unique([name, environmentId])
   @@index([environmentId, createdAt])
 }
 

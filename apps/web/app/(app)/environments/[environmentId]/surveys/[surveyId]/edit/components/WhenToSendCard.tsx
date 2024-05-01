@@ -1,12 +1,12 @@
 "use client";
 
+import { AddActionModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddActionModal";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
   CheckIcon,
   Code2Icon,
   MousePointerClickIcon,
   PlusIcon,
-  Settings,
   SparklesIcon,
   Trash2Icon,
 } from "lucide-react";
@@ -19,8 +19,6 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import { AddActionModal } from "@formbricks/ui/Trigger/AddActionModal";
-import { EditActionModal } from "@formbricks/ui/Trigger/EditActionModal";
 
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
@@ -40,9 +38,7 @@ export default function WhenToSendCard({
   const [open, setOpen] = useState(
     localSurvey.type === "app" || localSurvey.type === "website" ? true : false
   );
-  const [selectedAction, setSelectedAction] = useState<TActionClass | null>(null);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
-  const [isEditActionModalOpen, setEditActionModalOpen] = useState(false);
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
 
@@ -185,15 +181,6 @@ export default function WhenToSendCard({
                       </div>
                       <p className="mt-1 text-xs text-gray-500">{trigger.description}</p>
                     </div>
-                    {trigger.type !== "automatic" && !isViewer && (
-                      <Settings
-                        className="h-6 w-6 cursor-pointer rounded-md bg-slate-100 p-1 text-slate-600"
-                        onClick={() => {
-                          setEditActionModalOpen(true);
-                          setSelectedAction(trigger);
-                        }}
-                      />
-                    )}
                   </div>
                   <Trash2Icon
                     className="h-4 w-4 cursor-pointer text-slate-600"
@@ -304,20 +291,6 @@ export default function WhenToSendCard({
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
       />
-      {selectedAction && (
-        <EditActionModal
-          key={selectedAction.id}
-          selectedAction={selectedAction}
-          setSelectedAction={setSelectedAction}
-          actionClasses={actionClasses}
-          setActionClasses={setActionClasses}
-          isViewer={isViewer}
-          setLocalSurvey={setLocalSurvey}
-          open={isEditActionModalOpen}
-          environmentId={environmentId}
-          setOpen={setEditActionModalOpen}
-        />
-      )}
     </>
   );
 }

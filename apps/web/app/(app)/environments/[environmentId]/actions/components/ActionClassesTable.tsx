@@ -35,7 +35,6 @@ export default function ActionClassesTable({
     id: "",
     name: "",
     type: "noCode",
-    isPrivate: false,
     key: "",
     description: "",
     noCodeConfig: null,
@@ -70,19 +69,17 @@ export default function ActionClassesTable({
       <div className="rounded-lg border border-slate-200">
         {TableHeading}
         <div className="grid-cols-7" id="actionClassesWrapper">
-          {actionClasses
-            .filter((actionClass) => !actionClass.isPrivate)
-            .map((actionClass, index) => (
-              <button
-                onClick={(e) => {
-                  handleOpenActionDetailModalClick(e, actionClass);
-                }}
-                className="w-full"
-                title={actionClass.name}
-                key={actionClass.id}>
-                {actionRows[index]}
-              </button>
-            ))}
+          {actionClasses.map((actionClass, index) => (
+            <button
+              onClick={(e) => {
+                handleOpenActionDetailModalClick(e, actionClass);
+              }}
+              className="w-full"
+              title={actionClass.name}
+              key={actionClass.id}>
+              {actionRows[index]}
+            </button>
+          ))}
         </div>
       </div>
       <ActionDetailModal

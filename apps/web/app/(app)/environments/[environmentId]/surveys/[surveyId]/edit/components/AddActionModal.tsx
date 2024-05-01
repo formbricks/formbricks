@@ -1,22 +1,21 @@
 "use client";
 
-import { createId } from "@paralleldrive/cuid2";
+import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon, Terminal } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { MatchType, testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
-import { TActionClass, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TSurvey } from "@formbricks/types/surveys";
-
-import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "../Actions";
-import { Alert, AlertDescription, AlertTitle } from "../Alert";
-import { Button } from "../Button";
-import { Input } from "../Input";
-import { Label } from "../Label";
-import { ModalWithTabs } from "../ModalWithTabs";
-import { TabBar } from "../TabBar";
+import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
+import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
+import { TabBar } from "@formbricks/ui/TabBar";
 
 interface SavedActionsProps {
   actionClasses: TActionClass[];
@@ -31,23 +30,21 @@ const SavedActions = ({ actionClasses, localSurvey, setLocalSurvey, setOpen }: S
   );
   const [filteredActionClasses, setFilteredActionClasses] = useState<TActionClass[]>(diffActions);
 
-  const [code, noCode, automatic] = filteredActionClasses
-    .filter((actionClass) => !actionClass.isPrivate)
-    .reduce(
-      (acc, actionClass) => {
-        if (actionClass.type === "code") {
-          acc[0].push(actionClass);
-        }
-        if (actionClass.type === "noCode") {
-          acc[1].push(actionClass);
-        }
-        if (actionClass.type === "automatic") {
-          acc[2].push(actionClass);
-        }
-        return acc;
-      },
-      [[], [], []] as [TActionClass[], TActionClass[], TActionClass[]]
-    );
+  const [code, noCode, automatic] = filteredActionClasses.reduce(
+    (acc, actionClass) => {
+      if (actionClass.type === "code") {
+        acc[0].push(actionClass);
+      }
+      if (actionClass.type === "noCode") {
+        acc[1].push(actionClass);
+      }
+      if (actionClass.type === "automatic") {
+        acc[2].push(actionClass);
+      }
+      return acc;
+    },
+    [[], [], []] as [TActionClass[], TActionClass[], TActionClass[]]
+  );
 
   const handleActionClick = (action: TActionClass) => {
     setLocalSurvey((prev) => ({
@@ -163,16 +160,15 @@ const CreateNewAction = ({
   });
 
   const [type, setType] = useState("noCode");
-  const [visibility, setVisibility] = useState("public");
 
   const [isPageUrl, setIsPageUrl] = useState(false);
   const [isCssSelector, setIsCssSelector] = useState(false);
   const [isInnerHtml, setIsInnerText] = useState(false);
+  const [isCreatingAction, setIsCreatingAction] = useState(false);
   const [testUrl, setTestUrl] = useState("");
   const [isMatch, setIsMatch] = useState("");
   const actionClassNames = useMemo(
-    () =>
-      actionClasses.filter((actionClass) => !actionClass.isPrivate).map((actionClass) => actionClass.name),
+    () => actionClasses.map((actionClass) => actionClass.name),
     [actionClasses]
   );
 
@@ -213,12 +209,14 @@ const CreateNewAction = ({
     if (match === "no") toast.error("Your survey would not be shown.");
   };
 
-  const submitHandler = (data: Partial<TActionClass>) => {
+  const submitHandler = async (data: Partial<TActionClass>) => {
     const { noCodeConfig } = data;
     try {
       if (isViewer) {
         throw new Error("You are not authorised to perform this action.");
       }
+      setIsCreatingAction(true);
+
       if (!data.name || data.name?.trim() === "") {
         throw new Error("Please give your action a name");
       }
@@ -242,16 +240,11 @@ const CreateNewAction = ({
         throw new Error(`Action with key ${data.key} already exist`);
       }
 
-      const updatedAction: TActionClass = {
-        id: createId(),
+      const updatedAction: TActionClassInput = {
         name: data.name,
         description: data.description,
-        type: type as TActionClass["type"],
-        isPrivate: visibility === "private",
-        _isDraft: true,
         environmentId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        type: type as TActionClass["type"],
       };
 
       if (type === "noCode") {
@@ -261,25 +254,31 @@ const CreateNewAction = ({
         updatedAction.key = data.key;
       }
 
+      const newActionClass: TActionClass = await createActionClassAction(updatedAction);
+      if (setActionClasses) {
+        setActionClasses((prevActionClasses: TActionClass[]) => [...prevActionClasses, newActionClass]);
+      }
+
       setLocalSurvey((prev) => ({
         ...prev,
-        triggers: prev.triggers.concat(updatedAction),
+        triggers: prev.triggers.concat(newActionClass),
       }));
 
       if (setActionClasses) {
-        setActionClasses((prevActionClasses: TActionClass[]) => [...prevActionClasses, updatedAction]);
+        setActionClasses((prevActionClasses: TActionClass[]) => [...prevActionClasses, newActionClass]);
       }
 
       reset();
       resetAllStates();
     } catch (e: any) {
       toast.error(e.message);
+    } finally {
+      setIsCreatingAction(false);
     }
   };
 
   const resetAllStates = () => {
     setType("noCode");
-    setVisibility("public");
     setIsCssSelector(false);
     setIsPageUrl(false);
     setIsInnerText(false);
@@ -304,28 +303,6 @@ const CreateNewAction = ({
                 id="actionDescriptionInput"
                 placeholder="User clicked Download Button "
                 {...register("description")}
-              />
-            </div>
-          </div>
-          <div>
-            <Label>Visibility</Label>
-            <div className="w-4/5">
-              <TabBar
-                tabs={[
-                  {
-                    id: "public",
-                    label: "Save for all surveys",
-                  },
-                  {
-                    id: "private",
-                    label: "Only for this survey",
-                  },
-                ]}
-                activeId={visibility}
-                setActiveId={setVisibility}
-                tabStyle="button"
-                className="bg-white"
-                activeTabClassName="bg-slate-100"
               />
             </div>
           </div>
@@ -416,7 +393,7 @@ const CreateNewAction = ({
             <Button type="button" variant="minimal" onClick={resetAllStates}>
               Cancel
             </Button>
-            <Button variant="darkCTA" type="submit">
+            <Button variant="darkCTA" type="submit" loading={isCreatingAction}>
               Create Action
             </Button>
           </div>
