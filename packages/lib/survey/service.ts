@@ -140,7 +140,7 @@ const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TAc
   }
 };
 
-const handleTriggerUpdates = async (
+const handleTriggerUpdates = (
   updatedTriggers: TSurvey["triggers"],
   currentTriggers: TSurvey["triggers"],
   actionClasses: TActionClass[]
@@ -409,7 +409,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
 
     if (triggers) {
-      data.triggers = await handleTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
+      data.triggers = handleTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
     }
 
     // if the survey body has type other than "app" but has a private segment, we delete that segment, and if it has a public segment, we disconnect from to the survey
@@ -593,7 +593,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
       ...surveyBody,
       // TODO: Create with attributeFilters
       triggers: surveyBody.triggers
-        ? await handleTriggerUpdates(surveyBody.triggers, [], actionClasses)
+        ? handleTriggerUpdates(surveyBody.triggers, [], actionClasses)
         : undefined,
       attributeFilters: undefined,
     };

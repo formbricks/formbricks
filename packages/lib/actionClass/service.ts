@@ -6,11 +6,12 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "@formbricks/database";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/actionClasses";
-import { ZString } from "@formbricks/types/common";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 import { cache } from "../cache";
+import { ITEMS_PER_PAGE } from "../constants";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
@@ -27,11 +28,10 @@ const select = {
   environmentId: true,
 };
 
-// this function is used to get all actions for a given environment, it shouldn't be paginated as it also returns the private actions
-export const getActionClasses = (environmentId: string): Promise<TActionClass[]> =>
+export const getActionClasses = (environmentId: string, page?: number): Promise<TActionClass[]> =>
   cache(
     async () => {
-      validateInputs([environmentId, ZId]);
+      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
       try {
         return await prisma.actionClass.findMany({
@@ -39,6 +39,8 @@ export const getActionClasses = (environmentId: string): Promise<TActionClass[]>
             environmentId: environmentId,
           },
           select,
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
           orderBy: {
             createdAt: "asc",
           },
@@ -47,7 +49,7 @@ export const getActionClasses = (environmentId: string): Promise<TActionClass[]>
         throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
       }
     },
-    [`getActionClasses-${environmentId}`],
+    [`getActionClasses-${environmentId}-${page}`],
     {
       tags: [actionClassCache.tag.byEnvironmentId(environmentId)],
     }
