@@ -1,18 +1,15 @@
-import WidgetStatusIndicator from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyStarter";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getEnvironments } from "@formbricks/lib/environment/service";
+import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveyCount } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
 import { SurveysList } from "@formbricks/ui/SurveysList";
 
 export const metadata: Metadata = {
@@ -49,7 +46,7 @@ export default async function SurveysPage({ params }) {
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
   return (
-    <ContentWrapper className="flex h-full flex-col justify-between">
+    <>
       {surveyCount > 0 ? (
         <SurveysList
           environment={environment}
@@ -67,8 +64,6 @@ export default async function SurveysPage({ params }) {
           user={session.user}
         />
       )}
-
-      <WidgetStatusIndicator environmentId={params.environmentId} type="mini" />
-    </ContentWrapper>
+    </>
   );
 }

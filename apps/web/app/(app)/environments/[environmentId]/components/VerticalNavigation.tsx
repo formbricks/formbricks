@@ -1,45 +1,45 @@
 "use client";
 
-/* import { formbricksLogout } from "@/app/lib/formbricks";
-import clsx from "clsx"; */
-
-/* import Link from "next/link"; */
+/* import clsx from "clsx"; */
 import NavigationLink from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
+import { formbricksLogout } from "@/app/lib/formbricks";
 import {
   BlocksIcon,
   BrushIcon,
+  ChevronRightIcon,
   CodeIcon,
   CreditCardIcon,
   FileCheckIcon,
   HeartIcon,
   LanguagesIcon,
   LinkIcon,
+  LogOutIcon,
+  MailIcon,
   MessageCircle,
+  MessageSquareTextIcon,
   MousePointerClick,
+  PlusIcon,
   Settings,
   SlidersIcon,
   UserCircleIcon,
   UsersIcon,
 } from "lucide-react";
 import type { Session } from "next-auth";
-
-/* import { signOut } from "next-auth/react"; */
+import { signOut } from "next-auth/react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-/* import formbricks from "@formbricks/js/app"; */
+import formbricks from "@formbricks/js/app";
 
 /* import { cn } from "@formbricks/lib/cn"; */
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-
-/* import { capitalizeFirstLetter, truncate } from "@formbricks/lib/strings"; */
+import { capitalizeFirstLetter, truncate } from "@formbricks/lib/strings";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TTeam } from "@formbricks/types/teams";
-
-/* import { ProfileAvatar } from "@formbricks/ui/Avatars";
-import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
+import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,9 +55,12 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
+
+/* import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover"; */
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-import { CustomersIcon, DashboardIcon, FilterIcon, FormIcon, SettingsIcon } from "@formbricks/ui/icons";
+
+/*import { CustomersIcon, DashboardIcon, FilterIcon, FormIcon, SettingsIcon } from "@formbricks/ui/icons";
 
 import AddProductModal from "./AddProductModal";
 import UrlShortenerModal from "./UrlShortenerModal"; */
@@ -257,7 +260,7 @@ export default function Navigation({
   return (
     <>
       {product && (
-        <aside className="border-50 h-5/6 rounded-r-3xl border bg-white py-5">
+        <aside className="border-50 flex h-5/6 w-56 flex-col justify-between rounded-r-3xl border bg-white pt-5">
           <ul>
             {navigationItems.map(
               (item) =>
@@ -269,6 +272,203 @@ export default function Navigation({
                 )
             )}
           </ul>
+          {/* User Dropdown */}
+          <div className="hidden rounded-br-3xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 lg:flex lg:items-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild id="userDropdownTrigger">
+                <div tabIndex={0} className="flex cursor-pointer flex-row items-center space-x-5 pl-4">
+                  <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
+
+                  <div>
+                    <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">
+                      {truncate(product!.name, 30)}
+                    </p>
+                    <p className="text-sm text-slate-500">{capitalizeFirstLetter(team?.name)}</p>
+                  </div>
+                  <ChevronRightIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" id="userDropdownContentWrapper">
+                <DropdownMenuLabel className="cursor-default break-all">
+                  <span className="ph-no-capture font-normal">Signed in as </span>
+                  {session?.user?.name && session?.user?.name.length > 30 ? (
+                    <TooltipProvider delayDuration={50}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>{truncate(session?.user?.name, 30)}</span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[45rem] break-all" side="left" sideOffset={5}>
+                          {session?.user?.name}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    session?.user?.name
+                  )}
+                </DropdownMenuLabel>
+
+                <DropdownMenuSeparator />
+
+                {/* Environment Switch */}
+
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <div>
+                      <p>{capitalizeFirstLetter(environment?.type)}</p>
+                      <p className=" block text-xs text-slate-500">Environment</p>
+                    </div>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuRadioGroup
+                        value={environment?.type}
+                        onValueChange={(v) => handleEnvironmentChange(v as "production" | "development")}>
+                        <DropdownMenuRadioItem value="production" className="cursor-pointer">
+                          Production
+                        </DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="development" className="cursor-pointer">
+                          Development
+                        </DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+
+                {/* Product Switch */}
+
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <div>
+                      <div className="flex items-center space-x-1">
+                        <p>{truncate(product!.name, 20)}</p>
+                        {!widgetSetupCompleted && (
+                          <TooltipProvider delayDuration={50}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="mt-0.5 h-2 w-2 rounded-full bg-amber-500 hover:bg-amber-600"></div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Your app is not connected to Formbricks.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                      <p className=" block text-xs text-slate-500">Product</p>
+                    </div>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent className="max-w-[45rem]">
+                      <DropdownMenuRadioGroup
+                        value={product!.id}
+                        onValueChange={(v) => handleEnvironmentChangeByProduct(v)}>
+                        {sortedProducts.map((product) => (
+                          <DropdownMenuRadioItem
+                            value={product.id}
+                            className="cursor-pointer break-all"
+                            key={product.id}>
+                            {product?.name}
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+
+                      <DropdownMenuSeparator />
+                      {!isViewer && (
+                        <DropdownMenuItem onClick={() => setShowAddProductModal(true)}>
+                          <PlusIcon className="mr-2 h-4 w-4" />
+                          <span>Add product</span>
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+
+                {/* Team Switch */}
+
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <div>
+                      <p>{currentTeamName}</p>
+                      <p className="block text-xs text-slate-500">Team</p>
+                    </div>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuRadioGroup
+                        value={currentTeamId}
+                        onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
+                        {sortedTeams.map((team) => (
+                          <DropdownMenuRadioItem value={team.id} className="cursor-pointer" key={team.id}>
+                            {team.name}
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setShowCreateTeamModal(true)}>
+                        <PlusIcon className="mr-2 h-4 w-4" />
+                        <span>Create team</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+
+                {dropdownNavigation.map((item) => (
+                  <DropdownMenuGroup key={item.title}>
+                    <DropdownMenuSeparator />
+                    {item.links.map(
+                      (link) =>
+                        !link.hidden && (
+                          <Link href={link.href} target={link.target} key={link.label}>
+                            <DropdownMenuItem key={link.label} onClick={link?.onClick}>
+                              <div className="flex items-center">
+                                <link.icon className="mr-2 h-4 w-4" />
+                                <span>{link.label}</span>
+                              </div>
+                            </DropdownMenuItem>
+                          </Link>
+                        )
+                    )}
+                  </DropdownMenuGroup>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  {isFormbricksCloud && (
+                    <>
+                      <DropdownMenuItem>
+                        <a href="mailto:johannes@formbricks.com">
+                          <div className="flex items-center">
+                            <MailIcon className="mr-2 h-4 w-4" />
+                            <span>Email us!</span>
+                          </div>
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <button
+                          onClick={() => {
+                            formbricks.track("Top Menu: Product Feedback");
+                          }}>
+                          <div className="flex items-center">
+                            <MessageSquareTextIcon className="mr-2 h-4 w-4" />
+                            <span>Product Feedback</span>
+                          </div>
+                        </button>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      await signOut({ callbackUrl: "/auth/login" });
+                      await formbricksLogout();
+                    }}>
+                    <div className="flex h-full w-full items-center">
+                      <LogOutIcon className="mr-2 h-4 w-4" />
+                      Logout
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </aside>
       )}
     </>

@@ -13,7 +13,7 @@ export default function NavigationLink({ href, children, isActive }: NavigationL
 
   return (
     <li
-      className={`my-1 ml-5 rounded-l-md py-2 pl-5 text-slate-700 hover:text-slate-900 ${isActive ? activeClass : inactiveClass}`}>
+      className={`my-1 ml-5 rounded-l-md py-2 pl-5 text-sm text-slate-700 hover:text-slate-900 ${isActive ? activeClass : inactiveClass}`}>
       <Link href={href} className="flex items-center">
         {children}
       </Link>

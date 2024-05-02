@@ -3,6 +3,7 @@ import { AlertTriangleIcon, CheckIcon } from "lucide-react";
 import Link from "next/link";
 
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { Label } from "@formbricks/ui/Label";
 
 interface WidgetStatusIndicatorProps {
   environmentId: string;
@@ -22,11 +23,13 @@ export default async function WidgetStatusIndicator({ environmentId, type }: Wid
       title: "Connect Formbricks to your app or website.",
       subtitle:
         "Your app or website is not yet connected with Formbricks. To run in-app surveys follow the setup guide.",
+      shortText: "Connect Formbricks to your app or website",
     },
     running: {
       icon: CheckIcon,
       title: "Receiving data.",
       subtitle: "Your app or website is connected with Formbricks.",
+      shortText: "Connected",
     },
   };
 
@@ -65,8 +68,10 @@ export default async function WidgetStatusIndicator({ environmentId, type }: Wid
     return (
       <Link href={`/environments/${environment.id}/settings/setup`}>
         <div className="group my-4 flex justify-center">
-          <div className=" flex rounded-full bg-slate-100 px-2 py-1">
-            <p className="mr-2 text-sm text-slate-500 group-hover:underline">{currentStatus.subtitle}</p>
+          <div className="flex items-center space-x-2 rounded-md bg-slate-100 p-2">
+            <Label className="group-hover:cursor-pointer group-hover:underline">
+              {currentStatus.shortText}
+            </Label>
             <div
               className={clsx(
                 "h-5 w-5 rounded-full",
