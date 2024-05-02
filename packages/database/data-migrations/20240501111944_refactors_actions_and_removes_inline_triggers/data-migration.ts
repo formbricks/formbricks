@@ -6,26 +6,27 @@ const prisma = new PrismaClient();
 async function main() {
   await prisma.$transaction(
     async (tx) => {
+      const startTime = Date.now();
       // 1. copy value of name to key for all action classes where type is code
-      const actionClasses = await tx.actionClass.findMany({
+      const codeActionClasses = await tx.actionClass.findMany({
         where: {
           type: "code",
         },
       });
 
-      for (const actionClass of actionClasses) {
+      for (const codeActionClass of codeActionClasses) {
         await tx.actionClass.update({
           where: {
-            id: actionClass.id,
+            id: codeActionClass.id,
           },
           data: {
-            key: actionClass.name,
+            key: codeActionClass.name,
           },
         });
       }
 
       // 2. find all surveys with inlineTriggers and create action classes for them
-      const surveys = await tx.survey.findMany({
+      const surveysWithInlineTriggers = await tx.survey.findMany({
         where: {
           inlineTriggers: {
             not: Prisma.JsonNull,
@@ -37,6 +38,7 @@ async function main() {
       const getActionClassIdByCode = async (code: string, environmentId: string): Promise<string> => {
         const existingActionClass = await tx.actionClass.findFirst({
           where: {
+            type: "code",
             key: code,
             environmentId: environmentId,
           },
@@ -81,7 +83,7 @@ async function main() {
         return codeActionId;
       };
 
-      for (const survey of surveys) {
+      for (const survey of surveysWithInlineTriggers) {
         const { codeConfig, noCodeConfig } = survey.inlineTriggers ?? {};
 
         if (
@@ -174,6 +176,10 @@ async function main() {
           });
         }
       }
+
+      const endTime = Date.now();
+
+      console.log(`Data migration took ${(endTime - startTime) / 1000}s`);
     },
     {
       timeout: 50000,
