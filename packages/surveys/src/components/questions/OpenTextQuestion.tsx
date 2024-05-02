@@ -113,6 +113,7 @@ export const OpenTextQuestion = ({
                 rows={3}
                 name={question.id}
                 tabIndex={1}
+                aria-label="textarea"
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
                 required={question.required}
