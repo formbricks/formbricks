@@ -1,7 +1,8 @@
-import { AttributeClassesTable } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/AttributeClassesTable";
 import { Metadata } from "next";
 
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
+
+import { AttributeClassesTable } from "./components/AttributeClassesTable";
 
 export const metadata: Metadata = {
   title: "Attributes",

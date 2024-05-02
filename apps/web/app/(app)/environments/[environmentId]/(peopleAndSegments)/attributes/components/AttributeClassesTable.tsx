@@ -1,15 +1,16 @@
 "use client";
 
-import { AttributeDetailModal } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/AttributeDetailModal";
-import { AttributeClassDataRow } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/AttributeRowData";
-import { AttributeTableHeading } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/AttributeTableHeading";
-import { HowToAddAttributesButton } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/HowToAddAttributesButton";
-import { UploadAttributesModal } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/UploadAttributesModal";
 import { useState } from "react";
 import { useMemo } from "react";
 
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { Switch } from "@formbricks/ui/Switch";
+
+import { AttributeDetailModal } from "./AttributeDetailModal";
+import { AttributeClassDataRow } from "./AttributeRowData";
+import { AttributeTableHeading } from "./AttributeTableHeading";
+import { HowToAddAttributesButton } from "./HowToAddAttributesButton";
+import { UploadAttributesModal } from "./UploadAttributesModal";
 
 interface AttributeClassesTableProps {
   attributeClasses: TAttributeClass[];

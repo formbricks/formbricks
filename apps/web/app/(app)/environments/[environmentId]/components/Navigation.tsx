@@ -131,13 +131,13 @@ export default function Navigation({
         hidden: false,
       },
       {
-        name: "People & Segments",
+        name: "People",
         href: `/environments/${environment.id}/people`,
         icon: CustomersIcon,
         current: pathname?.includes("/people") || pathname?.includes("/segments"),
       },
       {
-        name: "Actions & Attributes",
+        name: "Actions",
         href: `/environments/${environment.id}/actions`,
         icon: FilterIcon,
         current: pathname?.includes("/actions") || pathname?.includes("/attributes"),

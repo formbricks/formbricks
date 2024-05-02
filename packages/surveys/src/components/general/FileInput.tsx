@@ -268,7 +268,7 @@ export default function FileInput({
         <label htmlFor="selectedFile" onDragOver={(e) => handleDragOver(e)} onDrop={(e) => handleDrop(e)}>
           {showUploader && (
             <div
-              className="flex flex-col items-center justify-center py-6 hover:cursor-pointer focus:border-2 focus:outline-none"
+              className="focus:outline-brand flex flex-col items-center justify-center py-6 hover:cursor-pointer"
               tabIndex={1}
               onKeyDown={(e) => {
                 // Accessibility: if spacebar was pressed pass this down to the input
