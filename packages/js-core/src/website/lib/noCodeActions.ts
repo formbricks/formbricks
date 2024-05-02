@@ -12,7 +12,7 @@ import {
   okVoid,
 } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
-import { trackAction } from "./actions";
+import { trackNoCodeAction } from "./actions";
 import { WebsiteConfig } from "./config";
 
 const websiteConfig = WebsiteConfig.getInstance();
@@ -45,7 +45,7 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
 
       if (match.value === false) continue;
 
-      const trackResult = await trackAction(event.name);
+      const trackResult = await trackNoCodeAction(event.name);
 
       if (trackResult.ok !== true) return err(trackResult.error);
     }
@@ -146,7 +146,7 @@ export const checkClickMatch = (event: MouseEvent) => {
   noCodeActionClasses.forEach((action: TActionClass) => {
     const isMatch = evaluateNoCodeConfig(targetElement, action);
     if (isMatch) {
-      trackAction(action.name).then((res) => {
+      trackNoCodeAction(action.name).then((res) => {
         match(
           res,
           (_value) => {},

@@ -86,7 +86,7 @@ export async function GET(
       await updateEnvironment(environment.id, { widgetSetupCompleted: true });
     }
 
-    const [surveys, noCodeActionClasses, product] = await Promise.all([
+    const [surveys, actionClasses, product] = await Promise.all([
       getSurveys(environmentId),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
@@ -129,11 +129,13 @@ export async function GET(
         highlightBorderColor: product.styling.highlightBorderColor.light,
       }),
     };
+    const noCodeActionClasses = actionClasses.filter((actionClass) => actionClass.type === "noCode");
 
     // Create the 'state' object with surveys, noCodeActionClasses, product, and person.
     const state: TJsWebsiteStateSync = {
       surveys: isInAppSurveyLimitReached ? [] : transformedSurveys,
-      noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
+      noCodeActionClasses,
+      ...(version && isVersionGreaterThanOrEqualTo(version, "2.0.0") && { actionClasses }),
       product: updatedProduct,
     };
 

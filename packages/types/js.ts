@@ -33,6 +33,7 @@ export const ZJsAppStateSync = z.object({
   userId: z.string().optional(),
   surveys: z.union([z.array(ZSurvey), z.array(ZLegacySurvey)]),
   noCodeActionClasses: z.array(ZActionClass),
+  actionClasses: z.array(ZActionClass).optional(),
   product: ZProduct,
   language: z.string().optional(),
 });
@@ -47,6 +48,7 @@ export const ZJsAppState = z.object({
   attributes: ZAttributes,
   surveys: z.array(ZSurvey),
   noCodeActionClasses: z.array(ZActionClass),
+  actionClasses: z.array(ZActionClass).optional(),
   product: ZProduct,
 });
 
@@ -55,6 +57,7 @@ export type TJsAppState = z.infer<typeof ZJsAppState>;
 export const ZJsWebsiteState = z.object({
   surveys: z.array(ZSurvey),
   noCodeActionClasses: z.array(ZActionClass),
+  actionClasses: z.array(ZActionClass).optional(),
   product: ZProduct,
   displays: z.array(ZJSWebsiteStateDisplay),
   attributes: ZAttributes.optional(),

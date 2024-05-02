@@ -68,6 +68,7 @@ export const sync = async (params: TJsWebsiteSyncParams, noCache = false): Promi
     let state: TJsWebsiteState = {
       surveys: syncResult.value.surveys as TSurvey[],
       noCodeActionClasses: syncResult.value.noCodeActionClasses,
+      ...(syncResult.value.actionClasses && { actionClasses: syncResult.value.actionClasses }),
       product: syncResult.value.product,
       displays: oldState?.displays || [],
     };

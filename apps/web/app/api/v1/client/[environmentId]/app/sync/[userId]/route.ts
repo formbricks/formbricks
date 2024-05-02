@@ -135,7 +135,7 @@ export async function GET(
       await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
     }
 
-    const [surveys, noCodeActionClasses, product] = await Promise.all([
+    const [surveys, actionClasses, product] = await Promise.all([
       getSyncSurveys(environmentId, person.id, device.type === "mobile" ? "phone" : "desktop", {
         version: version ?? undefined,
       }),
@@ -175,12 +175,14 @@ export async function GET(
     };
 
     const language = await getAttribute("language", person.id);
+    const noCodeActionClasses = actionClasses.filter((actionClass) => actionClass.type === "noCode");
 
     // return state
     const state: TJsAppStateSync = {
       ...(version && !isVersionGreaterThanOrEqualTo(version, "2.0.0") && { person }),
       surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
-      noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
+      noCodeActionClasses,
+      ...(version && isVersionGreaterThanOrEqualTo(version, "2.0.0") && { actionClasses }),
       language,
       product: updatedProduct,
     };
