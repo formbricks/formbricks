@@ -30,8 +30,8 @@ test.describe("JS Package Test", async () => {
 
     await expect(page.getByText("Survey Trigger")).toBeVisible();
 
-    await page.getByRole("combobox").click();
-    await page.getByLabel("New Session").click();
+    await page.getByRole("button", { name: "Add action" }).click();
+    await page.getByText("New SessionGets fired when a").click();
     await page.getByRole("button", { name: "Publish" }).click();
 
     environmentId =

@@ -43,10 +43,10 @@ export type TActionClassType = z.infer<typeof ZActionClassType>;
 export const ZActionClass = z.object({
   id: z.string().cuid2(),
   name: z.string(),
-  description: z.string().nullish(),
+  description: z.string().nullable(),
   type: ZActionClassType,
-  key: z.string().nullish(),
-  noCodeConfig: ZActionClassNoCodeConfig.nullish(),
+  key: z.string().nullable(),
+  noCodeConfig: ZActionClassNoCodeConfig.nullable(),
   environmentId: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),

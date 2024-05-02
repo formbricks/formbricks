@@ -287,11 +287,14 @@ test.describe("Create and Edit Code Action", async () => {
     // User selects the Code tab
     await page.getByRole("button", { name: "Code", exact: true }).click();
 
-    await expect(page.getByLabel("Identifier")).toBeVisible();
-    await page.getByLabel("Identifier").fill(actions.create.code.name);
+    await expect(page.getByLabel("Name")).toBeVisible();
+    await page.getByLabel("Name").fill(actions.create.code.name);
 
     await expect(page.getByLabel("Description")).toBeVisible();
     await page.getByLabel("Description").fill(actions.create.code.description);
+
+    await expect(page.getByLabel("Code")).toBeVisible();
+    await page.getByLabel("Code").fill(actions.create.code.key);
 
     await page.getByRole("button", { name: "Create Action", exact: true }).click();
     await page.waitForLoadState("networkidle");

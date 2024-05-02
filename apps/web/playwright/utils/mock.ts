@@ -257,6 +257,7 @@ export const actions = {
     code: {
       name: "Create Action (Code)",
       description: "This is my Create Action (Code)",
+      key: "Create Action (Code)",
     },
   },
   edit: {
