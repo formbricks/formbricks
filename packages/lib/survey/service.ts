@@ -717,7 +717,6 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
         triggers: {
           create: existingSurvey.triggers.map((trigger) => ({
             actionClassId: trigger.id,
-            // TODO: @gupta-piyush19
           })),
         },
         environment: {
@@ -803,7 +802,6 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
     existingSurvey.triggers.forEach((trigger) => {
       surveyCache.revalidate({
         actionClassId: trigger.id,
-        // TODO: @gupta-piyush19
       });
     });
 
