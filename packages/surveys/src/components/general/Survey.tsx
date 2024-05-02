@@ -326,15 +326,16 @@ export const Survey = ({
       <AutoCloseWrapper survey={survey} onClose={onClose}>
         <div
           className={cn(
-            "no-scrollbar md:rounded-custom rounded-t-custom bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-500 ease-in-out",
-            survey.type === "link" ? "fb-survey-shadow" : ""
+            "no-scrollbar md:rounded-custom rounded-t-custom bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",
+            survey.type === "link" ? "fb-survey-shadow" : "",
+            offset === 0 ? "opacity-100" : "opacity-0"
           )}>
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {content()}
           </div>
           <div className="mx-6 mb-10 mt-2 space-y-3 md:mb-6 md:mt-6">
             {isBrandingEnabled && <FormbricksBranding />}
-            {showProgressBar && offset === 0 && <ProgressBar survey={survey} questionId={questionId} />}
+            {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
           </div>
         </div>
       </AutoCloseWrapper>
