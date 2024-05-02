@@ -49,7 +49,7 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
         const startOfYear = new Date(now.getFullYear(), 0, 1); // January 1st of the current year
         const endOfYear = new Date(now.getFullYear() + 1, 0, 0); // December 31st of the current year
 
-        const responseCountForTeam = await prisma.response.count({
+        const responseCount = await prisma.response.count({
           where: {
             createdAt: {
               gte: startOfYear,
@@ -58,11 +58,10 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
           },
         });
 
-        // const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
-        const res = await fetch("http://localhost:8080/api/licenses/check", {
+        const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
           body: JSON.stringify({
             licenseKey: ENTERPRISE_LICENSE_KEY,
-            usage: { responseCount: responseCountForTeam },
+            usage: { responseCount: responseCount },
           }),
           headers: { "Content-Type": "application/json" },
           method: "POST",
