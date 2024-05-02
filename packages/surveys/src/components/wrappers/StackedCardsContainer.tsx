@@ -67,8 +67,8 @@ export const StackedCardsContainer = ({
           return offset < 0 ? `translateX(33%)` : `translateX(0) rotate(-${(hovered ? 3.5 : 3) * offset}deg)`;
         case "straight":
           return offset < 0 ? `translateY(25%)` : `translateY(-${(hovered ? 12 : 10) * offset}px)`;
-        /* default:
-          return offset < 0 ? `translateX(100%)` : `translateX(0)`; */
+        default:
+          return offset < 0 ? `translateX(0)` : `translateX(0)`;
       }
     };
   }, [cardArrangement, hovered]);
@@ -117,11 +117,12 @@ export const StackedCardsContainer = ({
                 transform: ` ${calculateCardTransform(offset)}`,
                 opacity: isHidden ? 0 : (100 - 30 * offset) / 100,
                 height: offset === 0 ? "auto" : cardHeight,
+                transitionDuration: cardArrangement === "simple" ? "0ms" : "600ms",
                 pointerEvents: offset === 0 ? "auto" : "none",
                 ...borderStyles,
                 ...straightCardArrangementClasses(offset),
               }}
-              className="pointer rounded-custom bg-survey-bg group-hover:scale-1 absolute inset-x-0 scale-[0.95] backdrop-blur-md transition-all duration-[600ms] ease-in-out">
+              className="pointer rounded-custom bg-survey-bg group-hover:scale-1 absolute inset-x-0 scale-[0.95] backdrop-blur-md transition-all ease-in-out">
               {getCardContent(index, offset)}
             </div>
           );

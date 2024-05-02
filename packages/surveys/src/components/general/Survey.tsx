@@ -328,7 +328,7 @@ export const Survey = ({
           className={cn(
             "no-scrollbar md:rounded-custom rounded-t-custom bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",
             survey.type === "link" ? "fb-survey-shadow" : "",
-            offset === 0 ? "opacity-100" : "opacity-0"
+            offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {content()}
