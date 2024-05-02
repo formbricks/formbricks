@@ -8,22 +8,27 @@ import { Toaster, toast } from "react-hot-toast";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { TProductStyling } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { StackedCardsContainer } from "@formbricks/ui/StackedCardsContainer";
 
-export default function VerifyEmail({
-  survey,
-  isErrorComponent,
-  singleUseId,
-  languageCode,
-}: {
+interface VerifyEmailProps {
   survey: TSurvey;
   isErrorComponent?: boolean;
   singleUseId?: string;
   languageCode: string;
-}) {
+  styling: TProductStyling;
+}
+
+export const VerifyEmail = ({
+  survey,
+  isErrorComponent,
+  singleUseId,
+  languageCode,
+  styling,
+}: VerifyEmailProps) => {
   survey = useMemo(() => {
     return checkForRecallInHeadline(survey, "default");
   }, [survey]);
@@ -87,7 +92,10 @@ export default function VerifyEmail({
   return (
     <div className="flex h-full w-full flex-col items-center justify-center text-center">
       <Toaster />
-      <StackedCardsContainer>
+      <StackedCardsContainer
+        cardArrangement={
+          survey.styling?.cardArrangement?.linkSurveys ?? styling.cardArrangement?.linkSurveys ?? "straight"
+        }>
         {!emailSent && !showPreviewQuestions && (
           <div className="flex flex-col">
             <div className="mx-auto rounded-full border bg-slate-200 p-6">
@@ -145,4 +153,4 @@ export default function VerifyEmail({
       </StackedCardsContainer>
     </div>
   );
-}
+};

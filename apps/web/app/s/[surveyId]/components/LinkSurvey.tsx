@@ -1,7 +1,7 @@
 "use client";
 
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
-import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
+import { VerifyEmail } from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -154,10 +154,24 @@ export default function LinkSurvey({
 
   if (survey.verifyEmail && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
-      return <VerifyEmail survey={survey} isErrorComponent={true} languageCode={languageCode} />;
+      return (
+        <VerifyEmail
+          survey={survey}
+          isErrorComponent={true}
+          languageCode={languageCode}
+          styling={product.styling}
+        />
+      );
     }
     //emailVerificationStatus === "not-verified"
-    return <VerifyEmail singleUseId={suId ?? ""} survey={survey} languageCode={languageCode} />;
+    return (
+      <VerifyEmail
+        singleUseId={suId ?? ""}
+        survey={survey}
+        languageCode={languageCode}
+        styling={product.styling}
+      />
+    );
   }
 
   const determineStyling = () => {
