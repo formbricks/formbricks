@@ -1,6 +1,7 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import SurveyState from "@formbricks/lib/surveyState";
+import { getStyling } from "@formbricks/lib/utils/styling";
 import { TJSWebsiteStateDisplay } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -91,26 +92,6 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
   const isBrandingEnabled = product.inAppSurveyBranding;
   const formbricksSurveys = await loadFormbricksSurveysExternally();
 
-  const getStyling = () => {
-    // allow style overwrite is disabled from the product
-    if (!product.styling.allowStyleOverwrite) {
-      return product.styling;
-    }
-
-    // allow style overwrite is enabled from the product
-    if (product.styling.allowStyleOverwrite) {
-      // survey style overwrite is disabled
-      if (!survey.styling?.overwriteThemeStyling) {
-        return product.styling;
-      }
-
-      // survey style overwrite is enabled
-      return survey.styling;
-    }
-
-    return product.styling;
-  };
-
   setTimeout(() => {
     formbricksSurveys.renderSurveyModal({
       survey: survey,
@@ -119,7 +100,7 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
       darkOverlay,
       languageCode,
       placement,
-      styling: getStyling(),
+      styling: getStyling(product, survey),
       getSetIsError: (f: (value: boolean) => void) => {
         setIsError = f;
       },
