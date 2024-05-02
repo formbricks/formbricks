@@ -111,7 +111,7 @@ export const StackedCardsContainer = ({
 
   return (
     <div
-      className="group relative flex items-end justify-center md:items-center"
+      className="relative flex items-end justify-center md:items-center"
       onMouseEnter={() => {
         setHovered(true);
       }}
@@ -137,7 +137,7 @@ export const StackedCardsContainer = ({
                 ...borderStyles,
                 ...straightCardArrangementClasses(offset),
               }}
-              className="pointer rounded-custom bg-survey-bg absolute inset-x-0 scale-95 backdrop-blur-md transition-all ease-in-out group-hover:scale-100">
+              className="pointer rounded-custom bg-survey-bg absolute inset-x-0 backdrop-blur-md transition-all ease-in-out">
               {getCardContent(index, offset)}
             </div>
           );
