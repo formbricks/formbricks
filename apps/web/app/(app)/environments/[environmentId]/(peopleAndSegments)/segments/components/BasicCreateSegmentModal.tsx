@@ -1,7 +1,6 @@
 "use client";
 
-import { UsersIcon } from "lucide-react";
-import { FilterIcon } from "lucide-react";
+import { FilterIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -118,7 +117,7 @@ const BasicCreateSegmentModal = ({
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
+      <div className="my-4 flex justify-end">
         <Button variant="darkCTA" onClick={() => setOpen(true)}>
           Create Segment
         </Button>

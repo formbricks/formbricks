@@ -1,21 +1,13 @@
-import { HelpCircleIcon, TagIcon } from "lucide-react";
+import { TagIcon } from "lucide-react";
 
-import { Button } from "@formbricks/ui/Button";
+import { HowToAddAttributesButton } from "./components/HowToAddAttributesButton";
 
 export default function Loading() {
   return (
     <>
-      <div className="mb-6 text-right">
-        <div className="mb-6 flex items-center justify-end text-right">
-          <Button
-            variant="secondary"
-            className="pointer-events-none animate-pulse cursor-not-allowed select-none">
-            <HelpCircleIcon className="mr-2 h-4 w-4" />
-            Loading Attributes
-          </Button>
-        </div>
+      <div className="my-4 text-right">
+        <HowToAddAttributesButton />
       </div>
-
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-5 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-3 pl-6 ">Name</div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteProductAction } from "@/app/(app)/environments/[environmentId]/settings/product/actions";
+import { deleteProductAction } from "@/app/(app)/environments/[environmentId]/product/general/actions";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";

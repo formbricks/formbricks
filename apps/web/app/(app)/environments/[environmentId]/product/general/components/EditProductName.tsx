@@ -68,7 +68,7 @@ const EditProductName: React.FC<EditProductNameProps> = ({
   };
 
   return !isProductNameEditDisabled ? (
-    <form className="w-full max-w-sm items-center" onSubmit={handleSubmit(updateProduct)}>
+    <form className="w-full max-w-sm items-center space-y-2" onSubmit={handleSubmit(updateProduct)}>
       <Label htmlFor="fullname">What&apos;s your product called?</Label>
       <Input
         type="text"
@@ -76,11 +76,10 @@ const EditProductName: React.FC<EditProductNameProps> = ({
         defaultValue={product.name}
         {...register("name", { required: true })}
       />
-
       <Button
         type="submit"
         variant="darkCTA"
-        className="mt-4"
+        size="sm"
         loading={isSubmitting}
         disabled={!isNotEmptySpaces(productNameValue) || isSubmitting}>
         Update

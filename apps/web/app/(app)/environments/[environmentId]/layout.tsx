@@ -42,7 +42,7 @@ export default async function EnvLayout({ children, params }) {
         <FormbricksClient session={session} />
         <ToasterClient />
         <EnvironmentLayout environmentId={params.environmentId} session={session}>
-          <main>{children}</main>
+          {children}
         </EnvironmentLayout>
       </ResponseFilterProvider>
     </>

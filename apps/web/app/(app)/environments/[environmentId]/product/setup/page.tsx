@@ -3,8 +3,7 @@ import WidgetStatusIndicator from "@/app/(app)/environments/[environmentId]/comp
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import EnvironmentNotice from "@formbricks/ui/EnvironmentNotice";
 
-import SettingsCard from "../components/SettingsCard";
-import SettingsTitle from "../components/SettingsTitle";
+import SettingsCard from "../../settings/components/SettingsCard";
 import EnvironmentIdField from "./components/EnvironmentIdField";
 import SetupInstructions from "./components/SetupInstructions";
 
@@ -12,7 +11,6 @@ export default async function ProfileSettingsPage({ params }) {
   return (
     <>
       <div className="space-y-4">
-        <SettingsTitle title="Setup Checklist" />
         <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/settings/setup" />
         <SettingsCard
           title="Widget Status"

@@ -9,9 +9,9 @@ export const metadata: Metadata = {
 
 export default async function PeopleLayout({ params, children }) {
   return (
-    <>
-      <PeopleSegmentsTabs activeId="people" environmentId={params.environmentId} />
-      <ContentWrapper>{children}</ContentWrapper>
-    </>
+    <ContentWrapper>
+      <PeopleSegmentsTabs activeId="respondents" environmentId={params.environmentId} />
+      {children}
+    </ContentWrapper>
   );
 }

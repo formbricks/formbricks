@@ -3,10 +3,8 @@ import HowToAddPeopleButton from "@/app/(app)/environments/[environmentId]/compo
 export default function Loading() {
   return (
     <>
-      <div className="mb-6 text-right">
-        <div className="mb-6 flex items-center justify-end text-right">
-          <HowToAddPeopleButton />
-        </div>
+      <div className="my-4 text-right">
+        <HowToAddPeopleButton />
       </div>
 
       <div className="rounded-lg border border-slate-200">

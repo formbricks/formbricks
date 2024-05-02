@@ -205,9 +205,7 @@ export default async function IntegrationsPage({ params }) {
 
   return (
     <div>
-      <h1 className="my-2 text-3xl font-bold text-slate-800">Integrations</h1>
-      <p className="mb-6 text-slate-500">Connect Formbricks with your favorite tools.</p>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-3 place-content-stretch gap-4 lg:grid-cols-3">
         {integrationCards.map((card) => (
           <Card
             key={card.label}

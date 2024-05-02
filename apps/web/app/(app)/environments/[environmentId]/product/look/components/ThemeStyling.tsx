@@ -1,6 +1,6 @@
 "use client";
 
-import { ThemeStylingPreviewSurvey } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/ThemeStylingPreviewSurvey";
+import { ThemeStylingPreviewSurvey } from "@/app/(app)/environments/[environmentId]/product/look/components/ThemeStylingPreviewSurvey";
 import BackgroundStylingCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/BackgroundStylingCard";
 import CardStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CardStylingSettings";
 import FormStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
@@ -217,11 +217,12 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
           </div>
         </div>
 
-        <div className="mt-8 flex items-center gap-2">
-          <Button variant="darkCTA" onClick={onSave}>
+        <div className="mt-4 flex items-center gap-2">
+          <Button variant="darkCTA" size="sm" onClick={onSave}>
             Save
           </Button>
           <Button
+            size="sm"
             variant="minimal"
             className="flex items-center gap-2"
             onClick={() => setConfirmResetStylingModalOpen(true)}>

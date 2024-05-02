@@ -1,4 +1,4 @@
-import { EditLogo } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/EditLogo";
+import { EditLogo } from "@/app/(app)/environments/[environmentId]/product/look/components/EditLogo";
 import { getServerSession } from "next-auth";
 
 import {
@@ -13,8 +13,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
-import SettingsCard from "../components/SettingsCard";
-import SettingsTitle from "../components/SettingsTitle";
+import SettingsCard from "../../settings/components/SettingsCard";
 import { EditFormbricksBranding } from "./components/EditBranding";
 import { EditPlacement } from "./components/EditPlacement";
 import { ThemeStyling } from "./components/ThemeStyling";
@@ -48,7 +47,6 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
 
   return (
     <div>
-      <SettingsTitle title="Look & Feel" />
       <SettingsCard
         title="Theme"
         className="max-w-7xl"

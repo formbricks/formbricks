@@ -7,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function IntegrationsLayout({ children }) {
-  return (
-    <>
-      <ContentWrapper>{children}</ContentWrapper>
-    </>
-  );
+  return <ContentWrapper pageTitle="Integrations">{children}</ContentWrapper>;
 }

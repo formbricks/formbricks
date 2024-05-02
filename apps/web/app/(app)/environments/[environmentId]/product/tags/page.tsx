@@ -1,3 +1,4 @@
+import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -9,7 +10,6 @@ import { getTagsOnResponsesCount } from "@formbricks/lib/tagOnResponse/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
-import SettingsTitle from "../components/SettingsTitle";
 import EditTagsWrapper from "./components/EditTagsWrapper";
 
 export default async function MembersSettingsPage({ params }) {
@@ -38,14 +38,13 @@ export default async function MembersSettingsPage({ params }) {
   const isTagSettingDisabled = isViewer;
 
   return !isTagSettingDisabled ? (
-    <div>
-      <SettingsTitle title="Tags" />
+    <SettingsCard title="Manage Tags" description="Add, merge and remove response tags.">
       <EditTagsWrapper
         environment={environment}
         environmentTags={tags}
         environmentTagsCount={environmentTagsCount}
       />
-    </div>
+    </SettingsCard>
   ) : (
     <ErrorComponent />
   );

@@ -67,8 +67,8 @@ export default async function WidgetStatusIndicator({ environmentId, type }: Wid
   if (type === "mini") {
     return (
       <Link href={`/environments/${environment.id}/settings/setup`}>
-        <div className="group my-4 flex justify-center">
-          <div className="flex items-center space-x-2 rounded-md bg-slate-100 p-2">
+        <div className="group my-3 flex justify-center">
+          <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
             <Label className="group-hover:cursor-pointer group-hover:underline">
               {currentStatus.shortText}
             </Label>

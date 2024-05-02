@@ -38,10 +38,8 @@ export default async function PeoplePage({
 
   return (
     <>
-      <div className="mb-6 text-right">
-        <div className="mb-6 flex items-center justify-end text-right">
-          <HowToAddPeopleButton />
-        </div>
+      <div className="my-4 text-right">
+        <HowToAddPeopleButton />
       </div>
       {people.length === 0 ? (
         <EmptySpaceFiller

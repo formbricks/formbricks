@@ -1,4 +1,4 @@
-import DeleteProductRender from "@/app/(app)/environments/[environmentId]/settings/product/components/DeleteProductRender";
+import DeleteProductRender from "@/app/(app)/environments/[environmentId]/product/general/components/DeleteProductRender";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";

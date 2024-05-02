@@ -1,5 +1,4 @@
 import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import SettingsTitle from "@/app/(app)/environments/[environmentId]/settings/components/SettingsTitle";
 import { notFound } from "next/navigation";
 
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
@@ -28,7 +27,6 @@ export default async function LanguageSettingsPage({ params }: { params: { envir
 
   return (
     <div>
-      <SettingsTitle title="Survey Languages" />
       <SettingsCard
         title="Multi-language surveys"
         description="Add languages to create multi-language surveys.">

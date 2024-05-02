@@ -10,8 +10,8 @@ interface PeopleSegmentsTabsProps {
 export default function PeopleSegmentsTabs({ activeId, environmentId }: PeopleSegmentsTabsProps) {
   let tabs = [
     {
-      id: "people",
-      label: "People",
+      id: "respondents",
+      label: "Respondents",
       icon: <UserIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/people`,
     },

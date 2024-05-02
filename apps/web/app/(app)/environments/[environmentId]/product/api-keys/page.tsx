@@ -8,8 +8,7 @@ import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import EnvironmentNotice from "@formbricks/ui/EnvironmentNotice";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
-import SettingsCard from "../components/SettingsCard";
-import SettingsTitle from "../components/SettingsTitle";
+import SettingsCard from "../../settings/components/SettingsCard";
 import ApiKeyList from "./components/ApiKeyList";
 
 export default async function ProfileSettingsPage({ params }) {
@@ -32,7 +31,6 @@ export default async function ProfileSettingsPage({ params }) {
 
   return !isViewer ? (
     <div>
-      <SettingsTitle title="API Keys" />
       <EnvironmentNotice environmentId={environment.id} subPageUrl="/settings/api-keys" />
       {environment.type === "development" ? (
         <SettingsCard

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { Switch } from "@formbricks/ui/Switch";
@@ -45,7 +44,7 @@ export const AttributeClassesTable = ({ attributeClasses }: AttributeClassesTabl
 
   return (
     <>
-      <div className="mb-6 flex items-center justify-end text-right">
+      <div className="my-4 flex items-center justify-end text-right">
         {hasArchived && (
           <div className="flex items-center text-sm font-medium">
             Show archived

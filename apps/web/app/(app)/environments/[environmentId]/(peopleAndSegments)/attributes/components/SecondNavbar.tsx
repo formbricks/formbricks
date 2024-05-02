@@ -30,7 +30,7 @@ export default async function SecondNavbar({
 
   return (
     <div {...props}>
-      <div className="mx-8 h-16 border-b pt-6">
+      <div className="border-b">
         <nav className="flex h-full items-center space-x-4 justify-self-center" aria-label="Tabs">
           {tabs.map((tab) => (
             <Link
@@ -39,8 +39,8 @@ export default async function SecondNavbar({
               className={cn(
                 tab.id === activeId
                   ? " border-brand-dark font-semibold text-slate-900"
-                  : "text-slate-500 hover:text-slate-700",
-                "flex h-full items-center border-b-2 border-transparent px-3 pb-2 text-sm font-medium"
+                  : "border-transparent text-slate-500 hover:text-slate-700",
+                "flex h-full items-center border-b-2  px-3 pb-2 text-sm font-medium"
               )}
               aria-current={tab.id === activeId ? "page" : undefined}>
               {tab.icon && <div className="mr-2 h-5 w-5">{tab.icon}</div>}

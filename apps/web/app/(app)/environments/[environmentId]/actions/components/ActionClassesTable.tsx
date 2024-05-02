@@ -52,7 +52,7 @@ export default function ActionClassesTable({
   return (
     <>
       {!isViewer && (
-        <div className="mb-6 text-right">
+        <div className="my-4 text-right">
           <Button
             loading={isLoading}
             variant="darkCTA"

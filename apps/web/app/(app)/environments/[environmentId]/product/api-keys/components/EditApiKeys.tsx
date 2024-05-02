@@ -80,17 +80,7 @@ export default function EditAPIKeys({
   };
 
   return (
-    <>
-      <div className="mb-6 text-right">
-        <Button
-          variant="darkCTA"
-          disabled={environmentId !== environmentTypeId}
-          onClick={() => {
-            setOpenAddAPIKeyModal(true);
-          }}>
-          {`Add ${capitalizeFirstLetter(environmentType)} API Key`}
-        </Button>
-      </div>
+    <div className="space-y-4">
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-10 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-4 sm:col-span-2">Label</div>
@@ -125,6 +115,18 @@ export default function EditAPIKeys({
         </div>
       </div>
 
+      <div>
+        <Button
+          variant="darkCTA"
+          size="sm"
+          disabled={environmentId !== environmentTypeId}
+          onClick={() => {
+            setOpenAddAPIKeyModal(true);
+          }}>
+          {`Add ${capitalizeFirstLetter(environmentType)} API Key`}
+        </Button>
+      </div>
+
       <AddAPIKeyModal
         open={isAddAPIKeyModalOpen}
         setOpen={setOpenAddAPIKeyModal}
@@ -136,6 +138,6 @@ export default function EditAPIKeys({
         deleteWhat="API Key"
         onDelete={handleDeleteKey}
       />
-    </>
+    </div>
   );
 }

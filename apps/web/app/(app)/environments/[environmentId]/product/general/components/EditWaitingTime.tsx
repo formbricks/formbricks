@@ -45,7 +45,7 @@ const EditWaitingTime: React.FC<EditWaitingTimeProps> = ({ product, environmentI
   };
 
   return (
-    <form className="w-full max-w-sm items-center" onSubmit={handleSubmit(updateWaitingTime)}>
+    <form className="w-full max-w-sm items-center space-y-2" onSubmit={handleSubmit(updateWaitingTime)}>
       <Label htmlFor="recontactDays">Wait X days before showing next survey:</Label>
       <Input
         type="number"
@@ -68,7 +68,7 @@ const EditWaitingTime: React.FC<EditWaitingTimeProps> = ({ product, environmentI
         </div>
       ) : null}
 
-      <Button type="submit" variant="darkCTA" className="mt-4">
+      <Button type="submit" variant="darkCTA" size="sm">
         Update
       </Button>
     </form>

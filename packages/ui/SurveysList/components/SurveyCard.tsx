@@ -87,7 +87,7 @@ export const SurveyCard = ({
       <Link
         href={linkHref}
         key={survey.id}
-        className="relative col-span-2 flex h-44 flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all ease-in-out hover:scale-105 ">
+        className="relative col-span-2 flex h-44 flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all ease-in-out hover:scale-105">
         <div className="flex justify-between">
           <SurveyTypeIndicator type={survey.type} />
           <SurveyDropDownMenu

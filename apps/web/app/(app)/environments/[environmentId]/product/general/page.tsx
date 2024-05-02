@@ -9,8 +9,7 @@ import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { SettingsId } from "@formbricks/ui/SettingsId";
 
-import SettingsCard from "../components/SettingsCard";
-import SettingsTitle from "../components/SettingsTitle";
+import SettingsCard from "../../settings/components/SettingsCard";
 import DeleteProduct from "./components/DeleteProduct";
 import EditProductName from "./components/EditProductName";
 import EditWaitingTime from "./components/EditWaitingTime";
@@ -43,7 +42,6 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
 
   return (
     <div>
-      <SettingsTitle title="Product Settings" />
       <SettingsCard title="Product Name" description="Change your products name.">
         <EditProductName
           environmentId={params.environmentId}

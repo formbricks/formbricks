@@ -8,6 +8,7 @@ import {
   BrushIcon,
   ChevronRightIcon,
   CodeIcon,
+  Cog,
   CreditCardIcon,
   FileCheckIcon,
   HeartIcon,
@@ -19,7 +20,6 @@ import {
   MessageSquareTextIcon,
   MousePointerClick,
   PlusIcon,
-  Settings,
   SlidersIcon,
   UserCircleIcon,
   UsersIcon,
@@ -139,13 +139,13 @@ export default function Navigation({
         name: "Respondents",
         href: `/environments/${environment.id}/people`,
         icon: UsersIcon,
-        isActive: pathname?.includes("/people") || pathname?.includes("/segments"),
+        isActive: pathname?.includes("/people") || pathname?.includes("/segments" || "/attributes"),
       },
       {
         name: "Actions",
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
-        isActive: pathname?.includes("/actions") || pathname?.includes("/attributes"),
+        isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
         isHidden: false,
       },
       {
@@ -156,10 +156,10 @@ export default function Navigation({
         isHidden: isViewer,
       },
       {
-        name: "Settings",
-        href: `/environments/${environment.id}/settings/product`,
-        icon: Settings,
-        isActive: pathname?.includes("/settings"),
+        name: "Configuration",
+        href: `/environments/${environment.id}/product/general`,
+        icon: Cog,
+        isActive: pathname?.includes("/product"),
         isHidden: false,
       },
     ],
@@ -260,7 +260,7 @@ export default function Navigation({
   return (
     <>
       {product && (
-        <aside className="border-50 flex h-5/6 w-56 flex-col justify-between rounded-r-3xl border bg-white pt-5">
+        <aside className="flex w-56 flex-col justify-between rounded-r-3xl border border-slate-200 bg-white pt-5">
           <ul>
             {navigationItems.map(
               (item) =>

@@ -1,5 +1,4 @@
 import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import SettingsTitle from "@/app/(app)/environments/[environmentId]/settings/components/SettingsTitle";
 
 import { cn } from "@formbricks/lib/cn";
 import { Badge } from "@formbricks/ui/Badge";
@@ -19,8 +18,6 @@ const placements = [
 export default function Loading() {
   return (
     <div>
-      <SettingsTitle title="Look & Feel" />
-
       <SettingsCard
         title="Theme"
         className="max-w-7xl"

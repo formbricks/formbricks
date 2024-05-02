@@ -4,8 +4,8 @@ import {
   deleteTagAction,
   mergeTagsAction,
   updateTagNameAction,
-} from "@/app/(app)/environments/[environmentId]/settings/tags/actions";
-import MergeTagsCombobox from "@/app/(app)/environments/[environmentId]/settings/tags/components/MergeTagsCombobox";
+} from "@/app/(app)/environments/[environmentId]/product/tags/actions";
+import MergeTagsCombobox from "@/app/(app)/environments/[environmentId]/product/tags/components/MergeTagsCombobox";
 import { AlertCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -48,7 +48,7 @@ const SingleTag: React.FC<{
 
   return (
     <div className="w-full" key={tagId}>
-      <div className="m-2 grid h-16 grid-cols-4 content-center rounded-lg">
+      <div className="grid h-16 grid-cols-4 content-center rounded-lg">
         <div className="col-span-2 flex items-center text-sm">
           <div className="w-full text-left">
             <Input
@@ -87,7 +87,7 @@ const SingleTag: React.FC<{
           <div className="text-slate-900">{tagCountLoading ? <LoadingSpinner /> : <p>{tagCount}</p>}</div>
         </div>
 
-        <div className="col-span-1 my-auto flex items-center justify-end gap-4 whitespace-nowrap text-center text-sm text-slate-500">
+        <div className="col-span-1 my-auto flex items-center justify-center gap-2 whitespace-nowrap text-center text-sm text-slate-500">
           <div>
             {isMergingTags ? (
               <div className="w-24">
@@ -146,28 +146,26 @@ const SingleTag: React.FC<{
 const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
   const { environment, environmentTags, environmentTagsCount } = props;
   return (
-    <div className="flex w-full flex-col gap-4">
-      <div className="rounded-lg border border-slate-200">
-        <div className="grid h-12 grid-cols-4 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-2 pl-6">Name</div>
-          <div className="col-span-1 text-center">Count</div>
-          <div className="col-span-1 mr-4 flex justify-center text-center">Actions</div>
-        </div>
-
-        {!environmentTags?.length ? (
-          <EmptySpaceFiller environment={environment} type="tag" noWidgetRequired />
-        ) : null}
-
-        {environmentTags?.map((tag) => (
-          <SingleTag
-            key={tag.id}
-            tagId={tag.id}
-            tagName={tag.name}
-            tagCount={environmentTagsCount?.find((count) => count.tagId === tag.id)?.count ?? 0}
-            environmentTags={environmentTags}
-          />
-        ))}
+    <div className="">
+      <div className="grid grid-cols-4 content-center rounded-lg bg-white text-left text-sm font-semibold text-slate-900">
+        <div className="col-span-2">Tag</div>
+        <div className="col-span-1 text-center">Count</div>
+        <div className="col-span-1 flex justify-center text-center">Actions</div>
       </div>
+
+      {!environmentTags?.length ? (
+        <EmptySpaceFiller environment={environment} type="tag" noWidgetRequired />
+      ) : null}
+
+      {environmentTags?.map((tag) => (
+        <SingleTag
+          key={tag.id}
+          tagId={tag.id}
+          tagName={tag.name}
+          tagCount={environmentTagsCount?.find((count) => count.tagId === tag.id)?.count ?? 0}
+          environmentTags={environmentTags}
+        />
+      ))}
     </div>
   );
 };
