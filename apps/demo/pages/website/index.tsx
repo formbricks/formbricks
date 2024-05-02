@@ -115,7 +115,7 @@ export default function AppPage({}) {
         </div>
 
         <div className="md:grid md:grid-cols-3">
-          <div className="col-span-3 rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-800">
+          <div className="col-span-3 self-start rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-800">
             <h3 className="text-lg font-semibold dark:text-white">
               Reset person / pull data from Formbricks app
             </h3>
@@ -136,7 +136,7 @@ export default function AppPage({}) {
             </p>
           </div>
 
-          <div className="pt-6">
+          {/* <div className="pt-6">
             <div>
               <button
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
@@ -188,7 +188,7 @@ export default function AppPage({}) {
                 scroll down to trigger the 50% scroll.
               </p>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
