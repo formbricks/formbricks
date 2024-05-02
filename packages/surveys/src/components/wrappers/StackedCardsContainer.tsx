@@ -48,7 +48,7 @@ export const StackedCardsContainer = ({
 
   const borderStyles = useMemo(() => {
     const baseStyle = {
-      border: "2px solid",
+      border: "1px solid",
       borderRadius: "var(--fb-border-radius)",
     };
     // Determine borderColor based on the survey type and availability of highlightBorderColor
@@ -64,11 +64,11 @@ export const StackedCardsContainer = ({
     return (offset: number) => {
       switch (cardArrangement) {
         case "casual":
-          return offset < 0 ? `translateX(100%)` : `translateX(0) rotate(-${(hovered ? 4 : 2) * offset}deg)`;
+          return offset < 0 ? `translateX(33%)` : `translateX(0) rotate(-${(hovered ? 3.5 : 3) * offset}deg)`;
         case "straight":
-          return offset < 0 ? `translateY(100%)` : `translateY(-${(hovered ? 12 : 10) * offset}px)`;
-        default:
-          return offset < 0 ? `translateX(100%)` : `translateX(0)`;
+          return offset < 0 ? `translateY(25%)` : `translateY(-${(hovered ? 12 : 10) * offset}px)`;
+        /* default:
+          return offset < 0 ? `translateX(100%)` : `translateX(0)`; */
       }
     };
   }, [cardArrangement, hovered]);
@@ -76,7 +76,7 @@ export const StackedCardsContainer = ({
   const straightCardArrangementClasses = (offset: number) => {
     if (cardArrangement === "straight") {
       return {
-        width: `${100 - 2 * offset}%`,
+        width: `${100 - 5 * offset}%`,
         margin: "auto",
       };
     }
@@ -121,7 +121,7 @@ export const StackedCardsContainer = ({
                 ...borderStyles,
                 ...straightCardArrangementClasses(offset),
               }}
-              className="pointer rounded-custom bg-survey-bg absolute inset-x-0 backdrop-blur-md transition-all duration-1000 ease-in-out">
+              className="pointer rounded-custom bg-survey-bg group-hover:scale-1 absolute inset-x-0 scale-[0.95] backdrop-blur-md transition-all duration-[600ms] ease-in-out">
               {getCardContent(index, offset)}
             </div>
           );
