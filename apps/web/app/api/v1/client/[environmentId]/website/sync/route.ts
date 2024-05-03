@@ -106,14 +106,15 @@ export async function GET(
     // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
     let transformedSurveys: TLegacySurvey[] | TSurvey[];
 
-    // Backwards compatibility for versions less than 1.7.0 (no multi-language support).
+    // Backwards compatibility for versions less than 1.7.0 (no multi-language support and updated trigger action classes).
     if (version && isVersionGreaterThanOrEqualTo(version, "1.7.0")) {
-      // Scenario 1: Multi language supported
+      // Scenario 1: Multi language and updated trigger action classes supported.
       // Use the surveys as they are.
       transformedSurveys = filteredSurveys;
     } else {
-      // Scenario 2: Multi language not supported
-      // Convert to legacy surveys with default language.
+      // Scenario 2: Multi language and updated trigger action classes not supported
+      // Convert to legacy surveys with default language
+      // convert triggers to array of actionClasses Names
       transformedSurveys = await Promise.all(
         filteredSurveys.map((survey) => {
           const languageCode = "default";

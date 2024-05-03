@@ -122,13 +122,13 @@ const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TAc
 
   // check if all the triggers are valid
   triggers.forEach((trigger) => {
-    if (!actionClasses.find((actionClass) => actionClass.id === trigger.id)) {
+    if (!actionClasses.find((actionClass) => actionClass.id === trigger.actionClass.id)) {
       throw new InvalidInputError("Invalid trigger id");
     }
   });
 
   // check if all the triggers are unique
-  const triggerIds = triggers.map((trigger) => trigger.id);
+  const triggerIds = triggers.map((trigger) => trigger.actionClass.id);
 
   if (new Set(triggerIds).size !== triggerIds.length) {
     throw new InvalidInputError("Duplicate trigger id");
@@ -140,24 +140,29 @@ const handleTriggerUpdates = (
   currentTriggers: TSurvey["triggers"],
   actionClasses: TActionClass[]
 ) => {
+  console.log("updatedTriggers", updatedTriggers, currentTriggers);
   if (!updatedTriggers) return {};
   checkTriggersValidity(updatedTriggers, actionClasses);
 
-  const currentTriggerIds = currentTriggers.map((trigger) => trigger.id);
-  const updatedTriggerIds = updatedTriggers.map((trigger) => trigger.id);
+  const currentTriggerIds = currentTriggers.map((trigger) => trigger.actionClass.id);
+  const updatedTriggerIds = updatedTriggers.map((trigger) => trigger.actionClass.id);
 
   // added triggers are triggers that are not in the current triggers and are there in the new triggers
-  const addedTriggers = updatedTriggers.filter((trigger) => !currentTriggerIds.includes(trigger.id));
+  const addedTriggers = updatedTriggers.filter(
+    (trigger) => !currentTriggerIds.includes(trigger.actionClass.id)
+  );
 
   // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
-  const deletedTriggers = currentTriggers.filter((trigger) => !updatedTriggerIds.includes(trigger.id));
+  const deletedTriggers = currentTriggers.filter(
+    (trigger) => !updatedTriggerIds.includes(trigger.actionClass.id)
+  );
 
   // Construct the triggers update object
   const triggersUpdate: TriggerUpdate = {};
 
   if (addedTriggers.length > 0) {
     triggersUpdate.create = addedTriggers.map((trigger) => ({
-      actionClassId: trigger.id,
+      actionClassId: trigger.actionClass.id,
     }));
   }
 
@@ -165,14 +170,14 @@ const handleTriggerUpdates = (
     // disconnect the public triggers from the survey
     triggersUpdate.deleteMany = {
       actionClassId: {
-        in: deletedTriggers.map((trigger) => trigger.id),
+        in: deletedTriggers.map((trigger) => trigger.actionClass.id),
       },
     };
   }
 
   [...addedTriggers, ...deletedTriggers].forEach((trigger) => {
     surveyCache.revalidate({
-      actionClassId: trigger.id,
+      actionClassId: trigger.actionClass.id,
     });
   });
 
@@ -308,6 +313,7 @@ export const transformToLegacySurvey = async (
 ): Promise<TLegacySurvey> => {
   const targetLanguage = languageCode ?? "default";
   const transformedSurvey = reverseTranslateSurvey(survey, targetLanguage);
+  transformedSurvey.triggers = survey.triggers.map((trigger) => trigger.actionClass.name);
 
   return transformedSurvey;
 };
@@ -488,9 +494,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     // @ts-expect-error
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
-      triggers: prismaSurvey.triggers
-        ? prismaSurvey.triggers.map((trigger) => ({ ...trigger.actionClass }))
-        : [],
       segment: surveySegment,
     };
 
@@ -651,7 +654,6 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     // @ts-expect-error
     const transformedSurvey: TSurvey = {
       ...survey,
-      triggers: survey.triggers.map((trigger) => ({ ...trigger.actionClass })),
       ...(survey.segment && {
         segment: {
           ...survey.segment,
@@ -711,7 +713,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
         },
         triggers: {
           create: existingSurvey.triggers.map((trigger) => ({
-            actionClassId: trigger.id,
+            actionClassId: trigger.actionClass.id,
           })),
         },
         environment: {
@@ -796,7 +798,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
 
     existingSurvey.triggers.forEach((trigger) => {
       surveyCache.revalidate({
-        actionClassId: trigger.id,
+        actionClassId: trigger.actionClass.id,
       });
     });
 
@@ -1056,7 +1058,6 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
     // @ts-expect-error
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
-      triggers: prismaSurvey.triggers.map((trigger) => ({ ...trigger.actionClass })),
       segment: surveySegment,
     };
 

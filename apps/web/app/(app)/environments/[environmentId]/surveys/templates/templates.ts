@@ -2656,7 +2656,7 @@ export const getExampleSurveyTemplate = (webAppUrl: string, trigger: TActionClas
   name: "Example survey",
   type: "website" as TSurveyType,
   autoComplete: 2,
-  triggers: [trigger],
+  triggers: [{ actionClass: trigger }],
   status: "inProgress" as TSurveyStatus,
   displayOption: "respondMultiple" as TSurveyDisplayOption,
   recontactDays: 0,

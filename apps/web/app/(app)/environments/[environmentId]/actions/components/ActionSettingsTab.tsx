@@ -157,7 +157,9 @@ export default function ActionSettingsTab({
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
         <div className="grid w-full grid-cols-2 gap-x-4">
           <div className="col-span-1">
-            <Label htmlFor="actionNameSettingsInput">What did your user do?</Label>
+            <Label htmlFor="actionNameSettingsInput">
+              {actionClass.type === "noCode" ? "What did your user do?" : "Display name"}
+            </Label>
             <Input
               id="actionNameSettingsInput"
               placeholder="E.g. Clicked Download"
@@ -183,7 +185,7 @@ export default function ActionSettingsTab({
 
           {actionClass.type === "code" && (
             <div className="col-span-1 mt-4">
-              <Label htmlFor="actionKeySettingsInput">Code</Label>
+              <Label htmlFor="actionKeySettingsInput">Key</Label>
               <Input
                 id="actionKeySettingsInput"
                 placeholder="E.g. download_button_clicked"

@@ -156,7 +156,7 @@ export const CreateNewActionTab = ({
 
       setLocalSurvey((prev) => ({
         ...prev,
-        triggers: prev.triggers.concat(newActionClass),
+        triggers: prev.triggers.concat({ actionClass: newActionClass }),
       }));
 
       if (setActionClasses) {
@@ -229,10 +229,10 @@ export const CreateNewActionTab = ({
             {type === "code" ? (
               <>
                 <div className="col-span-1">
-                  <Label htmlFor="codeKeyInput">Code</Label>
+                  <Label htmlFor="codeActionKeyInput">Key</Label>
                   <Input
-                    id="codeKeyInput"
-                    placeholder="Enter your code key"
+                    id="codeActionKeyInput"
+                    placeholder="Enter your key"
                     {...register("key")}
                     className="mb-2 w-1/2"
                   />

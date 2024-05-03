@@ -70,7 +70,7 @@ export const trackAction = async (name: string, alias?: string): Promise<Result<
   if (!!activeSurveys && activeSurveys.length > 0) {
     for (const survey of activeSurveys) {
       for (const trigger of survey.triggers) {
-        if (trigger.name === name) {
+        if (trigger.actionClass.name === name) {
           await triggerSurvey(survey, name);
         }
       }

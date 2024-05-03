@@ -18,7 +18,6 @@ export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
 
   const transformedSurvey: TSurvey = {
     ...surveyPrisma,
-    triggers: surveyPrisma.triggers.map((trigger) => ({ ...trigger.actionClass })),
     segment,
   };
 

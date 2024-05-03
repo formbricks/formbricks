@@ -162,28 +162,28 @@ export default function WhenToSendCard({
               </p>
 
               {localSurvey.triggers.filter(Boolean).map((trigger, idx) => (
-                <div className="flex items-center gap-2" key={trigger.id}>
+                <div className="flex items-center gap-2" key={trigger.actionClass.id}>
                   {idx !== 0 && <p className="ml-1 text-sm font-bold">or</p>}
                   <div
-                    key={trigger.id}
+                    key={trigger.actionClass.id}
                     className="flex grow items-center justify-between rounded-sm border border-slate-300 bg-white p-2 px-3">
                     <div>
                       <div className="mt-1 flex items-center">
                         <div className="mr-1.5 h-4 w-4 text-slate-600">
-                          {trigger.type === "code" ? (
+                          {trigger.actionClass.type === "code" ? (
                             <Code2Icon className="h-4 w-4" />
-                          ) : trigger.type === "noCode" ? (
+                          ) : trigger.actionClass.type === "noCode" ? (
                             <MousePointerClickIcon className="h-4 w-4" />
-                          ) : trigger.type === "automatic" ? (
+                          ) : trigger.actionClass.type === "automatic" ? (
                             <SparklesIcon className="h-4 w-4" />
                           ) : null}
                         </div>
 
                         <h4 className="text-sm font-semibold text-slate-600">
-                          {getFormattedActionClassName(trigger.name)}
+                          {getFormattedActionClassName(trigger.actionClass.name)}
                         </h4>
                       </div>
-                      <p className="mt-1 text-xs text-gray-500">{trigger.description}</p>
+                      <p className="mt-1 text-xs text-gray-500">{trigger.actionClass.description}</p>
                     </div>
                   </div>
                   <Trash2Icon

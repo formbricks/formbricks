@@ -470,7 +470,7 @@ export const ZSurvey = z.object({
   status: ZSurveyStatus,
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
-  triggers: z.array(ZActionClass),
+  triggers: z.array(z.object({ actionClass: ZActionClass })),
   redirectUrl: z.string().url().nullable(),
   recontactDays: z.number().nullable(),
   welcomeCard: ZSurveyWelcomeCard,
@@ -517,13 +517,7 @@ export const ZSurveyInput = z.object({
   pin: z.string().nullish(),
   resultShareKey: z.string().nullish(),
   displayPercentage: z.number().min(1).max(100).nullish(),
-  triggers: z
-    .array(
-      ZActionClass.extend({
-        _isDraft: z.boolean().nullish(),
-      })
-    )
-    .optional(),
+  triggers: z.array(z.object({ actionClass: ZActionClass })).optional(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;

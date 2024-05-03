@@ -20,7 +20,7 @@ export const SavedActionsTab = ({
   setOpen,
 }: SavedActionsTabProps) => {
   const AvailableActions = actionClasses.filter(
-    (actionClass) => !localSurvey.triggers.some((trigger) => trigger.id === actionClass.id)
+    (actionClass) => !localSurvey.triggers.some((trigger) => trigger.actionClass.id === actionClass.id)
   );
   const [filteredActionClasses, setFilteredActionClasses] = useState<TActionClass[]>(AvailableActions);
 
@@ -31,7 +31,7 @@ export const SavedActionsTab = ({
   const handleActionClick = (action: TActionClass) => {
     setLocalSurvey((prev) => ({
       ...prev,
-      triggers: prev.triggers.concat(action),
+      triggers: prev.triggers.concat({ actionClass: action }),
     }));
     setOpen(false);
   };

@@ -4,7 +4,6 @@ import { Prisma } from "@prisma/client";
 import { differenceInDays } from "date-fns";
 
 import { prisma } from "@formbricks/database";
-import { TActionClassType } from "@formbricks/types/actionClasses";
 import { TAction, TActionInput, ZActionInput } from "@formbricks/types/actions";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
@@ -116,11 +115,6 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
 
   try {
     const { environmentId, name, userId } = data;
-
-    let actionType: TActionClassType = "code";
-    if (name === "Exit Intent (Desktop)" || name === "50% Scroll") {
-      actionType = "automatic";
-    }
 
     let actionClass = await getActionClassByEnvironmentIdAndName(environmentId, name);
 
