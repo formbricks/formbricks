@@ -15,6 +15,8 @@ import { OpenQuestionForm } from "@/app/(app)/environments/[environmentId]/surve
 import { PictureSelectionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
 import { RatingQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/RatingQuestionForm";
 import { getTSurveyQuestionTypeName } from "@/app/lib/questions";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
   ArrowUpFromLineIcon,
@@ -38,7 +40,7 @@ import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TProduct } from "@formbricks/types/product";
-import { TI18nString, TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TI18nString, TSurvey, TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
@@ -48,6 +50,7 @@ import QuestionDropdown from "./QuestionMenu";
 interface QuestionCardProps {
   localSurvey: TSurvey;
   product: TProduct;
+  question: TSurveyQuestion;
   questionIdx: number;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -64,6 +67,7 @@ interface QuestionCardProps {
 export default function QuestionCard({
   localSurvey,
   product,
+  question,
   questionIdx,
   moveQuestion,
   updateQuestion,
@@ -76,7 +80,8 @@ export default function QuestionCard({
   setSelectedLanguageCode,
   isInvalid,
 }: QuestionCardProps) {
-  const question = localSurvey.questions[questionIdx];
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: question.id });
+
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
 
@@ -131,12 +136,21 @@ export default function QuestionCard({
     }
   };
 
+  const style = {
+    transition: transition ?? "transform 100ms ease",
+    transform: CSS.Transform.toString(transform),
+  };
+
   return (
     <div
       className={cn(
         open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
         "flex flex-row rounded-lg bg-white transition-all duration-300 ease-in-out"
-      )}>
+      )}
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      style={style}>
       <div
         className={cn(
           open ? "bg-slate-700" : "bg-slate-400",

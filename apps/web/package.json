@@ -12,6 +12,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.1.0",
+    "@dnd-kit/sortable": "^8.0.0",
     "@formbricks/api": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/ee": "workspace:*",
@@ -23,7 +25,6 @@
     "@formbricks/tailwind-config": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@formbricks/ui": "workspace:*",
-    "@formkit/drag-and-drop": "^0.0.38",
     "@headlessui/react": "^1.7.19",
     "@json2csv/node": "^7.0.6",
     "@opentelemetry/auto-instrumentations-node": "^0.44.0",

@@ -6,8 +6,14 @@ import {
   validateQuestion,
   validateSurveyQuestionsInBatch,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
-import { animations } from "@formkit/drag-and-drop";
-import { useDragAndDrop } from "@formkit/drag-and-drop/react";
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { createId } from "@paralleldrive/cuid2";
 import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -22,7 +28,7 @@ import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 import AddQuestionButton from "./AddQuestionButton";
 import EditThankYouCard from "./EditThankYouCard";
 import EditWelcomeCard from "./EditWelcomeCard";
-import QuestionCard from "./QuestionCard";
+import { QuestionsDroppable } from "./QuestionsDroppable";
 
 interface QuestionsViewProps {
   localSurvey: TSurvey;
@@ -51,19 +57,13 @@ export const QuestionsView = ({
   isMultiLanguageAllowed,
   isFormbricksCloud,
 }: QuestionsViewProps) => {
-  const [draggableParent, questionsDraggable] = useDragAndDrop<HTMLDivElement, TSurveyQuestion>(
-    localSurvey.questions,
-    {
-      plugins: [animations({ duration: 100 })],
-    }
-  );
-
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
       acc[question.id] = createId();
       return acc;
     }, {});
   }, [localSurvey.questions]);
+
   const surveyLanguages = localSurvey.languages;
   const [backButtonLabel, setbackButtonLabel] = useState(null);
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
@@ -303,12 +303,25 @@ export const QuestionsView = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeQuestionId, setActiveQuestionId]);
 
-  useEffect(() => {
-    setLocalSurvey((prev) => ({
-      ...prev,
-      questions: questionsDraggable,
-    }));
-  }, [questionsDraggable, setLocalSurvey]);
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  );
+
+  const onDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    const newQuestions = Array.from(localSurvey.questions);
+    const sourceIndex = newQuestions.findIndex((question) => question.id === active.id);
+    const destinationIndex = newQuestions.findIndex((question) => question.id === over?.id);
+    const [reorderedQuestion] = newQuestions.splice(sourceIndex, 1);
+    newQuestions.splice(destinationIndex, 0, reorderedQuestion);
+    const updatedSurvey = { ...localSurvey, questions: newQuestions };
+    setLocalSurvey(updatedSurvey);
+  };
 
   return (
     <div className="mt-16 px-5 py-4">
@@ -324,26 +337,22 @@ export const QuestionsView = ({
         />
       </div>
 
-      <div className="mb-5 grid w-full gap-5" ref={draggableParent}>
-        {questionsDraggable.map((question, questionIdx) => (
-          <QuestionCard
-            key={internalQuestionIdMap[question.id]}
-            localSurvey={localSurvey}
-            product={product}
-            questionIdx={questionIdx}
-            moveQuestion={moveQuestion}
-            updateQuestion={updateQuestion}
-            duplicateQuestion={duplicateQuestion}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            deleteQuestion={deleteQuestion}
-            activeQuestionId={activeQuestionId}
-            setActiveQuestionId={setActiveQuestionId}
-            lastQuestion={questionIdx === localSurvey.questions.length - 1}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
-          />
-        ))}
-      </div>
+      <DndContext sensors={sensors} onDragEnd={onDragEnd} collisionDetection={closestCorners}>
+        <QuestionsDroppable
+          localSurvey={localSurvey}
+          product={product}
+          moveQuestion={moveQuestion}
+          updateQuestion={updateQuestion}
+          duplicateQuestion={duplicateQuestion}
+          selectedLanguageCode={selectedLanguageCode}
+          setSelectedLanguageCode={setSelectedLanguageCode}
+          deleteQuestion={deleteQuestion}
+          activeQuestionId={activeQuestionId}
+          setActiveQuestionId={setActiveQuestionId}
+          invalidQuestions={invalidQuestions}
+          internalQuestionIdMap={internalQuestionIdMap}
+        />
+      </DndContext>
 
       <AddQuestionButton addQuestion={addQuestion} product={product} />
       <div className="mt-5 flex flex-col gap-5">
