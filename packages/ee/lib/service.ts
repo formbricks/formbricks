@@ -7,6 +7,9 @@ import { TTeam } from "@formbricks/types/teams";
 
 import { prisma } from "../../database/src";
 
+// This function is used to get the previous result of the license check from the cache
+// This might seem confusing at first since we only return the default value from this function,
+// but since we are using a cache and the cache key is the same, the cache will return the previous result - so this functions as a cache getter
 const getPreviousResult = (): Promise<{ active: boolean | null; lastChecked: Date }> =>
   cache(
     async () => ({
@@ -19,6 +22,8 @@ const getPreviousResult = (): Promise<{ active: boolean | null; lastChecked: Dat
     }
   )();
 
+// This function is used to set the previous result of the license check to the cache so that we can use it in the next call
+// Uses the same cache key as the getPreviousResult function
 const setPreviousResult = async (previousResult: { active: boolean | null; lastChecked: Date }) => {
   revalidateTag("getPreviousResult");
   const { lastChecked, active } = previousResult;
