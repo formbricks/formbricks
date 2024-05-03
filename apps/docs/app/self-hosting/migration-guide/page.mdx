@@ -93,8 +93,45 @@ The above command will migrate your data to the latest schema. This is a crucial
 
 ### In-App Surveys with @formbricks/js
 
-From this upgrade, we now **dynamically fetch** the package from our API endpoint so that you always have the latest version of the package (v2.0.0+).
-So make sure to update your package to the latest version to use the latest features.
+From this upgrade, we now **dynamically fetch** the package from our API endpoint and updated the package entrypoints to support both app and website surveys so that you always have the latest version of the package (v2.0.0+).
+
+**Old approach:** (v1.6.5)
+
+```ts
+import formbricks from "@formbricks/js";
+
+formbricks.init({
+  environmentId: "<environment-id>",
+  apiHost: "<api-host>",
+  userId: "<user-id>", // optional
+});
+```
+
+**New approach:** (v2.0.0)
+
+Website surveys:
+
+```ts
+import formbricks from "@formbricks/js/website";
+
+formbricks.init({
+  environmentId: "<environment-id>",
+  apiHost: "<api-host>",
+  // userId is not supported here
+});
+```
+
+App surveys:
+
+```ts
+import formbricks from "@formbricks/js/app";
+
+formbricks.init({
+  environmentId: "<environment-id>",
+  apiHost: "<api-host>",
+  userId: "<user-id>", // required
+});
+```
 
 ## v1.6
 
