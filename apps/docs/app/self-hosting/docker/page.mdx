@@ -8,9 +8,9 @@ export const metadata = {
 
 # Advanced Setup
 
-Quickly set up and start using Formbricks without getting into the technicalities of the build process. You'll be using an image that we've already built for you. The pre-built image is ready-to-run, and it only requires minimal configuration on your part. This approach is perfect for getting a functional instance of Formbricks up and running with minimal hassle. It's as easy as downloading the Docker image and firing up the container.
+Quickly set up and start using Formbricks with our [official Docker image](https://github.com/formbricks/formbricks/pkgs/container/formbricks) that we've already built for you. 
 
-This is ideal for those who are testing Formbricks or want to run it with minimal to no modifications. For this we use the [public Docker image](https://github.com/formbricks/formbricks/pkgs/container/formbricks) and a simple docker-compose file.
+The pre-built image is ready-to-run, and it only requires minimal configuration on your part. It's as easy as downloading the Docker image and firing up the container.
 
 ### Requirements
 
@@ -20,6 +20,8 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
   `docker compose` without the hyphen is now the primary method of using docker-compose, according to the
   Docker documentation.
 </Note>
+
+## Start
 
 1.  **Create a New Directory for Formbricks**
 
@@ -100,7 +102,7 @@ You're now ready to start the Formbricks Docker setup. The following command wil
 
    After starting the Docker setup, visit http://localhost:3000 in your browser to interact with the Formbricks application. The first time you access this page, you'll be greeted by a setup wizard. Follow the prompts to define your first user and get started.
 
-## Updating Formbricks
+## Update
 
 1.  Stop the Formbricks stack
 
@@ -142,7 +144,7 @@ You're now ready to start the Formbricks Docker setup. The following command wil
 
 </Col>
 
-## Debugging
+## Debug
 
 If you encounter any issues, you can check the logs of the container with:
 
@@ -203,7 +205,7 @@ You can close the logs again with `CTRL + C`.
 <Note>
 ## Customizing environment variables
 
-To edit any of the available environment variables, check out our [Configure](/docs/self-hosting/external-auth-providers) section!
+To edit any of the available environment variables, check out our [Configure](/self-hosting/configure) section!
 
 </Note>
 

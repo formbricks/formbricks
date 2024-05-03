@@ -104,66 +104,6 @@ Congratulations! You have successfully linked an Airtable with Formbricks. Now w
 
 Still struggling or something not working as expected? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!
 
-## Setup in self-hosted Formbricks
-
-Enabling the Airtable Integration in a self-hosted environment requires creating an airtable account and changing the environment variables of your Formbricks instance.
-
-1. Go to the [Airtable](https://airtable.com) and create a new account if you dont already have one.
-
-2. Click on user icon on top left and open to Developer hub
-
-<MdxImage
-  src={OpenDeveloperHub}
-  alt="List of linked tables"
-  quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl"
-/>
-
-3. Navigate to OAuth integrations and click on **Register an OAuth integrations**
-
-<MdxImage
-  src={CreateNewIntegration}
-  alt="List of linked tables"
-  quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl"
-/>
-
-3. Select a name for you integration and also add a redirect URL which will be YOUR_WEBAPP_URL/api/v1/integrations/airtable/callback
-
-   <MdxImage
-     src={RegisterNewIntegration}
-     alt="List of linked tables"
-     quality="100"
-     className="max-w-full rounded-lg sm:max-w-3xl"
-   />
-
-4. Now fill some basic details about your integrations and then go to scope section. You need to enable 5 scopes
-
-   - data.records:read
-   - data.records:write
-   - schema.bases:read
-   - schema.bases:write
-   - user.email:read
-
-{" "}
-
-<MdxImage
-  src={SelectScopes}
-  alt="List of linked tables"
-  quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl"
-/>
-
-5. Click on the "Save" button and you are done
-6. Now just copy client id and redirect url for your integration and add it to formbricks .env file
-
-### By now, your environment variables should include the below ones:
-
-- `AIRTABLE_CLIENT_ID`
-- `AIRTABLE_REDIRECT_URL`
-
-Voila! You have successfully enabled the Airtable integration in your self-hosted Formbricks instance. Now you can follow the steps mentioned in the [Formbricks Cloud](#formbricks-cloud) section to link an Airtable with Formbricks.
-
 ## Remove Integration with Airtable
 
 To remove the integration with Airtable,

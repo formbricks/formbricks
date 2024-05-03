@@ -38,6 +38,50 @@ const nextConfig = {
         destination: "/introduction/what-is-formbricks",
         permanent: true,
       },
+      // Redirects for Docs 2.0
+      // Self Hosting
+      {
+        source: "/self-hosting/deployment",
+        destination: "/self-hosting/overview",
+        permanent: true,
+      },
+      {
+        source: "/self-hosting/production",
+        destination: "/self-hosting/one-click",
+        permanent: true,
+      },
+      {
+        source: "/self-hosting/external-auth-providers",
+        destination: "/self-hosting/configuration",
+        permanent: true,
+      },
+      {
+        source: "/self-hosting/enterprise",
+        destination: "/self-hosting/license",
+        permanent: true,
+      },
+      // Developer Docs
+      {
+        source: "/contributing/:path",
+        destination: "/developer-docs/contributing",
+        permanent: true,
+      },
+      {
+        source: "/additional-features/api",
+        destination: "/developer-docs/rest-api",
+        permanent: true,
+      },
+      {
+        source: "/in-app-surveys/developer-quickstart",
+        destination: "/developer-docs/overview",
+        permanent: true,
+      },
+      // Link Survey
+      {
+        source: "/link-surveys/embed-in-email",
+        destination: "/link-surveys/embed-surveys",
+        permanent: true,
+      },
     ];
   },
 };
