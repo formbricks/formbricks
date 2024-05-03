@@ -291,8 +291,8 @@ test.describe("Create and Edit Code Action", async () => {
     await expect(page.getByLabel("Description")).toBeVisible();
     await page.getByLabel("Description").fill(actions.create.code.description);
 
-    await expect(page.getByLabel("Code")).toBeVisible();
-    await page.getByLabel("Code").fill(actions.create.code.key);
+    await expect(page.getByLabel("Key")).toBeVisible();
+    await page.getByLabel("Key").fill(actions.create.code.key);
 
     await page.getByRole("button", { name: "Create Action", exact: true }).click();
     await page.waitForLoadState("networkidle");
