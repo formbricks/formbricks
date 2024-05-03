@@ -11,14 +11,27 @@ import { useRef } from "react";
 import { Button } from "./Button";
 import { useIsInsideMobileNavigation } from "./MobileNavigation";
 import { useSectionStore } from "./SectionProvider";
-import { Tag } from "./Tag";
 
-export interface NavGroup {
+export interface BaseLink {
   title: string;
-  links: Array<{
+}
+
+export interface LinkWithHref extends BaseLink {
+  href: string;
+  children?: never; // Ensure that 'children' cannot coexist with 'href'
+}
+
+export interface LinkWithChildren extends BaseLink {
+  href?: never; // Ensure that 'href' cannot coexist with 'children'
+  children: Array<{
     title: string;
     href: string;
   }>;
+}
+
+export interface NavGroup {
+  title: string;
+  links: Array<LinkWithHref | LinkWithChildren>;
 }
 
 function useInitialValue<T>(value: T, condition = true) {
@@ -41,14 +54,12 @@ function TopLevelNavItem({ href, children }: { href: string; children: React.Rea
 function NavLink({
   href,
   children,
-  tag,
   active = false,
   isAnchorLink = false,
 }: {
   href: string;
   children: React.ReactNode;
-  tag?: string;
-  active?: boolean;
+  active: boolean;
   isAnchorLink?: boolean;
 }) {
   return (
@@ -63,7 +74,6 @@ function NavLink({
           : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
       )}>
       <span className="truncate">{children}</span>
-      {tag && <Tag variant="small">{tag}</Tag>}
     </Link>
   );
 }
@@ -80,10 +90,15 @@ function VisibleSectionHighlight({ group, pathname }: { group: NavGroup; pathnam
     [{ id: "_top" }, ...sections].findIndex((section) => section.id === visibleSections[0])
   );
   let itemHeight = remToPx(2);
+  let activePageIndex = group.links.findIndex(
+    (link) =>
+      (link.href && pathname.startsWith(link.href)) ||
+      (link.children && link.children.some((child) => pathname.startsWith(child.href)))
+  );
+
   let height = isPresent ? Math.max(1, visibleSections.length) * itemHeight : itemHeight;
-  let top =
-    group.links.findIndex((link) => link.href === pathname) * itemHeight +
-    firstVisibleSectionIndex * itemHeight;
+  let top = activePageIndex * itemHeight + firstVisibleSectionIndex * itemHeight;
+  if (activePageIndex === -1) return null;
 
   return (
     <motion.div
@@ -100,7 +115,12 @@ function VisibleSectionHighlight({ group, pathname }: { group: NavGroup; pathnam
 function ActivePageMarker({ group, pathname }: { group: NavGroup; pathname: string }) {
   let itemHeight = remToPx(2);
   let offset = remToPx(0.25);
-  let activePageIndex = group.links.findIndex((link) => link.href === pathname);
+  let activePageIndex = group.links.findIndex(
+    (link) =>
+      (link.href && pathname.startsWith(link.href)) ||
+      (link.children && link.children.some((child) => pathname.startsWith(child.href)))
+  );
+  if (activePageIndex === -1) return null;
   let top = offset + activePageIndex * itemHeight;
 
   return (
@@ -119,12 +139,18 @@ function NavigationGroup({ group, className }: { group: NavGroup; className?: st
   // state, so that the state does not change during the close animation.
   // The state will still update when we re-open (re-render) the navigation.
   let isInsideMobileNavigation = useIsInsideMobileNavigation();
-  let [pathname, sections] = useInitialValue(
-    [usePathname(), useSectionStore((s) => s.sections)],
-    isInsideMobileNavigation
+  let [pathname] = useInitialValue([usePathname()], isInsideMobileNavigation);
+  const isActiveGroup = group.links.some(
+    (link) =>
+      pathname.startsWith(link.href || "") ||
+      (link.children && link.children.some((child) => pathname.startsWith(child.href)))
   );
 
-  let isActiveGroup = group.links.findIndex((link) => link.href === pathname) !== -1;
+  const activeParentTitle = group.links.find((link) =>
+    link.children
+      ? link.children.some((child) => pathname.startsWith(child.href))
+      : pathname.startsWith(link.href || "")
+  )?.title;
 
   return (
     <li className={clsx("relative mt-6", className)}>
@@ -133,7 +159,7 @@ function NavigationGroup({ group, className }: { group: NavGroup; className?: st
       </motion.h2>
       <div className="relative mt-3 pl-2">
         <AnimatePresence initial={!isInsideMobileNavigation}>
-          {isActiveGroup && <VisibleSectionHighlight group={group} pathname={pathname || "/docs"} />}
+          {isActiveGroup && <VisibleSectionHighlight group={group} pathname={pathname} />}
         </AnimatePresence>
         <motion.div layout className="absolute inset-y-0 left-2 w-px bg-slate-900/10 dark:bg-white/5" />
         <AnimatePresence initial={false}>
@@ -141,12 +167,22 @@ function NavigationGroup({ group, className }: { group: NavGroup; className?: st
         </AnimatePresence>
         <ul role="list" className="border-l border-transparent">
           {group.links.map((link) => (
-            <motion.li key={link.href} layout="position" className="relative">
-              <NavLink href={link.href} active={link.href === pathname}>
-                {link.title}
-              </NavLink>
+            <motion.li key={link.title} layout="position" className="relative">
+              {link.href ? (
+                <NavLink href={link.href} active={pathname.startsWith(link.href)}>
+                  {link.title}
+                </NavLink>
+              ) : (
+                <NavLink
+                  href={link.children?.[0]?.href || ""}
+                  active={
+                    (link.children && link.children.some((child) => pathname.startsWith(child.href))) || false
+                  }>
+                  {link.title}
+                </NavLink>
+              )}
               <AnimatePresence mode="popLayout" initial={false}>
-                {link.href === pathname && sections.length > 0 && (
+                {link.children && link.title === activeParentTitle && (
                   <motion.ul
                     role="list"
                     initial={{ opacity: 0 }}
@@ -158,10 +194,10 @@ function NavigationGroup({ group, className }: { group: NavGroup; className?: st
                       opacity: 0,
                       transition: { duration: 0.15 },
                     }}>
-                    {sections.map((section) => (
-                      <li key={section.id}>
-                        <NavLink href={`${link.href}#${section.id}`} tag={section.tag} isAnchorLink>
-                          {section.title}
+                    {link.children.map((child) => (
+                      <li key={child.href}>
+                        <NavLink href={child.href} isAnchorLink active={pathname.startsWith(child.href)}>
+                          {child.title}
                         </NavLink>
                       </li>
                     ))}

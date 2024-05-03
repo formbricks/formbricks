@@ -38,7 +38,11 @@ function PageLink({
 
 function PageNavigation() {
   let pathname = usePathname();
-  let allPages = navigation.flatMap((group) => group.links);
+  let allPages = navigation.flatMap((group) => {
+    return group.links.flatMap((link) => {
+      return link.children ? link.children : link;
+    });
+  });
   let currentPageIndex = allPages.findIndex((page) => page.href === pathname);
 
   if (currentPageIndex === -1) {
