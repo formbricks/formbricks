@@ -8,13 +8,13 @@ export const metadata = {
 
 # Migration Guide
 
-## v 2.0
+## v2.0
 
-Formbricks v 2.0 comes with huge features such as Multi-Language Surveys and Advanced Styling for Surveys. We have also shipped various optimisations, bug fixes & smaller fixes on the way to make your experience more seamless. This guide will help you migrate your existing Formbricks instance to v 2.0 without any hassles or build errors.
+Formbricks v2.0 comes with huge features such as Multi-Language Surveys and Advanced Styling for Surveys. We have also shipped various optimisations, bug fixes & smaller fixes on the way to make your experience more seamless. This guide will help you migrate your existing Formbricks instance to v2.0 without any hassles or build errors.
 
 <Note>
   This upgrade requires a **data migration**. Please make sure to backup your database before proceeding with
-  the upgrade. Follow the below steps thoroughly to upgrade your Formbricks instance to v 2.0.
+  the upgrade. Follow the below steps thoroughly to upgrade your Formbricks instance to v2.0.
 </Note>
 
 ### Steps to Migrate
@@ -29,7 +29,7 @@ To run all these steps, please navigate to the `formbricks` folder where your `d
 <CodeGroup title="Backup Postgres">
 
 ```bash
-docker exec formbricks-quickstart-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v 2.0_$(date +%Y%m%d_%H%M%S).dump
+docker exec formbricks-quickstart-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v2.0_$(date +%Y%m%d_%H%M%S).dump
 ```
 
 </CodeGroup>
@@ -80,7 +80,7 @@ docker-compose up -d
 docker run --rm \
   --network=formbricks_default \
   -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
-  -e UPGRADE_TO_VERSION="v 2.0" \
+  -e UPGRADE_TO_VERSION="v2.0" \
   ghcr.io/formbricks/data-migrations:latest
 ```
 
@@ -93,8 +93,9 @@ The above command will migrate your data to the latest schema. This is a crucial
 
 ### In-App Surveys with @formbricks/js
 
-From this upgrade, we now **dynamically fetch** the package from our API endpoint so that you always have the latest version of the package (v 2.0.0+).
+From this upgrade, we now **dynamically fetch** the package from our API endpoint so that you always have the latest version of the package (v2.0.0+).
 So make sure to update your package to the latest version to use the latest features.
+
 ## v1.6
 
 Formbricks v1.6 comes with a big new features like Advanced Targeting & Segmentation of your end-users along with on-the-fly triggers for surveys and a ton of stability improvements & features. This also involves a few changes in our environment variables. This guide will help you migrate your existing Formbricks instance to v1.6 without any hassles or build errors.
