@@ -47,7 +47,10 @@ All you need to do is copy a `<script>` tag to your HTML head, and that’s abou
 ```html {{ title: 'index.html' }}
 <!-- START Formbricks Surveys -->
 <script type="text/javascript">
-!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.6.0/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "<your-environment-id>", apiHost: "<api-host>"})},500)}();
+!function(){
+    var apiHost = "https://app.formbricks.com";
+    var environmentId = "<your-environment-id>";
+    var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/api/packages/website";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost})},500)}();
 </script>
 <!-- END Formbricks Surveys -->
 ```
@@ -94,7 +97,7 @@ Now, update your App.js/ts file to initialise Formbricks.
 
 ```js
 // other imports
-import formbricks from "@formbricks/js/website"; 
+import formbricks from "@formbricks/js/website";
 
 if (typeof window !== "undefined") {
   formbricks.init({
@@ -225,7 +228,7 @@ Refer to our [Example NextJS App Directory project](https://github.com/formbrick
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 
-import formbricks from "@formbricks/js/website"; 
+import formbricks from "@formbricks/js/website";
 
 if (typeof window !== "undefined") {
   formbricks.init({
@@ -300,7 +303,7 @@ yarn add @formbricks/js
 <CodeGroup title="src/formbricks.js">
 
 ```js
-import formbricks from "@formbricks/js/website"; 
+import formbricks from "@formbricks/js/website";
 
 if (typeof window !== "undefined") {
   formbricks.init({
@@ -410,7 +413,7 @@ Debug log messages provide insights into:
 - Event tracking, survey triggers and form interactions.
 - Initialization errors.
 
-## Overwrite CSS Styles for In-App Surveys
+## Overwrite CSS Styles for App Surveys
 
 You can overwrite the default CSS styles for the in-app surveys by adding the following CSS to your global CSS file (eg. `globals.css`):
 

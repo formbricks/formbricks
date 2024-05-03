@@ -91,7 +91,7 @@ The above command will migrate your data to the latest schema. This is a crucial
 
 5. That's it! Once the migration is complete, you can **now access your Formbricks instance** at the same URL as before.
 
-### In-App Surveys with @formbricks/js
+### App Surveys with @formbricks/js
 
 From this upgrade, we now **dynamically fetch** the package from our API endpoint and updated the package entrypoints to support both app and website surveys so that you always have the latest version of the package (v2.0.0+).
 
@@ -232,7 +232,7 @@ docker exec -i formbricks-quickstart-postgres-1 pg_restore --clean -U postgres -
 
 <Note>This will wipe the database and restore from the `.dump` file</Note>
 
-### In-App Surveys with @formbricks/js
+### App Surveys with @formbricks/js
 
 If you are using the `@formbricks/js` package, please make sure to update it to version `~1.6.5` to use the latest features and improvements.
 
@@ -394,3 +394,4 @@ x-environment: &environment
 </CodeGroup>
 </Col>
 Did we miss something? Are you still facing issues migrating your app? [Join our Discord!](https://formbricks.com/discord) We'd be happy to help!
+```

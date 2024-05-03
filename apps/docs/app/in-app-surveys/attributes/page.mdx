@@ -4,7 +4,7 @@ export const metadata = {
     "Dive into the importance of attributes in surveys. Learn how key-value pairs can significantly improve survey targeting, enhance feedback quality, and guide data-driven decisions with Formbricks.",
 };
 
-#### In-App Surveys
+#### App Surveys
 
 # Attributes
 
@@ -16,10 +16,12 @@ Attributes are **key-value pairs** that you can set for each person individually
 Attributes are sent from your application to Formbricks and are associated with the current user. We store it in our database and allow you to use it the next time you create a survey. They help show surveys to the right group of people.
 
 <Note>
-    At Formbricks, we value user privacy. By default, Formbricks doesn't collect or store any personal information from your users.
+  At Formbricks, we value user privacy. By default, Formbricks doesn't collect or store any personal
+  information from your users.
 </Note>
 
 ## Identifying Users
+
 To use the User Identification feature of Formbricks, target surveys to specific user segments and see more information about the user who responded to a survey, you can identify users by setting a User ID, email, and custom attributes. Below is how to do that.
 
 ### Setting User ID
@@ -77,6 +79,7 @@ formbricks.setAttribute("Plan", "free");
 </Col>
 
 Generally speaking, the setAttribute function works like this:
+
 <Col>
 <CodeGroup title="Setting Custom Attributes">
 
@@ -87,7 +90,6 @@ formbricks.setAttribute("attribute_key", "attribute_value");
 </CodeGroup>
 </Col>
 Where `attributeName` is the name of the attribute you want to set, and `attributeValue` is the value of the attribute you want to set.
-
 
 ### Logging Out Users
 

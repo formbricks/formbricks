@@ -10,7 +10,7 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   // {
-  //   title: "In-App Surveys",
+  //   title: "App Surveys",
   //   links: [
   //     { title: "Quickstart", href: "/getting-started/quickstart-in-app-survey" },
   //     { title: "Developer Quickstart", href: "/in-app-surveys/developer-quickstart" },
