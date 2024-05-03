@@ -76,14 +76,14 @@ const createNoCodeActionByPageURL = async (
   await page.locator("#PageURL").click();
 
   // User opens the dropdown and selects the URL match type
-  await expect(page.locator("[name='noCodeConfig.[pageUrl].rule']")).toBeVisible();
-  await page.locator("[name='noCodeConfig.[pageUrl].rule']").selectOption({ label: matcher.label });
+  await expect(page.locator("[name='noCodeConfig.pageUrl.rule']")).toBeVisible();
+  await page.locator("[name='noCodeConfig.pageUrl.rule']").selectOption({ label: matcher.label });
 
   // User fills the Page URL to track
-  await page.locator("[name='noCodeConfig.[pageUrl].value']").fill(matcher.value);
+  await page.locator("[name='noCodeConfig.pageUrl.value']").fill(matcher.value);
 
   // User fills the Test URL to track
-  await page.locator("[name='noCodeConfig.[pageUrl].testUrl']").fill(testURL);
+  await page.locator("[name='noCodeConfig.pageUrl.testUrl']").fill(testURL);
 
   // User clicks the Test Match button
   await page.getByRole("button", { name: "Test Match", exact: true }).click();
@@ -215,16 +215,14 @@ test.describe("Create and Edit No Code Action by Page URL", async () => {
     await expect(page.getByLabel("Description")).toBeVisible();
     await page.getByLabel("Description").fill(actions.edit.noCode.pageURL.description);
 
-    await expect(page.locator("[name='noCodeConfig.[pageUrl].rule']")).toBeVisible();
+    await expect(page.locator("[name='noCodeConfig.pageUrl.rule']")).toBeVisible();
     await page
-      .locator("[name='noCodeConfig.[pageUrl].rule']")
+      .locator("[name='noCodeConfig.pageUrl.rule']")
       .selectOption({ label: actions.edit.noCode.pageURL.matcher.label });
 
-    await page
-      .locator("[name='noCodeConfig.[pageUrl].value']")
-      .fill(actions.edit.noCode.pageURL.matcher.value);
+    await page.locator("[name='noCodeConfig.pageUrl.value']").fill(actions.edit.noCode.pageURL.matcher.value);
 
-    await page.locator("[name='noCodeConfig.[pageUrl].testUrl']").fill(actions.edit.noCode.pageURL.testURL);
+    await page.locator("[name='noCodeConfig.pageUrl.testUrl']").fill(actions.edit.noCode.pageURL.testURL);
     await page.getByRole("button", { name: "Test Match", exact: true }).click();
     await page.getByRole("button", { name: "Save changes", exact: true }).click();
   });

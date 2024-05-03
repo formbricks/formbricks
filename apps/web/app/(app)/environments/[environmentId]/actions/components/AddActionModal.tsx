@@ -1,6 +1,7 @@
 "use client";
 
 import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/actions/actions";
+import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { MousePointerClickIcon } from "lucide-react";
 import { Terminal } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -26,19 +27,6 @@ interface AddNoCodeActionModalProps {
   isViewer: boolean;
 }
 
-function isValidCssSelector(selector?: string) {
-  if (!selector || selector.length === 0) {
-    return false;
-  }
-  const element = document.createElement("div");
-  try {
-    element.querySelector(selector);
-  } catch (err) {
-    return false;
-  }
-  return true;
-}
-
 export default function AddNoCodeActionModal({
   environmentId,
   open,
@@ -47,7 +35,7 @@ export default function AddNoCodeActionModal({
   setActionClasses,
   isViewer,
 }: AddNoCodeActionModalProps) {
-  const { register, control, handleSubmit, watch, reset } = useForm<TActionClassInput>({
+  const { register, control, handleSubmit, watch, reset } = useForm<TActionClass>({
     defaultValues: {
       name: "",
       description: "",

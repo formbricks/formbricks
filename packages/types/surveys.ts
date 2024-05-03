@@ -493,18 +493,6 @@ export const ZSurvey = z.object({
   languages: z.array(ZSurveyLanguage),
 });
 
-export const ZSurveyWithRefinements = ZSurvey.extend({
-  triggers: z
-    .array(
-      ZActionClass.partial({
-        description: true,
-        noCodeConfig: true,
-      })
-    )
-    .optional(),
-});
-
-export type TSurveyWithRefinements = z.infer<typeof ZSurveyWithRefinements>;
 export const ZSurveyInput = z.object({
   name: z.string(),
   type: ZSurveyType.optional(),

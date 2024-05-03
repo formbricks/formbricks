@@ -135,60 +135,6 @@ export default function AppPage({}) {
               try again.
             </p>
           </div>
-
-          {/* <div className="pt-6">
-            <div>
-              <button
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
-                onClick={() => {
-                  formbricksWebsite.track("New Session");
-                }}>
-                Track New Session
-              </button>
-            </div>
-            <div>
-              <p className="text-xs text-slate-700 dark:text-slate-300">
-                This button sends an Action to the Formbricks API called &apos;New Session&apos;. You will
-                find it in the Actions Tab.
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-6">
-            <div>
-              <button
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
-                onClick={() => {
-                  formbricksWebsite.track("Exit Intent");
-                }}>
-                Track Exit Intent
-              </button>
-            </div>
-            <div>
-              <p className="text-xs text-slate-700 dark:text-slate-300">
-                This button sends an Action to the Formbricks API called &apos;Exit Intent&apos;. You can also
-                move your mouse to the top of the browser to trigger the exit intent.
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-6">
-            <div>
-              <button
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
-                onClick={() => {
-                  formbricksWebsite.track("50% Scroll");
-                }}>
-                Track 50% Scroll
-              </button>
-            </div>
-            <div>
-              <p className="text-xs text-slate-700 dark:text-slate-300">
-                This button sends an Action to the Formbricks API called &apos;50% Scroll&apos;. You can also
-                scroll down to trigger the 50% scroll.
-              </p>
-            </div>
-          </div> */}
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { AddActionModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddActionModal";
+import { getFormattedActionClassName } from "@/app/lib/actionClass/actionClass";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
   CheckIcon,
@@ -19,6 +19,8 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
+
+import { AddActionModal } from "./AddActionModal";
 
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
@@ -49,7 +51,7 @@ export default function WhenToSendCard({
 
   const handleRemoveTriggerEvent = (idx: number) => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers.splice(idx, 1);
+    updatedSurvey.triggers = [...localSurvey.triggers.slice(0, idx), ...localSurvey.triggers.slice(idx + 1)];
     setLocalSurvey(updatedSurvey);
   };
 
@@ -177,7 +179,9 @@ export default function WhenToSendCard({
                           ) : null}
                         </div>
 
-                        <h4 className="text-sm font-semibold text-slate-600">{trigger.name}</h4>
+                        <h4 className="text-sm font-semibold text-slate-600">
+                          {getFormattedActionClassName(trigger.name)}
+                        </h4>
                       </div>
                       <p className="mt-1 text-xs text-gray-500">{trigger.description}</p>
                     </div>

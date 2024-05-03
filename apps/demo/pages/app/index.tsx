@@ -136,26 +136,6 @@ export default function AppPage({}) {
             </p>
           </div>
 
-          {/* <div className="p-6">
-            <div>
-              <button
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
-                onClick={() => {
-                  formbricksApp.track("Code Action");
-                }}>
-                Code Action
-              </button>
-            </div>
-            <div>
-              <p className="text-xs text-slate-700 dark:text-slate-300">
-                This button sends a{" "}
-                <a href="https://formbricks.com/docs/actions/code" className="underline" target="_blank">
-                  Code Action
-                </a>{" "}
-                to the Formbricks API called &apos;Code Action&apos;. You will find it in the Actions Tab.
-              </p>
-            </div>
-          </div> */}
           <div className="p-6">
             <div>
               <button className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">

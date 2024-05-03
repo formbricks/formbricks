@@ -10,12 +10,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import {
-  TSurvey,
-  TSurveyFilterCriteria,
-  TSurveyInput,
-  ZSurveyWithRefinements,
-} from "@formbricks/types/surveys";
+import { TSurvey, TSurveyFilterCriteria, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
 
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
@@ -345,7 +340,7 @@ export const getSurveyCount = async (environmentId: string): Promise<number> =>
   )();
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
-  validateInputs([updatedSurvey, ZSurveyWithRefinements]);
+  validateInputs([updatedSurvey, ZSurvey]);
 
   try {
     const surveyId = updatedSurvey.id;

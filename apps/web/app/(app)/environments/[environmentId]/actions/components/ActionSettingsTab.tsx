@@ -12,7 +12,12 @@ import { toast } from "react-hot-toast";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
-import { TActionClassInput, TActionClassNoCodeConfig, TNoCodeConfig } from "@formbricks/types/actionClasses";
+import {
+  TActionClass,
+  TActionClassInput,
+  TActionClassNoCodeConfig,
+  TNoCodeConfig,
+} from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Button } from "@formbricks/ui/Button";
@@ -44,7 +49,7 @@ export default function ActionSettingsTab({
   const [isDeletingAction, setIsDeletingAction] = useState(false);
   const { isViewer } = getAccessFlags(membershipRole);
 
-  const { register, handleSubmit, control, watch } = useForm({
+  const { register, handleSubmit, control, watch } = useForm<TActionClass>({
     defaultValues: {
       name: actionClass.name,
       description: actionClass.description,
@@ -73,8 +78,8 @@ export default function ActionSettingsTab({
   const handleMatchClick = () => {
     const match = testURLmatch(
       testUrl,
-      watch("noCodeConfig.[pageUrl].value"),
-      watch("noCodeConfig.[pageUrl].rule")
+      watch("noCodeConfig.pageUrl.value"),
+      watch("noCodeConfig.pageUrl.rule")
     );
     setIsMatch(match);
     if (match === "yes") toast.success("Your survey would be shown on this URL.");
@@ -153,7 +158,7 @@ export default function ActionSettingsTab({
           )}
 
           {actionClass.type === "code" && (
-            <div className="col-span-1">
+            <div className="col-span-1 mt-4">
               <Label htmlFor="actionKeySettingsInput">Code</Label>
               <Input
                 id="actionKeySettingsInput"

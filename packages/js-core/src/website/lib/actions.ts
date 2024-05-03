@@ -7,8 +7,8 @@ const logger = Logger.getInstance();
 const websiteConfig = WebsiteConfig.getInstance();
 
 export const trackAction = async (name: string, alias?: string): Promise<Result<void, NetworkError>> => {
-  alias = alias || name;
-  logger.debug(`Formbricks: Action "${alias}" tracked`);
+  const aliasName = alias || name;
+  logger.debug(`Formbricks: Action "${aliasName}" tracked`);
 
   // get a list of surveys that are collecting insights
   const activeSurveys = websiteConfig.get().state?.surveys;

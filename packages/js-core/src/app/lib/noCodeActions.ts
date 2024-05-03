@@ -137,7 +137,7 @@ export const checkClickMatch = (event: MouseEvent) => {
   }
 
   const { noCodeActionClasses } = state;
-  if (!noCodeActionClasses) {
+  if (!noCodeActionClasses.length) {
     return;
   }
 

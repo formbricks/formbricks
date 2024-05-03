@@ -1,3 +1,4 @@
+import { getFormattedActionClassName } from "@/app/lib/actionClass/actionClass";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 
 import { TActionClass } from "@formbricks/types/actionClasses";
@@ -63,7 +64,7 @@ export default function ActionDetailModal({
             <SparklesIcon className="h-5 w-5" />
           ) : null
         }
-        label={actionClass.name}
+        label={getFormattedActionClassName(actionClass.name)}
         description={actionClass.description || ""}
       />
     </>

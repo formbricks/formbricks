@@ -14,7 +14,7 @@ const inAppConfig = AppConfig.getInstance();
 const intentsToNotCreateOnApp = ["Exit Intent (Desktop)", "50% Scroll"];
 
 export const trackAction = async (name: string, alias?: string): Promise<Result<void, NetworkError>> => {
-  alias = alias || name;
+  const aliasName = alias || name;
   const { userId } = inAppConfig.get();
 
   const input: TJsActionInput = {
@@ -25,7 +25,7 @@ export const trackAction = async (name: string, alias?: string): Promise<Result<
 
   // don't send actions to the backend if the person is not identified
   if (userId && !intentsToNotCreateOnApp.includes(name)) {
-    logger.debug(`Sending action "${alias}" to backend`);
+    logger.debug(`Sending action "${aliasName}" to backend`);
 
     const api = new FormbricksAPI({
       apiHost: inAppConfig.get().apiHost,
@@ -39,7 +39,7 @@ export const trackAction = async (name: string, alias?: string): Promise<Result<
     if (!res.ok) {
       return err({
         code: "network_error",
-        message: `Error tracking action ${alias}`,
+        message: `Error tracking action ${aliasName}`,
         status: 500,
         url: `${inAppConfig.get().apiHost}/api/v1/client/${inAppConfig.get().environmentId}/actions`,
         responseMessage: res.error.message,
@@ -62,7 +62,7 @@ export const trackAction = async (name: string, alias?: string): Promise<Result<
     }
   }
 
-  logger.debug(`Formbricks: Action "${alias}" tracked`);
+  logger.debug(`Formbricks: Action "${aliasName}" tracked`);
 
   // get a list of surveys that are collecting insights
   const activeSurveys = inAppConfig.get().state?.surveys;

@@ -2,6 +2,8 @@ import { Label } from "@radix-ui/react-dropdown-menu";
 import clsx from "clsx";
 import { Control, Controller, UseFormRegister } from "react-hook-form";
 
+import { TActionClass } from "@formbricks/types/actionClasses";
+
 import { AdvancedOptionToggle } from "../../AdvancedOptionToggle";
 import { Button } from "../../Button";
 import { Input } from "../../Input";
@@ -15,8 +17,8 @@ interface PageUrlSelectorProps {
   isMatch: string;
   setIsMatch: (value: string) => void;
   handleMatchClick: () => void;
-  control: Control<any>;
-  register: UseFormRegister<any>;
+  control: Control<TActionClass>;
+  register: UseFormRegister<TActionClass>;
 }
 
 export const PageUrlSelector = ({
@@ -45,10 +47,10 @@ export const PageUrlSelector = ({
           <div className="col-span-1">
             <Label>URL</Label>
             <Controller
-              name="noCodeConfig.[pageUrl].rule"
+              name="noCodeConfig.pageUrl.rule"
               control={control}
               render={({ field: { onChange, value, name } }) => (
-                <Select onValueChange={onChange} {...value} value={value} name={name}>
+                <Select onValueChange={onChange} value={value} name={name}>
                   <SelectTrigger className="w-[160px] bg-white">
                     <SelectValue placeholder="Select match type" />
                   </SelectTrigger>
@@ -69,7 +71,7 @@ export const PageUrlSelector = ({
               type="text"
               className="bg-white"
               placeholder="e.g. https://app.com/dashboard"
-              {...register("noCodeConfig.[pageUrl].value", { required: isPageUrl })}
+              {...register("noCodeConfig.pageUrl.value", { required: isPageUrl })}
             />
           </div>
         </div>
@@ -83,7 +85,7 @@ export const PageUrlSelector = ({
               <Input
                 type="text"
                 value={testUrl}
-                name="noCodeConfig.[pageUrl].testUrl"
+                name="noCodeConfig.pageUrl.testUrl"
                 onChange={(e) => {
                   setTestUrl(e.target.value);
                   setIsMatch("default");

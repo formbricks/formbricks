@@ -124,6 +124,9 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
 
     let actionClass = await getActionClassByEnvironmentIdAndName(environmentId, name);
 
+    // DEPRECATED - This functionality is deprecated and will be removed in the future
+    // Reason: An action shouldn't create an ActionClass automatically
+    // Deprecated since 06-05-2024
     if (!actionClass) {
       actionClass = await createActionClass(environmentId, {
         name,
