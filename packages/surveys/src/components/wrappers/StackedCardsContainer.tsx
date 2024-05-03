@@ -73,7 +73,7 @@ export const StackedCardsContainer = ({
     };
   }, [cardArrangement, hovered]);
 
-  const straightCardArrangementClasses = (offset: number) => {
+  const straightCardArrangementStyles = (offset: number) => {
     if (cardArrangement === "straight") {
       // styles to set the descending width of stacked question cards when card arrangement is set to straight
       return {
@@ -131,7 +131,7 @@ export const StackedCardsContainer = ({
                 transitionDuration: cardArrangement === "simple" ? "0ms" : "600ms",
                 pointerEvents: offset === 0 ? "auto" : "none",
                 ...borderStyles,
-                ...straightCardArrangementClasses(offset),
+                ...straightCardArrangementStyles(offset),
               }}
               className="pointer rounded-custom bg-survey-bg absolute inset-x-0 backdrop-blur-md transition-all ease-in-out">
               {getCardContent(index, offset)}
