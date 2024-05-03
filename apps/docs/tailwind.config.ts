@@ -10,13 +10,10 @@ export default {
   trailingSlash: true,
   content: [
     // app content
-    "./app/**/*.{js,mjs,jsx,ts,tsx,mdx}", // Note the addition of the `app` directory.
-    "./pages/**/*.{js,mjs,jsx,ts,tsx,mdx}",
+    "./app/**/*.{js,mjs,jsx,ts,tsx,mdx}",
     "./components/**/*.{js,mjs,jsx,ts,tsx,mdx}",
     "./lib/**/*.{js,mjs,jsx,ts,tsx,mdx}",
     "./mdx/**/*.{js,mjs,jsx,ts,tsx,mdx}",
-    // include packages if not transpiling
-    "../../packages/ui/components/**/*.{js,ts,jsx,tsx}",
   ],
   darkMode: "class",
   theme: {
