@@ -45,6 +45,7 @@ export default function DeleteTeam({ team, isDeleteDisabled = false, isUserOwner
             This action cannot be undone. If it&apos;s gone, it&apos;s gone.
           </p>
           <Button
+            size="sm"
             disabled={isDeleteDisabled}
             variant="warn"
             className={`mt-4 ${isDeleteDisabled ? "ring-grey-500 ring-1 ring-offset-1" : ""}`}

@@ -176,10 +176,15 @@ export default function PricingTableComponent({
       <div className="justify-between gap-4 rounded-lg">
         {team.billing.stripeCustomerId ? (
           <div className="flex w-full justify-end">
-            <Button variant="minimal" className="justify-center py-2 shadow-sm" onClick={openCustomerPortal}>
+            <Button
+              variant="minimal"
+              className="justify-center py-2 shadow-sm"
+              size="sm"
+              onClick={openCustomerPortal}>
               Cancel Subscription
             </Button>
             <Button
+              size="sm"
               variant="secondary"
               className="justify-center py-2 shadow-sm"
               loading={loadingCustomerPortal}

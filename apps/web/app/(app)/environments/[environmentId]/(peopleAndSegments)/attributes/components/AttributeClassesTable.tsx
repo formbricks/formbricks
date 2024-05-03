@@ -8,7 +8,6 @@ import { Switch } from "@formbricks/ui/Switch";
 import { AttributeDetailModal } from "./AttributeDetailModal";
 import { AttributeClassDataRow } from "./AttributeRowData";
 import { AttributeTableHeading } from "./AttributeTableHeading";
-import { HowToAddAttributesButton } from "./HowToAddAttributesButton";
 import { UploadAttributesModal } from "./UploadAttributesModal";
 
 interface AttributeClassesTableProps {
@@ -44,16 +43,15 @@ export const AttributeClassesTable = ({ attributeClasses }: AttributeClassesTabl
 
   return (
     <>
-      <div className="my-4 flex items-center justify-end text-right">
-        {hasArchived && (
+      {hasArchived && (
+        <div className="my-4 flex items-center justify-end text-right">
           <div className="flex items-center text-sm font-medium">
             Show archived
             <Switch className="mx-3" checked={showArchived} onCheckedChange={toggleShowArchived} />
           </div>
-        )}
-        <HowToAddAttributesButton />
-      </div>
-      <div className="rounded-lg border border-slate-200">
+        </div>
+      )}
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <AttributeTableHeading />
         <div className="grid-cols-7">
           {displayedAttributeClasses.map((attributeClass, index) => (

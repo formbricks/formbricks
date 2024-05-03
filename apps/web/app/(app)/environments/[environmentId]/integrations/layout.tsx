@@ -1,11 +1,11 @@
 import { Metadata } from "next";
 
-import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
+import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
 
 export const metadata: Metadata = {
   title: "Integrations",
 };
 
 export default function IntegrationsLayout({ children }) {
-  return <ContentWrapper pageTitle="Integrations">{children}</ContentWrapper>;
+  return <InnerContentWrapper pageTitle="Integrations">{children}</InnerContentWrapper>;
 }

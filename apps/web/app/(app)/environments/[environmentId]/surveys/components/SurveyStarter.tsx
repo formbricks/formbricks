@@ -45,16 +45,15 @@ export default function SurveyStarter({
     }
   };
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col py-12">
+    <div className="mx-auto flex w-full max-w-5xl flex-col  py-20">
       {isCreateSurveyLoading ? (
         <LoadingSpinner />
       ) : (
         <>
-          <div className="px-7 pb-4">
-            <h1 className="text-3xl font-extrabold text-slate-700">
-              You&apos;re all set! Time to create your first survey.
-            </h1>
-          </div>
+          <h1 className="px-6 text-3xl font-extrabold text-slate-700">
+            You&apos;re all set! Time to create your first survey.
+          </h1>
+
           <TemplateList
             environmentId={environmentId}
             onTemplateClick={(template) => {

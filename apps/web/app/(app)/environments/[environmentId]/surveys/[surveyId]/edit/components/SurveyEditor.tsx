@@ -127,7 +127,7 @@ export default function SurveyEditor({
 
   return (
     <>
-      <div className="flex h-full flex-col">
+      <div className="flex h-screen flex-col">
         <SurveyMenuBar
           setLocalSurvey={setLocalSurvey}
           localSurvey={localSurvey}

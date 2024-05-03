@@ -22,10 +22,9 @@ import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
-import { TSurveySummary } from "@formbricks/types/surveys";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveySummary } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
-import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
+import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
 
 import { SummaryList } from "./SummaryList";
 import { SummaryMetadata } from "./SummaryMetadata";
@@ -125,7 +124,7 @@ const SummaryPage = ({
   }, [searchParams, resetState]);
 
   return (
-    <ContentWrapper>
+    <InnerContentWrapper>
       <SummaryHeader
         environment={environment}
         survey={survey}
@@ -160,7 +159,7 @@ const SummaryPage = ({
         fetchingSummary={isFetchingSummary}
         totalResponseCount={totalResponseCount}
       />
-    </ContentWrapper>
+    </InnerContentWrapper>
   );
 };
 

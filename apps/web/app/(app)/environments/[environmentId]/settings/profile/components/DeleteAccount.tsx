@@ -18,7 +18,7 @@ export function EditAvatar({ session }) {
     <div>
       <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
 
-      <Button className="mt-4" variant="darkCTA" disabled={true}>
+      <Button className="mt-4" variant="darkCTA" size="sm" disabled={true}>
         Upload Image
       </Button>
     </div>
@@ -125,7 +125,7 @@ export function DeleteAccount({
       <p className="text-sm text-slate-700">
         Delete your account with all personal data. <strong>This cannot be undone!</strong>
       </p>
-      <Button className="mt-4" variant="warn" onClick={() => setModalOpen(!isModalOpen)}>
+      <Button className="mt-4" variant="warn" size="sm" onClick={() => setModalOpen(!isModalOpen)}>
         Delete my account
       </Button>
     </div>

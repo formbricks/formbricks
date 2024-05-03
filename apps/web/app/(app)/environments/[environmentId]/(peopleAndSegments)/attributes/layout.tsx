@@ -1,12 +1,12 @@
 import PeopleSegmentsTabs from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/components/PeopleSegmentsTabs";
 
-import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
+import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
 
 export default function ActionsAndAttributesLayout({ params, children }) {
   return (
-    <ContentWrapper>
+    <InnerContentWrapper pageTitle="Attributes">
       <PeopleSegmentsTabs activeId="attributes" environmentId={params.environmentId} />
       {children}
-    </ContentWrapper>
+    </InnerContentWrapper>
   );
 }

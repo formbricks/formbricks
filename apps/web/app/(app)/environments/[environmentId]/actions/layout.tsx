@@ -1,9 +1,5 @@
-import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
+import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
 
 export default function ActionsAndAttributesLayout({ children }) {
-  return (
-    <ContentWrapper pageTitle="Actions" isPageTitleCollapsed>
-      {children}
-    </ContentWrapper>
-  );
+  return <InnerContentWrapper pageTitle="Actions">{children}</InnerContentWrapper>;
 }

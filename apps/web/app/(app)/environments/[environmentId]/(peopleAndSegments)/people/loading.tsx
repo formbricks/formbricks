@@ -1,12 +1,6 @@
-import HowToAddPeopleButton from "@/app/(app)/environments/[environmentId]/components/HowToAddPeopleButton";
-
 export default function Loading() {
   return (
     <>
-      <div className="my-4 text-right">
-        <HowToAddPeopleButton />
-      </div>
-
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-3 pl-6">User</div>

@@ -4,16 +4,10 @@ import clsx from "clsx";
 import {
   BellRingIcon,
   BoltIcon,
-  BrushIcon,
   ChevronDownIcon,
   CreditCardIcon,
-  FileCheckIcon,
   FileSearch2Icon,
-  HashIcon,
-  KeyIcon,
-  LanguagesIcon,
   LinkIcon,
-  SlidersIcon,
   UserCircleIcon,
   UsersIcon,
 } from "lucide-react";
@@ -89,47 +83,6 @@ export default function SettingsNavbar({
         hidden: false,
       },
       {
-        title: "Product",
-        links: [
-          {
-            name: "Settings",
-            href: `/environments/${environmentId}/settings/product`,
-            icon: SlidersIcon,
-            current: pathname?.includes("/product"),
-            hidden: false,
-          },
-          {
-            name: "Look & Feel",
-            href: `/environments/${environmentId}/settings/lookandfeel`,
-            icon: BrushIcon,
-            current: pathname?.includes("/lookandfeel"),
-            hidden: isViewer,
-          },
-          {
-            name: "Survey Languages",
-            href: `/environments/${environmentId}/settings/language`,
-            icon: LanguagesIcon,
-            current: pathname?.includes("/language"),
-            hidden: !isMultiLanguageAllowed,
-          },
-          {
-            name: "API Keys",
-            href: `/environments/${environmentId}/settings/api-keys`,
-            icon: KeyIcon,
-            current: pathname?.includes("/api-keys"),
-            hidden: isViewer,
-          },
-          {
-            name: "Tags",
-            href: `/environments/${environmentId}/settings/tags`,
-            icon: HashIcon,
-            current: pathname?.includes("/tags"),
-            hidden: isViewer,
-          },
-        ],
-        hidden: isViewer,
-      },
-      {
         title: "Team",
         links: [
           {
@@ -159,13 +112,6 @@ export default function SettingsNavbar({
       {
         title: "Setup",
         links: [
-          {
-            name: "Setup Checklist",
-            href: `/environments/${environmentId}/settings/setup`,
-            icon: FileCheckIcon,
-            current: pathname?.includes("/setup"),
-            hidden: false,
-          },
           {
             name: "Documentation",
             href: "https://formbricks.com/docs",
@@ -225,8 +171,8 @@ export default function SettingsNavbar({
 
   return (
     <>
-      <div className="fixed hidden h-full overflow-y-scroll bg-white py-2 pl-4 pr-10 md:block ">
-        <nav className="flex-1 space-y-1 bg-white px-2">
+      <div className="fixed top-16 ml-8">
+        <nav className="flex-1 space-y-1 px-2">
           {navigation.map(
             (item) =>
               !item.hidden && (
@@ -250,9 +196,9 @@ export default function SettingsNavbar({
                           target={link.target}
                           className={clsx(
                             link.current
-                              ? "bg-slate-100 text-slate-900"
-                              : "text-slate-900 hover:bg-slate-50 ",
-                            "group flex items-center whitespace-nowrap rounded-md px-1 py-1 pl-2 text-sm font-medium "
+                              ? "bg-slate-200 text-slate-900"
+                              : "text-slate-900 hover:bg-slate-100 ",
+                            "group flex items-center whitespace-nowrap rounded-md px-1 py-1 pl-2 text-sm"
                           )}>
                           <link.icon
                             className="mr-3 h-4 w-4 flex-shrink-0 text-slate-400 group-hover:text-slate-500"

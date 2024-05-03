@@ -26,7 +26,7 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
+import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
 
 interface ResponsePageProps {
   environment: TEnvironment;
@@ -164,7 +164,7 @@ const ResponsePage = ({
   }, [filters]);
 
   return (
-    <ContentWrapper>
+    <InnerContentWrapper>
       <SummaryHeader
         environment={environment}
         survey={survey}
@@ -200,7 +200,7 @@ const ResponsePage = ({
         totalResponseCount={totalResponseCount}
         isSharingPage={isSharingPage}
       />
-    </ContentWrapper>
+    </InnerContentWrapper>
   );
 };
 

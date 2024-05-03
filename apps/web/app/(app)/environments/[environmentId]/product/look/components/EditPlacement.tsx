@@ -121,7 +121,12 @@ export function EditPlacement({ product }: EditPlacementProps) {
           </div>
         </>
       )}
-      <Button variant="darkCTA" className="mt-4" loading={updatingPlacement} onClick={handleUpdatePlacement}>
+      <Button
+        variant="darkCTA"
+        className="mt-4"
+        size="sm"
+        loading={updatingPlacement}
+        onClick={handleUpdatePlacement}>
         Save
       </Button>
     </div>

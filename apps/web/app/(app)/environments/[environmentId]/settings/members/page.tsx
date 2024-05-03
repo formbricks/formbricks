@@ -12,7 +12,6 @@ import { SettingsId } from "@formbricks/ui/SettingsId";
 import { Skeleton } from "@formbricks/ui/Skeleton";
 
 import SettingsCard from "../components/SettingsCard";
-import SettingsTitle from "../components/SettingsTitle";
 import DeleteTeam from "./components/DeleteTeam";
 import { EditMemberships } from "./components/EditMemberships";
 import EditTeamName from "./components/EditTeamName";
@@ -65,7 +64,6 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
 
   return (
     <div>
-      <SettingsTitle title="Team" />
       <SettingsCard title="Manage members" description="Add or remove members in your team.">
         {currentUserRole && (
           <TeamActions

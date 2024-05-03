@@ -122,7 +122,7 @@ const CreateSegmentModal = ({
     <>
       <div className="my-4 flex justify-end">
         <Button variant="darkCTA" onClick={() => setOpen(true)}>
-          Create Segment
+          Create segment
         </Button>
       </div>
 
@@ -241,7 +241,7 @@ const CreateSegmentModal = ({
                   onClick={() => {
                     handleCreateSegment();
                   }}>
-                  Create Segment
+                  Create segment
                 </Button>
               </div>
             </div>

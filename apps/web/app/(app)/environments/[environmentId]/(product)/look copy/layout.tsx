@@ -1,4 +1,3 @@
-import ProductConfigTabs from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigTabs";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 
@@ -36,10 +35,5 @@ export default async function ConfigLayout({ children, params }) {
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
-  return (
-    <InnerContentWrapper pageTitle="Configuration">
-      <ProductConfigTabs activeId="setup" environmentId={params.environmentId} />
-      {children}
-    </InnerContentWrapper>
-  );
+  return <InnerContentWrapper pageTitle="Configuration">{children}</InnerContentWrapper>;
 }

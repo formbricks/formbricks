@@ -7,7 +7,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
+import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
 
 export const metadata: Metadata = {
   title: "Config",
@@ -37,9 +37,9 @@ export default async function ConfigLayout({ children, params }) {
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
   return (
-    <ContentWrapper pageTitle="Configuration">
+    <InnerContentWrapper pageTitle="Configuration">
       <ProductConfigTabs activeId="languages" environmentId={params.environmentId} />
       {children}
-    </ContentWrapper>
+    </InnerContentWrapper>
   );
 }

@@ -5,12 +5,10 @@ import { Badge } from "@formbricks/ui/Badge";
 
 export const AttributeClassDataRow = ({ attributeClass }) => {
   return (
-    <div className="m-2 grid h-16  grid-cols-5 content-center rounded-lg hover:bg-slate-100">
+    <div className="m-2 grid h-16  grid-cols-5 content-center rounded-lg transition-colors ease-in-out hover:bg-slate-100">
       <div className="col-span-5 flex items-center pl-6 text-sm sm:col-span-3">
         <div className="flex items-center">
-          <div className="h-10 w-10 flex-shrink-0">
-            <TagIcon className="h-8 w-8 flex-shrink-0 text-slate-500" />
-          </div>
+          <TagIcon className="h-5 w-5 flex-shrink-0 text-slate-500" />
           <div className="ml-4 text-left">
             <div className="font-medium text-slate-900">
               {attributeClass.name}

@@ -208,7 +208,7 @@ export default function Navigation({
         {
           icon: FileCheckIcon,
           label: "Setup checklist",
-          href: `/environments/${environment.id}/settings/setup`,
+          href: `/environments/${environment.id}/product/setup`,
           hidden: widgetSetupCompleted,
         },
         {
@@ -341,7 +341,7 @@ export default function Navigation({
                       <ChevronDownIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
                     </div>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" id="userDropdownContentWrapper">
+                  <DropdownMenuContent className="w-56" id="userDropdownInnerContentWrapper">
                     <DropdownMenuLabel className="cursor-default break-all">
                       <span className="ph-no-capture font-normal">Signed in as </span>
                       {session?.user?.name && session?.user?.name.length > 30 ? (

@@ -1,7 +1,7 @@
 import PeopleSegmentsTabs from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/components/PeopleSegmentsTabs";
 import { Metadata } from "next";
 
-import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
+import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
 
 export const metadata: Metadata = {
   title: "People",
@@ -9,9 +9,9 @@ export const metadata: Metadata = {
 
 export default async function PeopleLayout({ params, children }) {
   return (
-    <ContentWrapper>
+    <InnerContentWrapper pageTitle="Respondents">
       <PeopleSegmentsTabs activeId="respondents" environmentId={params.environmentId} />
       {children}
-    </ContentWrapper>
+    </InnerContentWrapper>
   );
 }

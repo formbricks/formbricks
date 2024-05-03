@@ -182,7 +182,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
                           </p>
                           <p className="text-xs font-normal">
                             <Link
-                              href={`/environments/${environment.id}/settings/setup`}
+                              href={`/environments/${environment.id}/product/setup`}
                               className="underline hover:text-amber-900"
                               target="_blank">
                               Connect Formbricks

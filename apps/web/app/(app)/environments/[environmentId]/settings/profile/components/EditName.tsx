@@ -62,6 +62,7 @@ export function EditName({ user }: { user: TUser }) {
           type="submit"
           variant="darkCTA"
           className="mt-4"
+          size="sm"
           loading={isSubmitting}
           disabled={nameValue === "" || isSubmitting}>
           Update

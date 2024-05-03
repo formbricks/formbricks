@@ -2,17 +2,15 @@ import clsx from "clsx";
 import { AlertTriangleIcon, CheckIcon } from "lucide-react";
 import Link from "next/link";
 
-import { getEnvironment } from "@formbricks/lib/environment/service";
+import { TEnvironment } from "@formbricks/types/environment";
 import { Label } from "@formbricks/ui/Label";
 
 interface WidgetStatusIndicatorProps {
-  environmentId: string;
+  environment: TEnvironment;
   type: "large" | "mini";
 }
 
-export default async function WidgetStatusIndicator({ environmentId, type }: WidgetStatusIndicatorProps) {
-  const environment = await getEnvironment(environmentId);
-
+export default async function WidgetStatusIndicator({ environment, type }: WidgetStatusIndicatorProps) {
   if (!environment) {
     throw new Error("Environment not found");
   }
@@ -66,8 +64,8 @@ export default async function WidgetStatusIndicator({ environmentId, type }: Wid
   }
   if (type === "mini") {
     return (
-      <Link href={`/environments/${environment.id}/settings/setup`}>
-        <div className="group my-3 flex justify-center">
+      <Link href={`/environments/${environment.id}/product/setup`}>
+        <div className="group flex justify-center">
           <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
             <Label className="group-hover:cursor-pointer group-hover:underline">
               {currentStatus.shortText}

@@ -86,6 +86,7 @@ export default function EditTeamName({ team, membershipRole }: EditTeamNameProps
         type="submit"
         className="mt-4"
         variant="darkCTA"
+        size="sm"
         loading={isUpdatingTeam}
         disabled={isTeamNameInputEmpty || currentTeamName === previousTeamName}>
         Update

@@ -11,9 +11,5 @@ export const metadata: Metadata = {
 export default async function AttributesPage({ params }) {
   let attributeClasses = await getAttributeClasses(params.environmentId);
 
-  return (
-    <>
-      <AttributeClassesTable attributeClasses={attributeClasses} />
-    </>
-  );
+  return <AttributeClassesTable attributeClasses={attributeClasses} />;
 }

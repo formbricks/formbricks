@@ -6,7 +6,6 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getUser } from "@formbricks/lib/user/service";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
-import SettingsTitle from "../components/SettingsTitle";
 import EditAlerts from "./components/EditAlerts";
 import EditWeeklySummary from "./components/EditWeeklySummary";
 import IntegrationsTip from "./components/IntegrationsTip";
@@ -96,7 +95,6 @@ export default async function ProfileSettingsPage({ params, searchParams }) {
 
   return (
     <div>
-      <SettingsTitle title="Notifications" />
       <SettingsCard
         title="Email alerts (Surveys)"
         description="Set up an alert to get an email on new responses.">

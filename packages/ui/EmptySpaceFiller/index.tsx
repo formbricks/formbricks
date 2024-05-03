@@ -31,7 +31,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
             {!environment.widgetSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex w-full items-center justify-center"
-                href={`/environments/${environment.id}/settings/setup`}>
+                href={`/environments/${environment.id}/product/setup`}>
                 <span className="decoration-brand-dark underline  transition-all duration-300  ease-in-out">
                   Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>
                 </span>
@@ -60,7 +60,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
             {!environment.widgetSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex h-full w-full items-center justify-center"
-                href={`/environments/${environment.id}/settings/setup`}>
+                href={`/environments/${environment.id}/product/setup`}>
                 <span className="decoration-brand-dark underline  transition-all duration-300 ease-in-out">
                   Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>
                 </span>
@@ -91,7 +91,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
             {!environment.widgetSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex h-full w-full items-center justify-center"
-                href={`/environments/${environment.id}/settings/setup`}>
+                href={`/environments/${environment.id}/product/setup`}>
                 <span className="decoration-brand-dark underline  transition-all duration-300 ease-in-out">
                   Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>
                 </span>
@@ -139,7 +139,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
           {!environment.widgetSetupCompleted && !noWidgetRequired && (
             <Link
               className="flex h-full w-full items-center justify-center"
-              href={`/environments/${environment.id}/settings/setup`}>
+              href={`/environments/${environment.id}/product/setup`}>
               <span className="decoration-brand-dark underline  transition-all duration-300 ease-in-out">
                 Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>
               </span>

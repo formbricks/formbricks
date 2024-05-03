@@ -2,7 +2,7 @@
 
 import DisableTwoFactorModal from "@/app/(app)/environments/[environmentId]/settings/profile/components/DisableTwoFactorModal";
 import EnableTwoFactorModal from "@/app/(app)/environments/[environmentId]/settings/profile/components/EnableTwoFactorModal";
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { TUser } from "@formbricks/types/user";
 import { Switch } from "@formbricks/ui/Switch";
@@ -25,9 +25,9 @@ const AccountSecurity = ({ user }: { user: TUser }) => {
           }}
         />
         <div className="flex flex-col">
-          <h1 className="text-base font-semibold">Two factor authentication</h1>
+          <h1 className="text-sm font-semibold text-slate-800">Two factor authentication</h1>
 
-          <p className="text-sm">
+          <p className="text-xs text-slate-600">
             Add an extra layer of security to your account in case your password is stolen.
           </p>
         </div>

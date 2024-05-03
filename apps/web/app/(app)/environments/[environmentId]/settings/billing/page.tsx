@@ -5,7 +5,6 @@ import {
   getTeamByEnvironmentId,
 } from "@formbricks/lib/team/service";
 
-import SettingsTitle from "../components/SettingsTitle";
 import PricingTable from "./components/PricingTable";
 
 export default async function BillingPage({ params }) {
@@ -20,18 +19,13 @@ export default async function BillingPage({ params }) {
   ]);
 
   return (
-    <>
-      <div>
-        <SettingsTitle title="Billing & Plan" />
-        <PricingTable
-          team={team}
-          environmentId={params.environmentId}
-          peopleCount={peopleCount}
-          responseCount={responseCount}
-          userTargetingFreeMtu={PRICING_USERTARGETING_FREE_MTU}
-          inAppSurveyFreeResponses={PRICING_APPSURVEYS_FREE_RESPONSES}
-        />
-      </div>
-    </>
+    <PricingTable
+      team={team}
+      environmentId={params.environmentId}
+      peopleCount={peopleCount}
+      responseCount={responseCount}
+      userTargetingFreeMtu={PRICING_USERTARGETING_FREE_MTU}
+      inAppSurveyFreeResponses={PRICING_APPSURVEYS_FREE_RESPONSES}
+    />
   );
 }

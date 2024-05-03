@@ -3,12 +3,14 @@
 import { PreviewSurvey } from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurvey";
 import { TemplateList } from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
 import { replacePresetPlaceholders } from "@/app/lib/templates";
+import { ArrowLeftIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import type { TTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
+import { Button } from "@formbricks/ui/Button";
 import { SearchBox } from "@formbricks/ui/SearchBox";
 
 import { minimalSurvey, templates } from "./templates";
@@ -38,12 +40,17 @@ export default function TemplateContainerWithPreview({
   }, [product]);
 
   return (
-    <div className="flex h-full flex-col ">
+    <div className="flex h-screen flex-col">
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <div className="flex-1 flex-col overflow-auto bg-slate-50">
-          <div className="flex flex-col items-center justify-between md:flex-row md:items-start">
-            <h1 className="ml-6 mt-6 text-2xl font-bold text-slate-800">Create a new survey</h1>
-            <div className="ml-6 mt-6 px-6">
+          <div className="ml-6 mt-6 flex flex-col items-center justify-between md:flex-row md:items-start">
+            <div className=" flex space-x-4">
+              <Button variant="secondary" StartIcon={ArrowLeftIcon} size="sm">
+                Back
+              </Button>
+              <h1 className="text-2xl font-bold text-slate-800">Create a new survey</h1>
+            </div>
+            <div className="px-6">
               <SearchBox
                 autoFocus
                 value={templateSearch ?? ""}

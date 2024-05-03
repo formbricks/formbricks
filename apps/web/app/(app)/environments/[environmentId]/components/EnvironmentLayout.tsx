@@ -1,12 +1,6 @@
-"use server";
-
-import TopControls from "@/app/(app)/environments/[environmentId]/components/TopControls";
-import VerticalNavigation from "@/app/(app)/environments/[environmentId]/components/VerticalNavigation";
-import WidgetStatusIndicator from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
-import FBLogo from "@/images/Formbricks-wordmark.svg";
+import SideBar from "@/app/(app)/environments/[environmentId]/components/SideBar";
+import TopControlBar from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import type { Session } from "next-auth";
-import Image from "next/image";
-import Link from "next/link";
 
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -50,26 +44,10 @@ export default async function EnvironmentLayout({
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
   return (
-    <div className="h-full overflow-hidden bg-slate-50">
-      {environment?.type === "development" && (
-        <div className="flex h-6 w-full items-center justify-center bg-orange-800 p-0.5 text-center text-xs text-white">
-          You&apos;re in an development environment. Set it up to test surveys, actions and attributes.
-        </div>
-      )}
-      <div className="max-w-8xl pr-4">
-        <div className="flex justify-between">
-          <Link
-            href={`/environments/${environment.id}/surveys/`}
-            className="flex items-center justify-center p-1">
-            <Image src={FBLogo} width={180} height={30} alt="Formbricks wordmark" />
-          </Link>
-          <div className="flex space-x-2">
-            <WidgetStatusIndicator environmentId={environment.id} type="mini" />
-            <TopControls environment={environment} environments={environments} />
-          </div>
-        </div>
-        <div className="flex w-full">
-          <VerticalNavigation
+    <>
+      <div className="bg-slate-50 transition-all ease-in-out">
+        <div className="flex">
+          <SideBar
             environment={environment}
             team={team}
             teams={teams}
@@ -81,9 +59,12 @@ export default async function EnvironmentLayout({
             membershipRole={currentUserMembership?.role}
             isMultiLanguageAllowed={isMultiLanguageAllowed}
           />
-          <main className="flex-1">{children}</main>
+          <div id="mainContent" className="min-h-screen flex-1 overflow-y-auto">
+            <TopControlBar environment={environment} environments={environments} />
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -7,7 +7,6 @@ import { getUser } from "@formbricks/lib/user/service";
 import { SettingsId } from "@formbricks/ui/SettingsId";
 
 import SettingsCard from "../components/SettingsCard";
-import SettingsTitle from "../components/SettingsTitle";
 import { DeleteAccount } from "./components/DeleteAccount";
 import { EditAvatar } from "./components/EditAvatar";
 import { EditName } from "./components/EditName";
@@ -24,8 +23,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
     <>
       {user && (
         <div>
-          <SettingsTitle title="Profile" />
-          <SettingsCard title="Personal Information" description="Update your personal information.">
+          <SettingsCard title="Personal information" description="Update your personal information.">
             <EditName user={user} />
           </SettingsCard>
           <SettingsCard title="Avatar" description="Assist your team in identifying you on Formbricks.">

@@ -3,7 +3,7 @@ import { Metadata } from "next";
 
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
+import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
 
 export const metadata: Metadata = {
   title: "Segments",
@@ -19,13 +19,13 @@ export default async function PeopleLayout({ params, children }) {
   const isUserTargetingAllowed = getAdvancedTargetingPermission(team);
 
   return (
-    <ContentWrapper>
+    <InnerContentWrapper pageTitle="Segments">
       <PeopleSegmentsTabs
         activeId="segments"
         environmentId={params.environmentId}
         isUserTargetingAllowed={isUserTargetingAllowed}
       />
       {children}
-    </ContentWrapper>
+    </InnerContentWrapper>
   );
 }

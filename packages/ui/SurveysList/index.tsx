@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys";
 
-import { ContentWrapper } from "../ContentWrapper";
+import { InnerContentWrapper } from "../InnerContentWrapper";
 import { Button } from "../v2/Button";
 import { getSurveysAction } from "./actions";
 import { SurveyCard } from "./components/SurveyCard";
@@ -97,16 +97,18 @@ export const SurveysList = ({
     setSurveys(newSurveys);
   };
 
+  const CreateSurveyButton = (
+    <Button
+      size="sm"
+      href={`/environments/${environment.id}/surveys/templates`}
+      variant="secondary"
+      EndIcon={PlusIcon}>
+      New survey
+    </Button>
+  );
+
   return (
-    <ContentWrapper pageTitle="Surveys" className="space-y-4" isPageTitleCollapsed>
-      <div className="flex justify-end">
-        <Button
-          href={`/environments/${environment.id}/surveys/templates`}
-          variant="darkCTA"
-          EndIcon={PlusIcon}>
-          New survey
-        </Button>
-      </div>
+    <InnerContentWrapper pageTitle="Surveys" cta={CreateSurveyButton}>
       <SurveyFilters
         orientation={orientation}
         setOrientation={setOrientation}
@@ -176,6 +178,6 @@ export const SurveysList = ({
           <div className="text-slate-600">{isFetching ? "Fetching surveys..." : "No surveys found"}</div>
         </div>
       )}
-    </ContentWrapper>
+    </InnerContentWrapper>
   );
 };

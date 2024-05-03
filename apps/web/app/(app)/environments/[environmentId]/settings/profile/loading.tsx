@@ -21,7 +21,7 @@ function LoadingCard({ title, description, skeletonLines }) {
 export default function Loading() {
   const cards = [
     {
-      title: "Personal Information",
+      title: "Personal information",
       description: "Update your personal information",
       skeletonLines: [
         { classes: "h-4 w-28" },

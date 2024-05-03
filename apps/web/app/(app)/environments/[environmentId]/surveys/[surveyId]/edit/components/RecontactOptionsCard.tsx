@@ -148,7 +148,7 @@ export default function RecontactOptionsCard({
               This setting overwrites your{" "}
               <Link
                 className="decoration-brand-dark underline"
-                href={`/environments/${environmentId}/settings/product`}
+                href={`/environments/${environmentId}/product/general`}
                 target="_blank">
                 waiting period
               </Link>

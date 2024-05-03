@@ -27,16 +27,14 @@ export default async function ActionClassesComponent({ params }) {
     : true;
 
   return (
-    <>
-      <ActionClassesTable
-        environmentId={params.environmentId}
-        actionClasses={actionClasses}
-        isUserTargetingEnabled={isUserTargetingEnabled}>
-        <ActionTableHeading />
-        {actionClasses.map((actionClass) => (
-          <ActionClassDataRow key={actionClass.id} actionClass={actionClass} />
-        ))}
-      </ActionClassesTable>
-    </>
+    <ActionClassesTable
+      environmentId={params.environmentId}
+      actionClasses={actionClasses}
+      isUserTargetingEnabled={isUserTargetingEnabled}>
+      <ActionTableHeading />
+      {actionClasses.map((actionClass) => (
+        <ActionClassDataRow key={actionClass.id} actionClass={actionClass} />
+      ))}
+    </ActionClassesTable>
   );
 }

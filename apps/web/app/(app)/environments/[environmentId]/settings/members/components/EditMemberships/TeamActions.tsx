@@ -73,31 +73,34 @@ export default function TeamActions({
 
   return (
     <>
-      <div className="mb-6 text-right">
+      <div className="mb-4 text-right">
         {role !== "owner" && (
           <Button
             EndIcon={XIcon}
             variant="secondary"
+            size="sm"
             className="mr-2"
             onClick={() => setLeaveTeamModalOpen(true)}>
-            Leave Team
+            Leave team
           </Button>
         )}
         <Button
           variant="secondary"
           className="mr-2"
+          size="sm"
           onClick={() => {
             setCreateTeamModalOpen(true);
           }}>
-          Create New Team
+          Create new team
         </Button>
         {!isInviteDisabled && isAdminOrOwner && (
           <Button
+            size="sm"
             variant="darkCTA"
             onClick={() => {
               setAddMemberModalOpen(true);
             }}>
-            Add Member
+            Add member
           </Button>
         )}
       </div>

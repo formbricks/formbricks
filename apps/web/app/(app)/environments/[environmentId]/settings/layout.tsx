@@ -39,7 +39,7 @@ export default async function SettingsLayout({ children, params }) {
 
   return (
     <>
-      <div className="sm:flex">
+      <div className="flex pt-12">
         <SettingsNavbar
           environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
@@ -48,10 +48,9 @@ export default async function SettingsLayout({ children, params }) {
           membershipRole={currentUserMembership?.role}
           isMultiLanguageAllowed={isMultiLanguageAllowed}
         />
-        <div className="w-full md:ml-64">
-          <div className="max-w-7xl px-20 pb-6 pt-14 md:pt-6">
-            <div>{children}</div>
-          </div>
+
+        <div className="ml-64 w-full pb-6 pt-14 md:pt-6">
+          <div>{children}</div>
         </div>
       </div>
     </>

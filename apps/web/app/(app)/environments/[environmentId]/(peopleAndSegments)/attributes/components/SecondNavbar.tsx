@@ -31,16 +31,16 @@ export default async function SecondNavbar({
   return (
     <div {...props}>
       <div className="border-b">
-        <nav className="flex h-full items-center space-x-4 justify-self-center" aria-label="Tabs">
+        <nav className="flex h-full items-center space-x-1 justify-self-center" aria-label="Tabs">
           {tabs.map((tab) => (
             <Link
               key={tab.id}
               href={tab.href}
               className={cn(
                 tab.id === activeId
-                  ? " border-brand-dark font-semibold text-slate-900"
-                  : "border-transparent text-slate-500 hover:text-slate-700",
-                "flex h-full items-center border-b-2  px-3 pb-2 text-sm font-medium"
+                  ? " border-brand-dark rounded-t-md bg-slate-100 font-semibold text-slate-900"
+                  : "rounded-t-md border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700",
+                "flex h-full items-center border-b-2 px-3 py-2 text-sm font-medium"
               )}
               aria-current={tab.id === activeId ? "page" : undefined}>
               {tab.icon && <div className="mr-2 h-5 w-5">{tab.icon}</div>}

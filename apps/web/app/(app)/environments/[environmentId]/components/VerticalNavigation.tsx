@@ -5,14 +5,12 @@ import NavigationLink from "@/app/(app)/environments/[environmentId]/components/
 import { formbricksLogout } from "@/app/lib/formbricks";
 import {
   BlocksIcon,
-  BrushIcon,
   ChevronRightIcon,
   CodeIcon,
   Cog,
   CreditCardIcon,
   FileCheckIcon,
   HeartIcon,
-  LanguagesIcon,
   LinkIcon,
   LogOutIcon,
   MailIcon,
@@ -20,7 +18,6 @@ import {
   MessageSquareTextIcon,
   MousePointerClick,
   PlusIcon,
-  SlidersIcon,
   UserCircleIcon,
   UsersIcon,
 } from "lucide-react";
@@ -139,7 +136,10 @@ export default function Navigation({
         name: "Respondents",
         href: `/environments/${environment.id}/people`,
         icon: UsersIcon,
-        isActive: pathname?.includes("/people") || pathname?.includes("/segments" || "/attributes"),
+        isActive:
+          pathname?.includes("/people") ||
+          pathname?.includes("/segments") ||
+          pathname?.includes("/attributes"),
       },
       {
         name: "Actions",
@@ -168,29 +168,6 @@ export default function Navigation({
 
   const dropdownNavigation = [
     {
-      title: "Survey",
-      links: [
-        {
-          icon: SlidersIcon,
-          label: "Product Settings",
-          href: `/environments/${environment.id}/settings/product`,
-          hidden: false,
-        },
-        {
-          icon: BrushIcon,
-          label: "Look & Feel",
-          href: `/environments/${environment.id}/settings/lookandfeel`,
-          hidden: isViewer,
-        },
-        {
-          icon: LanguagesIcon,
-          label: "Survey Languages",
-          href: `/environments/${environment.id}/settings/language`,
-          hidden: !isMultiLanguageAllowed,
-        },
-      ],
-    },
-    {
       title: "Account",
       links: [
         {
@@ -213,7 +190,7 @@ export default function Navigation({
         {
           icon: FileCheckIcon,
           label: "Setup checklist",
-          href: `/environments/${environment.id}/settings/setup`,
+          href: `/environments/${environment.id}/product/setup`,
           hidden: widgetSetupCompleted,
         },
         {
@@ -260,7 +237,7 @@ export default function Navigation({
   return (
     <>
       {product && (
-        <aside className="flex w-56 flex-col justify-between rounded-r-3xl border border-slate-200 bg-white pt-5">
+        <aside className="fixed inset-x-0 bottom-14 top-14 flex w-56 flex-col justify-between rounded-r-xl border border-slate-200 bg-white pt-4 shadow-sm">
           <ul>
             {navigationItems.map(
               (item) =>
@@ -288,7 +265,7 @@ export default function Navigation({
                   <ChevronRightIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
                 </div>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" id="userDropdownContentWrapper">
+              <DropdownMenuContent className="w-56" id="userDropdownInnerContentWrapper">
                 <DropdownMenuLabel className="cursor-default break-all">
                   <span className="ph-no-capture font-normal">Signed in as </span>
                   {session?.user?.name && session?.user?.name.length > 30 ? (
@@ -308,31 +285,6 @@ export default function Navigation({
                 </DropdownMenuLabel>
 
                 <DropdownMenuSeparator />
-
-                {/* Environment Switch */}
-
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <div>
-                      <p>{capitalizeFirstLetter(environment?.type)}</p>
-                      <p className=" block text-xs text-slate-500">Environment</p>
-                    </div>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuRadioGroup
-                        value={environment?.type}
-                        onValueChange={(v) => handleEnvironmentChange(v as "production" | "development")}>
-                        <DropdownMenuRadioItem value="production" className="cursor-pointer">
-                          Production
-                        </DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="development" className="cursor-pointer">
-                          Development
-                        </DropdownMenuRadioItem>
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
 
                 {/* Product Switch */}
 

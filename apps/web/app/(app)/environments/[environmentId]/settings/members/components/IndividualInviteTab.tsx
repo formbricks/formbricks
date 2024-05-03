@@ -80,6 +80,7 @@ export const IndividualInviteTab = ({
       <div className="flex justify-end p-6">
         <div className="flex space-x-2">
           <Button
+            size="sm"
             type="button"
             variant="minimal"
             onClick={() => {
@@ -87,7 +88,7 @@ export const IndividualInviteTab = ({
             }}>
             Cancel
           </Button>
-          <Button variant="darkCTA" type="submit">
+          <Button variant="darkCTA" type="submit" size="sm">
             Send Invitation
           </Button>
         </div>

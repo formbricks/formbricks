@@ -11,7 +11,7 @@ export default async function ProfileSettingsPage({ params }) {
   return (
     <>
       <div className="space-y-4">
-        <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/settings/setup" />
+        <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/product/setup" />
         <SettingsCard
           title="Widget Status"
           description="Check if the Formbricks widget is alive and kicking.">
