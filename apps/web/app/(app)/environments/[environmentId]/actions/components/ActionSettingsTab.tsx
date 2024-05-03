@@ -126,7 +126,8 @@ export default function ActionSettingsTab({
       const updatedData: TActionClassInput = {
         ...data,
         ...(isCodeAction ? {} : { noCodeConfig: filteredNoCodeConfig }),
-      } as TActionClassInput;
+        name: data.name.trim(),
+      };
       await updateActionClassAction(environmentId, actionClass.id, updatedData);
       setOpen(false);
       router.refresh();
@@ -164,7 +165,6 @@ export default function ActionSettingsTab({
               id="actionNameSettingsInput"
               placeholder="E.g. Clicked Download"
               {...register("name", {
-                value: actionClass.name,
                 disabled: actionClass.type === "automatic" ? true : false,
               })}
             />
@@ -176,7 +176,6 @@ export default function ActionSettingsTab({
                 id="actionDescriptionSettingsInput"
                 placeholder="User clicked Download Button "
                 {...register("description", {
-                  value: actionClass.description,
                   disabled: actionClass.type === "automatic" ? true : false,
                 })}
               />
@@ -189,7 +188,9 @@ export default function ActionSettingsTab({
               <Input
                 id="actionKeySettingsInput"
                 placeholder="E.g. download_button_clicked"
-                {...register("key", { disabled: true })}
+                {...register("key")}
+                readOnly
+                disabled
               />
             </div>
           )}

@@ -136,7 +136,7 @@ export default function AddNoCodeActionModal({
       }
 
       const updatedAction: TActionClassInput = {
-        name: data.name,
+        name: data.name.trim(),
         description: data.description,
         environmentId,
         type: type as TActionClass["type"],
