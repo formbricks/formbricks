@@ -1,4 +1,4 @@
-import SlackWrapper from "@/app/(app)/environments/[environmentId]/integrations/slack/components/SlackWrapper";
+import { SlackWrapper } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/SlackWrapper";
 
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";

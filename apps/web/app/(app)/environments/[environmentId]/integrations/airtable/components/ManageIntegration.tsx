@@ -1,7 +1,8 @@
 "use client";
 
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
-import AddIntegrationModal, {
+import {
+  AddIntegrationModal,
   IntegrationModalInputs,
 } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AddIntegrationModal";
 import { useState } from "react";
@@ -16,7 +17,7 @@ import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 
-interface handleModalProps {
+interface ManageIntegrationProps {
   airtableIntegration: TIntegrationAirtable;
   environment: TEnvironment;
   environmentId: string;
@@ -27,7 +28,7 @@ interface handleModalProps {
 
 const tableHeaders = ["Survey", "Table Name", "Questions", "Updated At"];
 
-export default function Home(props: handleModalProps) {
+export const ManageIntegration = (props: ManageIntegrationProps) => {
   const { airtableIntegration, environment, environmentId, setIsConnected, surveys, airtableArray } = props;
   const [isDeleting, setisDeleting] = useState(false);
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
@@ -146,4 +147,4 @@ export default function Home(props: handleModalProps) {
       )}
     </div>
   );
-}
+};
