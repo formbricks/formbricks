@@ -17,7 +17,7 @@ import { createSurvey, getSurveys, transformToLegacySurvey } from "@formbricks/l
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
-import { TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";
+import { TJsWebsiteLegacyStateSync, TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
@@ -106,8 +106,8 @@ export async function GET(
     // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
     let transformedSurveys: TLegacySurvey[] | TSurvey[];
 
-    // Backwards compatibility for versions less than 1.7.0 (no multi-language support and updated trigger action classes).
-    if (version && isVersionGreaterThanOrEqualTo(version, "1.7.0")) {
+    // Backwards compatibility for versions less than 2.0.0 (no multi-language support and updated trigger action classes).
+    if (version && isVersionGreaterThanOrEqualTo(version, "2.0.0")) {
       // Scenario 1: Multi language and updated trigger action classes supported.
       // Use the surveys as they are.
       transformedSurveys = filteredSurveys;
@@ -132,13 +132,23 @@ export async function GET(
     };
     const noCodeActionClasses = actionClasses.filter((actionClass) => actionClass.type === "noCode");
 
-    // Create the 'state' object with surveys, noCodeActionClasses, product, and person.
-    const state: TJsWebsiteStateSync = {
-      surveys: isInAppSurveyLimitReached ? [] : transformedSurveys,
-      noCodeActionClasses,
-      ...(version && isVersionGreaterThanOrEqualTo(version, "2.0.0") && { actionClasses }),
-      product: updatedProduct,
-    };
+    // creating state object
+    let state: TJsWebsiteStateSync | TJsWebsiteLegacyStateSync;
+
+    // Backwards compatibility for versions less than 2.0.0
+    if (version && isVersionGreaterThanOrEqualTo(version, "2.0.0")) {
+      state = {
+        surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
+        actionClasses,
+        product: updatedProduct,
+      };
+    } else {
+      state = {
+        surveys: isInAppSurveyLimitReached ? [] : transformedSurveys,
+        noCodeActionClasses,
+        product: updatedProduct,
+      };
+    }
 
     return responses.successResponse(
       { ...state },

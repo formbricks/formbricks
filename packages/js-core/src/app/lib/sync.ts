@@ -66,7 +66,6 @@ export const sync = async (params: TJsAppSyncParams, noCache = false): Promise<v
     let state: TJsAppState = {
       surveys: syncResult.value.surveys as TSurvey[],
       actionClasses: syncResult.value.actionClasses,
-      noCodeActionClasses: syncResult.value.noCodeActionClasses,
       product: syncResult.value.product,
       attributes,
     };
