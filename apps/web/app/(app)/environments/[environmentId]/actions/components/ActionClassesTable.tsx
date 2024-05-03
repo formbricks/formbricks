@@ -86,6 +86,7 @@ export default function ActionClassesTable({
         environmentId={environmentId}
         open={isActionDetailModalOpen}
         setOpen={setActionDetailModalOpen}
+        actionClasses={actionClasses}
         actionClass={activeActionClass}
         membershipRole={membershipRole}
         isUserTargetingEnabled={isUserTargetingEnabled}

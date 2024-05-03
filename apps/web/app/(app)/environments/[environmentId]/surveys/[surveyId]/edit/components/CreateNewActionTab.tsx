@@ -219,7 +219,7 @@ export const CreateNewActionTab = ({
                 activeId={type}
                 setActiveId={setType}
                 tabStyle="button"
-                className="bg-white"
+                className="rounded-md bg-white"
                 activeTabClassName="bg-slate-100"
               />
             </div>

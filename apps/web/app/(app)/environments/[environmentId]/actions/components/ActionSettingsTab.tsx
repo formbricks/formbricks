@@ -4,9 +4,10 @@ import {
   deleteActionClassAction,
   updateActionClassAction,
 } from "@/app/(app)/environments/[environmentId]/actions/actions";
+import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 
@@ -27,7 +28,8 @@ import { Label } from "@formbricks/ui/Label";
 
 interface ActionSettingsTabProps {
   environmentId: string;
-  actionClass: any;
+  actionClass: TActionClass;
+  actionClasses: TActionClass[];
   setOpen: (v: boolean) => void;
   membershipRole?: TMembershipRole;
 }
@@ -35,6 +37,7 @@ interface ActionSettingsTabProps {
 export default function ActionSettingsTab({
   environmentId,
   actionClass,
+  actionClasses,
   setOpen,
   membershipRole,
 }: ActionSettingsTabProps) {
@@ -48,6 +51,11 @@ export default function ActionSettingsTab({
   const [isUpdatingAction, setIsUpdatingAction] = useState(false);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
   const { isViewer } = getAccessFlags(membershipRole);
+  const actionClassNames = useMemo(
+    () =>
+      actionClasses.filter((action) => action.id !== actionClass.id).map((actionClass) => actionClass.name),
+    [actionClass.id, actionClasses]
+  );
 
   const { register, handleSubmit, control, watch } = useForm<TActionClass>({
     defaultValues: {
@@ -88,20 +96,36 @@ export default function ActionSettingsTab({
 
   const onSubmit = async (data) => {
     try {
-      const isCodeAction = actionClass.type === "code";
+      if (isViewer) {
+        throw new Error("You are not authorised to perform this action.");
+      }
       setIsUpdatingAction(true);
-      if (data.name === "") throw new Error("Please give your action a name");
-      if (!isPageUrl && !isCssSelector && !isInnerHtml && !isCodeAction)
-        throw new Error("Please select at least one selector");
+      if (!data.name || data.name?.trim() === "") {
+        throw new Error("Please give your action a name");
+      }
+      if (data.name && actionClassNames.includes(data.name)) {
+        throw new Error(`Action with name ${data.name} already exist`);
+      }
+
+      if (actionClass.type === "noCode") {
+        if (!isPageUrl && !isCssSelector && !isInnerHtml)
+          throw new Error("Please select at least one selector");
+
+        if (isCssSelector && !isValidCssSelector(actionClass.noCodeConfig?.cssSelector?.value))
+          throw new Error("Please enter a valid CSS Selector");
+
+        if (isPageUrl && actionClass.noCodeConfig?.pageUrl?.rule === undefined)
+          throw new Error("Please select a rule for page URL");
+      }
+
       let filteredNoCodeConfig = data.noCodeConfig;
+      const isCodeAction = actionClass.type === "code";
       if (!isCodeAction) {
         filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TNoCodeConfig);
       }
       const updatedData: TActionClassInput = {
         ...data,
-        environmentId,
-        noCodeConfig: filteredNoCodeConfig,
-        type: isCodeAction ? "code" : "noCode",
+        ...(isCodeAction ? {} : { noCodeConfig: filteredNoCodeConfig }),
       } as TActionClassInput;
       await updateActionClassAction(environmentId, actionClass.id, updatedData);
       setOpen(false);

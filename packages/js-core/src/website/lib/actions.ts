@@ -32,23 +32,20 @@ export const trackCodeAction = (
   code: string
 ): Promise<Result<void, NetworkError>> | Result<void, InvalidCodeError> => {
   const {
-    state: { actionClasses },
+    state: { actionClasses = [] },
   } = websiteConfig.get();
 
-  let name = code;
+  const codeActionClasses = actionClasses.filter((action) => action.type === "code");
+  const action = codeActionClasses.find((action) => action.key === code);
 
-  if (actionClasses) {
-    const action = actionClasses.find((action) => action.key === code);
-    if (!action) {
-      return err({
-        code: "invalid_code",
-        message: `${code} action unknown. Please add this action in Formbricks first in order to use it in your code.`,
-      });
-    }
-    name = action.name;
+  if (!action) {
+    return err({
+      code: "invalid_code",
+      message: `${code} action unknown. Please add this action in Formbricks first in order to use it in your code.`,
+    });
   }
 
-  return trackAction(name, code);
+  return trackAction(action.name, code);
 };
 
 export const trackNoCodeAction = (name: string): Promise<Result<void, NetworkError>> => {

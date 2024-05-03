@@ -8,10 +8,10 @@ import { TActionClassType } from "@formbricks/types/actionClasses";
 import { TAction, TActionInput, ZActionInput } from "@formbricks/types/actions";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 
 import { actionClassCache } from "../actionClass/cache";
-import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
+import { getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { activePersonCache } from "../person/cache";
@@ -124,16 +124,10 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
 
     let actionClass = await getActionClassByEnvironmentIdAndName(environmentId, name);
 
-    // DEPRECATED - This functionality is deprecated and will be removed in the future
-    // Reason: An action shouldn't create an ActionClass automatically
-    // Deprecated since 06-05-2024
     if (!actionClass) {
-      actionClass = await createActionClass(environmentId, {
-        name,
-        type: actionType,
-        environmentId,
-        ...(actionType === "code" ? { key: name } : {}),
-      });
+      throw new OperationNotAllowedError(
+        `${name} action unknown. Please add this action in Formbricks first in order to use it in your code.`
+      );
     }
 
     const action = await prisma.action.create({

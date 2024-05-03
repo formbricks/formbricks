@@ -22,7 +22,9 @@ const errorHandler = ErrorHandler.getInstance();
 export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError | NetworkError>> => {
   logger.debug(`Checking page url: ${window.location.href}`);
   const { state } = websiteConfig.get();
-  const { noCodeActionClasses = [] } = state ?? {};
+  const { actionClasses = [] } = state ?? {};
+
+  const noCodeActionClasses = actionClasses.filter((action) => action.type === "noCode");
 
   const actionsWithPageUrl: TActionClass[] = noCodeActionClasses.filter((action) => {
     const { innerHtml, cssSelector, pageUrl } = action.noCodeConfig || {};
@@ -136,7 +138,9 @@ export const checkClickMatch = (event: MouseEvent) => {
     return;
   }
 
-  const { noCodeActionClasses } = state;
+  const { actionClasses = [] } = state;
+  const noCodeActionClasses = actionClasses.filter((action) => action.type === "noCode");
+
   if (!noCodeActionClasses) {
     return;
   }
