@@ -25,16 +25,17 @@ export const navigation: Array<NavGroup> = [
   {
     title: "App Surveys",
     links: [
-      { title: "Quickstart TODO", href: "/getting-started/quickstart-in-app-survey" },
-      { title: "Framework Guides", href: "/getting-started/framework-guides" },
+      { title: "Quickstart", href: "/app-surveys/quickstart" },
+      { title: "Framework Guides", href: "/app-surveys/framework-guides" },
       {
         title: "Features",
         children: [
-          { title: "Identify Users", href: "/in-app-surveys/user-identification" },
-          { title: "Actions", href: "/in-app-surveys/actions" },
-          { title: "Attributes", href: "/in-app-surveys/attributes" },
-          { title: "Advanced Targeting", href: "/in-app-surveys/advanced-targeting" },
-          { title: "Recontact Options", href: "/in-app-surveys/recontact" },
+          { title: "Identify Users", href: "/app-surveys/user-identification" },
+          { title: "Actions", href: "/app-surveys/actions" },
+          { title: "Attributes", href: "/app-surveys/attributes" },
+          { title: "Advanced Targeting", href: "/app-surveys/advanced-targeting" },
+          { title: "Show Survey to % of users", href: "/global/show-survey-to-percent-of-users" }, // app and website
+          { title: "Recontact Options", href: "/app-surveys/recontact" },
           { title: "Multi Language Surveys", href: "/global/multi-language-surveys" }, // global
           { title: "User Metadata", href: "/global/metadata" }, // global
           { title: "Custom Styling", href: "/global/custom-styling" }, // global
@@ -49,14 +50,14 @@ export const navigation: Array<NavGroup> = [
   {
     title: "Website Surveys",
     links: [
-      { title: "Quickstart TODO", href: "/getting-started/quickstart-in-app-survey" },
+      { title: "Quickstart", href: "/website-surveys/quickstart" },
       { title: "Framework Guides", href: "/website-surveys/framework-guides" },
       {
         title: "Features",
         children: [
           { title: "Actions & Targeting", href: "/website-surveys/actions-and-targeting" },
-          { title: "Show Survey to % of users", href: "/website-surveys/show-survey-to-percent-of-users" },
-          { title: "Recontact Options", href: "/in-app-surveys/recontact" },
+          { title: "Show Survey to % of users", href: "/global/show-survey-to-percent-of-users" }, // app and website
+          { title: "Recontact Options", href: "/app-surveys/recontact" },
           { title: "Multi Language Surveys", href: "/global/multi-language-surveys" }, // global
           { title: "User Metadata", href: "/global/metadata" }, // global
           { title: "Custom Styling", href: "/global/custom-styling" }, // global
@@ -91,22 +92,8 @@ export const navigation: Array<NavGroup> = [
           { title: "Verify Email before Survey", href: "/link-surveys/verify-email-before-survey" },
           { title: "PIN Protected Surveys", href: "/link-surveys/pin-protected-surveys" },
           { title: "Partial Submissions", href: "/global/partial-submissions" },
-          { title: "Integrations TODO", href: "/link-surveys/integrations" },
         ],
       },
-      { title: "Integrations TODO", href: "/link-surveys/integrations" },
-    ],
-  },
-  {
-    title: "Developer Docs",
-    links: [
-      { title: "Overview", href: "/developer-docs/overview" },
-      { title: "SDK: App Survey", href: "/developer-docs/app-survey-sdk" },
-      { title: "SDK: Website Survey", href: "/developer-docs/website-survey-sdk" },
-      { title: "SDK: Formbricks API", href: "/developer-docs/api-sdk" },
-      { title: "REST API", href: "/developer-docs/rest-api" },
-      { title: "Webhooks", href: "/developer-docs/webhooks" },
-      { title: "Contributing", href: "/developer-docs/contributing" },
     ],
   },
   {
@@ -119,6 +106,32 @@ export const navigation: Array<NavGroup> = [
       { title: "Configuration", href: "/self-hosting/configuration" },
       { title: "Integrations", href: "/self-hosting/integrations" },
       { title: "License", href: "/self-hosting/license" },
+    ],
+  },
+  {
+    title: "Developer Docs",
+    links: [
+      { title: "Overview", href: "/developer-docs/overview" },
+      {
+        title: "Integrations",
+        children: [
+          { title: "Overview", href: "/developer-docs/integrations/overview" },
+          { title: "Airtable", href: "/developer-docs/integrations/airtable" },
+          { title: "Google Sheets", href: "/developer-docs/integrations/google-sheets" },
+          { title: "Make", href: "/developer-docs/integrations/make" },
+          { title: "n8n", href: "/developer-docs/integrations/n8n" },
+          { title: "Notion", href: "/developer-docs/integrations/notion" },
+          { title: "Slack", href: "/developer-docs/integrations/slack" },
+          { title: "Wordpress", href: "/developer-docs/integrations/wordpress" },
+          { title: "Zapier", href: "/developer-docs/integrations/zapier" },
+        ],
+      },
+      { title: "SDK: App Survey", href: "/developer-docs/app-survey-sdk" },
+      { title: "SDK: Website Survey", href: "/developer-docs/website-survey-sdk" },
+      { title: "SDK: Formbricks API", href: "/developer-docs/api-sdk" },
+      { title: "REST API", href: "/developer-docs/rest-api" },
+      { title: "Webhooks", href: "/developer-docs/webhooks" },
+      { title: "Contributing", href: "/developer-docs/contributing" },
     ],
   },
 ];

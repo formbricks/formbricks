@@ -3,23 +3,24 @@ import { Heading } from "@/components/Heading";
 
 const gettingStarted = [
   {
-    href: "/docs/getting-started/quickstart-in-app-survey",
+    href: "/website-surveys/framework-guides",
     name: "Quickstart",
-    description: "Get up and running with our cloud and JavaScript widget",
+    description: "Get up and running with our cloud and JavaScript widget for public-facing website surveys",
   },
   {
-    href: "/docs/getting-started/framework-guides#next-js",
+    href: "/website-surveys/framework-guides#next-js",
     name: "Next.js App",
-    description: "Integrate the Formbricks SDK into a Next.js application with the new app directory",
-  },
-  {
-    href: "/docs/self-hosting/deployment",
-    name: "Self Host Deployment",
     description:
-      "Host Formbricks on your own servers, check out our dedicated Self-hosted Documentation page.",
+      "Integrate the Formbricks Website Survey SDK into a Next.js application with the new app directory",
   },
   {
-    href: "/docs/best-practices/interview-prompt",
+    href: "/self-hosting/one-click",
+    name: "Self Host Single Click Deployment",
+    description:
+      "Host Formbricks on your own servers with just a single script. No need to worry about setting up databases, queues, or caches.",
+  },
+  {
+    href: "/best-practices/interview-prompt",
     name: "Interview Prompt",
     description: "Set user interviews on autopilot for a continuous stream of interviews.",
   },

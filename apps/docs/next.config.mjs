@@ -82,6 +82,28 @@ const nextConfig = {
         destination: "/link-surveys/embed-surveys",
         permanent: true,
       },
+      // App & Website Survey
+      {
+        source: "/getting-started/quickstart-in-app-survey",
+        destination: "/app-surveys/quickstart",
+        permanent: true,
+      },
+      {
+        source: "/getting-started/framework-guides",
+        destination: "/app-surveys/framework-guides",
+        permanent: true,
+      },
+      {
+        source: "/in-app-surveys/:path",
+        destination: "/app-surveys/:path",
+        permanent: true,
+      },
+      // Integrations
+      {
+        source: "/integrations/:path",
+        destination: "/developer-docs/integrations/:path",
+        permanent: true,
+      },
     ];
   },
 };
