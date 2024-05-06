@@ -55,7 +55,7 @@ export const SavedActionsTab = ({
         {[automaticActions, noCodeActions, codeActions].map(
           (actions, i) =>
             actions.length > 0 && (
-              <div key={i}>
+              <div key={i} className="me-4">
                 <h2 className="mb-2 mt-4 font-semibold">
                   {i === 0 ? "Automatic" : i === 1 ? "No code" : "Code"}
                 </h2>

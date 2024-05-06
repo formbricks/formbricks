@@ -159,10 +159,6 @@ export const CreateNewActionTab = ({
         triggers: prev.triggers.concat({ actionClass: newActionClass }),
       }));
 
-      if (setActionClasses) {
-        setActionClasses((prevActionClasses: TActionClass[]) => [...prevActionClasses, newActionClass]);
-      }
-
       reset();
       resetAllStates();
     } catch (e: any) {
