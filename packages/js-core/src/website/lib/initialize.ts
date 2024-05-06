@@ -191,6 +191,11 @@ export const deinitalize = (): void => {
 };
 
 export const putFormbricksInErrorState = (): void => {
+  if (getIsDebug()) {
+    logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
+    return;
+  }
+
   logger.debug("Putting formbricks in error state");
   // change formbricks status to error
   websiteConfig.update({
