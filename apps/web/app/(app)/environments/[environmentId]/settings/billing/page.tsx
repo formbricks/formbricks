@@ -1,4 +1,3 @@
-import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
 import { PRICING_APPSURVEYS_FREE_RESPONSES, PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
 import {
   getMonthlyActiveTeamPeopleCount,
@@ -19,9 +18,6 @@ export default async function BillingPage({ params }) {
     getMonthlyActiveTeamPeopleCount(team.id),
     getMonthlyTeamResponseCount(team.id),
   ]);
-
-  const isEnterpriseEdition = await getIsEnterpriseEdition();
-  console.log("GETTING IS ENTERPRISE EDITION: ", isEnterpriseEdition);
 
   return (
     <>

@@ -7,6 +7,8 @@ import { TTeam } from "@formbricks/types/teams";
 
 import { prisma } from "../../database/src";
 
+const PREVIOUS_RESULTS_CACHE_TAG = "getPreviousResult";
+
 // This function is used to get the previous result of the license check from the cache
 // This might seem confusing at first since we only return the default value from this function,
 // but since we are using a cache and the cache key is the same, the cache will return the previous result - so this functions as a cache getter
@@ -16,16 +18,16 @@ const getPreviousResult = (): Promise<{ active: boolean | null; lastChecked: Dat
       active: null,
       lastChecked: new Date(0),
     }),
-    ["getPreviousResult"],
+    [PREVIOUS_RESULTS_CACHE_TAG],
     {
-      tags: [`getPreviousResult`],
+      tags: [PREVIOUS_RESULTS_CACHE_TAG],
     }
   )();
 
 // This function is used to set the previous result of the license check to the cache so that we can use it in the next call
 // Uses the same cache key as the getPreviousResult function
 const setPreviousResult = async (previousResult: { active: boolean | null; lastChecked: Date }) => {
-  revalidateTag("getPreviousResult");
+  revalidateTag(PREVIOUS_RESULTS_CACHE_TAG);
   const { lastChecked, active } = previousResult;
 
   await cache(
@@ -33,9 +35,9 @@ const setPreviousResult = async (previousResult: { active: boolean | null; lastC
       active,
       lastChecked,
     }),
-    ["getPreviousResult"],
+    [PREVIOUS_RESULTS_CACHE_TAG],
     {
-      tags: [`getPreviousResult`],
+      tags: [PREVIOUS_RESULTS_CACHE_TAG],
     }
   )();
 };
@@ -63,7 +65,6 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
           },
         });
 
-        console.log("CALLING LICENSE CHECK \n\n");
         const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
           body: JSON.stringify({
             licenseKey: ENTERPRISE_LICENSE_KEY,
@@ -72,9 +73,6 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
           headers: { "Content-Type": "application/json" },
           method: "POST",
         });
-
-        console.log("RESPONSE: ", res);
-        console.log("\n\n\n");
 
         if (res.ok) {
           const responseJson = await res.json();
