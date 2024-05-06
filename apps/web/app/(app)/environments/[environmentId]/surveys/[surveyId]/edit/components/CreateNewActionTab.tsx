@@ -232,17 +232,17 @@ export const CreateNewActionTab = ({
                   <Label htmlFor="codeActionKeyInput">Key</Label>
                   <Input
                     id="codeActionKeyInput"
-                    placeholder="Enter your key"
+                    placeholder="e.g. download_cta_click_on_home"
                     {...register("key")}
                     className="mb-2 w-1/2"
                   />
                 </div>
-                <Alert>
+                <Alert className="bg-slate-100">
                   <Terminal className="h-4 w-4" />
                   <AlertTitle>How do Code Actions work?</AlertTitle>
                   <AlertDescription>
                     You can track code action anywhere in your app using{" "}
-                    <span className="rounded bg-slate-100 px-2 py-1 text-xs">
+                    <span className="rounded bg-white px-2 py-1 text-xs">
                       formbricks.track(&quot;{watch("key")}&quot;)
                     </span>{" "}
                     in your code. Read more in our{" "}
@@ -289,7 +289,7 @@ export const CreateNewActionTab = ({
               Cancel
             </Button>
             <Button variant="darkCTA" type="submit" loading={isCreatingAction}>
-              Create Action
+              Create action
             </Button>
           </div>
         </div>

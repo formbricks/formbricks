@@ -2,8 +2,7 @@
 
 import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
-import { MousePointerClickIcon } from "lucide-react";
-import { Terminal } from "lucide-react";
+import { MousePointerClickIcon, Terminal } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -249,7 +248,7 @@ export default function AddNoCodeActionModal({
                   Cancel
                 </Button>
                 <Button variant="darkCTA" type="submit" loading={isCreatingAction}>
-                  Create Action
+                  Create action
                 </Button>
               </div>
             </div>
@@ -287,7 +286,7 @@ export default function AddNoCodeActionModal({
                     className="mb-2 w-1/2"
                   />
                 </div>
-                <Alert>
+                <Alert className="bg-slate-100">
                   <Terminal className="h-4 w-4" />
                   <AlertTitle>How do Code Actions work?</AlertTitle>
                   <AlertDescription>
@@ -310,7 +309,7 @@ export default function AddNoCodeActionModal({
                   Cancel
                 </Button>
                 <Button variant="darkCTA" type="submit" loading={isCreatingAction}>
-                  Create Action
+                  Create action
                 </Button>
               </div>
             </div>

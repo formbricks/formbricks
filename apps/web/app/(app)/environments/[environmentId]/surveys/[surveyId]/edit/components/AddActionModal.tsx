@@ -41,7 +41,7 @@ export const AddActionModal = ({
       ),
     },
     {
-      title: "Create new action",
+      title: "Capture new action",
       children: (
         <CreateNewActionTab
           actionClasses={actionClasses}

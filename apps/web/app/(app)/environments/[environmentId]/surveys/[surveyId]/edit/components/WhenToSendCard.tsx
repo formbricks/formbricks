@@ -161,41 +161,73 @@ export default function WhenToSendCard({
                 Trigger survey when one of the actions is fired...
               </p>
 
-              {localSurvey.triggers.filter(Boolean).map((trigger, idx) => (
-                <div className="flex items-center gap-2" key={trigger.actionClass.id}>
-                  {idx !== 0 && <p className="ml-1 text-sm font-bold">or</p>}
-                  <div
-                    key={trigger.actionClass.id}
-                    className="flex grow items-center justify-between rounded-sm border border-slate-300 bg-white p-2 px-3">
-                    <div>
-                      <div className="mt-1 flex items-center">
-                        <div className="mr-1.5 h-4 w-4 text-slate-600">
-                          {trigger.actionClass.type === "code" ? (
-                            <Code2Icon className="h-4 w-4" />
-                          ) : trigger.actionClass.type === "noCode" ? (
-                            <MousePointerClickIcon className="h-4 w-4" />
-                          ) : trigger.actionClass.type === "automatic" ? (
-                            <SparklesIcon className="h-4 w-4" />
-                          ) : null}
+              {localSurvey.triggers.filter(Boolean).map((trigger, idx) => {
+                console.log(trigger);
+                return (
+                  <div className="flex items-center gap-2" key={trigger.actionClass.id}>
+                    {idx !== 0 && <p className="ml-1 text-sm font-bold text-slate-700">or</p>}
+                    <div
+                      key={trigger.actionClass.id}
+                      className="flex grow items-center justify-between rounded-md border border-slate-300 bg-white p-2 px-3">
+                      <div>
+                        <div className="mt-1 flex items-center">
+                          <div className="mr-1.5 h-4 w-4 text-slate-600">
+                            {trigger.actionClass.type === "code" ? (
+                              <Code2Icon className="h-4 w-4" />
+                            ) : trigger.actionClass.type === "noCode" ? (
+                              <MousePointerClickIcon className="h-4 w-4" />
+                            ) : trigger.actionClass.type === "automatic" ? (
+                              <SparklesIcon className="h-4 w-4" />
+                            ) : null}
+                          </div>
+
+                          <h4 className="text-sm font-semibold text-slate-600">
+                            {getFormattedActionClassName(trigger.actionClass.name)}
+                          </h4>
                         </div>
-
-                        <h4 className="text-sm font-semibold text-slate-600">
-                          {getFormattedActionClassName(trigger.actionClass.name)}
-                        </h4>
+                        <div className="mt-1 text-xs text-gray-500">
+                          {trigger.actionClass.description && (
+                            <span className="mr-1">{trigger.actionClass.description}</span>
+                          )}
+                          {trigger.actionClass.type === "code" && (
+                            <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
+                              Key: <b>{trigger.actionClass.key}</b>
+                            </span>
+                          )}
+                          {trigger.actionClass.type === "noCode" &&
+                            trigger.actionClass.noCodeConfig?.cssSelector && (
+                              <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
+                                CSS Selector: <b>{trigger.actionClass.noCodeConfig.cssSelector.value}</b>
+                              </span>
+                            )}
+                          {trigger.actionClass.type === "noCode" &&
+                            trigger.actionClass.noCodeConfig?.innerHtml && (
+                              <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
+                                Inner Text: <b>{trigger.actionClass.noCodeConfig.innerHtml.value}</b>
+                              </span>
+                            )}
+                          {trigger.actionClass.type === "noCode" &&
+                            trigger.actionClass.noCodeConfig?.pageUrl && (
+                              <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
+                                URL {trigger.actionClass.noCodeConfig.pageUrl.rule}:{" "}
+                                <b>{trigger.actionClass.noCodeConfig.pageUrl.value}</b>
+                              </span>
+                            )}
+                        </div>
                       </div>
-                      <p className="mt-1 text-xs text-gray-500">{trigger.actionClass.description}</p>
                     </div>
+                    <Trash2Icon
+                      className="h-4 w-4 cursor-pointer text-slate-600"
+                      onClick={() => handleRemoveTriggerEvent(idx)}
+                    />
                   </div>
-                  <Trash2Icon
-                    className="h-4 w-4 cursor-pointer text-slate-600"
-                    onClick={() => handleRemoveTriggerEvent(idx)}
-                  />
-                </div>
-              ))}
+                );
+              })}
 
-              <div className="py-4">
+              <div>
                 <Button
                   variant="secondary"
+                  size="sm"
                   onClick={() => {
                     setAddActionModalOpen(true);
                   }}>
