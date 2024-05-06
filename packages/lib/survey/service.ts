@@ -312,9 +312,15 @@ export const transformToLegacySurvey = async (
   languageCode?: string
 ): Promise<TLegacySurvey> => {
   const targetLanguage = languageCode ?? "default";
-  const transformedSurvey = reverseTranslateSurvey(survey, targetLanguage);
-  transformedSurvey.triggers = survey.triggers.map((trigger) => trigger.actionClass.name);
 
+  // workaround to handle triggers for legacy surveys
+  // because we dont wanna do this in the `reverseTranslateSurvey` function
+  const surveyToTransform: any = {
+    ...structuredClone(survey),
+    triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
+  };
+
+  const transformedSurvey = reverseTranslateSurvey(surveyToTransform as TSurvey, targetLanguage);
   return transformedSurvey;
 };
 

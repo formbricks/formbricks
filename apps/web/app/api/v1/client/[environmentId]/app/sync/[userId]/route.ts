@@ -147,26 +147,6 @@ export async function GET(
       throw new Error("Product not found");
     }
 
-    // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
-    let transformedSurveys: TLegacySurvey[] | TSurvey[];
-
-    // Backwards compatibility for versions less than 2.0.0 (no multi-language support and updated trigger action classes).
-    if (version && isVersionGreaterThanOrEqualTo(version, "2.0.0")) {
-      // Scenario 1: Multi language and updated trigger action classes supported.
-      // Use the surveys as they are.
-      transformedSurveys = surveys;
-    } else {
-      // Scenario 2: Multi language and updated trigger action classes not supported
-      // Convert to legacy surveys with default language
-      // convert triggers to array of actionClasses Names
-      transformedSurveys = await Promise.all(
-        surveys.map((survey) => {
-          const languageCode = "default";
-          return transformToLegacySurvey(survey, languageCode);
-        })
-      );
-    }
-
     const updatedProduct: TProduct = {
       ...product,
       brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
@@ -178,18 +158,30 @@ export async function GET(
     const language = await getAttribute("language", person.id);
     const noCodeActionClasses = actionClasses.filter((actionClass) => actionClass.type === "noCode");
 
-    // creating state object
-    let state: TJsAppStateSync | TJsAppLegacyStateSync;
+    // Scenario 1: Multi language and updated trigger action classes supported.
+    // Use the surveys as they are.
+    let transformedSurveys: TLegacySurvey[] | TSurvey[] = surveys;
 
-    // Backwards compatibility for versions less than 2.0.0
-    if (version && isVersionGreaterThanOrEqualTo(version, "2.0.0")) {
-      state = {
-        surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
-        actionClasses,
-        language,
-        product: updatedProduct,
-      };
-    } else {
+    // creating state object
+    let state: TJsAppStateSync | TJsAppLegacyStateSync = {
+      surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
+      actionClasses,
+      language,
+      product: updatedProduct,
+    };
+
+    // Backwards compatibility for versions less than 2.0.0 (no multi-language support and updated trigger action classes).
+    if (!isVersionGreaterThanOrEqualTo(version ?? "", "2.0.0")) {
+      // Scenario 2: Multi language and updated trigger action classes not supported
+      // Convert to legacy surveys with default language
+      // convert triggers to array of actionClasses Names
+      transformedSurveys = await Promise.all(
+        surveys.map((survey: TSurvey | TLegacySurvey) => {
+          const languageCode = "default";
+          return transformToLegacySurvey(survey as TSurvey, languageCode);
+        })
+      );
+
       state = {
         surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
         person,
