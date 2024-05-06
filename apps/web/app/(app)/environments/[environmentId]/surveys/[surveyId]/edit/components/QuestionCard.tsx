@@ -80,7 +80,9 @@ export default function QuestionCard({
   setSelectedLanguageCode,
   isInvalid,
 }: QuestionCardProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: question.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: question.id,
+  });
 
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
@@ -138,7 +140,8 @@ export default function QuestionCard({
 
   const style = {
     transition: transition ?? "transform 100ms ease",
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
+    zIndex: isDragging ? 10 : 1,
   };
 
   return (
