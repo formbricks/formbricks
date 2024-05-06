@@ -97,6 +97,9 @@ From this upgrade, we now **dynamically fetch** the package from our API endpoin
 
 **Old approach:** (v1.6.5)
 
+<Col>
+<CodeGroup title="Old Formbricks/js use">
+
 ```ts
 import formbricks from "@formbricks/js";
 
@@ -107,9 +110,15 @@ formbricks.init({
 });
 ```
 
+</CodeGroup>
+</Col>
+
 **New approach:** (v2.0.0)
 
 Website surveys:
+
+<Col>
+<CodeGroup title="New Formbricks/js website sdk">
 
 ```ts
 import formbricks from "@formbricks/js/website";
@@ -121,7 +130,13 @@ formbricks.init({
 });
 ```
 
+</CodeGroup>
+</Col>
+
 App surveys:
+
+<Col>
+<CodeGroup title="New Formbricks/js app sdk">
 
 ```ts
 import formbricks from "@formbricks/js/app";
@@ -132,6 +147,9 @@ formbricks.init({
   userId: "<user-id>", // required
 });
 ```
+
+</CodeGroup>
+</Col>
 
 ## v1.6
 
@@ -285,20 +303,20 @@ Formbricks v1.1 includes a lot of new features and improvements. However, it als
 This was introduced because we got a lot of requests from our users for the ability to define some common environment variables at runtime itself i.e. without having to rebuild the image for the changes to take effect.
 This is now possible with v1.1. However, due to Next.JS best practices, we had to deprecate the prefix **NEXT*PUBLIC*** in the following environment variables:
 
-| till v1.0                                   | v1.1                        |
-| ------------------------------------------- | --------------------------- |
-| **NEXT*PUBLIC***EMAIL_VERIFICATION_DISABLED | EMAIL_VERIFICATION_DISABLED |
-| **NEXT*PUBLIC***PASSWORD_RESET_DISABLED     | PASSWORD_RESET_DISABLED     |
-| **NEXT*PUBLIC***SIGNUP_DISABLED             | SIGNUP_DISABLED             |
-| **NEXT*PUBLIC***INVITE_DISABLED             | INVITE_DISABLED             |
-| **NEXT*PUBLIC***PRIVACY_URL                 | PRIVACY_URL                 |
-| **NEXT*PUBLIC***TERMS_URL                   | TERMS_URL                   |
-| **NEXT*PUBLIC***IMPRINT_URL                 | IMPRINT_URL                 |
-| **NEXT*PUBLIC***GITHUB_AUTH_ENABLED         | GITHUB_AUTH_ENABLED         |
-| **NEXT*PUBLIC***GOOGLE_AUTH_ENABLED         | GOOGLE_AUTH_ENABLED         |
-| **NEXT*PUBLIC***WEBAPP_URL                  | WEBAPP_URL                  |
-| **NEXT*PUBLIC***IS_FORMBRICKS_CLOUD         | IS_FORMBRICKS_CLOUD         |
-| **NEXT*PUBLIC***SURVEY_BASE_URL             | SURVEY_BASE_URL             |
+| till v1.0                               | v1.1                        |
+| --------------------------------------- | --------------------------- |
+| NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED | EMAIL_VERIFICATION_DISABLED |
+| NEXT_PUBLIC_PASSWORD_RESET_DISABLED     | PASSWORD_RESET_DISABLED     |
+| NEXT_PUBLIC_SIGNUP_DISABLED             | SIGNUP_DISABLED             |
+| NEXT_PUBLIC_INVITE_DISABLED             | INVITE_DISABLED             |
+| NEXT_PUBLIC_PRIVACY_URL                 | PRIVACY_URL                 |
+| NEXT_PUBLIC_TERMS_URL                   | TERMS_URL                   |
+| NEXT_PUBLIC_IMPRINT_URL                 | IMPRINT_URL                 |
+| NEXT_PUBLIC_GITHUB_AUTH_ENABLED         | GITHUB_AUTH_ENABLED         |
+| NEXT_PUBLIC_GOOGLE_AUTH_ENABLED         | GOOGLE_AUTH_ENABLED         |
+| NEXT_PUBLIC_WEBAPP_URL                  | WEBAPP_URL                  |
+| NEXT_PUBLIC_IS_FORMBRICKS_CLOUD         | IS_FORMBRICKS_CLOUD         |
+| NEXT_PUBLIC_SURVEY_BASE_URL             | SURVEY_BASE_URL             |
 
 <Note>
   Please note that their values and the logic remains exactly the same. Only the prefix has been deprecated.
@@ -325,6 +343,7 @@ For a more detailed guide on these environment variables, please refer to the [I
 
 <Col>
 <CodeGroup title="docker-compose.yml">
+
 ```yaml {{ title: 'docker-compose.yml' }}
 version: "3.3"
 x-environment: &environment
@@ -388,10 +407,9 @@ x-environment: &environment
     # GOOGLE_AUTH_ENABLED:
     # GOOGLE_CLIENT_ID:
     # GOOGLE_CLIENT_SECRET:
-
 ```
 
 </CodeGroup>
 </Col>
+
 Did we miss something? Are you still facing issues migrating your app? [Join our Discord!](https://formbricks.com/discord) We'd be happy to help!
-```

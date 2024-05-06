@@ -4,6 +4,7 @@ import { navigation } from "@/lib/navigation";
 import { remToPx } from "@/lib/remToPx";
 import clsx from "clsx";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
@@ -70,10 +71,10 @@ function NavLink({
         "flex justify-between gap-2 py-1 pr-3 text-sm transition",
         isAnchorLink ? "pl-7" : "pl-4",
         active
-          ? "text-slate-900 dark:text-white"
+          ? "font-bold text-slate-900 dark:text-white"
           : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
       )}>
-      <span className="truncate">{children}</span>
+      <span className="flex w-full truncate">{children}</span>
     </Link>
   );
 }
@@ -106,7 +107,7 @@ function VisibleSectionHighlight({ group, pathname }: { group: NavGroup; pathnam
       initial={{ opacity: 0 }}
       animate={{ opacity: 1, transition: { delay: 0.2 } }}
       exit={{ opacity: 0 }}
-      className="bg-slate-800/2.5 dark:bg-white/2.5 absolute inset-x-0 top-0 will-change-transform"
+      className="absolute inset-x-0 top-0 bg-slate-800/10 dark:bg-white/10"
       style={{ borderRadius: 8, height, top }}
     />
   );
@@ -150,6 +151,13 @@ function NavigationGroup({
   // The state will still update when we re-open (re-render) the navigation.
   let isInsideMobileNavigation = useIsInsideMobileNavigation();
   let [pathname] = useInitialValue([usePathname()], isInsideMobileNavigation);
+  const [activeParentTitle, setActiveParentTitle] = useState<string | undefined>(
+    group.links.find((link) =>
+      link.children
+        ? link.children.some((child) => pathname.startsWith(child.href))
+        : pathname.startsWith(link.href || "")
+    )?.title
+  );
 
   const isActiveGroup = group.links.some((link) => {
     pathname.startsWith(link.href || "") ||
@@ -159,12 +167,6 @@ function NavigationGroup({
         link.children.some((child) => pathname.startsWith(child.href)));
   });
 
-  const activeParentTitle = group.links.find((link) =>
-    link.children
-      ? link.children.some((child) => pathname.startsWith(child.href))
-      : pathname.startsWith(link.href || "")
-  )?.title;
-
   return (
     <li className={clsx("relative mt-6", className)}>
       <motion.h2 layout="position" className="text-xs font-semibold text-slate-900 dark:text-white">
@@ -172,13 +174,13 @@ function NavigationGroup({
       </motion.h2>
       <div className="relative mt-3 pl-2">
         <AnimatePresence initial={!isInsideMobileNavigation}>
-          {isActiveGroup && activeGroup?.title === group.title && (
+          {activeGroup?.title === group.title && (
             <VisibleSectionHighlight group={group} pathname={pathname} />
           )}
         </AnimatePresence>
         <motion.div layout className="absolute inset-y-0 left-2 w-px bg-slate-900/10 dark:bg-white/5" />
         <AnimatePresence initial={false}>
-          {isActiveGroup && activeGroup?.title === group.title && (
+          {activeGroup?.title === group.title && (
             <ActivePageMarker group={group} pathname={pathname || "/docs"} />
           )}
         </AnimatePresence>
@@ -195,17 +197,29 @@ function NavigationGroup({
                   {link.title}
                 </NavLink>
               ) : (
-                <NavLink
-                  href={link.children?.[0]?.href || ""}
-                  active={
-                    (isActiveGroup &&
-                      activeGroup?.title === group.title &&
-                      link.children &&
-                      link.children.some((child) => pathname.startsWith(child.href))) ||
-                    false
-                  }>
-                  {link.title}
-                </NavLink>
+                <div
+                  onClick={() => {
+                    setActiveParentTitle(link.title as string);
+                  }}>
+                  <NavLink
+                    href={link.children?.[0]?.href || ""}
+                    active={
+                      (isActiveGroup &&
+                        activeGroup?.title === group.title &&
+                        link.children &&
+                        link.children.some((child) => pathname.startsWith(child.href))) ||
+                      false
+                    }>
+                    <span className="flex w-full justify-between">
+                      {link.title}
+                      {link.title === activeParentTitle && activeGroup?.title === group.title ? (
+                        <ChevronUpIcon className="my-1 h-4" />
+                      ) : (
+                        <ChevronDownIcon className="my-1 h-4" />
+                      )}
+                    </span>
+                  </NavLink>
+                </div>
               )}
               <AnimatePresence mode="popLayout" initial={false}>
                 {link.children && link.title === activeParentTitle && activeGroup?.title === group.title && (
