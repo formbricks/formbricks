@@ -135,7 +135,7 @@ export const ZJsWebsiteConfigInput = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
-  attributes: ZAttributes.optional(),
+  attributes: z.record(z.string()).optional(),
 });
 
 export type TJsWebsiteConfigInput = z.infer<typeof ZJsWebsiteConfigInput>;
@@ -145,7 +145,7 @@ export const ZJsAppConfigInput = z.object({
   apiHost: z.string(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
   userId: z.string(),
-  attributes: ZAttributes.optional(),
+  attributes: z.record(z.string()).optional(),
 });
 
 export type TJsAppConfigInput = z.infer<typeof ZJsAppConfigInput>;
