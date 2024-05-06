@@ -2,7 +2,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
-import formbricksWebsite from "@formbricks/js/website";
+import formbricks from "@formbricks/js/website";
 
 import { SurveySwitch } from "../../components/SurveySwitch";
 import fbsetup from "../../public/fb-setup.png";
@@ -39,7 +39,7 @@ export default function AppPage({}) {
         language: "de",
       };
 
-      formbricksWebsite.init({
+      formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         attributes: defaultAttributes,
@@ -48,7 +48,7 @@ export default function AppPage({}) {
 
     // Connect next.js router to Formbricks
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
-      const handleRouteChange = formbricksWebsite?.registerRouteChange;
+      const handleRouteChange = formbricks?.registerRouteChange;
       router.events.on("routeChangeComplete", handleRouteChange);
 
       return () => {
@@ -61,7 +61,7 @@ export default function AppPage({}) {
     <div className="h-screen bg-white px-12 py-6 dark:bg-slate-800">
       <div className="flex flex-col items-center justify-between md:flex-row">
         <div className="flex items-center gap-2">
-          <SurveySwitch value="website" formbricks={formbricksWebsite} />
+          <SurveySwitch value="website" formbricks={formbricks} />
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
               Formbricks Website Survey Demo App
@@ -126,7 +126,7 @@ export default function AppPage({}) {
             <button
               className="my-4 rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
               onClick={() => {
-                formbricksWebsite.reset();
+                formbricks.reset();
               }}>
               Reset
             </button>
