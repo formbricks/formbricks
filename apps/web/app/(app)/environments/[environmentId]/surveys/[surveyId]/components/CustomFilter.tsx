@@ -7,7 +7,7 @@ import {
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
 import { differenceInDays, format, startOfDay, subDays } from "date-fns";
-import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
+import { ChevronDown, ChevronUp, ArrowDownToLine } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -262,13 +262,8 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                 <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:min-w-[11rem] sm:px-6 sm:py-3">
                   <div className="hidden w-full items-center justify-between sm:flex">
                     <span className="text-sm text-slate-700">Download</span>
-                    {isDownloadDropDownOpen ? (
-                      <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
-                    ) : (
-                      <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                    )}
+                    <ArrowDownToLine className="ml-2 h-4 w-4 opacity-50" />
                   </div>
-                  <DownloadIcon className="block h-4 sm:hidden" />
                 </div>
               </DropdownMenuTrigger>
 
