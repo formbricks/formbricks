@@ -84,11 +84,6 @@ export const initialize = async (
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
 
-  // let updatedAttributes: TPersonAttributes | null = null;
-  // if (configInput.attributes) {
-  //   updatedAttributes = { ...configInput.attributes };
-  // }
-
   if (
     existingConfig &&
     existingConfig.state &&
@@ -160,6 +155,11 @@ export const initialize = async (
 };
 
 const handleErrorOnFirstInit = () => {
+  if (getIsDebug()) {
+    logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
+    return;
+  }
+
   // put formbricks in error state (by creating a new config) and throw error
   const initialErrorConfig: Partial<TJSAppConfig> = {
     status: "error",

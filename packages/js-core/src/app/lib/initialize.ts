@@ -150,6 +150,7 @@ export const initialize = async (
     } catch (e) {
       handleErrorOnFirstInit();
     }
+
     // and track the new session event
     await trackAction("New Session");
   }
@@ -181,6 +182,11 @@ export const initialize = async (
 };
 
 const handleErrorOnFirstInit = () => {
+  if (getIsDebug()) {
+    logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
+    return;
+  }
+
   // put formbricks in error state (by creating a new config) and throw error
   const initialErrorConfig: Partial<TJSAppConfig> = {
     status: "error",
