@@ -181,7 +181,11 @@ export default function Navigation({
             {navigationItems.map(
               (item) =>
                 !item.isHidden && (
-                  <NavigationLink key={item.name} href={item.href} isActive={item.isActive}>
+                  <NavigationLink
+                    key={item.name}
+                    href={item.href}
+                    isActive={item.isActive}
+                    isCollapsed={isCollapsed}>
                     <item.icon className={cn("h-5 w-5", !isCollapsed ? "mr-3" : "w-sidebar-expanded")} />
                     {!isCollapsed && item.name}
                   </NavigationLink>
