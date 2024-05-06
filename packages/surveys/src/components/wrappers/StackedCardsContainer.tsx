@@ -44,7 +44,7 @@ export const StackedCardsContainer = ({
     if (currentQuestionId === "start") return survey.welcomeCard.enabled ? -1 : 0;
     if (currentQuestionId === "end") return survey.thankYouCard.enabled ? survey.questions.length : 0;
     return survey.questions.findIndex((question) => question.id === currentQuestionId);
-  }, [currentQuestionId, survey.welcomeCard.enabled, survey.thankYouCard.enabled]);
+  }, [currentQuestionId, survey.welcomeCard.enabled, survey.thankYouCard.enabled, survey.questions]);
 
   const borderStyles = useMemo(() => {
     const baseStyle = {
@@ -94,7 +94,7 @@ export const StackedCardsContainer = ({
       resizeObserver.current.observe(currentElement);
     }
     return () => resizeObserver.current?.disconnect();
-  }, [questionIdx, cardRefs.current]);
+  }, [questionIdx]);
 
   const getCardHeight = (offset: number): string => {
     // Take default height depending upon card content

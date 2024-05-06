@@ -344,15 +344,12 @@ export const Survey = ({
   };
 
   return (
-    <>
-      {console.log(ttc)}
-      <StackedCardsContainer
-        cardArrangement={cardArrangement}
-        currentQuestionId={questionId}
-        getCardContent={getCardContent}
-        survey={survey}
-        styling={styling}
-      />
-    </>
+    <StackedCardsContainer
+      cardArrangement={cardArrangement}
+      currentQuestionId={questionId}
+      getCardContent={getCardContent}
+      survey={survey}
+      styling={styling}
+    />
   );
 };

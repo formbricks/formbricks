@@ -107,7 +107,7 @@ export const DateQuestion = ({
         input.focus();
       }
     }
-  }, [datePickerOpen]);
+  }, [datePickerOpen, selectedDate]);
 
   useEffect(() => {
     if (!!selectedDate) {
