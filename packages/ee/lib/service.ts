@@ -63,6 +63,7 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
           },
         });
 
+        console.log("CALLING LICENSE CHECK \n\n");
         const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
           body: JSON.stringify({
             licenseKey: ENTERPRISE_LICENSE_KEY,
@@ -71,6 +72,9 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
           headers: { "Content-Type": "application/json" },
           method: "POST",
         });
+
+        console.log("RESPONSE: ", res);
+        console.log("\n\n\n");
 
         if (res.ok) {
           const responseJson = await res.json();
