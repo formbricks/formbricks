@@ -101,7 +101,7 @@ export const SurveysList = ({
     <Button
       size="sm"
       href={`/environments/${environment.id}/surveys/templates`}
-      variant="secondary"
+      variant="darkCTA"
       EndIcon={PlusIcon}>
       New survey
     </Button>

@@ -2,7 +2,7 @@ import PeopleSegmentsNav from "@/app/(app)/environments/[environmentId]/(peopleA
 
 import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
 
-export default function ActionsAndAttributesLayout({ params, children }) {
+export default function AttributeLayout({ params, children }) {
   return (
     <div className="flex">
       <PeopleSegmentsNav activeId="attributes" environmentId={params.environmentId} />
