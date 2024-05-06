@@ -103,15 +103,26 @@ export async function GET(
       // && (!survey.segment || survey.segment.filters.length === 0)
     );
 
+    const updatedProduct: TProduct = {
+      ...product,
+      brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
+      ...(product.styling.highlightBorderColor?.light && {
+        highlightBorderColor: product.styling.highlightBorderColor.light,
+      }),
+    };
+
+    const noCodeActionClasses = actionClasses.filter((actionClass) => actionClass.type === "noCode");
+
     // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
-    let transformedSurveys: TLegacySurvey[] | TSurvey[];
+    let transformedSurveys: TLegacySurvey[] | TSurvey[] = surveys;
+    let state: TJsWebsiteStateSync | TJsWebsiteLegacyStateSync = {
+      surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
+      actionClasses,
+      product: updatedProduct,
+    };
 
     // Backwards compatibility for versions less than 2.0.0 (no multi-language support and updated trigger action classes).
-    if (version && isVersionGreaterThanOrEqualTo(version, "2.0.0")) {
-      // Scenario 1: Multi language and updated trigger action classes supported.
-      // Use the surveys as they are.
-      transformedSurveys = filteredSurveys;
-    } else {
+    if (!isVersionGreaterThanOrEqualTo(version ?? "", "2.0.0")) {
       // Scenario 2: Multi language and updated trigger action classes not supported
       // Convert to legacy surveys with default language
       // convert triggers to array of actionClasses Names
@@ -121,28 +132,7 @@ export async function GET(
           return transformToLegacySurvey(survey, languageCode);
         })
       );
-    }
 
-    const updatedProduct: TProduct = {
-      ...product,
-      brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
-      ...(product.styling.highlightBorderColor?.light && {
-        highlightBorderColor: product.styling.highlightBorderColor.light,
-      }),
-    };
-    const noCodeActionClasses = actionClasses.filter((actionClass) => actionClass.type === "noCode");
-
-    // creating state object
-    let state: TJsWebsiteStateSync | TJsWebsiteLegacyStateSync;
-
-    // Backwards compatibility for versions less than 2.0.0
-    if (version && isVersionGreaterThanOrEqualTo(version, "2.0.0")) {
-      state = {
-        surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
-        actionClasses,
-        product: updatedProduct,
-      };
-    } else {
       state = {
         surveys: isInAppSurveyLimitReached ? [] : transformedSurveys,
         noCodeActionClasses,
