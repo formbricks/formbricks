@@ -26,7 +26,7 @@ const config = () => {
     plugins: [
       dts({
         rollupTypes: true,
-        bundledPackages: ["@formbricks/api"],
+        bundledPackages: ["@formbricks/api", "@formbricks/types"],
       }),
     ],
   });
