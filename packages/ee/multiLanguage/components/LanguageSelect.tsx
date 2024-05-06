@@ -52,7 +52,7 @@ export const LanguageSelect = ({ language, onLanguageChange, disabled }: Languag
         disabled={disabled}
         variant="minimal"
         onClick={toggleDropdown}
-        className="flex h-full w-full justify-between border px-3 py-2">
+        className="flex h-full w-full justify-between border border-slate-200 px-3 py-2">
         <span className="mr-2">{selectedOption?.english ?? "Select"}</span>
         <ChevronDown className="h-4 w-4" />
       </Button>

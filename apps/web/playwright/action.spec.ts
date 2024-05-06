@@ -15,7 +15,7 @@ const createNoCodeActionByCSSSelector = async (
   await signUpAndLogin(page, username, email, password);
   await finishOnboarding(page);
 
-  await page.getByRole("link", { name: "Actions & Attributes" }).click();
+  await page.getByRole("link", { name: "Actions" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/actions/);
 
   // Add Action button
@@ -57,7 +57,7 @@ const createNoCodeActionByPageURL = async (
   await signUpAndLogin(page, username, email, password);
   await finishOnboarding(page);
 
-  await page.getByRole("link", { name: "Actions & Attributes" }).click();
+  await page.getByRole("link", { name: "Actions" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/actions/);
 
   // Add Action button
@@ -106,7 +106,7 @@ const createNoCodeActionByInnerText = async (
   await signUpAndLogin(page, username, email, password);
   await finishOnboarding(page);
 
-  await page.getByRole("link", { name: "Actions & Attributes" }).click();
+  await page.getByRole("link", { name: "Actions" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/actions/);
 
   // Add Action button
@@ -155,7 +155,7 @@ test.describe("Create and Edit No Code Action by CSS Selector", async () => {
   test("Edit No Code Action by CSS Selector", async ({ page }) => {
     const { email, password } = users.action[0];
     await login(page, email, password);
-    await page.getByRole("link", { name: "Actions & Attributes" }).click();
+    await page.getByRole("link", { name: "Actions" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/actions/);
 
     const actionButton = getActionButtonLocator(page, actions.create.noCode.cssSelector.name);
@@ -200,7 +200,7 @@ test.describe("Create and Edit No Code Action by Page URL", async () => {
     const { email, password } = users.action[1];
     await login(page, email, password);
 
-    await page.getByRole("link", { name: "Actions & Attributes" }).click();
+    await page.getByRole("link", { name: "Actions" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/actions/);
 
     const actionButton = getActionButtonLocator(page, actions.create.noCode.pageURL.name);
@@ -248,7 +248,7 @@ test.describe("Create and Edit No Code Action by Inner Text", async () => {
     const { email, password } = users.action[2];
 
     await login(page, email, password);
-    await page.getByRole("link", { name: "Actions & Attributes" }).click();
+    await page.getByRole("link", { name: "Actions" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/actions/);
 
     const actionButton = getActionButtonLocator(page, actions.create.noCode.innerText.name);
@@ -278,7 +278,7 @@ test.describe("Create and Edit Code Action", async () => {
     await signUpAndLogin(page, username, email, password);
     await finishOnboarding(page);
 
-    await page.getByRole("link", { name: "Actions & Attributes" }).click();
+    await page.getByRole("link", { name: "Actions" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/actions/);
 
     // Add Action button
@@ -300,7 +300,7 @@ test.describe("Create and Edit Code Action", async () => {
 
   test("Edit Code Action", async ({ page }) => {
     await login(page, email, password);
-    await page.getByRole("link", { name: "Actions & Attributes" }).click();
+    await page.getByRole("link", { name: "Actions" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/actions/);
 
     const actionButton = getActionButtonLocator(page, actions.create.code.name);
@@ -336,7 +336,7 @@ test.describe("Create and Delete Action", async () => {
     const { email, password } = users.action[4];
     await login(page, email, password);
 
-    await page.getByRole("link", { name: "Actions & Attributes" }).click();
+    await page.getByRole("link", { name: "Actions" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/actions/);
 
     const actionButton = getActionButtonLocator(page, actions.delete.noCode.name);

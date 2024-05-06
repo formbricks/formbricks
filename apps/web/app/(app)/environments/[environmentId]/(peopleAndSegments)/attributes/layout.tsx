@@ -1,16 +1,11 @@
 import PeopleSegmentsTabs from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/components/PeopleSegmentsTabs";
-import { Metadata } from "next";
 
 import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
 
-export const metadata: Metadata = {
-  title: "People",
-};
-
-export default async function PeopleLayout({ params, children }) {
+export default function ActionsAndAttributesLayout({ params, children }) {
   return (
     <>
-      <PeopleSegmentsTabs activeId="people" environmentId={params.environmentId} />
+      <PeopleSegmentsTabs activeId="attributes" environmentId={params.environmentId} />
       <ContentWrapper>{children}</ContentWrapper>
     </>
   );

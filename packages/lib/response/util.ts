@@ -405,7 +405,10 @@ export const extracMetadataKeys = (obj: TResponse["meta"]) => {
 
 export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) => {
   const metaDataFields = responses.length > 0 ? extracMetadataKeys(responses[0].meta) : [];
-  const questions = survey.questions.map((question, idx) => `${idx + 1}. ${question.headline}`);
+  const questions = survey.questions.map((question, idx) => {
+    const headline = getLocalizedValue(question.headline, "default") ?? question.id;
+    return `${idx + 1}. ${headline}`;
+  });
   const hiddenFields = survey.hiddenFields?.fieldIds || [];
   const userAttributes = Array.from(
     new Set(responses.map((response) => Object.keys(response.personAttributes ?? {})).flat())

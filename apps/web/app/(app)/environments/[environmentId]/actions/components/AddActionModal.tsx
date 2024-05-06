@@ -1,6 +1,6 @@
 "use client";
 
-import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
+import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { MousePointerClickIcon } from "lucide-react";
 import { Terminal } from "lucide-react";
 import { useState } from "react";
