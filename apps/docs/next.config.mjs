@@ -15,6 +15,7 @@ const withMDX = nextMDX({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  basePath: "/docs",
   pageExtensions: ["js", "jsx", "ts", "tsx", "mdx"],
   transpilePackages: ["@formbricks/ui", "@formbricks/lib"],
   images: {
@@ -52,7 +53,7 @@ const nextConfig = {
       },
       {
         source: "/self-hosting/external-auth-providers",
-        destination: "/self-hosting/configuration",
+        destination: "/self-hosting/configure",
         permanent: true,
       },
       {
