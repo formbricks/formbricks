@@ -77,7 +77,6 @@ export default function SideBar({
         </Link>
       )}
       <Button
-        tooltip={isCollapsed ? "Open Sidebar" : "Close Sidebar"}
         size="icon"
         tooltipSide="right"
         onClick={toggleSidebar}

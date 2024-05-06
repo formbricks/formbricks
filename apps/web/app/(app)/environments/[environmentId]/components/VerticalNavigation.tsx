@@ -106,7 +106,7 @@ export default function Navigation({
         isHidden: false,
       },
       {
-        name: "Respondents",
+        name: "People",
         href: `/environments/${environment.id}/people`,
         icon: UsersIcon,
         isActive:

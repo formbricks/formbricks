@@ -21,8 +21,8 @@ export default function NavigationLink({
   linkText,
   isTextVisible = true,
 }: NavigationLinkProps) {
-  const activeClass = "bg-slate-50 border-r-4 border-brand-dark font-semibold";
-  const inactiveClass = "hover:bg-slate-50 border-r-4 border-transparent";
+  const activeClass = "bg-slate-50 border-r-4 border-brand-dark font-semibold text-slate-900";
+  const inactiveClass = "hover:bg-slate-50 border-r-4 border-transparent hover:border-slate-300";
 
   return (
     <>
@@ -48,7 +48,7 @@ export default function NavigationLink({
       ) : (
         <li
           className={cn(
-            "my-1 ml-4 rounded-l-md py-2 pl-5 text-sm text-slate-700 hover:text-slate-900",
+            "my-1 ml-4 rounded-l-md py-2 pl-5 text-sm text-slate-600 hover:text-slate-900",
             isActive ? activeClass : inactiveClass
           )}>
           <Link href={href} className="flex items-center">

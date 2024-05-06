@@ -1,4 +1,4 @@
-import PeopleSegmentsTabs from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/components/PeopleSegmentsTabs";
+import PeopleSegmentsNav from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/components/PeopleSegmentsNav";
 import { Metadata } from "next";
 
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
@@ -19,13 +19,13 @@ export default async function PeopleLayout({ params, children }) {
   const isUserTargetingAllowed = getAdvancedTargetingPermission(team);
 
   return (
-    <InnerContentWrapper pageTitle="Segments">
-      <PeopleSegmentsTabs
+    <div className="flex">
+      <PeopleSegmentsNav
         activeId="segments"
         environmentId={params.environmentId}
         isUserTargetingAllowed={isUserTargetingAllowed}
       />
-      {children}
-    </InnerContentWrapper>
+      <InnerContentWrapper pageTitle="Segments">{children}</InnerContentWrapper>
+    </div>
   );
 }

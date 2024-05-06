@@ -40,7 +40,7 @@ export default async function SecondNavbar({
                 tab.id === activeId
                   ? " border-brand-dark rounded-t-md bg-slate-100 font-semibold text-slate-900"
                   : "rounded-t-md border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700",
-                "flex h-full items-center border-b-2 px-3 py-2 text-sm font-medium"
+                "my-1 ml-4 flex h-full items-center rounded-l-md border-b-2 px-3  py-2 text-sm font-medium text-slate-700 hover:text-slate-900"
               )}
               aria-current={tab.id === activeId ? "page" : undefined}>
               {tab.icon && <div className="mr-2 h-5 w-5">{tab.icon}</div>}

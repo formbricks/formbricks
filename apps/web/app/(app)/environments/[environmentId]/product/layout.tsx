@@ -1,16 +1,8 @@
-import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 
-import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
-
-export const metadata: Metadata = {
-  title: "Config",
-};
 
 export default async function ConfigLayout({ children, params }) {
   const [team, product, session] = await Promise.all([
@@ -31,9 +23,5 @@ export default async function ConfigLayout({ children, params }) {
     throw new Error("Unauthenticated");
   }
 
-  const isMultiLanguageAllowed = getMultiLanguagePermission(team);
-
-  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-
-  return <InnerContentWrapper pageTitle="Configuration">{children}</InnerContentWrapper>;
+  return <>{children}</>;
 }

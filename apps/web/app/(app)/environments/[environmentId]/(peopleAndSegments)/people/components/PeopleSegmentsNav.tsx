@@ -1,5 +1,6 @@
-import SecondNavbar from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/attributes/components/SecondNavbar";
 import { TagIcon, UserIcon, UsersIcon } from "lucide-react";
+
+import SecondNavigation from "@formbricks/ui/SecondNavigation";
 
 interface PeopleSegmentsTabsProps {
   activeId: string;
@@ -8,26 +9,29 @@ interface PeopleSegmentsTabsProps {
 }
 
 export default function PeopleSegmentsTabs({ activeId, environmentId }: PeopleSegmentsTabsProps) {
-  let tabs = [
+  const navigation = [
     {
-      id: "respondents",
-      label: "Respondents",
+      id: "people",
+      label: "People",
       icon: <UserIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/people`,
+      current: activeId === "people",
     },
     {
       id: "segments",
       label: "Segments",
       icon: <UsersIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/segments`,
+      current: activeId === "segments",
     },
     {
       id: "attributes",
       label: "Attributes",
       icon: <TagIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/attributes`,
+      current: activeId === "attributes",
     },
   ];
 
-  return <SecondNavbar tabs={tabs} activeId={activeId} environmentId={environmentId} />;
+  return <SecondNavigation navigation={navigation} />;
 }

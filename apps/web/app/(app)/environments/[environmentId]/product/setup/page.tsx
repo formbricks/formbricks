@@ -1,6 +1,7 @@
 import WidgetStatusIndicator from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import EnvironmentNotice from "@formbricks/ui/EnvironmentNotice";
 
 import SettingsCard from "../../settings/components/SettingsCard";
@@ -8,6 +9,8 @@ import EnvironmentIdField from "./components/EnvironmentIdField";
 import SetupInstructions from "./components/SetupInstructions";
 
 export default async function ProfileSettingsPage({ params }) {
+  const environment = await getEnvironment(params.environmentId);
+
   return (
     <>
       <div className="space-y-4">
@@ -15,7 +18,7 @@ export default async function ProfileSettingsPage({ params }) {
         <SettingsCard
           title="Widget Status"
           description="Check if the Formbricks widget is alive and kicking.">
-          <WidgetStatusIndicator environmentId={params.environmentId} type="large" />
+          {environment && <WidgetStatusIndicator environment={environment} type="large" />}
         </SettingsCard>
         <SettingsCard
           title="Your EnvironmentId"
