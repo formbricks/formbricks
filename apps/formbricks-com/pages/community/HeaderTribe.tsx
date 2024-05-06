@@ -1,5 +1,5 @@
 import footerLogoDark from "@/images/logo/footerlogo-dark.svg";
-import { Bars3Icon } from "@heroicons/react/24/solid";
+import { MenuIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -50,7 +50,7 @@ export default function HeaderLight() {
         <Popover open={mobileNavMenuOpen} onOpenChange={setMobileNavMenuOpen}>
           <PopoverTrigger onClick={() => setMobileNavMenuOpen(!mobileNavMenuOpen)}>
             <span>
-              <Bars3Icon className="h-8 w-8 rounded-md bg-slate-700 p-1 text-slate-200" />
+              <MenuIcon className="h-8 w-8 rounded-md bg-slate-700 p-1 text-slate-200" />
             </span>
           </PopoverTrigger>
           <PopoverContent className="border-slate-600 bg-slate-700 shadow">

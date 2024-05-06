@@ -1,7 +1,7 @@
 "use client";
 
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -94,7 +94,10 @@ export default function RecontactOptionsCard({
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
-            <CheckCircleIcon className="h-8 w-8 text-green-400" />
+            <CheckIcon
+              strokeWidth={3}
+              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+            />
           </div>
           <div>
             <p className="font-semibold text-slate-800">Recontact Options</p>
@@ -124,7 +127,7 @@ export default function RecontactOptionsCard({
                   id={option.name}
                   className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
                 />
-                <div className="">
+                <div>
                   <p className="font-semibold text-slate-700">{option.name}</p>
 
                   <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
@@ -185,7 +188,7 @@ export default function RecontactOptionsCard({
                   id="newDays"
                   className="aria-checked:border-brand-dark mx-4 disabled:border-slate-400 aria-checked:border-2"
                 />
-                <div className="">
+                <div>
                   <p className="text-sm font-semibold text-slate-700">
                     Wait
                     <Input

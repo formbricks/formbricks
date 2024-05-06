@@ -1,28 +1,16 @@
-import CalLogoDark from "@/images/clients/cal-logo-dark.svg";
-import CalLogoLight from "@/images/clients/cal-logo-light.svg";
-import CrowdLogoDark from "@/images/clients/crowd-logo-dark.svg";
-import CrowdLogoLight from "@/images/clients/crowd-logo-light.svg";
-import FlixbusLogo from "@/images/clients/flixbus-white.svg";
-import NILogoDark from "@/images/clients/niLogoDark.svg";
-import NILogoLight from "@/images/clients/niLogoWhite.svg";
-import OptimoleLogo from "@/images/clients/optimole-logo.svg";
-import ThemeisleLogo from "@/images/clients/themeisle-logo.webp";
-import AnimationFallback from "@/public/animations/opensource-xm-platform-formbricks-fallback.png";
-import { ShieldCheckIcon, StarIcon } from "@heroicons/react/24/outline";
+import LogoBar from "@/components/salespage/LogoBar";
+import { ShieldCheckIcon, StarIcon } from "lucide-react";
 import { usePlausible } from "next-plausible";
-import Image from "next/image";
 import { useRouter } from "next/router";
 
 import { Button } from "@formbricks/ui/Button";
-
-import HeroAnimation from "./HeroAnimation";
 
 export const Hero: React.FC = ({}) => {
   const plausible = usePlausible();
   const router = useRouter();
   return (
     <div className="relative">
-      <div className="px-4 pb-20 pt-16 text-center sm:px-6 lg:px-8 lg:pb-32 lg:pt-20">
+      <div className="text-center">
         <div className="xs:text-sm flex items-center justify-center space-x-4 divide-x-2 text-xs text-slate-600">
           <p>
             <ShieldCheckIcon className="mb-1 inline h-4 w-4" /> Privacy-first
@@ -46,56 +34,17 @@ export const Hero: React.FC = ({}) => {
             know what your customers need.
           </span>
         </p>
+        <LogoBar hideTeamsClaim />
 
-        <div className="mx-auto mt-5 max-w-3xl items-center px-4 sm:flex sm:justify-center md:mt-6 md:space-x-8 md:px-0">
-          <div className="grid grid-cols-6 items-center gap-6 pt-2 md:gap-8">
-            <Image
-              src={FlixbusLogo}
-              alt="Flixbus Flix Flixtrain Logo"
-              className="rounded-lg pb-1 "
-              width={200}
-            />
-            <Image src={CalLogoLight} alt="Cal Logo" className="block rounded-lg  dark:hidden" width={170} />
-            <Image src={CalLogoDark} alt="Cal Logo" className="hidden rounded-lg  dark:block" width={170} />
-            <Image src={ThemeisleLogo} alt="Neverinstall Logo" className="pb-1" width={200} />
-
-            <Image
-              src={CrowdLogoLight}
-              alt="Crowd.dev Logo"
-              className="block rounded-lg pb-1  dark:hidden"
-              width={200}
-            />
-            <Image
-              src={CrowdLogoDark}
-              alt="Crowd.dev Logo"
-              className="hidden rounded-lg pb-1  dark:block"
-              width={200}
-            />
-            <Image src={OptimoleLogo} alt="Neverinstall Logo" className="pb-1" width={200} />
-            <Image src={NILogoDark} alt="Neverinstall Logo" className="block pb-1  dark:hidden" width={200} />
-            <Image
-              src={NILogoLight}
-              alt="Neverinstall Logo"
-              className="hidden  pb-1  dark:block"
-              width={200}
-            />
-            <Image
-              src={NILogoLight}
-              alt="Neverinstall Logo"
-              className="hidden  pb-1  dark:block"
-              width={200}
-            />
-          </div>
-        </div>
-        <div className="hidden pt-14 md:block">
+        <div className="hidden pt-7 md:block">
           <Button
-            variant="highlight"
+            variant="darkCTA"
             className="mr-3 px-6"
             onClick={() => {
               router.push("https://app.formbricks.com/auth/signup");
               plausible("Hero_CTA_GetStartedItsFree");
             }}>
-            Get Started, it&apos;s Free
+            Get Started
           </Button>
           <Button
             variant="secondary"
@@ -107,9 +56,6 @@ export const Hero: React.FC = ({}) => {
             View Code on GitHub
           </Button>
         </div>
-      </div>
-      <div className="relative px-2 md:px-0">
-        <HeroAnimation fallbackImage={AnimationFallback} />
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
+import { getAttributes } from "@formbricks/lib/attribute/service";
 import { getPerson } from "@formbricks/lib/person/service";
 import { getResponsesByPersonId } from "@formbricks/lib/response/service";
 import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 
 export default async function AttributesSection({ personId }: { personId: string }) {
-  const person = await getPerson(personId);
+  const [person, attributes] = await Promise.all([getPerson(personId), getAttributes(personId)]);
   if (!person) {
     throw new Error("No such person found");
   }
@@ -18,8 +19,18 @@ export default async function AttributesSection({ personId }: { personId: string
       <div>
         <dt className="text-sm font-medium text-slate-500">Email</dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
-          {person.attributes.email ? (
-            <span>{person.attributes.email}</span>
+          {attributes.email ? (
+            <span>{attributes.email}</span>
+          ) : (
+            <span className="text-slate-300">Not provided</span>
+          )}
+        </dd>
+      </div>
+      <div>
+        <dt className="text-sm font-medium text-slate-500">Language</dt>
+        <dd className="ph-no-capture mt-1 text-sm text-slate-900">
+          {attributes.language ? (
+            <span>{attributes.language}</span>
           ) : (
             <span className="text-slate-300">Not provided</span>
           )}
@@ -28,9 +39,7 @@ export default async function AttributesSection({ personId }: { personId: string
       <div>
         <dt className="text-sm font-medium text-slate-500">User Id</dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
-          {person.attributes.userId ? (
-            <span>{person.attributes.userId}</span>
-          ) : person.userId ? (
+          {person.userId ? (
             <span>{person.userId}</span>
           ) : (
             <span className="text-slate-300">Not provided</span>
@@ -42,8 +51,8 @@ export default async function AttributesSection({ personId }: { personId: string
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">{person.id}</dd>
       </div>
 
-      {Object.entries(person.attributes)
-        .filter(([key, _]) => key !== "email" && key !== "userId")
+      {Object.entries(attributes)
+        .filter(([key, _]) => key !== "email" && key !== "userId" && key !== "language")
         .map(([key, value]) => (
           <div key={key}>
             <dt className="text-sm font-medium text-slate-500">{capitalizeFirstLetter(key.toString())}</dt>
@@ -52,10 +61,6 @@ export default async function AttributesSection({ personId }: { personId: string
         ))}
       <hr />
 
-      <div>
-        {/* <dt className="text-sm font-medium text-slate-500">Sessions</dt> */}
-        {/* <dd className="mt-1 text-sm text-slate-900">{numberOfSessions}</dd> */}
-      </div>
       <div>
         <dt className="text-sm font-medium text-slate-500">Responses</dt>
         <dd className="mt-1 text-sm text-slate-900">{numberOfResponses}</dd>

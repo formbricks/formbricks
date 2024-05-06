@@ -12,11 +12,19 @@ export const signUpAndLogin = async (
   await page.goto("/auth/login");
   await page.getByRole("link", { name: "Create an account" }).click();
   await page.getByRole("button", { name: "Continue with Email" }).click();
+
+  await expect(page.getByPlaceholder("Full Name")).toBeVisible();
   await page.getByPlaceholder("Full Name").fill(name);
   await page.getByPlaceholder("Full Name").press("Tab");
+
+  await expect(page.getByPlaceholder("work@email.com")).toBeVisible();
+
   await page.getByPlaceholder("work@email.com").click();
   await page.getByPlaceholder("work@email.com").fill(email);
   await page.getByPlaceholder("work@email.com").press("Tab");
+
+  await expect(page.getByPlaceholder("*******")).toBeVisible();
+
   await page.getByPlaceholder("*******").click();
   await page.getByPlaceholder("*******").fill(password);
   await page.getByRole("button", { name: "Continue with Email" }).click();
@@ -30,29 +38,65 @@ export const signUpAndLogin = async (
 
 export const login = async (page: Page, email: string, password: string): Promise<void> => {
   await page.goto("/auth/login");
+
+  await expect(page.getByRole("button", { name: "Login with Email" })).toBeVisible();
+
   await page.getByRole("button", { name: "Login with Email" }).click();
+
+  await expect(page.getByPlaceholder("work@email.com")).toBeVisible();
+
   await page.getByPlaceholder("work@email.com").fill(email);
+
+  await expect(page.getByPlaceholder("*******")).toBeVisible();
+
   await page.getByPlaceholder("*******").click();
   await page.getByPlaceholder("*******").fill(password);
   await page.getByRole("button", { name: "Login with Email" }).click();
 };
 
-export const skipOnboarding = async (page: Page): Promise<void> => {
+export const finishOnboarding = async (page: Page, deleteExampleSurvey: boolean = true): Promise<void> => {
   await page.waitForURL("/onboarding");
   await expect(page).toHaveURL("/onboarding");
-  await page.getByRole("button", { name: "I'll do it later" }).click();
-  await page.waitForTimeout(500);
-  await page.getByRole("button", { name: "I'll do it later" }).click();
-  await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-  await expect(page).toHaveURL(/\/environments\/[^/]+\/surveys/);
+
+  const hiddenSkipButton = page.locator("#FB__INTERNAL__SKIP_ONBOARDING");
+  hiddenSkipButton.evaluate((el: HTMLElement) => el.click());
+
   await expect(page.getByText("My Product")).toBeVisible();
+
+  let currentDir = process.cwd();
+  let htmlFilePath = currentDir + "/packages/js/index.html";
+
+  const environmentId =
+    /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
+    (() => {
+      throw new Error("Unable to parse environmentId from URL");
+    })();
+
+  let htmlFile = replaceEnvironmentIdInHtml(htmlFilePath, environmentId);
+  await page.goto(htmlFile);
+
+  // Formbricks Website Sync has happened
+  const syncApi = await page.waitForResponse((response) => response.url().includes("/website/sync"));
+  expect(syncApi.status()).toBe(200);
+
+  await page.goto("/");
+  await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+
+  if (deleteExampleSurvey) {
+    await page.click("#example-survey-survey-actions");
+    await page.getByRole("menuitem", { name: "Delete" }).click();
+    await page.getByRole("button", { name: "Delete" }).click();
+    await expect(page.getByText("Survey deleted successfully.")).toBeVisible();
+    await page.reload();
+    await expect(page.getByText("Start from scratchCreate a")).toBeVisible();
+  }
 };
 
 export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: string): string => {
   let htmlContent = readFileSync(filePath, "utf-8");
   htmlContent = htmlContent.replace(/environmentId: ".*?"/, `environmentId: "${environmentId}"`);
 
-  writeFileSync(filePath, htmlContent);
+  writeFileSync(filePath, htmlContent, { mode: 1 });
   return "file:///" + filePath;
 };
 
@@ -87,9 +131,9 @@ export const createSurvey = async (
   const addQuestion = "Add QuestionAdd a new question to your survey";
 
   await signUpAndLogin(page, name, email, password);
-  await skipOnboarding(page);
+  await finishOnboarding(page);
 
-  await page.getByRole("heading", { name: "Start from Scratch" }).click();
+  await page.getByText("Start from scratchCreate a").click();
 
   // Welcome Card
   await expect(page.locator("#welcome-toggle")).toBeVisible();
@@ -97,7 +141,7 @@ export const createSurvey = async (
   await page.locator("#welcome-toggle").check();
   await page.getByLabel("Headline").fill(params.welcomeCard.headline);
   await page.locator("form").getByText("Thanks for providing your").fill(params.welcomeCard.description);
-  await page.getByText("Welcome CardEnabled").click();
+  await page.getByText("Welcome CardOn").click();
 
   // Open Text Question
   await page.getByRole("button", { name: "1 What would you like to know" }).click();
@@ -154,11 +198,7 @@ export const createSurvey = async (
   await page.getByRole("button", { name: "Net Promoter Score (NPS)" }).click();
   await page.getByLabel("Question").fill(params.npsQuestion.question);
   await page.getByLabel("Lower label").fill(params.npsQuestion.lowLabel);
-  await page
-    .locator("div")
-    .filter({ hasText: /^Upper label$/ })
-    .locator("#subheader")
-    .fill(params.npsQuestion.highLabel);
+  await page.getByLabel("Upper label").fill(params.npsQuestion.highLabel);
 
   // CTA Question
   await page
@@ -167,7 +207,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Call-to-Action" }).click();
-  await page.getByLabel("Question").fill(params.ctaQuestion.question);
+  await page.getByPlaceholder("Your question here. Recall").fill(params.ctaQuestion.question);
   await page.getByPlaceholder("Finish").fill(params.ctaQuestion.buttonLabel);
 
   // Consent Question
@@ -199,12 +239,42 @@ export const createSurvey = async (
   await page.getByRole("button", { name: "File Upload" }).click();
   await page.getByLabel("Question").fill(params.fileUploadQuestion.question);
 
-  // Thank You Card
+  // Fill Matrix question in german
+  // File Upload Question
   await page
     .locator("div")
-    .filter({ hasText: /^Thank You CardShown$/ })
+    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
     .nth(1)
     .click();
-  await page.getByLabel("Question").fill(params.thankYouCard.headline);
+  await page.getByRole("button", { name: "Matrix" }).click();
+  await page.getByLabel("Question").fill(params.matrix.question);
+  await page.getByLabel("Description").fill(params.matrix.description);
+  await page.locator("#row-0").click();
+  await page.locator("#row-0").fill(params.matrix.rows[0]);
+  await page.locator("#row-1").click();
+  await page.locator("#row-1").fill(params.matrix.rows[1]);
+  await page.locator("#row-2").click();
+  await page.locator("#row-2").fill(params.matrix.rows[2]);
+  await page.locator("#column-0").click();
+  await page.locator("#column-0").fill(params.matrix.columns[0]);
+  await page.locator("#column-1").click();
+  await page.locator("#column-1").fill(params.matrix.columns[1]);
+  await page.locator("#column-2").click();
+  await page.locator("#column-2").fill(params.matrix.columns[2]);
+  await page.locator("#column-3").click();
+  await page.locator("#column-3").fill(params.matrix.columns[3]);
+
+  // File Address Question
+  await page
+    .locator("div")
+    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .nth(1)
+    .click();
+  await page.getByRole("button", { name: "Address" }).click();
+  await page.getByLabel("Question").fill(params.address.question);
+
+  // Thank You Card
+  await page.getByText("Thank You CardShown").click();
+  await page.getByLabel("Headline").fill(params.thankYouCard.headline);
   await page.getByLabel("Description").fill(params.thankYouCard.description);
 };

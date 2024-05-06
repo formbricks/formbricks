@@ -19,7 +19,6 @@ interface LinkSurveyPinScreenProps {
   product: TProduct;
   userId?: string;
   emailVerificationStatus?: string;
-  prefillAnswer?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
   webAppUrl: string;
@@ -27,6 +26,7 @@ interface LinkSurveyPinScreenProps {
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
   verifiedEmail?: string;
+  languageCode: string;
 }
 
 const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
@@ -36,13 +36,13 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
     webAppUrl,
     emailVerificationStatus,
     userId,
-    prefillAnswer,
     singleUseId,
     singleUseResponse,
     IMPRINT_URL,
     PRIVACY_URL,
     IS_FORMBRICKS_CLOUD,
     verifiedEmail,
+    languageCode,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -112,21 +112,20 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
 
   return (
     <div>
-      <MediaBackground survey={survey}>
+      <MediaBackground survey={survey} product={product}>
         <LinkSurvey
           survey={survey}
           product={product}
           userId={userId}
           emailVerificationStatus={emailVerificationStatus}
-          prefillAnswer={prefillAnswer}
           singleUseId={singleUseId}
           singleUseResponse={singleUseResponse}
           webAppUrl={webAppUrl}
           verifiedEmail={verifiedEmail}
+          languageCode={languageCode}
         />
       </MediaBackground>
       <LegalFooter
-        bgColor={survey.styling?.background?.bg || "#ffff"}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}

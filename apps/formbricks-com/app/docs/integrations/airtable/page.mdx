@@ -1,17 +1,18 @@
-import { Fence } from "@/components/shared/Fence";
 import { Callout } from "@/components/shared/Callout";
-import IntegrationTab from "./integrations-tab.webp";
-import ConnectWithAirtable from "./connect-with-airtable.webp";
+import { Fence } from "@/components/shared/Fence";
+import { MdxImage } from "@/components/shared/MdxImage";
+
 import AirtableConnected from "./airtable-connected.webp";
+import ConnectWithAirtable from "./connect-with-airtable.webp";
+import CreateNewIntegration from "./create-new-integration.webp";
+import DeleteIntegration from "./deleteIntegration.webp";
+import IntegrationTab from "./integrations-tab.webp";
 import LinkSurveyWithTable from "./link-survey-with-table.webp";
 import LinkWithQuestions from "./link-with-questions.webp";
 import ListLinkedSurveys from "./list-linked-surveys.webp";
 import OpenDeveloperHub from "./open-developer-hub.webp";
-import CreateNewIntegration from "./create-new-integration.webp";
 import RegisterNewIntegration from "./register-new-integration.webp";
 import SelectScopes from "./select-scopes.webp";
-import DeleteIntegration from "./deleteIntegration.webp";
-import Image from "next/image";
 
 export const metadata = {
   title: "Airtable Setup",
@@ -33,7 +34,7 @@ The Airtable integration allows you to automatically send responses to an Airtab
 
 1. Go to the Integrations tab in your [Formbricks Cloud dashboard](https://app.formbricks.com/) and click on the "Connect" button under Airtable integration.
 
-<Image
+<MdxImage
   src={IntegrationTab}
   alt="Formbricks Integrations Tab"
   quality="100"
@@ -42,7 +43,7 @@ The Airtable integration allows you to automatically send responses to an Airtab
 
 2. Now click on the "Connect with Airtable" button to authenticate yourself with Airtable.
 
-<Image
+<MdxImage
   src={ConnectWithAirtable}
   alt="Connect Formbricks with Airtable"
   quality="100"
@@ -51,7 +52,7 @@ The Airtable integration allows you to automatically send responses to an Airtab
 
 3. You will now be taken to a page where you need to add and grant access to the base you want to use for the integration.
 
-<Image
+<MdxImage
   src={ConnectWithAirtable}
   alt="Add and grant access to airtable base"
   quality="100"
@@ -60,7 +61,7 @@ The Airtable integration allows you to automatically send responses to an Airtab
 
 4. Once you add and grant access to your base, you will be taken back to Formbricks Cloud and see the connected status as below:
 
-<Image
+<MdxImage
   src={AirtableConnected}
   alt="Formbricks is now connected with Google"
   quality="100"
@@ -73,9 +74,9 @@ Before the next step, make sure that you have a Formbricks Survey with at least 
 
 </Note>
 
-6. Now click on the "Link New Table" button to link a new Airtable with Formbricks and a modal will open up.
+6. Now click on the "Link New Table" button to link an Airtable with Formbricks and a modal will open up.
 
-<Image
+<MdxImage
   src={LinkSurveyWithTable}
   alt="Link Formbricks with a Airtable"
   quality="100"
@@ -84,7 +85,7 @@ Before the next step, make sure that you have a Formbricks Survey with at least 
 
 7. Select the Base and table you want to link with Formbricks and the Survey. On doing so, you will be asked with what questions' responses you want to feed in Airtable. Select the questions and click on the "Save" button.
 
-<Image
+<MdxImage
   src={LinkWithQuestions}
   alt="Select question to link with Airtable"
   quality="100"
@@ -94,14 +95,14 @@ Before the next step, make sure that you have a Formbricks Survey with at least 
 
 8. On submitting, the modal will close and you will see the linked table in the list of linked tables.
 
-<Image
+<MdxImage
   src={ListLinkedSurveys}
   alt="List of linked tables"
   quality="100"
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-Congratulations! You have successfully linked an Airtable with Formbricks. Now whenever a response is submitted for the linked Survey, it will be automatically added to the linked Airtable.
+Congratulations! You have successfully linked an Airtable with Formbricks. Now whenever a response is submitted for the linked survey, it will be automatically added to the linked Airtable.
 
 Still struggling or something not working as expected? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!
 
@@ -113,7 +114,7 @@ Enabling the Airtable Integration in a self-hosted environment requires creating
 
 2. Click on user icon on top left and open to Developer hub
 
-<Image
+<MdxImage
   src={OpenDeveloperHub}
   alt="List of linked tables"
   quality="100"
@@ -122,7 +123,7 @@ Enabling the Airtable Integration in a self-hosted environment requires creating
 
 3. Navigate to OAuth integrations and click on **Register an OAuth integrations**
 
-<Image
+<MdxImage
   src={CreateNewIntegration}
   alt="List of linked tables"
   quality="100"
@@ -131,7 +132,7 @@ Enabling the Airtable Integration in a self-hosted environment requires creating
 
 3. Select a name for you integration and also add a redirect URL which will be YOUR_WEBAPP_URL/api/v1/integrations/airtable/callback
 
-   <Image
+   <MdxImage
      src={RegisterNewIntegration}
      alt="List of linked tables"
      quality="100"
@@ -148,7 +149,7 @@ Enabling the Airtable Integration in a self-hosted environment requires creating
 
 {" "}
 
-<Image
+<MdxImage
   src={SelectScopes}
   alt="List of linked tables"
   quality="100"
@@ -174,7 +175,7 @@ To remove the integration with Airtable,
 3. Click on the "Connected with `<your-email-here`>" just before the "Link new Table" button.
 4. It will now ask for a confirmation to remove the integration. Click on the "Delete" button to remove the integration. You can always come back and connect again with the same Airtable Account.
 
-<Image
+<MdxImage
   src={DeleteIntegration}
   alt="Delete Airtable Integration with Formbricks"
   quality="100"

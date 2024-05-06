@@ -1,7 +1,6 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -12,16 +11,15 @@ import {
   TTeamBilling,
   TTeamCreateInput,
   TTeamUpdateInput,
-  ZTeam,
   ZTeamCreateInput,
 } from "@formbricks/types/teams";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
+import { ITEMS_PER_PAGE } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { getProducts } from "../product/service";
 import { getUsersWithTeam, updateUser } from "../user/service";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { teamCache } from "./cache";
 
@@ -37,8 +35,8 @@ export const getTeamsTag = (teamId: string) => `teams-${teamId}`;
 export const getTeamsByUserIdCacheTag = (userId: string) => `users-${userId}-teams`;
 export const getTeamByEnvironmentIdCacheTag = (environmentId: string) => `environments-${environmentId}-team`;
 
-export const getTeamsByUserId = async (userId: string, page?: number): Promise<TTeam[]> => {
-  const teams = await unstable_cache(
+export const getTeamsByUserId = (userId: string, page?: number): Promise<TTeam[]> =>
+  cache(
     async () => {
       validateInputs([userId, ZString], [page, ZOptionalNumber]);
 
@@ -70,14 +68,11 @@ export const getTeamsByUserId = async (userId: string, page?: number): Promise<T
     [`getTeamsByUserId-${userId}-${page}`],
     {
       tags: [teamCache.tag.byUserId(userId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return teams.map((team) => formatDateFields(team, ZTeam));
-};
 
-export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTeam | null> => {
-  const team = await unstable_cache(
+export const getTeamByEnvironmentId = (environmentId: string): Promise<TTeam | null> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId]);
 
@@ -110,14 +105,11 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
     [`getTeamByEnvironmentId-${environmentId}`],
     {
       tags: [teamCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return team ? formatDateFields(team, ZTeam) : null;
-};
 
-export const getTeam = async (teamId: string): Promise<TTeam | null> => {
-  const team = await unstable_cache(
+export const getTeam = (teamId: string): Promise<TTeam | null> =>
+  cache(
     async () => {
       validateInputs([teamId, ZString]);
 
@@ -140,11 +132,8 @@ export const getTeam = async (teamId: string): Promise<TTeam | null> => {
     [`getTeam-${teamId}`],
     {
       tags: [teamCache.tag.byId(teamId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return team ? formatDateFields(team, ZTeam) : null;
-};
 
 export const createTeam = async (teamInput: TTeamCreateInput): Promise<TTeam> => {
   try {
@@ -161,6 +150,10 @@ export const createTeam = async (teamInput: TTeamCreateInput): Promise<TTeam> =>
 
     return team;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
     throw error;
   }
 };
@@ -205,9 +198,8 @@ export const updateTeam = async (teamId: string, data: Partial<TTeamUpdateInput>
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
       throw new ResourceNotFoundError("Team", teamId);
-    } else {
-      throw error; // Re-throw any other errors
     }
+    throw error; // Re-throw any other errors
   }
 };
 
@@ -261,8 +253,8 @@ export const deleteTeam = async (teamId: string): Promise<TTeam> => {
   }
 };
 
-export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
-  const teams = await unstable_cache(
+export const getTeamsWithPaidPlan = (): Promise<TTeam[]> =>
+  cache(
     async () => {
       try {
         const fetchedTeams = await prisma.team.findMany({
@@ -296,105 +288,124 @@ export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
     ["getTeamsWithPaidPlan"],
     {
       tags: [],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-  return teams.map((team) => formatDateFields(team, ZTeam));
-};
-
-export const getMonthlyActiveTeamPeopleCount = async (teamId: string): Promise<number> =>
-  await unstable_cache(
+export const getMonthlyActiveTeamPeopleCount = (teamId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([teamId, ZId]);
 
-      // Define the start of the month
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      try {
+        // Define the start of the month
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // Get all environment IDs for the team
-      const products = await getProducts(teamId);
-      const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
+        // Get all environment IDs for the team
+        const products = await getProducts(teamId);
+        const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
 
-      // Aggregate the count of active people across all environments
-      const peopleAggregations = await prisma.person.aggregate({
-        _count: {
-          id: true,
-        },
-        where: {
-          AND: [
-            { environmentId: { in: environmentIds } },
-            {
-              actions: {
-                some: {
-                  createdAt: { gte: firstDayOfMonth },
+        // Aggregate the count of active people across all environments
+        const peopleAggregations = await prisma.person.aggregate({
+          _count: {
+            id: true,
+          },
+          where: {
+            AND: [
+              { environmentId: { in: environmentIds } },
+              {
+                actions: {
+                  some: {
+                    createdAt: { gte: firstDayOfMonth },
+                  },
                 },
               },
-            },
-          ],
-        },
-      });
+            ],
+          },
+        });
 
-      return peopleAggregations._count.id;
+        return peopleAggregations._count.id;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
     },
     [`getMonthlyActiveTeamPeopleCount-${teamId}`],
     {
-      tags: [],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
+      revalidate: 60 * 60 * 2, // 2 hours
     }
   )();
 
-export const getMonthlyTeamResponseCount = async (teamId: string): Promise<number> =>
-  await unstable_cache(
+export const getMonthlyTeamResponseCount = (teamId: string): Promise<number> =>
+  cache(
     async () => {
       validateInputs([teamId, ZId]);
 
-      // Define the start of the month
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      try {
+        // Define the start of the month
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // Get all environment IDs for the team
-      const products = await getProducts(teamId);
-      const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
+        // Get all environment IDs for the team
+        const products = await getProducts(teamId);
+        const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
 
-      // Use Prisma's aggregate to count responses for all environments
-      const responseAggregations = await prisma.response.aggregate({
-        _count: {
-          id: true,
-        },
-        where: {
-          AND: [
-            { survey: { environmentId: { in: environmentIds } } },
-            { survey: { type: "web" } },
-            { createdAt: { gte: firstDayOfMonth } },
-          ],
-        },
-      });
+        // Use Prisma's aggregate to count responses for all environments
+        const responseAggregations = await prisma.response.aggregate({
+          _count: {
+            id: true,
+          },
+          where: {
+            AND: [
+              { survey: { environmentId: { in: environmentIds } } },
+              { survey: { type: { in: ["app", "website"] } } },
+              { createdAt: { gte: firstDayOfMonth } },
+            ],
+          },
+        });
 
-      // The result is an aggregation of the total count
-      return responseAggregations._count.id;
+        // The result is an aggregation of the total count
+        return responseAggregations._count.id;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
     },
     [`getMonthlyTeamResponseCount-${teamId}`],
     {
-      tags: [],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
+      revalidate: 60 * 60 * 2, // 2 hours
     }
   )();
 
-export const getTeamBillingInfo = async (teamId: string): Promise<TTeamBilling | null> =>
-  await unstable_cache(
+export const getTeamBillingInfo = (teamId: string): Promise<TTeamBilling | null> =>
+  cache(
     async () => {
-      const billingInfo = await prisma.team.findUnique({
-        where: {
-          id: teamId,
-        },
-      });
+      validateInputs([teamId, ZId]);
 
-      return billingInfo?.billing ?? null;
+      try {
+        const billingInfo = await prisma.team.findUnique({
+          where: {
+            id: teamId,
+          },
+        });
+
+        return billingInfo?.billing ?? null;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
     },
     [`getTeamBillingInfo-${teamId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [teamCache.tag.byId(teamId)],
     }
   )();

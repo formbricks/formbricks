@@ -1,4 +1,4 @@
-import { CheckCircleIcon, PauseCircleIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
+import { CheckCircle2Icon, HelpCircleIcon, PauseCircleIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -11,13 +11,13 @@ const SurveyInactive = ({
   status,
   surveyClosedMessage,
 }: {
-  status: "paused" | "completed" | "link invalid";
+  status: "paused" | "completed" | "link invalid" | "scheduled";
   surveyClosedMessage?: TSurveyClosedMessage | null;
 }) => {
   const icons = {
     paused: <PauseCircleIcon className="h-20 w-20" />,
-    completed: <CheckCircleIcon className="h-20 w-20" />,
-    "link invalid": <QuestionMarkCircleIcon className="h-20 w-20" />,
+    completed: <CheckCircle2Icon className="h-20 w-20" />,
+    "link invalid": <HelpCircleIcon className="h-20 w-20" />,
   };
 
   const descriptions = {

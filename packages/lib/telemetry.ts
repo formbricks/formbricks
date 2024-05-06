@@ -2,13 +2,10 @@
    and how we can improve it. All data including the IP address is collected anonymously
    and we cannot trace anything back to you or your customers. If you still want to
    disable telemetry, set the environment variable TELEMETRY_DISABLED=1 */
+import { env } from "./env";
 
 export const captureTelemetry = async (eventName: string, properties = {}) => {
-  if (
-    process.env.TELEMETRY_DISABLED !== "1" &&
-    process.env.NODE_ENV === "production" &&
-    process.env.INSTANCE_ID
-  ) {
+  if (env.TELEMETRY_DISABLED !== "1" && process.env.NODE_ENV === "production" && process.env.INSTANCE_ID) {
     try {
       await fetch("https://eu.posthog.com/capture/", {
         method: "POST",
@@ -24,7 +21,7 @@ export const captureTelemetry = async (eventName: string, properties = {}) => {
         }),
       });
     } catch (error) {
-      console.log("error sending telemetry:", error);
+      console.error(`error sending telemetry: ${error}`);
     }
   }
 };

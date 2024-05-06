@@ -27,7 +27,17 @@ export const users = {
     {
       name: "Survey User 2",
       email: "survey2@formbricks.com",
-      password: "Y1I*EpURUSb32j5XijP",
+      password: "G73*Gjif22F4JKM1pA",
+    },
+    {
+      name: "Survey User 3",
+      email: "survey3@formbricks.com",
+      password: "Gj2DGji27D&M8u53V",
+    },
+    {
+      name: "Survey User 4",
+      email: "survey4@formbricks.com",
+      password: "UU3efj8vJa&M8u5M1",
     },
   ],
   js: [
@@ -83,7 +93,7 @@ export const teams = {
     {
       role: "Founder",
       useCase: "Increase conversion",
-      productName: "Formbricks E2E Test Suite",
+      productName: "My Product",
     },
   ],
 };
@@ -135,9 +145,86 @@ export const surveys = {
     fileUploadQuestion: {
       question: "This is my File Upload Question",
     },
+    matrix: {
+      question: "How much do you love these flowers?",
+      description: "0: Not at all, 3: Love it",
+      rows: ["Rose 🌹", "Sunflower 🌻", "Hibiscus 🌺"],
+      columns: ["0", "1", "2", "3"],
+    },
+    address: {
+      question: "Where do you live?",
+      placeholder: "Address Line 1",
+    },
     thankYouCard: {
       headline: "This is my Thank You Card Headline!",
       description: "This is my Thank you Card Description!",
+    },
+  },
+  germanCreate: {
+    welcomeCard: {
+      headline: "Willkommen zu meiner Testumfrage Willkommenskarte!", // German translation
+      description: "Dies ist die Beschreibung meiner Willkommenskarte!", // German translation
+    },
+    openTextQuestion: {
+      question: "Dies ist meine offene Textfrage", // German translation
+      description: "Dies ist meine Beschreibung zum offenen Text", // German translation
+      placeholder: "Dies ist mein Platzhalter", // German translation
+    },
+    singleSelectQuestion: {
+      question: "Dies ist meine Einzelauswahlfrage", // German translation
+      description: "Dies ist meine Beschreibung zur Einzelauswahl", // German translation
+      options: ["Option 1", "Option 2"], // Translated options
+    },
+    multiSelectQuestion: {
+      question: "Dies ist meine Mehrfachauswahlfrage", // German translation
+      description: "Dies ist die Beschreibung zur Mehrfachauswahl", // German translation
+      options: ["Option 1", "Option 2", "Option 3"], // Translated options
+    },
+    ratingQuestion: {
+      question: "Dies ist meine Bewertungsfrage", // German translation
+      description: "Dies ist die Beschreibung zur Bewertung", // German translation
+      lowLabel: "Mein unteres Label", // German translation
+      highLabel: "Mein oberes Label", // German translation
+    },
+    npsQuestion: {
+      question: "Dies ist meine NPS-Frage", // German translation
+      lowLabel: "Mein unteres Label", // German translation
+      highLabel: "Mein oberes Label", // German translation
+    },
+    ctaQuestion: {
+      question: "Dies ist meine CTA-Frage", // German translation
+      buttonLabel: "Mein Knopfetikett", // German translation
+    },
+    consentQuestion: {
+      question: "Dies ist meine Zustimmungsfrage", // German translation
+      checkboxLabel: "Mein Kontrollkästchen-Label", // German translation
+    },
+    pictureSelectQuestion: {
+      question: "Dies ist meine Bildauswahlfrage", // German translation
+      description: "Dies ist die Beschreibung zur Bildauswahl", // German translation
+    },
+    fileUploadQuestion: {
+      question: "Dies ist meine Datei-Upload-Frage", // German translation
+    },
+    dateQuestion: {
+      question: "Dies ist date question", // German translation
+    },
+    calQuestion: {
+      question: "Dies ist cal question", // German translation
+    },
+    matrix: {
+      question: "Wie hoch würden Sie diese Blumen bewerten?",
+      description: "0: Überhaupt nicht, 3: Ich liebe es",
+      rows: ["Rose", "Sunflower", "Hibiscus"],
+      columns: ["0", "1", "2", "3"],
+    },
+    addressQuestion: {
+      question: "Wo wohnst du ?",
+    },
+    thankYouCard: {
+      headline: "Dies ist meine Dankeskarte Überschrift!", // German translation
+      description: "Dies ist meine Beschreibung zur Dankeskarte!", // German translation
+      buttonLabel: "Erstellen Sie Ihre eigene Umfrage",
     },
   },
 };

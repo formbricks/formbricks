@@ -1,73 +1,128 @@
 "use client";
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
-import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
-import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryList";
-import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata";
-import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
-import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
-import { getFilterResponses } from "@/app/lib/surveys/surveys";
-import { useSearchParams } from "next/navigation";
+import {
+  getResponseCountAction,
+  getSurveySummaryAction,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { SurveyResultsTabs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
+import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
+import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
+import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
+import { SummaryHeader } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
+import { getFormattedFilters } from "@/app/lib/surveys/surveys";
+import {
+  getResponseCountBySurveySharingKeyAction,
+  getSummaryBySurveySharingKeyAction,
+} from "@/app/share/[sharingKey]/action";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
-import { TResponse, TSurveyPersonAttributes } from "@formbricks/types/responses";
+import { TSurveySummary } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
 
-import ResultsShareButton from "../../../components/ResultsShareButton";
+import { SummaryList } from "./SummaryList";
+import { SummaryMetadata } from "./SummaryMetadata";
+
+const initialSurveySummary: TSurveySummary = {
+  meta: {
+    completedPercentage: 0,
+    completedResponses: 0,
+    displayCount: 0,
+    dropOffPercentage: 0,
+    dropOffCount: 0,
+    startsPercentage: 0,
+    totalResponses: 0,
+    ttcAverage: 0,
+  },
+  dropOff: [],
+  summary: [],
+};
 
 interface SummaryPageProps {
   environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
-  responses: TResponse[];
   webAppUrl: string;
   product: TProduct;
-  user: TUser;
-  environmentTags: TTag[];
-  attributes: TSurveyPersonAttributes;
-  displayCount: number;
-  responsesPerPage: number;
+  user?: TUser;
   membershipRole?: TMembershipRole;
+  totalResponseCount: number;
 }
 
 const SummaryPage = ({
   environment,
   survey,
   surveyId,
-  responses,
-  webAppUrl,
   product,
+  webAppUrl,
   user,
-  environmentTags,
-  attributes,
-  displayCount,
-  responsesPerPage,
   membershipRole,
+  totalResponseCount,
 }: SummaryPageProps) => {
-  const { selectedFilter, dateRange, resetState } = useResponseFilter();
+  const params = useParams();
+  const sharingKey = params.sharingKey as string;
+  const isSharingPage = !!sharingKey;
+
+  const [responseCount, setResponseCount] = useState<number | null>(null);
+  const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
+  const [isFetchingSummary, setFetchingSummary] = useState<boolean>(true);
+
+  const { selectedFilter, dateRange, resetState } = useResponseFilter();
+
+  const filters = useMemo(
+    () => getFormattedFilters(survey, selectedFilter, dateRange),
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedFilter, dateRange]
+  );
+
+  useEffect(() => {
+    const handleInitialData = async () => {
+      try {
+        setFetchingSummary(true);
+        let updatedResponseCount;
+        if (isSharingPage) {
+          updatedResponseCount = await getResponseCountBySurveySharingKeyAction(sharingKey, filters);
+        } else {
+          updatedResponseCount = await getResponseCountAction(surveyId, filters);
+        }
+        setResponseCount(updatedResponseCount);
+
+        let updatedSurveySummary;
+        if (isSharingPage) {
+          updatedSurveySummary = await getSummaryBySurveySharingKeyAction(sharingKey, filters);
+        } else {
+          updatedSurveySummary = await getSurveySummaryAction(surveyId, filters);
+        }
+
+        setSurveySummary(updatedSurveySummary);
+      } finally {
+        setFetchingSummary(false);
+      }
+    };
+
+    handleInitialData();
+  }, [filters, isSharingPage, sharingKey, surveyId]);
+
   const searchParams = useSearchParams();
+
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey);
+    return checkForRecallInHeadline(survey, "default");
   }, [survey]);
+
   useEffect(() => {
     if (!searchParams?.get("referer")) {
       resetState();
     }
   }, [searchParams, resetState]);
-
-  // get the filtered array when the selected filter value changes
-  const filterResponses: TResponse[] = useMemo(() => {
-    return getFilterResponses(responses, selectedFilter, survey, dateRange);
-  }, [selectedFilter, responses, survey, dateRange]);
 
   return (
     <ContentWrapper>
@@ -81,23 +136,29 @@ const SummaryPage = ({
         membershipRole={membershipRole}
       />
       <div className="flex gap-1.5">
-        <CustomFilter environmentTags={environmentTags} attributes={attributes} survey={survey} />
-        <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
+        <CustomFilter survey={survey} />
+        {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />}
       </div>
-      <SurveyResultsTabs activeId="summary" environmentId={environment.id} surveyId={surveyId} />
+      <SurveyResultsTabs
+        activeId="summary"
+        environmentId={environment.id}
+        surveyId={surveyId}
+        responseCount={responseCount}
+      />
       <SummaryMetadata
-        responses={filterResponses}
         survey={survey}
-        displayCount={displayCount}
+        surveySummary={surveySummary.meta}
         showDropOffs={showDropOffs}
         setShowDropOffs={setShowDropOffs}
       />
-      {showDropOffs && <SummaryDropOffs survey={survey} responses={responses} displayCount={displayCount} />}
+      {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
       <SummaryList
-        responses={filterResponses}
+        summary={surveySummary.summary}
+        responseCount={responseCount}
         survey={survey}
         environment={environment}
-        responsesPerPage={responsesPerPage}
+        fetchingSummary={isFetchingSummary}
+        totalResponseCount={totalResponseCount}
       />
     </ContentWrapper>
   );

@@ -1,10 +1,8 @@
 "use client";
 
 import { formbricksLogout } from "@/app/lib/formbricks";
-import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
-import Image from "next/image";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -18,17 +16,7 @@ import { deleteUserAction } from "../actions";
 export function EditAvatar({ session }) {
   return (
     <div>
-      {session?.user?.image ? (
-        <Image
-          src={AvatarPlaceholder}
-          width="100"
-          height="100"
-          className="h-24 w-24 rounded-full"
-          alt="Avatar placeholder"
-        />
-      ) : (
-        <ProfileAvatar userId={session?.user?.id} />
-      )}
+      <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
 
       <Button className="mt-4" variant="darkCTA" disabled={true}>
         Upload Image
@@ -61,7 +49,7 @@ function DeleteAccountModal({ setOpen, open, session, IS_FORMBRICKS_CLOUD }: Del
         await signOut({ redirect: true });
         window.location.replace("https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2");
       } else {
-        await signOut();
+        await signOut({ callbackUrl: "/auth/login" });
       }
     } catch (error) {
       toast.error("Something went wrong");

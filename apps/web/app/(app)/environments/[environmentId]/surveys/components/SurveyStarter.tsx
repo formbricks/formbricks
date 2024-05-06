@@ -1,6 +1,6 @@
 "use client";
 
-import TemplateList from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
+import { TemplateList } from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -27,14 +27,13 @@ export default function SurveyStarter({
 }) {
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
   const router = useRouter();
+
   const newSurveyFromTemplate = async (template: TTemplate) => {
     setIsCreateSurveyLoading(true);
-    const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
-    const autoComplete = surveyType === "web" ? 50 : null;
+    const surveyType = environment?.widgetSetupCompleted ? "app" : "link";
     const augmentedTemplate: TSurveyInput = {
       ...template.preset,
       type: surveyType,
-      autoComplete: autoComplete || undefined,
       createdBy: user.id,
     };
     try {

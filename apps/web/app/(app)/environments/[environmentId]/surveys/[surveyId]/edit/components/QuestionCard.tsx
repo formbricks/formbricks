@@ -1,50 +1,54 @@
 "use client";
 
-import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedSettings";
-import DateQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
-import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
+import { AddressQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddressQuestionForm";
+import { AdvancedSettings } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedSettings";
+import { CTAQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CTAQuestionForm";
+import { CalQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CalQuestionForm";
+import { ConsentQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/ConsentQuestionForm";
+import { DateQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
+import { FileUploadQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FileUploadQuestionForm";
+import { MatrixQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MatrixQuestionForm";
+import { MultipleChoiceMultiForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MultipleChoiceMultiForm";
+import { MultipleChoiceSingleForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MultipleChoiceSingleForm";
+import { NPSQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/NPSQuestionForm";
+import { OpenQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/OpenQuestionForm";
+import { PictureSelectionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
+import { RatingQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/RatingQuestionForm";
 import { getTSurveyQuestionTypeName } from "@/app/lib/questions";
+import * as Collapsible from "@radix-ui/react-collapsible";
 import {
-  ArrowUpTrayIcon,
+  ArrowUpFromLineIcon,
   CalendarDaysIcon,
-  ChatBubbleBottomCenterTextIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  CursorArrowRippleIcon,
-  ListBulletIcon,
+  Grid3X3Icon,
+  HomeIcon,
+  ImageIcon,
+  ListIcon,
+  MessageSquareTextIcon,
+  MousePointerClickIcon,
   PhoneIcon,
-  PhotoIcon,
-  PresentationChartBarIcon,
-  QueueListIcon,
+  PresentationIcon,
+  Rows3Icon,
   StarIcon,
-} from "@heroicons/react/24/solid";
-import * as Collapsible from "@radix-ui/react-collapsible";
+} from "lucide-react";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TProduct } from "@formbricks/types/product";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
-import { Input } from "@formbricks/ui/Input";
+import { TI18nString, TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
 
-import CTAQuestionForm from "./CTAQuestionForm";
-import CalQuestionForm from "./CalQuestionForm";
-import ConsentQuestionForm from "./ConsentQuestionForm";
-import FileUploadQuestionForm from "./FileUploadQuestionForm";
-import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
-import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
-import NPSQuestionForm from "./NPSQuestionForm";
-import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
-import RatingQuestionForm from "./RatingQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
-  product?: TProduct;
+  product: TProduct;
   questionIdx: number;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -53,33 +57,9 @@ interface QuestionCardProps {
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   lastQuestion: boolean;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-}
-
-export function BackButtonInput({
-  value,
-  onChange,
-  className,
-}: {
-  value: string | undefined;
-  onChange: (e: any) => void;
-  className?: string;
-}) {
-  return (
-    <div className="w-full">
-      <Label htmlFor="backButtonLabel">&quot;Back&quot; Button Label</Label>
-      <div className="mt-2">
-        <Input
-          id="backButtonLabel"
-          name="backButtonLabel"
-          value={value}
-          placeholder="Back"
-          onChange={onChange}
-          className={className}
-        />
-      </div>
-    </div>
-  );
 }
 
 export default function QuestionCard({
@@ -93,6 +73,8 @@ export default function QuestionCard({
   activeQuestionId,
   setActiveQuestionId,
   lastQuestion,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
   isInvalid,
 }: QuestionCardProps) {
   const question = localSurvey.questions[questionIdx];
@@ -118,13 +100,36 @@ export default function QuestionCard({
     });
   };
 
-  const updateEmptyNextButtonLabels = (labelValue: string) => {
+  const updateEmptyNextButtonLabels = (labelValue: TI18nString) => {
     localSurvey.questions.forEach((q, index) => {
       if (index === localSurvey.questions.length - 1) return;
-      if (!q.buttonLabel || q.buttonLabel?.trim() === "") {
+      if (!q.buttonLabel || q.buttonLabel[selectedLanguageCode]?.trim() === "") {
         updateQuestion(index, { buttonLabel: labelValue });
       }
     });
+  };
+
+  const getIsRequiredToggleDisabled = (): boolean => {
+    if (question.type === "address") {
+      return [
+        question.isAddressLine1Required,
+        question.isAddressLine2Required,
+        question.isCityRequired,
+        question.isCountryRequired,
+        question.isStateRequired,
+        question.isZipRequired,
+      ].some((condition) => condition === true);
+    }
+    return false;
+  };
+
+  const handleRequiredToggle = () => {
+    // Fix for NPS and Rating questions having missing translations when buttonLabel is not removed
+    if (!question.required && (question.type === "nps" || question.type === "rating")) {
+      updateQuestion(questionIdx, { required: true, buttonLabel: undefined });
+    } else {
+      updateQuestion(questionIdx, { required: !question.required });
+    }
   };
 
   return (
@@ -163,33 +168,43 @@ export default function QuestionCard({
                 <div className="inline-flex">
                   <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
                     {question.type === TSurveyQuestionType.FileUpload ? (
-                      <ArrowUpTrayIcon />
+                      <ArrowUpFromLineIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.OpenText ? (
-                      <ChatBubbleBottomCenterTextIcon />
+                      <MessageSquareTextIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
-                      <QueueListIcon />
+                      <Rows3Icon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
-                      <ListBulletIcon />
+                      <ListIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.NPS ? (
-                      <PresentationChartBarIcon />
+                      <PresentationIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.CTA ? (
-                      <CursorArrowRippleIcon />
+                      <MousePointerClickIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.Rating ? (
-                      <StarIcon />
+                      <StarIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.Consent ? (
-                      <CheckIcon />
+                      <CheckIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.PictureSelection ? (
-                      <PhotoIcon />
+                      <ImageIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.Date ? (
-                      <CalendarDaysIcon />
+                      <CalendarDaysIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.Cal ? (
-                      <PhoneIcon />
+                      <PhoneIcon className="h-5 w-5" />
+                    ) : question.type === TSurveyQuestionType.Matrix ? (
+                      <Grid3X3Icon className="h-5 w-5" />
+                    ) : question.type === TSurveyQuestionType.Address ? (
+                      <HomeIcon className="h-5 w-5" />
                     ) : null}
                   </div>
                   <div>
                     <p className="text-sm font-semibold">
-                      {recallToHeadline(question.headline, localSurvey, true)
-                        ? formatTextWithSlashes(recallToHeadline(question.headline, localSurvey, true))
+                      {recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
+                        selectedLanguageCode
+                      ]
+                        ? formatTextWithSlashes(
+                            recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
+                              selectedLanguageCode
+                            ] ?? ""
+                          )
                         : getTSurveyQuestionTypeName(question.type)}
                     </p>
                     {!open && question?.required && (
@@ -219,6 +234,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
@@ -228,6 +245,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
@@ -237,6 +256,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.NPS ? (
@@ -246,6 +267,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.CTA ? (
@@ -255,6 +278,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Rating ? (
@@ -264,6 +289,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Consent ? (
@@ -272,6 +299,8 @@ export default function QuestionCard({
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Date ? (
@@ -281,6 +310,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.PictureSelection ? (
@@ -290,6 +321,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.FileUpload ? (
@@ -300,6 +333,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Cal ? (
@@ -309,6 +344,30 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
+                  isInvalid={isInvalid}
+                />
+              ) : question.type === TSurveyQuestionType.Matrix ? (
+                <MatrixQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
+                  isInvalid={isInvalid}
+                />
+              ) : question.type === TSurveyQuestionType.Address ? (
+                <AddressQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
                 />
               ) : null}
@@ -327,34 +386,43 @@ export default function QuestionCard({
                     {question.type !== TSurveyQuestionType.NPS &&
                     question.type !== TSurveyQuestionType.Rating &&
                     question.type !== TSurveyQuestionType.CTA ? (
-                      <div className="mt-4 flex space-x-2">
+                      <div className="mt-2 flex space-x-2">
                         <div className="w-full">
-                          <Label htmlFor="buttonLabel">&quot;Next&quot; Button Label</Label>
-                          <div className="mt-2">
-                            <Input
-                              id="buttonLabel"
-                              name="buttonLabel"
-                              value={question.buttonLabel}
-                              maxLength={48}
-                              placeholder={lastQuestion ? "Finish" : "Next"}
-                              onChange={(e) => {
-                                updateQuestion(questionIdx, { buttonLabel: e.target.value });
-                              }}
-                              onBlur={(e) => {
-                                //If it is the last question then do not update labels
-                                if (questionIdx === localSurvey.questions.length - 1) return;
-                                updateEmptyNextButtonLabels(e.target.value);
-                              }}
-                            />
-                          </div>
+                          <QuestionFormInput
+                            id="buttonLabel"
+                            value={question.buttonLabel}
+                            localSurvey={localSurvey}
+                            questionIdx={questionIdx}
+                            maxLength={48}
+                            placeholder={lastQuestion ? "Finish" : "Next"}
+                            isInvalid={isInvalid}
+                            updateQuestion={updateQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            onBlur={(e) => {
+                              if (!question.buttonLabel) return;
+                              let translatedNextButtonLabel = {
+                                ...question.buttonLabel,
+                                [selectedLanguageCode]: e.target.value,
+                              };
+
+                              if (questionIdx === localSurvey.questions.length - 1) return;
+                              updateEmptyNextButtonLabels(translatedNextButtonLabel);
+                            }}
+                          />
                         </div>
                         {questionIdx !== 0 && (
-                          <BackButtonInput
+                          <QuestionFormInput
+                            id="backButtonLabel"
                             value={question.backButtonLabel}
-                            onChange={(e) => {
-                              if (e.target.value.trim() == "") e.target.value = "";
-                              updateQuestion(questionIdx, { backButtonLabel: e.target.value });
-                            }}
+                            localSurvey={localSurvey}
+                            questionIdx={questionIdx}
+                            maxLength={48}
+                            placeholder={"Back"}
+                            isInvalid={isInvalid}
+                            updateQuestion={updateQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
                           />
                         )}
                       </div>
@@ -363,12 +431,17 @@ export default function QuestionCard({
                       question.type === TSurveyQuestionType.NPS) &&
                       questionIdx !== 0 && (
                         <div className="mt-4">
-                          <BackButtonInput
+                          <QuestionFormInput
+                            id="backButtonLabel"
                             value={question.backButtonLabel}
-                            onChange={(e) => {
-                              if (e.target.value.trim() == "") e.target.value = "";
-                              updateQuestion(questionIdx, { backButtonLabel: e.target.value });
-                            }}
+                            localSurvey={localSurvey}
+                            questionIdx={questionIdx}
+                            maxLength={48}
+                            placeholder={"Back"}
+                            isInvalid={isInvalid}
+                            updateQuestion={updateQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
                           />
                         </div>
                       )}
@@ -409,9 +482,10 @@ export default function QuestionCard({
                     <Switch
                       id="required-toggle"
                       checked={question.required}
+                      disabled={getIsRequiredToggleDisabled()}
                       onClick={(e) => {
                         e.stopPropagation();
-                        updateQuestion(questionIdx, { required: !question.required });
+                        handleRequiredToggle();
                       }}
                     />
                   </div>

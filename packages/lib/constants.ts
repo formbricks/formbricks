@@ -1,10 +1,8 @@
 import "server-only";
 
-import { env } from "./env.mjs";
+import { env } from "./env";
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
-export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
-export const SERVICES_REVALIDATION_INTERVAL = 60 * 30; // 30 minutes
 export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 9000 : 1000000;
 
 // URLs
@@ -55,6 +53,10 @@ export const SIGNUP_ENABLED = env.SIGNUP_DISABLED !== "1";
 export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";
 export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 
+export const SLACK_CLIENT_SECRET = env.SLACK_CLIENT_SECRET;
+export const SLACK_CLIENT_ID = env.SLACK_CLIENT_ID;
+export const SLACK_AUTH_URL = `https://slack.com/oauth/v2/authorize?client_id=${env.SLACK_CLIENT_ID}&scope=channels:read,chat:write,chat:write.public,chat:write.customize`;
+
 export const GOOGLE_SHEETS_CLIENT_ID = env.GOOGLE_SHEETS_CLIENT_ID;
 export const GOOGLE_SHEETS_CLIENT_SECRET = env.GOOGLE_SHEETS_CLIENT_SECRET;
 export const GOOGLE_SHEETS_REDIRECT_URL = env.GOOGLE_SHEETS_REDIRECT_URL;
@@ -74,31 +76,42 @@ export const SMTP_PASSWORD = env.SMTP_PASSWORD;
 export const MAIL_FROM = env.MAIL_FROM;
 
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
-export const NEXTAUTH_URL = env.NEXTAUTH_URL;
 export const ITEMS_PER_PAGE = 50;
+export const SURVEYS_PER_PAGE = 12;
 export const RESPONSES_PER_PAGE = 10;
 export const TEXT_RESPONSES_PER_PAGE = 5;
 
 export const DEFAULT_TEAM_ID = env.DEFAULT_TEAM_ID;
-export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE || "";
-export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED;
+export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE;
+export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED === "1";
 
 // Storage constants
-export const UPLOADS_DIR = "./uploads";
+export const S3_ACCESS_KEY = env.S3_ACCESS_KEY;
+export const S3_SECRET_KEY = env.S3_SECRET_KEY;
+export const S3_REGION = env.S3_REGION;
+export const S3_ENDPOINT_URL = env.S3_ENDPOINT_URL;
+export const S3_BUCKET_NAME = env.S3_BUCKET_NAME;
+export const UPLOADS_DIR = env.UPLOADS_DIR || "./uploads";
 export const MAX_SIZES = {
   public: 1024 * 1024 * 10, // 10MB
   free: 1024 * 1024 * 10, // 10MB
   pro: 1024 * 1024 * 1024, // 1GB
 } as const;
-export const IS_S3_CONFIGURED: boolean =
-  env.S3_ACCESS_KEY && env.S3_SECRET_KEY && env.S3_REGION && env.S3_BUCKET_NAME ? true : false;
+
+// Function to check if the necessary S3 configuration is set up
+export const isS3Configured = () => {
+  // This function checks if the S3 bucket name environment variable is defined.
+  // The AWS SDK automatically resolves credentials through a chain,
+  // so we do not need to explicitly check for AWS credentials like access key, secret key, or region.
+  return !!S3_BUCKET_NAME;
+};
 
 // Pricing
 export const PRICING_USERTARGETING_FREE_MTU = 2500;
 export const PRICING_APPSURVEYS_FREE_RESPONSES = 250;
 
 // Colors for Survey Bg
-export const colours = [
+export const SURVEY_BG_COLORS = [
   "#FFF2D8",
   "#EAD7BB",
   "#BCA37F",
@@ -127,30 +140,38 @@ export const colours = [
 
 // Rate Limiting
 export const SIGNUP_RATE_LIMIT = {
-  interval: 60 * 60 * 1000, // 60 minutes
+  interval: 60 * 60, // 60 minutes
   allowedPerInterval: 30,
 };
 export const LOGIN_RATE_LIMIT = {
-  interval: 15 * 60 * 1000, // 15 minutes
+  interval: 15 * 60, // 15 minutes
   allowedPerInterval: 30,
 };
 export const CLIENT_SIDE_API_RATE_LIMIT = {
-  interval: 5 * 60 * 1000, // 5 minutes
+  interval: 5 * 60, // 5 minutes
   allowedPerInterval: 200,
 };
 export const SHARE_RATE_LIMIT = {
-  interval: 60 * 60 * 1000, // 60 minutes
+  interval: 60 * 60, // 60 minutes
   allowedPerInterval: 30,
 };
 
 export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
-  interval: 60 * 1000, // 1 minute
+  interval: 60, // 1 minute
   allowedPerInterval: 5,
 };
 
-export const DEBUG = process.env.DEBUG === "1";
+export const DEBUG = env.DEBUG === "1";
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
+export const REDIS_URL = env.REDIS_URL;
+export const REDIS_HTTP_URL = env.REDIS_HTTP_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
+
+export const CUSTOMER_IO_SITE_ID = env.CUSTOMER_IO_SITE_ID;
+export const CUSTOMER_IO_API_KEY = env.CUSTOMER_IO_API_KEY;
+export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;
+
+export const STRIPE_API_VERSION = "2024-04-10";

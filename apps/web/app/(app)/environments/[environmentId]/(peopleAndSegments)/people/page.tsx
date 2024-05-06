@@ -1,17 +1,13 @@
 import HowToAddPeopleButton from "@/app/(app)/environments/[environmentId]/components/HowToAddPeopleButton";
-import Link from "next/link";
 
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";
-import { truncateMiddle } from "@formbricks/lib/strings";
 import { TPerson } from "@formbricks/types/people";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { Pagination } from "@formbricks/ui/Pagination";
 
-const getAttributeValue = (person: TPerson, attributeName: string) =>
-  person.attributes[attributeName]?.toString();
+import { PersonCard } from "./components/PersonCard";
 
 export default async function PeoplePage({
   params,
@@ -61,37 +57,7 @@ export default async function PeoplePage({
             <div className="col-span-2 hidden text-center sm:block">Email</div>
           </div>
           {people.map((person) => (
-            <Link
-              href={`/environments/${params.environmentId}/people/${person.id}`}
-              key={person.id}
-              className="w-full">
-              <div className="m-2 grid h-16  grid-cols-7 content-center rounded-lg hover:bg-slate-100">
-                <div className="col-span-3 flex items-center pl-6 text-sm">
-                  <div className="flex items-center">
-                    <div className="ph-no-capture h-10 w-10 flex-shrink-0">
-                      <PersonAvatar personId={person.id} />
-                    </div>
-                    <div className="ml-4">
-                      <div className="ph-no-capture font-medium text-slate-900">
-                        {getAttributeValue(person, "email") ? (
-                          <span>{getAttributeValue(person, "email")}</span>
-                        ) : (
-                          <span>{person.id}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-span-2 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
-                  <div className="ph-no-capture text-slate-900">
-                    {truncateMiddle(getAttributeValue(person, "userId"), 24) || person.userId}
-                  </div>
-                </div>
-                <div className="col-span-2 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
-                  <div className="ph-no-capture text-slate-900">{getAttributeValue(person, "email")}</div>
-                </div>
-              </div>
-            </Link>
+            <PersonCard person={person} />
           ))}
         </div>
       )}

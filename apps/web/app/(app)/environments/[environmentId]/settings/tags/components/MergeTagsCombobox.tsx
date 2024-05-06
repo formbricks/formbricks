@@ -1,7 +1,14 @@
 import { useState } from "react";
 
 import { Button } from "@formbricks/ui/Button";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@formbricks/ui/Command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@formbricks/ui/Command";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 
 interface IMergeTagsComboboxProps {
@@ -36,24 +43,26 @@ const MergeTagsCombobox: React.FC<IMergeTagsComboboxProps> = ({ tags, onSelect }
               className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
             />
           </div>
-          <CommandEmpty>
-            <div className="p-2 text-sm text-slate-500">No tag found</div>
-          </CommandEmpty>
-          <CommandGroup>
-            {tags?.length === 0 ? <CommandItem>No tags found</CommandItem> : null}
+          <CommandList>
+            <CommandEmpty>
+              <div className="p-2 text-sm text-slate-500">No tag found</div>
+            </CommandEmpty>
+            <CommandGroup>
+              {tags?.length === 0 ? <CommandItem>No tags found</CommandItem> : null}
 
-            {tags?.map((tag) => (
-              <CommandItem
-                key={tag.value}
-                onSelect={(currentValue) => {
-                  setValue(currentValue === value ? "" : currentValue);
-                  setOpen(false);
-                  onSelect(tag.value);
-                }}>
-                {tag.label}
-              </CommandItem>
-            ))}
-          </CommandGroup>
+              {tags?.map((tag) => (
+                <CommandItem
+                  key={tag.value}
+                  onSelect={(currentValue) => {
+                    setValue(currentValue === value ? "" : currentValue);
+                    setOpen(false);
+                    onSelect(tag.value);
+                  }}>
+                  {tag.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>

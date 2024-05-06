@@ -26,7 +26,7 @@ export default function FeatureChaserPage() {
           </h3>
           <p className="text-slate-600 dark:text-slate-400">
             Once you&apos;ve embedded the Formbricks Widget in your application, you can start following user
-            actions. Simply use our No-Code Action wizard to keep track of different actions users perfrom -
+            actions. Simply use our No-Code Action wizard to keep track of different actions users perform -
             100% GPDR compliant.
           </p>
           <UseCaseCTA href="/docs/best-practices/feature-chaser" />

@@ -15,7 +15,7 @@ interface AlertDialogProps {
   onConfirm?: () => void;
 }
 
-export default function AlertDialog({
+export const AlertDialog = ({
   open,
   setOpen,
   headerText,
@@ -25,7 +25,7 @@ export default function AlertDialog({
   confirmBtnLabel,
   declineBtnVariant = "minimal",
   onConfirm,
-}: AlertDialogProps) {
+}: AlertDialogProps) => {
   return (
     <Modal open={open} setOpen={setOpen} title={headerText}>
       <p className="mb-6 text-slate-900">{mainText}</p>
@@ -47,4 +47,4 @@ export default function AlertDialog({
       </div>
     </Modal>
   );
-}
+};

@@ -1,4 +1,4 @@
-import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
+import { CopyIcon } from "lucide-react";
 import { useRouter } from "next/router";
 
 import { Button } from "@formbricks/ui/Button";
@@ -7,7 +7,7 @@ export default function HeadingCentered() {
   const router = useRouter();
   return (
     <div className="mx-auto grid grid-cols-1 content-center gap-10 pb-12 pt-24 md:grid-cols-2">
-      <div className="">
+      <div>
         <p className="text-md text-brand-dark dark:text-brand-light font-semibold uppercase">
           What are you waiting for?
         </p>
@@ -28,7 +28,7 @@ export default function HeadingCentered() {
         <div className="flex h-20 w-full items-center justify-between rounded-lg bg-slate-300 px-8 text-slate-700 dark:bg-slate-800 dark:text-slate-200 ">
           <p>npm install @formbricks/react</p>
           <button onClick={() => navigator.clipboard.writeText("npm install @formbricks/react")}>
-            <DocumentDuplicateIcon className="h-8 w-8" />
+            <CopyIcon className="h-8 w-8" />
           </button>
         </div>
       </div>

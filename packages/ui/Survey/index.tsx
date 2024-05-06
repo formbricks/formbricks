@@ -1,53 +1,44 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
-import { renderSurveyInline, renderSurveyModal } from "@formbricks/surveys";
-import { TResponseData, TResponseUpdate } from "@formbricks/types/responses";
-import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurvey } from "@formbricks/types/surveys";
+import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
+
+import { loadSurveyScript } from "./lib/loadScript";
 
 const createContainerId = () => `formbricks-survey-container`;
-
-interface SurveyProps {
-  survey: TSurvey;
-  brandColor: string;
-  isBrandingEnabled: boolean;
-  activeQuestionId?: string;
-  getSetIsError?: (getSetError: (value: boolean) => void) => void;
-  onRetry?: () => void;
-  onDisplay?: () => void;
-  onResponse?: (response: TResponseUpdate) => void;
-  onFinished?: () => void;
-  onActiveQuestionChange?: (questionId: string) => void;
-  onClose?: () => void;
-  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
-  autoFocus?: boolean;
-  prefillResponseData?: TResponseData;
-  isRedirectDisabled?: boolean;
-  responseCount?: number;
-  supportEmail?: string | null;
+declare global {
+  interface Window {
+    formbricksSurveys: {
+      renderSurveyInline: (props: SurveyInlineProps) => void;
+      renderSurveyModal: (props: SurveyModalProps) => void;
+    };
+  }
 }
 
-interface SurveyModalProps extends SurveyProps {
-  placement: "topRight" | "bottomRight" | "bottomLeft" | "topLeft" | "center";
-  clickOutside: boolean;
-  darkOverlay: boolean;
-  highlightBorderColor: string | null;
-}
-
-export const SurveyInline = (props: SurveyProps) => {
+export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
   const containerId = useMemo(() => createContainerId(), []);
-  useEffect(() => {
-    renderSurveyInline({
-      ...props,
-      containerId,
-    });
-  }, [containerId, props]);
-  return <div id={containerId} className="h-full w-full" />;
-};
+  const renderInline = useCallback(
+    () => window.formbricksSurveys.renderSurveyInline({ ...props, containerId }),
+    [containerId, props]
+  );
 
-export const SurveyModal = (props: SurveyModalProps) => {
   useEffect(() => {
-    renderSurveyModal(props);
-  }, [props]);
-  return <div id="formbricks-survey"></div>;
+    async function loadScript() {
+      if (typeof window !== "undefined") {
+        if (!window.formbricksSurveys) {
+          try {
+            await loadSurveyScript();
+            renderInline();
+          } catch (error) {
+            console.error("Failed to load the surveys package: ", error);
+          }
+        } else {
+          renderInline();
+        }
+      }
+    }
+
+    loadScript();
+  }, [containerId, props, renderInline]);
+
+  return <div id={containerId} className="w-full" />;
 };

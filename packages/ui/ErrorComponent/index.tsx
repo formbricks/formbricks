@@ -1,4 +1,4 @@
-import { XCircleIcon } from "@heroicons/react/24/solid";
+import { XCircleIcon } from "lucide-react";
 
 export const ErrorComponent: React.FC = ({}) => {
   return (

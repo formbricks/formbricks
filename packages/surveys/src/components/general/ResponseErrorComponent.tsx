@@ -1,5 +1,6 @@
 import SubmitButton from "@/components/buttons/SubmitButton";
 
+import { processResponseData } from "@formbricks/lib/responses";
 import { type TResponseData } from "@formbricks/types/responses";
 import { type TSurveyQuestion } from "@formbricks/types/surveys";
 
@@ -11,7 +12,7 @@ type ResponseErrorComponentProps = {
 
 export const ResponseErrorComponent = ({ questions, responseData, onRetry }: ResponseErrorComponentProps) => {
   return (
-    <div className={"flex flex-col bg-white"}>
+    <div className={"flex flex-col bg-white p-4"}>
       <span className={"mb-1.5 text-base font-bold leading-6 text-slate-900"}>
         {"Your feedback is stuck :("}
       </span>
@@ -29,7 +30,7 @@ export const ResponseErrorComponent = ({ questions, responseData, onRetry }: Res
               <div className={"flex flex-col"}>
                 <span className={"text-sm leading-6 text-slate-900"}>{`Question ${index + 1}`}</span>
                 <span className={"mt-1 text-sm font-semibold leading-6 text-slate-900"}>
-                  {typeof response === "object" ? response.join(", ") : response}
+                  {processResponseData(response)}
                 </span>
               </div>
             );

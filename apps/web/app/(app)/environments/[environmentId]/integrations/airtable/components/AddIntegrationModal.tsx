@@ -8,6 +8,8 @@ import { useEffect, useState } from "react";
 import { Control, Controller, UseFormSetValue, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationAirtable,
@@ -48,8 +50,8 @@ export type IntegrationModalInputs = {
 function NoBaseFoundError() {
   return (
     <Alert>
-      <AlertTitle>No Airbase bases found</AlertTitle>
-      <AlertDescription>create a Airbase base</AlertDescription>
+      <AlertTitle>No Airtable bases found</AlertTitle>
+      <AlertDescription>Please create a base on Airtable</AlertDescription>
     </Alert>
   );
 }
@@ -233,11 +235,11 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
         <div className="flex w-full items-center justify-between p-6">
           <div className="flex items-center space-x-2">
             <div className="mr-1.5 h-6 w-6 text-slate-500">
-              <Image className="w-12" src={AirtableLogo} alt="Airbase logo" />
+              <Image className="w-12" src={AirtableLogo} alt="Airtable logo" />
             </div>
             <div>
-              <div className="text-xl font-medium text-slate-700">Link Airbase Table</div>
-              <div className="text-sm text-slate-500">Sync responses with a Airbase table</div>
+              <div className="text-xl font-medium text-slate-700">Link Airtable Table</div>
+              <div className="text-sm text-slate-500">Sync responses with an Airtable</div>
             </div>
           </div>
         </div>
@@ -333,7 +335,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
                 <Label htmlFor="Surveys">Questions</Label>
                 <div className="mt-1 rounded-lg border border-slate-200">
                   <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                    {selectedSurvey?.questions.map((question) => (
+                    {checkForRecallInHeadline(selectedSurvey, "default")?.questions.map((question) => (
                       <Controller
                         key={question.id}
                         control={control}
@@ -353,7 +355,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
                                     : field.onChange(field.value?.filter((value) => value !== question.id));
                                 }}
                               />
-                              <span className="ml-2">{question.headline}</span>
+                              <span className="ml-2">{getLocalizedValue(question.headline, "default")}</span>
                             </label>
                           </div>
                         )}

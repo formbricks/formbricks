@@ -1,6 +1,6 @@
 import CalComLogo from "@/images/cal-logo-light.svg";
 import Peer from "@/images/peer.webp";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { CheckCircle2Icon } from "lucide-react";
 import Image from "next/image";
 
 export default function Testimonial() {
@@ -18,15 +18,15 @@ export default function Testimonial() {
         </p> */}
         <div className="space-y-2">
           <div className="flex space-x-2">
-            <CheckCircleIcon className="text-brand-dark h-6 w-6" />
+            <CheckCircle2Icon className="text-brand-dark h-6 w-6" />
             <p className="inline text-lg text-slate-800">All features included</p>
           </div>
           <div className="flex space-x-2">
-            <CheckCircleIcon className="text-brand-dark h-6 w-6" />
+            <CheckCircle2Icon className="text-brand-dark h-6 w-6" />
             <p className="inline text-lg text-slate-800">Free and open-source</p>
           </div>
           <div className="flex space-x-2">
-            <CheckCircleIcon className="text-brand-dark h-6 w-6" />
+            <CheckCircle2Icon className="text-brand-dark h-6 w-6" />
             <p className="inline text-lg text-slate-800">No credit card required</p>
           </div>
         </div>
@@ -39,11 +39,11 @@ export default function Testimonial() {
           <div className="mt-4 flex items-center space-x-6">
             <Image
               src={Peer}
-              alt="Cal.com Co-CEO Peer Richelsen"
+              alt="Cal.com Co-Founder Peer Richelsen"
               className="-mb-12 h-28 w-28 rounded-full border border-slate-200 shadow-sm"
             />
             <div>
-              <p className="mb-1.5 text-sm text-slate-500">Peer Richelsen, Co-CEO Cal.com</p>
+              <p className="mb-1.5 text-sm text-slate-500">Peer Richelsen, Co-Founder Cal.com</p>
               <Image src={CalComLogo} alt="Cal.com Logo" />
             </div>
           </div>

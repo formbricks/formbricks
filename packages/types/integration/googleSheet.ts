@@ -24,7 +24,7 @@ export type TIntegrationGoogleSheetsConfigData = z.infer<typeof ZIntegrationGoog
 export const ZIntegrationGoogleSheetsConfig = z.object({
   key: ZGoogleCredential,
   data: z.array(ZIntegrationGoogleSheetsConfigData),
-  email: z.string(),
+  email: z.string().email(),
 });
 
 export type TIntegrationGoogleSheetsConfig = z.infer<typeof ZIntegrationGoogleSheetsConfig>;

@@ -1,9 +1,7 @@
 "use client";
 
 import { replacePresetPlaceholders } from "@/app/lib/templates";
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
-import { SparklesIcon } from "@heroicons/react/24/solid";
-import { SplitIcon } from "lucide-react";
+import { PlusCircleIcon, SparklesIcon, SplitIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -19,25 +17,26 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formb
 import { createSurveyAction } from "../actions";
 import { customSurvey, templates, testTemplate } from "./templates";
 
-type TemplateList = {
+interface TemplateList {
   environmentId: string;
   user: TUser;
   onTemplateClick: (template: TTemplate) => void;
   environment: TEnvironment;
   product: TProduct;
   templateSearch?: string;
-};
+}
 
 const ALL_CATEGORY_NAME = "All";
 const RECOMMENDED_CATEGORY_NAME = "For you";
-export default function TemplateList({
+
+export const TemplateList = ({
   environmentId,
   user,
   onTemplateClick,
   product,
   environment,
   templateSearch,
-}: TemplateList) {
+}: TemplateList) => {
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [loading, setLoading] = useState(false);
@@ -68,12 +67,10 @@ export default function TemplateList({
 
   const addSurvey = async (activeTemplate) => {
     setLoading(true);
-    const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
-    const autoComplete = surveyType === "web" ? 50 : null;
+    const surveyType = environment?.widgetSetupCompleted ? "app" : "link";
     const augmentedTemplate: TSurveyInput = {
       ...activeTemplate.preset,
       type: surveyType,
-      autoComplete,
       createdBy: user.id,
     };
     const survey = await createSurveyAction(environmentId, augmentedTemplate);
@@ -214,4 +211,4 @@ export default function TemplateList({
       </div>
     </main>
   );
-}
+};

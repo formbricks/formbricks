@@ -1,4 +1,4 @@
-import { CheckIcon } from "@heroicons/react/24/solid";
+import { CheckIcon } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 interface Validation {
@@ -13,7 +13,7 @@ const PASSWORD_REGEX = {
 
 const DEFAULT_VALIDATIONS = [
   { label: "Mix of uppercase and lowercase", state: false },
-  { label: "Minimum 8 characters long", state: false },
+  { label: "Minimum 8 & Maximum 128 characters long", state: false },
   { label: "Contain at least 1 number", state: false },
 ];
 
@@ -30,7 +30,7 @@ export default function IsPasswordValid({
     let newValidations = [...DEFAULT_VALIDATIONS];
     if (password !== null) {
       newValidations = checkValidation(newValidations, 0, PASSWORD_REGEX.UPPER_AND_LOWER.test(password));
-      newValidations = checkValidation(newValidations, 1, password.length >= 8);
+      newValidations = checkValidation(newValidations, 1, password.length >= 8 && password.length <= 128);
       newValidations = checkValidation(newValidations, 2, PASSWORD_REGEX.NUMBER.test(password));
     }
     setIsValid(newValidations.every((validation) => validation.state === true));

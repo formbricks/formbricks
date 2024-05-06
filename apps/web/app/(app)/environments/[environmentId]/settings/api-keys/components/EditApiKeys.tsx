@@ -1,7 +1,6 @@
 "use client";
 
-import { TrashIcon } from "@heroicons/react/24/outline";
-import { FilesIcon } from "lucide-react";
+import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -97,7 +96,7 @@ export default function EditAPIKeys({
           <div className="col-span-4 sm:col-span-2">Label</div>
           <div className="col-span-4 hidden sm:col-span-5 sm:block">API Key</div>
           <div className="col-span-4 sm:col-span-2">Created at</div>
-          <div className=""></div>
+          <div></div>
         </div>
         <div className="grid-cols-9">
           {apiKeysLocal && apiKeysLocal.length === 0 ? (

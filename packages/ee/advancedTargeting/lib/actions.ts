@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { segmentCache } from "@formbricks/lib/segment/cache";
 import {
   cloneSegment,
   createSegment,
@@ -14,16 +13,9 @@ import {
   updateSegment,
 } from "@formbricks/lib/segment/service";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
-import { surveyCache } from "@formbricks/lib/survey/cache";
 import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
-import { formatDateFields } from "@formbricks/lib/utils/datetime";
 import { AuthorizationError } from "@formbricks/types/errors";
-import {
-  TSegmentCreateInput,
-  TSegmentUpdateInput,
-  ZSegmentFilters,
-  ZSegmentUpdateInput,
-} from "@formbricks/types/segment";
+import { TSegmentCreateInput, TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
 
 export const createSegmentAction = async ({
   description,
@@ -36,7 +28,7 @@ export const createSegmentAction = async ({
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
+  const environmentAccess = await hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!environmentAccess) throw new AuthorizationError("Not authorized");
 
   const parsedFilters = ZSegmentFilters.safeParse(filters);
@@ -55,8 +47,6 @@ export const createSegmentAction = async ({
     isPrivate,
     filters,
   });
-  surveyCache.revalidate({ id: surveyId });
-  segmentCache.revalidate({ id: segment.id, environmentId });
 
   return segment;
 };
@@ -69,7 +59,7 @@ export const updateSegmentAction = async (
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
+  const environmentAccess = await hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!environmentAccess) throw new AuthorizationError("Not authorized");
 
   const { filters } = data;
@@ -83,12 +73,7 @@ export const updateSegmentAction = async (
     }
   }
 
-  const _data = {
-    ...data,
-    ...formatDateFields(data, ZSegmentUpdateInput),
-  };
-
-  return await updateSegment(segmentId, _data);
+  return await updateSegment(segmentId, data);
 };
 
 export const loadNewSegmentAction = async (surveyId: string, segmentId: string) => {

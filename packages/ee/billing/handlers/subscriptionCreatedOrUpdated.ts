@@ -1,5 +1,7 @@
 import Stripe from "stripe";
 
+import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
+import { env } from "@formbricks/lib/env";
 import {
   getMonthlyActiveTeamPeopleCount,
   getMonthlyTeamResponseCount,
@@ -10,9 +12,9 @@ import {
 import { ProductFeatureKeys, StripePriceLookupKeys, StripeProductNames } from "../lib/constants";
 import { reportUsage } from "../lib/reportUsage";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
-  apiVersion: "2023-10-16",
+  apiVersion: STRIPE_API_VERSION,
 });
 
 const isProductScheduled = async (
@@ -67,7 +69,9 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
 
     switch (product.name) {
       case StripeProductNames.inAppSurvey:
-        const isInAppSurveyUnlimited = item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited;
+        const isInAppSurveyUnlimited =
+          item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimitedPlan90 ||
+          item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimitedPlan33;
 
         // If the current subscription is scheduled to cancel at the end of the period
         if (stripeSubscriptionObject.cancel_at_period_end) {
@@ -104,7 +108,9 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
         break;
 
       case StripeProductNames.linkSurvey:
-        const isLinkSurveyUnlimited = item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited;
+        const isLinkSurveyUnlimited =
+          item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimitedPlan19 ||
+          item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimitedPlan33;
 
         if (stripeSubscriptionObject.cancel_at_period_end) {
           const isLinkSurveyScheduled = await isProductScheduled(
@@ -129,7 +135,8 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
 
       case StripeProductNames.userTargeting:
         const isUserTargetingUnlimited =
-          item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited;
+          item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimitedPlan90 ||
+          item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimitedPlan33;
 
         if (stripeSubscriptionObject.cancel_at_period_end) {
           const isUserTargetingScheduled = await isProductScheduled(

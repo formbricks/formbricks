@@ -6,6 +6,8 @@ runs:
     - name: Checkout repo
       uses: actions/checkout@v3
 
+    - uses: ./.github/actions/dangerous-git-checkout
+
     - name: Cache Build
       uses: actions/cache@v3
       id: cache-build
@@ -13,13 +15,12 @@ runs:
         cache-name: prod-build
         key-1: ${{ hashFiles('pnpm-lock.yaml') }}
         key-2: ${{ hashFiles('apps/**/**.[jt]s', 'apps/**/**.[jt]sx', 'packages/**/**.[jt]s', 'packages/**/**.[jt]sx', '!**/node_modules') }}
-        key-3: ${{ github.event.pull_request.number || github.ref }}
       with:
         path: |
           ${{ github.workspace }}/apps/web/.next
           **/.turbo/**
           **/dist/**
-        key: ${{ runner.os }}-${{ env.cache-name }}-${{ env.key-1 }}-${{ env.key-2 }}-${{ env.key-3 }}
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ env.key-1 }}-${{ env.key-2 }}
 
     - name: Setup Node.js 20.x
       uses: actions/setup-node@v3
@@ -44,6 +45,7 @@ runs:
       run: |
         SECRET=$(openssl rand -hex 32)
         echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
+        echo "ENTERPRISE_LICENSE_KEY=$SECRET" >> $GITHUB_ENV
       shell: bash
 
     - run: |

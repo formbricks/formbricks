@@ -1,8 +1,11 @@
 "use client";
 
-import { updateAvatarAction } from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
+import {
+  removeAvatarAction,
+  updateAvatarAction,
+} from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
+import { handleFileUpload } from "@/app/lib/fileUpload";
 import { Session } from "next-auth";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -10,9 +13,7 @@ import toast from "react-hot-toast";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 
-import { handleFileUpload } from "../lib";
-
-export function EditAvatar({ session, environmentId }: { session: Session | null; environmentId: string }) {
+export function EditAvatar({ session, environmentId }: { session: Session; environmentId: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -20,6 +21,10 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
   const handleUpload = async (file: File, environmentId: string) => {
     setIsLoading(true);
     try {
+      if (session?.user.imageUrl) {
+        // If avatar image already exist, then remove it before update action
+        await removeAvatarAction(environmentId);
+      }
       const { url, error } = await handleFileUpload(file, environmentId);
 
       if (error) {
@@ -38,6 +43,21 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
     setIsLoading(false);
   };
 
+  const handleRemove = async () => {
+    setIsLoading(true);
+
+    try {
+      await removeAvatarAction(environmentId);
+    } catch (err) {
+      toast.error("Avatar update failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+    }
+  };
+
   return (
     <div>
       <div className="relative h-10 w-10 overflow-hidden rounded-full">
@@ -54,43 +74,37 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
           </div>
         )}
 
-        {session?.user?.imageUrl ? (
-          <Image
-            src={session.user.imageUrl}
-            width="40"
-            height="40"
-            style={{
-              objectFit: "cover",
-            }}
-            className="h-10 w-10 rounded-full"
-            alt="Avatar placeholder"
-          />
-        ) : (
-          <ProfileAvatar userId={session!.user.id} />
-        )}
+        <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
       </div>
 
-      <Button
-        className="mt-4"
-        variant="darkCTA"
-        onClick={() => {
-          inputRef.current?.click();
-        }}>
-        Upload Image
-        <input
-          type="file"
-          id="hiddenFileInput"
-          ref={inputRef}
-          className="hidden"
-          accept="image/*"
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              await handleUpload(file, environmentId);
-            }
-          }}
-        />
-      </Button>
+      <div className="mt-4">
+        <Button
+          className="mr-2"
+          variant="darkCTA"
+          onClick={() => {
+            inputRef.current?.click();
+          }}>
+          {session?.user.imageUrl ? "Change Image" : "Upload Image"}
+          <input
+            type="file"
+            id="hiddenFileInput"
+            ref={inputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                await handleUpload(file, environmentId);
+              }
+            }}
+          />
+        </Button>
+        {session?.user?.imageUrl && (
+          <Button className="mr-2" variant="warn" onClick={handleRemove}>
+            Remove Image
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

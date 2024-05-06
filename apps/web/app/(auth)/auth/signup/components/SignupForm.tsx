@@ -6,7 +6,7 @@ import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
 import IsPasswordValid from "@/app/(auth)/auth/components/IsPasswordValid";
 import { OpenIdButton } from "@/app/(auth)/auth/components/OpenIdButton";
 import { createUser } from "@/app/lib/users/users";
-import { XCircleIcon } from "@heroicons/react/24/solid";
+import { XCircleIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
@@ -46,6 +46,7 @@ export const SignupForm = ({
   const [error, setError] = useState<string>("");
   const [signingUp, setSigningUp] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   const inviteToken = searchParams?.get("inviteToken");
   const callbackUrl = useMemo(() => {
@@ -85,7 +86,6 @@ export const SignupForm = ({
 
   const [showLogin, setShowLogin] = useState(false);
   const [isButtonEnabled, setButtonEnabled] = useState(true);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [password, setPassword] = useState<string | null>(null);
   const [isValid, setIsValid] = useState(false);
@@ -183,24 +183,31 @@ export const SignupForm = ({
                   <IsPasswordValid password={password} setIsValid={setIsValid} />
                 </div>
               )}
-              <Button
-                onClick={(e: any) => {
-                  e.preventDefault();
-                  if (!showLogin) {
+              {showLogin && (
+                <Button
+                  type="submit"
+                  variant="darkCTA"
+                  className="w-full justify-center"
+                  loading={signingUp}
+                  disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
+                  Continue with Email
+                </Button>
+              )}
+
+              {!showLogin && (
+                <Button
+                  type="button"
+                  onClick={() => {
                     setShowLogin(true);
                     setButtonEnabled(false);
                     // Add a slight delay before focusing the input field to ensure it's visible
                     setTimeout(() => nameRef.current?.focus(), 100);
-                  } else if (formRef.current) {
-                    formRef.current.requestSubmit();
-                  }
-                }}
-                variant="darkCTA"
-                className="w-full justify-center"
-                loading={signingUp}
-                disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
-                Continue with Email
-              </Button>
+                  }}
+                  variant="darkCTA"
+                  className="w-full justify-center">
+                  Continue with Email
+                </Button>
+              )}
             </form>
           )}
           {googleOAuthEnabled && (

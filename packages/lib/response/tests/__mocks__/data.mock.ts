@@ -8,9 +8,9 @@ import {
   TResponseUpdateInput,
   TSurveyPersonAttributes,
 } from "@formbricks/types/responses";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
-import { transformPrismaPerson } from "../../../person/service";
 import { responseNoteSelect } from "../../../responseNote/service";
 import { responseSelection } from "../../service";
 import { constantsForTests } from "../constants";
@@ -20,9 +20,6 @@ type ResponseMock = Prisma.ResponseGetPayload<{
 }>;
 type ResponseNoteMock = Prisma.ResponseNoteGetPayload<{
   include: typeof responseNoteSelect;
-}>;
-type ResponsePersonMock = Prisma.PersonGetPayload<{
-  select: typeof responseSelection.person.select;
 }>;
 
 export const mockEnvironmentId = "ars2tjk8hsi8oqk1uac00mo7";
@@ -62,20 +59,9 @@ export const mockResponseNote: ResponseNoteMock = {
   },
 };
 
-export const mockPerson: ResponsePersonMock = {
+export const mockPerson = {
   id: mockPersonId,
   userId: mockUserId,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  environmentId: mockEnvironmentId,
-  attributes: [
-    {
-      value: "attribute1",
-      attributeClass: {
-        name: "attributeClass1",
-      },
-    },
-  ],
 };
 
 export const mockTags = [
@@ -114,6 +100,7 @@ export const mockResponse: ResponseMock = {
   tags: mockTags,
   personId: mockPersonId,
   updatedAt: new Date(),
+  language: "English",
   ttc: {},
 };
 
@@ -132,6 +119,7 @@ export const mockResponsePersonAttributes: ResponseMock[] = [
     updatedAt: new Date(),
     ttc: {},
     person: null,
+    language: null,
     personAttributes: { Plan: "Paid", "Init Attribute 1": "one", "Init Attribute 2": "two" },
   },
   {
@@ -148,6 +136,7 @@ export const mockResponsePersonAttributes: ResponseMock[] = [
     updatedAt: new Date(),
     ttc: {},
     person: null,
+    language: null,
     personAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "three",
@@ -168,6 +157,7 @@ export const mockResponsePersonAttributes: ResponseMock[] = [
     updatedAt: new Date(),
     ttc: {},
     person: null,
+    language: null,
     personAttributes: { Plan: "Paid", "Init Attribute 1": "five", "Init Attribute 2": "six" },
   },
   {
@@ -184,6 +174,7 @@ export const mockResponsePersonAttributes: ResponseMock[] = [
     updatedAt: new Date(),
     ttc: {},
     person: null,
+    language: null,
     personAttributes: { Plan: "Paid", "Init Attribute 1": "five", "Init Attribute 2": "four" },
   },
   {
@@ -200,6 +191,7 @@ export const mockResponsePersonAttributes: ResponseMock[] = [
     updatedAt: new Date(),
     ttc: {},
     person: null,
+    language: null,
     personAttributes: { Plan: "Paid", "Init Attribute 1": "three", "Init Attribute 2": "two" },
   },
 ];
@@ -237,6 +229,7 @@ export const mockResponses: ResponseMock[] = [
     singleUseId: mockSingleUseId,
     personId: mockPersonId,
     person: null,
+    language: null,
     tags: getMockTags(["tag1", "tag3"]),
     notes: [],
   },
@@ -260,6 +253,7 @@ export const mockResponses: ResponseMock[] = [
     singleUseId: mockSingleUseId,
     personId: mockPersonId,
     person: null,
+    language: null,
     tags: getMockTags(["tag1", "tag2"]),
     notes: [],
   },
@@ -284,6 +278,7 @@ export const mockResponses: ResponseMock[] = [
     person: null,
     tags: getMockTags(["tag2", "tag3"]),
     notes: [],
+    language: null,
   },
   {
     id: "clsk6bk1l0017k8iut9dp0uxt",
@@ -306,6 +301,7 @@ export const mockResponses: ResponseMock[] = [
     person: null,
     tags: getMockTags(["tag1", "tag4"]),
     notes: [],
+    language: null,
   },
   {
     id: "clsk5tgkm000uk8iueqoficwc",
@@ -328,6 +324,7 @@ export const mockResponses: ResponseMock[] = [
     person: null,
     tags: getMockTags(["tag4", "tag5"]),
     notes: [],
+    language: null,
   },
 ];
 
@@ -430,7 +427,7 @@ export const getFilteredMockResponses = (
   if (format) {
     return result.map((response) => ({
       ...response,
-      person: response.person ? transformPrismaPerson(response.person) : null,
+      person: response.person ? { id: response.person.id, userId: response.person.userId } : null,
       tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     }));
   }
@@ -458,3 +455,40 @@ export const getMockUpdateResponseInput = (finished: boolean = false): TResponse
   data: mockResponseData,
   finished,
 });
+
+export const mockSurveySummaryOutput = {
+  dropOff: [
+    {
+      dropOffCount: 0,
+      dropOffPercentage: 0,
+      headline: "Question Text",
+      questionId: "ars2tjk8hsi8oqk1uac00mo8",
+      ttc: 0,
+      impressions: 0,
+    },
+  ],
+  meta: {
+    completedPercentage: 0,
+    completedResponses: 1,
+    displayCount: 0,
+    dropOffPercentage: 0,
+    dropOffCount: 0,
+    startsPercentage: 0,
+    totalResponses: 1,
+    ttcAverage: 0,
+  },
+  summary: [
+    {
+      question: {
+        headline: { default: "Question Text", de: "Fragetext" },
+        id: "ars2tjk8hsi8oqk1uac00mo8",
+        inputType: "text",
+        required: false,
+        type: TSurveyQuestionType.OpenText,
+      },
+      responseCount: 0,
+      samples: [],
+      type: "openText",
+    },
+  ],
+};

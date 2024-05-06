@@ -5,20 +5,15 @@ import {
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import {
-  generateQuestionAndFilterOptions,
-  getFormattedFilters,
-  getTodayDate,
-} from "@/app/lib/surveys/surveys";
+import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
 import { differenceInDays, format, startOfDay, subDays } from "date-fns";
 import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-import useClickOutside from "@formbricks/lib/useClickOutside";
-import { TSurveyPersonAttributes } from "@formbricks/types/responses";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TTag } from "@formbricks/types/tags";
 import { Calendar } from "@formbricks/ui/Calendar";
 import {
   DropdownMenu,
@@ -47,8 +42,6 @@ enum FilterDropDownLabels {
 }
 
 interface CustomFilterProps {
-  environmentTags: TTag[];
-  attributes: TSurveyPersonAttributes;
   survey: TSurvey;
 }
 
@@ -63,8 +56,11 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps) => {
-  const { selectedFilter, setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
+export const CustomFilter = ({ survey }: CustomFilterProps) => {
+  const params = useParams();
+  const isSharingPage = !!params.sharingKey;
+
+  const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
       ? getDifferenceOfDays(dateRange.from, dateRange.to)
@@ -76,17 +72,27 @@ const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps
   const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
   const [hoveredRange, setHoveredRange] = useState<DateRange | null>(null);
 
-  // when the page loads we get total responses and iterate over the responses and questions, tags and attributes to create the filter options
-  useEffect(() => {
-    const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
-      survey,
-      environmentTags,
-      attributes
-    );
-    setSelectedOptions({ questionFilterOptions, questionOptions });
-  }, [survey, setSelectedOptions, environmentTags, attributes]);
+  const firstMountRef = useRef(true);
 
-  const filters = useMemo(() => getFormattedFilters(selectedFilter, dateRange), [selectedFilter, dateRange]);
+  useEffect(() => {
+    if (!firstMountRef.current) {
+      firstMountRef.current = false;
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!firstMountRef.current) {
+      resetState();
+    }
+  }, [survey?.id, resetState]);
+
+  const filters = useMemo(
+    () => getFormattedFilters(survey, selectedFilter, dateRange),
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedFilter, dateRange]
+  );
 
   const datePickerRef = useRef<HTMLDivElement>(null);
 
@@ -188,7 +194,7 @@ const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps
     <>
       <div className="relative mb-12 flex justify-between">
         <div className="flex justify-stretch gap-x-1.5">
-          <ResponseFilter />
+          <ResponseFilter survey={survey} />
           <DropdownMenu
             onOpenChange={(value) => {
               value && handleDatePickerClose();
@@ -246,55 +252,58 @@ const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <DropdownMenu
-            onOpenChange={(value) => {
-              value && handleDatePickerClose();
-              setIsDownloadDropDownOpen(value);
-            }}>
-            <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
-              <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:min-w-[11rem] sm:px-6 sm:py-3">
-                <div className="hidden w-full items-center justify-between sm:flex">
-                  <span className="text-sm text-slate-700">Download</span>
-                  {isDownloadDropDownOpen ? (
-                    <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
-                  ) : (
-                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                  )}
+          {!isSharingPage && (
+            <DropdownMenu
+              onOpenChange={(value) => {
+                value && handleDatePickerClose();
+                setIsDownloadDropDownOpen(value);
+              }}>
+              <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
+                <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:min-w-[11rem] sm:px-6 sm:py-3">
+                  <div className="hidden w-full items-center justify-between sm:flex">
+                    <span className="text-sm text-slate-700">Download</span>
+                    {isDownloadDropDownOpen ? (
+                      <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
+                    ) : (
+                      <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                    )}
+                  </div>
+                  <DownloadIcon className="block h-4 sm:hidden" />
                 </div>
-                <DownloadIcon className="block h-4 sm:hidden" />
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem
-                className="hover:ring-0"
-                onClick={() => {
-                  handleDowndloadResponses(FilterDownload.ALL, "csv");
-                }}>
-                <p className="text-slate-700">All responses (CSV)</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="hover:ring-0"
-                onClick={() => {
-                  handleDowndloadResponses(FilterDownload.ALL, "xlsx");
-                }}>
-                <p className="text-slate-700">All responses (Excel)</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="hover:ring-0"
-                onClick={() => {
-                  handleDowndloadResponses(FilterDownload.FILTER, "csv");
-                }}>
-                <p className="text-slate-700">Current selection (CSV)</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="hover:ring-0"
-                onClick={() => {
-                  handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
-                }}>
-                <p className="text-slate-700">Current selection (Excel)</p>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  className="hover:ring-0"
+                  onClick={() => {
+                    handleDowndloadResponses(FilterDownload.ALL, "csv");
+                  }}>
+                  <p className="text-slate-700">All responses (CSV)</p>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="hover:ring-0"
+                  onClick={() => {
+                    handleDowndloadResponses(FilterDownload.ALL, "xlsx");
+                  }}>
+                  <p className="text-slate-700">All responses (Excel)</p>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="hover:ring-0"
+                  onClick={() => {
+                    handleDowndloadResponses(FilterDownload.FILTER, "csv");
+                  }}>
+                  <p className="text-slate-700">Current selection (CSV)</p>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="hover:ring-0"
+                  onClick={() => {
+                    handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
+                  }}>
+                  <p className="text-slate-700">Current selection (Excel)</p>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
         {isDatePickerOpen && (
           <div ref={datePickerRef} className="absolute top-full z-50 my-2 rounded-md border bg-white">
@@ -317,5 +326,3 @@ const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps
     </>
   );
 };
-
-export default CustomFilter;

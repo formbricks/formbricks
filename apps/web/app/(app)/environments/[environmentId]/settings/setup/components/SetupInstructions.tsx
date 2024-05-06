@@ -1,6 +1,5 @@
 "use client";
 
-import jsPackageJson from "@/../../packages/js/package.json";
 import packageJson from "@/package.json";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
@@ -32,8 +31,10 @@ export default function SetupInstructions({
       <div className="px-6 py-5">
         {activeTab === "npm" ? (
           <div className="prose prose-slate">
-            <p className="text-lg font-semibold text-slate-800">Step 1: NPM Install</p>
-            <CodeBlock language="sh">npm install @formbricks/js --save</CodeBlock>
+            <p className="text-lg font-semibold text-slate-800">Step 1: Install with NPM or Yarn</p>
+            <CodeBlock language="sh">npm install @formbricks/js</CodeBlock>
+            <p>or</p>
+            <CodeBlock language="sh">yarn add @formbricks/js</CodeBlock>
             <p className="pt-4 text-lg font-semibold text-slate-800">Step 2: Initialize widget</p>
             <p>Import Formbricks and initialize the widget in your Component (e.g. App.tsx):</p>
             <CodeBlock language="js">{`import formbricks from "@formbricks/js";
@@ -42,7 +43,6 @@ if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "${environmentId}",
     apiHost: "${webAppUrl}",
-    debug: true, // remove when in production 
   });
 }`}</CodeBlock>
 
@@ -110,7 +110,7 @@ if (typeof window !== "undefined") {
             </p>
             <CodeBlock language="js">{`<!-- START Formbricks Surveys -->
 <script type="text/javascript">
-!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^${jsPackageJson.version}/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
+!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.6.5/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
 </script>
 <!-- END Formbricks Surveys -->`}</CodeBlock>
             <p className="text-lg font-semibold text-slate-800">You&apos;re done 🎉</p>

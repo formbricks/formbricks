@@ -7,7 +7,7 @@ import {
   resendInviteAction,
 } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
 import ShareInviteModal from "@/app/(app)/environments/[environmentId]/settings/members/components/ShareInviteModal";
-import { PaperAirplaneIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -87,7 +87,7 @@ export default function MemberActions({ team, member, invite, showDeleteButton }
     try {
       if (!invite) return;
 
-      await resendInviteAction(invite.id);
+      await resendInviteAction(invite.id, team.id);
       toast.success("Invitation sent once more.");
     } catch (err) {
       toast.error(`Error: ${err.message}`);
@@ -111,7 +111,7 @@ export default function MemberActions({ team, member, invite, showDeleteButton }
                 onClick={() => {
                   handleShareInvite();
                 }}
-                id="shareInviteButton">
+                className="shareInviteButton">
                 <ShareIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
               </button>
             </TooltipTrigger>
@@ -127,7 +127,7 @@ export default function MemberActions({ team, member, invite, showDeleteButton }
                   handleResendInvite();
                 }}
                 id="resendInviteButton">
-                <PaperAirplaneIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
+                <SendHorizonalIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
               </button>
             </TooltipTrigger>
             <TooltipContent className="TooltipContent" sideOffset={5}>

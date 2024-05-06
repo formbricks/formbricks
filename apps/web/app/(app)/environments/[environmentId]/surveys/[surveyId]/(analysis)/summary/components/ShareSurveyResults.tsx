@@ -1,6 +1,4 @@
-"use client";
-
-import { CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/solid";
+import { AlertCircleIcon, CheckCircle2Icon } from "lucide-react";
 import { Clipboard } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -15,14 +13,14 @@ interface ShareEmbedSurveyProps {
   showPublishModal: boolean;
   surveyUrl: string;
 }
-export default function ShareSurveyResults({
+export const ShareSurveyResults = ({
   open,
   setOpen,
   handlePublish,
   handleUnpublish,
   showPublishModal,
   surveyUrl,
-}: ShareEmbedSurveyProps) {
+}: ShareEmbedSurveyProps) => {
   return (
     <Dialog
       open={open}
@@ -32,7 +30,7 @@ export default function ShareSurveyResults({
       {showPublishModal && surveyUrl ? (
         <DialogContent className="flex flex-col rounded-2xl bg-white px-12 py-6">
           <div className="flex flex-col items-center gap-y-6 text-center">
-            <CheckCircleIcon className="h-20 w-20 text-slate-300" />
+            <CheckCircle2Icon className="h-20 w-20 text-slate-300" />
             <div>
               <p className="text-lg font-medium text-slate-600">Your survey results are public!</p>
               <p className="text-balanced mt-2 text-sm text-slate-500">
@@ -77,7 +75,7 @@ export default function ShareSurveyResults({
       ) : (
         <DialogContent className="flex flex-col rounded-2xl bg-white p-8">
           <div className="flex flex-col items-center gap-y-6 text-center">
-            <ExclamationCircleIcon className="h-20 w-20 text-slate-300" />
+            <AlertCircleIcon className="h-20 w-20 text-slate-300" />
             <div>
               <p className="text-lg font-medium text-slate-600">
                 You are about to release these survey results to the public.
@@ -99,4 +97,4 @@ export default function ShareSurveyResults({
       )}
     </Dialog>
   );
-}
+};

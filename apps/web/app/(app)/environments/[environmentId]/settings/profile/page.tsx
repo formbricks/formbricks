@@ -15,6 +15,9 @@ import { EditName } from "./components/EditName";
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const { environmentId } = params;
   const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error("Session not found");
+  }
   const user = session && session.user ? await getUser(session.user.id) : null;
 
   return (

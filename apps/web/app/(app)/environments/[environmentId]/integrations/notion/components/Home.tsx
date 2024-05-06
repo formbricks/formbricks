@@ -1,4 +1,5 @@
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
+import { Trash2Icon } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -14,7 +15,9 @@ interface HomeProps {
   notionIntegration: TIntegrationNotion;
   setOpenAddIntegrationModal: React.Dispatch<React.SetStateAction<boolean>>;
   setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
-  setSelectedIntegration: (v: (TIntegrationNotionConfigData & { index: number }) | null) => void;
+  setSelectedIntegration: React.Dispatch<
+    React.SetStateAction<(TIntegrationNotionConfigData & { index: number }) | null>
+  >;
 }
 
 export default function Home({
@@ -47,10 +50,7 @@ export default function Home({
   };
 
   const editIntegration = (index: number) => {
-    setSelectedIntegration({
-      ...notionIntegration.config.data[index],
-      index: index,
-    });
+    setSelectedIntegration({ ...notionIntegration.config.data[index], index });
     setOpenAddIntegrationModal(true);
   };
 
@@ -59,11 +59,7 @@ export default function Home({
       <div className="flex w-full justify-end">
         <div className="mr-6 flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
-          <span
-            className="cursor-pointer text-slate-500"
-            onClick={() => {
-              setIsDeleteIntegrationModalOpen(true);
-            }}>
+          <span className="text-slate-500">
             Connected with {notionIntegration.config.key.workspace_name} workspace
           </span>
         </div>
@@ -111,6 +107,14 @@ export default function Home({
           </div>
         </div>
       )}
+      <Button
+        variant="minimal"
+        onClick={() => setIsDeleteIntegrationModalOpen(true)}
+        className="mt-4"
+        StartIcon={Trash2Icon}
+        startIconClassName="h-5 w-5 mr-2">
+        Delete Integration
+      </Button>
 
       <DeleteDialog
         open={isDeleteIntegrationModalOpen}

@@ -1,6 +1,6 @@
 "use client";
 
-import { CodeBracketIcon, DocumentDuplicateIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
+import { Code2Icon, CopyIcon, MailIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -9,7 +9,7 @@ import { Button } from "@formbricks/ui/Button";
 import CodeBlock from "@formbricks/ui/CodeBlock";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 
-import { getEmailHtmlAction, sendEmailAction } from "../../actions";
+import { getEmailHtmlAction, sendEmbedSurveyPreviewEmailAction } from "../../actions";
 
 interface EmailTabProps {
   surveyId: string;
@@ -35,17 +35,11 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
       const emailHtml = await getEmailHtmlAction(surveyId);
       setEmailHtmlPreview(emailHtml);
     }
-  });
+  }, [surveyId]);
 
-  const subject = "Formbricks Email Survey Preview";
-
-  const sendPreviewEmail = async (html) => {
+  const sendPreviewEmail = async () => {
     try {
-      await sendEmailAction({
-        html,
-        subject,
-        to: email,
-      });
+      await sendEmbedSurveyPreviewEmailAction(surveyId);
       toast.success("Email sent!");
     } catch (err) {
       if (err instanceof AuthenticationError) {
@@ -69,7 +63,7 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
               navigator.clipboard.writeText(emailHtml);
             }}
             className="shrink-0"
-            EndIcon={DocumentDuplicateIcon}>
+            EndIcon={CopyIcon}>
             Copy code
           </Button>
         ) : (
@@ -78,8 +72,8 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
               variant="secondary"
               title="send preview email"
               aria-label="send preview email"
-              onClick={() => sendPreviewEmail(emailHtmlPreview)}
-              EndIcon={EnvelopeIcon}
+              onClick={() => sendPreviewEmail()}
+              EndIcon={MailIcon}
               className="shrink-0">
               Send Preview
             </Button>
@@ -92,7 +86,7 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
           onClick={() => {
             setShowEmbed(!showEmbed);
           }}
-          EndIcon={CodeBracketIcon}
+          EndIcon={Code2Icon}
           className="shrink-0">
           {showEmbed ? "Hide Embed Code" : "View Embed Code"}
         </Button>
@@ -113,9 +107,11 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
             <div className="h-3 w-3 rounded-full bg-amber-500"></div>
             <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
           </div>
-          <div className="">
+          <div>
             <div className="mb-2 border-b border-slate-200 pb-2 text-sm">To : {email || "user@mail.com"}</div>
-            <div className="border-b border-slate-200 pb-2 text-sm">Subject : {subject}</div>
+            <div className="border-b border-slate-200 pb-2 text-sm">
+              Subject : Formbricks Email Survey Preview
+            </div>
             <div className="p-4">
               {emailHtml ? (
                 <div dangerouslySetInnerHTML={{ __html: emailHtmlPreview }}></div>

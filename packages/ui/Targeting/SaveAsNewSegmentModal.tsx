@@ -1,6 +1,6 @@
 "use client";
 
-import { UserGroupIcon } from "@heroicons/react/24/solid";
+import { UsersIcon } from "lucide-react";
 import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -56,28 +56,8 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
   const handleSaveSegment: SubmitHandler<SaveAsNewSegmentModalForm> = async (data) => {
     if (!segment || !segment?.filters.length) return;
 
-    try {
-      // if the segment is private, update it to add title, description and make it public
-      // otherwise, create a new segment
-
+    const createSegment = async () => {
       setIsLoading(true);
-      if (!!segment && segment?.isPrivate) {
-        const updatedSegment = await onUpdateSegment(segment.environmentId, segment.id, {
-          ...segment,
-          title: data.title,
-          description: data.description,
-          isPrivate: false,
-          filters: segment?.filters,
-        });
-
-        toast.success("Segment updated successfully");
-        setSegment(updatedSegment);
-
-        setIsSegmentEditorOpen(false);
-        handleReset();
-        return;
-      }
-
       const createdSegment = await onCreateSegment({
         environmentId: localSurvey.environmentId,
         surveyId: localSurvey.id,
@@ -93,6 +73,44 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
       setIsLoading(false);
       toast.success("Segment created successfully");
       handleReset();
+    };
+
+    const updateSegment = async () => {
+      if (!!segment && segment?.isPrivate) {
+        const updatedSegment = await onUpdateSegment(segment.environmentId, segment.id, {
+          ...segment,
+          title: data.title,
+          description: data.description,
+          isPrivate: false,
+          filters: segment?.filters,
+        });
+
+        toast.success("Segment updated successfully");
+        setSegment(updatedSegment);
+
+        setIsSegmentEditorOpen(false);
+        handleReset();
+      }
+    };
+
+    try {
+      // if the segment is private, update it to add title, description and make it public
+      // otherwise, create a new segment
+
+      setIsLoading(true);
+
+      if (!!segment) {
+        if (segment.id === "temp") {
+          await createSegment();
+        } else {
+          await updateSegment();
+        }
+
+        return;
+      }
+
+      await createSegment();
+      return;
     } catch (err: any) {
       toast.error(err.message);
       setIsLoading(false);
@@ -110,7 +128,7 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
         <div className="flex w-full items-center gap-4 p-6">
           <div className="flex items-center space-x-2">
             <div className="mr-1.5 h-6 w-6 text-slate-500">
-              <UserGroupIcon />
+              <UsersIcon className="h-5 w-5" />
             </div>
             <div>
               <h3 className="text-base font-medium">Save as new segment</h3>

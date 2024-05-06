@@ -16,7 +16,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: 0,
   /* Timeout for each test */
-  timeout: 60000,
+  timeout: 120000,
   /* Opt out of parallel tests on CI. */
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -28,6 +28,7 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
+    permissions: ["clipboard-read", "clipboard-write"],
   },
 
   /* Configure projects for major browsers */

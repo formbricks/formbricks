@@ -1,0 +1,128 @@
+name: Kamal Setup
+concurrency:
+  group: setup-kamal
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch: # Only to be triggered when accessories are updated
+
+jobs:
+  Setup:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      DOCKER_BUILDKIT: 1
+      IS_FORMBRICKS_CLOUD: ${{ vars.IS_FORMBRICKS_CLOUD }}
+      WEBAPP_URL: ${{ vars.WEBAPP_URL }}
+      NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      MIGRATE_DATABASE_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+      SHORT_URL_BASE: ${{ vars.SHORT_URL_BASE }}
+      MAIL_FROM: ${{ secrets.MAIL_FROM }}
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      PRIVACY_URL: ${{ vars.PRIVACY_URL }}
+      TERMS_URL: ${{ vars.TERMS_URL }}
+      IMPRINT_URL: ${{ vars.IMPRINT_URL }}
+      GITHUB_ID: ${{ secrets.FB_GITHUB_ID }}
+      GITHUB_SECRET: ${{ secrets.FB_GITHUB_SECRET }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      AZUREAD_CLIENT_ID: ${{ secrets.AZUREAD_CLIENT_ID }}
+      AZUREAD_CLIENT_SECRET: ${{ secrets.AZUREAD_CLIENT_SECRET }}
+      AZUREAD_TENANT_ID: ${{ secrets.AZUREAD_TENANT_ID }}
+      OIDC_CLIENT_ID: ${{ secrets.OIDC_CLIENT_ID }}
+      OIDC_CLIENT_SECRET: ${{ secrets.OIDC_CLIENT_SECRET }}
+      OIDC_ISSUER: ${{ secrets.OIDC_ISSUER }}
+      OIDC_DISPLAY_NAME: ${{ secrets.OIDC_DISPLAY_NAME }}
+      OIDC_SIGNING_ALGORITHM: ${{ secrets.OIDC_SIGNING_ALGORITHM }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      ASSET_PREFIX_URL: ${{ vars.ASSET_PREFIX_URL }}
+      NOTION_OAUTH_CLIENT_ID: ${{ secrets.NOTION_OAUTH_CLIENT_ID }}
+      NOTION_OAUTH_CLIENT_SECRET: ${{ secrets.NOTION_OAUTH_CLIENT_SECRET }}
+      SLACK_CLIENT_ID: ${{ secrets.SLACK_CLIENT_ID }}
+      SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      GOOGLE_SHEETS_CLIENT_ID: ${{ secrets.GOOGLE_SHEETS_CLIENT_ID }}
+      GOOGLE_SHEETS_CLIENT_SECRET: ${{ secrets.GOOGLE_SHEETS_CLIENT_SECRET }}
+      GOOGLE_SHEETS_REDIRECT_URL: ${{ secrets.GOOGLE_SHEETS_REDIRECT_URL }}
+      AIRTABLE_CLIENT_ID: ${{ secrets.AIRTABLE_CLIENT_ID }}
+      ENTERPRISE_LICENSE_KEY: ${{ secrets.ENTERPRISE_LICENSE_KEY }}
+      DEFAULT_TEAM_ID: ${{ vars.DEFAULT_TEAM_ID }}
+      ONBOARDING_DISABLED: ${{ vars.ONBOARDING_DISABLED }}
+      CUSTOMER_IO_API_KEY: ${{ secrets.CUSTOMER_IO_API_KEY }}
+      CUSTOMER_IO_SITE_ID: ${{ secrets.CUSTOMER_IO_SITE_ID }}
+      NEXT_PUBLIC_POSTHOG_API_KEY: ${{ vars.NEXT_PUBLIC_POSTHOG_API_KEY }}
+      NEXT_PUBLIC_POSTHOG_API_HOST: ${{ vars.NEXT_PUBLIC_POSTHOG_API_HOST }}
+      NEXT_PUBLIC_FORMBRICKS_API_HOST: ${{ vars.NEXT_PUBLIC_FORMBRICKS_API_HOST }}
+      NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: ${{ vars.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID }}
+      NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: ${{ vars.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID }}
+      NEXT_PUBLIC_SENTRY_DSN: ${{ vars.NEXT_PUBLIC_SENTRY_DSN }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      NODE_ENV: production
+      CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
+      CLOUDFLARE_DNS_API_TOKEN: ${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
+      S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+      S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
+      S3_REGION: ${{ vars.S3_REGION }}
+      S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
+      OPENTELEMETRY_LISTENER_URL: ${{ vars.OPENTELEMETRY_LISTENER_URL }}
+      RATE_LIMITING_DISABLED: ${{ vars.RATE_LIMITING_DISABLED }}
+      KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      REDIS_URL: ${{ secrets.REDIS_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3.0
+          bundler-cache: true
+
+      - name: Install dependencies
+        run: |
+          gem install kamal
+
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Create builder
+        run: docker buildx create --use --name formbricks-gh-actions-builder
+        if: steps.buildx.outputs.should_create_builder == 'true'
+
+      - name: Push env variables to Kamal
+        run: |
+          kamal() { command kamal "$@" -c kamal/deploy.yml; }
+          kamal env push
+
+      - name: Run setup command
+        run: |
+          kamal() { command kamal "$@" -c kamal/deploy.yml; }
+          set +e
+          DEPLOY_OUTPUT=$(kamal setup 2>&1)
+          DEPLOY_EXIT_CODE=$?
+          echo "$DEPLOY_OUTPUT"
+          if [[ "$DEPLOY_OUTPUT" == *"container not unhealthy (healthy)"* ]]; then
+            echo "Deployment reported healthy container. Considering as success."
+            kamal lock release
+            exit 0
+          else
+            exit $DEPLOY_EXIT_CODE
+          fi
+        shell: bash

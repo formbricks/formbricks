@@ -3,13 +3,13 @@ on:
   workflow_call:
 jobs:
   build:
-    name: Tests
+    name: Unit Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/dangerous-git-checkout
 
       - name: Setup Node.js 20.x
         uses: actions/setup-node@v3
@@ -29,9 +29,6 @@ jobs:
         run: |
           SECRET=$(openssl rand -hex 32)
           echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
-
-      - name: Build formbricks-js dependencies
-        run: pnpm build --filter=js
 
       - name: Test
         run: pnpm test

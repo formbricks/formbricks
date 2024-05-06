@@ -1,34 +1,20 @@
-import { getServerSession } from "next-auth";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { StripePriceLookupKeys } from "@formbricks/ee/billing/lib/constants";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
 import { upgradePlanAction } from "../actions";
 
 export default async function UnlimitedPage({ params }) {
-  if (!IS_FORMBRICKS_CLOUD) {
-    notFound();
-  }
-
-  const session = await getServerSession(authOptions);
-
   const team = await getTeamByEnvironmentId(params.environmentId);
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
-
   if (!team) {
     throw new Error("Team not found");
   }
 
   const { status, newPlan, url } = await upgradePlanAction(team.id, params.environmentId, [
-    StripePriceLookupKeys.inAppSurveyUnlimited,
-    StripePriceLookupKeys.linkSurveyUnlimited,
-    StripePriceLookupKeys.userTargetingUnlimited,
+    StripePriceLookupKeys.inAppSurveyUnlimitedPlan90,
+    StripePriceLookupKeys.linkSurveyUnlimitedPlan19,
+    StripePriceLookupKeys.userTargetingUnlimitedPlan90,
   ]);
   if (status != 200) {
     throw new Error("Something went wrong");

@@ -1,6 +1,6 @@
 "use client";
 
-import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
+import { CopyIcon } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { Button } from "@formbricks/ui/Button";
@@ -17,7 +17,7 @@ export default function WebpageTab({ surveyUrl }) {
   return (
     <div className="flex h-full grow flex-col">
       <div className="flex justify-between">
-        <div className=""></div>
+        <div></div>
         <Button
           variant="darkCTA"
           title="Embed survey in your website"
@@ -26,7 +26,7 @@ export default function WebpageTab({ surveyUrl }) {
             navigator.clipboard.writeText(iframeCode);
             toast.success("Embed code copied to clipboard!");
           }}
-          EndIcon={DocumentDuplicateIcon}>
+          EndIcon={CopyIcon}>
           Copy code
         </Button>
       </div>

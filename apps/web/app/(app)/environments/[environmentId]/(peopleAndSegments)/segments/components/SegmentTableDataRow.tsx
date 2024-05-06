@@ -1,7 +1,7 @@
 "use client";
 
-import { UserGroupIcon } from "@heroicons/react/24/solid";
 import { format, formatDistanceToNow } from "date-fns";
+import { UsersIcon } from "lucide-react";
 import { useState } from "react";
 
 import { TActionClass } from "@formbricks/types/actionClasses";
@@ -39,7 +39,7 @@ const SegmentTableDataRow = ({
         <div className="col-span-4 flex items-center pl-6 text-sm">
           <div className="flex items-center gap-4">
             <div className="ph-no-capture h-8 w-8 flex-shrink-0 text-slate-700">
-              <UserGroupIcon />
+              <UsersIcon className="h-5 w-5" />
             </div>
             <div className="flex flex-col">
               <div className="ph-no-capture font-medium text-slate-900">{title}</div>

@@ -1,12 +1,13 @@
 import { prisma } from "@formbricks/database";
+import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/email";
 import {
+  DEFAULT_TEAM_ID,
+  DEFAULT_TEAM_ROLE,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   INVITE_DISABLED,
   SIGNUP_ENABLED,
 } from "@formbricks/lib/constants";
-import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/lib/emails/emails";
-import { env } from "@formbricks/lib/env.mjs";
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
@@ -19,17 +20,13 @@ export async function POST(request: Request) {
   if (!EMAIL_AUTH_ENABLED || inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED) {
     return Response.json({ error: "Signup disabled" }, { status: 403 });
   }
-  user = { ...user, ...{ email: user.email.toLowerCase() } };
 
   let inviteId;
 
   try {
     let invite;
+    let isInviteValid = false;
 
-    // create the user
-    user = await createUser(user);
-
-    // User is invited to team
     if (inviteToken) {
       let inviteTokenData = await verifyInviteToken(inviteToken);
       inviteId = inviteTokenData?.inviteId;
@@ -44,7 +41,20 @@ export async function POST(request: Request) {
       if (!invite) {
         return Response.json({ error: "Invalid invite ID" }, { status: 400 });
       }
+      isInviteValid = true;
+    }
 
+    user = {
+      ...user,
+      ...{ email: user.email.toLowerCase() },
+      onboardingCompleted: isInviteValid,
+    };
+
+    // create the user
+    user = await createUser(user);
+
+    // User is invited to team
+    if (isInviteValid) {
       // assign user to existing team
       await createMembership(invite.teamId, user.id, {
         accepted: true,
@@ -63,16 +73,16 @@ export async function POST(request: Request) {
 
     // User signs up without invite
     // Default team assignment is enabled
-    if (env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0) {
+    if (DEFAULT_TEAM_ID && DEFAULT_TEAM_ID.length > 0) {
       // check if team exists
-      let team = await getTeam(env.DEFAULT_TEAM_ID);
+      let team = await getTeam(DEFAULT_TEAM_ID);
       let isNewTeam = false;
       if (!team) {
         // create team with id from env
-        team = await createTeam({ id: env.DEFAULT_TEAM_ID, name: user.name + "'s Team" });
+        team = await createTeam({ id: DEFAULT_TEAM_ID, name: user.name + "'s Team" });
         isNewTeam = true;
       }
-      const role = isNewTeam ? "owner" : env.DEFAULT_TEAM_ROLE || "admin";
+      const role = isNewTeam ? "owner" : DEFAULT_TEAM_ROLE || "admin";
       await createMembership(team.id, user.id, { role, accepted: true });
     }
     // Without default team assignment
@@ -103,7 +113,7 @@ export async function POST(request: Request) {
 
     return Response.json(user);
   } catch (e) {
-    if (e.code === "P2002") {
+    if (e.message === "User with this email already exists") {
       return Response.json(
         {
           error: "user with this email address already exists",

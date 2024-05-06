@@ -1,0 +1,156 @@
+# Name of your application. Used to uniquely configure containers.
+service: formbricks-kamal
+
+# Name of the container image.
+image: formbricks/formbricks-cloud
+
+# Deploy to these servers.
+servers:
+  web: # Use a named role, so it can be used as entrypoint by Traefik
+    hosts:
+      - 18.196.187.144
+      - 18.196.172.27
+      - 35.157.124.188
+      - 18.199.207.103
+      - ec2-18-194-217-29.eu-central-1.compute.amazonaws.com
+      - ec2-3-64-56-61.eu-central-1.compute.amazonaws.com
+      - ec2-3-122-60-81.eu-central-1.compute.amazonaws.com
+    labels:
+      traefik.http.routers.formbricks-kamal.entrypoints: web
+    options:
+      network: "private"
+
+# Credentials for your image host.
+registry:
+  # Specify the registry server, if you're not using Docker Hub
+  server: ghcr.io
+  username: mattinannt
+  # Always use an access token rather than real password when possible.
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+# Inject ENV variables into containers (secrets come from .env).
+# Remember to run `kamal env push` after making changes!
+env:
+  clear:
+    REDIS_HTTP_URL: http://formbricks-kamal-webdis:7379
+  secret:
+    - IS_FORMBRICKS_CLOUD
+    - WEBAPP_URL
+    - NEXTAUTH_URL
+    - DATABASE_URL
+    - MIGRATE_DATABASE_URL
+    - NEXTAUTH_SECRET
+    - ENCRYPTION_KEY
+    - SHORT_URL_BASE
+    - MAIL_FROM
+    - SMTP_HOST
+    - SMTP_PORT
+    - SMTP_USER
+    - SMTP_PASSWORD
+    - PRIVACY_URL
+    - TERMS_URL
+    - IMPRINT_URL
+    - GITHUB_ID
+    - GITHUB_SECRET
+    - GOOGLE_CLIENT_ID
+    - GOOGLE_CLIENT_SECRET
+    - AZUREAD_CLIENT_ID
+    - AZUREAD_CLIENT_SECRET
+    - AZUREAD_TENANT_ID
+    - OIDC_CLIENT_ID
+    - OIDC_CLIENT_SECRET
+    - OIDC_ISSUER
+    - OIDC_DISPLAY_NAME
+    - OIDC_SIGNING_ALGORITHM
+    - CRON_SECRET
+    - ASSET_PREFIX_URL
+    - NOTION_OAUTH_CLIENT_ID
+    - NOTION_OAUTH_CLIENT_SECRET
+    - SLACK_CLIENT_ID
+    - SLACK_CLIENT_SECRET
+    - STRIPE_SECRET_KEY
+    - STRIPE_WEBHOOK_SECRET
+    - GOOGLE_SHEETS_CLIENT_ID
+    - GOOGLE_SHEETS_CLIENT_SECRET
+    - GOOGLE_SHEETS_REDIRECT_URL
+    - AIRTABLE_CLIENT_ID
+    - ENTERPRISE_LICENSE_KEY
+    - DEFAULT_TEAM_ID
+    - ONBOARDING_DISABLED
+    - CUSTOMER_IO_API_KEY
+    - CUSTOMER_IO_SITE_ID
+    - NEXT_PUBLIC_POSTHOG_API_KEY
+    - NEXT_PUBLIC_POSTHOG_API_HOST
+    - NEXT_PUBLIC_FORMBRICKS_API_HOST
+    - NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID
+    - NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID
+    - OPENTELEMETRY_LISTENER_URL
+    - NEXT_PUBLIC_SENTRY_DSN
+    - CLOUDFLARE_EMAIL
+    - CLOUDFLARE_DNS_API_TOKEN
+    - S3_ACCESS_KEY
+    - S3_SECRET_KEY
+    - S3_REGION
+    - S3_BUCKET_NAME
+    - RATE_LIMITING_DISABLED
+    - DB_HOST
+    - DB_USER
+    - DB_PASSWORD
+    - DB_NAME
+    - SENTRY_AUTH_TOKEN
+    - REDIS_URL
+
+# Use a different ssh user than root
+ssh:
+  user: ubuntu
+
+# Configure builder setup.
+builder:
+  context: .
+  dockerfile: ./apps/web/Dockerfile
+  args:
+    - NEXT_PUBLIC_POSTHOG_API_KEY
+    - NEXT_PUBLIC_POSTHOG_API_HOST
+    - NEXT_PUBLIC_FORMBRICKS_API_HOST
+    - NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID
+    - NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID
+    - NEXT_PUBLIC_SENTRY_DSN
+    - ASSET_PREFIX_URL
+    - SENTRY_AUTH_TOKEN
+  multiarch: false
+  cache:
+    type: registry
+    options: mode=max,image-manifest=true,oci-mediatypes=true
+
+traefik:
+  args:
+    entryPoints.web.address: ":80"
+  options:
+    network: "private"
+
+# Use accessory services (secrets come from .env).
+accessories:
+  webdis:
+    image: nicolas/webdis:0.1.22
+    roles:
+      - web
+    env:
+      secret:
+        - REDIS_URL
+    cmd: >
+      /bin/sh -c '
+      REDIS_HOST=$(echo $REDIS_URL | awk -F "[:/]" "{print \$4}") &&
+      wget -O /usr/local/bin/webdis.json https://github.com/nicolasff/webdis/raw/0.1.22/webdis.json &&
+      sed -i "s/\"redis_host\":.*/\"redis_host\": \"$REDIS_HOST\",/" /usr/local/bin/webdis.json &&
+      sed -i "s/\"logfile\":.*/\"logfile\": \"\/dev\/stderr\"/" /usr/local/bin/webdis.json &&
+      /usr/local/bin/webdis /usr/local/bin/webdis.json'
+    port: 7379
+    options:
+      network: "private"
+
+healthcheck:
+  path: /health
+  port: 3000
+  max_attempts: 15
+  interval: 20s

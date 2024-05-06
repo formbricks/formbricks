@@ -1,10 +1,8 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
-
 import { ZId } from "@formbricks/types/environment";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
@@ -13,25 +11,29 @@ import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
 import { getActionClass } from "./service";
 
-export const canUserUpdateActionClass = async (userId: string, actionClassId: string): Promise<boolean> =>
-  await unstable_cache(
+export const canUserUpdateActionClass = (userId: string, actionClassId: string): Promise<boolean> =>
+  cache(
     async () => {
       validateInputs([userId, ZId], [actionClassId, ZId]);
-      if (!userId) return false;
 
-      const actionClass = await getActionClass(actionClassId);
-      if (!actionClass) return false;
+      try {
+        if (!userId) return false;
 
-      const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, actionClass.environmentId);
+        const actionClass = await getActionClass(actionClassId);
+        if (!actionClass) return false;
 
-      if (!hasAccessToEnvironment) return false;
+        const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, actionClass.environmentId);
 
-      return true;
+        if (!hasAccessToEnvironment) return false;
+
+        return true;
+      } catch (error) {
+        throw error;
+      }
     },
 
-    [`users-${userId}-actionClasses-${actionClassId}`],
+    [`canUserUpdateActionClass-${userId}-${actionClassId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [actionClassCache.tag.byId(actionClassId)],
     }
   )();
@@ -43,22 +45,26 @@ export const verifyUserRoleAccess = async (
   hasCreateOrUpdateAccess: boolean;
   hasDeleteAccess: boolean;
 }> => {
-  const accessObject = {
-    hasCreateOrUpdateAccess: true,
-    hasDeleteAccess: true,
-  };
+  try {
+    const accessObject = {
+      hasCreateOrUpdateAccess: true,
+      hasDeleteAccess: true,
+    };
 
-  const team = await getTeamByEnvironmentId(environmentId);
-  if (!team) {
-    throw new Error("Team not found");
+    const team = await getTeamByEnvironmentId(environmentId);
+    if (!team) {
+      throw new Error("Team not found");
+    }
+
+    const currentUserMembership = await getMembershipByUserIdTeamId(userId, team.id);
+    const { isViewer } = getAccessFlags(currentUserMembership?.role);
+
+    if (isViewer) {
+      accessObject.hasCreateOrUpdateAccess = false;
+      accessObject.hasDeleteAccess = false;
+    }
+    return accessObject;
+  } catch (error) {
+    throw error;
   }
-
-  const currentUserMembership = await getMembershipByUserIdTeamId(userId, team.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
-
-  if (isViewer) {
-    accessObject.hasCreateOrUpdateAccess = false;
-    accessObject.hasDeleteAccess = false;
-  }
-  return accessObject;
 };

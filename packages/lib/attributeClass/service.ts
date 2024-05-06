@@ -2,14 +2,13 @@
 
 import "server-only";
 
-import { unstable_cache } from "next/cache";
+import { Prisma } from "@prisma/client";
 
 import { prisma } from "@formbricks/database";
 import {
   TAttributeClass,
   TAttributeClassType,
   TAttributeClassUpdateInput,
-  ZAttributeClass,
   ZAttributeClassType,
   ZAttributeClassUpdateInput,
 } from "@formbricks/types/attributeClasses";
@@ -17,41 +16,39 @@ import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { formatDateFields } from "../utils/datetime";
+import { cache } from "../cache";
+import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { attributeClassCache } from "./cache";
 
-export const getAttributeClass = async (attributeClassId: string): Promise<TAttributeClass | null> => {
-  const attributeClass = await unstable_cache(
+export const getAttributeClass = async (attributeClassId: string): Promise<TAttributeClass | null> =>
+  cache(
     async () => {
       validateInputs([attributeClassId, ZId]);
 
       try {
-        return await prisma.attributeClass.findFirst({
+        const attributeClass = await prisma.attributeClass.findFirst({
           where: {
             id: attributeClassId,
           },
         });
+
+        return attributeClass;
       } catch (error) {
-        throw new DatabaseError(`Database error when fetching attributeClass with id ${attributeClassId}`);
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+        throw error;
       }
     },
     [`getAttributeClass-${attributeClassId}`],
     {
       tags: [attributeClassCache.tag.byId(attributeClassId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-  return attributeClass ? formatDateFields(attributeClass, ZAttributeClass) : null;
-};
-
-export const getAttributeClasses = async (
-  environmentId: string,
-  page?: number
-): Promise<TAttributeClass[]> => {
-  const attributeClasses = await unstable_cache(
+export const getAttributeClasses = async (environmentId: string, page?: number): Promise<TAttributeClass[]> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -75,19 +72,17 @@ export const getAttributeClasses = async (
           return true;
         });
       } catch (error) {
-        throw new DatabaseError(
-          `Database error when fetching attributeClasses for environment ${environmentId}`
-        );
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+        throw error;
       }
     },
     [`getAttributeClasses-${environmentId}-${page}`],
     {
       tags: [attributeClassCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return attributeClasses.map((attributeClass) => formatDateFields(attributeClass, ZAttributeClass));
-};
 
 export const updateAttributeClass = async (
   attributeClassId: string,
@@ -114,32 +109,39 @@ export const updateAttributeClass = async (
 
     return attributeClass;
   } catch (error) {
-    throw new DatabaseError(`Database error when updating attribute class with id ${attributeClassId}`);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
   }
 };
 
-export const getAttributeClassByName = async (environmentId: string, name: string) => {
-  const attributeClass = await unstable_cache(
+export const getAttributeClassByName = async (environmentId: string, name: string) =>
+  cache(
     async (): Promise<TAttributeClass | null> => {
       validateInputs([environmentId, ZId], [name, ZString]);
 
-      const attributeClass = await prisma.attributeClass.findFirst({
-        where: {
-          environmentId,
-          name,
-        },
-      });
+      try {
+        const attributeClass = await prisma.attributeClass.findFirst({
+          where: {
+            environmentId,
+            name,
+          },
+        });
 
-      return attributeClass;
+        return attributeClass;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+        throw error;
+      }
     },
     [`getAttributeClassByName-${environmentId}-${name}`],
     {
       tags: [attributeClassCache.tag.byEnvironmentIdAndName(environmentId, name)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return attributeClass ? formatDateFields(attributeClass, ZAttributeClass) : null;
-};
 
 export const createAttributeClass = async (
   environmentId: string,
@@ -148,25 +150,32 @@ export const createAttributeClass = async (
 ): Promise<TAttributeClass | null> => {
   validateInputs([environmentId, ZId], [name, ZString], [type, ZAttributeClassType]);
 
-  const attributeClass = await prisma.attributeClass.create({
-    data: {
-      name,
-      type,
-      environment: {
-        connect: {
-          id: environmentId,
+  try {
+    const attributeClass = await prisma.attributeClass.create({
+      data: {
+        name,
+        type,
+        environment: {
+          connect: {
+            id: environmentId,
+          },
         },
       },
-    },
-  });
+    });
 
-  attributeClassCache.revalidate({
-    id: attributeClass.id,
-    environmentId: attributeClass.environmentId,
-    name: attributeClass.name,
-  });
+    attributeClassCache.revalidate({
+      id: attributeClass.id,
+      environmentId: attributeClass.environmentId,
+      name: attributeClass.name,
+    });
 
-  return attributeClass;
+    return attributeClass;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
 };
 
 export const deleteAttributeClass = async (attributeClassId: string): Promise<TAttributeClass> => {
@@ -187,6 +196,9 @@ export const deleteAttributeClass = async (attributeClassId: string): Promise<TA
 
     return deletedAttributeClass;
   } catch (error) {
-    throw new DatabaseError(`Database error when deleting webhook with ID ${attributeClassId}`);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
   }
 };

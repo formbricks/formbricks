@@ -1,46 +1,56 @@
-import FormbricksBranding from "@/components/general/FormbricksBranding";
-import ProgressBar from "@/components/general/ProgressBar";
+import { FormbricksBranding } from "@/components/general/FormbricksBranding";
+import { ProgressBar } from "@/components/general/ProgressBar";
+import { QuestionConditional } from "@/components/general/QuestionConditional";
 import { ResponseErrorComponent } from "@/components/general/ResponseErrorComponent";
+import { ThankYouCard } from "@/components/general/ThankYouCard";
+import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
 import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 
-import QuestionConditional from "./QuestionConditional";
-import ThankYouCard from "./ThankYouCard";
-import WelcomeCard from "./WelcomeCard";
-
-export function Survey({
+export const Survey = ({
   survey,
+  styling,
   isBrandingEnabled,
-  activeQuestionId,
   onDisplay = () => {},
-  onActiveQuestionChange = () => {},
   onResponse = () => {},
   onClose = () => {},
   onFinished = () => {},
   onRetry = () => {},
   isRedirectDisabled = false,
   prefillResponseData,
+  languageCode,
   getSetIsError,
+  getSetIsResponseSendingFinished,
+  getSetQuestionId,
   onFileUpload,
   responseCount,
-}: SurveyBaseProps) {
+  isCardBorderVisible = true,
+  startAtQuestionId,
+}: SurveyBaseProps) => {
+  const isInIframe = window.self !== window.top;
   const [questionId, setQuestionId] = useState(
-    activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
+    survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
   const [showError, setShowError] = useState(false);
+  // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
+  const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
+    getSetIsResponseSendingFinished ? false : true
+  );
+
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
   const [ttc, setTtc] = useState<TResponseTtc>({});
-
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = useMemo(() => {
     if (questionId === "end" && !survey.thankYouCard.enabled) {
@@ -50,18 +60,9 @@ export function Survey({
     } else {
       return survey.questions.find((q) => q.id === questionId);
     }
-  }, [questionId, survey]);
+  }, [questionId, survey, history]);
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const showProgressBar = !survey.styling?.hideProgressBar;
-
-  useEffect(() => {
-    if (activeQuestionId === "hidden") return;
-    if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
-      setQuestionId(survey?.questions[0]?.id);
-      return;
-    }
-    setQuestionId(activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id));
-  }, [activeQuestionId, survey.questions, survey.welcomeCard.enabled]);
+  const showProgressBar = !styling.hideProgressBar;
 
   useEffect(() => {
     // scroll to top when question changes
@@ -74,7 +75,10 @@ export function Survey({
     // call onDisplay when component is mounted
     onDisplay();
     if (prefillResponseData) {
-      onSubmit(prefillResponseData, {}, true);
+      onChange(prefillResponseData);
+    }
+    if (startAtQuestionId) {
+      setQuestionId(startAtQuestionId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -85,34 +89,76 @@ export function Survey({
         setShowError(value);
       });
     }
-  });
+  }, [getSetIsError]);
+
+  useEffect(() => {
+    if (getSetQuestionId) {
+      getSetQuestionId((value: string) => {
+        setQuestionId(value);
+      });
+    }
+  }, [getSetQuestionId]);
+
+  useEffect(() => {
+    if (getSetIsResponseSendingFinished) {
+      getSetIsResponseSendingFinished((value: boolean) => {
+        setIsResponseSendingFinished(value);
+      });
+    }
+  }, [getSetIsResponseSendingFinished]);
 
   let currIdxTemp = currentQuestionIndex;
   let currQuesTemp = currentQuestion;
 
-  function getNextQuestionId(data: TResponseData, isFromPrefilling: Boolean = false): string {
+  const getNextQuestionId = (data: TResponseData): string => {
     const questions = survey.questions;
     const responseValue = data[questionId];
 
-    if (questionId === "start") {
-      if (!isFromPrefilling) {
-        return questions[0]?.id || "end";
-      } else {
-        currIdxTemp = 0;
-        currQuesTemp = questions[0];
-      }
-    }
+    if (questionId === "start") return questions[0]?.id || "end";
+
     if (currIdxTemp === -1) throw new Error("Question not found");
     if (currQuesTemp?.logic && currQuesTemp?.logic.length > 0 && currentQuestion) {
       for (let logic of currQuesTemp.logic) {
         if (!logic.destination) continue;
+        // Check if the current question is of type 'multipleChoiceSingle' or 'multipleChoiceMulti'
         if (
           currentQuestion.type === "multipleChoiceSingle" ||
           currentQuestion.type === "multipleChoiceMulti"
         ) {
-          const choice = currentQuestion.choices.find((choice) => choice.label === responseValue);
-          // if choice is undefined we can determine that, "other" option is selected
-          if (!choice) {
+          let choice;
+
+          // Check if the response is a string (applies to single choice questions)
+          // Sonne -> sun
+          if (typeof responseValue === "string") {
+            // Find the choice in currentQuestion.choices that matches the responseValue after localization
+            choice = currentQuestion.choices.find((choice) => {
+              return getLocalizedValue(choice.label, languageCode) === responseValue;
+            })?.label;
+
+            // If a matching choice is found, get its default localized value
+            if (choice) {
+              choice = getLocalizedValue(choice, "default");
+            }
+          }
+          // Check if the response is an array (applies to multiple choices questions)
+          // ["Sonne","Mond"]->["sun","moon"]
+          else if (Array.isArray(responseValue)) {
+            // Filter and map the choices in currentQuestion.choices that are included in responseValue after localization
+            choice = currentQuestion.choices
+              .filter((choice) => {
+                return responseValue.includes(getLocalizedValue(choice.label, languageCode));
+              })
+              .map((choice) => getLocalizedValue(choice.label, "default"));
+          }
+
+          // If a choice is determined (either single or multiple), evaluate the logic condition with that choice
+          if (choice) {
+            if (evaluateCondition(logic, choice)) {
+              return logic.destination;
+            }
+          }
+          // If choice is undefined, it implies an "other" option is selected. Evaluate the logic condition for "Other"
+          else {
             if (evaluateCondition(logic, "Other")) {
               return logic.destination;
             }
@@ -123,31 +169,33 @@ export function Survey({
         }
       }
     }
+
     return questions[currIdxTemp + 1]?.id || "end";
-  }
+  };
 
   const onChange = (responseDataUpdate: TResponseData) => {
     const updatedResponseData = { ...responseData, ...responseDataUpdate };
     setResponseData(updatedResponseData);
   };
 
-  const onSubmit = (responseData: TResponseData, ttc: TResponseTtc, isFromPrefilling: Boolean = false) => {
+  const onSubmit = (responseData: TResponseData, ttc: TResponseTtc) => {
     const questionId = Object.keys(responseData)[0];
     setLoadingElement(true);
-    const nextQuestionId = getNextQuestionId(responseData, isFromPrefilling);
+    const nextQuestionId = getNextQuestionId(responseData);
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, ttc, finished });
     if (finished) {
+      // Post a message to the parent window indicating that the survey is completed.
+      window.parent.postMessage("formbricksSurveyCompleted", "*");
       onFinished();
     }
     setQuestionId(nextQuestionId);
     // add to history
     setHistory([...history, questionId]);
     setLoadingElement(false);
-    onActiveQuestionChange(nextQuestionId);
   };
 
-  const replaceRecallInfo = (text: string) => {
+  const replaceRecallInfo = (text: string): string => {
     while (text.includes("recall:")) {
       const recallInfo = extractRecallInfo(text);
       if (recallInfo) {
@@ -159,7 +207,7 @@ export function Survey({
           value = formatDateWithOrdinal(new Date(value));
         }
         if (Array.isArray(value)) {
-          value = value.join(", ");
+          value = value.filter((item) => item !== null && item !== undefined && item !== "").join(", ");
         }
         text = text.replace(recallInfo, value);
       }
@@ -168,12 +216,20 @@ export function Survey({
   };
 
   const parseRecallInformation = (question: TSurveyQuestion) => {
-    const modifiedQuestion = { ...question };
-    if (question.headline.includes("recall:")) {
-      modifiedQuestion.headline = replaceRecallInfo(modifiedQuestion.headline);
+    const modifiedQuestion = structuredClone(question);
+    if (question.headline && question.headline[languageCode]?.includes("recall:")) {
+      modifiedQuestion.headline[languageCode] = replaceRecallInfo(
+        getLocalizedValue(modifiedQuestion.headline, languageCode)
+      );
     }
-    if (question.subheader && question.subheader.includes("recall:")) {
-      modifiedQuestion.subheader = replaceRecallInfo(modifiedQuestion.subheader as string);
+    if (
+      question.subheader &&
+      question.subheader[languageCode]?.includes("recall:") &&
+      modifiedQuestion.subheader
+    ) {
+      modifiedQuestion.subheader[languageCode] = replaceRecallInfo(
+        getLocalizedValue(modifiedQuestion.subheader, languageCode)
+      );
     }
     return modifiedQuestion;
   };
@@ -184,7 +240,6 @@ export function Survey({
     if (history?.length > 0) {
       const newHistory = [...history];
       prevQuestionId = newHistory.pop();
-      if (prefillResponseData && prevQuestionId === survey.questions[0].id) return;
       setHistory(newHistory);
     } else {
       // otherwise go back to previous question in array
@@ -192,10 +247,9 @@ export function Survey({
     }
     if (!prevQuestionId) throw new Error("Question not found");
     setQuestionId(prevQuestionId);
-    onActiveQuestionChange(prevQuestionId);
   };
 
-  function getCardContent() {
+  const getCardContent = (): JSX.Element | undefined => {
     if (showError) {
       return (
         <ResponseErrorComponent responseData={responseData} questions={survey.questions} onRetry={onRetry} />
@@ -210,27 +264,26 @@ export function Survey({
           buttonLabel={survey.welcomeCard.buttonLabel}
           onSubmit={onSubmit}
           survey={survey}
+          languageCode={languageCode}
           responseCount={responseCount}
+          isInIframe={isInIframe}
         />
       );
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
       return (
         <ThankYouCard
-          headline={
-            typeof survey.thankYouCard.headline === "string"
-              ? replaceRecallInfo(survey.thankYouCard.headline)
-              : ""
-          }
-          subheader={
-            typeof survey.thankYouCard.subheader === "string"
-              ? replaceRecallInfo(survey.thankYouCard.subheader)
-              : ""
-          }
+          headline={survey.thankYouCard.headline}
+          subheader={survey.thankYouCard.subheader}
+          isResponseSendingFinished={isResponseSendingFinished}
           buttonLabel={survey.thankYouCard.buttonLabel}
           buttonLink={survey.thankYouCard.buttonLink}
           imageUrl={survey.thankYouCard.imageUrl}
+          videoUrl={survey.thankYouCard.videoUrl}
           redirectUrl={survey.redirectUrl}
           isRedirectDisabled={isRedirectDisabled}
+          languageCode={languageCode}
+          replaceRecallInfo={replaceRecallInfo}
+          isInIframe={isInIframe}
         />
       );
     } else {
@@ -246,22 +299,25 @@ export function Survey({
             ttc={ttc}
             setTtc={setTtc}
             onFileUpload={onFileUpload}
-            isFirstQuestion={
-              history && prefillResponseData
-                ? history[history.length - 1] === survey.questions[0].id
-                : currentQuestion.id === survey?.questions[0]?.id
-            }
+            isFirstQuestion={currentQuestion.id === survey?.questions[0]?.id}
             isLastQuestion={currentQuestion.id === survey.questions[survey.questions.length - 1].id}
+            languageCode={languageCode}
+            isInIframe={isInIframe}
           />
         )
       );
     }
-  }
+  };
 
   return (
     <>
       <AutoCloseWrapper survey={survey} onClose={onClose}>
-        <div className="no-scrollbar flex h-full w-full flex-col justify-between rounded-lg bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
+        <div
+          className={cn(
+            "no-scrollbar md:rounded-custom bg-survey-bg rounded-t-custom flex h-full w-full flex-col justify-between",
+            isCardBorderVisible ? "border-survey-border border" : "",
+            survey.type === "link" ? "fb-survey-shadow" : ""
+          )}>
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {survey.questions.length === 0 && !survey.welcomeCard.enabled && !survey.thankYouCard.enabled ? (
               // Handle the case when there are no questions and both welcome and thank you cards are disabled
@@ -270,7 +326,7 @@ export function Survey({
               getCardContent()
             )}
           </div>
-          <div className="mt-8">
+          <div className="mx-6 mb-10 mt-2 space-y-3 md:mb-6 md:mt-6">
             {isBrandingEnabled && <FormbricksBranding />}
             {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
           </div>
@@ -278,4 +334,4 @@ export function Survey({
       </AutoCloseWrapper>
     </>
   );
-}
+};

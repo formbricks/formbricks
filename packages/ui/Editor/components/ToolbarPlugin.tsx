@@ -23,6 +23,7 @@ import {
   FORMAT_TEXT_COMMAND,
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
+import { COMMAND_PRIORITY_CRITICAL, PASTE_COMMAND } from "lexical";
 import { Bold, ChevronDownIcon, Italic, Link } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -158,30 +159,43 @@ function FloatingLinkEditor({ editor }: { editor: LexicalEditor }) {
     }
   }, [isEditMode]);
 
+  useEffect(() => {
+    setEditMode(true);
+  }, []);
+
+  const handleSubmit = () => {
+    if (lastSelection && linkUrl) {
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, linkUrl);
+    }
+    setEditMode(false);
+  };
+
   return (
     <div ref={editorRef} className="link-editor">
-      <Input
-        className="bg-white"
-        ref={inputRef}
-        value={linkUrl}
-        onChange={(event) => {
-          setLinkUrl(event.target.value);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            if (lastSelection !== null) {
-              if (linkUrl !== "") {
-                editor.dispatchCommand(TOGGLE_LINK_COMMAND, linkUrl);
+      {isEditMode && (
+        <div className="flex">
+          <Input
+            className="bg-white"
+            ref={inputRef}
+            value={linkUrl}
+            onChange={(event) => {
+              setLinkUrl(event.target.value);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                handleSubmit();
+              } else if (event.key === "Escape") {
+                event.preventDefault();
+                setEditMode(false);
               }
-              setEditMode(false);
-            }
-          } else if (event.key === "Escape") {
-            event.preventDefault();
-            setEditMode(false);
-          }
-        }}
-      />
+            }}
+          />
+          <Button variant="darkCTA" className="py-2" onClick={handleSubmit}>
+            Add
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -401,11 +415,35 @@ export default function ToolbarPlugin(props: TextEditorProps) {
 
   const insertLink = useCallback(() => {
     if (!isLink) {
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, "https://");
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, {
+        url: "https://",
+        target: "_blank",
+        rel: "noopener noreferrer",
+      });
     } else {
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
     }
   }, [editor, isLink]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      PASTE_COMMAND,
+      (e: ClipboardEvent) => {
+        const text = e.clipboardData?.getData("text/plain");
+
+        editor.update(() => {
+          const selection = $getSelection();
+          if ($isRangeSelection(selection)) {
+            selection.insertRawText(text ?? "");
+          }
+        });
+
+        e.preventDefault();
+        return true; // Prevent the default paste handler
+      },
+      COMMAND_PRIORITY_CRITICAL
+    );
+  }, [editor]);
 
   if (!props.editable) return <></>;
   return (

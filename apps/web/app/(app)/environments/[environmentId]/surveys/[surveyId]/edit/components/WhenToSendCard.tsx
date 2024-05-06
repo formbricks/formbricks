@@ -1,9 +1,9 @@
 "use client";
 
-import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddActionModal";
+import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/actions/components/AddActionModal";
 import InlineTriggers from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/InlineTriggers";
-import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -38,7 +38,9 @@ export default function WhenToSendCard({
   propActionClasses,
   membershipRole,
 }: WhenToSendCardProps) {
-  const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
+  const [open, setOpen] = useState(
+    localSurvey.type === "app" || localSurvey.type === "website" ? true : false
+  );
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
@@ -215,9 +217,12 @@ export default function WhenToSendCard({
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
               {containsEmptyTriggers ? (
-                <div className="h-8 w-8 rounded-full border border-amber-500 bg-amber-50" />
+                <div className="h-7 w-7 rounded-full border border-amber-500 bg-amber-50" />
               ) : (
-                <CheckCircleIcon className="h-8 w-8 text-green-400" />
+                <CheckIcon
+                  strokeWidth={3}
+                  className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+                />
               )}
             </div>
 
@@ -317,7 +322,7 @@ export default function WhenToSendCard({
               <label
                 htmlFor="triggerDelay"
                 className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-                <div className="">
+                <div>
                   <p className="text-sm font-semibold text-slate-700">
                     Wait
                     <Input

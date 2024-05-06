@@ -11,17 +11,18 @@ export default function HtmlBody({ htmlString, questionId }: HtmlBodyProps) {
   useEffect(() => {
     if (htmlString) {
       import("isomorphic-dompurify").then((DOMPurify) => {
-        setSafeHtml(DOMPurify.sanitize(htmlString));
+        setSafeHtml(DOMPurify.sanitize(htmlString, { ADD_ATTR: ["target"] }));
       });
     }
   }, [htmlString]);
 
   if (!htmlString) return null;
+  if (safeHtml === `<p class="fb-editor-paragraph"><br></p>`) return null;
 
   return (
     <label
       htmlFor={questionId}
-      className="fb-htmlbody" // styles are in global.css
+      className="fb-htmlbody break-words" // styles are in global.css
       dangerouslySetInnerHTML={{ __html: safeHtml }}></label>
   );
 }

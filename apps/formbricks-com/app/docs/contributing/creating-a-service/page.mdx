@@ -1,4 +1,5 @@
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
+
 import UnstableCache from "./unstable-cache-documentation.webp";
 
 export const metadata = {
@@ -208,12 +209,12 @@ We will rewrite the function `getApiKey` we created in the `service.ts` file to 
 <CodeGroup title="packages/lib/apiKey/service.ts">
 
 ```ts
-import { unstable_cache } from "next/cache";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "@formbricks/lib/cache";
+
 import { apiKeyCache } from "./cache";
 
-export const getApiKey = async (apiKeyId: string): Promise<TApiKey> =>
-  unstable_cache(
+export const getApiKey = (apiKeyId: string): Promise<TApiKey> =>
+  cache(
     async () => {
       validateInputs([apiKeyId, ZString]);
 
@@ -240,7 +241,6 @@ export const getApiKey = async (apiKeyId: string): Promise<TApiKey> =>
     [`getApiKey-${apiKeyId}`],
     {
       tags: [apiKeyCache.tag.byId(apiKeyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 ```
@@ -252,7 +252,7 @@ _Breakdown of the above code._
 
 In the above code we only introduce something new called `unstable_cache`, read more about it [here](https://nextjs.org/docs/app/api-reference/functions/unstable_cache#parameters). In a nutshell these are its parameters:
 
-<Image
+<MdxImage
   src={UnstableCache}
   alt="Unstable Cache Parameters"
   quality="100"
@@ -263,9 +263,7 @@ From the screenshot above we see that `unstable_cache` receives 3 arguments:
 
 1. `fetchData`: In our case this is the exact function of your service without caching (step 3)
 2. `keyParts`: As a rule of thumb, the key must consist of the name of the function and the arguments passed into the function, all separated by a dash. In our case it is called `getApiKey-${apiKeyId}` because the function name is `getApiKey` and we receive only one argument called `apiKeyId`
-3. `options`: which consists of **tags** and **revalidate**
-   1. `tags`: This is where the tags you created in step 4a comes in, tags are created solely based on the arguments passed to the function. (please reference existing services in `packages/lib` to see more variations of this when dealing with more than one argument)
-   2. `revalidate`: We have a global constant for this which you can use called `SERVICES_REVALIDATION_INTERVAL`
+3. `options`: which consists of **tags** that controls the revalidation of the cache. This is where the tags you created in step 4a comes in, tags are created solely based on the arguments passed to the function. (please reference existing services in `packages/lib` to see more variations of this when dealing with more than one argument)
 
 <Note>
 In create, update and delete requests, you don’t need caching however these are the places where the revalidate method is called. For example when the apiKey is deleted we want to call the revalidate method and pass in the id and environmentId, so we invalidate every cached function with `id` and `environmentId` tags.
