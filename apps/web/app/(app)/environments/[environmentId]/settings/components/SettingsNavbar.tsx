@@ -110,7 +110,7 @@ export default function SettingsNavbar({
         hidden: false,
       },
       {
-        title: "Setup",
+        title: "Links",
         links: [
           {
             name: "Documentation",

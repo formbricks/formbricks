@@ -89,7 +89,7 @@ export default async function EnterpriseLicensePage({ params }) {
     <>
       {isEnterpriseEdition ? (
         <div>
-          <div className="mt-8 rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
+          <div className="mt-8 max-w-4xl rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
             <div className="space-y-4 p-8">
               <div className="flex items-center gap-x-2">
                 <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">

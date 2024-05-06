@@ -35,7 +35,7 @@ export default function TopControls({ environment, environments }: TopControlsPr
         tooltip="Settings"
         className="h-fit w-fit p-1"
         onClick={() => {
-          router.push(`/environments/${environment.id}/product/general`);
+          router.push(`/environments/${environment.id}/settings/profile`);
         }}>
         <SettingsIcon className="h-5 w-5" />
       </Button>
