@@ -57,6 +57,7 @@ interface NavigationProps {
   membershipRole?: TMembershipRole;
   isMultiLanguageAllowed: boolean;
   isCollapsed: boolean;
+  isTextVisible: boolean;
 }
 
 export default function Navigation({
@@ -71,6 +72,7 @@ export default function Navigation({
   membershipRole,
   isMultiLanguageAllowed,
   isCollapsed = false,
+  isTextVisible = true,
 }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -174,7 +176,7 @@ export default function Navigation({
       {product && (
         <aside
           className={cn(
-            "fixed inset-x-0 bottom-14 top-14 flex flex-col justify-between rounded-r-xl border border-slate-200 bg-white pt-4 shadow-sm",
+            "transition-width fixed inset-x-0 bottom-14 top-14 flex flex-col justify-between rounded-r-xl border border-slate-200 bg-white pt-4 shadow-sm",
             !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
           )}>
           <ul>
@@ -185,33 +187,57 @@ export default function Navigation({
                     key={item.name}
                     href={item.href}
                     isActive={item.isActive}
-                    isCollapsed={isCollapsed}>
-                    <item.icon className={cn("h-5 w-5", !isCollapsed ? "mr-3" : "w-sidebar-expanded")} />
-                    {!isCollapsed && item.name}
+                    isCollapsed={isCollapsed}
+                    isTextVisible={isTextVisible}
+                    linkText={item.name}>
+                    <item.icon />
                   </NavigationLink>
                 )
             )}
           </ul>
 
-          {/* User Dropdown */}
+          {/* Product Switch */}
           <div>
             <DropdownMenu>
               <DropdownMenuTrigger
                 asChild
                 id="userDropdownTrigger"
                 className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50">
-                <div tabIndex={0} className="flex cursor-pointer flex-row items-center space-x-5 pl-4">
+                <div
+                  tabIndex={0}
+                  className={cn(
+                    "flex cursor-pointer flex-row items-center space-x-5",
+                    isCollapsed ? "pl-2" : "pl-4"
+                  )}>
                   <div className="rounded-lg border border-slate-800 bg-slate-900 p-1.5 font-bold text-slate-50">
                     XM
                   </div>
-
-                  <div>
-                    <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">
-                      {product.name}
-                    </p>
-                    <p className="text-sm text-slate-500">Product</p>
-                  </div>
-                  <ChevronRightIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
+                  {!isCollapsed && !isTextVisible && (
+                    <>
+                      <div>
+                        <p
+                          className={cn(
+                            "ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700 transition-opacity duration-200 ",
+                            isTextVisible ? "opacity-0" : "opacity-100"
+                          )}>
+                          {product.name}
+                        </p>
+                        <p
+                          className={cn(
+                            "text-sm text-slate-500 transition-opacity duration-200",
+                            isTextVisible ? "opacity-0" : "opacity-100"
+                          )}>
+                          Product
+                        </p>
+                      </div>
+                      <ChevronRightIcon
+                        className={cn(
+                          "h-5 w-5 text-slate-700 transition-opacity duration-200 hover:text-slate-500",
+                          isTextVisible ? "opacity-0" : "opacity-100"
+                        )}
+                      />
+                    </>
+                  )}
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -243,26 +269,38 @@ export default function Navigation({
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* User Switch */}
             <div className="hidden lg:flex lg:items-center">
               <DropdownMenu>
                 <DropdownMenuTrigger
                   asChild
                   id="userDropdownTrigger"
                   className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50">
-                  <div tabIndex={0} className="flex cursor-pointer flex-row items-center space-x-5 pl-4">
+                  <div
+                    tabIndex={0}
+                    className={cn(
+                      "flex cursor-pointer flex-row items-center space-x-5",
+                      isCollapsed ? "pl-2" : "pl-4"
+                    )}>
                     <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
-
-                    <div>
-                      <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">
-                        {session?.user?.name ? (
-                          <span>{truncate(session?.user?.name, 30)}</span>
-                        ) : (
-                          <span>{truncate(session?.user?.email, 30)}</span>
-                        )}
-                      </p>
-                      <p className="text-sm text-slate-500">{capitalizeFirstLetter(team?.name)}</p>
-                    </div>
-                    <ChevronRightIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
+                    {!isCollapsed && !isTextVisible && (
+                      <>
+                        <div className={cn(isTextVisible ? "opacity-0" : "opacity-100")}>
+                          <p
+                            className={cn(
+                              "ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700"
+                            )}>
+                            {session?.user?.name ? (
+                              <span>{truncate(session?.user?.name, 30)}</span>
+                            ) : (
+                              <span>{truncate(session?.user?.email, 30)}</span>
+                            )}
+                          </p>
+                          <p className={cn("text-sm text-slate-500")}>{capitalizeFirstLetter(team?.name)}</p>
+                        </div>
+                        <ChevronRightIcon className={cn("h-5 w-5 text-slate-700 hover:text-slate-500")} />
+                      </>
+                    )}
                   </div>
                 </DropdownMenuTrigger>
 

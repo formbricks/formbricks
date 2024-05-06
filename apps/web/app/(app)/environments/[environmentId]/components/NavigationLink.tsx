@@ -1,34 +1,68 @@
 import Link from "next/link";
-import { ReactNode } from "react";
+import React from "react";
 
 import { cn } from "@formbricks/lib/cn";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 interface NavigationLinkProps {
   href: string;
-  children: ReactNode;
   isActive: boolean;
   isCollapsed: boolean;
+  children: React.ReactNode;
+  linkText: string;
+  isTextVisible: boolean;
 }
 
 export default function NavigationLink({
   href,
-  children,
   isActive,
   isCollapsed = false,
+  children,
+  linkText,
+  isTextVisible = true,
 }: NavigationLinkProps) {
   const activeClass = "bg-slate-50 border-r-4 border-brand-dark font-semibold";
   const inactiveClass = "hover:bg-slate-50 border-r-4 border-transparent";
 
   return (
-    <li
-      className={cn(
-        "my-1 ml-4 rounded-l-md py-2 text-sm text-slate-700 hover:text-slate-900",
-        isActive ? activeClass : inactiveClass,
-        isCollapsed ? "pl-1" : "pl-5"
-      )}>
-      <Link href={href} className="flex items-center">
-        {children}
-      </Link>
-    </li>
+    <>
+      {isCollapsed ? (
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <li
+                className={cn(
+                  "my-1 ml-2 rounded-l-md py-2 pl-2 text-sm text-slate-700 hover:text-slate-900",
+                  isActive ? activeClass : inactiveClass
+                )}>
+                <Link href={href} className="flex items-center">
+                  {children}
+                </Link>
+              </li>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="z-50">
+              {linkText}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <li
+          className={cn(
+            "my-1 ml-4 rounded-l-md py-2 pl-5 text-sm text-slate-700 hover:text-slate-900",
+            isActive ? activeClass : inactiveClass
+          )}>
+          <Link href={href} className="flex items-center">
+            {children}
+            <span
+              className={cn(
+                "ml-2 transition-opacity duration-100",
+                isTextVisible ? "opacity-0" : "opacity-100"
+              )}>
+              {linkText}
+            </span>
+          </Link>
+        </li>
+      )}
+    </>
   );
 }
