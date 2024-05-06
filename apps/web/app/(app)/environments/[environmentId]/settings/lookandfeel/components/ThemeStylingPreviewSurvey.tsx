@@ -113,6 +113,13 @@ export const ThemeStylingPreviewSurvey = ({
 
   const isAppSurvey = previewType === "app" || previewType === "website";
 
+  const scrollToEditLogoSection = () => {
+    const editLogoSection = document.getElementById("edit-logo");
+    if (editLogoSection) {
+      editLogoSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <div className="flex h-full w-full flex-col items-center justify-items-center">
       <motion.div
@@ -172,8 +179,8 @@ export const ThemeStylingPreviewSurvey = ({
             </Modal>
           ) : (
             <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
-              {!product.styling?.isLogoHidden && product.logo?.url && (
-                <div className="absolute left-5 top-5">
+              {!product.styling?.isLogoHidden && (
+                <div className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
                   <ClientLogo product={product} previewSurvey />
                 </div>
               )}

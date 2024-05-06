@@ -1,6 +1,6 @@
-import ActionClassesTable from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/ActionClassesTable";
-import ActionClassDataRow from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/ActionRowData";
-import ActionTableHeading from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/ActionTableHeading";
+import ActionClassesTable from "@/app/(app)/environments/[environmentId]/actions/components/ActionClassesTable";
+import ActionClassDataRow from "@/app/(app)/environments/[environmentId]/actions/components/ActionRowData";
+import ActionTableHeading from "@/app/(app)/environments/[environmentId]/actions/components/ActionTableHeading";
 import { Metadata } from "next";
 
 import { getActionClasses } from "@formbricks/lib/actionClass/service";

@@ -1,6 +1,4 @@
-import fs from "fs";
 import { resolve } from "path";
-import path from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
@@ -28,6 +26,7 @@ const config = () => {
     plugins: [
       dts({
         rollupTypes: true,
+        bundledPackages: ["@formbricks/api", "@formbricks/types"],
       }),
     ],
   });

@@ -38,6 +38,15 @@ export default {
     },
     typography: typographyStyles,
     extend: {
+      keyframes: {
+        scroll: {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-1990px)" },
+        },
+      },
+      animation: {
+        scroll: "scroll 60s linear infinite",
+      },
       boxShadow: {
         glow: "0 0 4px rgb(0 0 0 / 0.1)",
       },
