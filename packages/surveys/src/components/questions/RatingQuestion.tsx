@@ -37,6 +37,7 @@ interface RatingQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
+  currentQuestionId: string;
 }
 
 export const RatingQuestion = ({
@@ -50,12 +51,13 @@ export const RatingQuestion = ({
   languageCode,
   ttc,
   setTtc,
+  currentQuestionId,
 }: RatingQuestionProps) => {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
 
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const handleSelect = (number: number) => {
     onChange({ [question.id]: number });

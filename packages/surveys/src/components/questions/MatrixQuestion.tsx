@@ -23,6 +23,7 @@ interface MatrixQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  currentQuestionId: string;
 }
 
 export const MatrixQuestion = ({
@@ -36,11 +37,12 @@ export const MatrixQuestion = ({
   languageCode,
   ttc,
   setTtc,
+  currentQuestionId,
 }: MatrixQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
   const isSubmitButtonVisible = question.required ? Object.entries(value).length !== 0 : true;
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const handleSelect = useCallback(
     (column: string, row: string) => {

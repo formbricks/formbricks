@@ -24,6 +24,7 @@ interface NPSQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
+  currentQuestionId: string;
 }
 
 export const NPSQuestion = ({
@@ -37,12 +38,13 @@ export const NPSQuestion = ({
   languageCode,
   ttc,
   setTtc,
+  currentQuestionId,
 }: NPSQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
 
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   return (
     <form

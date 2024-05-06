@@ -296,13 +296,13 @@ export const Survey = ({
           />
         );
       } else {
-        const currentQuestion = survey.questions[questionIdx];
+        const question = survey.questions[questionIdx];
         return (
-          currentQuestion && (
+          question && (
             <QuestionConditional
               surveyId={survey.id}
-              question={parseRecallInformation(currentQuestion)}
-              value={responseData[currentQuestion.id]}
+              question={parseRecallInformation(question)}
+              value={responseData[question.id]}
               onChange={onChange}
               onSubmit={onSubmit}
               onBack={onBack}
@@ -312,11 +312,12 @@ export const Survey = ({
               isFirstQuestion={
                 history && prefillResponseData
                   ? history[history.length - 1] === survey.questions[0].id
-                  : currentQuestion.id === survey?.questions[0]?.id
+                  : question.id === survey?.questions[0]?.id
               }
-              isLastQuestion={currentQuestion.id === survey.questions[survey.questions.length - 1].id}
+              isLastQuestion={question.id === survey.questions[survey.questions.length - 1].id}
               languageCode={languageCode}
               isInIframe={isInIframe}
+              currentQuestionId={questionId}
             />
           )
         );
@@ -343,12 +344,15 @@ export const Survey = ({
   };
 
   return (
-    <StackedCardsContainer
-      cardArrangement={cardArrangement}
-      currentQuestionId={questionId}
-      getCardContent={getCardContent}
-      survey={survey}
-      styling={styling}
-    />
+    <>
+      {console.log(ttc)}
+      <StackedCardsContainer
+        cardArrangement={cardArrangement}
+        currentQuestionId={questionId}
+        getCardContent={getCardContent}
+        survey={survey}
+        styling={styling}
+      />
+    </>
   );
 };
