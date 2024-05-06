@@ -60,6 +60,7 @@ export function Search() {
         --docsearch-footer-background: ${isLightMode ? "#EEEEEE" : "#121212"};
         --docsearch-searchbox-focus-background: ${isLightMode ? "#D8F6F4" : "#121212"};
         --docsearch-modal-shadow: ${isLightMode ? "inset 1px 1px 0 0 hsla(0,0%,100%,0.5), 0 3px 8px 0 #D8F6F4" : "inset 1px 1px 0 0 hsla(0,0%,100%,0.5), 0 3px 8px 0 #808080"};
+        --DocSearch-Input: ${isLightMode ? "#000000" : "#FFFFFF"};
       }
       .DocSearch-Hit-title {
         color: ${isLightMode ? "#000000" : "#FFFFFF"};
@@ -81,6 +82,9 @@ export function Search() {
       }
       .DocSearch-Screen-Icon {
         visibility: hidden;
+      }
+      #docsearch-input {
+        background-color: transparent;
       }
       
     `;
