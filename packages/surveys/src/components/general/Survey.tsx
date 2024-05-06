@@ -326,7 +326,7 @@ export const Survey = ({
     };
     return (
       <AutoCloseWrapper survey={survey} onClose={onClose}>
-        {offset === 0 && onClose && survey.type !== "link" && <SurveyCloseButton onClose={onClose} />}
+        {offset === 0 && survey.type !== "link" && <SurveyCloseButton onClose={onClose} />}
         <div
           className={cn(
             "no-scrollbar md:rounded-custom rounded-t-custom bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",
