@@ -98,6 +98,11 @@ const nextConfig = {
         destination: "/app-surveys/:path",
         permanent: true,
       },
+      {
+        source: "/app-surveys/attributes",
+        destination: "/app-surveys/user-identification",
+        permanent: true,
+      },
       // Integrations
       {
         source: "/integrations/:path",

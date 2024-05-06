@@ -6,7 +6,7 @@ import clsx from "clsx";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 import { Button } from "./Button";
 import { useIsInsideMobileNavigation } from "./MobileNavigation";
@@ -134,17 +134,30 @@ function ActivePageMarker({ group, pathname }: { group: NavGroup; pathname: stri
     />
   );
 }
-function NavigationGroup({ group, className }: { group: NavGroup; className?: string }) {
+function NavigationGroup({
+  group,
+  className,
+  activeGroup,
+  setActiveGroup,
+}: {
+  group: NavGroup;
+  className?: string;
+  activeGroup: NavGroup;
+  setActiveGroup: (group: NavGroup) => void;
+}) {
   // If this is the mobile navigation then we always render the initial
   // state, so that the state does not change during the close animation.
   // The state will still update when we re-open (re-render) the navigation.
   let isInsideMobileNavigation = useIsInsideMobileNavigation();
   let [pathname] = useInitialValue([usePathname()], isInsideMobileNavigation);
-  const isActiveGroup = group.links.some(
-    (link) =>
-      pathname.startsWith(link.href || "") ||
-      (link.children && link.children.some((child) => pathname.startsWith(child.href)))
-  );
+
+  const isActiveGroup = group.links.some((link) => {
+    pathname.startsWith(link.href || "") ||
+      (activeGroup &&
+        link.title === activeGroup.title &&
+        link.children &&
+        link.children.some((child) => pathname.startsWith(child.href)));
+  });
 
   const activeParentTitle = group.links.find((link) =>
     link.children
@@ -159,13 +172,22 @@ function NavigationGroup({ group, className }: { group: NavGroup; className?: st
       </motion.h2>
       <div className="relative mt-3 pl-2">
         <AnimatePresence initial={!isInsideMobileNavigation}>
-          {isActiveGroup && <VisibleSectionHighlight group={group} pathname={pathname} />}
+          {isActiveGroup && activeGroup?.title === group.title && (
+            <VisibleSectionHighlight group={group} pathname={pathname} />
+          )}
         </AnimatePresence>
         <motion.div layout className="absolute inset-y-0 left-2 w-px bg-slate-900/10 dark:bg-white/5" />
         <AnimatePresence initial={false}>
-          {isActiveGroup && <ActivePageMarker group={group} pathname={pathname || "/docs"} />}
+          {isActiveGroup && activeGroup?.title === group.title && (
+            <ActivePageMarker group={group} pathname={pathname || "/docs"} />
+          )}
         </AnimatePresence>
-        <ul role="list" className="border-l border-transparent">
+        <ul
+          role="list"
+          className="border-l border-transparent"
+          onClick={() => {
+            setActiveGroup(group);
+          }}>
           {group.links.map((link) => (
             <motion.li key={link.title} layout="position" className="relative">
               {link.href ? (
@@ -176,13 +198,17 @@ function NavigationGroup({ group, className }: { group: NavGroup; className?: st
                 <NavLink
                   href={link.children?.[0]?.href || ""}
                   active={
-                    (link.children && link.children.some((child) => pathname.startsWith(child.href))) || false
+                    (isActiveGroup &&
+                      activeGroup?.title === group.title &&
+                      link.children &&
+                      link.children.some((child) => pathname.startsWith(child.href))) ||
+                    false
                   }>
                   {link.title}
                 </NavLink>
               )}
               <AnimatePresence mode="popLayout" initial={false}>
-                {link.children && link.title === activeParentTitle && (
+                {link.children && link.title === activeParentTitle && activeGroup?.title === group.title && (
                   <motion.ul
                     role="list"
                     initial={{ opacity: 0 }}
@@ -213,6 +239,8 @@ function NavigationGroup({ group, className }: { group: NavGroup; className?: st
 }
 
 export function Navigation(props: React.ComponentPropsWithoutRef<"nav">) {
+  const [activeGroup, setActiveGroup] = useState<NavGroup>(navigation[0]);
+
   return (
     <nav {...props}>
       <ul role="list">
@@ -220,7 +248,13 @@ export function Navigation(props: React.ComponentPropsWithoutRef<"nav">) {
         <TopLevelNavItem href="https://github.com/formbricks/formbricks">Star us on GitHub</TopLevelNavItem>
         <TopLevelNavItem href="https://formbricks.com/discord">Join our Discord</TopLevelNavItem>
         {navigation.map((group, groupIndex) => (
-          <NavigationGroup key={group.title} group={group} className={groupIndex === 0 ? "md:mt-0" : ""} />
+          <NavigationGroup
+            key={group.title}
+            group={group}
+            className={groupIndex === 0 ? "md:mt-0" : ""}
+            activeGroup={activeGroup}
+            setActiveGroup={setActiveGroup}
+          />
         ))}
         <li className="sticky bottom-0 z-10 mt-6 min-[416px]:hidden">
           <Button
