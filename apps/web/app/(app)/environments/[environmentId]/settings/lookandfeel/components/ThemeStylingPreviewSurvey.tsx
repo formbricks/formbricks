@@ -105,9 +105,9 @@ export const ThemeStylingPreviewSurvey = ({
 
   const highlightBorderColor = product.styling.highlightBorderColor?.light;
 
-  function resetQuestionProgress() {
+  const resetQuestionProgress = () => {
     setQuestionId(survey?.questions[0]?.id);
-  }
+  };
 
   const onFileUpload = async (file: File) => file.name;
 

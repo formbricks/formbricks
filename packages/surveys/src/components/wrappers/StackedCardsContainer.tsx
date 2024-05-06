@@ -12,6 +12,7 @@ interface StackedCardsContainerProps {
   survey: TSurvey;
   getCardContent: (questionIdx: number, offset: number) => JSX.Element | undefined;
   styling: TProductStyling | TSurveyStyling;
+  setQuestionId: (questionId: string) => void;
 }
 
 export const StackedCardsContainer = ({
@@ -20,6 +21,7 @@ export const StackedCardsContainer = ({
   survey,
   getCardContent,
   styling,
+  setQuestionId,
 }: StackedCardsContainerProps) => {
   const [hovered, setHovered] = useState(false);
   const highlightBorderColor =
@@ -77,7 +79,7 @@ export const StackedCardsContainer = ({
     if (cardArrangement === "straight") {
       // styles to set the descending width of stacked question cards when card arrangement is set to straight
       return {
-        width: `${100 - 5 * offset}%`,
+        width: `${100 - 5 * offset >= 100 ? 100 : 100 - 5 * offset}%`,
         margin: "auto",
       };
     }
@@ -94,7 +96,13 @@ export const StackedCardsContainer = ({
       resizeObserver.current.observe(currentElement);
     }
     return () => resizeObserver.current?.disconnect();
-  }, [questionIdx]);
+  }, [questionIdx, cardArrangement]);
+
+  // Reset question progress, when card arrangement changes
+  useEffect(() => {
+    setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardArrangement]);
 
   const getCardHeight = (offset: number): string => {
     // Take default height depending upon card content
@@ -113,31 +121,33 @@ export const StackedCardsContainer = ({
       }}
       onMouseLeave={() => setHovered(false)}>
       <div style={{ height: cardHeight }}></div>
-      {questionIdx !== undefined &&
-        cardIndexes.map((_, idx) => {
-          const index = survey.welcomeCard.enabled ? idx - 1 : idx;
-          const offset = index - questionIdx;
-          const isHidden = offset < 0;
-          return (
-            <div
-              ref={(el) => (cardRefs.current[index] = el)}
-              id={`questionCard-${index}`}
-              key={index}
-              style={{
-                zIndex: 1000 - index,
-                transform: `${calculateCardTransform(offset)}`,
-                opacity: isHidden ? 0 : (100 - 30 * offset) / 100,
-                height: getCardHeight(offset),
-                transitionDuration: cardArrangement === "simple" ? "0ms" : "600ms",
-                pointerEvents: offset === 0 ? "auto" : "none",
-                ...borderStyles,
-                ...straightCardArrangementStyles(offset),
-              }}
-              className="pointer rounded-custom bg-survey-bg absolute inset-x-0 backdrop-blur-md transition-all ease-in-out">
-              {getCardContent(index, offset)}
-            </div>
-          );
-        })}
+      {cardArrangement === "simple"
+        ? getCardContent(questionIdx, 0)
+        : questionIdx !== undefined &&
+          cardIndexes.map((_, idx) => {
+            const index = survey.welcomeCard.enabled ? idx - 1 : idx;
+            const offset = index - questionIdx;
+            const isHidden = offset < 0;
+            return (
+              <div
+                ref={(el) => (cardRefs.current[index] = el)}
+                id={`questionCard-${index}`}
+                key={index}
+                style={{
+                  zIndex: 1000 - index,
+                  transform: `${calculateCardTransform(offset)}`,
+                  opacity: isHidden ? 0 : (100 - 30 * offset) / 100,
+                  height: getCardHeight(offset),
+                  transitionDuration: "600ms",
+                  pointerEvents: offset === 0 ? "auto" : "none",
+                  ...borderStyles,
+                  ...straightCardArrangementStyles(offset),
+                }}
+                className="pointer rounded-custom bg-survey-bg absolute inset-x-0 backdrop-blur-md transition-all ease-in-out">
+                {getCardContent(index, offset)}
+              </div>
+            );
+          })}
     </div>
   );
 };

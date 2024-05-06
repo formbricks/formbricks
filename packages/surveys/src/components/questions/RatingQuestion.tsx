@@ -226,7 +226,7 @@ export const RatingQuestion = ({
           />
         )}
         <div></div>
-        {(!question.required || value) && (
+        {!question.required && (
           <SubmitButton
             tabIndex={question.range + 1}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}

@@ -2,6 +2,7 @@ import { FormbricksBranding } from "@/components/general/FormbricksBranding";
 import { ProgressBar } from "@/components/general/ProgressBar";
 import { QuestionConditional } from "@/components/general/QuestionConditional";
 import { ResponseErrorComponent } from "@/components/general/ResponseErrorComponent";
+import { SurveyCloseButton } from "@/components/general/SurveyCloseButton";
 import { ThankYouCard } from "@/components/general/ThankYouCard";
 import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
@@ -325,6 +326,7 @@ export const Survey = ({
     };
     return (
       <AutoCloseWrapper survey={survey} onClose={onClose}>
+        {offset === 0 && onClose && survey.type !== "link" && <SurveyCloseButton onClose={onClose} />}
         <div
           className={cn(
             "no-scrollbar md:rounded-custom rounded-t-custom bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",
@@ -350,6 +352,7 @@ export const Survey = ({
       getCardContent={getCardContent}
       survey={survey}
       styling={styling}
+      setQuestionId={setQuestionId}
     />
   );
 };

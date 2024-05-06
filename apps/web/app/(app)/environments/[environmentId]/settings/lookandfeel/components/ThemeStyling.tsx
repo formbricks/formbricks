@@ -201,6 +201,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
               setStyling={setStyling}
               isSettingsPage
               localProduct={localProduct}
+              surveyType={previewSurveyType}
             />
 
             <BackgroundStylingCard

@@ -92,25 +92,6 @@ export default function Modal({
             show ? "opacity-100" : "opacity-0",
             "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
           )}>
-          {!isCenter && (
-            <div class="absolute right-0 top-0 z-10 block pr-2 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                class="text-close-button hover:text-close-button-focus focus:ring-close-button-focus relative h-5 w-5 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2">
-                <span class="sr-only">Close survey</span>
-                <svg
-                  class="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                  stroke="currentColor"
-                  aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4L20 20M4 20L20 4" />
-                </svg>
-              </button>
-            </div>
-          )}
           <div>{children}</div>
         </div>
       </div>
