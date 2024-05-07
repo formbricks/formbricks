@@ -1,7 +1,7 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { TJsActionInput } from "@formbricks/types/js";
 
-import { NetworkError, Result, err, okVoid } from "../../shared/errors";
+import { InvalidCodeError, NetworkError, Result, err, okVoid } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import { getIsDebug } from "../../shared/utils";
 import { AppConfig } from "./config";
@@ -13,22 +13,9 @@ const inAppConfig = AppConfig.getInstance();
 
 const intentsToNotCreateOnApp = ["Exit Intent (Desktop)", "50% Scroll"];
 
-export const trackAction = async (name: string): Promise<Result<void, NetworkError>> => {
-  const {
-    userId,
-    state: { surveys = [] },
-  } = inAppConfig.get();
-
-  // if surveys have a inline triggers, we need to check the name of the action in the code action config
-  surveys.forEach(async (survey) => {
-    const { inlineTriggers } = survey;
-    const { codeConfig } = inlineTriggers ?? {};
-
-    if (name === codeConfig?.identifier) {
-      await triggerSurvey(survey);
-      return;
-    }
-  });
+export const trackAction = async (name: string, alias?: string): Promise<Result<void, NetworkError>> => {
+  const aliasName = alias || name;
+  const { userId } = inAppConfig.get();
 
   const input: TJsActionInput = {
     environmentId: inAppConfig.get().environmentId,
@@ -38,7 +25,7 @@ export const trackAction = async (name: string): Promise<Result<void, NetworkErr
 
   // don't send actions to the backend if the person is not identified
   if (userId && !intentsToNotCreateOnApp.includes(name)) {
-    logger.debug(`Sending action "${name}" to backend`);
+    logger.debug(`Sending action "${aliasName}" to backend`);
 
     const api = new FormbricksAPI({
       apiHost: inAppConfig.get().apiHost,
@@ -52,7 +39,7 @@ export const trackAction = async (name: string): Promise<Result<void, NetworkErr
     if (!res.ok) {
       return err({
         code: "network_error",
-        message: `Error tracking action ${name}`,
+        message: `Error tracking action ${aliasName}`,
         status: 500,
         url: `${inAppConfig.get().apiHost}/api/v1/client/${inAppConfig.get().environmentId}/actions`,
         responseMessage: res.error.message,
@@ -75,7 +62,7 @@ export const trackAction = async (name: string): Promise<Result<void, NetworkErr
     }
   }
 
-  logger.debug(`Formbricks: Action "${name}" tracked`);
+  logger.debug(`Formbricks: Action "${aliasName}" tracked`);
 
   // get a list of surveys that are collecting insights
   const activeSurveys = inAppConfig.get().state?.surveys;
@@ -83,7 +70,7 @@ export const trackAction = async (name: string): Promise<Result<void, NetworkErr
   if (!!activeSurveys && activeSurveys.length > 0) {
     for (const survey of activeSurveys) {
       for (const trigger of survey.triggers) {
-        if (trigger === name) {
+        if (trigger.actionClass.name === name) {
           await triggerSurvey(survey, name);
         }
       }
@@ -93,4 +80,28 @@ export const trackAction = async (name: string): Promise<Result<void, NetworkErr
   }
 
   return okVoid();
+};
+
+export const trackCodeAction = (
+  code: string
+): Promise<Result<void, NetworkError>> | Result<void, InvalidCodeError> => {
+  const {
+    state: { actionClasses = [] },
+  } = inAppConfig.get();
+
+  const codeActionClasses = actionClasses.filter((action) => action.type === "code");
+  const action = codeActionClasses.find((action) => action.key === code);
+
+  if (!action) {
+    return err({
+      code: "invalid_code",
+      message: `${code} action unknown. Please add this action in Formbricks first in order to use it in your code.`,
+    });
+  }
+
+  return trackAction(action.name, code);
+};
+
+export const trackNoCodeAction = (name: string): Promise<Result<void, NetworkError>> => {
+  return trackAction(name);
 };
