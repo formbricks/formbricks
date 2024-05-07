@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cache, revalidateTag } from "@formbricks/lib/cache";
-import { ENTERPRISE_LICENSE_KEY, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { E2E_TESTING, ENTERPRISE_LICENSE_KEY, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { hashString } from "@formbricks/lib/hashString";
 import { TTeam } from "@formbricks/types/teams";
 
@@ -49,7 +49,7 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
 
   const hashedKey = hashString(ENTERPRISE_LICENSE_KEY);
 
-  if (process.env.NODE_ENV === "test") {
+  if (E2E_TESTING) {
     const previousResult = await getPreviousResult();
     if (previousResult.lastChecked.getTime() === new Date(0).getTime()) {
       // first call
