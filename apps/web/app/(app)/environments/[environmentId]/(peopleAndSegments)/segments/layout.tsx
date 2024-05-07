@@ -28,8 +28,6 @@ export default async function SegmentsLayout({ params, children }) {
     throw new Error("Team not found");
   }
 
-  const isUserTargetingAllowed = await getAdvancedTargetingPermission(team);
-
   if (!segments) {
     throw new Error("Failed to fetch segments");
   }
@@ -48,7 +46,8 @@ export default async function SegmentsLayout({ params, children }) {
     return true;
   });
 
-  const isAdvancedTargetingAllowed = getAdvancedTargetingPermission(team);
+  const isAdvancedTargetingAllowed = await getAdvancedTargetingPermission(team);
+  console.log("isAdvancedTargetingAllowed", isAdvancedTargetingAllowed);
 
   const renderCreateSegmentButton = () =>
     isAdvancedTargetingAllowed ? (

@@ -165,11 +165,10 @@ export default async function EnterpriseLicensePage({ params }) {
                 Please request all Enterprise License info incl. pricing here:
               </p>
               <Button
-                size="sm"
                 variant="darkCTA"
-                href="https://app.formbricks.com/s/clrf4z8zg1u3912250j7shqb5"
+                href="https://app.formbricks.com/s/clvupq3y205i5yrm3sm9v1xt5"
                 target="_blank">
-                Request enterprise license info
+                Request Enterprise License Info
               </Button>
             </div>
           </div>
