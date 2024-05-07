@@ -71,7 +71,7 @@ function NavLink({
         "flex justify-between gap-2 py-1 pr-3 text-sm transition",
         isAnchorLink ? "pl-7" : "pl-4",
         active
-          ? "font-bold text-slate-900 dark:text-white"
+          ? "rounded-r-md bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
           : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
       )}>
       <span className="flex w-full truncate">{children}</span>
@@ -107,8 +107,8 @@ function VisibleSectionHighlight({ group, pathname }: { group: NavGroup; pathnam
       initial={{ opacity: 0 }}
       animate={{ opacity: 1, transition: { delay: 0.2 } }}
       exit={{ opacity: 0 }}
-      className="absolute inset-x-0 top-0 bg-slate-800/10 dark:bg-white/10"
-      style={{ borderRadius: 8, height, top }}
+      className="absolute inset-x-0 top-0"
+      style={{ height, top }}
     />
   );
 }
