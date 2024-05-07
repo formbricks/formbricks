@@ -57,7 +57,8 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
       return true;
     } else if (new Date().getTime() - previousResult.lastChecked.getTime() > 24 * 60 * 60 * 1000) {
       // Fail after 24 hours
-      throw new Error("Error while checking license");
+      console.log("E2E_TESTING is enabled. Enterprise license was revoked after 24 hours.");
+      return false;
     }
 
     return previousResult.active !== null ? previousResult.active : false;
