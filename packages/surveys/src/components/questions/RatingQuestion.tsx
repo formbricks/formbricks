@@ -78,7 +78,7 @@ export const RatingQuestion = ({
       name="rating"
       value={number}
       className="invisible absolute left-0 h-full w-full cursor-pointer opacity-0"
-      onChange={() => handleSelect(number)}
+      onClick={() => handleSelect(number)}
       required={question.required}
       checked={value === number}
     />

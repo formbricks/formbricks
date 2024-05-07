@@ -195,6 +195,7 @@ export const PreviewSurvey = ({
   const handlePreviewModalClose = () => {
     setIsModalOpen(false);
     setTimeout(() => {
+      setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
       setIsModalOpen(true);
     }, 1000);
   };
@@ -267,7 +268,7 @@ export const PreviewSurvey = ({
                   </div>
                   <div className=" z-10 w-full max-w-md rounded-lg border border-transparent">
                     <SurveyInline
-                      survey={survey}
+                      survey={{ ...survey, type: "link" }}
                       isBrandingEnabled={product.linkSurveyBranding}
                       onFileUpload={onFileUpload}
                       languageCode={languageCode}
@@ -352,7 +353,7 @@ export const PreviewSurvey = ({
                 </div>
                 <div className="z-0 w-full max-w-md rounded-lg border-transparent">
                   <SurveyInline
-                    survey={survey}
+                    survey={{ ...survey, type: "link" }}
                     isBrandingEnabled={product.linkSurveyBranding}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}

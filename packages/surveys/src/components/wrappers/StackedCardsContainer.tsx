@@ -113,6 +113,13 @@ export const StackedCardsContainer = ({
     else return cardHeight;
   };
 
+  const getBottomStyles = () => {
+    if (survey.type !== "link")
+      return {
+        bottom: 0,
+      };
+  };
+
   return (
     <div
       className="relative flex items-end justify-center md:items-center"
@@ -142,6 +149,7 @@ export const StackedCardsContainer = ({
                   pointerEvents: offset === 0 ? "auto" : "none",
                   ...borderStyles,
                   ...straightCardArrangementStyles(offset),
+                  ...getBottomStyles(),
                 }}
                 className="pointer rounded-custom bg-survey-bg absolute inset-x-0 backdrop-blur-md transition-all ease-in-out">
                 {getCardContent(index, offset)}
