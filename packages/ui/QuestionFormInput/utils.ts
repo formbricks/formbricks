@@ -54,7 +54,7 @@ export const determineImageUploaderVisibility = (questionIdx: number, localSurve
     case localSurvey.questions.length: // Thank You Card
       return !!localSurvey.thankYouCard.imageUrl || !!localSurvey.thankYouCard.videoUrl;
     case -1: // Welcome Card
-      return !!localSurvey.welcomeCard.fileUrl || !!localSurvey.welcomeCard.videoUrl;
+      return false;
     default:
       // Regular Survey Question
       const question = localSurvey.questions[questionIdx];
