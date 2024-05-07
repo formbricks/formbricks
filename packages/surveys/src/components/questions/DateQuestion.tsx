@@ -29,6 +29,7 @@ interface DateQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
+  currentQuestionId: string;
 }
 
 const CalendarIcon = () => (
@@ -87,12 +88,12 @@ export const DateQuestion = ({
   languageCode,
   setTtc,
   ttc,
+  currentQuestionId,
 }: DateQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
@@ -106,7 +107,7 @@ export const DateQuestion = ({
         input.focus();
       }
     }
-  }, [datePickerOpen]);
+  }, [datePickerOpen, selectedDate]);
 
   useEffect(() => {
     if (!!selectedDate) {

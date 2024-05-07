@@ -77,13 +77,16 @@ export const QuestionFormInput = ({
   className,
 }: QuestionFormInputProps) => {
   const question: TSurveyQuestion = localSurvey.questions[questionIdx];
-  const questionId = question?.id;
   const isChoice = id.includes("choice");
   const isMatrixLabelRow = id.includes("row");
   const isMatrixLabelColumn = id.includes("column");
   const isThankYouCard = questionIdx === localSurvey.questions.length;
   const isWelcomeCard = questionIdx === -1;
   const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
+
+  const questionId = useMemo(() => {
+    return isWelcomeCard ? "start" : isThankYouCard ? "end" : question.id;
+  }, [isWelcomeCard, isThankYouCard, question?.id]);
 
   const enabledLanguages = useMemo(
     () => getEnabledLanguages(localSurvey.languages ?? []),
