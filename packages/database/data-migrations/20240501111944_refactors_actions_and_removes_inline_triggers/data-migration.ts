@@ -64,7 +64,9 @@ async function main() {
             where: {
               name: code,
               environmentId: environmentId,
-              type: "noCode",
+              NOT: {
+                type: "code",
+              },
             },
           });
 
