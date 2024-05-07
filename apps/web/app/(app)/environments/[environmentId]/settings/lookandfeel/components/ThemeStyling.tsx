@@ -99,7 +99,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
         roundness: 8,
         cardArrangement: {
           linkSurveys: "simple",
-          inAppSurveys: "simple",
+          appSurveys: "simple",
         },
       },
     });
@@ -132,7 +132,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
       roundness: 8,
       cardArrangement: {
         linkSurveys: "simple",
-        inAppSurveys: "simple",
+        appSurveys: "simple",
       },
     });
 
@@ -191,7 +191,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
               setOpen={setFormStylingOpen}
               styling={styling}
               setStyling={setStyling}
-              hideCheckmark
+              isSettingsPage
             />
 
             <CardStylingSettings
@@ -199,8 +199,9 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
               setOpen={setCardStylingOpen}
               styling={styling}
               setStyling={setStyling}
-              hideCheckmark
+              isSettingsPage
               localProduct={localProduct}
+              surveyType={previewSurveyType}
             />
 
             <BackgroundStylingCard
@@ -211,7 +212,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
               environmentId={environmentId}
               colors={colors}
               key={styling.background?.bg}
-              hideCheckmark
+              isSettingsPage
               isUnsplashConfigured={isUnsplashConfigured}
             />
           </div>
