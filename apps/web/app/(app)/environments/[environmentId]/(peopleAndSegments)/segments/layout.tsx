@@ -47,7 +47,6 @@ export default async function SegmentsLayout({ params, children }) {
   });
 
   const isAdvancedTargetingAllowed = await getAdvancedTargetingPermission(team);
-  console.log("isAdvancedTargetingAllowed", isAdvancedTargetingAllowed);
 
   const renderCreateSegmentButton = () =>
     isAdvancedTargetingAllowed ? (
