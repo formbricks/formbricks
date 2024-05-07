@@ -285,8 +285,8 @@ test.describe("Create and Edit Code Action", async () => {
     // User selects the Code tab
     await page.getByRole("button", { name: "Code", exact: true }).click();
 
-    await expect(page.getByLabel("Name")).toBeVisible();
-    await page.getByLabel("Name").fill(actions.create.code.name);
+    await expect(page.getByLabel("What did your user do?")).toBeVisible();
+    await page.getByLabel("What did your user do?").fill(actions.create.code.name);
 
     await expect(page.getByLabel("Description")).toBeVisible();
     await page.getByLabel("Description").fill(actions.create.code.description);
