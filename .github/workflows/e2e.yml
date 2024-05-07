@@ -2,6 +2,9 @@ name: E2E Tests
 on:
   workflow_call:
   workflow_dispatch:
+  push:
+    branches:
+      - action-test
 jobs:
   build:
     name: Run E2E Tests
