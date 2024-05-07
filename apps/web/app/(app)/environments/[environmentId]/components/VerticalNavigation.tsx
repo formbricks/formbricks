@@ -2,17 +2,21 @@
 
 import NavigationLink from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
+import FBLogo from "@/images/formbricks-wordmark.svg";
 import {
   BlocksIcon,
   ChevronRightIcon,
   Cog,
   MessageCircle,
   MousePointerClick,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
   PlusIcon,
   UsersIcon,
 } from "lucide-react";
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -25,6 +29,7 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TTeam } from "@formbricks/types/teams";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
+import { Button } from "@formbricks/ui/Button";
 import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
 import {
   DropdownMenu,
@@ -51,8 +56,6 @@ interface NavigationProps {
   products: TProduct[];
   isFormbricksCloud: boolean;
   membershipRole?: TMembershipRole;
-  isCollapsed: boolean;
-  isTextVisible: boolean;
 }
 
 export default function Navigation({
@@ -63,8 +66,6 @@ export default function Navigation({
   products,
   isFormbricksCloud,
   membershipRole,
-  isCollapsed = false,
-  isTextVisible = true,
 }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -75,6 +76,20 @@ export default function Navigation({
   const product = products.find((product) => product.id === environment.productId);
   const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
   const isPricingDisabled = !isOwner && !isAdmin;
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isTextVisible, setIsTextVisible] = useState(true);
+
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  useEffect(() => {
+    const toggleTextOpacity = () => {
+      setIsTextVisible(isCollapsed ? true : false);
+    };
+    const timeoutId = setTimeout(toggleTextOpacity, 150);
+    return () => clearTimeout(timeoutId);
+  }, [isCollapsed]);
 
   useEffect(() => {
     if (team && team.name !== "") {
@@ -87,7 +102,19 @@ export default function Navigation({
     return [...teams].sort((a, b) => a.name.localeCompare(b.name));
   }, [teams]);
 
-  const navigationItems = useMemo(
+  const sortedProducts = useMemo(() => {
+    return [...products].sort((a, b) => a.name.localeCompare(b.name));
+  }, [products]);
+
+  const handleEnvironmentChangeByProduct = (productId: string) => {
+    router.push(`/products/${productId}/`);
+  };
+
+  const handleEnvironmentChangeByTeam = (teamId: string) => {
+    router.push(`/teams/${teamId}/`);
+  };
+
+  const mainNavigation = useMemo(
     () => [
       {
         name: "Surveys",
@@ -130,7 +157,7 @@ export default function Navigation({
     [environment.id, pathname, isViewer]
   );
 
-  const navItems = [
+  const dropdownNavigation = [
     {
       label: "Billing",
       href: `/environments/${environment.id}/settings/billing`,
@@ -148,45 +175,59 @@ export default function Navigation({
     },
   ];
 
-  const sortedProducts = useMemo(() => {
-    return [...products].sort((a, b) => a.name.localeCompare(b.name));
-  }, [products]);
-
-  const handleEnvironmentChangeByProduct = (productId: string) => {
-    router.push(`/products/${productId}/`);
-  };
-
-  const handleEnvironmentChangeByTeam = (teamId: string) => {
-    router.push(`/teams/${teamId}/`);
-  };
-
-  if (pathname?.includes("/edit")) return null;
+  if (pathname?.includes("/edit") || pathname?.includes("/surveys/templates")) return null;
 
   return (
     <>
       {product && (
         <aside
           className={cn(
-            "transition-width fixed inset-x-0 bottom-14 top-14 z-50 flex flex-col justify-between rounded-r-xl border border-slate-200 bg-white pt-4 shadow-sm",
+            "sticky top-0 z-50 flex h-screen max-h-screen flex-col justify-between rounded-r-xl border border-slate-200 bg-white pt-3 shadow-sm transition-all duration-100",
             !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
           )}>
-          <ul>
-            {navigationItems.map(
-              (item) =>
-                !item.isHidden && (
-                  <NavigationLink
-                    key={item.name}
-                    href={item.href}
-                    isActive={item.isActive}
-                    isCollapsed={isCollapsed}
-                    isTextVisible={isTextVisible}
-                    linkText={item.name}>
-                    <item.icon strokeWidth={1.5} />
-                  </NavigationLink>
-                )
-            )}
-          </ul>
+          <div>
+            {/* Logo and Toggle */}
 
+            <div className="flex items-center justify-between px-3 pb-3">
+              {!isCollapsed && (
+                <Link
+                  href={`/environments/${environment.id}/surveys/`}
+                  className={cn(
+                    "flex items-center justify-center transition-opacity duration-100",
+                    isTextVisible ? "opacity-0" : "opacity-100"
+                  )}>
+                  <Image src={FBLogo} width={160} height={30} alt="Formbricks Logo" />
+                </Link>
+              )}
+              <Button
+                size="icon"
+                tooltipSide="right"
+                onClick={toggleSidebar}
+                className={cn(
+                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"
+                )}>
+                {isCollapsed ? <PanelLeftOpenIcon strokeWidth={1} /> : <PanelLeftCloseIcon strokeWidth={1} />}
+              </Button>
+            </div>
+
+            {/* Main Nav Switch */}
+            <ul>
+              {mainNavigation.map(
+                (item) =>
+                  !item.isHidden && (
+                    <NavigationLink
+                      key={item.name}
+                      href={item.href}
+                      isActive={item.isActive}
+                      isCollapsed={isCollapsed}
+                      isTextVisible={isTextVisible}
+                      linkText={item.name}>
+                      <item.icon strokeWidth={1.5} />
+                    </NavigationLink>
+                  )
+              )}
+            </ul>
+          </div>
           {/* Product Switch */}
           <div>
             <DropdownMenu>
@@ -300,7 +341,7 @@ export default function Navigation({
                   id="userDropdownInnerContentWrapper"
                   side="right"
                   sideOffset={10}
-                  alignOffset={-1}
+                  alignOffset={5}
                   align="end">
                   <DropdownMenuItem className=" break-all rounded-lg text-xs font-normal">
                     <Link href={`/environments/${environment.id}/settings/profile`}>
@@ -334,7 +375,7 @@ export default function Navigation({
 
                   {/* Dropdown Items */}
 
-                  {navItems.map(
+                  {dropdownNavigation.map(
                     (link) =>
                       !link.hidden && (
                         <Link href={link.href} target={link.target} key={link.label}>
@@ -357,7 +398,8 @@ export default function Navigation({
                     <DropdownMenuPortal>
                       <DropdownMenuSubContent
                         className="rounded-xl border border-slate-200 shadow-sm"
-                        sideOffset={10}>
+                        sideOffset={10}
+                        alignOffset={5}>
                         <DropdownMenuRadioGroup
                           value={currentTeamId}
                           onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>

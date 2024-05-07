@@ -32,7 +32,7 @@ export default function NavigationLink({
             <TooltipTrigger asChild>
               <li
                 className={cn(
-                  "my-1 ml-2 rounded-l-md py-2 pl-2 text-sm text-slate-700 hover:text-slate-900",
+                  "mb-1 ml-2 rounded-l-md py-2 pl-2 text-sm text-slate-700 hover:text-slate-900",
                   isActive ? activeClass : inactiveClass
                 )}>
                 <Link href={href} className="flex items-center">
@@ -40,15 +40,13 @@ export default function NavigationLink({
                 </Link>
               </li>
             </TooltipTrigger>
-            <TooltipContent side="right" className="">
-              {linkText}
-            </TooltipContent>
+            <TooltipContent side="right">{linkText}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       ) : (
         <li
           className={cn(
-            "my-1 ml-4 rounded-l-md py-2 pl-5 text-sm text-slate-600 hover:text-slate-900",
+            "mb-1 ml-4 rounded-l-md py-2 pl-5 text-sm text-slate-600 hover:text-slate-900",
             isActive ? activeClass : inactiveClass
           )}>
           <Link href={href} className="flex items-center">

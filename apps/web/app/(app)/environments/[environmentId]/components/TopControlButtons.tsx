@@ -23,7 +23,7 @@ export default function TopControls({ environment, environments }: TopControlsPr
         variant="minimal"
         size="icon"
         tooltip="Share feedback"
-        className="h-fit w-fit  p-1"
+        className="h-fit w-fit bg-slate-50 p-1"
         onClick={() => {
           formbricks.track("Top Menu: Product Feedback");
         }}>
@@ -33,7 +33,7 @@ export default function TopControls({ environment, environments }: TopControlsPr
         variant="minimal"
         size="icon"
         tooltip="Settings"
-        className="h-fit w-fit p-1"
+        className="h-fit w-fit bg-slate-50 p-1"
         onClick={() => {
           router.push(`/environments/${environment.id}/settings/profile`);
         }}>
