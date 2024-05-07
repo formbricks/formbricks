@@ -15,7 +15,7 @@ interface DeletePersonButtonProps {
   membershipRole?: TMembershipRole;
 }
 
-export function DeletePersonButton({ environmentId, personId }: DeletePersonButtonProps) {
+export const DeletePersonButton = ({ environmentId, personId }: DeletePersonButtonProps) => {
   const router = useRouter();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -51,4 +51,4 @@ export function DeletePersonButton({ environmentId, personId }: DeletePersonButt
       />
     </>
   );
-}
+};

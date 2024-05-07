@@ -10,6 +10,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
@@ -64,7 +65,7 @@ export const SummaryHeader = ({
   const [showShareSurveyModal, setShowShareSurveyModal] = useState(false);
 
   return (
-    <div className="mb-11 flex flex-wrap items-center justify-between">
+    <div className="flex flex-wrap items-center justify-between">
       <div>
         <div className="flex gap-4">
           <p className="text-3xl font-bold text-slate-800">{survey.name}</p>
@@ -72,7 +73,9 @@ export const SummaryHeader = ({
             <Badge text="Results are public" type="warning" size="normal"></Badge>
           )}
         </div>
-        <span className="text-base font-extralight text-slate-600">{product.name}</span>
+        <span className="text-base font-extralight text-slate-600">
+          {product.name} • Last updated: {timeSinceConditionally(survey.updatedAt.toString())}
+        </span>
       </div>
       {!isSharingPage && (
         <>

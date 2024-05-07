@@ -17,12 +17,12 @@ interface EditFormbricksBrandingProps {
   environmentId: string;
 }
 
-export function EditFormbricksBranding({
+export const EditFormbricksBranding = ({
   type,
   product,
   canRemoveBranding,
   environmentId,
-}: EditFormbricksBrandingProps) {
+}: EditFormbricksBrandingProps) => {
   const [isBrandingEnabled, setIsBrandingEnabled] = useState(
     type === "linkSurvey" ? product.linkSurveyBranding : product.inAppSurveyBranding
   );
@@ -80,4 +80,4 @@ export function EditFormbricksBranding({
       )}
     </div>
   );
-}
+};

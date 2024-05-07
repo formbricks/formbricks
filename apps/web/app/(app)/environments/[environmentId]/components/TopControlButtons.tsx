@@ -16,7 +16,7 @@ interface TopControlsProps {
 export default function TopControls({ environment, environments }: TopControlsProps) {
   const router = useRouter();
   return (
-    <div className="flex items-center space-x-2">
+    <div className="z-50 flex items-center space-x-2">
       <EnvironmentSwitch environment={environment} environments={environments} />
 
       <Button

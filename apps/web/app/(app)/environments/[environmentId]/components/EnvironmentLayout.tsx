@@ -59,7 +59,7 @@ export default async function EnvironmentLayout({
             membershipRole={currentUserMembership?.role}
             isMultiLanguageAllowed={isMultiLanguageAllowed}
           />
-          <div id="mainContent" className="min-h-screen flex-1 overflow-y-auto">
+          <div id="mainContent" className="z-50 min-h-screen flex-1 overflow-y-auto">
             <TopControlBar environment={environment} environments={environments} />
             {children}
           </div>

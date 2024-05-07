@@ -132,10 +132,6 @@ const SummaryPage = ({
         user={user}
         membershipRole={membershipRole}
       />
-      <div className="flex gap-1.5">
-        <CustomFilter survey={survey} />
-        {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />}
-      </div>
       <SummaryMetadata
         survey={survey}
         surveySummary={surveySummary.meta}
@@ -143,6 +139,11 @@ const SummaryPage = ({
         setShowDropOffs={setShowDropOffs}
       />
       {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
+      <div className="flex gap-1.5">
+        <CustomFilter survey={survey} />
+        {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />}
+      </div>
+
       <SummaryList
         summary={surveySummary.summary}
         responseCount={responseCount}

@@ -192,7 +192,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
 
   return (
     <>
-      <div className="relative mb-12 flex justify-between">
+      <div className="relative flex justify-between">
         <div className="flex justify-stretch gap-x-1.5">
           <ResponseFilter survey={survey} />
           <DropdownMenu
@@ -201,7 +201,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
               setIsFilterDropDownOpen(value);
             }}>
             <DropdownMenuTrigger>
-              <div className="flex h-auto min-w-[8rem] items-center justify-between rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:min-w-[11rem] sm:px-6 sm:py-3">
+              <div className="flex min-w-[8rem] items-center justify-between rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:min-w-[11rem] sm:px-6 sm:py-3">
                 <span className="text-sm text-slate-700">
                   {filterRange === FilterDropDownLabels.CUSTOM_RANGE
                     ? `${dateRange?.from ? format(dateRange?.from, "dd LLL") : "Select first date"} - ${
