@@ -55,8 +55,8 @@ export const createI18nString = (text: string | TI18nString, languages: string[]
     return i18nString;
   } else {
     // It's a regular string, so create a new i18n object
-    const i18nString: any = {
-      ["default"]: text as string, // Type assertion to assure TypeScript `text` is a string
+    const i18nString: TI18nString = {
+      ["default"]: text, // Type assertion to assure TypeScript `text` is a string
     };
 
     // Initialize all provided languages with empty strings
@@ -227,6 +227,12 @@ const translateQuestion = (
           question.upperLabel ?? "",
           languages
         );
+      }
+      const range = question.range;
+      if (typeof range === "string") {
+        const parsedRange = parseInt(range);
+        // @ts-expect-error
+        clonedQuestion.range = parsedRange;
       }
       return ZSurveyRatingQuestion.parse(clonedQuestion);
 
