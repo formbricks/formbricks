@@ -17,7 +17,7 @@ interface BackgroundStylingCardProps {
   styling: TSurveyStyling | TProductStyling | null;
   setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | TProductStyling>>;
   colors: string[];
-  hideCheckmark?: boolean;
+  isSettingsPage?: boolean;
   disabled?: boolean;
   environmentId: string;
   isUnsplashConfigured: boolean;
@@ -29,7 +29,7 @@ export default function BackgroundStylingCard({
   styling,
   setStyling,
   colors,
-  hideCheckmark,
+  isSettingsPage = false,
   disabled,
   environmentId,
   isUnsplashConfigured,
@@ -79,7 +79,7 @@ export default function BackgroundStylingCard({
           disabled && "cursor-not-allowed opacity-60 hover:bg-white"
         )}>
         <div className="inline-flex px-4 py-4">
-          {!hideCheckmark && (
+          {!isSettingsPage && (
             <div className="flex items-center pl-2 pr-5">
               <CheckIcon
                 strokeWidth={3}
@@ -89,10 +89,12 @@ export default function BackgroundStylingCard({
           )}
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <p className="font-semibold text-slate-800">Background Styling</p>
-              {hideCheckmark && <Badge text="Link Surveys" type="gray" size="normal" />}
+              <p className={cn("font-semibold text-slate-800", isSettingsPage ? "text-sm" : "text-base")}>
+                Background Styling
+              </p>
+              {isSettingsPage && <Badge text="Link Surveys" type="gray" size="normal" />}
             </div>
-            <p className="mt-1 truncate text-sm text-slate-500">
+            <p className={cn("mt-1 text-slate-500", isSettingsPage ? "text-xs" : "text-sm")}>
               Change the background to a color, image or animation.
             </p>
           </div>

@@ -7,12 +7,13 @@ import React, { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
+import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
 import { Slider } from "@formbricks/ui/Slider";
-import { ColorSelectorWithLabel } from "@formbricks/ui/Styling";
+import { CardArrangement, ColorSelectorWithLabel } from "@formbricks/ui/Styling";
 import { Switch } from "@formbricks/ui/Switch";
 
 type CardStylingSettingsProps = {
@@ -20,7 +21,7 @@ type CardStylingSettingsProps = {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   styling: TSurveyStyling | TProductStyling | null;
   setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | TProductStyling>>;
-  hideCheckmark?: boolean;
+  isSettingsPage?: boolean;
   surveyType?: TSurveyType;
   disabled?: boolean;
   localProduct: TProduct;
@@ -29,7 +30,7 @@ type CardStylingSettingsProps = {
 const CardStylingSettings = ({
   setStyling,
   styling,
-  hideCheckmark,
+  isSettingsPage = false,
   surveyType,
   disabled,
   open,
@@ -42,6 +43,10 @@ const CardStylingSettings = ({
   const isLogoHidden = styling?.isLogoHidden ?? false;
 
   const isLogoVisible = !!localProduct.logo?.url;
+
+  const linkSurveyCardArrangement = styling?.cardArrangement?.linkSurveys ?? "straight";
+
+  const inAppSurveyCardArrangement = styling?.cardArrangement?.appSurveys ?? "straight";
 
   const setCardBgColor = (color: string) => {
     setStyling((prev) => ({
@@ -113,6 +118,24 @@ const CardStylingSettings = ({
     }));
   };
 
+  const setCardArrangement = (arrangement: TCardArrangementOptions, surveyType: TSurveyType) => {
+    const newCardArrangement = {
+      linkSurveys: linkSurveyCardArrangement,
+      appSurveys: inAppSurveyCardArrangement,
+    };
+
+    if (surveyType === "link") {
+      newCardArrangement.linkSurveys = arrangement;
+    } else if (surveyType === "app" || surveyType === "website") {
+      newCardArrangement.appSurveys = arrangement;
+    }
+
+    setStyling((prev) => ({
+      ...prev,
+      cardArrangement: newCardArrangement,
+    }));
+  };
+
   const toggleProgressBarVisibility = (hideProgressBar: boolean) => {
     setStyling({
       ...styling,
@@ -147,7 +170,7 @@ const CardStylingSettings = ({
           disabled && "cursor-not-allowed opacity-60 hover:bg-white"
         )}>
         <div className="inline-flex px-4 py-4">
-          {!hideCheckmark && (
+          {!isSettingsPage && (
             <div className="flex items-center pl-2 pr-5">
               <CheckIcon
                 strokeWidth={3}
@@ -157,8 +180,12 @@ const CardStylingSettings = ({
           )}
 
           <div>
-            <p className="font-semibold text-slate-800">Card Styling</p>
-            <p className="mt-1 text-sm text-slate-500">Style the survey card.</p>
+            <p className={cn("font-semibold text-slate-800", isSettingsPage ? "text-sm" : "text-base")}>
+              Card Styling
+            </p>
+            <p className={cn("mt-1 text-slate-500", isSettingsPage ? "text-xs" : "text-sm")}>
+              Style the survey card.
+            </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -198,6 +225,12 @@ const CardStylingSettings = ({
             description="Change the shadow color of the card."
           />
 
+          <CardArrangement
+            surveyType={isAppSurvey ? "app" : "link"}
+            activeCardArrangement={isAppSurvey ? inAppSurveyCardArrangement : linkSurveyCardArrangement}
+            setActiveCardArrangement={setCardArrangement}
+          />
+
           <>
             <div className="flex items-center space-x-1">
               <Switch
@@ -215,14 +248,14 @@ const CardStylingSettings = ({
               </Label>
             </div>
 
-            {isLogoVisible && (!surveyType || surveyType === "link") && (
+            {isLogoVisible && (!surveyType || surveyType === "link") && !isSettingsPage && (
               <div className="flex items-center space-x-1">
                 <Switch id="isLogoHidden" checked={isLogoHidden} onCheckedChange={toggleLogoVisibility} />
                 <Label htmlFor="isLogoHidden" className="cursor-pointer">
                   <div className="ml-2 flex flex-col">
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-semibold text-slate-700">Hide logo</h3>
-                      {hideCheckmark && <Badge text="Link Surveys" type="gray" size="normal" />}
+                      <Badge text="Link Surveys" type="gray" size="normal" />
                     </div>
                     <p className="text-xs font-normal text-slate-500">
                       Hides the logo in this specific survey
@@ -238,8 +271,15 @@ const CardStylingSettings = ({
                   <Switch checked={isHighlightBorderAllowed} onCheckedChange={setIsHighlightBorderAllowed} />
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-semibold text-slate-700">Add highlight border</h3>
-                      <Badge text="In-App and Website Surveys" type="gray" size="normal" />
+                      <h3 className="whitespace-nowrap text-sm font-semibold text-slate-700">
+                        Add highlight border
+                      </h3>
+                      <Badge
+                        text="App & Website Surveys"
+                        type="gray"
+                        size="normal"
+                        className="whitespace-nowrap"
+                      />
                     </div>
                     <p className="text-xs text-slate-500">Add an outer border to your survey card.</p>
                   </div>
