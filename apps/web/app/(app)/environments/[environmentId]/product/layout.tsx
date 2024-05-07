@@ -1,8 +1,15 @@
+import { ProductConfigTabs } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigTabs";
+import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
+
+export const metadata: Metadata = {
+  title: "Config",
+};
 
 export default async function ConfigLayout({ children, params }) {
   const [team, product, session] = await Promise.all([
@@ -23,5 +30,14 @@ export default async function ConfigLayout({ children, params }) {
     throw new Error("Unauthenticated");
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <div className="flex">
+        <ProductConfigTabs environmentId={params.environmentId} />
+        <div className="ml-56 w-full">
+          <InnerContentWrapper pageTitle="Configuration">{children}</InnerContentWrapper>
+        </div>
+      </div>
+    </>
+  );
 }

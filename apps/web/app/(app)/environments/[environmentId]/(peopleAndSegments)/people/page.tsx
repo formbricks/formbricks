@@ -50,7 +50,7 @@ export default async function PeoplePage({
             <div className="col-span-2 hidden text-center sm:block">Email</div>
           </div>
           {people.map((person) => (
-            <PersonCard person={person} />
+            <PersonCard person={person} key={person.id} />
           ))}
         </div>
       )}

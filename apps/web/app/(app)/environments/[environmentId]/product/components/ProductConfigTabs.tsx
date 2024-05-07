@@ -1,58 +1,61 @@
+"use client";
+
 import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import SecondNavigation from "@formbricks/ui/SecondNavigation";
 
 interface ProductConfigTabsProps {
-  activeId: string;
   environmentId: string;
   isUserTargetingAllowed?: boolean;
 }
 
-export default function ProductConfigTabs({ activeId, environmentId }: ProductConfigTabsProps) {
+export const ProductConfigTabs = ({ environmentId }: ProductConfigTabsProps) => {
+  const pathname = usePathname();
   let navigation = [
     {
       id: "general",
       label: "General",
       icon: <UsersIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/product/general`,
-      current: activeId === "general",
+      current: pathname?.includes("/general"),
     },
     {
       id: "look",
       label: "Look & Feel",
       icon: <BrushIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/product/look`,
-      current: activeId === "look",
+      current: pathname?.includes("/look"),
     },
     {
       id: "languages",
       label: "Survey Languages",
       icon: <LanguagesIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/product/languages`,
-      current: activeId === "languages",
+      current: pathname?.includes("/languages"),
     },
     {
       id: "tags",
       label: "Tags",
       icon: <TagIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/product/tags`,
-      current: activeId === "tags",
+      current: pathname?.includes("/tags"),
     },
     {
       id: "api-keys",
       label: "API Keys",
       icon: <KeyIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/product/api-keys`,
-      current: activeId === "api-keys",
+      current: pathname?.includes("/api-keys"),
     },
     {
       id: "setup",
       label: "Setup Guide",
       icon: <ListChecksIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/product/setup`,
-      current: activeId === "setup",
+      current: pathname?.includes("/setup"),
     },
   ];
 
   return <SecondNavigation navigation={navigation} />;
-}
+};

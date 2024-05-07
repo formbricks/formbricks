@@ -7,6 +7,7 @@ import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
 
 import SettingsNavbar from "./components/SettingsNavbar";
 
@@ -38,21 +39,16 @@ export default async function SettingsLayout({ children, params }) {
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
   return (
-    <>
-      <div className="flex pt-12">
-        <SettingsNavbar
-          environmentId={params.environmentId}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          team={team}
-          product={product}
-          membershipRole={currentUserMembership?.role}
-          isMultiLanguageAllowed={isMultiLanguageAllowed}
-        />
-
-        <div className="ml-64 w-full pb-6 pt-14 md:pt-6">
-          <div>{children}</div>
-        </div>
-      </div>
-    </>
+    <div className="flex">
+      <SettingsNavbar
+        environmentId={params.environmentId}
+        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+        team={team}
+        product={product}
+        membershipRole={currentUserMembership?.role}
+        isMultiLanguageAllowed={isMultiLanguageAllowed}
+      />
+      <InnerContentWrapper pageTitle="Settings">{children}</InnerContentWrapper>
+    </div>
   );
 }

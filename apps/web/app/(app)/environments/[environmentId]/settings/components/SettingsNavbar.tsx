@@ -171,8 +171,8 @@ export default function SettingsNavbar({
 
   return (
     <>
-      <div className="fixed top-16 ml-8">
-        <nav className="flex-1 space-y-1 px-2">
+      <div className="pl-6 pt-20">
+        <nav className="flex-1 px-2">
           {navigation.map(
             (item) =>
               !item.hidden && (
@@ -186,7 +186,7 @@ export default function SettingsNavbar({
                       <span className="font-normal capitalize">({truncate(team?.name, 14)})</span>
                     )}
                   </p>
-                  <div className="ml-2 mt-1 space-y-1">
+                  <div className="ml-2 mt-3 space-y-2">
                     {item.links
                       .filter((l) => !l.hidden)
                       .map((link) => (
@@ -196,9 +196,9 @@ export default function SettingsNavbar({
                           target={link.target}
                           className={clsx(
                             link.current
-                              ? "bg-slate-200 text-slate-900"
-                              : "text-slate-900 hover:bg-slate-100 ",
-                            "group flex items-center whitespace-nowrap rounded-md px-1 py-1 pl-2 text-sm"
+                              ? "border-brand-dark  font-semibold text-slate-900"
+                              : "border-transparent  hover:border-slate-300 ",
+                            "group flex items-center whitespace-nowrap rounded-l-md border-r-2 px-4 py-2 pl-2 text-sm text-slate-600 hover:text-slate-900"
                           )}>
                           <link.icon
                             className="mr-3 h-4 w-4 flex-shrink-0 text-slate-400 group-hover:text-slate-500"
