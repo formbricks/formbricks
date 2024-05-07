@@ -51,7 +51,7 @@ runs:
 
     - name: Add E2E Testing Mode
       run: |
-        echo "E2E_TESTING=${{ github.event.inputs.e2e_testing_mode }}" >> $GITHUB_ENV
+        echo "E2E_TESTING=${{ inputs.e2e_testing_mode }}" >> $GITHUB_ENV
       shell: bash
 
     - name: Generate Random ENCRYPTION_KEY
