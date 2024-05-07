@@ -26,6 +26,10 @@ export default function Modal({
   const [show, setShow] = useState(false);
   const isCenter = placement === "center";
   const modalRef = useRef(null);
+  const showCloseSurveyButton = useMemo(() => {
+    if (placement === "center") return clickOutside;
+    else return true;
+  }, [placement, clickOutside]);
 
   useEffect(() => {
     setShow(isOpen);
@@ -106,7 +110,7 @@ export default function Modal({
             show ? "opacity-100" : "opacity-0",
             "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
           )}>
-          {!isCenter && (
+          {showCloseSurveyButton && (
             <div class="absolute right-0 top-0 z-10 block pr-2 pt-2">
               <button
                 type="button"
