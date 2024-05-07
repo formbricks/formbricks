@@ -305,7 +305,6 @@ export const mockSurvey: TSurvey = {
   },
   pin: null,
   resultShareKey: null,
-  inlineTriggers: {},
   triggers: [],
   languages: mockSurveyLanguages,
   segment: mockSegment,

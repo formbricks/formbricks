@@ -1,6 +1,5 @@
 import type { TActionClass } from "@formbricks/types/actionClasses";
 import type { TActionClassPageUrlRule } from "@formbricks/types/actionClasses";
-import { TSurveyInlineTriggers } from "@formbricks/types/surveys";
 
 import {
   ErrorHandler,
@@ -13,9 +12,8 @@ import {
   okVoid,
 } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
-import { trackAction } from "./actions";
+import { trackNoCodeAction } from "./actions";
 import { WebsiteConfig } from "./config";
-import { triggerSurvey } from "./widget";
 
 const websiteConfig = WebsiteConfig.getInstance();
 const logger = Logger.getInstance();
@@ -24,16 +22,13 @@ const errorHandler = ErrorHandler.getInstance();
 export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError | NetworkError>> => {
   logger.debug(`Checking page url: ${window.location.href}`);
   const { state } = websiteConfig.get();
-  const { noCodeActionClasses = [], surveys = [] } = state ?? {};
+  const { actionClasses = [] } = state ?? {};
+
+  const noCodeActionClasses = actionClasses.filter((action) => action.type === "noCode");
 
   const actionsWithPageUrl: TActionClass[] = noCodeActionClasses.filter((action) => {
     const { innerHtml, cssSelector, pageUrl } = action.noCodeConfig || {};
     return pageUrl && !innerHtml && !cssSelector;
-  });
-
-  const surveysWithInlineTriggers = surveys.filter((survey) => {
-    const { pageUrl, cssSelector, innerHtml } = survey.inlineTriggers?.noCodeConfig || {};
-    return pageUrl && !cssSelector && !innerHtml;
   });
 
   if (actionsWithPageUrl.length > 0) {
@@ -52,26 +47,10 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
 
       if (match.value === false) continue;
 
-      const trackResult = await trackAction(event.name);
+      const trackResult = await trackNoCodeAction(event.name);
 
       if (trackResult.ok !== true) return err(trackResult.error);
     }
-  }
-
-  if (surveysWithInlineTriggers.length > 0) {
-    surveysWithInlineTriggers.forEach((survey) => {
-      const { noCodeConfig } = survey.inlineTriggers ?? {};
-      const { pageUrl } = noCodeConfig ?? {};
-
-      if (pageUrl) {
-        const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule);
-
-        if (match.ok !== true) return err(match.error);
-        if (match.value === false) return;
-
-        triggerSurvey(survey);
-      }
-    });
   }
 
   return okVoid();
@@ -119,10 +98,7 @@ export function checkUrlMatch(
   }
 }
 
-const evaluateNoCodeConfig = (
-  targetElement: HTMLElement,
-  action: TActionClass | TSurveyInlineTriggers
-): boolean => {
+const evaluateNoCodeConfig = (targetElement: HTMLElement, action: TActionClass): boolean => {
   const innerHtml = action.noCodeConfig?.innerHtml?.value;
   const cssSelectors = action.noCodeConfig?.cssSelector?.value;
   const pageUrl = action.noCodeConfig?.pageUrl?.value;
@@ -162,7 +138,9 @@ export const checkClickMatch = (event: MouseEvent) => {
     return;
   }
 
-  const { noCodeActionClasses } = state;
+  const { actionClasses = [] } = state;
+  const noCodeActionClasses = actionClasses.filter((action) => action.type === "noCode");
+
   if (!noCodeActionClasses) {
     return;
   }
@@ -172,7 +150,7 @@ export const checkClickMatch = (event: MouseEvent) => {
   noCodeActionClasses.forEach((action: TActionClass) => {
     const isMatch = evaluateNoCodeConfig(targetElement, action);
     if (isMatch) {
-      trackAction(action.name).then((res) => {
+      trackNoCodeAction(action.name).then((res) => {
         match(
           res,
           (_value) => {},
@@ -189,16 +167,6 @@ export const checkClickMatch = (event: MouseEvent) => {
   if (!activeSurveys || activeSurveys.length === 0) {
     return;
   }
-
-  activeSurveys.forEach((survey) => {
-    const { inlineTriggers } = survey;
-    if (inlineTriggers) {
-      const isMatch = evaluateNoCodeConfig(targetElement, inlineTriggers);
-      if (isMatch) {
-        triggerSurvey(survey);
-      }
-    }
-  });
 };
 
 let isClickEventListenerAdded = false;

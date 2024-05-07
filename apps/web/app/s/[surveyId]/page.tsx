@@ -61,7 +61,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   if (!team) {
     throw new Error("Team not found");
   }
-  const isMultiLanguageAllowed = getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
 
   if (survey && survey.status !== "inProgress") {
     return (

@@ -87,7 +87,9 @@ export const copyToOtherEnvironmentAction = async (
   for (const trigger of existingSurvey.triggers) {
     const targetEnvironmentTrigger = await prisma.actionClass.findFirst({
       where: {
-        name: trigger.actionClass.name,
+        ...(trigger.actionClass.type === "code"
+          ? { key: trigger.actionClass.key }
+          : { name: trigger.actionClass.name }),
         environment: {
           id: targetEnvironmentId,
         },
@@ -105,9 +107,13 @@ export const copyToOtherEnvironmentAction = async (
           },
           description: trigger.actionClass.description,
           type: trigger.actionClass.type,
-          noCodeConfig: trigger.actionClass.noCodeConfig
-            ? structuredClone(trigger.actionClass.noCodeConfig)
-            : undefined,
+          ...(trigger.actionClass.type === "code"
+            ? { key: trigger.actionClass.key }
+            : {
+                noCodeConfig: trigger.actionClass.noCodeConfig
+                  ? structuredClone(trigger.actionClass.noCodeConfig)
+                  : undefined,
+              }),
         },
       });
       targetEnvironmentTriggers.push(newTrigger.id);
@@ -160,7 +166,6 @@ export const copyToOtherEnvironmentAction = async (
       status: "draft",
       questions: structuredClone(existingSurvey.questions),
       thankYouCard: structuredClone(existingSurvey.thankYouCard),
-      inlineTriggers: JSON.parse(JSON.stringify(existingSurvey.inlineTriggers)),
       triggers: {
         create: targetEnvironmentTriggers.map((actionClassId) => ({
           actionClassId: actionClassId,

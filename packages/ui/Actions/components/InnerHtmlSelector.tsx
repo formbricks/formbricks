@@ -1,12 +1,14 @@
 import { UseFormRegister } from "react-hook-form";
 
+import { TActionClass } from "@formbricks/types/actionClasses";
+
 import { AdvancedOptionToggle } from "../../AdvancedOptionToggle";
 import { Input } from "../../Input";
 
 interface InnerHtmlSelectorProps {
   isInnerHtml: boolean;
   setIsInnerHtml: (value: boolean) => void;
-  register: UseFormRegister<any>;
+  register: UseFormRegister<TActionClass>;
 }
 
 export const InnerHtmlSelector = ({ isInnerHtml, setIsInnerHtml, register }: InnerHtmlSelectorProps) => {

@@ -188,6 +188,7 @@ export const ZLegacySurvey = ZSurvey.extend({
   questions: ZLegacySurveyQuestions,
   thankYouCard: ZLegacySurveyThankYouCard,
   welcomeCard: ZLegacySurveyWelcomeCard,
+  triggers: z.array(z.string()),
 });
 
 export type TLegacySurvey = z.infer<typeof ZLegacySurvey>;

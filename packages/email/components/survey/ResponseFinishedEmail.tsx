@@ -21,7 +21,7 @@ export const renderEmailResponseValue = (response: string | string[], questionTy
                 key={response}
                 className="mt-2 flex flex-col items-center justify-center rounded-lg bg-gray-200 p-2 text-black shadow-sm">
                 <FileIcon />
-                <Text className="mb-0 truncate">{getOriginalFileNameFromUrl(response)}</Text>
+                <Text className="mx-auto mb-0 truncate">{getOriginalFileNameFromUrl(response)}</Text>
               </Link>
             ))}
         </Container>

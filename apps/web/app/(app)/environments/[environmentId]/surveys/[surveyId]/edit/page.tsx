@@ -59,8 +59,8 @@ export default async function SurveysEditPage({ params }) {
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
   const isSurveyCreationDeletionDisabled = isViewer;
 
-  const isUserTargetingAllowed = getAdvancedTargetingPermission(team);
-  const isMultiLanguageAllowed = getMultiLanguagePermission(team);
+  const isUserTargetingAllowed = await getAdvancedTargetingPermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
 
   if (
     !survey ||
