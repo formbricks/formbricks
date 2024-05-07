@@ -27,7 +27,7 @@ export default function Modal({
   const isCenter = placement === "center";
   const modalRef = useRef(null);
   const showCloseSurveyButton = useMemo(() => {
-    if (placement === "center") return clickOutside;
+    if (isCenter) return clickOutside;
     else return true;
   }, [placement, clickOutside]);
 
