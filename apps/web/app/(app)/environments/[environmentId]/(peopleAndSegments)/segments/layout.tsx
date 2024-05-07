@@ -67,15 +67,19 @@ export default async function SegmentsLayout({ params, children }) {
     );
 
   return (
-    <div className="flex">
-      <PeopleSegmentsNav
-        activeId="segments"
-        environmentId={params.environmentId}
-        isUserTargetingAllowed={isAdvancedTargetingAllowed}
-      />
-      <InnerContentWrapper pageTitle="Segments" cta={renderCreateSegmentButton()}>
-        {children}
-      </InnerContentWrapper>
-    </div>
+    <>
+      <div className="flex">
+        <PeopleSegmentsNav
+          activeId="segments"
+          environmentId={params.environmentId}
+          isUserTargetingAllowed={isAdvancedTargetingAllowed}
+        />
+        <div className="ml-44 w-full">
+          <InnerContentWrapper pageTitle="Segments" cta={renderCreateSegmentButton()}>
+            {children}
+          </InnerContentWrapper>
+        </div>
+      </div>
+    </>
   );
 }

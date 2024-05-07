@@ -5,7 +5,6 @@ import {
   getResponseCountAction,
   getResponsesAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import { SurveyResultsTabs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
@@ -26,7 +25,6 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
 
 interface ResponsePageProps {
   environment: TEnvironment;
@@ -164,7 +162,7 @@ const ResponsePage = ({
   }, [filters]);
 
   return (
-    <InnerContentWrapper>
+    <>
       <SummaryHeader
         environment={environment}
         survey={survey}
@@ -178,12 +176,6 @@ const ResponsePage = ({
         <CustomFilter survey={survey} />
         {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />}
       </div>
-      <SurveyResultsTabs
-        activeId="responses"
-        environmentId={environment.id}
-        surveyId={surveyId}
-        responseCount={responseCount}
-      />
       <ResponseTimeline
         environment={environment}
         surveyId={surveyId}
@@ -200,7 +192,7 @@ const ResponsePage = ({
         totalResponseCount={totalResponseCount}
         isSharingPage={isSharingPage}
       />
-    </InnerContentWrapper>
+    </>
   );
 };
 

@@ -10,7 +10,7 @@ interface WidgetStatusIndicatorProps {
   type: "large" | "mini";
 }
 
-export default async function WidgetStatusIndicator({ environment, type }: WidgetStatusIndicatorProps) {
+export const WidgetStatusIndicator = ({ environment, type }: WidgetStatusIndicatorProps) => {
   if (!environment) {
     throw new Error("Environment not found");
   }
@@ -51,7 +51,7 @@ export default async function WidgetStatusIndicator({ environment, type }: Widge
         )}>
         <div
           className={clsx(
-            "h-12 w-12 rounded-full bg-white p-2",
+            "flex h-12 w-12 items-center justify-center rounded-full bg-white p-2",
             status === "notImplemented" && "text-slate-700",
             status === "running" && "text-green-700"
           )}>
@@ -85,4 +85,4 @@ export default async function WidgetStatusIndicator({ environment, type }: Widge
   } else {
     return null;
   }
-}
+};

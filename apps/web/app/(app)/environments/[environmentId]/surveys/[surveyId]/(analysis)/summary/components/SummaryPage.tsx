@@ -5,7 +5,6 @@ import {
   getResponseCountAction,
   getSurveySummaryAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import { SurveyResultsTabs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
@@ -24,7 +23,6 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
-import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
 
 import { SummaryList } from "./SummaryList";
 import { SummaryMetadata } from "./SummaryMetadata";
@@ -124,7 +122,7 @@ const SummaryPage = ({
   }, [searchParams, resetState]);
 
   return (
-    <InnerContentWrapper>
+    <>
       <SummaryHeader
         environment={environment}
         survey={survey}
@@ -138,12 +136,6 @@ const SummaryPage = ({
         <CustomFilter survey={survey} />
         {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />}
       </div>
-      <SurveyResultsTabs
-        activeId="summary"
-        environmentId={environment.id}
-        surveyId={surveyId}
-        responseCount={responseCount}
-      />
       <SummaryMetadata
         survey={survey}
         surveySummary={surveySummary.meta}
@@ -159,7 +151,7 @@ const SummaryPage = ({
         fetchingSummary={isFetchingSummary}
         totalResponseCount={totalResponseCount}
       />
-    </InnerContentWrapper>
+    </>
   );
 };
 

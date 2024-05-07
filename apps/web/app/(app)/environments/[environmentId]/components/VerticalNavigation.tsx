@@ -81,7 +81,6 @@ export default function Navigation({
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
   const product = products.find((product) => product.id === environment.productId);
-  const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
   const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
   const isPricingDisabled = !isOwner && !isAdmin;
 
@@ -176,7 +175,7 @@ export default function Navigation({
       {product && (
         <aside
           className={cn(
-            "transition-width fixed inset-x-0 bottom-14 top-14 flex flex-col justify-between rounded-r-xl border border-slate-200 bg-white pt-4 shadow-sm",
+            "transition-width fixed inset-x-0 bottom-14 top-14 z-50 flex flex-col justify-between rounded-r-xl border border-slate-200 bg-white pt-4 shadow-sm",
             !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
           )}>
           <ul>
@@ -190,7 +189,7 @@ export default function Navigation({
                     isCollapsed={isCollapsed}
                     isTextVisible={isTextVisible}
                     linkText={item.name}>
-                    <item.icon />
+                    <item.icon strokeWidth={1.5} />
                   </NavigationLink>
                 )
             )}
@@ -270,7 +269,7 @@ export default function Navigation({
             </DropdownMenu>
 
             {/* User Switch */}
-            <div className="hidden lg:flex lg:items-center">
+            <div className="flex items-center">
               <DropdownMenu>
                 <DropdownMenuTrigger
                   asChild

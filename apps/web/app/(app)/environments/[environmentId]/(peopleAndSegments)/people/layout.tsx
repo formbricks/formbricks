@@ -9,9 +9,13 @@ export const metadata: Metadata = {
 
 export default async function PeopleLayout({ params, children }) {
   return (
-    <div className="flex">
-      <PeopleSegmentsNav activeId="people" environmentId={params.environmentId} />
-      <InnerContentWrapper pageTitle="People">{children}</InnerContentWrapper>
-    </div>
+    <>
+      <div className="flex">
+        <PeopleSegmentsNav activeId="people" environmentId={params.environmentId} />
+        <div className="ml-44 w-full">
+          <InnerContentWrapper pageTitle="People">{children}</InnerContentWrapper>
+        </div>
+      </div>
+    </>
   );
 }

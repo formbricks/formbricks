@@ -11,13 +11,14 @@ interface NavigationLink {
   current?: boolean;
   hidden?: boolean;
   target?: string;
+  onClick?: () => void;
 }
 
 interface SecondNavigationProps {
   navigation: NavigationLink[];
 }
 
-export default function SecondNavigation({ navigation }: SecondNavigationProps) {
+export const SecondNavigation = ({ navigation }: SecondNavigationProps) => {
   if (!navigation) return null;
 
   return (
@@ -30,6 +31,7 @@ export default function SecondNavigation({ navigation }: SecondNavigationProps) 
                 key={link.id}
                 href={link.href}
                 target={link.target}
+                onClick={link.onClick}
                 className={clsx(
                   link.current
                     ? "border-brand-dark font-semibold text-slate-900"
@@ -44,4 +46,4 @@ export default function SecondNavigation({ navigation }: SecondNavigationProps) 
       </nav>
     </div>
   );
-}
+};

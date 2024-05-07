@@ -1,6 +1,6 @@
 import { TagIcon, UserIcon, UsersIcon } from "lucide-react";
 
-import SecondNavigation from "@formbricks/ui/SecondNavigation";
+import { SecondNavigation } from "@formbricks/ui/SecondNavigation";
 
 interface PeopleSegmentsTabsProps {
   activeId: string;

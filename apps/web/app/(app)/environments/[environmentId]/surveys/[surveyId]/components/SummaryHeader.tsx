@@ -64,7 +64,7 @@ export const SummaryHeader = ({
   const [showShareSurveyModal, setShowShareSurveyModal] = useState(false);
 
   return (
-    <div className="mb-11 mt-6 flex flex-wrap items-center justify-between">
+    <div className="mb-11 flex flex-wrap items-center justify-between">
       <div>
         <div className="flex gap-4">
           <p className="text-3xl font-bold text-slate-800">{survey.name}</p>

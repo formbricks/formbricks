@@ -53,7 +53,7 @@ export const SurveyMenuBar = ({
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
-  const cautionText = "This survey received responses, make changes with caution.";
+  const cautionText = "This survey received responses.";
 
   const faultyQuestions: string[] = [];
 

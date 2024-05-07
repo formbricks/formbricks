@@ -40,7 +40,7 @@ export default function NavigationLink({
                 </Link>
               </li>
             </TooltipTrigger>
-            <TooltipContent side="right" className="z-50">
+            <TooltipContent side="right" className="">
               {linkText}
             </TooltipContent>
           </Tooltip>

@@ -3,7 +3,7 @@
 import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-import SecondNavigation from "@formbricks/ui/SecondNavigation";
+import { SecondNavigation } from "@formbricks/ui/SecondNavigation";
 
 interface ProductConfigTabsProps {
   environmentId: string;

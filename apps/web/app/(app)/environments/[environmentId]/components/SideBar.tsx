@@ -63,7 +63,7 @@ export default function SideBar({
     <div
       id="sidebar"
       className={cn(
-        "relative transition-all duration-100",
+        "relative z-50 transition-all duration-100",
         !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
       )}>
       {!isCollapsed && (
@@ -80,7 +80,7 @@ export default function SideBar({
         size="icon"
         tooltipSide="right"
         onClick={toggleSidebar}
-        className="absolute right-0 top-2 z-50 rounded-xl border border-slate-200 bg-transparent p-1 text-slate-600 hover:bg-slate-100">
+        className="absolute right-0 top-2 z-50 rounded-xl border border-slate-200 bg-transparent p-1 text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent">
         {isCollapsed ? <PanelLeftOpenIcon strokeWidth={1} /> : <PanelLeftCloseIcon strokeWidth={1} />}
       </Button>
       <VerticalNavigation
