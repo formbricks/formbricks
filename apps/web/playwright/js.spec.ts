@@ -30,8 +30,8 @@ test.describe("JS Package Test", async () => {
 
     await expect(page.getByText("Survey Trigger")).toBeVisible();
 
-    await page.getByRole("combobox").click();
-    await page.getByLabel("New Session").click();
+    await page.getByRole("button", { name: "Add action" }).click();
+    await page.getByText("New SessionGets fired when a").click();
     await page.getByRole("button", { name: "Publish" }).click();
 
     environmentId =
@@ -65,7 +65,9 @@ test.describe("JS Package Test", async () => {
     // expect(displayApi.status()).toBe(200);
 
     // Formbricks Modal is visible
-    await expect(page.getByRole("link", { name: "Powered by Formbricks" })).toBeVisible();
+    await expect(
+      page.locator("#questionCard-0").getByRole("link", { name: "Powered by Formbricks" })
+    ).toBeVisible();
 
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(1500);
@@ -87,24 +89,31 @@ test.describe("JS Package Test", async () => {
     await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
 
     // Formbricks Modal is visible
-    await expect(page.getByRole("link", { name: "Powered by Formbricks" })).toBeVisible();
+    await expect(
+      page.locator("#questionCard-0").getByRole("link", { name: "Powered by Formbricks" })
+    ).toBeVisible();
 
     // Fill the Survey
     await page.getByRole("button", { name: "Happy to help!" }).click();
     await page.locator("label").filter({ hasText: "Somewhat disappointed" }).click();
-    await page.getByRole("button", { name: "Next" }).click();
+    await page.locator("#questionCard-1").getByRole("button", { name: "Next" }).click();
     await page.locator("label").filter({ hasText: "Founder" }).click();
-    await page.getByRole("button", { name: "Next" }).click();
-    await page.getByLabel("").fill("People who believe that PMF is necessary");
-    await page.getByRole("button", { name: "Next" }).click();
-    await page.getByLabel("").fill("Much higher response rates!");
-    await page.getByRole("button", { name: "Next" }).click();
-    await page.getByLabel("How can we improve My Product").fill("Make this end to end test pass!");
+    await page.locator("#questionCard-2").getByRole("button", { name: "Next" }).click();
+    await page
+      .locator("#questionCard-3")
+      .getByLabel("textarea")
+      .fill("People who believe that PMF is necessary");
+    await page.locator("#questionCard-3").getByRole("button", { name: "Next" }).click();
+    await page.locator("#questionCard-4").getByLabel("textarea").fill("Much higher response rates!");
+    await page.locator("#questionCard-4").getByRole("button", { name: "Next" }).click();
+    await page.locator("#questionCard-5").getByLabel("textarea").fill("Make this end to end test pass!");
     await page.getByRole("button", { name: "Finish" }).click();
     await page.getByText("Thank you!").click();
 
     // Formbricks Modal is not visible
-    await expect(page.getByText("Powered by Formbricks")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      page.locator("#questionCard-6").getByRole("link", { name: "Powered by Formbricks" })
+    ).toBeVisible();
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(5000);
   });

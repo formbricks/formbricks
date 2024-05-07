@@ -13,7 +13,7 @@ import {
 } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import { getIsDebug } from "../../shared/utils";
-import { trackAction } from "./actions";
+import { trackNoCodeAction } from "./actions";
 import { WEBSITE_LOCAL_STORAGE_KEY, WebsiteConfig } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { checkPageUrl } from "./noCodeActions";
@@ -138,7 +138,7 @@ export const initialize = async (
     }
 
     // and track the new session event
-    await trackAction("New Session");
+    await trackNoCodeAction("New Session");
   }
 
   logger.debug("Adding event listeners");

@@ -12,6 +12,7 @@ interface ActionDetailModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   actionClass: TActionClass;
+  actionClasses: TActionClass[];
   membershipRole?: TMembershipRole;
   isUserTargetingEnabled: boolean;
 }
@@ -21,6 +22,7 @@ export default function ActionDetailModal({
   open,
   setOpen,
   actionClass,
+  actionClasses,
   membershipRole,
   isUserTargetingEnabled,
 }: ActionDetailModalProps) {
@@ -41,6 +43,7 @@ export default function ActionDetailModal({
         <ActionSettingsTab
           environmentId={environmentId}
           actionClass={actionClass}
+          actionClasses={actionClasses}
           setOpen={setOpen}
           membershipRole={membershipRole}
         />

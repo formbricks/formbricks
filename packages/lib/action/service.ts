@@ -4,14 +4,13 @@ import { Prisma } from "@prisma/client";
 import { differenceInDays } from "date-fns";
 
 import { prisma } from "@formbricks/database";
-import { TActionClassType } from "@formbricks/types/actionClasses";
 import { TAction, TActionInput, ZActionInput } from "@formbricks/types/actions";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 
 import { actionClassCache } from "../actionClass/cache";
-import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
+import { getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { activePersonCache } from "../person/cache";
@@ -117,19 +116,12 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
   try {
     const { environmentId, name, userId } = data;
 
-    let actionType: TActionClassType = "code";
-    if (name === "Exit Intent (Desktop)" || name === "50% Scroll") {
-      actionType = "automatic";
-    }
-
     let actionClass = await getActionClassByEnvironmentIdAndName(environmentId, name);
 
     if (!actionClass) {
-      actionClass = await createActionClass(environmentId, {
-        name,
-        type: actionType,
-        environmentId,
-      });
+      throw new OperationNotAllowedError(
+        `${name} action unknown. Please add this action in Formbricks first in order to use it in your code.`
+      );
     }
 
     const action = await prisma.action.create({

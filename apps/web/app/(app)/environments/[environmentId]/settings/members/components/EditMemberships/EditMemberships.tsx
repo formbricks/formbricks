@@ -23,7 +23,7 @@ export async function EditMemberships({
 
   const currentUserRole = membership?.role;
   const isUserAdminOrOwner = membership?.role === "admin" || membership?.role === "owner";
-  const canDoRoleManagement = getRoleManagementPermission(team);
+  const canDoRoleManagement = await getRoleManagementPermission(team);
 
   return (
     <div>
