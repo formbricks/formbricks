@@ -24,7 +24,7 @@ export default async function PeopleLayout({ params, children }) {
     <>
       <div className="flex">
         <PeopleSegmentsNav activeId="people" environmentId={params.environmentId} />
-        <div className="ml-44 w-full">
+        <div className="w-full">
           <InnerContentWrapper pageTitle="People" cta={HowToAddPeopleButton}>
             {children}
           </InnerContentWrapper>

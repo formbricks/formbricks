@@ -34,7 +34,7 @@ export default async function ConfigLayout({ children, params }) {
     <>
       <div className="flex">
         <ProductConfigTabs environmentId={params.environmentId} />
-        <div className="ml-56 w-full">
+        <div className="w-full">
           <InnerContentWrapper pageTitle="Configuration">{children}</InnerContentWrapper>
         </div>
       </div>

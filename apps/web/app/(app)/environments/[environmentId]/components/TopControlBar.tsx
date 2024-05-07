@@ -11,14 +11,14 @@ interface SideBarProps {
   environments: TEnvironment[];
 }
 
-export default function SideBar({ environment, environments }: SideBarProps) {
+export const TopControlBar = ({ environment, environments }: SideBarProps) => {
   const pathname = usePathname();
 
   if (pathname?.includes("/edit") || pathname?.includes("/surveys/templates")) return null;
 
   return (
-    <div className="max-w-8xl z-50 flex w-full justify-end px-6">
-      <div className="shadow-xs fixed z-10">
+    <div className="max-w-8xl z-50 flex h-20 w-full justify-end px-6">
+      <div className="shadow-xs z-10">
         {environment.type === "development" && (
           <div className="flex h-6 w-full items-center justify-center rounded-b-md bg-orange-800 p-0.5 text-center text-xs text-white">
             You&apos;re in an development environment. Set it up to test surveys, actions and attributes.
@@ -31,4 +31,4 @@ export default function SideBar({ environment, environments }: SideBarProps) {
       </div>
     </div>
   );
-}
+};

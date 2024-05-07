@@ -72,7 +72,7 @@ export default async function SegmentsLayout({ params, children }) {
           environmentId={params.environmentId}
           isUserTargetingAllowed={isAdvancedTargetingAllowed}
         />
-        <div className="ml-44 w-full">
+        <div className="w-full">
           <InnerContentWrapper pageTitle="Segments" cta={renderCreateSegmentButton()}>
             {children}
           </InnerContentWrapper>

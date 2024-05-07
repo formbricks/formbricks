@@ -37,7 +37,7 @@ export default async function SurveyLayout({ children, params }) {
           surveyId={params.surveyId}
           responseCount={responseCount}
         />
-        <div className="ml-48 w-full">
+        <div className="w-full">
           <InnerContentWrapper>{children}</InnerContentWrapper>
         </div>
       </div>

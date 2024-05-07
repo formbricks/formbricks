@@ -1,5 +1,5 @@
-import TopControlBar from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
-import VerticalNavigation from "@/app/(app)/environments/[environmentId]/components/VerticalNavigation";
+import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
+import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import type { Session } from "next-auth";
 
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -44,7 +44,7 @@ export default async function EnvironmentLayout({
     <>
       <div className="bg-slate-50 transition-all ease-in-out">
         <div className="flex">
-          <VerticalNavigation
+          <MainNavigation
             environment={environment}
             team={team}
             teams={teams}

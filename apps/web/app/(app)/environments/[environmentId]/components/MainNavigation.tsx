@@ -58,7 +58,7 @@ interface NavigationProps {
   membershipRole?: TMembershipRole;
 }
 
-export default function Navigation({
+export const MainNavigation = ({
   environment,
   teams,
   team,
@@ -66,7 +66,7 @@ export default function Navigation({
   products,
   isFormbricksCloud,
   membershipRole,
-}: NavigationProps) {
+}: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const [currentTeamName, setCurrentTeamName] = useState("");
@@ -182,7 +182,7 @@ export default function Navigation({
       {product && (
         <aside
           className={cn(
-            "sticky top-0 z-50 flex h-screen max-h-screen flex-col justify-between rounded-r-xl border border-slate-200 bg-white pt-3 shadow-sm transition-all duration-100",
+            "sticky top-0 z-50 flex h-screen max-h-screen flex-col justify-between rounded-r-xl border border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
             !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
           )}>
           <div>
@@ -434,4 +434,4 @@ export default function Navigation({
       />
     </>
   );
-}
+};

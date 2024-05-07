@@ -22,7 +22,7 @@ export const SecondNavigation = ({ navigation }: SecondNavigationProps) => {
   if (!navigation) return null;
 
   return (
-    <div className="fixed h-screen pl-6 pt-20">
+    <div className="p-6">
       <nav className="flex-1 space-y-2 px-2">
         {navigation.map(
           (link) =>

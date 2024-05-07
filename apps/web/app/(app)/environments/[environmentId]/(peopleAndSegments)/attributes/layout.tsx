@@ -20,7 +20,7 @@ export default function AttributeLayout({ params, children }) {
     <>
       <div className="flex">
         <PeopleSegmentsNav activeId="attributes" environmentId={params.environmentId} />
-        <div className="ml-44 w-full">
+        <div className="w-full">
           <InnerContentWrapper pageTitle="Attributes" cta={HowToAddAttributesButton}>
             {children}
           </InnerContentWrapper>
