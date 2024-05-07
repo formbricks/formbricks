@@ -20,7 +20,7 @@ interface CreateNewActionTabProps {
   actionClasses: TActionClass[];
   setActionClasses: React.Dispatch<React.SetStateAction<TActionClass[]>>;
   isViewer: boolean;
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  setLocalSurvey?: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   environmentId: string;
 }
@@ -154,10 +154,12 @@ export const CreateNewActionTab = ({
         setActionClasses((prevActionClasses: TActionClass[]) => [...prevActionClasses, newActionClass]);
       }
 
-      setLocalSurvey((prev) => ({
-        ...prev,
-        triggers: prev.triggers.concat({ actionClass: newActionClass }),
-      }));
+      if (setLocalSurvey) {
+        setLocalSurvey((prev) => ({
+          ...prev,
+          triggers: prev.triggers.concat({ actionClass: newActionClass }),
+        }));
+      }
 
       reset();
       resetAllStates();

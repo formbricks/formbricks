@@ -19,10 +19,10 @@ export const SavedActionsTab = ({
   setLocalSurvey,
   setOpen,
 }: SavedActionsTabProps) => {
-  const AvailableActions = actionClasses.filter(
+  const availableActions = actionClasses.filter(
     (actionClass) => !localSurvey.triggers.some((trigger) => trigger.actionClass.id === actionClass.id)
   );
-  const [filteredActionClasses, setFilteredActionClasses] = useState<TActionClass[]>(AvailableActions);
+  const [filteredActionClasses, setFilteredActionClasses] = useState<TActionClass[]>(availableActions);
 
   const codeActions = filteredActionClasses.filter((actionClass) => actionClass.type === "code");
   const noCodeActions = filteredActionClasses.filter((actionClass) => actionClass.type === "noCode");
@@ -42,7 +42,7 @@ export const SavedActionsTab = ({
         type="text"
         onChange={(e) => {
           setFilteredActionClasses(
-            actionClasses.filter((actionClass) =>
+            availableActions.filter((actionClass) =>
               actionClass.name.toLowerCase().includes(e.target.value.toLowerCase())
             )
           );
