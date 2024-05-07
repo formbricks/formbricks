@@ -1,7 +1,7 @@
 import { TJsPackageType } from "@formbricks/types/js";
 
-import { trackAction as trackInAppAction } from "../app/lib/actions";
-import { trackAction as trackWebsiteAction } from "../website/lib/actions";
+import { trackNoCodeAction as trackInAppAction } from "../app/lib/actions";
+import { trackNoCodeAction as trackWebsiteAction } from "../website/lib/actions";
 import { err } from "./errors";
 
 let exitIntentListenerAdded = false;

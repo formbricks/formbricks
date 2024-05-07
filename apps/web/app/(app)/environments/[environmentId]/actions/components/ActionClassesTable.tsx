@@ -34,6 +34,7 @@ export default function ActionClassesTable({
     id: "",
     name: "",
     type: "noCode",
+    key: "",
     description: "",
     noCodeConfig: null,
     createdAt: new Date(),
@@ -95,6 +96,7 @@ export default function ActionClassesTable({
         environmentId={environmentId}
         open={isActionDetailModalOpen}
         setOpen={setActionDetailModalOpen}
+        actionClasses={actionClasses}
         actionClass={activeActionClass}
         membershipRole={membershipRole}
         isUserTargetingEnabled={isUserTargetingEnabled}

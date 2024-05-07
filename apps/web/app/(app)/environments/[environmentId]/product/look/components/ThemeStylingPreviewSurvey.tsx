@@ -105,9 +105,9 @@ export const ThemeStylingPreviewSurvey = ({
 
   const highlightBorderColor = product.styling.highlightBorderColor?.light;
 
-  function resetQuestionProgress() {
+  const resetQuestionProgress = () => {
     setQuestionId(survey?.questions[0]?.id);
-  }
+  };
 
   const onFileUpload = async (file: File) => file.name;
 
@@ -121,7 +121,7 @@ export const ThemeStylingPreviewSurvey = ({
   };
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-items-center">
+    <div className="flex h-full w-full flex-col items-center justify-items-center overflow-hidden">
       <motion.div
         variants={previewParentContainerVariant}
         className="fixed hidden h-[95%] w-5/6"
@@ -158,14 +158,13 @@ export const ThemeStylingPreviewSurvey = ({
             <Modal
               isOpen
               placement={placement}
-              highlightBorderColor={highlightBorderColor}
               clickOutsideClose={clickOutsideClose}
               darkOverlay={darkOverlay}
               previewMode="desktop"
               background={product.styling.cardBackgroundColor?.light}
               borderRadius={product.styling.roundness ?? 8}>
               <SurveyInline
-                survey={survey}
+                survey={{ ...survey, type: "app" }}
                 isBrandingEnabled={product.inAppSurveyBranding}
                 isRedirectDisabled={true}
                 onFileUpload={onFileUpload}
@@ -187,7 +186,7 @@ export const ThemeStylingPreviewSurvey = ({
               <div
                 className={`${product.logo?.url && !product.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0  w-full max-w-md rounded-lg p-4`}>
                 <SurveyInline
-                  survey={survey}
+                  survey={{ ...survey, type: "link" }}
                   isBrandingEnabled={product.linkSurveyBranding}
                   isRedirectDisabled={true}
                   onFileUpload={onFileUpload}

@@ -18,7 +18,6 @@ export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
 
   const transformedSurvey: TSurvey = {
     ...surveyPrisma,
-    triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
     segment,
   };
 
@@ -50,7 +49,18 @@ export const buildWhereClause = (filterCriteria?: TSurveyFilterCriteria) => {
         whereClause.push({ createdBy: filterCriteria.createdBy.userId });
       }
       if (filterCriteria.createdBy.value[0] === "others") {
-        whereClause.push({ createdBy: { not: filterCriteria.createdBy.userId } });
+        whereClause.push({
+          OR: [
+            {
+              createdBy: {
+                not: filterCriteria.createdBy.userId,
+              },
+            },
+            {
+              createdBy: null,
+            },
+          ],
+        });
       }
     }
   }

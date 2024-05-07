@@ -2,7 +2,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
-import formbricksApp from "@formbricks/js/app";
+import formbricks from "@formbricks/js/app";
 
 import { SurveySwitch } from "../../components/SurveySwitch";
 import fbsetup from "../../public/fb-setup.png";
@@ -38,7 +38,7 @@ export default function AppPage({}) {
       const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
       const userInitAttributes = { language: "de", "Init Attribute 1": "eight", "Init Attribute 2": "two" };
 
-      formbricksApp.init({
+      formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         userId,
@@ -48,7 +48,7 @@ export default function AppPage({}) {
 
     // Connect next.js router to Formbricks
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
-      const handleRouteChange = formbricksApp?.registerRouteChange;
+      const handleRouteChange = formbricks?.registerRouteChange;
       router.events.on("routeChangeComplete", handleRouteChange);
 
       return () => {
@@ -61,7 +61,7 @@ export default function AppPage({}) {
     <div className="h-screen bg-white px-12 py-6 dark:bg-slate-800">
       <div className="flex flex-col justify-between md:flex-row">
         <div className="flex items-center gap-2">
-          <SurveySwitch value="app" formbricks={formbricksApp} />
+          <SurveySwitch value="app" formbricks={formbricks} />
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
               Formbricks In-product Survey Demo App
@@ -115,7 +115,7 @@ export default function AppPage({}) {
         </div>
 
         <div className="md:grid md:grid-cols-3">
-          <div className="col-span-3 rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-800">
+          <div className="col-span-3 self-start rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-800">
             <h3 className="text-lg font-semibold dark:text-white">
               Reset person / pull data from Formbricks app
             </h3>
@@ -126,7 +126,7 @@ export default function AppPage({}) {
             <button
               className="my-4 rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
               onClick={() => {
-                formbricksApp.reset();
+                formbricks.reset();
               }}>
               Reset
             </button>
@@ -136,26 +136,6 @@ export default function AppPage({}) {
             </p>
           </div>
 
-          <div className="p-6">
-            <div>
-              <button
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
-                onClick={() => {
-                  formbricksApp.track("Code Action");
-                }}>
-                Code Action
-              </button>
-            </div>
-            <div>
-              <p className="text-xs text-slate-700 dark:text-slate-300">
-                This button sends a{" "}
-                <a href="https://formbricks.com/docs/actions/code" className="underline" target="_blank">
-                  Code Action
-                </a>{" "}
-                to the Formbricks API called &apos;Code Action&apos;. You will find it in the Actions Tab.
-              </p>
-            </div>
-          </div>
           <div className="p-6">
             <div>
               <button className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
@@ -185,7 +165,7 @@ export default function AppPage({}) {
             <div>
               <button
                 onClick={() => {
-                  formbricksApp.setAttribute("Plan", "Free");
+                  formbricks.setAttribute("Plan", "Free");
                 }}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Plan to &apos;Free&apos;
@@ -208,7 +188,7 @@ export default function AppPage({}) {
             <div>
               <button
                 onClick={() => {
-                  formbricksApp.setAttribute("Plan", "Paid");
+                  formbricks.setAttribute("Plan", "Paid");
                 }}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Plan to &apos;Paid&apos;
@@ -231,7 +211,7 @@ export default function AppPage({}) {
             <div>
               <button
                 onClick={() => {
-                  formbricksApp.setEmail("test@web.com");
+                  formbricks.setEmail("test@web.com");
                 }}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Email

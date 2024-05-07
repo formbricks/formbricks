@@ -332,6 +332,7 @@ model ActionClass {
   name          String
   description   String?
   type          ActionType
+  key           String?
   /// @zod.custom(imports.ZActionClassNoCodeConfig)
   /// [ActionClassNoCodeConfig]
   noCodeConfig  Json?
@@ -340,6 +341,7 @@ model ActionClass {
   surveys       SurveyTrigger[]
   actions       Action[]
 
+  @@unique([key, environmentId])
   @@unique([name, environmentId])
   @@index([environmentId, createdAt])
 }

@@ -44,7 +44,7 @@ export function AutoCloseWrapper({ survey, onClose, children }: AutoCloseProps) 
   }, [survey.autoClose]);
 
   return (
-    <div>
+    <div className="h-full w-full">
       {survey.autoClose && showAutoCloseProgressBar && (
         <AutoCloseProgressBar autoCloseTimeout={survey.autoClose} />
       )}

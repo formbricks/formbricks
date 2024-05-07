@@ -19,7 +19,7 @@ export default async function LanguageSettingsPage({ params }: { params: { envir
     throw new Error("Team not found");
   }
 
-  const isMultiLanguageAllowed = getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
 
   if (!isMultiLanguageAllowed) {
     notFound();

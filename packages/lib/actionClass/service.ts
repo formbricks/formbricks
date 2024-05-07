@@ -23,6 +23,7 @@ const select = {
   name: true,
   description: true,
   type: true,
+  key: true,
   noCodeConfig: true,
   environmentId: true,
 };
@@ -54,6 +55,7 @@ export const getActionClasses = (environmentId: string, page?: number): Promise<
     }
   )();
 
+// This function is used to get an action by its name and environmentId(it can return private actions as well)
 export const getActionClassByEnvironmentIdAndName = (
   environmentId: string,
   name: string
@@ -147,6 +149,7 @@ export const createActionClass = async (
         name: actionClass.name,
         description: actionClass.description,
         type: actionClass.type,
+        key: actionClass.type === "code" ? actionClass.key : undefined,
         noCodeConfig: actionClass.noCodeConfig ? structuredClone(actionClass.noCodeConfig) : undefined,
         environment: { connect: { id: environmentId } },
       },
@@ -161,7 +164,12 @@ export const createActionClass = async (
 
     return actionClassPrisma;
   } catch (error) {
-    console.error(error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new DatabaseError(
+        `Action with ${error.meta?.target?.[0]} ${actionClass[error.meta?.target?.[0]]} already exists`
+      );
+    }
+
     throw new DatabaseError(`Database error when creating an action for environment ${environmentId}`);
   }
 };
@@ -182,9 +190,14 @@ export const updateActionClass = async (
         name: inputActionClass.name,
         description: inputActionClass.description,
         type: inputActionClass.type,
-        noCodeConfig: inputActionClass.noCodeConfig
-          ? structuredClone(inputActionClass.noCodeConfig)
-          : undefined,
+
+        ...(inputActionClass.type === "code"
+          ? { key: inputActionClass.key }
+          : {
+              noCodeConfig: inputActionClass.noCodeConfig
+                ? structuredClone(inputActionClass.noCodeConfig)
+                : undefined,
+            }),
       },
       select,
     });
@@ -198,6 +211,12 @@ export const updateActionClass = async (
 
     return result;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new DatabaseError(
+        `Action with ${error.meta?.target?.[0]} ${inputActionClass[error.meta?.target?.[0]]} already exists`
+      );
+    }
+
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
