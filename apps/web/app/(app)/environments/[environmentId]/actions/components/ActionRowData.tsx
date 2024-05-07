@@ -1,4 +1,3 @@
-import { getFormattedActionClassName } from "@/app/lib/actionClass/actionClass";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 
 import { timeSinceConditionally } from "@formbricks/lib/time";
@@ -19,7 +18,7 @@ export default function ActionClassDataRow({ actionClass }: { actionClass: TActi
             ) : null}
           </div>
           <div className="ml-4 text-left">
-            <div className="font-medium text-slate-900">{getFormattedActionClassName(actionClass.name)}</div>
+            <div className="font-medium text-slate-900">{actionClass.name}</div>
             <div className="text-xs text-slate-400">{actionClass.description}</div>
           </div>
         </div>

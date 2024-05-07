@@ -1,6 +1,5 @@
 "use client";
 
-import { getFormattedActionClassName } from "@/app/lib/actionClass/actionClass";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
   CheckIcon,
@@ -180,9 +179,7 @@ export default function WhenToSendCard({
                             ) : null}
                           </div>
 
-                          <h4 className="text-sm font-semibold text-slate-600">
-                            {getFormattedActionClassName(trigger.actionClass.name)}
-                          </h4>
+                          <h4 className="text-sm font-semibold text-slate-600">{trigger.actionClass.name}</h4>
                         </div>
                         <div className="mt-1 text-xs text-gray-500">
                           {trigger.actionClass.description && (

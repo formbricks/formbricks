@@ -1,4 +1,3 @@
-import { getFormattedActionClassName } from "@/app/lib/actionClass/actionClass";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -76,9 +75,7 @@ export const SavedActionsTab = ({
                           ) : null}
                         </div>
 
-                        <h4 className="text-sm font-semibold text-slate-600">
-                          {getFormattedActionClassName(action.name)}
-                        </h4>
+                        <h4 className="text-sm font-semibold text-slate-600">{action.name}</h4>
                       </div>
                       <p className="mt-1 text-xs text-gray-500">{action.description}</p>
                     </div>
