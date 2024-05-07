@@ -22,6 +22,12 @@ x-environment: &environment
     # You can use: $(openssl rand -hex 32) to generate one
     ENCRYPTION_KEY:
 
+    ############################################# OPTIONAL (ENTERPRISE EDITION) #############################################
+
+    # Enterprise License Key (More info at: https://formbricks.com/docs/self-hosting/license)
+    # Required to access Enterprise-only features
+    # ENTERPRISE_LICENSE_KEY:
+
     ############################################# OPTIONAL (EMAIL CONFIGURATION) #############################################
 
     # Email Configuration
@@ -30,8 +36,9 @@ x-environment: &environment
     # SMTP_PORT:
     # SMTP_USER:
     # SMTP_PASSWORD:
-    # (If you face SSL errors, try toggling below)
-    # SMTP_SECURE_ENABLED:
+
+    # (Additional option for TLS (port 465) only)
+    # SMTP_SECURE_ENABLED: 1
 
     ############################################## OPTIONAL (APP CONFIGURATION) ##############################################
 
@@ -64,17 +71,6 @@ x-environment: &environment
 
     # Set the below to your Unsplash API Key for their Survey Backgrounds
     # UNSPLASH_ACCESS_KEY:
-
-    ############################################### OPTIONAL (COPYRIGHT URLs) ################################################
-
-    # Set the below to have your own Privacy Page URL on auth & link survey page
-    # PRIVACY_URL:
-
-    # Set the below to have your own Terms Page URL on auth & link survey page
-    # TERMS_URL:
-
-    # Set the below to have your own Imprint Page URL on auth & link survey page
-    # IMPRINT_URL:
 
     ################################################### OPTIONAL (STORAGE) ###################################################
 
@@ -112,7 +108,7 @@ x-environment: &environment
     # OIDC_DISPLAY_NAME:
     # OIDC_SIGNING_ALGORITHM:
 
-    ########################################## OPTIONAL (Third Party Integrations) ###########################################
+    ########################################## OPTIONAL (THIRD PARTY INTEGRATIONS) ###########################################
 
     # Oauth credentials for Notion Integration
     # NOTION_OAUTH_CLIENT_ID:
@@ -130,7 +126,18 @@ x-environment: &environment
     # SLACK_CLIENT_ID:
     # SLACK_CLIENT_SECRET:
 
-    ########################################## OPTIONAL (DEPLOYMENT CONFIGURATION) ###########################################
+    ############################################### OPTIONAL (LEGAL INFORMATION) ################################################
+
+    # Set the below to have your own Privacy Page URL on auth & link survey page
+    # PRIVACY_URL:
+
+    # Set the below to have your own Terms Page URL on auth & link survey page
+    # TERMS_URL:
+
+    # Set the below to have your own Imprint Page URL on auth & link survey page
+    # IMPRINT_URL:
+
+    ########################################## OPTIONAL (SERVER CONFIGURATION) ###########################################
 
     # Set the below to 1 to disable Rate Limiting across Formbricks
     # RATE_LIMITING_DISABLED: 1
@@ -144,11 +151,7 @@ x-environment: &environment
     # Set the below to use for Rate Limiting (default us In-Memory LRU Cache)
     # REDIS_HTTP_URL:
 
-    ############################################# OPTIONAL (ENTERPRISE FEATURES) #############################################
-
-    # Enterprise License Key (More info at: https://formbricks.com/pricing)
-    # Required to access Enterprise-only features
-    # ENTERPRISE_LICENSE_KEY:
+    ############################################# OPTIONAL (OTHER) #############################################
 
     # Set the below to automatically assign new users to a specific team and role within that team
     # Insert an existing team id or generate a valid CUID for a new one at https://www.getuniqueid.com/cuid (e.g. cjld2cjxh0000qzrmn831i7rn)
