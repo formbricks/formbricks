@@ -162,7 +162,6 @@ export default function WhenToSendCard({
               </p>
 
               {localSurvey.triggers.filter(Boolean).map((trigger, idx) => {
-                console.log(trigger);
                 return (
                   <div className="flex items-center gap-2" key={trigger.actionClass.id}>
                     {idx !== 0 && <p className="ml-1 text-sm font-bold text-slate-700">or</p>}
