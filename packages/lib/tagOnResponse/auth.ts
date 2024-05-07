@@ -1,10 +1,8 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
-
 import { ZId } from "@formbricks/types/environment";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
 import { canUserAccessResponse } from "../response/auth";
@@ -13,23 +11,26 @@ import { getTeamByEnvironmentId } from "../team/service";
 import { validateInputs } from "../utils/validate";
 import { tagOnResponseCache } from "./cache";
 
-export const canUserAccessTagOnResponse = async (
+export const canUserAccessTagOnResponse = (
   userId: string,
   tagId: string,
   responseId: string
 ): Promise<boolean> =>
-  await unstable_cache(
+  cache(
     async () => {
       validateInputs([userId, ZId], [tagId, ZId], [responseId, ZId]);
 
-      const isAuthorizedForTag = await canUserAccessTag(userId, tagId);
-      const isAuthorizedForResponse = await canUserAccessResponse(userId, responseId);
+      try {
+        const isAuthorizedForTag = await canUserAccessTag(userId, tagId);
+        const isAuthorizedForResponse = await canUserAccessResponse(userId, responseId);
 
-      return isAuthorizedForTag && isAuthorizedForResponse;
+        return isAuthorizedForTag && isAuthorizedForResponse;
+      } catch (error) {
+        throw error;
+      }
     },
-    [`users-${userId}-tagOnResponse-${tagId}-${responseId}`],
+    [`canUserAccessTagOnResponse-${userId}-${tagId}-${responseId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [tagOnResponseCache.tag.byResponseIdAndTagId(responseId, tagId)],
     }
   )();

@@ -4,24 +4,23 @@ import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/M
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import { Variants, motion } from "framer-motion";
-import { ExpandIcon, MonitorIcon, RefreshCcwIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui/Button";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
+import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 
 interface PreviewSurveyProps {
   survey: TSurvey;
-  setActiveQuestionId: (id: string | null) => void;
-  activeQuestionId?: string | null;
+  questionId?: string | null;
   previewType?: TPreviewType;
   product: TProduct;
   environment: TEnvironment;
@@ -29,7 +28,7 @@ interface PreviewSurveyProps {
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
 }
 
-let surveyNameTemp;
+let surveyNameTemp: string;
 
 const previewParentContainerVariant: Variants = {
   expanded: {
@@ -58,16 +57,17 @@ const previewParentContainerVariant: Variants = {
   },
 };
 
-export default function PreviewSurvey({
-  setActiveQuestionId,
-  activeQuestionId,
+let setQuestionId = (_: string) => {};
+
+export const PreviewSurvey = ({
+  questionId,
   survey,
   previewType,
   product,
   environment,
   languageCode,
   onFileUpload,
-}: PreviewSurveyProps) {
+}: PreviewSurveyProps) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
@@ -76,7 +76,6 @@ export default function PreviewSurvey({
   const ContentRef = useRef<HTMLDivElement | null>(null);
   const [shrink, setShrink] = useState(false);
   const { productOverwrites } = survey || {};
-
   const previewScreenVariants: Variants = {
     expanded: {
       right: "5%",
@@ -113,8 +112,12 @@ export default function PreviewSurvey({
   };
 
   const { placement: surveyPlacement } = productOverwrites || {};
+  const { darkOverlay: surveyDarkOverlay } = productOverwrites || {};
+  const { clickOutsideClose: surveyClickOutsideClose } = productOverwrites || {};
 
   const placement = surveyPlacement || product.placement;
+  const darkOverlay = surveyDarkOverlay ?? product.darkOverlay;
+  const clickOutsideClose = surveyClickOutsideClose ?? product.clickOutsideClose;
 
   const styling: TSurveyStyling | TProductStyling = useMemo(() => {
     // allow style overwrite is disabled from the product
@@ -136,20 +139,33 @@ export default function PreviewSurvey({
     return product.styling;
   }, [product.styling, survey.styling]);
 
-  useEffect(() => {
-    // close modal if there are no questions left
-    if (survey.type === "web" && !survey.thankYouCard.enabled) {
-      if (activeQuestionId === "end") {
-        setIsModalOpen(false);
-        setTimeout(() => {
-          setActiveQuestionId(survey.questions[0]?.id);
-          setIsModalOpen(true);
-        }, 500);
-      }
-    }
-  }, [activeQuestionId, survey.type, survey, setActiveQuestionId]);
+  const updateQuestionId = useCallback(
+    (newQuestionId: string) => {
+      if (!newQuestionId || newQuestionId === "hidden" || newQuestionId === "multiLanguage") return;
+      if (newQuestionId === "start" && !survey.welcomeCard.enabled) return;
+      setQuestionId(newQuestionId);
+    },
+    [survey.welcomeCard.enabled]
+  );
 
-  // this useEffect is fo refreshing the survey preview only if user is switching between templates on survey templates page and hence we are checking for survey.id === "someUniqeId1" which is a common Id for all templates
+  useEffect(() => {
+    if (questionId) {
+      updateQuestionId(questionId);
+    }
+  }, [questionId, updateQuestionId]);
+
+  const onFinished = () => {
+    // close modal if there are no questions left
+    if ((survey.type === "website" || survey.type === "app") && !survey.thankYouCard.enabled) {
+      setIsModalOpen(false);
+      setTimeout(() => {
+        setQuestionId(survey.questions[0]?.id);
+        setIsModalOpen(true);
+      }, 500);
+    }
+  };
+
+  // this useEffect is for refreshing the survey preview only if user is switching between templates on survey templates page and hence we are checking for survey.id === "someUniqeId1" which is a common Id for all templates
   useEffect(() => {
     if (survey.name !== surveyNameTemp && survey.id === "someUniqueId1") {
       resetQuestionProgress();
@@ -165,7 +181,7 @@ export default function PreviewSurvey({
       setPreviewMode(storePreviewMode);
     }, 10);
 
-    setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
+    setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
   };
 
   useEffect(() => {
@@ -186,13 +202,13 @@ export default function PreviewSurvey({
   if (!previewType) {
     previewType = widgetSetupCompleted ? "modal" : "fullwidth";
 
-    if (!activeQuestionId) {
+    if (!questionId) {
       return <></>;
     }
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-items-center">
+    <div className="flex h-full w-full flex-col items-center justify-items-center" id="survey-preview">
       <motion.div
         variants={previewParentContainerVariant}
         className="fixed hidden h-[95%] w-5/6"
@@ -215,7 +231,7 @@ export default function PreviewSurvey({
               Preview
             </p>
             <div className="absolute right-0 top-0 m-2">
-              <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
+              <ResetProgressButton onClick={resetQuestionProgress} />
             </div>
             <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isMobilePreview>
               {previewType === "modal" ? (
@@ -224,38 +240,43 @@ export default function PreviewSurvey({
                   placement={placement}
                   highlightBorderColor={styling.highlightBorderColor?.light}
                   previewMode="mobile"
+                  darkOverlay={darkOverlay}
+                  clickOutsideClose={clickOutsideClose}
                   borderRadius={styling?.roundness ?? 8}
                   background={styling?.cardBackgroundColor?.light}>
                   <SurveyInline
                     survey={survey}
-                    activeQuestionId={activeQuestionId || undefined}
                     isBrandingEnabled={product.inAppSurveyBranding}
-                    onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     languageCode={languageCode}
                     onFileUpload={onFileUpload}
                     styling={styling}
                     isCardBorderVisible={!styling.highlightBorderColor?.light}
                     onClose={handlePreviewModalClose}
+                    getSetQuestionId={(f: (value: string) => void) => {
+                      setQuestionId = f;
+                    }}
+                    onFinished={onFinished}
                   />
                 </Modal>
               ) : (
-                <div className="w-full px-3">
+                <div className="flex h-full w-full flex-col justify-end">
                   <div className="absolute left-5 top-5">
-                    {!styling.isLogoHidden && product.logo?.url && (
+                    {!styling.isLogoHidden && (
                       <ClientLogo environmentId={environment.id} product={product} previewSurvey />
                     )}
                   </div>
-                  <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
+                  <div className="no-scrollbar z-10 w-full border border-transparent">
                     <SurveyInline
                       survey={survey}
-                      activeQuestionId={activeQuestionId || undefined}
                       isBrandingEnabled={product.linkSurveyBranding}
-                      onActiveQuestionChange={setActiveQuestionId}
                       onFileUpload={onFileUpload}
                       languageCode={languageCode}
                       responseCount={42}
                       styling={styling}
+                      getSetQuestionId={(f: (value: string) => void) => {
+                        setQuestionId = f;
+                      }}
                     />
                   </div>
                 </div>
@@ -294,7 +315,7 @@ export default function PreviewSurvey({
                       }}
                     />
                   )}
-                  <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
+                  <ResetProgressButton onClick={resetQuestionProgress} />
                 </div>
               </div>
             </div>
@@ -304,40 +325,45 @@ export default function PreviewSurvey({
                 isOpen={isModalOpen}
                 placement={placement}
                 highlightBorderColor={styling.highlightBorderColor?.light}
+                clickOutsideClose={clickOutsideClose}
+                darkOverlay={darkOverlay}
                 previewMode="desktop"
                 borderRadius={styling.roundness ?? 8}
                 background={styling.cardBackgroundColor?.light}>
                 <SurveyInline
                   survey={survey}
-                  activeQuestionId={activeQuestionId || undefined}
                   isBrandingEnabled={product.inAppSurveyBranding}
-                  onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                   languageCode={languageCode}
                   onFileUpload={onFileUpload}
                   styling={styling}
                   isCardBorderVisible={!styling.highlightBorderColor?.light}
                   onClose={handlePreviewModalClose}
+                  getSetQuestionId={(f: (value: string) => void) => {
+                    setQuestionId = f;
+                  }}
+                  onFinished={onFinished}
                 />
               </Modal>
             ) : (
               <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
                 <div className="absolute left-5 top-5">
-                  {!styling.isLogoHidden && product.logo?.url && (
+                  {!styling.isLogoHidden && (
                     <ClientLogo environmentId={environment.id} product={product} previewSurvey />
                   )}
                 </div>
                 <div className="z-0 w-full max-w-md rounded-lg border-transparent">
                   <SurveyInline
                     survey={survey}
-                    activeQuestionId={activeQuestionId || undefined}
                     isBrandingEnabled={product.linkSurveyBranding}
-                    onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
                     languageCode={languageCode}
                     responseCount={42}
                     styling={styling}
+                    getSetQuestionId={(f: (value: string) => void) => {
+                      setQuestionId = f;
+                    }}
                   />
                 </div>
               </MediaBackground>
@@ -361,16 +387,4 @@ export default function PreviewSurvey({
       </div>
     </div>
   );
-}
-
-function ResetProgressButton({ resetQuestionProgress }) {
-  return (
-    <Button
-      variant="minimal"
-      className="py-0.2 mr-2 bg-white px-2 font-sans text-sm text-slate-500"
-      onClick={resetQuestionProgress}>
-      Restart
-      <RefreshCcwIcon className="ml-2 h-4 w-4" />
-    </Button>
-  );
-}
+};

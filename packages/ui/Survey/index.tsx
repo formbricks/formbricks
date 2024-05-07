@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
 
@@ -16,15 +16,29 @@ declare global {
 
 export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
   const containerId = useMemo(() => createContainerId(), []);
+  const renderInline = useCallback(
+    () => window.formbricksSurveys.renderSurveyInline({ ...props, containerId }),
+    [containerId, props]
+  );
+
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const renderInline = () => window.formbricksSurveys.renderSurveyInline({ ...props, containerId });
-      if (!window.formbricksSurveys) {
-        loadSurveyScript().then(renderInline);
-      } else {
-        renderInline();
+    async function loadScript() {
+      if (typeof window !== "undefined") {
+        if (!window.formbricksSurveys) {
+          try {
+            await loadSurveyScript();
+            renderInline();
+          } catch (error) {
+            console.error("Failed to load the surveys package: ", error);
+          }
+        } else {
+          renderInline();
+        }
       }
     }
-  }, [containerId, props]);
-  return <div id={containerId} className="h-full w-full" />;
+
+    loadScript();
+  }, [containerId, props, renderInline]);
+
+  return <div id={containerId} className="w-full" />;
 };

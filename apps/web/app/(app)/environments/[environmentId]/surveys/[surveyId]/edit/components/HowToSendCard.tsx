@@ -1,12 +1,13 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { AlertCircleIcon, CheckIcon, LinkIcon, MonitorIcon, SmartphoneIcon } from "lucide-react";
+import { AlertCircleIcon, CheckIcon, EarthIcon, LinkIcon, MonitorIcon, SmartphoneIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
+import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
 import { Label } from "@formbricks/ui/Label";
@@ -14,7 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 
 interface HowToSendCardProps {
   localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey | ((TSurvey) => TSurvey)) => void;
+  setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
   environment: TEnvironment;
 }
 
@@ -39,14 +40,50 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
         enabled: type === "link" ? true : prevSurvey.thankYouCard.enabled,
       },
     }));
+
+    // if the type is "app" and the local survey does not already have a segment, we create a new temporary segment
+    if (type === "app" && !localSurvey.segment) {
+      const tempSegment: TSegment = {
+        id: "temp",
+        isPrivate: true,
+        title: localSurvey.id,
+        environmentId: environment.id,
+        surveys: [localSurvey.id],
+        filters: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+      };
+
+      setLocalSurvey((prevSurvey) => ({
+        ...prevSurvey,
+        segment: tempSegment,
+      }));
+    }
+
+    // if the type is anything other than "app" and the local survey has a temporary segment, we remove it
+    if (type !== "app" && localSurvey.segment?.id === "temp") {
+      setLocalSurvey((prevSurvey) => ({
+        ...prevSurvey,
+        segment: null,
+      }));
+    }
   };
 
   const options = [
     {
-      id: "web",
-      name: "In-App Survey",
+      id: "website",
+      name: "Website Survey",
+      icon: EarthIcon,
+      description: "Run targeted surveys on public websites.",
+      comingSoon: false,
+      alert: !widgetSetupCompleted,
+    },
+    {
+      id: "app",
+      name: "App Survey",
       icon: MonitorIcon,
-      description: "Embed a survey in your web app to collect responses.",
+      description: "Embed a survey in your web app to collect responses with user identification.",
       comingSoon: false,
       alert: !widgetSetupCompleted,
     },
@@ -97,7 +134,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
           <RadioGroup
-            defaultValue="web"
+            defaultValue="app"
             value={localSurvey.type}
             onValueChange={setSurveyType}
             className="flex flex-col space-y-3">

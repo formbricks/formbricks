@@ -3,45 +3,26 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
-import { TPerson } from "@formbricks/types/people";
+import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys";
 
-export const formatSurveyDateFields = (survey: TSurvey): TSurvey => {
-  if (typeof survey.createdAt === "string") {
-    survey.createdAt = new Date(survey.createdAt);
-  }
-  if (typeof survey.updatedAt === "string") {
-    survey.updatedAt = new Date(survey.updatedAt);
-  }
-  if (typeof survey.runOnDate === "string") {
-    survey.runOnDate = new Date(survey.runOnDate);
-  }
-  if (typeof survey.closeOnDate === "string") {
-    survey.closeOnDate = new Date(survey.closeOnDate);
+export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
+  let segment: TSegment | null = null;
+
+  if (surveyPrisma.segment) {
+    segment = {
+      ...surveyPrisma.segment,
+      surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
+    };
   }
 
-  if (survey.segment) {
-    if (typeof survey.segment.createdAt === "string") {
-      survey.segment.createdAt = new Date(survey.segment.createdAt);
-    }
+  const transformedSurvey: TSurvey = {
+    ...surveyPrisma,
+    triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
+    segment,
+  };
 
-    if (typeof survey.segment.updatedAt === "string") {
-      survey.segment.updatedAt = new Date(survey.segment.updatedAt);
-    }
-  }
-
-  if (survey.languages) {
-    survey.languages.forEach((surveyLanguage) => {
-      if (typeof surveyLanguage.language.createdAt === "string") {
-        surveyLanguage.language.createdAt = new Date(surveyLanguage.language.createdAt);
-      }
-      if (typeof surveyLanguage.language.updatedAt === "string") {
-        surveyLanguage.language.updatedAt = new Date(surveyLanguage.language.updatedAt);
-      }
-    });
-  }
-
-  return survey;
+  return transformedSurvey;
 };
 
 export const buildWhereClause = (filterCriteria?: TSurveyFilterCriteria) => {
@@ -69,7 +50,18 @@ export const buildWhereClause = (filterCriteria?: TSurveyFilterCriteria) => {
         whereClause.push({ createdBy: filterCriteria.createdBy.userId });
       }
       if (filterCriteria.createdBy.value[0] === "others") {
-        whereClause.push({ createdBy: { not: filterCriteria.createdBy.userId } });
+        whereClause.push({
+          OR: [
+            {
+              createdBy: {
+                not: filterCriteria.createdBy.userId,
+              },
+            },
+            {
+              createdBy: null,
+            },
+          ],
+        });
       }
     }
   }
@@ -98,22 +90,4 @@ export const anySurveyHasFilters = (surveys: TSurvey[] | TLegacySurvey[]): boole
     }
     return false;
   });
-};
-
-export const determineLanguageCode = (person: TPerson, survey: TSurvey) => {
-  // Default to 'default' if person.attributes.language is not set or not a string
-  if (!person.attributes?.language) return "default";
-  const languageCodeOrAlias =
-    typeof person.attributes?.language === "string" ? person.attributes.language : "default";
-
-  // Find the matching language in the survey
-  const selectedLanguage = survey.languages.find(
-    (surveyLanguage) =>
-      surveyLanguage.language.code === languageCodeOrAlias ||
-      surveyLanguage.language.alias === languageCodeOrAlias
-  );
-  if (!selectedLanguage) return;
-
-  // Determine and return the language code to use
-  return selectedLanguage.default ? "default" : selectedLanguage.language.code;
 };

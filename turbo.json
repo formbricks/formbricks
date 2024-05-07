@@ -56,9 +56,6 @@
       "env": [
         "AIRTABLE_CLIENT_ID",
         "ASSET_PREFIX_URL",
-        "AWS_ACCESS_KEY_ID",
-        "AWS_SECRET_ACCESS_KEY",
-        "AWS_REGION",
         "AZUREAD_CLIENT_ID",
         "AZUREAD_CLIENT_SECRET",
         "AZUREAD_TENANT_ID",
@@ -66,6 +63,7 @@
         "DEFAULT_TEAM_ROLE",
         "ONBOARDING_DISABLED",
         "CRON_SECRET",
+        "CUSTOM_CACHE_DISABLED",
         "CUSTOMER_IO_API_KEY",
         "CUSTOMER_IO_SITE_ID",
         "DEBUG",
@@ -145,7 +143,8 @@
         "UPLOADS_DIR",
         "VERCEL",
         "VERCEL_URL",
-        "WEBAPP_URL"
+        "WEBAPP_URL",
+        "UNSPLASH_ACCESS_KEY"
       ]
     },
     "build:dev": {

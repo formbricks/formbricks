@@ -2,11 +2,16 @@
 
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { LoadingSkeleton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LoadingSkeleton";
+import { QuestionsAudienceTabs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionsStylingSettingsTabs";
+import { QuestionsView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionsView";
+import { SettingsView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/SettingsView";
 import { StylingView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/StylingView";
+import { SurveyMenuBar } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyMenuBar";
+import { PreviewSurvey } from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurvey";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -15,12 +20,6 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys";
-
-import PreviewSurvey from "../../../components/PreviewSurvey";
-import QuestionsAudienceTabs from "./QuestionsStylingSettingsTabs";
-import QuestionsView from "./QuestionsView";
-import SettingsView from "./SettingsView";
-import SurveyMenuBar from "./SurveyMenuBar";
 
 interface SurveyEditorProps {
   survey: TSurvey;
@@ -35,6 +34,7 @@ interface SurveyEditorProps {
   isUserTargetingAllowed?: boolean;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
+  isUnsplashConfigured: boolean;
 }
 
 export default function SurveyEditor({
@@ -50,6 +50,7 @@ export default function SurveyEditor({
   isMultiLanguageAllowed,
   isUserTargetingAllowed = false,
   isFormbricksCloud,
+  isUnsplashConfigured,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -61,8 +62,6 @@ export default function SurveyEditor({
 
   const [styling, setStyling] = useState(localSurvey?.styling);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
-
-  const createdSegmentRef = useRef(false);
 
   const fetchLatestProduct = useCallback(async () => {
     const latestProduct = await refetchProduct(localProduct.id);
@@ -113,39 +112,6 @@ export default function SurveyEditor({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type, survey?.questions]);
-
-  const handleCreateSegment = async () => {
-    if (!localSurvey) return;
-
-    try {
-      const createdSegment = await createSegmentAction({
-        title: localSurvey.id,
-        description: "",
-        environmentId: environment.id,
-        surveyId: localSurvey.id,
-        filters: [],
-        isPrivate: true,
-      });
-
-      const localSurveyClone = structuredClone(localSurvey);
-      localSurveyClone.segment = createdSegment;
-      setLocalSurvey(localSurveyClone);
-    } catch (err) {
-      // set the ref to false to retry during the next render
-      createdSegmentRef.current = false;
-    }
-  };
-
-  useEffect(() => {
-    if (!localSurvey || localSurvey.type !== "web" || !!localSurvey.segment || createdSegmentRef.current) {
-      return;
-    }
-
-    createdSegmentRef.current = true;
-    handleCreateSegment();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSurvey]);
 
   useEffect(() => {
     if (!localSurvey?.languages) return;
@@ -210,6 +176,7 @@ export default function SurveyEditor({
                 setStyling={setStyling}
                 localStylingChanges={localStylingChanges}
                 setLocalStylingChanges={setLocalStylingChanges}
+                isUnsplashConfigured={isUnsplashConfigured}
               />
             )}
 
@@ -232,11 +199,12 @@ export default function SurveyEditor({
           <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6 md:flex md:flex-col">
             <PreviewSurvey
               survey={localSurvey}
-              setActiveQuestionId={setActiveQuestionId}
-              activeQuestionId={activeQuestionId}
+              questionId={activeQuestionId}
               product={localProduct}
               environment={environment}
-              previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
+              previewType={
+                localSurvey.type === "app" || localSurvey.type === "website" ? "modal" : "fullwidth"
+              }
               languageCode={selectedLanguageCode}
               onFileUpload={async (file) => file.name}
             />

@@ -1,8 +1,6 @@
-import { unstable_cache } from "next/cache";
-
 import { ZId } from "@formbricks/types/environment";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
 import { getMembershipByUserIdTeamId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
 import { getTeamsByUserId } from "../team/service";
@@ -10,22 +8,25 @@ import { validateInputs } from "../utils/validate";
 import { productCache } from "./cache";
 import { getProduct } from "./service";
 
-export const canUserAccessProduct = async (userId: string, productId: string): Promise<boolean> =>
-  await unstable_cache(
+export const canUserAccessProduct = (userId: string, productId: string): Promise<boolean> =>
+  cache(
     async () => {
       validateInputs([userId, ZId], [productId, ZId]);
 
       if (!userId || !productId) return false;
 
-      const product = await getProduct(productId);
-      if (!product) return false;
+      try {
+        const product = await getProduct(productId);
+        if (!product) return false;
 
-      const teamIds = (await getTeamsByUserId(userId)).map((team) => team.id);
-      return teamIds.includes(product.teamId);
+        const teamIds = (await getTeamsByUserId(userId)).map((team) => team.id);
+        return teamIds.includes(product.teamId);
+      } catch (error) {
+        throw error;
+      }
     },
     [`canUserAccessProduct-${userId}-${productId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [productCache.tag.byId(productId), productCache.tag.byUserId(userId)],
     }
   )();

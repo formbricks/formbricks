@@ -1,4 +1,4 @@
-import PeopleSegmentsTabs from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/PeopleSegmentsTabs";
+import PeopleSegmentsTabs from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/components/PeopleSegmentsTabs";
 import { Metadata } from "next";
 
 import { ContentWrapper } from "@formbricks/ui/ContentWrapper";

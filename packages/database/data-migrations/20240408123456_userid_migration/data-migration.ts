@@ -6,48 +6,35 @@ async function main() {
   await prisma.$transaction(
     async (tx) => {
       // get all the persons that have an attribute class with the name "userId"
-      const personsWithUserIdAttribute = await tx.person.findMany({
+      const userIdAttributeClasses = await tx.attributeClass.findMany({
         where: {
-          attributes: {
-            some: {
-              attributeClass: {
-                name: "userId",
-              },
-            },
-          },
+          name: "userId",
         },
         include: {
           attributes: {
-            include: { attributeClass: true },
+            include: { person: true },
           },
         },
       });
 
-      for (let person of personsWithUserIdAttribute) {
-        // If the person already has a userId, skip it
-        if (person.userId) {
-          continue;
-        }
-
-        const userIdAttributeValue = person.attributes.find((attribute) => {
-          if (attribute.attributeClass.name === "userId") {
-            return attribute;
+      for (let attributeClass of userIdAttributeClasses) {
+        for (let attribute of attributeClass.attributes) {
+          if (attribute.person.userId) {
+            continue;
           }
-        });
 
-        if (!userIdAttributeValue) {
-          continue;
+          await tx.person.update({
+            where: {
+              id: attribute.personId,
+            },
+            data: {
+              userId: attribute.value,
+            },
+          });
         }
-
-        await tx.person.update({
-          where: {
-            id: person.id,
-          },
-          data: {
-            userId: userIdAttributeValue.value,
-          },
-        });
       }
+
+      console.log("Migrated userIds to the person table.");
 
       // Delete all attributeClasses with the name "userId"
       await tx.attributeClass.deleteMany({
@@ -55,6 +42,8 @@ async function main() {
           name: "userId",
         },
       });
+
+      console.log("Deleted attributeClasses with the name 'userId'.");
     },
     {
       timeout: 60000 * 3, // 3 minutes

@@ -19,7 +19,7 @@ export const SurveyTypeSelection: React.FC = () => {
         subheading="Follow individual feedback trails or zoom out for the big picture. All in one place."
       />
 
-      <div className="flex space-x-8 text-center">
+      <div className="space-y-6 text-center md:flex md:space-x-8 md:space-y-0">
         <OptionCard
           size="lg"
           title="On your website"
@@ -32,7 +32,7 @@ export const SurveyTypeSelection: React.FC = () => {
         <OptionCard
           size="lg"
           title="In emails"
-          description="Create on brand surveys, embedded in your emails."
+          description="Embed branded surveys in your emails."
           onSelect={() => {
             router.push("/open-source-form-builder");
           }}>

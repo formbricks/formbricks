@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import { TProduct } from "@formbricks/types/product";
@@ -24,6 +26,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
 }) => {
   const animatedBackgroundRef = useRef<HTMLVideoElement>(null);
   const [backgroundLoaded, setBackgroundLoaded] = useState(false);
+  const [authorDetailsForUnsplash, setAuthorDetailsForUnsplash] = useState({ authorName: "", authorURL: "" });
 
   // get the background from either the survey or the product styling
   const background = useMemo(() => {
@@ -55,11 +58,18 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
 
       // Cleanup
       return () => video.removeEventListener("canplaythrough", onCanPlayThrough);
-    } else if (background?.bgType === "image" && background?.bg) {
-      // For images, we create a new Image object to listen for the 'load' event
-      const img = new Image();
-      img.onload = () => setBackgroundLoaded(true);
-      img.src = background?.bg;
+    } else if ((background?.bgType === "image" || background?.bgType === "upload") && background?.bg) {
+      if (background?.bgType === "image") {
+        // To not set for Default Images as they have relative URL & are not from Unsplash
+        if (!background?.bg.startsWith("/")) {
+          setAuthorDetailsForUnsplash({
+            authorName: new URL(background?.bg!).searchParams.get("authorName") || "",
+            authorURL: new URL(background?.bg!).searchParams.get("authorLink") || "",
+          });
+        } else {
+          setAuthorDetailsForUnsplash({ authorName: "", authorURL: "" });
+        }
+      }
     } else {
       // For colors or any other types, set to loaded immediately
       setBackgroundLoaded(true);
@@ -98,11 +108,57 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
           </video>
         );
       case "image":
+        if (!background?.bg) {
+          return <div>No background image found.</div>;
+        }
+
         return (
-          <div
-            className={`${baseClasses} ${loadedClass} bg-cover bg-center`}
-            style={{ backgroundImage: `url(${background?.bg})`, filter: `${filterStyle}` }}
-          />
+          <>
+            <div className={`${baseClasses} ${loadedClass} bg-cover bg-center`}>
+              <Image
+                src={background?.bg}
+                alt="Background image"
+                layout="fill"
+                objectFit="cover"
+                style={{ filter: `${filterStyle}` }}
+                onLoadingComplete={() => setBackgroundLoaded(true)}
+              />
+              {authorDetailsForUnsplash.authorName && (
+                <div className="absolute bottom-4 right-6 z-10 ml-auto hidden w-max text-xs text-slate-400 md:block">
+                  <span>Photo by </span>
+                  <Link
+                    href={authorDetailsForUnsplash.authorURL + "?utm_source=formbricks&utm_medium=referral"}
+                    target="_blank"
+                    className="hover:underline">
+                    {authorDetailsForUnsplash.authorName}
+                  </Link>
+                  <span> on </span>
+                  <Link
+                    href="https://unsplash.com/?utm_source=formbricks&utm_medium=referral"
+                    target="_blank"
+                    className="hover:underline">
+                    Unsplash
+                  </Link>
+                </div>
+              )}
+            </div>
+          </>
+        );
+      case "upload":
+        if (!background?.bg) {
+          return <div>No background image found.</div>;
+        }
+        return (
+          <div className={`${baseClasses} ${loadedClass} bg-cover bg-center`}>
+            <Image
+              src={background?.bg}
+              alt="Background image"
+              layout="fill"
+              objectFit="cover"
+              style={{ filter: `${filterStyle}` }}
+              onLoadingComplete={() => setBackgroundLoaded(true)}
+            />
+          </div>
         );
       default:
         return <div className={`${baseClasses} ${loadedClass} bg-white`} />;
@@ -110,9 +166,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   };
 
   const renderContent = () => (
-    <div className="no-scrollbar absolute flex h-full w-full items-center justify-center overflow-y-auto">
-      {children}
-    </div>
+    <div className="no-scrollbar absolute flex h-full w-full items-center justify-center">{children}</div>
   );
 
   if (isMobilePreview) {
@@ -128,7 +182,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     );
   } else if (isEditorView) {
     return (
-      <div ref={ContentRef} className="flex flex-grow flex-col overflow-y-auto rounded-b-lg">
+      <div ref={ContentRef} className="flex flex-grow flex-col rounded-b-lg">
         <div className="relative flex w-full flex-grow flex-col items-center justify-center p-4 py-6">
           {renderBackground()}
           <div className="flex h-full w-full items-center justify-center">{children}</div>
@@ -137,7 +191,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     );
   } else {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
+      <div className="flex min-h-dvh flex-col items-center justify-center">
         {renderBackground()}
         <div className="relative w-full">{children}</div>
       </div>

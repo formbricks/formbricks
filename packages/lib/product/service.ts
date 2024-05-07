@@ -1,7 +1,6 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 import { z } from "zod";
 
 import { prisma } from "@formbricks/database";
@@ -11,11 +10,11 @@ import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL, isS3Configured } from "../constants";
+import { cache } from "../cache";
+import { ITEMS_PER_PAGE, isS3Configured } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { createEnvironment } from "../environment/service";
 import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "../storage/service";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { productCache } from "./cache";
 
@@ -37,8 +36,8 @@ const selectProduct = {
   logo: true,
 };
 
-export const getProducts = async (teamId: string, page?: number): Promise<TProduct[]> => {
-  const products = await unstable_cache(
+export const getProducts = (teamId: string, page?: number): Promise<TProduct[]> =>
+  cache(
     async () => {
       validateInputs([teamId, ZId], [page, ZOptionalNumber]);
 
@@ -63,14 +62,11 @@ export const getProducts = async (teamId: string, page?: number): Promise<TProdu
     [`getProducts-${teamId}-${page}`],
     {
       tags: [productCache.tag.byTeamId(teamId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return products.map((product) => formatDateFields(product, ZProduct));
-};
 
-export const getProductByEnvironmentId = async (environmentId: string): Promise<TProduct | null> => {
-  const product = await unstable_cache(
+export const getProductByEnvironmentId = (environmentId: string): Promise<TProduct | null> =>
+  cache(
     async () => {
       validateInputs([environmentId, ZId]);
 
@@ -100,11 +96,8 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
     [`getProductByEnvironmentId-${environmentId}`],
     {
       tags: [productCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return product ? formatDateFields(product, ZProduct) : null;
-};
 
 export const updateProduct = async (
   productId: string,
@@ -130,6 +123,7 @@ export const updateProduct = async (
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
+    throw error;
   }
 
   try {
@@ -156,8 +150,8 @@ export const updateProduct = async (
   }
 };
 
-export const getProduct = async (productId: string): Promise<TProduct | null> => {
-  const product = await unstable_cache(
+export const getProduct = async (productId: string): Promise<TProduct | null> =>
+  cache(
     async () => {
       let productPrisma;
       try {
@@ -179,68 +173,72 @@ export const getProduct = async (productId: string): Promise<TProduct | null> =>
     [`getProduct-${productId}`],
     {
       tags: [productCache.tag.byId(productId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return product ? formatDateFields(product, ZProduct) : null;
-};
 
 export const deleteProduct = async (productId: string): Promise<TProduct> => {
-  const product = await prisma.product.delete({
-    where: {
-      id: productId,
-    },
-    select: selectProduct,
-  });
+  try {
+    const product = await prisma.product.delete({
+      where: {
+        id: productId,
+      },
+      select: selectProduct,
+    });
 
-  if (product) {
-    // delete all files from storage related to this product
+    if (product) {
+      // delete all files from storage related to this product
 
-    if (isS3Configured()) {
-      const s3FilesPromises = product.environments.map(async (environment) => {
-        return deleteS3FilesByEnvironmentId(environment.id);
+      if (isS3Configured()) {
+        const s3FilesPromises = product.environments.map(async (environment) => {
+          return deleteS3FilesByEnvironmentId(environment.id);
+        });
+
+        try {
+          await Promise.all(s3FilesPromises);
+        } catch (err) {
+          // fail silently because we don't want to throw an error if the files are not deleted
+          console.error(err);
+        }
+      } else {
+        const localFilesPromises = product.environments.map(async (environment) => {
+          return deleteLocalFilesByEnvironmentId(environment.id);
+        });
+
+        try {
+          await Promise.all(localFilesPromises);
+        } catch (err) {
+          // fail silently because we don't want to throw an error if the files are not deleted
+          console.error(err);
+        }
+      }
+
+      productCache.revalidate({
+        id: product.id,
+        teamId: product.teamId,
       });
 
-      try {
-        await Promise.all(s3FilesPromises);
-      } catch (err) {
-        // fail silently because we don't want to throw an error if the files are not deleted
-        console.error(err);
-      }
-    } else {
-      const localFilesPromises = product.environments.map(async (environment) => {
-        return deleteLocalFilesByEnvironmentId(environment.id);
+      environmentCache.revalidate({
+        productId: product.id,
       });
 
-      try {
-        await Promise.all(localFilesPromises);
-      } catch (err) {
-        // fail silently because we don't want to throw an error if the files are not deleted
-        console.error(err);
-      }
+      product.environments.forEach((environment) => {
+        // revalidate product cache
+        productCache.revalidate({
+          environmentId: environment.id,
+        });
+        environmentCache.revalidate({
+          id: environment.id,
+        });
+      });
     }
 
-    productCache.revalidate({
-      id: product.id,
-      teamId: product.teamId,
-    });
-
-    environmentCache.revalidate({
-      productId: product.id,
-    });
-
-    product.environments.forEach((environment) => {
-      // revalidate product cache
-      productCache.revalidate({
-        environmentId: environment.id,
-      });
-      environmentCache.revalidate({
-        id: environment.id,
-      });
-    });
+    return product;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
   }
-
-  return product;
 };
 
 export const createProduct = async (
@@ -255,24 +253,38 @@ export const createProduct = async (
 
   const { environments, ...data } = productInput;
 
-  let product = await prisma.product.create({
-    data: {
-      ...data,
-      name: productInput.name,
-      teamId,
-    },
-    select: selectProduct,
-  });
+  try {
+    let product = await prisma.product.create({
+      data: {
+        ...data,
+        name: productInput.name,
+        teamId,
+      },
+      select: selectProduct,
+    });
 
-  const devEnvironment = await createEnvironment(product.id, {
-    type: "development",
-  });
+    productCache.revalidate({
+      id: product.id,
+      teamId: product.teamId,
+    });
 
-  const prodEnvironment = await createEnvironment(product.id, {
-    type: "production",
-  });
+    const devEnvironment = await createEnvironment(product.id, {
+      type: "development",
+    });
 
-  return await updateProduct(product.id, {
-    environments: [devEnvironment, prodEnvironment],
-  });
+    const prodEnvironment = await createEnvironment(product.id, {
+      type: "production",
+    });
+
+    const updatedProduct = await updateProduct(product.id, {
+      environments: [devEnvironment, prodEnvironment],
+    });
+
+    return updatedProduct;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
 };

@@ -1,29 +1,27 @@
-import FormbricksBranding from "@/components/general/FormbricksBranding";
-import ProgressBar from "@/components/general/ProgressBar";
+import { FormbricksBranding } from "@/components/general/FormbricksBranding";
+import { ProgressBar } from "@/components/general/ProgressBar";
+import { QuestionConditional } from "@/components/general/QuestionConditional";
 import { ResponseErrorComponent } from "@/components/general/ResponseErrorComponent";
+import { ThankYouCard } from "@/components/general/ThankYouCard";
+import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
 import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 
-import QuestionConditional from "./QuestionConditional";
-import ThankYouCard from "./ThankYouCard";
-import WelcomeCard from "./WelcomeCard";
-
-export function Survey({
+export const Survey = ({
   survey,
   styling,
   isBrandingEnabled,
-  activeQuestionId,
   onDisplay = () => {},
-  onActiveQuestionChange = () => {},
   onResponse = () => {},
   onClose = () => {},
   onFinished = () => {},
@@ -33,13 +31,15 @@ export function Survey({
   languageCode,
   getSetIsError,
   getSetIsResponseSendingFinished,
+  getSetQuestionId,
   onFileUpload,
   responseCount,
   isCardBorderVisible = true,
-}: SurveyBaseProps) {
+  startAtQuestionId,
+}: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
   const [questionId, setQuestionId] = useState(
-    activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
+    survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
   const [showError, setShowError] = useState(false);
   // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
@@ -51,7 +51,6 @@ export function Survey({
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
   const [ttc, setTtc] = useState<TResponseTtc>({});
-
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = useMemo(() => {
     if (questionId === "end" && !survey.thankYouCard.enabled) {
@@ -66,15 +65,6 @@ export function Survey({
   const showProgressBar = !styling.hideProgressBar;
 
   useEffect(() => {
-    if (activeQuestionId === "hidden" || activeQuestionId === "multiLanguage") return;
-    if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
-      setQuestionId(survey?.questions[0]?.id);
-      return;
-    }
-    setQuestionId(activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id));
-  }, [activeQuestionId, survey.questions, survey.welcomeCard.enabled]);
-
-  useEffect(() => {
     // scroll to top when question changes
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
@@ -85,7 +75,10 @@ export function Survey({
     // call onDisplay when component is mounted
     onDisplay();
     if (prefillResponseData) {
-      onSubmit(prefillResponseData, {}, true);
+      onChange(prefillResponseData);
+    }
+    if (startAtQuestionId) {
+      setQuestionId(startAtQuestionId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -99,6 +92,14 @@ export function Survey({
   }, [getSetIsError]);
 
   useEffect(() => {
+    if (getSetQuestionId) {
+      getSetQuestionId((value: string) => {
+        setQuestionId(value);
+      });
+    }
+  }, [getSetQuestionId]);
+
+  useEffect(() => {
     if (getSetIsResponseSendingFinished) {
       getSetIsResponseSendingFinished((value: boolean) => {
         setIsResponseSendingFinished(value);
@@ -109,18 +110,12 @@ export function Survey({
   let currIdxTemp = currentQuestionIndex;
   let currQuesTemp = currentQuestion;
 
-  const getNextQuestionId = (data: TResponseData, isFormPrefilling: Boolean = false): string => {
+  const getNextQuestionId = (data: TResponseData): string => {
     const questions = survey.questions;
     const responseValue = data[questionId];
 
-    if (questionId === "start") {
-      if (!isFormPrefilling) {
-        return questions[0]?.id || "end";
-      } else {
-        currIdxTemp = 0;
-        currQuesTemp = questions[0];
-      }
-    }
+    if (questionId === "start") return questions[0]?.id || "end";
+
     if (currIdxTemp === -1) throw new Error("Question not found");
     if (currQuesTemp?.logic && currQuesTemp?.logic.length > 0 && currentQuestion) {
       for (let logic of currQuesTemp.logic) {
@@ -174,6 +169,7 @@ export function Survey({
         }
       }
     }
+
     return questions[currIdxTemp + 1]?.id || "end";
   };
 
@@ -182,13 +178,10 @@ export function Survey({
     setResponseData(updatedResponseData);
   };
 
-  const onSubmit = (responseData: TResponseData, ttc: TResponseTtc, isFormPrefilling: Boolean = false) => {
+  const onSubmit = (responseData: TResponseData, ttc: TResponseTtc) => {
     const questionId = Object.keys(responseData)[0];
-    if (isFormPrefilling && questionId === survey.questions[0].id) {
-      onChange(responseData);
-    }
     setLoadingElement(true);
-    const nextQuestionId = getNextQuestionId(responseData, isFormPrefilling);
+    const nextQuestionId = getNextQuestionId(responseData);
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, ttc, finished });
     if (finished) {
@@ -200,7 +193,6 @@ export function Survey({
     // add to history
     setHistory([...history, questionId]);
     setLoadingElement(false);
-    onActiveQuestionChange(nextQuestionId);
   };
 
   const replaceRecallInfo = (text: string): string => {
@@ -248,7 +240,6 @@ export function Survey({
     if (history?.length > 0) {
       const newHistory = [...history];
       prevQuestionId = newHistory.pop();
-      if (prefillResponseData && prevQuestionId === survey.questions[0].id) return;
       setHistory(newHistory);
     } else {
       // otherwise go back to previous question in array
@@ -256,7 +247,6 @@ export function Survey({
     }
     if (!prevQuestionId) throw new Error("Question not found");
     setQuestionId(prevQuestionId);
-    onActiveQuestionChange(prevQuestionId);
   };
 
   const getCardContent = (): JSX.Element | undefined => {
@@ -309,11 +299,7 @@ export function Survey({
             ttc={ttc}
             setTtc={setTtc}
             onFileUpload={onFileUpload}
-            isFirstQuestion={
-              history && prefillResponseData
-                ? history[history.length - 1] === survey.questions[0].id
-                : currentQuestion.id === survey?.questions[0]?.id
-            }
+            isFirstQuestion={currentQuestion.id === survey?.questions[0]?.id}
             isLastQuestion={currentQuestion.id === survey.questions[survey.questions.length - 1].id}
             languageCode={languageCode}
             isInIframe={isInIframe}
@@ -328,7 +314,7 @@ export function Survey({
       <AutoCloseWrapper survey={survey} onClose={onClose}>
         <div
           className={cn(
-            "no-scrollbar rounded-custom bg-survey-bg flex h-full w-full flex-col justify-between px-6 pb-3 pt-6",
+            "no-scrollbar md:rounded-custom bg-survey-bg rounded-t-custom flex h-full w-full flex-col justify-between",
             isCardBorderVisible ? "border-survey-border border" : "",
             survey.type === "link" ? "fb-survey-shadow" : ""
           )}>
@@ -340,7 +326,7 @@ export function Survey({
               getCardContent()
             )}
           </div>
-          <div className="mt-4">
+          <div className="mx-6 mb-10 mt-2 space-y-3 md:mb-6 md:mt-6">
             {isBrandingEnabled && <FormbricksBranding />}
             {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
           </div>
@@ -348,4 +334,4 @@ export function Survey({
       </AutoCloseWrapper>
     </>
   );
-}
+};

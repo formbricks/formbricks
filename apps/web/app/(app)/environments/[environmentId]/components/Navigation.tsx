@@ -30,7 +30,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import formbricks from "@formbricks/js";
+import formbricks from "@formbricks/js/app";
 import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter, truncate } from "@formbricks/lib/strings";
@@ -135,13 +135,13 @@ export default function Navigation({
         hidden: false,
       },
       {
-        name: "People & Segments",
+        name: "People",
         href: `/environments/${environment.id}/people`,
         icon: CustomersIcon,
         current: pathname?.includes("/people") || pathname?.includes("/segments"),
       },
       {
-        name: "Actions & Attributes",
+        name: "Actions",
         href: `/environments/${environment.id}/actions`,
         icon: FilterIcon,
         current: pathname?.includes("/actions") || pathname?.includes("/attributes"),
@@ -156,7 +156,7 @@ export default function Navigation({
       },
       {
         name: "Settings",
-        href: `/environments/${environment.id}/settings/profile`,
+        href: `/environments/${environment.id}/settings/product`,
         icon: SettingsIcon,
         current: pathname?.includes("/settings"),
         hidden: false,
@@ -378,31 +378,27 @@ export default function Navigation({
 
                     <DropdownMenuSeparator />
 
-                    {/* Team Switch */}
+                    {/* Environment Switch */}
 
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>
                         <div>
-                          <p>{currentTeamName}</p>
-                          <p className="block text-xs text-slate-500">Team</p>
+                          <p>{capitalizeFirstLetter(environment?.type)}</p>
+                          <p className=" block text-xs text-slate-500">Environment</p>
                         </div>
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
                         <DropdownMenuSubContent>
                           <DropdownMenuRadioGroup
-                            value={currentTeamId}
-                            onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
-                            {teams?.map((team) => (
-                              <DropdownMenuRadioItem value={team.id} className="cursor-pointer" key={team.id}>
-                                {team.name}
-                              </DropdownMenuRadioItem>
-                            ))}
+                            value={environment?.type}
+                            onValueChange={(v) => handleEnvironmentChange(v as "production" | "development")}>
+                            <DropdownMenuRadioItem value="production" className="cursor-pointer">
+                              Production
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="development" className="cursor-pointer">
+                              Development
+                            </DropdownMenuRadioItem>
                           </DropdownMenuRadioGroup>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setShowCreateTeamModal(true)}>
-                            <PlusIcon className="mr-2 h-4 w-4" />
-                            <span>Create team</span>
-                          </DropdownMenuItem>
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
                     </DropdownMenuSub>
@@ -413,7 +409,7 @@ export default function Navigation({
                       <DropdownMenuSubTrigger>
                         <div>
                           <div className="flex items-center space-x-1">
-                            <p className="">{truncate(product!.name, 20)}</p>
+                            <p>{truncate(product!.name, 20)}</p>
                             {!widgetSetupCompleted && (
                               <TooltipProvider delayDuration={50}>
                                 <Tooltip>
@@ -481,31 +477,6 @@ export default function Navigation({
                             <PlusIcon className="mr-2 h-4 w-4" />
                             <span>Create team</span>
                           </DropdownMenuItem>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuPortal>
-                    </DropdownMenuSub>
-
-                    {/* Environment Switch */}
-
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <div>
-                          <p>{capitalizeFirstLetter(environment?.type)}</p>
-                          <p className=" block text-xs text-slate-500">Environment</p>
-                        </div>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                          <DropdownMenuRadioGroup
-                            value={environment?.type}
-                            onValueChange={(v) => handleEnvironmentChange(v as "production" | "development")}>
-                            <DropdownMenuRadioItem value="production" className="cursor-pointer">
-                              Production
-                            </DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="development" className="cursor-pointer">
-                              Development
-                            </DropdownMenuRadioItem>
-                          </DropdownMenuRadioGroup>
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
                     </DropdownMenuSub>

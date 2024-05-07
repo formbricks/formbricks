@@ -23,7 +23,7 @@ export type TIntegrationAirtableConfigData = z.infer<typeof ZIntegrationAirtable
 export const ZIntegrationAirtableConfig = z.object({
   key: ZIntegrationAirtableCredential,
   data: z.array(ZIntegrationAirtableConfigData),
-  email: z.string(),
+  email: z.string().email(),
 });
 
 export type TIntegrationAirtableConfig = z.infer<typeof ZIntegrationAirtableConfig>;

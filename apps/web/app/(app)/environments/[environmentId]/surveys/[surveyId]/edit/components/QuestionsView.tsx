@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 
 import { MultiLanguageCard } from "@formbricks/ee/multiLanguage/components/MultiLanguageCard";
 import { extractLanguageCodes, getLocalizedValue, translateQuestion } from "@formbricks/lib/i18n/utils";
+import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
@@ -37,7 +38,7 @@ interface QuestionsViewProps {
   isFormbricksCloud: boolean;
 }
 
-export default function QuestionsView({
+export const QuestionsView = ({
   activeQuestionId,
   setActiveQuestionId,
   localSurvey,
@@ -49,7 +50,7 @@ export default function QuestionsView({
   selectedLanguageCode,
   isMultiLanguageAllowed,
   isFormbricksCloud,
-}: QuestionsViewProps) {
+}: QuestionsViewProps) => {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
       acc[question.id] = createId();
@@ -117,10 +118,31 @@ export default function QuestionsView({
     };
 
     if ("backButtonLabel" in updatedAttributes) {
-      updatedSurvey.questions.forEach((question) => {
-        question.backButtonLabel = updatedAttributes.backButtonLabel;
-      });
-      setbackButtonLabel(updatedAttributes.backButtonLabel);
+      const backButtonLabel = updatedSurvey.questions[questionIdx].backButtonLabel;
+      // If the value of backbuttonLabel is equal to {default:""}, then delete backButtonLabel key
+      if (
+        backButtonLabel &&
+        Object.keys(backButtonLabel).length === 1 &&
+        backButtonLabel["default"].trim() === ""
+      ) {
+        delete updatedSurvey.questions[questionIdx].backButtonLabel;
+      } else {
+        updatedSurvey.questions.forEach((question) => {
+          question.backButtonLabel = updatedAttributes.backButtonLabel;
+        });
+        setbackButtonLabel(updatedAttributes.backButtonLabel);
+      }
+    }
+    // If the value of buttonLabel is equal to {default:""}, then delete buttonLabel key
+    if ("buttonLabel" in updatedAttributes) {
+      const currentButtonLabel = updatedSurvey.questions[questionIdx].buttonLabel;
+      if (
+        currentButtonLabel &&
+        Object.keys(currentButtonLabel).length === 1 &&
+        currentButtonLabel["default"].trim() === ""
+      ) {
+        delete updatedSurvey.questions[questionIdx].buttonLabel;
+      }
     }
     setLocalSurvey(updatedSurvey);
     validateSurveyQuestion(updatedSurvey.questions[questionIdx]);
@@ -362,4 +384,4 @@ export default function QuestionsView({
       </div>
     </div>
   );
-}
+};
