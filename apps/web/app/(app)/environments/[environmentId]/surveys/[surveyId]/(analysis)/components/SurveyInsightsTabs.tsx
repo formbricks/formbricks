@@ -17,7 +17,6 @@ export const SurveyInsightsTabs = ({ environmentId, surveyId, responseCount }: S
   const params = useParams();
   const sharingKey = params.sharingKey as string;
   const isSharingPage = !!sharingKey;
-  console.log("Response count in tabs comp", responseCount);
 
   const url = isSharingPage ? `/share/${sharingKey}` : `/environments/${environmentId}/surveys/${surveyId}`;
 

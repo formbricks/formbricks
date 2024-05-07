@@ -8,7 +8,6 @@ import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
@@ -18,8 +17,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SegmentsLayout({ params, children }) {
-  const [environment, segments, attributeClasses, actionClassesFromServer, team] = await Promise.all([
-    getEnvironment(params.environmentId),
+  const [segments, attributeClasses, actionClassesFromServer, team] = await Promise.all([
     getSegments(params.environmentId),
     getAttributeClasses(params.environmentId),
     getActionClasses(params.environmentId),

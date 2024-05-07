@@ -1,10 +1,9 @@
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
-import { TSurvey, TSurveySummary } from "@formbricks/types/surveys";
+import { TSurveySummary } from "@formbricks/types/surveys";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 interface SummaryMetadataProps {
-  survey: TSurvey;
   setShowDropOffs: React.Dispatch<React.SetStateAction<boolean>>;
   showDropOffs: boolean;
   surveySummary: TSurveySummary["meta"];
@@ -46,12 +45,7 @@ function formatTime(ttc) {
   return formattedValue;
 }
 
-export const SummaryMetadata = ({
-  survey,
-  setShowDropOffs,
-  showDropOffs,
-  surveySummary,
-}: SummaryMetadataProps) => {
+export const SummaryMetadata = ({ setShowDropOffs, showDropOffs, surveySummary }: SummaryMetadataProps) => {
   const {
     completedPercentage,
     completedResponses,

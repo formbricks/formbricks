@@ -22,11 +22,10 @@ interface SideBarProps {
   session: Session;
   team: TTeam;
   products: TProduct[];
-  environments: TEnvironment[];
+
   isFormbricksCloud: boolean;
-  webAppUrl: string;
+
   membershipRole?: TMembershipRole;
-  isMultiLanguageAllowed: boolean;
 }
 
 export default function SideBar({
@@ -35,11 +34,8 @@ export default function SideBar({
   team,
   session,
   products,
-  environments,
   isFormbricksCloud,
-  webAppUrl,
   membershipRole,
-  isMultiLanguageAllowed,
 }: SideBarProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -93,12 +89,9 @@ export default function SideBar({
         team={team}
         teams={teams}
         products={products}
-        environments={environments}
         session={session}
         isFormbricksCloud={isFormbricksCloud}
-        webAppUrl={webAppUrl}
         membershipRole={membershipRole}
-        isMultiLanguageAllowed={isMultiLanguageAllowed}
       />
     </div>
   );

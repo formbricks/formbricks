@@ -133,7 +133,6 @@ const SummaryPage = ({
         membershipRole={membershipRole}
       />
       <SummaryMetadata
-        survey={survey}
         surveySummary={surveySummary.meta}
         showDropOffs={showDropOffs}
         setShowDropOffs={setShowDropOffs}
@@ -143,7 +142,6 @@ const SummaryPage = ({
         <CustomFilter survey={survey} />
         {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />}
       </div>
-
       <SummaryList
         summary={surveySummary.summary}
         responseCount={responseCount}

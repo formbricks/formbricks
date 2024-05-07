@@ -2,8 +2,7 @@ import SideBar from "@/app/(app)/environments/[environmentId]/components/SideBar
 import TopControlBar from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import type { Session } from "next-auth";
 
-import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
-import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProducts } from "@formbricks/lib/product/service";
@@ -31,8 +30,6 @@ export default async function EnvironmentLayout({
     return <ErrorComponent />;
   }
 
-  const isMultiLanguageAllowed = getMultiLanguagePermission(team);
-
   const [products, environments] = await Promise.all([
     getProducts(team.id),
     getEnvironments(environment.productId),
@@ -52,12 +49,9 @@ export default async function EnvironmentLayout({
             team={team}
             teams={teams}
             products={products}
-            environments={environments}
             session={session}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-            webAppUrl={WEBAPP_URL}
             membershipRole={currentUserMembership?.role}
-            isMultiLanguageAllowed={isMultiLanguageAllowed}
           />
           <div id="mainContent" className="z-50 min-h-screen flex-1 overflow-y-auto">
             <TopControlBar environment={environment} environments={environments} />

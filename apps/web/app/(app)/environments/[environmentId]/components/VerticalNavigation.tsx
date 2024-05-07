@@ -1,8 +1,6 @@
 "use client";
 
 import NavigationLink from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
-
-/*import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover"; */
 import { formbricksLogout } from "@/app/lib/formbricks";
 import {
   BlocksIcon,
@@ -51,11 +49,8 @@ interface NavigationProps {
   session: Session;
   team: TTeam;
   products: TProduct[];
-  environments: TEnvironment[];
   isFormbricksCloud: boolean;
-  webAppUrl: string;
   membershipRole?: TMembershipRole;
-  isMultiLanguageAllowed: boolean;
   isCollapsed: boolean;
   isTextVisible: boolean;
 }
@@ -66,11 +61,8 @@ export default function Navigation({
   team,
   session,
   products,
-  environments,
   isFormbricksCloud,
-  webAppUrl,
   membershipRole,
-  isMultiLanguageAllowed,
   isCollapsed = false,
   isTextVisible = true,
 }: NavigationProps) {

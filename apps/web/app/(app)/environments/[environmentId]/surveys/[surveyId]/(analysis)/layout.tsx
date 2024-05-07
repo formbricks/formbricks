@@ -16,7 +16,6 @@ export const generateMetadata = async ({ params }: Props): Promise<Metadata> => 
   const session = await getServerSession(authOptions);
   const survey = await getSurvey(params.surveyId);
   const responseCount = await getResponseCountBySurveyId(params.surveyId);
-  console.log("responseCount layout", responseCount);
 
   if (session) {
     return {
