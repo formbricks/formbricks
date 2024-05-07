@@ -1,6 +1,8 @@
 version: "3.3"
 x-environment: &environment
   environment:
+    ######################################################## REQUIRED ########################################################
+
     # The url of your Formbricks instance used in the admin panel
     WEBAPP_URL:
 
@@ -20,20 +22,18 @@ x-environment: &environment
     # You can use: $(openssl rand -hex 32) to generate one
     ENCRYPTION_KEY:
 
-    # PostgreSQL password
-    POSTGRES_PASSWORD: postgres
-
-    # Enterprise License Key
-    # Required to access Enterprise-only features
-    # ENTERPRISE_LICENSE_KEY:
+    ############################################# OPTIONAL (EMAIL CONFIGURATION) #############################################
 
     # Email Configuration
     # MAIL_FROM:
     # SMTP_HOST:
     # SMTP_PORT:
-    # SMTP_SECURE_ENABLED:
     # SMTP_USER:
     # SMTP_PASSWORD:
+    # (If you face SSL errors, try toggling below)
+    # SMTP_SECURE_ENABLED:
+
+    ############################################## OPTIONAL (APP CONFIGURATION) ##############################################
 
     # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
     # SHORT_URL_BASE:
@@ -44,46 +44,117 @@ x-environment: &environment
     # Set the below to 0 to enable Password Reset (will required Email Configuration)
     PASSWORD_RESET_DISABLED: 1
 
-    # Uncomment the below and set it to 1 to disable Signups
+    # Set the below to 1 to disable signups
     # SIGNUP_DISABLED:
 
-    # Uncomment the below and set it to 1 to disable logging in with email
+    # Set the below to 1 to disable logins with email
     # EMAIL_AUTH_DISABLED:
 
-    # Uncomment the below and set it to 1 to disable Invites
+    # Set the below to 1 to disable invites
     # INVITE_DISABLED:
 
-    # Uncomment the below and set a value to have your own Privacy Page URL on the signup & login page
+    # Set the below to use it intead of API Key for the API & use as an auth for cronjobs
+    # CRON_SECRET:
+
+    # Set the below if you want to ship JS & CSS files from a complete URL instead of the current domain
+    # ASSET_PREFIX_URL:
+
+    # Set the below to 1 to skip onboarding process for new users
+    # ONBOARDING_DISABLED: 1
+
+    # Set the below to your Unsplash API Key for their Survey Backgrounds
+    # UNSPLASH_ACCESS_KEY:
+
+    ############################################### OPTIONAL (COPYRIGHT URLs) ################################################
+
+    # Set the below to have your own Privacy Page URL on auth & link survey page
     # PRIVACY_URL:
 
-    # Uncomment the below and set a value to have your own Terms Page URL on the auth and the surveys page
+    # Set the below to have your own Terms Page URL on auth & link survey page
     # TERMS_URL:
 
-    # Uncomment the below and set a value to have your own Imprint Page URL on the auth and the surveys page
+    # Set the below to have your own Imprint Page URL on auth & link survey page
     # IMPRINT_URL:
 
-    # Uncomment the below and set to 1 if you want to enable GitHub OAuth
+    ################################################### OPTIONAL (STORAGE) ###################################################
+
+    # Set the below to set a custom Upload Directory
+    # UPLOADS_DIR:
+
+    # Set S3 Storage configuration (required for the file upload in serverless environments like Vercel)
+    # S3_ACCESS_KEY:
+    # S3_SECRET_KEY:
+    # S3_REGION:
+    # S3_BUCKET_NAME:
+
+    # Set a third party S3 compatible storage service endpoint like StorJ leave empty if you use Amazon S3
+    # S3_ENDPOINT_URL=
+
+    ############################################# OPTIONAL (OAUTH CONFIGURATION) #############################################
+
+    # Set the below from GitHub if you want to enable GitHub OAuth
     # GITHUB_ID:
     # GITHUB_SECRET:
 
-    # Uncomment the below and set to 1 if you want to enable Google OAuth
+    # Set the below from Google if you want to enable Google OAuth
     # GOOGLE_CLIENT_ID:
     # GOOGLE_CLIENT_SECRET:
 
-    # Uncomment the below to automatically assign new users to a specific team and role within that team
+    # Set the below from Azure Active Directory Login if you want to enable Azure AD OAuth
+    # AZUREAD_CLIENT_ID:
+    # AZUREAD_CLIENT_SECRET:
+    # AZUREAD_TENANT_ID:
+
+    # Set the below to OpenID Connect Provider if you want to enable OIDC
+    # OIDC_CLIENT_ID:
+    # OIDC_CLIENT_SECRET:
+    # OIDC_ISSUER:
+    # OIDC_DISPLAY_NAME:
+    # OIDC_SIGNING_ALGORITHM:
+
+    ########################################## OPTIONAL (Third Party Integrations) ###########################################
+
+    # Oauth credentials for Notion Integration
+    # NOTION_OAUTH_CLIENT_ID:
+    # NOTION_OAUTH_CLIENT_SECRET:
+
+    # Oauth credentials for Google Sheet Integration
+    # GOOGLE_SHEETS_CLIENT_ID:
+    # GOOGLE_SHEETS_CLIENT_SECRET:
+    # GOOGLE_SHEETS_REDIRECT_URL:
+
+    # Oauth credentials for Airtable Integration
+    # AIRTABLE_CLIENT_ID:
+
+    # Oauth credentials for Slack Integration
+    # SLACK_CLIENT_ID:
+    # SLACK_CLIENT_SECRET:
+
+    ########################################## OPTIONAL (DEPLOYMENT CONFIGURATION) ###########################################
+
+    # Set the below to 1 to disable Rate Limiting across Formbricks
+    # RATE_LIMITING_DISABLED: 1
+
+    # Set the below to send OpenTelemetry data for tracing
+    # OPENTELEMETRY_LISTENER_URL: http://localhost:4318/v1/traces
+
+    # Set the below to use Redis for Next Caching (default is In-Memory from Next Cache)
+    # REDIS_URL:
+
+    # Set the below to use for Rate Limiting (default us In-Memory LRU Cache)
+    # REDIS_HTTP_URL:
+
+    ############################################# OPTIONAL (ENTERPRISE FEATURES) #############################################
+
+    # Enterprise License Key (More info at: https://formbricks.com/pricing)
+    # Required to access Enterprise-only features
+    # ENTERPRISE_LICENSE_KEY:
+
+    # Set the below to automatically assign new users to a specific team and role within that team
     # Insert an existing team id or generate a valid CUID for a new one at https://www.getuniqueid.com/cuid (e.g. cjld2cjxh0000qzrmn831i7rn)
     # (Role Management is an Enterprise feature)
     # DEFAULT_TEAM_ID:
     # DEFAULT_TEAM_ROLE: admin
-
-    # Uncomment and set to 1 to skip onboarding for new users
-    # ONBOARDING_DISABLED: 1
-
-    # The below is used for Next Caching (uses In-Memory from Next Cache if not provided)
-    # REDIS_URL:
-
-    # The below is used for Rate Limiting (uses In-Memory LRU Cache if not provided)
-    # REDIS_HTTP_URL:
 
 services:
   postgres:
