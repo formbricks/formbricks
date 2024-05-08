@@ -1,13 +1,13 @@
 "use client";
 
-import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
-import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import { Variants, motion } from "framer-motion";
 import { useRef, useState } from "react";
 
 import type { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
+import { MediaBackground } from "@formbricks/ui/MediaBackground";
+import Modal from "@formbricks/ui/PreviewSurvey/components/Modal";
 import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
 import { SurveyInline } from "@formbricks/ui/Survey";
 

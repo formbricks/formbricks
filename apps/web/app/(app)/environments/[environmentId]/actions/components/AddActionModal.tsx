@@ -1,6 +1,6 @@
 "use client";
 
-import { CreateNewActionTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CreateNewActionTab";
+import { CreateNewActionTab } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/CreateNewActionTab";
 import { MousePointerClickIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 

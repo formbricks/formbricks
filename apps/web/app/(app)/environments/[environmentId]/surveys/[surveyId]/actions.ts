@@ -8,10 +8,12 @@ import {
   getResponseMeta,
   getResponsePersonAttributes,
 } from "@formbricks/lib/response/service";
-import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
+import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
+import { updateSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 
 export async function getResponsesDownloadUrlAction(
   surveyId: string,
@@ -41,4 +43,17 @@ export async function getSurveyFilterDataAction(surveyId: string, environmentId:
   ]);
 
   return { environmentTags: tags, attributes, meta };
+}
+
+export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await canUserAccessSurvey(session.user.id, survey.id);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(survey.environmentId, session.user.id);
+  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
+
+  return await updateSurvey(survey);
 }

@@ -5,9 +5,9 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getPerson } from "@formbricks/lib/person/service";
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import GoBackButton from "@formbricks/ui/GoBackButton";
+import { GoBackButton } from "@formbricks/ui/GoBackButton";
 
 import { DeletePersonButton } from "./DeletePersonButton";
 

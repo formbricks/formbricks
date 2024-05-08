@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "../Button";
 
-export default function GoBackButton({ url }: { url?: string }) {
+export const GoBackButton = ({ url }: { url?: string }) => {
   const router = useRouter();
   return (
     <Button
@@ -22,4 +22,4 @@ export default function GoBackButton({ url }: { url?: string }) {
       Back
     </Button>
   );
-}
+};

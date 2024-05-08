@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TSurveyQuestionSummaryAddress } from "@formbricks/types/surveys";
 import { AddressResponse } from "@formbricks/ui/AddressResponse";

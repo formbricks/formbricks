@@ -9,7 +9,7 @@ import { Button } from "../v2/Button";
 import { getSurveysAction } from "./actions";
 import { SurveyCard } from "./components/SurveyCard";
 import { SurveyFilters } from "./components/SurveyFilters";
-import { getFormattedFilters } from "./util";
+import { getFormattedFilters } from "./utils";
 
 interface SurveysListProps {
   environment: TEnvironment;

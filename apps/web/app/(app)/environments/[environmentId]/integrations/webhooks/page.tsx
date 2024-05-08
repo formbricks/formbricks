@@ -5,7 +5,7 @@ import WebhookTableHeading from "@/app/(app)/environments/[environmentId]/integr
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { getWebhooks } from "@formbricks/lib/webhook/service";
-import GoBackButton from "@formbricks/ui/GoBackButton";
+import { GoBackButton } from "@formbricks/ui/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 

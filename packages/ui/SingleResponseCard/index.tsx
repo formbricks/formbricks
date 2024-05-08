@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
 import { getLanguageCode, getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 import { TEnvironment } from "@formbricks/types/environment";

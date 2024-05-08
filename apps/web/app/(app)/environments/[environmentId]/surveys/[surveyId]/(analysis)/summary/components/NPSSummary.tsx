@@ -1,7 +1,7 @@
 import { TSurveyQuestionSummaryNps } from "@formbricks/types/surveys";
 import { HalfCircle, ProgressBar } from "@formbricks/ui/ProgressBar";
 
-import { convertFloatToNDecimal } from "../lib/util";
+import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface NPSSummaryProps {

@@ -1,6 +1,5 @@
 "use client";
 
-import { getPlacementStyle } from "@/app/lib/preview";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -9,6 +8,7 @@ import { TPlacement } from "@formbricks/types/common";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
+import { getPlacementStyle } from "@formbricks/ui/PreviewSurvey/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 
 import { updateProductAction } from "../actions";

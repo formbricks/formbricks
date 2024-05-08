@@ -1,9 +1,5 @@
 "use client";
 
-import {
-  deleteBasicSegmentAction,
-  updateBasicSegmentAction,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { FilterIcon, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -19,6 +15,8 @@ import BasicAddFilterModal from "@formbricks/ui/Targeting/BasicAddFilterModal";
 import BasicSegmentEditor from "@formbricks/ui/Targeting/BasicSegmentEditor";
 import ConfirmDeleteSegmentModal from "@formbricks/ui/Targeting/ConfirmDeleteSegmentModal";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
+
+import { deleteBasicSegmentAction, updateBasicSegmentAction } from "../actions";
 
 type TBasicSegmentSettingsTabProps = {
   environmentId: string;

@@ -2,7 +2,7 @@ import { DownloadIcon, FileIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TSurveyQuestionSummaryFileUpload } from "@formbricks/types/surveys";

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 import { TSurveyQuestionSummaryDate } from "@formbricks/types/surveys";
