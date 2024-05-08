@@ -246,7 +246,7 @@ interface RatingSmileyProps {
   range: number;
 }
 
-function RatingSmiley({ active, idx, range }: RatingSmileyProps): JSX.Element {
+const RatingSmiley = ({ active, idx, range }: RatingSmileyProps): JSX.Element => {
   const activeColor = "fill-rating-fill";
   const inactiveColor = "fill-none";
   let icons = [
@@ -267,4 +267,4 @@ function RatingSmiley({ active, idx, range }: RatingSmileyProps): JSX.Element {
   else if (range == 4) icons = [icons[4], icons[5], icons[6], icons[7]];
   else if (range == 3) icons = [icons[4], icons[5], icons[7]];
   return icons[idx];
-}
+};
