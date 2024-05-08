@@ -1,4 +1,4 @@
-import ActivityTimeline from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/components/ActivityTimeline";
+import ActivityTimeline from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ActivityTimeline";
 
 import { getActionsByPersonId } from "@formbricks/lib/action/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";

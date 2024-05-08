@@ -17,7 +17,7 @@ export const TopControlBar = ({ environment, environments }: SideBarProps) => {
   if (pathname?.includes("/edit") || pathname?.includes("/surveys/templates")) return null;
 
   return (
-    <div className="max-w-8xl z-50 flex h-12 w-full justify-end px-6">
+    <div className="flex h-14 w-full items-center justify-end px-6">
       <div className="shadow-xs z-10">
         <div className="flex w-fit space-x-2 py-2">
           <WidgetStatusIndicator environment={environment} type="mini" />

@@ -1,3 +1,4 @@
+import { PeopleSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PeopleSecondaryNavigation";
 import { CircleHelpIcon } from "lucide-react";
 
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
@@ -52,7 +53,9 @@ export default async function PeoplePage({
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="People" cta={HowToAddPeopleButton} />
+      <PageHeader pageTitle="People" cta={HowToAddPeopleButton}>
+        <PeopleSecondaryNavigation activeId="people" environmentId={params.environmentId} />
+      </PageHeader>
       {people.length === 0 ? (
         <EmptySpaceFiller
           type="table"

@@ -1,49 +1,34 @@
-"use client";
-
-import clsx from "clsx";
 import Link from "next/link";
 
-interface NavigationLink {
-  id: string;
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-  current?: boolean;
-  hidden?: boolean;
-  target?: string;
-  onClick?: () => void;
+import { cn } from "@formbricks/lib/cn";
+
+interface SecondNavbarProps {
+  navigation: { id: string; label: string; href: string; icon?: React.ReactNode }[];
+  activeId: string;
 }
 
-interface SecondaryNavigationProps {
-  navigation: NavigationLink[];
-}
-
-export const SecondaryNavigation = ({ navigation }: SecondaryNavigationProps) => {
-  if (!navigation) return null;
-
+export const SecondaryNavigation = ({ navigation, activeId, ...props }: SecondNavbarProps) => {
   return (
-    <div className="px-6 pt-3">
-      <nav className="flex-1 space-y-2 px-2">
-        {navigation.map(
-          (link) =>
-            !link.hidden && (
-              <Link
-                key={link.id}
-                href={link.href}
-                target={link.target}
-                onClick={link.onClick}
-                className={clsx(
-                  link.current
-                    ? "border-brand-dark font-semibold text-slate-900"
-                    : "border-transparent hover:border-slate-300 ",
-                  "group flex items-center whitespace-nowrap rounded-l-md border-r-2 px-4 py-2 pl-2 text-sm text-slate-600 hover:text-slate-900"
-                )}>
-                {link.icon}
-                <span className="ml-3">{link.label}</span>
-              </Link>
-            )
-        )}
-      </nav>
+    <div {...props}>
+      <div className="grid h-10 w-full grid-cols-3 justify-items-stretch">
+        <nav className="flex h-full items-center space-x-4 " aria-label="Tabs">
+          {navigation.map((navElem) => (
+            <Link
+              key={navElem.id}
+              href={navElem.href}
+              className={cn(
+                navElem.id === activeId
+                  ? " border-brand-dark border-b-2 font-semibold text-slate-900"
+                  : "text-slate-500 hover:text-slate-700",
+                "flex h-full items-center px-3 text-sm font-medium"
+              )}
+              aria-current={navElem.id === activeId ? "page" : undefined}>
+              {navElem.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="justify-self-end"></div>
+      </div>
     </div>
   );
 };

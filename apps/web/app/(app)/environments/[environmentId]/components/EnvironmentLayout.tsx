@@ -41,29 +41,25 @@ export default async function EnvironmentLayout({
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
   return (
-    <>
-      <div className="bg-slate-50 transition-all ease-in-out">
-        <div className="flex">
-          <MainNavigation
-            environment={environment}
-            team={team}
-            teams={teams}
-            products={products}
-            session={session}
-            isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-            membershipRole={currentUserMembership?.role}
-          />
-          <div id="mainContent" className="min-h-screen flex-1 overflow-y-auto ">
-            {environment.type === "development" && (
-              <div className="flex h-6 w-full items-center justify-center  bg-orange-800 p-0.5 text-center text-xs text-white">
-                You&apos;re in an development environment. Set it up to test surveys, actions and attributes.
-              </div>
-            )}
-            <TopControlBar environment={environment} environments={environments} />
-            <div className="max-w-8xl flex">{children}</div>
+    <div className="flex justify-center">
+      <MainNavigation
+        environment={environment}
+        team={team}
+        teams={teams}
+        products={products}
+        session={session}
+        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+        membershipRole={currentUserMembership?.role}
+      />
+      <div id="mainContent" className="min-h-screen flex-1 overflow-y-auto bg-slate-50">
+        {environment.type === "development" && (
+          <div className="flex h-6 w-full items-center justify-center  bg-orange-800 p-0.5 text-center text-xs text-white">
+            You&apos;re in an development environment. Set it up to test surveys, actions and attributes.
           </div>
-        </div>
+        )}
+        <TopControlBar environment={environment} environments={environments} />
+        <div className="flex">{children}</div>
       </div>
-    </>
+    </div>
   );
 }

@@ -46,7 +46,7 @@ export default function NavigationLink({
       ) : (
         <li
           className={cn(
-            "mb-1 ml-4 rounded-l-md py-2 pl-5 text-sm text-slate-600 hover:text-slate-900",
+            "mb-1 rounded-l-md py-2 pl-5 text-sm text-slate-600 hover:text-slate-900",
             isActive ? activeClass : inactiveClass
           )}>
           <Link href={href} className="flex items-center">

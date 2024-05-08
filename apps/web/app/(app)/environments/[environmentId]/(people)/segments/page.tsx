@@ -1,5 +1,6 @@
-import BasicCreateSegmentModal from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/components/BasicCreateSegmentModal";
-import SegmentTable from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/components/SegmentTable";
+import { PeopleSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PeopleSecondaryNavigation";
+import BasicCreateSegmentModal from "@/app/(app)/environments/[environmentId]/(people)/segments/components/BasicCreateSegmentModal";
+import SegmentTable from "@/app/(app)/environments/[environmentId]/(people)/segments/components/SegmentTable";
 
 import CreateSegmentModal from "@formbricks/ee/advancedTargeting/components/CreateSegmentModal";
 import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedTargeting/lib/constants";
@@ -69,7 +70,9 @@ export default async function SegmentsPage({ params }) {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Segments" cta={renderCreateSegmentButton()} />
+      <PageHeader pageTitle="People" cta={renderCreateSegmentButton()}>
+        <PeopleSecondaryNavigation activeId="segments" environmentId={params.environmentId} />
+      </PageHeader>
       {filteredSegments.length === 0 ? (
         <EmptySpaceFiller
           type="table"

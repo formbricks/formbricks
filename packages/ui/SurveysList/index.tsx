@@ -132,7 +132,7 @@ export const SurveysList = ({
             </div>
           )}
           {orientation === "grid" && (
-            <div className="grid grid-cols-4 place-content-stretch gap-4 lg:grid-cols-6 ">
+            <div className="grid grid-cols-2 place-content-stretch gap-4 lg:grid-cols-3 2xl:grid-cols-5">
               {surveys.map((survey) => {
                 return (
                   <SurveyCard

@@ -4,7 +4,6 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 
-import { MenuBar } from "./components/MenuBar";
 import TemplateContainerWithPreview from "./components/TemplateContainer";
 
 export default async function SurveyTemplatesPage({ params }) {
@@ -29,14 +28,11 @@ export default async function SurveyTemplatesPage({ params }) {
   }
 
   return (
-    <>
-      <MenuBar />
-      <TemplateContainerWithPreview
-        environmentId={environmentId}
-        user={session.user}
-        environment={environment}
-        product={product}
-      />
-    </>
+    <TemplateContainerWithPreview
+      environmentId={environmentId}
+      user={session.user}
+      environment={environment}
+      product={product}
+    />
   );
 }

@@ -189,13 +189,13 @@ export const MainNavigation = ({
       {product && (
         <aside
           className={cn(
-            "sticky top-0 z-50 flex h-screen max-h-screen flex-col justify-between rounded-r-xl border border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
+            "sticky top-0 z-50 flex h-screen max-h-screen flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
             !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
           )}>
           <div>
             {/* Logo and Toggle */}
 
-            <div className="flex items-center justify-between px-3 pb-2">
+            <div className="flex items-center justify-between px-3 pb-4">
               {!isCollapsed && (
                 <Link
                   href={`/environments/${environment.id}/surveys/`}
@@ -241,7 +241,7 @@ export const MainNavigation = ({
               <DropdownMenuTrigger
                 asChild
                 id="userDropdownTrigger"
-                className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50">
+                className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
                 <div
                   tabIndex={0}
                   className={cn(
@@ -314,7 +314,7 @@ export const MainNavigation = ({
                 <DropdownMenuTrigger
                   asChild
                   id="userDropdownTrigger"
-                  className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50">
+                  className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
                   <div
                     tabIndex={0}
                     className={cn(

@@ -1,5 +1,6 @@
 "use client";
 
+import { MenuBar } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/templates/components/MenuBar";
 import { useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
@@ -31,6 +32,7 @@ export default function TemplateContainerWithPreview({
 
   return (
     <div className="flex h-screen flex-col">
+      <MenuBar />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <div className="flex-1 flex-col overflow-auto bg-slate-50">
           <div className="ml-6 mt-6 flex flex-col items-center justify-between md:flex-row md:items-start">
