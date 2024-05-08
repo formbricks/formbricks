@@ -54,6 +54,11 @@ export default async function EnvironmentLayout({
             membershipRole={currentUserMembership?.role}
           />
           <div id="mainContent" className="min-h-screen flex-1 overflow-y-auto ">
+            {environment.type === "development" && (
+              <div className="flex h-6 w-full items-center justify-center  bg-orange-800 p-0.5 text-center text-xs text-white">
+                You&apos;re in an development environment. Set it up to test surveys, actions and attributes.
+              </div>
+            )}
             <TopControlBar environment={environment} environments={environments} />
             {children}
           </div>

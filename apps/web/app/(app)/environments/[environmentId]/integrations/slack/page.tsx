@@ -31,8 +31,8 @@ export default async function Slack({ params }) {
 
   return (
     <PageContentWrapper>
+      <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
       <PageHeader pageTitle="Slack Integration" />
-      <GoBackButton url={`/environments/${params.environmentId}/integrations`} />
       <div className="h-[75vh] w-full">
         <SlackWrapper
           isEnabled={isEnabled}

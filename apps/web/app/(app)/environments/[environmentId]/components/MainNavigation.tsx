@@ -175,7 +175,6 @@ export const MainNavigation = ({
     {
       label: "Team Settings",
       href: `/environments/${environment.id}/settings/members`,
-      target: "_blank",
     },
   ];
 
@@ -192,7 +191,7 @@ export const MainNavigation = ({
           <div>
             {/* Logo and Toggle */}
 
-            <div className="flex items-center justify-between px-3 pb-3">
+            <div className="flex items-center justify-between px-3 pb-2">
               {!isCollapsed && (
                 <Link
                   href={`/environments/${environment.id}/surveys/`}

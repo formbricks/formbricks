@@ -25,8 +25,8 @@ export default async function CustomWebhookPage({ params }) {
   });
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Webhooks" />
       <GoBackButton />
+      <PageHeader pageTitle="Webhooks" />
       <WebhookTable environment={environment} webhooks={webhooks} surveys={surveys}>
         <WebhookTableHeading />
         {webhooks.map((webhook) => (

@@ -22,7 +22,7 @@ export const SecondaryNavigation = ({ navigation }: SecondaryNavigationProps) =>
   if (!navigation) return null;
 
   return (
-    <div className="p-6">
+    <div className="px-6 pt-3">
       <nav className="flex-1 space-y-2 px-2">
         {navigation.map(
           (link) =>

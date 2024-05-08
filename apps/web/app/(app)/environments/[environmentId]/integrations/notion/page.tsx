@@ -40,8 +40,8 @@ export default async function Notion({ params }) {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Notion Integration" />
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
+      <PageHeader pageTitle="Notion Integration" />
       <NotionWrapper
         enabled={enabled}
         surveys={surveys}

@@ -38,8 +38,8 @@ export default async function Airtable({ params }) {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Airtable Integration" />
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
+      <PageHeader pageTitle="Airtable Integration" />
       <div className="h-[75vh] w-full">
         <AirtableWrapper
           enabled={enabled}

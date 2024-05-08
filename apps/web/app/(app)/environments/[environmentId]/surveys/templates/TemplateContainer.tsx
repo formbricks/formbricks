@@ -3,15 +3,13 @@
 import { PreviewSurvey } from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurvey";
 import { TemplateList } from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
 import { replacePresetPlaceholders } from "@/app/lib/templates";
-import { ArrowLeftIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import type { TTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/Button";
+import GoBackButton from "@formbricks/ui/GoBackButton";
 import { SearchBox } from "@formbricks/ui/SearchBox";
 
 import { minimalSurvey, templates } from "./templates";
@@ -32,7 +30,6 @@ export default function TemplateContainerWithPreview({
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [templateSearch, setTemplateSearch] = useState<string | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     if (product && templates?.length) {
@@ -48,9 +45,7 @@ export default function TemplateContainerWithPreview({
         <div className="flex-1 flex-col overflow-auto bg-slate-50">
           <div className="ml-6 mt-6 flex flex-col items-center justify-between md:flex-row md:items-start">
             <div className=" flex space-x-4">
-              <Button variant="secondary" StartIcon={ArrowLeftIcon} size="sm" onClick={() => router.back()}>
-                Back
-              </Button>
+              <GoBackButton />
               <h1 className="text-2xl font-bold text-slate-800">Create a new survey</h1>
             </div>
             <div className="px-6">

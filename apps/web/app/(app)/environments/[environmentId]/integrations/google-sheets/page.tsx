@@ -41,8 +41,8 @@ export default async function GoogleSheet({ params }) {
   }
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Google Sheets Integration" />
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
+      <PageHeader pageTitle="Google Sheets Integration" />
       <div className="h-[75vh] w-full">
         <GoogleSheetWrapper
           enabled={enabled}
