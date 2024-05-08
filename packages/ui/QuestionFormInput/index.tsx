@@ -18,7 +18,13 @@ import {
   recallToHeadline,
   replaceRecallInfoWithUnderline,
 } from "@formbricks/lib/utils/recall";
-import { TI18nString, TSurvey, TSurveyChoice, TSurveyQuestion } from "@formbricks/types/surveys";
+import {
+  TI18nString,
+  TRecallQuestionInfo,
+  TSurvey,
+  TSurveyChoice,
+  TSurveyQuestion,
+} from "@formbricks/types/surveys";
 
 import { LanguageIndicator } from "../../ee/multiLanguage/components/LanguageIndicator";
 import { createI18nString } from "../../lib/i18n/utils";
@@ -128,7 +134,7 @@ export const QuestionFormInput = ({
   );
   const [showQuestionSelect, setShowQuestionSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
-  const [recallQuestions, setRecallQuestions] = useState<TSurveyQuestion[]>(
+  const [recallQuestions, setRecallQuestions] = useState<TRecallQuestionInfo[]>(
     getLocalizedValue(text, selectedLanguageCode).includes("#recall:")
       ? getRecallQuestions(getLocalizedValue(text, selectedLanguageCode), localSurvey, selectedLanguageCode)
       : []
@@ -176,9 +182,13 @@ export const QuestionFormInput = ({
     // Constructs an array of JSX elements representing segmented parts of text, interspersed with special formatted spans for recall headlines.
     const processInput = (): JSX.Element[] => {
       const parts: JSX.Element[] = [];
-      let remainingText = recallToHeadline(text, localSurvey, false, selectedLanguageCode)[
-        selectedLanguageCode
-      ];
+      let remainingText = recallToHeadline(
+        text,
+        localSurvey,
+        false,
+        selectedLanguageCode,
+        localSurvey.hiddenFields.fieldIds ?? []
+      )[selectedLanguageCode];
       filterRecallQuestions(remainingText);
       recallQuestionHeadlines.forEach((headline) => {
         const index = remainingText.indexOf("@" + headline);
@@ -225,6 +235,7 @@ export const QuestionFormInput = ({
   const checkForRecallSymbol = () => {
     const pattern = /(^|\s)@(\s|$)/;
     if (pattern.test(getLocalizedValue(text, selectedLanguageCode))) {
+      console.log("setting true");
       setShowQuestionSelect(true);
     } else {
       setShowQuestionSelect(false);
@@ -232,13 +243,17 @@ export const QuestionFormInput = ({
   };
 
   // Adds a new recall question to the recallQuestions array, updates fallbacks, modifies the text with recall details.
-  const addRecallQuestion = (recallQuestion: TSurveyQuestion) => {
+  const addRecallQuestion = (recallQuestion: TRecallQuestionInfo) => {
     if ((recallQuestion.headline as TI18nString)[selectedLanguageCode].trim() === "") {
       toast.error("Cannot add question with empty headline as recall");
       return;
     }
+    console.log(recallQuestion);
     let recallQuestionTemp = structuredClone(recallQuestion);
-    recallQuestionTemp = replaceRecallInfoWithUnderline(recallQuestionTemp, selectedLanguageCode);
+    recallQuestionTemp.headline = replaceRecallInfoWithUnderline(
+      recallQuestionTemp.headline,
+      selectedLanguageCode
+    );
     setRecallQuestions((prevQuestions) => {
       const updatedQuestions = [...prevQuestions, recallQuestionTemp];
       return updatedQuestions;
@@ -251,6 +266,7 @@ export const QuestionFormInput = ({
     }
     setShowQuestionSelect(false);
     let modifiedHeadlineWithId = { ...getElementTextBasedOnType() };
+    console.log({ modifiedHeadlineWithId });
     modifiedHeadlineWithId[selectedLanguageCode] = getLocalizedValue(
       modifiedHeadlineWithId,
       selectedLanguageCode
@@ -260,15 +276,18 @@ export const QuestionFormInput = ({
       modifiedHeadlineWithId,
       localSurvey,
       false,
-      selectedLanguageCode
+      selectedLanguageCode,
+      localSurvey.hiddenFields.fieldIds ?? []
     );
+    console.log(modifiedHeadlineWithName);
     setText(modifiedHeadlineWithName);
     setShowFallbackInput(true);
   };
 
   // Filters and updates the list of recall questions based on their presence in the given text, also managing related text and fallback states.
   const filterRecallQuestions = (remainingText: string) => {
-    let includedQuestions: TSurveyQuestion[] = [];
+    let includedQuestions: TRecallQuestionInfo[] = [];
+    console.log({ remainingText });
     recallQuestions.forEach((recallQuestion) => {
       if (remainingText.includes(`@${getLocalizedValue(recallQuestion.headline, selectedLanguageCode)}`)) {
         includedQuestions.push(recallQuestion);
@@ -284,6 +303,7 @@ export const QuestionFormInput = ({
         let updatedFallback = { ...fallbacks };
         delete updatedFallback[recallQuestion.id];
         setFallbacks(updatedFallback);
+        console.log("removed");
       }
     });
     setRecallQuestions(includedQuestions);
@@ -436,7 +456,15 @@ export const QuestionFormInput = ({
                 name={id}
                 aria-label={label ? label : getLabelById(id)}
                 autoComplete={showQuestionSelect ? "off" : "on"}
-                value={recallToHeadline(text, localSurvey, false, selectedLanguageCode)[selectedLanguageCode]}
+                value={
+                  recallToHeadline(
+                    text,
+                    localSurvey,
+                    false,
+                    selectedLanguageCode,
+                    localSurvey.hiddenFields.fieldIds ?? []
+                  )[selectedLanguageCode]
+                }
                 ref={inputRef}
                 onBlur={onBlur}
                 onChange={(e) => {
@@ -444,7 +472,15 @@ export const QuestionFormInput = ({
                     ...getElementTextBasedOnType(),
                     [selectedLanguageCode]: e.target.value,
                   };
-                  setText(recallToHeadline(translatedText, localSurvey, false, selectedLanguageCode));
+                  setText(
+                    recallToHeadline(
+                      translatedText,
+                      localSurvey,
+                      false,
+                      selectedLanguageCode,
+                      localSurvey.hiddenFields.fieldIds ?? []
+                    )
+                  );
                   handleUpdate(
                     headlineToRecall(e.target.value, recallQuestions, fallbacks, selectedLanguageCode)
                   );
@@ -493,12 +529,18 @@ export const QuestionFormInput = ({
             inputRef={inputRef}
             recallQuestions={recallQuestions}
             selectedLanguageCode={selectedLanguageCode}
+            hiddenFields={localSurvey.hiddenFields}
           />
         )}
       </div>
       {selectedLanguageCode !== "default" && value && typeof value["default"] !== undefined && (
         <div className="mt-1 text-xs text-gray-500">
-          <strong>Translate:</strong> {recallToHeadline(value, localSurvey, false, "default")["default"]}
+          <strong>Translate:</strong>{" "}
+          {
+            recallToHeadline(value, localSurvey, false, "default", localSurvey.hiddenFields.fieldIds ?? [])[
+              "default"
+            ]
+          }
         </div>
       )}
       {selectedLanguageCode === "default" && localSurvey.languages?.length > 1 && isTranslationIncomplete && (

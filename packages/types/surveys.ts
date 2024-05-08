@@ -875,3 +875,10 @@ const ZSortOption = z.object({
 
 export type TSortOption = z.infer<typeof ZSortOption>;
 export type TSurveySummary = z.infer<typeof ZSurveySummary>;
+
+const ZRecallQuestionInfo = z.object({
+  id: z.string(),
+  headline: ZI18nString,
+});
+
+export type TRecallQuestionInfo = z.infer<typeof ZRecallQuestionInfo>;

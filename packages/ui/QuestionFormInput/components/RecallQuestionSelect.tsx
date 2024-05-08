@@ -1,5 +1,6 @@
 import {
   CalendarDaysIcon,
+  EyeOffIcon,
   HomeIcon,
   ListIcon,
   MessageSquareTextIcon,
@@ -10,10 +11,16 @@ import {
 } from "lucide-react";
 import { RefObject, useEffect, useMemo, useState } from "react";
 
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { createI18nString, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+import {
+  TI18nString,
+  TRecallQuestionInfo,
+  TSurvey,
+  TSurveyHiddenFields,
+  TSurveyQuestion,
+} from "@formbricks/types/surveys";
 
 const questionIconMapping = {
   openText: MessageSquareTextIcon,
@@ -29,12 +36,13 @@ const questionIconMapping = {
 interface RecallQuestionSelectProps {
   localSurvey: TSurvey;
   questionId: string;
-  addRecallQuestion: (question: TSurveyQuestion) => void;
+  addRecallQuestion: (question: TRecallQuestionInfo) => void;
   setShowQuestionSelect: (show: boolean) => void;
   showQuestionSelect: boolean;
   inputRef: RefObject<HTMLInputElement>;
-  recallQuestions: TSurveyQuestion[];
+  recallQuestions: TRecallQuestionInfo[];
   selectedLanguageCode: string;
+  hiddenFields: TSurveyHiddenFields;
 }
 
 export default function RecallQuestionSelect({
@@ -46,6 +54,7 @@ export default function RecallQuestionSelect({
   inputRef,
   recallQuestions,
   selectedLanguageCode,
+  hiddenFields,
 }: RecallQuestionSelectProps) {
   const [focusedQuestionIdx, setFocusedQuestionIdx] = useState(0); // New state for managing focus
   const isNotAllowedQuestionType = (question: TSurveyQuestion) => {
@@ -69,20 +78,36 @@ export default function RecallQuestionSelect({
       questionId === "end"
         ? localSurvey.questions.length
         : localSurvey.questions.findIndex((recallQuestion) => recallQuestion.id === questionId);
-    const filteredQuestions = localSurvey.questions.filter((question, index) => {
-      const notAllowed = isNotAllowedQuestionType(question);
-      return (
-        !recallQuestionIds.includes(question.id) && !notAllowed && question.id !== questionId && idx > index
-      );
-    });
+    const filteredQuestions = localSurvey.questions
+      .filter((question, index) => {
+        const notAllowed = isNotAllowedQuestionType(question);
+        return (
+          !recallQuestionIds.includes(question.id) && !notAllowed && question.id !== questionId && idx > index
+        );
+      })
+      .map((question) => {
+        return { id: question.id, headline: question.headline };
+      });
     return filteredQuestions;
   }, [localSurvey.questions, questionId, recallQuestionIds]);
 
+  const hiddenFieldsArray = hiddenFields.fieldIds
+    ? hiddenFields.fieldIds.map((hiddenField) => {
+        return {
+          id: hiddenField,
+          headline: createI18nString(
+            hiddenField,
+            localSurvey.languages.map((lang) => lang.language.code)
+          ),
+        };
+      })
+    : [];
+
   // function to modify headline (recallInfo to corresponding headline)
-  const getRecallHeadline = (question: TSurveyQuestion): TSurveyQuestion => {
-    let questionTemp = structuredClone(question);
-    questionTemp = replaceRecallInfoWithUnderline(questionTemp, selectedLanguageCode);
-    return questionTemp;
+  const getRecallHeadline = (question: TI18nString): TI18nString => {
+    let questionTempHeadline = structuredClone(question);
+    questionTempHeadline = replaceRecallInfoWithUnderline(questionTempHeadline, selectedLanguageCode);
+    return questionTempHeadline;
   };
 
   // function to handle key press
@@ -91,16 +116,18 @@ export default function RecallQuestionSelect({
       if (showQuestionSelect) {
         if (event.key === "ArrowDown") {
           event.preventDefault();
-          setFocusedQuestionIdx((prevIdx) => (prevIdx + 1) % filteredRecallQuestions.length);
+          setFocusedQuestionIdx(
+            (prevIdx) => (prevIdx + 1) % [...filteredRecallQuestions, ...hiddenFieldsArray].length
+          );
         } else if (event.key === "ArrowUp") {
           event.preventDefault();
           setFocusedQuestionIdx((prevIdx) =>
-            prevIdx === 0 ? filteredRecallQuestions.length - 1 : prevIdx - 1
+            prevIdx === 0 ? [...filteredRecallQuestions, ...hiddenFieldsArray].length - 1 : prevIdx - 1
           );
         } else if (event.key === "Enter") {
           event.preventDefault();
           event.stopPropagation();
-          const selectedQuestion = filteredRecallQuestions[focusedQuestionIdx];
+          const selectedQuestion = [...filteredRecallQuestions, ...hiddenFieldsArray][focusedQuestionIdx];
           setShowQuestionSelect(false);
           if (!selectedQuestion) return;
           addRecallQuestion(selectedQuestion);
@@ -116,6 +143,13 @@ export default function RecallQuestionSelect({
     };
   }, [showQuestionSelect, localSurvey.questions, focusedQuestionIdx]);
 
+  const getQuestionIcon = (questionId: string) => {
+    const question = localSurvey.questions.find((question) => question.id === questionId);
+    if (question) {
+      return questionIconMapping[question?.type as keyof typeof questionIconMapping];
+    } else return EyeOffIcon;
+  };
+
   return (
     <div className="absolute z-30 mt-1 flex max-w-[85%] flex-col overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3  text-xs ">
       {filteredRecallQuestions.length === 0 ? (
@@ -124,9 +158,9 @@ export default function RecallQuestionSelect({
         <p className="mb-2 font-medium">Recall Information from...</p>
       )}
       <div>
-        {filteredRecallQuestions.map((q, idx) => {
+        {[...filteredRecallQuestions, ...hiddenFieldsArray].map((q, idx) => {
           const isFocused = idx === focusedQuestionIdx;
-          const IconComponent = questionIconMapping[q.type as keyof typeof questionIconMapping];
+          const IconComponent = getQuestionIcon(q.id);
           return (
             <div
               key={q.id}
@@ -134,12 +168,12 @@ export default function RecallQuestionSelect({
                 isFocused ? "bg-slate-200" : "hover:bg-slate-200 "
               }`}
               onClick={() => {
-                addRecallQuestion(q);
+                addRecallQuestion({ id: q.id, headline: q.headline });
                 setShowQuestionSelect(false);
               }}>
               <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
               <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
-                {getLocalizedValue(getRecallHeadline(q).headline, selectedLanguageCode)}
+                {getLocalizedValue(getRecallHeadline(q.headline), selectedLanguageCode)}
               </div>
             </div>
           );

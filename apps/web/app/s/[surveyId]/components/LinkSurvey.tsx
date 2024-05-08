@@ -10,7 +10,7 @@ import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/product";
-import { TResponse, TResponseUpdate } from "@formbricks/types/responses";
+import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
@@ -120,8 +120,8 @@ export default function LinkSurvey({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hiddenFieldsRecord = useMemo<Record<string, string | number | string[]> | null>(() => {
-    const fieldsRecord: Record<string, string | number | string[]> = {};
+  const hiddenFieldsRecord = useMemo<TResponseData | undefined>(() => {
+    const fieldsRecord: TResponseData = {};
     let fieldsSet = false;
 
     survey.hiddenFields?.fieldIds?.forEach((field) => {
@@ -133,7 +133,7 @@ export default function LinkSurvey({
     });
 
     // Only return the record if at least one field was set.
-    return fieldsSet ? fieldsRecord : null;
+    return fieldsSet ? fieldsRecord : undefined;
   }, [searchParams, survey.hiddenFields?.fieldIds]);
 
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
@@ -278,6 +278,7 @@ export default function LinkSurvey({
             setQuestionId = f;
           }}
           startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
+          hiddenFieldsRecord={hiddenFieldsRecord}
         />
       </ContentWrapper>
     </div>

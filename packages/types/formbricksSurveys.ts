@@ -23,6 +23,7 @@ export interface SurveyBaseProps {
   responseCount?: number;
   isCardBorderVisible?: boolean;
   startAtQuestionId?: string;
+  hiddenFieldsRecord?: TResponseData;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {
