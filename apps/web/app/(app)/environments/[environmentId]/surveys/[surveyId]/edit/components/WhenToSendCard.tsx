@@ -1,10 +1,15 @@
 "use client";
 
-import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/actions/components/AddActionModal";
-import InlineTriggers from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/InlineTriggers";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { CheckIcon, PlusIcon, TrashIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  CheckIcon,
+  Code2Icon,
+  MousePointerClickIcon,
+  PlusIcon,
+  SparklesIcon,
+  Trash2Icon,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
@@ -13,15 +18,8 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui/Select";
-import { TabBar } from "@formbricks/ui/TabBar";
+
+import { AddActionModal } from "./AddActionModal";
 
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
@@ -41,52 +39,16 @@ export default function WhenToSendCard({
   const [open, setOpen] = useState(
     localSurvey.type === "app" || localSurvey.type === "website" ? true : false
   );
-  const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
-
-  const [activeTriggerTab, setActiveTriggerTab] = useState(
-    !!localSurvey?.inlineTriggers ? "inline" : "relation"
-  );
-  const tabs = [
-    {
-      id: "relation",
-      label: "Saved Actions",
-    },
-    {
-      id: "inline",
-      label: "Custom Actions",
-    },
-  ];
 
   const { isViewer } = getAccessFlags(membershipRole);
 
   const autoClose = localSurvey.autoClose !== null;
   const delay = localSurvey.delay !== 0;
 
-  const addTriggerEvent = useCallback(() => {
-    const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers = [...localSurvey.triggers, ""];
-    setLocalSurvey(updatedSurvey);
-  }, [localSurvey, setLocalSurvey]);
-
-  const setTriggerEvent = useCallback(
-    (idx: number, actionClassName: string) => {
-      const updatedSurvey = { ...localSurvey };
-      const newActionClass = actionClasses!.find((actionClass) => {
-        return actionClass.name === actionClassName;
-      });
-      if (!newActionClass) {
-        throw new Error("Action class not found");
-      }
-      updatedSurvey.triggers[idx] = newActionClass.name;
-      setLocalSurvey(updatedSurvey);
-    },
-    [actionClasses, localSurvey, setLocalSurvey]
-  );
-
-  const removeTriggerEvent = (idx: number) => {
+  const handleRemoveTriggerEvent = (idx: number) => {
     const updatedSurvey = { ...localSurvey };
     updatedSurvey.triggers = [...localSurvey.triggers.slice(0, idx), ...localSurvey.triggers.slice(idx + 1)];
     setLocalSurvey(updatedSurvey);
@@ -144,58 +106,14 @@ export default function WhenToSendCard({
   };
 
   useEffect(() => {
-    if (isAddEventModalOpen) return;
-
-    if (activeIndex !== null) {
-      const newActionClass = actionClasses[actionClasses.length - 1].name;
-      const currentActionClass = localSurvey.triggers[activeIndex];
-
-      if (newActionClass !== currentActionClass) {
-        setTriggerEvent(activeIndex, newActionClass);
-      }
-
-      setActiveIndex(null);
-    }
-  }, [actionClasses, activeIndex, setTriggerEvent, isAddEventModalOpen, localSurvey.triggers]);
-
-  useEffect(() => {
     if (localSurvey.type === "link") {
       setOpen(false);
     }
   }, [localSurvey.type]);
 
-  //create new empty trigger on page load, remove one click for user
-  useEffect(() => {
-    if (localSurvey.triggers.length === 0) {
-      addTriggerEvent();
-    }
-  }, [addTriggerEvent, localSurvey.triggers.length]);
-
   const containsEmptyTriggers = useMemo(() => {
-    const noTriggers = !localSurvey.triggers || !localSurvey.triggers.length || !localSurvey.triggers[0];
-    const noInlineTriggers =
-      !localSurvey.inlineTriggers ||
-      (!localSurvey.inlineTriggers?.codeConfig && !localSurvey.inlineTriggers?.noCodeConfig);
-
-    if (noTriggers && noInlineTriggers) {
-      return true;
-    }
-
-    return false;
+    return !localSurvey.triggers || !localSurvey.triggers.length || !localSurvey.triggers[0];
   }, [localSurvey]);
-
-  // for inline triggers, if both the codeConfig and noCodeConfig are empty, we consider it as empty
-  useEffect(() => {
-    const inlineTriggers = localSurvey?.inlineTriggers ?? {};
-    if (Object.keys(inlineTriggers).length === 0) {
-      setLocalSurvey((prevSurvey) => {
-        return {
-          ...prevSurvey,
-          inlineTriggers: null,
-        };
-      });
-    }
-  }, [localSurvey?.inlineTriggers, setLocalSurvey]);
 
   if (localSurvey.type === "link") {
     return null; // Hide card completely
@@ -237,77 +155,85 @@ export default function WhenToSendCard({
           <hr className="py-1 text-slate-600" />
 
           <div className="px-3 pb-3 pt-1">
-            <div className="flex flex-col overflow-hidden rounded-lg border-2 border-slate-100">
-              <TabBar
-                tabs={tabs}
-                activeId={activeTriggerTab}
-                setActiveId={setActiveTriggerTab}
-                tabStyle="button"
-                className="bg-slate-100"
-              />
-              <div className="p-3">
-                {activeTriggerTab === "inline" ? (
-                  <div className="flex flex-col">
-                    <InlineTriggers localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
-                  </div>
-                ) : (
-                  <>
-                    {!isAddEventModalOpen &&
-                      localSurvey.triggers?.map((triggerEventClass, idx) => (
-                        <div className="mt-2" key={idx}>
-                          <div className="inline-flex items-center">
-                            <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
-                            <Select
-                              value={triggerEventClass}
-                              onValueChange={(actionClassName) => setTriggerEvent(idx, actionClassName)}>
-                              <SelectTrigger className="w-[240px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <button
-                                  type="button"
-                                  className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
-                                  value="none"
-                                  onClick={() => {
-                                    setAddEventModalOpen(true);
-                                    setActiveIndex(idx);
-                                  }}>
-                                  <PlusIcon className="mr-1 h-5 w-5" />
-                                  Add Action
-                                </button>
-                                <SelectSeparator />
-                                {actionClasses.map((actionClass) => (
-                                  <SelectItem
-                                    value={actionClass.name}
-                                    key={actionClass.name}
-                                    title={actionClass.description ? actionClass.description : ""}>
-                                    {actionClass.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <p className="mx-2 text-sm">action is performed</p>
-                            <button type="button" onClick={() => removeTriggerEvent(idx)}>
-                              <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
-                            </button>
+            <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-800">
+                Trigger survey when one of the actions is fired...
+              </p>
+
+              {localSurvey.triggers.filter(Boolean).map((trigger, idx) => {
+                return (
+                  <div className="flex items-center gap-2" key={trigger.actionClass.id}>
+                    {idx !== 0 && <p className="ml-1 text-sm font-bold text-slate-700">or</p>}
+                    <div
+                      key={trigger.actionClass.id}
+                      className="flex grow items-center justify-between rounded-md border border-slate-300 bg-white p-2 px-3">
+                      <div>
+                        <div className="mt-1 flex items-center">
+                          <div className="mr-1.5 h-4 w-4 text-slate-600">
+                            {trigger.actionClass.type === "code" ? (
+                              <Code2Icon className="h-4 w-4" />
+                            ) : trigger.actionClass.type === "noCode" ? (
+                              <MousePointerClickIcon className="h-4 w-4" />
+                            ) : trigger.actionClass.type === "automatic" ? (
+                              <SparklesIcon className="h-4 w-4" />
+                            ) : null}
                           </div>
+
+                          <h4 className="text-sm font-semibold text-slate-600">{trigger.actionClass.name}</h4>
                         </div>
-                      ))}
-                    <div className="px-6 py-4">
-                      <Button
-                        variant="secondary"
-                        onClick={() => {
-                          addTriggerEvent();
-                        }}>
-                        <PlusIcon className="mr-2 h-4 w-4" />
-                        Add condition
-                      </Button>
+                        <div className="mt-1 text-xs text-gray-500">
+                          {trigger.actionClass.description && (
+                            <span className="mr-1">{trigger.actionClass.description}</span>
+                          )}
+                          {trigger.actionClass.type === "code" && (
+                            <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
+                              Key: <b>{trigger.actionClass.key}</b>
+                            </span>
+                          )}
+                          {trigger.actionClass.type === "noCode" &&
+                            trigger.actionClass.noCodeConfig?.cssSelector && (
+                              <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
+                                CSS Selector: <b>{trigger.actionClass.noCodeConfig.cssSelector.value}</b>
+                              </span>
+                            )}
+                          {trigger.actionClass.type === "noCode" &&
+                            trigger.actionClass.noCodeConfig?.innerHtml && (
+                              <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
+                                Inner Text: <b>{trigger.actionClass.noCodeConfig.innerHtml.value}</b>
+                              </span>
+                            )}
+                          {trigger.actionClass.type === "noCode" &&
+                            trigger.actionClass.noCodeConfig?.pageUrl && (
+                              <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
+                                URL {trigger.actionClass.noCodeConfig.pageUrl.rule}:{" "}
+                                <b>{trigger.actionClass.noCodeConfig.pageUrl.value}</b>
+                              </span>
+                            )}
+                        </div>
+                      </div>
                     </div>
-                  </>
-                )}
+                    <Trash2Icon
+                      className="h-4 w-4 cursor-pointer text-slate-600"
+                      onClick={() => handleRemoveTriggerEvent(idx)}
+                    />
+                  </div>
+                );
+              })}
+
+              <div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setAddActionModalOpen(true);
+                  }}>
+                  <PlusIcon className="mr-2 h-4 w-4" />
+                  Add action
+                </Button>
               </div>
             </div>
 
+            {/* Survey Display Settings */}
             <div className="mb-4 mt-8 space-y-1 px-4">
               <h3 className="font-semibold text-slate-800">Survey Display Settings</h3>
               <p className="text-sm text-slate-500">Add a delay or auto-close the survey</p>
@@ -387,13 +313,15 @@ export default function WhenToSendCard({
           </div>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
-      <AddNoCodeActionModal
+      <AddActionModal
         environmentId={environmentId}
-        open={isAddEventModalOpen}
-        setOpen={setAddEventModalOpen}
+        open={isAddActionModalOpen}
+        setOpen={setAddActionModalOpen}
         actionClasses={actionClasses}
         setActionClasses={setActionClasses}
         isViewer={isViewer}
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
       />
     </>
   );

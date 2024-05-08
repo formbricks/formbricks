@@ -2,6 +2,7 @@
 
 import { getServerSession } from "next-auth";
 
+import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
@@ -23,6 +24,7 @@ import {
   loadNewSegmentInSurvey,
   updateSurvey,
 } from "@formbricks/lib/survey/service";
+import { TActionClassInput } from "@formbricks/types/actionClasses";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TProduct } from "@formbricks/types/product";
 import { TBaseFilters, TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
@@ -247,4 +249,14 @@ export async function triggerDownloadUnsplashImageAction(downloadUrl: string) {
   } catch (error) {
     throw new Error("Error downloading image from Unsplash");
   }
+}
+
+export async function createActionClassAction(action: TActionClassInput) {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, action.environmentId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  return await createActionClass(action.environmentId, action);
 }

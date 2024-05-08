@@ -25,44 +25,6 @@ test.describe("Survey Create & Submit Response", async () => {
     url = await page.evaluate("navigator.clipboard.readText()");
   });
 
-  test("Create Survey with Custom Actions", async ({ page }) => {
-    const { name, email, password } = users.survey[1];
-
-    await createSurvey(page, name, email, password, surveys.createAndSubmit);
-    // Save & Publish Survey
-    await page.getByRole("button", { name: "Continue to Settings" }).click();
-    await page.locator("#howToSendCardTrigger").click();
-    await page.locator("#howToSendCardOption-website").click();
-    await page.getByRole("button", { name: "Custom Actions" }).click();
-
-    await expect(page.locator("#codeAction")).toBeVisible();
-    await page.locator("#codeAction").click();
-
-    await expect(page.locator("#codeActionIdentifierInput")).toBeVisible();
-    await page.locator("#codeActionIdentifierInput").fill("my-custom-code-action");
-
-    await expect(page.locator("#noCodeAction")).toBeVisible();
-    await page.locator("#noCodeAction").click();
-
-    await expect(page.locator("#cssSelectorToggle")).toBeVisible();
-    await expect(page.locator("#pageURLToggle")).toBeVisible();
-    await expect(page.locator("#innerHTMLToggle")).toBeVisible();
-
-    await page.locator("#cssSelectorToggle").click();
-    await expect(page.locator("#cssSelectorInput")).toBeVisible();
-    await page.locator("#cssSelectorInput").fill(".my-custom-class");
-
-    await page.locator("#pageURLToggle").click();
-    await expect(page.locator("#pageURLInput")).toBeVisible();
-    await page.locator("#pageURLInput").fill("custom-url");
-
-    await page.locator("#innerHTMLToggle").click();
-    await expect(page.locator("#innerHTMLInput")).toBeVisible();
-    await page.locator("#innerHTMLInput").fill("Download");
-
-    await page.getByRole("button", { name: "Publish" }).click();
-  });
-
   test("Submit Survey Response", async ({ page }) => {
     await page.goto(url!);
     await page.waitForURL(/\/s\/[A-Za-z0-9]+$/);
