@@ -158,6 +158,14 @@ export const MainNavigation = ({
 
   const dropdownNavigation = [
     {
+      label: "Account Settings",
+      href: `/environments/${environment.id}/settings/profile`,
+    },
+    {
+      label: "Team Settings",
+      href: `/environments/${environment.id}/settings/members`,
+    },
+    {
       label: "Billing",
       href: `/environments/${environment.id}/settings/billing`,
       hidden: !isFormbricksCloud || isPricingDisabled,
@@ -171,10 +179,6 @@ export const MainNavigation = ({
       label: "Join Discord",
       href: "https://formbricks.com/discord",
       target: "_blank",
-    },
-    {
-      label: "Team Settings",
-      href: `/environments/${environment.id}/settings/members`,
     },
   ];
 
@@ -340,29 +344,12 @@ export const MainNavigation = ({
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent
-                  className="w-56 space-y-1 rounded-xl border border-slate-200 shadow-sm"
+                  className="w-56 rounded-xl border border-slate-200 shadow-sm"
                   id="userDropdownInnerContentWrapper"
                   side="right"
                   sideOffset={10}
                   alignOffset={5}
                   align="end">
-                  <DropdownMenuItem className="break-all rounded-lg font-normal">
-                    <Link href={`/environments/${environment.id}/settings/profile`}>
-                      <span>My Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
-
-                  {/* Logout */}
-
-                  <DropdownMenuItem
-                    className="rounded-lg font-normal"
-                    onClick={async () => {
-                      await signOut({ callbackUrl: "/auth/login" });
-                      await formbricksLogout();
-                    }}>
-                    Logout
-                  </DropdownMenuItem>
-
                   {/* Dropdown Items */}
 
                   {dropdownNavigation.map(
@@ -375,6 +362,17 @@ export const MainNavigation = ({
                         </Link>
                       )
                   )}
+
+                  {/* Logout */}
+
+                  <DropdownMenuItem
+                    className="rounded-lg font-normal"
+                    onClick={async () => {
+                      await signOut({ callbackUrl: "/auth/login" });
+                      await formbricksLogout();
+                    }}>
+                    Logout
+                  </DropdownMenuItem>
 
                   {/* Team Switch */}
 
