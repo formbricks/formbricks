@@ -24,6 +24,7 @@ interface AddressQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
+  currentQuestionId: string;
 }
 
 export const AddressQuestion = ({
@@ -38,12 +39,13 @@ export const AddressQuestion = ({
   ttc,
   setTtc,
   isInIframe,
+  currentQuestionId,
 }: AddressQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [hasFilled, setHasFilled] = useState(false);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const safeValue = useMemo(() => {
     return Array.isArray(value) ? value : ["", "", "", "", "", ""];

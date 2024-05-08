@@ -131,5 +131,4 @@ export const PREVIEW_SURVEY = {
   resultShareKey: null,
   languages: [],
   triggers: [],
-  inlineTriggers: null,
 } as TSurvey;

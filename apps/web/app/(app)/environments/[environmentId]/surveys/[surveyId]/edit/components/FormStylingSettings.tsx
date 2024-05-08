@@ -17,7 +17,7 @@ type FormStylingSettingsProps = {
   setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | TProductStyling>>;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  hideCheckmark?: boolean;
+  isSettingsPage?: boolean;
   disabled?: boolean;
 };
 
@@ -25,7 +25,7 @@ const FormStylingSettings = ({
   styling,
   setStyling,
   open,
-  hideCheckmark = false,
+  isSettingsPage = false,
   disabled = false,
   setOpen,
 }: FormStylingSettingsProps) => {
@@ -134,7 +134,7 @@ const FormStylingSettings = ({
           disabled && "cursor-not-allowed opacity-60 hover:bg-white"
         )}>
         <div className="inline-flex px-4 py-4">
-          {!hideCheckmark && (
+          {!isSettingsPage && (
             <div className="flex items-center pl-2 pr-5">
               <CheckIcon
                 strokeWidth={3}
@@ -144,8 +144,10 @@ const FormStylingSettings = ({
           )}
 
           <div>
-            <p className="font-semibold text-slate-800">Form Styling</p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className={cn("font-semibold text-slate-800", isSettingsPage ? "text-sm" : "text-base")}>
+              Form Styling
+            </p>
+            <p className={cn("mt-1 text-slate-500", isSettingsPage ? "text-xs" : "text-sm")}>
               Style the question texts, descriptions and input fields.
             </p>
           </div>

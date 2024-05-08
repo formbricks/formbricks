@@ -1,5 +1,13 @@
 name: Build & Cache Web App
 
+on:
+  workflow_dispatch:
+    inputs:
+      e2e_testing_mode:
+        description: "Set E2E Testing Mode"
+        required: false
+        default: "0"
+
 runs:
   using: "composite"
   steps:
@@ -39,6 +47,11 @@ runs:
 
     - name: create .env
       run: cp .env.example .env
+      shell: bash
+
+    - name: Add E2E Testing Mode
+      run: |
+        echo "E2E_TESTING=${{ inputs.e2e_testing_mode }}" >> $GITHUB_ENV
       shell: bash
 
     - name: Generate Random ENCRYPTION_KEY

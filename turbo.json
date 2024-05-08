@@ -76,6 +76,7 @@
         "CUSTOMER_IO_API_KEY",
         "CUSTOMER_IO_SITE_ID",
         "DEBUG",
+        "E2E_TESTING",
         "EMAIL_AUTH_DISABLED",
         "EMAIL_VERIFICATION_DISABLED",
         "ENCRYPTION_KEY",

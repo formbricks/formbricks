@@ -162,6 +162,7 @@ export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
 };
 
 export const DEBUG = env.DEBUG === "1";
+export const E2E_TESTING = env.E2E_TESTING === "1";
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;

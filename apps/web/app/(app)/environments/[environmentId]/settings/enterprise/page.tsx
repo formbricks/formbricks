@@ -37,7 +37,7 @@ export default async function EnterpriseLicensePage({ params }) {
     notFound();
   }
 
-  const isEnterpriseEdition = getIsEnterpriseEdition();
+  const isEnterpriseEdition = await getIsEnterpriseEdition();
 
   const paidFeatures = [
     {

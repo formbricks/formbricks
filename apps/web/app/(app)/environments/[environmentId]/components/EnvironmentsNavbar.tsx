@@ -25,7 +25,7 @@ export default async function EnvironmentsNavbar({ environmentId, session }: Env
     return <ErrorComponent />;
   }
 
-  const isMultiLanguageAllowed = getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
 
   const [products, environments] = await Promise.all([
     getProducts(team.id),
