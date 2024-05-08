@@ -1,6 +1,6 @@
 import { TagIcon, UserIcon, UsersIcon } from "lucide-react";
 
-import { SecondNavigation } from "@formbricks/ui/SecondNavigation";
+import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
 
 interface PeopleSegmentsTabsProps {
   activeId: string;
@@ -33,5 +33,5 @@ export default function PeopleSegmentsTabs({ activeId, environmentId }: PeopleSe
     },
   ];
 
-  return <SecondNavigation navigation={navigation} />;
+  return <SecondaryNavigation navigation={navigation} />;
 }

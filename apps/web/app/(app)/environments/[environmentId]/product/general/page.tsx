@@ -7,6 +7,8 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 import { SettingsId } from "@formbricks/ui/SettingsId";
 
 import SettingsCard from "../../settings/components/SettingsCard";
@@ -41,7 +43,8 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   }
 
   return (
-    <div>
+    <PageContentWrapper>
+      <PageHeader pageTitle="General Settings" />
       <SettingsCard title="Product Name" description="Change your products name.">
         <EditProductName
           environmentId={params.environmentId}
@@ -60,6 +63,6 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         <DeleteProduct environmentId={params.environmentId} product={product} />
       </SettingsCard>
       <SettingsId title="Product" id={product.id}></SettingsId>
-    </div>
+    </PageContentWrapper>
   );
 }

@@ -3,6 +3,8 @@ import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import EnvironmentNotice from "@formbricks/ui/EnvironmentNotice";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
 import SettingsCard from "../../settings/components/SettingsCard";
 import EnvironmentIdField from "./components/EnvironmentIdField";
@@ -12,7 +14,8 @@ export default async function ProfileSettingsPage({ params }) {
   const environment = await getEnvironment(params.environmentId);
 
   return (
-    <>
+    <PageContentWrapper>
+      <PageHeader pageTitle="Setup" />
       <div className="space-y-4">
         <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/product/setup" />
         <SettingsCard
@@ -36,6 +39,6 @@ export default async function ProfileSettingsPage({ params }) {
           />
         </SettingsCard>
       </div>
-    </>
+    </PageContentWrapper>
   );
 }

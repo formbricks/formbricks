@@ -6,6 +6,8 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { getWebhooks } from "@formbricks/lib/webhook/service";
 import GoBackButton from "@formbricks/ui/GoBackButton";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
 export default async function CustomWebhookPage({ params }) {
   const [webhooksUnsorted, surveys, environment] = await Promise.all([
@@ -22,7 +24,8 @@ export default async function CustomWebhookPage({ params }) {
     return 0;
   });
   return (
-    <>
+    <PageContentWrapper>
+      <PageHeader pageTitle="Webhooks" />
       <GoBackButton />
       <WebhookTable environment={environment} webhooks={webhooks} surveys={surveys}>
         <WebhookTableHeading />
@@ -30,6 +33,6 @@ export default async function CustomWebhookPage({ params }) {
           <WebhookRowData key={webhook.id} webhook={webhook} surveys={surveys} />
         ))}
       </WebhookTable>
-    </>
+    </PageContentWrapper>
   );
 }

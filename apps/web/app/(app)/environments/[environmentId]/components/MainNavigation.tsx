@@ -44,7 +44,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 import AddProductModal from "./AddProductModal";
 
@@ -166,6 +165,11 @@ export const MainNavigation = ({
     {
       label: "Documentation",
       href: "https://formbricks.com/docs",
+      target: "_blank",
+    },
+    {
+      label: "Join Discord",
+      href: "https://formbricks.com/discord",
       target: "_blank",
     },
     {
@@ -343,22 +347,9 @@ export const MainNavigation = ({
                   sideOffset={10}
                   alignOffset={5}
                   align="end">
-                  <DropdownMenuItem className=" break-all rounded-lg text-xs font-normal">
+                  <DropdownMenuItem className="break-all rounded-lg font-normal">
                     <Link href={`/environments/${environment.id}/settings/profile`}>
-                      {session?.user?.email.length > 30 ? (
-                        <TooltipProvider delayDuration={50}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="">{truncate(session?.user?.email, 30)}</span>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-[45rem] break-all" side="left" sideOffset={5}>
-                              {session?.user?.email}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      ) : (
-                        <span className="">{session?.user?.email}</span>
-                      )}
+                      <span>My Profile</span>
                     </Link>
                   </DropdownMenuItem>
 

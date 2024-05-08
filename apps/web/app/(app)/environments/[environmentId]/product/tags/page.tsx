@@ -9,6 +9,8 @@ import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTagsOnResponsesCount } from "@formbricks/lib/tagOnResponse/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
 import EditTagsWrapper from "./components/EditTagsWrapper";
 
@@ -38,13 +40,16 @@ export default async function MembersSettingsPage({ params }) {
   const isTagSettingDisabled = isViewer;
 
   return !isTagSettingDisabled ? (
-    <SettingsCard title="Manage Tags" description="Add, merge and remove response tags.">
-      <EditTagsWrapper
-        environment={environment}
-        environmentTags={tags}
-        environmentTagsCount={environmentTagsCount}
-      />
-    </SettingsCard>
+    <PageContentWrapper>
+      <PageHeader pageTitle="Manage Tags" />
+      <SettingsCard title="Manage Tags" description="Add, merge and remove response tags.">
+        <EditTagsWrapper
+          environment={environment}
+          environmentTags={tags}
+          environmentTagsCount={environmentTagsCount}
+        />
+      </SettingsCard>
+    </PageContentWrapper>
   ) : (
     <ErrorComponent />
   );

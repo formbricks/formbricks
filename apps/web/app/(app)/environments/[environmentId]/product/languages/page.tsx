@@ -5,6 +5,8 @@ import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import EditLanguage from "@formbricks/ee/multiLanguage/components/EditLanguage";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTeam } from "@formbricks/lib/team/service";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
 export default async function LanguageSettingsPage({ params }: { params: { environmentId: string } }) {
   const product = await getProductByEnvironmentId(params.environmentId);
@@ -26,12 +28,13 @@ export default async function LanguageSettingsPage({ params }: { params: { envir
   }
 
   return (
-    <div>
+    <PageContentWrapper>
+      <PageHeader pageTitle="Multi-language Surveys" />
       <SettingsCard
         title="Multi-language surveys"
         description="Add languages to create multi-language surveys.">
         <EditLanguage product={product} environmentId={params.environmentId} />
       </SettingsCard>
-    </div>
+    </PageContentWrapper>
   );
 }

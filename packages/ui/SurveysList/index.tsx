@@ -1,12 +1,10 @@
 "use client";
 
-import { PlusIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys";
 
-import { InnerContentWrapper } from "../InnerContentWrapper";
 import { Button } from "../v2/Button";
 import { getSurveysAction } from "./actions";
 import { SurveyCard } from "./components/SurveyCard";
@@ -97,18 +95,8 @@ export const SurveysList = ({
     setSurveys(newSurveys);
   };
 
-  const CreateSurveyButton = (
-    <Button
-      size="sm"
-      href={`/environments/${environment.id}/surveys/templates`}
-      variant="darkCTA"
-      EndIcon={PlusIcon}>
-      New survey
-    </Button>
-  );
-
   return (
-    <InnerContentWrapper pageTitle="Surveys" cta={CreateSurveyButton}>
+    <div className="space-y-6">
       <SurveyFilters
         orientation={orientation}
         setOrientation={setOrientation}
@@ -178,6 +166,6 @@ export const SurveysList = ({
           <div className="text-slate-600">{isFetching ? "Fetching surveys..." : "No surveys found"}</div>
         </div>
       )}
-    </InnerContentWrapper>
+    </div>
   );
 };

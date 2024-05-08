@@ -1,13 +1,18 @@
+import BasicCreateSegmentModal from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/components/BasicCreateSegmentModal";
 import SegmentTable from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/components/SegmentTable";
 
+import CreateSegmentModal from "@formbricks/ee/advancedTargeting/components/CreateSegmentModal";
 import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedTargeting/lib/constants";
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
 export default async function SegmentsPage({ params }) {
   const [environment, segments, attributeClasses, actionClassesFromServer, team] = await Promise.all([
@@ -46,8 +51,25 @@ export default async function SegmentsPage({ params }) {
     return true;
   });
 
+  const renderCreateSegmentButton = () =>
+    isAdvancedTargetingAllowed ? (
+      <CreateSegmentModal
+        environmentId={params.environmentId}
+        actionClasses={actionClasses}
+        attributeClasses={attributeClasses}
+        segments={filteredSegments}
+      />
+    ) : (
+      <BasicCreateSegmentModal
+        attributeClasses={attributeClasses}
+        environmentId={params.environmentId}
+        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+      />
+    );
+
   return (
-    <>
+    <PageContentWrapper>
+      <PageHeader pageTitle="Segments" cta={renderCreateSegmentButton()} />
       {filteredSegments.length === 0 ? (
         <EmptySpaceFiller
           type="table"
@@ -62,6 +84,6 @@ export default async function SegmentsPage({ params }) {
           isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
         />
       )}
-    </>
+    </PageContentWrapper>
   );
 }

@@ -11,6 +11,7 @@ import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getUser } from "@formbricks/lib/user/service";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);
@@ -54,7 +55,7 @@ export default async function Page({ params }) {
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
   return (
-    <>
+    <PageContentWrapper>
       <SummaryPage
         environment={environment}
         survey={survey}
@@ -65,6 +66,6 @@ export default async function Page({ params }) {
         membershipRole={currentUserMembership?.role}
         totalResponseCount={totalResponseCount}
       />
-    </>
+    </PageContentWrapper>
   );
 }

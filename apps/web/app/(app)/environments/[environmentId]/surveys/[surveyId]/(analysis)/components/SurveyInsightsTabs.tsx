@@ -4,7 +4,7 @@ import revalidateSurveyIdPath from "@/app/(app)/environments/[environmentId]/sur
 import { InboxIcon, PresentationIcon } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 
-import { SecondNavigation } from "@formbricks/ui/SecondNavigation";
+import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
 
 interface SurveyInsightsTabsProps {
   environmentId: string;
@@ -43,5 +43,5 @@ export const SurveyInsightsTabs = ({ environmentId, surveyId, responseCount }: S
     },
   ];
 
-  return <SecondNavigation navigation={navigation} />;
+  return <SecondaryNavigation navigation={navigation} />;
 };

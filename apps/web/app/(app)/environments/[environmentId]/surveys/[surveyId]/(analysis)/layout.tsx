@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
 
 import { SurveyInsightsTabs } from "./components/SurveyInsightsTabs";
 
@@ -29,6 +28,7 @@ export const generateMetadata = async ({ params }: Props): Promise<Metadata> => 
 
 export default async function SurveyLayout({ children, params }) {
   const responseCount = await getResponseCountBySurveyId(params.surveyId);
+
   return (
     <>
       <div className="flex">
@@ -37,9 +37,7 @@ export default async function SurveyLayout({ children, params }) {
           surveyId={params.surveyId}
           responseCount={responseCount}
         />
-        <div className="w-full">
-          <InnerContentWrapper>{children}</InnerContentWrapper>
-        </div>
+        <div className="w-full">{children}</div>
       </div>
     </>
   );

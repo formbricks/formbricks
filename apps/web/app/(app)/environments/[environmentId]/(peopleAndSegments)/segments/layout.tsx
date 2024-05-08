@@ -1,26 +1,18 @@
 import PeopleSegmentsNav from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/components/PeopleSegmentsNav";
-import BasicCreateSegmentModal from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/components/BasicCreateSegmentModal";
 import { Metadata } from "next";
 
-import CreateSegmentModal from "@formbricks/ee/advancedTargeting/components/CreateSegmentModal";
-import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedTargeting/lib/constants";
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
-import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { InnerContentWrapper } from "@formbricks/ui/InnerContentWrapper";
+import { SidebarLayout } from "@formbricks/ui/SidebarLayout";
 
 export const metadata: Metadata = {
   title: "Segments",
 };
 
 export default async function SegmentsLayout({ params, children }) {
-  const [segments, attributeClasses, actionClassesFromServer, team] = await Promise.all([
+  const [segments, team] = await Promise.all([
     getSegments(params.environmentId),
-    getAttributeClasses(params.environmentId),
-    getActionClasses(params.environmentId),
     getTeamByEnvironmentId(params.environmentId),
   ]);
 
@@ -32,52 +24,18 @@ export default async function SegmentsLayout({ params, children }) {
     throw new Error("Failed to fetch segments");
   }
 
-  const filteredSegments = segments.filter((segment) => !segment.isPrivate);
-
-  const actionClasses = actionClassesFromServer.filter((actionClass) => {
-    if (actionClass.type === "automatic") {
-      if (ACTIONS_TO_EXCLUDE.includes(actionClass.name)) {
-        return false;
-      }
-
-      return true;
-    }
-
-    return true;
-  });
-
   const isAdvancedTargetingAllowed = await getAdvancedTargetingPermission(team);
 
-  const renderCreateSegmentButton = () =>
-    isAdvancedTargetingAllowed ? (
-      <CreateSegmentModal
-        environmentId={params.environmentId}
-        actionClasses={actionClasses}
-        attributeClasses={attributeClasses}
-        segments={filteredSegments}
-      />
-    ) : (
-      <BasicCreateSegmentModal
-        attributeClasses={attributeClasses}
-        environmentId={params.environmentId}
-        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-      />
-    );
-
   return (
-    <>
-      <div className="flex">
+    <SidebarLayout
+      sidebar={
         <PeopleSegmentsNav
           activeId="segments"
           environmentId={params.environmentId}
           isUserTargetingAllowed={isAdvancedTargetingAllowed}
         />
-        <div className="w-full">
-          <InnerContentWrapper pageTitle="Segments" cta={renderCreateSegmentButton()}>
-            {children}
-          </InnerContentWrapper>
-        </div>
-      </div>
-    </>
+      }>
+      {children}
+    </SidebarLayout>
   );
 }

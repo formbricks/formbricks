@@ -1,8 +1,13 @@
+import { CircleHelpIcon } from "lucide-react";
+
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";
 import { TPerson } from "@formbricks/types/people";
+import { Button } from "@formbricks/ui/Button";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 import { Pagination } from "@formbricks/ui/Pagination";
 
 import { PersonCard } from "./components/PersonCard";
@@ -34,8 +39,20 @@ export default async function PeoplePage({
     people = await getPeople(params.environmentId, pageNumber);
   }
 
+  const HowToAddPeopleButton = (
+    <Button
+      size="sm"
+      href="https://formbricks.com/docs/app-surveys/user-identification"
+      variant="secondary"
+      target="_blank"
+      EndIcon={CircleHelpIcon}>
+      How to add people
+    </Button>
+  );
+
   return (
-    <>
+    <PageContentWrapper>
+      <PageHeader pageTitle="People" cta={HowToAddPeopleButton} />
       {people.length === 0 ? (
         <EmptySpaceFiller
           type="table"
@@ -62,6 +79,6 @@ export default async function PeoplePage({
           itemsPerPage={ITEMS_PER_PAGE}
         />
       )}
-    </>
+    </PageContentWrapper>
   );
 }

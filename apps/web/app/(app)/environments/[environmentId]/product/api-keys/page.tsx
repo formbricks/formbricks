@@ -7,6 +7,8 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import EnvironmentNotice from "@formbricks/ui/EnvironmentNotice";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
 import SettingsCard from "../../settings/components/SettingsCard";
 import ApiKeyList from "./components/ApiKeyList";
@@ -30,7 +32,8 @@ export default async function ProfileSettingsPage({ params }) {
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
   return !isViewer ? (
-    <div>
+    <PageContentWrapper>
+      <PageHeader pageTitle="API Keys" />
       <EnvironmentNotice environmentId={environment.id} subPageUrl="/settings/api-keys" />
       {environment.type === "development" ? (
         <SettingsCard
@@ -45,7 +48,7 @@ export default async function ProfileSettingsPage({ params }) {
           <ApiKeyList environmentId={params.environmentId} environmentType="production" />
         </SettingsCard>
       )}
-    </div>
+    </PageContentWrapper>
   ) : (
     <ErrorComponent />
   );

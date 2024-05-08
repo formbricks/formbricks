@@ -18,6 +18,8 @@ import { getWebhookCountBySource } from "@formbricks/lib/webhook/service";
 import { TIntegrationType } from "@formbricks/types/integration";
 import { Card } from "@formbricks/ui/Card";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
 import AirtableLogo from "./airtable/images/airtable.svg";
 import GoogleSheetsLogo from "./google-sheets/images/google-sheets-small.png";
@@ -204,7 +206,8 @@ export default async function IntegrationsPage({ params }) {
   if (isViewer) return <ErrorComponent />;
 
   return (
-    <div>
+    <PageContentWrapper>
+      <PageHeader pageTitle="Integrations" />
       <div className="grid grid-cols-3 place-content-stretch gap-4 lg:grid-cols-3">
         {integrationCards.map((card) => (
           <Card
@@ -223,6 +226,6 @@ export default async function IntegrationsPage({ params }) {
           />
         ))}
       </div>
-    </div>
+    </PageContentWrapper>
   );
 }

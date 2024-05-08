@@ -12,6 +12,8 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
 import SettingsCard from "../../settings/components/SettingsCard";
 import { EditFormbricksBranding } from "./components/EditBranding";
@@ -46,7 +48,8 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   }
 
   return (
-    <div>
+    <PageContentWrapper>
+      <PageHeader pageTitle="Look & Feel" />
       <SettingsCard
         title="Theme"
         className="max-w-7xl"
@@ -82,6 +85,6 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
           environmentId={params.environmentId}
         />
       </SettingsCard>
-    </div>
+    </PageContentWrapper>
   );
 }
