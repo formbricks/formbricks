@@ -4,7 +4,6 @@ import { Metadata } from "next";
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { SidebarLayout } from "@formbricks/ui/SidebarLayout";
 
 export const metadata: Metadata = {
   title: "Segments",
@@ -27,15 +26,13 @@ export default async function SegmentsLayout({ params, children }) {
   const isAdvancedTargetingAllowed = await getAdvancedTargetingPermission(team);
 
   return (
-    <SidebarLayout
-      sidebar={
-        <PeopleSegmentsNav
-          activeId="segments"
-          environmentId={params.environmentId}
-          isUserTargetingAllowed={isAdvancedTargetingAllowed}
-        />
-      }>
+    <>
+      <PeopleSegmentsNav
+        activeId="segments"
+        environmentId={params.environmentId}
+        isUserTargetingAllowed={isAdvancedTargetingAllowed}
+      />
       {children}
-    </SidebarLayout>
+    </>
   );
 }

@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { SidebarLayout } from "@formbricks/ui/SidebarLayout";
 
 export default async function AccountSettingsLayout({ children, params }) {
   const [team, product, session] = await Promise.all([
@@ -26,8 +25,9 @@ export default async function AccountSettingsLayout({ children, params }) {
   }
 
   return (
-    <SidebarLayout sidebar={<AccountSettingsNavbar environmentId={params.environmentId} />}>
+    <>
+      <AccountSettingsNavbar environmentId={params.environmentId} />
       {children}
-    </SidebarLayout>
+    </>
   );
 }

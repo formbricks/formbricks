@@ -31,7 +31,7 @@ export default async function SurveyLayout({ children, params }) {
 
   return (
     <>
-      <div className="flex">
+      <div className="flex flex-1">
         <SurveyInsightsTabs
           environmentId={params.environmentId}
           surveyId={params.surveyId}

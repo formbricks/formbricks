@@ -60,7 +60,7 @@ export default async function EnvironmentLayout({
               </div>
             )}
             <TopControlBar environment={environment} environments={environments} />
-            {children}
+            <div className="max-w-8xl flex">{children}</div>
           </div>
         </div>
       </div>
