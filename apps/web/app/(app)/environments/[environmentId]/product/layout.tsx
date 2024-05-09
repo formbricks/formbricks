@@ -1,4 +1,3 @@
-import { ProductConfigTabs } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigTabs";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 
@@ -29,10 +28,5 @@ export default async function ConfigLayout({ children, params }) {
     throw new Error("Unauthenticated");
   }
 
-  return (
-    <>
-      <ProductConfigTabs environmentId={params.environmentId} />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }

@@ -1,3 +1,4 @@
+import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import AccountSecurity from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
 import { getServerSession } from "next-auth";
 
@@ -23,7 +24,9 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Profile" />
+      <PageHeader pageTitle="Account Settings">
+        <AccountSettingsNavbar environmentId={environmentId} activeId="profile" />
+      </PageHeader>
       {user && (
         <div>
           <SettingsCard title="Personal information" description="Update your personal information.">

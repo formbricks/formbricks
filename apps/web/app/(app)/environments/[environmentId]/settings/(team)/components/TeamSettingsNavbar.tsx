@@ -11,14 +11,29 @@ export const TeamSettingsNavbar = ({
   environmentId,
   isFormbricksCloud,
   membershipRole,
+  activeId,
 }: {
   environmentId: string;
   isFormbricksCloud: boolean;
-  membershipRole: TMembershipRole;
+  membershipRole?: TMembershipRole;
+  activeId: string;
 }) => {
   const pathname = usePathname();
   const { isAdmin, isOwner } = getAccessFlags(membershipRole);
   const isPricingDisabled = !isOwner && !isAdmin;
+
+  console.log({
+    environmentId,
+    isFormbricksCloud,
+    membershipRole,
+    activeId,
+    pathname,
+    isAdmin,
+    isOwner,
+    isPricingDisabled,
+  });
+
+  console.log("hidden: ", !isFormbricksCloud || isPricingDisabled);
 
   const navigation = [
     {
@@ -47,5 +62,5 @@ export const TeamSettingsNavbar = ({
     },
   ];
 
-  return <SecondaryNavigation navigation={navigation} />;
+  return <SecondaryNavigation navigation={navigation} activeId={activeId} />;
 };

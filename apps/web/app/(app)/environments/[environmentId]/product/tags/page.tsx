@@ -1,3 +1,4 @@
+import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getServerSession } from "next-auth";
 
@@ -41,7 +42,9 @@ export default async function MembersSettingsPage({ params }) {
 
   return !isTagSettingDisabled ? (
     <PageContentWrapper>
-      <PageHeader pageTitle="Manage Tags" />
+      <PageHeader pageTitle="Configuration">
+        <ProductConfigNavigation environmentId={params.environmentId} activeId="tags" />
+      </PageHeader>
       <SettingsCard title="Manage Tags" description="Add, merge and remove response tags.">
         <EditTagsWrapper
           environment={environment}

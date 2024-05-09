@@ -5,7 +5,13 @@ import { usePathname } from "next/navigation";
 
 import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
 
-export const AccountSettingsNavbar = ({ environmentId }: { environmentId: string }) => {
+export const AccountSettingsNavbar = ({
+  environmentId,
+  activeId,
+}: {
+  environmentId: string;
+  activeId: string;
+}) => {
   const pathname = usePathname();
   const navigation = [
     {
@@ -24,5 +30,5 @@ export const AccountSettingsNavbar = ({ environmentId }: { environmentId: string
     },
   ];
 
-  return <SecondaryNavigation navigation={navigation} />;
+  return <SecondaryNavigation navigation={navigation} activeId={activeId} />;
 };

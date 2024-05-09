@@ -1,4 +1,5 @@
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
+import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -15,7 +16,9 @@ export default async function ProfileSettingsPage({ params }) {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Setup" />
+      <PageHeader pageTitle="Configuration">
+        <ProductConfigNavigation environmentId={params.environmentId} activeId="setup" />
+      </PageHeader>
       <div className="space-y-4">
         <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/product/setup" />
         <SettingsCard

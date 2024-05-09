@@ -6,5 +6,5 @@ interface PageContentWrapperProps {
 }
 
 export const PageContentWrapper = ({ children, className }: PageContentWrapperProps) => {
-  return <div className={cn("flex-1 space-y-6 overflow-y-auto p-6", className)}>{children}</div>;
+  return <div className={cn("space-y-6 overflow-y-auto p-6", className)}>{children}</div>;
 };

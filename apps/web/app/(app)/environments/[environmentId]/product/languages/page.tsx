@@ -1,3 +1,4 @@
+import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { notFound } from "next/navigation";
 
@@ -29,7 +30,9 @@ export default async function LanguageSettingsPage({ params }: { params: { envir
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Multi-language Surveys" />
+      <PageHeader pageTitle="Configuration">
+        <ProductConfigNavigation environmentId={params.environmentId} activeId="languages" />
+      </PageHeader>
       <SettingsCard
         title="Multi-language surveys"
         description="Add languages to create multi-language surveys.">

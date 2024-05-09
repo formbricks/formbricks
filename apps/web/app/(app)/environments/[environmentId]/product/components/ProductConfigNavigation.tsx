@@ -5,12 +5,12 @@ import { usePathname } from "next/navigation";
 
 import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
 
-interface ProductConfigTabsProps {
+interface ProductConfigNavigationProps {
   environmentId: string;
-  isUserTargetingAllowed?: boolean;
+  activeId: string;
 }
 
-export const ProductConfigTabs = ({ environmentId }: ProductConfigTabsProps) => {
+export const ProductConfigNavigation = ({ environmentId, activeId }: ProductConfigNavigationProps) => {
   const pathname = usePathname();
   let navigation = [
     {
@@ -57,5 +57,5 @@ export const ProductConfigTabs = ({ environmentId }: ProductConfigTabsProps) => 
     },
   ];
 
-  return <SecondaryNavigation navigation={navigation} />;
+  return <SecondaryNavigation navigation={navigation} activeId={activeId} />;
 };

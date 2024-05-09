@@ -58,7 +58,7 @@ export default async function EnvironmentLayout({
           </div>
         )}
         <TopControlBar environment={environment} environments={environments} />
-        <div className="flex">{children}</div>
+        {children}
       </div>
     </div>
   );

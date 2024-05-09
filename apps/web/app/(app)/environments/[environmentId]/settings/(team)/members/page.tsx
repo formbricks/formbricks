@@ -1,3 +1,4 @@
+import { TeamSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(team)/components/TeamSettingsNavbar";
 import TeamActions from "@/app/(app)/environments/[environmentId]/settings/(team)/members/components/EditMemberships/TeamActions";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
@@ -66,7 +67,14 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Members" />
+      <PageHeader pageTitle="Team Settings">
+        <TeamSettingsNavbar
+          environmentId={params.environmentId}
+          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+          membershipRole={currentUserMembership?.role}
+          activeId="members"
+        />
+      </PageHeader>
       <SettingsCard title="Manage members" description="Add or remove members in your team.">
         {currentUserRole && (
           <TeamActions

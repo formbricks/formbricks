@@ -1,4 +1,13 @@
-import { PRICING_APPSURVEYS_FREE_RESPONSES, PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
+import { TeamSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(team)/components/TeamSettingsNavbar";
+import { getServerSession } from "next-auth";
+
+import { authOptions } from "@formbricks/lib/authOptions";
+import {
+  IS_FORMBRICKS_CLOUD,
+  PRICING_APPSURVEYS_FREE_RESPONSES,
+  PRICING_USERTARGETING_FREE_MTU,
+} from "@formbricks/lib/constants";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import {
   getMonthlyActiveTeamPeopleCount,
   getMonthlyTeamResponseCount,
@@ -15,14 +24,28 @@ export default async function BillingPage({ params }) {
     throw new Error("Team not found");
   }
 
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
   const [peopleCount, responseCount] = await Promise.all([
     getMonthlyActiveTeamPeopleCount(team.id),
     getMonthlyTeamResponseCount(team.id),
   ]);
 
+  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Billing & Plan" />
+      <PageHeader pageTitle="Team Settings">
+        <TeamSettingsNavbar
+          environmentId={params.environmentId}
+          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+          membershipRole={currentUserMembership?.role}
+          activeId="billing"
+        />
+      </PageHeader>
       <PricingTable
         team={team}
         environmentId={params.environmentId}

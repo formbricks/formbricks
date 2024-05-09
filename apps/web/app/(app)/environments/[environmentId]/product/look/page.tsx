@@ -1,3 +1,4 @@
+import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { EditLogo } from "@/app/(app)/environments/[environmentId]/product/look/components/EditLogo";
 import { getServerSession } from "next-auth";
 
@@ -49,7 +50,9 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Look & Feel" />
+      <PageHeader pageTitle="Configuration">
+        <ProductConfigNavigation environmentId={params.environmentId} activeId="look" />
+      </PageHeader>
       <SettingsCard
         title="Theme"
         className="max-w-7xl"

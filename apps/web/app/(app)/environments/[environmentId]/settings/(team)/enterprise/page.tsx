@@ -1,3 +1,4 @@
+import { TeamSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(team)/components/TeamSettingsNavbar";
 import { CheckIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
@@ -89,7 +90,14 @@ export default async function EnterpriseLicensePage({ params }) {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Enterprise License" />
+      <PageHeader pageTitle="Team Settings">
+        <TeamSettingsNavbar
+          environmentId={params.environmentId}
+          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+          membershipRole={currentUserMembership?.role}
+          activeId="enterprise"
+        />
+      </PageHeader>
       {isEnterpriseEdition ? (
         <div>
           <div className="mt-8 max-w-4xl rounded-lg border border-slate-300 bg-slate-100 shadow-sm">

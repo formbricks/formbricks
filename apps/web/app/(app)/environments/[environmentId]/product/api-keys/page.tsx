@@ -1,3 +1,4 @@
+import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -33,7 +34,9 @@ export default async function ProfileSettingsPage({ params }) {
 
   return !isViewer ? (
     <PageContentWrapper>
-      <PageHeader pageTitle="API Keys" />
+      <PageHeader pageTitle="Configuration">
+        <ProductConfigNavigation environmentId={params.environmentId} activeId="api-keys" />
+      </PageHeader>
       <EnvironmentNotice environmentId={environment.id} subPageUrl="/settings/api-keys" />
       {environment.type === "development" ? (
         <SettingsCard

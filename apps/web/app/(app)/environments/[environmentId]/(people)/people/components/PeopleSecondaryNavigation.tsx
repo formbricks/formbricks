@@ -3,7 +3,6 @@ import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
 interface PeopleSegmentsTabsProps {
   activeId: string;
   environmentId: string;
-  isUserTargetingAllowed?: boolean;
 }
 
 export const PeopleSecondaryNavigation = ({ activeId, environmentId }: PeopleSegmentsTabsProps) => {

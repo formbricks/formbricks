@@ -1,3 +1,4 @@
+import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getServerSession } from "next-auth";
 
@@ -97,7 +98,9 @@ export default async function ProfileSettingsPage({ params, searchParams }) {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Notifications" />
+      <PageHeader pageTitle="Account Settings">
+        <AccountSettingsNavbar environmentId={params.environmentId} activeId="notifications" />
+      </PageHeader>
       <SettingsCard
         title="Email alerts (Surveys)"
         description="Set up an alert to get an email on new responses.">

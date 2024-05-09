@@ -1,3 +1,4 @@
+import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -44,7 +45,10 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="General Settings" />
+      <PageHeader pageTitle="Configuration">
+        <ProductConfigNavigation environmentId={params.environmentId} activeId="general" />
+      </PageHeader>
+
       <SettingsCard title="Product Name" description="Change your products name.">
         <EditProductName
           environmentId={params.environmentId}

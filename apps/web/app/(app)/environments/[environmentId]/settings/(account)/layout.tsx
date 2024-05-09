@@ -1,4 +1,3 @@
-import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -24,10 +23,5 @@ export default async function AccountSettingsLayout({ children, params }) {
     throw new Error("Unauthenticated");
   }
 
-  return (
-    <>
-      <AccountSettingsNavbar environmentId={params.environmentId} />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }
