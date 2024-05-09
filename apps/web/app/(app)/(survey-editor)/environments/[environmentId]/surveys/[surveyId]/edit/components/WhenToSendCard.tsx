@@ -131,7 +131,8 @@ export default function WhenToSendCard({
         className="w-full rounded-lg border border-slate-300 bg-white">
         <Collapsible.CollapsibleTrigger
           asChild
-          className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
+          className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50"
+          id="whenToSendCardTrigger">
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
               {containsEmptyTriggers ? (

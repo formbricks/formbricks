@@ -10,8 +10,9 @@ test.describe("Survey Create & Submit Response", async () => {
 
   test("Create Survey", async ({ page }) => {
     await createSurvey(page, name, email, password, surveys.createAndSubmit);
+
     // Save & Publish Survey
-    await page.getByRole("button", { name: "Continue to Settings" }).click();
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
 
     await page.locator("#howToSendCardTrigger").click();
     await expect(page.locator("#howToSendCardOption-link")).toBeVisible();

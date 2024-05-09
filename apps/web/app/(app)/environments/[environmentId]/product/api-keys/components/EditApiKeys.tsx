@@ -74,7 +74,9 @@ export default function EditAPIKeys({
     return (
       <div className="flex items-center">
         <span>{apiKey}</span>
-        <FilesIcon className="mx-2 h-4 w-4 cursor-pointer" onClick={copyToClipboard} />
+        <div className="copyApiKeyIcon">
+          <FilesIcon className="mx-2 h-4 w-4 cursor-pointer" onClick={copyToClipboard} />
+        </div>
       </div>
     );
   };
