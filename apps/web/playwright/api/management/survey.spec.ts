@@ -19,7 +19,7 @@ test.describe("API Tests", () => {
         throw new Error("Unable to parse environmentId from URL");
       })();
 
-    await page.goto(`/environments/${environmentId}/settings/api-keys`);
+    await page.goto(`/environments/${environmentId}/product/api-keys`);
 
     await page.getByRole("button", { name: "Add Production API Key" }).isVisible();
     await page.getByRole("button", { name: "Add Production API Key" }).click();
