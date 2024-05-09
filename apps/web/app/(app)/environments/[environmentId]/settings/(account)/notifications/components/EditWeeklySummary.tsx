@@ -17,10 +17,9 @@ export default function EditWeeklySummary({ memberships, user, environmentId }: 
     <>
       {memberships.map((membership) => (
         <>
-          <div className="mb-5 flex items-center space-x-3 font-semibold">
-            <div className="rounded-full bg-slate-100 p-1">
-              <UsersIcon className="h-6 w-7 text-slate-600" />
-            </div>
+          <div className="mb-5 flex items-center space-x-3 text-sm font-medium">
+            <UsersIcon className="h-6 w-7 text-slate-600" />
+
             <p className="text-slate-800">{membership.team.name}</p>
           </div>
           <div className="mb-6 rounded-lg border border-slate-200">

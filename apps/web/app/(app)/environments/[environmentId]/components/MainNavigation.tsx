@@ -4,14 +4,19 @@ import NavigationLink from "@/app/(app)/environments/[environmentId]/components/
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import {
+  ArrowUpRightIcon,
   BlocksIcon,
   ChevronRightIcon,
   Cog,
+  CreditCardIcon,
+  LogOutIcon,
   MessageCircle,
   MousePointerClick,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
+  UserCircleIcon,
+  UserIcon,
   UsersIcon,
 } from "lucide-react";
 import type { Session } from "next-auth";
@@ -128,7 +133,7 @@ export const MainNavigation = ({
       {
         name: "People",
         href: `/environments/${environment.id}/people`,
-        icon: UsersIcon,
+        icon: UserIcon,
         isActive:
           pathname?.includes("/people") ||
           pathname?.includes("/segments") ||
@@ -161,27 +166,32 @@ export const MainNavigation = ({
 
   const dropdownNavigation = [
     {
-      label: "Account Settings",
+      label: "Account",
       href: `/environments/${environment.id}/settings/profile`,
+      icon: UserCircleIcon,
     },
     {
-      label: "Team Settings",
+      label: "Team",
       href: `/environments/${environment.id}/settings/members`,
+      icon: UsersIcon,
     },
     {
       label: "Billing",
       href: `/environments/${environment.id}/settings/billing`,
       hidden: !isFormbricksCloud || isPricingDisabled,
+      icon: CreditCardIcon,
     },
     {
       label: "Documentation",
       href: "https://formbricks.com/docs",
       target: "_blank",
+      icon: ArrowUpRightIcon,
     },
     {
       label: "Join Discord",
       href: "https://formbricks.com/discord",
       target: "_blank",
+      icon: ArrowUpRightIcon,
     },
   ];
 
@@ -215,7 +225,11 @@ export const MainNavigation = ({
                 className={cn(
                   "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"
                 )}>
-                {isCollapsed ? <PanelLeftOpenIcon strokeWidth={1} /> : <PanelLeftCloseIcon strokeWidth={1} />}
+                {isCollapsed ? (
+                  <PanelLeftOpenIcon strokeWidth={1.5} />
+                ) : (
+                  <PanelLeftCloseIcon strokeWidth={1.5} />
+                )}
               </Button>
             </div>
 
@@ -357,8 +371,15 @@ export const MainNavigation = ({
                   {dropdownNavigation.map(
                     (link) =>
                       !link.hidden && (
-                        <Link href={link.href} target={link.target} key={link.label}>
-                          <DropdownMenuItem className="rounded-lg font-normal" key={link.label}>
+                        <Link
+                          href={link.href}
+                          target={link.target}
+                          key={link.label}
+                          className="flex items-center">
+                          <DropdownMenuItem
+                            className="w-full gap-x-2 rounded-lg font-normal"
+                            key={link.label}>
+                            <link.icon className="h-4 w-4" strokeWidth={1.5} />
                             {link.label}
                           </DropdownMenuItem>
                         </Link>
@@ -368,11 +389,12 @@ export const MainNavigation = ({
                   {/* Logout */}
 
                   <DropdownMenuItem
-                    className="rounded-lg font-normal"
+                    className="w-full gap-x-2 rounded-lg font-normal"
                     onClick={async () => {
                       await signOut({ callbackUrl: "/auth/login" });
                       await formbricksLogout();
                     }}>
+                    <LogOutIcon className="h-4 w-4" strokeWidth={1.5} />
                     Logout
                   </DropdownMenuItem>
 
