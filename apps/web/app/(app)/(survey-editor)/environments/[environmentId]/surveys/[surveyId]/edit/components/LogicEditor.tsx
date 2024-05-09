@@ -1,12 +1,12 @@
 import {
+  ArrowDownIcon,
   ChevronDown,
   CornerDownRightIcon,
   HelpCircle,
-  MoveDownIcon,
   SplitIcon,
   TrashIcon,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -26,6 +26,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
+import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
@@ -52,6 +53,7 @@ export default function LogicEditor({
   questionIdx,
   updateQuestion,
 }: LogicEditorProps): JSX.Element {
+  const [searchValue, setSearchValue] = useState<string>("");
   localSurvey = useMemo(() => {
     return checkForRecallInHeadline(localSurvey, "default");
   }, [localSurvey]);
@@ -266,6 +268,13 @@ export default function LogicEditor({
     return <></>;
   }
 
+  const getLogicDisplayValue = (value: string | string[]) => {
+    if (Array.isArray(value)) {
+      return value.join(", ");
+    }
+    return value;
+  };
+
   return (
     <div className="mt-3">
       <Label>Logic Jumps</Label>
@@ -298,61 +307,56 @@ export default function LogicEditor({
               </Select>
 
               {logic.condition && logicConditions[logic.condition].values != null && (
-                <div>
-                  {!logicConditions[logic.condition].multiSelect ? (
-                    <Select
-                      value={logic.value?.toString()}
-                      onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
-                      <SelectTrigger className="w-full overflow-hidden">
-                        <SelectValue placeholder="Select match type" />
-                      </SelectTrigger>
-                      <SelectContent className=" bg-slate-50 text-slate-700">
-                        {logicConditions[logic.condition].values?.map((value) => {
-                          if (!value) return;
-                          return (
-                            <SelectItem key={value} value={value} title={value}>
-                              <div className="w-full">
-                                <p className="mr-2 line-clamp-1 w-fit text-left">{value}</p>
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-                        <div className="flex h-10 w-full items-center justify-between overflow-hidden rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                          {logic.value?.length === 0 ? (
-                            <p className="line-clamp-1 text-slate-400" title="Select match type">
-                              Select match type
-                            </p>
-                          ) : (
-                            <p className="line-clamp-1" title={logic.value.join(", ")}>
-                              {logic.value.join(", ")}
-                            </p>
-                          )}
-                          <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-                        </div>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        className="w-40 bg-slate-50 text-slate-700"
-                        align="start"
-                        side="top">
-                        {logicConditions[logic.condition].values?.map((value) => (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
+                    <div className="flex h-10 w-full items-center justify-between overflow-hidden rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                      {!logic.value || logic.value?.length === 0 ? (
+                        <p className="line-clamp-1 text-slate-400" title="Select match type">
+                          Select match type
+                        </p>
+                      ) : (
+                        <p className="line-clamp-1" title={getLogicDisplayValue(logic.value)}>
+                          {getLogicDisplayValue(logic.value)}
+                        </p>
+                      )}
+                      <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                    </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className="w-40 bg-slate-50 text-slate-700"
+                    align="start"
+                    side="bottom">
+                    <Input
+                      placeholder="Search options"
+                      className="mb-1 w-full bg-white"
+                      onChange={(e) => setSearchValue(e.target.value)}
+                      value={searchValue}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    />
+                    <div className="max-h-72 overflow-x-hidden overflow-y-scroll">
+                      {logicConditions[logic.condition].values
+                        ?.filter((value) => value.includes(searchValue))
+                        ?.map((value) => (
                           <DropdownMenuCheckboxItem
                             key={value}
                             title={value}
-                            checked={logic.value?.includes(value)}
+                            checked={
+                              !logicConditions[logic.condition].multiSelect
+                                ? logic.value === value
+                                : logic.value?.includes(value)
+                            }
                             onSelect={(e) => e.preventDefault()}
-                            onCheckedChange={(e) => updateMultiSelectLogic(logicIdx, e, value)}>
+                            onCheckedChange={(e) =>
+                              !logicConditions[logic.condition].multiSelect
+                                ? updateLogic(logicIdx, { value })
+                                : updateMultiSelectLogic(logicIdx, e, value)
+                            }>
                             {value}
                           </DropdownMenuCheckboxItem>
                         ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
 
               <p className="text-slate-800">jump to</p>
@@ -390,7 +394,7 @@ export default function LogicEditor({
             </div>
           ))}
           <div className="flex flex-wrap items-center space-x-2 py-1 text-sm">
-            <MoveDownIcon className="h-4 w-4" />
+            <ArrowDownIcon className="h-4 w-4" />
             <p className="text-slate-700">All other answers will continue to the next question</p>
           </div>
         </div>
