@@ -52,7 +52,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
           <TopControlBar environment={environment} environments={environments} />
-          {children}
+          <div className="mt-14">{children}</div>
         </div>
       </div>
     </div>
