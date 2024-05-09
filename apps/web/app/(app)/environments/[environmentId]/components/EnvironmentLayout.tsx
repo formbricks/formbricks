@@ -47,14 +47,14 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
         isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         membershipRole={currentUserMembership?.role}
       />
-      <div id="mainContent" className="min-h-screen flex-1 overflow-y-auto bg-slate-50">
+      <div id="mainContent" className="flex min-h-screen flex-1 flex-col bg-slate-50">
         {environment.type === "development" && (
           <div className="flex h-6 w-full items-center justify-center  bg-orange-800 p-0.5 text-center text-xs text-white">
             You&apos;re in an development environment. Set it up to test surveys, actions and attributes.
           </div>
         )}
         <TopControlBar environment={environment} environments={environments} />
-        {children}
+        <div className="flex-1">{children}</div>
       </div>
     </div>
   );

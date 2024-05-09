@@ -63,7 +63,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
           colors={SURVEY_BG_COLORS}
           isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
         />
-      </SettingsCard>{" "}
+      </SettingsCard>
       <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">
         <EditLogo product={product} environmentId={params.environmentId} isViewer={isViewer} />
       </SettingsCard>

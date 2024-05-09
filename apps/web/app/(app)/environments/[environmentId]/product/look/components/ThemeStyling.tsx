@@ -166,7 +166,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
   return (
     <div className="flex">
       {/* Styling settings */}
-      <div className="w-1/2 pr-6">
+      <div className="relative w-1/2 pr-6">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
             <div className="flex items-center gap-6">
@@ -218,7 +218,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
           </div>
         </div>
 
-        <div className="mt-4 flex items-center gap-2">
+        <div className="absolute bottom-0 mt-4 flex items-center gap-2">
           <Button variant="darkCTA" size="sm" onClick={onSave}>
             Save
           </Button>
@@ -236,7 +236,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
       {/* Survey Preview */}
 
       <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
-        <div className="sticky top-4 mb-4 h-full max-h-[600px]">
+        <div className="sticky top-4 mb-4 h-[600px]">
           <ThemeStylingPreviewSurvey
             setQuestionId={setQuestionId}
             survey={styledPreviewSurvey as TSurvey}
