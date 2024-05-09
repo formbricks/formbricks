@@ -10,7 +10,7 @@ interface SecondaryNavbarProps {
 export const SecondaryNavigation = ({ navigation, activeId, ...props }: SecondaryNavbarProps) => {
   return (
     <div {...props}>
-      <div className="grid h-10 w-full grid-cols-[auto,1fr]">
+      <div className="grid h-10 w-full grid-cols-[auto,1fr] ">
         <nav className="flex h-full min-w-full items-center space-x-4" aria-label="Tabs">
           {navigation.map((navElem) => (
             <Link
@@ -19,8 +19,8 @@ export const SecondaryNavigation = ({ navigation, activeId, ...props }: Secondar
               className={cn(
                 navElem.id === activeId
                   ? "border-brand-dark border-b-2 font-semibold text-slate-900"
-                  : "text-slate-500 hover:text-slate-700",
-                "flex h-full items-center px-3 text-sm font-medium",
+                  : "border-transparent text-slate-500 transition-all duration-150 ease-in-out hover:border-slate-300 hover:text-slate-700",
+                "flex h-full items-center border-b-2 px-3 text-sm font-medium",
                 navElem.hidden && "hidden"
               )}
               aria-current={navElem.id === activeId ? "page" : undefined}>
