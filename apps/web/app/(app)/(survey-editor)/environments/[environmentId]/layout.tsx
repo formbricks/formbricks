@@ -49,7 +49,7 @@ export default async function EnvLayout({ children, params }) {
         <ToasterClient />
         <div className="flex h-screen flex-col justify-between">
           <DevEnvironmentBanner environment={environment} />
-          <div className="h-full overflow-y-auto bg-green-500">{children}</div>
+          <div className="h-full overflow-y-auto bg-slate-50">{children}</div>
         </div>
       </ResponseFilterProvider>
     </>
