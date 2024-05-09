@@ -1,7 +1,7 @@
 "use client";
 
 import EnvironmentSwitch from "@/app/(app)/environments/[environmentId]/components/EnvironmentSwitch";
-import { MessageCircleQuestionIcon, PlusIcon, SettingsIcon } from "lucide-react";
+import { CircleUserIcon, MessageCircleQuestionIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import formbricks from "@formbricks/js/app";
@@ -27,27 +27,27 @@ export default function TopControls({ environment, environments }: TopControlsPr
         onClick={() => {
           formbricks.track("Top Menu: Product Feedback");
         }}>
-        <MessageCircleQuestionIcon className="h-5 w-5" />
+        <MessageCircleQuestionIcon className="h-5 w-5" strokeWidth={1.5} />
       </Button>
       <Button
         variant="minimal"
         size="icon"
-        tooltip="Settings"
+        tooltip="Account"
         className="h-fit w-fit bg-slate-50 p-1"
         onClick={() => {
           router.push(`/environments/${environment.id}/settings/profile`);
         }}>
-        <SettingsIcon className="h-5 w-5" />
+        <CircleUserIcon strokeWidth={1.5} className="h-5 w-5" />
       </Button>
       <Button
         variant="secondary"
         size="icon"
-        tooltip="Create survey"
+        tooltip="New survey"
         className="h-fit w-fit p-1"
         onClick={() => {
           router.push(`/environments/${environment.id}/surveys/templates`);
         }}>
-        <PlusIcon className="h-5 w-5" />
+        <PlusIcon strokeWidth={1.5} className="h-5 w-5" />
       </Button>
     </div>
   );
