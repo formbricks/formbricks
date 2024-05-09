@@ -422,11 +422,11 @@ test.describe("Multi Language Survey Create", async () => {
     // await page.getByPlaceholder("Create your own Survey").fill(surveys.germanCreate.thankYouCard.buttonLabel);
 
     // TODO: @pandeymangg - figure out if this is required
-    // await page.getByRole("button", { name: "Settings", exact: true }).click();
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
 
-    // await page.locator("#howToSendCardTrigger").click();
-    // await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
-    // await page.locator("#howToSendCardOption-link").click();
+    await page.locator("#howToSendCardTrigger").click();
+    await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
+    await page.locator("#howToSendCardOption-link").click();
 
     await page.getByRole("button", { name: "Publish" }).click();
 
