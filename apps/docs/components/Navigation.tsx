@@ -60,7 +60,7 @@ function NavLink({
         isAnchorLink ? "pl-7" : "pl-4",
         active
           ? "rounded-r-md bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
-          : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
       )}>
       <span className="flex w-full truncate">{children}</span>
     </Link>
@@ -129,28 +129,30 @@ function NavigationGroup({
   className,
   activeGroup,
   setActiveGroup,
+  openGroups,
+  setOpenGroups,
 }: {
   group: NavGroup;
   className?: string;
   activeGroup: NavGroup | null;
   setActiveGroup: (group: NavGroup | null) => void;
+  openGroups: string[];
+  setOpenGroups: (groups: string[]) => void;
 }) {
   const isInsideMobileNavigation = useIsInsideMobileNavigation();
   const pathname = usePathname();
-  const [activeParentTitle, setActiveParentTitle] = useState<string | undefined>(
-    group.links.find((link) =>
-      link.children
-        ? link.children.some((child) => pathname.startsWith(child.href))
-        : pathname.startsWith(link.href || "")
-    )?.title
-  );
-
   const isActiveGroup = activeGroup?.title === group.title;
 
   const toggleParentTitle = (title: string) => {
-    setActiveParentTitle(activeParentTitle === title ? undefined : title);
+    if (openGroups.includes(title)) {
+      setOpenGroups(openGroups.filter((t) => t !== title));
+    } else {
+      setOpenGroups([...openGroups, title]);
+    }
     setActiveGroup(group);
   };
+
+  const isParentOpen = (title: string) => openGroups.includes(title);
 
   return (
     <li className={clsx("relative mt-6", className)}>
@@ -178,15 +180,14 @@ function NavigationGroup({
                     href={link.children?.[0]?.href || ""}
                     active={
                       !!(
-                        isActiveGroup &&
-                        link.title === activeParentTitle &&
+                        isParentOpen(link.title) &&
                         link.children &&
                         link.children.some((child) => pathname.startsWith(child.href))
                       )
                     }>
                     <span className="flex w-full justify-between">
                       {link.title}
-                      {link.title === activeParentTitle && isActiveGroup ? (
+                      {isParentOpen(link.title) ? (
                         <ChevronUpIcon className="my-1 h-4" />
                       ) : (
                         <ChevronDownIcon className="my-1 h-4" />
@@ -196,7 +197,7 @@ function NavigationGroup({
                 </div>
               )}
               <AnimatePresence mode="popLayout" initial={false}>
-                {link.children && link.title === activeParentTitle && isActiveGroup && (
+                {link.children && isParentOpen(link.title) && (
                   <motion.ul
                     role="list"
                     initial={{ opacity: 0 }}
@@ -222,6 +223,7 @@ function NavigationGroup({
 
 export function Navigation(props: React.ComponentPropsWithoutRef<"nav">) {
   const [activeGroup, setActiveGroup] = useState<NavGroup | null>(navigation[0]);
+  const [openGroups, setOpenGroups] = useState<string[]>([]);
 
   return (
     <nav {...props}>
@@ -233,6 +235,8 @@ export function Navigation(props: React.ComponentPropsWithoutRef<"nav">) {
             className={groupIndex === 0 ? "md:mt-0" : ""}
             activeGroup={activeGroup}
             setActiveGroup={setActiveGroup}
+            openGroups={openGroups}
+            setOpenGroups={setOpenGroups}
           />
         ))}
         <li className="sticky bottom-0 z-10 mt-6 min-[416px]:hidden">
