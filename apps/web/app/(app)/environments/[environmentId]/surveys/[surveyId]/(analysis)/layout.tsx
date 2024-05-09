@@ -5,8 +5,6 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 
-import { SurveyInsightsTabs } from "./components/SurveyInsightsTabs";
-
 type Props = {
   params: { surveyId: string; environmentId: string };
 };
@@ -26,19 +24,6 @@ export const generateMetadata = async ({ params }: Props): Promise<Metadata> => 
   };
 };
 
-export default async function SurveyLayout({ children, params }) {
-  const responseCount = await getResponseCountBySurveyId(params.surveyId);
-
-  return (
-    <>
-      <div className="flex flex-1">
-        <SurveyInsightsTabs
-          environmentId={params.environmentId}
-          surveyId={params.surveyId}
-          responseCount={responseCount}
-        />
-        <div className="w-full">{children}</div>
-      </div>
-    </>
-  );
+export default async function SurveyLayout({ children }) {
+  return <>{children}</>;
 }

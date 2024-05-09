@@ -1,3 +1,4 @@
+import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import SummaryPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
@@ -56,6 +57,12 @@ export default async function Page({ params }) {
 
   return (
     <PageContentWrapper>
+      <SurveyAnalysisNavigation
+        environmentId={environment.id}
+        responseCount={totalResponseCount}
+        surveyId={survey.id}
+        activeId="summary"
+      />
       <SummaryPage
         environment={environment}
         survey={survey}
