@@ -37,6 +37,7 @@ export const Survey = ({
   onFileUpload,
   responseCount,
   startAtQuestionId,
+  clickOutside,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
   const [questionId, setQuestionId] = useState(
@@ -72,6 +73,9 @@ export const Survey = ({
   }, [questionId, survey, history]);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !styling.hideProgressBar;
+  const getShowSurveyCloseButton = (offset: number) => {
+    return offset === 0 && survey.type !== "link" && (clickOutside === undefined ? true : clickOutside);
+  };
 
   useEffect(() => {
     // scroll to top when question changes
@@ -326,7 +330,7 @@ export const Survey = ({
     };
     return (
       <AutoCloseWrapper survey={survey} onClose={onClose}>
-        {offset === 0 && survey.type !== "link" && <SurveyCloseButton onClose={onClose} />}
+        {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
         <div
           className={cn(
             "no-scrollbar md:rounded-custom rounded-t-custom bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",

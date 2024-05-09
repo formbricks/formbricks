@@ -335,7 +335,6 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Fill Rating question in german
     await page.getByRole("button", { name: "Rating Required" }).click();
-    await page.getByRole("button", { name: "5 Rating Question Question" }).click();
     await page.getByPlaceholder("Your question here. Recall").click();
     await page
       .getByPlaceholder("Your question here. Recall")

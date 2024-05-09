@@ -23,6 +23,7 @@ export interface SurveyBaseProps {
   responseCount?: number;
   isCardBorderVisible?: boolean;
   startAtQuestionId?: string;
+  clickOutside?: boolean;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {
