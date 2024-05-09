@@ -1,8 +1,5 @@
-"use client";
-
 import TopControlButtons from "@/app/(app)/environments/[environmentId]/components/TopControlButtons";
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
-import { usePathname } from "next/navigation";
 
 import { TEnvironment } from "@formbricks/types/environment";
 
@@ -12,10 +9,6 @@ interface SideBarProps {
 }
 
 export const TopControlBar = ({ environment, environments }: SideBarProps) => {
-  const pathname = usePathname();
-
-  if (pathname?.includes("/edit") || pathname?.includes("/surveys/templates")) return null;
-
   return (
     <div className="flex h-14 w-full items-center justify-end px-6">
       <div className="shadow-xs z-10">

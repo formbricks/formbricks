@@ -15,11 +15,7 @@ interface EnvironmentLayoutProps {
   children?: React.ReactNode;
 }
 
-export default async function EnvironmentLayout({
-  environmentId,
-  session,
-  children,
-}: EnvironmentLayoutProps) {
+export const EnvironmentLayout = async ({ environmentId, session, children }: EnvironmentLayoutProps) => {
   const [environment, teams, team] = await Promise.all([
     getEnvironment(environmentId),
     getTeamsByUserId(session.user.id),
@@ -62,4 +58,4 @@ export default async function EnvironmentLayout({
       </div>
     </div>
   );
-}
+};
