@@ -7,6 +7,7 @@ import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/ser
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProducts } from "@formbricks/lib/product/service";
 import { getTeamByEnvironmentId, getTeamsByUserId } from "@formbricks/lib/team/service";
+import { DevEnvironmentBanner } from "@formbricks/ui/DevEnvironmentBanner";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 interface EnvironmentLayoutProps {
@@ -37,24 +38,22 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
   return (
-    <div className="flex justify-center">
-      <MainNavigation
-        environment={environment}
-        team={team}
-        teams={teams}
-        products={products}
-        session={session}
-        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-        membershipRole={currentUserMembership?.role}
-      />
-      <div id="mainContent" className="min-h-screen flex-1 overflow-y-auto bg-slate-50">
-        {environment.type === "development" && (
-          <div className="flex h-6 w-full items-center justify-center  bg-orange-800 p-0.5 text-center text-xs text-white">
-            You&apos;re in an development environment. Set it up to test surveys, actions and attributes.
-          </div>
-        )}
-        <TopControlBar environment={environment} environments={environments} />
-        {children}
+    <div className="flex h-screen min-h-screen flex-col overflow-hidden">
+      <DevEnvironmentBanner environment={environment} />
+      <div className="flex h-full">
+        <MainNavigation
+          environment={environment}
+          team={team}
+          teams={teams}
+          products={products}
+          session={session}
+          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+          membershipRole={currentUserMembership?.role}
+        />
+        <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
+          <TopControlBar environment={environment} environments={environments} />
+          {children}
+        </div>
       </div>
     </div>
   );
