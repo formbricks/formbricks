@@ -8,7 +8,6 @@ import {
 import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
-import { SummaryHeader } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import {
   getResponseCountBySurveySharingKeyAction,
@@ -19,8 +18,6 @@ import { useEffect, useMemo, useState } from "react";
 
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TMembershipRole } from "@formbricks/types/memberships";
-import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
 
@@ -47,9 +44,7 @@ interface SummaryPageProps {
   survey: TSurvey;
   surveyId: string;
   webAppUrl: string;
-  product: TProduct;
   user?: TUser;
-  membershipRole?: TMembershipRole;
   totalResponseCount: number;
 }
 
@@ -57,10 +52,8 @@ const SummaryPage = ({
   environment,
   survey,
   surveyId,
-  product,
   webAppUrl,
   user,
-  membershipRole,
   totalResponseCount,
 }: SummaryPageProps) => {
   const params = useParams();
@@ -123,15 +116,6 @@ const SummaryPage = ({
 
   return (
     <>
-      <SummaryHeader
-        environment={environment}
-        survey={survey}
-        surveyId={surveyId}
-        webAppUrl={webAppUrl}
-        product={product}
-        user={user}
-        membershipRole={membershipRole}
-      />
       <SummaryMetadata
         surveySummary={surveySummary.meta}
         showDropOffs={showDropOffs}

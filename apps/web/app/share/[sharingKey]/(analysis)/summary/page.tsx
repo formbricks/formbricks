@@ -8,6 +8,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
 export default async function Page({ params }) {
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
@@ -37,18 +38,19 @@ export default async function Page({ params }) {
   return (
     <div className="flex w-full justify-center">
       <PageContentWrapper className="w-full">
-        <SurveyAnalysisNavigation
-          surveyId={survey.id}
-          environmentId={environment.id}
-          activeId="summary"
-          responseCount={totalResponseCount}
-        />
+        <PageHeader pageTitle={survey.name}>
+          <SurveyAnalysisNavigation
+            surveyId={survey.id}
+            environmentId={environment.id}
+            activeId="summary"
+            responseCount={totalResponseCount}
+          />
+        </PageHeader>
         <SummaryPage
           environment={environment}
           survey={survey}
           surveyId={survey.id}
           webAppUrl={WEBAPP_URL}
-          product={product}
           totalResponseCount={totalResponseCount}
         />
       </PageContentWrapper>
