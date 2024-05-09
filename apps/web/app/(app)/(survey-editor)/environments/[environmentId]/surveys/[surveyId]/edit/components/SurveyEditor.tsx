@@ -14,7 +14,7 @@ import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys";
 import { PreviewSurvey } from "@formbricks/ui/PreviewSurvey";
 
-import { refetchProduct } from "../actions";
+import { refetchProductAction } from "../actions";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { QuestionsAudienceTabs } from "./QuestionsStylingSettingsTabs";
 import { QuestionsView } from "./QuestionsView";
@@ -65,7 +65,7 @@ export default function SurveyEditor({
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
   const fetchLatestProduct = useCallback(async () => {
-    const latestProduct = await refetchProduct(localProduct.id);
+    const latestProduct = await refetchProductAction(localProduct.id);
     if (latestProduct) {
       setLocalProduct(latestProduct);
     }
@@ -92,7 +92,7 @@ export default function SurveyEditor({
     const listener = () => {
       if (document.visibilityState === "visible") {
         const fetchLatestProduct = async () => {
-          const latestProduct = await refetchProduct(localProduct.id);
+          const latestProduct = await refetchProductAction(localProduct.id);
           if (latestProduct) {
             setLocalProduct(latestProduct);
           }

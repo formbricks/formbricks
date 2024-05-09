@@ -10,13 +10,13 @@ interface QuestionDropdownProps {
   moveQuestion: (questionIdx: number, up: boolean) => void;
 }
 
-export default function QuestionActions({
+export const QuestionDropdown = ({
   questionIdx,
   lastQuestion,
   duplicateQuestion,
   deleteQuestion,
   moveQuestion,
-}: QuestionDropdownProps) {
+}: QuestionDropdownProps) => {
   return (
     <div className="flex space-x-2">
       <ArrowUpIcon
@@ -57,4 +57,4 @@ export default function QuestionActions({
       />
     </div>
   );
-}
+};
