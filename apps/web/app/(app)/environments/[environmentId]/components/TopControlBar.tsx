@@ -10,7 +10,7 @@ interface SideBarProps {
 
 export const TopControlBar = ({ environment, environments }: SideBarProps) => {
   return (
-    <div className="flex h-14 w-full items-center justify-end px-6">
+    <div className="sticky top-0 z-10 flex h-14 w-full items-center justify-end bg-slate-50 px-6">
       <div className="shadow-xs z-10">
         <div className="flex w-fit space-x-2 py-2">
           <WidgetStatusIndicator environment={environment} type="mini" />

@@ -78,7 +78,7 @@ export const MainNavigation = ({
   const [currentTeamId, setCurrentTeamId] = useState("");
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(localStorage.getItem("isMainNavCollapsed") === "true");
   const [isTextVisible, setIsTextVisible] = useState(true);
 
   const product = products.find((product) => product.id === environment.productId);
@@ -87,6 +87,7 @@ export const MainNavigation = ({
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
+    localStorage.setItem("isMainNavCollapsed", isCollapsed ? "false" : "true");
   };
 
   useEffect(() => {
@@ -200,7 +201,8 @@ export const MainNavigation = ({
         <aside
           className={cn(
             "flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
-            !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
+            !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded",
+            environment.type === "development" ? `h-[calc(100vh-1.25rem)]` : "h-screen"
           )}>
           <div>
             {/* Logo and Toggle */}
