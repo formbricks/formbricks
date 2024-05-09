@@ -327,13 +327,14 @@ export default function LogicEditor({
                     align="start"
                     side="bottom">
                     <Input
+                      autoFocus
                       placeholder="Search options"
                       className="mb-1 w-full bg-white"
                       onChange={(e) => setSearchValue(e.target.value)}
                       value={searchValue}
                       onKeyDown={(e) => e.stopPropagation()}
                     />
-                    <div className="max-h-72 overflow-x-hidden overflow-y-scroll">
+                    <div className="max-h-72 overflow-y-auto overflow-x-hidden">
                       {logicConditions[logic.condition].values
                         ?.filter((value) => value.includes(searchValue))
                         ?.map((value) => (
