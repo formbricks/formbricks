@@ -39,7 +39,7 @@ export function Button({ variant = "primary", className, children, arrow, ...pro
     "inline-flex gap-0.5 justify-center items-center overflow-hidden font-medium transition text-center",
     variantStyles[variant],
     className,
-    "px-5 py-2.5 text-xs"
+    "px-5 py-2.5 text-sm"
   );
 
   let arrowIcon = (

@@ -42,7 +42,7 @@ export default function typographyStyles({ theme }: PluginUtils) {
 
         // Base
         color: "var(--tw-prose-body)",
-        fontSize: theme("fontSize.sm")[0],
+        fontSize: theme("fontSize.base")[0],
         lineHeight: theme("lineHeight.7"),
 
         // Layout
@@ -192,14 +192,14 @@ export default function typographyStyles({ theme }: PluginUtils) {
           color: "var(--tw-prose-headings)",
           fontWeight: "600",
           fontSize: theme("fontSize.lg")[0],
-          ...theme("fontSize.lg")[1],
+          ...theme("fontSize.xl")[1],
           marginTop: theme("spacing.16"),
           marginBottom: theme("spacing.2"),
         },
         h3: {
           color: "var(--tw-prose-headings)",
           fontSize: theme("fontSize.base")[0],
-          ...theme("fontSize.base")[1],
+          ...theme("fontSize.lg")[1],
           fontWeight: "600",
           marginTop: theme("spacing.10"),
           marginBottom: theme("spacing.2"),

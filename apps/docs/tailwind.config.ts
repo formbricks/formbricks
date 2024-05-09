@@ -68,7 +68,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Poppins", ...defaultTheme.fontFamily.sans],
+        sans: ["Jost", ...defaultTheme.fontFamily.sans],
         display: ["Lexend", ...defaultTheme.fontFamily.sans],
         kablammo: ["Kablammo", "sans"],
       },
