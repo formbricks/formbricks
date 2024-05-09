@@ -82,7 +82,7 @@ export const SummaryMetadata = ({ setShowDropOffs, showDropOffs, surveySummary }
         <TooltipProvider delayDuration={50}>
           <Tooltip>
             <TooltipTrigger>
-              <button
+              <div
                 onClick={() => setShowDropOffs(!showDropOffs)}
                 className="group flex h-full w-full cursor-pointer flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
                 <span className="text-sm text-slate-600">
@@ -103,7 +103,7 @@ export const SummaryMetadata = ({ setShowDropOffs, showDropOffs, surveySummary }
                     )}
                   </span>
                 </div>
-              </button>
+              </div>
             </TooltipTrigger>
             <TooltipContent>
               <p>Number of times the survey has been started but not completed.</p>
