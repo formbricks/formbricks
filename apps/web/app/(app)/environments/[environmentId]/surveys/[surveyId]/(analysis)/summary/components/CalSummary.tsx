@@ -12,9 +12,9 @@ interface CalSummaryProps {
 
 export const CalSummary = ({ questionSummary }: CalSummaryProps) => {
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader questionSummary={questionSummary} />
-      <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         <div>
           <div className="text flex justify-between px-2 pb-2">
             <div className="mr-8 flex space-x-1">
@@ -29,7 +29,7 @@ export const CalSummary = ({ questionSummary }: CalSummaryProps) => {
               {questionSummary.booked.count} {questionSummary.booked.count === 1 ? "response" : "responses"}
             </p>
           </div>
-          <ProgressBar barColor="bg-brand" progress={questionSummary.booked.percentage / 100} />
+          <ProgressBar barColor="bg-brand-dark" progress={questionSummary.booked.percentage / 100} />
         </div>
         <div>
           <div className="text flex justify-between px-2 pb-2">
@@ -45,7 +45,7 @@ export const CalSummary = ({ questionSummary }: CalSummaryProps) => {
               {questionSummary.skipped.count} {questionSummary.skipped.count === 1 ? "response" : "responses"}
             </p>
           </div>
-          <ProgressBar barColor="bg-brand" progress={questionSummary.skipped.percentage / 100} />
+          <ProgressBar barColor="bg-brand-dark" progress={questionSummary.skipped.percentage / 100} />
         </div>
       </div>
     </div>

@@ -44,9 +44,9 @@ export const MultipleChoiceSummary = ({
   };
 
   return (
-    <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader questionSummary={questionSummary} />
-      <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => (
           <div key={result.value}>
             <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
@@ -64,7 +64,7 @@ export const MultipleChoiceSummary = ({
                 {result.count} {result.count === 1 ? "response" : "responses"}
               </p>
             </div>
-            <ProgressBar barColor="bg-brand" progress={result.percentage / 100} />
+            <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100} />
             {result.others && result.others.length > 0 && (
               <div className="mt-4 rounded-lg border border-slate-200">
                 <div className="grid h-12 grid-cols-2 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">

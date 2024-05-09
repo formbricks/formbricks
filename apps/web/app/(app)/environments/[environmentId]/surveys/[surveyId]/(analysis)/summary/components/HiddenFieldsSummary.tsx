@@ -23,7 +23,7 @@ export const HiddenFieldsSummary = ({ environment, questionSummary }: HiddenFiel
     );
   };
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
         <div className={"align-center flex justify-between gap-4 "}>
           <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">{questionSummary.id}</h3>
