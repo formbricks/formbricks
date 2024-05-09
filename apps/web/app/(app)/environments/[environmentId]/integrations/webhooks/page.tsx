@@ -2,12 +2,10 @@ import { AddWebhookButton } from "@/app/(app)/environments/[environmentId]/integ
 import WebhookRowData from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookRowData";
 import WebhookTable from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookTable";
 import WebhookTableHeading from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookTableHeading";
-import { Webhook } from "lucide-react";
 
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { getWebhooks } from "@formbricks/lib/webhook/service";
-import { Button } from "@formbricks/ui/Button";
 import { GoBackButton } from "@formbricks/ui/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
