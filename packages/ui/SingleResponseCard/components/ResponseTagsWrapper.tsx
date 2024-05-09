@@ -58,7 +58,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   }, [tagIdToHighlight]);
 
   return (
-    <div className="flex items-center gap-3 p-6">
+    <div className="flex items-center gap-3 border-t border-slate-200 px-6 py-4">
       {!isViewer && (
         <Button
           variant="minimal"
