@@ -22,11 +22,6 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "seo-strapi-aws-s3.s3.eu-central-1.amazonaws.com",
-        port: "",
-      },
-      {
-        protocol: "https",
         hostname: "avatars.githubusercontent.com",
         port: "",
       },
@@ -77,6 +72,7 @@ const nextConfig = {
         destination: "/developer-docs/overview",
         permanent: true,
       },
+
       // Link Survey
       {
         source: "/link-surveys/embed-in-email",

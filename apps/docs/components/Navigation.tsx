@@ -258,9 +258,6 @@ export function Navigation(props: React.ComponentPropsWithoutRef<"nav">) {
   return (
     <nav {...props}>
       <ul role="list">
-        <TopLevelNavItem href="/docs/introduction/what-is-formbricks">Documentation</TopLevelNavItem>
-        <TopLevelNavItem href="https://github.com/formbricks/formbricks">Star us on GitHub</TopLevelNavItem>
-        <TopLevelNavItem href="https://formbricks.com/discord">Join our Discord</TopLevelNavItem>
         {navigation.map((group, groupIndex) => (
           <NavigationGroup
             key={group.title}
