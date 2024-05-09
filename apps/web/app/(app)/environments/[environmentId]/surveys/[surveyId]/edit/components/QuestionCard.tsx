@@ -197,21 +197,13 @@ export default function QuestionCard({
                   </div>
                   <div>
                     <p className="text-sm font-semibold">
-                      {recallToHeadline(
-                        question.headline,
-                        localSurvey,
-                        true,
-                        selectedLanguageCode,
-                        localSurvey.hiddenFields.fieldIds ?? []
-                      )[selectedLanguageCode]
+                      {recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
+                        selectedLanguageCode
+                      ]
                         ? formatTextWithSlashes(
-                            recallToHeadline(
-                              question.headline,
-                              localSurvey,
-                              true,
-                              selectedLanguageCode,
-                              localSurvey.hiddenFields.fieldIds ?? []
-                            )[selectedLanguageCode] ?? ""
+                            recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
+                              selectedLanguageCode
+                            ] ?? ""
                           )
                         : getTSurveyQuestionTypeName(question.type)}
                     </p>

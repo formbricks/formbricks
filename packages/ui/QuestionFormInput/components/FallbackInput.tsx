@@ -1,13 +1,13 @@
 import { RefObject } from "react";
 import { toast } from "react-hot-toast";
 
-import { TRecallQuestionInfo } from "@formbricks/types/surveys";
+import { TSurveyRecallItem } from "@formbricks/types/surveys";
 
 import { Button } from "../../Button";
 import { Input } from "../../Input";
 
 interface FallbackInputProps {
-  filteredRecallQuestions: (TRecallQuestionInfo | undefined)[];
+  filteredRecallQuestions: (TSurveyRecallItem | undefined)[];
   fallbacks: { [type: string]: string };
   setFallbacks: (fallbacks: { [type: string]: string }) => void;
   fallbackInputRef: RefObject<HTMLInputElement>;

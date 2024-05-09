@@ -16,10 +16,10 @@ import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
 import {
   TI18nString,
-  TRecallQuestionInfo,
   TSurvey,
   TSurveyHiddenFields,
   TSurveyQuestion,
+  TSurveyRecallItem,
 } from "@formbricks/types/surveys";
 
 const questionIconMapping = {
@@ -33,31 +33,31 @@ const questionIconMapping = {
   address: HomeIcon,
 };
 
-interface RecallQuestionSelectProps {
+interface RecallItemSelectProps {
   localSurvey: TSurvey;
   questionId: string;
-  addRecallQuestion: (question: TRecallQuestionInfo) => void;
-  setShowQuestionSelect: (show: boolean) => void;
-  showQuestionSelect: boolean;
+  addRecallItem: (question: TSurveyRecallItem) => void;
+  setShowRecallItemSelect: (show: boolean) => void;
+  showRecallItemSelect: boolean;
   inputRef: RefObject<HTMLInputElement>;
-  recallQuestions: TRecallQuestionInfo[];
+  recallItems: TSurveyRecallItem[];
   selectedLanguageCode: string;
   hiddenFields: TSurveyHiddenFields;
 }
 
-export default function RecallQuestionSelect({
+export const RecallItemSelect = ({
   localSurvey,
   questionId,
-  addRecallQuestion,
-  setShowQuestionSelect,
-  showQuestionSelect,
+  addRecallItem,
+  setShowRecallItemSelect,
+  showRecallItemSelect,
   inputRef,
-  recallQuestions,
+  recallItems,
   selectedLanguageCode,
   hiddenFields,
-}: RecallQuestionSelectProps) {
-  const [focusedQuestionIdx, setFocusedQuestionIdx] = useState(0); // New state for managing focus
-  const isNotAllowedQuestionType = (question: TSurveyQuestion) => {
+}: RecallItemSelectProps) => {
+  const [focusedQuestionIdx, setFocusedQuestionIdx] = useState(0); // state for managing focus
+  const isNotAllowedQuestionType = (question: TSurveyQuestion): boolean => {
     return (
       question.type === "fileUpload" ||
       question.type === "cta" ||
@@ -68,12 +68,12 @@ export default function RecallQuestionSelect({
     );
   };
 
-  const recallQuestionIds = useMemo(() => {
-    return recallQuestions.map((recallQuestion) => recallQuestion.id);
-  }, [recallQuestions]);
+  const recallItemIds = useMemo(() => {
+    return recallItems.map((recallItem) => recallItem.id);
+  }, [recallItems]);
 
   // function to remove some specific type of questions (fileUpload, imageSelect etc) from the list of questions to recall from and few other checks
-  const filteredRecallQuestions = useMemo(() => {
+  const filteredRecallItems = useMemo(() => {
     const idx =
       questionId === "end"
         ? localSurvey.questions.length
@@ -82,26 +82,31 @@ export default function RecallQuestionSelect({
       .filter((question, index) => {
         const notAllowed = isNotAllowedQuestionType(question);
         return (
-          !recallQuestionIds.includes(question.id) && !notAllowed && question.id !== questionId && idx > index
+          !recallItemIds.includes(question.id) && !notAllowed && question.id !== questionId && idx > index
         );
       })
       .map((question) => {
         return { id: question.id, headline: question.headline };
       });
-    return filteredQuestions;
-  }, [localSurvey.questions, questionId, recallQuestionIds]);
 
-  const hiddenFieldsArray = hiddenFields.fieldIds
-    ? hiddenFields.fieldIds.map((hiddenField) => {
-        return {
-          id: hiddenField,
-          headline: createI18nString(
-            hiddenField,
-            localSurvey.languages.map((lang) => lang.language.code)
-          ),
-        };
-      })
-    : [];
+    const getHiddenFields = () => {
+      if (hiddenFields.fieldIds) {
+        return hiddenFields.fieldIds
+          .filter((hiddenFieldId) => {
+            return !recallItemIds.includes(hiddenFieldId);
+          })
+          .map((hiddenFieldId) => ({
+            id: hiddenFieldId,
+            headline: createI18nString(
+              hiddenFieldId,
+              localSurvey.languages.map((lang) => lang.language.code)
+            ),
+          }));
+      }
+      return [];
+    };
+    return [...filteredQuestions, ...getHiddenFields()];
+  }, [localSurvey.questions, questionId, recallItemIds]);
 
   // function to modify headline (recallInfo to corresponding headline)
   const getRecallHeadline = (question: TI18nString): TI18nString => {
@@ -113,24 +118,20 @@ export default function RecallQuestionSelect({
   // function to handle key press
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
-      if (showQuestionSelect) {
+      if (showRecallItemSelect) {
         if (event.key === "ArrowDown") {
           event.preventDefault();
-          setFocusedQuestionIdx(
-            (prevIdx) => (prevIdx + 1) % [...filteredRecallQuestions, ...hiddenFieldsArray].length
-          );
+          setFocusedQuestionIdx((prevIdx) => (prevIdx + 1) % filteredRecallItems.length);
         } else if (event.key === "ArrowUp") {
           event.preventDefault();
-          setFocusedQuestionIdx((prevIdx) =>
-            prevIdx === 0 ? [...filteredRecallQuestions, ...hiddenFieldsArray].length - 1 : prevIdx - 1
-          );
+          setFocusedQuestionIdx((prevIdx) => (prevIdx === 0 ? filteredRecallItems.length - 1 : prevIdx - 1));
         } else if (event.key === "Enter") {
           event.preventDefault();
           event.stopPropagation();
-          const selectedQuestion = [...filteredRecallQuestions, ...hiddenFieldsArray][focusedQuestionIdx];
-          setShowQuestionSelect(false);
+          const selectedQuestion = filteredRecallItems[focusedQuestionIdx];
+          setShowRecallItemSelect(false);
           if (!selectedQuestion) return;
-          addRecallQuestion(selectedQuestion);
+          addRecallItem(selectedQuestion);
         }
       }
     };
@@ -141,7 +142,7 @@ export default function RecallQuestionSelect({
     return () => {
       inputElement?.removeEventListener("keydown", handleKeyPress);
     };
-  }, [showQuestionSelect, localSurvey.questions, focusedQuestionIdx]);
+  }, [showRecallItemSelect, localSurvey.questions, focusedQuestionIdx]);
 
   const getQuestionIcon = (questionId: string) => {
     const question = localSurvey.questions.find((question) => question.id === questionId);
@@ -152,28 +153,28 @@ export default function RecallQuestionSelect({
 
   return (
     <div className="absolute z-30 mt-1 flex max-w-[85%] flex-col overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3  text-xs ">
-      {filteredRecallQuestions.length === 0 ? (
+      {filteredRecallItems.length === 0 ? (
         <p className="font-medium text-slate-900">There is no information to recall yet 🤷</p>
       ) : (
         <p className="mb-2 font-medium">Recall Information from...</p>
       )}
       <div>
-        {[...filteredRecallQuestions, ...hiddenFieldsArray].map((q, idx) => {
+        {filteredRecallItems.map((recallItem, idx) => {
           const isFocused = idx === focusedQuestionIdx;
-          const IconComponent = getQuestionIcon(q.id);
+          const IconComponent = getQuestionIcon(recallItem.id);
           return (
             <div
-              key={q.id}
+              key={recallItem.id}
               className={`flex max-w-full cursor-pointer items-center rounded-md px-3 py-2 ${
                 isFocused ? "bg-slate-200" : "hover:bg-slate-200 "
               }`}
               onClick={() => {
-                addRecallQuestion({ id: q.id, headline: q.headline });
-                setShowQuestionSelect(false);
+                addRecallItem({ id: recallItem.id, headline: recallItem.headline });
+                setShowRecallItemSelect(false);
               }}>
               <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
               <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
-                {getLocalizedValue(getRecallHeadline(q.headline), selectedLanguageCode)}
+                {getLocalizedValue(getRecallHeadline(recallItem.headline), selectedLanguageCode)}
               </div>
             </div>
           );
@@ -181,4 +182,4 @@ export default function RecallQuestionSelect({
       </div>
     </div>
   );
-}
+};

@@ -121,6 +121,7 @@ const getProductsByTeamId = async (teamId: string): Promise<TWeeklySummaryProduc
               name: true,
               questions: true,
               status: true,
+              hiddenFields: true,
               responses: {
                 where: {
                   createdAt: {

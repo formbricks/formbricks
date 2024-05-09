@@ -1,9 +1,9 @@
 import {
   TI18nString,
-  TRecallQuestionInfo,
   TSurvey,
   TSurveyQuestion,
   TSurveyQuestionsObject,
+  TSurveyRecallItem,
 } from "@formbricks/types/surveys";
 
 import { createI18nString, getLocalizedValue } from "../i18n/utils";
@@ -61,9 +61,9 @@ export const recallToHeadline = <T extends TSurveyQuestionsObject>(
   headline: TI18nString,
   survey: T,
   withSlash: boolean,
-  language: string,
-  hiddenFieldIds: string[]
+  language: string
 ): TI18nString => {
+  const hiddenFieldIds = survey.hiddenFields.fieldIds ?? [];
   let newHeadline = structuredClone(headline);
   if (!newHeadline[language]?.includes("#recall:")) return headline;
 
@@ -125,30 +125,23 @@ export const checkForEmptyFallBackValue = (survey: TSurvey, langauge: string): T
 };
 
 // Processes each question in a survey to ensure headlines are formatted correctly for recall and return the modified survey.
-export const checkForRecallInHeadline = (survey: TSurvey, langauge: string): TSurvey => {
+export const checkForRecallInHeadline = <T extends TSurveyQuestionsObject>(
+  survey: T,
+  langauge: string
+): T => {
   const modifiedSurvey = structuredClone(survey);
   modifiedSurvey.questions.forEach((question) => {
-    question.headline = recallToHeadline(
-      question.headline,
-      modifiedSurvey,
-      false,
-      langauge,
-      survey.hiddenFields.fieldIds ?? []
-    );
+    question.headline = recallToHeadline(question.headline, modifiedSurvey, false, langauge);
   });
   return modifiedSurvey;
 };
 
 // Retrieves an array of survey questions referenced in a text containing recall information.
-export const getRecallQuestions = (
-  text: string,
-  survey: TSurvey,
-  langauge: string
-): TRecallQuestionInfo[] => {
+export const getRecallQuestions = (text: string, survey: TSurvey, langauge: string): TSurveyRecallItem[] => {
   if (!text.includes("#recall:")) return [];
 
   const ids = extractIds(text);
-  let recallQuestionArray: TRecallQuestionInfo[] = [];
+  let recallQuestionArray: TSurveyRecallItem[] = [];
   ids.forEach((questionId) => {
     const recallQuestionHeadline = survey.hiddenFields.fieldIds?.includes(questionId)
       ? createI18nString(
@@ -183,7 +176,7 @@ export const getFallbackValues = (text: string): fallbacks => {
 // Transforms headlines in a text to their corresponding recall information.
 export const headlineToRecall = (
   text: string,
-  recallQuestions: TRecallQuestionInfo[],
+  recallQuestions: TSurveyRecallItem[],
   fallbacks: fallbacks,
   langauge: string
 ): string => {
