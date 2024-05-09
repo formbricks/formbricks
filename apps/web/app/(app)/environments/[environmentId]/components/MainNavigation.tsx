@@ -256,7 +256,7 @@ export const MainNavigation = ({
             <DropdownMenu>
               <DropdownMenuTrigger
                 asChild
-                id="userDropdownTrigger"
+                id="productDropdownTrigger"
                 className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
                 <div
                   tabIndex={0}
