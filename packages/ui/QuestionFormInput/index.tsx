@@ -13,7 +13,7 @@ import {
   extractRecallInfo,
   findRecallInfoById,
   getFallbackValues,
-  getRecallQuestions,
+  getRecallItems,
   headlineToRecall,
   recallToHeadline,
   replaceRecallInfoWithUnderline,
@@ -134,9 +134,9 @@ export const QuestionFormInput = ({
   );
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
-  const [recallItems, setRecallQuestions] = useState<TSurveyRecallItem[]>(
+  const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>(
     getLocalizedValue(text, selectedLanguageCode).includes("#recall:")
-      ? getRecallQuestions(getLocalizedValue(text, selectedLanguageCode), localSurvey, selectedLanguageCode)
+      ? getRecallItems(getLocalizedValue(text, selectedLanguageCode), localSurvey, selectedLanguageCode)
       : []
   );
   const [fallbacks, setFallbacks] = useState<{ [type: string]: string }>(
@@ -149,7 +149,7 @@ export const QuestionFormInput = ({
   const fallbackInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const filteredRecallQuestions = Array.from(new Set(recallItems.map((q) => q.id))).map((id) => {
+  const filteredRecallItems = Array.from(new Set(recallItems.map((q) => q.id))).map((id) => {
     return recallItems.find((q) => q.id === id);
   });
 
@@ -161,19 +161,19 @@ export const QuestionFormInput = ({
       checkForRecallSymbol();
     }
     // Generates an array of headlines from recallItems, replacing nested recall questions with '___' .
-    const recallQuestionHeadlines = recallItems.flatMap((recallQuestion) => {
-      if (!getLocalizedValue(recallQuestion.headline, selectedLanguageCode).includes("#recall:")) {
-        return [(recallQuestion.headline as TI18nString)[selectedLanguageCode]];
+    const recallItemLabels = recallItems.flatMap((recallItem) => {
+      if (!recallItem.label.includes("#recall:")) {
+        return [recallItem.label];
       }
-      const recallQuestionText = (recallQuestion[id as keyof typeof recallQuestion] as string) || "";
-      const recallInfo = extractRecallInfo(recallQuestionText);
+      const recallItemLabel = recallItem.label;
+      const recallInfo = extractRecallInfo(recallItemLabel);
 
       if (recallInfo) {
-        const recallQuestionId = extractId(recallInfo);
-        const recallQuestion = localSurvey.questions.find((question) => question.id === recallQuestionId);
+        const recallItemId = extractId(recallInfo);
+        const recallQuestion = localSurvey.questions.find((question) => question.id === recallItemId);
 
         if (recallQuestion) {
-          return [recallQuestionText.replace(recallInfo, `___`)];
+          return [recallItemLabel.replace(recallInfo, `___`)];
         }
       }
       return [];
@@ -185,9 +185,9 @@ export const QuestionFormInput = ({
       let remainingText = recallToHeadline(text, localSurvey, false, selectedLanguageCode)[
         selectedLanguageCode
       ];
-      filterRecallQuestions(remainingText);
-      recallQuestionHeadlines.forEach((headline) => {
-        const index = remainingText.indexOf("@" + headline);
+      filterRecallItems(remainingText);
+      recallItemLabels.forEach((label) => {
+        const index = remainingText.indexOf("@" + label);
         if (index !== -1) {
           if (index > 0) {
             parts.push(
@@ -200,10 +200,10 @@ export const QuestionFormInput = ({
             <span
               className="z-30 flex cursor-pointer items-center justify-center whitespace-pre rounded-md bg-slate-100 text-sm text-transparent"
               key={parts.length}>
-              {"@" + headline}
+              {"@" + label}
             </span>
           );
-          remainingText = remainingText.substring(index + headline.length + 1);
+          remainingText = remainingText.substring(index + label.length + 1);
         }
       });
       if (remainingText?.length) {
@@ -231,7 +231,6 @@ export const QuestionFormInput = ({
   const checkForRecallSymbol = () => {
     const pattern = /(^|\s)@(\s|$)/;
     if (pattern.test(getLocalizedValue(text, selectedLanguageCode))) {
-      console.log("setting true");
       setShowRecallItemSelect(true);
     } else {
       setShowRecallItemSelect(false);
@@ -239,34 +238,29 @@ export const QuestionFormInput = ({
   };
 
   // Adds a new recall question to the recallItems array, updates fallbacks, modifies the text with recall details.
-  const addRecallItem = (recallQuestion: TSurveyRecallItem) => {
-    if ((recallQuestion.headline as TI18nString)[selectedLanguageCode].trim() === "") {
+  const addRecallItem = (recallItem: TSurveyRecallItem) => {
+    if (recallItem.label.trim() === "") {
       toast.error("Cannot add question with empty headline as recall");
       return;
     }
-    console.log(recallQuestion);
-    let recallQuestionTemp = structuredClone(recallQuestion);
-    recallQuestionTemp.headline = replaceRecallInfoWithUnderline(
-      recallQuestionTemp.headline,
-      selectedLanguageCode
-    );
-    setRecallQuestions((prevQuestions) => {
-      const updatedQuestions = [...prevQuestions, recallQuestionTemp];
+    let recallItemTemp = structuredClone(recallItem);
+    recallItemTemp.label = replaceRecallInfoWithUnderline(recallItem.label);
+    setRecallItems((prevQuestions) => {
+      const updatedQuestions = [...prevQuestions, recallItemTemp];
       return updatedQuestions;
     });
-    if (!Object.keys(fallbacks).includes(recallQuestion.id)) {
+    if (!Object.keys(fallbacks).includes(recallItem.id)) {
       setFallbacks((prevFallbacks) => ({
         ...prevFallbacks,
-        [recallQuestion.id]: "",
+        [recallItem.id]: "",
       }));
     }
     setShowRecallItemSelect(false);
     let modifiedHeadlineWithId = { ...getElementTextBasedOnType() };
-    console.log({ modifiedHeadlineWithId });
     modifiedHeadlineWithId[selectedLanguageCode] = getLocalizedValue(
       modifiedHeadlineWithId,
       selectedLanguageCode
-    ).replace("@", `#recall:${recallQuestion.id}/fallback:# `);
+    ).replace("@", `#recall:${recallItem.id}/fallback:# `);
     handleUpdate(getLocalizedValue(modifiedHeadlineWithId, selectedLanguageCode));
     const modifiedHeadlineWithName = recallToHeadline(
       modifiedHeadlineWithId,
@@ -274,39 +268,33 @@ export const QuestionFormInput = ({
       false,
       selectedLanguageCode
     );
-    console.log(modifiedHeadlineWithName);
     setText(modifiedHeadlineWithName);
     setShowFallbackInput(true);
   };
 
   // Filters and updates the list of recall questions based on their presence in the given text, also managing related text and fallback states.
-  const filterRecallQuestions = (remainingText: string) => {
-    let includedQuestions: TSurveyRecallItem[] = [];
-    console.log({ remainingText });
-    recallItems.forEach((recallQuestion) => {
-      if (remainingText.includes(`@${getLocalizedValue(recallQuestion.headline, selectedLanguageCode)}`)) {
-        includedQuestions.push(recallQuestion);
+  const filterRecallItems = (remainingText: string) => {
+    let includedRecallItems: TSurveyRecallItem[] = [];
+    recallItems.forEach((recallItem) => {
+      if (remainingText.includes(`@${recallItem.label}`)) {
+        includedRecallItems.push(recallItem);
       } else {
-        const questionToRemove = getLocalizedValue(recallQuestion.headline, selectedLanguageCode).slice(
-          0,
-          -1
-        );
+        const recallItemToRemove = recallItem.label.slice(0, -1);
         const newText = { ...text };
-        newText[selectedLanguageCode] = text[selectedLanguageCode].replace(`@${questionToRemove}`, "");
+        newText[selectedLanguageCode] = text[selectedLanguageCode].replace(`@${recallItemToRemove}`, "");
         setText(newText);
-        handleUpdate(text[selectedLanguageCode].replace(`@${questionToRemove}`, ""));
+        handleUpdate(text[selectedLanguageCode].replace(`@${recallItemToRemove}`, ""));
         let updatedFallback = { ...fallbacks };
-        delete updatedFallback[recallQuestion.id];
+        delete updatedFallback[recallItem.id];
         setFallbacks(updatedFallback);
-        console.log("removed");
       }
     });
-    setRecallQuestions(includedQuestions);
+    setRecallItems(includedRecallItems);
   };
 
   const addFallback = () => {
     let headlineWithFallback = getElementTextBasedOnType();
-    filteredRecallQuestions.forEach((recallQuestion) => {
+    filteredRecallItems.forEach((recallQuestion) => {
       if (recallQuestion) {
         const recallInfo = findRecallInfoById(
           getLocalizedValue(headlineWithFallback, selectedLanguageCode),
@@ -460,9 +448,7 @@ export const QuestionFormInput = ({
                     [selectedLanguageCode]: e.target.value,
                   };
                   setText(recallToHeadline(translatedText, localSurvey, false, selectedLanguageCode));
-                  handleUpdate(
-                    headlineToRecall(e.target.value, recallItems, fallbacks, selectedLanguageCode)
-                  );
+                  handleUpdate(headlineToRecall(e.target.value, recallItems, fallbacks));
                 }}
                 maxLength={maxLength ?? undefined}
                 isInvalid={
@@ -481,7 +467,7 @@ export const QuestionFormInput = ({
               )}
               {!showRecallItemSelect && showFallbackInput && recallItems.length > 0 && (
                 <FallbackInput
-                  filteredRecallQuestions={filteredRecallQuestions}
+                  filteredRecallItems={filteredRecallItems}
                   fallbacks={fallbacks}
                   setFallbacks={setFallbacks}
                   fallbackInputRef={fallbackInputRef}

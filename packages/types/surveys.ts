@@ -881,7 +881,7 @@ export type TSurveySummary = z.infer<typeof ZSurveySummary>;
 
 const ZSurveyRecallItem = z.object({
   id: z.string(),
-  headline: ZI18nString,
+  label: z.string(),
 });
 
 export type TSurveyRecallItem = z.infer<typeof ZSurveyRecallItem>;

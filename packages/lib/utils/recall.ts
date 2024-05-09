@@ -6,7 +6,7 @@ import {
   TSurveyRecallItem,
 } from "@formbricks/types/surveys";
 
-import { createI18nString, getLocalizedValue } from "../i18n/utils";
+import { getLocalizedValue } from "../i18n/utils";
 import { structuredClone } from "../pollyfills/structuredClone";
 
 export interface fallbacks {
@@ -70,12 +70,12 @@ export const recallToHeadline = <T extends TSurveyQuestionsObject>(
   while (newHeadline[language].includes("#recall:")) {
     const recallInfo = extractRecallInfo(getLocalizedValue(newHeadline, language));
     if (recallInfo) {
-      const questionId = extractId(recallInfo);
-      if (questionId) {
-        let questionHeadline = hiddenFieldIds.includes(questionId)
-          ? questionId
+      const recalllItemId = extractId(recallInfo);
+      if (recalllItemId) {
+        let questionHeadline = hiddenFieldIds.includes(recalllItemId)
+          ? recalllItemId
           : getLocalizedValue(
-              survey.questions.find((question) => question.id === questionId)?.headline,
+              survey.questions.find((question) => question.id === recalllItemId)?.headline,
               language
             );
         while (questionHeadline?.includes("#recall:")) {
@@ -96,15 +96,15 @@ export const recallToHeadline = <T extends TSurveyQuestionsObject>(
 };
 
 // Replaces recall information in a survey question's headline with an ___.
-export const replaceRecallInfoWithUnderline = (headline: TI18nString, language: string): TI18nString => {
-  const newHeadline = structuredClone(headline);
-  while (getLocalizedValue(newHeadline, language).includes("#recall:")) {
-    const recallInfo = extractRecallInfo(getLocalizedValue(newHeadline, language));
+export const replaceRecallInfoWithUnderline = (label: string): string => {
+  let newLabel = label;
+  while (newLabel.includes("#recall:")) {
+    const recallInfo = extractRecallInfo(newLabel);
     if (recallInfo) {
-      newHeadline[language] = getLocalizedValue(newHeadline, language).replace(recallInfo, "___");
+      newLabel = newLabel.replace(recallInfo, "___");
     }
   }
-  return newHeadline;
+  return newLabel;
 };
 
 // Checks for survey questions with a "recall" pattern but no fallback value.
@@ -137,25 +137,22 @@ export const checkForRecallInHeadline = <T extends TSurveyQuestionsObject>(
 };
 
 // Retrieves an array of survey questions referenced in a text containing recall information.
-export const getRecallQuestions = (text: string, survey: TSurvey, langauge: string): TSurveyRecallItem[] => {
+export const getRecallItems = (text: string, survey: TSurvey, langauge: string): TSurveyRecallItem[] => {
   if (!text.includes("#recall:")) return [];
 
   const ids = extractIds(text);
-  let recallQuestionArray: TSurveyRecallItem[] = [];
+  let recallItems: TSurveyRecallItem[] = [];
   ids.forEach((questionId) => {
-    const recallQuestionHeadline = survey.hiddenFields.fieldIds?.includes(questionId)
-      ? createI18nString(
-          questionId,
-          survey.languages.map((lang) => lang.language.code)
-        )
-      : survey.questions.find((question) => question.id === questionId)?.headline;
-    if (recallQuestionHeadline) {
-      let recallQuestionHeadlineTemp = structuredClone(recallQuestionHeadline);
-      recallQuestionHeadlineTemp = replaceRecallInfoWithUnderline(recallQuestionHeadlineTemp, langauge);
-      recallQuestionArray.push({ id: questionId, headline: recallQuestionHeadlineTemp });
+    const recallItemLabel = survey.hiddenFields.fieldIds?.includes(questionId)
+      ? questionId
+      : survey.questions.find((question) => question.id === questionId)?.headline[langauge];
+    if (recallItemLabel) {
+      let recallItemLabelTemp = recallItemLabel;
+      recallItemLabelTemp = replaceRecallInfoWithUnderline(recallItemLabelTemp);
+      recallItems.push({ id: questionId, label: recallItemLabelTemp });
     }
   });
-  return recallQuestionArray;
+  return recallItems;
 };
 
 // Constructs a fallbacks object from a text containing multiple recall and fallback patterns.
@@ -176,13 +173,12 @@ export const getFallbackValues = (text: string): fallbacks => {
 // Transforms headlines in a text to their corresponding recall information.
 export const headlineToRecall = (
   text: string,
-  recallQuestions: TSurveyRecallItem[],
-  fallbacks: fallbacks,
-  langauge: string
+  recallItems: TSurveyRecallItem[],
+  fallbacks: fallbacks
 ): string => {
-  recallQuestions.forEach((recallQuestion) => {
-    const recallInfo = `#recall:${recallQuestion.id}/fallback:${fallbacks[recallQuestion.id]}#`;
-    text = text.replace(`@${recallQuestion.headline[langauge]}`, recallInfo);
+  recallItems.forEach((recallItem) => {
+    const recallInfo = `#recall:${recallItem.id}/fallback:${fallbacks[recallItem.id]}#`;
+    text = text.replace(`@${recallItem.label}`, recallInfo);
   });
   return text;
 };

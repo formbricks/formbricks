@@ -11,16 +11,8 @@ import {
 } from "lucide-react";
 import { RefObject, useEffect, useMemo, useState } from "react";
 
-import { createI18nString, getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
-import {
-  TI18nString,
-  TSurvey,
-  TSurveyHiddenFields,
-  TSurveyQuestion,
-  TSurveyRecallItem,
-} from "@formbricks/types/surveys";
+import { TSurvey, TSurveyHiddenFields, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys";
 
 const questionIconMapping = {
   openText: MessageSquareTextIcon,
@@ -86,7 +78,7 @@ export const RecallItemSelect = ({
         );
       })
       .map((question) => {
-        return { id: question.id, headline: question.headline };
+        return { id: question.id, label: question.headline[selectedLanguageCode] };
       });
 
     const getHiddenFields = () => {
@@ -97,10 +89,7 @@ export const RecallItemSelect = ({
           })
           .map((hiddenFieldId) => ({
             id: hiddenFieldId,
-            headline: createI18nString(
-              hiddenFieldId,
-              localSurvey.languages.map((lang) => lang.language.code)
-            ),
+            label: hiddenFieldId,
           }));
       }
       return [];
@@ -109,10 +98,8 @@ export const RecallItemSelect = ({
   }, [localSurvey.questions, questionId, recallItemIds]);
 
   // function to modify headline (recallInfo to corresponding headline)
-  const getRecallHeadline = (question: TI18nString): TI18nString => {
-    let questionTempHeadline = structuredClone(question);
-    questionTempHeadline = replaceRecallInfoWithUnderline(questionTempHeadline, selectedLanguageCode);
-    return questionTempHeadline;
+  const getRecallLabel = (label: string): string => {
+    return replaceRecallInfoWithUnderline(label);
   };
 
   // function to handle key press
@@ -169,12 +156,12 @@ export const RecallItemSelect = ({
                 isFocused ? "bg-slate-200" : "hover:bg-slate-200 "
               }`}
               onClick={() => {
-                addRecallItem({ id: recallItem.id, headline: recallItem.headline });
+                addRecallItem({ id: recallItem.id, label: recallItem.label });
                 setShowRecallItemSelect(false);
               }}>
               <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
               <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
-                {getLocalizedValue(getRecallHeadline(recallItem.headline), selectedLanguageCode)}
+                {getRecallLabel(recallItem.label)}
               </div>
             </div>
           );

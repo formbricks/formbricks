@@ -327,7 +327,6 @@ export const Survey = ({
     };
     return (
       <AutoCloseWrapper survey={survey} onClose={onClose}>
-        {console.log(responseData)}
         {offset === 0 && survey.type !== "link" && <SurveyCloseButton onClose={onClose} />}
         <div
           className={cn(
