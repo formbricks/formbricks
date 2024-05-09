@@ -6,13 +6,19 @@ import { useParams, usePathname } from "next/navigation";
 
 import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
 
-interface SurveyInsightsTabsProps {
+interface SurveyAnalysisNavigationProps {
   environmentId: string;
   surveyId: string;
   responseCount: number | null;
+  activeId: string;
 }
 
-export const SurveyInsightsTabs = ({ environmentId, surveyId, responseCount }: SurveyInsightsTabsProps) => {
+export const SurveyAnalysisNavigation = ({
+  environmentId,
+  surveyId,
+  responseCount,
+  activeId,
+}: SurveyAnalysisNavigationProps) => {
   const pathname = usePathname();
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -43,5 +49,5 @@ export const SurveyInsightsTabs = ({ environmentId, surveyId, responseCount }: S
     },
   ];
 
-  return <SecondaryNavigation navigation={navigation} />;
+  return <SecondaryNavigation navigation={navigation} activeId={activeId} />;
 };

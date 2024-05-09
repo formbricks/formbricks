@@ -4,14 +4,18 @@ import packageJson from "@/package.json";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
-import { IoLogoHtml5, IoLogoNpm } from "react-icons/io5";
 
 import CodeBlock from "@formbricks/ui/CodeBlock";
 import { TabBar } from "@formbricks/ui/TabBar";
+import { Html5Icon, NpmIcon } from "@formbricks/ui/icons";
 
 const tabs = [
-  { id: "npm", label: "NPM", icon: <IoLogoNpm /> },
-  { id: "html", label: "HTML", icon: <IoLogoHtml5 /> },
+  {
+    id: "npm",
+    label: "NPM",
+    icon: <NpmIcon />,
+  },
+  { id: "html", label: "HTML", icon: <Html5Icon /> },
 ];
 
 export default function SetupInstructions({

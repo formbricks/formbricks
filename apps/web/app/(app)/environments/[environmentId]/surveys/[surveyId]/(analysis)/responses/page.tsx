@@ -1,3 +1,4 @@
+import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import ResponsePage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { getServerSession } from "next-auth";
 
@@ -46,11 +47,16 @@ export default async function Page({ params }) {
   }
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
   return (
     <PageContentWrapper>
+      <SurveyAnalysisNavigation
+        environmentId={environment.id}
+        responseCount={totalResponseCount}
+        surveyId={survey.id}
+        activeId="responses"
+      />
       <ResponsePage
         environment={environment}
         survey={survey}
