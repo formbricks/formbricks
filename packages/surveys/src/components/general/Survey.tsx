@@ -16,7 +16,7 @@ import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
 import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";
-import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
+import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 
 export const Survey = ({
@@ -30,6 +30,7 @@ export const Survey = ({
   onRetry = () => {},
   isRedirectDisabled = false,
   prefillResponseData,
+  skipPrefilled,
   languageCode,
   getSetIsError,
   getSetIsResponseSendingFinished,
@@ -40,8 +41,8 @@ export const Survey = ({
   clickOutside,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
-  const [questionId, setQuestionId] = useState(
-    survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
+  const [questionId, setQuestionId] = useState<string | undefined>(
+    survey.welcomeCard.enabled ? "start" : undefined
   );
   const [showError, setShowError] = useState(false);
   // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
@@ -87,9 +88,6 @@ export const Survey = ({
   useEffect(() => {
     // call onDisplay when component is mounted
     onDisplay();
-    if (prefillResponseData) {
-      onChange(prefillResponseData);
-    }
     if (startAtQuestionId) {
       setQuestionId(startAtQuestionId);
     }
@@ -124,6 +122,8 @@ export const Survey = ({
   let currQuesTemp = currentQuestion;
 
   const getNextQuestionId = (data: TResponseData): string => {
+    if (!questionId) return "start";
+
     const questions = survey.questions;
     const responseValue = data[questionId];
 
@@ -196,6 +196,7 @@ export const Survey = ({
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId(responseData);
     const finished = nextQuestionId === "end";
+    onChange(responseData);
     onResponse({ data: responseData, ttc, finished });
     if (finished) {
       // Post a message to the parent window indicating that the survey is completed.
@@ -262,6 +263,15 @@ export const Survey = ({
     setQuestionId(prevQuestionId);
   };
 
+  const getQuestionPrefillData = (questionId: string, offset: number): TResponseDataValue | undefined => {
+    if (offset === 0 && prefillResponseData) {
+      return prefillResponseData[questionId];
+    }
+    return undefined;
+  };
+
+  if (!questionId) return null;
+
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
     if (showError) {
       return (
@@ -314,11 +324,9 @@ export const Survey = ({
               ttc={ttc}
               setTtc={setTtc}
               onFileUpload={onFileUpload}
-              isFirstQuestion={
-                history && prefillResponseData
-                  ? history[history.length - 1] === survey.questions[0].id
-                  : question.id === survey?.questions[0]?.id
-              }
+              isFirstQuestion={question.id === survey?.questions[0]?.id}
+              skipPrefilled={skipPrefilled}
+              prefillResponseData={getQuestionPrefillData(question.id, offset)}
               isLastQuestion={question.id === survey.questions[survey.questions.length - 1].id}
               languageCode={languageCode}
               isInIframe={isInIframe}

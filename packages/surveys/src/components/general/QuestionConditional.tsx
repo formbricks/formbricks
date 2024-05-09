@@ -12,7 +12,7 @@ import { OpenTextQuestion } from "@/components/questions/OpenTextQuestion";
 import { PictureSelectionQuestion } from "@/components/questions/PictureSelectionQuestion";
 import { RatingQuestion } from "@/components/questions/RatingQuestion";
 
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
+import { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
 
@@ -26,6 +26,8 @@ interface QuestionConditionalProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   languageCode: string;
+  prefillResponseData?: TResponseDataValue;
+  skipPrefilled?: boolean;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   surveyId: string;
@@ -42,6 +44,8 @@ export const QuestionConditional = ({
   isFirstQuestion,
   isLastQuestion,
   languageCode,
+  prefillResponseData,
+  skipPrefilled,
   ttc,
   setTtc,
   surveyId,
@@ -49,6 +53,14 @@ export const QuestionConditional = ({
   isInIframe,
   currentQuestionId,
 }: QuestionConditionalProps) => {
+  if (!value && prefillResponseData) {
+    if (skipPrefilled) {
+      onSubmit({ [question.id]: prefillResponseData }, { [question.id]: 0 });
+    } else {
+      onChange({ [question.id]: prefillResponseData });
+    }
+  }
+
   return question.type === TSurveyQuestionType.OpenText ? (
     <OpenTextQuestion
       key={question.id}

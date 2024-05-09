@@ -50,6 +50,7 @@ export default function LinkSurvey({
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
+  const skipPrefilled = searchParams?.get("skipPrefilled") === "1";
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
   const defaultLanguageCode = survey.languages?.find((surveyLanguage) => {
@@ -273,6 +274,7 @@ export default function LinkSurvey({
           }}
           autoFocus={autoFocus}
           prefillResponseData={prefillValue}
+          skipPrefilled={skipPrefilled}
           responseCount={responseCount}
           getSetQuestionId={(f: (value: string) => void) => {
             setQuestionId = f;
