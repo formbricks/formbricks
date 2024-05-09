@@ -41,7 +41,7 @@ export default function SetupInstructions({
             <CodeBlock language="sh">yarn add @formbricks/js</CodeBlock>
             <p className="pt-4 text-lg font-semibold text-slate-800">Step 2: Initialize widget</p>
             <p>Import Formbricks and initialize the widget in your Component (e.g. App.tsx):</p>
-            <CodeBlock language="js">{`import formbricks from "@formbricks/js";
+            <CodeBlock language="js">{`import formbricks from "@formbricks/js/website";
 
 if (typeof window !== "undefined") {
   formbricks.init({
@@ -75,7 +75,7 @@ if (typeof window !== "undefined") {
                 </span>{" "}
                 <Link
                   className="decoration-brand-dark"
-                  href="https://formbricks.com/docs/getting-started/quickstart-in-app-survey"
+                  href="https://formbricks.com/docs/website-surveys/quickstart"
                   target="_blank">
                   Check out the docs.
                 </Link>

@@ -1,6 +1,7 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { getServerSession } from "next-auth";
 
+import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
@@ -43,10 +44,16 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
     return <ErrorComponent />;
   }
 
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="Configuration">
-        <ProductConfigNavigation environmentId={params.environmentId} activeId="general" />
+        <ProductConfigNavigation
+          environmentId={params.environmentId}
+          activeId="general"
+          isMultiLanguageAllowed={isMultiLanguageAllowed}
+        />
       </PageHeader>
 
       <SettingsCard title="Product Name" description="Change your products name.">

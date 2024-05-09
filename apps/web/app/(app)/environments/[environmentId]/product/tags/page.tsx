@@ -2,6 +2,7 @@ import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId
 import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getServerSession } from "next-auth";
 
+import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
@@ -40,10 +41,16 @@ export default async function MembersSettingsPage({ params }) {
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
   const isTagSettingDisabled = isViewer;
 
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+
   return !isTagSettingDisabled ? (
     <PageContentWrapper>
       <PageHeader pageTitle="Configuration">
-        <ProductConfigNavigation environmentId={params.environmentId} activeId="tags" />
+        <ProductConfigNavigation
+          environmentId={params.environmentId}
+          activeId="tags"
+          isMultiLanguageAllowed={isMultiLanguageAllowed}
+        />
       </PageHeader>
       <SettingsCard title="Manage Tags" description="Add, merge and remove response tags.">
         <EditTagsWrapper

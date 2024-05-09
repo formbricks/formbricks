@@ -8,9 +8,14 @@ import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
 interface ProductConfigNavigationProps {
   environmentId: string;
   activeId: string;
+  isMultiLanguageAllowed: boolean;
 }
 
-export const ProductConfigNavigation = ({ environmentId, activeId }: ProductConfigNavigationProps) => {
+export const ProductConfigNavigation = ({
+  environmentId,
+  activeId,
+  isMultiLanguageAllowed,
+}: ProductConfigNavigationProps) => {
   const pathname = usePathname();
   let navigation = [
     {
@@ -32,6 +37,7 @@ export const ProductConfigNavigation = ({ environmentId, activeId }: ProductConf
       label: "Survey Languages",
       icon: <LanguagesIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/product/languages`,
+      hidden: !isMultiLanguageAllowed,
       current: pathname?.includes("/languages"),
     },
     {

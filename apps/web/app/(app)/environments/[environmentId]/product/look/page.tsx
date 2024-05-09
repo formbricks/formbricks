@@ -3,6 +3,7 @@ import { EditLogo } from "@/app/(app)/environments/[environmentId]/product/look/
 import { getServerSession } from "next-auth";
 
 import {
+  getMultiLanguagePermission,
   getRemoveInAppBrandingPermission,
   getRemoveLinkBrandingPermission,
 } from "@formbricks/ee/lib/service";
@@ -48,10 +49,16 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
     return <ErrorComponent />;
   }
 
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="Configuration">
-        <ProductConfigNavigation environmentId={params.environmentId} activeId="look" />
+        <ProductConfigNavigation
+          environmentId={params.environmentId}
+          activeId="look"
+          isMultiLanguageAllowed={isMultiLanguageAllowed}
+        />
       </PageHeader>
       <SettingsCard
         title="Theme"

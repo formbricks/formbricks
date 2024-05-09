@@ -11,24 +11,26 @@ import { Button } from "@formbricks/ui/Button";
 interface TopControlsProps {
   environment: TEnvironment;
   environments: TEnvironment[];
+  isFormbricksCloud: boolean;
 }
 
-export default function TopControls({ environment, environments }: TopControlsProps) {
+export default function TopControls({ environment, environments, isFormbricksCloud }: TopControlsProps) {
   const router = useRouter();
   return (
     <div className="z-50 flex items-center space-x-2">
       <EnvironmentSwitch environment={environment} environments={environments} />
-
-      <Button
-        variant="minimal"
-        size="icon"
-        tooltip="Share feedback"
-        className="h-fit w-fit bg-slate-50 p-1"
-        onClick={() => {
-          formbricks.track("Top Menu: Product Feedback");
-        }}>
-        <MessageCircleQuestionIcon className="h-5 w-5" strokeWidth={1.5} />
-      </Button>
+      {isFormbricksCloud && (
+        <Button
+          variant="minimal"
+          size="icon"
+          tooltip="Share feedback"
+          className="h-fit w-fit bg-slate-50 p-1"
+          onClick={() => {
+            formbricks.track("Top Menu: Product Feedback");
+          }}>
+          <MessageCircleQuestionIcon className="h-5 w-5" strokeWidth={1.5} />
+        </Button>
+      )}
       <Button
         variant="minimal"
         size="icon"
