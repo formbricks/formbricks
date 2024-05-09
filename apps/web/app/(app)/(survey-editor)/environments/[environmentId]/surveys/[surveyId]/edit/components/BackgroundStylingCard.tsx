@@ -23,7 +23,7 @@ interface BackgroundStylingCardProps {
   isUnsplashConfigured: boolean;
 }
 
-export function BackgroundStylingCard({
+export const BackgroundStylingCard = ({
   open,
   setOpen,
   styling,
@@ -33,7 +33,7 @@ export function BackgroundStylingCard({
   disabled,
   environmentId,
   isUnsplashConfigured,
-}: BackgroundStylingCardProps) {
+}: BackgroundStylingCardProps) => {
   const { bgType, brightness } = styling?.background ?? {};
 
   const handleBgChange = (color: string, type: TSurveyBackgroundBgType) => {
@@ -150,4 +150,4 @@ export function BackgroundStylingCard({
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
-}
+};

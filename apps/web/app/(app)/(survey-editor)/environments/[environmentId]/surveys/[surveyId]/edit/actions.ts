@@ -61,7 +61,7 @@ export const deleteSurveyAction = async (surveyId: string) => {
   await deleteSurvey(surveyId);
 };
 
-export const refetchProduct = async (productId: string): Promise<TProduct | null> => {
+export const refetchProductAction = async (productId: string): Promise<TProduct | null> => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 

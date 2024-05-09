@@ -43,7 +43,7 @@ import { MultipleChoiceSingleForm } from "./MultipleChoiceSingleForm";
 import { NPSQuestionForm } from "./NPSQuestionForm";
 import { OpenQuestionForm } from "./OpenQuestionForm";
 import { PictureSelectionForm } from "./PictureSelectionForm";
-import QuestionDropdown from "./QuestionMenu";
+import { QuestionDropdown } from "./QuestionMenu";
 import { RatingQuestionForm } from "./RatingQuestionForm";
 
 interface QuestionCardProps {
