@@ -28,5 +28,5 @@ export default async function ConfigLayout({ children, params }) {
     throw new Error("Unauthenticated");
   }
 
-  return <>{children}</>;
+  return children;
 }

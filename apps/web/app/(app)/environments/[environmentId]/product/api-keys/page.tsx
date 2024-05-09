@@ -1,6 +1,7 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { getServerSession } from "next-auth";
 
+import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
@@ -31,11 +32,16 @@ export default async function ProfileSettingsPage({ params }) {
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
 
   return !isViewer ? (
     <PageContentWrapper>
       <PageHeader pageTitle="Configuration">
-        <ProductConfigNavigation environmentId={params.environmentId} activeId="api-keys" />
+        <ProductConfigNavigation
+          environmentId={params.environmentId}
+          activeId="api-keys"
+          isMultiLanguageAllowed={isMultiLanguageAllowed}
+        />
       </PageHeader>
       <EnvironmentNotice environmentId={environment.id} subPageUrl="/settings/api-keys" />
       {environment.type === "development" ? (

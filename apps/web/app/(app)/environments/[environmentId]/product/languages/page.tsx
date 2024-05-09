@@ -31,7 +31,11 @@ export default async function LanguageSettingsPage({ params }: { params: { envir
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="Configuration">
-        <ProductConfigNavigation environmentId={params.environmentId} activeId="languages" />
+        <ProductConfigNavigation
+          environmentId={params.environmentId}
+          activeId="languages"
+          isMultiLanguageAllowed={isMultiLanguageAllowed}
+        />
       </PageHeader>
       <SettingsCard
         title="Multi-language surveys"
