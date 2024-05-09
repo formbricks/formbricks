@@ -1,6 +1,5 @@
 "use client";
 
-import { PlusIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -10,7 +9,7 @@ import { Button } from "../v2/Button";
 import { getSurveysAction } from "./actions";
 import { SurveyCard } from "./components/SurveyCard";
 import { SurveyFilters } from "./components/SurveyFilters";
-import { getFormattedFilters } from "./util";
+import { getFormattedFilters } from "./utils";
 
 interface SurveysListProps {
   environment: TEnvironment;
@@ -54,7 +53,7 @@ export const SurveysList = ({
       setOrientation(orientationFromLocalStorage);
     } else {
       setOrientation("grid");
-      localStorage.setItem("surveyOrientation", "grid");
+      localStorage.setItem("surveyOrientation", "list");
     }
   }, []);
 
@@ -97,16 +96,7 @@ export const SurveysList = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between">
-        <h1 className="my-2 text-3xl font-bold text-slate-800">Surveys</h1>
-        <Button
-          href={`/environments/${environment.id}/surveys/templates`}
-          variant="darkCTA"
-          EndIcon={PlusIcon}>
-          New survey
-        </Button>
-      </div>
+    <div className="space-y-6">
       <SurveyFilters
         orientation={orientation}
         setOrientation={setOrientation}
@@ -142,7 +132,7 @@ export const SurveysList = ({
             </div>
           )}
           {orientation === "grid" && (
-            <div className="grid grid-cols-4 place-content-stretch gap-4 lg:grid-cols-6 ">
+            <div className="grid grid-cols-2 place-content-stretch gap-4 lg:grid-cols-3 2xl:grid-cols-5">
               {surveys.map((survey) => {
                 return (
                   <SurveyCard

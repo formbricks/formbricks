@@ -1,7 +1,7 @@
 import { TSurveyQuestionSummaryNps } from "@formbricks/types/surveys";
 import { HalfCircle, ProgressBar } from "@formbricks/ui/ProgressBar";
 
-import { convertFloatToNDecimal } from "../lib/util";
+import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface NPSSummaryProps {
@@ -10,9 +10,9 @@ interface NPSSummaryProps {
 
 export const NPSSummary = ({ questionSummary }: NPSSummaryProps) => {
   return (
-    <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader questionSummary={questionSummary} />
-      <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {["promoters", "passives", "detractors"].map((group) => (
           <div key={group}>
             <div className="mb-2 flex justify-between">
@@ -28,7 +28,7 @@ export const NPSSummary = ({ questionSummary }: NPSSummaryProps) => {
                 {questionSummary[group].count} {questionSummary[group].count === 1 ? "response" : "responses"}
               </p>
             </div>
-            <ProgressBar barColor="bg-brand" progress={questionSummary[group].percentage / 100} />
+            <ProgressBar barColor="bg-brand-dark" progress={questionSummary[group].percentage / 100} />
           </div>
         ))}
       </div>
@@ -53,7 +53,7 @@ export const NPSSummary = ({ questionSummary }: NPSSummaryProps) => {
           </div>
         </div>
       )}
-      <div className="flex justify-center rounded-b-lg bg-white pb-4 pt-4">
+      <div className="flex justify-center pb-4 pt-4">
         <HalfCircle value={questionSummary.score} />
       </div>
     </div>

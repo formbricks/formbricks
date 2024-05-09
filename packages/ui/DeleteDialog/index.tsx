@@ -17,7 +17,7 @@ interface DeleteDialogProps {
   disabled?: boolean;
 }
 
-export function DeleteDialog({
+export const DeleteDialog = ({
   open,
   setOpen,
   deleteWhat,
@@ -29,7 +29,7 @@ export function DeleteDialog({
   onSave,
   children,
   disabled,
-}: DeleteDialogProps) {
+}: DeleteDialogProps) => {
   return (
     <Modal open={open} setOpen={setOpen} title={`Delete ${deleteWhat}`}>
       <p>{text || "Are you sure? This action cannot be undone."}</p>
@@ -52,4 +52,4 @@ export function DeleteDialog({
       </div>
     </Modal>
   );
-}
+};

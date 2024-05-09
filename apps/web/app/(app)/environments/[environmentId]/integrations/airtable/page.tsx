@@ -8,7 +8,9 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
-import GoBackButton from "@formbricks/ui/GoBackButton";
+import { GoBackButton } from "@formbricks/ui/GoBackButton";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
 export default async function Airtable({ params }) {
   const enabled = !!AIRTABLE_CLIENT_ID;
@@ -35,8 +37,9 @@ export default async function Airtable({ params }) {
   }
 
   return (
-    <>
+    <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
+      <PageHeader pageTitle="Airtable Integration" />
       <div className="h-[75vh] w-full">
         <AirtableWrapper
           enabled={enabled}
@@ -48,6 +51,6 @@ export default async function Airtable({ params }) {
           webAppUrl={WEBAPP_URL}
         />
       </div>
-    </>
+    </PageContentWrapper>
   );
 }

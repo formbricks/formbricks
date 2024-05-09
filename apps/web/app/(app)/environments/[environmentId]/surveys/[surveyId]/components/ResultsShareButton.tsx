@@ -88,7 +88,7 @@ export const ResultsShareButton = ({ survey, webAppUrl, user }: ResultsShareButt
     }
   };
   return (
-    <div className="mb-12">
+    <div>
       <DropdownMenu>
         <DropdownMenuTrigger
           asChild

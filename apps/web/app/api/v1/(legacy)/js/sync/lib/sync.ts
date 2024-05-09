@@ -25,7 +25,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 export const transformLegacySurveys = (surveys: TSurvey[]): TSurveyWithTriggers[] => {
   const updatedSurveys = surveys.map((survey) => {
     const updatedSurvey: any = { ...reverseTranslateSurvey(survey) };
-    updatedSurvey.triggers = updatedSurvey.triggers.map((trigger) => ({ name: trigger }));
+    updatedSurvey.triggers = updatedSurvey.triggers.map((trigger) => ({ name: trigger.actionClass.name }));
     return updatedSurvey;
   });
   return updatedSurveys;
