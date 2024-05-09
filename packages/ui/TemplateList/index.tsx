@@ -160,7 +160,7 @@ export const TemplateList = ({
             key={template.name}
             className={cn(
               activeTemplate?.name === template.name && "ring-2 ring-slate-400",
-              "duration-120 group relative cursor-pointer rounded-lg bg-white p-6 shadow transition-all duration-150 hover:scale-105"
+              "duration-120 group relative cursor-pointer rounded-lg bg-white p-6 shadow transition-all duration-150 hover:ring-2 hover:ring-slate-300"
             )}>
             <div className="flex">
               <div
