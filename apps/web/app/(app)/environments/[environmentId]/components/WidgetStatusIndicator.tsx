@@ -11,10 +11,6 @@ interface WidgetStatusIndicatorProps {
 }
 
 export const WidgetStatusIndicator = ({ environment, type }: WidgetStatusIndicatorProps) => {
-  if (!environment) {
-    throw new Error("Environment not found");
-  }
-
   const stati = {
     notImplemented: {
       icon: AlertTriangleIcon,

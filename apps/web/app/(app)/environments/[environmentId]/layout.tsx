@@ -1,4 +1,4 @@
-import EnvironmentLayout from "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout";
+import { EnvironmentLayout } from "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";

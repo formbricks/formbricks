@@ -38,7 +38,7 @@
     "lint-staged": "^15.2.2",
     "rimraf": "^5.0.5",
     "tsx": "^4.7.2",
-    "turbo": "^1.13.2"
+    "turbo": "^1.13.3"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [

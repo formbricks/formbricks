@@ -68,15 +68,17 @@ export const MainNavigation = ({
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
+
   const [currentTeamName, setCurrentTeamName] = useState("");
   const [currentTeamId, setCurrentTeamId] = useState("");
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isTextVisible, setIsTextVisible] = useState(true);
+
   const product = products.find((product) => product.id === environment.productId);
   const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
   const isPricingDisabled = !isOwner && !isAdmin;
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isTextVisible, setIsTextVisible] = useState(true);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -181,8 +183,6 @@ export const MainNavigation = ({
       target: "_blank",
     },
   ];
-
-  if (pathname?.includes("/edit") || pathname?.includes("/surveys/templates")) return null;
 
   return (
     <>
