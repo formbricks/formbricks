@@ -107,7 +107,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
 
   if (type === "summary") {
     return (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <Skeleton className="group space-y-4 rounded-lg bg-white p-6 ">
           <div className="flex items-center space-x-4">
             <div className=" h-6 w-full rounded-full bg-slate-100"></div>

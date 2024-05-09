@@ -28,10 +28,9 @@ export default function EditAlerts({
         <>
           <div className="mb-5 grid grid-cols-6 items-center space-x-3">
             <div className="col-span-3 flex items-center space-x-3">
-              <div className="rounded-full bg-slate-100 p-1">
-                <UsersIcon className="h-6 w-7 text-slate-600" />
-              </div>
-              <p className="font-semibold text-slate-800">{membership.team.name}</p>
+              <UsersIcon className="h-6 w-7 text-slate-600" />
+
+              <p className="text-sm font-medium text-slate-800">{membership.team.name}</p>
             </div>
 
             <div className="col-span-3 flex items-center justify-end pr-2">

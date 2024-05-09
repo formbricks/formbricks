@@ -12,9 +12,9 @@ interface RatingSummaryProps {
 
 export const RatingSummary = ({ questionSummary }: RatingSummaryProps) => {
   return (
-    <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader questionSummary={questionSummary} />
-      <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {questionSummary.choices.map((result) => (
           <div key={result.rating}>
             <div className="text flex justify-between px-2 pb-2">
@@ -36,7 +36,7 @@ export const RatingSummary = ({ questionSummary }: RatingSummaryProps) => {
                 {result.count} {result.count === 1 ? "response" : "responses"}
               </p>
             </div>
-            <ProgressBar barColor="bg-brand" progress={result.percentage / 100} />
+            <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100} />
           </div>
         ))}
       </div>

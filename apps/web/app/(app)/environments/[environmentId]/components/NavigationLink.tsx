@@ -22,7 +22,8 @@ export default function NavigationLink({
   isTextVisible = true,
 }: NavigationLinkProps) {
   const activeClass = "bg-slate-50 border-r-4 border-brand-dark font-semibold text-slate-900";
-  const inactiveClass = "hover:bg-slate-50 border-r-4 border-transparent hover:border-slate-300";
+  const inactiveClass =
+    "hover:bg-slate-50 border-r-4 border-transparent hover:border-slate-300 transition-all duration-150 ease-in-out";
 
   return (
     <>

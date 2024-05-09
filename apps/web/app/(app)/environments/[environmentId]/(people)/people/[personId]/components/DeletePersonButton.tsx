@@ -6,16 +6,15 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-import { TMembershipRole } from "@formbricks/types/memberships";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 
 interface DeletePersonButtonProps {
   environmentId: string;
   personId: string;
-  membershipRole?: TMembershipRole;
+  isViewer: boolean;
 }
 
-export const DeletePersonButton = ({ environmentId, personId }: DeletePersonButtonProps) => {
+export const DeletePersonButton = ({ environmentId, personId, isViewer }: DeletePersonButtonProps) => {
   const router = useRouter();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -34,6 +33,11 @@ export const DeletePersonButton = ({ environmentId, personId }: DeletePersonButt
       setIsDeletingPerson(false);
     }
   };
+
+  if (isViewer) {
+    return null;
+  }
+
   return (
     <>
       <button

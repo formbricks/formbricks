@@ -53,7 +53,7 @@ export const SurveysList = ({
       setOrientation(orientationFromLocalStorage);
     } else {
       setOrientation("grid");
-      localStorage.setItem("surveyOrientation", "grid");
+      localStorage.setItem("surveyOrientation", "list");
     }
   }, []);
 

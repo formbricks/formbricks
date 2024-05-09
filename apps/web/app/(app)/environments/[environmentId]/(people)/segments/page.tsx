@@ -78,6 +78,7 @@ export default async function SegmentsPage({ params }) {
           type="table"
           environment={environment}
           emptyMessage="No segments yet. Add your first one to get started."
+          noWidgetRequired={true}
         />
       ) : (
         <SegmentTable

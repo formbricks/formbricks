@@ -301,7 +301,7 @@ export default function SingleResponseCard({
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
       <div
         className={clsx(
-          "relative z-10 my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm transition-all",
+          "relative z-10 my-6 rounded-xl border border-slate-200 bg-white shadow-sm transition-all",
           pageType === "response" &&
             (isOpen
               ? "w-3/4"
@@ -309,7 +309,7 @@ export default function SingleResponseCard({
                 ? "w-[96.5%]"
                 : cn("w-full", user ? "group-hover:w-[96.5%]" : ""))
         )}>
-        <div className="space-y-2 px-6 pb-5 pt-6">
+        <div className="space-y-2 border-b border-slate-200 px-6 pb-4 pt-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center justify-center space-x-4">
               {pageType === "response" && (
@@ -388,7 +388,7 @@ export default function SingleResponseCard({
             </div>
           </div>
         </div>
-        <div className="rounded-b-lg bg-white p-6">
+        <div className="p-6">
           {survey.welcomeCard.enabled && (
             <QuestionSkip
               skippedQuestions={[]}
@@ -461,9 +461,11 @@ export default function SingleResponseCard({
             </div>
           )}
           {response.finished && (
-            <div className="mt-4 flex">
+            <div className="mt-4 flex items-center">
               <CheckCircle2Icon className="h-6 w-6 text-slate-400" />
-              <p className="mx-2 rounded-lg bg-slate-100 px-2 text-slate-700">Completed</p>
+              <p className="mx-2 rounded-lg bg-slate-100 px-2 text-sm font-medium text-slate-700">
+                Completed
+              </p>
             </div>
           )}
         </div>

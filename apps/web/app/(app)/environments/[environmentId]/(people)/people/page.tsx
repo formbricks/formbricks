@@ -61,6 +61,7 @@ export default async function PeoplePage({
           type="table"
           environment={environment}
           emptyMessage="Your users will appear here as soon as they use your app ⏲️"
+          noWidgetRequired={true}
         />
       ) : (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
