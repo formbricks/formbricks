@@ -1,10 +1,9 @@
-import { getExampleSurveyTemplate } from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
 import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
 
-import { getActionClasses } from "@formbricks/lib/actionClass/service";
+import { getActionClassByEnvironmentIdAndName, getActionClasses } from "@formbricks/lib/actionClass/service";
 import {
   IS_FORMBRICKS_CLOUD,
   PRICING_APPSURVEYS_FREE_RESPONSES,
@@ -15,9 +14,10 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { createSurvey, getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getExampleSurveyTemplate } from "@formbricks/lib/templates";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
-import { TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";
+import { TJsWebsiteLegacyStateSync, TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
@@ -77,12 +77,16 @@ export async function GET(
     }
 
     if (!environment?.widgetSetupCompleted) {
-      const firstSurvey = getExampleSurveyTemplate(WEBAPP_URL);
+      const exampleTrigger = await getActionClassByEnvironmentIdAndName(environmentId, "New Session");
+      if (!exampleTrigger) {
+        throw new Error("Example trigger not found");
+      }
+      const firstSurvey = getExampleSurveyTemplate(WEBAPP_URL, exampleTrigger);
       await createSurvey(environmentId, firstSurvey);
       await updateEnvironment(environment.id, { widgetSetupCompleted: true });
     }
 
-    const [surveys, noCodeActionClasses, product] = await Promise.all([
+    const [surveys, actionClasses, product] = await Promise.all([
       getSurveys(environmentId),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
@@ -99,25 +103,6 @@ export async function GET(
       // && (!survey.segment || survey.segment.filters.length === 0)
     );
 
-    // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
-    let transformedSurveys: TLegacySurvey[] | TSurvey[];
-
-    // Backwards compatibility for versions less than 1.7.0 (no multi-language support).
-    if (version && isVersionGreaterThanOrEqualTo(version, "1.7.0")) {
-      // Scenario 1: Multi language supported
-      // Use the surveys as they are.
-      transformedSurveys = filteredSurveys;
-    } else {
-      // Scenario 2: Multi language not supported
-      // Convert to legacy surveys with default language.
-      transformedSurveys = await Promise.all(
-        filteredSurveys.map((survey) => {
-          const languageCode = "default";
-          return transformToLegacySurvey(survey, languageCode);
-        })
-      );
-    }
-
     const updatedProduct: TProduct = {
       ...product,
       brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
@@ -126,12 +111,34 @@ export async function GET(
       }),
     };
 
-    // Create the 'state' object with surveys, noCodeActionClasses, product, and person.
-    const state: TJsWebsiteStateSync = {
-      surveys: isInAppSurveyLimitReached ? [] : transformedSurveys,
-      noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
+    const noCodeActionClasses = actionClasses.filter((actionClass) => actionClass.type === "noCode");
+
+    // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
+    let transformedSurveys: TLegacySurvey[] | TSurvey[] = surveys;
+    let state: TJsWebsiteStateSync | TJsWebsiteLegacyStateSync = {
+      surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
+      actionClasses,
       product: updatedProduct,
     };
+
+    // Backwards compatibility for versions less than 2.0.0 (no multi-language support and updated trigger action classes).
+    if (!isVersionGreaterThanOrEqualTo(version ?? "", "2.0.0")) {
+      // Scenario 2: Multi language and updated trigger action classes not supported
+      // Convert to legacy surveys with default language
+      // convert triggers to array of actionClasses Names
+      transformedSurveys = await Promise.all(
+        filteredSurveys.map((survey) => {
+          const languageCode = "default";
+          return transformToLegacySurvey(survey, languageCode);
+        })
+      );
+
+      state = {
+        surveys: isInAppSurveyLimitReached ? [] : transformedSurveys,
+        noCodeActionClasses,
+        product: updatedProduct,
+      };
+    }
 
     return responses.successResponse(
       { ...state },

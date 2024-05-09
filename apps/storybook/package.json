@@ -12,24 +12,24 @@
   },
   "dependencies": {
     "@formbricks/ui": "workspace:*",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "@storybook/addon-essentials": "^8.0.9",
-    "@storybook/addon-interactions": "^8.0.9",
-    "@storybook/addon-links": "^8.0.9",
-    "@storybook/addon-onboarding": "^8.0.9",
-    "@storybook/blocks": "^8.0.9",
-    "@storybook/react": "^8.0.9",
-    "@storybook/react-vite": "^8.0.9",
+    "@storybook/addon-essentials": "^8.0.10",
+    "@storybook/addon-interactions": "^8.0.10",
+    "@storybook/addon-links": "^8.0.10",
+    "@storybook/addon-onboarding": "^8.0.10",
+    "@storybook/blocks": "^8.0.10",
+    "@storybook/react": "^8.0.10",
+    "@storybook/react-vite": "^8.0.10",
     "@storybook/testing-library": "^0.2.2",
-    "@typescript-eslint/eslint-plugin": "^7.7.1",
-    "@typescript-eslint/parser": "^7.7.1",
+    "@typescript-eslint/eslint-plugin": "^7.8.0",
+    "@typescript-eslint/parser": "^7.8.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "esbuild": "^0.20.2",
+    "esbuild": "^0.21.1",
     "tsup": "^8.0.2",
-    "vite": "^5.2.10"
+    "vite": "^5.2.11"
   }
 }

@@ -6,7 +6,6 @@ import { TBaseFilters } from "@formbricks/types/segment";
 import {
   TSurveyClosedMessage,
   TSurveyHiddenFields,
-  TSurveyInlineTriggers,
   TSurveyProductOverwrites,
   TSurveyQuestions,
   TSurveySingleUse,
@@ -38,7 +37,6 @@ declare global {
     export type TeamBilling = TTeamBilling;
     export type UserNotificationSettings = TUserNotificationSettings;
     export type SegmentFilter = TBaseFilters;
-    export type SurveyInlineTriggers = TSurveyInlineTriggers;
     export type Styling = TProductStyling;
   }
 }

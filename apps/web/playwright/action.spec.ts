@@ -36,7 +36,7 @@ const createNoCodeActionByCSSSelector = async (
   // User fills the CSS Selector to track
   await expect(page.locator("[name='noCodeConfig.cssSelector.value']")).toBeVisible();
   await page.locator("[name='noCodeConfig.cssSelector.value']").fill(selector);
-  await page.getByRole("button", { name: "Create Action", exact: true }).click();
+  await page.getByRole("button", { name: "Create action", exact: true }).click();
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(500);
 };
@@ -76,20 +76,20 @@ const createNoCodeActionByPageURL = async (
   await page.locator("#PageURL").click();
 
   // User opens the dropdown and selects the URL match type
-  await expect(page.locator("[name='noCodeConfig.[pageUrl].rule']")).toBeVisible();
-  await page.locator("[name='noCodeConfig.[pageUrl].rule']").selectOption({ label: matcher.label });
+  await expect(page.locator("[name='noCodeConfig.pageUrl.rule']")).toBeVisible();
+  await page.locator("[name='noCodeConfig.pageUrl.rule']").selectOption({ label: matcher.label });
 
   // User fills the Page URL to track
-  await page.locator("[name='noCodeConfig.[pageUrl].value']").fill(matcher.value);
+  await page.locator("[name='noCodeConfig.pageUrl.value']").fill(matcher.value);
 
   // User fills the Test URL to track
-  await page.locator("[name='noCodeConfig.[pageUrl].testUrl']").fill(testURL);
+  await page.locator("[name='noCodeConfig.pageUrl.testUrl']").fill(testURL);
 
   // User clicks the Test Match button
   await page.getByRole("button", { name: "Test Match", exact: true }).click();
 
   // User clicks the Create Action button
-  await page.getByRole("button", { name: "Create Action", exact: true }).click();
+  await page.getByRole("button", { name: "Create action", exact: true }).click();
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(500);
 };
@@ -127,7 +127,7 @@ const createNoCodeActionByInnerText = async (
   // User fills the Inner Text to track
   await expect(page.locator("[name='noCodeConfig.innerHtml.value']")).toBeVisible();
   await page.locator("[name='noCodeConfig.innerHtml.value']").fill(innerText);
-  await page.getByRole("button", { name: "Create Action", exact: true }).click();
+  await page.getByRole("button", { name: "Create action", exact: true }).click();
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(500);
 };
@@ -215,16 +215,14 @@ test.describe("Create and Edit No Code Action by Page URL", async () => {
     await expect(page.getByLabel("Description")).toBeVisible();
     await page.getByLabel("Description").fill(actions.edit.noCode.pageURL.description);
 
-    await expect(page.locator("[name='noCodeConfig.[pageUrl].rule']")).toBeVisible();
+    await expect(page.locator("[name='noCodeConfig.pageUrl.rule']")).toBeVisible();
     await page
-      .locator("[name='noCodeConfig.[pageUrl].rule']")
+      .locator("[name='noCodeConfig.pageUrl.rule']")
       .selectOption({ label: actions.edit.noCode.pageURL.matcher.label });
 
-    await page
-      .locator("[name='noCodeConfig.[pageUrl].value']")
-      .fill(actions.edit.noCode.pageURL.matcher.value);
+    await page.locator("[name='noCodeConfig.pageUrl.value']").fill(actions.edit.noCode.pageURL.matcher.value);
 
-    await page.locator("[name='noCodeConfig.[pageUrl].testUrl']").fill(actions.edit.noCode.pageURL.testURL);
+    await page.locator("[name='noCodeConfig.pageUrl.testUrl']").fill(actions.edit.noCode.pageURL.testURL);
     await page.getByRole("button", { name: "Test Match", exact: true }).click();
     await page.getByRole("button", { name: "Save changes", exact: true }).click();
   });
@@ -287,13 +285,16 @@ test.describe("Create and Edit Code Action", async () => {
     // User selects the Code tab
     await page.getByRole("button", { name: "Code", exact: true }).click();
 
-    await expect(page.getByLabel("Identifier")).toBeVisible();
-    await page.getByLabel("Identifier").fill(actions.create.code.name);
+    await expect(page.getByLabel("What did your user do?")).toBeVisible();
+    await page.getByLabel("What did your user do?").fill(actions.create.code.name);
 
     await expect(page.getByLabel("Description")).toBeVisible();
     await page.getByLabel("Description").fill(actions.create.code.description);
 
-    await page.getByRole("button", { name: "Create Action", exact: true }).click();
+    await expect(page.getByLabel("Key")).toBeVisible();
+    await page.getByLabel("Key").fill(actions.create.code.key);
+
+    await page.getByRole("button", { name: "Create action", exact: true }).click();
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(500);
   });

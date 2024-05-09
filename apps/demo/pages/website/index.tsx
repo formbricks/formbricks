@@ -115,7 +115,7 @@ export default function AppPage({}) {
         </div>
 
         <div className="md:grid md:grid-cols-3">
-          <div className="col-span-3 rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-800">
+          <div className="col-span-3 self-start rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-800">
             <h3 className="text-lg font-semibold dark:text-white">
               Reset person / pull data from Formbricks app
             </h3>
@@ -134,60 +134,6 @@ export default function AppPage({}) {
               If you made a change in Formbricks app and it does not seem to work, hit &apos;Reset&apos; and
               try again.
             </p>
-          </div>
-
-          <div className="pt-6">
-            <div>
-              <button
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
-                onClick={() => {
-                  formbricks.track("New Session");
-                }}>
-                Track New Session
-              </button>
-            </div>
-            <div>
-              <p className="text-xs text-slate-700 dark:text-slate-300">
-                This button sends an Action to the Formbricks API called &apos;New Session&apos;. You will
-                find it in the Actions Tab.
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-6">
-            <div>
-              <button
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
-                onClick={() => {
-                  formbricks.track("Exit Intent");
-                }}>
-                Track Exit Intent
-              </button>
-            </div>
-            <div>
-              <p className="text-xs text-slate-700 dark:text-slate-300">
-                This button sends an Action to the Formbricks API called &apos;Exit Intent&apos;. You can also
-                move your mouse to the top of the browser to trigger the exit intent.
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-6">
-            <div>
-              <button
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
-                onClick={() => {
-                  formbricks.track("50% Scroll");
-                }}>
-                Track 50% Scroll
-              </button>
-            </div>
-            <div>
-              <p className="text-xs text-slate-700 dark:text-slate-300">
-                This button sends an Action to the Formbricks API called &apos;50% Scroll&apos;. You can also
-                scroll down to trigger the 50% scroll.
-              </p>
-            </div>
           </div>
         </div>
       </div>
