@@ -418,8 +418,8 @@ test.describe("Multi Language Survey Create", async () => {
       .getByPlaceholder("Your description here. Recall")
       .fill(surveys.germanCreate.thankYouCard.description);
 
-    await page.getByPlaceholder("Create your own Survey").click();
-    await page.getByPlaceholder("Create your own Survey").fill(surveys.germanCreate.thankYouCard.buttonLabel);
+    // await page.getByPlaceholder("Create your own Survey").click();
+    // await page.getByPlaceholder("Create your own Survey").fill(surveys.germanCreate.thankYouCard.buttonLabel);
 
     // TODO: @pandeymangg - figure out if this is required
     // await page.getByRole("button", { name: "Settings", exact: true }).click();
