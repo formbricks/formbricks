@@ -190,7 +190,7 @@ test.describe("Multi Language Survey Create", async () => {
     await finishOnboarding(page);
 
     //add a new language
-    await page.getByRole("link", { name: "Settings" }).click();
+    await page.getByRole("link", { name: "Configuration" }).click();
     await page.getByRole("link", { name: "Survey Languages" }).click();
     await page.getByRole("button", { name: "Edit Languages" }).click();
     await page.getByRole("button", { name: "Add Language" }).click();
