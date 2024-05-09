@@ -1,4 +1,4 @@
-import { FaSlack } from "react-icons/fa";
+import { SlackIcon } from "@formbricks/ui/icons";
 
 interface IntegrationsTipProps {
   environmentId: string;
@@ -8,7 +8,7 @@ export default async function IntegrationsTip({ environmentId }: IntegrationsTip
   return (
     <div>
       <div className="flex max-w-4xl items-center space-y-3 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base">
-        <FaSlack className="mr-3 h-4 w-4 text-blue-400" />
+        <SlackIcon className="mr-3 h-4 w-4 text-blue-400" />
         <p className="text-sm">
           Need Slack or Discord notifications?
           <a

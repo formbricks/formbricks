@@ -1,8 +1,8 @@
 import { HelpCircle, TrashIcon } from "lucide-react";
 import { ChevronDown, SplitIcon } from "lucide-react";
+import { CornerDownRightIcon, MoveDownIcon } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
-import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
@@ -269,7 +269,7 @@ export default function LogicEditor({
         <div className="mt-2 space-y-3">
           {question?.logic?.map((logic, logicIdx) => (
             <div key={logicIdx} className="flex items-center space-x-2 space-y-1 text-xs xl:text-sm">
-              <BsArrowReturnRight className="h-4 w-4" />
+              <CornerDownRightIcon className="h-4 w-4" />
               <p className="text-slate-800">If this answer</p>
 
               <Select value={logic.condition} onValueChange={(e) => updateLogic(logicIdx, { condition: e })}>
@@ -385,7 +385,7 @@ export default function LogicEditor({
             </div>
           ))}
           <div className="flex flex-wrap items-center space-x-2 py-1 text-sm">
-            <BsArrowDown className="h-4 w-4" />
+            <MoveDownIcon className="h-4 w-4" />
             <p className="text-slate-700">All other answers will continue to the next question</p>
           </div>
         </div>
