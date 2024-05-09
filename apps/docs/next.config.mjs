@@ -34,6 +34,11 @@ const nextConfig = {
         destination: "/introduction/what-is-formbricks",
         permanent: true,
       },
+      {
+        source: "/introduction/why-is-it-better",
+        destination: "/introduction/why-open-source",
+        permanent: true,
+      },
       // Redirects for Docs 2.0
       // Self Hosting
       {

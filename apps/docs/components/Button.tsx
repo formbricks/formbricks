@@ -16,7 +16,7 @@ function ArrowIcon(props: React.ComponentPropsWithoutRef<"svg">) {
 
 const variantStyles = {
   primary:
-    "rounded-full bg-slate-900 py-1 px-3 text-white hover:bg-slate-700 dark:bg-teal-400/10 dark:text-teal-400 dark:ring-1 dark:ring-inset dark:ring-teal-400/20 dark:hover:bg-teal-400/10 dark:hover:text-teal-300 dark:hover:ring-teal-300",
+    "rounded-full bg-slate-900 py-1 px-3 text-white hover:text-white hover:bg-slate-700 dark:bg-teal-400/10 dark:text-teal-400 dark:ring-1 dark:ring-inset dark:ring-teal-400/20 dark:hover:bg-teal-400/10 dark:hover:text-teal-300 dark:hover:ring-teal-300",
   secondary:
     "rounded-full bg-slate-100 py-1 px-3 text-slate-900 hover:bg-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:ring-1 dark:ring-inset dark:ring-slate-800 dark:hover:bg-slate-800 dark:hover:text-slate-300",
   filled:
