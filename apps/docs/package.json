@@ -1,5 +1,5 @@
 {
-  "name": "@formbricks/formbricks-com",
+  "name": "@formbricks/docs",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -50,7 +50,6 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-highlight-words": "^0.20.0",
-    "react-icons": "^5.2.1",
     "react-markdown": "^9.0.1",
     "react-responsive-embed": "^2.1.0",
     "remark": "^15.0.1",

@@ -1,18 +1,19 @@
-import WidgetStatusIndicator from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyStarter";
+import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getEnvironments } from "@formbricks/lib/environment/service";
+import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveyCount } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
+import { Button } from "@formbricks/ui/Button";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 import { SurveysList } from "@formbricks/ui/SurveysList";
 
 export const metadata: Metadata = {
@@ -48,17 +49,30 @@ export default async function SurveysPage({ params }) {
   const environments = await getEnvironments(product.id);
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
+  const CreateSurveyButton = (
+    <Button
+      size="sm"
+      href={`/environments/${environment.id}/surveys/templates`}
+      variant="darkCTA"
+      EndIcon={PlusIcon}>
+      New survey
+    </Button>
+  );
+
   return (
-    <ContentWrapper className="flex h-full flex-col justify-between">
+    <PageContentWrapper>
       {surveyCount > 0 ? (
-        <SurveysList
-          environment={environment}
-          otherEnvironment={otherEnvironment}
-          isViewer={isViewer}
-          WEBAPP_URL={WEBAPP_URL}
-          userId={session.user.id}
-          surveysPerPage={SURVEYS_PER_PAGE}
-        />
+        <>
+          <PageHeader pageTitle="Surveys" cta={CreateSurveyButton} />
+          <SurveysList
+            environment={environment}
+            otherEnvironment={otherEnvironment}
+            isViewer={isViewer}
+            WEBAPP_URL={WEBAPP_URL}
+            userId={session.user.id}
+            surveysPerPage={SURVEYS_PER_PAGE}
+          />
+        </>
       ) : (
         <SurveyStarter
           environmentId={params.environmentId}
@@ -67,8 +81,6 @@ export default async function SurveysPage({ params }) {
           user={session.user}
         />
       )}
-
-      <WidgetStatusIndicator environmentId={params.environmentId} type="mini" />
-    </ContentWrapper>
+    </PageContentWrapper>
   );
 }

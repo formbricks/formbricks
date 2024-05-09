@@ -10,8 +10,9 @@ test.describe("Survey Create & Submit Response", async () => {
 
   test("Create Survey", async ({ page }) => {
     await createSurvey(page, name, email, password, surveys.createAndSubmit);
+
     // Save & Publish Survey
-    await page.getByRole("button", { name: "Continue to Settings" }).click();
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
 
     await page.locator("#howToSendCardTrigger").click();
     await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
@@ -189,7 +190,7 @@ test.describe("Multi Language Survey Create", async () => {
     await finishOnboarding(page);
 
     //add a new language
-    await page.getByRole("link", { name: "Settings" }).click();
+    await page.getByRole("link", { name: "Configuration" }).click();
     await page.getByRole("link", { name: "Survey Languages" }).click();
     await page.getByRole("button", { name: "Edit Languages" }).click();
     await page.getByRole("button", { name: "Add Language" }).click();
@@ -208,6 +209,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.waitForTimeout(2000);
     await page.getByRole("link", { name: "Surveys" }).click();
     await page.getByRole("button", { name: "Start from scratch Create a" }).click();
+    await page.getByRole("button", { name: "Create survey", exact: true }).click();
     await page.locator("#multi-lang-toggle").click();
     await page.getByRole("combobox").click();
     await page.getByLabel("English (en)").click();
@@ -415,9 +417,17 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your description here. Recall")
       .fill(surveys.germanCreate.thankYouCard.description);
-    await page.getByRole("button", { name: "Continue to Settings" }).click();
+
+    // await page.getByPlaceholder("Create your own Survey").click();
+    // await page.getByPlaceholder("Create your own Survey").fill(surveys.germanCreate.thankYouCard.buttonLabel);
+
+    // TODO: @pandeymangg - figure out if this is required
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
+
     await page.locator("#howToSendCardTrigger").click();
+    await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
     await page.locator("#howToSendCardOption-link").click();
+
     await page.getByRole("button", { name: "Publish" }).click();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
