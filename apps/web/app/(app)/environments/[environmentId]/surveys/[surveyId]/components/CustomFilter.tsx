@@ -69,7 +69,6 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   const [selectingDate, setSelectingDate] = useState<DateSelected>(DateSelected.FROM);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const [isFilterDropDownOpen, setIsFilterDropDownOpen] = useState<boolean>(false);
-  const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
   const [hoveredRange, setHoveredRange] = useState<DateRange | null>(null);
 
   const firstMountRef = useRef(true);
@@ -256,7 +255,6 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
             <DropdownMenu
               onOpenChange={(value) => {
                 value && handleDatePickerClose();
-                setIsDownloadDropDownOpen(value);
               }}>
               <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
                 <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:px-6 sm:py-3">
