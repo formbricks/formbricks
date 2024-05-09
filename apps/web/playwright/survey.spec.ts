@@ -209,6 +209,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.waitForTimeout(2000);
     await page.getByRole("link", { name: "Surveys" }).click();
     await page.getByRole("button", { name: "Start from scratch Create a" }).click();
+    await page.getByRole("button", { name: "Create survey", exact: true }).click();
     await page.locator("#multi-lang-toggle").click();
     await page.getByRole("combobox").click();
     await page.getByLabel("English (en)").click();
@@ -416,9 +417,17 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your description here. Recall")
       .fill(surveys.germanCreate.thankYouCard.description);
-    await page.getByRole("button", { name: "Continue to Settings" }).click();
-    await page.locator("#howToSendCardTrigger").click();
-    await page.locator("#howToSendCardOption-link").click();
+
+    await page.getByPlaceholder("Create your own Survey").click();
+    await page.getByPlaceholder("Create your own Survey").fill(surveys.germanCreate.thankYouCard.buttonLabel);
+
+    // TODO: @pandeymangg - figure out if this is required
+    // await page.getByRole("button", { name: "Settings", exact: true }).click();
+
+    // await page.locator("#howToSendCardTrigger").click();
+    // await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
+    // await page.locator("#howToSendCardOption-link").click();
+
     await page.getByRole("button", { name: "Publish" }).click();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
