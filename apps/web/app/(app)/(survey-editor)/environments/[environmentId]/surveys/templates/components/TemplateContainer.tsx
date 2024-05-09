@@ -31,7 +31,7 @@ export default function TemplateContainerWithPreview({
   const [templateSearch, setTemplateSearch] = useState<string | null>(null);
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-full flex-col">
       <MenuBar />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <div className="flex-1 flex-col overflow-auto bg-slate-50">

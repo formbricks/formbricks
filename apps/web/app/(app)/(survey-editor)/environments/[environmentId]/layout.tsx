@@ -47,8 +47,10 @@ export default async function EnvLayout({ children, params }) {
         />
         <FormbricksClient session={session} />
         <ToasterClient />
-        <DevEnvironmentBanner environment={environment} />
-        {children}
+        <div className="flex h-screen flex-col justify-between">
+          <DevEnvironmentBanner environment={environment} />
+          <div className="h-full overflow-y-auto bg-green-500">{children}</div>
+        </div>
       </ResponseFilterProvider>
     </>
   );
