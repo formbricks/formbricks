@@ -39,7 +39,7 @@ export const Modal: React.FC<Modal> = ({
   return (
     <>
       <Transition.Root show={open} as={Fragment}>
-        <Dialog as="div" className="relative z-[60]" onClose={() => closeOnOutsideClick && setOpen(false)}>
+        <Dialog as="div" className="relative z-20" onClose={() => closeOnOutsideClick && setOpen(false)}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
