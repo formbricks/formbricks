@@ -1,3 +1,4 @@
+import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import SummaryPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { notFound } from "next/navigation";
 
@@ -35,7 +36,13 @@ export default async function Page({ params }) {
 
   return (
     <div className="flex w-full justify-center">
-      <PageContentWrapper className="max-w-8xl">
+      <PageContentWrapper className="w-full">
+        <SurveyAnalysisNavigation
+          surveyId={survey.id}
+          environmentId={environment.id}
+          activeId="summary"
+          responseCount={totalResponseCount}
+        />
         <SummaryPage
           environment={environment}
           survey={survey}

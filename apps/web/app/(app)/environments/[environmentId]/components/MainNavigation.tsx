@@ -189,7 +189,7 @@ export const MainNavigation = ({
       {product && (
         <aside
           className={cn(
-            "sticky top-0 z-50 flex h-screen max-h-screen flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
+            "sticky top-0 z-10 flex h-screen max-h-screen flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
             !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
           )}>
           <div>
