@@ -16,8 +16,8 @@ test.describe("Invite, accept and remove team member", async () => {
     await expect(dropdownTrigger).toBeVisible();
     await dropdownTrigger.click();
 
-    const dropdownContentWrapper = page.locator("#userDropdownContentWrapper");
-    await expect(dropdownContentWrapper).toBeVisible();
+    const dropdownInnerContentWrapper = page.locator("#userDropdownInnerContentWrapper");
+    await expect(dropdownInnerContentWrapper).toBeVisible();
 
     await page.getByRole("link", { name: "Team" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/settings\/members/);
@@ -47,8 +47,8 @@ test.describe("Invite, accept and remove team member", async () => {
     await expect(dropdownTrigger).toBeVisible();
     await dropdownTrigger.click();
 
-    const dropdownContentWrapper = page.locator("#userDropdownContentWrapper");
-    await expect(dropdownContentWrapper).toBeVisible();
+    const dropdownInnerContentWrapper = page.locator("#userDropdownInnerContentWrapper");
+    await expect(dropdownInnerContentWrapper).toBeVisible();
 
     await page.getByRole("link", { name: "Team" }).click();
 
@@ -96,8 +96,8 @@ test.describe("Invite, accept and remove team member", async () => {
     await expect(dropdownTrigger).toBeVisible();
     await dropdownTrigger.click();
 
-    const dropdownContentWrapper = page.locator("#userDropdownContentWrapper");
-    await expect(dropdownContentWrapper).toBeVisible();
+    const dropdownInnerContentWrapper = page.locator("#userDropdownInnerContentWrapper");
+    await expect(dropdownInnerContentWrapper).toBeVisible();
 
     await page.getByRole("link", { name: "Team" }).click();
 

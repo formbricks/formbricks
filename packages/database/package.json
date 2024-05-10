@@ -25,18 +25,19 @@
     "predev": "pnpm generate",
     "data-migration:v1.6": "ts-node ./data-migrations/20240207041922_advanced_targeting/data-migration.ts",
     "data-migration:styling": "ts-node ./data-migrations/20240320090315_add_form_styling/data-migration.ts",
-    "data-migration:v1.7": "pnpm data-migration:mls && pnpm data-migration:styling",
     "data-migration:website-surveys": "ts-node ./data-migrations/20240410111624_adds_website_and_inapp_survey/data-migration.ts",
     "data-migration:mls": "ts-node ./data-migrations/20240318050527_add_languages_and_survey_languages/data-migration.ts",
     "data-migration:mls-fix": "ts-node ./data-migrations/20240318050527_add_languages_and_survey_languages/data-migration-fix.ts",
     "data-migration:mls-range-fix": "ts-node ./data-migrations/20240318050527_add_languages_and_survey_languages/data-migration-range-fix.ts",
     "data-migration:userId": "ts-node ./data-migrations/20240408123456_userid_migration/data-migration.ts",
-    "data-migration:mls-welcomeCard-fix": "ts-node ./data-migrations/20240318050527_add_languages_and_survey_languages/data-migration-welcomeCard-fix.ts"
+    "data-migration:refactor-actions": "ts-node ./data-migrations/20240501111944_refactors_actions_and_removes_inline_triggers/data-migration.ts",
+    "data-migration:mls-welcomeCard-fix": "ts-node ./data-migrations/20240318050527_add_languages_and_survey_languages/data-migration-welcomeCard-fix.ts",
+    "data-migration:v2.0": "pnpm data-migration:mls && pnpm data-migration:styling && pnpm data-migration:website-surveys && pnpm data-migration:userId && pnpm data-migration:mls-welcomeCard-fix && pnpm data-migration:refactor-actions"
   },
   "dependencies": {
     "@prisma/client": "^5.13.0",
     "@prisma/extension-accelerate": "^1.0.0",
-    "dotenv-cli": "^7.4.1"
+    "dotenv-cli": "^7.4.2"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
@@ -47,7 +48,7 @@
     "prisma-dbml-generator": "^0.12.0",
     "prisma-json-types-generator": "^3.0.4",
     "ts-node": "^10.9.2",
-    "zod": "^3.23.4",
+    "zod": "^3.23.7",
     "zod-prisma": "^0.5.4"
   }
 }
