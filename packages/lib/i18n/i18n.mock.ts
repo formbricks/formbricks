@@ -9,13 +9,12 @@ import {
   TSurveyConsentQuestion,
   TSurveyDateQuestion,
   TSurveyFileUploadQuestion,
-  TSurveyMultipleChoiceMultiQuestion,
-  TSurveyMultipleChoiceSingleQuestion,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestionType,
   TSurveyRatingQuestion,
+  TSurveySelectQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
@@ -50,7 +49,7 @@ export const mockOpenTextQuestion: TSurveyOpenTextQuestion = {
   },
 };
 
-export const mockSingleSelectQuestion: TSurveyMultipleChoiceSingleQuestion = {
+export const mockSingleSelectQuestion: TSurveySelectQuestion = {
   id: "mvqx8t90np6isb6oel9eamzc",
   type: TSurveyQuestionType.MultipleChoiceSingle,
   choices: [
@@ -78,7 +77,7 @@ export const mockSingleSelectQuestion: TSurveyMultipleChoiceSingleQuestion = {
   shuffleOption: "none",
 };
 
-export const mockMultiSelectQuestion: TSurveyMultipleChoiceMultiQuestion = {
+export const mockMultiSelectQuestion: TSurveySelectQuestion = {
   required: true,
   headline: {
     default: "What's important on vacay?",

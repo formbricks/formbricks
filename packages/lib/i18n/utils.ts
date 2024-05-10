@@ -7,34 +7,30 @@ import {
 import { TLanguage } from "@formbricks/types/product";
 import {
   TI18nString,
+  TSurvey,
   TSurveyCTAQuestion,
   TSurveyChoice,
   TSurveyConsentQuestion,
-  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyLanguage,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
+  TSurveyQuestion,
   TSurveyRatingQuestion,
+  TSurveySelectQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
   ZSurveyCTAQuestion,
   ZSurveyCalQuestion,
   ZSurveyConsentQuestion,
   ZSurveyFileUploadQuestion,
-  ZSurveyMultipleChoiceMultiQuestion,
-  ZSurveyMultipleChoiceSingleQuestion,
   ZSurveyNPSQuestion,
   ZSurveyOpenTextQuestion,
   ZSurveyPictureSelectionQuestion,
   ZSurveyQuestion,
   ZSurveyRatingQuestion,
+  ZSurveySelectQuestion,
   ZSurveyThankYouCard,
   ZSurveyWelcomeCard,
-} from "@formbricks/types/surveys";
-import {
-  TSurvey,
-  TSurveyLanguage,
-  TSurveyMultipleChoiceMultiQuestion,
-  TSurveyQuestion,
 } from "@formbricks/types/surveys";
 
 import { structuredClone } from "../pollyfills/structuredClone";
@@ -207,21 +203,16 @@ export const translateQuestion = (
 
     case "multipleChoiceSingle":
     case "multipleChoiceMulti":
-      (clonedQuestion as TSurveyMultipleChoiceSingleQuestion | TSurveyMultipleChoiceMultiQuestion).choices =
-        question.choices.map((choice) => {
-          return translateChoice(choice, languages);
-        });
-      if (
-        typeof (clonedQuestion as TSurveyMultipleChoiceSingleQuestion | TSurveyMultipleChoiceMultiQuestion)
-          .otherOptionPlaceholder !== "undefined"
-      ) {
-        (
-          clonedQuestion as TSurveyMultipleChoiceSingleQuestion | TSurveyMultipleChoiceMultiQuestion
-        ).otherOptionPlaceholder = createI18nString(question.otherOptionPlaceholder ?? "", languages);
+      (clonedQuestion as TSurveySelectQuestion).choices = question.choices.map((choice) => {
+        return translateChoice(choice, languages);
+      });
+      if (typeof (clonedQuestion as TSurveySelectQuestion).otherOptionPlaceholder !== "undefined") {
+        (clonedQuestion as TSurveySelectQuestion).otherOptionPlaceholder = createI18nString(
+          question.otherOptionPlaceholder ?? "",
+          languages
+        );
       }
-      if (question.type === "multipleChoiceSingle") {
-        return ZSurveyMultipleChoiceSingleQuestion.parse(clonedQuestion);
-      } else return ZSurveyMultipleChoiceMultiQuestion.parse(clonedQuestion);
+      return ZSurveySelectQuestion.parse(clonedQuestion);
 
     case "cta":
       if (typeof question.dismissButtonLabel !== "undefined") {
