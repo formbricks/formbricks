@@ -60,7 +60,7 @@ function NavLink({
         isAnchorLink ? "pl-7" : "pl-4",
         active
           ? "rounded-r-md bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
-          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
       )}>
       <span className="flex w-full truncate">{children}</span>
     </Link>
