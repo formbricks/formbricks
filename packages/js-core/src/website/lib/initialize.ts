@@ -32,7 +32,8 @@ export const setIsInitialized = (value: boolean) => {
 export const initialize = async (
   configInput: TJsWebsiteConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
-  if (getIsDebug()) {
+  const isDebug = getIsDebug();
+  if (isDebug) {
     logger.configure({ logLevel: "debug" });
   }
 
@@ -51,6 +52,14 @@ export const initialize = async (
 
   // formbricks is in error state, skip initialization
   if (existingConfig?.status === "error") {
+    if (isDebug) {
+      logger.debug(
+        "Formbricks is in error state, but debug mode is active. Resetting config and continuing."
+      );
+      websiteConfig.resetConfig();
+      return okVoid();
+    }
+
     logger.debug("Formbricks was set to an error state.");
     if (existingConfig?.expiresAt && new Date(existingConfig.expiresAt) > new Date()) {
       logger.debug("Error state is not expired, skipping initialization");
