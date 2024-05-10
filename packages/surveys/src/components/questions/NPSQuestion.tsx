@@ -46,6 +46,20 @@ export const NPSQuestion = ({
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
+  const handleClick = (number: number) => {
+    onChange({ [question.id]: number });
+    const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
+    setTimeout(() => {
+      onSubmit(
+        {
+          [question.id]: number,
+        },
+        updatedTtcObj
+      );
+    }, 250);
+  };
+
   return (
     <form
       key={question.id}
@@ -100,21 +114,7 @@ export const NPSQuestion = ({
                         value={number}
                         checked={value === number}
                         className="absolute left-0 h-full w-full cursor-pointer opacity-0"
-                        onClick={() => {
-                          const updatedTtcObj = getUpdatedTtc(
-                            ttc,
-                            question.id,
-                            performance.now() - startTime
-                          );
-                          setTtc(updatedTtcObj);
-                          onSubmit(
-                            {
-                              [question.id]: number,
-                            },
-                            updatedTtcObj
-                          );
-                          onChange({ [question.id]: number });
-                        }}
+                        onClick={() => handleClick(number)}
                         required={question.required}
                       />
                       {number}

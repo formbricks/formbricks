@@ -9,8 +9,8 @@ interface SummaryDropOffsProps {
 
 export const SummaryDropOffs = ({ dropOff }: SummaryDropOffsProps) => {
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
-      <div className="rounded-b-lg bg-white ">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="">
         <div className="grid h-10 grid-cols-6 items-center border-y border-slate-200 bg-slate-100 text-sm font-semibold text-slate-600">
           <div className="col-span-3 pl-4 md:pl-6">Questions</div>
           <div className="flex justify-center">

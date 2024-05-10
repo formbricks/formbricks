@@ -3,7 +3,7 @@ import { InboxIcon } from "lucide-react";
 import { TSurveyQuestionSummaryCta } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
-import { convertFloatToNDecimal } from "../lib/util";
+import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface CTASummaryProps {
@@ -12,7 +12,7 @@ interface CTASummaryProps {
 
 export const CTASummary = ({ questionSummary }: CTASummaryProps) => {
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         showResponses={false}
@@ -35,7 +35,7 @@ export const CTASummary = ({ questionSummary }: CTASummaryProps) => {
           </>
         }
       />
-      <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         <div className="text flex justify-between px-2 pb-2">
           <div className="mr-8 flex space-x-1">
             <p className="font-semibold text-slate-700">CTR</p>
@@ -49,7 +49,7 @@ export const CTASummary = ({ questionSummary }: CTASummaryProps) => {
             {questionSummary.ctr.count} {questionSummary.ctr.count === 1 ? "Click" : "Clicks"}
           </p>
         </div>
-        <ProgressBar barColor="bg-brand" progress={questionSummary.ctr.percentage / 100} />
+        <ProgressBar barColor="bg-brand-dark" progress={questionSummary.ctr.percentage / 100} />
       </div>
     </div>
   );

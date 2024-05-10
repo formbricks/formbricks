@@ -1,4 +1,3 @@
-import { getExampleSurveyTemplate } from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
 import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -15,6 +14,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { createSurvey, getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getExampleSurveyTemplate } from "@formbricks/lib/templates";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TJsWebsiteLegacyStateSync, TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";

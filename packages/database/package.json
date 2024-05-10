@@ -37,7 +37,7 @@
   "dependencies": {
     "@prisma/client": "^5.13.0",
     "@prisma/extension-accelerate": "^1.0.0",
-    "dotenv-cli": "^7.4.1"
+    "dotenv-cli": "^7.4.2"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
@@ -48,7 +48,7 @@
     "prisma-dbml-generator": "^0.12.0",
     "prisma-json-types-generator": "^3.0.4",
     "ts-node": "^10.9.2",
-    "zod": "^3.23.4",
+    "zod": "^3.23.7",
     "zod-prisma": "^0.5.4"
   }
 }

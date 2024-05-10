@@ -183,7 +183,6 @@ export const DateQuestion = ({
                 </div>
               )}
 
-              {/* @ts-expect-error */}
               <DatePicker
                 key={datePickerOpen}
                 value={selectedDate}
@@ -226,7 +225,7 @@ export const DateQuestion = ({
                 }}
                 // @ts-expect-error
                 calendarIcon={<CalendarIcon />}
-                tileClassName={({ date }) => {
+                tileClassName={({ date }: { date: Date }) => {
                   const baseClass =
                     "hover:bg-input-bg-selected rounded-custom h-9 p-0 mt-1 font-normal text-heading aria-selected:opacity-100 focus:ring-2 focus:bg-slate-200";
                   // today's date class
@@ -248,7 +247,7 @@ export const DateQuestion = ({
 
                   return baseClass;
                 }}
-                formatShortWeekday={(_, date) => {
+                formatShortWeekday={(_: any, date: Date) => {
                   return date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
                 }}
                 showNeighboringMonth={false}
