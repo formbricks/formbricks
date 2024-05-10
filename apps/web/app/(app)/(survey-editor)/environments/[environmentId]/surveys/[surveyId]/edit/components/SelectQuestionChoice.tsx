@@ -76,7 +76,7 @@ export const SelectQuestionChoice = ({
         className={cn("flex items-center", choice.id === "other" && "invisible")}
         {...listeners}
         {...attributes}>
-        <GripVerticalIcon className="h-4 w-4 cursor-move text-slate-400" />
+        <GripVerticalIcon className="mt-3 h-4 w-4 cursor-move text-slate-400" />
       </div>
 
       <div className="flex w-full space-x-2">
@@ -126,7 +126,7 @@ export const SelectQuestionChoice = ({
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="mt-3 flex items-center gap-2">
         {question.choices && question.choices.length > 2 && (
           <TrashIcon
             className="h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"

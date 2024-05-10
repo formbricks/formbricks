@@ -265,7 +265,7 @@ export const MultipleChoiceMultiForm = ({
               updateQuestion(questionIdx, { choices: newChoices });
             }}>
             <SortableContext items={question.choices} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col">
                 {question.choices &&
                   question.choices.map((choice, choiceIdx) => (
                     <SelectQuestionChoice
