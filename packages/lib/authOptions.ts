@@ -8,7 +8,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@formbricks/database";
 
 import { createAccount } from "./account/service";
-import { verifyPassword } from "./auth/util";
+import { verifyPassword } from "./auth/utils";
 import {
   AZUREAD_CLIENT_ID,
   AZUREAD_CLIENT_SECRET,

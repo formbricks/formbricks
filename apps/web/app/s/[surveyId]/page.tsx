@@ -1,7 +1,6 @@
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
-import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
 import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
@@ -18,6 +17,7 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ZId } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
+import { MediaBackground } from "@formbricks/ui/MediaBackground";
 
 import { getEmailVerificationDetails } from "./lib/helpers";
 

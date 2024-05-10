@@ -5,7 +5,7 @@ export const navigation: Array<NavGroup> = [
     title: "Introduction",
     links: [
       { title: "What is Formbricks?", href: "/introduction/what-is-formbricks" },
-      { title: "Why is it better?", href: "/introduction/why-is-it-better" },
+      { title: "Why open source?", href: "/introduction/why-open-source" },
       { title: "How does it work?", href: "/introduction/how-it-works" },
       {
         title: "Best Practices",

@@ -152,7 +152,7 @@ export default function EditLanguage({ product, environmentId }: EditLanguagePro
     ) : null;
 
   return (
-    <div className="flex flex-col space-y-6">
+    <div className="flex flex-col space-y-4">
       <div className="space-y-4">
         {languages.length > 0 ? (
           <>
@@ -231,15 +231,15 @@ const EditSaveButtons: React.FC<{
 }> = ({ isEditing, onEdit, onSave, onCancel }) =>
   isEditing ? (
     <div className="flex gap-4">
-      <Button variant="darkCTA" onClick={onSave}>
+      <Button variant="darkCTA" size="sm" onClick={onSave}>
         Save Changes
       </Button>
-      <Button variant="minimal" onClick={onCancel}>
+      <Button variant="minimal" size="sm" onClick={onCancel}>
         Cancel
       </Button>
     </div>
   ) : (
-    <Button variant="darkCTA" onClick={onEdit} className="w-fit">
+    <Button variant="darkCTA" size="sm" onClick={onEdit} className="w-fit">
       Edit Languages
     </Button>
   );

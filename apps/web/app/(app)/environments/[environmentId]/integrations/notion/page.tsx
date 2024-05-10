@@ -13,7 +13,9 @@ import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { getNotionDatabases } from "@formbricks/lib/notion/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
-import GoBackButton from "@formbricks/ui/GoBackButton";
+import { GoBackButton } from "@formbricks/ui/GoBackButton";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
 export default async function Notion({ params }) {
   const enabled = !!(
@@ -39,8 +41,9 @@ export default async function Notion({ params }) {
   }
 
   return (
-    <>
+    <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
+      <PageHeader pageTitle="Notion Integration" />
       <NotionWrapper
         enabled={enabled}
         surveys={surveys}
@@ -50,6 +53,6 @@ export default async function Notion({ params }) {
         databasesArray={databasesArray}
         attributeClasses={attributeClasses}
       />
-    </>
+    </PageContentWrapper>
   );
 }

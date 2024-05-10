@@ -5,11 +5,9 @@ import {
   getResponseCountAction,
   getResponsesAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import { SurveyResultsTabs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
-import { SummaryHeader } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import {
   getResponseCountBySurveySharingKeyAction,
@@ -21,24 +19,19 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TMembershipRole } from "@formbricks/types/memberships";
-import { TProduct } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
 
 interface ResponsePageProps {
   environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
   webAppUrl: string;
-  product: TProduct;
   user?: TUser;
   environmentTags: TTag[];
   responsesPerPage: number;
-  membershipRole?: TMembershipRole;
   totalResponseCount: number;
   attributeClasses: TAttributeClass[];
 }
@@ -48,11 +41,9 @@ const ResponsePage = ({
   survey,
   surveyId,
   webAppUrl,
-  product,
   user,
   environmentTags,
   responsesPerPage,
-  membershipRole,
   totalResponseCount,
   attributeClasses,
 }: ResponsePageProps) => {
@@ -167,26 +158,11 @@ const ResponsePage = ({
   }, [filters]);
 
   return (
-    <ContentWrapper>
-      <SummaryHeader
-        environment={environment}
-        survey={survey}
-        surveyId={surveyId}
-        webAppUrl={webAppUrl}
-        product={product}
-        user={user}
-        membershipRole={membershipRole}
-      />
+    <>
       <div className="flex gap-1.5">
         <CustomFilter survey={survey} />
         {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />}
       </div>
-      <SurveyResultsTabs
-        activeId="responses"
-        environmentId={environment.id}
-        surveyId={surveyId}
-        responseCount={responseCount}
-      />
       <ResponseTimeline
         environment={environment}
         surveyId={surveyId}
@@ -203,7 +179,7 @@ const ResponsePage = ({
         totalResponseCount={totalResponseCount}
         isSharingPage={isSharingPage}
       />
-    </ContentWrapper>
+    </>
   );
 };
 

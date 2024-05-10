@@ -1,5 +1,5 @@
 import { Button } from "@formbricks/ui/Button";
-import GoBackButton from "@formbricks/ui/GoBackButton";
+import { GoBackButton } from "@formbricks/ui/GoBackButton";
 
 export default function Loading() {
   return (

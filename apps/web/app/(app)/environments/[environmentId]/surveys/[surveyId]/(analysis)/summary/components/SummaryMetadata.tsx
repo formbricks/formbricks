@@ -1,12 +1,9 @@
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
-import { timeSinceConditionally } from "@formbricks/lib/time";
-import { TSurvey, TSurveySummary } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui/Button";
+import { TSurveySummary } from "@formbricks/types/surveys";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 interface SummaryMetadataProps {
-  survey: TSurvey;
   setShowDropOffs: React.Dispatch<React.SetStateAction<boolean>>;
   showDropOffs: boolean;
   surveySummary: TSurveySummary["meta"];
@@ -16,7 +13,7 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
   <TooltipProvider delayDuration={50}>
     <Tooltip>
       <TooltipTrigger>
-        <div className="flex h-full cursor-default flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
+        <div className="flex h-full cursor-default flex-col justify-between space-y-2 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm">
           <p className="text-sm text-slate-600">
             {label}
             {percentage && percentage !== "NaN%" && (
@@ -48,12 +45,7 @@ function formatTime(ttc) {
   return formattedValue;
 }
 
-export const SummaryMetadata = ({
-  survey,
-  setShowDropOffs,
-  showDropOffs,
-  surveySummary,
-}: SummaryMetadataProps) => {
+export const SummaryMetadata = ({ setShowDropOffs, showDropOffs, surveySummary }: SummaryMetadataProps) => {
   const {
     completedPercentage,
     completedResponses,
@@ -66,52 +58,64 @@ export const SummaryMetadata = ({
   } = surveySummary;
 
   return (
-    <div className="mb-4">
-      <div className="flex flex-col-reverse gap-y-2 lg:grid lg:grid-cols-3 lg:gap-x-2">
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-x-2 lg:col-span-2">
-          <StatCard
-            label="Impressions"
-            percentage={null}
-            value={displayCount === 0 ? <span>-</span> : displayCount}
-            tooltipText="Number of times the survey has been viewed."
-          />
-          <StatCard
-            label="Starts"
-            percentage={`${Math.round(startsPercentage)}%`}
-            value={totalResponses === 0 ? <span>-</span> : totalResponses}
-            tooltipText="Number of times the survey has been started."
-          />
-          <StatCard
-            label="Responses"
-            percentage={`${Math.round(completedPercentage)}%`}
-            value={completedResponses === 0 ? <span>-</span> : completedResponses}
-            tooltipText="Number of times the survey has been completed."
-          />
-          <StatCard
-            label="Drop-Offs"
-            percentage={`${Math.round(dropOffPercentage)}%`}
-            value={dropOffCount === 0 ? <span>-</span> : dropOffCount}
-            tooltipText="Number of times the survey has been started but not completed."
-          />
-          <StatCard
-            label="Time to Complete"
-            percentage={null}
-            value={ttcAverage === 0 ? <span>-</span> : `${formatTime(ttcAverage)}`}
-            tooltipText="Average time to complete the survey."
-          />
-        </div>
-        <div className="flex flex-col justify-between gap-2 lg:col-span-1">
-          <div className="text-right text-xs text-slate-400">
-            Last updated: {timeSinceConditionally(survey.updatedAt.toString())}
-          </div>
-          <Button
-            variant="minimal"
-            className="w-max self-start"
-            EndIcon={showDropOffs ? ChevronDownIcon : ChevronUpIcon}
-            onClick={() => setShowDropOffs(!showDropOffs)}>
-            Analyze Drop-Offs
-          </Button>
-        </div>
+    <div>
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-x-2 lg:col-span-4">
+        <StatCard
+          label="Impressions"
+          percentage={null}
+          value={displayCount === 0 ? <span>-</span> : displayCount}
+          tooltipText="Number of times the survey has been viewed."
+        />
+        <StatCard
+          label="Starts"
+          percentage={`${Math.round(startsPercentage)}%`}
+          value={totalResponses === 0 ? <span>-</span> : totalResponses}
+          tooltipText="Number of times the survey has been started."
+        />
+        <StatCard
+          label="Responses"
+          percentage={`${Math.round(completedPercentage)}%`}
+          value={completedResponses === 0 ? <span>-</span> : completedResponses}
+          tooltipText="Number of times the survey has been completed."
+        />
+
+        <TooltipProvider delayDuration={50}>
+          <Tooltip>
+            <TooltipTrigger>
+              <div
+                onClick={() => setShowDropOffs(!showDropOffs)}
+                className="group flex h-full w-full cursor-pointer flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
+                <span className="text-sm text-slate-600">
+                  Drop-Offs
+                  {`${Math.round(dropOffPercentage)}%` !== "NaN%" && (
+                    <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">{`${Math.round(dropOffPercentage)}%`}</span>
+                  )}
+                </span>
+                <div className="flex w-full items-end justify-between">
+                  <span className="text-2xl font-bold text-slate-800">
+                    {dropOffCount === 0 ? <span>-</span> : dropOffCount}
+                  </span>
+                  <span className="ml-1 flex items-center rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-50 group-hover:bg-slate-700">
+                    {showDropOffs ? (
+                      <ChevronUpIcon className="h-4 w-4" />
+                    ) : (
+                      <ChevronDownIcon className="h-4 w-4" />
+                    )}
+                  </span>
+                </div>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Number of times the survey has been started but not completed.</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <StatCard
+          label="Time to Complete"
+          percentage={null}
+          value={ttcAverage === 0 ? <span>-</span> : `${formatTime(ttcAverage)}`}
+          tooltipText="Average time to complete the survey."
+        />
       </div>
     </div>
   );

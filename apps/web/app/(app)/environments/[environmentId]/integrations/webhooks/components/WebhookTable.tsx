@@ -1,14 +1,11 @@
 "use client";
 
-import AddWebhookModal from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/AddWebhookModal";
 import WebhookModal from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookDetailModal";
-import { Webhook } from "lucide-react";
 import { useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TWebhook } from "@formbricks/types/webhooks";
-import { Button } from "@formbricks/ui/Button";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 
 export default function WebhookTable({
@@ -23,7 +20,6 @@ export default function WebhookTable({
   children: [JSX.Element, JSX.Element[]];
 }) {
   const [isWebhookDetailModalOpen, setWebhookDetailModalOpen] = useState(false);
-  const [isAddWebhookModalOpen, setAddWebhookModalOpen] = useState(false);
 
   const [activeWebhook, setActiveWebhook] = useState<TWebhook>({
     environmentId: environment.id,
@@ -45,17 +41,6 @@ export default function WebhookTable({
 
   return (
     <>
-      <div className="mb-6 text-right">
-        <Button
-          variant="darkCTA"
-          onClick={() => {
-            setAddWebhookModalOpen(true);
-          }}>
-          <Webhook className="mr-2 h-5 w-5 text-white" />
-          Add Webhook
-        </Button>
-      </div>
-
       {webhooks.length === 0 ? (
         <EmptySpaceFiller
           type="table"
@@ -80,19 +65,12 @@ export default function WebhookTable({
           </div>
         </div>
       )}
-
       <WebhookModal
         environmentId={environment.id}
         open={isWebhookDetailModalOpen}
         setOpen={setWebhookDetailModalOpen}
         webhook={activeWebhook}
         surveys={surveys}
-      />
-      <AddWebhookModal
-        environmentId={environment.id}
-        surveys={surveys}
-        open={isAddWebhookModalOpen}
-        setOpen={setAddWebhookModalOpen}
       />
     </>
   );

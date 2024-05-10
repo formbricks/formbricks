@@ -26,9 +26,9 @@ export const MatrixQuestionSummary = ({ questionSummary }: MatrixQuestionSummary
   const columns = questionSummary.data[0] ? Object.keys(questionSummary.data[0].columnPercentages) : [];
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader questionSummary={questionSummary} />
-      <div className="overflow-x-auto rounded-b-lg bg-white p-6">
+      <div className="overflow-x-auto p-6">
         {/* Summary Table  */}
         <table className="mx-auto border-collapse cursor-default text-left">
           <thead>

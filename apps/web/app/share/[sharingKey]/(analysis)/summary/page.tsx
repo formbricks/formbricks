@@ -1,3 +1,4 @@
+import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import SummaryPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { notFound } from "next/navigation";
 
@@ -7,6 +8,8 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
 export default async function Page({ params }) {
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
@@ -37,16 +40,25 @@ export default async function Page({ params }) {
   const totalResponseCount = await getResponseCountBySurveyId(surveyId);
 
   return (
-    <>
-      <SummaryPage
-        environment={environment}
-        survey={survey}
-        surveyId={survey.id}
-        webAppUrl={WEBAPP_URL}
-        product={product}
-        totalResponseCount={totalResponseCount}
-        attributeClasses={attributeClasses}
-      />
-    </>
+    <div className="flex w-full justify-center">
+      <PageContentWrapper className="w-full">
+        <PageHeader pageTitle={survey.name}>
+          <SurveyAnalysisNavigation
+            surveyId={survey.id}
+            environmentId={environment.id}
+            activeId="summary"
+            responseCount={totalResponseCount}
+          />
+        </PageHeader>
+        <SummaryPage
+          environment={environment}
+          survey={survey}
+          surveyId={survey.id}
+          webAppUrl={WEBAPP_URL}
+          totalResponseCount={totalResponseCount}
+          attributeClasses={attributeClasses}
+        />
+      </PageContentWrapper>
+    </div>
   );
 }
