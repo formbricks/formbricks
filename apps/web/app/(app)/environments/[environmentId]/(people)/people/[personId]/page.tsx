@@ -5,6 +5,7 @@ import ResponseSection from "@/app/(app)/environments/[environmentId]/(people)/p
 import { getServerSession } from "next-auth";
 
 import { getAttributes } from "@formbricks/lib/attribute/service";
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
@@ -18,15 +19,17 @@ import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
 export default async function PersonPage({ params }) {
-  const [environment, environmentTags, product, session, team, person, attributes] = await Promise.all([
-    getEnvironment(params.environmentId),
-    getTagsByEnvironmentId(params.environmentId),
-    getProductByEnvironmentId(params.environmentId),
-    getServerSession(authOptions),
-    getTeamByEnvironmentId(params.environmentId),
-    getPerson(params.personId),
-    getAttributes(params.personId),
-  ]);
+  const [environment, environmentTags, product, session, team, person, attributes, attributeClasses] =
+    await Promise.all([
+      getEnvironment(params.environmentId),
+      getTagsByEnvironmentId(params.environmentId),
+      getProductByEnvironmentId(params.environmentId),
+      getServerSession(authOptions),
+      getTeamByEnvironmentId(params.environmentId),
+      getPerson(params.personId),
+      getAttributes(params.personId),
+      getAttributeClasses(params.environmentId),
+    ]);
 
   if (!product) {
     throw new Error("Product not found");
@@ -67,6 +70,7 @@ export default async function PersonPage({ params }) {
             environment={environment}
             personId={params.personId}
             environmentTags={environmentTags}
+            attributeClasses={attributeClasses}
           />
           <ActivitySection environmentId={params.environmentId} personId={params.personId} />
         </div>
