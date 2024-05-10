@@ -67,7 +67,7 @@ export const RecallItemSelect = ({
     return recallItems.map((recallItem) => recallItem.id);
   }, [recallItems]);
 
-  const hiddenFields = useMemo(() => {
+  const hiddenFieldRecallItems = useMemo(() => {
     if (localSurvey.type !== "link") return [];
     if (localSurvey.hiddenFields.fieldIds) {
       return localSurvey.hiddenFields.fieldIds
@@ -96,8 +96,7 @@ export const RecallItemSelect = ({
       });
   }, [attributeClasses]);
 
-  // function to remove some specific type of questions (fileUpload, imageSelect etc) from the list of questions to recall from and few other checks
-  const filteredRecallItems: TSurveyRecallItem[] = useMemo(() => {
+  const surveyQuestionRecallItems = useMemo(() => {
     const idx =
       questionId === "end"
         ? localSurvey.questions.length
@@ -113,8 +112,12 @@ export const RecallItemSelect = ({
         return { id: question.id, label: question.headline[selectedLanguageCode], type: "question" as const };
       });
 
-    return [...filteredQuestions, ...hiddenFields, ...attributeClassRecallItems];
-  }, [localSurvey.questions, questionId, recallItemIds, attributeClassRecallItems]);
+    return filteredQuestions;
+  }, [localSurvey.questions, questionId, recallItemIds]);
+
+  const filteredRecallItems: TSurveyRecallItem[] = useMemo(() => {
+    return [...surveyQuestionRecallItems, ...hiddenFieldRecallItems, ...attributeClassRecallItems];
+  }, [surveyQuestionRecallItems, hiddenFieldRecallItems, attributeClassRecallItems]);
 
   // function to modify headline (recallInfo to corresponding headline)
   const getRecallLabel = (label: string): string => {
@@ -165,7 +168,7 @@ export const RecallItemSelect = ({
   };
 
   return (
-    <div className="absolute z-30 mt-1 flex max-h-80 max-w-[85%] flex-col overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3  text-xs ">
+    <div className="absolute z-30 mt-1 flex max-h-60 max-w-[85%] flex-col overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3  text-xs ">
       {filteredRecallItems.length === 0 ? (
         <p className="font-medium text-slate-900">There is no information to recall yet 🤷</p>
       ) : (
