@@ -3,6 +3,7 @@
 import { MenuBar } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/templates/components/MenuBar";
 import { useState } from "react";
 
+import { customSurvey } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import type { TTemplate } from "@formbricks/types/templates";
@@ -26,8 +27,9 @@ export default function TemplateContainerWithPreview({
   environment,
   user,
 }: TemplateContainerWithPreviewProps) {
-  const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
-  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+  const initialTemplate = customSurvey;
+  const [activeTemplate, setActiveTemplate] = useState<TTemplate>(initialTemplate);
+  const [activeQuestionId, setActiveQuestionId] = useState<string>(initialTemplate.preset.questions[0].id);
   const [templateSearch, setTemplateSearch] = useState<string | null>(null);
 
   return (
