@@ -7,7 +7,9 @@ import { getSlackChannels } from "@formbricks/lib/slack/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
-import GoBackButton from "@formbricks/ui/GoBackButton";
+import { GoBackButton } from "@formbricks/ui/GoBackButton";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
 export default async function Slack({ params }) {
   const isEnabled = !!(SLACK_CLIENT_ID && SLACK_CLIENT_SECRET);
@@ -28,8 +30,9 @@ export default async function Slack({ params }) {
   }
 
   return (
-    <>
-      <GoBackButton url={`/environments/${params.environmentId}/integrations`} />
+    <PageContentWrapper>
+      <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
+      <PageHeader pageTitle="Slack Integration" />
       <div className="h-[75vh] w-full">
         <SlackWrapper
           isEnabled={isEnabled}
@@ -40,6 +43,6 @@ export default async function Slack({ params }) {
           webAppUrl={WEBAPP_URL}
         />
       </div>
-    </>
+    </PageContentWrapper>
   );
 }

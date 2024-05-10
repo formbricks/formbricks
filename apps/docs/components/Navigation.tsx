@@ -40,18 +40,6 @@ function useInitialValue<T>(value: T, condition = true) {
   return condition ? initialValue : value;
 }
 
-function TopLevelNavItem({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <li className="md:hidden">
-      <Link
-        href={href}
-        className="block py-1 text-sm text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
-        {children}
-      </Link>
-    </li>
-  );
-}
-
 function NavLink({
   href,
   children,
@@ -72,7 +60,7 @@ function NavLink({
         isAnchorLink ? "pl-7" : "pl-4",
         active
           ? "rounded-r-md bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
-          : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
       )}>
       <span className="flex w-full truncate">{children}</span>
     </Link>
@@ -135,84 +123,71 @@ function ActivePageMarker({ group, pathname }: { group: NavGroup; pathname: stri
     />
   );
 }
+
 function NavigationGroup({
   group,
   className,
   activeGroup,
   setActiveGroup,
+  openGroups,
+  setOpenGroups,
 }: {
   group: NavGroup;
   className?: string;
-  activeGroup: NavGroup;
-  setActiveGroup: (group: NavGroup) => void;
+  activeGroup: NavGroup | null;
+  setActiveGroup: (group: NavGroup | null) => void;
+  openGroups: string[];
+  setOpenGroups: (groups: string[]) => void;
 }) {
-  // If this is the mobile navigation then we always render the initial
-  // state, so that the state does not change during the close animation.
-  // The state will still update when we re-open (re-render) the navigation.
-  let isInsideMobileNavigation = useIsInsideMobileNavigation();
-  let [pathname] = useInitialValue([usePathname()], isInsideMobileNavigation);
-  const [activeParentTitle, setActiveParentTitle] = useState<string | undefined>(
-    group.links.find((link) =>
-      link.children
-        ? link.children.some((child) => pathname.startsWith(child.href))
-        : pathname.startsWith(link.href || "")
-    )?.title
-  );
+  const isInsideMobileNavigation = useIsInsideMobileNavigation();
+  const pathname = usePathname();
+  const isActiveGroup = activeGroup?.title === group.title;
 
-  const isActiveGroup = group.links.some((link) => {
-    pathname.startsWith(link.href || "") ||
-      (activeGroup &&
-        link.title === activeGroup.title &&
-        link.children &&
-        link.children.some((child) => pathname.startsWith(child.href)));
-  });
+  const toggleParentTitle = (title: string) => {
+    if (openGroups.includes(title)) {
+      setOpenGroups(openGroups.filter((t) => t !== title));
+    } else {
+      setOpenGroups([...openGroups, title]);
+    }
+    setActiveGroup(group);
+  };
+
+  const isParentOpen = (title: string) => openGroups.includes(title);
 
   return (
     <li className={clsx("relative mt-6", className)}>
-      <motion.h2 layout="position" className="text-xs font-semibold text-slate-900 dark:text-white">
+      <motion.h2 layout="position" className="font-semibold text-slate-900 dark:text-white">
         {group.title}
       </motion.h2>
       <div className="relative mt-3 pl-2">
         <AnimatePresence initial={!isInsideMobileNavigation}>
-          {activeGroup?.title === group.title && (
-            <VisibleSectionHighlight group={group} pathname={pathname} />
-          )}
+          {isActiveGroup && <VisibleSectionHighlight group={group} pathname={pathname} />}
         </AnimatePresence>
         <motion.div layout className="absolute inset-y-0 left-2 w-px bg-slate-900/10 dark:bg-white/5" />
         <AnimatePresence initial={false}>
-          {activeGroup?.title === group.title && (
-            <ActivePageMarker group={group} pathname={pathname || "/docs"} />
-          )}
+          {isActiveGroup && <ActivePageMarker group={group} pathname={pathname || "/docs"} />}
         </AnimatePresence>
-        <ul
-          role="list"
-          className="border-l border-transparent"
-          onClick={() => {
-            setActiveGroup(group);
-          }}>
+        <ul role="list" className="border-l border-transparent">
           {group.links.map((link) => (
             <motion.li key={link.title} layout="position" className="relative">
               {link.href ? (
-                <NavLink href={link.href} active={pathname.startsWith(link.href)}>
+                <NavLink href={link.href} active={!!pathname?.startsWith(link.href)}>
                   {link.title}
                 </NavLink>
               ) : (
-                <div
-                  onClick={() => {
-                    setActiveParentTitle(link.title as string);
-                  }}>
+                <div onClick={() => toggleParentTitle(link.title)}>
                   <NavLink
                     href={link.children?.[0]?.href || ""}
                     active={
-                      (isActiveGroup &&
-                        activeGroup?.title === group.title &&
+                      !!(
+                        isParentOpen(link.title) &&
                         link.children &&
-                        link.children.some((child) => pathname.startsWith(child.href))) ||
-                      false
+                        link.children.some((child) => pathname.startsWith(child.href))
+                      )
                     }>
                     <span className="flex w-full justify-between">
                       {link.title}
-                      {link.title === activeParentTitle && activeGroup?.title === group.title ? (
+                      {isParentOpen(link.title) ? (
                         <ChevronUpIcon className="my-1 h-4" />
                       ) : (
                         <ChevronDownIcon className="my-1 h-4" />
@@ -222,21 +197,15 @@ function NavigationGroup({
                 </div>
               )}
               <AnimatePresence mode="popLayout" initial={false}>
-                {link.children && link.title === activeParentTitle && activeGroup?.title === group.title && (
+                {link.children && isParentOpen(link.title) && (
                   <motion.ul
                     role="list"
                     initial={{ opacity: 0 }}
-                    animate={{
-                      opacity: 1,
-                      transition: { delay: 0.1 },
-                    }}
-                    exit={{
-                      opacity: 0,
-                      transition: { duration: 0.15 },
-                    }}>
+                    animate={{ opacity: 1, transition: { delay: 0.1 } }}
+                    exit={{ opacity: 0, transition: { duration: 0.15 } }}>
                     {link.children.map((child) => (
                       <li key={child.href}>
-                        <NavLink href={child.href} isAnchorLink active={pathname.startsWith(child.href)}>
+                        <NavLink href={child.href} isAnchorLink active={!!pathname?.startsWith(child.href)}>
                           {child.title}
                         </NavLink>
                       </li>
@@ -253,14 +222,12 @@ function NavigationGroup({
 }
 
 export function Navigation(props: React.ComponentPropsWithoutRef<"nav">) {
-  const [activeGroup, setActiveGroup] = useState<NavGroup>(navigation[0]);
+  const [activeGroup, setActiveGroup] = useState<NavGroup | null>(navigation[0]);
+  const [openGroups, setOpenGroups] = useState<string[]>([]);
 
   return (
     <nav {...props}>
       <ul role="list">
-        <TopLevelNavItem href="/docs/introduction/what-is-formbricks">Documentation</TopLevelNavItem>
-        <TopLevelNavItem href="https://github.com/formbricks/formbricks">Star us on GitHub</TopLevelNavItem>
-        <TopLevelNavItem href="https://formbricks.com/discord">Join our Discord</TopLevelNavItem>
         {navigation.map((group, groupIndex) => (
           <NavigationGroup
             key={group.title}
@@ -268,6 +235,8 @@ export function Navigation(props: React.ComponentPropsWithoutRef<"nav">) {
             className={groupIndex === 0 ? "md:mt-0" : ""}
             activeGroup={activeGroup}
             setActiveGroup={setActiveGroup}
+            openGroups={openGroups}
+            setOpenGroups={setOpenGroups}
           />
         ))}
         <li className="sticky bottom-0 z-10 mt-6 min-[416px]:hidden">

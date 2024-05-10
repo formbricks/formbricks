@@ -3,7 +3,7 @@ import Image from "next/image";
 import { TSurveyQuestionSummaryPictureSelection } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
-import { convertFloatToNDecimal } from "../lib/util";
+import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface PictureChoiceSummaryProps {
@@ -14,9 +14,9 @@ export const PictureChoiceSummary = ({ questionSummary }: PictureChoiceSummaryPr
   const results = questionSummary.choices.sort((a, b) => b.count - a.count);
 
   return (
-    <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader questionSummary={questionSummary} />
-      <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result) => (
           <div key={result.id}>
             <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
@@ -40,7 +40,7 @@ export const PictureChoiceSummary = ({ questionSummary }: PictureChoiceSummaryPr
                 {result.count} {result.count === 1 ? "response" : "responses"}
               </p>
             </div>
-            <ProgressBar barColor="bg-brand" progress={result.percentage / 100 || 0} />
+            <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100 || 0} />
           </div>
         ))}
       </div>
