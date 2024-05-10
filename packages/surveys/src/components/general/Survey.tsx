@@ -39,10 +39,12 @@ export const Survey = ({
   responseCount,
   startAtQuestionId,
   clickOutside,
+  isInEditor,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
-  const [questionId, setQuestionId] = useState<string | undefined>(
-    survey.welcomeCard.enabled ? "start" : undefined
+
+  const [questionId, setQuestionId] = useState(
+    startAtQuestionId ? startAtQuestionId : survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
   const [showError, setShowError] = useState(false);
   // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
@@ -88,9 +90,7 @@ export const Survey = ({
   useEffect(() => {
     // call onDisplay when component is mounted
     onDisplay();
-    if (startAtQuestionId) {
-      setQuestionId(startAtQuestionId);
-    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -122,8 +122,6 @@ export const Survey = ({
   let currQuesTemp = currentQuestion;
 
   const getNextQuestionId = (data: TResponseData): string => {
-    if (!questionId) return "start";
-
     const questions = survey.questions;
     const responseValue = data[questionId];
 
@@ -270,8 +268,6 @@ export const Survey = ({
     return undefined;
   };
 
-  if (!questionId) return null;
-
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
     if (showError) {
       return (
@@ -326,7 +322,7 @@ export const Survey = ({
               onFileUpload={onFileUpload}
               isFirstQuestion={question.id === survey?.questions[0]?.id}
               skipPrefilled={skipPrefilled}
-              prefillResponseData={getQuestionPrefillData(question.id, offset)}
+              prefilledQuestionValue={getQuestionPrefillData(question.id, offset)}
               isLastQuestion={question.id === survey.questions[survey.questions.length - 1].id}
               languageCode={languageCode}
               isInIframe={isInIframe}
@@ -365,6 +361,7 @@ export const Survey = ({
       survey={survey}
       styling={styling}
       setQuestionId={setQuestionId}
+      isInEditor={isInEditor}
     />
   );
 };

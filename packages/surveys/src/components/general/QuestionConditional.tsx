@@ -26,7 +26,7 @@ interface QuestionConditionalProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   languageCode: string;
-  prefillResponseData?: TResponseDataValue;
+  prefilledQuestionValue?: TResponseDataValue;
   skipPrefilled?: boolean;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
@@ -44,7 +44,7 @@ export const QuestionConditional = ({
   isFirstQuestion,
   isLastQuestion,
   languageCode,
-  prefillResponseData,
+  prefilledQuestionValue,
   skipPrefilled,
   ttc,
   setTtc,
@@ -53,11 +53,11 @@ export const QuestionConditional = ({
   isInIframe,
   currentQuestionId,
 }: QuestionConditionalProps) => {
-  if (!value && prefillResponseData) {
+  if (!value && prefilledQuestionValue) {
     if (skipPrefilled) {
-      onSubmit({ [question.id]: prefillResponseData }, { [question.id]: 0 });
+      onSubmit({ [question.id]: prefilledQuestionValue }, { [question.id]: 0 });
     } else {
-      onChange({ [question.id]: prefillResponseData });
+      onChange({ [question.id]: prefilledQuestionValue });
     }
   }
 

@@ -13,6 +13,7 @@ interface StackedCardsContainerProps {
   getCardContent: (questionIdx: number, offset: number) => JSX.Element | undefined;
   styling: TProductStyling | TSurveyStyling;
   setQuestionId: (questionId: string) => void;
+  isInEditor?: boolean;
 }
 
 export const StackedCardsContainer = ({
@@ -22,6 +23,7 @@ export const StackedCardsContainer = ({
   getCardContent,
   styling,
   setQuestionId,
+  isInEditor = true,
 }: StackedCardsContainerProps) => {
   const [hovered, setHovered] = useState(false);
   const highlightBorderColor =
@@ -100,7 +102,9 @@ export const StackedCardsContainer = ({
 
   // Reset question progress, when card arrangement changes
   useEffect(() => {
-    setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
+    if (isInEditor) {
+      setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardArrangement]);
 
