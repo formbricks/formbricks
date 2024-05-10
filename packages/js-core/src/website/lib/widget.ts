@@ -190,6 +190,7 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
         setIsError(false);
         responseQueue.processQueue();
       },
+      attributes,
     });
   }, survey.delay * 1000);
 };
