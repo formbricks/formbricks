@@ -43,7 +43,7 @@ export default async function ProfileSettingsPage({ params }) {
           isMultiLanguageAllowed={isMultiLanguageAllowed}
         />
       </PageHeader>
-      <EnvironmentNotice environmentId={environment.id} subPageUrl="/settings/api-keys" />
+      <EnvironmentNotice environmentId={environment.id} subPageUrl="/product/api-keys" />
       {environment.type === "development" ? (
         <SettingsCard
           title="Development Env Keys"
