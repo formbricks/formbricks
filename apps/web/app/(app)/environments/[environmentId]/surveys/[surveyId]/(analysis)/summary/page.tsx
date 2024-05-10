@@ -2,6 +2,7 @@ import SummaryPage from "@/app/(app)/environments/[environmentId]/surveys/[surve
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -24,15 +25,16 @@ export default async function Page({ params }) {
     return notFound();
   }
 
-  const survey = await getSurvey(surveyId);
-
-  if (!survey) {
-    throw new Error("Survey not found");
-  }
-  const environment = await getEnvironment(survey.environmentId);
-
+  const [survey, environment, attributeClasses] = await Promise.all([
+    getSurvey(params.surveyId),
+    getEnvironment(params.environmentId),
+    getAttributeClasses(params.environmentId),
+  ]);
   if (!environment) {
     throw new Error("Environment not found");
+  }
+  if (!survey) {
+    throw new Error("Survey not found");
   }
 
   const product = await getProductByEnvironmentId(environment.id);
@@ -64,6 +66,7 @@ export default async function Page({ params }) {
         user={user}
         membershipRole={currentUserMembership?.role}
         totalResponseCount={totalResponseCount}
+        attributeClasses={attributeClasses}
       />
     </>
   );

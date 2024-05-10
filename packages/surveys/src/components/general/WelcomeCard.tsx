@@ -19,6 +19,7 @@ interface WelcomeCardProps {
   languageCode: string;
   responseCount?: number;
   isInIframe: boolean;
+  replaceRecallInfo: (text: string) => string;
 }
 
 const TimerIcon = () => {
@@ -68,6 +69,7 @@ export const WelcomeCard = ({
   survey,
   responseCount,
   isInIframe,
+  replaceRecallInfo,
 }: WelcomeCardProps) => {
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
@@ -109,8 +111,14 @@ export const WelcomeCard = ({
             <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
           )}
 
-          <Headline headline={getLocalizedValue(headline, languageCode)} questionId="welcomeCard" />
-          <HtmlBody htmlString={getLocalizedValue(html, languageCode)} questionId="welcomeCard" />
+          <Headline
+            headline={replaceRecallInfo(getLocalizedValue(headline, languageCode))}
+            questionId="welcomeCard"
+          />
+          <HtmlBody
+            htmlString={replaceRecallInfo(getLocalizedValue(html, languageCode))}
+            questionId="welcomeCard"
+          />
         </div>
       </ScrollableContainer>
 

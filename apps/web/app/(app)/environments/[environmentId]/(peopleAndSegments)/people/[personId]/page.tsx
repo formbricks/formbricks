@@ -3,15 +3,17 @@ import AttributesSection from "@/app/(app)/environments/[environmentId]/(peopleA
 import HeadingSection from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/components/HeadingSection";
 import ResponseSection from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/components/ResponseSection";
 
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 
 export default async function PersonPage({ params }) {
-  const [environment, environmentTags, product] = await Promise.all([
+  const [environment, environmentTags, product, attributeClasses] = await Promise.all([
     getEnvironment(params.environmentId),
     getTagsByEnvironmentId(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
+    getAttributeClasses(params.environmentId),
   ]);
 
   if (!product) {
@@ -33,6 +35,7 @@ export default async function PersonPage({ params }) {
                 environment={environment}
                 personId={params.personId}
                 environmentTags={environmentTags}
+                attributeClasses={attributeClasses}
               />
               <ActivitySection environmentId={params.environmentId} personId={params.personId} />
             </div>

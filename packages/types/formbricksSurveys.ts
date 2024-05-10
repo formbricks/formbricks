@@ -1,3 +1,4 @@
+import { TAttributes } from "./attributes";
 import { TProductStyling } from "./product";
 import { TResponseData, TResponseUpdate } from "./responses";
 import { TUploadFileConfig } from "./storage";
@@ -24,6 +25,7 @@ export interface SurveyBaseProps {
   isCardBorderVisible?: boolean;
   startAtQuestionId?: string;
   hiddenFieldsRecord?: TResponseData;
+  attributes?: TAttributes;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

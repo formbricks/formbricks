@@ -9,6 +9,7 @@ import type { NextPage } from "next";
 import { useCallback, useEffect, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -27,6 +28,7 @@ interface LinkSurveyPinScreenProps {
   IS_FORMBRICKS_CLOUD: boolean;
   verifiedEmail?: string;
   languageCode: string;
+  attributeClasses: TAttributeClass[];
 }
 
 const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
@@ -43,6 +45,7 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
     IS_FORMBRICKS_CLOUD,
     verifiedEmail,
     languageCode,
+    attributeClasses,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -123,6 +126,7 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
           webAppUrl={webAppUrl}
           verifiedEmail={verifiedEmail}
           languageCode={languageCode}
+          attributeClasses={attributeClasses}
         />
       </MediaBackground>
       <LegalFooter

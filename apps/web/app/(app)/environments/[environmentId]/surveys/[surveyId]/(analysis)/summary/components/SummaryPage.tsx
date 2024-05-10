@@ -19,6 +19,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
@@ -54,6 +55,7 @@ interface SummaryPageProps {
   user?: TUser;
   membershipRole?: TMembershipRole;
   totalResponseCount: number;
+  attributeClasses: TAttributeClass[];
 }
 
 const SummaryPage = ({
@@ -65,6 +67,7 @@ const SummaryPage = ({
   user,
   membershipRole,
   totalResponseCount,
+  attributeClasses,
 }: SummaryPageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -115,8 +118,8 @@ const SummaryPage = ({
   const searchParams = useSearchParams();
 
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey, "default");
-  }, [survey]);
+    return checkForRecallInHeadline(survey, "default", attributeClasses);
+  }, [survey, attributeClasses]);
 
   useEffect(() => {
     if (!searchParams?.get("referer")) {

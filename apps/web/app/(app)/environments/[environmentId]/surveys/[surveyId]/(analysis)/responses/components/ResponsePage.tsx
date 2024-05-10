@@ -19,6 +19,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
@@ -39,6 +40,7 @@ interface ResponsePageProps {
   responsesPerPage: number;
   membershipRole?: TMembershipRole;
   totalResponseCount: number;
+  attributeClasses: TAttributeClass[];
 }
 
 const ResponsePage = ({
@@ -52,6 +54,7 @@ const ResponsePage = ({
   responsesPerPage,
   membershipRole,
   totalResponseCount,
+  attributeClasses,
 }: ResponsePageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -75,8 +78,8 @@ const ResponsePage = ({
   const searchParams = useSearchParams();
 
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey, "default");
-  }, [survey]);
+    return checkForRecallInHeadline(survey, "default", attributeClasses);
+  }, [survey, attributeClasses]);
 
   const fetchNextPage = useCallback(async () => {
     const newPage = page + 1;

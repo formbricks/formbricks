@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
@@ -33,6 +34,7 @@ interface LinkSurveyProps {
   responseCount?: number;
   verifiedEmail?: string;
   languageCode: string;
+  attributeClasses: TAttributeClass[];
 }
 
 export default function LinkSurvey({
@@ -46,6 +48,7 @@ export default function LinkSurvey({
   responseCount,
   verifiedEmail,
   languageCode,
+  attributeClasses,
 }: LinkSurveyProps) {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
@@ -160,6 +163,7 @@ export default function LinkSurvey({
           isErrorComponent={true}
           languageCode={languageCode}
           styling={product.styling}
+          attributeClasses={attributeClasses}
         />
       );
     }
@@ -170,6 +174,7 @@ export default function LinkSurvey({
         survey={survey}
         languageCode={languageCode}
         styling={product.styling}
+        attributeClasses={attributeClasses}
       />
     );
   }

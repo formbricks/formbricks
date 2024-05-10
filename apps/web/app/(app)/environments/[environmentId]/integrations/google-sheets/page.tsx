@@ -1,5 +1,6 @@
 import GoogleSheetWrapper from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/GoogleSheetWrapper";
 
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
   GOOGLE_SHEETS_CLIENT_SECRET,
@@ -17,10 +18,11 @@ import GoBackButton from "@formbricks/ui/GoBackButton";
 
 export default async function GoogleSheet({ params }) {
   const enabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);
-  const [surveys, integrations, environment] = await Promise.all([
+  const [surveys, integrations, environment, attributeClasses] = await Promise.all([
     getSurveys(params.environmentId),
     getIntegrations(params.environmentId),
     getEnvironment(params.environmentId),
+    getAttributeClasses(params.environmentId),
   ]);
   if (!environment) {
     throw new Error("Environment not found");
@@ -48,6 +50,7 @@ export default async function GoogleSheet({ params }) {
           spreadSheetArray={spreadSheetArray}
           googleSheetIntegration={googleSheetIntegration}
           webAppUrl={WEBAPP_URL}
+          attributeClasses={attributeClasses}
         />
       </div>
     </>

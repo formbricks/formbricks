@@ -5,6 +5,7 @@ import Connect from "@/app/(app)/environments/[environmentId]/integrations/notio
 import Home from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Home";
 import { useState } from "react";
 
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationNotion,
@@ -20,6 +21,7 @@ interface NotionWrapperProps {
   webAppUrl: string;
   surveys: TSurvey[];
   databasesArray: TIntegrationNotionDatabase[];
+  attributeClasses: TAttributeClass[];
 }
 
 export default function NotionWrapper({
@@ -29,6 +31,7 @@ export default function NotionWrapper({
   webAppUrl,
   surveys,
   databasesArray,
+  attributeClasses,
 }: NotionWrapperProps) {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(
@@ -50,6 +53,7 @@ export default function NotionWrapper({
             notionIntegration={notionIntegration}
             databases={databasesArray}
             selectedIntegration={selectedIntegration}
+            attributeClasses={attributeClasses}
           />
           <Home
             environment={environment}

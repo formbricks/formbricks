@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   TI18nString,
   TShuffleOption,
@@ -32,6 +33,7 @@ interface OpenQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
+  attributeClasses: TAttributeClass[];
 }
 
 export const MultipleChoiceSingleForm = ({
@@ -42,6 +44,7 @@ export const MultipleChoiceSingleForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
+  attributeClasses,
 }: OpenQuestionFormProps): JSX.Element => {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
@@ -190,6 +193,7 @@ export const MultipleChoiceSingleForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
+        attributeClasses={attributeClasses}
       />
 
       <div>
@@ -205,6 +209,7 @@ export const MultipleChoiceSingleForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
+                attributeClasses={attributeClasses}
               />
             </div>
 
@@ -267,6 +272,7 @@ export const MultipleChoiceSingleForm = ({
                       !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
                     }
                     className={`${choice.id === "other" ? "border border-dashed" : ""}`}
+                    attributeClasses={attributeClasses}
                   />
                   {choice.id === "other" && (
                     <QuestionFormInput
@@ -287,6 +293,7 @@ export const MultipleChoiceSingleForm = ({
                         !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
                       }
                       className="border border-dashed"
+                      attributeClasses={attributeClasses}
                     />
                   )}
                 </div>

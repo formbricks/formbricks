@@ -10,6 +10,7 @@ import { toast } from "react-hot-toast";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationAirtable,
@@ -38,6 +39,7 @@ type AddIntegrationModalProps = {
   airtableArray: TIntegrationItem[];
   surveys: TSurvey[];
   airtableIntegration: TIntegrationAirtable;
+  attributeClasses: TAttributeClass[];
 } & EditModeProps;
 
 export type IntegrationModalInputs = {
@@ -118,6 +120,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
     airtableIntegration,
     isEditMode,
     defaultData,
+    attributeClasses,
   } = props;
   const router = useRouter();
   const [tables, setTables] = useState<TIntegrationAirtableTables["tables"]>([]);
@@ -335,32 +338,36 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
                 <Label htmlFor="Surveys">Questions</Label>
                 <div className="mt-1 rounded-lg border border-slate-200">
                   <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                    {checkForRecallInHeadline(selectedSurvey, "default")?.questions.map((question) => (
-                      <Controller
-                        key={question.id}
-                        control={control}
-                        name={"questions"}
-                        render={({ field }) => (
-                          <div className="my-1 flex items-center space-x-2">
-                            <label htmlFor={question.id} className="flex cursor-pointer items-center">
-                              <Checkbox
-                                type="button"
-                                id={question.id}
-                                value={question.id}
-                                className="bg-white"
-                                checked={field.value?.includes(question.id)}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...field.value, question.id])
-                                    : field.onChange(field.value?.filter((value) => value !== question.id));
-                                }}
-                              />
-                              <span className="ml-2">{getLocalizedValue(question.headline, "default")}</span>
-                            </label>
-                          </div>
-                        )}
-                      />
-                    ))}
+                    {checkForRecallInHeadline(selectedSurvey, "default", attributeClasses)?.questions.map(
+                      (question) => (
+                        <Controller
+                          key={question.id}
+                          control={control}
+                          name={"questions"}
+                          render={({ field }) => (
+                            <div className="my-1 flex items-center space-x-2">
+                              <label htmlFor={question.id} className="flex cursor-pointer items-center">
+                                <Checkbox
+                                  type="button"
+                                  id={question.id}
+                                  value={question.id}
+                                  className="bg-white"
+                                  checked={field.value?.includes(question.id)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...field.value, question.id])
+                                      : field.onChange(field.value?.filter((value) => value !== question.id));
+                                  }}
+                                />
+                                <span className="ml-2">
+                                  {getLocalizedValue(question.headline, "default")}
+                                </span>
+                              </label>
+                            </div>
+                          )}
+                        />
+                      )
+                    )}
                   </div>
                 </div>
               </div>

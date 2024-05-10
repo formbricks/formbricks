@@ -7,6 +7,7 @@ import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   TSurvey,
   TSurveyLogic,
@@ -30,6 +31,7 @@ interface LogicEditorProps {
   questionIdx: number;
   question: TSurveyQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  attributeClasses: TAttributeClass[];
 }
 
 type LogicConditions = {
@@ -46,10 +48,11 @@ export default function LogicEditor({
   question,
   questionIdx,
   updateQuestion,
+  attributeClasses,
 }: LogicEditorProps): JSX.Element {
   localSurvey = useMemo(() => {
-    return checkForRecallInHeadline(localSurvey, "default");
-  }, [localSurvey]);
+    return checkForRecallInHeadline(localSurvey, "default", attributeClasses);
+  }, [localSurvey, attributeClasses]);
 
   const questionValues = useMemo(() => {
     if ("choices" in question) {

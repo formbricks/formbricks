@@ -23,6 +23,7 @@ export function SurveyModal({
   languageCode,
   responseCount,
   styling,
+  attributes,
 }: SurveyModalProps) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -69,6 +70,7 @@ export function SurveyModal({
           responseCount={responseCount}
           styling={styling}
           isCardBorderVisible={!highlightBorderColor}
+          attributes={attributes}
         />
       </Modal>
     </div>

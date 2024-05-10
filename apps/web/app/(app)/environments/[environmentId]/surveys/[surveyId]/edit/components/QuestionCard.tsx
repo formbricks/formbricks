@@ -38,6 +38,7 @@ import { Draggable } from "react-beautiful-dnd";
 
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
 import { TI18nString, TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
@@ -60,6 +61,7 @@ interface QuestionCardProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
+  attributeClasses: TAttributeClass[];
 }
 
 export default function QuestionCard({
@@ -76,6 +78,7 @@ export default function QuestionCard({
   selectedLanguageCode,
   setSelectedLanguageCode,
   isInvalid,
+  attributeClasses,
 }: QuestionCardProps) {
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
@@ -197,13 +200,21 @@ export default function QuestionCard({
                   </div>
                   <div>
                     <p className="text-sm font-semibold">
-                      {recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
-                        selectedLanguageCode
-                      ]
+                      {recallToHeadline(
+                        question.headline,
+                        localSurvey,
+                        true,
+                        selectedLanguageCode,
+                        attributeClasses
+                      )[selectedLanguageCode]
                         ? formatTextWithSlashes(
-                            recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
-                              selectedLanguageCode
-                            ] ?? ""
+                            recallToHeadline(
+                              question.headline,
+                              localSurvey,
+                              true,
+                              selectedLanguageCode,
+                              attributeClasses
+                            )[selectedLanguageCode] ?? ""
                           )
                         : getTSurveyQuestionTypeName(question.type)}
                     </p>
@@ -237,6 +248,7 @@ export default function QuestionCard({
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
+                  attributeClasses={attributeClasses}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
                 <MultipleChoiceSingleForm
@@ -248,6 +260,7 @@ export default function QuestionCard({
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
+                  attributeClasses={attributeClasses}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
                 <MultipleChoiceMultiForm
@@ -259,6 +272,7 @@ export default function QuestionCard({
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
+                  attributeClasses={attributeClasses}
                 />
               ) : question.type === TSurveyQuestionType.NPS ? (
                 <NPSQuestionForm
@@ -270,6 +284,7 @@ export default function QuestionCard({
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
+                  attributeClasses={attributeClasses}
                 />
               ) : question.type === TSurveyQuestionType.CTA ? (
                 <CTAQuestionForm
@@ -281,6 +296,7 @@ export default function QuestionCard({
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
+                  attributeClasses={attributeClasses}
                 />
               ) : question.type === TSurveyQuestionType.Rating ? (
                 <RatingQuestionForm
@@ -292,6 +308,7 @@ export default function QuestionCard({
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
+                  attributeClasses={attributeClasses}
                 />
               ) : question.type === TSurveyQuestionType.Consent ? (
                 <ConsentQuestionForm
@@ -302,6 +319,7 @@ export default function QuestionCard({
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
+                  attributeClasses={attributeClasses}
                 />
               ) : question.type === TSurveyQuestionType.Date ? (
                 <DateQuestionForm
@@ -313,6 +331,7 @@ export default function QuestionCard({
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
+                  attributeClasses={attributeClasses}
                 />
               ) : question.type === TSurveyQuestionType.PictureSelection ? (
                 <PictureSelectionForm
@@ -324,6 +343,7 @@ export default function QuestionCard({
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
+                  attributeClasses={attributeClasses}
                 />
               ) : question.type === TSurveyQuestionType.FileUpload ? (
                 <FileUploadQuestionForm
@@ -336,6 +356,7 @@ export default function QuestionCard({
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
+                  attributeClasses={attributeClasses}
                 />
               ) : question.type === TSurveyQuestionType.Cal ? (
                 <CalQuestionForm
@@ -347,6 +368,7 @@ export default function QuestionCard({
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
+                  attributeClasses={attributeClasses}
                 />
               ) : question.type === TSurveyQuestionType.Matrix ? (
                 <MatrixQuestionForm
@@ -358,6 +380,7 @@ export default function QuestionCard({
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
+                  attributeClasses={attributeClasses}
                 />
               ) : question.type === TSurveyQuestionType.Address ? (
                 <AddressQuestionForm
@@ -369,6 +392,7 @@ export default function QuestionCard({
                   selectedLanguageCode={selectedLanguageCode}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
+                  attributeClasses={attributeClasses}
                 />
               ) : null}
               <div className="mt-4">
@@ -409,6 +433,7 @@ export default function QuestionCard({
                               if (questionIdx === localSurvey.questions.length - 1) return;
                               updateEmptyNextButtonLabels(translatedNextButtonLabel);
                             }}
+                            attributeClasses={attributeClasses}
                           />
                         </div>
                         {questionIdx !== 0 && (
@@ -423,6 +448,7 @@ export default function QuestionCard({
                             updateQuestion={updateQuestion}
                             selectedLanguageCode={selectedLanguageCode}
                             setSelectedLanguageCode={setSelectedLanguageCode}
+                            attributeClasses={attributeClasses}
                           />
                         )}
                       </div>
@@ -442,6 +468,7 @@ export default function QuestionCard({
                             updateQuestion={updateQuestion}
                             selectedLanguageCode={selectedLanguageCode}
                             setSelectedLanguageCode={setSelectedLanguageCode}
+                            attributeClasses={attributeClasses}
                           />
                         </div>
                       )}
@@ -451,6 +478,7 @@ export default function QuestionCard({
                       questionIdx={questionIdx}
                       localSurvey={localSurvey}
                       updateQuestion={updateQuestion}
+                      attributeClasses={attributeClasses}
                     />
                   </Collapsible.CollapsibleContent>
                 </Collapsible.Root>

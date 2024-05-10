@@ -4,6 +4,7 @@ import ResponseFeed from "@/app/(app)/environments/[environmentId]/(peopleAndSeg
 import { ArrowDownUpIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -16,12 +17,14 @@ export default function ResponseTimeline({
   environment,
   responses,
   environmentTags,
+  attributeClasses,
 }: {
   surveys: TSurvey[];
   user: TUser;
   responses: TResponse[];
   environment: TEnvironment;
   environmentTags: TTag[];
+  attributeClasses: TAttributeClass[];
 }) {
   const [sortedResponses, setSortedResponses] = useState(responses);
   const toggleSortResponses = () => {
@@ -51,6 +54,7 @@ export default function ResponseTimeline({
         surveys={surveys}
         user={user}
         environmentTags={environmentTags}
+        attributeClasses={attributeClasses}
       />
     </div>
   );

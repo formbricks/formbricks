@@ -1,6 +1,7 @@
 import AirtableWrapper from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirtableWrapper";
 
 import { getAirtableTables } from "@formbricks/lib/airtable/service";
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
@@ -12,10 +13,11 @@ import GoBackButton from "@formbricks/ui/GoBackButton";
 
 export default async function Airtable({ params }) {
   const enabled = !!AIRTABLE_CLIENT_ID;
-  const [surveys, integrations, environment] = await Promise.all([
+  const [surveys, integrations, environment, attributeClasses] = await Promise.all([
     getSurveys(params.environmentId),
     getIntegrations(params.environmentId),
     getEnvironment(params.environmentId),
+    getAttributeClasses(params.environmentId),
   ]);
   if (!environment) {
     throw new Error("Environment not found");
@@ -46,6 +48,7 @@ export default async function Airtable({ params }) {
           surveys={surveys}
           environment={environment}
           webAppUrl={WEBAPP_URL}
+          attributeClasses={attributeClasses}
         />
       </div>
     </>

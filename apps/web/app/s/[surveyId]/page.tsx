@@ -9,6 +9,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -125,6 +126,8 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     throw new Error("Product not found");
   }
 
+  const attributeClasses = await getAttributeClasses(survey.environmentId);
+
   const getLanguageCode = (): string => {
     if (!langParam || !isMultiLanguageAllowed) return "default";
     else {
@@ -167,6 +170,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
+        attributeClasses={attributeClasses}
       />
     );
   }
@@ -185,6 +189,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
           responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
           verifiedEmail={verifiedEmail}
           languageCode={languageCode}
+          attributeClasses={attributeClasses}
         />
         <LegalFooter
           IMPRINT_URL={IMPRINT_URL}

@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 
 import { prisma } from "@formbricks/database";
 import { sendResponseFinishedEmail } from "@formbricks/email";
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
 
   const { environmentId, surveyId, event, response } = inputValidation.data;
   const product = await getProductByEnvironmentId(environmentId);
+  const attributeClasses = await getAttributeClasses(environmentId);
   if (!product) return;
 
   // get all webhooks of this environment where event in triggers
@@ -106,7 +108,7 @@ export async function POST(request: Request) {
       getIntegrations(environmentId),
       getSurvey(surveyId),
     ]);
-    const survey = surveyData ? checkForRecallInHeadline(surveyData, "default") : undefined;
+    const survey = surveyData ? checkForRecallInHeadline(surveyData, "default", attributeClasses) : undefined;
 
     if (integrations.length > 0 && survey) {
       handleIntegrations(integrations, inputValidation.data, survey);

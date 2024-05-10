@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import { cn } from "@formbricks/lib/cn";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { FileInput } from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
@@ -20,6 +21,7 @@ interface EditWelcomeCardProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
+  attributeClasses: TAttributeClass[];
 }
 
 export default function EditWelcomeCard({
@@ -30,6 +32,7 @@ export default function EditWelcomeCard({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
+  attributeClasses,
 }: EditWelcomeCardProps) {
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
@@ -130,6 +133,7 @@ export default function EditWelcomeCard({
                 updateSurvey={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
+                attributeClasses={attributeClasses}
               />
             </div>
             <div className="mt-3">
@@ -164,6 +168,7 @@ export default function EditWelcomeCard({
                     updateSurvey={updateSurvey}
                     selectedLanguageCode={selectedLanguageCode}
                     setSelectedLanguageCode={setSelectedLanguageCode}
+                    attributeClasses={attributeClasses}
                   />
                 </div>
               </div>

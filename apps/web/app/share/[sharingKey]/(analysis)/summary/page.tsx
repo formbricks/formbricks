@@ -1,6 +1,7 @@
 import SummaryPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { notFound } from "next/navigation";
 
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -14,18 +15,21 @@ export default async function Page({ params }) {
     return notFound();
   }
 
-  const survey = await getSurvey(surveyId);
+  const [survey, environment, attributeClasses, product] = await Promise.all([
+    getSurvey(params.surveyId),
+    getEnvironment(params.environmentId),
+    getAttributeClasses(params.environmentId),
+    getProductByEnvironmentId(params.environmentId),
+  ]);
 
   if (!survey) {
     throw new Error("Survey not found");
   }
-  const environment = await getEnvironment(survey.environmentId);
 
   if (!environment) {
     throw new Error("Environment not found");
   }
 
-  const product = await getProductByEnvironmentId(environment.id);
   if (!product) {
     throw new Error("Product not found");
   }
@@ -41,6 +45,7 @@ export default async function Page({ params }) {
         webAppUrl={WEBAPP_URL}
         product={product}
         totalResponseCount={totalResponseCount}
+        attributeClasses={attributeClasses}
       />
     </>
   );

@@ -18,6 +18,7 @@ import {
   recallToHeadline,
   replaceRecallInfoWithUnderline,
 } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   TI18nString,
   TSurvey,
@@ -33,7 +34,6 @@ import { Input } from "../Input";
 import { Label } from "../Label";
 import { FallbackInput } from "./components/FallbackInput";
 import { RecallItemSelect } from "./components/RecallItemSelect";
-import { isValueIncomplete } from "./lib/utils";
 import {
   determineImageUploaderVisibility,
   getCardText,
@@ -42,6 +42,7 @@ import {
   getLabelById,
   getMatrixLabel,
   getPlaceHolderById,
+  isValueIncomplete,
 } from "./utils";
 
 interface QuestionFormInputProps {
@@ -62,6 +63,7 @@ interface QuestionFormInputProps {
   ref?: RefObject<HTMLInputElement>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
+  attributeClasses: TAttributeClass[];
 }
 
 export const QuestionFormInput = ({
@@ -81,6 +83,7 @@ export const QuestionFormInput = ({
   placeholder,
   onBlur,
   className,
+  attributeClasses,
 }: QuestionFormInputProps) => {
   const question: TSurveyQuestion = localSurvey.questions[questionIdx];
   const isChoice = id.includes("choice");
@@ -136,7 +139,12 @@ export const QuestionFormInput = ({
   const [showFallbackInput, setShowFallbackInput] = useState(false);
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>(
     getLocalizedValue(text, selectedLanguageCode).includes("#recall:")
-      ? getRecallItems(getLocalizedValue(text, selectedLanguageCode), localSurvey, selectedLanguageCode)
+      ? getRecallItems(
+          getLocalizedValue(text, selectedLanguageCode),
+          localSurvey,
+          selectedLanguageCode,
+          attributeClasses
+        )
       : []
   );
   const [fallbacks, setFallbacks] = useState<{ [type: string]: string }>(
@@ -157,7 +165,7 @@ export const QuestionFormInput = ({
   useSyncScroll(highlightContainerRef, inputRef);
 
   useEffect(() => {
-    if (!isWelcomeCard && (id === "headline" || id === "subheader")) {
+    if (id === "headline" || id === "subheader") {
       checkForRecallSymbol();
     }
     // Generates an array of headlines from recallItems, replacing nested recall questions with '___' .
@@ -182,7 +190,7 @@ export const QuestionFormInput = ({
     // Constructs an array of JSX elements representing segmented parts of text, interspersed with special formatted spans for recall headlines.
     const processInput = (): JSX.Element[] => {
       const parts: JSX.Element[] = [];
-      let remainingText = recallToHeadline(text, localSurvey, false, selectedLanguageCode)[
+      let remainingText = recallToHeadline(text, localSurvey, false, selectedLanguageCode, attributeClasses)[
         selectedLanguageCode
       ];
       filterRecallItems(remainingText);
@@ -260,13 +268,14 @@ export const QuestionFormInput = ({
     modifiedHeadlineWithId[selectedLanguageCode] = getLocalizedValue(
       modifiedHeadlineWithId,
       selectedLanguageCode
-    ).replace("@", `#recall:${recallItem.id}/fallback:# `);
+    ).replace(" @", ` #recall:${recallItem.id}/fallback:# `);
     handleUpdate(getLocalizedValue(modifiedHeadlineWithId, selectedLanguageCode));
     const modifiedHeadlineWithName = recallToHeadline(
       modifiedHeadlineWithId,
       localSurvey,
       false,
-      selectedLanguageCode
+      selectedLanguageCode,
+      attributeClasses
     );
     setText(modifiedHeadlineWithName);
     setShowFallbackInput(true);
@@ -439,7 +448,11 @@ export const QuestionFormInput = ({
                 name={id}
                 aria-label={label ? label : getLabelById(id)}
                 autoComplete={showRecallItemSelect ? "off" : "on"}
-                value={recallToHeadline(text, localSurvey, false, selectedLanguageCode)[selectedLanguageCode]}
+                value={
+                  recallToHeadline(text, localSurvey, false, selectedLanguageCode, attributeClasses)[
+                    selectedLanguageCode
+                  ]
+                }
                 ref={inputRef}
                 onBlur={onBlur}
                 onChange={(e) => {
@@ -447,7 +460,15 @@ export const QuestionFormInput = ({
                     ...getElementTextBasedOnType(),
                     [selectedLanguageCode]: e.target.value,
                   };
-                  setText(recallToHeadline(translatedText, localSurvey, false, selectedLanguageCode));
+                  setText(
+                    recallToHeadline(
+                      translatedText,
+                      localSurvey,
+                      false,
+                      selectedLanguageCode,
+                      attributeClasses
+                    )
+                  );
                   handleUpdate(headlineToRecall(e.target.value, recallItems, fallbacks));
                 }}
                 maxLength={maxLength ?? undefined}
@@ -495,12 +516,14 @@ export const QuestionFormInput = ({
             recallItems={recallItems}
             selectedLanguageCode={selectedLanguageCode}
             hiddenFields={localSurvey.hiddenFields}
+            attributeClasses={attributeClasses}
           />
         )}
       </div>
       {selectedLanguageCode !== "default" && value && typeof value["default"] !== undefined && (
         <div className="mt-1 text-xs text-gray-500">
-          <strong>Translate:</strong> {recallToHeadline(value, localSurvey, false, "default")["default"]}
+          <strong>Translate:</strong>{" "}
+          {recallToHeadline(value, localSurvey, false, "default", attributeClasses)["default"]}
         </div>
       )}
       {selectedLanguageCode === "default" && localSurvey.languages?.length > 1 && isTranslationIncomplete && (

@@ -3,6 +3,7 @@
 import { refreshSheetAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
 import { useState } from "react";
 
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
@@ -22,6 +23,7 @@ interface GoogleSheetWrapperProps {
   spreadSheetArray: TIntegrationItem[];
   googleSheetIntegration?: TIntegrationGoogleSheets;
   webAppUrl: string;
+  attributeClasses: TAttributeClass[];
 }
 
 export default function GoogleSheetWrapper({
@@ -31,6 +33,7 @@ export default function GoogleSheetWrapper({
   spreadSheetArray,
   googleSheetIntegration,
   webAppUrl,
+  attributeClasses,
 }: GoogleSheetWrapperProps) {
   const [isConnected, setIsConnected] = useState(
     googleSheetIntegration ? googleSheetIntegration.config?.key : false
@@ -58,6 +61,7 @@ export default function GoogleSheetWrapper({
             spreadsheets={spreadsheets}
             googleSheetIntegration={googleSheetIntegration}
             selectedIntegration={selectedIntegration}
+            attributeClasses={attributeClasses}
           />
           <Home
             environment={environment}

@@ -8,10 +8,12 @@ import {
   PresentationIcon,
   Rows3Icon,
   StarIcon,
+  TagIcon,
 } from "lucide-react";
 import { RefObject, useEffect, useMemo, useState } from "react";
 
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyHiddenFields, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys";
 
 const questionIconMapping = {
@@ -35,6 +37,7 @@ interface RecallItemSelectProps {
   recallItems: TSurveyRecallItem[];
   selectedLanguageCode: string;
   hiddenFields: TSurveyHiddenFields;
+  attributeClasses: TAttributeClass[];
 }
 
 export const RecallItemSelect = ({
@@ -46,7 +49,7 @@ export const RecallItemSelect = ({
   inputRef,
   recallItems,
   selectedLanguageCode,
-  hiddenFields,
+  attributeClasses,
 }: RecallItemSelectProps) => {
   const [focusedQuestionIdx, setFocusedQuestionIdx] = useState(0); // state for managing focus
   const isNotAllowedQuestionType = (question: TSurveyQuestion): boolean => {
@@ -64,8 +67,37 @@ export const RecallItemSelect = ({
     return recallItems.map((recallItem) => recallItem.id);
   }, [recallItems]);
 
+  const hiddenFields = useMemo(() => {
+    if (localSurvey.type !== "link") return [];
+    if (localSurvey.hiddenFields.fieldIds) {
+      return localSurvey.hiddenFields.fieldIds
+        .filter((hiddenFieldId) => {
+          return !recallItemIds.includes(hiddenFieldId);
+        })
+        .map((hiddenFieldId) => ({
+          id: hiddenFieldId,
+          label: hiddenFieldId,
+          type: "hiddenField" as const,
+        }));
+    }
+    return [];
+  }, [localSurvey.hiddenFields]);
+
+  const attributeClassRecallItems = useMemo(() => {
+    if (localSurvey.type === "link") return [];
+    return attributeClasses
+      .filter((attributeClass) => !recallItemIds.includes(attributeClass.name.replaceAll(" ", "nbsp")))
+      .map((attributeClass) => {
+        return {
+          id: attributeClass.name.replaceAll(" ", "nbsp"),
+          label: attributeClass.name,
+          type: "attributeClass" as const,
+        };
+      });
+  }, [attributeClasses]);
+
   // function to remove some specific type of questions (fileUpload, imageSelect etc) from the list of questions to recall from and few other checks
-  const filteredRecallItems = useMemo(() => {
+  const filteredRecallItems: TSurveyRecallItem[] = useMemo(() => {
     const idx =
       questionId === "end"
         ? localSurvey.questions.length
@@ -78,24 +110,11 @@ export const RecallItemSelect = ({
         );
       })
       .map((question) => {
-        return { id: question.id, label: question.headline[selectedLanguageCode] };
+        return { id: question.id, label: question.headline[selectedLanguageCode], type: "question" as const };
       });
 
-    const getHiddenFields = () => {
-      if (hiddenFields.fieldIds) {
-        return hiddenFields.fieldIds
-          .filter((hiddenFieldId) => {
-            return !recallItemIds.includes(hiddenFieldId);
-          })
-          .map((hiddenFieldId) => ({
-            id: hiddenFieldId,
-            label: hiddenFieldId,
-          }));
-      }
-      return [];
-    };
-    return [...filteredQuestions, ...getHiddenFields()];
-  }, [localSurvey.questions, questionId, recallItemIds]);
+    return [...filteredQuestions, ...hiddenFields, ...attributeClassRecallItems];
+  }, [localSurvey.questions, questionId, recallItemIds, attributeClassRecallItems]);
 
   // function to modify headline (recallInfo to corresponding headline)
   const getRecallLabel = (label: string): string => {
@@ -131,15 +150,22 @@ export const RecallItemSelect = ({
     };
   }, [showRecallItemSelect, localSurvey.questions, focusedQuestionIdx]);
 
-  const getQuestionIcon = (questionId: string) => {
-    const question = localSurvey.questions.find((question) => question.id === questionId);
-    if (question) {
-      return questionIconMapping[question?.type as keyof typeof questionIconMapping];
-    } else return EyeOffIcon;
+  const getQuestionIcon = (recallItem: TSurveyRecallItem) => {
+    switch (recallItem.type) {
+      case "question":
+        const question = localSurvey.questions.find((question) => question.id === questionId);
+        if (question) {
+          return questionIconMapping[question?.type as keyof typeof questionIconMapping];
+        }
+      case "hiddenField":
+        return EyeOffIcon;
+      case "attributeClass":
+        return TagIcon;
+    }
   };
 
   return (
-    <div className="absolute z-30 mt-1 flex max-w-[85%] flex-col overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3  text-xs ">
+    <div className="absolute z-30 mt-1 flex max-h-80 max-w-[85%] flex-col overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3  text-xs ">
       {filteredRecallItems.length === 0 ? (
         <p className="font-medium text-slate-900">There is no information to recall yet 🤷</p>
       ) : (
@@ -148,7 +174,7 @@ export const RecallItemSelect = ({
       <div>
         {filteredRecallItems.map((recallItem, idx) => {
           const isFocused = idx === focusedQuestionIdx;
-          const IconComponent = getQuestionIcon(recallItem.id);
+          const IconComponent = getQuestionIcon(recallItem);
           return (
             <div
               key={recallItem.id}
@@ -156,7 +182,7 @@ export const RecallItemSelect = ({
                 isFocused ? "bg-slate-200" : "hover:bg-slate-200 "
               }`}
               onClick={() => {
-                addRecallItem({ id: recallItem.id, label: recallItem.label });
+                addRecallItem({ id: recallItem.id, label: recallItem.label, type: recallItem.type });
                 setShowRecallItemSelect(false);
               }}>
               <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>

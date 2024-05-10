@@ -151,6 +151,18 @@ const getProductsByTeamId = async (teamId: string): Promise<TWeeklySummaryProduc
               hiddenFields: true,
             },
           },
+          attributeClasses: {
+            select: {
+              id: true,
+              createdAt: true,
+              updatedAt: true,
+              name: true,
+              description: true,
+              type: true,
+              environmentId: true,
+              archived: true,
+            },
+          },
         },
       },
       team: {
@@ -186,7 +198,7 @@ const getNotificationResponse = (
   const surveys: TWeeklySummaryNotificationDataSurvey[] = [];
   // iterate through the surveys and calculate the overall insights
   for (const survey of environment.surveys) {
-    const parsedSurvey = checkForRecallInHeadline(survey, "default");
+    const parsedSurvey = checkForRecallInHeadline(survey, "default", environment.attributeClasses);
     const surveyData: TWeeklySummaryNotificationDataSurvey = {
       id: parsedSurvey.id,
       name: parsedSurvey.name,

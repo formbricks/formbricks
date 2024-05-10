@@ -2,6 +2,7 @@ import { HashIcon, PlusIcon, SmileIcon, StarIcon, TrashIcon } from "lucide-react
 import { useState } from "react";
 
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
@@ -18,6 +19,7 @@ interface RatingQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
+  attributeClasses: TAttributeClass[];
 }
 
 export const RatingQuestionForm = ({
@@ -28,6 +30,7 @@ export const RatingQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
+  attributeClasses,
 }: RatingQuestionFormProps) => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -43,6 +46,7 @@ export const RatingQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
+        attributeClasses={attributeClasses}
       />
 
       <div>
@@ -58,6 +62,7 @@ export const RatingQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
+                attributeClasses={attributeClasses}
               />
             </div>
 
@@ -135,6 +140,7 @@ export const RatingQuestionForm = ({
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
+            attributeClasses={attributeClasses}
           />
         </div>
         <div className="flex-1">
@@ -148,6 +154,7 @@ export const RatingQuestionForm = ({
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
+            attributeClasses={attributeClasses}
           />
         </div>
       </div>
@@ -165,6 +172,7 @@ export const RatingQuestionForm = ({
               updateQuestion={updateQuestion}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
+              attributeClasses={attributeClasses}
             />
           </div>
         )}

@@ -12,6 +12,7 @@ import {
 import { useState } from "react";
 
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   TSurvey,
   TSurveyOpenTextQuestion,
@@ -39,6 +40,7 @@ interface OpenQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
+  attributeClasses: TAttributeClass[];
 }
 
 export const OpenQuestionForm = ({
@@ -49,6 +51,7 @@ export const OpenQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
+  attributeClasses,
 }: OpenQuestionFormProps): JSX.Element => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
@@ -73,6 +76,7 @@ export const OpenQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
+        attributeClasses={attributeClasses}
       />
 
       <div>
@@ -88,6 +92,7 @@ export const OpenQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
+                attributeClasses={attributeClasses}
               />
             </div>
 
@@ -131,6 +136,7 @@ export const OpenQuestionForm = ({
           updateQuestion={updateQuestion}
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
+          attributeClasses={attributeClasses}
         />
       </div>
 

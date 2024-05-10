@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getResponsesByPersonId } from "@formbricks/lib/response/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
@@ -12,10 +13,12 @@ export default async function ResponseSection({
   environment,
   personId,
   environmentTags,
+  attributeClasses,
 }: {
   environment: TEnvironment;
   personId: string;
   environmentTags: TTag[];
+  attributeClasses: TAttributeClass[];
 }) {
   const responses = await getResponsesByPersonId(personId);
   const surveyIds = responses?.map((response) => response.surveyId) || [];
@@ -36,6 +39,7 @@ export default async function ResponseSection({
       responses={responses}
       environment={environment}
       environmentTags={environmentTags}
+      attributeClasses={attributeClasses}
     />
   );
 }

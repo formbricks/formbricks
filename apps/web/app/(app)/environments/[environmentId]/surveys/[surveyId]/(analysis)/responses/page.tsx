@@ -1,6 +1,7 @@
 import ResponsePage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { getServerSession } from "next-auth";
 
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -17,9 +18,10 @@ export default async function Page({ params }) {
   if (!session) {
     throw new Error("Unauthorized");
   }
-  const [survey, environment] = await Promise.all([
+  const [survey, environment, attributeClasses] = await Promise.all([
     getSurvey(params.surveyId),
     getEnvironment(params.environmentId),
+    getAttributeClasses(params.environmentId),
   ]);
 
   if (!environment) {
@@ -61,6 +63,7 @@ export default async function Page({ params }) {
         responsesPerPage={RESPONSES_PER_PAGE}
         membershipRole={currentUserMembership?.role}
         totalResponseCount={totalResponseCount}
+        attributeClasses={attributeClasses}
       />
     </>
   );

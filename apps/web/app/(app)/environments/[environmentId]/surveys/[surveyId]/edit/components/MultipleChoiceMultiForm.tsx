@@ -11,6 +11,7 @@ import {
   isLabelValidForAllLanguages,
 } from "@formbricks/lib/i18n/utils";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   TI18nString,
   TShuffleOption,
@@ -35,6 +36,7 @@ interface OpenQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
+  attributeClasses: TAttributeClass[];
 }
 
 export const MultipleChoiceMultiForm = ({
@@ -45,6 +47,7 @@ export const MultipleChoiceMultiForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
+  attributeClasses,
 }: OpenQuestionFormProps): JSX.Element => {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
@@ -194,6 +197,7 @@ export const MultipleChoiceMultiForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
+        attributeClasses={attributeClasses}
       />
 
       <div>
@@ -209,6 +213,7 @@ export const MultipleChoiceMultiForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
+                attributeClasses={attributeClasses}
               />
             </div>
 
@@ -271,6 +276,7 @@ export const MultipleChoiceMultiForm = ({
                       !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguageCodes)
                     }
                     className={`${choice.id === "other" ? "border border-dashed" : ""}`}
+                    attributeClasses={attributeClasses}
                   />
                   {choice.id === "other" && (
                     <QuestionFormInput
@@ -291,6 +297,7 @@ export const MultipleChoiceMultiForm = ({
                         !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguageCodes)
                       }
                       className="border border-dashed"
+                      attributeClasses={attributeClasses}
                     />
                   )}
                 </div>
