@@ -316,11 +316,12 @@ export const SelectQuestionForm = ({
               variant="minimal"
               type="button"
               onClick={() => {
-                if (question.type === TSurveyQuestionType.MultipleChoiceSingle) {
-                  updateQuestion(questionIdx, { type: TSurveyQuestionType.MultipleChoiceMulti });
-                } else {
-                  updateQuestion(questionIdx, { type: TSurveyQuestionType.MultipleChoiceSingle });
-                }
+                updateQuestion(questionIdx, {
+                  type:
+                    question.type === TSurveyQuestionType.MultipleChoiceMulti
+                      ? TSurveyQuestionType.MultipleChoiceSingle
+                      : TSurveyQuestionType.MultipleChoiceMulti,
+                });
               }}>
               Convert to {question.type === TSurveyQuestionType.MultipleChoiceSingle ? "Multiple" : "Single"}{" "}
               Select
