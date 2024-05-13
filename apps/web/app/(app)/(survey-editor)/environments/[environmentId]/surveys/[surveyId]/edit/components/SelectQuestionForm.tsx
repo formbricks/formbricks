@@ -316,9 +316,14 @@ export const SelectQuestionForm = ({
               variant="minimal"
               type="button"
               onClick={() => {
-                updateQuestion(questionIdx, { type: TSurveyQuestionType.MultipleChoiceMulti });
+                if (question.type === TSurveyQuestionType.MultipleChoiceSingle) {
+                  updateQuestion(questionIdx, { type: TSurveyQuestionType.MultipleChoiceMulti });
+                } else {
+                  updateQuestion(questionIdx, { type: TSurveyQuestionType.MultipleChoiceSingle });
+                }
               }}>
-              Convert to Multi Select
+              Convert to {question.type === TSurveyQuestionType.MultipleChoiceSingle ? "Multiple" : "Single"}{" "}
+              Select
             </Button>
 
             <div className="flex flex-1 items-center justify-end gap-2">

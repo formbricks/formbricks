@@ -172,10 +172,6 @@ const translateQuestion = (
 
       return ZSurveySelectQuestion.parse(clonedQuestion);
 
-    // if (question.type === "multipleChoiceSingle") {
-    //   return ZSurveyMultipleChoiceSingleQuestion.parse(clonedQuestion);
-    // } else return ZSurveyMultipleChoiceMultiQuestion.parse(clonedQuestion);
-
     case "cta":
       if (typeof question.dismissButtonLabel !== "undefined") {
         (clonedQuestion as TSurveyCTAQuestion).dismissButtonLabel = createI18nString(

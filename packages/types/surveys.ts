@@ -308,10 +308,10 @@ export const ZSurveySelectQuestion = ZSurveyQuestionBase.extend({
     const { logic, type } = question;
 
     if (type === TSurveyQuestionType.MultipleChoiceSingle) {
-      // logic ke andar 'includesAll'
+      // The single choice question should not have 'includesAll' logic
       return !logic?.some((l) => l.condition === "includesAll");
     } else {
-      // logic ke andar 'notEquals'
+      // The multi choice question should not have 'notEquals' logic
       return !logic?.some((l) => l.condition === "notEquals");
     }
   },
