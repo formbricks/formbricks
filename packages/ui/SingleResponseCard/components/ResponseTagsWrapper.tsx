@@ -65,7 +65,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
           size="sm"
           className="cursor-pointer p-0"
           onClick={() => {
-            router.push(`/environments/${environmentId}/settings/tags`);
+            router.push(`/environments/${environmentId}/product/tags`);
           }}>
           <SettingsIcon className="h-5 w-5 text-slate-300 hover:text-slate-400" />
         </Button>

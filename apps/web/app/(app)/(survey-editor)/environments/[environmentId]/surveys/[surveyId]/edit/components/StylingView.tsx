@@ -184,7 +184,7 @@ export const StylingView = ({
         <p className="text-sm text-slate-500">
           Adjust the theme in the{" "}
           <Link
-            href={`/environments/${environment.id}/settings/lookandfeel`}
+            href={`/environments/${environment.id}/product/look`}
             target="_blank"
             className="font-semibold underline">
             Look & Feel
