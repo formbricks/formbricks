@@ -20,7 +20,7 @@ export const ClientLogo = ({ environmentId, product, previewSurvey = false }: Cl
       style={{ backgroundColor: product.logo?.bgColor }}>
       {previewSurvey && environmentId && (
         <Link
-          href={`/environments/${environmentId}/settings/lookandfeel`}
+          href={`/environments/${environmentId}/product/look`}
           className="group/link absolute h-full w-full hover:cursor-pointer"
           target="_blank">
           <ArrowUpRight
@@ -42,7 +42,7 @@ export const ClientLogo = ({ environmentId, product, previewSurvey = false }: Cl
         />
       ) : (
         <Link
-          href={`/environments/${environmentId}/settings/lookandfeel`}
+          href={`/environments/${environmentId}/product/look`}
           onClick={(e) => {
             if (!environmentId) {
               e.preventDefault();

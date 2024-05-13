@@ -227,10 +227,9 @@ export const MultipleChoiceMultiQuestion = ({
                         value={getLocalizedValue(otherOption.label, languageCode)}
                         className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
                         aria-labelledby={`${otherOption.id}-label`}
-                        onChange={(e) => {
+                        onChange={() => {
                           setOtherSelected(!otherSelected);
-                          if ((e.target as HTMLInputElement)?.checked) {
-                            if (!otherValue) return;
+                          if (!value.includes(otherValue)) {
                             addItem(otherValue);
                           } else {
                             removeItem(otherValue);
