@@ -23,7 +23,7 @@ export const EmptyAppSurveys = ({ environment, surveyType = "app" }: TEmptyAppSu
           Connect your {surveyType} with Formbricks to run {surveyType} surveys.
         </p>
 
-        <Link className="mt-2" href={`/environments/${environment.id}/settings/setup`}>
+        <Link className="mt-2" href={`/environments/${environment.id}/product/setup`}>
           <Button variant="darkCTA" size="sm" className="flex w-[120px] justify-center">
             Connect
           </Button>

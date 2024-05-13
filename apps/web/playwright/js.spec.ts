@@ -19,6 +19,9 @@ test.describe("JS Package Test", async () => {
       .getByText("Product ExperienceProduct Market Fit (Superhuman)Measure PMF by assessing how")
       .click();
 
+    await page.getByRole("button", { name: "Use this template" }).isVisible();
+    await page.getByRole("button", { name: "Use this template" }).click();
+
     await page.getByRole("button", { name: "Settings", exact: true }).click();
 
     await expect(page.locator("#howToSendCardTrigger")).toBeVisible();
@@ -27,8 +30,6 @@ test.describe("JS Package Test", async () => {
     await expect(page.locator("#howToSendCardOption-website")).toBeVisible();
     await page.locator("#howToSendCardOption-website").click();
     await page.locator("#howToSendCardOption-website").click();
-
-    await expect(page.getByText("Survey Trigger")).toBeVisible();
 
     await page.getByRole("button", { name: "Add action" }).click();
     await page.getByText("New SessionGets fired when a").click();

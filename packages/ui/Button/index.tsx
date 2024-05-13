@@ -4,6 +4,8 @@ import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, forwardRef } from "r
 
 import { cn } from "@formbricks/lib/cn";
 
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
+
 type SVGComponent = React.FunctionComponent<React.SVGProps<SVGSVGElement>> | LucideIcon;
 
 export type ButtonBaseProps = {
@@ -17,6 +19,9 @@ export type ButtonBaseProps = {
   EndIcon?: SVGComponent | React.ComponentType<React.ComponentProps<"svg">>;
   endIconClassName?: string;
   shallow?: boolean;
+  tooltip?: string;
+  tooltipSide?: "top" | "right" | "bottom" | "left";
+  tooltipOffset?: number;
 };
 type ButtonBasePropsWithTarget = ButtonBaseProps & { target?: string };
 
@@ -41,6 +46,8 @@ export const Button: React.ForwardRefExoticComponent<
     endIconClassName,
     EndIcon,
     shallow,
+    tooltipSide = "top",
+    tooltipOffset = 4,
     // attributes propagated from `HTMLAnchorProps` or `HTMLButtonProps`
     ...passThroughProps
   } = props;
@@ -150,6 +157,39 @@ export const Button: React.ForwardRefExoticComponent<
       {element}
     </Link>
   ) : (
-    element
+    <Wrapper
+      data-testid="wrapper"
+      tooltip={props.tooltip}
+      tooltipSide={tooltipSide}
+      tooltipOffset={tooltipOffset}>
+      {element}
+    </Wrapper>
   );
 });
+
+const Wrapper = ({
+  children,
+  tooltip,
+  tooltipSide = "top",
+  tooltipOffset = 0,
+}: {
+  tooltip?: string;
+  children: React.ReactNode;
+  tooltipSide?: "top" | "right" | "bottom" | "left";
+  tooltipOffset?: number;
+}) => {
+  if (!tooltip) {
+    return <>{children}</>;
+  }
+
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent side={tooltipSide} sideOffset={tooltipOffset}>
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};

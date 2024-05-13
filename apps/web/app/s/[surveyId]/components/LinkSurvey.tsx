@@ -14,7 +14,6 @@ import { TResponse, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
-import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
 import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
@@ -198,7 +197,7 @@ export default function LinkSurvey({
   return (
     <div className="flex max-h-dvh min-h-dvh items-end justify-center overflow-clip md:items-center">
       {!determineStyling().isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
-      <ContentWrapper className="w-full p-0 md:max-w-md">
+      <div className="w-full space-y-6 p-0 md:max-w-md ">
         {isPreview && (
           <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
             <div />
@@ -281,7 +280,7 @@ export default function LinkSurvey({
           }}
           startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
         />
-      </ContentWrapper>
+      </div>
     </div>
   );
 }
