@@ -41,6 +41,7 @@ export const FallbackInput = ({
                 ref={fallbackInputRef}
                 id="fallback"
                 value={fallbacks[recallItem.id]?.replaceAll("nbsp", " ")}
+                placeholder={"Fallback for " + recallItem.label}
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
                     e.preventDefault();

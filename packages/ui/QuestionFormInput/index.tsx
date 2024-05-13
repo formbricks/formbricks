@@ -268,7 +268,7 @@ export const QuestionFormInput = ({
     modifiedHeadlineWithId[selectedLanguageCode] = getLocalizedValue(
       modifiedHeadlineWithId,
       selectedLanguageCode
-    ).replace(" @", ` #recall:${recallItem.id}/fallback:# `);
+    ).replace(/(?<=^|\s)@(?=\s|$)/g, `#recall:${recallItem.id}/fallback:# `);
     handleUpdate(getLocalizedValue(modifiedHeadlineWithId, selectedLanguageCode));
     const modifiedHeadlineWithName = recallToHeadline(
       modifiedHeadlineWithId,
@@ -511,8 +511,6 @@ export const QuestionFormInput = ({
             questionId={questionId}
             addRecallItem={addRecallItem}
             setShowRecallItemSelect={setShowRecallItemSelect}
-            showRecallItemSelect={showRecallItemSelect}
-            inputRef={inputRef}
             recallItems={recallItems}
             selectedLanguageCode={selectedLanguageCode}
             hiddenFields={localSurvey.hiddenFields}
