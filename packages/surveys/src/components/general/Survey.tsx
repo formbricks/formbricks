@@ -36,13 +36,20 @@ export const Survey = ({
   responseCount,
   startAtQuestionId,
   clickOutside,
-  isInEditor,
+  shouldResetQuestionId,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
 
-  const [questionId, setQuestionId] = useState(
-    startAtQuestionId ? startAtQuestionId : survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
-  );
+  const [questionId, setQuestionId] = useState(() => {
+    if (startAtQuestionId) {
+      return startAtQuestionId;
+    } else if (survey.welcomeCard.enabled) {
+      return "start";
+    } else {
+      return survey?.questions[0]?.id;
+    }
+  });
+  // );
   const [showError, setShowError] = useState(false);
   // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
@@ -259,13 +266,12 @@ export const Survey = ({
               responseData
             )}
             isResponseSendingFinished={isResponseSendingFinished}
-            buttonLabel={survey.thankYouCard.buttonLabel}
+            buttonLabel={getLocalizedValue(survey.thankYouCard.buttonLabel, languageCode)}
             buttonLink={survey.thankYouCard.buttonLink}
             imageUrl={survey.thankYouCard.imageUrl}
             videoUrl={survey.thankYouCard.videoUrl}
             redirectUrl={survey.redirectUrl}
             isRedirectDisabled={isRedirectDisabled}
-            languageCode={languageCode}
             isInIframe={isInIframe}
           />
         );
@@ -324,7 +330,7 @@ export const Survey = ({
       survey={survey}
       styling={styling}
       setQuestionId={setQuestionId}
-      isInEditor={isInEditor}
+      shouldResetQuestionId={shouldResetQuestionId}
     />
   );
 };

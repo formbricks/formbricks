@@ -25,7 +25,7 @@ export interface SurveyBaseProps {
   isCardBorderVisible?: boolean;
   startAtQuestionId?: string;
   clickOutside?: boolean;
-  isInEditor?: boolean;
+  shouldResetQuestionId?: boolean;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

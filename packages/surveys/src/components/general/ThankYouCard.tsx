@@ -6,16 +6,12 @@ import RedirectCountDown from "@/components/general/RedirectCountdown";
 import Subheader from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TI18nString } from "@formbricks/types/surveys";
-
 interface ThankYouCardProps {
   headline?: string;
   subheader?: string;
   redirectUrl: string | null;
   isRedirectDisabled: boolean;
-  languageCode: string;
-  buttonLabel?: TI18nString;
+  buttonLabel?: string;
   buttonLink?: string;
   imageUrl?: string;
   videoUrl?: string;
@@ -28,7 +24,6 @@ export const ThankYouCard = ({
   subheader,
   redirectUrl,
   isRedirectDisabled,
-  languageCode,
   buttonLabel,
   buttonLink,
   imageUrl,
@@ -68,7 +63,7 @@ export const ThankYouCard = ({
             {buttonLabel && (
               <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
                 <Button
-                  buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
+                  buttonLabel={buttonLabel}
                   isLastQuestion={false}
                   focus={!isInIframe}
                   onClick={() => {
