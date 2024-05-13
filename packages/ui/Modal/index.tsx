@@ -102,19 +102,17 @@ export const Modal = ({
   if (!open) return null;
 
   return (
-    <div className="relative">
-      <DialogPrimitive.Root open={open} onOpenChange={(open: boolean) => setOpen(open)} modal>
-        <DialogContent
-          blur={blur}
-          size={size}
-          noPadding={noPadding}
-          hideCloseButton={hideCloseButton}
-          closeOnOutsideClick={closeOnOutsideClick}
-          title={title}
-          className={className}>
-          {children}
-        </DialogContent>
-      </DialogPrimitive.Root>
-    </div>
+    <DialogPrimitive.Root open={open} onOpenChange={(open: boolean) => setOpen(open)} modal>
+      <DialogContent
+        blur={blur}
+        size={size}
+        noPadding={noPadding}
+        hideCloseButton={hideCloseButton}
+        closeOnOutsideClick={closeOnOutsideClick}
+        title={title}
+        className={className}>
+        {children}
+      </DialogContent>
+    </DialogPrimitive.Root>
   );
 };
