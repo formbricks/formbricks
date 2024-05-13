@@ -12,7 +12,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
-import SingleResponseCard from "@formbricks/ui/SingleResponseCard";
+import { SingleResponseCard } from "@formbricks/ui/SingleResponseCard";
 
 export default function ResponseFeed({
   responses,

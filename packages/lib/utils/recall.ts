@@ -1,4 +1,6 @@
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributes } from "@formbricks/types/attributes";
+import { TResponseData } from "@formbricks/types/responses";
 import {
   TI18nString,
   TSurvey,
@@ -9,6 +11,7 @@ import {
 
 import { getLocalizedValue } from "../i18n/utils";
 import { structuredClone } from "../pollyfills/structuredClone";
+import { formatDateWithOrdinal, isValidDateString } from "./datetime";
 
 export interface fallbacks {
   [id: string]: string;
@@ -221,4 +224,68 @@ export const headlineToRecall = (
     text = text.replace(`@${recallItem.label}`, recallInfo);
   });
   return text;
+};
+
+export const parseRecallInfo = (
+  text: string,
+  attributes?: TAttributes,
+  responseData?: TResponseData,
+  withSlash: boolean = false
+) => {
+  let modifiedText = text;
+  const attributeKeys = attributes ? Object.keys(attributes) : [];
+  const questionIds = responseData ? Object.keys(responseData) : [];
+  if (attributes && attributeKeys.length > 0) {
+    attributeKeys.forEach((attributeKey) => {
+      const recallPattern = `#recall:${attributeKey}`;
+      while (modifiedText.includes(recallPattern)) {
+        const recallInfo = extractRecallInfo(modifiedText);
+        if (!recallInfo) break; // Exit the loop if no recall info is found
+
+        const recallItemId = extractId(recallInfo);
+        if (!recallItemId) continue; // Skip to the next iteration if no ID could be extracted
+
+        const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
+        let value = attributes[recallItemId.replace("nbsp", " ")] || fallback;
+        if (withSlash) {
+          modifiedText = modifiedText.replace(recallInfo, "#/" + value + "\\#");
+        } else {
+          modifiedText = modifiedText.replace(recallInfo, value);
+        }
+      }
+    });
+  }
+  if (responseData && questionIds.length > 0) {
+    while (modifiedText.includes("recall:")) {
+      const recallInfo = extractRecallInfo(modifiedText);
+      if (!recallInfo) break; // Exit the loop if no recall info is found
+
+      const recallItemId = extractId(recallInfo);
+      if (!recallItemId) return modifiedText; // Return the text if no ID could be extracted
+
+      const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
+      let value;
+
+      // Fetching value from responseData or attributes based on recallItemId
+      if (responseData[recallItemId]) {
+        value = (responseData[recallItemId] as string) ?? fallback;
+      }
+      // Additional value formatting if it exists
+      if (value) {
+        if (isValidDateString(value)) {
+          value = formatDateWithOrdinal(new Date(value));
+        } else if (Array.isArray(value)) {
+          value = value.filter((item) => item).join(", "); // Filters out empty values and joins with a comma
+        }
+      }
+
+      if (withSlash) {
+        modifiedText = modifiedText.replace(recallInfo, "#/" + (value ?? fallback) + "\\#");
+      } else {
+        modifiedText = modifiedText.replace(recallInfo, value ?? fallback);
+      }
+    }
+  }
+
+  return modifiedText;
 };

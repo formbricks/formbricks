@@ -35,7 +35,7 @@ export default function AppPage({}) {
     addFormbricksDebugParam();
 
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
-      const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
+      const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING3";
       const userInitAttributes = { language: "de", "Init Attribute 1": "eight", "Init Attribute 2": "two" };
 
       formbricks.init({

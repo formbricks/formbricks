@@ -1,6 +1,8 @@
 import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { parseRecallInfo } from "@formbricks/lib/utils/recall";
+import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
@@ -10,14 +12,16 @@ interface QuestionSkipProps {
   status: string;
   questions: TSurveyQuestion[];
   isFirstQuestionAnswered?: boolean;
+  responseData: TResponseData;
 }
 
-export default function QuestionSkip({
+export const QuestionSkip = ({
   skippedQuestions,
   status,
   questions,
   isFirstQuestionAnswered,
-}: QuestionSkipProps) {
+  responseData,
+}: QuestionSkipProps) => {
   return (
     <div>
       {skippedQuestions && (
@@ -65,9 +69,13 @@ export default function QuestionSkip({
                   skippedQuestions.map((questionId) => {
                     return (
                       <p className="my-2" key={questionId}>
-                        {getLocalizedValue(
-                          questions.find((question) => question.id === questionId)!.headline,
-                          "default"
+                        {parseRecallInfo(
+                          getLocalizedValue(
+                            questions.find((question) => question.id === questionId)!.headline,
+                            "default"
+                          ),
+                          {},
+                          responseData
                         )}
                       </p>
                     );
@@ -95,9 +103,13 @@ export default function QuestionSkip({
                   skippedQuestions.map((questionId) => {
                     return (
                       <p className="my-2" key={questionId}>
-                        {getLocalizedValue(
-                          questions.find((question) => question.id === questionId)!.headline,
-                          "default"
+                        {parseRecallInfo(
+                          getLocalizedValue(
+                            questions.find((question) => question.id === questionId)!.headline,
+                            "default"
+                          ),
+                          {},
+                          responseData
                         )}
                       </p>
                     );
@@ -109,4 +121,4 @@ export default function QuestionSkip({
       )}
     </div>
   );
-}
+};

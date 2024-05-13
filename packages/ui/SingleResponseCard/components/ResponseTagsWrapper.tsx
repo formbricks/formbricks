@@ -24,7 +24,7 @@ interface ResponseTagsWrapperProps {
   isViewer?: boolean;
 }
 
-const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
+export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   tags,
   environmentId,
   responseId,
@@ -145,5 +145,3 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
     </div>
   );
 };
-
-export default ResponseTagsWrapper;

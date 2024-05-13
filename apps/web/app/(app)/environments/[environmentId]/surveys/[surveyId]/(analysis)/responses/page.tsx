@@ -3,7 +3,6 @@ import ResponsePage from "@/app/(app)/environments/[environmentId]/surveys/[surv
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { getServerSession } from "next-auth";
 
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -23,10 +22,9 @@ export default async function Page({ params }) {
   if (!session) {
     throw new Error("Unauthorized");
   }
-  const [survey, environment, attributeClasses] = await Promise.all([
+  const [survey, environment] = await Promise.all([
     getSurvey(params.surveyId),
     getEnvironment(params.environmentId),
-    getAttributeClasses(params.environmentId),
   ]);
 
   if (!environment) {
@@ -85,7 +83,6 @@ export default async function Page({ params }) {
         user={user}
         responsesPerPage={RESPONSES_PER_PAGE}
         totalResponseCount={totalResponseCount}
-        attributeClasses={attributeClasses}
       />
     </PageContentWrapper>
   );

@@ -2,7 +2,6 @@ import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentI
 import ResponsePage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { notFound } from "next/navigation";
 
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -19,10 +18,9 @@ export default async function Page({ params }) {
     return notFound();
   }
 
-  const [survey, environment, attributeClasses, product, tags] = await Promise.all([
+  const [survey, environment, product, tags] = await Promise.all([
     getSurvey(params.surveyId),
     getEnvironment(params.environmentId),
-    getAttributeClasses(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
     getTagsByEnvironmentId(params.environmentId),
   ]);
@@ -59,7 +57,6 @@ export default async function Page({ params }) {
           environmentTags={tags}
           responsesPerPage={RESPONSES_PER_PAGE}
           totalResponseCount={totalResponseCount}
-          attributeClasses={attributeClasses}
         />
       </PageContentWrapper>
     </div>
