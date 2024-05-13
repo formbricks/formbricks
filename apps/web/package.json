@@ -23,7 +23,6 @@
     "@formbricks/types": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "@formbricks/email": "workspace:*",
-    "@headlessui/react": "^2.0.3",
     "@json2csv/node": "^7.0.6",
     "@opentelemetry/auto-instrumentations-node": "^0.46.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.51.1",
