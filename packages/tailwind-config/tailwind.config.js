@@ -85,6 +85,13 @@ module.exports = {
           to: { height: 0 },
         },
       },
+      width: {
+        "sidebar-expanded": "4rem",
+        "sidebar-collapsed": "14rem",
+      },
+      transitionProperty: {
+        width: "width",
+      },
       maxWidth: {
         "8xl": "88rem",
       },

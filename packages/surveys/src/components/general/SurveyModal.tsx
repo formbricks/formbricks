@@ -69,6 +69,7 @@ export function SurveyModal({
           responseCount={responseCount}
           styling={styling}
           isCardBorderVisible={!highlightBorderColor}
+          clickOutside={placement === "center" ? clickOutside : undefined}
         />
       </Modal>
     </div>

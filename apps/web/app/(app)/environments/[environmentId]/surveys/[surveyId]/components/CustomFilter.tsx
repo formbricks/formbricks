@@ -7,7 +7,7 @@ import {
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
 import { differenceInDays, format, startOfDay, subDays } from "date-fns";
-import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
+import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -69,7 +69,6 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   const [selectingDate, setSelectingDate] = useState<DateSelected>(DateSelected.FROM);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const [isFilterDropDownOpen, setIsFilterDropDownOpen] = useState<boolean>(false);
-  const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
   const [hoveredRange, setHoveredRange] = useState<DateRange | null>(null);
 
   const firstMountRef = useRef(true);
@@ -192,7 +191,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
 
   return (
     <>
-      <div className="relative mb-12 flex justify-between">
+      <div className="relative flex justify-between">
         <div className="flex justify-stretch gap-x-1.5">
           <ResponseFilter survey={survey} />
           <DropdownMenu
@@ -201,7 +200,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
               setIsFilterDropDownOpen(value);
             }}>
             <DropdownMenuTrigger>
-              <div className="flex h-auto min-w-[8rem] items-center justify-between rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:min-w-[11rem] sm:px-6 sm:py-3">
+              <div className="flex min-w-[8rem] items-center justify-between rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:min-w-[11rem] sm:px-6 sm:py-3">
                 <span className="text-sm text-slate-700">
                   {filterRange === FilterDropDownLabels.CUSTOM_RANGE
                     ? `${dateRange?.from ? format(dateRange?.from, "dd LLL") : "Select first date"} - ${
@@ -256,17 +255,12 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
             <DropdownMenu
               onOpenChange={(value) => {
                 value && handleDatePickerClose();
-                setIsDownloadDropDownOpen(value);
               }}>
               <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
-                <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:min-w-[11rem] sm:px-6 sm:py-3">
+                <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:px-6 sm:py-3">
                   <div className="hidden w-full items-center justify-between sm:flex">
                     <span className="text-sm text-slate-700">Download</span>
-                    {isDownloadDropDownOpen ? (
-                      <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
-                    ) : (
-                      <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                    )}
+                    <ArrowDownToLineIcon className="ml-2 h-4 w-4" />
                   </div>
                   <DownloadIcon className="block h-4 sm:hidden" />
                 </div>

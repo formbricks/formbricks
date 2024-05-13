@@ -1,7 +1,5 @@
-import { Body, Column, Container, Html, Img, Link, Row, Section } from "@react-email/components";
-import { Tailwind } from "@react-email/components";
-import { Fragment } from "react";
-import React from "react";
+import { Body, Column, Container, Html, Img, Link, Row, Section, Tailwind } from "@react-email/components";
+import React, { Fragment } from "react";
 
 interface EmailTemplateProps {
   content: JSX.Element;
@@ -14,7 +12,7 @@ export const EmailTemplate = ({ content }: EmailTemplateProps) => (
         <Body
           className="m-0 h-full w-full justify-center bg-slate-100 bg-slate-50 p-6 text-center text-base font-medium text-slate-800"
           style={{
-            fontFamily: "'Poppins', 'Helvetica Neue', 'Segoe UI', 'Helvetica', 'sans-serif'",
+            fontFamily: "'Jost', 'Helvetica Neue', 'Segoe UI', 'Helvetica', 'sans-serif'",
           }}>
           <Section>
             <Link href="https://formbricks.com?utm_source=email_header&utm_medium=email" target="_blank">

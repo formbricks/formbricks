@@ -4,6 +4,7 @@ import { type Section } from "@/components/SectionProvider";
 import "@/styles/tailwind.css";
 import glob from "fast-glob";
 import { type Metadata } from "next";
+import { Jost } from "next/font/google";
 
 export const metadata: Metadata = {
   title: {
@@ -11,6 +12,8 @@ export const metadata: Metadata = {
     default: "Formbricks Documentation",
   },
 };
+
+const jost = Jost({ subsets: ["latin"] });
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let pages = await glob("**/*.mdx", { cwd: "src/app" });
@@ -24,7 +27,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
-      <body className="flex min-h-full bg-white antialiased dark:bg-zinc-900">
+      <body className={`flex min-h-full bg-white antialiased dark:bg-zinc-900 ${jost.className}`}>
         <Providers>
           <div className="w-full">
             <Layout allSections={allSections}>{children}</Layout>
