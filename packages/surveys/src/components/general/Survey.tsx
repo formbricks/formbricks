@@ -8,16 +8,13 @@ import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
 import { evaluateCondition } from "@/lib/logicEvaluator";
+import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
-import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";
 import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
 
 export const Survey = ({
   survey,
@@ -39,10 +36,12 @@ export const Survey = ({
   responseCount,
   startAtQuestionId,
   clickOutside,
+  isInEditor,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
-  const [questionId, setQuestionId] = useState<string | undefined>(
-    survey.welcomeCard.enabled ? "start" : undefined
+
+  const [questionId, setQuestionId] = useState(
+    startAtQuestionId ? startAtQuestionId : survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
   const [showError, setShowError] = useState(false);
   // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
@@ -88,9 +87,7 @@ export const Survey = ({
   useEffect(() => {
     // call onDisplay when component is mounted
     onDisplay();
-    if (startAtQuestionId) {
-      setQuestionId(startAtQuestionId);
-    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -122,8 +119,6 @@ export const Survey = ({
   let currQuesTemp = currentQuestion;
 
   const getNextQuestionId = (data: TResponseData): string => {
-    if (!questionId) return "start";
-
     const questions = survey.questions;
     const responseValue = data[questionId];
 
@@ -209,45 +204,6 @@ export const Survey = ({
     setLoadingElement(false);
   };
 
-  const replaceRecallInfo = (text: string): string => {
-    while (text.includes("recall:")) {
-      const recallInfo = extractRecallInfo(text);
-      if (recallInfo) {
-        const questionId = extractId(recallInfo);
-        const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
-        let value = questionId && responseData[questionId] ? (responseData[questionId] as string) : fallback;
-
-        if (isValidDateString(value)) {
-          value = formatDateWithOrdinal(new Date(value));
-        }
-        if (Array.isArray(value)) {
-          value = value.filter((item) => item !== null && item !== undefined && item !== "").join(", ");
-        }
-        text = text.replace(recallInfo, value);
-      }
-    }
-    return text;
-  };
-
-  const parseRecallInformation = (question: TSurveyQuestion) => {
-    const modifiedQuestion = structuredClone(question);
-    if (question.headline && question.headline[languageCode]?.includes("recall:")) {
-      modifiedQuestion.headline[languageCode] = replaceRecallInfo(
-        getLocalizedValue(modifiedQuestion.headline, languageCode)
-      );
-    }
-    if (
-      question.subheader &&
-      question.subheader[languageCode]?.includes("recall:") &&
-      modifiedQuestion.subheader
-    ) {
-      modifiedQuestion.subheader[languageCode] = replaceRecallInfo(
-        getLocalizedValue(modifiedQuestion.subheader, languageCode)
-      );
-    }
-    return modifiedQuestion;
-  };
-
   const onBack = (): void => {
     let prevQuestionId;
     // use history if available
@@ -269,8 +225,6 @@ export const Survey = ({
     }
     return undefined;
   };
-
-  if (!questionId) return null;
 
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
     if (showError) {
@@ -296,8 +250,14 @@ export const Survey = ({
       } else if (questionIdx === survey.questions.length) {
         return (
           <ThankYouCard
-            headline={survey.thankYouCard.headline}
-            subheader={survey.thankYouCard.subheader}
+            headline={replaceRecallInfo(
+              getLocalizedValue(survey.thankYouCard.headline, languageCode),
+              responseData
+            )}
+            subheader={replaceRecallInfo(
+              getLocalizedValue(survey.thankYouCard.subheader, languageCode),
+              responseData
+            )}
             isResponseSendingFinished={isResponseSendingFinished}
             buttonLabel={survey.thankYouCard.buttonLabel}
             buttonLink={survey.thankYouCard.buttonLink}
@@ -306,7 +266,6 @@ export const Survey = ({
             redirectUrl={survey.redirectUrl}
             isRedirectDisabled={isRedirectDisabled}
             languageCode={languageCode}
-            replaceRecallInfo={replaceRecallInfo}
             isInIframe={isInIframe}
           />
         );
@@ -316,7 +275,7 @@ export const Survey = ({
           question && (
             <QuestionConditional
               surveyId={survey.id}
-              question={parseRecallInformation(question)}
+              question={parseRecallInformation(question, languageCode, responseData)}
               value={responseData[question.id]}
               onChange={onChange}
               onSubmit={onSubmit}
@@ -326,7 +285,7 @@ export const Survey = ({
               onFileUpload={onFileUpload}
               isFirstQuestion={question.id === survey?.questions[0]?.id}
               skipPrefilled={skipPrefilled}
-              prefillResponseData={getQuestionPrefillData(question.id, offset)}
+              prefilledQuestionValue={getQuestionPrefillData(question.id, offset)}
               isLastQuestion={question.id === survey.questions[survey.questions.length - 1].id}
               languageCode={languageCode}
               isInIframe={isInIframe}
@@ -365,6 +324,7 @@ export const Survey = ({
       survey={survey}
       styling={styling}
       setQuestionId={setQuestionId}
+      isInEditor={isInEditor}
     />
   );
 };
