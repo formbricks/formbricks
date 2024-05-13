@@ -154,25 +154,38 @@ export const RecallItemSelect = ({
         <DropdownMenuContent className="w-96 bg-slate-50 text-slate-700" align="start" side="bottom">
           <p className="m-2 text-sm font-medium">Recall Information from...</p>
           <Input
+            id="recallItemSearchInput"
             placeholder="Search options"
             className="mb-1 w-full bg-white"
             onChange={(e) => setSearchValue(e.target.value)}
             autoFocus
             value={searchValue}
-            onKeyDown={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowDown") {
+                document.getElementById("recallItem-0")?.focus();
+              }
+            }}
           />
           <div className="max-h-72 overflow-y-auto overflow-x-hidden">
-            {filteredRecallItems.map((recallItem) => {
+            {filteredRecallItems.map((recallItem, index) => {
               const IconComponent = getQuestionIcon(recallItem);
               return (
                 <DropdownMenuItem
+                  id={"recallItem-" + index}
                   key={recallItem.id}
                   title={recallItem.label}
                   onSelect={() => {
                     addRecallItem({ id: recallItem.id, label: recallItem.label, type: recallItem.type });
                     setShowRecallItemSelect(false);
                   }}
-                  className="flex w-full cursor-pointer rounded-md p-2 focus:bg-slate-200 focus:outline-none">
+                  className="flex w-full cursor-pointer rounded-md p-2 focus:bg-slate-200 focus:outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowUp" && index === 0) {
+                      document.getElementById("recallItemSearchInput")?.focus();
+                    } else if (e.key === "ArrowDown" && index === filteredRecallItems.length - 1) {
+                      document.getElementById("recallItemSearchInput")?.focus();
+                    }
+                  }}>
                   <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
                   <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm">
                     {getRecallLabel(recallItem.label)}
