@@ -15,7 +15,7 @@ Formbricks is your go-to solution for in-product micro-surveys that will superch
 1. Install the Formbricks package inside your project using npm:
 
 ```bash
-npm install -s @formbricks/js
+npm install @formbricks/js
 ```
 
 1. Import Formbricks and initialize the widget in your main component (e.g., App.tsx or App.js):

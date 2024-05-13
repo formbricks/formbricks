@@ -14,7 +14,7 @@ import {
 } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import { getIsDebug } from "../../shared/utils";
-import { trackAction } from "./actions";
+import { trackNoCodeAction } from "./actions";
 import { updateAttributes } from "./attributes";
 import { AppConfig, IN_APP_LOCAL_STORAGE_KEY } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
@@ -151,7 +151,7 @@ export const initialize = async (
       handleErrorOnFirstInit();
     }
     // and track the new session event
-    await trackAction("New Session");
+    await trackNoCodeAction("New Session");
   }
   // update attributes in config
   if (updatedAttributes && Object.keys(updatedAttributes).length > 0) {

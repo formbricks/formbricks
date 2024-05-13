@@ -1,16 +1,12 @@
 "use client";
 
-import { MousePointerClickIcon } from "lucide-react";
 import { useState } from "react";
 
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
-import { Button } from "@formbricks/ui/Button";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 import ActionDetailModal from "./ActionDetailModal";
-import AddNoCodeActionModal from "./AddActionModal";
 
 interface ActionClassesTableProps {
   environmentId: string;
@@ -26,15 +22,14 @@ export default function ActionClassesTable({
   isUserTargetingEnabled,
 }: ActionClassesTableProps) {
   const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
-  const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
-  const { membershipRole, isLoading, error } = useMembershipRole(environmentId);
-  const { isViewer } = getAccessFlags(membershipRole);
+  const { membershipRole, error } = useMembershipRole(environmentId);
 
   const [activeActionClass, setActiveActionClass] = useState<TActionClass>({
     environmentId,
     id: "",
     name: "",
     type: "noCode",
+    key: "",
     description: "",
     noCodeConfig: null,
     createdAt: new Date(),
@@ -46,28 +41,15 @@ export default function ActionClassesTable({
     setActiveActionClass(actionClass);
     setActionDetailModalOpen(true);
   };
+
   if (error) {
     return <ErrorComponent />;
   }
   return (
     <>
-      {!isViewer && (
-        <div className="mb-6 text-right">
-          <Button
-            loading={isLoading}
-            variant="darkCTA"
-            onClick={() => {
-              setAddActionModalOpen(true);
-            }}>
-            <MousePointerClickIcon className="mr-2 h-5 w-5 text-white" />
-            {isLoading ? "Loading" : "Add Action"}
-          </Button>
-        </div>
-      )}
-
-      <div className="rounded-lg border border-slate-200">
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
         {TableHeading}
-        <div className="grid-cols-7" id="actionClassesWrapper">
+        <div id="actionClassesWrapper" className="flex flex-col">
           {actionClasses.map((actionClass, index) => (
             <button
               onClick={(e) => {
@@ -85,16 +67,10 @@ export default function ActionClassesTable({
         environmentId={environmentId}
         open={isActionDetailModalOpen}
         setOpen={setActionDetailModalOpen}
+        actionClasses={actionClasses}
         actionClass={activeActionClass}
         membershipRole={membershipRole}
         isUserTargetingEnabled={isUserTargetingEnabled}
-      />
-      <AddNoCodeActionModal
-        environmentId={environmentId}
-        open={isAddActionModalOpen}
-        actionClasses={actionClasses}
-        setOpen={setAddActionModalOpen}
-        isViewer={isViewer}
       />
     </>
   );

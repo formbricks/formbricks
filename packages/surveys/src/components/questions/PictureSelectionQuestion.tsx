@@ -24,6 +24,7 @@ interface PictureSelectionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
+  currentQuestionId: string;
 }
 
 export const PictureSelectionQuestion = ({
@@ -37,11 +38,12 @@ export const PictureSelectionQuestion = ({
   languageCode,
   ttc,
   setTtc,
+  currentQuestionId,
 }: PictureSelectionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
 
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const addItem = (item: string) => {
     let values: string[] = [];
@@ -152,7 +154,7 @@ export const PictureSelectionQuestion = ({
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        stroke-width="1"
+                        strokeWidth="1"
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         class="lucide lucide-expand">

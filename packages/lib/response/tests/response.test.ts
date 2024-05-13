@@ -50,7 +50,7 @@ import {
   getSurveySummary,
   updateResponse,
 } from "../service";
-import { buildWhereClause } from "../util";
+import { buildWhereClause } from "../utils";
 import { constantsForTests } from "./constants";
 
 const expectedResponseWithoutPerson: TResponse = {

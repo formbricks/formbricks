@@ -24,6 +24,7 @@ interface MultipleChoiceSingleProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
+  currentQuestionId: string;
 }
 
 export const MultipleChoiceSingleQuestion = ({
@@ -38,6 +39,7 @@ export const MultipleChoiceSingleQuestion = ({
   ttc,
   setTtc,
   isInIframe,
+  currentQuestionId,
 }: MultipleChoiceSingleProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherSelected, setOtherSelected] = useState(false);
@@ -45,7 +47,7 @@ export const MultipleChoiceSingleQuestion = ({
   const choicesContainerRef = useRef<HTMLDivElement | null>(null);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
 
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const questionChoices = useMemo(() => {
     if (!question.choices) {
