@@ -224,7 +224,7 @@ Additional to the AGPL licensed Formbricks core, this repository contains code l
 
 ### White-Labeling Formbricks and Other Licensing Needs
 
-If you have other licensing requirements such as White-Labeling please [send us an email](mailto:hola@formbricks.com).
+We currently do not offer Formbricks white-labeled. Any other needs? [Send us an email](mailto:hola@formbricks.com).
 
 ### Why charge for Enterprise Features?
 
