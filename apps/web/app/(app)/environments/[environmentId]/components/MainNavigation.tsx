@@ -190,6 +190,7 @@ export const MainNavigation = ({
       label: "Chat with us",
       href: pathname,
       onClick: () => {
+        console.log("this is a testsssss");
         if (openSaturn) {
           toast.success("Chat is already open on the bottom right corner.");
           return;
@@ -391,6 +392,7 @@ export const MainNavigation = ({
                           href={link.href}
                           target={link.target}
                           key={link.label}
+                          onClick={link.onClick}
                           className="flex items-center">
                           <DropdownMenuItem
                             className="w-full gap-x-2 rounded-lg font-normal"
