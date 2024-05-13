@@ -11,6 +11,7 @@ import {
   CreditCardIcon,
   LogOutIcon,
   MessageCircle,
+  MessageSquareIcon,
   MousePointerClick,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
@@ -25,6 +26,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -50,6 +52,7 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 
+import { SaturnChat } from "../components/SaturnSupport";
 import AddProductModal from "./AddProductModal";
 
 interface NavigationProps {
@@ -80,6 +83,7 @@ export const MainNavigation = ({
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(localStorage.getItem("isMainNavCollapsed") === "true");
   const [isTextVisible, setIsTextVisible] = useState(true);
+  const [openSaturn, setOpenSaturn] = useState(false);
 
   const product = products.find((product) => product.id === environment.productId);
   const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
@@ -180,6 +184,18 @@ export const MainNavigation = ({
       href: `/environments/${environment.id}/settings/billing`,
       hidden: !isFormbricksCloud || isPricingDisabled,
       icon: CreditCardIcon,
+    },
+    {
+      icon: MessageSquareIcon,
+      label: "Chat with us",
+      href: pathname,
+      onClick: () => {
+        if (openSaturn) {
+          toast.success("Chat is already open on the bottom right corner.");
+          return;
+        }
+        setOpenSaturn(true);
+      },
     },
     {
       label: "Documentation",
@@ -444,6 +460,15 @@ export const MainNavigation = ({
         setOpen={(val) => setShowAddProductModal(val)}
         environmentId={environment.id}
       />
+      {openSaturn && (
+        <SaturnChat
+          userId={session.user.id}
+          email={session.user.email}
+          name={session.user.name}
+          teamId={team.id}
+          teamName={team.name}
+        />
+      )}
     </>
   );
 };
