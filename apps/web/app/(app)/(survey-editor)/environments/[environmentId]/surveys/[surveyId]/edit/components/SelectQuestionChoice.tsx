@@ -9,8 +9,7 @@ import {
   TI18nString,
   TSurvey,
   TSurveyLanguage,
-  TSurveyMultipleChoiceMultiQuestion,
-  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyMultipleChoiceQuestion,
 } from "@formbricks/types/surveys";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 
@@ -33,11 +32,8 @@ interface ChoiceProps {
   setSelectedLanguageCode: (language: string) => void;
   surveyLanguages: TSurveyLanguage[];
   findDuplicateLabel: () => string | null;
-  question: TSurveyMultipleChoiceSingleQuestion | TSurveyMultipleChoiceMultiQuestion;
-  updateQuestion: (
-    questionIdx: number,
-    updatedAttributes: Partial<TSurveyMultipleChoiceSingleQuestion | TSurveyMultipleChoiceMultiQuestion>
-  ) => void;
+  question: TSurveyMultipleChoiceQuestion;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceQuestion>) => void;
   surveyLanguageCodes: string[];
 }
 
