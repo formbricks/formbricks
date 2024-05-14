@@ -140,7 +140,6 @@ const handleTriggerUpdates = (
   currentTriggers: TSurvey["triggers"],
   actionClasses: TActionClass[]
 ) => {
-  console.log("updatedTriggers", updatedTriggers, currentTriggers);
   if (!updatedTriggers) return {};
   checkTriggersValidity(updatedTriggers, actionClasses);
 

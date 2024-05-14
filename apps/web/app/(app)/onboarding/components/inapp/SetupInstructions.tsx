@@ -67,7 +67,7 @@ export const SetupInstructionsOnboarding = ({
             </p>
             <CodeBlock
               customEditorClass="!bg-white border border-slate-200"
-              language="js">{`import formbricks from "@formbricks/js";
+              language="js">{`import formbricks from "@formbricks/js/website";
 
 if (typeof window !== "undefined") {
   formbricks.init({
