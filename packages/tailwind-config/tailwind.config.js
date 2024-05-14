@@ -13,6 +13,8 @@ module.exports = {
         shake: "shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both",
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        fadeIn: "fadeIn 0.2s ease-out",
+        fadeOut: "fadeOut 0.2s ease-out",
       },
       blur: {
         xxs: "0.33px",
@@ -58,6 +60,10 @@ module.exports = {
         fadeIn: {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
+        },
+        fadeOut: {
+          "0%": { opacity: "1" },
+          "100%": { opacity: "0" },
         },
         shake: {
           "10%, 90%": {
