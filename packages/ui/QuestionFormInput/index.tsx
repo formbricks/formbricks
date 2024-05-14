@@ -385,7 +385,7 @@ export const QuestionFormInput = ({
           <Label htmlFor={id}>{getLabelById(id)}</Label>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 bg-white">
           {showImageUploader && id === "headline" && (
             <FileInput
               id="question-image"

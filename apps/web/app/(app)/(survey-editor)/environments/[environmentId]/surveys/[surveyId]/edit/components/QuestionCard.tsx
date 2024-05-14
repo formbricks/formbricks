@@ -154,6 +154,8 @@ export default function QuestionCard({
       ref={setNodeRef}
       style={style}>
       <div
+        {...listeners}
+        {...attributes}
         className={cn(
           open ? "bg-slate-700" : "bg-slate-400",
           "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:cursor-grab hover:bg-slate-600",
@@ -163,7 +165,7 @@ export default function QuestionCard({
         <span>{questionIdx + 1}</span>
 
         {/* drag handle */}
-        <button {...listeners} {...attributes} className="hidden hover:cursor-move group-hover:block">
+        <button className="hidden hover:cursor-move group-hover:block">
           <GripIcon className="h-4 w-4" />
         </button>
       </div>
