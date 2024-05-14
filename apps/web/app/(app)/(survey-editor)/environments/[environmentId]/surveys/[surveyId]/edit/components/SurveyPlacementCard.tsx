@@ -132,7 +132,7 @@ export default function SurveyPlacementCard({
             <div>
               <p className="text-xs text-slate-500">
                 To keep the placement over all surveys consistent, you can{" "}
-                <Link href={`/environments/${environmentId}/settings/lookandfeel`} target="_blank">
+                <Link href={`/environments/${environmentId}/product/look`} target="_blank">
                   <span className="underline">set the global placement in the Look & Feel settings.</span>
                 </Link>
               </p>
