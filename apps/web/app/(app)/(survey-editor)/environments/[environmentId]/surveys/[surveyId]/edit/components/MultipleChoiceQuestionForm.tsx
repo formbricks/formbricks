@@ -12,7 +12,7 @@ import {
   TI18nString,
   TShuffleOption,
   TSurvey,
-  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyMultipleChoiceQuestion,
   TSurveyQuestionType,
 } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -24,19 +24,16 @@ import { SelectQuestionChoice } from "./SelectQuestionChoice";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyMultipleChoiceSingleQuestion;
+  question: TSurveyMultipleChoiceQuestion;
   questionIdx: number;
-  updateQuestion: (
-    questionIdx: number,
-    updatedAttributes: Partial<TSurveyMultipleChoiceSingleQuestion>
-  ) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
 }
 
-export const MultipleChoiceSingleForm = ({
+export const MultipleChoiceQuestionForm = ({
   question,
   questionIdx,
   updateQuestion,
@@ -49,6 +46,7 @@ export const MultipleChoiceSingleForm = ({
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
+
   const questionRef = useRef<HTMLInputElement>(null);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const surveyLanguages = localSurvey.languages ?? [];
@@ -301,10 +299,15 @@ export const MultipleChoiceSingleForm = ({
               variant="minimal"
               type="button"
               onClick={() => {
-                // @ts-expect-error
-                updateQuestion(questionIdx, { type: TSurveyQuestionType.MultipleChoiceMulti });
+                updateQuestion(questionIdx, {
+                  type:
+                    question.type === TSurveyQuestionType.MultipleChoiceMulti
+                      ? TSurveyQuestionType.MultipleChoiceSingle
+                      : TSurveyQuestionType.MultipleChoiceMulti,
+                });
               }}>
-              Convert to Multi Select
+              Convert to {question.type === TSurveyQuestionType.MultipleChoiceSingle ? "Multiple" : "Single"}{" "}
+              Select
             </Button>
 
             <div className="flex flex-1 items-center justify-end gap-2">

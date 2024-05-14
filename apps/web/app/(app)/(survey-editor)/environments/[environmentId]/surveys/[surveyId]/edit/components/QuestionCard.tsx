@@ -40,8 +40,7 @@ import { ConsentQuestionForm } from "./ConsentQuestionForm";
 import { DateQuestionForm } from "./DateQuestionForm";
 import { FileUploadQuestionForm } from "./FileUploadQuestionForm";
 import { MatrixQuestionForm } from "./MatrixQuestionForm";
-import { MultipleChoiceMultiForm } from "./MultipleChoiceMultiForm";
-import { MultipleChoiceSingleForm } from "./MultipleChoiceSingleForm";
+import { MultipleChoiceQuestionForm } from "./MultipleChoiceQuestionForm";
 import { NPSQuestionForm } from "./NPSQuestionForm";
 import { OpenQuestionForm } from "./OpenQuestionForm";
 import { PictureSelectionForm } from "./PictureSelectionForm";
@@ -164,7 +163,6 @@ export default function QuestionCard({
         )}>
         <span>{questionIdx + 1}</span>
 
-        {/* drag handle */}
         <button className="hidden hover:cursor-move group-hover:block">
           <GripIcon className="h-4 w-4" />
         </button>
@@ -255,7 +253,7 @@ export default function QuestionCard({
               isInvalid={isInvalid}
             />
           ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
-            <MultipleChoiceSingleForm
+            <MultipleChoiceQuestionForm
               localSurvey={localSurvey}
               question={question}
               questionIdx={questionIdx}
@@ -266,7 +264,7 @@ export default function QuestionCard({
               isInvalid={isInvalid}
             />
           ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
-            <MultipleChoiceMultiForm
+            <MultipleChoiceQuestionForm
               localSurvey={localSurvey}
               question={question}
               questionIdx={questionIdx}
