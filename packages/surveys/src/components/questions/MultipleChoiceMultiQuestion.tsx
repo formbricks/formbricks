@@ -10,10 +10,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
+import type { TSurveyMultipleChoiceQuestion } from "@formbricks/types/surveys";
 
 interface MultipleChoiceMultiProps {
-  question: TSurveyMultipleChoiceMultiQuestion;
+  question: TSurveyMultipleChoiceQuestion;
   value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
