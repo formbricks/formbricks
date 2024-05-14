@@ -12,9 +12,9 @@ import { Button } from "@formbricks/ui/Button";
 import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
 import { ShareSurveyLink } from "@formbricks/ui/ShareSurveyLink";
 
-import EmailTab from "./shareEmbedTabs/EmailTab";
-import LinkTab from "./shareEmbedTabs/LinkTab";
-import WebpageTab from "./shareEmbedTabs/WebpageTab";
+import { EmailTab } from "./shareEmbedTabs/EmailTab";
+import { LinkTab } from "./shareEmbedTabs/LinkTab";
+import { WebpageTab } from "./shareEmbedTabs/WebpageTab";
 
 interface ShareEmbedSurveyProps {
   survey: TSurvey;

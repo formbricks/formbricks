@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "Attributes",
 };
 
-export default async function AttributesPage({ params }) {
+const Page = async ({ params }) => {
   let attributeClasses = await getAttributeClasses(params.environmentId);
 
   const HowToAddAttributesButton = (
@@ -35,4 +35,6 @@ export default async function AttributesPage({ params }) {
       <AttributeClassesTable attributeClasses={attributeClasses} />
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

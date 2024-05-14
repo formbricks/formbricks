@@ -11,21 +11,21 @@ import { deleteUser, updateUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TUserUpdateInput } from "@formbricks/types/user";
 
-export async function updateUserAction(data: Partial<TUserUpdateInput>) {
+export const updateUserAction = async (data: Partial<TUserUpdateInput>) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
   return await updateUser(session.user.id, data);
-}
+};
 
-export async function deleteUserAction() {
+export const deleteUserAction = async () => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
   return await deleteUser(session.user.id);
-}
+};
 
-export async function setupTwoFactorAuthAction(password: string) {
+export const setupTwoFactorAuthAction = async (password: string) => {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -37,9 +37,9 @@ export async function setupTwoFactorAuthAction(password: string) {
   }
 
   return await setupTwoFactorAuth(session.user.id, password);
-}
+};
 
-export async function enableTwoFactorAuthAction(code: string) {
+export const enableTwoFactorAuthAction = async (code: string) => {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -51,14 +51,15 @@ export async function enableTwoFactorAuthAction(code: string) {
   }
 
   return await enableTwoFactorAuth(session.user.id, code);
-}
+};
 
 type TDisableTwoFactorAuthParams = {
   code: string;
   password: string;
   backupCode?: string;
 };
-export async function disableTwoFactorAuthAction(params: TDisableTwoFactorAuthParams) {
+
+export const disableTwoFactorAuthAction = async (params: TDisableTwoFactorAuthParams) => {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -70,9 +71,9 @@ export async function disableTwoFactorAuthAction(params: TDisableTwoFactorAuthPa
   }
 
   return await disableTwoFactorAuth(session.user.id, params);
-}
+};
 
-export async function updateAvatarAction(avatarUrl: string) {
+export const updateAvatarAction = async (avatarUrl: string) => {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -84,9 +85,9 @@ export async function updateAvatarAction(avatarUrl: string) {
   }
 
   return await updateUser(session.user.id, { imageUrl: avatarUrl });
-}
+};
 
-export async function removeAvatarAction(environmentId: string) {
+export const removeAvatarAction = async (environmentId: string) => {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -121,4 +122,4 @@ export async function removeAvatarAction(environmentId: string) {
   } catch (error) {
     throw new Error(`${"Deletion failed"}: ${error.message}`);
   }
-}
+};

@@ -64,7 +64,7 @@ interface QuestionCardProps {
   isInvalid: boolean;
 }
 
-export default function QuestionCard({
+export const QuestionCard = ({
   localSurvey,
   product,
   question,
@@ -79,7 +79,7 @@ export default function QuestionCard({
   selectedLanguageCode,
   setSelectedLanguageCode,
   isInvalid,
-}: QuestionCardProps) {
+}: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
   });
@@ -508,4 +508,4 @@ export default function QuestionCard({
       </Collapsible.Root>
     </div>
   );
-}
+};

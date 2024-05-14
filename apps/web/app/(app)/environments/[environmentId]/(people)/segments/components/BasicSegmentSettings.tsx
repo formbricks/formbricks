@@ -11,9 +11,9 @@ import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment, TSegmentWithSurveyNames, ZSegmentFilters } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import BasicAddFilterModal from "@formbricks/ui/Targeting/BasicAddFilterModal";
-import BasicSegmentEditor from "@formbricks/ui/Targeting/BasicSegmentEditor";
-import ConfirmDeleteSegmentModal from "@formbricks/ui/Targeting/ConfirmDeleteSegmentModal";
+import { BasicAddFilterModal } from "@formbricks/ui/Targeting/BasicAddFilterModal";
+import { BasicSegmentEditor } from "@formbricks/ui/Targeting/BasicSegmentEditor";
+import { ConfirmDeleteSegmentModal } from "@formbricks/ui/Targeting/ConfirmDeleteSegmentModal";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 import { deleteBasicSegmentAction, updateBasicSegmentAction } from "../actions";
@@ -26,7 +26,7 @@ type TBasicSegmentSettingsTabProps = {
   isFormbricksCloud: boolean;
 };
 
-const BasicSegmentSettings = ({
+export const BasicSegmentSettings = ({
   environmentId,
   initialSegment,
   setOpen,
@@ -263,5 +263,3 @@ const BasicSegmentSettings = ({
     </>
   );
 };
-
-export default BasicSegmentSettings;

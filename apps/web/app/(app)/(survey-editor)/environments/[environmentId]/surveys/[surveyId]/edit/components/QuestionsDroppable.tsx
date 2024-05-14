@@ -3,7 +3,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
-import QuestionCard from "./QuestionCard";
+import { QuestionCard } from "./QuestionCard";
 
 interface QuestionsDraggableProps {
   localSurvey: TSurvey;

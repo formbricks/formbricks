@@ -12,12 +12,12 @@ interface LanguageIndicatorProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   setFirstRender?: (firstRender: boolean) => void;
 }
-export function LanguageIndicator({
+export const LanguageIndicator = ({
   surveyLanguages,
   selectedLanguageCode,
   setSelectedLanguageCode,
   setFirstRender,
-}: LanguageIndicatorProps) {
+}: LanguageIndicatorProps) => {
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const toggleDropdown = () => setShowLanguageDropdown((prev) => !prev);
   const languageDropdownRef = useRef(null);
@@ -71,4 +71,4 @@ export function LanguageIndicator({
       )}
     </div>
   );
-}
+};

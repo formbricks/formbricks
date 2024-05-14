@@ -17,7 +17,7 @@ const scopes = [
   "https://www.googleapis.com/auth/userinfo.email",
 ];
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   const environmentId = req.headers.get("environmentId");
   const session = await getServerSession(authOptions);
 
@@ -50,4 +50,4 @@ export async function GET(req: NextRequest) {
   });
 
   return responses.successResponse({ authUrl });
-}
+};

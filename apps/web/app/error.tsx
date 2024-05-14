@@ -4,7 +4,7 @@
 import { Button } from "@formbricks/ui/Button";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
-export default function Error({ error, reset }: { error: Error; reset: () => void }) {
+const Error = ({ error, reset }: { error: Error; reset: () => void }) => {
   if (process.env.NODE_ENV === "development") {
     console.error(error.message);
   }
@@ -22,4 +22,6 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
       </div>
     </div>
   );
-}
+};
+
+export default Error;

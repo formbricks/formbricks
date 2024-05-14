@@ -61,5 +61,3 @@ export const reportUsageToStripe = async (
     return { status: 500, data: "Something went wrong: " + error };
   }
 };
-
-export default reportUsageToStripe;

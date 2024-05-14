@@ -19,7 +19,7 @@ interface HowToSendCardProps {
   environment: TEnvironment;
 }
 
-export default function HowToSendCard({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) {
+export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
   const [open, setOpen] = useState(false);
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
 
@@ -201,4 +201,4 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
-}
+};

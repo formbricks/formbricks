@@ -1,7 +1,7 @@
 import { Button } from "@/components/Button";
 import { HeroPattern } from "@/components/HeroPattern";
 
-export default function NotFound() {
+const NotFound = () => {
   return (
     <>
       <HeroPattern />
@@ -17,4 +17,6 @@ export default function NotFound() {
       </div>
     </>
   );
-}
+};
+
+export default NotFound;

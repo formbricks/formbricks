@@ -1,17 +1,15 @@
 import { ReactNode } from "react";
 
-export default function TabOption({
-  active,
-  icon,
-  onClick,
-}: {
+interface TabOptionProps {
   active: boolean;
   icon: ReactNode;
   onClick: () => void;
-}) {
+}
+
+export const TabOption = ({ active, icon, onClick }: TabOptionProps) => {
   return (
     <div className={`${active ? "rounded-full bg-slate-200" : ""} cursor-pointer`} onClick={onClick}>
       {icon}
     </div>
   );
-}
+};

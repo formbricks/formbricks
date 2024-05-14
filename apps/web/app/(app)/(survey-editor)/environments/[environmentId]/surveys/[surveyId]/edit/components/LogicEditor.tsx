@@ -47,12 +47,7 @@ type LogicConditions = {
   };
 };
 
-export default function LogicEditor({
-  localSurvey,
-  question,
-  questionIdx,
-  updateQuestion,
-}: LogicEditorProps): JSX.Element {
+export const LogicEditor = ({ localSurvey, question, questionIdx, updateQuestion }: LogicEditorProps) => {
   const [searchValue, setSearchValue] = useState<string>("");
   localSurvey = useMemo(() => {
     return checkForRecallInHeadline(localSurvey, "default");
@@ -426,4 +421,4 @@ export default function LogicEditor({
       </div>
     </div>
   );
-}
+};

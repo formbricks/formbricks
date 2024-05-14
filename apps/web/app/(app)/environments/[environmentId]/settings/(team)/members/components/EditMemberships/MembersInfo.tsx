@@ -1,4 +1,4 @@
-import MemberActions from "@/app/(app)/environments/[environmentId]/settings/(team)/members/components/EditMemberships/MemberActions";
+import { MemberActions } from "@/app/(app)/environments/[environmentId]/settings/(team)/members/components/EditMemberships/MemberActions";
 import { isInviteExpired } from "@/app/lib/utils";
 
 import { EditMembershipRole } from "@formbricks/ee/RoleManagement/components/EditMembershipRole";
@@ -18,11 +18,11 @@ type MembersInfoProps = {
 };
 
 // Type guard to check if member is an invitee
-function isInvitee(member: TMember | TInvite): member is TInvite {
+const isInvitee = (member: TMember | TInvite): member is TInvite => {
   return (member as TInvite).expiresAt !== undefined;
-}
+};
 
-const MembersInfo = async ({
+export const MembersInfo = async ({
   team,
   invites,
   isUserAdminOrOwner,
@@ -86,5 +86,3 @@ const MembersInfo = async ({
     </div>
   );
 };
-
-export default MembersInfo;

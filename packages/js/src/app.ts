@@ -10,7 +10,7 @@ declare global {
 }
 
 // load the sdk, return the result
-async function loadFormbricksAppSDK(apiHost: string): Promise<Result<void>> {
+const loadFormbricksAppSDK = async (apiHost: string): Promise<Result<void>> => {
   if (!window.formbricks) {
     const res = await fetch(`${apiHost}/api/packages/app`);
 
@@ -52,7 +52,7 @@ async function loadFormbricksAppSDK(apiHost: string): Promise<Result<void>> {
   }
 
   return { ok: true, data: undefined };
-}
+};
 
 type FormbricksAppMethods = {
   [K in keyof TFormbricksApp]: TFormbricksApp[K] extends Function ? K : never;

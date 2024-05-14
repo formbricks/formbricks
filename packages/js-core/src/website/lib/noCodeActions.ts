@@ -72,11 +72,11 @@ export const removePageUrlEventListeners = (): void => {
   arePageUrlEventListenersAdded = false;
 };
 
-export function checkUrlMatch(
+export const checkUrlMatch = (
   url: string,
   pageUrlValue: string,
   pageUrlRule: TActionClassPageUrlRule
-): Result<boolean, InvalidMatchTypeError> {
+): Result<boolean, InvalidMatchTypeError> => {
   switch (pageUrlRule) {
     case "exactMatch":
       return ok(url === pageUrlValue);
@@ -96,7 +96,7 @@ export function checkUrlMatch(
         message: "Invalid match type",
       });
   }
-}
+};
 
 const evaluateNoCodeConfig = (targetElement: HTMLElement, action: TActionClass): boolean => {
   const innerHtml = action.noCodeConfig?.innerHtml?.value;

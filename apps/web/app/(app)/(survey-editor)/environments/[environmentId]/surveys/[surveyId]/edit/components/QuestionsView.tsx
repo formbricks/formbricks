@@ -20,10 +20,10 @@ import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
 import { isCardValid, validateQuestion, validateSurveyQuestionsInBatch } from "../lib/validation";
-import AddQuestionButton from "./AddQuestionButton";
-import EditThankYouCard from "./EditThankYouCard";
-import EditWelcomeCard from "./EditWelcomeCard";
-import HiddenFieldsCard from "./HiddenFieldsCard";
+import { AddQuestionButton } from "./AddQuestionButton";
+import { EditThankYouCard } from "./EditThankYouCard";
+import { EditWelcomeCard } from "./EditWelcomeCard";
+import { HiddenFieldsCard } from "./HiddenFieldsCard";
 import { QuestionsDroppable } from "./QuestionsDroppable";
 
 interface QuestionsViewProps {

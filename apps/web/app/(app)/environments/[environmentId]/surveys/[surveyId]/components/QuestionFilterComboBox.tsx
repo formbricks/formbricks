@@ -34,7 +34,7 @@ type QuestionFilterComboBoxProps = {
   disabled?: boolean;
 };
 
-const QuestionFilterComboBox = ({
+export const QuestionFilterComboBox = ({
   filterComboBoxOptions,
   filterComboBoxValue,
   filterOptions,
@@ -190,5 +190,3 @@ const QuestionFilterComboBox = ({
     </div>
   );
 };
-
-export default QuestionFilterComboBox;

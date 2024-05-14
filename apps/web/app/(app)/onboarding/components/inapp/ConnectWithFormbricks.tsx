@@ -1,6 +1,6 @@
 "use client";
 
-import OnboardingTitle from "@/app/(app)/onboarding/components/OnboardingTitle";
+import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTitle";
 import Dance from "@/images/onboarding-dance.gif";
 import Lost from "@/images/onboarding-lost.gif";
 import { ArrowRight } from "lucide-react";
@@ -13,7 +13,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { Button } from "@formbricks/ui/Button";
 
 import { fetchEnvironment, finishOnboardingAction } from "../../actions";
-import SetupInstructionsOnboarding from "./SetupInstructions";
+import { SetupInstructionsOnboarding } from "./SetupInstructions";
 
 const goToProduct = async (router) => {
   if (typeof localStorage !== undefined) {
@@ -114,12 +114,12 @@ interface ConnectProps {
   setCurrentStep: (currentStep: number) => void;
 }
 
-export function ConnectWithFormbricks({
+export const ConnectWithFormbricks = ({
   environment,
   webAppUrl,
   jsPackageVersion,
   setCurrentStep,
-}: ConnectProps) {
+}: ConnectProps) => {
   const router = useRouter();
   const [localEnvironment, setLocalEnvironment] = useState(environment);
 
@@ -152,4 +152,4 @@ export function ConnectWithFormbricks({
       }}
     />
   );
-}
+};

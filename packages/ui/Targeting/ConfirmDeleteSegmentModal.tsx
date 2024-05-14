@@ -12,7 +12,12 @@ type ConfirmDeleteSegmentModalProps = {
   onDelete: () => Promise<void>;
 };
 
-const ConfirmDeleteSegmentModal = ({ onDelete, open, segment, setOpen }: ConfirmDeleteSegmentModalProps) => {
+export const ConfirmDeleteSegmentModal = ({
+  onDelete,
+  open,
+  segment,
+  setOpen,
+}: ConfirmDeleteSegmentModalProps) => {
   const handleDelete = async () => {
     await onDelete();
   };
@@ -64,5 +69,3 @@ const ConfirmDeleteSegmentModal = ({ onDelete, open, segment, setOpen }: Confirm
     </Modal>
   );
 };
-
-export default ConfirmDeleteSegmentModal;

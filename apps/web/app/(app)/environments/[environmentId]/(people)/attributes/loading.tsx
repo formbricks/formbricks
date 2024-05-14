@@ -1,6 +1,6 @@
 import { TagIcon } from "lucide-react";
 
-export default function Loading() {
+const Loading = () => {
   return (
     <>
       <div className="rounded-lg border border-slate-200">
@@ -39,4 +39,6 @@ export default function Loading() {
       ))}
     </>
   );
-}
+};
+
+export default Loading;

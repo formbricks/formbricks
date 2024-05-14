@@ -16,7 +16,7 @@ type DeleteTeamProps = {
   isUserOwner?: boolean;
 };
 
-export default function DeleteTeam({ team, isDeleteDisabled = false, isUserOwner = false }: DeleteTeamProps) {
+export const DeleteTeam = ({ team, isDeleteDisabled = false, isUserOwner = false }: DeleteTeamProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -70,7 +70,7 @@ export default function DeleteTeam({ team, isDeleteDisabled = false, isUserOwner
       />
     </div>
   );
-}
+};
 
 interface DeleteTeamModalProps {
   open: boolean;
@@ -81,7 +81,7 @@ interface DeleteTeamModalProps {
   isDeleting?: boolean;
 }
 
-function DeleteTeamModal({ setOpen, open, teamData, deleteTeam, isDeleting }: DeleteTeamModalProps) {
+const DeleteTeamModal = ({ setOpen, open, teamData, deleteTeam, isDeleting }: DeleteTeamModalProps) => {
   const [inputValue, setInputValue] = useState("");
 
   const handleInputChange = (e) => {
@@ -123,4 +123,4 @@ function DeleteTeamModal({ setOpen, open, teamData, deleteTeam, isDeleting }: De
       </div>
     </DeleteDialog>
   );
-}
+};

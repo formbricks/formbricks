@@ -1,4 +1,4 @@
-import MembersInfo from "@/app/(app)/environments/[environmentId]/settings/(team)/members/components/EditMemberships/MembersInfo";
+import { MembersInfo } from "@/app/(app)/environments/[environmentId]/settings/(team)/members/components/EditMemberships/MembersInfo";
 
 import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { getInvitesByTeamId } from "@formbricks/lib/invite/service";
@@ -13,11 +13,11 @@ type EditMembershipsProps = {
   allMemberships: TMembership[];
 };
 
-export async function EditMemberships({
+export const EditMemberships = async ({
   team,
   currentUserId,
   currentUserMembership: membership,
-}: EditMembershipsProps) {
+}: EditMembershipsProps) => {
   const members = await getMembersByTeamId(team.id);
   const invites = await getInvitesByTeamId(team.id);
 
@@ -49,4 +49,4 @@ export async function EditMemberships({
       </div>
     </div>
   );
-}
+};

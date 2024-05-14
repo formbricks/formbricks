@@ -3,7 +3,7 @@
 import { Transition } from "@headlessui/react";
 import { Fragment, forwardRef, useState } from "react";
 
-function CheckIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+const CheckIcon = (props: React.ComponentPropsWithoutRef<"svg">) => {
   return (
     <svg viewBox="0 0 20 20" aria-hidden="true" {...props}>
       <circle cx="10" cy="10" r="10" strokeWidth="0" />
@@ -16,9 +16,9 @@ function CheckIcon(props: React.ComponentPropsWithoutRef<"svg">) {
       />
     </svg>
   );
-}
+};
 
-function FeedbackButton(props: Omit<React.ComponentPropsWithoutRef<"button">, "type" | "className">) {
+const FeedbackButton = (props: Omit<React.ComponentPropsWithoutRef<"button">, "type" | "className">) => {
   return (
     <button
       type="submit"
@@ -26,12 +26,12 @@ function FeedbackButton(props: Omit<React.ComponentPropsWithoutRef<"button">, "t
       {...props}
     />
   );
-}
+};
 
 const FeedbackForm = forwardRef<
   React.ElementRef<"form">,
   Pick<React.ComponentPropsWithoutRef<"form">, "onSubmit">
->(function FeedbackForm({ onSubmit }, ref) {
+>(({ onSubmit }, ref) => {
   return (
     <form
       ref={ref}
@@ -47,7 +47,9 @@ const FeedbackForm = forwardRef<
   );
 });
 
-const FeedbackThanks = forwardRef<React.ElementRef<"div">>(function FeedbackThanks(_props, ref) {
+FeedbackForm.displayName = "FeedbackForm";
+
+const FeedbackThanks = forwardRef<React.ElementRef<"div">>((_props, ref) => {
   return (
     <div ref={ref} className="absolute inset-0 flex justify-center md:justify-start">
       <div className="flex items-center gap-3 rounded-full bg-teal-50/50 py-1 pl-1.5 pr-3 text-sm text-teal-900 ring-1 ring-inset ring-teal-500/20 dark:bg-teal-500/5 dark:text-teal-200 dark:ring-teal-500/30">
@@ -58,17 +60,19 @@ const FeedbackThanks = forwardRef<React.ElementRef<"div">>(function FeedbackThan
   );
 });
 
-export function Feedback() {
+FeedbackThanks.displayName = "FeedbackThanks";
+
+export const Feedback = () => {
   let [submitted, setSubmitted] = useState(false);
 
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     // event.nativeEvent.submitter.dataset.response
     // => "yes" or "no"
 
     setSubmitted(true);
-  }
+  };
 
   return (
     <div className="relative h-8">
@@ -90,4 +94,4 @@ export function Feedback() {
       </Transition>
     </div>
   );
-}
+};

@@ -15,13 +15,13 @@ interface EditAlertsProps {
   autoDisableNotificationElementId: string;
 }
 
-export default function EditAlerts({
+export const EditAlerts = ({
   memberships,
   user,
   environmentId,
   autoDisableNotificationType,
   autoDisableNotificationElementId,
-}: EditAlertsProps) {
+}: EditAlertsProps) => {
   return (
     <>
       {memberships.map((membership) => (
@@ -108,4 +108,4 @@ export default function EditAlerts({
       ))}
     </>
   );
-}
+};

@@ -17,11 +17,11 @@ interface LanguageSwitchProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
 }
-export default function LanguageSwitch({
+export const LanguageSwitch = ({
   surveyLanguages,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: LanguageSwitchProps) {
+}: LanguageSwitchProps) => {
   if (selectedLanguageCode === "default") {
     selectedLanguageCode =
       surveyLanguages.find((surveyLanguage) => {
@@ -64,4 +64,4 @@ export default function LanguageSwitch({
       </DropdownMenu>
     </div>
   );
-}
+};

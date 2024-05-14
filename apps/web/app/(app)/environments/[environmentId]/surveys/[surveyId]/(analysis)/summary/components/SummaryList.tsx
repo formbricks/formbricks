@@ -16,7 +16,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveySummary } from "@formbricks/types/surveys";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { SkeletonLoader } from "@formbricks/ui/SkeletonLoader";
 
 import { AddressSummary } from "./AddressSummary";

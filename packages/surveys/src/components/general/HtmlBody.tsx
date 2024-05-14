@@ -5,7 +5,7 @@ interface HtmlBodyProps {
   questionId: string;
 }
 
-export default function HtmlBody({ htmlString, questionId }: HtmlBodyProps) {
+export const HtmlBody = ({ htmlString, questionId }: HtmlBodyProps) => {
   const [safeHtml, setSafeHtml] = useState("");
 
   useEffect(() => {
@@ -25,4 +25,4 @@ export default function HtmlBody({ htmlString, questionId }: HtmlBodyProps) {
       className="fb-htmlbody break-words" // styles are in global.css
       dangerouslySetInnerHTML={{ __html: safeHtml }}></label>
   );
-}
+};

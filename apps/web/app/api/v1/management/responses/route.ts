@@ -5,7 +5,7 @@ import { NextRequest } from "next/server";
 import { getResponsesByEnvironmentId } from "@formbricks/lib/response/service";
 import { DatabaseError } from "@formbricks/types/errors";
 
-export async function GET(request: NextRequest) {
+export const GET = async (request: NextRequest) => {
   const surveyId = request.nextUrl.searchParams.get("surveyId");
   try {
     const authentication = await authenticateRequest(request);
@@ -21,6 +21,6 @@ export async function GET(request: NextRequest) {
     }
     throw error;
   }
-}
+};
 
 // Please use the client API to create a new response

@@ -11,9 +11,9 @@ import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
-import AddAPIKeyModal from "./AddApiKeyModal";
+import { AddApiKeyModal } from "./AddApiKeyModal";
 
-export default function EditAPIKeys({
+export const EditAPIKeys = ({
   environmentTypeId,
   environmentType,
   apiKeys,
@@ -23,7 +23,7 @@ export default function EditAPIKeys({
   environmentType: string;
   apiKeys: TApiKey[];
   environmentId: string;
-}) {
+}) => {
   const [isAddAPIKeyModalOpen, setOpenAddAPIKeyModal] = useState(false);
   const [isDeleteKeyModalOpen, setOpenDeleteKeyModal] = useState(false);
   const [apiKeysLocal, setApiKeysLocal] = useState<TApiKey[]>(apiKeys);
@@ -129,7 +129,7 @@ export default function EditAPIKeys({
         </Button>
       </div>
 
-      <AddAPIKeyModal
+      <AddApiKeyModal
         open={isAddAPIKeyModalOpen}
         setOpen={setOpenAddAPIKeyModal}
         onSubmit={handleAddAPIKey}
@@ -142,4 +142,4 @@ export default function EditAPIKeys({
       />
     </div>
   );
-}
+};

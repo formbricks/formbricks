@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "Config",
 };
 
-export default async function ConfigLayout({ children, params }) {
+const ConfigLayout = async ({ children, params }) => {
   const [team, product, session] = await Promise.all([
     getTeamByEnvironmentId(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
@@ -29,4 +29,6 @@ export default async function ConfigLayout({ children, params }) {
   }
 
   return children;
-}
+};
+
+export default ConfigLayout;

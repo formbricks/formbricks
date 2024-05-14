@@ -7,7 +7,7 @@ interface RedirectCountDownProps {
   isRedirectDisabled: boolean;
 }
 
-export default function RedirectCountDown({ redirectUrl, isRedirectDisabled }: RedirectCountDownProps) {
+export const RedirectCountDown = ({ redirectUrl, isRedirectDisabled }: RedirectCountDownProps) => {
   const [timeRemaining, setTimeRemaining] = useState(REDIRECT_TIMEOUT);
 
   useEffect(() => {
@@ -41,4 +41,4 @@ export default function RedirectCountDown({ redirectUrl, isRedirectDisabled }: R
       </div>
     </div>
   );
-}
+};

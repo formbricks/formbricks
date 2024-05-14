@@ -18,13 +18,13 @@ type DeleteProductRenderProps = {
   userId: string;
 };
 
-const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
+export const DeleteProductRender = ({
   environmentId,
   isDeleteDisabled,
   isUserAdminOrOwner,
   product,
   userId,
-}) => {
+}: DeleteProductRenderProps) => {
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -86,5 +86,3 @@ const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
     </div>
   );
 };
-
-export default DeleteProductRender;

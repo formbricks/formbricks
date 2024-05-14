@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 const jost = Jost({ subsets: ["latin"] });
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+const RootLayout = async ({ children }: { children: React.ReactNode }) => {
   let pages = await glob("**/*.mdx", { cwd: "src/app" });
   let allSectionsEntries = (await Promise.all(
     pages.map(async (filename) => [
@@ -36,4 +36,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </body>
     </html>
   );
-}
+};
+
+export default RootLayout;

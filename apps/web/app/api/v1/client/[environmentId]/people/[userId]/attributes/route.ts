@@ -6,12 +6,15 @@ import { getAttributesByUserId, updateAttributes } from "@formbricks/lib/attribu
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { ZJsPeopleUpdateAttributeInput } from "@formbricks/types/js";
 
-export async function OPTIONS() {
+export const OPTIONS = async () => {
   // cors headers
   return responses.successResponse({}, true);
-}
+};
 
-export async function PUT(req: NextRequest, context: { params: { environmentId: string; userId: string } }) {
+export const PUT = async (
+  req: NextRequest,
+  context: { params: { environmentId: string; userId: string } }
+) => {
   try {
     const environmentId = context.params.environmentId;
     if (!environmentId) {
@@ -80,4 +83,4 @@ export async function PUT(req: NextRequest, context: { params: { environmentId: 
 
     return responses.internalServerErrorResponse("Something went wrong", true);
   }
-}
+};

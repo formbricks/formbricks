@@ -8,7 +8,7 @@ interface IntegrationPageTitleProps {
   environmentId: string;
 }
 
-const IntegrationPageTitle: React.FC<IntegrationPageTitleProps> = ({ title, icon, environmentId }) => {
+export const IntegrationPageTitle = ({ title, icon, environmentId }: IntegrationPageTitleProps) => {
   return (
     <div className="flex justify-between">
       <div className="mb-8">
@@ -28,5 +28,3 @@ const IntegrationPageTitle: React.FC<IntegrationPageTitleProps> = ({ title, icon
     </div>
   );
 };
-
-export default IntegrationPageTitle;

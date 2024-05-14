@@ -11,7 +11,7 @@ import {
 } from "@formbricks/lib/team/service";
 import { TTeam } from "@formbricks/types/teams";
 
-async function reportTeamUsage(team: TTeam) {
+const reportTeamUsage = async (team: TTeam) => {
   const stripeCustomerId = team.billing.stripeCustomerId;
   if (!stripeCustomerId) {
     return;
@@ -49,9 +49,9 @@ async function reportTeamUsage(team: TTeam) {
       Math.floor(Date.now() / 1000)
     );
   }
-}
+};
 
-export async function POST(): Promise<Response> {
+export const POST = async (): Promise<Response> => {
   const headersList = headers();
   const apiKey = headersList.get("x-api-key");
 
@@ -68,4 +68,4 @@ export async function POST(): Promise<Response> {
     console.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
-}
+};

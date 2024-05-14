@@ -27,11 +27,11 @@ import { TJsAppLegacyStateSync, TJsAppStateSync, ZJsPeopleUserIdInput } from "@f
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function GET(
+export const GET = async (
   request: NextRequest,
   {
     params,
@@ -41,7 +41,7 @@ export async function GET(
       userId: string;
     };
   }
-): Promise<Response> {
+): Promise<Response> => {
   try {
     const { device } = userAgent(request);
     const version = request.nextUrl.searchParams.get("version");
@@ -200,4 +200,4 @@ export async function GET(
     console.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
-}
+};

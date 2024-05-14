@@ -15,11 +15,11 @@ import { AuthorizationError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 
-export async function getResponsesDownloadUrlAction(
+export const getResponsesDownloadUrlAction = async (
   surveyId: string,
   format: "csv" | "xlsx",
   filterCritera: TResponseFilterCriteria
-): Promise<string> {
+): Promise<string> => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -27,9 +27,9 @@ export async function getResponsesDownloadUrlAction(
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   return getResponseDownloadUrl(surveyId, format, filterCritera);
-}
+};
 
-export async function getSurveyFilterDataAction(surveyId: string, environmentId: string) {
+export const getSurveyFilterDataAction = async (surveyId: string, environmentId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -43,9 +43,9 @@ export async function getSurveyFilterDataAction(surveyId: string, environmentId:
   ]);
 
   return { environmentTags: tags, attributes, meta };
-}
+};
 
-export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
+export const updateSurveyAction = async (survey: TSurvey): Promise<TSurvey> => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -56,4 +56,4 @@ export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await updateSurvey(survey);
-}
+};

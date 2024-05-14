@@ -1,8 +1,8 @@
 "use client";
 
-import AddIntegrationModal from "@/app/(app)/environments/[environmentId]/integrations/notion/components/AddIntegrationModal";
-import Connect from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Connect";
-import Home from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Home";
+import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/AddIntegrationModal";
+import { Connect } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Connect";
+import { Home } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Home";
 import { useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -22,14 +22,14 @@ interface NotionWrapperProps {
   databasesArray: TIntegrationNotionDatabase[];
 }
 
-export default function NotionWrapper({
+export const NotionWrapper = ({
   notionIntegration,
   enabled,
   environment,
   webAppUrl,
   surveys,
   databasesArray,
-}: NotionWrapperProps) {
+}: NotionWrapperProps) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(
     notionIntegration ? notionIntegration.config.key?.bot_id : false
@@ -64,4 +64,4 @@ export default function NotionWrapper({
       )}
     </>
   );
-}
+};

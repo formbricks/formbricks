@@ -24,7 +24,7 @@ const guides = [
   },
 ];
 
-export function Guides() {
+export const Guides = () => {
   return (
     <div className="my-16 xl:max-w-none">
       <Heading level={2} id="guides">
@@ -45,4 +45,4 @@ export function Guides() {
       </div>
     </div>
   );
-}
+};

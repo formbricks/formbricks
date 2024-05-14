@@ -12,7 +12,7 @@ import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import {
   getResponseCountBySurveySharingKeyAction,
   getSummaryBySurveySharingKeyAction,
-} from "@/app/share/[sharingKey]/action";
+} from "@/app/share/[sharingKey]/actions";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -48,7 +48,7 @@ interface SummaryPageProps {
   totalResponseCount: number;
 }
 
-const SummaryPage = ({
+export const SummaryPage = ({
   environment,
   survey,
   surveyId,
@@ -137,5 +137,3 @@ const SummaryPage = ({
     </>
   );
 };
-
-export default SummaryPage;

@@ -8,7 +8,7 @@ import { TrashIcon } from "lucide-react";
 import { TAction } from "@formbricks/types/actions";
 import { BackIcon } from "@formbricks/ui/icons";
 
-export default function Loading() {
+const Loading = () => {
   const actionItemList: TAction[] = [
     {
       id: "demoId1",
@@ -151,4 +151,6 @@ export default function Loading() {
       </main>
     </div>
   );
-}
+};
+
+export default Loading;

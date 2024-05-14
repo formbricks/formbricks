@@ -7,7 +7,7 @@ const DEFAULT_STYLING = {
 
 const prisma = new PrismaClient();
 
-async function main() {
+const main = async () => {
   await prisma.$transaction(
     async (tx) => {
       // product table with brand color and the highlight border color (if available)
@@ -131,7 +131,7 @@ async function main() {
       timeout: 50000,
     }
   );
-}
+};
 main()
   .catch(async (e) => {
     console.error(e);
