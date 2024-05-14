@@ -81,7 +81,7 @@ export const Modal = ({
       setShow(true);
     }
     const previewBase = document.getElementById("preview-survey-base");
-    function handleClickOutside(e: MouseEvent) {
+    const handleClickOutside = (e: MouseEvent) => {
       // Checks if the positioning is center, clickOutsideClose is set & if the click is inside the preview screen but outside the survey modal
       if (
         scalingClasses.transformOrigin === "" &&
@@ -96,7 +96,7 @@ export const Modal = ({
           setShow(false);
         }, 500);
       }
-    }
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);

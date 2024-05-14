@@ -114,12 +114,12 @@ interface ConnectProps {
   setCurrentStep: (currentStep: number) => void;
 }
 
-export function ConnectWithFormbricks({
+export const ConnectWithFormbricks = ({
   environment,
   webAppUrl,
   jsPackageVersion,
   setCurrentStep,
-}: ConnectProps) {
+}: ConnectProps) => {
   const router = useRouter();
   const [localEnvironment, setLocalEnvironment] = useState(environment);
 
@@ -152,4 +152,4 @@ export function ConnectWithFormbricks({
       }}
     />
   );
-}
+};

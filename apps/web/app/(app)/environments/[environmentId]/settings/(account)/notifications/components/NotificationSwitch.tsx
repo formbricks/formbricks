@@ -16,13 +16,13 @@ interface NotificationSwitchProps {
   autoDisableNotificationElementId?: string;
 }
 
-export function NotificationSwitch({
+export const NotificationSwitch = ({
   surveyOrProductOrTeamId,
   notificationSettings,
   notificationType,
   autoDisableNotificationType,
   autoDisableNotificationElementId,
-}: NotificationSwitchProps) {
+}: NotificationSwitchProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const isChecked =
@@ -96,4 +96,4 @@ export function NotificationSwitch({
       }}
     />
   );
-}
+};

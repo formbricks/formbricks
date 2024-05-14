@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function main() {
+const main = async () => {
   await prisma.$transaction(
     async (tx) => {
       // Retrieve all surveys of type "web" with necessary fields for efficient processing
@@ -132,7 +132,7 @@ async function main() {
       timeout: 50000,
     }
   );
-}
+};
 
 main()
   .catch((e: Error) => {

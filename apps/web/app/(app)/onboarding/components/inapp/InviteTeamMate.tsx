@@ -21,12 +21,12 @@ const DEFAULT_INVITE_MESSAGE =
   "I'm looking into Formbricks to run targeted surveys. Can you help me set it up? 🙏";
 const INITIAL_FORM_STATE = { email: "", inviteMessage: DEFAULT_INVITE_MESSAGE };
 
-function isValidEmail(email) {
+const isValidEmail = (email) => {
   const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
   return regex.test(email);
-}
+};
 
-function InviteMessageInput({ value, onChange }) {
+const InviteMessageInput = ({ value, onChange }) => {
   return (
     <textarea
       rows={5}
@@ -36,9 +36,9 @@ function InviteMessageInput({ value, onChange }) {
       onChange={onChange}
     />
   );
-}
+};
 
-export function InviteTeamMate({ team, environmentId, setCurrentStep }: InviteTeamMateProps) {
+export const InviteTeamMate = ({ team, environmentId, setCurrentStep }: InviteTeamMateProps) => {
   const [formState, setFormState] = useState(INITIAL_FORM_STATE);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -126,4 +126,4 @@ export function InviteTeamMate({ team, environmentId, setCurrentStep }: InviteTe
       </div>
     </div>
   );
-}
+};

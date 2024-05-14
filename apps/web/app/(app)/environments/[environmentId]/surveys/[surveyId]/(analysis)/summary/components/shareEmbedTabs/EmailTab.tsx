@@ -29,12 +29,12 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   }, [emailHtmlPreview]);
 
   useEffect(() => {
-    getData();
-
-    async function getData() {
+    const getData = async () => {
       const emailHtml = await getEmailHtmlAction(surveyId);
       setEmailHtmlPreview(emailHtml);
-    }
+    };
+
+    getData();
   }, [surveyId]);
 
   const sendPreviewEmail = async () => {

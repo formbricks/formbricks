@@ -17,7 +17,7 @@ interface ResponseTagsWrapperProps {
   allowDelete?: boolean;
 }
 
-export function Tag({
+export const Tag = ({
   tagId,
   tagName,
   onDelete,
@@ -25,7 +25,7 @@ export function Tag({
   setTagsState,
   highlight,
   allowDelete = true,
-}: ResponseTagsWrapperProps) {
+}: ResponseTagsWrapperProps) => {
   return (
     <div
       key={tagId}
@@ -49,4 +49,4 @@ export function Tag({
       )}
     </div>
   );
-}
+};

@@ -520,7 +520,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
   }
 };
 
-export async function deleteSurvey(surveyId: string) {
+export const deleteSurvey = async (surveyId: string) => {
   validateInputs([surveyId, ZId]);
 
   try {
@@ -583,7 +583,7 @@ export async function deleteSurvey(surveyId: string) {
 
     throw error;
   }
-}
+};
 
 export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
   validateInputs([environmentId, ZId]);

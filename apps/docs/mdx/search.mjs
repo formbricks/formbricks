@@ -10,21 +10,7 @@ import { filter } from "unist-util-filter";
 import { SKIP, visit } from "unist-util-visit";
 import * as url from "url";
 
-const __filename = url.fileURLToPath(import.meta.url);
-const processor = remark().use(remarkMdx).use(extractSections);
-const slugify = slugifyWithCounter();
-
-function isObjectExpression(node) {
-  return (
-    node.type === "mdxTextExpression" && node.data?.estree?.body?.[0]?.expression?.type === "ObjectExpression"
-  );
-}
-
-function excludeObjectExpressions(tree) {
-  return filter(tree, (node) => !isObjectExpression(node));
-}
-
-function extractSections() {
+const extractSections = () => {
   return (tree, { sections }) => {
     slugify.reset();
 
@@ -41,7 +27,7 @@ function extractSections() {
       }
     });
   };
-}
+};
 
 export const Search = (nextConfig = {}) => {
   let cache = new Map();
@@ -105,7 +91,7 @@ export const Search = (nextConfig = {}) => {
                 }
               }
 
-              export function search(query, options = {}) {
+              export const search = (query, options = {}) => {
                 let result = sectionIndex.search(query, {
                   ...options,
                   enrich: true,
@@ -131,4 +117,18 @@ export const Search = (nextConfig = {}) => {
       return config;
     },
   });
+};
+
+const __filename = url.fileURLToPath(import.meta.url);
+const processor = remark().use(remarkMdx).use(extractSections);
+const slugify = slugifyWithCounter();
+
+const isObjectExpression = (node) => {
+  return (
+    node.type === "mdxTextExpression" && node.data?.estree?.body?.[0]?.expression?.type === "ObjectExpression"
+  );
+};
+
+const excludeObjectExpressions = (tree) => {
+  return filter(tree, (node) => !isObjectExpression(node));
 };

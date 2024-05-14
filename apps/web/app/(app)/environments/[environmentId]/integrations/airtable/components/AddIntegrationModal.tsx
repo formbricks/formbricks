@@ -47,14 +47,14 @@ export type IntegrationModalInputs = {
   questions: string[];
 };
 
-function NoBaseFoundError() {
+const NoBaseFoundError = () => {
   return (
     <Alert>
       <AlertTitle>No Airtable bases found</AlertTitle>
       <AlertDescription>Please create a base on Airtable</AlertDescription>
     </Alert>
   );
-}
+};
 
 interface BaseSelectProps {
   control: Control<IntegrationModalInputs, any>;
@@ -65,14 +65,14 @@ interface BaseSelectProps {
   defaultValue: string | undefined;
 }
 
-function BaseSelect({
+const BaseSelect = ({
   airtableArray,
   control,
   fetchTable,
   isLoading,
   setValue,
   defaultValue,
-}: BaseSelectProps) {
+}: BaseSelectProps) => {
   return (
     <div className="flex w-full flex-col">
       <Label htmlFor="base">Airtable base</Label>
@@ -106,7 +106,7 @@ function BaseSelect({
       </div>
     </div>
   );
-}
+};
 
 export const AddIntegrationModal = (props: AddIntegrationModalProps) => {
   const {

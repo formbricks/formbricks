@@ -16,7 +16,7 @@ const IV_LENGTH = 16; // AES blocksize
  *
  * @returns Encrypted value using key
  */
-export const symmetricEncrypt = function (text: string, key: string) {
+export const symmetricEncrypt = (text: string, key: string) => {
   const _key = Buffer.from(key, BUFFER_ENCODING);
   const iv = crypto.randomBytes(IV_LENGTH);
 
@@ -33,7 +33,7 @@ export const symmetricEncrypt = function (text: string, key: string) {
  * @param text Value to decrypt
  * @param key Key used to decrypt value must be 32 bytes for AES256 encryption algorithm
  */
-export const symmetricDecrypt = function (text: string, key: string) {
+export const symmetricDecrypt = (text: string, key: string) => {
   const _key = Buffer.from(key, BUFFER_ENCODING);
 
   const components = text.split(":");
@@ -62,19 +62,19 @@ export const decryptAES128 = (encryptionKey: string, data: string): string => {
   return decrypted;
 };
 
-export function generateLocalSignedUrl(
+export const generateLocalSignedUrl = (
   fileName: string,
   environmentId: string,
   fileType: string
-): { signature: string; uuid: string; timestamp: number } {
+): { signature: string; uuid: string; timestamp: number } => {
   const uuid = randomBytes(16).toString("hex");
   const timestamp = Date.now();
   const data = `${uuid}:${fileName}:${environmentId}:${fileType}:${timestamp}`;
   const signature = createHmac("sha256", ENCRYPTION_KEY!).update(data).digest("hex");
   return { signature, uuid, timestamp };
-}
+};
 
-export function validateLocalSignedUrl(
+export const validateLocalSignedUrl = (
   uuid: string,
   fileName: string,
   environmentId: string,
@@ -82,7 +82,7 @@ export function validateLocalSignedUrl(
   timestamp: number,
   signature: string,
   secret: string
-): boolean {
+): boolean => {
   const data = `${uuid}:${fileName}:${environmentId}:${fileType}:${timestamp}`;
   const expectedSignature = createHmac("sha256", secret).update(data).digest("hex");
 
@@ -96,4 +96,4 @@ export function validateLocalSignedUrl(
   }
 
   return true;
-}
+};

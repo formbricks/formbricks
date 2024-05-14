@@ -12,11 +12,11 @@ import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { TPipelineInput } from "@formbricks/types/pipelines";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 
-export async function handleIntegrations(
+export const handleIntegrations = async (
   integrations: TIntegration[],
   data: TPipelineInput,
   survey: TSurvey
-) {
+) => {
   for (const integration of integrations) {
     switch (integration.type) {
       case "googleSheets":
@@ -33,13 +33,13 @@ export async function handleIntegrations(
         break;
     }
   }
-}
+};
 
-async function handleAirtableIntegration(
+const handleAirtableIntegration = async (
   integration: TIntegrationAirtable,
   data: TPipelineInput,
   survey: TSurvey
-) {
+) => {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
@@ -49,13 +49,13 @@ async function handleAirtableIntegration(
       }
     }
   }
-}
+};
 
-async function handleGoogleSheetsIntegration(
+const handleGoogleSheetsIntegration = async (
   integration: TIntegrationGoogleSheets,
   data: TPipelineInput,
   survey: TSurvey
-) {
+) => {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
@@ -64,9 +64,13 @@ async function handleGoogleSheetsIntegration(
       }
     }
   }
-}
+};
 
-async function handleSlackIntegration(integration: TIntegrationSlack, data: TPipelineInput, survey: TSurvey) {
+const handleSlackIntegration = async (
+  integration: TIntegrationSlack,
+  data: TPipelineInput,
+  survey: TSurvey
+) => {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
@@ -75,13 +79,13 @@ async function handleSlackIntegration(integration: TIntegrationSlack, data: TPip
       }
     }
   }
-}
+};
 
-async function extractResponses(
+const extractResponses = async (
   data: TPipelineInput,
   questionIds: string[],
   survey: TSurvey
-): Promise<string[][]> {
+): Promise<string[][]> => {
   const responses: string[] = [];
   const questions: string[] = [];
 
@@ -113,13 +117,13 @@ async function extractResponses(
   }
 
   return [responses, questions];
-}
+};
 
-async function handleNotionIntegration(
+const handleNotionIntegration = async (
   integration: TIntegrationNotion,
   data: TPipelineInput,
   surveyData: TSurvey
-) {
+) => {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
@@ -128,13 +132,13 @@ async function handleNotionIntegration(
       }
     }
   }
-}
+};
 
-function buildNotionPayloadProperties(
+const buildNotionPayloadProperties = (
   mapping: TIntegrationNotionConfigData["mapping"],
   data: TPipelineInput,
   surveyData: TSurvey
-) {
+) => {
   const properties: any = {};
   const responses = data.response.data;
 
@@ -162,11 +166,11 @@ function buildNotionPayloadProperties(
   });
 
   return properties;
-}
+};
 
 // notion requires specific payload for each column type
 // * TYPES NOT SUPPORTED BY NOTION API - rollup, created_by, created_time, last_edited_by, or last_edited_time
-function getValue(colType: string, value: string | string[] | number | Record<string, string>) {
+const getValue = (colType: string, value: string | string[] | number | Record<string, string>) => {
   try {
     switch (colType) {
       case "select":
@@ -213,4 +217,4 @@ function getValue(colType: string, value: string | string[] | number | Record<st
   } catch (error) {
     throw new Error("Payload build failed!");
   }
-}
+};

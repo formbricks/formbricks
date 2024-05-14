@@ -81,7 +81,7 @@ interface DeleteTeamModalProps {
   isDeleting?: boolean;
 }
 
-function DeleteTeamModal({ setOpen, open, teamData, deleteTeam, isDeleting }: DeleteTeamModalProps) {
+const DeleteTeamModal = ({ setOpen, open, teamData, deleteTeam, isDeleting }: DeleteTeamModalProps) => {
   const [inputValue, setInputValue] = useState("");
 
   const handleInputChange = (e) => {
@@ -123,4 +123,4 @@ function DeleteTeamModal({ setOpen, open, teamData, deleteTeam, isDeleting }: De
       </div>
     </DeleteDialog>
   );
-}
+};

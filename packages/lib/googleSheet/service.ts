@@ -23,7 +23,7 @@ import { validateInputs } from "../utils/validate";
 
 const { google } = require("googleapis");
 
-async function fetchSpreadsheets(auth: any) {
+const fetchSpreadsheets = async (auth: any) => {
   const authClient = authorize(auth);
   const service = google.drive({ version: "v3", auth: authClient });
   try {
@@ -35,7 +35,7 @@ async function fetchSpreadsheets(auth: any) {
   } catch (err) {
     throw err;
   }
-}
+};
 
 export const getSpreadSheets = async (environmentId: string): Promise<TIntegrationItem[]> => {
   validateInputs([environmentId, ZId]);
@@ -57,11 +57,11 @@ export const getSpreadSheets = async (environmentId: string): Promise<TIntegrati
     throw error;
   }
 };
-export async function writeData(
+export const writeData = async (
   credentials: TIntegrationGoogleSheetsCredential,
   spreadsheetId: string,
   values: string[][]
-) {
+) => {
   validateInputs(
     [credentials, ZIntegrationGoogleSheetsCredential],
     [spreadsheetId, ZString],
@@ -106,7 +106,7 @@ export async function writeData(
     }
     throw error;
   }
-}
+};
 
 const authorize = (credentials: any) => {
   const client_id = GOOGLE_SHEETS_CLIENT_ID;

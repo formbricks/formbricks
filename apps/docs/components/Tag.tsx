@@ -39,7 +39,7 @@ const valueColorMap = {
   DELETE: "rose",
 } as Record<string, keyof typeof colorStyles>;
 
-export function Tag({
+export const Tag = ({
   children,
   variant = "medium",
   color = valueColorMap[children] ?? "teal",
@@ -47,7 +47,7 @@ export function Tag({
   children: keyof typeof valueColorMap & (string | {});
   variant?: keyof typeof variantStyles;
   color?: keyof typeof colorStyles;
-}) {
+}) => {
   return (
     <span
       className={clsx(
@@ -58,4 +58,4 @@ export function Tag({
       {children}
     </span>
   );
-}
+};

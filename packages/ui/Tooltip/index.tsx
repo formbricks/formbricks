@@ -39,7 +39,7 @@ interface TooltipRendererProps {
   children: ReactNode;
   className?: string;
 }
-export function TooltipRenderer(props: TooltipRendererProps) {
+export const TooltipRenderer = (props: TooltipRendererProps) => {
   const { children, shouldRender, tooltipContent, className } = props;
   if (shouldRender) {
     return (
@@ -53,4 +53,4 @@ export function TooltipRenderer(props: TooltipRendererProps) {
   }
 
   return <>{children}</>;
-}
+};

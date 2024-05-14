@@ -21,7 +21,7 @@ interface CreateFirstSurveyProps {
   environmentId: string;
 }
 
-export function CreateFirstSurvey({ environmentId }: CreateFirstSurveyProps) {
+export const CreateFirstSurvey = ({ environmentId }: CreateFirstSurveyProps) => {
   const router = useRouter();
   const [loadingTemplate, setLoadingTemplate] = useState<string | null>(null);
   const templateOrder = ["Collect Feedback", "Net Promoter Score (NPS)", "Churn Survey"];
@@ -84,4 +84,4 @@ export function CreateFirstSurvey({ environmentId }: CreateFirstSurveyProps) {
       </Button>
     </div>
   );
-}
+};

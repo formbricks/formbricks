@@ -42,10 +42,10 @@ const updateUsageAttributes = (numSurveys) => {
   }
 };
 
-export function UsageAttributesUpdater({ numSurveys }: UsageAttributesUpdaterProps) {
+export const UsageAttributesUpdater = ({ numSurveys }: UsageAttributesUpdaterProps) => {
   useEffect(() => {
     updateUsageAttributes(numSurveys);
   }, [numSurveys]);
 
   return null;
-}
+};

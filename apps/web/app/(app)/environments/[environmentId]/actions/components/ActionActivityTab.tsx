@@ -40,9 +40,8 @@ export const EventActivityTab = ({
 
   useEffect(() => {
     setLoading(true);
-    updateState();
 
-    async function updateState() {
+    const updateState = async () => {
       try {
         setLoading(true);
         const [
@@ -66,7 +65,9 @@ export const EventActivityTab = ({
       } finally {
         setLoading(false);
       }
-    }
+    };
+
+    updateState();
   }, [actionClass.id, environmentId, isUserTargetingEnabled]);
 
   if (loading) return <LoadingSpinner />;

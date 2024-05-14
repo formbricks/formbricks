@@ -12,11 +12,11 @@ interface QuestionTypeSelectorProps {
   handleTypeChange: (value: string) => void;
 }
 
-export function OptionsSwitcher({
+export const OptionsSwitcher = ({
   options: questionTypes,
   currentOption,
   handleTypeChange,
-}: QuestionTypeSelectorProps) {
+}: QuestionTypeSelectorProps) => {
   return (
     <div className="flex w-full items-center justify-between rounded-md border p-1">
       {questionTypes.map((type) => (
@@ -38,4 +38,4 @@ export function OptionsSwitcher({
       ))}
     </div>
   );
-}
+};

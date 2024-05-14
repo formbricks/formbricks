@@ -27,14 +27,14 @@ interface OnboardingProps {
   webAppUrl: string;
 }
 
-export function Onboarding({
+export const Onboarding = ({
   isFormbricksCloud,
   session,
   environment,
   user,
   team,
   webAppUrl,
-}: OnboardingProps) {
+}: OnboardingProps) => {
   const router = useRouter();
   const [selectedPathway, setSelectedPathway] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(16);
@@ -188,4 +188,4 @@ export function Onboarding({
       </div>
     </div>
   );
-}
+};

@@ -26,7 +26,7 @@ export const Modal = ({ children, isOpen, placement, clickOutside, darkOverlay, 
   useEffect(() => {
     if (!isCenter) return;
 
-    function handleClickOutside(e: MouseEvent) {
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         clickOutside &&
         show &&
@@ -35,7 +35,7 @@ export const Modal = ({ children, isOpen, placement, clickOutside, darkOverlay, 
       ) {
         onClose();
       }
-    }
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);

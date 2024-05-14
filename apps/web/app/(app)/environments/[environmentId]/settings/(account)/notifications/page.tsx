@@ -14,10 +14,10 @@ import { EditWeeklySummary } from "./components/EditWeeklySummary";
 import { IntegrationsTip } from "./components/IntegrationsTip";
 import type { Membership } from "./types";
 
-function setCompleteNotificationSettings(
+const setCompleteNotificationSettings = (
   notificationSettings: TUserNotificationSettings,
   memberships: Membership[]
-): TUserNotificationSettings {
+): TUserNotificationSettings => {
   const newNotificationSettings = {
     alert: {},
     weeklySummary: {},
@@ -40,9 +40,9 @@ function setCompleteNotificationSettings(
     }
   }
   return newNotificationSettings;
-}
+};
 
-async function getMemberships(userId: string): Promise<Membership[]> {
+const getMemberships = async (userId: string): Promise<Membership[]> => {
   const memberships = await prisma.membership.findMany({
     where: {
       userId,
@@ -77,7 +77,7 @@ async function getMemberships(userId: string): Promise<Membership[]> {
     },
   });
   return memberships;
-}
+};
 
 const Page = async ({ params, searchParams }) => {
   const session = await getServerSession(authOptions);

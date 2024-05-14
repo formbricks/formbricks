@@ -3,12 +3,12 @@ import { NetworkError } from "@formbricks/types/errors";
 
 import { ApiResponse } from "../types";
 
-export async function makeRequest<T>(
+export const makeRequest = async <T>(
   apiHost: string,
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE",
   data?: any
-): Promise<Result<T, NetworkError | Error>> {
+): Promise<Result<T, NetworkError | Error>> => {
   const url = new URL(endpoint, apiHost);
   const body = JSON.stringify(data);
 
@@ -34,4 +34,4 @@ export async function makeRequest<T>(
   }
 
   return ok(innerData as T);
-}
+};

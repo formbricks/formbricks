@@ -3,15 +3,15 @@ import { compare, hash } from "bcryptjs";
 import { prisma } from "@formbricks/database";
 import { AuthenticationError } from "@formbricks/types/errors";
 
-export async function hashPassword(password: string) {
+export const hashPassword = async (password: string) => {
   const hashedPassword = await hash(password, 12);
   return hashedPassword;
-}
+};
 
-export async function verifyPassword(password: string, hashedPassword: string) {
+export const verifyPassword = async (password: string, hashedPassword: string) => {
   const isValid = await compare(password, hashedPassword);
   return isValid;
-}
+};
 
 export const hasTeamAccess = async (userId: string, teamId: string) => {
   const membership = await prisma.membership.findUnique({

@@ -41,7 +41,7 @@ interface UserTargetingAdvancedCardProps {
   initialSegment?: TSegment;
 }
 
-export function AdvancedTargetingCard({
+export const AdvancedTargetingCard = ({
   localSurvey,
   setLocalSurvey,
   environmentId,
@@ -49,7 +49,7 @@ export function AdvancedTargetingCard({
   attributeClasses,
   segments,
   initialSegment,
-}: UserTargetingAdvancedCardProps) {
+}: UserTargetingAdvancedCardProps) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
@@ -413,4 +413,4 @@ export function AdvancedTargetingCard({
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
-}
+};

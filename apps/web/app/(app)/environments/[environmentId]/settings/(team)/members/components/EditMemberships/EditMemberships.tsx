@@ -13,11 +13,11 @@ type EditMembershipsProps = {
   allMemberships: TMembership[];
 };
 
-export async function EditMemberships({
+export const EditMemberships = async ({
   team,
   currentUserId,
   currentUserMembership: membership,
-}: EditMembershipsProps) {
+}: EditMembershipsProps) => {
   const members = await getMembersByTeamId(team.id);
   const invites = await getInvitesByTeamId(team.id);
 
@@ -49,4 +49,4 @@ export async function EditMemberships({
       </div>
     </div>
   );
-}
+};

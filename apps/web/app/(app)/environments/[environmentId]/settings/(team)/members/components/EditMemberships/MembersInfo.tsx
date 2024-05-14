@@ -18,9 +18,9 @@ type MembersInfoProps = {
 };
 
 // Type guard to check if member is an invitee
-function isInvitee(member: TMember | TInvite): member is TInvite {
+const isInvitee = (member: TMember | TInvite): member is TInvite => {
   return (member as TInvite).expiresAt !== undefined;
-}
+};
 
 export const MembersInfo = async ({
   team,

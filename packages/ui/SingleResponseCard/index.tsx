@@ -63,7 +63,7 @@ interface TooltipRendererProps {
   children: ReactNode;
 }
 
-function TooltipRenderer(props: TooltipRendererProps) {
+const TooltipRenderer = (props: TooltipRendererProps) => {
   const { children, shouldRender, tooltipContent } = props;
   if (shouldRender) {
     return (
@@ -77,14 +77,14 @@ function TooltipRenderer(props: TooltipRendererProps) {
   }
 
   return <>{children}</>;
-}
+};
 
-function DateResponse({ date }: { date?: string }) {
+const DateResponse = ({ date }: { date?: string }) => {
   if (!date) return null;
 
   const formattedDateString = formatDateWithOrdinal(new Date(date));
   return <p className="ph-no-capture my-1 font-semibold text-slate-700">{formattedDateString}</p>;
-}
+};
 
 export const SingleResponseCard = ({
   survey,

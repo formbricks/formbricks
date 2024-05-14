@@ -26,12 +26,12 @@ import { sanitizeString } from "../strings";
 import { getTodaysDateTimeFormatted } from "../time";
 import { evaluateCondition } from "../utils/evaluateLogic";
 
-export function calculateTtcTotal(ttc: TResponseTtc) {
+export const calculateTtcTotal = (ttc: TResponseTtc) => {
   const result = { ...ttc };
   result._total = Object.values(result).reduce((acc: number, val: number) => acc + val, 0);
 
   return result;
-}
+};
 
 export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
   const whereClause: Prisma.ResponseWhereInput["AND"] = [];

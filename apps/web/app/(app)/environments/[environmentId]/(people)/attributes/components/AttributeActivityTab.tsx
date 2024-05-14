@@ -25,9 +25,7 @@ export const AttributeActivityTab = ({ attributeClass }: EventActivityTabProps) 
   useEffect(() => {
     setLoading(true);
 
-    getSurveys();
-
-    async function getSurveys() {
+    const getSurveys = async () => {
       try {
         setLoading(true);
         const segmentsWithAttributeClassName = await getSegmentsByAttributeClassAction(
@@ -42,7 +40,9 @@ export const AttributeActivityTab = ({ attributeClass }: EventActivityTabProps) 
       } finally {
         setLoading(false);
       }
-    }
+    };
+
+    getSurveys();
   }, [attributeClass, attributeClass.environmentId, attributeClass.id, attributeClass.name]);
 
   if (loading) return <LoadingSpinner />;
