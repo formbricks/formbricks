@@ -38,8 +38,7 @@ import { ConsentQuestionForm } from "./ConsentQuestionForm";
 import { DateQuestionForm } from "./DateQuestionForm";
 import { FileUploadQuestionForm } from "./FileUploadQuestionForm";
 import { MatrixQuestionForm } from "./MatrixQuestionForm";
-import { MultipleChoiceMultiForm } from "./MultipleChoiceMultiForm";
-import { MultipleChoiceSingleForm } from "./MultipleChoiceSingleForm";
+import { MultipleChoiceQuestionForm } from "./MultipleChoiceQuestionForm";
 import { NPSQuestionForm } from "./NPSQuestionForm";
 import { OpenQuestionForm } from "./OpenQuestionForm";
 import { PictureSelectionForm } from "./PictureSelectionForm";
@@ -239,7 +238,7 @@ export default function QuestionCard({
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
-                <MultipleChoiceSingleForm
+                <MultipleChoiceQuestionForm
                   localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
@@ -250,7 +249,7 @@ export default function QuestionCard({
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
-                <MultipleChoiceMultiForm
+                <MultipleChoiceQuestionForm
                   localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}

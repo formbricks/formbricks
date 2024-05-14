@@ -22,19 +22,6 @@ export const TeamSettingsNavbar = ({
   const { isAdmin, isOwner } = getAccessFlags(membershipRole);
   const isPricingDisabled = !isOwner && !isAdmin;
 
-  console.log({
-    environmentId,
-    isFormbricksCloud,
-    membershipRole,
-    activeId,
-    pathname,
-    isAdmin,
-    isOwner,
-    isPricingDisabled,
-  });
-
-  console.log("hidden: ", !isFormbricksCloud || isPricingDisabled);
-
   const navigation = [
     {
       id: "members",

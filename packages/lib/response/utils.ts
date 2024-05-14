@@ -6,8 +6,7 @@ import { TResponse, TResponseFilterCriteria, TResponseTtc } from "@formbricks/ty
 import {
   TSurvey,
   TSurveyLanguage,
-  TSurveyMultipleChoiceMultiQuestion,
-  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyMultipleChoiceQuestion,
   TSurveyQuestionSummaryAddress,
   TSurveyQuestionSummaryDate,
   TSurveyQuestionSummaryFileUpload,
@@ -678,9 +677,9 @@ const checkForI18n = (response: TResponse, id: string, survey: TSurvey, language
   }
 
   // Return the localized value of the choice fo multiSelect single question
-  const choice = (
-    question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion
-  )?.choices.find((choice) => choice.label[languageCode] === response.data[id]);
+  const choice = (question as TSurveyMultipleChoiceQuestion)?.choices.find(
+    (choice) => choice.label[languageCode] === response.data[id]
+  );
 
   return getLocalizedValue(choice?.label, "default") || response.data[id];
 };
