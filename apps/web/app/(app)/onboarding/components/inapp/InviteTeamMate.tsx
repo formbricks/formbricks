@@ -1,6 +1,6 @@
 "use client";
 
-import OnboardingTitle from "@/app/(app)/onboarding/components/OnboardingTitle";
+import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTitle";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";

@@ -24,14 +24,14 @@ interface ResponseNotesProps {
   updateFetchedResponses: () => void;
 }
 
-export default function ResponseNotes({
+export const ResponseNotes = ({
   user,
   responseId,
   notes,
   isOpen,
   setIsOpen,
   updateFetchedResponses,
-}: ResponseNotesProps) {
+}: ResponseNotesProps) => {
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [isUpdatingNote, setIsUpdatingNote] = useState(false);
@@ -257,4 +257,4 @@ export default function ResponseNotes({
       )}
     </div>
   );
-}
+};

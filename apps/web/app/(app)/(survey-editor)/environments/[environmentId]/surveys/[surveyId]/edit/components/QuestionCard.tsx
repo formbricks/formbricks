@@ -62,7 +62,7 @@ interface QuestionCardProps {
   isInvalid: boolean;
 }
 
-export default function QuestionCard({
+export const QuestionCard = ({
   localSurvey,
   product,
   questionIdx,
@@ -76,7 +76,7 @@ export default function QuestionCard({
   selectedLanguageCode,
   setSelectedLanguageCode,
   isInvalid,
-}: QuestionCardProps) {
+}: QuestionCardProps) => {
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
@@ -497,4 +497,4 @@ export default function QuestionCard({
       )}
     </Draggable>
   );
-}
+};

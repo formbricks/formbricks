@@ -218,7 +218,7 @@ const AttributeTabContent = ({ attributeClasses, onAddFilter, setOpen }: Attribu
   );
 };
 
-const AddFilterModal = ({
+export const AddFilterModal = ({
   onAddFilter,
   open,
   setOpen,
@@ -558,5 +558,3 @@ const AddFilterModal = ({
     </Modal>
   );
 };
-
-export default AddFilterModal;

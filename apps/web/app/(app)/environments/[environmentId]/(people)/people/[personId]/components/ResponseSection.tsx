@@ -1,4 +1,4 @@
-import ResponseTimeline from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseTimeline";
+import { ResponseTimeline } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseTimeline";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -8,15 +8,13 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
-export default async function ResponseSection({
-  environment,
-  personId,
-  environmentTags,
-}: {
+interface ResponseSectionProps {
   environment: TEnvironment;
   personId: string;
   environmentTags: TTag[];
-}) {
+}
+
+export const ResponseSection = async ({ environment, personId, environmentTags }: ResponseSectionProps) => {
   const responses = await getResponsesByPersonId(personId);
   const surveyIds = responses?.map((response) => response.surveyId) || [];
   const surveys: TSurvey[] = surveyIds.length === 0 ? [] : (await getSurveys(environment.id)) ?? [];
@@ -38,4 +36,4 @@ export default async function ResponseSection({
       environmentTags={environmentTags}
     />
   );
-}
+};

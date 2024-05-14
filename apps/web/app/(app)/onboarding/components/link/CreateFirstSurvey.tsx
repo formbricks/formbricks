@@ -1,6 +1,6 @@
 "use client";
 
-import OnboardingTitle from "@/app/(app)/onboarding/components/OnboardingTitle";
+import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTitle";
 import ChurnImage from "@/images/onboarding-churn.png";
 import FeedbackImage from "@/images/onboarding-collect-feedback.png";
 import NPSImage from "@/images/onboarding-nps.png";

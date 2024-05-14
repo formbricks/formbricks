@@ -1,4 +1,4 @@
-export default function ActionTableHeading() {
+export const ActionTableHeading = () => {
   return (
     <>
       <div className="grid h-12 grid-cols-6 content-center border-b border-slate-200 text-left text-sm font-semibold text-slate-900">
@@ -8,4 +8,4 @@ export default function ActionTableHeading() {
       </div>
     </>
   );
-}
+};

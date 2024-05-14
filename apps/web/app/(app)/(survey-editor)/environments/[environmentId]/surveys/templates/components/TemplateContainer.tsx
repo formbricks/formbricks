@@ -21,12 +21,12 @@ type TemplateContainerWithPreviewProps = {
   user: TUser;
 };
 
-export default function TemplateContainerWithPreview({
+export const TemplateContainerWithPreview = ({
   environmentId,
   product,
   environment,
   user,
-}: TemplateContainerWithPreviewProps) {
+}: TemplateContainerWithPreviewProps) => {
   const initialTemplate = customSurvey;
   const [activeTemplate, setActiveTemplate] = useState<TTemplate>(initialTemplate);
   const [activeQuestionId, setActiveQuestionId] = useState<string>(initialTemplate.preset.questions[0].id);
@@ -81,4 +81,4 @@ export default function TemplateContainerWithPreview({
       </div>
     </div>
   );
-}
+};

@@ -5,7 +5,7 @@ import {
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import QuestionFilterComboBox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
+import { QuestionFilterComboBox } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
 import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
 import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/action";
 import clsx from "clsx";
@@ -20,7 +20,7 @@ import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 
-import QuestionsComboBox, { OptionsType, QuestionOption } from "./QuestionsComboBox";
+import { OptionsType, QuestionOption, QuestionsComboBox } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
   type: TSurveyQuestionType | "Attributes" | "Tags" | "Languages";
@@ -33,7 +33,7 @@ interface ResponseFilterProps {
   survey: TSurvey;
 }
 
-const ResponseFilter = ({ survey }: ResponseFilterProps) => {
+export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
   const isSharingPage = !!sharingKey;
@@ -292,5 +292,3 @@ const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     </Popover>
   );
 };
-
-export default ResponseFilter;

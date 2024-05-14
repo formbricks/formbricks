@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 
-import LoadingSpinner from "../LoadingSpinner";
+import { LoadingSpinner } from "../LoadingSpinner";
 import { TabBar } from "../TabBar";
 import { Uploader } from "./components/Uploader";
 import { VideoSettings } from "./components/VideoSettings";

@@ -28,7 +28,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
   }
 }
 
-export default async function ShortUrlPage({ params }) {
+const Page = async ({ params }) => {
   if (!params.shortUrlId) {
     notFound();
   }
@@ -52,4 +52,6 @@ export default async function ShortUrlPage({ params }) {
   }
 
   notFound();
-}
+};
+
+export default Page;

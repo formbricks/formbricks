@@ -1,4 +1,4 @@
-import MembersInfo from "@/app/(app)/environments/[environmentId]/settings/(team)/members/components/EditMemberships/MembersInfo";
+import { MembersInfo } from "@/app/(app)/environments/[environmentId]/settings/(team)/members/components/EditMemberships/MembersInfo";
 
 import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { getInvitesByTeamId } from "@formbricks/lib/invite/service";

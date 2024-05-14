@@ -216,7 +216,7 @@ function getSelectedNode(selection: RangeSelection) {
   }
 }
 
-export default function ToolbarPlugin(props: TextEditorProps) {
+export const ToolbarPlugin = (props: TextEditorProps) => {
   const [editor] = useLexicalComposerContext();
 
   const toolbarRef = useRef(null);
@@ -537,4 +537,4 @@ export default function ToolbarPlugin(props: TextEditorProps) {
       </>
     </div>
   );
-}
+};

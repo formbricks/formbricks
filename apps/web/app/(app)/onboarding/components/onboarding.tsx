@@ -15,7 +15,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TTeam } from "@formbricks/types/teams";
 import { TUser } from "@formbricks/types/user";
 
-import PathwaySelect from "./PathwaySelect";
+import { PathwaySelect } from "./PathwaySelect";
 import { OnboardingHeader } from "./ProgressBar";
 
 interface OnboardingProps {

@@ -1,8 +1,8 @@
 import { PeopleSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PeopleSecondaryNavigation";
-import BasicCreateSegmentModal from "@/app/(app)/environments/[environmentId]/(people)/segments/components/BasicCreateSegmentModal";
-import SegmentTable from "@/app/(app)/environments/[environmentId]/(people)/segments/components/SegmentTable";
+import { BasicCreateSegmentModal } from "@/app/(app)/environments/[environmentId]/(people)/segments/components/BasicCreateSegmentModal";
+import { SegmentTable } from "@/app/(app)/environments/[environmentId]/(people)/segments/components/SegmentTable";
 
-import CreateSegmentModal from "@formbricks/ee/advancedTargeting/components/CreateSegmentModal";
+import { CreateSegmentModal } from "@formbricks/ee/advancedTargeting/components/CreateSegmentModal";
 import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedTargeting/lib/constants";
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
@@ -11,11 +11,11 @@ import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function SegmentsPage({ params }) {
+export default async function Page({ params }) {
   const [environment, segments, attributeClasses, actionClassesFromServer, team] = await Promise.all([
     getEnvironment(params.environmentId),
     getSegments(params.environmentId),

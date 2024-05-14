@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { TSurveyBackgroundBgType } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 
 import { getImagesFromUnsplashAction, triggerDownloadUnsplashImageAction } from "../actions";
 

@@ -1,4 +1,4 @@
-import DeleteProductRender from "@/app/(app)/environments/[environmentId]/product/general/components/DeleteProductRender";
+import { DeleteProductRender } from "@/app/(app)/environments/[environmentId]/product/general/components/DeleteProductRender";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -12,7 +12,7 @@ type DeleteProductProps = {
   product: TProduct;
 };
 
-export default async function DeleteProduct({ environmentId, product }: DeleteProductProps) {
+export const DeleteProduct = async ({ environmentId, product }: DeleteProductProps) => {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Session not found");
@@ -41,4 +41,4 @@ export default async function DeleteProduct({ environmentId, product }: DeletePr
       userId={session?.user.id ?? ""}
     />
   );
-}
+};

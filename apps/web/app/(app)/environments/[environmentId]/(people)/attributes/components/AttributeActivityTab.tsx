@@ -8,7 +8,7 @@ import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { Label } from "@formbricks/ui/Label";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 
 import { getSegmentsByAttributeClassAction } from "../actions";
 
@@ -16,7 +16,7 @@ interface EventActivityTabProps {
   attributeClass: TAttributeClass;
 }
 
-export default function AttributeActivityTab({ attributeClass }: EventActivityTabProps) {
+export const AttributeActivityTab = ({ attributeClass }: EventActivityTabProps) => {
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
   const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
   const [loading, setLoading] = useState(true);
@@ -95,4 +95,4 @@ export default function AttributeActivityTab({ attributeClass }: EventActivityTa
       </div>
     </div>
   );
-}
+};

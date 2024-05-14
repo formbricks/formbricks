@@ -1,7 +1,7 @@
-import ActivitySection from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ActivitySection";
-import AttributesSection from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/AttributesSection";
+import { ActivitySection } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ActivitySection";
+import { AttributesSection } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/AttributesSection";
 import { DeletePersonButton } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/DeletePersonButton";
-import ResponseSection from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseSection";
+import { ResponseSection } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseSection";
 import { getServerSession } from "next-auth";
 
 import { getAttributes } from "@formbricks/lib/attribute/service";
@@ -17,7 +17,7 @@ import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function PersonPage({ params }) {
+export default async function Page({ params }) {
   const [environment, environmentTags, product, session, team, person, attributes] = await Promise.all([
     getEnvironment(params.environmentId),
     getTagsByEnvironmentId(params.environmentId),

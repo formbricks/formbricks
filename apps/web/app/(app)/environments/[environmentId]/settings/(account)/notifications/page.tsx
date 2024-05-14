@@ -1,5 +1,5 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
-import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getServerSession } from "next-auth";
 
 import { prisma } from "@formbricks/database";
@@ -9,9 +9,9 @@ import { TUserNotificationSettings } from "@formbricks/types/user";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-import EditAlerts from "./components/EditAlerts";
-import EditWeeklySummary from "./components/EditWeeklySummary";
-import IntegrationsTip from "./components/IntegrationsTip";
+import { EditAlerts } from "./components/EditAlerts";
+import { EditWeeklySummary } from "./components/EditWeeklySummary";
+import { IntegrationsTip } from "./components/IntegrationsTip";
 import type { Membership } from "./types";
 
 function setCompleteNotificationSettings(
@@ -79,7 +79,7 @@ async function getMemberships(userId: string): Promise<Membership[]> {
   return memberships;
 }
 
-export default async function ProfileSettingsPage({ params, searchParams }) {
+export default async function Page({ params, searchParams }) {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Unauthorized");

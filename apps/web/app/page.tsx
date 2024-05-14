@@ -6,9 +6,9 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { ONBOARDING_DISABLED } from "@formbricks/lib/constants";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
 import { getTeamsByUserId } from "@formbricks/lib/team/service";
-import ClientLogout from "@formbricks/ui/ClientLogout";
+import { ClientLogout } from "@formbricks/ui/ClientLogout";
 
-export default async function Home() {
+export default async function Page() {
   const session: Session | null = await getServerSession(authOptions);
 
   if (!session) {

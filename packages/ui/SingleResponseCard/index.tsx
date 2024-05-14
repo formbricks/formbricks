@@ -34,9 +34,9 @@ import { RatingResponse } from "../RatingResponse";
 import { SurveyStatusIndicator } from "../SurveyStatusIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
 import { deleteResponseAction, getResponseAction } from "./actions";
-import QuestionSkip from "./components/QuestionSkip";
-import ResponseNotes from "./components/ResponseNote";
-import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
+import { QuestionSkip } from "./components/QuestionSkip";
+import { ResponseNotes } from "./components/ResponseNote";
+import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";
 
 const isSubmissionTimeMoreThan5Minutes = (submissionTimeISOString: Date) => {
   const submissionTime: Date = new Date(submissionTimeISOString);
@@ -86,7 +86,7 @@ function DateResponse({ date }: { date?: string }) {
   return <p className="ph-no-capture my-1 font-semibold text-slate-700">{formattedDateString}</p>;
 }
 
-export default function SingleResponseCard({
+export const SingleResponseCard = ({
   survey,
   response,
   user,
@@ -96,7 +96,7 @@ export default function SingleResponseCard({
   updateResponse,
   deleteResponse,
   isViewer,
-}: SingleResponseCardProps) {
+}: SingleResponseCardProps) => {
   const environmentId = survey.environmentId;
   const router = useRouter();
   const displayIdentifier = response.person
@@ -499,4 +499,4 @@ export default function SingleResponseCard({
       )}
     </div>
   );
-}
+};

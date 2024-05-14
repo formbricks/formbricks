@@ -1,10 +1,10 @@
-import ConfirmationPage from "@/app/(app)/billing-confirmation/components/ConfirmationPage";
+import { ConfirmationPage } from "@/app/(app)/billing-confirmation/components/ConfirmationPage";
 
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 
 export const dynamic = "force-dynamic";
 
-export default function BillingConfirmation({ searchParams }) {
+export default function Page({ searchParams }) {
   const { environmentId } = searchParams;
 
   return (

@@ -17,13 +17,13 @@ const DEFAULT_VALIDATIONS = [
   { label: "Contain at least 1 number", state: false },
 ];
 
-export default function IsPasswordValid({
+export const IsPasswordValid = ({
   password,
   setIsValid,
 }: {
   password: string | null;
   setIsValid: (isValid: boolean) => void;
-}) {
+}) => {
   const [validations, setValidations] = useState<Validation[]>(DEFAULT_VALIDATIONS);
 
   useEffect(() => {
@@ -69,4 +69,4 @@ export default function IsPasswordValid({
       </ul>
     </div>
   );
-}
+};

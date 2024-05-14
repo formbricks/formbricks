@@ -1,4 +1,4 @@
-import FormbricksClient from "@/app/(app)/components/FormbricksClient";
+import { FormbricksClient } from "@/app/(app)/components/FormbricksClient";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
 

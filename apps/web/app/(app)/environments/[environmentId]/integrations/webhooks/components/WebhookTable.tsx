@@ -1,24 +1,26 @@
 "use client";
 
-import WebhookModal from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookDetailModal";
+import { WebhookModal } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookDetailModal";
 import { useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TWebhook } from "@formbricks/types/webhooks";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 
-export default function WebhookTable({
-  environment,
-  webhooks,
-  surveys,
-  children: [TableHeading, webhookRows],
-}: {
+interface WebhookTableProps {
   environment: TEnvironment;
   webhooks: TWebhook[];
   surveys: TSurvey[];
   children: [JSX.Element, JSX.Element[]];
-}) {
+}
+
+export const WebhookTable = ({
+  environment,
+  webhooks,
+  surveys,
+  children: [TableHeading, webhookRows],
+}: WebhookTableProps) => {
   const [isWebhookDetailModalOpen, setWebhookDetailModalOpen] = useState(false);
 
   const [activeWebhook, setActiveWebhook] = useState<TWebhook>({
@@ -74,4 +76,4 @@ export default function WebhookTable({
       />
     </>
   );
-}
+};

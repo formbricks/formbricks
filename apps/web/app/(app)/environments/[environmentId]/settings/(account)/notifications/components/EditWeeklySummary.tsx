@@ -12,7 +12,7 @@ interface EditAlertsProps {
   environmentId: string;
 }
 
-export default function EditWeeklySummary({ memberships, user, environmentId }: EditAlertsProps) {
+export const EditWeeklySummary = ({ memberships, user, environmentId }: EditAlertsProps) => {
   return (
     <>
       {memberships.map((membership) => (
@@ -54,4 +54,4 @@ export default function EditWeeklySummary({ memberships, user, environmentId }: 
       ))}
     </>
   );
-}
+};

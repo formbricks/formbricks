@@ -1,5 +1,5 @@
-import FormbricksClient from "@/app/(app)/components/FormbricksClient";
-import PosthogIdentify from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
+import { FormbricksClient } from "@/app/(app)/components/FormbricksClient";
+import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
@@ -10,7 +10,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { DevEnvironmentBanner } from "@formbricks/ui/DevEnvironmentBanner";
-import ToasterClient from "@formbricks/ui/ToasterClient";
+import { ToasterClient } from "@formbricks/ui/ToasterClient";
 
 export default async function EnvLayout({ children, params }) {
   const session = await getServerSession(authOptions);

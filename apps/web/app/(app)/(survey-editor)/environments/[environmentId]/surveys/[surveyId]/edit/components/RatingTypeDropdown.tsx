@@ -16,7 +16,7 @@ type DropdownProps = {
   onSelect: (option: Option) => any;
 };
 
-const Dropdown = ({ options, defaultValue, onSelect, disabled = false }: DropdownProps) => {
+export const Dropdown = ({ options, defaultValue, onSelect, disabled = false }: DropdownProps) => {
   const [selectedOption, setSelectedOption] = useState<Option>(
     options.filter((option) => option.value === defaultValue)[0] || options[0]
   );
@@ -65,5 +65,3 @@ const Dropdown = ({ options, defaultValue, onSelect, disabled = false }: Dropdow
     </DropdownMenu.Root>
   );
 };
-
-export default Dropdown;

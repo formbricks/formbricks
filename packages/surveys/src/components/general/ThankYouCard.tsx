@@ -1,9 +1,9 @@
-import Button from "@/components/buttons/SubmitButton";
-import Headline from "@/components/general/Headline";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { Headline } from "@/components/general/Headline";
 import { LoadingSpinner } from "@/components/general/LoadingSpinner";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
-import RedirectCountDown from "@/components/general/RedirectCountdown";
-import Subheader from "@/components/general/Subheader";
+import { RedirectCountDown } from "@/components/general/RedirectCountdown";
+import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -76,7 +76,7 @@ export const ThankYouCard = ({
             <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
             {buttonLabel && (
               <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
-                <Button
+                <SubmitButton
                   buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
                   isLastQuestion={false}
                   focus={!isInIframe}

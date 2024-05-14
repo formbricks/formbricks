@@ -1,5 +1,5 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
-import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getServerSession } from "next-auth";
 
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
@@ -14,9 +14,9 @@ import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-import EditTagsWrapper from "./components/EditTagsWrapper";
+import { EditTagsWrapper } from "./components/EditTagsWrapper";
 
-export default async function MembersSettingsPage({ params }) {
+export default async function Page({ params }) {
   const environment = await getEnvironment(params.environmentId);
   if (!environment) {
     throw new Error("Environment not found");

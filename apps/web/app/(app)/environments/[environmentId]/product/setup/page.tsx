@@ -5,15 +5,15 @@ import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import EnvironmentNotice from "@formbricks/ui/EnvironmentNotice";
+import { EnvironmentNotice } from "@formbricks/ui/EnvironmentNotice";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-import SettingsCard from "../../settings/components/SettingsCard";
-import EnvironmentIdField from "./components/EnvironmentIdField";
-import SetupInstructions from "./components/SetupInstructions";
+import { SettingsCard } from "../../settings/components/SettingsCard";
+import { EnvironmentIdField } from "./components/EnvironmentIdField";
+import { SetupInstructions } from "./components/SetupInstructions";
 
-export default async function ProfileSettingsPage({ params }) {
+export default async function Page({ params }) {
   const [environment, team] = await Promise.all([
     getEnvironment(params.environmentId),
     getTeamByEnvironmentId(params.environmentId),

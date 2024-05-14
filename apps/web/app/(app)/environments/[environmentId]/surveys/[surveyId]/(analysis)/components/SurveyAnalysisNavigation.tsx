@@ -1,6 +1,6 @@
 "use client";
 
-import revalidateSurveyIdPath from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { revalidateSurveyIdPath } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { InboxIcon, PresentationIcon } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 

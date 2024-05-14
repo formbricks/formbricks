@@ -10,9 +10,9 @@ import { AuthorizationError } from "@formbricks/types/errors";
 import { TResponse, TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveySummary } from "@formbricks/types/surveys";
 
-export default async function revalidateSurveyIdPath(environmentId: string, surveyId: string) {
+export const revalidateSurveyIdPath = async (environmentId: string, surveyId: string) => {
   revalidatePath(`/environments/${environmentId}/surveys/${surveyId}`);
-}
+};
 
 export async function getMoreResponses(
   surveyId: string,

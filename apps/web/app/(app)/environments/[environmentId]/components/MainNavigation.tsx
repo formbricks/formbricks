@@ -1,6 +1,6 @@
 "use client";
 
-import NavigationLink from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
+import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import {
@@ -35,7 +35,7 @@ import { TProduct } from "@formbricks/types/product";
 import { TTeam } from "@formbricks/types/teams";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
-import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
+import { CreateTeamModal } from "@formbricks/ui/CreateTeamModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,7 +50,7 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 
-import AddProductModal from "./AddProductModal";
+import { AddProductModal } from "./AddProductModal";
 
 interface NavigationProps {
   environment: TEnvironment;

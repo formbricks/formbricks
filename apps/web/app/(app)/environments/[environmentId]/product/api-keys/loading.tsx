@@ -1,4 +1,4 @@
-function LoadingCard({ title, description }) {
+const LoadingCard = ({ title, description }) => {
   return (
     <div className="my-4 rounded-lg border border-slate-200">
       <div className="grid content-center rounded-lg bg-slate-100 px-6 py-5 text-left text-slate-900">
@@ -26,8 +26,9 @@ function LoadingCard({ title, description }) {
       </div>
     </div>
   );
-}
-export default function Loading() {
+};
+
+const Loading = () => {
   const cards = [
     {
       title: "Development Env Keys",
@@ -47,4 +48,6 @@ export default function Loading() {
       ))}
     </div>
   );
-}
+};
+
+export default Loading;

@@ -1,10 +1,10 @@
-import CreateFirstTeam from "@/app/(app)/create-first-team/components/CreateFirstTeam";
+import { CreateFirstTeam } from "@/app/(app)/create-first-team/components/CreateFirstTeam";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 
-export default async function CreateFirstTeamPage() {
+export default async function Page() {
   const session = await getServerSession(authOptions);
 
   if (!session) {

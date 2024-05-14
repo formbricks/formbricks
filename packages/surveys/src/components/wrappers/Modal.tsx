@@ -14,14 +14,7 @@ interface ModalProps {
   onClose: () => void;
 }
 
-export default function Modal({
-  children,
-  isOpen,
-  placement,
-  clickOutside,
-  darkOverlay,
-  onClose,
-}: ModalProps) {
+export const Modal = ({ children, isOpen, placement, clickOutside, darkOverlay, onClose }: ModalProps) => {
   const [show, setShow] = useState(false);
   const isCenter = placement === "center";
   const modalRef = useRef(null);
@@ -97,4 +90,4 @@ export default function Modal({
       </div>
     </div>
   );
-}
+};

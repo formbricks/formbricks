@@ -23,14 +23,14 @@ type TPlacementProps = {
   clickOutsideClose: boolean;
 };
 
-export default function Placement({
+export const Placement = ({
   setCurrentPlacement,
   currentPlacement,
   setOverlay,
   overlay,
   setClickOutsideClose,
   clickOutsideClose,
-}: TPlacementProps) {
+}: TPlacementProps) => {
   const overlayStyle =
     currentPlacement === "center" && overlay === "dark" ? "bg-gray-700/80" : "bg-slate-200";
   return (
@@ -105,4 +105,4 @@ export default function Placement({
       )}
     </>
   );
-}
+};

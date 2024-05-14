@@ -48,7 +48,7 @@ interface SummaryPageProps {
   totalResponseCount: number;
 }
 
-const SummaryPage = ({
+export const SummaryPage = ({
   environment,
   survey,
   surveyId,
@@ -137,5 +137,3 @@ const SummaryPage = ({
     </>
   );
 };
-
-export default SummaryPage;

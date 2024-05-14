@@ -108,7 +108,7 @@ function BaseSelect({
   );
 }
 
-export default function AddIntegrationModal(props: AddIntegrationModalProps) {
+export const AddIntegrationModal = (props: AddIntegrationModalProps) => {
   const {
     open,
     setOpenWithStates,
@@ -392,4 +392,4 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
       </form>
     </Modal>
   );
-}
+};

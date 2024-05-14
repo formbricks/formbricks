@@ -1,7 +1,7 @@
 "use client";
 
 import { updateUserAction } from "@/app/(app)/onboarding/actions";
-import OnboardingTitle from "@/app/(app)/onboarding/components/OnboardingTitle";
+import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTitle";
 import { handleTabNavigation } from "@/app/(app)/onboarding/utils";
 import { formbricksEnabled, updateResponse } from "@/app/lib/formbricks";
 import { useEffect, useRef, useState } from "react";

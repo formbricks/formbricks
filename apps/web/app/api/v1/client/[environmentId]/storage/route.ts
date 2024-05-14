@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
-import uploadPrivateFile from "./lib/uploadPrivateFile";
+import { uploadPrivateFile } from "./lib/uploadPrivateFile";
 
 interface Context {
   params: {

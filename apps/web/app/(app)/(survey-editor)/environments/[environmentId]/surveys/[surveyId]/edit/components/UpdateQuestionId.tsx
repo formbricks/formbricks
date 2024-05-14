@@ -17,12 +17,12 @@ interface UpdateQuestionIdProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
 }
 
-export default function UpdateQuestionId({
+export const UpdateQuestionId = ({
   localSurvey,
   question,
   questionIdx,
   updateQuestion,
-}: UpdateQuestionIdProps) {
+}: UpdateQuestionIdProps) => {
   const [currentValue, setCurrentValue] = useState(question.id);
   const [prevValue, setPrevValue] = useState(question.id);
   const [isInputInvalid, setIsInputInvalid] = useState(
@@ -72,4 +72,4 @@ export default function UpdateQuestionId({
       </div>
     </div>
   );
-}
+};

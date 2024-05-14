@@ -7,10 +7,10 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { AuthorizationError } from "@formbricks/types/errors";
-import ToasterClient from "@formbricks/ui/ToasterClient";
+import { ToasterClient } from "@formbricks/ui/ToasterClient";
 
-import FormbricksClient from "../../components/FormbricksClient";
-import PosthogIdentify from "./components/PosthogIdentify";
+import { FormbricksClient } from "../../components/FormbricksClient";
+import { PosthogIdentify } from "./components/PosthogIdentify";
 
 export default async function EnvLayout({ children, params }) {
   const session = await getServerSession(authOptions);

@@ -5,7 +5,7 @@ import { NextRequest } from "next/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
-import getSignedUrlForPublicFile from "./lib/getSignedUrl";
+import { getSignedUrlForPublicFile } from "./lib/getSignedUrl";
 
 // api endpoint for uploading public files
 // uploaded files will be public, anyone can access the file

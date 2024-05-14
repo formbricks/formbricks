@@ -282,7 +282,7 @@ const DisplayBackupCodes = ({ backupCodes, setOpen }: TDisplayBackupCodesProps) 
   );
 };
 
-const EnableTwoFactorModal = ({ open, setOpen }: TEnableTwoFactorModalProps) => {
+export const EnableTwoFactorModal = ({ open, setOpen }: TEnableTwoFactorModalProps) => {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<TStep>("confirmPassword");
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
@@ -325,5 +325,3 @@ const EnableTwoFactorModal = ({ open, setOpen }: TEnableTwoFactorModalProps) => 
     </Modal>
   );
 };
-
-export default EnableTwoFactorModal;

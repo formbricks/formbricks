@@ -6,14 +6,14 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";
 import { TPerson } from "@formbricks/types/people";
 import { Button } from "@formbricks/ui/Button";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 import { Pagination } from "@formbricks/ui/Pagination";
 
 import { PersonCard } from "./components/PersonCard";
 
-export default async function PeoplePage({
+export default async function Page({
   params,
   searchParams,
 }: {

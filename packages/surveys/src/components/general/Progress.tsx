@@ -1,4 +1,4 @@
-export default function Progress({ progress }: { progress: number }) {
+export const Progress = ({ progress }: { progress: number }) => {
   return (
     <div className="bg-accent-bg h-2 w-full overflow-hidden rounded-full">
       <div
@@ -6,4 +6,4 @@ export default function Progress({ progress }: { progress: number }) {
         style={{ width: `${Math.floor(progress * 100)}%` }}></div>
     </div>
   );
-}
+};

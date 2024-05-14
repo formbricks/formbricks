@@ -6,8 +6,8 @@ import toast from "react-hot-toast";
 
 import { AuthenticationError } from "@formbricks/types/errors";
 import { Button } from "@formbricks/ui/Button";
-import CodeBlock from "@formbricks/ui/CodeBlock";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { CodeBlock } from "@formbricks/ui/CodeBlock";
+import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 
 import { getEmailHtmlAction, sendEmbedSurveyPreviewEmailAction } from "../../actions";
 
@@ -16,7 +16,7 @@ interface EmailTabProps {
   email: string;
 }
 
-export default function EmailTab({ surveyId, email }: EmailTabProps) {
+export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   const [showEmbed, setShowEmbed] = useState(false);
   const [emailHtmlPreview, setEmailHtmlPreview] = useState<string>("");
 
@@ -124,4 +124,4 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
       )}
     </div>
   );
-}
+};

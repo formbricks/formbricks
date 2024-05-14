@@ -15,7 +15,7 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
-import SurveyEditor from "./components/SurveyEditor";
+import { SurveyEditor } from "./components/SurveyEditor";
 
 export const generateMetadata = async ({ params }) => {
   const survey = await getSurvey(params.surveyId);
@@ -24,7 +24,7 @@ export const generateMetadata = async ({ params }) => {
   };
 };
 
-export default async function SurveysEditPage({ params }) {
+export default async function Page({ params }) {
   const [
     survey,
     product,

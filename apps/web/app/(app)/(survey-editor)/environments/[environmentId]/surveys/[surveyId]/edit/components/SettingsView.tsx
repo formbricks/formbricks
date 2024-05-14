@@ -6,12 +6,12 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 
-import HowToSendCard from "./HowToSendCard";
-import RecontactOptionsCard from "./RecontactOptionsCard";
-import ResponseOptionsCard from "./ResponseOptionsCard";
-import SurveyPlacementCard from "./SurveyPlacementCard";
-import TargetingCard from "./TargetingCard";
-import WhenToSendCard from "./WhenToSendCard";
+import { HowToSendCard } from "./HowToSendCard";
+import { RecontactOptionsCard } from "./RecontactOptionsCard";
+import { ResponseOptionsCard } from "./ResponseOptionsCard";
+import { SurveyPlacementCard } from "./SurveyPlacementCard";
+import { TargetingCard } from "./TargetingCard";
+import { WhenToSendCard } from "./WhenToSendCard";
 
 interface SettingsViewProps {
   environment: TEnvironment;

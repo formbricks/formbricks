@@ -12,8 +12,8 @@ import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segmen
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
-import BasicAddFilterModal from "@formbricks/ui/Targeting/BasicAddFilterModal";
-import BasicSegmentEditor from "@formbricks/ui/Targeting/BasicSegmentEditor";
+import { BasicAddFilterModal } from "@formbricks/ui/Targeting/BasicAddFilterModal";
+import { BasicSegmentEditor } from "@formbricks/ui/Targeting/BasicSegmentEditor";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 type TCreateSegmentModalProps = {
@@ -21,7 +21,8 @@ type TCreateSegmentModalProps = {
   attributeClasses: TAttributeClass[];
   isFormbricksCloud: boolean;
 };
-const BasicCreateSegmentModal = ({
+
+export const BasicCreateSegmentModal = ({
   environmentId,
   attributeClasses,
   isFormbricksCloud,
@@ -256,5 +257,3 @@ const BasicCreateSegmentModal = ({
     </>
   );
 };
-
-export default BasicCreateSegmentModal;

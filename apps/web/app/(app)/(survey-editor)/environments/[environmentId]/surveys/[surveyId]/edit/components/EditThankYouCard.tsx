@@ -21,7 +21,7 @@ interface EditThankYouCardProps {
   setSelectedLanguageCode: (languageCode: string) => void;
 }
 
-export default function EditThankYouCard({
+export const EditThankYouCard = ({
   localSurvey,
   setLocalSurvey,
   setActiveQuestionId,
@@ -29,7 +29,7 @@ export default function EditThankYouCard({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: EditThankYouCardProps) {
+}: EditThankYouCardProps) => {
   // const [open, setOpen] = useState(false);
   let open = activeQuestionId == "end";
   const [showThankYouCardCTA, setshowThankYouCardCTA] = useState<boolean>(
@@ -191,4 +191,4 @@ export default function EditThankYouCard({
       </Collapsible.Root>
     </div>
   );
-}
+};

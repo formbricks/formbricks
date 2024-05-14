@@ -1,4 +1,4 @@
-export default function Loading() {
+const Loading = () => {
   return (
     <div>
       <h2 className="my-4 text-2xl font-medium leading-6 text-slate-800">Enterprise License</h2>
@@ -9,4 +9,6 @@ export default function Loading() {
       </div>
     </div>
   );
-}
+};
+
+export default Loading;

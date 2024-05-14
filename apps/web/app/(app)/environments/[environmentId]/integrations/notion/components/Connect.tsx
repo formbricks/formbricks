@@ -16,7 +16,7 @@ interface ConnectProps {
   webAppUrl: string;
 }
 
-export default function Connect({ enabled, environmentId, webAppUrl }: ConnectProps) {
+export const Connect = ({ enabled, environmentId, webAppUrl }: ConnectProps) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const searchParams = useSearchParams();
 
@@ -66,4 +66,4 @@ export default function Connect({ enabled, environmentId, webAppUrl }: ConnectPr
       </div>
     </div>
   );
-}
+};

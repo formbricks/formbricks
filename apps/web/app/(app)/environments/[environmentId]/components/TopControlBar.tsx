@@ -1,4 +1,4 @@
-import TopControlButtons from "@/app/(app)/environments/[environmentId]/components/TopControlButtons";
+import { TopControlButtons } from "@/app/(app)/environments/[environmentId]/components/TopControlButtons";
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";

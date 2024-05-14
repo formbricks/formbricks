@@ -1,4 +1,4 @@
-import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyStarter";
+import { SurveyStarter } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyStarter";
 import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: "Your Surveys",
 };
 
-export default async function SurveysPage({ params }) {
+export default async function Page({ params }) {
   const session = await getServerSession(authOptions);
   const product = await getProductByEnvironmentId(params.environmentId);
   const team = await getTeamByEnvironmentId(params.environmentId);

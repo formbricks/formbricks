@@ -9,7 +9,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { ZStorageRetrievalParams } from "@formbricks/types/storage";
 
-import getFile from "./lib/getFile";
+import { getFile } from "./lib/getFile";
 
 export async function GET(
   request: NextRequest,

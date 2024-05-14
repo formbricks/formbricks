@@ -16,7 +16,7 @@ interface AttributeSettingsTabProps {
   setOpen: (v: boolean) => void;
 }
 
-export default function AttributeSettingsTab({ attributeClass, setOpen }: AttributeSettingsTabProps) {
+export const AttributeSettingsTab = async ({ attributeClass, setOpen }: AttributeSettingsTabProps) => {
   const router = useRouter();
   const { register, handleSubmit } = useForm({
     defaultValues: { name: attributeClass.name, description: attributeClass.description },
@@ -110,4 +110,4 @@ export default function AttributeSettingsTab({ attributeClass, setOpen }: Attrib
       </form>
     </div>
   );
-}
+};

@@ -77,7 +77,12 @@ type TBasicAddFilterModalProps = {
   attributeClasses: TAttributeClass[];
 };
 
-const BasicAddFilterModal = ({ onAddFilter, open, setOpen, attributeClasses }: TBasicAddFilterModalProps) => {
+export const BasicAddFilterModal = ({
+  onAddFilter,
+  open,
+  setOpen,
+  attributeClasses,
+}: TBasicAddFilterModalProps) => {
   const [searchValue, setSearchValue] = useState("");
 
   const attributeClassesFiltered = useMemo(() => {
@@ -146,5 +151,3 @@ const BasicAddFilterModal = ({ onAddFilter, open, setOpen, attributeClasses }: T
     </Modal>
   );
 };
-
-export default BasicAddFilterModal;

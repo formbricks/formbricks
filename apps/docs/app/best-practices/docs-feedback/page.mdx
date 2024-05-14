@@ -135,7 +135,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover"
 
 import { handleFeedbackSubmit, updateFeedback } from "../../lib/handleFeedbackSubmit";
 
-export default function DocsFeedback() {
+export const DocsFeedback = () => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [sharedFeedback, setSharedFeedback] = useState(false);
@@ -199,7 +199,7 @@ export default function DocsFeedback() {
       )}
     </div>
   );
-}
+};
 ```
 
 </CodeGroup>
