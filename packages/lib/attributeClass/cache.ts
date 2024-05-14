@@ -4,6 +4,7 @@ interface RevalidateProps {
   id?: string;
   name?: string;
   environmentId?: string;
+  count?: boolean;
 }
 
 export const attributeClassCache = {
@@ -17,8 +18,11 @@ export const attributeClassCache = {
     byEnvironmentIdAndName(environmentId: string, name: string) {
       return `environments-${environmentId}-name-${name}-attributeClasses`;
     },
+    byCountAndEnvironmentId(environmentId: string) {
+      return `environments-${environmentId}-attributeClasses-count`;
+    },
   },
-  revalidate({ id, environmentId, name }: RevalidateProps): void {
+  revalidate({ id, environmentId, name, count }: RevalidateProps): void {
     if (id) {
       revalidateTag(this.tag.byId(id));
     }
@@ -29,6 +33,10 @@ export const attributeClassCache = {
 
     if (environmentId && name) {
       revalidateTag(this.tag.byEnvironmentIdAndName(environmentId, name));
+    }
+
+    if (count && environmentId) {
+      revalidateTag(this.tag.byCountAndEnvironmentId(environmentId));
     }
   },
 };

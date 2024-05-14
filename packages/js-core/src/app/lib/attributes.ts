@@ -19,6 +19,13 @@ export const updateAttribute = async (key: string, value: string): Promise<Resul
   const res = await api.client.attribute.update({ userId, attributes: { [key]: value } });
 
   if (!res.ok) {
+    // @ts-expect-error
+    if (res.error.status === 403) {
+      logger.error(
+        "This attribute could not be set due to the maximum number of attribute classes being reached for this environment."
+      );
+      return okVoid();
+    }
     return err({
       code: "network_error",
       status: 500,
@@ -74,6 +81,14 @@ export const updateAttributes = async (
 
   if (res.ok) {
     return ok(updatedAttributes);
+  } else {
+    // @ts-expect-error
+    if (res.error.status === 403) {
+      logger.error(
+        "Some attributes could not be updated due to the maximum number of attribute classes being reached for this environment."
+      );
+      return ok(updatedAttributes);
+    }
   }
 
   return err({
