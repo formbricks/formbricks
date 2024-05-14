@@ -5,7 +5,7 @@ import { responses } from "@/app/lib/api/response";
 
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 
-export async function GET() {
+export const GET = async () => {
   try {
     return responses.goneResponse(
       "This endpoint has been deprecated. Please use the new endpoint /api/packages/<package-name>",
@@ -19,4 +19,4 @@ export async function GET() {
   } catch (error) {
     return responses.internalServerErrorResponse("this endpoint is not available");
   }
-}
+};

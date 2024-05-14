@@ -12,7 +12,7 @@ import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import {
   getResponseCountBySurveySharingKeyAction,
   getSummaryBySurveySharingKeyAction,
-} from "@/app/share/[sharingKey]/action";
+} from "@/app/share/[sharingKey]/actions";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 

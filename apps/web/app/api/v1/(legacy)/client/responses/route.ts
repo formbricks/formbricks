@@ -11,11 +11,11 @@ import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, ZResponseLegacyInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(request: Request): Promise<Response> {
+export const POST = async (request: Request): Promise<Response> => {
   const responseInput = await request.json();
   if (responseInput.personId === "legacy") {
     responseInput.personId = null;
@@ -106,4 +106,4 @@ export async function POST(request: Request): Promise<Response> {
   });
 
   return responses.successResponse({ id: response.id }, true);
-}
+};

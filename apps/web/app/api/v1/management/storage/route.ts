@@ -13,7 +13,7 @@ import { getSignedUrlForPublicFile } from "./lib/getSignedUrl";
 // use this to upload files for a specific resource, e.g. a user profile picture or a survey
 // this api endpoint will return a signed url for uploading the file to s3 and another url for uploading file to the local storage
 
-export async function POST(req: NextRequest): Promise<Response> {
+export const POST = async (req: NextRequest): Promise<Response> => {
   const { fileName, fileType, environmentId, allowedFileExtensions } = await req.json();
 
   if (!fileName) {
@@ -51,4 +51,4 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   return await getSignedUrlForPublicFile(fileName, environmentId, fileType);
-}
+};

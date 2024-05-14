@@ -7,7 +7,7 @@ import {
 import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { QuestionFilterComboBox } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
 import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
-import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/action";
+import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
 import clsx from "clsx";
 import { isEqual } from "lodash";
 import { TrashIcon } from "lucide-react";

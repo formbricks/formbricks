@@ -1,7 +1,7 @@
 import { prisma } from "@formbricks/database";
 import { sendForgotPasswordEmail } from "@formbricks/email";
 
-export async function POST(request: Request) {
+export const POST = async (request: Request) => {
   const { email } = await request.json();
 
   try {
@@ -26,4 +26,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+};

@@ -18,11 +18,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(request: Request, context: Context): Promise<Response> {
+export const POST = async (request: Request, context: Context): Promise<Response> => {
   const { environmentId } = context.params;
   const environmentIdValidation = ZId.safeParse(environmentId);
 
@@ -124,4 +124,4 @@ export async function POST(request: Request, context: Context): Promise<Response
   });
 
   return responses.successResponse({ id: response.id }, true);
-}
+};

@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { CRON_SECRET } from "@formbricks/lib/constants";
 
-export async function POST() {
+export const POST = async () => {
   const headersList = headers();
   const apiKey = headersList.get("x-api-key");
 
@@ -67,4 +67,4 @@ export async function POST() {
   return responses.successResponse({
     message: `Updated ${surveysToClose.length} surveys to completed and ${scheduledSurveys.length} surveys to inProgress.`,
   });
-}
+};
