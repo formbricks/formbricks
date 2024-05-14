@@ -1,9 +1,10 @@
 "use client";
 
+import { DndContext } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
 
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -19,7 +20,7 @@ import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
-import { isLabelValidForAllLanguages } from "../lib/validation";
+import { SelectQuestionChoice } from "./SelectQuestionChoice";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
@@ -237,74 +238,56 @@ export const MultipleChoiceQuestionForm = ({
 
       <div className="mt-3">
         <Label htmlFor="choices">Options</Label>
-        <div className="mt-2 -space-y-2" id="choices">
-          {question.choices &&
-            question.choices.map((choice, choiceIdx) => (
-              <div className="inline-flex w-full items-center">
-                <div className="flex w-full space-x-2">
-                  <QuestionFormInput
-                    key={choice.id}
-                    id={`choice-${choiceIdx}`}
-                    placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
-                    localSurvey={localSurvey}
-                    questionIdx={questionIdx}
-                    value={choice.label}
-                    onBlur={() => {
-                      const duplicateLabel = findDuplicateLabel();
-                      if (duplicateLabel) {
-                        toast.error("Duplicate choices");
-                        setisInvalidValue(duplicateLabel);
-                      } else {
-                        setisInvalidValue(null);
-                      }
-                    }}
-                    updateChoice={updateChoice}
-                    selectedLanguageCode={selectedLanguageCode}
-                    setSelectedLanguageCode={setSelectedLanguageCode}
-                    isInvalid={
-                      isInvalid &&
-                      !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
-                    }
-                    className={`${choice.id === "other" ? "border border-dashed" : ""}`}
-                  />
-                  {choice.id === "other" && (
-                    <QuestionFormInput
-                      id="otherOptionPlaceholder"
-                      localSurvey={localSurvey}
-                      placeholder={"Please specify"}
+        <div className="mt-2" id="choices">
+          <DndContext
+            onDragEnd={(event) => {
+              const { active, over } = event;
+
+              if (active.id === "other" || over?.id === "other") {
+                return;
+              }
+
+              if (!active || !over) {
+                return;
+              }
+
+              const activeIndex = question.choices.findIndex((choice) => choice.id === active.id);
+              const overIndex = question.choices.findIndex((choice) => choice.id === over.id);
+
+              const newChoices = [...question.choices];
+
+              newChoices.splice(activeIndex, 1);
+              newChoices.splice(overIndex, 0, question.choices[activeIndex]);
+
+              updateQuestion(questionIdx, { choices: newChoices });
+            }}>
+            <SortableContext items={question.choices} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col">
+                {question.choices &&
+                  question.choices.map((choice, choiceIdx) => (
+                    <SelectQuestionChoice
+                      key={choice.id}
+                      choice={choice}
+                      choiceIdx={choiceIdx}
                       questionIdx={questionIdx}
-                      value={
-                        question.otherOptionPlaceholder
-                          ? question.otherOptionPlaceholder
-                          : createI18nString("Please specify", surveyLanguageCodes)
-                      }
-                      updateQuestion={updateQuestion}
+                      updateChoice={updateChoice}
+                      deleteChoice={deleteChoice}
+                      addChoice={addChoice}
+                      setisInvalidValue={setisInvalidValue}
+                      isInvalid={isInvalid}
+                      localSurvey={localSurvey}
                       selectedLanguageCode={selectedLanguageCode}
                       setSelectedLanguageCode={setSelectedLanguageCode}
-                      isInvalid={
-                        isInvalid &&
-                        !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
-                      }
-                      className="border border-dashed"
+                      surveyLanguages={surveyLanguages}
+                      findDuplicateLabel={findDuplicateLabel}
+                      question={question}
+                      updateQuestion={updateQuestion}
+                      surveyLanguageCodes={surveyLanguageCodes}
                     />
-                  )}
-                </div>
-                {question.choices && question.choices.length > 2 && (
-                  <TrashIcon
-                    className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                    onClick={() => deleteChoice(choiceIdx)}
-                  />
-                )}
-                <div className="ml-2 h-4 w-4">
-                  {choice.id !== "other" && (
-                    <PlusIcon
-                      className="h-full w-full cursor-pointer text-slate-400 hover:text-slate-500"
-                      onClick={() => addChoice(choiceIdx)}
-                    />
-                  )}
-                </div>
+                  ))}
               </div>
-            ))}
+            </SortableContext>
+          </DndContext>
           <div className="flex items-center justify-between space-x-2">
             {question.choices.filter((c) => c.id === "other").length === 0 && (
               <Button size="sm" variant="minimal" type="button" onClick={() => addOther()}>

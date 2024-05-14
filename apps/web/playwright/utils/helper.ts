@@ -145,11 +145,13 @@ export const createSurvey = async (
   await page.getByText("Welcome CardOn").click();
 
   // Open Text Question
-  await page.getByRole("button", { name: "1 What would you like to know" }).click();
+  await page.getByRole("main").getByText("What would you like to know?").click();
+
   await page.getByLabel("Question").fill(params.openTextQuestion.question);
   await page.getByLabel("Description").fill(params.openTextQuestion.description);
   await page.getByLabel("Placeholder").fill(params.openTextQuestion.placeholder);
-  await page.getByRole("button", { name: params.openTextQuestion.question }).click();
+
+  await page.locator("p").filter({ hasText: params.openTextQuestion.question }).click();
 
   // Single Select Question
   await page

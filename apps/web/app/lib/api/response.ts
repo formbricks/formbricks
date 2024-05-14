@@ -14,7 +14,8 @@ export interface ApiErrorResponse {
     | "internal_server_error"
     | "unauthorized"
     | "method_not_allowed"
-    | "not_authenticated";
+    | "not_authenticated"
+    | "forbidden";
   message: string;
   details: {
     [key: string]: string | string[] | number | number[] | boolean | boolean[];
@@ -138,6 +139,23 @@ const unauthorizedResponse = (cors: boolean = false) =>
     }
   );
 
+const forbiddenResponse = (
+  message: string,
+  cors: boolean = false,
+  details: ApiErrorResponse["details"] = {}
+) =>
+  Response.json(
+    {
+      code: "forbidden",
+      message,
+      details,
+    } as ApiErrorResponse,
+    {
+      status: 403,
+      ...(cors && { headers: corsHeaders }),
+    }
+  );
+
 const successResponse = (data: Object, cors: boolean = false, cache: string = "private, no-store") => {
   const headers = {
     ...(cors && corsHeaders),
@@ -212,4 +230,5 @@ export const responses = {
   notFoundResponse,
   successResponse,
   tooManyRequestsResponse,
+  forbiddenResponse,
 };
