@@ -22,6 +22,10 @@ x-environment: &environment
     # You can use: $(openssl rand -hex 32) to generate one
     ENCRYPTION_KEY:
 
+    # Postgres DB Super User Password
+    # Replace the below with your own secure password
+    POSTGRES_PASSWORD: postgres
+
     ############################################# OPTIONAL (ENTERPRISE EDITION) #############################################
 
     # Enterprise License Key (More info at: https://formbricks.com/docs/self-hosting/license)
