@@ -268,7 +268,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                   </div>
                 )}
 
-                <Link href={`/environments/${environmentId}/settings/language`} target="_blank">
+                <Link href={`/environments/${environmentId}/product/languages`} target="_blank">
                   <Button className="mt-2" variant="secondary" size="sm">
                     Manage Languages <ArrowUpRight className="ml-2 h-4 w-4" />
                   </Button>

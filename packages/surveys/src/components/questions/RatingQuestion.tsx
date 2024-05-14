@@ -63,12 +63,14 @@ export const RatingQuestion = ({
     onChange({ [question.id]: number });
     const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
-    onSubmit(
-      {
-        [question.id]: number,
-      },
-      updatedTtcObj
-    );
+    setTimeout(() => {
+      onSubmit(
+        {
+          [question.id]: number,
+        },
+        updatedTtcObj
+      );
+    }, 250);
   };
 
   const HiddenRadioInput = ({ number, id }: { number: number; id?: string }) => (
@@ -244,7 +246,7 @@ interface RatingSmileyProps {
   range: number;
 }
 
-function RatingSmiley({ active, idx, range }: RatingSmileyProps): JSX.Element {
+const RatingSmiley = ({ active, idx, range }: RatingSmileyProps): JSX.Element => {
   const activeColor = "fill-rating-fill";
   const inactiveColor = "fill-none";
   let icons = [
@@ -265,4 +267,4 @@ function RatingSmiley({ active, idx, range }: RatingSmileyProps): JSX.Element {
   else if (range == 4) icons = [icons[4], icons[5], icons[6], icons[7]];
   else if (range == 3) icons = [icons[4], icons[5], icons[7]];
   return icons[idx];
-}
+};

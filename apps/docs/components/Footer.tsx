@@ -3,9 +3,11 @@
 import { navigation } from "@/lib/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaDiscord, FaGithub, FaXTwitter } from "react-icons/fa6";
 
 import { Button } from "./Button";
+import { DiscordIcon } from "./icons/DiscordIcon";
+import { GithubIcon } from "./icons/GithubIcon";
+import { TwitterIcon } from "./icons/TwitterIcon";
 
 function PageLink({
   label,
@@ -98,13 +100,13 @@ function SmallPrint() {
         Formbricks GmbH &copy; {currentYear}. All rights reserved.
       </p>
       <div className="flex gap-4">
-        <SocialLink href="https://twitter.com/formbricks" icon={FaXTwitter}>
+        <SocialLink href="https://twitter.com/formbricks" icon={TwitterIcon}>
           Follow us on Twitter
         </SocialLink>
-        <SocialLink href="https://github.com/formbricks/formbricks" icon={FaGithub}>
+        <SocialLink href="https://github.com/formbricks/formbricks" icon={GithubIcon}>
           Follow us on GitHub
         </SocialLink>
-        <SocialLink href="https://formbricks.com/discord" icon={FaDiscord}>
+        <SocialLink href="https://formbricks.com/discord" icon={DiscordIcon}>
           Join our Discord server
         </SocialLink>
       </div>

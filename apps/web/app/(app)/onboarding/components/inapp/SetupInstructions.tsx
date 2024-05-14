@@ -3,15 +3,15 @@
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { IoLogoHtml5, IoLogoNpm } from "react-icons/io5";
 
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
 import CodeBlock from "@formbricks/ui/CodeBlock";
+import { Html5Icon, NpmIcon } from "@formbricks/ui/icons";
 
 const tabs = [
-  { id: "html", label: "HTML", icon: <IoLogoHtml5 /> },
-  { id: "npm", label: "NPM", icon: <IoLogoNpm /> },
+  { id: "html", label: "HTML", icon: <Html5Icon /> },
+  { id: "npm", label: "NPM", icon: <NpmIcon /> },
 ];
 
 interface SetupInstructionsOnboardingProps {

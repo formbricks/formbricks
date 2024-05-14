@@ -34,7 +34,7 @@ import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { anySurveyHasFilters, buildOrderByClause, buildWhereClause, transformPrismaSurvey } from "./util";
+import { anySurveyHasFilters, buildOrderByClause, buildWhereClause, transformPrismaSurvey } from "./utils";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;

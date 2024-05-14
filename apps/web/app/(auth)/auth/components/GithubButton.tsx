@@ -1,9 +1,9 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { FaGithub } from "react-icons/fa";
 
 import { Button } from "@formbricks/ui/Button";
+import { GithubIcon } from "@formbricks/ui/icons";
 
 export const GithubButton = ({
   text = "Continue with Github",
@@ -22,7 +22,7 @@ export const GithubButton = ({
   return (
     <Button
       type="button"
-      EndIcon={FaGithub}
+      EndIcon={GithubIcon}
       startIconClassName="ml-2"
       onClick={handleLogin}
       variant="secondary"

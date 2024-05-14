@@ -30,16 +30,6 @@ import { ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { displayCache } from "../display/cache";
 import { deleteDisplayByResponseId, getDisplayCountBySurveyId } from "../display/service";
 import { createPerson, getPerson, getPersonByUserId } from "../person/service";
-import {
-  buildWhereClause,
-  calculateTtcTotal,
-  extractSurveyDetails,
-  getQuestionWiseSummary,
-  getResponsesFileName,
-  getResponsesJson,
-  getSurveySummaryDropOff,
-  getSurveySummaryMeta,
-} from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
 import { putFile } from "../storage/service";
@@ -49,6 +39,16 @@ import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
 import { checkForRecallInHeadline } from "../utils/recall";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
+import {
+  buildWhereClause,
+  calculateTtcTotal,
+  extractSurveyDetails,
+  getQuestionWiseSummary,
+  getResponsesFileName,
+  getResponsesJson,
+  getSurveySummaryDropOff,
+  getSurveySummaryMeta,
+} from "./utils";
 
 const RESPONSES_PER_PAGE = 10;
 
