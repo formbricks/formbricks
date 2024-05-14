@@ -14,10 +14,10 @@ import {
 } from "@formbricks/types/attributeClasses";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 
 import { cache } from "../cache";
-import { ITEMS_PER_PAGE } from "../constants";
+import { ITEMS_PER_PAGE, MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { attributeClassCache } from "./cache";
 
@@ -150,6 +150,14 @@ export const createAttributeClass = async (
 ): Promise<TAttributeClass | null> => {
   validateInputs([environmentId, ZId], [name, ZString], [type, ZAttributeClassType]);
 
+  const attributeClassesCount = await getAttributeClassesCount(environmentId);
+
+  if (attributeClassesCount >= MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
+    throw new OperationNotAllowedError(
+      `Maximum number of attribute classes (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) reached for environment ${environmentId}`
+    );
+  }
+
   try {
     const attributeClass = await prisma.attributeClass.create({
       data: {
@@ -202,3 +210,27 @@ export const deleteAttributeClass = async (attributeClassId: string): Promise<TA
     throw error;
   }
 };
+
+export const getAttributeClassesCount = async (environmentId: string): Promise<number> =>
+  cache(
+    async () => {
+      validateInputs([environmentId, ZId]);
+
+      try {
+        return prisma.attributeClass.count({
+          where: {
+            environmentId,
+          },
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+        throw error;
+      }
+    },
+    [`getAttributeClassesCount-${environmentId}`],
+    {
+      tags: [attributeClassCache.tag.byEnvironmentId(environmentId)],
+    }
+  )();
