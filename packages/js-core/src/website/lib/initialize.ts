@@ -84,11 +84,6 @@ export const initialize = async (
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
 
-  // let updatedAttributes: TPersonAttributes | null = null;
-  // if (configInput.attributes) {
-  //   updatedAttributes = { ...configInput.attributes };
-  // }
-
   if (
     existingConfig &&
     existingConfig.state &&
