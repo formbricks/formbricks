@@ -15,7 +15,7 @@ import { PageHeader } from "@formbricks/ui/PageHeader";
 import { SettingsCard } from "../../settings/components/SettingsCard";
 import { ApiKeyList } from "./components/ApiKeyList";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const environment = await getEnvironment(params.environmentId);
   const team = await getTeamByEnvironmentId(params.environmentId);
   const session = await getServerSession(authOptions);
@@ -61,4 +61,6 @@ export default async function Page({ params }) {
   ) : (
     <ErrorComponent />
   );
-}
+};
+
+export default Page;

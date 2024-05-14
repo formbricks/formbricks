@@ -14,7 +14,7 @@ import { DeleteAccount } from "./components/DeleteAccount";
 import { EditAvatar } from "./components/EditAvatar";
 import { EditName } from "./components/EditName";
 
-export default async function Page({ params }: { params: { environmentId: string } }) {
+const Page = async ({ params }: { params: { environmentId: string } }) => {
   const { environmentId } = params;
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -51,4 +51,6 @@ export default async function Page({ params }: { params: { environmentId: string
       )}
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

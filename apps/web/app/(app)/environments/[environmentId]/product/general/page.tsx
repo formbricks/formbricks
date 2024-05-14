@@ -18,7 +18,7 @@ import { DeleteProduct } from "./components/DeleteProduct";
 import { EditProductName } from "./components/EditProductName";
 import { EditWaitingTime } from "./components/EditWaitingTime";
 
-export default async function Page({ params }: { params: { environmentId: string } }) {
+const Page = async ({ params }: { params: { environmentId: string } }) => {
   const [, product, session, team] = await Promise.all([
     getEnvironment(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
@@ -76,4 +76,6 @@ export default async function Page({ params }: { params: { environmentId: string
       <SettingsId title="Product" id={product.id}></SettingsId>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

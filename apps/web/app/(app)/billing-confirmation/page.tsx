@@ -4,7 +4,7 @@ import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 
 export const dynamic = "force-dynamic";
 
-export default function Page({ searchParams }) {
+const Page = ({ searchParams }) => {
   const { environmentId } = searchParams;
 
   return (
@@ -12,4 +12,6 @@ export default function Page({ searchParams }) {
       <ConfirmationPage environmentId={environmentId?.toString()} />
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

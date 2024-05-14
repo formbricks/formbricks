@@ -17,7 +17,7 @@ import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const [environment, environmentTags, product, session, team, person, attributes] = await Promise.all([
     getEnvironment(params.environmentId),
     getTagsByEnvironmentId(params.environmentId),
@@ -73,4 +73,6 @@ export default async function Page({ params }) {
       </section>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

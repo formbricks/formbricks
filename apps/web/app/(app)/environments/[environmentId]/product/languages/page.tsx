@@ -9,7 +9,7 @@ import { getTeam } from "@formbricks/lib/team/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Page({ params }: { params: { environmentId: string } }) {
+const Page = async ({ params }: { params: { environmentId: string } }) => {
   const product = await getProductByEnvironmentId(params.environmentId);
 
   if (!product) {
@@ -44,4 +44,6 @@ export default async function Page({ params }: { params: { environmentId: string
       </SettingsCard>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

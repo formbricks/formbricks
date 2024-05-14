@@ -13,7 +13,7 @@ import { SettingsCard } from "../../settings/components/SettingsCard";
 import { EnvironmentIdField } from "./components/EnvironmentIdField";
 import { SetupInstructions } from "./components/SetupInstructions";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const [environment, team] = await Promise.all([
     getEnvironment(params.environmentId),
     getTeamByEnvironmentId(params.environmentId),
@@ -63,4 +63,6 @@ export default async function Page({ params }) {
       </div>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

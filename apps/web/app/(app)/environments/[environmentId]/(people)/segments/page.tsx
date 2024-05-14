@@ -15,7 +15,7 @@ import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const [environment, segments, attributeClasses, actionClassesFromServer, team] = await Promise.all([
     getEnvironment(params.environmentId),
     getSegments(params.environmentId),
@@ -90,4 +90,6 @@ export default async function Page({ params }) {
       )}
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

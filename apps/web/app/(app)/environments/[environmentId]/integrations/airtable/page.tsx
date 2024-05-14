@@ -12,7 +12,7 @@ import { GoBackButton } from "@formbricks/ui/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const enabled = !!AIRTABLE_CLIENT_ID;
   const [surveys, integrations, environment] = await Promise.all([
     getSurveys(params.environmentId),
@@ -53,4 +53,6 @@ export default async function Page({ params }) {
       </div>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

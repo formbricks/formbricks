@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: "Actions",
 };
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const [actionClasses, team] = await Promise.all([
     getActionClasses(params.environmentId),
     getTeamByEnvironmentId(params.environmentId),
@@ -47,4 +47,6 @@ export default async function Page({ params }) {
       </ActionClassesTable>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

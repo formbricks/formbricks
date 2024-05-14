@@ -12,7 +12,7 @@ import { AuthorizationError } from "@formbricks/types/errors";
 import { DevEnvironmentBanner } from "@formbricks/ui/DevEnvironmentBanner";
 import { ToasterClient } from "@formbricks/ui/ToasterClient";
 
-export default async function EnvLayout({ children, params }) {
+const EnvLayout = async ({ children, params }) => {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);
@@ -54,4 +54,6 @@ export default async function EnvLayout({ children, params }) {
       </ResponseFilterProvider>
     </>
   );
-}
+};
+
+export default EnvLayout;

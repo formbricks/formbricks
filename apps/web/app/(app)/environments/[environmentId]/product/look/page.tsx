@@ -22,7 +22,7 @@ import { EditFormbricksBranding } from "./components/EditBranding";
 import { EditPlacement } from "./components/EditPlacement";
 import { ThemeStyling } from "./components/ThemeStyling";
 
-export default async function Page({ params }: { params: { environmentId: string } }) {
+const Page = async ({ params }: { params: { environmentId: string } }) => {
   const [session, team, product] = await Promise.all([
     getServerSession(authOptions),
     getTeamByEnvironmentId(params.environmentId),
@@ -97,4 +97,6 @@ export default async function Page({ params }: { params: { environmentId: string
       </SettingsCard>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

@@ -13,7 +13,7 @@ import { Button } from "@formbricks/ui/Button";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function EnterpriseLicensePage({ params }) {
+const Page = async ({ params }) => {
   if (IS_FORMBRICKS_CLOUD) {
     notFound();
   }
@@ -187,4 +187,6 @@ export default async function EnterpriseLicensePage({ params }) {
       )}
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

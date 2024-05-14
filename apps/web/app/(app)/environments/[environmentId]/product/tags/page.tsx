@@ -16,7 +16,7 @@ import { PageHeader } from "@formbricks/ui/PageHeader";
 
 import { EditTagsWrapper } from "./components/EditTagsWrapper";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const environment = await getEnvironment(params.environmentId);
   if (!environment) {
     throw new Error("Environment not found");
@@ -63,4 +63,6 @@ export default async function Page({ params }) {
   ) : (
     <ErrorComponent />
   );
-}
+};
+
+export default Page;

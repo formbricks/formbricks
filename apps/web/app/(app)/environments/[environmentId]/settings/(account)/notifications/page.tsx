@@ -79,7 +79,7 @@ async function getMemberships(userId: string): Promise<Membership[]> {
   return memberships;
 }
 
-export default async function Page({ params, searchParams }) {
+const Page = async ({ params, searchParams }) => {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Unauthorized");
@@ -120,4 +120,6 @@ export default async function Page({ params, searchParams }) {
       </SettingsCard>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

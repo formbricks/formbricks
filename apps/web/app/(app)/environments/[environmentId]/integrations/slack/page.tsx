@@ -11,7 +11,7 @@ import { GoBackButton } from "@formbricks/ui/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const isEnabled = !!(SLACK_CLIENT_ID && SLACK_CLIENT_SECRET);
 
   const [surveys, slackIntegration, environment] = await Promise.all([
@@ -45,4 +45,6 @@ export default async function Page({ params }) {
       </div>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

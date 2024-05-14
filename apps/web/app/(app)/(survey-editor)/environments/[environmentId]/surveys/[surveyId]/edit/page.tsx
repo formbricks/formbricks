@@ -24,7 +24,7 @@ export const generateMetadata = async ({ params }) => {
   };
 };
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const [
     survey,
     product,
@@ -90,4 +90,6 @@ export default async function Page({ params }) {
       isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
     />
   );
-}
+};
+
+export default Page;

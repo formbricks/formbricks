@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: "Your Surveys",
 };
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const session = await getServerSession(authOptions);
   const product = await getProductByEnvironmentId(params.environmentId);
   const team = await getTeamByEnvironmentId(params.environmentId);
@@ -83,4 +83,6 @@ export default async function Page({ params }) {
       )}
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

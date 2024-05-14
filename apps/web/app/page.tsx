@@ -8,7 +8,7 @@ import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service
 import { getTeamsByUserId } from "@formbricks/lib/team/service";
 import { ClientLogout } from "@formbricks/ui/ClientLogout";
 
-export default async function Page() {
+const Page = async () => {
   const session: Session | null = await getServerSession(authOptions);
 
   if (!session) {
@@ -45,4 +45,6 @@ export default async function Page() {
   }
 
   return redirect(`/environments/${environment.id}`);
-}
+};
+
+export default Page;

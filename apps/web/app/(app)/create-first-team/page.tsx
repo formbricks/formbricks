@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 
-export default async function Page() {
+const Page = async () => {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -12,4 +12,6 @@ export default async function Page() {
   }
 
   return <CreateFirstTeam />;
-}
+};
+
+export default Page;

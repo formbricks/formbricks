@@ -18,7 +18,7 @@ import { PageHeader } from "@formbricks/ui/PageHeader";
 
 import { PricingTable } from "./components/PricingTable";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const team = await getTeamByEnvironmentId(params.environmentId);
   if (!team) {
     throw new Error("Team not found");
@@ -56,4 +56,6 @@ export default async function Page({ params }) {
       />
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

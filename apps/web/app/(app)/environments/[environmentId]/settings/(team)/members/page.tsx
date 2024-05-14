@@ -43,7 +43,7 @@ const MembersLoading = () => (
   </div>
 );
 
-export default async function Page({ params }: { params: { environmentId: string } }) {
+const Page = async ({ params }: { params: { environmentId: string } }) => {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Unauthenticated");
@@ -119,4 +119,6 @@ export default async function Page({ params }: { params: { environmentId: string
       <SettingsId title="Team" id={team.id}></SettingsId>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

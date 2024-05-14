@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { ToasterClient } from "@formbricks/ui/ToasterClient";
 
-export default async function EnvironmentLayout({ children }) {
+const EnvironmentLayout = async ({ children }) => {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);
@@ -18,4 +18,6 @@ export default async function EnvironmentLayout({ children }) {
       {children}
     </div>
   );
-}
+};
+
+export default EnvironmentLayout;

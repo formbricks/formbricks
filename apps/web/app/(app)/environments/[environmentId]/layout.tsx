@@ -12,7 +12,7 @@ import { ToasterClient } from "@formbricks/ui/ToasterClient";
 import { FormbricksClient } from "../../components/FormbricksClient";
 import { PosthogIdentify } from "./components/PosthogIdentify";
 
-export default async function EnvLayout({ children, params }) {
+const EnvLayout = async ({ children, params }) => {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);
@@ -47,4 +47,6 @@ export default async function EnvLayout({ children, params }) {
       </ResponseFilterProvider>
     </>
   );
-}
+};
+
+export default EnvLayout;

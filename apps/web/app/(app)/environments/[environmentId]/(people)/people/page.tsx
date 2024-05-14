@@ -13,13 +13,13 @@ import { Pagination } from "@formbricks/ui/Pagination";
 
 import { PersonCard } from "./components/PersonCard";
 
-export default async function Page({
+const Page = async ({
   params,
   searchParams,
 }: {
   params: { environmentId: string };
   searchParams: { [key: string]: string | string[] | undefined };
-}) {
+}) => {
   const pageNumber = searchParams.page ? parseInt(searchParams.page as string) : 1;
   const [environment, totalPeople] = await Promise.all([
     getEnvironment(params.environmentId),
@@ -85,4 +85,6 @@ export default async function Page({
       )}
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

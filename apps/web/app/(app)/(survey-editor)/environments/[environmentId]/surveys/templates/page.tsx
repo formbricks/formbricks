@@ -6,7 +6,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 
 import { TemplateContainerWithPreview } from "./components/TemplateContainer";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const session = await getServerSession(authOptions);
   const environmentId = params.environmentId;
 
@@ -35,4 +35,6 @@ export default async function Page({ params }) {
       product={product}
     />
   );
-}
+};
+
+export default Page;

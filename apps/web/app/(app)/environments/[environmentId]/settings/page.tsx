@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 
-export default function ProfileSettingsPage({ params }) {
+const Page = ({ params }) => {
   return redirect(`/environments/${params.environmentId}/settings/profile`);
-}
+};
+
+export default Page;

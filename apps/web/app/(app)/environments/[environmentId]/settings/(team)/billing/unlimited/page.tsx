@@ -5,7 +5,7 @@ import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
 import { upgradePlanAction } from "../actions";
 
-export default async function UnlimitedPage({ params }) {
+const Page = async ({ params }) => {
   const team = await getTeamByEnvironmentId(params.environmentId);
   if (!team) {
     throw new Error("Team not found");
@@ -26,4 +26,6 @@ export default async function UnlimitedPage({ params }) {
   } else {
     throw new Error("Something went wrong");
   }
-}
+};
+
+export default Page;
