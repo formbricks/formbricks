@@ -7,7 +7,9 @@ interface TabBarProps {
   activeId: string;
   setActiveId: (id: string) => void;
   className?: string;
+  activeTabClassName?: string;
   tabStyle?: "bar" | "button";
+  disabled?: boolean;
 }
 
 export const TabBar: React.FC<TabBarProps> = ({
@@ -15,7 +17,9 @@ export const TabBar: React.FC<TabBarProps> = ({
   activeId,
   setActiveId,
   className = "",
+  activeTabClassName,
   tabStyle = "bar",
+  disabled = false,
 }) => {
   const Nav = () => {
     if (tabStyle === "bar") {
@@ -27,7 +31,7 @@ export const TabBar: React.FC<TabBarProps> = ({
               onClick={() => setActiveId(tab.id)}
               className={cn(
                 tab.id === activeId
-                  ? " border-brand-dark border-b-2 font-semibold text-slate-900"
+                  ? `border-brand-dark border-b-2 font-semibold text-slate-900 ${activeTabClassName}`
                   : "text-slate-500 hover:text-slate-700",
                 "flex h-full items-center px-3 text-sm font-medium"
               )}
@@ -42,16 +46,23 @@ export const TabBar: React.FC<TabBarProps> = ({
 
     if (tabStyle === "button") {
       return (
-        <nav className="flex h-full w-full flex-1 items-center space-x-4" aria-label="Tabs">
+        <nav
+          className={cn(
+            "flex h-full w-full flex-1 items-center space-x-4",
+            disabled ? "cursor-not-allowed opacity-50" : ""
+          )}
+          aria-label="Tabs">
           {tabs.map((tab) => (
             <div className="flex h-full flex-1 justify-center px-3 py-2" key={tab.id}>
               <button
-                onClick={() => setActiveId(tab.id)}
+                onClick={() => !disabled && setActiveId(tab.id)}
+                type="button"
                 className={cn(
                   tab.id === activeId
-                    ? "bg-white font-semibold text-slate-900"
-                    : "text-slate-500 hover:text-slate-700",
-                  "h-full w-full items-center rounded-lg text-center text-sm font-medium"
+                    ? `bg-white font-semibold text-slate-900 ${activeTabClassName}`
+                    : "text-slate-500",
+                  "h-full w-full items-center rounded-lg text-center text-sm font-medium",
+                  disabled ? "cursor-not-allowed" : "hover:text-slate-700"
                 )}
                 aria-current={tab.id === activeId ? "page" : undefined}>
                 {tab.label}

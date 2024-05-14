@@ -96,6 +96,11 @@ export type AttributeAlreadyExistsError = {
   message: string;
 };
 
+export type InvalidCodeError = {
+  code: "invalid_code";
+  message: string;
+};
+
 const logger = Logger.getInstance();
 
 export class ErrorHandler {

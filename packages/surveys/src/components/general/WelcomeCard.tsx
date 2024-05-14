@@ -114,7 +114,7 @@ export const WelcomeCard = ({
         </div>
       </ScrollableContainer>
 
-      <div className="mx-6 mt-4 flex  gap-4">
+      <div className="mx-6 mt-4 flex gap-4 py-4">
         <SubmitButton
           buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
           isLastQuestion={false}

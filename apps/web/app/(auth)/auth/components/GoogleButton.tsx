@@ -1,9 +1,9 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { FaGoogle } from "react-icons/fa";
 
 import { Button } from "@formbricks/ui/Button";
+import { GoogleIcon } from "@formbricks/ui/icons";
 
 export const GoogleButton = ({
   text = "Continue with Google",
@@ -22,7 +22,7 @@ export const GoogleButton = ({
   return (
     <Button
       type="button"
-      EndIcon={FaGoogle}
+      EndIcon={GoogleIcon}
       startIconClassName="ml-3"
       onClick={handleLogin}
       variant="secondary"

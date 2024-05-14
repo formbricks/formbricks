@@ -37,6 +37,7 @@ interface RatingQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
+  currentQuestionId: string;
 }
 
 export const RatingQuestion = ({
@@ -50,23 +51,26 @@ export const RatingQuestion = ({
   languageCode,
   ttc,
   setTtc,
+  currentQuestionId,
 }: RatingQuestionProps) => {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
 
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const handleSelect = (number: number) => {
     onChange({ [question.id]: number });
     const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
-    onSubmit(
-      {
-        [question.id]: number,
-      },
-      updatedTtcObj
-    );
+    setTimeout(() => {
+      onSubmit(
+        {
+          [question.id]: number,
+        },
+        updatedTtcObj
+      );
+    }, 250);
   };
 
   const HiddenRadioInput = ({ number, id }: { number: number; id?: string }) => (
@@ -76,7 +80,7 @@ export const RatingQuestion = ({
       name="rating"
       value={number}
       className="invisible absolute left-0 h-full w-full cursor-pointer opacity-0"
-      onChange={() => handleSelect(number)}
+      onClick={() => handleSelect(number)}
       required={question.required}
       checked={value === number}
     />
@@ -224,7 +228,7 @@ export const RatingQuestion = ({
           />
         )}
         <div></div>
-        {(!question.required || value) && (
+        {!question.required && (
           <SubmitButton
             tabIndex={question.range + 1}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
@@ -242,7 +246,7 @@ interface RatingSmileyProps {
   range: number;
 }
 
-function RatingSmiley({ active, idx, range }: RatingSmileyProps): JSX.Element {
+const RatingSmiley = ({ active, idx, range }: RatingSmileyProps): JSX.Element => {
   const activeColor = "fill-rating-fill";
   const inactiveColor = "fill-none";
   let icons = [
@@ -263,4 +267,4 @@ function RatingSmiley({ active, idx, range }: RatingSmileyProps): JSX.Element {
   else if (range == 4) icons = [icons[4], icons[5], icons[6], icons[7]];
   else if (range == 3) icons = [icons[4], icons[5], icons[7]];
   return icons[idx];
-}
+};

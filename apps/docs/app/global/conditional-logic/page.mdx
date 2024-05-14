@@ -1,0 +1,136 @@
+import { MdxImage } from "@/components/MdxImage";
+
+import StepEight from "./images/StepEight.webp";
+import StepFive from "./images/StepFive.webp";
+import StepFour from "./images/StepFour.webp";
+import StepOne from "./images/StepOne.webp";
+import StepSeven from "./images/StepSeven.webp";
+import StepSix from "./images/StepSix.webp";
+import StepThree from "./images/StepThree.webp";
+import StepTwo from "./images/StepTwo.webp";
+
+export const metadata = {
+  title: "Conditional Logic in Formbricks Surveys",
+  description:
+    "Enhance your surveys with Conditional Logic to create a dynamic and responsive survey experience. Guide respondents through different paths based on their answers, ensuring each survey is tailored to the user’s responses. This feature is applicable for all kinds of surveys!",
+};
+
+# Conditional Logic
+
+With Formbricks, enhance your surveys with Conditional Logic to create a dynamic and responsive survey experience. This feature allows you to guide respondents through different paths based on their answers, ensuring each survey is tailored to the user’s responses. This feature is applicable for all kinds of surveys!
+
+### Setting Up Conditional Logic
+
+Conditional Logic can be applied to any question within your survey to direct the flow based on specific responses.
+
+1. **Create or Edit a Question**: Start by adding a new question or editing an existing one within your survey.
+
+<MdxImage
+  src={StepOne}
+  alt="Choose a link survey template"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+2. **Access Advanced Settings**: Click on **Advanced Settings** beneath the question setup area to access additional configuration options.
+
+<MdxImage
+  src={StepTwo}
+  alt="Choose a link survey template"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+3. **Configure Logic Jumps**: Choose **Logic Jumps** to set up conditions that dictate the survey's progression based on responses.
+
+<MdxImage
+  src={StepThree}
+  alt="Choose a link survey template"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+### Configuring Logic Conditions
+
+Enhance survey interactivity by setting up triggers based on respondent answers. You can specify different paths for each type of response:
+
+**General Conditions (Available in All Question Types):**
+
+- **Answer Submitted/Skipped**: Initiate different survey paths based on whether a question is answered or skipped.
+  <MdxImage
+    src={StepFour}
+    alt="Choose a link survey template"
+    quality="100"
+    className="max-w-full rounded-lg sm:max-w-3xl "
+  />
+
+**Choice-Based Conditions:**
+
+<MdxImage
+  src={StepFive}
+  alt="Choose a link survey template"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+- **One of Multiple Choice Values**: Activate if the answer is among selected options. (Single select and Multi select)
+- **Equals: Exactly the Selected Values**: Initiate a jump if the response matches exactly the selected values provided in the options. (Single select and Multi select)
+- **Includes All Selected Values**: Activate if all selected values match those chosen by the survey creator. (Multi select only)
+
+**Numeric Conditions (Rating & NPS Questions Only)**
+
+<MdxImage
+  src={StepSix}
+  alt="Choose a link survey template"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+- **Value Comparisons**: Initiate jumps based on numerical criteria—equals, does not equal, less than, less than or equal to, greater than, or greater than equal to.
+
+**Matrix-Specific Conditions**
+
+<MdxImage
+  src={StepSeven}
+  alt="Choose a link survey template"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+- **Submission Completeness**: Initiate based on whether the response is completely or partially submitted.
+
+### **Specifying Survey Paths**
+
+After setting conditions, you specify the paths to take when those conditions are met:
+
+- **Jump to a Specific Question**: Direct the respondent to a particular question elsewhere in the survey.
+- **Jump to Survey End**: Conclude the survey early based on the respondent's answers.
+
+<MdxImage
+  src={StepEight}
+  alt="Choose a link survey template"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+### **Multiple Logic Jumps**
+
+You can add multiple Logic Jumps to a single question. These jumps work in an **OR** fashion, meaning any of the conditions can initiate the specified survey path. The logic jumps are evaluated in the **order they are created**, and the first true condition will take precedence.
+
+---
+
+### **Example Scenario**
+
+Suppose you’re conducting a survey about technology usage:
+
+1. **Question (Single Select)**: What devices do you use daily?
+2. **Answers**: Smartphone, Laptop, Tablet, None
+
+**Logic Jump Setup**:
+
+- If the respondent selects **None**, jump to the end of the survey.
+- If the respondent selects **Smartphone**, jump to a question specific to smartphone usage.
+
+This setup allows for a tailored survey experience that adapts to the respondent's input, making your data collection more targeted and efficient.
+
+That’s it! Now go and configure your surveys to bring down your survey fatigue to 0% and ask respondents through customized paths. Enhance their relevance and engagement with your survey, leading to higher quality responses and better data.
