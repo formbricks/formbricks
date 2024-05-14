@@ -175,7 +175,6 @@ export const createAttributeClass = async (
       id: attributeClass.id,
       environmentId: attributeClass.environmentId,
       name: attributeClass.name,
-      count: true,
     });
 
     return attributeClass;
@@ -201,7 +200,6 @@ export const deleteAttributeClass = async (attributeClassId: string): Promise<TA
       id: deletedAttributeClass.id,
       environmentId: deletedAttributeClass.environmentId,
       name: deletedAttributeClass.name,
-      count: true,
     });
 
     return deletedAttributeClass;
@@ -233,6 +231,6 @@ export const getAttributeClassesCount = async (environmentId: string): Promise<n
     },
     [`getAttributeClassesCount-${environmentId}`],
     {
-      tags: [attributeClassCache.tag.byCountAndEnvironmentId(environmentId)],
+      tags: [attributeClassCache.tag.byEnvironmentId(environmentId)],
     }
   )();

@@ -75,7 +75,7 @@ export async function PUT(req: NextRequest, context: { params: { environmentId: 
     );
   } catch (err) {
     if (err.statusCode === 403) {
-      return responses.forbiddenResponse(err.message || "Forbidden", true);
+      return responses.forbiddenResponse(err.message || "Forbidden", true, { ignore: true });
     }
 
     return responses.internalServerErrorResponse("Something went wrong", true);
