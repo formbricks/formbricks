@@ -51,7 +51,9 @@ export const SingleResponseCardBody = ({
       // Check if the part was inside #/ and \#
       if (index % 2 === 1) {
         return (
-          <span key={index} className="mx-1 rounded-md bg-slate-100 p-1 px-2 text-xs">
+          <span
+            key={index}
+            className="ml-0.5 mr-0.5 rounded-md border border-slate-200 bg-slate-50 px-1 py-0.5 text-sm first:ml-0 ">
             @{part}
           </span>
         );
