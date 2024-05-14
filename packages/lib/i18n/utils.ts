@@ -12,23 +12,23 @@ import {
   TSurveyChoice,
   TSurveyConsentQuestion,
   TSurveyLanguage,
+  TSurveyMultipleChoiceQuestion,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
   TSurveyQuestion,
   TSurveyRatingQuestion,
-  TSurveySelectQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
   ZSurveyCTAQuestion,
   ZSurveyCalQuestion,
   ZSurveyConsentQuestion,
   ZSurveyFileUploadQuestion,
+  ZSurveyMultipleChoiceQuestion,
   ZSurveyNPSQuestion,
   ZSurveyOpenTextQuestion,
   ZSurveyPictureSelectionQuestion,
   ZSurveyQuestion,
   ZSurveyRatingQuestion,
-  ZSurveySelectQuestion,
   ZSurveyThankYouCard,
   ZSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
@@ -203,16 +203,16 @@ export const translateQuestion = (
 
     case "multipleChoiceSingle":
     case "multipleChoiceMulti":
-      (clonedQuestion as TSurveySelectQuestion).choices = question.choices.map((choice) => {
+      (clonedQuestion as TSurveyMultipleChoiceQuestion).choices = question.choices.map((choice) => {
         return translateChoice(choice, languages);
       });
-      if (typeof (clonedQuestion as TSurveySelectQuestion).otherOptionPlaceholder !== "undefined") {
-        (clonedQuestion as TSurveySelectQuestion).otherOptionPlaceholder = createI18nString(
+      if (typeof (clonedQuestion as TSurveyMultipleChoiceQuestion).otherOptionPlaceholder !== "undefined") {
+        (clonedQuestion as TSurveyMultipleChoiceQuestion).otherOptionPlaceholder = createI18nString(
           question.otherOptionPlaceholder ?? "",
           languages
         );
       }
-      return ZSurveySelectQuestion.parse(clonedQuestion);
+      return ZSurveyMultipleChoiceQuestion.parse(clonedQuestion);
 
     case "cta":
       if (typeof question.dismissButtonLabel !== "undefined") {

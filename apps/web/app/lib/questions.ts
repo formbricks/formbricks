@@ -24,11 +24,11 @@ import {
   TSurveyDateQuestion,
   TSurveyFileUploadQuestion,
   TSurveyMatrixQuestion,
+  TSurveyMultipleChoiceQuestion,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyRatingQuestion,
-  TSurveySelectQuestion,
 } from "@formbricks/types/surveys";
 
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -68,7 +68,7 @@ export const questionTypes: TSurveyQuestionType[] = [
         { id: createId(), label: { default: "Have the cake 🎂" } },
       ],
       shuffleOption: "none",
-    } as Partial<TSurveySelectQuestion>,
+    } as Partial<TSurveyMultipleChoiceQuestion>,
   },
   {
     id: QuestionId.MultipleChoiceMulti,
@@ -83,7 +83,7 @@ export const questionTypes: TSurveyQuestionType[] = [
         { id: createId(), label: { default: "Palms 🌴" } },
       ],
       shuffleOption: "none",
-    } as Partial<TSurveySelectQuestion>,
+    } as Partial<TSurveyMultipleChoiceQuestion>,
   },
   {
     id: QuestionId.PictureSelection,

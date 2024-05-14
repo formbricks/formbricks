@@ -12,12 +12,12 @@ import {
   TSurveyConsentQuestion,
   TSurveyLanguage,
   TSurveyMatrixQuestion,
+  TSurveyMultipleChoiceQuestion,
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestion,
   TSurveyQuestionType,
   TSurveyQuestions,
-  TSurveySelectQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
@@ -37,7 +37,7 @@ export const isLabelValidForAllLanguages = (
 
 // Validation logic for multiple choice questions
 const handleI18nCheckForMultipleChoice = (
-  question: TSurveySelectQuestion,
+  question: TSurveyMultipleChoiceQuestion,
   languages: TSurveyLanguage[]
 ): boolean => {
   return question.choices.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
@@ -83,10 +83,10 @@ export const validationRules = {
       ? isLabelValidForAllLanguages(question.placeholder, languages)
       : true;
   },
-  multipleChoiceMulti: (question: TSurveySelectQuestion, languages: TSurveyLanguage[]) => {
+  multipleChoiceMulti: (question: TSurveyMultipleChoiceQuestion, languages: TSurveyLanguage[]) => {
     return handleI18nCheckForMultipleChoice(question, languages);
   },
-  multipleChoiceSingle: (question: TSurveySelectQuestion, languages: TSurveyLanguage[]) => {
+  multipleChoiceSingle: (question: TSurveyMultipleChoiceQuestion, languages: TSurveyLanguage[]) => {
     return handleI18nCheckForMultipleChoice(question, languages);
   },
   consent: (question: TSurveyConsentQuestion, languages: TSurveyLanguage[]) => {

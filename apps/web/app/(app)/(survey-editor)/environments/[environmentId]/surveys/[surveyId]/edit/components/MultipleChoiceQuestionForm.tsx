@@ -11,8 +11,8 @@ import {
   TI18nString,
   TShuffleOption,
   TSurvey,
+  TSurveyMultipleChoiceQuestion,
   TSurveyQuestionType,
-  TSurveySelectQuestion,
 } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
@@ -23,16 +23,16 @@ import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveySelectQuestion;
+  question: TSurveyMultipleChoiceQuestion;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveySelectQuestion>) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
 }
 
-export const SelectQuestionForm = ({
+export const MultipleChoiceQuestionForm = ({
   question,
   questionIdx,
   updateQuestion,

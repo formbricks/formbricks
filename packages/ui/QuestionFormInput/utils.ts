@@ -3,8 +3,8 @@ import {
   TI18nString,
   TSurvey,
   TSurveyMatrixQuestion,
+  TSurveyMultipleChoiceQuestion,
   TSurveyQuestion,
-  TSurveySelectQuestion,
 } from "@formbricks/types/surveys";
 
 // Function to get index for choice /rowLabel /columnLabel
@@ -23,7 +23,7 @@ export const getChoiceLabel = (
   choiceIdx: number,
   surveyLanguageCodes: string[]
 ): TI18nString => {
-  const choiceQuestion = question as TSurveySelectQuestion;
+  const choiceQuestion = question as TSurveyMultipleChoiceQuestion;
   return choiceQuestion.choices[choiceIdx]?.label || createI18nString("", surveyLanguageCodes);
 };
 

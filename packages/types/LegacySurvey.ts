@@ -8,6 +8,7 @@ import {
   ZSurveyCalLogic,
   ZSurveyConsentLogic,
   ZSurveyFileUploadLogic,
+  ZSurveyMultipleChoiceLogic,
   ZSurveyNPSLogic,
   ZSurveyOpenTextLogic,
   ZSurveyOpenTextQuestionInputType,
@@ -15,7 +16,6 @@ import {
   ZSurveyPictureSelectionLogic,
   ZSurveyQuestionBase,
   ZSurveyRatingLogic,
-  ZSurveySelectLogic,
 } from "./surveys";
 
 const ZLegacySurveyQuestionBase = ZSurveyQuestionBase.extend({
@@ -55,7 +55,7 @@ export type TLegacySurveyChoice = z.infer<typeof ZLegacySurveyChoice>;
 export const ZLegacySurveyMultipleChoiceSingleQuestion = ZLegacySurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.MultipleChoiceSingle),
   choices: z.array(ZLegacySurveyChoice),
-  logic: z.array(ZSurveySelectLogic).optional(),
+  logic: z.array(ZSurveyMultipleChoiceLogic).optional(),
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
   otherOptionPlaceholder: z.string().optional(),
 });
@@ -67,7 +67,7 @@ export type TLegacySurveyMultipleChoiceSingleQuestion = z.infer<
 export const ZLegacySurveyMultipleChoiceMultiQuestion = ZLegacySurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.MultipleChoiceMulti),
   choices: z.array(ZLegacySurveyChoice),
-  logic: z.array(ZSurveySelectLogic).optional(),
+  logic: z.array(ZSurveyMultipleChoiceLogic).optional(),
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
   otherOptionPlaceholder: z.string().optional(),
 });
