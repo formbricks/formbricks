@@ -50,7 +50,8 @@ const DialogContent = React.forwardRef<
           `${noPadding ? "" : "px-4 pb-4 pt-5 sm:p-6"}`,
           "data-[state='closed']:animate-fadeOut data-[state='open']:animate-fadeIn",
           size && sizeClassName && sizeClassName[size],
-          className
+          className,
+          "max-h-screen overflow-y-auto"
         )}
         {...props}
         onPointerDownOutside={(e) => {
