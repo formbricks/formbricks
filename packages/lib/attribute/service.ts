@@ -252,7 +252,6 @@ export const updateAttributes = async (personId: string, attributes: TAttributes
   // Revalidate the count cache
   attributeClassCache.revalidate({
     environmentId,
-    count: true,
   });
 
   return true;
