@@ -178,4 +178,4 @@ export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;
 export const STRIPE_API_VERSION = "2024-04-10";
 
 // Maximum number of attribute classes allowed:
-export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 100 as const;
+export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150 as const;
