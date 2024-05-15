@@ -14,26 +14,10 @@ export const revalidateSurveyIdPath = async (environmentId: string, surveyId: st
   revalidatePath(`/environments/${environmentId}/surveys/${surveyId}`);
 };
 
-export const getMoreResponses = async (
-  surveyId: string,
-  page: number,
-  batchSize?: number
-): Promise<TResponse[]> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  batchSize = batchSize ?? 10;
-  const responses = await getResponses(surveyId, page, batchSize);
-  return responses;
-};
-
 export const getResponsesAction = async (
   surveyId: string,
-  page: number,
-  batchSize?: number,
+  limit?: number,
+  offset?: number,
   filterCriteria?: TResponseFilterCriteria
 ): Promise<TResponse[]> => {
   const session = await getServerSession(authOptions);
@@ -42,8 +26,10 @@ export const getResponsesAction = async (
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  batchSize = batchSize ?? 10;
-  const responses = await getResponses(surveyId, page, batchSize, filterCriteria);
+  const _limit = limit ?? 10;
+  const _offset = offset ?? 0;
+
+  const responses = await getResponses(surveyId, _limit, _offset, filterCriteria);
   return responses;
 };
 
