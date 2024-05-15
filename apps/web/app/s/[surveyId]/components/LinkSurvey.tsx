@@ -12,7 +12,7 @@ import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurvey } from "@formbricks/types/surveys";
+import { THiddenFieldValue, TSurvey } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
 import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
 import { SurveyInline } from "@formbricks/ui/Survey";
@@ -119,20 +119,17 @@ export const LinkSurvey = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hiddenFieldsRecord = useMemo<Record<string, string | number | string[]> | null>(() => {
-    const fieldsRecord: Record<string, string | number | string[]> = {};
-    let fieldsSet = false;
+  const hiddenFieldsRecord = useMemo<THiddenFieldValue>(() => {
+    const fieldsRecord: THiddenFieldValue = {};
 
     survey.hiddenFields?.fieldIds?.forEach((field) => {
       const answer = searchParams?.get(field);
       if (answer) {
         fieldsRecord[field] = answer;
-        fieldsSet = true;
       }
     });
 
-    // Only return the record if at least one field was set.
-    return fieldsSet ? fieldsRecord : null;
+    return fieldsRecord;
   }, [searchParams, survey.hiddenFields?.fieldIds]);
 
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
@@ -248,7 +245,6 @@ export const LinkSurvey = ({
               responseQueue.add({
                 data: {
                   ...responseUpdate.data,
-                  ...hiddenFieldsRecord,
                   ...getVerifiedEmail,
                 },
                 ttc: responseUpdate.ttc,
@@ -259,6 +255,7 @@ export const LinkSurvey = ({
                   url: window.location.href,
                   source: sourceParam || "",
                 },
+                hiddenFields: hiddenFieldsRecord,
               });
           }}
           onFileUpload={async (file: File, params: TUploadFileConfig) => {

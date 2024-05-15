@@ -5,7 +5,7 @@ import { ZActionClass } from "./actionClasses";
 import { ZAttributes } from "./attributes";
 import { ZPerson } from "./people";
 import { ZProduct } from "./product";
-import { ZSurvey } from "./surveys";
+import { ZHiddenFieldValue, ZSurvey } from "./surveys";
 
 export const ZJsPerson = z.object({
   id: z.string().cuid2().optional(),
@@ -254,7 +254,7 @@ export const ZJsPackageType = z.union([z.literal("app"), z.literal("website")]);
 export type TJsPackageType = z.infer<typeof ZJsPackageType>;
 
 export const ZTrackProperties = z.object({
-  hiddenFields: z.record(z.string()).optional(),
+  hiddenFields: ZHiddenFieldValue.optional(),
 });
 
 export type TTrackProperties = z.infer<typeof ZTrackProperties>;

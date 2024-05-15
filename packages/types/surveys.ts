@@ -877,3 +877,6 @@ const ZSortOption = z.object({
 
 export type TSortOption = z.infer<typeof ZSortOption>;
 export type TSurveySummary = z.infer<typeof ZSurveySummary>;
+
+export const ZHiddenFieldValue = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
+export type THiddenFieldValue = z.infer<typeof ZHiddenFieldValue>;
