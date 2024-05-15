@@ -362,14 +362,12 @@ export const QuestionsView = ({
           selectedLanguageCode={selectedLanguageCode}
         />
 
-        {localSurvey.type === "link" ? (
-          <HiddenFieldsCard
-            localSurvey={localSurvey}
-            setLocalSurvey={setLocalSurvey}
-            setActiveQuestionId={setActiveQuestionId}
-            activeQuestionId={activeQuestionId}
-          />
-        ) : null}
+        <HiddenFieldsCard
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+          setActiveQuestionId={setActiveQuestionId}
+          activeQuestionId={activeQuestionId}
+        />
 
         <MultiLanguageCard
           localSurvey={localSurvey}

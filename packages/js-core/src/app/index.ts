@@ -1,4 +1,4 @@
-import { TJsAppConfigInput } from "@formbricks/types/js";
+import { TJsAppConfigInput, TTrackProperties } from "@formbricks/types/js";
 
 import { CommandQueue } from "../shared/commandQueue";
 import { ErrorHandler } from "../shared/errors";
@@ -41,7 +41,7 @@ const reset = async (): Promise<void> => {
   await queue.wait();
 };
 
-const track = async (name: string, properties: any = {}): Promise<void> => {
+const track = async (name: string, properties?: TTrackProperties): Promise<void> => {
   queue.add<any>(true, "app", trackCodeAction, name, properties);
   await queue.wait();
 };

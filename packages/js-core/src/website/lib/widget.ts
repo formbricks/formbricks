@@ -2,12 +2,12 @@ import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
-import { TJSWebsiteStateDisplay } from "@formbricks/types/js";
+import { TJSWebsiteStateDisplay, TTrackProperties } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 
 import { Logger } from "../../shared/logger";
-import { getDefaultLanguageCode, getLanguageCode } from "../../shared/utils";
+import { getDefaultLanguageCode, getLanguageCode, handleHiddenFields } from "../../shared/utils";
 import { WebsiteConfig } from "./config";
 import { filterPublicSurveys } from "./sync";
 
@@ -29,7 +29,11 @@ const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
   return randomNum <= displayPercentage;
 };
 
-export const triggerSurvey = async (survey: TSurvey, action?: string): Promise<void> => {
+export const triggerSurvey = async (
+  survey: TSurvey,
+  action?: string,
+  properties?: TTrackProperties
+): Promise<void> => {
   // Check if the survey should be displayed based on displayPercentage
   if (survey.displayPercentage) {
     const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
@@ -38,10 +42,16 @@ export const triggerSurvey = async (survey: TSurvey, action?: string): Promise<v
       return; // skip displaying the survey
     }
   }
-  await renderWidget(survey, action);
+
+  const hiddenFieldsObject: Record<string, string> = handleHiddenFields(
+    survey.hiddenFields,
+    properties?.hiddenFields
+  );
+
+  await renderWidget(survey, action, hiddenFieldsObject);
 };
 
-const renderWidget = async (survey: TSurvey, action?: string) => {
+const renderWidget = async (survey: TSurvey, action?: string, hiddenFields: Record<string, string> = {}) => {
   if (isSurveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
@@ -94,8 +104,8 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
 
   setTimeout(() => {
     formbricksSurveys.renderSurveyModal({
-      survey: survey,
-      isBrandingEnabled: isBrandingEnabled,
+      survey,
+      isBrandingEnabled,
       clickOutside,
       darkOverlay,
       languageCode,
@@ -175,6 +185,7 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
             url: window.location.href,
             action,
           },
+          hiddenFields,
         });
       },
       onClose: closeSurvey,

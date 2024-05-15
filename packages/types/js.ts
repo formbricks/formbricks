@@ -252,3 +252,9 @@ export type TSettings = z.infer<typeof ZJsSettings>;
 export const ZJsPackageType = z.union([z.literal("app"), z.literal("website")]);
 
 export type TJsPackageType = z.infer<typeof ZJsPackageType>;
+
+export const ZTrackProperties = z.object({
+  hiddenFields: z.record(z.string()).optional(),
+});
+
+export type TTrackProperties = z.infer<typeof ZTrackProperties>;
