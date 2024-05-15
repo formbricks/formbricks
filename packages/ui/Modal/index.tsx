@@ -14,7 +14,7 @@ const DialogOverlay = React.forwardRef<
     ref={ref}
     className={cn(
       blur && "backdrop-blur-md",
-      "fixed inset-0 z-20 bg-slate-500 bg-opacity-30",
+      "fixed inset-0 z-50 bg-slate-500 bg-opacity-30",
       "data-[state='closed']:animate-fadeOut data-[state='open']:animate-fadeIn"
     )}
     {...props}
@@ -46,7 +46,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed left-[50%] top-[50%] z-20 translate-x-[-50%] translate-y-[-50%] transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl",
+          "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl",
           `${noPadding ? "" : "px-4 pb-4 pt-5 sm:p-6"}`,
           "data-[state='closed']:animate-fadeOut data-[state='open']:animate-fadeIn",
           size && sizeClassName && sizeClassName[size],
