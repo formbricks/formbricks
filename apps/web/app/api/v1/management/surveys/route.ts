@@ -7,7 +7,7 @@ import { createSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZSurveyInput } from "@formbricks/types/surveys";
 
-export async function GET(request: Request) {
+export const GET = async (request: Request) => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -24,9 +24,9 @@ export async function GET(request: Request) {
     }
     throw error;
   }
-}
+};
 
-export async function POST(request: Request): Promise<Response> {
+export const POST = async (request: Request): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -59,4 +59,4 @@ export async function POST(request: Request): Promise<Response> {
     }
     throw error;
   }
-}
+};

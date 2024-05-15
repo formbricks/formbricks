@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 
-export default function EnvironmentPage({ params }) {
+const Page = ({ params }) => {
   return redirect(`/environments/${params.environmentId}/surveys`);
-}
+};
+
+export default Page;

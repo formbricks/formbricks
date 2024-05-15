@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function main() {
+const main = async () => {
   await prisma.$transaction(
     async (tx) => {
       const surveys = await tx.survey.findMany({
@@ -47,7 +47,7 @@ async function main() {
       timeout: 50000,
     }
   );
-}
+};
 
 main()
   .catch(async (e) => {

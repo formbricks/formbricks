@@ -3,15 +3,15 @@
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { IoLogoHtml5, IoLogoNpm } from "react-icons/io5";
 
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
-import CodeBlock from "@formbricks/ui/CodeBlock";
+import { CodeBlock } from "@formbricks/ui/CodeBlock";
+import { Html5Icon, NpmIcon } from "@formbricks/ui/icons";
 
 const tabs = [
-  { id: "html", label: "HTML", icon: <IoLogoHtml5 /> },
-  { id: "npm", label: "NPM", icon: <IoLogoNpm /> },
+  { id: "html", label: "HTML", icon: <Html5Icon /> },
+  { id: "npm", label: "NPM", icon: <NpmIcon /> },
 ];
 
 interface SetupInstructionsOnboardingProps {
@@ -20,10 +20,10 @@ interface SetupInstructionsOnboardingProps {
   jsPackageVersion: string;
 }
 
-export default function SetupInstructionsOnboarding({
+export const SetupInstructionsOnboarding = ({
   environmentId,
   webAppUrl,
-}: SetupInstructionsOnboardingProps) {
+}: SetupInstructionsOnboardingProps) => {
   const [activeTab, setActiveId] = useState(tabs[0].id);
   const htmlSnippet = `<!-- START Formbricks Surveys -->
 <script type="text/javascript">
@@ -67,7 +67,7 @@ export default function SetupInstructionsOnboarding({
             </p>
             <CodeBlock
               customEditorClass="!bg-white border border-slate-200"
-              language="js">{`import formbricks from "@formbricks/js";
+              language="js">{`import formbricks from "@formbricks/js/website";
 
 if (typeof window !== "undefined") {
   formbricks.init({
@@ -115,4 +115,4 @@ if (typeof window !== "undefined") {
       </div>
     </div>
   );
-}
+};

@@ -7,7 +7,7 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getNotionDatabases } from "@formbricks/lib/notion/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 
-export async function refreshDatabasesAction(environmentId: string) {
+export const refreshDatabasesAction = async (environmentId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -15,4 +15,4 @@ export async function refreshDatabasesAction(environmentId: string) {
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   return await getNotionDatabases(environmentId);
-}
+};

@@ -22,7 +22,7 @@ export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
   );
 
   useEffect(() => {
-    async function loadScript() {
+    const loadScript = async () => {
       if (typeof window !== "undefined") {
         if (!window.formbricksSurveys) {
           try {
@@ -35,7 +35,7 @@ export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
           renderInline();
         }
       }
-    }
+    };
 
     loadScript();
   }, [containerId, props, renderInline]);

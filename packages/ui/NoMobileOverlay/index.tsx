@@ -1,6 +1,6 @@
 import { SmartphoneIcon, XIcon } from "lucide-react";
 
-export function NoMobileOverlay() {
+export const NoMobileOverlay = () => {
   return (
     <>
       <div className="fixed inset-0 z-[9999] flex items-center justify-center sm:hidden">
@@ -13,4 +13,4 @@ export function NoMobileOverlay() {
       </div>
     </>
   );
-}
+};

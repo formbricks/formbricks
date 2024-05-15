@@ -16,19 +16,19 @@ interface HitProps {
   children: React.ReactNode;
 }
 
-function Hit({ hit, children }: HitProps) {
+const Hit = ({ hit, children }: HitProps) => {
   return <Link href={hit.url}>{children}</Link>;
-}
+};
 
-function SearchIcon(props: any) {
+const SearchIcon = (props: any) => {
   return (
     <svg aria-hidden="true" viewBox="0 0 20 20" {...props}>
       <path d="M16.293 17.707a1 1 0 0 0 1.414-1.414l-1.414 1.414ZM9 14a5 5 0 0 1-5-5H2a7 7 0 0 0 7 7v-2ZM4 9a5 5 0 0 1 5-5V2a7 7 0 0 0-7 7h2Zm5-5a5 5 0 0 1 5 5h2a7 7 0 0 0-7-7v2Zm8.707 12.293-3.757-3.757-1.414 1.414 3.757 3.757 1.414-1.414ZM14 9a4.98 4.98 0 0 1-1.464 3.536l1.414 1.414A6.98 6.98 0 0 0 16 9h-2Zm-1.464 3.536A4.98 4.98 0 0 1 9 14v2a6.98 6.98 0 0 0 4.95-2.05l-1.414-1.414Z" />
     </svg>
   );
-}
+};
 
-export function Search() {
+export const Search = () => {
   let { resolvedTheme } = useTheme();
   let isLightMode = resolvedTheme === "light";
 
@@ -53,13 +53,13 @@ export function Search() {
     const style = document.createElement("style");
     style.innerHTML = ` 
       :root {
-        --docsearch-primary-color: ${isLightMode ? "#029E94" : "#1F7066"};
-        --docsearch-modal-background: ${isLightMode ? "#FFFFFF" : "#121212"};
+        --docsearch-primary-color: ${isLightMode ? "#00C4B8" : "#00C4B8"};
+        --docsearch-modal-background: ${isLightMode ? "#f8fafc" : "#0f172a"};
         --docsearch-text-color: ${isLightMode ? "#121212" : "#FFFFFF"};
         --docsearch-hit-background: ${isLightMode ? "#FFFFFF" : "#111111"};
         --docsearch-footer-background: ${isLightMode ? "#EEEEEE" : "#121212"};
-        --docsearch-searchbox-focus-background: ${isLightMode ? "#D8F6F4" : "#121212"};
-        --docsearch-modal-shadow: ${isLightMode ? "inset 1px 1px 0 0 hsla(0,0%,100%,0.5), 0 3px 8px 0 #D8F6F4" : "inset 1px 1px 0 0 hsla(0,0%,100%,0.5), 0 3px 8px 0 #808080"};
+        --docsearch-searchbox-focus-background: ${isLightMode ? "#f1f5f9" : "#1e293b"};
+        --docsearch-modal-shadow: "";
         --DocSearch-Input: ${isLightMode ? "#000000" : "#FFFFFF"};
       }
       .DocSearch-Hit-title {
@@ -85,6 +85,9 @@ export function Search() {
       }
       #docsearch-input {
         background-color: transparent;
+      }
+      .DocSearch-Footer {
+        display: none !important;
       }
       
     `;
@@ -129,4 +132,4 @@ export function Search() {
         )}
     </>
   );
-}
+};

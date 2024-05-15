@@ -117,7 +117,7 @@ export const getTodaysDateTimeFormatted = (seperator: string) => {
   return [formattedDate, formattedTime].join(seperator);
 };
 
-export function convertDatesInObject(obj: any) {
+export const convertDatesInObject = (obj: any) => {
   for (let key in obj) {
     if ((key === "createdAt" || key === "updatedAt") && !isNaN(Date.parse(obj[key]))) {
       obj[key] = new Date(obj[key]);
@@ -125,4 +125,4 @@ export function convertDatesInObject(obj: any) {
       convertDatesInObject(obj[key]);
     }
   }
-}
+};

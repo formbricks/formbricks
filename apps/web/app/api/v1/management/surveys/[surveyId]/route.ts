@@ -5,7 +5,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { deleteSurvey, getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { TSurvey, ZSurvey } from "@formbricks/types/surveys";
 
-async function fetchAndAuthorizeSurvey(authentication: any, surveyId: string): Promise<TSurvey | null> {
+const fetchAndAuthorizeSurvey = async (authentication: any, surveyId: string): Promise<TSurvey | null> => {
   const survey = await getSurvey(surveyId);
   if (!survey) {
     return null;
@@ -14,9 +14,12 @@ async function fetchAndAuthorizeSurvey(authentication: any, surveyId: string): P
     throw new Error("Unauthorized");
   }
   return survey;
-}
+};
 
-export async function GET(request: Request, { params }: { params: { surveyId: string } }): Promise<Response> {
+export const GET = async (
+  request: Request,
+  { params }: { params: { surveyId: string } }
+): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -28,12 +31,12 @@ export async function GET(request: Request, { params }: { params: { surveyId: st
   } catch (error) {
     return handleErrorResponse(error);
   }
-}
+};
 
-export async function DELETE(
+export const DELETE = async (
   request: Request,
   { params }: { params: { surveyId: string } }
-): Promise<Response> {
+): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -46,9 +49,12 @@ export async function DELETE(
   } catch (error) {
     return handleErrorResponse(error);
   }
-}
+};
 
-export async function PUT(request: Request, { params }: { params: { surveyId: string } }): Promise<Response> {
+export const PUT = async (
+  request: Request,
+  { params }: { params: { surveyId: string } }
+): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -71,4 +77,4 @@ export async function PUT(request: Request, { params }: { params: { surveyId: st
   } catch (error) {
     return handleErrorResponse(error);
   }
-}
+};

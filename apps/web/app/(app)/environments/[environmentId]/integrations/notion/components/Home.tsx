@@ -8,7 +8,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 
 interface HomeProps {
   environment: TEnvironment;
@@ -20,13 +20,13 @@ interface HomeProps {
   >;
 }
 
-export default function Home({
+export const Home = ({
   environment,
   notionIntegration,
   setOpenAddIntegrationModal,
   setIsConnected,
   setSelectedIntegration,
-}: HomeProps) {
+}: HomeProps) => {
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [isDeleting, setisDeleting] = useState(false);
   const integrationArray = notionIntegration
@@ -126,4 +126,4 @@ export default function Home({
       />
     </div>
   );
-}
+};

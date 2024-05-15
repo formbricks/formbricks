@@ -9,7 +9,7 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
 const scope = `data.records:read data.records:write schema.bases:read schema.bases:write user.email:read`;
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   const environmentId = req.headers.get("environmentId");
   const session = await getServerSession(authOptions);
 
@@ -52,4 +52,4 @@ export async function GET(req: NextRequest) {
   authUrl.searchParams.append("code_challenge", codeChallenge);
 
   return responses.successResponse({ authUrl: authUrl.toString() });
-}
+};

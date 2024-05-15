@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function main() {
+const main = async () => {
   await prisma.$transaction(
     async (tx) => {
       // get all the persons that have an attribute class with the name "userId"
@@ -49,7 +49,7 @@ async function main() {
       timeout: 60000 * 3, // 3 minutes
     }
   );
-}
+};
 main()
   .catch(async (e) => {
     console.error(e);

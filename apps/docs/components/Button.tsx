@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import Link from "next/link";
 
-function ArrowIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+const ArrowIcon = (props: React.ComponentPropsWithoutRef<"svg">) => {
   return (
     <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
       <path
@@ -12,11 +12,11 @@ function ArrowIcon(props: React.ComponentPropsWithoutRef<"svg">) {
       />
     </svg>
   );
-}
+};
 
 const variantStyles = {
   primary:
-    "rounded-full bg-slate-900 py-1 px-3 text-white hover:bg-slate-700 dark:bg-teal-400/10 dark:text-teal-400 dark:ring-1 dark:ring-inset dark:ring-teal-400/20 dark:hover:bg-teal-400/10 dark:hover:text-teal-300 dark:hover:ring-teal-300",
+    "rounded-full bg-slate-900 py-1 px-3 text-white hover:text-white hover:bg-slate-700 dark:bg-teal-400/10 dark:text-teal-400 dark:ring-1 dark:ring-inset dark:ring-teal-400/20 dark:hover:bg-teal-400/10 dark:hover:text-teal-300 dark:hover:ring-teal-300",
   secondary:
     "rounded-full bg-slate-100 py-1 px-3 text-slate-900 hover:bg-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:ring-1 dark:ring-inset dark:ring-slate-800 dark:hover:bg-slate-800 dark:hover:text-slate-300",
   filled:
@@ -34,12 +34,12 @@ type ButtonProps = {
   | (React.ComponentPropsWithoutRef<"button"> & { href?: undefined })
 );
 
-export function Button({ variant = "primary", className, children, arrow, ...props }: ButtonProps) {
+export const Button = ({ variant = "primary", className, children, arrow, ...props }: ButtonProps) => {
   className = clsx(
     "inline-flex gap-0.5 justify-center items-center overflow-hidden font-medium transition text-center",
     variantStyles[variant],
     className,
-    "px-5 py-2.5 text-xs"
+    "px-5 py-2.5 text-sm"
   );
 
   let arrowIcon = (
@@ -74,4 +74,4 @@ export function Button({ variant = "primary", className, children, arrow, ...pro
       {inner}
     </Link>
   );
-}
+};

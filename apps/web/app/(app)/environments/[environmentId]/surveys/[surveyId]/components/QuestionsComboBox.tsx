@@ -132,7 +132,7 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
   );
 };
 
-const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBoxProps) => {
+export const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBoxProps) => {
   const [open, setOpen] = React.useState(false);
   const commandRef = React.useRef(null);
   const [inputValue, setInputValue] = React.useState("");
@@ -199,5 +199,3 @@ const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBo
     </Command>
   );
 };
-
-export default QuestionsComboBox;

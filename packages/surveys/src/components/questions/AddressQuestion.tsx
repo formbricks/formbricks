@@ -1,8 +1,8 @@
 import { BackButton } from "@/components/buttons/BackButton";
-import SubmitButton from "@/components/buttons/SubmitButton";
-import Headline from "@/components/general/Headline";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { Headline } from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
-import Subheader from "@/components/general/Subheader";
+import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
@@ -24,6 +24,7 @@ interface AddressQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
+  currentQuestionId: string;
 }
 
 export const AddressQuestion = ({
@@ -38,12 +39,13 @@ export const AddressQuestion = ({
   ttc,
   setTtc,
   isInIframe,
+  currentQuestionId,
 }: AddressQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [hasFilled, setHasFilled] = useState(false);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const safeValue = useMemo(() => {
     return Array.isArray(value) ? value : ["", "", "", "", "", ""];

@@ -6,7 +6,7 @@ import { Button } from "@formbricks/ui/Button";
 
 import footerLogo from "./lib/footerlogo.svg";
 
-export default function NotFound() {
+const NotFound = () => {
   return (
     <div className="flex h-full flex-col items-center justify-between bg-gradient-to-br from-slate-200 to-slate-50 py-8 text-center">
       <div></div>
@@ -25,4 +25,6 @@ export default function NotFound() {
       </div>
     </div>
   );
-}
+};
+
+export default NotFound;

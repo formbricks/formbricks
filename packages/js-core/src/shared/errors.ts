@@ -22,17 +22,11 @@ export const wrap =
   (result: Result<T>): Result<R> =>
     result.ok === true ? { ok: true, value: fn(result.value) } : result;
 
-export function match<TSuccess, TError, TReturn>(
+export const match = <TSuccess, TError, TReturn>(
   result: Result<TSuccess, TError>,
   onSuccess: (value: TSuccess) => TReturn,
   onError: (error: TError) => TReturn
-) {
-  if (result.ok === true) {
-    return onSuccess(result.value);
-  }
-
-  return onError(result.error);
-}
+): TReturn => (result.ok === true ? onSuccess(result.value) : onError(result.error));
 
 /* 
 Usage: 
@@ -93,6 +87,11 @@ export type NotInitializedError = {
 
 export type AttributeAlreadyExistsError = {
   code: "attribute_already_exists";
+  message: string;
+};
+
+export type InvalidCodeError = {
+  code: "invalid_code";
   message: string;
 };
 

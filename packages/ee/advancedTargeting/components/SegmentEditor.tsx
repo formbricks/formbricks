@@ -23,8 +23,8 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 
-import AddFilterModal from "./AddFilterModal";
-import SegmentFilter from "./SegmentFilter";
+import { AddFilterModal } from "./AddFilterModal";
+import { SegmentFilter } from "./SegmentFilter";
 
 type TSegmentEditorProps = {
   group: TBaseFilters;
@@ -37,7 +37,7 @@ type TSegmentEditorProps = {
   viewOnly?: boolean;
 };
 
-const SegmentEditor = ({
+export const SegmentEditor = ({
   group,
   environmentId,
   setSegment,
@@ -261,5 +261,3 @@ const SegmentEditor = ({
     </div>
   );
 };
-
-export default SegmentEditor;

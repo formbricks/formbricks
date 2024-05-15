@@ -10,6 +10,7 @@ interface ModalWithTabsProps {
   description?: string;
   tabs: TabProps[];
   closeOnOutsideClick?: boolean;
+  size?: "md" | "lg";
 }
 
 interface TabProps {
@@ -25,6 +26,7 @@ export const ModalWithTabs = ({
   label,
   description,
   closeOnOutsideClick,
+  size = "lg",
 }: ModalWithTabsProps) => {
   const [activeTab, setActiveTab] = useState(0);
 
@@ -39,7 +41,7 @@ export const ModalWithTabs = ({
   }, [open]);
 
   return (
-    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={closeOnOutsideClick} size="lg">
+    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={closeOnOutsideClick} size={size}>
       <div className="flex h-full flex-col rounded-lg">
         <div className="rounded-t-lg bg-slate-100">
           <div className="mr-20 flex items-center justify-between truncate p-6">

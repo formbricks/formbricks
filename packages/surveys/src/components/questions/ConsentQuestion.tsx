@@ -1,7 +1,7 @@
 import { BackButton } from "@/components/buttons/BackButton";
-import SubmitButton from "@/components/buttons/SubmitButton";
-import Headline from "@/components/general/Headline";
-import HtmlBody from "@/components/general/HtmlBody";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { Headline } from "@/components/general/Headline";
+import { HtmlBody } from "@/components/general/HtmlBody";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
@@ -23,6 +23,7 @@ interface ConsentQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
+  currentQuestionId: string;
 }
 
 export const ConsentQuestion = ({
@@ -36,11 +37,12 @@ export const ConsentQuestion = ({
   languageCode,
   ttc,
   setTtc,
+  currentQuestionId,
 }: ConsentQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
 
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   return (
     <form

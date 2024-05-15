@@ -7,5 +7,5 @@ declare module "@/mdx/search.mjs" {
     pageTitle?: string;
   };
 
-  export function search(query: string, options?: SearchOptions): Array<Result>;
+  export const search: (query: string, options?: SearchOptions) => Array<Result>;
 }

@@ -2,7 +2,7 @@ import logoDark from "@/images/logo/logo-dark.svg";
 import logoLight from "@/images/logo/logo-light.svg";
 import Image from "next/image";
 
-export function Logo({ className }: { className?: string }) {
+export const Logo = ({ className }: { className?: string }) => {
   return (
     <div>
       <div className="block dark:hidden">
@@ -13,4 +13,4 @@ export function Logo({ className }: { className?: string }) {
       </div>
     </div>
   );
-}
+};

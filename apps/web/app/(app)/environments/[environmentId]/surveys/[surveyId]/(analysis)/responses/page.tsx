@@ -1,18 +1,23 @@
-import ResponsePage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
+import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
+import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
+import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getUser } from "@formbricks/lib/user/service";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Unauthorized");
@@ -45,23 +50,42 @@ export default async function Page({ params }) {
   }
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+
   return (
-    <>
+    <PageContentWrapper>
+      <PageHeader
+        pageTitle={survey.name}
+        cta={
+          <SurveyAnalysisCTA
+            environment={environment}
+            survey={survey}
+            isViewer={isViewer}
+            webAppUrl={WEBAPP_URL}
+            user={user}
+          />
+        }>
+        <SurveyAnalysisNavigation
+          environmentId={environment.id}
+          responseCount={totalResponseCount}
+          surveyId={survey.id}
+          activeId="responses"
+        />
+      </PageHeader>
       <ResponsePage
         environment={environment}
         survey={survey}
         surveyId={params.surveyId}
         webAppUrl={WEBAPP_URL}
-        product={product}
         environmentTags={tags}
         user={user}
         responsesPerPage={RESPONSES_PER_PAGE}
-        membershipRole={currentUserMembership?.role}
         totalResponseCount={totalResponseCount}
       />
-    </>
+    </PageContentWrapper>
   );
-}
+};
+
+export default Page;

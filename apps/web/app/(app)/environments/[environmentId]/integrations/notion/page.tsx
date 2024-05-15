@@ -1,4 +1,4 @@
-import NotionWrapper from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
+import { NotionWrapper } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
 
 import {
   NOTION_AUTH_URL,
@@ -12,9 +12,11 @@ import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { getNotionDatabases } from "@formbricks/lib/notion/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
-import GoBackButton from "@formbricks/ui/GoBackButton";
+import { GoBackButton } from "@formbricks/ui/GoBackButton";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Notion({ params }) {
+const Page = async ({ params }) => {
   const enabled = !!(
     NOTION_OAUTH_CLIENT_ID &&
     NOTION_OAUTH_CLIENT_SECRET &&
@@ -37,8 +39,9 @@ export default async function Notion({ params }) {
   }
 
   return (
-    <>
+    <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
+      <PageHeader pageTitle="Notion Integration" />
       <NotionWrapper
         enabled={enabled}
         surveys={surveys}
@@ -47,6 +50,8 @@ export default async function Notion({ params }) {
         webAppUrl={WEBAPP_URL}
         databasesArray={databasesArray}
       />
-    </>
+    </PageContentWrapper>
   );
-}
+};
+
+export default Page;

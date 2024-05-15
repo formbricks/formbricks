@@ -3,7 +3,7 @@ import Peer from "@/images/peer.webp";
 import { CheckCircle2Icon } from "lucide-react";
 import Image from "next/image";
 
-export default function Testimonial() {
+export const Testimonial = () => {
   return (
     <div className="flex flex-col items-center justify-center bg-gradient-to-tr from-slate-100 to-slate-300">
       <div className="3xl:w-2/3 mb-10 space-y-8 px-12 xl:px-20 ">
@@ -51,4 +51,4 @@ export default function Testimonial() {
       </div>
     </div>
   );
-}
+};

@@ -15,10 +15,10 @@ import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from 
 import { TSurvey } from "@formbricks/types/surveys";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
-import LoadSegmentModal from "@formbricks/ui/Targeting/LoadSegmentModal";
-import SaveAsNewSegmentModal from "@formbricks/ui/Targeting/SaveAsNewSegmentModal";
-import SegmentTitle from "@formbricks/ui/Targeting/SegmentTitle";
-import TargetingIndicator from "@formbricks/ui/Targeting/TargetingIndicator";
+import { LoadSegmentModal } from "@formbricks/ui/Targeting/LoadSegmentModal";
+import { SaveAsNewSegmentModal } from "@formbricks/ui/Targeting/SaveAsNewSegmentModal";
+import { SegmentTitle } from "@formbricks/ui/Targeting/SegmentTitle";
+import { TargetingIndicator } from "@formbricks/ui/Targeting/TargetingIndicator";
 
 import {
   cloneSegmentAction,
@@ -28,8 +28,8 @@ import {
   updateSegmentAction,
 } from "../lib/actions";
 import { ACTIONS_TO_EXCLUDE } from "../lib/constants";
-import AddFilterModal from "./AddFilterModal";
-import SegmentEditor from "./SegmentEditor";
+import { AddFilterModal } from "./AddFilterModal";
+import { SegmentEditor } from "./SegmentEditor";
 
 interface UserTargetingAdvancedCardProps {
   localSurvey: TSurvey;
@@ -41,7 +41,7 @@ interface UserTargetingAdvancedCardProps {
   initialSegment?: TSegment;
 }
 
-export function AdvancedTargetingCard({
+export const AdvancedTargetingCard = ({
   localSurvey,
   setLocalSurvey,
   environmentId,
@@ -49,7 +49,7 @@ export function AdvancedTargetingCard({
   attributeClasses,
   segments,
   initialSegment,
-}: UserTargetingAdvancedCardProps) {
+}: UserTargetingAdvancedCardProps) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
@@ -413,4 +413,4 @@ export function AdvancedTargetingCard({
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
-}
+};

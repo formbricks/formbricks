@@ -1,6 +1,6 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
-import SurveyState from "@formbricks/lib/surveyState";
+import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
 import { TJSWebsiteStateDisplay } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";

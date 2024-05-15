@@ -17,7 +17,7 @@ interface MultipleFileInputProps {
   allowMultipleFiles?: boolean;
 }
 
-export default function FileInput({
+export const FileInput = ({
   allowedFileExtensions,
   surveyId,
   onUploadCallback,
@@ -25,7 +25,7 @@ export default function FileInput({
   fileUrls,
   maxSizeInMB,
   allowMultipleFiles,
-}: MultipleFileInputProps) {
+}: MultipleFileInputProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -314,4 +314,4 @@ export default function FileInput({
       </div>
     </div>
   );
-}
+};

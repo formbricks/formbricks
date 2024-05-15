@@ -36,7 +36,7 @@ const checkDatabaseConnection = async () => {
   }
 }; */
 
-export default async function HealthPage() {
+const Page = async () => {
   await checkDatabaseConnection();
   // Skipping S3 check for now until it's fixed
   // await checkS3Connection();
@@ -47,4 +47,6 @@ export default async function HealthPage() {
       <p className="text-md mt-4 font-bold text-zinc-900">All systems are up and running</p>
     </div>
   );
-}
+};
+
+export default Page;

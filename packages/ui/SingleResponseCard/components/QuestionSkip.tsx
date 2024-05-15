@@ -12,12 +12,12 @@ interface QuestionSkipProps {
   isFirstQuestionAnswered?: boolean;
 }
 
-export default function QuestionSkip({
+export const QuestionSkip = ({
   skippedQuestions,
   status,
   questions,
   isFirstQuestionAnswered,
-}: QuestionSkipProps) {
+}: QuestionSkipProps) => {
   return (
     <div>
       {skippedQuestions && (
@@ -88,7 +88,9 @@ export default function QuestionSkip({
                 </div>
               </div>
               <div className="mb-2 ml-4 flex flex-col">
-                <p className="mb-2 w-fit rounded-lg bg-slate-100 px-2 text-slate-700">Survey Closed</p>
+                <p className="mb-2 w-fit rounded-lg bg-slate-100 px-2 font-medium text-slate-700">
+                  Survey closed
+                </p>
                 {skippedQuestions &&
                   skippedQuestions.map((questionId) => {
                     return (
@@ -107,4 +109,4 @@ export default function QuestionSkip({
       )}
     </div>
   );
-}
+};

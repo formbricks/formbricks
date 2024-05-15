@@ -2,7 +2,7 @@
 
 import { Dispatch, SetStateAction, useState } from "react";
 
-import CustomDialog from "@formbricks/ui/CustomDialog";
+import { CustomDialog } from "@formbricks/ui/CustomDialog";
 import { Input } from "@formbricks/ui/Input";
 
 interface TransferOwnershipModalProps {
@@ -13,13 +13,13 @@ interface TransferOwnershipModalProps {
   isLoading?: boolean;
 }
 
-export default function TransferOwnershipModal({
+export const TransferOwnershipModal = ({
   setOpen,
   open,
   memberName,
   onSubmit,
   isLoading,
-}: TransferOwnershipModalProps) {
+}: TransferOwnershipModalProps) => {
   const [inputValue, setInputValue] = useState("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,4 +61,4 @@ export default function TransferOwnershipModal({
       </div>
     </CustomDialog>
   );
-}
+};

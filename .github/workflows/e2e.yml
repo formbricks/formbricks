@@ -13,6 +13,8 @@ jobs:
 
       - name: Build & Cache Web Binaries
         uses: ./.github/actions/cache-build-web
+        with:
+          e2e_testing_mode: "1"
 
       - name: Install pnpm
         uses: pnpm/action-setup@v2

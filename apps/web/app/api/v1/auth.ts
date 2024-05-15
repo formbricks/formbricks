@@ -4,7 +4,7 @@ import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
-export async function authenticateRequest(request: Request): Promise<TAuthenticationApiKey | null> {
+export const authenticateRequest = async (request: Request): Promise<TAuthenticationApiKey | null> => {
   const apiKey = request.headers.get("x-api-key");
   if (apiKey) {
     const apiKeyData = await getApiKeyFromKey(apiKey);
@@ -18,9 +18,9 @@ export async function authenticateRequest(request: Request): Promise<TAuthentica
     return null;
   }
   return null;
-}
+};
 
-export function handleErrorResponse(error: any): Response {
+export const handleErrorResponse = (error: any): Response => {
   switch (error.message) {
     case "NotAuthenticated":
       return responses.notAuthenticatedResponse();
@@ -36,4 +36,4 @@ export function handleErrorResponse(error: any): Response {
       }
       return responses.internalServerErrorResponse("Some error occurred");
   }
-}
+};

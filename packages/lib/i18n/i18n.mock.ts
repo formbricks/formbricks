@@ -9,8 +9,7 @@ import {
   TSurveyConsentQuestion,
   TSurveyDateQuestion,
   TSurveyFileUploadQuestion,
-  TSurveyMultipleChoiceMultiQuestion,
-  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyMultipleChoiceQuestion,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
@@ -50,7 +49,7 @@ export const mockOpenTextQuestion: TSurveyOpenTextQuestion = {
   },
 };
 
-export const mockSingleSelectQuestion: TSurveyMultipleChoiceSingleQuestion = {
+export const mockSingleSelectQuestion: TSurveyMultipleChoiceQuestion = {
   id: "mvqx8t90np6isb6oel9eamzc",
   type: TSurveyQuestionType.MultipleChoiceSingle,
   choices: [
@@ -78,7 +77,7 @@ export const mockSingleSelectQuestion: TSurveyMultipleChoiceSingleQuestion = {
   shuffleOption: "none",
 };
 
-export const mockMultiSelectQuestion: TSurveyMultipleChoiceMultiQuestion = {
+export const mockMultiSelectQuestion: TSurveyMultipleChoiceQuestion = {
   required: true,
   headline: {
     default: "What's important on vacay?",
@@ -305,7 +304,6 @@ export const mockSurvey: TSurvey = {
   },
   pin: null,
   resultShareKey: null,
-  inlineTriggers: {},
   triggers: [],
   languages: mockSurveyLanguages,
   segment: mockSegment,

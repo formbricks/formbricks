@@ -3,11 +3,13 @@
 import { navigation } from "@/lib/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaDiscord, FaGithub, FaXTwitter } from "react-icons/fa6";
 
 import { Button } from "./Button";
+import { DiscordIcon } from "./icons/DiscordIcon";
+import { GithubIcon } from "./icons/GithubIcon";
+import { TwitterIcon } from "./icons/TwitterIcon";
 
-function PageLink({
+const PageLink = ({
   label,
   page,
   previous = false,
@@ -15,7 +17,7 @@ function PageLink({
   label: string;
   page: { href: string; title: string };
   previous?: boolean;
-}) {
+}) => {
   return (
     <>
       <Button
@@ -34,9 +36,9 @@ function PageLink({
       </Link>
     </>
   );
-}
+};
 
-function PageNavigation() {
+const PageNavigation = () => {
   let pathname = usePathname();
   let allPages = navigation.flatMap((group) => {
     return group.links.flatMap((link) => {
@@ -70,9 +72,9 @@ function PageNavigation() {
       )}
     </div>
   );
-}
+};
 
-function SocialLink({
+const SocialLink = ({
   href,
   icon: Icon,
   children,
@@ -80,16 +82,16 @@ function SocialLink({
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
-}) {
+}) => {
   return (
     <Link href={href} className="group">
       <span className="sr-only">{children}</span>
       <Icon className="h-5 w-5 fill-slate-700 transition group-hover:fill-slate-900 dark:group-hover:fill-slate-500" />
     </Link>
   );
-}
+};
 
-function SmallPrint() {
+const SmallPrint = () => {
   const currentYear = new Date().getFullYear();
 
   return (
@@ -98,25 +100,25 @@ function SmallPrint() {
         Formbricks GmbH &copy; {currentYear}. All rights reserved.
       </p>
       <div className="flex gap-4">
-        <SocialLink href="https://twitter.com/formbricks" icon={FaXTwitter}>
+        <SocialLink href="https://twitter.com/formbricks" icon={TwitterIcon}>
           Follow us on Twitter
         </SocialLink>
-        <SocialLink href="https://github.com/formbricks/formbricks" icon={FaGithub}>
+        <SocialLink href="https://github.com/formbricks/formbricks" icon={GithubIcon}>
           Follow us on GitHub
         </SocialLink>
-        <SocialLink href="https://formbricks.com/discord" icon={FaDiscord}>
+        <SocialLink href="https://formbricks.com/discord" icon={DiscordIcon}>
           Join our Discord server
         </SocialLink>
       </div>
     </div>
   );
-}
+};
 
-export function Footer() {
+export const Footer = () => {
   return (
     <footer className="mx-auto w-full max-w-2xl space-y-10 pb-16 lg:max-w-5xl">
       <PageNavigation />
       <SmallPrint />
     </footer>
   );
-}
+};

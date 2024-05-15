@@ -26,7 +26,7 @@ import { FileInput } from "../FileInput";
 import { Input } from "../Input";
 import { Label } from "../Label";
 import { FallbackInput } from "./components/FallbackInput";
-import RecallQuestionSelect from "./components/RecallQuestionSelect";
+import { RecallQuestionSelect } from "./components/RecallQuestionSelect";
 import { isValueIncomplete } from "./lib/utils";
 import {
   determineImageUploaderVisibility,
@@ -77,13 +77,16 @@ export const QuestionFormInput = ({
   className,
 }: QuestionFormInputProps) => {
   const question: TSurveyQuestion = localSurvey.questions[questionIdx];
-  const questionId = question?.id;
   const isChoice = id.includes("choice");
   const isMatrixLabelRow = id.includes("row");
   const isMatrixLabelColumn = id.includes("column");
   const isThankYouCard = questionIdx === localSurvey.questions.length;
   const isWelcomeCard = questionIdx === -1;
   const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
+
+  const questionId = useMemo(() => {
+    return isWelcomeCard ? "start" : isThankYouCard ? "end" : question.id;
+  }, [isWelcomeCard, isThankYouCard, question?.id]);
 
   const enabledLanguages = useMemo(
     () => getEnabledLanguages(localSurvey.languages ?? []),
@@ -379,9 +382,10 @@ export const QuestionFormInput = ({
     <div className="w-full">
       <div className="w-full">
         <div className="mb-2 mt-3">
-          <Label htmlFor={id}>{label ?? getLabelById(id)}</Label>
+          <Label htmlFor={id}>{getLabelById(id)}</Label>
         </div>
-        <div className="flex flex-col gap-4">
+
+        <div className="flex flex-col gap-4 bg-white">
           {showImageUploader && id === "headline" && (
             <FileInput
               id="question-image"

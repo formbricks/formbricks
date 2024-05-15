@@ -5,7 +5,7 @@ import { CommandQueue } from "../shared/commandQueue";
 import { ErrorHandler } from "../shared/errors";
 import { Logger } from "../shared/logger";
 // Website package specific imports
-import { trackAction } from "./lib/actions";
+import { trackCodeAction } from "./lib/actions";
 import { resetConfig } from "./lib/common";
 import { initialize } from "./lib/initialize";
 import { checkPageUrl } from "./lib/noCodeActions";
@@ -27,7 +27,7 @@ const reset = async (): Promise<void> => {
 };
 
 const track = async (name: string, properties: any = {}): Promise<void> => {
-  queue.add<any>(true, "website", trackAction, name, properties);
+  queue.add<any>(true, "website", trackCodeAction, name, properties);
   await queue.wait();
 };
 

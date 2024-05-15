@@ -3,7 +3,7 @@
 import { AzureButton } from "@/app/(auth)/auth/components/AzureButton";
 import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
 import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
-import IsPasswordValid from "@/app/(auth)/auth/components/IsPasswordValid";
+import { IsPasswordValid } from "@/app/(auth)/auth/components/IsPasswordValid";
 import { OpenIdButton } from "@/app/(auth)/auth/components/OpenIdButton";
 import { createUser } from "@/app/lib/users/users";
 import { XCircleIcon } from "lucide-react";

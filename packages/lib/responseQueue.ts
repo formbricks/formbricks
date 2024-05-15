@@ -1,7 +1,7 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { TResponseUpdate } from "@formbricks/types/responses";
 
-import SurveyState from "./surveyState";
+import { SurveyState } from "./surveyState";
 import { delay } from "./utils";
 
 interface QueueConfig {

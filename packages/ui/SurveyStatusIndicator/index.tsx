@@ -11,7 +11,7 @@ interface SurveyStatusIndicatorProps {
   tooltip?: boolean;
 }
 
-export function SurveyStatusIndicator({ status, tooltip }: SurveyStatusIndicatorProps) {
+export const SurveyStatusIndicator = ({ status, tooltip }: SurveyStatusIndicatorProps) => {
   if (tooltip) {
     return (
       <TooltipProvider>
@@ -112,4 +112,4 @@ export function SurveyStatusIndicator({ status, tooltip }: SurveyStatusIndicator
         )}
       </span>
     );
-}
+};

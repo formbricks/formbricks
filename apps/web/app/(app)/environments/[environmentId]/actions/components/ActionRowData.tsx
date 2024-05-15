@@ -3,9 +3,9 @@ import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TActionClass } from "@formbricks/types/actionClasses";
 
-export default function ActionClassDataRow({ actionClass }: { actionClass: TActionClass }) {
+export const ActionClassDataRow = ({ actionClass }: { actionClass: TActionClass }) => {
   return (
-    <div className="m-2 grid h-16 grid-cols-6 content-center rounded-lg hover:bg-slate-100">
+    <div className="m-2 grid h-16 grid-cols-6 content-center rounded-lg transition-colors ease-in-out hover:bg-slate-100">
       <div className="col-span-4 flex items-center pl-6 text-sm">
         <div className="flex items-center">
           <div className="h-5 w-5 flex-shrink-0 text-slate-500">
@@ -29,4 +29,4 @@ export default function ActionClassDataRow({ actionClass }: { actionClass: TActi
       <div className="text-center"></div>
     </div>
   );
-}
+};

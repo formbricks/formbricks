@@ -1,19 +1,6 @@
-import { MousePointerClickIcon } from "lucide-react";
-
-import { Button } from "@formbricks/ui/Button";
-
-export default function Loading() {
+const Loading = () => {
   return (
     <>
-      <div className="mb-6 text-right">
-        <Button
-          variant="darkCTA"
-          className="pointer-events-none animate-pulse cursor-not-allowed select-none bg-slate-200">
-          <MousePointerClickIcon className="mr-2 h-5 w-5 text-white" />
-          Loading
-        </Button>
-      </div>
-
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-6 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <span className="sr-only">Edit</span>
@@ -45,4 +32,6 @@ export default function Loading() {
       ))}
     </>
   );
-}
+};
+
+export default Loading;

@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 
-export default function EnvironmentPage({ params }) {
+const Page = ({ params }) => {
   return redirect(`/share/${params.sharingKey}/summary`);
-}
+};
+
+export default Page;

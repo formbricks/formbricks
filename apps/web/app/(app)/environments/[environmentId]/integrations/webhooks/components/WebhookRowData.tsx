@@ -51,7 +51,7 @@ const renderSelectedTriggersText = (webhook: TWebhook) => {
   }
 };
 
-export default function WebhookRowData({ webhook, surveys }: { webhook: TWebhook; surveys: TSurvey[] }) {
+export const WebhookRowData = ({ webhook, surveys }: { webhook: TWebhook; surveys: TSurvey[] }) => {
   return (
     <div className="mt-2 grid h-auto grid-cols-12 content-center rounded-lg py-2 hover:bg-slate-100">
       <div className="col-span-3 flex items-center truncate pl-6 text-sm">
@@ -83,4 +83,4 @@ export default function WebhookRowData({ webhook, surveys }: { webhook: TWebhook
       <div className="text-center"></div>
     </div>
   );
-}
+};

@@ -14,7 +14,7 @@ type UrlShortenerFormDataProps = {
 };
 type UrlValidationState = "default" | "valid" | "invalid";
 
-export default function UrlShortenerForm({ webAppUrl }: { webAppUrl: string }) {
+export const UrlShortenerForm = ({ webAppUrl }: { webAppUrl: string }) => {
   const [urlValidationState, setUrlValidationState] = useState<UrlValidationState>("default");
   const [shortUrl, setShortUrl] = useState("");
   const {
@@ -117,4 +117,4 @@ export default function UrlShortenerForm({ webAppUrl }: { webAppUrl: string }) {
       )}
     </div>
   );
-}
+};

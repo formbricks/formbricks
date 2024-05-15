@@ -15,7 +15,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TTeam } from "@formbricks/types/teams";
 import { TUser } from "@formbricks/types/user";
 
-import PathwaySelect from "./PathwaySelect";
+import { PathwaySelect } from "./PathwaySelect";
 import { OnboardingHeader } from "./ProgressBar";
 
 interface OnboardingProps {
@@ -27,14 +27,14 @@ interface OnboardingProps {
   webAppUrl: string;
 }
 
-export function Onboarding({
+export const Onboarding = ({
   isFormbricksCloud,
   session,
   environment,
   user,
   team,
   webAppUrl,
-}: OnboardingProps) {
+}: OnboardingProps) => {
   const router = useRouter();
   const [selectedPathway, setSelectedPathway] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(16);
@@ -188,4 +188,4 @@ export function Onboarding({
       </div>
     </div>
   );
-}
+};

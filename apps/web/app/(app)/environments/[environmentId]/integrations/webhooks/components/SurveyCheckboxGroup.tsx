@@ -69,5 +69,3 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
     </div>
   );
 };
-
-export default SurveyCheckboxGroup;

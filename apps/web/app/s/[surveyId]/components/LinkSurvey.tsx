@@ -1,7 +1,7 @@
 "use client";
 
-import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
-import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
+import { SurveyLinkUsed } from "@/app/s/[surveyId]/components/SurveyLinkUsed";
+import { VerifyEmail } from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -14,7 +14,6 @@ import { TResponse, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
-import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
 import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
@@ -35,7 +34,7 @@ interface LinkSurveyProps {
   languageCode: string;
 }
 
-export default function LinkSurvey({
+export const LinkSurvey = ({
   survey,
   product,
   userId,
@@ -46,7 +45,7 @@ export default function LinkSurvey({
   responseCount,
   verifiedEmail,
   languageCode,
-}: LinkSurveyProps) {
+}: LinkSurveyProps) => {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
@@ -154,10 +153,24 @@ export default function LinkSurvey({
 
   if (survey.verifyEmail && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
-      return <VerifyEmail survey={survey} isErrorComponent={true} languageCode={languageCode} />;
+      return (
+        <VerifyEmail
+          survey={survey}
+          isErrorComponent={true}
+          languageCode={languageCode}
+          styling={product.styling}
+        />
+      );
     }
     //emailVerificationStatus === "not-verified"
-    return <VerifyEmail singleUseId={suId ?? ""} survey={survey} languageCode={languageCode} />;
+    return (
+      <VerifyEmail
+        singleUseId={suId ?? ""}
+        survey={survey}
+        languageCode={languageCode}
+        styling={product.styling}
+      />
+    );
   }
 
   const determineStyling = () => {
@@ -183,7 +196,7 @@ export default function LinkSurvey({
   return (
     <div className="flex max-h-dvh min-h-dvh items-end justify-center overflow-clip md:items-center">
       {!determineStyling().isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
-      <ContentWrapper className="w-full p-0 md:max-w-md">
+      <div className="w-full space-y-6 p-0 md:max-w-md ">
         {isPreview && (
           <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
             <div />
@@ -193,7 +206,6 @@ export default function LinkSurvey({
             />
           </div>
         )}
-
         <SurveyInline
           survey={survey}
           styling={determineStyling()}
@@ -266,7 +278,7 @@ export default function LinkSurvey({
           }}
           startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
         />
-      </ContentWrapper>
+      </div>
     </div>
   );
-}
+};

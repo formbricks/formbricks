@@ -75,6 +75,7 @@ export const processResponseData = (
         return responseData;
       } else {
         const formattedString = Object.entries(responseData)
+          .filter(([_, value]) => value !== "")
           .map(([key, value]) => `${key}: ${value}`)
           .join("\n");
         return formattedString;

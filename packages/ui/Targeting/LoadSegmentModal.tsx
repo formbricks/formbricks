@@ -129,7 +129,7 @@ type LoadSegmentModalProps = {
   onSegmentLoad: (surveyId: string, segmentId: string) => Promise<TSurvey>;
 };
 
-const LoadSegmentModal = ({
+export const LoadSegmentModal = ({
   open,
   surveyId,
   setOpen,
@@ -187,5 +187,3 @@ const LoadSegmentModal = ({
     </Modal>
   );
 };
-
-export default LoadSegmentModal;

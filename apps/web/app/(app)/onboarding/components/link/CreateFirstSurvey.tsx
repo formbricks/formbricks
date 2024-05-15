@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  customSurvey,
-  templates,
-} from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
-import OnboardingTitle from "@/app/(app)/onboarding/components/OnboardingTitle";
+import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTitle";
 import ChurnImage from "@/images/onboarding-churn.png";
 import FeedbackImage from "@/images/onboarding-collect-feedback.png";
 import NPSImage from "@/images/onboarding-nps.png";
@@ -14,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 
+import { customSurvey, templates } from "@formbricks/lib/templates";
 import { TTemplate } from "@formbricks/types/templates";
 import { Button } from "@formbricks/ui/Button";
 import { OptionCard } from "@formbricks/ui/OptionCard";
@@ -24,7 +21,7 @@ interface CreateFirstSurveyProps {
   environmentId: string;
 }
 
-export function CreateFirstSurvey({ environmentId }: CreateFirstSurveyProps) {
+export const CreateFirstSurvey = ({ environmentId }: CreateFirstSurveyProps) => {
   const router = useRouter();
   const [loadingTemplate, setLoadingTemplate] = useState<string | null>(null);
   const templateOrder = ["Collect Feedback", "Net Promoter Score (NPS)", "Churn Survey"];
@@ -87,4 +84,4 @@ export function CreateFirstSurvey({ environmentId }: CreateFirstSurveyProps) {
       </Button>
     </div>
   );
-}
+};

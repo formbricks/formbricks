@@ -8,25 +8,25 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Fragment, Suspense, createContext, useContext, useEffect, useRef } from "react";
 import { create } from "zustand";
 
-function MenuIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+const MenuIcon = (props: React.ComponentPropsWithoutRef<"svg">) => {
   return (
     <svg viewBox="0 0 10 9" fill="none" strokeLinecap="round" aria-hidden="true" {...props}>
       <path d="M.5 1h9M.5 8h9M.5 4.5h9" />
     </svg>
   );
-}
+};
 
-function XIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+const XIcon = (props: React.ComponentPropsWithoutRef<"svg">) => {
   return (
     <svg viewBox="0 0 10 9" fill="none" strokeLinecap="round" aria-hidden="true" {...props}>
       <path d="m1.5 1 7 7M8.5 1l-7 7" />
     </svg>
   );
-}
+};
 
 const IsInsideMobileNavigationContext = createContext(false);
 
-function MobileNavigationDialog({ isOpen, close }: { isOpen: boolean; close: () => void }) {
+const MobileNavigationDialog = ({ isOpen, close }: { isOpen: boolean; close: () => void }) => {
   let pathname = usePathname();
   let searchParams = useSearchParams();
   let initialPathname = useRef(pathname).current;
@@ -38,7 +38,7 @@ function MobileNavigationDialog({ isOpen, close }: { isOpen: boolean; close: () 
     }
   }, [pathname, searchParams, close, initialPathname, initialSearchParams]);
 
-  function onClickDialog(event: React.MouseEvent<HTMLDivElement>) {
+  const onClickDialog = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!(event.target instanceof HTMLElement)) {
       return;
     }
@@ -51,7 +51,7 @@ function MobileNavigationDialog({ isOpen, close }: { isOpen: boolean; close: () 
     ) {
       close();
     }
-  }
+  };
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -97,11 +97,11 @@ function MobileNavigationDialog({ isOpen, close }: { isOpen: boolean; close: () 
       </Dialog>
     </Transition.Root>
   );
-}
+};
 
-export function useIsInsideMobileNavigation() {
+export const useIsInsideMobileNavigation = () => {
   return useContext(IsInsideMobileNavigationContext);
-}
+};
 
 export const useMobileNavigationStore = create<{
   isOpen: boolean;
@@ -115,7 +115,7 @@ export const useMobileNavigationStore = create<{
   toggle: () => set((state) => ({ isOpen: !state.isOpen })),
 }));
 
-export function MobileNavigation() {
+export const MobileNavigation = () => {
   let isInsideMobileNavigation = useIsInsideMobileNavigation();
   let { isOpen, toggle, close } = useMobileNavigationStore();
   let ToggleIcon = isOpen ? XIcon : MenuIcon;
@@ -136,4 +136,4 @@ export function MobileNavigation() {
       )}
     </IsInsideMobileNavigationContext.Provider>
   );
-}
+};

@@ -27,9 +27,9 @@ import {
   updateSegment,
 } from "../service";
 
-function addOrSubractDays(date: Date, number: number) {
+const addOrSubractDays = (date: Date, number: number) => {
   return new Date(new Date().setDate(date.getDate() - number));
-}
+};
 
 beforeEach(() => {
   prisma.segment.findUnique.mockResolvedValue(mockSegmentPrisma);

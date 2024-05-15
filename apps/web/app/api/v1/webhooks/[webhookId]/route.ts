@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
 import { deleteWebhook, getWebhook } from "@formbricks/lib/webhook/service";
 
-export async function GET(_: Request, { params }: { params: { webhookId: string } }) {
+export const GET = async (_: Request, { params }: { params: { webhookId: string } }) => {
   const apiKey = headers().get("x-api-key");
   if (!apiKey) {
     return responses.notAuthenticatedResponse();
@@ -23,9 +23,9 @@ export async function GET(_: Request, { params }: { params: { webhookId: string 
     return responses.unauthorizedResponse();
   }
   return responses.successResponse(webhook);
-}
+};
 
-export async function DELETE(_: Request, { params }: { params: { webhookId: string } }) {
+export const DELETE = async (_: Request, { params }: { params: { webhookId: string } }) => {
   const apiKey = headers().get("x-api-key");
   if (!apiKey) {
     return responses.notAuthenticatedResponse();
@@ -52,4 +52,4 @@ export async function DELETE(_: Request, { params }: { params: { webhookId: stri
     console.error(e.message);
     return responses.notFoundResponse("Webhook", params.webhookId);
   }
-}
+};

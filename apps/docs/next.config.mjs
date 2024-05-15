@@ -3,7 +3,7 @@ import nextMDX from "@next/mdx";
 import { recmaPlugins } from "./mdx/recma.mjs";
 import { rehypePlugins } from "./mdx/rehype.mjs";
 import { remarkPlugins } from "./mdx/remark.mjs";
-import withSearch from "./mdx/search.mjs";
+import { Search as withSearch } from "./mdx/search.mjs";
 
 const withMDX = nextMDX({
   options: {
@@ -22,11 +22,6 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "seo-strapi-aws-s3.s3.eu-central-1.amazonaws.com",
-        port: "",
-      },
-      {
-        protocol: "https",
         hostname: "avatars.githubusercontent.com",
         port: "",
       },
@@ -37,6 +32,11 @@ const nextConfig = {
       {
         source: "/",
         destination: "/introduction/what-is-formbricks",
+        permanent: true,
+      },
+      {
+        source: "/introduction/why-is-it-better",
+        destination: "/introduction/why-open-source",
         permanent: true,
       },
       // Redirects for Docs 2.0
@@ -77,6 +77,7 @@ const nextConfig = {
         destination: "/developer-docs/overview",
         permanent: true,
       },
+
       // Link Survey
       {
         source: "/link-surveys/embed-in-email",

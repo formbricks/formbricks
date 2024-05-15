@@ -4,6 +4,8 @@
 import { unstable_cache } from "next/cache";
 import { parse, stringify } from "superjson";
 
+export { revalidateTag } from "next/cache";
+
 export const cache = <T, P extends unknown[]>(
   fn: (...params: P) => Promise<T>,
   keys: Parameters<typeof unstable_cache>[1],

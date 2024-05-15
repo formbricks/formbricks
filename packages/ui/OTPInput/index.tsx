@@ -15,14 +15,14 @@ export type OTPInputProps = {
 
 const RE_DIGIT = /^\d+$/;
 
-export function OTPInput({
+export const OTPInput = ({
   value,
   valueLength,
   onChange,
   containerClassName,
   inputBoxClassName,
   disabled,
-}: OTPInputProps) {
+}: OTPInputProps) => {
   const valueItems = useMemo(() => {
     const valueArray = value.split("");
     const items: Array<string> = [];
@@ -153,4 +153,4 @@ export function OTPInput({
       ))}
     </div>
   );
-}
+};

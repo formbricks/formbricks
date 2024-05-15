@@ -1,7 +1,7 @@
 import { Button } from "@formbricks/ui/Button";
-import GoBackButton from "@formbricks/ui/GoBackButton";
+import { GoBackButton } from "@formbricks/ui/GoBackButton";
 
-export default function Loading() {
+const Loading = () => {
   return (
     <div className="mt-6 p-6">
       <GoBackButton />
@@ -56,4 +56,6 @@ export default function Loading() {
       </div>
     </div>
   );
-}
+};
+
+export default Loading;

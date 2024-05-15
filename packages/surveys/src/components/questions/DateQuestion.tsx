@@ -1,8 +1,8 @@
 import { BackButton } from "@/components/buttons/BackButton";
-import SubmitButton from "@/components/buttons/SubmitButton";
-import Headline from "@/components/general/Headline";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { Headline } from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
-import Subheader from "@/components/general/Subheader";
+import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,7 @@ interface DateQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
+  currentQuestionId: string;
 }
 
 const CalendarIcon = () => (
@@ -87,12 +88,12 @@ export const DateQuestion = ({
   languageCode,
   setTtc,
   ttc,
+  currentQuestionId,
 }: DateQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
@@ -106,7 +107,7 @@ export const DateQuestion = ({
         input.focus();
       }
     }
-  }, [datePickerOpen]);
+  }, [datePickerOpen, selectedDate]);
 
   useEffect(() => {
     if (!!selectedDate) {
@@ -182,7 +183,6 @@ export const DateQuestion = ({
                 </div>
               )}
 
-              {/* @ts-expect-error */}
               <DatePicker
                 key={datePickerOpen}
                 value={selectedDate}
@@ -225,7 +225,7 @@ export const DateQuestion = ({
                 }}
                 // @ts-expect-error
                 calendarIcon={<CalendarIcon />}
-                tileClassName={({ date }) => {
+                tileClassName={({ date }: { date: Date }) => {
                   const baseClass =
                     "hover:bg-input-bg-selected rounded-custom h-9 p-0 mt-1 font-normal text-heading aria-selected:opacity-100 focus:ring-2 focus:bg-slate-200";
                   // today's date class
@@ -247,7 +247,7 @@ export const DateQuestion = ({
 
                   return baseClass;
                 }}
-                formatShortWeekday={(_, date) => {
+                formatShortWeekday={(_: any, date: Date) => {
                   return date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
                 }}
                 showNeighboringMonth={false}
