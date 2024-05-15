@@ -1,6 +1,6 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@formbricks/ui/Accordion";
 
-import FaqJsonLdComponent from "./FAQPageJsonLd";
+import { FaqJsonLdComponent } from "./FAQPageJsonLd";
 
 const FAQ_DATA = [
   {
@@ -62,7 +62,7 @@ export const faqJsonLdData = FAQ_DATA.map((faq) => ({
   acceptedAnswerText: faq.answer(),
 }));
 
-export default function FAQ() {
+export const FAQ = () => {
   return (
     <>
       <FaqJsonLdComponent data={faqJsonLdData} />
@@ -76,4 +76,4 @@ export default function FAQ() {
       </Accordion>
     </>
   );
-}
+};

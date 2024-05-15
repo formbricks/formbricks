@@ -9,7 +9,7 @@ import { TSurveyBackgroundBgType, TSurveyStyling } from "@formbricks/types/surve
 import { Badge } from "@formbricks/ui/Badge";
 import { Slider } from "@formbricks/ui/Slider";
 
-import SurveyBgSelectorTab from "./SurveyBgSelectorTab";
+import { SurveyBgSelectorTab } from "./SurveyBgSelectorTab";
 
 interface BackgroundStylingCardProps {
   open: boolean;

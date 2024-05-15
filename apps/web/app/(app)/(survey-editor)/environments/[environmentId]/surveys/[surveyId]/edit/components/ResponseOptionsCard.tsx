@@ -20,11 +20,11 @@ interface ResponseOptionsCardProps {
   responseCount: number;
 }
 
-export default function ResponseOptionsCard({
+export const ResponseOptionsCard = ({
   localSurvey,
   setLocalSurvey,
   responseCount,
-}: ResponseOptionsCardProps) {
+}: ResponseOptionsCardProps) => {
   const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
@@ -578,4 +578,4 @@ export default function ResponseOptionsCard({
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
-}
+};

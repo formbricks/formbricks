@@ -23,7 +23,7 @@ type TDisableTwoFactorModalProps = {
   setOpen: (open: boolean) => void;
 };
 
-const DisableTwoFactorModal = ({ open, setOpen }: TDisableTwoFactorModalProps) => {
+export const DisableTwoFactorModal = ({ open, setOpen }: TDisableTwoFactorModalProps) => {
   const router = useRouter();
   const { handleSubmit, control, setValue } = useForm<TDisableTwoFactorFormState>();
   const [backupCodeInputVisible, setBackupCodeInputVisible] = useState(false);
@@ -157,5 +157,3 @@ const DisableTwoFactorModal = ({ open, setOpen }: TDisableTwoFactorModalProps) =
     </Modal>
   );
 };
-
-export default DisableTwoFactorModal;

@@ -1,4 +1,4 @@
-import SubmitButton from "@/components/buttons/SubmitButton";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { calculateElementIdx } from "@/lib/utils";
 
@@ -6,8 +6,8 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys";
 
-import Headline from "./Headline";
-import HtmlBody from "./HtmlBody";
+import { Headline } from "./Headline";
+import { HtmlBody } from "./HtmlBody";
 
 interface WelcomeCardProps {
   headline?: TI18nString;

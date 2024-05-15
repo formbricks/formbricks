@@ -13,7 +13,7 @@ import { Input } from "@formbricks/ui/Input";
 
 import { deleteUserAction } from "../actions";
 
-export function EditAvatar({ session }) {
+export const EditAvatar = ({ session }) => {
   return (
     <div>
       <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
@@ -23,7 +23,7 @@ export function EditAvatar({ session }) {
       </Button>
     </div>
   );
-}
+};
 
 interface DeleteAccountModalProps {
   open: boolean;
@@ -32,7 +32,7 @@ interface DeleteAccountModalProps {
   IS_FORMBRICKS_CLOUD: boolean;
 }
 
-function DeleteAccountModal({ setOpen, open, session, IS_FORMBRICKS_CLOUD }: DeleteAccountModalProps) {
+const DeleteAccountModal = ({ setOpen, open, session, IS_FORMBRICKS_CLOUD }: DeleteAccountModalProps) => {
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const handleInputChange = (e) => {
@@ -99,15 +99,15 @@ function DeleteAccountModal({ setOpen, open, session, IS_FORMBRICKS_CLOUD }: Del
       </div>
     </DeleteDialog>
   );
-}
+};
 
-export function DeleteAccount({
+export const DeleteAccount = ({
   session,
   IS_FORMBRICKS_CLOUD,
 }: {
   session: Session | null;
   IS_FORMBRICKS_CLOUD: boolean;
-}) {
+}) => {
   const [isModalOpen, setModalOpen] = useState(false);
 
   if (!session) {
@@ -130,4 +130,4 @@ export function DeleteAccount({
       </Button>
     </div>
   );
-}
+};

@@ -2,7 +2,7 @@
 
 import { XCircleIcon } from "lucide-react";
 
-export default function Error({ error }: { error: Error & { digest?: string } }) {
+const Error = ({ error }: { error: Error & { digest?: string } }) => {
   return (
     <div className="mx-auto flex h-full max-w-xl flex-col items-center justify-center text-center">
       <XCircleIcon height={40} color="red" />
@@ -10,4 +10,6 @@ export default function Error({ error }: { error: Error & { digest?: string } })
       <p className="text-sm text-zinc-900">{error.message}</p>
     </div>
   );
-}
+};
+
+export default Error;

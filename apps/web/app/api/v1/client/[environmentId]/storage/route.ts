@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
-import uploadPrivateFile from "./lib/uploadPrivateFile";
+import { uploadPrivateFile } from "./lib/uploadPrivateFile";
 
 interface Context {
   params: {
@@ -12,9 +12,9 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
 // api endpoint for uploading private files
 // uploaded files will be private, only the user who has access to the environment can access the file
@@ -22,7 +22,7 @@ export async function OPTIONS(): Promise<Response> {
 // use this to let users upload files to a survey for example
 // this api endpoint will return a signed url for uploading the file to s3 and another url for uploading file to the local storage
 
-export async function POST(req: NextRequest, context: Context): Promise<Response> {
+export const POST = async (req: NextRequest, context: Context): Promise<Response> => {
   const environmentId = context.params.environmentId;
 
   const { fileName, fileType, surveyId } = await req.json();
@@ -52,4 +52,4 @@ export async function POST(req: NextRequest, context: Context): Promise<Response
   const plan = ["active", "canceled"].includes(team.billing.features.linkSurvey.status) ? "pro" : "free";
 
   return await uploadPrivateFile(fileName, environmentId, fileType, plan);
-}
+};

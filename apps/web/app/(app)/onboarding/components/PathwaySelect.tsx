@@ -1,4 +1,4 @@
-import OnboardingTitle from "@/app/(app)/onboarding/components/OnboardingTitle";
+import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTitle";
 import InappMockup from "@/images/onboarding-in-app-survey.png";
 import LinkMockup from "@/images/onboarding-link-survey.webp";
 import Image from "next/image";
@@ -13,11 +13,11 @@ interface PathwaySelectProps {
 
 type PathwayOptionType = "link" | "website";
 
-export default function PathwaySelect({
+export const PathwaySelect = ({
   setSelectedPathway,
   setCurrentStep,
   isFormbricksCloud,
-}: PathwaySelectProps) {
+}: PathwaySelectProps) => {
   const handleSelect = async (pathway: PathwayOptionType) => {
     if (pathway === "link") {
       localStorage.setItem("onboardingPathway", "link");
@@ -66,4 +66,4 @@ export default function PathwaySelect({
       </div>
     </div>
   );
-}
+};

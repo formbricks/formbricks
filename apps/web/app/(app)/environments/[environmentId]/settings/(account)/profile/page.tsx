@@ -1,5 +1,5 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
-import AccountSecurity from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
+import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -9,12 +9,12 @@ import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 import { SettingsId } from "@formbricks/ui/SettingsId";
 
-import SettingsCard from "../../components/SettingsCard";
+import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteAccount } from "./components/DeleteAccount";
 import { EditAvatar } from "./components/EditAvatar";
 import { EditName } from "./components/EditName";
 
-export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
+const Page = async ({ params }: { params: { environmentId: string } }) => {
   const { environmentId } = params;
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -51,4 +51,6 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
       )}
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

@@ -1,7 +1,7 @@
 import { cn } from "@formbricks/lib/cn";
 import { Badge } from "@formbricks/ui/Badge";
 
-export default function SettingsCard({
+export const SettingsCard = ({
   title,
   description,
   children,
@@ -17,7 +17,7 @@ export default function SettingsCard({
   noPadding?: boolean;
   beta?: boolean;
   className?: string;
-}) {
+}) => {
   return (
     <div
       className={cn(
@@ -38,4 +38,4 @@ export default function SettingsCard({
       <div className={cn(noPadding ? "" : "px-4 pt-4")}>{children}</div>
     </div>
   );
-}
+};

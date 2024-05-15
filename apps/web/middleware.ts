@@ -19,7 +19,7 @@ import type { NextRequest } from "next/server";
 
 import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 
-export async function middleware(request: NextRequest) {
+export const middleware = async (request: NextRequest) => {
   const token = await getToken({ req: request });
 
   if (isWebAppRoute(request.nextUrl.pathname) && !token) {
@@ -64,7 +64,7 @@ export async function middleware(request: NextRequest) {
     }
   }
   return NextResponse.next();
-}
+};
 
 export const config = {
   matcher: [

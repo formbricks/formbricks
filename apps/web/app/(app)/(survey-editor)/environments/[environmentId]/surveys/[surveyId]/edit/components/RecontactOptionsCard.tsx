@@ -41,11 +41,11 @@ interface RecontactOptionsCardProps {
   environmentId: string;
 }
 
-export default function RecontactOptionsCard({
+export const RecontactOptionsCard = ({
   localSurvey,
   setLocalSurvey,
   environmentId,
-}: RecontactOptionsCardProps) {
+}: RecontactOptionsCardProps) => {
   const [open, setOpen] = useState(false);
   const ignoreWaiting = localSurvey.recontactDays !== null;
   const [inputDays, setInputDays] = useState(
@@ -213,4 +213,4 @@ export default function RecontactOptionsCard({
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
-}
+};

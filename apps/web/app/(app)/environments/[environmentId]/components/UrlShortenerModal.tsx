@@ -2,7 +2,7 @@ import { LinkIcon } from "lucide-react";
 
 import { Modal } from "@formbricks/ui/Modal";
 
-import UrlShortenerForm from "./UrlShortenerForm";
+import { UrlShortenerForm } from "./UrlShortenerForm";
 
 type UrlShortenerModalProps = {
   open: boolean;
@@ -10,7 +10,7 @@ type UrlShortenerModalProps = {
   webAppUrl: string;
 };
 
-export default function UrlShortenerModal({ open, setOpen, webAppUrl }: UrlShortenerModalProps) {
+export const UrlShortenerModal = ({ open, setOpen, webAppUrl }: UrlShortenerModalProps) => {
   return (
     <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false}>
       <div className="flex h-full flex-col rounded-lg pb-4">
@@ -33,4 +33,4 @@ export default function UrlShortenerModal({ open, setOpen, webAppUrl }: UrlShort
       </div>
     </Modal>
   );
-}
+};

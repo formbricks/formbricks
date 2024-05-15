@@ -8,7 +8,7 @@ import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 
-import EditSegmentModal from "./EditSegmentModal";
+import { EditSegmentModal } from "./EditSegmentModal";
 
 type TSegmentTableDataRowProps = {
   currentSegment: TSegmentWithSurveyNames;
@@ -19,7 +19,7 @@ type TSegmentTableDataRowProps = {
   isFormbricksCloud: boolean;
 };
 
-const SegmentTableDataRow = ({
+export const SegmentTableDataRow = ({
   currentSegment,
   actionClasses,
   attributeClasses,
@@ -76,5 +76,3 @@ const SegmentTableDataRow = ({
     </>
   );
 };
-
-export default SegmentTableDataRow;

@@ -1,5 +1,5 @@
-import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
-import Testimonial from "@/app/(auth)/auth/components/Testimonial";
+import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
+import { Testimonial } from "@/app/(auth)/auth/components/Testimonial";
 import { SignupForm } from "@/app/(auth)/auth/signup/components/SignupForm";
 import Link from "next/link";
 
@@ -19,11 +19,7 @@ import {
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 
-export default function SignUpPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+const Page = ({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) => {
   const inviteToken = searchParams["inviteToken"] ?? null;
 
   return (
@@ -66,4 +62,6 @@ export default function SignUpPage({
       </div>
     </div>
   );
-}
+};
+
+export default Page;

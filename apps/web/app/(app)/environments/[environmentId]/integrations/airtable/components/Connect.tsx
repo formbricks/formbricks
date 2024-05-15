@@ -15,7 +15,7 @@ interface AirtableConnectProps {
   webAppUrl: string;
 }
 
-export default function AirtableConnect({ environmentId, enabled, webAppUrl }: AirtableConnectProps) {
+export const AirtableConnect = ({ environmentId, enabled, webAppUrl }: AirtableConnectProps) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const handleGoogleLogin = async () => {
     setIsConnecting(true);
@@ -49,4 +49,4 @@ export default function AirtableConnect({ environmentId, enabled, webAppUrl }: A
       </div>
     </div>
   );
-}
+};

@@ -1,7 +1,7 @@
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
-import LogicEditor from "./LogicEditor";
-import UpdateQuestionId from "./UpdateQuestionId";
+import { LogicEditor } from "./LogicEditor";
+import { UpdateQuestionId } from "./UpdateQuestionId";
 
 interface AdvancedSettingsProps {
   question: TSurveyQuestion;

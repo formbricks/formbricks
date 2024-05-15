@@ -6,7 +6,7 @@ import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershi
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
-import ActionDetailModal from "./ActionDetailModal";
+import { ActionDetailModal } from "./ActionDetailModal";
 
 interface ActionClassesTableProps {
   environmentId: string;
@@ -15,12 +15,12 @@ interface ActionClassesTableProps {
   isUserTargetingEnabled: boolean;
 }
 
-export default function ActionClassesTable({
+export const ActionClassesTable = ({
   environmentId,
   actionClasses,
   children: [TableHeading, actionRows],
   isUserTargetingEnabled,
-}: ActionClassesTableProps) {
+}: ActionClassesTableProps) => {
   const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
   const { membershipRole, error } = useMembershipRole(environmentId);
 
@@ -74,4 +74,4 @@ export default function ActionClassesTable({
       />
     </>
   );
-}
+};

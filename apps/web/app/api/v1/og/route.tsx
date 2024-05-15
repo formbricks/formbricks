@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 
 export const runtime = "edge";
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   let name = req.nextUrl.searchParams.get("name");
   let brandColor = req.nextUrl.searchParams.get("brandColor");
 
@@ -57,4 +57,4 @@ export async function GET(req: NextRequest) {
       },
     }
   );
-}
+};

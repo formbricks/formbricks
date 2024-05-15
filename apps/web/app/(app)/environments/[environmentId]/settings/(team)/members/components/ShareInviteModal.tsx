@@ -13,7 +13,7 @@ interface ShareInviteModalProps {
   setOpen: (open: boolean) => void;
 }
 
-export default function ShareInviteModal({ inviteToken, open, setOpen }: ShareInviteModalProps) {
+export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModalProps) => {
   const linkTextRef = useRef(null);
 
   const handleTextSelection = () => {
@@ -66,4 +66,4 @@ export default function ShareInviteModal({ inviteToken, open, setOpen }: ShareIn
       </div>
     </Modal>
   );
-}
+};

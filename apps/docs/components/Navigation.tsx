@@ -35,12 +35,12 @@ export interface NavGroup {
   links: Array<LinkWithHref | LinkWithChildren>;
 }
 
-function useInitialValue<T>(value: T, condition = true) {
+const useInitialValue = <T,>(value: T, condition = true) => {
   let initialValue = useRef(value).current;
   return condition ? initialValue : value;
-}
+};
 
-function NavLink({
+const NavLink = ({
   href,
   children,
   active = false,
@@ -50,7 +50,7 @@ function NavLink({
   children: React.ReactNode;
   active: boolean;
   isAnchorLink?: boolean;
-}) {
+}) => {
   return (
     <Link
       href={href}
@@ -65,9 +65,9 @@ function NavLink({
       <span className="flex w-full truncate">{children}</span>
     </Link>
   );
-}
+};
 
-function VisibleSectionHighlight({ group, pathname }: { group: NavGroup; pathname: string }) {
+const VisibleSectionHighlight = ({ group, pathname }: { group: NavGroup; pathname: string }) => {
   let [sections, visibleSections] = useInitialValue(
     [useSectionStore((s) => s.sections), useSectionStore((s) => s.visibleSections)],
     useIsInsideMobileNavigation()
@@ -99,9 +99,9 @@ function VisibleSectionHighlight({ group, pathname }: { group: NavGroup; pathnam
       style={{ height, top }}
     />
   );
-}
+};
 
-function ActivePageMarker({ group, pathname }: { group: NavGroup; pathname: string }) {
+const ActivePageMarker = ({ group, pathname }: { group: NavGroup; pathname: string }) => {
   let itemHeight = remToPx(2);
   let offset = remToPx(0.25);
   let activePageIndex = group.links.findIndex(
@@ -122,9 +122,9 @@ function ActivePageMarker({ group, pathname }: { group: NavGroup; pathname: stri
       style={{ top }}
     />
   );
-}
+};
 
-function NavigationGroup({
+const NavigationGroup = ({
   group,
   className,
   activeGroup,
@@ -138,7 +138,7 @@ function NavigationGroup({
   setActiveGroup: (group: NavGroup | null) => void;
   openGroups: string[];
   setOpenGroups: (groups: string[]) => void;
-}) {
+}) => {
   const isInsideMobileNavigation = useIsInsideMobileNavigation();
   const pathname = usePathname();
   const isActiveGroup = activeGroup?.title === group.title;
@@ -219,9 +219,9 @@ function NavigationGroup({
       </div>
     </li>
   );
-}
+};
 
-export function Navigation(props: React.ComponentPropsWithoutRef<"nav">) {
+export const Navigation = (props: React.ComponentPropsWithoutRef<"nav">) => {
   const [activeGroup, setActiveGroup] = useState<NavGroup | null>(navigation[0]);
   const [openGroups, setOpenGroups] = useState<string[]>([]);
 
@@ -251,4 +251,4 @@ export function Navigation(props: React.ComponentPropsWithoutRef<"nav">) {
       </ul>
     </nav>
   );
-}
+};

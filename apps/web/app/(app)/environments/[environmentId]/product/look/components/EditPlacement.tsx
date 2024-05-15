@@ -26,7 +26,7 @@ interface EditPlacementProps {
   environmentId: string;
 }
 
-export function EditPlacement({ product }: EditPlacementProps) {
+export const EditPlacement = ({ product }: EditPlacementProps) => {
   const [currentPlacement, setCurrentPlacement] = useState<TPlacement>(product.placement);
   const [overlay, setOverlay] = useState(product.darkOverlay ? "darkOverlay" : "lightOverlay");
   const [clickOutside, setClickOutside] = useState(product.clickOutsideClose ? "allow" : "disallow");
@@ -131,4 +131,4 @@ export function EditPlacement({ product }: EditPlacementProps) {
       </Button>
     </div>
   );
-}
+};

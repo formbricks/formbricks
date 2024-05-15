@@ -10,8 +10,8 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
-import SingleResponseCard from "@formbricks/ui/SingleResponseCard";
+import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
+import { SingleResponseCard } from "@formbricks/ui/SingleResponseCard";
 import { SkeletonLoader } from "@formbricks/ui/SkeletonLoader";
 
 interface ResponseTimelineProps {
@@ -31,7 +31,7 @@ interface ResponseTimelineProps {
   isSharingPage?: boolean;
 }
 
-export default function ResponseTimeline({
+export const ResponseTimeline = ({
   environment,
   responses,
   survey,
@@ -45,7 +45,7 @@ export default function ResponseTimeline({
   responseCount,
   totalResponseCount,
   isSharingPage = false,
-}: ResponseTimelineProps) {
+}: ResponseTimelineProps) => {
   const [isViewer, setIsViewer] = useState(false);
   const loadingRef = useRef(null);
 
@@ -122,4 +122,4 @@ export default function ResponseTimeline({
       )}
     </div>
   );
-}
+};

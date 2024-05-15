@@ -1,5 +1,5 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
-import ResponsePage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
+import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { notFound } from "next/navigation";
 
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -11,7 +11,7 @@ import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
 
   if (!surveyId) {
@@ -60,4 +60,6 @@ export default async function Page({ params }) {
       </PageContentWrapper>
     </div>
   );
-}
+};
+
+export default Page;

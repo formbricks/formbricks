@@ -5,7 +5,7 @@ import { translateSurvey } from "./lib/i18n";
 
 const prisma = new PrismaClient();
 
-async function main() {
+const main = async () => {
   await prisma.$transaction(
     async (tx) => {
       // Translate Surveys
@@ -92,7 +92,7 @@ async function main() {
       timeout: 50000,
     }
   );
-}
+};
 
 main()
   .catch(async (e) => {

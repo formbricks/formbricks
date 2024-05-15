@@ -9,7 +9,7 @@ interface Membership {
   userId: string;
 }
 
-export async function GET() {
+export const GET = async () => {
   const sessionUser = await getSessionUser();
   if (!sessionUser) {
     return new Response("Not authenticated", {
@@ -24,9 +24,9 @@ export async function GET() {
   });
 
   return Response.json(user);
-}
+};
 
-export async function PUT(request: NextRequest) {
+export const PUT = async (request: NextRequest) => {
   const sessionUser = await getSessionUser();
   if (!sessionUser) {
     return new Response("Not authenticated", {
@@ -43,7 +43,7 @@ export async function PUT(request: NextRequest) {
   });
 
   return Response.json(user);
-}
+};
 
 const deleteUser = async (userId: string) => {
   await prisma.user.delete({
@@ -78,7 +78,7 @@ const deleteTeam = async (teamId: string) => {
   });
 };
 
-export async function DELETE() {
+export const DELETE = async () => {
   try {
     const currentUser = await getSessionUser();
 
@@ -134,4 +134,4 @@ export async function DELETE() {
   } catch (error) {
     return Response.json({ message: error.message }, { status: 500 });
   }
-}
+};

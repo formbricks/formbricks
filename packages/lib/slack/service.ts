@@ -52,12 +52,12 @@ export const getSlackChannels = async (environmentId: string): Promise<TIntegrat
   }
 };
 
-export async function writeDataToSlack(
+export const writeDataToSlack = async (
   credentials: TIntegrationSlackCredential,
   channelId: string,
   values: string[][],
   surveyName: string | undefined
-) {
+) => {
   try {
     const [responses, questions] = values;
     let blockResponse = [
@@ -117,4 +117,4 @@ export async function writeDataToSlack(
     }
     throw error;
   }
-}
+};

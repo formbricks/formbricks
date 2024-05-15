@@ -58,7 +58,7 @@ export const SurveysList = ({
   }, []);
 
   useEffect(() => {
-    async function fetchInitialSurveys() {
+    const fetchInitialSurveys = async () => {
       setIsFetching(true);
       const res = await getSurveysAction(environment.id, surveysLimit, undefined, filters);
       if (res.length < surveysLimit) {
@@ -68,7 +68,7 @@ export const SurveysList = ({
       }
       setSurveys(res);
       setIsFetching(false);
-    }
+    };
     fetchInitialSurveys();
   }, [environment.id, surveysLimit, filters]);
 

@@ -11,7 +11,7 @@ import { Button } from "./Button";
 import { MobileNavigation, useIsInsideMobileNavigation, useMobileNavigationStore } from "./MobileNavigation";
 import { ThemeToggle } from "./ThemeToggle";
 
-function TopLevelNavItem({ href, children }: { href: string; children: React.ReactNode }) {
+const TopLevelNavItem = ({ href, children }: { href: string; children: React.ReactNode }) => {
   return (
     <li>
       <Link
@@ -21,12 +21,9 @@ function TopLevelNavItem({ href, children }: { href: string; children: React.Rea
       </Link>
     </li>
   );
-}
+};
 
-export const Header = forwardRef<React.ElementRef<"div">, { className?: string }>(function Header(
-  { className },
-  ref
-) {
+export const Header = forwardRef<React.ElementRef<"div">, { className?: string }>(({ className }, ref) => {
   let { isOpen: mobileNavIsOpen } = useMobileNavigationStore();
   let isInsideMobileNavigation = useIsInsideMobileNavigation();
 
@@ -91,3 +88,5 @@ export const Header = forwardRef<React.ElementRef<"div">, { className?: string }
     </motion.div>
   );
 });
+
+Header.displayName = "Header";

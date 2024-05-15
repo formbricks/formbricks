@@ -17,12 +17,12 @@ import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-import SettingsCard from "../../settings/components/SettingsCard";
+import { SettingsCard } from "../../settings/components/SettingsCard";
 import { EditFormbricksBranding } from "./components/EditBranding";
 import { EditPlacement } from "./components/EditPlacement";
 import { ThemeStyling } from "./components/ThemeStyling";
 
-export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
+const Page = async ({ params }: { params: { environmentId: string } }) => {
   const [session, team, product] = await Promise.all([
     getServerSession(authOptions),
     getTeamByEnvironmentId(params.environmentId),
@@ -97,4 +97,6 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
       </SettingsCard>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

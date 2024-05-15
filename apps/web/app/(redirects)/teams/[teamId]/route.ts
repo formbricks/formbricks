@@ -8,7 +8,7 @@ import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getProducts } from "@formbricks/lib/product/service";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 
-export async function GET(_: Request, context: { params: { teamId: string } }) {
+export const GET = async (_: Request, context: { params: { teamId: string } }) => {
   const teamId = context?.params?.teamId;
   if (!teamId) return notFound();
   // check auth
@@ -24,4 +24,4 @@ export async function GET(_: Request, context: { params: { teamId: string } }) {
   const prodEnvironment = environments.find((e) => e.type === "production");
   if (!prodEnvironment) return notFound();
   redirect(`/environments/${prodEnvironment.id}/`);
-}
+};

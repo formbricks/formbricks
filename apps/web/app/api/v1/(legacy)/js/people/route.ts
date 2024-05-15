@@ -3,13 +3,13 @@ import { NextRequest } from "next/server";
 
 import { createPerson } from "@formbricks/lib/person/service";
 
-export async function OPTIONS() {
+export const OPTIONS = async () => {
   // cors headers
 
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(req: NextRequest) {
+export const POST = async (req: NextRequest) => {
   // we need to create a new person
   // call the createPerson service from here
 
@@ -30,4 +30,4 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     return responses.internalServerErrorResponse("Something went wrong", true);
   }
-}
+};

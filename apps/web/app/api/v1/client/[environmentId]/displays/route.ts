@@ -12,11 +12,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(request: Request, context: Context): Promise<Response> {
+export const POST = async (request: Request, context: Context): Promise<Response> => {
   const jsonInput = await request.json();
   const inputValidation = ZDisplayCreateInput.safeParse({
     ...jsonInput,
@@ -49,4 +49,4 @@ export async function POST(request: Request, context: Context): Promise<Response
   await capturePosthogEnvironmentEvent(inputValidation.data.environmentId, "display created");
 
   return responses.successResponse(response, true);
-}
+};

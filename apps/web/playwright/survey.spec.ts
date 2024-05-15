@@ -284,7 +284,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByLabel("Headline").fill(surveys.germanCreate.welcomeCard.headline);
 
     // Fill Open text question in german
-    await page.getByRole("button", { name: "Free text Required" }).click();
+    await page.getByRole("main").getByText("Free text").click();
     await page.getByPlaceholder("Your question here. Recall").click();
     await page
       .getByPlaceholder("Your question here. Recall")
@@ -297,7 +297,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByLabel("Placeholder").fill(surveys.germanCreate.openTextQuestion.placeholder);
 
     // Fill Single select question in german
-    await page.getByRole("button", { name: "Single-Select Required" }).click();
+    await page.getByRole("main").getByText("Single-Select").click();
     await page.getByPlaceholder("Your question here. Recall").click();
     await page
       .getByPlaceholder("Your question here. Recall")
@@ -312,7 +312,8 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Option 2").fill(surveys.germanCreate.singleSelectQuestion.options[1]);
 
     // Fill Multi select question in german
-    await page.getByRole("button", { name: "Multi-Select Required" }).click();
+    await page.getByRole("main").getByText("Multi-Select").click();
+
     await page.getByPlaceholder("Your question here. Recall").click();
     await page
       .getByPlaceholder("Your question here. Recall")
@@ -325,7 +326,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Option 3").fill(surveys.germanCreate.multiSelectQuestion.options[2]);
 
     // Fill Picture select question in german
-    await page.getByRole("button", { name: "Picture Selection Required" }).click();
+    await page.getByRole("main").getByText("Picture Selection").click();
     await page.getByPlaceholder("Your question here. Recall").click();
     await page
       .getByPlaceholder("Your question here. Recall")
@@ -336,7 +337,7 @@ test.describe("Multi Language Survey Create", async () => {
       .fill(surveys.germanCreate.pictureSelectQuestion.description);
 
     // Fill Rating question in german
-    await page.getByRole("button", { name: "Rating Required" }).click();
+    await page.getByRole("main").getByText("Rating").click();
     await page.getByPlaceholder("Your question here. Recall").click();
     await page
       .getByPlaceholder("Your question here. Recall")
@@ -351,7 +352,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Very satisfied").fill(surveys.germanCreate.ratingQuestion.highLabel);
 
     // Fill NPS question in german
-    await page.getByRole("button", { name: "Net Promoter Score (NPS) Required" }).click();
+    await page.getByRole("main").getByText("Net Promoter Score (NPS)").click();
     await page.getByPlaceholder("Your question here. Recall").click();
     await page.getByPlaceholder("Your question here. Recall").fill(surveys.germanCreate.npsQuestion.question);
     await page.getByLabel("Lower Label").click();
@@ -360,21 +361,21 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByLabel("Upper Label").fill(surveys.germanCreate.npsQuestion.highLabel);
 
     // Fill Date question in german
-    await page.getByRole("button", { name: "Date Required" }).click();
+    await page.getByRole("main").getByText("Date").click();
     await page.getByPlaceholder("Your question here. Recall").click();
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.dateQuestion.question);
 
     // Fill File upload question in german
-    await page.getByRole("button", { name: "File Upload Required" }).click();
+    await page.getByRole("main").getByText("File Upload").click();
     await page.getByPlaceholder("Your question here. Recall").click();
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.fileUploadQuestion.question);
 
     // Fill Matrix question in german
-    await page.getByRole("button", { name: "9 Matrix" }).click();
+    await page.getByRole("main").getByText("Matrix").click();
     await page.getByPlaceholder("Your question here. Recall").click();
     await page.getByPlaceholder("Your question here. Recall").fill(surveys.germanCreate.matrix.question);
     await page.getByPlaceholder("Your description here. Recall").click();
@@ -397,7 +398,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.locator("#column-3").fill(surveys.germanCreate.matrix.columns[3]);
 
     // Fill Address question in german
-    await page.getByRole("button", { name: "Address Required" }).click();
+    await page.getByRole("main").getByText("Address").click();
     await page.getByPlaceholder("Your question here. Recall").click();
     await page
       .getByPlaceholder("Your question here. Recall")

@@ -4,7 +4,7 @@ import { SurveyInlineProps } from "@formbricks/types/formbricksSurveys";
 
 import { Survey } from "./Survey";
 
-export function SurveyInline(props: SurveyInlineProps) {
+export const SurveyInline = (props: SurveyInlineProps) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768); // Assuming 768px as a breakpoint for mobile
 
   useEffect(() => {
@@ -29,4 +29,4 @@ export function SurveyInline(props: SurveyInlineProps) {
       )}
     </div>
   );
-}
+};

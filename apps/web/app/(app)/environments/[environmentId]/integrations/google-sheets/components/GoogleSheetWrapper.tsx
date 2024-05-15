@@ -11,9 +11,9 @@ import {
 } from "@formbricks/types/integration/googleSheet";
 import { TSurvey } from "@formbricks/types/surveys";
 
-import AddIntegrationModal from "./AddIntegrationModal";
-import Connect from "./Connect";
-import Home from "./Home";
+import { AddIntegrationModal } from "./AddIntegrationModal";
+import { Connect } from "./Connect";
+import { Home } from "./Home";
 
 interface GoogleSheetWrapperProps {
   enabled: boolean;
@@ -24,14 +24,14 @@ interface GoogleSheetWrapperProps {
   webAppUrl: string;
 }
 
-export default function GoogleSheetWrapper({
+export const GoogleSheetWrapper = ({
   enabled,
   environment,
   surveys,
   spreadSheetArray,
   googleSheetIntegration,
   webAppUrl,
-}: GoogleSheetWrapperProps) {
+}: GoogleSheetWrapperProps) => {
   const [isConnected, setIsConnected] = useState(
     googleSheetIntegration ? googleSheetIntegration.config?.key : false
   );
@@ -73,4 +73,4 @@ export default function GoogleSheetWrapper({
       )}
     </>
   );
-}
+};

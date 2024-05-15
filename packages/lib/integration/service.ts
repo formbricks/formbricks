@@ -13,10 +13,10 @@ import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { integrationCache } from "./cache";
 
-export async function createOrUpdateIntegration(
+export const createOrUpdateIntegration = async (
   environmentId: string,
   integrationData: TIntegrationInput
-): Promise<TIntegration> {
+): Promise<TIntegration> => {
   validateInputs([environmentId, ZId]);
 
   try {
@@ -49,7 +49,7 @@ export async function createOrUpdateIntegration(
     }
     throw error;
   }
-}
+};
 
 export const getIntegrations = (environmentId: string, page?: number): Promise<TIntegration[]> =>
   cache(

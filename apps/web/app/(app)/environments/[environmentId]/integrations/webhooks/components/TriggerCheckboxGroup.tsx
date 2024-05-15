@@ -47,5 +47,3 @@ export const TriggerCheckboxGroup: React.FC<TriggerCheckboxGroupProps> = ({
     </div>
   );
 };
-
-export default TriggerCheckboxGroup;

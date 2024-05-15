@@ -68,7 +68,7 @@ const validateLanguages = (languages: TLanguage[]) => {
   return true;
 };
 
-export default function EditLanguage({ product, environmentId }: EditLanguageProps) {
+export const EditLanguage = ({ product, environmentId }: EditLanguageProps) => {
   const [languages, setLanguages] = useState<TLanguage[]>(product.languages);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
@@ -194,7 +194,7 @@ export default function EditLanguage({ product, environmentId }: EditLanguagePro
       />
     </div>
   );
-}
+};
 
 const AliasTooltip = () => {
   return (

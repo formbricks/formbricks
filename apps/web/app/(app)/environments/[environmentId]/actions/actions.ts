@@ -16,7 +16,7 @@ import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TActionClassInput } from "@formbricks/types/actionClasses";
 import { AuthorizationError } from "@formbricks/types/errors";
 
-export async function deleteActionClassAction(environmentId, actionClassId: string) {
+export const deleteActionClassAction = async (environmentId, actionClassId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -33,13 +33,13 @@ export async function deleteActionClassAction(environmentId, actionClassId: stri
   if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
 
   await deleteActionClass(environmentId, actionClassId);
-}
+};
 
-export async function updateActionClassAction(
+export const updateActionClassAction = async (
   environmentId: string,
   actionClassId: string,
   updatedAction: Partial<TActionClassInput>
-) {
+) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -56,9 +56,9 @@ export async function updateActionClassAction(
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await updateActionClass(environmentId, actionClassId, updatedAction);
-}
+};
 
-export async function createActionClassAction(action: TActionClassInput) {
+export const createActionClassAction = async (action: TActionClassInput) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -66,7 +66,7 @@ export async function createActionClassAction(action: TActionClassInput) {
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   return await createActionClass(action.environmentId, action);
-}
+};
 
 export const getActionCountInLastHourAction = async (actionClassId: string, environmentId: string) => {
   const session = await getServerSession(authOptions);

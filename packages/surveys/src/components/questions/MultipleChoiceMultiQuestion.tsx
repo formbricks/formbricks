@@ -1,8 +1,8 @@
 import { BackButton } from "@/components/buttons/BackButton";
-import SubmitButton from "@/components/buttons/SubmitButton";
-import Headline from "@/components/general/Headline";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { Headline } from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
-import Subheader from "@/components/general/Subheader";
+import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, shuffleQuestions } from "@/lib/utils";
@@ -10,10 +10,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
+import type { TSurveyMultipleChoiceQuestion } from "@formbricks/types/surveys";
 
 interface MultipleChoiceMultiProps {
-  question: TSurveyMultipleChoiceMultiQuestion;
+  question: TSurveyMultipleChoiceQuestion;
   value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;

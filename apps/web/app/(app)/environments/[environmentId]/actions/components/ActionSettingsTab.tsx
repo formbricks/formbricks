@@ -34,13 +34,13 @@ interface ActionSettingsTabProps {
   membershipRole?: TMembershipRole;
 }
 
-export default function ActionSettingsTab({
+export const ActionSettingsTab = ({
   environmentId,
   actionClass,
   actionClasses,
   setOpen,
   membershipRole,
-}: ActionSettingsTabProps) {
+}: ActionSettingsTabProps) => {
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [testUrl, setTestUrl] = useState("");
@@ -268,4 +268,4 @@ export default function ActionSettingsTab({
       />
     </div>
   );
-}
+};

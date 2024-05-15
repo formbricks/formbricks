@@ -9,7 +9,7 @@ import { TTag } from "@formbricks/types/tags";
 
 import { Button } from "../../Button";
 import { Tag } from "../../Tag";
-import TagsCombobox from "../../TagsCombobox";
+import { TagsCombobox } from "../../TagsCombobox";
 import { createTagAction, createTagToResponeAction, deleteTagOnResponseAction } from "../actions";
 
 interface ResponseTagsWrapperProps {
@@ -24,7 +24,7 @@ interface ResponseTagsWrapperProps {
   isViewer?: boolean;
 }
 
-const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
+export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   tags,
   environmentId,
   responseId,
@@ -145,5 +145,3 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
     </div>
   );
 };
-
-export default ResponseTagsWrapper;

@@ -9,15 +9,7 @@ import { TSubscriptionStatus } from "@formbricks/types/teams";
 
 const posthogEnabled = env.NEXT_PUBLIC_POSTHOG_API_KEY && env.NEXT_PUBLIC_POSTHOG_API_HOST;
 
-export default function PosthogIdentify({
-  session,
-  environmentId,
-  teamId,
-  teamName,
-  inAppSurveyBillingStatus,
-  linkSurveyBillingStatus,
-  userTargetingBillingStatus,
-}: {
+interface PosthogIdentifyProps {
   session: Session;
   environmentId?: string;
   teamId?: string;
@@ -25,7 +17,17 @@ export default function PosthogIdentify({
   inAppSurveyBillingStatus?: TSubscriptionStatus;
   linkSurveyBillingStatus?: TSubscriptionStatus;
   userTargetingBillingStatus?: TSubscriptionStatus;
-}) {
+}
+
+export const PosthogIdentify = ({
+  session,
+  environmentId,
+  teamId,
+  teamName,
+  inAppSurveyBillingStatus,
+  linkSurveyBillingStatus,
+  userTargetingBillingStatus,
+}: PosthogIdentifyProps) => {
   const posthog = usePostHog();
 
   useEffect(() => {
@@ -60,4 +62,4 @@ export default function PosthogIdentify({
   ]);
 
   return null;
-}
+};

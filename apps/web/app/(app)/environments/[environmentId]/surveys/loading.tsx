@@ -1,5 +1,7 @@
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 
-export default function LoadingPage() {
+const Loading = () => {
   return <LoadingSpinner />;
-}
+};
+
+export default Loading;

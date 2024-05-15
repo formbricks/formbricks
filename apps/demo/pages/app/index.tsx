@@ -9,7 +9,7 @@ import fbsetup from "../../public/fb-setup.png";
 
 declare const window: any;
 
-export default function AppPage({}) {
+const AppPage = ({}) => {
   const [darkMode, setDarkMode] = useState(false);
   const router = useRouter();
 
@@ -36,7 +36,11 @@ export default function AppPage({}) {
 
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
       const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
-      const userInitAttributes = { language: "de", "Init Attribute 1": "eight", "Init Attribute 2": "two" };
+      const userInitAttributes = {
+        language: "de",
+        "Init Attribute 1": "eight",
+        "Init Attribute 2": "two",
+      };
 
       formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
@@ -234,4 +238,6 @@ export default function AppPage({}) {
       </div>
     </div>
   );
-}
+};
+
+export default AppPage;

@@ -5,16 +5,7 @@ import { TPlacement } from "@formbricks/types/common";
 
 import { getPlacementStyle } from "../lib/utils";
 
-export default function Modal({
-  children,
-  isOpen,
-  placement,
-  previewMode,
-  clickOutsideClose,
-  darkOverlay,
-  borderRadius,
-  background,
-}: {
+interface ModalProps {
   children: ReactNode;
   isOpen: boolean;
   placement: TPlacement;
@@ -23,7 +14,18 @@ export default function Modal({
   darkOverlay: boolean;
   borderRadius?: number;
   background?: string;
-}) {
+}
+
+export const Modal = ({
+  children,
+  isOpen,
+  placement,
+  previewMode,
+  clickOutsideClose,
+  darkOverlay,
+  borderRadius,
+  background,
+}: ModalProps) => {
   const [show, setShow] = useState(true);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -79,7 +81,7 @@ export default function Modal({
       setShow(true);
     }
     const previewBase = document.getElementById("preview-survey-base");
-    function handleClickOutside(e: MouseEvent) {
+    const handleClickOutside = (e: MouseEvent) => {
       // Checks if the positioning is center, clickOutsideClose is set & if the click is inside the preview screen but outside the survey modal
       if (
         scalingClasses.transformOrigin === "" &&
@@ -94,7 +96,7 @@ export default function Modal({
           setShow(false);
         }, 500);
       }
-    }
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -152,4 +154,4 @@ export default function Modal({
       </div>
     </div>
   );
-}
+};

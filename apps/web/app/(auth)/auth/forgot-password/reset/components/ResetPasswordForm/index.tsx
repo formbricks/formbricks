@@ -1,6 +1,6 @@
 "use client";
 
-import IsPasswordValid from "@/app/(auth)/auth/components/IsPasswordValid";
+import { IsPasswordValid } from "@/app/(auth)/auth/components/IsPasswordValid";
 import { resetPassword } from "@/app/lib/users/users";
 import { XCircleIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";

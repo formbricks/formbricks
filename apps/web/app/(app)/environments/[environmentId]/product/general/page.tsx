@@ -13,12 +13,12 @@ import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 import { SettingsId } from "@formbricks/ui/SettingsId";
 
-import SettingsCard from "../../settings/components/SettingsCard";
-import DeleteProduct from "./components/DeleteProduct";
-import EditProductName from "./components/EditProductName";
-import EditWaitingTime from "./components/EditWaitingTime";
+import { SettingsCard } from "../../settings/components/SettingsCard";
+import { DeleteProduct } from "./components/DeleteProduct";
+import { EditProductName } from "./components/EditProductName";
+import { EditWaitingTime } from "./components/EditWaitingTime";
 
-export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
+const Page = async ({ params }: { params: { environmentId: string } }) => {
   const [, product, session, team] = await Promise.all([
     getEnvironment(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
@@ -76,4 +76,6 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
       <SettingsId title="Product" id={product.id}></SettingsId>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

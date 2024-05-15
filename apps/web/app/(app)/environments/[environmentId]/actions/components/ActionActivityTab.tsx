@@ -8,7 +8,7 @@ import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { Label } from "@formbricks/ui/Label";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 
 import {
   getActionCountInLast7DaysAction,
@@ -23,11 +23,11 @@ interface ActivityTabProps {
   isUserTargetingEnabled: boolean;
 }
 
-export default function EventActivityTab({
+export const EventActivityTab = ({
   actionClass,
   environmentId,
   isUserTargetingEnabled,
-}: ActivityTabProps) {
+}: ActivityTabProps) => {
   // const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, actionClass.id);
 
   const [numEventsLastHour, setNumEventsLastHour] = useState<number | undefined>();
@@ -40,9 +40,8 @@ export default function EventActivityTab({
 
   useEffect(() => {
     setLoading(true);
-    updateState();
 
-    async function updateState() {
+    const updateState = async () => {
       try {
         setLoading(true);
         const [
@@ -66,7 +65,9 @@ export default function EventActivityTab({
       } finally {
         setLoading(false);
       }
-    }
+    };
+
+    updateState();
   }, [actionClass.id, environmentId, isUserTargetingEnabled]);
 
   if (loading) return <LoadingSpinner />;
@@ -145,4 +146,4 @@ export default function EventActivityTab({
       </div>
     </div>
   );
-}
+};

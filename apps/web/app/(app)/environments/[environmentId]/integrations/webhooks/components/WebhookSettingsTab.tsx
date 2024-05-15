@@ -1,8 +1,8 @@
 "use client";
 
 import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/HardcodedTriggers";
-import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
-import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
+import { SurveyCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
+import { TriggerCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
 import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/testEndpoint";
 import clsx from "clsx";
 import { TrashIcon } from "lucide-react";
@@ -28,12 +28,7 @@ interface ActionSettingsTabProps {
   setOpen: (v: boolean) => void;
 }
 
-export default function WebhookSettingsTab({
-  environmentId,
-  webhook,
-  surveys,
-  setOpen,
-}: ActionSettingsTabProps) {
+export const WebhookSettingsTab = ({ environmentId, webhook, surveys, setOpen }: ActionSettingsTabProps) => {
   const router = useRouter();
   const { register, handleSubmit } = useForm({
     defaultValues: {
@@ -247,4 +242,4 @@ export default function WebhookSettingsTab({
       />
     </div>
   );
-}
+};

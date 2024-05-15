@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import React from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
 
@@ -14,12 +13,12 @@ type EmptySpaceFillerProps = {
   emptyMessage?: string;
 };
 
-const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
+export const EmptySpaceFiller = ({
   type,
   environment,
   noWidgetRequired,
   emptyMessage,
-}) => {
+}: EmptySpaceFillerProps) => {
   if (type === "table") {
     return (
       <div className="shadow-xs group rounded-xl border border-slate-100 bg-white p-4 ">
@@ -152,5 +151,3 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
     </div>
   );
 };
-
-export default EmptySpaceFiller;

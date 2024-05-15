@@ -1,7 +1,7 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { FC, useState } from "react";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
@@ -21,12 +21,12 @@ interface HiddenFieldsCardProps {
   setActiveQuestionId: (questionId: string | null) => void;
 }
 
-const HiddenFieldsCard: FC<HiddenFieldsCardProps> = ({
+export const HiddenFieldsCard = ({
   activeQuestionId,
   localSurvey,
   setActiveQuestionId,
   setLocalSurvey,
-}) => {
+}: HiddenFieldsCardProps) => {
   const open = activeQuestionId == "hidden";
   const [hiddenField, setHiddenField] = useState<string>("");
 
@@ -150,5 +150,3 @@ const HiddenFieldsCard: FC<HiddenFieldsCardProps> = ({
     </div>
   );
 };
-
-export default HiddenFieldsCard;

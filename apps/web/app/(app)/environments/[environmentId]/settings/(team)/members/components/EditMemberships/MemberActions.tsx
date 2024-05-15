@@ -6,7 +6,7 @@ import {
   deleteMembershipAction,
   resendInviteAction,
 } from "@/app/(app)/environments/[environmentId]/settings/(team)/members/actions";
-import ShareInviteModal from "@/app/(app)/environments/[environmentId]/settings/(team)/members/components/ShareInviteModal";
+import { ShareInviteModal } from "@/app/(app)/environments/[environmentId]/settings/(team)/members/components/ShareInviteModal";
 import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
@@ -26,7 +26,7 @@ type MemberActionsProps = {
   showDeleteButton?: boolean;
 };
 
-export default function MemberActions({ team, member, invite, showDeleteButton }: MemberActionsProps) {
+export const MemberActions = ({ team, member, invite, showDeleteButton }: MemberActionsProps) => {
   const router = useRouter();
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -154,4 +154,4 @@ export default function MemberActions({ team, member, invite, showDeleteButton }
       )}
     </>
   );
-}
+};

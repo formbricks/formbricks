@@ -53,13 +53,13 @@ export const ResultsShareButton = ({ survey, webAppUrl, user }: ResultsShareButt
   };
 
   useEffect(() => {
-    async function fetchSharingKey() {
+    const fetchSharingKey = async () => {
       const sharingKey = await getResultShareUrlAction(survey.id);
       if (sharingKey) {
         setSurveyUrl(webAppUrl + "/share/" + sharingKey);
         setShowPublishModal(true);
       }
-    }
+    };
 
     fetchSharingKey();
   }, [survey.id, webAppUrl]);

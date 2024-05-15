@@ -34,9 +34,9 @@ import { RatingResponse } from "../RatingResponse";
 import { SurveyStatusIndicator } from "../SurveyStatusIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
 import { deleteResponseAction, getResponseAction } from "./actions";
-import QuestionSkip from "./components/QuestionSkip";
-import ResponseNotes from "./components/ResponseNote";
-import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
+import { QuestionSkip } from "./components/QuestionSkip";
+import { ResponseNotes } from "./components/ResponseNote";
+import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";
 
 const isSubmissionTimeMoreThan5Minutes = (submissionTimeISOString: Date) => {
   const submissionTime: Date = new Date(submissionTimeISOString);
@@ -63,7 +63,7 @@ interface TooltipRendererProps {
   children: ReactNode;
 }
 
-function TooltipRenderer(props: TooltipRendererProps) {
+const TooltipRenderer = (props: TooltipRendererProps) => {
   const { children, shouldRender, tooltipContent } = props;
   if (shouldRender) {
     return (
@@ -77,16 +77,16 @@ function TooltipRenderer(props: TooltipRendererProps) {
   }
 
   return <>{children}</>;
-}
+};
 
-function DateResponse({ date }: { date?: string }) {
+const DateResponse = ({ date }: { date?: string }) => {
   if (!date) return null;
 
   const formattedDateString = formatDateWithOrdinal(new Date(date));
   return <p className="ph-no-capture my-1 font-semibold text-slate-700">{formattedDateString}</p>;
-}
+};
 
-export default function SingleResponseCard({
+export const SingleResponseCard = ({
   survey,
   response,
   user,
@@ -96,7 +96,7 @@ export default function SingleResponseCard({
   updateResponse,
   deleteResponse,
   isViewer,
-}: SingleResponseCardProps) {
+}: SingleResponseCardProps) => {
   const environmentId = survey.environmentId;
   const router = useRouter();
   const displayIdentifier = response.person
@@ -301,7 +301,7 @@ export default function SingleResponseCard({
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
       <div
         className={clsx(
-          "relative z-10 my-6 rounded-xl border border-slate-200 bg-white shadow-sm transition-all",
+          "relative z-30 my-6 rounded-xl border border-slate-200 bg-white shadow-sm transition-all",
           pageType === "response" &&
             (isOpen
               ? "w-3/4"
@@ -499,4 +499,4 @@ export default function SingleResponseCard({
       )}
     </div>
   );
-}
+};

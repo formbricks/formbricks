@@ -17,7 +17,7 @@ import {
 
 const BATCH_SIZE = 500;
 
-export async function POST(): Promise<Response> {
+export const POST = async (): Promise<Response> => {
   // Check authentication
   if (headers().get("x-api-key") !== CRON_SECRET) {
     return responses.notAuthenticatedResponse();
@@ -68,7 +68,7 @@ export async function POST(): Promise<Response> {
 
   await Promise.all(emailSendingPromises);
   return responses.successResponse({}, true);
-}
+};
 
 const getTeamIds = async (): Promise<string[]> => {
   const teams = await prisma.team.findMany({

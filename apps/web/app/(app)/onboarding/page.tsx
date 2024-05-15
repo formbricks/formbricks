@@ -8,7 +8,7 @@ import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getUser } from "@formbricks/lib/user/service";
 
-export default async function OnboardingPage() {
+const Page = async () => {
   const session = await getServerSession(authOptions);
 
   // Redirect to login if not authenticated
@@ -41,4 +41,6 @@ export default async function OnboardingPage() {
       webAppUrl={WEBAPP_URL}
     />
   );
-}
+};
+
+export default Page;

@@ -72,22 +72,22 @@ const resources: Array<Resource> = [
   },
 ];
 
-function ResourceIcon({ icon: Icon }: { icon: Resource["icon"] }) {
+const ResourceIcon = ({ icon: Icon }: { icon: Resource["icon"] }) => {
   return (
     <div className="dark:bg-white/7.5 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900/5 ring-1 ring-zinc-900/25 backdrop-blur-[2px] transition duration-300 group-hover:bg-white/50 group-hover:ring-zinc-900/25 dark:ring-white/15 dark:group-hover:bg-teal-300/10 dark:group-hover:ring-teal-400">
       <Icon className="h-5 w-5 fill-zinc-700/10 stroke-zinc-700 transition-colors duration-300 group-hover:stroke-zinc-900 dark:fill-white/10 dark:stroke-zinc-400 dark:group-hover:fill-teal-300/10 dark:group-hover:stroke-teal-400" />
     </div>
   );
-}
+};
 
-function ResourcePattern({
+const ResourcePattern = ({
   mouseX,
   mouseY,
   ...gridProps
 }: Resource["pattern"] & {
   mouseX: MotionValue<number>;
   mouseY: MotionValue<number>;
-}) {
+}) => {
   let maskImage = useMotionTemplate`radial-gradient(180px at ${mouseX}px ${mouseY}px, white, transparent)`;
   let style = { maskImage, WebkitMaskImage: maskImage };
 
@@ -119,17 +119,17 @@ function ResourcePattern({
       </motion.div>
     </div>
   );
-}
+};
 
-function Resource({ resource }: { resource: Resource }) {
+const Resource = ({ resource }: { resource: Resource }) => {
   let mouseX = useMotionValue(0);
   let mouseY = useMotionValue(0);
 
-  function onMouseMove({ currentTarget, clientX, clientY }: React.MouseEvent<HTMLDivElement>) {
+  const onMouseMove = ({ currentTarget, clientX, clientY }: React.MouseEvent<HTMLDivElement>) => {
     let { left, top } = currentTarget.getBoundingClientRect();
     mouseX.set(clientX - left);
     mouseY.set(clientY - top);
-  }
+  };
 
   return (
     <div
@@ -150,9 +150,9 @@ function Resource({ resource }: { resource: Resource }) {
       </div>
     </div>
   );
-}
+};
 
-export function Resources() {
+export const Resources = () => {
   return (
     <div className="my-16 xl:max-w-none">
       <Heading level={2} id="resources">
@@ -165,4 +165,4 @@ export function Resources() {
       </div>
     </div>
   );
-}
+};

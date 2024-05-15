@@ -4,11 +4,11 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 
 import { ZJsSyncLegacyInput } from "@formbricks/types/js";
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(req: Request): Promise<Response> {
+export const POST = async (req: Request): Promise<Response> => {
   try {
     const jsonInput = await req.json();
 
@@ -40,4 +40,4 @@ export async function POST(req: Request): Promise<Response> {
     console.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
-}
+};
