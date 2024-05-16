@@ -5,7 +5,7 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn, shuffleQuestions } from "@/lib/utils";
+import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -44,6 +44,11 @@ export const MultipleChoiceMultiQuestion = ({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
+  const shuffledChoicesIds = useMemo(() => {
+    if (question.shuffleOption) {
+      return getShuffledChoicesIds(question.choices, question.shuffleOption);
+    } else return question.choices.map((choice) => choice.id);
+  }, [question.shuffleOption, question.choices.length]);
 
   const getChoicesWithoutOtherLabels = useCallback(
     () =>
@@ -73,15 +78,17 @@ export const MultipleChoiceMultiQuestion = ({
     if (!question.choices) {
       return [];
     }
-    const choicesWithoutOther = question.choices.filter((choice) => choice.id !== "other");
-    if (question.shuffleOption) {
-      return shuffleQuestions(choicesWithoutOther, question.shuffleOption);
-    }
-    return choicesWithoutOther;
+    if (question.shuffleOption === "none" || question.shuffleOption === undefined) return question.choices;
+    return shuffledChoicesIds.map((choiceId) => {
+      const choice = question.choices.find((choice) => {
+        return choice.id === choiceId;
+      });
+      if (choice) return choice;
+    });
   }, [question.choices, question.shuffleOption]);
 
   const questionChoiceLabels = questionChoices.map((questionChoice) => {
-    return questionChoice.label[languageCode];
+    return questionChoice?.label[languageCode];
   });
 
   const otherOption = useMemo(
@@ -152,55 +159,60 @@ export const MultipleChoiceMultiQuestion = ({
             <fieldset>
               <legend className="sr-only">Options</legend>
               <div className="bg-survey-bg relative space-y-2" ref={choicesContainerRef}>
-                {questionChoices.map((choice, idx) => (
-                  <label
-                    key={choice.id}
-                    tabIndex={idx + 1}
-                    className={cn(
-                      value === choice.label ? "border-border bg-input-selected-bg z-10" : "border-border",
-                      "text-heading bg-input-bg focus-within:border-brand hover:bg-input-bg-selected focus:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
-                    )}
-                    onKeyDown={(e) => {
-                      // Accessibility: if spacebar was pressed pass this down to the input
-                      if (e.key === " ") {
-                        e.preventDefault();
-                        document.getElementById(choice.id)?.click();
-                        document.getElementById(choice.id)?.focus();
-                      }
-                    }}
-                    autoFocus={idx === 0 && !isInIframe}>
-                    <span className="flex items-center text-sm">
-                      <input
-                        type="checkbox"
-                        id={choice.id}
-                        name={question.id}
-                        tabIndex={-1}
-                        value={choice.label}
-                        className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
-                        aria-labelledby={`${choice.id}-label`}
-                        onChange={(e) => {
-                          if ((e.target as HTMLInputElement)?.checked) {
-                            addItem(getLocalizedValue(choice.label, languageCode));
-                          } else {
-                            removeItem(getLocalizedValue(choice.label, languageCode));
+                {questionChoices.map((choice, idx) => {
+                  if (!choice || choice.id === "other") return;
+                  return (
+                    <label
+                      key={choice.id}
+                      tabIndex={idx + 1}
+                      className={cn(
+                        value.includes(getLocalizedValue(choice.label, languageCode))
+                          ? "border-border bg-input-selected-bg z-10"
+                          : "border-border",
+                        "text-heading bg-input-bg focus-within:border-brand hover:bg-input-bg-selected focus:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                      )}
+                      onKeyDown={(e) => {
+                        // Accessibility: if spacebar was pressed pass this down to the input
+                        if (e.key === " ") {
+                          e.preventDefault();
+                          document.getElementById(choice.id)?.click();
+                          document.getElementById(choice.id)?.focus();
+                        }
+                      }}
+                      autoFocus={idx === 0 && !isInIframe}>
+                      <span className="flex items-center text-sm">
+                        <input
+                          type="checkbox"
+                          id={choice.id}
+                          name={question.id}
+                          tabIndex={-1}
+                          value={getLocalizedValue(choice.label, languageCode)}
+                          className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
+                          aria-labelledby={`${choice.id}-label`}
+                          onChange={(e) => {
+                            if ((e.target as HTMLInputElement)?.checked) {
+                              addItem(getLocalizedValue(choice.label, languageCode));
+                            } else {
+                              removeItem(getLocalizedValue(choice.label, languageCode));
+                            }
+                          }}
+                          checked={
+                            Array.isArray(value) &&
+                            value.includes(getLocalizedValue(choice.label, languageCode))
                           }
-                        }}
-                        checked={
-                          Array.isArray(value) &&
-                          value.includes(getLocalizedValue(choice.label, languageCode))
-                        }
-                        required={
-                          question.required && Array.isArray(value) && value.length
-                            ? false
-                            : question.required
-                        }
-                      />
-                      <span id={`${choice.id}-label`} className="ml-3 font-medium">
-                        {getLocalizedValue(choice.label, languageCode)}
+                          required={
+                            question.required && Array.isArray(value) && value.length
+                              ? false
+                              : question.required
+                          }
+                        />
+                        <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                          {getLocalizedValue(choice.label, languageCode)}
+                        </span>
                       </span>
-                    </span>
-                  </label>
-                ))}
+                    </label>
+                  );
+                })}
                 {otherOption && (
                   <label
                     tabIndex={questionChoices.length + 1}
