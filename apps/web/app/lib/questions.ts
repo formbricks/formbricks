@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import {
-  ArrowUpFromLine,
+  ArrowUpFromLineIcon,
   CalendarDaysIcon,
   CheckIcon,
   Grid3X3Icon,
@@ -33,7 +33,7 @@ import {
 
 import { replaceQuestionPresetPlaceholders } from "./templates";
 
-export type TSurveyQuestionType = {
+export type TQuestion = {
   id: string;
   label: string;
   description: string;
@@ -41,7 +41,7 @@ export type TSurveyQuestionType = {
   preset: any;
 };
 
-export const questionTypes: TSurveyQuestionType[] = [
+export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.OpenText,
     label: "Free text",
@@ -172,7 +172,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     id: QuestionId.FileUpload,
     label: "File Upload",
     description: "Allow respondents to upload a file",
-    icon: ArrowUpFromLine,
+    icon: ArrowUpFromLineIcon,
     preset: {
       headline: { default: "File Upload" },
       allowMultipleFiles: false,

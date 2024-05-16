@@ -336,6 +336,7 @@ export const QuestionsView = ({
       <DndContext sensors={sensors} onDragEnd={onDragEnd} collisionDetection={closestCorners}>
         <QuestionsDroppable
           localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
           product={product}
           moveQuestion={moveQuestion}
           updateQuestion={updateQuestion}

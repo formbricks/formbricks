@@ -1,5 +1,6 @@
 "use client";
 
+import { QuestionCardIcon } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionCardIcon";
 import { getTSurveyQuestionTypeName } from "@/app/lib/questions";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -22,7 +23,7 @@ import {
   Rows3Icon,
   StarIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
@@ -49,6 +50,7 @@ import { RatingQuestionForm } from "./RatingQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
+  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   product: TProduct;
   question: TSurveyQuestion;
   questionIdx: number;
@@ -66,6 +68,7 @@ interface QuestionCardProps {
 
 export const QuestionCard = ({
   localSurvey,
+  setLocalSurvey,
   product,
   question,
   questionIdx,
@@ -183,33 +186,12 @@ export const QuestionCard = ({
           <div>
             <div className="inline-flex">
               <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
-                {question.type === TSurveyQuestionType.FileUpload ? (
-                  <ArrowUpFromLineIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.OpenText ? (
-                  <MessageSquareTextIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
-                  <Rows3Icon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
-                  <ListIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.NPS ? (
-                  <PresentationIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.CTA ? (
-                  <MousePointerClickIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Rating ? (
-                  <StarIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Consent ? (
-                  <CheckIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.PictureSelection ? (
-                  <ImageIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Date ? (
-                  <CalendarDaysIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Cal ? (
-                  <PhoneIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Matrix ? (
-                  <Grid3X3Icon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Address ? (
-                  <HomeIcon className="h-5 w-5" />
-                ) : null}
+                <QuestionCardIcon
+                  question={question}
+                  localSurvey={localSurvey}
+                  setLocalSurvey={setLocalSurvey}
+                  product={product}
+                />
               </div>
               <div>
                 <p className="text-sm font-semibold">
