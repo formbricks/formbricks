@@ -2,6 +2,7 @@ import { TFormbricksApp } from "@formbricks/js-core/app";
 import { TFormbricksWebsite } from "@formbricks/js-core/website";
 
 import { Result, wrapThrowsAsync } from "../../types/errorHandlers";
+import { MethodQueue } from "./methodQueue";
 
 declare global {
   interface Window {
@@ -9,12 +10,15 @@ declare global {
   }
 }
 
-// load the sdk, return the result
+let isInitializing = false;
+let isInitialized = false;
+
+// Load the SDK, return the result
 const loadFormbricksAppSDK = async (apiHost: string): Promise<Result<void>> => {
   if (!window.formbricks) {
     const res = await fetch(`${apiHost}/api/packages/app`);
 
-    // failed to fetch the app package
+    // Failed to fetch the app package
     if (!res.ok) {
       return { ok: false, error: new Error("Failed to load Formbricks App SDK") };
     }
@@ -43,7 +47,7 @@ const loadFormbricksAppSDK = async (apiHost: string): Promise<Result<void>> => {
       await getFormbricks();
       return { ok: true, data: undefined };
     } catch (error: any) {
-      // formbricks loading failed, return the error
+      // Formbricks loading failed, return the error
       return {
         ok: false,
         error: new Error(error.message ?? "Failed to load Formbricks App SDK"),
@@ -61,27 +65,69 @@ type FormbricksAppMethods = {
 const formbricksProxyHandler: ProxyHandler<TFormbricksApp> = {
   get(_target, prop, _receiver) {
     return async (...args: any[]) => {
-      if (!window.formbricks) {
-        if (prop !== "init") {
+      const methodQueue = new MethodQueue();
+
+      if (prop === "init") {
+        // if still initializing, return
+        if (isInitializing) {
+          return;
+        }
+
+        // mark as initializing
+        isInitializing = true;
+
+        const { apiHost } = args[0];
+        const loadSDKResult = await wrapThrowsAsync(loadFormbricksAppSDK)(apiHost);
+
+        if (!loadSDKResult.ok) {
+          // error loading the SDK
+          isInitializing = false;
+          console.error(`🧱 Formbricks - Global error: ${loadSDKResult.error.message}`);
+          return;
+        }
+
+        try {
+          // @ts-expect-error
+          const result = await (window.formbricks[prop as FormbricksAppMethods] as Function)(...args);
+
+          // mark as initialized
+          isInitializing = false;
+          isInitialized = true;
+
+          // run the method queue
+          methodQueue.run();
+
+          // clear the method queue
+          methodQueue.clear();
+          return result;
+        } catch (error) {
+          isInitializing = false;
+          console.error(`🧱 Formbricks - Global error: ${error}`);
+          throw error;
+        }
+      }
+
+      if (!isInitialized) {
+        if (!isInitializing) {
           console.error(
             "🧱 Formbricks - Global error: You need to call formbricks.init before calling any other method"
           );
           return;
         }
 
-        // still need to check if the apiHost is passed
-        if (!args[0]) {
-          console.error("🧱 Formbricks - Global error: You need to pass the apiHost as the first argument");
-          return;
-        }
+        return new Promise<void>((resolve) => {
+          const method = async () => {
+            try {
+              // @ts-expect-error
+              const result = await (window.formbricks[prop as FormbricksAppMethods] as Function)(...args);
+              resolve(result);
+            } catch (error) {
+              console.error(`🧱 Formbricks - Global error: ${error}`);
+            }
+          };
 
-        const { apiHost } = args[0];
-        const loadSDKResult = await wrapThrowsAsync(loadFormbricksAppSDK)(apiHost);
-
-        if (!loadSDKResult.ok) {
-          console.error(`🧱 Formbricks - Global error: ${loadSDKResult.error.message}`);
-          return;
-        }
+          methodQueue.add(method);
+        });
       }
 
       // @ts-expect-error
@@ -96,8 +142,8 @@ const formbricksProxyHandler: ProxyHandler<TFormbricksApp> = {
         // @ts-expect-error
         return (window.formbricks[prop as FormbricksAppMethods] as Function)(...args);
       } catch (error) {
-        console.error(`Something went wrong: ${error}`);
-        return;
+        console.error(`🧱 Formbricks - Global error: ${error}`);
+        throw error;
       }
     };
   },

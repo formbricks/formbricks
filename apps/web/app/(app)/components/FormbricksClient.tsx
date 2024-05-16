@@ -16,17 +16,19 @@ export const FormbricksClient = ({ session }) => {
   const searchParams = useSearchParams();
 
   const initializeFormbricksAndSetupRouteChanges = useCallback(async () => {
-    await formbricks.init({
+    formbricks.init({
       environmentId: env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID || "",
       apiHost: env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
       userId: session.user.id,
     });
-    await formbricks.setEmail(session.user.email);
-    await formbricks.registerRouteChange();
+
+    formbricks.setEmail(session.user.email);
+
+    formbricks.registerRouteChange();
   }, [session.user.email, session.user.id]);
 
   useEffect(() => {
-    if (window !== undefined && formbricksEnabled && session?.user && formbricks) {
+    if (formbricksEnabled && session?.user && formbricks) {
       initializeFormbricksAndSetupRouteChanges();
     }
   }, [session, pathname, searchParams, initializeFormbricksAndSetupRouteChanges]);
