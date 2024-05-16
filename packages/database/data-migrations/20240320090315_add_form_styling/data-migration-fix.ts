@@ -4,6 +4,9 @@ const prisma = new PrismaClient();
 
 async function main() {
   await prisma.$transaction(async (tx) => {
+    const startTime = Date.now();
+    console.log("Starting data migration for styling fixes...");
+
     const surveysWithProductOverwrites = await tx.survey.findMany({
       where: {
         productOverwrites: {
@@ -12,9 +15,16 @@ async function main() {
       },
     });
 
+    console.log(`Found ${surveysWithProductOverwrites.length} surveys with product overwrites to process.`);
+
     for (const survey of surveysWithProductOverwrites) {
       if (survey.productOverwrites) {
         const { brandColor, highlightBorderColor, ...rest } = survey.productOverwrites;
+
+        if (!brandColor && !highlightBorderColor) {
+          console.log(`Skipping survey ${survey.id} as it has no brandColor or highlightBorderColor`);
+          continue;
+        }
 
         await tx.survey.update({
           where: {
@@ -36,6 +46,8 @@ async function main() {
         });
       }
     }
+
+    console.log("Data migration for styling fixes complete.");
   });
 }
 
