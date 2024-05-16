@@ -85,6 +85,7 @@ export const FileUploadQuestion = ({
             questionId={question.id}
           />
           <FileInput
+            uniqueId={question.id}
             surveyId={surveyId}
             onFileUpload={onFileUpload}
             onUploadCallback={(urls: string[]) => {

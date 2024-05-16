@@ -15,6 +15,7 @@ interface MultipleFileInputProps {
   fileUrls: string[] | undefined;
   maxSizeInMB?: number;
   allowMultipleFiles?: boolean;
+  uniqueId?: string;
 }
 
 export const FileInput = ({
@@ -25,6 +26,7 @@ export const FileInput = ({
   fileUrls,
   maxSizeInMB,
   allowMultipleFiles,
+  uniqueId = "",
 }: MultipleFileInputProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -206,6 +208,8 @@ export const FileInput = ({
     return true;
   }, [allowMultipleFiles, fileUrls, isUploading]);
 
+  const uniqueIdForInput = useMemo(() => `selectedFile-${uniqueId}`, [uniqueId]);
+
   return (
     <div
       className={`items-left bg-input-bg hover:bg-input-bg-selected border-border relative mt-3 flex w-full flex-col justify-center rounded-lg border-2 border-dashed dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800`}>
@@ -259,13 +263,13 @@ export const FileInput = ({
       <div>
         {isUploading && (
           <div className="inset-0 flex animate-pulse items-center justify-center rounded-lg py-4">
-            <label htmlFor="selectedFile" className="text-subheading text-sm font-medium">
+            <label htmlFor={uniqueIdForInput} className="text-subheading text-sm font-medium">
               Uploading...
             </label>
           </div>
         )}
 
-        <label htmlFor="selectedFile" onDragOver={(e) => handleDragOver(e)} onDrop={(e) => handleDrop(e)}>
+        <label htmlFor={uniqueIdForInput} onDragOver={(e) => handleDragOver(e)} onDrop={(e) => handleDrop(e)}>
           {showUploader && (
             <div
               className="focus:outline-brand flex flex-col items-center justify-center py-6 hover:cursor-pointer"
@@ -274,8 +278,8 @@ export const FileInput = ({
                 // Accessibility: if spacebar was pressed pass this down to the input
                 if (e.key === " ") {
                   e.preventDefault();
-                  document.getElementById("selectedFile")?.click();
-                  document.getElementById("selectedFile")?.focus();
+                  document.getElementById(uniqueIdForInput)?.click();
+                  document.getElementById(uniqueIdForInput)?.focus();
                 }
               }}>
               <svg
@@ -297,8 +301,8 @@ export const FileInput = ({
               </p>
               <input
                 type="file"
-                id="selectedFile"
-                name="selectedFile"
+                id={uniqueIdForInput}
+                name={uniqueIdForInput}
                 accept={allowedFileExtensions?.map((ext) => `.${ext}`).join(",")}
                 className="hidden"
                 onChange={(e) => {
