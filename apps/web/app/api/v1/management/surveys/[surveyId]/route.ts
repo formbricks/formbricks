@@ -62,7 +62,13 @@ export const PUT = async (
     if (!survey) {
       return responses.notFoundResponse("Survey", params.surveyId);
     }
-    const surveyUpdate = await request.json();
+    let surveyUpdate;
+    try {
+      surveyUpdate = await request.json();
+    } catch (error) {
+      console.error(`Error parsing JSON input: ${error}`);
+      return responses.badRequestResponse("Malformed JSON input, please check your request body");
+    }
     const inputValidation = ZSurvey.safeParse({
       ...survey,
       ...surveyUpdate,

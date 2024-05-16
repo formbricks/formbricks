@@ -14,7 +14,16 @@ import { getSignedUrlForPublicFile } from "./lib/getSignedUrl";
 // this api endpoint will return a signed url for uploading the file to s3 and another url for uploading file to the local storage
 
 export const POST = async (req: NextRequest): Promise<Response> => {
-  const { fileName, fileType, environmentId, allowedFileExtensions } = await req.json();
+  let storageInput;
+
+  try {
+    storageInput = await req.json();
+  } catch (error) {
+    console.error(`Error parsing JSON input: ${error}`);
+    return responses.badRequestResponse("Malformed JSON input, please check your request body");
+  }
+
+  const { fileName, fileType, environmentId, allowedFileExtensions } = storageInput;
 
   if (!fileName) {
     return responses.badRequestResponse("fileName is required");
