@@ -63,7 +63,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   const isSingleUseSurvey = survey.singleUse?.enabled;
 
   if (redirectUrl) {
-    // if redirectUrl exist in params and if its valid, we overwrite the redirect url of survey if it exist
+    // if redirectUrl exist in params and if its valid, we overwrite the redirect url of survey
     survey.redirectUrl = redirectUrl;
   }
 
