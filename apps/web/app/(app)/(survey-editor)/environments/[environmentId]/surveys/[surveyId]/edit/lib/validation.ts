@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 
 import { extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
+import { isValidUrl } from "@formbricks/lib/utils/url";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TI18nString,
@@ -189,15 +190,6 @@ export const isCardValid = (
   );
 };
 
-export const isValidUrl = (string: string): boolean => {
-  try {
-    new URL(string);
-    return true;
-  } catch (e) {
-    return false;
-  }
-};
-
 // Function to validate question ID and Hidden field Id
 export const validateId = (
   type: "Hidden field" | "Question",
@@ -227,6 +219,7 @@ export const validateId = (
     "hidden",
     "verifiedEmail",
     "multiLanguage",
+    "redirectUrl",
   ];
   if (forbiddenIds.includes(field)) {
     toast.error(`${type} Id not allowed.`);
@@ -407,11 +400,7 @@ export const isSurveyValid = (
   }
 
   // Checking the validity of redirection URLs to ensure they are properly formatted.
-  if (
-    survey.redirectUrl &&
-    !survey.redirectUrl.includes("https://") &&
-    !survey.redirectUrl.includes("http://")
-  ) {
+  if (survey.redirectUrl && !isValidUrl(survey.redirectUrl)) {
     toast.error("Please enter a valid URL for redirecting respondents.");
     return false;
   }

@@ -91,6 +91,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Verify Email before Survey", href: "/link-surveys/verify-email-before-survey" },
           { title: "PIN Protected Surveys", href: "/link-surveys/pin-protected-surveys" },
           { title: "Partial Submissions", href: "/global/partial-submissions" },
+          { title: "Redirect on Completion", href: "/link-surveys/redirect-on-completion" },
         ],
       },
     ],

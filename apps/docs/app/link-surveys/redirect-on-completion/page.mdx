@@ -1,0 +1,70 @@
+import { MdxImage } from "@/components/MdxImage";
+
+import StepOne from "../pin-protected-surveys/images/StepOne.webp";
+import RedirectUrlExample from "./images/RedirectUrlExample.webp";
+import StepTwo from "./images/StepTwo.webp";
+
+export const metadata = {
+  title: "Redirect on survey completion",
+  description:
+    "Automatically redirect users to a specified URL upon completing a survey. Enhance user flow and engagement by seamlessly guiding respondents to the next step.",
+};
+
+# Redirect on survey completion
+
+Automatically redirect users to a specified URL upon completing a survey. Enhance user flow and engagement by seamlessly guiding respondents to the next step. There are two ways of achieving it:
+
+1. Static Url Redirection
+2. Dynamic Url Redirection
+
+## **Staic Url Redirection**
+
+This is usefull when you want to redirect all the survey respondents to the same url.
+
+### **Steps to Set Up Staic Url Redirection**
+
+1. **Open Settings in Survey Editor**: Navigate to your survey in the survey editor where you wish to enable redirection (make sure its a link survey)
+2. **Select Response Options**: Find and select **`Response Options`** to access settings related to survey responses.
+   <MdxImage
+     src={StepOne}
+     alt="Choose Response option"
+     quality="100"
+     className="max-w-full rounded-lg sm:max-w-3xl "
+   />
+3. **Enable Redirect on completion**: Find the option for **`Redirect on completion`** and activate it. You will be prompted
+   to enter a url to which respondents would be redirected to.
+   <MdxImage
+     src={StepTwo}
+     alt="Choose Redirect on Completion"
+     quality="100"
+     className="max-w-full rounded-lg sm:max-w-3xl "
+   />
+
+## **Dynamic Url Redirection**
+
+This is usefull when you want to redirect different respondents to different Urls
+
+### **Steps to Set Up Dynamic Url Redirection**
+
+1. **Append redirectUrl param to survey link**: Before sending the survey link to the respondent, append **`redirectUrl=<you-redirect-url-here>`** to the survey link
+
+   <MdxImage
+     src={RedirectUrlExample}
+     alt="Redirect Url example"
+     quality="100"
+     className="max-w-full rounded-lg sm:max-w-3xl "
+   />
+
+<Note>
+  In cases where both static and dynamic redirect URLs are configured, dynamic redirect URL would be given a
+  higher priority
+</Note>{" "}
+
+### **Benefits of Redirect on completion**
+
+- **Increased Engagement**: Direct users to relevant content or next actions, such as additional surveys, or promotional offers.
+- **Customization and Personalization**: Use dynamic redirection to provide personalized experiences based on user responses, enhancing relevance and engagement.
+
+## **Conclusion**
+
+Implementing redirect on survey completion is a powerful feature that enhances user flow and engagement by guiding respondents to the next step seamlessly. Whether using static or dynamic URL redirection, this capability provides numerous benefits, including improved user experience, increased engagement, and enhanced tracking and analytics. By integrating redirection into your surveys, you can automate workflows, personalize user journeys, and ultimately achieve better outcomes from your survey initiatives.

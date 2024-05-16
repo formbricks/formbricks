@@ -12,7 +12,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
+import { testURLmatch } from "@formbricks/lib/utils/url";
 import {
   TActionClass,
   TActionClassInput,

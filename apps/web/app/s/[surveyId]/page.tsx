@@ -14,6 +14,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { isValidUrl } from "@formbricks/lib/utils/url";
 import { ZId } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { MediaBackground } from "@formbricks/ui/MediaBackground";
@@ -29,6 +30,7 @@ interface LinkSurveyPageProps {
     userId?: string;
     verify?: string;
     lang?: string;
+    redirectUrl?: string;
   };
 }
 
@@ -46,15 +48,23 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   if (!validId.success) {
     notFound();
   }
-  const survey = await getSurvey(params.surveyId);
+  const surveyPrisma = await getSurvey(params.surveyId);
 
   const suId = searchParams.suId;
   const langParam = searchParams.lang; //can either be language code or alias
-  const isSingleUseSurvey = survey?.singleUse?.enabled;
-  const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
+  const redirectUrl =
+    searchParams.redirectUrl && isValidUrl(searchParams.redirectUrl) ? searchParams.redirectUrl : undefined;
+  const survey = structuredClone(surveyPrisma);
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
+  }
+  const isSingleUseSurveyEncrypted = survey.singleUse?.isEncrypted;
+  const isSingleUseSurvey = survey.singleUse?.enabled;
+
+  if (redirectUrl) {
+    // if redirectUrl exist in params and if its valid, we overwrite the redirect url of survey if it exist
+    survey.redirectUrl = redirectUrl;
   }
 
   const team = await getTeamByEnvironmentId(survey?.environmentId);

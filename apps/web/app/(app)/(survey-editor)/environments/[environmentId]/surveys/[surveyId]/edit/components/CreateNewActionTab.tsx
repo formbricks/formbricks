@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { MatchType, testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
+import { MatchType, testURLmatch } from "@formbricks/lib/utils/url";
 import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
