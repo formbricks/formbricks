@@ -48,6 +48,7 @@ export const MultipleChoiceMultiQuestion = ({
     if (question.shuffleOption) {
       return getShuffledChoicesIds(question.choices, question.shuffleOption);
     } else return question.choices.map((choice) => choice.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.shuffleOption, question.choices.length]);
 
   const getChoicesWithoutOtherLabels = useCallback(
@@ -85,7 +86,7 @@ export const MultipleChoiceMultiQuestion = ({
       });
       if (choice) return choice;
     });
-  }, [question.choices, question.shuffleOption]);
+  }, [question.choices, question.shuffleOption, shuffledChoicesIds]);
 
   const questionChoiceLabels = questionChoices.map((questionChoice) => {
     return questionChoice?.label[languageCode];
