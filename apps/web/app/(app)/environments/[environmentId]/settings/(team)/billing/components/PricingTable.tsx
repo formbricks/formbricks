@@ -14,7 +14,7 @@ import { TTeam } from "@formbricks/types/teams";
 import { Badge } from "@formbricks/ui/Badge";
 import { BillingSlider } from "@formbricks/ui/BillingSlider";
 import { Button } from "@formbricks/ui/Button";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 import { PricingCard } from "@formbricks/ui/PricingCard";
 
 interface PricingTableProps {
@@ -24,12 +24,7 @@ interface PricingTableProps {
   responseCount: number;
 }
 
-export default function PricingTableComponent({
-  team,
-  environmentId,
-  peopleCount,
-  responseCount,
-}: PricingTableProps) {
+export const PricingTable = ({ team, environmentId, peopleCount, responseCount }: PricingTableProps) => {
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
   const [upgradingPlan, setUpgradingPlan] = useState(false);
@@ -226,4 +221,4 @@ export default function PricingTableComponent({
       </div>
     </div>
   );
-}
+};

@@ -5,7 +5,7 @@ import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 
-import CodeBlock from "@formbricks/ui/CodeBlock";
+import { CodeBlock } from "@formbricks/ui/CodeBlock";
 import { TabBar } from "@formbricks/ui/TabBar";
 import { Html5Icon, NpmIcon } from "@formbricks/ui/icons";
 
@@ -18,15 +18,17 @@ const tabs = [
   { id: "html", label: "HTML", icon: <Html5Icon /> },
 ];
 
-export default function SetupInstructions({
-  environmentId,
-  webAppUrl,
-  isFormbricksCloud,
-}: {
+interface SetupInstructionsProps {
   environmentId: string;
   webAppUrl: string;
   isFormbricksCloud: boolean;
-}) {
+}
+
+export const SetupInstructions = ({
+  environmentId,
+  webAppUrl,
+  isFormbricksCloud,
+}: SetupInstructionsProps) => {
   const [activeTab, setActiveTab] = useState(tabs[0].id);
 
   return (
@@ -165,4 +167,4 @@ if (typeof window !== "undefined") {
       </div>
     </div>
   );
-}
+};

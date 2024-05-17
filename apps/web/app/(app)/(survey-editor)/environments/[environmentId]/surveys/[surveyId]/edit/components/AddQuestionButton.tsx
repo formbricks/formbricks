@@ -14,7 +14,7 @@ interface AddQuestionButtonProps {
   product: TProduct;
 }
 
-export default function AddQuestionButton({ addQuestion, product }: AddQuestionButtonProps) {
+export const AddQuestionButton = ({ addQuestion, product }: AddQuestionButtonProps) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -59,4 +59,4 @@ export default function AddQuestionButton({ addQuestion, product }: AddQuestionB
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
-}
+};

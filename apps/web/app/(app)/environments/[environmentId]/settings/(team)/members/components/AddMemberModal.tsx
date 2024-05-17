@@ -20,14 +20,14 @@ interface AddMemberModalProps {
   environmentId: string;
 }
 
-export default function AddMemberModal({
+export const AddMemberModal = ({
   open,
   setOpen,
   onSubmit,
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
-}: AddMemberModalProps) {
+}: AddMemberModalProps) => {
   const tabs = [
     {
       title: "Individual Invite",
@@ -60,4 +60,4 @@ export default function AddMemberModal({
       />
     </>
   );
-}
+};

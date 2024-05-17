@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "Billing",
 };
 
-export default async function BillingLayout({ children, params }) {
+const BillingLayout = async ({ children, params }) => {
   if (!IS_FORMBRICKS_CLOUD) {
     notFound();
   }
@@ -33,4 +33,6 @@ export default async function BillingLayout({ children, params }) {
   const isPricingDisabled = !isOwner && !isAdmin;
 
   return <>{!isPricingDisabled ? <>{children}</> : <ErrorComponent />}</>;
-}
+};
+
+export default BillingLayout;

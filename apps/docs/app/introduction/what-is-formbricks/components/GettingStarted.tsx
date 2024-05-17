@@ -26,7 +26,7 @@ const gettingStarted = [
   },
 ];
 
-export function GettingStarted() {
+export const GettingStarted = () => {
   return (
     <div className="my-16 xl:max-w-none">
       <Heading level={2} id="getting-started">
@@ -47,4 +47,4 @@ export function GettingStarted() {
       </div>
     </div>
   );
-}
+};

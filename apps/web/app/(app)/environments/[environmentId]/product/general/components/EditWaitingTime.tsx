@@ -20,7 +20,7 @@ type EditWaitingTimeProps = {
   product: TProduct;
 };
 
-const EditWaitingTime: React.FC<EditWaitingTimeProps> = ({ product, environmentId }) => {
+export const EditWaitingTime: React.FC<EditWaitingTimeProps> = ({ product, environmentId }) => {
   const router = useRouter();
   const {
     register,
@@ -74,5 +74,3 @@ const EditWaitingTime: React.FC<EditWaitingTimeProps> = ({ product, environmentI
     </form>
   );
 };
-
-export default EditWaitingTime;

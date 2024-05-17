@@ -14,7 +14,7 @@ type FormData = {
   name: string;
 };
 
-export function EditName({ user }: { user: TUser }) {
+export const EditName = ({ user }: { user: TUser }) => {
   const {
     register,
     handleSubmit,
@@ -70,4 +70,4 @@ export function EditName({ user }: { user: TUser }) {
       </form>
     </>
   );
-}
+};

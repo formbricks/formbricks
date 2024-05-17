@@ -1,4 +1,4 @@
-export function DocumentIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+export const DocumentIcon = (props: React.ComponentPropsWithoutRef<"svg">) => {
   return (
     <svg viewBox="0 0 20 20" aria-hidden="true" {...props}>
       <path
@@ -9,4 +9,4 @@ export function DocumentIcon(props: React.ComponentPropsWithoutRef<"svg">) {
       <path fill="none" strokeLinecap="round" strokeLinejoin="round" d="m11.5 2.5 5 5" />
     </svg>
   );
-}
+};

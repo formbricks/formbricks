@@ -27,7 +27,7 @@ interface SectionState {
   }) => void;
 }
 
-function createSectionStore(sections: Array<Section>) {
+const createSectionStore = (sections: Array<Section>) => {
   return createStore<SectionState>()((set) => ({
     sections,
     visibleSections: [],
@@ -49,14 +49,14 @@ function createSectionStore(sections: Array<Section>) {
         };
       }),
   }));
-}
+};
 
-function useVisibleSections(sectionStore: StoreApi<SectionState>) {
+const useVisibleSections = (sectionStore: StoreApi<SectionState>) => {
   let setVisibleSections = useStore(sectionStore, (s) => s.setVisibleSections);
   let sections = useStore(sectionStore, (s) => s.sections);
 
   useEffect(() => {
-    function checkVisibleSections() {
+    const checkVisibleSections = () => {
       let { innerHeight, scrollY } = window;
       let newVisibleSections: string[] = [];
 
@@ -90,7 +90,7 @@ function useVisibleSections(sectionStore: StoreApi<SectionState>) {
       }
 
       setVisibleSections(newVisibleSections);
-    }
+    };
 
     let raf = window.requestAnimationFrame(() => checkVisibleSections());
     window.addEventListener("scroll", checkVisibleSections, { passive: true });
@@ -102,19 +102,19 @@ function useVisibleSections(sectionStore: StoreApi<SectionState>) {
       window.removeEventListener("resize", checkVisibleSections);
     };
   }, [setVisibleSections, sections]);
-}
+};
 
 const SectionStoreContext = createContext<StoreApi<SectionState> | null>(null);
 
 const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-export function SectionProvider({
+export const SectionProvider = ({
   sections,
   children,
 }: {
   sections: Array<Section>;
   children: React.ReactNode;
-}) {
+}) => {
   let [sectionStore] = useState(() => createSectionStore(sections));
 
   useVisibleSections(sectionStore);
@@ -124,9 +124,9 @@ export function SectionProvider({
   }, [sectionStore, sections]);
 
   return <SectionStoreContext.Provider value={sectionStore}>{children}</SectionStoreContext.Provider>;
-}
+};
 
-export function useSectionStore<T>(selector: (state: SectionState) => T) {
-  let store = useContext(SectionStoreContext);
+export const useSectionStore = <T,>(selector: (state: SectionState) => T) => {
+  const store = useContext(SectionStoreContext);
   return useStore(store!, selector);
-}
+};

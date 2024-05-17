@@ -1,4 +1,4 @@
-import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 
 import { cn } from "@formbricks/lib/cn";
 import { Badge } from "@formbricks/ui/Badge";
@@ -15,7 +15,7 @@ const placements = [
   { name: "Centered Modal", value: "center", disabled: false },
 ];
 
-export default function Loading() {
+const Loading = () => {
   return (
     <div>
       <SettingsCard
@@ -142,4 +142,6 @@ export default function Loading() {
       </SettingsCard>
     </div>
   );
-}
+};
+
+export default Loading;

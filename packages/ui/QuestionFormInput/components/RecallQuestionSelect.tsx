@@ -37,7 +37,7 @@ interface RecallQuestionSelectProps {
   selectedLanguageCode: string;
 }
 
-export default function RecallQuestionSelect({
+export const RecallQuestionSelect = ({
   localSurvey,
   questionId,
   addRecallQuestion,
@@ -46,7 +46,7 @@ export default function RecallQuestionSelect({
   inputRef,
   recallQuestions,
   selectedLanguageCode,
-}: RecallQuestionSelectProps) {
+}: RecallQuestionSelectProps) => {
   const [focusedQuestionIdx, setFocusedQuestionIdx] = useState(0); // New state for managing focus
   const isNotAllowedQuestionType = (question: TSurveyQuestion) => {
     return (
@@ -147,4 +147,4 @@ export default function RecallQuestionSelect({
       </div>
     </div>
   );
-}
+};

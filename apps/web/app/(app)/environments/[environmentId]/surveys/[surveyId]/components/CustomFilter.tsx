@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 
-import ResponseFilter from "./ResponseFilter";
+import { ResponseFilter } from "./ResponseFilter";
 
 enum DateSelected {
   FROM = "from",

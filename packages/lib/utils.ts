@@ -66,7 +66,7 @@ export const mixColor = (hexColor: string, mixWithHex: string, weight: number): 
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 };
 
-export function isLight(color: string) {
+export const isLight = (color: string) => {
   let r: number | undefined, g: number | undefined, b: number | undefined;
 
   if (color.length === 4) {
@@ -82,4 +82,4 @@ export function isLight(color: string) {
     throw new Error("Invalid color");
   }
   return r * 0.299 + g * 0.587 + b * 0.114 > 128;
-}
+};

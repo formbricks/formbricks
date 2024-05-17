@@ -15,9 +15,9 @@ import type { Dispatch, SetStateAction } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 
-import AutoLinkPlugin from "../components/AutoLinkPlugin";
-import ToolbarPlugin from "../components/ToolbarPlugin";
-import ExampleTheme from "../lib/ExampleTheme";
+import { PlaygroundAutoLinkPlugin as AutoLinkPlugin } from "../components/AutoLinkPlugin";
+import { ToolbarPlugin } from "../components/ToolbarPlugin";
+import { exampleTheme } from "../lib/ExampleTheme";
 import "../stylesEditor.css";
 import "../stylesEditorFrontend.css";
 
@@ -43,7 +43,7 @@ export type TextEditorProps = {
 };
 
 const editorConfig = {
-  theme: ExampleTheme,
+  theme: exampleTheme,
   onError(error: any) {
     throw error;
   },

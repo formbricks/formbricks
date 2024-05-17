@@ -13,7 +13,7 @@ interface EnvironmentSwitchProps {
   environments: TEnvironment[];
 }
 
-export default function EnvironmentSwitch({ environment, environments }: EnvironmentSwitchProps) {
+export const EnvironmentSwitch = ({ environment, environments }: EnvironmentSwitchProps) => {
   const router = useRouter();
   const [isEnvSwitchChecked, setIsEnvSwitchChecked] = useState(environment?.type === "development");
   const [isLoading, setIsLoading] = useState(false);
@@ -52,4 +52,4 @@ export default function EnvironmentSwitch({ environment, environments }: Environ
       />
     </div>
   );
-}
+};

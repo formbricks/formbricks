@@ -7,7 +7,7 @@ interface ProductNavItemProps {
   isActive: boolean;
 }
 
-export default function ProductNavItem({ href, children, isActive }: ProductNavItemProps) {
+export const ProductNavItem = ({ href, children, isActive }: ProductNavItemProps) => {
   const activeClass = "bg-slate-50 font-semibold";
   const inactiveClass = "hover:bg-slate-50";
 
@@ -19,4 +19,4 @@ export default function ProductNavItem({ href, children, isActive }: ProductNavI
       </Link>
     </li>
   );
-}
+};

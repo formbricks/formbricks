@@ -11,11 +11,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function PUT(request: Request, context: Context): Promise<Response> {
+export const PUT = async (request: Request, context: Context): Promise<Response> => {
   const { displayId, environmentId } = context.params;
   const jsonInput = await request.json();
   const inputValidation = ZDisplayUpdateInput.safeParse({
@@ -38,4 +38,4 @@ export async function PUT(request: Request, context: Context): Promise<Response>
     console.error(error);
     return responses.internalServerErrorResponse(error.message, true);
   }
-}
+};

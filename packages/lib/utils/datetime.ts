@@ -57,7 +57,7 @@ export const getOrdinalDate = (date: number) => {
   return date + "th";
 };
 
-export function isValidDateString(value: string) {
+export const isValidDateString = (value: string) => {
   const regex = /^(?:\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{4})$/;
 
   if (!regex.test(value)) {
@@ -66,4 +66,4 @@ export function isValidDateString(value: string) {
 
   const date = new Date(value);
   return date;
-}
+};

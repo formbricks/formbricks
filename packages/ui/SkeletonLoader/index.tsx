@@ -4,7 +4,7 @@ type SkeletonLoaderProps = {
   type: "response" | "summary";
 };
 
-export function SkeletonLoader({ type }: SkeletonLoaderProps) {
+export const SkeletonLoader = ({ type }: SkeletonLoaderProps) => {
   if (type === "summary") {
     return (
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -40,4 +40,4 @@ export function SkeletonLoader({ type }: SkeletonLoaderProps) {
       </div>
     );
   }
-}
+};

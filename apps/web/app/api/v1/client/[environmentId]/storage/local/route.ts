@@ -18,7 +18,7 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return Response.json(
     {},
     {
@@ -30,9 +30,9 @@ export async function OPTIONS(): Promise<Response> {
       },
     }
   );
-}
+};
 
-export async function POST(req: NextRequest, context: Context): Promise<Response> {
+export const POST = async (req: NextRequest, context: Context): Promise<Response> => {
   const environmentId = context.params.environmentId;
 
   const accessType = "private"; // private files are accessible only by authorized users
@@ -121,4 +121,4 @@ export async function POST(req: NextRequest, context: Context): Promise<Response
     }
     return responses.internalServerErrorResponse("File upload failed");
   }
-}
+};

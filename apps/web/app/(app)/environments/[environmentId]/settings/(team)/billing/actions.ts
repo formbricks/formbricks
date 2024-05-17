@@ -12,11 +12,11 @@ import { canUserAccessTeam } from "@formbricks/lib/team/auth";
 import { getTeam } from "@formbricks/lib/team/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 
-export async function upgradePlanAction(
+export const upgradePlanAction = async (
   teamId: string,
   environmentId: string,
   priceLookupKey: StripePriceLookupKeys
-) {
+) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -26,9 +26,9 @@ export async function upgradePlanAction(
   const subscriptionSession = await createSubscription(teamId, environmentId, priceLookupKey);
 
   return subscriptionSession;
-}
+};
 
-export async function manageSubscriptionAction(teamId: string, environmentId: string) {
+export const manageSubscriptionAction = async (teamId: string, environmentId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -44,7 +44,7 @@ export async function manageSubscriptionAction(teamId: string, environmentId: st
     `${WEBAPP_URL}/environments/${environmentId}/settings/billing`
   );
   return sessionUrl;
-}
+};
 
 export async function isSubscriptionCancelledAction(teamId: string) {
   const session = await getServerSession(authOptions);

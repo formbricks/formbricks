@@ -1,4 +1,4 @@
-export function EnvelopeIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+export const EnvelopeIcon = (props: React.ComponentPropsWithoutRef<"svg">) => {
   return (
     <svg viewBox="0 0 20 20" aria-hidden="true" {...props}>
       <path
@@ -14,4 +14,4 @@ export function EnvelopeIcon(props: React.ComponentPropsWithoutRef<"svg">) {
       />
     </svg>
   );
-}
+};

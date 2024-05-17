@@ -21,7 +21,7 @@ type Tag = {
   value: string;
 };
 
-const MergeTagsCombobox: React.FC<IMergeTagsComboboxProps> = ({ tags, onSelect }) => {
+export const MergeTagsCombobox = ({ tags, onSelect }: IMergeTagsComboboxProps) => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
 
@@ -68,5 +68,3 @@ const MergeTagsCombobox: React.FC<IMergeTagsComboboxProps> = ({ tags, onSelect }
     </Popover>
   );
 };
-
-export default MergeTagsCombobox;

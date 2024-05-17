@@ -1,6 +1,6 @@
 import { TAction } from "@formbricks/types/actions";
 import { TEnvironment } from "@formbricks/types/environment";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 import { ActivityItemContent, ActivityItemIcon, ActivityItemPopover } from "./ActivityItemComponents";
@@ -11,11 +11,11 @@ interface IActivityTimelineProps {
   isUserTargetingEnabled: boolean;
 }
 
-export default function ActivityTimeline({
+export const ActivityTimeline = ({
   environment,
   actions,
   isUserTargetingEnabled,
-}: IActivityTimelineProps) {
+}: IActivityTimelineProps) => {
   return (
     <>
       <div className="flex items-center justify-between pb-6">
@@ -68,4 +68,4 @@ export default function ActivityTimeline({
       )}
     </>
   );
-}
+};

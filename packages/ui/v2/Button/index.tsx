@@ -28,10 +28,7 @@ export type ButtonProps = ButtonBasePropsWithTarget &
 
 export const Button: React.ForwardRefExoticComponent<
   React.PropsWithoutRef<ButtonProps> & React.RefAttributes<HTMLAnchorElement | HTMLButtonElement>
-> = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonProps>(function Button(
-  props: ButtonProps,
-  forwardedRef
-) {
+> = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonProps>((props: ButtonProps, forwardedRef) => {
   const {
     loading = false,
     variant = "primary",
@@ -153,3 +150,5 @@ export const Button: React.ForwardRefExoticComponent<
     element
   );
 });
+
+Button.displayName = "Button";

@@ -30,7 +30,7 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
   </TooltipProvider>
 );
 
-function formatTime(ttc) {
+const formatTime = (ttc) => {
   const seconds = ttc / 1000;
   let formattedValue;
 
@@ -43,7 +43,7 @@ function formatTime(ttc) {
   }
 
   return formattedValue;
-}
+};
 
 export const SummaryMetadata = ({ setShowDropOffs, showDropOffs, surveySummary }: SummaryMetadataProps) => {
   const {

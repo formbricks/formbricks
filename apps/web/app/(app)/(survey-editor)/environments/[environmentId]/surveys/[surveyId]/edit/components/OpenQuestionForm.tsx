@@ -149,7 +149,7 @@ export const OpenQuestionForm = ({
   );
 };
 
-function getPlaceholderByInputType(inputType: TSurveyOpenTextQuestionInputType) {
+const getPlaceholderByInputType = (inputType: TSurveyOpenTextQuestionInputType) => {
   switch (inputType) {
     case "email":
       return "example@email.com";
@@ -162,4 +162,4 @@ function getPlaceholderByInputType(inputType: TSurveyOpenTextQuestionInputType) 
     default:
       return "Type your answer here...";
   }
-}
+};

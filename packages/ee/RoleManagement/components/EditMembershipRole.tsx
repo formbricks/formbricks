@@ -18,7 +18,7 @@ import {
 } from "@formbricks/ui/DropdownMenu";
 
 import { transferOwnershipAction, updateInviteAction, updateMembershipAction } from "../lib/actions";
-import TransferOwnershipModal from "./TransferOwnershipModal";
+import { TransferOwnershipModal } from "./TransferOwnershipModal";
 
 interface Role {
   isAdminOrOwner: boolean;

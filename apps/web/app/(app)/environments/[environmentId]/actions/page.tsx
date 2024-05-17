@@ -1,6 +1,6 @@
-import ActionClassesTable from "@/app/(app)/environments/[environmentId]/actions/components/ActionClassesTable";
-import ActionClassDataRow from "@/app/(app)/environments/[environmentId]/actions/components/ActionRowData";
-import ActionTableHeading from "@/app/(app)/environments/[environmentId]/actions/components/ActionTableHeading";
+import { ActionClassesTable } from "@/app/(app)/environments/[environmentId]/actions/components/ActionClassesTable";
+import { ActionClassDataRow } from "@/app/(app)/environments/[environmentId]/actions/components/ActionRowData";
+import { ActionTableHeading } from "@/app/(app)/environments/[environmentId]/actions/components/ActionTableHeading";
 import { AddActionModal } from "@/app/(app)/environments/[environmentId]/actions/components/AddActionModal";
 import { Metadata } from "next";
 
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: "Actions",
 };
 
-export default async function ActionClassesComponent({ params }) {
+const Page = async ({ params }) => {
   const [actionClasses, team] = await Promise.all([
     getActionClasses(params.environmentId),
     getTeamByEnvironmentId(params.environmentId),
@@ -46,4 +46,6 @@ export default async function ActionClassesComponent({ params }) {
       </ActionClassesTable>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 
-export default function ProductPage({ params }) {
+const Page = ({ params }) => {
   return redirect(`/environments/${params.environmentId}/product/general`);
-}
+};
+
+export default Page;

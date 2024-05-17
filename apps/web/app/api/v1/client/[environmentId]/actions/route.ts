@@ -13,11 +13,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(req: Request, context: Context): Promise<Response> {
+export const POST = async (req: Request, context: Context): Promise<Response> => {
   try {
     const jsonInput = await req.json();
 
@@ -52,4 +52,4 @@ export async function POST(req: Request, context: Context): Promise<Response> {
     console.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
-}
+};

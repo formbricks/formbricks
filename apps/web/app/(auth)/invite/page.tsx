@@ -17,7 +17,7 @@ import {
   WrongAccountContent,
 } from "./components/InviteContentComponents";
 
-export default async function InvitePage({ searchParams }) {
+const Page = async ({ searchParams }) => {
   const session = await getServerSession(authOptions);
 
   try {
@@ -52,4 +52,6 @@ export default async function InvitePage({ searchParams }) {
     console.error(e);
     return <InvitationNotFound />;
   }
-}
+};
+
+export default Page;

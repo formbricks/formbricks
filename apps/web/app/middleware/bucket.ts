@@ -1,4 +1,4 @@
-import rateLimit from "@/app/middleware/rateLimit";
+import { rateLimit } from "@/app/middleware/rateLimit";
 
 import {
   CLIENT_SIDE_API_RATE_LIMIT,

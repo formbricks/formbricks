@@ -4,7 +4,7 @@ import {
   inviteUserAction,
   leaveTeamAction,
 } from "@/app/(app)/environments/[environmentId]/settings/(team)/members/actions";
-import AddMemberModal from "@/app/(app)/environments/[environmentId]/settings/(team)/members/components/AddMemberModal";
+import { AddMemberModal } from "@/app/(app)/environments/[environmentId]/settings/(team)/members/components/AddMemberModal";
 import { XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -13,8 +13,8 @@ import toast from "react-hot-toast";
 import { TInvitee } from "@formbricks/types/invites";
 import { TTeam } from "@formbricks/types/teams";
 import { Button } from "@formbricks/ui/Button";
-import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
-import CustomDialog from "@formbricks/ui/CustomDialog";
+import { CreateTeamModal } from "@formbricks/ui/CreateTeamModal";
+import { CustomDialog } from "@formbricks/ui/CustomDialog";
 
 type TeamActionsProps = {
   role: string;
@@ -27,7 +27,7 @@ type TeamActionsProps = {
   environmentId: string;
 };
 
-export default function TeamActions({
+export const TeamActions = ({
   isAdminOrOwner,
   role,
   team,
@@ -36,7 +36,7 @@ export default function TeamActions({
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
-}: TeamActionsProps) {
+}: TeamActionsProps) => {
   const router = useRouter();
   const [isLeaveTeamModalOpen, setLeaveTeamModalOpen] = useState(false);
   const [isCreateTeamModalOpen, setCreateTeamModalOpen] = useState(false);
@@ -132,4 +132,4 @@ export default function TeamActions({
       </CustomDialog>
     </>
   );
-}
+};

@@ -12,7 +12,7 @@ import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 
-export async function POST(req: NextRequest): Promise<Response> {
+export const POST = async (req: NextRequest): Promise<Response> => {
   const accessType = "public"; // public files are accessible by anyone
   const headersList = headers();
 
@@ -100,4 +100,4 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
     return responses.internalServerErrorResponse("File upload failed");
   }
-}
+};

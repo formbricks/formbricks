@@ -1,5 +1,5 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
-import ResponsePage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
+import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { getServerSession } from "next-auth";
 
@@ -17,7 +17,7 @@ import { getUser } from "@formbricks/lib/user/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Unauthorized");
@@ -86,4 +86,6 @@ export default async function Page({ params }) {
       />
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

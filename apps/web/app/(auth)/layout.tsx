@@ -1,10 +1,12 @@
 import { NoMobileOverlay } from "@formbricks/ui/NoMobileOverlay";
 
-export default function AppLayout({ children }) {
+const AppLayout = ({ children }) => {
   return (
     <>
       <NoMobileOverlay />
       {children}
     </>
   );
-}
+};
+
+export default AppLayout;

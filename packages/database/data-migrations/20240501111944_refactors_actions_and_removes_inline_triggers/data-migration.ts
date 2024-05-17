@@ -4,7 +4,7 @@ import { Prisma, PrismaClient } from "@prisma/client";
 const createId = init({ length: 5 });
 const prisma = new PrismaClient();
 
-async function main() {
+const main = async () => {
   await prisma.$transaction(
     async (tx) => {
       const startTime = Date.now();
@@ -193,7 +193,7 @@ async function main() {
       timeout: 180000, // 3 minutes
     }
   );
-}
+};
 
 main()
   .catch((e: Error) => {

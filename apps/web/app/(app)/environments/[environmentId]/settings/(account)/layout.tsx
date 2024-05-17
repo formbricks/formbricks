@@ -4,7 +4,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
-export default async function AccountSettingsLayout({ children, params }) {
+const AccountSettingsLayout = async ({ children, params }) => {
   const [team, product, session] = await Promise.all([
     getTeamByEnvironmentId(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
@@ -24,4 +24,6 @@ export default async function AccountSettingsLayout({ children, params }) {
   }
 
   return <>{children}</>;
-}
+};
+
+export default AccountSettingsLayout;

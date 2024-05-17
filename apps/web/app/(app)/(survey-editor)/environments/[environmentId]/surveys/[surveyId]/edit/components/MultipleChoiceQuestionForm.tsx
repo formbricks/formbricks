@@ -1,21 +1,18 @@
 "use client";
 
+import { DndContext } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
 
-import {
-  createI18nString,
-  extractLanguageCodes,
-  isLabelValidForAllLanguages,
-} from "@formbricks/lib/i18n/utils";
+import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import {
   TI18nString,
   TShuffleOption,
   TSurvey,
-  TSurveyMultipleChoiceMultiQuestion,
+  TSurveyMultipleChoiceQuestion,
   TSurveyQuestionType,
 } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -23,21 +20,20 @@ import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
+import { SelectQuestionChoice } from "./SelectQuestionChoice";
+
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyMultipleChoiceMultiQuestion;
+  question: TSurveyMultipleChoiceQuestion;
   questionIdx: number;
-  updateQuestion: (
-    questionIdx: number,
-    updatedAttributes: Partial<TSurveyMultipleChoiceMultiQuestion>
-  ) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
+  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
 }
 
-export const MultipleChoiceMultiForm = ({
+export const MultipleChoiceQuestionForm = ({
   question,
   questionIdx,
   updateQuestion,
@@ -49,10 +45,11 @@ export const MultipleChoiceMultiForm = ({
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
-  const questionRef = useRef<HTMLInputElement>(null);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
-  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
+  const questionRef = useRef<HTMLInputElement>(null);
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
+  const surveyLanguages = localSurvey.languages ?? [];
   const shuffleOptionsTypes = {
     none: {
       id: "none",
@@ -71,6 +68,20 @@ export const MultipleChoiceMultiForm = ({
     },
   };
 
+  const findDuplicateLabel = () => {
+    for (let i = 0; i < question.choices.length; i++) {
+      for (let j = i + 1; j < question.choices.length; j++) {
+        if (
+          getLocalizedValue(question.choices[i].label, selectedLanguageCode).trim() ===
+          getLocalizedValue(question.choices[j].label, selectedLanguageCode).trim()
+        ) {
+          return getLocalizedValue(question.choices[i].label, selectedLanguageCode).trim(); // Return the duplicate label
+        }
+      }
+    }
+    return null;
+  };
+
   const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
     const newLabel = updatedAttributes.label.en;
     const oldLabel = question.choices[choiceIdx].label;
@@ -87,28 +98,14 @@ export const MultipleChoiceMultiForm = ({
       let newL: string | string[] | undefined = logic.value;
       if (Array.isArray(logic.value)) {
         newL = logic.value.map((value) =>
-          newLabel && value === oldLabel[selectedLanguageCode] ? newLabel : value
+          value === getLocalizedValue(oldLabel, selectedLanguageCode) ? newLabel : value
         );
       } else {
-        newL = logic.value === oldLabel[selectedLanguageCode] ? newLabel : logic.value;
+        newL = logic.value === getLocalizedValue(oldLabel, selectedLanguageCode) ? newLabel : logic.value;
       }
       newLogic.push({ ...logic, value: newL });
     });
     updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
-  };
-
-  const findDuplicateLabel = () => {
-    for (let i = 0; i < question.choices.length; i++) {
-      for (let j = i + 1; j < question.choices.length; j++) {
-        if (
-          getLocalizedValue(question.choices[i].label, selectedLanguageCode).trim() ===
-          getLocalizedValue(question.choices[j].label, selectedLanguageCode).trim()
-        ) {
-          return getLocalizedValue(question.choices[i].label, selectedLanguageCode).trim(); // Return the duplicate label
-        }
-      }
-    }
-    return null;
   };
 
   const addChoice = (choiceIdx?: number) => {
@@ -151,7 +148,6 @@ export const MultipleChoiceMultiForm = ({
 
   const deleteChoice = (choiceIdx: number) => {
     const newChoices = !question.choices ? [] : question.choices.filter((_, idx) => idx !== choiceIdx);
-
     const choiceValue = question.choices[choiceIdx].label[selectedLanguageCode];
     if (isInvalidValue === choiceValue) {
       setisInvalidValue(null);
@@ -242,74 +238,56 @@ export const MultipleChoiceMultiForm = ({
 
       <div className="mt-3">
         <Label htmlFor="choices">Options</Label>
-        <div className="mt-2 -space-y-2" id="choices">
-          {question.choices &&
-            question.choices.map((choice, choiceIdx) => (
-              <div key={choiceIdx} className="inline-flex w-full items-center">
-                <div className="flex w-full space-x-2">
-                  <QuestionFormInput
-                    key={choice.id}
-                    id={`choice-${choiceIdx}`}
-                    localSurvey={localSurvey}
-                    placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
-                    questionIdx={questionIdx}
-                    value={choice.label}
-                    onBlur={() => {
-                      const duplicateLabel = findDuplicateLabel();
-                      if (duplicateLabel) {
-                        toast.error("Duplicate choices");
-                        setisInvalidValue(duplicateLabel);
-                      } else {
-                        setisInvalidValue(null);
-                      }
-                    }}
-                    updateChoice={updateChoice}
-                    selectedLanguageCode={selectedLanguageCode}
-                    setSelectedLanguageCode={setSelectedLanguageCode}
-                    isInvalid={
-                      isInvalid &&
-                      !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguageCodes)
-                    }
-                    className={`${choice.id === "other" ? "border border-dashed" : ""}`}
-                  />
-                  {choice.id === "other" && (
-                    <QuestionFormInput
-                      id="otherOptionPlaceholder"
-                      localSurvey={localSurvey}
-                      placeholder={"Please specify"}
+        <div className="mt-2" id="choices">
+          <DndContext
+            onDragEnd={(event) => {
+              const { active, over } = event;
+
+              if (active.id === "other" || over?.id === "other") {
+                return;
+              }
+
+              if (!active || !over) {
+                return;
+              }
+
+              const activeIndex = question.choices.findIndex((choice) => choice.id === active.id);
+              const overIndex = question.choices.findIndex((choice) => choice.id === over.id);
+
+              const newChoices = [...question.choices];
+
+              newChoices.splice(activeIndex, 1);
+              newChoices.splice(overIndex, 0, question.choices[activeIndex]);
+
+              updateQuestion(questionIdx, { choices: newChoices });
+            }}>
+            <SortableContext items={question.choices} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col">
+                {question.choices &&
+                  question.choices.map((choice, choiceIdx) => (
+                    <SelectQuestionChoice
+                      key={choice.id}
+                      choice={choice}
+                      choiceIdx={choiceIdx}
                       questionIdx={questionIdx}
-                      value={
-                        question.otherOptionPlaceholder
-                          ? question.otherOptionPlaceholder
-                          : createI18nString("Please specify", surveyLanguageCodes)
-                      }
-                      updateQuestion={updateQuestion}
+                      updateChoice={updateChoice}
+                      deleteChoice={deleteChoice}
+                      addChoice={addChoice}
+                      setisInvalidValue={setisInvalidValue}
+                      isInvalid={isInvalid}
+                      localSurvey={localSurvey}
                       selectedLanguageCode={selectedLanguageCode}
                       setSelectedLanguageCode={setSelectedLanguageCode}
-                      isInvalid={
-                        isInvalid &&
-                        !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguageCodes)
-                      }
-                      className="border border-dashed"
+                      surveyLanguages={surveyLanguages}
+                      findDuplicateLabel={findDuplicateLabel}
+                      question={question}
+                      updateQuestion={updateQuestion}
+                      surveyLanguageCodes={surveyLanguageCodes}
                     />
-                  )}
-                </div>
-                {question.choices && question.choices.length > 2 && (
-                  <TrashIcon
-                    className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                    onClick={() => deleteChoice(choiceIdx)}
-                  />
-                )}
-                <div className="ml-2 h-4 w-4">
-                  {choice.id !== "other" && (
-                    <PlusIcon
-                      className="h-full w-full cursor-pointer text-slate-400 hover:text-slate-500"
-                      onClick={() => addChoice(choiceIdx)}
-                    />
-                  )}
-                </div>
+                  ))}
               </div>
-            ))}
+            </SortableContext>
+          </DndContext>
           <div className="flex items-center justify-between space-x-2">
             {question.choices.filter((c) => c.id === "other").length === 0 && (
               <Button size="sm" variant="minimal" type="button" onClick={() => addOther()}>
@@ -321,10 +299,15 @@ export const MultipleChoiceMultiForm = ({
               variant="minimal"
               type="button"
               onClick={() => {
-                // @ts-expect-error
-                updateQuestion(questionIdx, { type: TSurveyQuestionType.MultipleChoiceSingle });
+                updateQuestion(questionIdx, {
+                  type:
+                    question.type === TSurveyQuestionType.MultipleChoiceMulti
+                      ? TSurveyQuestionType.MultipleChoiceSingle
+                      : TSurveyQuestionType.MultipleChoiceMulti,
+                });
               }}>
-              Convert to Single Select
+              Convert to {question.type === TSurveyQuestionType.MultipleChoiceSingle ? "Multiple" : "Single"}{" "}
+              Select
             </Button>
 
             <div className="flex flex-1 items-center justify-end gap-2">

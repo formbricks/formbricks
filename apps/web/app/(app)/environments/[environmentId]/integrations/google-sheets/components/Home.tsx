@@ -13,7 +13,7 @@ import {
 } from "@formbricks/types/integration/googleSheet";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 
 interface HomeProps {
   environment: TEnvironment;
@@ -24,14 +24,14 @@ interface HomeProps {
   refreshSheet: () => void;
 }
 
-export default function Home({
+export const Home = ({
   environment,
   googleSheetIntegration,
   setOpenAddIntegrationModal,
   setIsConnected,
   setSelectedIntegration,
   refreshSheet,
-}: HomeProps) {
+}: HomeProps) => {
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const integrationArray = googleSheetIntegration
     ? googleSheetIntegration.config.data
@@ -135,4 +135,4 @@ export default function Home({
       />
     </div>
   );
-}
+};

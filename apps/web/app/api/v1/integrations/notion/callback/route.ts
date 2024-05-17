@@ -11,7 +11,7 @@ import {
 import { symmetricEncrypt } from "@formbricks/lib/crypto";
 import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   const url = req.url;
   const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
   const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
@@ -73,4 +73,4 @@ export async function GET(req: NextRequest) {
       `${WEBAPP_URL}/environments/${environmentId}/integrations/notion?error=${error}`
     );
   }
-}
+};

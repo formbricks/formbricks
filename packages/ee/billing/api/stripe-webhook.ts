@@ -13,7 +13,7 @@ const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
 
 const webhookSecret: string = env.STRIPE_WEBHOOK_SECRET!;
 
-const webhookHandler = async (requestBody: string, stripeSignature: string) => {
+export const webhookHandler = async (requestBody: string, stripeSignature: string) => {
   let event: Stripe.Event;
 
   try {
@@ -36,5 +36,3 @@ const webhookHandler = async (requestBody: string, stripeSignature: string) => {
   }
   return { status: 200, message: { received: true } };
 };
-
-export default webhookHandler;

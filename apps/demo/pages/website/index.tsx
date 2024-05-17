@@ -9,7 +9,7 @@ import fbsetup from "../../public/fb-setup.png";
 
 declare const window: any;
 
-export default function AppPage({}) {
+const AppPage = ({}) => {
   const [darkMode, setDarkMode] = useState(false);
   const router = useRouter();
 
@@ -139,4 +139,6 @@ export default function AppPage({}) {
       </div>
     </div>
   );
-}
+};
+
+export default AppPage;

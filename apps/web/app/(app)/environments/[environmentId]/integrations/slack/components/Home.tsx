@@ -9,7 +9,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 
 import { deleteIntegrationAction } from "../../actions";
 
@@ -24,14 +24,14 @@ interface HomeProps {
   refreshChannels: () => void;
 }
 
-export default function Home({
+export const Home = ({
   environment,
   slackIntegration,
   setOpenAddIntegrationModal,
   setIsConnected,
   setSelectedIntegration,
   refreshChannels,
-}: HomeProps) {
+}: HomeProps) => {
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [isDeleting, setisDeleting] = useState(false);
   const integrationArray = slackIntegration
@@ -132,4 +132,4 @@ export default function Home({
       />
     </div>
   );
-}
+};

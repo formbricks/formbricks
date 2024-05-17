@@ -31,7 +31,7 @@ interface AddWebhookModalProps {
   selectedIntegration?: (TIntegrationGoogleSheetsConfigData & { index: number }) | null;
 }
 
-export default function AddIntegrationModal({
+export const AddIntegrationModal = ({
   environmentId,
   surveys,
   open,
@@ -39,7 +39,7 @@ export default function AddIntegrationModal({
   spreadsheets,
   googleSheetIntegration,
   selectedIntegration,
-}: AddWebhookModalProps) {
+}: AddWebhookModalProps) => {
   const { handleSubmit } = useForm();
 
   const integrationData = {
@@ -286,4 +286,4 @@ export default function AddIntegrationModal({
       </div>
     </Modal>
   );
-}
+};

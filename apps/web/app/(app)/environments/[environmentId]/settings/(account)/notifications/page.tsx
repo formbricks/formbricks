@@ -1,5 +1,5 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
-import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getServerSession } from "next-auth";
 
 import { prisma } from "@formbricks/database";
@@ -9,15 +9,15 @@ import { TUserNotificationSettings } from "@formbricks/types/user";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-import EditAlerts from "./components/EditAlerts";
-import EditWeeklySummary from "./components/EditWeeklySummary";
-import IntegrationsTip from "./components/IntegrationsTip";
+import { EditAlerts } from "./components/EditAlerts";
+import { EditWeeklySummary } from "./components/EditWeeklySummary";
+import { IntegrationsTip } from "./components/IntegrationsTip";
 import type { Membership } from "./types";
 
-function setCompleteNotificationSettings(
+const setCompleteNotificationSettings = (
   notificationSettings: TUserNotificationSettings,
   memberships: Membership[]
-): TUserNotificationSettings {
+): TUserNotificationSettings => {
   const newNotificationSettings = {
     alert: {},
     weeklySummary: {},
@@ -40,9 +40,9 @@ function setCompleteNotificationSettings(
     }
   }
   return newNotificationSettings;
-}
+};
 
-async function getMemberships(userId: string): Promise<Membership[]> {
+const getMemberships = async (userId: string): Promise<Membership[]> => {
   const memberships = await prisma.membership.findMany({
     where: {
       userId,
@@ -77,9 +77,9 @@ async function getMemberships(userId: string): Promise<Membership[]> {
     },
   });
   return memberships;
-}
+};
 
-export default async function ProfileSettingsPage({ params, searchParams }) {
+const Page = async ({ params, searchParams }) => {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Unauthorized");
@@ -120,4 +120,6 @@ export default async function ProfileSettingsPage({ params, searchParams }) {
       </SettingsCard>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

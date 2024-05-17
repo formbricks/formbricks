@@ -9,7 +9,7 @@ interface ConfirmationPageProps {
   environmentId: string;
 }
 
-export default function ConfirmationPage({ environmentId }: ConfirmationPageProps) {
+export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
   const [showConfetti, setShowConfetti] = useState(false);
   useEffect(() => {
     setShowConfetti(true);
@@ -34,4 +34,4 @@ export default function ConfirmationPage({ environmentId }: ConfirmationPageProp
       </div>
     </div>
   );
-}
+};

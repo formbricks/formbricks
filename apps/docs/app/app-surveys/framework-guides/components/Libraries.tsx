@@ -33,7 +33,7 @@ const libraries = [
   },
 ];
 
-export function Libraries() {
+export const Libraries = () => {
   return (
     <div className="my-16 xl:max-w-none">
       <div className="not-prose mt-4 grid grid-cols-1 gap-x-6 gap-y-10 border-slate-900/5 sm:grid-cols-2 xl:max-w-none xl:grid-cols-3 dark:border-white/5">
@@ -57,4 +57,4 @@ export function Libraries() {
       </div>
     </div>
   );
-}
+};

@@ -10,13 +10,13 @@ import { Footer } from "./Footer";
 import { Header } from "./Header";
 import { type Section, SectionProvider } from "./SectionProvider";
 
-export function Layout({
+export const Layout = ({
   children,
   allSections,
 }: {
   children: React.ReactNode;
   allSections: Record<string, Array<Section>>;
-}) {
+}) => {
   let pathname = usePathname();
 
   return (
@@ -42,4 +42,4 @@ export function Layout({
       </div>
     </SectionProvider>
   );
-}
+};

@@ -41,10 +41,10 @@ const redisRateLimiter = (options: Options) => async (token: string) => {
   }
 };
 
-export default function rateLimit(options: Options) {
+export const rateLimit = (options: Options) => {
   if (REDIS_HTTP_URL) {
     return redisRateLimiter(options);
   } else {
     return inMemoryRateLimiter(options);
   }
-}
+};

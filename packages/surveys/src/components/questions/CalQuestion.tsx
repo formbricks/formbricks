@@ -1,9 +1,9 @@
 import { BackButton } from "@/components/buttons/BackButton";
-import SubmitButton from "@/components/buttons/SubmitButton";
-import CalEmbed from "@/components/general/CalEmbed";
-import Headline from "@/components/general/Headline";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { CalEmbed } from "@/components/general/CalEmbed";
+import { Headline } from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
-import Subheader from "@/components/general/Subheader";
+import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useState } from "preact/hooks";

@@ -1,5 +1,5 @@
 // ResponsiveVideo.js
-export function ResponsiveVideo({ src, title }) {
+export const ResponsiveVideo = ({ src, title }) => {
   return (
     <div className="relative w-full overflow-hidden pt-[56.25%]">
       <iframe
@@ -12,4 +12,4 @@ export function ResponsiveVideo({ src, title }) {
         allowFullScreen></iframe>
     </div>
   );
-}
+};

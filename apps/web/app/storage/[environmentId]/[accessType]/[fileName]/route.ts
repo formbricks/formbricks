@@ -9,12 +9,12 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { ZStorageRetrievalParams } from "@formbricks/types/storage";
 
-import getFile from "./lib/getFile";
+import { getFile } from "./lib/getFile";
 
-export async function GET(
+export const GET = async (
   request: NextRequest,
   { params }: { params: { environmentId: string; accessType: string; fileName: string } }
-) {
+) => {
   const paramValidation = ZStorageRetrievalParams.safeParse(params);
 
   if (!paramValidation.success) {
@@ -55,9 +55,9 @@ export async function GET(
 
     return await getFile(environmentId, accessType, fileName);
   }
-}
+};
 
-export async function DELETE(_: NextRequest, { params }: { params: { fileName: string } }) {
+export const DELETE = async (_: NextRequest, { params }: { params: { fileName: string } }) => {
   if (!params.fileName) {
     return responses.badRequestResponse("Fields are missing or incorrectly formatted", {
       fileName: "fileName is required",
@@ -96,4 +96,4 @@ export async function DELETE(_: NextRequest, { params }: { params: { fileName: s
     paramValidation.data.accessType,
     paramValidation.data.fileName
   );
-}
+};

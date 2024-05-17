@@ -14,8 +14,8 @@ import { ClientLogo } from "../ClientLogo";
 import { MediaBackground } from "../MediaBackground";
 import { ResetProgressButton } from "../ResetProgressButton";
 import { SurveyInline } from "../Survey";
-import Modal from "./components/Modal";
-import TabOption from "./components/TabOption";
+import { Modal } from "./components/Modal";
+import { TabOption } from "./components/TabOption";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 

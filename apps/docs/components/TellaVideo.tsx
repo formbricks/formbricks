@@ -1,6 +1,6 @@
 import React from "react";
 
-export function TellaVideo({ tellaVideoIdentifier }: { tellaVideoIdentifier: string }) {
+export const TellaVideo = ({ tellaVideoIdentifier }: { tellaVideoIdentifier: string }) => {
   return (
     <div>
       <iframe
@@ -15,4 +15,4 @@ export function TellaVideo({ tellaVideoIdentifier }: { tellaVideoIdentifier: str
         title="Tella Video Help"></iframe>
     </div>
   );
-}
+};

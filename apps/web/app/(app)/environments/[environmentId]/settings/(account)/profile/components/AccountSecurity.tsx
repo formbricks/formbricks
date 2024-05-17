@@ -1,13 +1,13 @@
 "use client";
 
-import DisableTwoFactorModal from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/DisableTwoFactorModal";
-import EnableTwoFactorModal from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/EnableTwoFactorModal";
+import { DisableTwoFactorModal } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/DisableTwoFactorModal";
+import { EnableTwoFactorModal } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/EnableTwoFactorModal";
 import { useState } from "react";
 
 import { TUser } from "@formbricks/types/user";
 import { Switch } from "@formbricks/ui/Switch";
 
-const AccountSecurity = ({ user }: { user: TUser }) => {
+export const AccountSecurity = ({ user }: { user: TUser }) => {
   const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
   const [disableTwoFactorModalOpen, setDisableTwoFactorModalOpen] = useState(false);
 
@@ -38,5 +38,3 @@ const AccountSecurity = ({ user }: { user: TUser }) => {
     </div>
   );
 };
-
-export default AccountSecurity;

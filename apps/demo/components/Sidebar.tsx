@@ -26,7 +26,7 @@ const secondaryNavigation = [
   { name: "Privacy", href: "#", icon: ShieldCheckIcon },
 ];
 
-export default function Sidebar({}) {
+export const Sidebar = () => {
   return (
     <div className="flex flex-grow flex-col overflow-y-auto bg-cyan-700 pb-4 pt-5">
       <nav
@@ -63,4 +63,4 @@ export default function Sidebar({}) {
       </nav>
     </div>
   );
-}
+};

@@ -1,4 +1,4 @@
-export function UsersIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+export const UsersIcon = (props: React.ComponentPropsWithoutRef<"svg">) => {
   return (
     <svg viewBox="0 0 20 20" aria-hidden="true" {...props}>
       <path
@@ -21,4 +21,4 @@ export function UsersIcon(props: React.ComponentPropsWithoutRef<"svg">) {
       <path strokeLinecap="round" strokeLinejoin="round" d="M13 2a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z" />
     </svg>
   );
-}
+};

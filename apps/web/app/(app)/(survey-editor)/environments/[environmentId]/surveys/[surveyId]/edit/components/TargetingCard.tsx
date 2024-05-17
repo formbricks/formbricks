@@ -15,12 +15,12 @@ import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from 
 import { TSurvey } from "@formbricks/types/surveys";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
-import BasicAddFilterModal from "@formbricks/ui/Targeting/BasicAddFilterModal";
-import BasicSegmentEditor from "@formbricks/ui/Targeting/BasicSegmentEditor";
-import LoadSegmentModal from "@formbricks/ui/Targeting/LoadSegmentModal";
-import SaveAsNewSegmentModal from "@formbricks/ui/Targeting/SaveAsNewSegmentModal";
-import SegmentTitle from "@formbricks/ui/Targeting/SegmentTitle";
-import TargetingIndicator from "@formbricks/ui/Targeting/TargetingIndicator";
+import { BasicAddFilterModal } from "@formbricks/ui/Targeting/BasicAddFilterModal";
+import { BasicSegmentEditor } from "@formbricks/ui/Targeting/BasicSegmentEditor";
+import { LoadSegmentModal } from "@formbricks/ui/Targeting/LoadSegmentModal";
+import { SaveAsNewSegmentModal } from "@formbricks/ui/Targeting/SaveAsNewSegmentModal";
+import { SegmentTitle } from "@formbricks/ui/Targeting/SegmentTitle";
+import { TargetingIndicator } from "@formbricks/ui/Targeting/TargetingIndicator";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 import {
@@ -41,7 +41,7 @@ interface TargetingCardProps {
   isFormbricksCloud: boolean;
 }
 
-export default function TargetingCard({
+export const TargetingCard = ({
   localSurvey,
   setLocalSurvey,
   environmentId,
@@ -49,7 +49,7 @@ export default function TargetingCard({
   segments,
   initialSegment,
   isFormbricksCloud,
-}: TargetingCardProps) {
+}: TargetingCardProps) => {
   const router = useRouter();
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
   const [open, setOpen] = useState(false);
@@ -434,4 +434,4 @@ export default function TargetingCard({
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
-}
+};

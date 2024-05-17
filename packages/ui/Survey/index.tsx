@@ -22,20 +22,18 @@ export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
   );
 
   useEffect(() => {
-    async function loadScript() {
-      if (typeof window !== "undefined") {
-        if (!window.formbricksSurveys) {
-          try {
-            await loadSurveyScript();
-            renderInline();
-          } catch (error) {
-            console.error("Failed to load the surveys package: ", error);
-          }
-        } else {
+    const loadScript = async () => {
+      if (!window.formbricksSurveys) {
+        try {
+          await loadSurveyScript();
           renderInline();
+        } catch (error) {
+          console.error("Failed to load the surveys package: ", error);
         }
+      } else {
+        renderInline();
       }
-    }
+    };
 
     loadScript();
   }, [containerId, props, renderInline]);

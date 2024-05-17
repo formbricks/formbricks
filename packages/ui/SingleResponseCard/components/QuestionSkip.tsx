@@ -12,12 +12,12 @@ interface QuestionSkipProps {
   isFirstQuestionAnswered?: boolean;
 }
 
-export default function QuestionSkip({
+export const QuestionSkip = ({
   skippedQuestions,
   status,
   questions,
   isFirstQuestionAnswered,
-}: QuestionSkipProps) {
+}: QuestionSkipProps) => {
   return (
     <div>
       {skippedQuestions && (
@@ -109,4 +109,4 @@ export default function QuestionSkip({
       )}
     </div>
   );
-}
+};

@@ -11,10 +11,10 @@ jiti("@formbricks/lib/env");
 
 /** @type {import('next').NextConfig} */
 
-function getHostname(url) {
+const getHostname = (url) => {
   const urlObj = new URL(url);
   return urlObj.hostname;
-}
+};
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,

@@ -4,7 +4,7 @@ import { Toaster } from "react-hot-toast";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 
-export default async function AuthLayout({ children }: { children: React.ReactNode }) {
+const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
   const session = await getServerSession(authOptions);
   if (session) {
     redirect(`/`);
@@ -19,4 +19,6 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
       </div>
     </>
   );
-}
+};
+
+export default AuthLayout;

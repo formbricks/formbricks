@@ -7,11 +7,11 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { TDisplay, ZDisplayLegacyCreateInput } from "@formbricks/types/displays";
 import { InvalidInputError } from "@formbricks/types/errors";
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(request: Request): Promise<Response> {
+export const POST = async (request: Request): Promise<Response> => {
   const jsonInput = await request.json();
   if (jsonInput.personId === "legacy") {
     delete jsonInput.personId;
@@ -65,4 +65,4 @@ export async function POST(request: Request): Promise<Response> {
   });
 
   return responses.successResponse({ id: display.id }, true);
-}
+};

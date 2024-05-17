@@ -17,17 +17,24 @@ const DEFAULT_VALIDATIONS = [
   { label: "Contain at least 1 number", state: false },
 ];
 
-export default function IsPasswordValid({
+export const IsPasswordValid = ({
   password,
   setIsValid,
 }: {
   password: string | null;
   setIsValid: (isValid: boolean) => void;
-}) {
+}) => {
   const [validations, setValidations] = useState<Validation[]>(DEFAULT_VALIDATIONS);
 
   useEffect(() => {
     let newValidations = [...DEFAULT_VALIDATIONS];
+
+    const checkValidation = (prevValidations, index: number, state: boolean) => {
+      const updatedValidations = [...prevValidations];
+      updatedValidations[index].state = state;
+      return updatedValidations;
+    };
+
     if (password !== null) {
       newValidations = checkValidation(newValidations, 0, PASSWORD_REGEX.UPPER_AND_LOWER.test(password));
       newValidations = checkValidation(newValidations, 1, password.length >= 8 && password.length <= 128);
@@ -35,12 +42,6 @@ export default function IsPasswordValid({
     }
     setIsValid(newValidations.every((validation) => validation.state === true));
     setValidations(newValidations);
-
-    function checkValidation(prevValidations, index: number, state: boolean) {
-      const updatedValidations = [...prevValidations];
-      updatedValidations[index].state = state;
-      return updatedValidations;
-    }
   }, [password, setIsValid]);
 
   const renderIcon = (state: boolean) => {
@@ -69,4 +70,4 @@ export default function IsPasswordValid({
       </ul>
     </div>
   );
-}
+};

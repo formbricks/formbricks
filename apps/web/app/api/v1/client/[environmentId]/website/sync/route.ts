@@ -17,14 +17,14 @@ import { TJsWebsiteLegacyStateSync, TJsWebsiteStateSync, ZJsWebsiteSyncInput } f
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function GET(
+export const GET = async (
   request: NextRequest,
   { params }: { params: { environmentId: string } }
-): Promise<Response> {
+): Promise<Response> => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const version =
@@ -141,4 +141,4 @@ export async function GET(
     console.error(error);
     return responses.internalServerErrorResponse(`Unable to complete response: ${error.message}`, true);
   }
-}
+};

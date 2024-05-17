@@ -4,8 +4,8 @@ import { TActionClass } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
 
-import EventActivityTab from "./ActionActivityTab";
-import ActionSettingsTab from "./ActionSettingsTab";
+import { EventActivityTab } from "./ActionActivityTab";
+import { ActionSettingsTab } from "./ActionSettingsTab";
 
 interface ActionDetailModalProps {
   environmentId: string;
@@ -17,7 +17,7 @@ interface ActionDetailModalProps {
   isUserTargetingEnabled: boolean;
 }
 
-export default function ActionDetailModal({
+export const ActionDetailModal = ({
   environmentId,
   open,
   setOpen,
@@ -25,7 +25,7 @@ export default function ActionDetailModal({
   actionClasses,
   membershipRole,
   isUserTargetingEnabled,
-}: ActionDetailModalProps) {
+}: ActionDetailModalProps) => {
   const tabs = [
     {
       title: "Activity",
@@ -71,4 +71,4 @@ export default function ActionDetailModal({
       />
     </>
   );
-}
+};

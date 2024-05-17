@@ -3,8 +3,8 @@ import { TagIcon } from "lucide-react";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
 
-import AttributeActivityTab from "./AttributeActivityTab";
-import AttributeSettingsTab from "./AttributeSettingsTab";
+import { AttributeActivityTab } from "./AttributeActivityTab";
+import { AttributeSettingsTab } from "./AttributeSettingsTab";
 
 interface AttributeDetailModalProps {
   open: boolean;
