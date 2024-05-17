@@ -78,7 +78,7 @@ export const MainNavigation = ({
   const [currentTeamId, setCurrentTeamId] = useState("");
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(localStorage.getItem("isMainNavCollapsed") === "true");
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
 
   const product = products.find((product) => product.id === environment.productId);
@@ -89,6 +89,11 @@ export const MainNavigation = ({
     setIsCollapsed(!isCollapsed);
     localStorage.setItem("isMainNavCollapsed", isCollapsed ? "false" : "true");
   };
+
+  useEffect(() => {
+    const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
+    setIsCollapsed(isCollapsedValueFromLocalStorage);
+  }, []);
 
   useEffect(() => {
     const toggleTextOpacity = () => {
