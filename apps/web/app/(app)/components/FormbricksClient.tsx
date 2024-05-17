@@ -21,7 +21,6 @@ export const FormbricksClient = ({ session }) => {
       apiHost: env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
       userId: session.user.id,
     });
-
     formbricks.setEmail(session.user.email);
 
     formbricks.registerRouteChange();
