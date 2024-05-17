@@ -382,7 +382,7 @@ export const QuestionFormInput = ({
     <div className="w-full">
       <div className="w-full">
         <div className="mb-2 mt-3">
-          <Label htmlFor={id}>{getLabelById(id)}</Label>
+          <Label htmlFor={id}>{label ? label : getLabelById(id)}</Label>
         </div>
 
         <div className="flex flex-col gap-4 bg-white">

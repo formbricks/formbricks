@@ -109,7 +109,7 @@ export const EditThankYouCard = ({
           <form>
             <QuestionFormInput
               id="headline"
-              label="Headline"
+              label="Note"
               value={localSurvey?.thankYouCard?.headline}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}

@@ -140,7 +140,7 @@ export const createSurvey = async (
   await expect(page.locator("#welcome-toggle")).toBeVisible();
   await page.getByText("Welcome Card").click();
   await page.locator("#welcome-toggle").check();
-  await page.getByLabel("Headline").fill(params.welcomeCard.headline);
+  await page.getByLabel("Note").fill(params.welcomeCard.headline);
   await page.locator("form").getByText("Thanks for providing your").fill(params.welcomeCard.description);
   await page.getByText("Welcome CardOn").click();
 
@@ -278,6 +278,6 @@ export const createSurvey = async (
 
   // Thank You Card
   await page.getByText("Thank You CardShown").click();
-  await page.getByLabel("Headline").fill(params.thankYouCard.headline);
+  await page.getByLabel("Note").fill(params.thankYouCard.headline);
   await page.getByLabel("Description").fill(params.thankYouCard.description);
 };
