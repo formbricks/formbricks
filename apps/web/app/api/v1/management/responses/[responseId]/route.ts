@@ -72,7 +72,14 @@ export const PUT = async (
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
     await fetchAndValidateResponse(authentication, params.responseId);
-    const responseUpdate = await request.json();
+    let responseUpdate;
+    try {
+      responseUpdate = await request.json();
+    } catch (error) {
+      console.error(`Error parsing JSON: ${error}`);
+      return responses.badRequestResponse("Malformed JSON input, please check your request body");
+    }
+
     const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
     if (!inputValidation.success) {
       return responses.badRequestResponse(
