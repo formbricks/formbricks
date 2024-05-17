@@ -46,12 +46,13 @@ export const MultipleChoiceSingleQuestion = ({
   const otherSpecify = useRef<HTMLInputElement | null>(null);
   const choicesContainerRef = useRef<HTMLDivElement | null>(null);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
+
   const shuffledChoicesIds = useMemo(() => {
     if (question.shuffleOption) {
       return getShuffledChoicesIds(question.choices, question.shuffleOption);
     } else return question.choices.map((choice) => choice.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [question.shuffleOption, question.choices.length]);
+  }, [question.shuffleOption, question.choices.length, question.choices[question.choices.length - 1].id]);
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
@@ -64,7 +65,7 @@ export const MultipleChoiceSingleQuestion = ({
       const choice = question.choices.find((choice) => {
         return choice.id === choiceId;
       });
-      if (choice) return choice;
+      return choice;
     });
   }, [question.choices, question.shuffleOption, shuffledChoicesIds]);
 

@@ -44,12 +44,13 @@ export const MultipleChoiceMultiQuestion = ({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
+
   const shuffledChoicesIds = useMemo(() => {
     if (question.shuffleOption) {
       return getShuffledChoicesIds(question.choices, question.shuffleOption);
     } else return question.choices.map((choice) => choice.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [question.shuffleOption, question.choices.length]);
+  }, [question.shuffleOption, question.choices.length, question.choices[question.choices.length - 1].id]);
 
   const getChoicesWithoutOtherLabels = useCallback(
     () =>
@@ -84,7 +85,7 @@ export const MultipleChoiceMultiQuestion = ({
       const choice = question.choices.find((choice) => {
         return choice.id === choiceId;
       });
-      if (choice) return choice;
+      return choice;
     });
   }, [question.choices, question.shuffleOption, shuffledChoicesIds]);
 

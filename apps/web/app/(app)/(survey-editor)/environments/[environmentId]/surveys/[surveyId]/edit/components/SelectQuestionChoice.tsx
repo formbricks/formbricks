@@ -55,8 +55,7 @@ export const SelectQuestionChoice = ({
   surveyLanguageCodes,
   updateQuestion,
 }: ChoiceProps) => {
-  const isDragDisabled =
-    choice.id === "other" || question.shuffleOption === "all" || question.shuffleOption === "exceptLast";
+  const isDragDisabled = choice.id === "other";
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,
     disabled: isDragDisabled,
@@ -74,13 +73,7 @@ export const SelectQuestionChoice = ({
         className={cn("flex items-center", choice.id === "other" && "invisible")}
         {...listeners}
         {...attributes}>
-        <GripVerticalIcon
-          className={cn(
-            "mt-3 h-4 w-4 cursor-move text-slate-400",
-            (question.shuffleOption === "all" || question.shuffleOption === "exceptLast") &&
-              "cursor-not-allowed"
-          )}
-        />
+        <GripVerticalIcon className="mt-3 h-4 w-4 cursor-move text-slate-400" />
       </div>
 
       <div className="flex w-full space-x-2">
