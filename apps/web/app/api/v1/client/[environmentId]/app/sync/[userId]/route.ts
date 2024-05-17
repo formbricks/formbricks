@@ -3,13 +3,10 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
 
+import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttribute } from "@formbricks/lib/attribute/service";
-import {
-  IS_FORMBRICKS_CLOUD,
-  PRICING_APPSURVEYS_FREE_RESPONSES,
-  PRICING_USERTARGETING_FREE_MTU,
-} from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -86,19 +83,14 @@ export async function GET(
     let isMauLimitReached = false;
     let isInAppSurveyLimitReached = false;
     if (IS_FORMBRICKS_CLOUD) {
-      // check userTargeting subscription
-      const hasUserTargetingSubscription =
-        team.billing.features.userTargeting.status &&
-        ["active", "canceled"].includes(team.billing.features.userTargeting.status);
-      const currentMau = await getMonthlyActiveTeamPeopleCount(team.id);
-      isMauLimitReached = !hasUserTargetingSubscription && currentMau >= PRICING_USERTARGETING_FREE_MTU;
-      // check inAppSurvey subscription
-      const hasInAppSurveySubscription =
-        team.billing.features.inAppSurvey.status &&
-        ["active", "canceled"].includes(team.billing.features.inAppSurvey.status);
+      const [hasUserTargetingSubscription, currentMau] = await Promise.all([
+        getAdvancedTargetingPermission(team),
+        getMonthlyActiveTeamPeopleCount(team.id),
+      ]);
+
+      isMauLimitReached = !hasUserTargetingSubscription && currentMau >= team.billing.limits.monthly.miu;
       const currentResponseCount = await getMonthlyTeamResponseCount(team.id);
-      isInAppSurveyLimitReached =
-        !hasInAppSurveySubscription && currentResponseCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
+      isInAppSurveyLimitReached = currentResponseCount >= team.billing.limits.monthly.responses;
     }
 
     let person = await getPersonByUserId(environmentId, userId);

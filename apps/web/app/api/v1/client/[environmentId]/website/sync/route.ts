@@ -4,11 +4,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
 
 import { getActionClassByEnvironmentIdAndName, getActionClasses } from "@formbricks/lib/actionClass/service";
-import {
-  IS_FORMBRICKS_CLOUD,
-  PRICING_APPSURVEYS_FREE_RESPONSES,
-  WEBAPP_URL,
-} from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
@@ -60,19 +56,15 @@ export async function GET(
     }
 
     // check if MAU limit is reached
-    let isInAppSurveyLimitReached = false;
+    let isWebsiteSurveyResponseLimitReached = false;
     if (IS_FORMBRICKS_CLOUD) {
       // check team subscriptons
 
       // check inAppSurvey subscription
-      const hasInAppSurveySubscription =
-        team.billing.features.inAppSurvey.status &&
-        ["active", "canceled"].includes(team.billing.features.inAppSurvey.status);
       const currentResponseCount = await getMonthlyTeamResponseCount(team.id);
-      isInAppSurveyLimitReached =
-        !hasInAppSurveySubscription && currentResponseCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
-      if (isInAppSurveyLimitReached) {
-        await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
+      isWebsiteSurveyResponseLimitReached = currentResponseCount >= team.billing.limits.monthly.responses;
+      if (isWebsiteSurveyResponseLimitReached) {
+        await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "websiteSurvey");
       }
     }
 
@@ -116,7 +108,7 @@ export async function GET(
     // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
     let transformedSurveys: TLegacySurvey[] | TSurvey[] = surveys;
     let state: TJsWebsiteStateSync | TJsWebsiteLegacyStateSync = {
-      surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
+      surveys: !isWebsiteSurveyResponseLimitReached ? transformedSurveys : [],
       actionClasses,
       product: updatedProduct,
     };
@@ -134,7 +126,7 @@ export async function GET(
       );
 
       state = {
-        surveys: isInAppSurveyLimitReached ? [] : transformedSurveys,
+        surveys: isWebsiteSurveyResponseLimitReached ? [] : transformedSurveys,
         noCodeActionClasses,
         product: updatedProduct,
       };

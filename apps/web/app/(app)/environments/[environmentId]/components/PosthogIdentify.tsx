@@ -5,7 +5,7 @@ import { usePostHog } from "posthog-js/react";
 import { useEffect } from "react";
 
 import { env } from "@formbricks/lib/env";
-import { TSubscriptionStatus } from "@formbricks/types/teams";
+import { TTeamBilling } from "@formbricks/types/teams";
 
 const posthogEnabled = env.NEXT_PUBLIC_POSTHOG_API_KEY && env.NEXT_PUBLIC_POSTHOG_API_HOST;
 
@@ -14,17 +14,13 @@ export default function PosthogIdentify({
   environmentId,
   teamId,
   teamName,
-  inAppSurveyBillingStatus,
-  linkSurveyBillingStatus,
-  userTargetingBillingStatus,
+  billing,
 }: {
   session: Session;
   environmentId?: string;
   teamId?: string;
   teamName?: string;
-  inAppSurveyBillingStatus?: TSubscriptionStatus;
-  linkSurveyBillingStatus?: TSubscriptionStatus;
-  userTargetingBillingStatus?: TSubscriptionStatus;
+  billing: TTeamBilling;
 }) {
   const posthog = usePostHog();
 
@@ -42,22 +38,13 @@ export default function PosthogIdentify({
       if (teamId) {
         posthog.group("team", teamId, {
           name: teamName,
-          inAppSurveyBillingStatus,
-          linkSurveyBillingStatus,
-          userTargetingBillingStatus,
+          plan: billing.plan,
+          responseLimit: billing.limits.monthly.responses,
+          miuLimit: billing.limits.monthly.miu,
         });
       }
     }
-  }, [
-    posthog,
-    session.user,
-    environmentId,
-    teamId,
-    teamName,
-    inAppSurveyBillingStatus,
-    linkSurveyBillingStatus,
-    userTargetingBillingStatus,
-  ]);
+  }, [posthog, session.user, environmentId, teamId, teamName, billing]);
 
   return null;
 }

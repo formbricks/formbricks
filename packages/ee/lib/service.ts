@@ -132,31 +132,37 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
 };
 
 export const getRemoveInAppBrandingPermission = (team: TTeam): boolean => {
-  if (IS_FORMBRICKS_CLOUD) return team.billing.features.inAppSurvey.status !== "inactive";
+  if (IS_FORMBRICKS_CLOUD) return team.billing.plan !== "free";
   else if (!IS_FORMBRICKS_CLOUD) return true;
   else return false;
 };
 
 export const getRemoveLinkBrandingPermission = (team: TTeam): boolean => {
-  if (IS_FORMBRICKS_CLOUD) return team.billing.features.linkSurvey.status !== "inactive";
+  if (IS_FORMBRICKS_CLOUD) return team.billing.plan !== "free";
   else if (!IS_FORMBRICKS_CLOUD) return true;
   else return false;
 };
 
 export const getRoleManagementPermission = async (team: TTeam): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD) return team.billing.features.inAppSurvey.status !== "inactive";
+  if (IS_FORMBRICKS_CLOUD) return team.billing.plan === "scale" || team.billing.plan === "enterprise";
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
   else return false;
 };
 
 export const getAdvancedTargetingPermission = async (team: TTeam): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD) return team.billing.features.userTargeting.status !== "inactive";
+  if (IS_FORMBRICKS_CLOUD) return team.billing.plan === "scale" || team.billing.plan === "enterprise";
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
   else return false;
 };
 
 export const getMultiLanguagePermission = async (team: TTeam): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD) return team.billing.features.inAppSurvey.status !== "inactive";
+  if (IS_FORMBRICKS_CLOUD) return team.billing.plan === "scale" || team.billing.plan === "enterprise";
+  else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
+  else return false;
+};
+
+export const getBiggerUploadFileSizePermission = async (team: TTeam): Promise<boolean> => {
+  if (IS_FORMBRICKS_CLOUD) return team.billing.plan !== "free";
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
   else return false;
 };

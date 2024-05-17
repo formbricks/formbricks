@@ -1,23 +1,13 @@
 import { z } from "zod";
 
-export const ZSubscriptionStatus = z.enum(["active", "cancelled", "inactive"]).default("inactive");
-
-export type TSubscriptionStatus = z.infer<typeof ZSubscriptionStatus>;
-
-export const ZSubscription = z.object({
-  status: ZSubscriptionStatus,
-  unlimited: z.boolean().default(false),
-});
-
-export type TSubscription = z.infer<typeof ZSubscription>;
-
 export const ZTeamBilling = z.object({
   stripeCustomerId: z.string().nullable(),
-  features: z.object({
-    inAppSurvey: ZSubscription,
-    linkSurvey: ZSubscription,
-    userTargeting: ZSubscription,
-    multiLanguage: ZSubscription,
+  plan: z.enum(["free", "startup", "scale", "enterprise"]).default("free"),
+  limits: z.object({
+    monthly: z.object({
+      responses: z.number(),
+      miu: z.number(),
+    }),
   }),
 });
 

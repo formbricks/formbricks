@@ -1,23 +1,25 @@
 export enum ProductFeatureKeys {
-  inAppSurvey = "inAppSurvey",
-  linkSurvey = "linkSurvey",
-  userTargeting = "userTargeting",
+  free = "free",
+  startup = "startup",
+  scale = "scale",
+  enterprise = "enterprise",
 }
 
 export enum StripeProductNames {
-  inAppSurvey = "Formbricks In App Survey",
-  linkSurvey = "Formbricks Link Survey",
-  userTargeting = "Formbricks User Identification",
+  startup = "Formbricks Startup",
+  scale = "Formbricks Scale",
+  enterprise = "Formbricks Enterprise",
 }
 export enum StripePriceLookupKeys {
-  inAppSurvey = "inAppSurvey",
-  linkSurvey = "linkSurvey",
-  userTargeting = "userTargeting",
-  inAppSurveyUnlimitedPlan90 = "survey-unlimited-03112023",
-  linkSurveyUnlimitedPlan19 = "linkSurvey-unlimited-03112023",
-  userTargetingUnlimitedPlan90 = "userTargeting-unlimited-03112023",
-
-  inAppSurveyUnlimitedPlan33 = "survey-unlimited-33-27022024",
-  linkSurveyUnlimitedPlan33 = "linkSurvey-unlimited-33-27022024",
-  userTargetingUnlimitedPlan33 = "userTargeting-unlimited-33-27022024",
+  startupMonthly = "formbricks_startup_monthly",
+  startupYearly = "formbricks_startup_yearly",
+  scaleMonthly = "formbricks_scale_monthly",
+  scaleYearly = "formbricks_scale_yearly",
 }
+
+export const LIMITS = {
+  FREE: {
+    RESPONSES: 500,
+    MIU: 1000,
+  },
+};

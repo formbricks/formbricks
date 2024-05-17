@@ -50,7 +50,7 @@ export const BillingSlider = React.forwardRef<React.ElementRef<typeof SliderPrim
         style={{ left: `calc(${(freeTierLimit / max) * 100}% + 0.5rem)` }}
         className="absolute mt-16 text-sm text-slate-700">
         <p className="text-xs">
-          Free Tier Limit
+          Current Tier Limit
           <br />
           {freeTierLimit} {metric}
         </p>

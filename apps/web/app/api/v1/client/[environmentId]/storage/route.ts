@@ -1,6 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { NextRequest } from "next/server";
 
+import { getBiggerUploadFileSizePermission } from "@formbricks/ee/lib/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest, context: Context): Promise<Response
     return responses.notFoundResponse("TeamByEnvironmentId", environmentId);
   }
 
-  const plan = ["active", "canceled"].includes(team.billing.features.linkSurvey.status) ? "pro" : "free";
+  const plan = (await getBiggerUploadFileSizePermission(team)) ? "pro" : "free";
 
   return await uploadPrivateFile(fileName, environmentId, fileType, plan);
 }

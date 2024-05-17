@@ -4,6 +4,7 @@ import ActionTableHeading from "@/app/(app)/environments/[environmentId]/actions
 import { AddActionModal } from "@/app/(app)/environments/[environmentId]/actions/components/AddActionModal";
 import { Metadata } from "next";
 
+import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
@@ -25,9 +26,7 @@ export default async function ActionClassesComponent({ params }) {
   }
 
   // On Formbricks Cloud only render the timeline if the user targeting feature is booked
-  const isUserTargetingEnabled = IS_FORMBRICKS_CLOUD
-    ? team.billing.features.userTargeting.status === "active"
-    : true;
+  const isUserTargetingEnabled = IS_FORMBRICKS_CLOUD ? await getAdvancedTargetingPermission(team) : true;
 
   const renderAddActionButton = () => (
     <AddActionModal environmentId={params.environmentId} actionClasses={actionClasses} />

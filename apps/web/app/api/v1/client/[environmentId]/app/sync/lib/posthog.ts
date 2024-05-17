@@ -3,7 +3,7 @@ import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 
 export const sendFreeLimitReachedEventToPosthogBiWeekly = (
   environmentId: string,
-  plan: "inAppSurvey" | "userTargeting"
+  plan: "inAppSurvey" | "userTargeting" | "websiteSurvey"
 ): Promise<string> =>
   cache(
     async () => {

@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { StripePriceLookupKeys } from "@formbricks/ee/billing/lib/constants";
 import { createCustomerPortalSession } from "@formbricks/ee/billing/lib/createCustomerPortalSession";
 import { createSubscription } from "@formbricks/ee/billing/lib/createSubscription";
-import { removeSubscription } from "@formbricks/ee/billing/lib/removeSubscription";
+import { isSubscriptionCancelled } from "@formbricks/ee/billing/lib/isSubscriptionCancelled";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { canUserAccessTeam } from "@formbricks/lib/team/auth";
@@ -15,7 +15,7 @@ import { AuthorizationError } from "@formbricks/types/errors";
 export async function upgradePlanAction(
   teamId: string,
   environmentId: string,
-  priceLookupKeys: StripePriceLookupKeys[]
+  priceLookupKey: StripePriceLookupKeys
 ) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
@@ -23,7 +23,7 @@ export async function upgradePlanAction(
   const isAuthorized = await canUserAccessTeam(session.user.id, teamId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const subscriptionSession = await createSubscription(teamId, environmentId, priceLookupKeys);
+  const subscriptionSession = await createSubscription(teamId, environmentId, priceLookupKey);
 
   return subscriptionSession;
 }
@@ -46,18 +46,12 @@ export async function manageSubscriptionAction(teamId: string, environmentId: st
   return sessionUrl;
 }
 
-export async function removeSubscriptionAction(
-  teamId: string,
-  environmentId: string,
-  priceLookupKeys: StripePriceLookupKeys[]
-) {
+export async function isSubscriptionCancelledAction(teamId: string) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessTeam(session.user.id, teamId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const removedSubscription = await removeSubscription(teamId, environmentId, priceLookupKeys);
-
-  return removedSubscription.url;
+  return await isSubscriptionCancelled(teamId);
 }

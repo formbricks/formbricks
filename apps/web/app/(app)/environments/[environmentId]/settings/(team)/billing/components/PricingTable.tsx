@@ -1,17 +1,18 @@
 "use client";
 
 import {
+  isSubscriptionCancelledAction,
   manageSubscriptionAction,
-  removeSubscriptionAction,
   upgradePlanAction,
 } from "@/app/(app)/environments/[environmentId]/settings/(team)/billing/actions";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { ProductFeatureKeys, StripePriceLookupKeys } from "@formbricks/ee/billing/lib/constants";
+import { StripePriceLookupKeys } from "@formbricks/ee/billing/lib/constants";
 import { TTeam } from "@formbricks/types/teams";
-import { AlertDialog } from "@formbricks/ui/AlertDialog";
+import { Badge } from "@formbricks/ui/Badge";
+import { BillingSlider } from "@formbricks/ui/BillingSlider";
 import { Button } from "@formbricks/ui/Button";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 import { PricingCard } from "@formbricks/ui/PricingCard";
@@ -21,8 +22,6 @@ interface PricingTableProps {
   environmentId: string;
   peopleCount: number;
   responseCount: number;
-  userTargetingFreeMtu: number;
-  inAppSurveyFreeResponses: number;
 }
 
 export default function PricingTableComponent({
@@ -30,14 +29,21 @@ export default function PricingTableComponent({
   environmentId,
   peopleCount,
   responseCount,
-  userTargetingFreeMtu,
-  inAppSurveyFreeResponses: appSurveyFreeResponses,
 }: PricingTableProps) {
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
   const [upgradingPlan, setUpgradingPlan] = useState(false);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [activeLookupKey, setActiveLookupKey] = useState<StripePriceLookupKeys>();
+  const [cancellingOn, setCancellingOn] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const checkSubscriptionStatus = async () => {
+      const isCancelled = await isSubscriptionCancelledAction(team.id);
+      if (isCancelled) {
+        setCancellingOn(isCancelled.date);
+      }
+    };
+    checkSubscriptionStatus();
+  }, [team.id]);
 
   const openCustomerPortal = async () => {
     setLoadingCustomerPortal(true);
@@ -46,10 +52,10 @@ export default function PricingTableComponent({
     setLoadingCustomerPortal(false);
   };
 
-  const upgradePlan = async (priceLookupKeys: StripePriceLookupKeys[]) => {
+  const upgradePlan = async (priceLookupKey: StripePriceLookupKeys) => {
     try {
       setUpgradingPlan(true);
-      const { status, newPlan, url } = await upgradePlanAction(team.id, environmentId, priceLookupKeys);
+      const { status, newPlan, url } = await upgradePlanAction(team.id, environmentId, priceLookupKey);
       setUpgradingPlan(false);
       if (status != 200) {
         throw new Error("Something went wrong");
@@ -69,101 +75,47 @@ export default function PricingTableComponent({
     }
   };
 
-  const handleUnsubscribe = async (e, lookupKey) => {
-    try {
-      e.preventDefault();
-      setActiveLookupKey(lookupKey);
-      setOpenDeleteModal(true);
-    } catch (err) {
-      toast.error("Unable to open delete modal");
-    }
-  };
-
-  const handleDeleteSubscription = async () => {
-    try {
-      if (!activeLookupKey) throw new Error("No active lookup key");
-      await removeSubscriptionAction(team.id, environmentId, [activeLookupKey]);
-      router.refresh();
-      toast.success("Subscription deleted successfully");
-    } catch (err) {
-      toast.error("Unable to delete subscription");
-    } finally {
-      setOpenDeleteModal(false);
-    }
-  };
-
-  const coreAndWebAppSurveyFeatures = [
-    {
-      title: "Remove Formbricks Branding",
-      comingSoon: false,
-    },
-    {
-      title: "Team Roles",
-      comingSoon: false,
-    },
-    {
-      title: "250 responses / month free",
-      comingSoon: false,
-      unlimited: false,
-    },
-    {
-      title: "$0.15 / responses afterwards",
-      comingSoon: false,
-      unlimited: false,
-    },
-    {
-      title: "Multi-Language Surveys",
-      comingSoon: false,
-    },
-    {
-      title: "Unlimited Responses",
-      unlimited: true,
-    },
+  const freeFeatures = [
+    "Unlimited Surveys",
+    "Unlimited Team Members",
+    "Unlimited Connected Domains / Apps / Websites",
+    "500 Responses / Month",
+    "1,000 Identified Users / Month",
+    "Logic Jumps, Hidden Fields, Recurring Surveys, etc.",
+    "Website Popup Surveys",
+    "In-product Surveys for Web with Attribute Targeting",
+    "Link Surveys (Shareable Page)",
+    "Email Embedded Surveys",
+    "All Integrations",
+    "API & Webhooks",
   ];
 
-  const userTargetingFeatures = [
-    {
-      title: "2.500 identified users / month free",
-      comingSoon: false,
-      unlimited: false,
-    },
-    {
-      title: "$0.01 / identified user afterwards",
-      comingSoon: false,
-      unlimited: false,
-    },
-    {
-      title: "Advanced Targeting",
-      comingSoon: false,
-    },
-    {
-      title: "Unlimited User Identification",
-      unlimited: true,
-    },
-    {
-      title: "Reusable Segments",
-      comingSoon: false,
-      unlimited: true,
-    },
+  const startupFeatures = [
+    "Everything in Free",
+    "2,000 Responses / Month",
+    "2,500 Identified Users / Month",
+    "Bigger File Uploads in Surveys",
+    "Remove Formbricks Branding",
   ];
 
-  const linkSurveysFeatures = [
-    {
-      title: "Remove Formbricks Branding",
-      comingSoon: false,
-    },
-    {
-      title: "File Uploads up to 1 GB",
-      comingSoon: false,
-    },
-    {
-      title: "Custom Domain",
-      comingSoon: true,
-    },
-    {
-      title: "Multi-Language Surveys",
-      comingSoon: false,
-    },
+  const scaleFeatures = [
+    "Everything in Startup",
+    "5,000 Responses / Month",
+    "20,000 Identified Users / Month",
+    "Email Support",
+    "Multi-Language Surveys",
+    "Advanced Targeting based on User Actions",
+    "Team Access Control",
+  ];
+
+  const enterpriseFeatures = [
+    "Everything in Scale",
+    "Custom Response Limits",
+    "Custom User Identification Limits",
+    "Priority Support with SLA",
+    "99% Uptime SLA",
+    "Customer Success Manager",
+    "Technical Onboarding",
   ];
 
   return (
@@ -173,183 +125,105 @@ export default function PricingTableComponent({
           <LoadingSpinner />
         </div>
       )}
-      <div className="justify-between gap-4 rounded-lg">
-        {team.billing.stripeCustomerId ? (
-          <div className="flex w-full justify-end">
-            <Button
-              variant="minimal"
-              className="justify-center py-2 shadow-sm"
-              size="sm"
-              onClick={openCustomerPortal}>
-              Cancel Subscription
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="justify-center py-2 shadow-sm"
-              loading={loadingCustomerPortal}
-              onClick={openCustomerPortal}>
-              {team.billing.features.inAppSurvey.unlimited ? "Manage Subscription" : "Manage Card details"}
-            </Button>
-          </div>
-        ) : (
-          <>
-            {/* <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-slate-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
-              <svg
-                viewBox="0 0 1024 1024"
-                className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
-                aria-hidden="true">
-                <circle
-                  cx={512}
-                  cy={512}
-                  r={512}
-                  fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                  fillOpacity="0.7"
-                />
-                <defs>
-                  <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                    <stop stopColor="#00E6CA" />
-                    <stop offset={0} stopColor="#00C4B8" />
-                  </radialGradient>
-                </defs>
-              </svg>
-              <div className="mx-auto max-w-md text-center lg:mx-0 lg:flex-auto lg:py-16 lg:text-left">
-                <h2 className="text-2xl font-bold text-white sm:text-3xl">
-                  Launch Special:
-                  <br /> Go Unlimited! Forever!
-                </h2>
-                <p className="text-md mt-6 leading-8 text-slate-300">
-                  Get access to all pro features and unlimited responses + identified users for a flat fee of
-                  only $99/month.
-                  <br /> <br />
-                  <span className="text-slate-400">
-                    This deal ends on 31st of October 2023 at 11:59 PM PST.
-                  </span>
-                </p>
-              </div>
-              <div className="flex flex-1 flex-col items-center justify-center lg:pr-8">
-                <Button
-                  variant="minimal"
-                  className="w-full justify-center bg-white py-2 text-slate-800 shadow-sm"
-                  loading={upgradingPlan}
-                  onClick={() =>
-                    upgradePlan([
-                      StripePriceLookupKeys.inAppSurveyUnlimited,
-                      StripePriceLookupKeys.linkSurveyUnlimited,
-                      StripePriceLookupKeys.userTargetingUnlimited,
-                    ])
-                  }>
-                  Upgrade now at $99/month
-                </Button>
-              </div>
-            </div> */}
+      <div className="mx-16 justify-between gap-4 rounded-lg capitalize">
+        <div className="flex w-full">
+          <h2 className="mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
+            Current Plan: {team.billing.plan}
+            {cancellingOn && (
+              <Badge
+                className="mx-2"
+                text={`Cancelling: ${cancellingOn ? cancellingOn.toDateString() : ""}`}
+                size="normal"
+                type="warning"
+              />
+            )}
+          </h2>
 
-            <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-slate-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
-              <svg
-                viewBox="0 0 1024 1024"
-                className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
-                aria-hidden="true">
-                <circle
-                  cx={512}
-                  cy={512}
-                  r={512}
-                  fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                  fillOpacity="0.7"
-                />
-                <defs>
-                  <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                    <stop stopColor="#00E6CA" />
-                    <stop offset={0} stopColor="#00C4B8" />
-                  </radialGradient>
-                </defs>
-              </svg>
-              <div className="mx-auto max-w-md text-center lg:mx-0 lg:flex-auto lg:py-16 lg:text-left">
-                <h2 className="text-2xl font-bold text-white sm:text-3xl">
-                  Unlock the full power of Formbricks, for free.
-                </h2>
-                <p className="text-md mt-6 leading-8 text-slate-300">
-                  Add a credit card, get access to all features.
-                  <br />
-                  You will <b>not</b> be charged until you exceed the free tier limits.
-                </p>
-              </div>
+          {team.billing.stripeCustomerId && (
+            <div className="flex w-full justify-end">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="justify-center py-2 shadow-sm"
+                loading={loadingCustomerPortal}
+                onClick={openCustomerPortal}>
+                {team.billing.plan !== "free" ? "Manage Subscription" : "Manage Card details"}
+              </Button>
             </div>
-          </>
-        )}
+          )}
+        </div>
 
+        <div className="mt-2 rounded-lg border border-slate-300 bg-slate-100 py-4 capitalize shadow-sm dark:bg-slate-800">
+          <div className="mb-2 flex items-center gap-x-4"></div>
+          {
+            <div className="relative mx-8 mb-16 mt-4">
+              Responses
+              <BillingSlider
+                className="slider-class"
+                value={responseCount}
+                max={team.billing.limits.monthly.responses * 1.5}
+                freeTierLimit={team.billing.limits.monthly.responses}
+                metric={"Responses"}
+              />
+            </div>
+          }
+          <div className="mb-2 flex items-center gap-x-4"></div>
+          {
+            <div className="relative mx-8 mb-16 mt-4">
+              Monthly Identified Users
+              <BillingSlider
+                className="slider-class"
+                value={peopleCount}
+                max={team.billing.limits.monthly.miu * 1.5}
+                freeTierLimit={team.billing.limits.monthly.miu}
+                metric={"MIU"}
+              />
+            </div>
+          }
+        </div>
+        <div className="flex w-full justify-center gap-x-4">
+          <PricingCard
+            title={"Formbricks Startup"}
+            subtitle={"Ideal for small teams"}
+            plan="startup"
+            monthlyPrice={49}
+            actionText={"Starting at"}
+            team={team}
+            paidFeatures={startupFeatures}
+            loading={upgradingPlan}
+            onUpgrade={() => upgradePlan(StripePriceLookupKeys.startupMonthly)}
+          />
+          <PricingCard
+            title={"Formbricks Scale"}
+            subtitle={"Ideal for growing teams"}
+            plan="scale"
+            monthlyPrice={199}
+            actionText={"Starting at"}
+            team={team}
+            paidFeatures={scaleFeatures}
+            loading={upgradingPlan}
+            onUpgrade={() => upgradePlan(StripePriceLookupKeys.scaleMonthly)}
+          />
+          <PricingCard
+            title={"Formbricks Enterprise"}
+            subtitle={"Ideal for large teams"}
+            plan="enterprise"
+            team={team}
+            paidFeatures={enterpriseFeatures}
+            loading={upgradingPlan}
+            onUpgrade={() => (window.location.href = "mailto:hola@formbricks.com")}
+          />
+        </div>
         <PricingCard
-          title={"Formbricks Core & Surveys"}
-          subtitle={"Get 250 responses free every month"}
-          featureName={ProductFeatureKeys[ProductFeatureKeys.inAppSurvey]}
-          monthlyPrice={0}
-          actionText={"Starting at"}
+          title={"Formbricks Free"}
+          subtitle={"Available to Everybody"}
+          plan="free"
           team={team}
-          metric="responses"
-          sliderValue={responseCount}
-          sliderLimit={350}
-          freeTierLimit={appSurveyFreeResponses}
-          paidFeatures={coreAndWebAppSurveyFeatures.filter((feature) => {
-            if (team.billing.features.inAppSurvey.unlimited) {
-              return feature.unlimited !== false;
-            } else {
-              return feature.unlimited !== true;
-            }
-          })}
-          perMetricCharge={0.15}
+          paidFeatures={freeFeatures}
           loading={upgradingPlan}
-          onUpgrade={() => upgradePlan([StripePriceLookupKeys.inAppSurvey])}
-          onUnsubscribe={(e) => handleUnsubscribe(e, ProductFeatureKeys[ProductFeatureKeys.inAppSurvey])}
-        />
-
-        <PricingCard
-          title={"Link Survey Pro"}
-          subtitle={"Link Surveys include unlimited surveys and responses for free."}
-          featureName={ProductFeatureKeys[ProductFeatureKeys.linkSurvey]}
-          monthlyPrice={30}
-          actionText={""}
-          team={team}
-          paidFeatures={linkSurveysFeatures}
-          loading={upgradingPlan}
-          onUpgrade={() => upgradePlan([StripePriceLookupKeys.linkSurvey])}
-          onUnsubscribe={(e) => handleUnsubscribe(e, ProductFeatureKeys[ProductFeatureKeys.linkSurvey])}
-        />
-
-        <PricingCard
-          title={"User Identification"}
-          subtitle={"Identify up to 2.500 users every month"}
-          featureName={ProductFeatureKeys[ProductFeatureKeys.userTargeting]}
-          monthlyPrice={0}
-          actionText={"Starting at"}
-          team={team}
-          metric="people"
-          sliderValue={peopleCount}
-          sliderLimit={3500}
-          freeTierLimit={userTargetingFreeMtu}
-          paidFeatures={userTargetingFeatures.filter((feature) => {
-            if (team.billing.features.userTargeting.unlimited) {
-              return feature.unlimited !== false;
-            } else {
-              return feature.unlimited !== true;
-            }
-          })}
-          perMetricCharge={0.01}
-          loading={upgradingPlan}
-          onUpgrade={() => upgradePlan([StripePriceLookupKeys.userTargeting])}
-          onUnsubscribe={(e) => handleUnsubscribe(e, ProductFeatureKeys[ProductFeatureKeys.userTargeting])}
+          onUpgrade={() => toast.error("Everybody has the free plan by default!")}
         />
       </div>
-
-      <AlertDialog
-        headerText="Are you sure that you want to unsubscribe?"
-        open={openDeleteModal}
-        setOpen={setOpenDeleteModal}
-        onDecline={() => {
-          setOpenDeleteModal(false);
-        }}
-        mainText="Your subscription for this product will be canceled at the End of this Month! After that, you won't have access to the Paid features anymore"
-        onConfirm={() => handleDeleteSubscription()}
-        confirmBtnLabel="Unsubscribe"
-      />
     </div>
   );
 }

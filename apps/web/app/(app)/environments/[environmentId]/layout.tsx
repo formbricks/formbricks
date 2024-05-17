@@ -35,9 +35,7 @@ export default async function EnvLayout({ children, params }) {
           environmentId={params.environmentId}
           teamId={team.id}
           teamName={team.name}
-          inAppSurveyBillingStatus={team.billing.features.inAppSurvey.status}
-          linkSurveyBillingStatus={team.billing.features.linkSurvey.status}
-          userTargetingBillingStatus={team.billing.features.userTargeting.status}
+          billing={team.billing}
         />
         <FormbricksClient session={session} />
         <ToasterClient />

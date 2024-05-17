@@ -5,6 +5,7 @@ import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
 
+import { getBiggerUploadFileSizePermission } from "@formbricks/ee/lib/service";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest, context: Context): Promise<Response
   }
 
   try {
-    const plan = ["active", "canceled"].includes(team.billing.features.linkSurvey.status) ? "pro" : "free";
+    const plan = (await getBiggerUploadFileSizePermission(team)) ? "pro" : "free";
     const bytes = await file.arrayBuffer();
     const fileBuffer = Buffer.from(bytes);
 
