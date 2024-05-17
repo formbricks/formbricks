@@ -7,7 +7,6 @@ import { QuestionCard } from "./QuestionCard";
 
 interface QuestionsDraggableProps {
   localSurvey: TSurvey;
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   product: TProduct;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -27,7 +26,6 @@ export const QuestionsDroppable = ({
   duplicateQuestion,
   invalidQuestions,
   localSurvey,
-  setLocalSurvey,
   moveQuestion,
   product,
   selectedLanguageCode,
@@ -56,7 +54,6 @@ export const QuestionsDroppable = ({
             setActiveQuestionId={setActiveQuestionId}
             lastQuestion={questionIdx === localSurvey.questions.length - 1}
             isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
-            setLocalSurvey={setLocalSurvey}
           />
         ))}
       </SortableContext>

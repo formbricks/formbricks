@@ -1,29 +1,12 @@
 "use client";
 
-import { QuestionCardIcon } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionCardIcon";
 import { getTSurveyQuestionTypeName } from "@/app/lib/questions";
+import { QUESTIONS_ICON_MAP } from "@/app/lib/surveys/constants";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import {
-  ArrowUpFromLineIcon,
-  CalendarDaysIcon,
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  Grid3X3Icon,
-  GripIcon,
-  HomeIcon,
-  ImageIcon,
-  ListIcon,
-  MessageSquareTextIcon,
-  MousePointerClickIcon,
-  PhoneIcon,
-  PresentationIcon,
-  Rows3Icon,
-  StarIcon,
-} from "lucide-react";
-import { useMemo, useState } from "react";
+import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
+import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
@@ -45,12 +28,11 @@ import { MultipleChoiceQuestionForm } from "./MultipleChoiceQuestionForm";
 import { NPSQuestionForm } from "./NPSQuestionForm";
 import { OpenQuestionForm } from "./OpenQuestionForm";
 import { PictureSelectionForm } from "./PictureSelectionForm";
-import { QuestionDropdown } from "./QuestionMenu";
+import { QuestionMenu } from "./QuestionMenu";
 import { RatingQuestionForm } from "./RatingQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   product: TProduct;
   question: TSurveyQuestion;
   questionIdx: number;
@@ -68,7 +50,6 @@ interface QuestionCardProps {
 
 export const QuestionCard = ({
   localSurvey,
-  setLocalSurvey,
   product,
   question,
   questionIdx,
@@ -186,12 +167,7 @@ export const QuestionCard = ({
           <div>
             <div className="inline-flex">
               <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
-                <QuestionCardIcon
-                  question={question}
-                  localSurvey={localSurvey}
-                  setLocalSurvey={setLocalSurvey}
-                  product={product}
-                />
+                {QUESTIONS_ICON_MAP[question.type]}
               </div>
               <div>
                 <p className="text-sm font-semibold">
@@ -212,12 +188,15 @@ export const QuestionCard = ({
             </div>
 
             <div className="flex items-center space-x-2">
-              <QuestionDropdown
+              <QuestionMenu
                 questionIdx={questionIdx}
                 lastQuestion={lastQuestion}
                 duplicateQuestion={duplicateQuestion}
                 deleteQuestion={deleteQuestion}
                 moveQuestion={moveQuestion}
+                question={question}
+                product={product}
+                updateQuestion={updateQuestion}
               />
             </div>
           </div>
