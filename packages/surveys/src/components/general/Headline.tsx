@@ -19,7 +19,7 @@ export const Headline = ({
         {headline}
         {!required && (
           <span
-            className="text-heading ml-2 self-start text-sm font-normal leading-7 opacity-60"
+            className="text-heading mx-2 self-start text-sm font-normal leading-7 opacity-60"
             tabIndex={-1}>
             Optional
           </span>
