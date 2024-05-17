@@ -7,7 +7,7 @@ import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 
-interface MultipleFileInputProps {
+interface FileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
   surveyId: string | undefined;
   onUploadCallback: (uploadedUrls: string[]) => void;
@@ -15,7 +15,7 @@ interface MultipleFileInputProps {
   fileUrls: string[] | undefined;
   maxSizeInMB?: number;
   allowMultipleFiles?: boolean;
-  uniqueId?: string;
+  htmlFor?: string;
 }
 
 export const FileInput = ({
@@ -26,8 +26,8 @@ export const FileInput = ({
   fileUrls,
   maxSizeInMB,
   allowMultipleFiles,
-  uniqueId = "",
-}: MultipleFileInputProps) => {
+  htmlFor = "",
+}: FileInputProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -208,7 +208,7 @@ export const FileInput = ({
     return true;
   }, [allowMultipleFiles, fileUrls, isUploading]);
 
-  const uniqueIdForInput = useMemo(() => `selectedFile-${uniqueId}`, [uniqueId]);
+  const uniqueHtmlFor = useMemo(() => `selectedFile-${htmlFor}`, [htmlFor]);
 
   return (
     <div
@@ -263,13 +263,13 @@ export const FileInput = ({
       <div>
         {isUploading && (
           <div className="inset-0 flex animate-pulse items-center justify-center rounded-lg py-4">
-            <label htmlFor={uniqueIdForInput} className="text-subheading text-sm font-medium">
+            <label htmlFor={uniqueHtmlFor} className="text-subheading text-sm font-medium">
               Uploading...
             </label>
           </div>
         )}
 
-        <label htmlFor={uniqueIdForInput} onDragOver={(e) => handleDragOver(e)} onDrop={(e) => handleDrop(e)}>
+        <label htmlFor={uniqueHtmlFor} onDragOver={(e) => handleDragOver(e)} onDrop={(e) => handleDrop(e)}>
           {showUploader && (
             <div
               className="focus:outline-brand flex flex-col items-center justify-center py-6 hover:cursor-pointer"
@@ -278,8 +278,8 @@ export const FileInput = ({
                 // Accessibility: if spacebar was pressed pass this down to the input
                 if (e.key === " ") {
                   e.preventDefault();
-                  document.getElementById(uniqueIdForInput)?.click();
-                  document.getElementById(uniqueIdForInput)?.focus();
+                  document.getElementById(uniqueHtmlFor)?.click();
+                  document.getElementById(uniqueHtmlFor)?.focus();
                 }
               }}>
               <svg
@@ -301,8 +301,8 @@ export const FileInput = ({
               </p>
               <input
                 type="file"
-                id={uniqueIdForInput}
-                name={uniqueIdForInput}
+                id={uniqueHtmlFor}
+                name={uniqueHtmlFor}
                 accept={allowedFileExtensions?.map((ext) => `.${ext}`).join(",")}
                 className="hidden"
                 onChange={(e) => {
