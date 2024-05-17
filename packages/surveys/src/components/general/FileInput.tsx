@@ -17,7 +17,7 @@ interface FileInputProps {
   htmlFor?: string;
 }
 
-const FILE_LIMIT = 20;
+const FILE_LIMIT = 25;
 
 export const FileInput = ({
   allowedFileExtensions,
