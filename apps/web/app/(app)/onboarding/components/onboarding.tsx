@@ -82,14 +82,11 @@ export const Onboarding = ({
   }, [iframeVisible, currentStep]); // Depend on iframeVisible and currentStep to re-evaluate when needed
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Access localStorage only when window is available
-      const pathwayValueFromLocalStorage = localStorage.getItem("onboardingPathway");
-      const currentStepValueFromLocalStorage = parseInt(localStorage.getItem("onboardingCurrentStep") ?? "1");
+    const pathwayValueFromLocalStorage = localStorage.getItem("onboardingPathway");
+    const currentStepValueFromLocalStorage = parseInt(localStorage.getItem("onboardingCurrentStep") ?? "1");
 
-      setSelectedPathway(pathwayValueFromLocalStorage);
-      setCurrentStep(currentStepValueFromLocalStorage);
-    }
+    setSelectedPathway(pathwayValueFromLocalStorage);
+    setCurrentStep(currentStepValueFromLocalStorage);
   }, []);
 
   useEffect(() => {

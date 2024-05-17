@@ -91,11 +91,8 @@ export const MainNavigation = ({
   };
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Access localStorage only when window is available
-      const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
-      setIsCollapsed(isCollapsedValueFromLocalStorage);
-    }
+    const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
+    setIsCollapsed(isCollapsedValueFromLocalStorage);
   }, []);
 
   useEffect(() => {
