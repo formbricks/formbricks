@@ -7,8 +7,8 @@ import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
+  TOrganizationBilling,
   TTeam,
-  TTeamBilling,
   TTeamCreateInput,
   TTeamUpdateInput,
   ZTeamCreateInput,
@@ -383,7 +383,7 @@ export const getMonthlyTeamResponseCount = (teamId: string): Promise<number> =>
     }
   )();
 
-export const getTeamBillingInfo = (teamId: string): Promise<TTeamBilling | null> =>
+export const getTeamBillingInfo = (teamId: string): Promise<TOrganizationBilling | null> =>
   cache(
     async () => {
       validateInputs([teamId, ZId]);

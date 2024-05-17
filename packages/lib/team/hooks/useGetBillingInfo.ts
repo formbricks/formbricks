@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { TTeamBilling } from "@formbricks/types/teams";
+import { TOrganizationBilling } from "@formbricks/types/teams";
 
 import { getTeamBillingInfoAction } from "./actions";
 
 export const useGetBillingInfo = (teamId: string) => {
-  const [billingInfo, setBillingInfo] = useState<TTeamBilling>();
+  const [billingInfo, setBillingInfo] = useState<TOrganizationBilling>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 

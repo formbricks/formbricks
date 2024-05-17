@@ -14,7 +14,7 @@ import {
   TSurveyVerifyEmail,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
-import { TTeamBilling } from "@formbricks/types/teams";
+import { TOrganizationBilling } from "@formbricks/types/teams";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
 declare global {
@@ -34,7 +34,7 @@ declare global {
     export type SurveyClosedMessage = TSurveyClosedMessage;
     export type SurveySingleUse = TSurveySingleUse;
     export type SurveyVerifyEmail = TSurveyVerifyEmail;
-    export type TeamBilling = TTeamBilling;
+    export type OrganizationBilling = TOrganizationBilling;
     export type UserNotificationSettings = TUserNotificationSettings;
     export type SegmentFilter = TBaseFilters;
     export type Styling = TProductStyling;
