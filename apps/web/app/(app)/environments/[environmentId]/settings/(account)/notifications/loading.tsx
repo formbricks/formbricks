@@ -18,14 +18,27 @@ const LoadingCard = ({ title, description, skeletonLines }) => {
   );
 };
 
-const pages = ["Members", "Enterprise License"];
-
 const Loading = () => {
+  const cards = [
+    {
+      title: "Email alerts (Surveys)",
+      description: "Set up an alert to get an email on new responses.",
+      skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-10 w-128" }, { classes: "h-10 w-128" }],
+    },
+    {
+      title: "Weekly summary (Products)",
+      description: "Stay up-to-date with a Weekly every Monday.",
+      skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-10 w-128" }, { classes: "h-10 w-128" }],
+    },
+  ];
+
+  const pages = ["Profile", "Notifications"];
+
   return (
     <div className="p-6">
       <div>
         <div className="flex items-center justify-between space-x-4 pb-4">
-          <h1 className="text-3xl font-bold text-slate-800">Team Settings</h1>
+          <h1 className="text-3xl font-bold text-slate-800">Account Settings</h1>
         </div>
       </div>
       <div className="mb-6 border-b border-slate-200">
@@ -42,8 +55,9 @@ const Loading = () => {
           <div className="justify-self-end"></div>
         </div>
       </div>
-      <div className=" my-8 h-64 animate-pulse rounded-xl bg-slate-200 "></div>
-      <div className=" my-8 h-96 animate-pulse rounded-md bg-slate-200"></div>
+      {cards.map((card, index) => (
+        <LoadingCard key={index} {...card} />
+      ))}
     </div>
   );
 };
