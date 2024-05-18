@@ -4,11 +4,13 @@ import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
 import { PinScreen } from "@/app/s/[surveyId]/components/PinScreen";
 import { SurveyInactive } from "@/app/s/[surveyId]/components/SurveyInactive";
 import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
+import { GoogleTagManager } from "@next/third-parties/google";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
+import { getGooglesTagsBySurveyId } from "@formbricks/lib/googleTag/service";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
@@ -46,7 +48,17 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   if (!validId.success) {
     notFound();
   }
+
   const survey = await getSurvey(params.surveyId);
+  let googleTag;
+
+  if (survey) {
+    googleTag = await getGooglesTagsBySurveyId(survey?.environmentId, survey.id);
+    console.log(googleTag);
+    console.log("rafly");
+    console.log(survey?.environmentId);
+    console.log(survey.id);
+  }
 
   const suId = searchParams.suId;
   const langParam = searchParams.lang; //can either be language code or alias
@@ -172,28 +184,33 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   }
 
   return survey ? (
-    <div className="relative">
-      <MediaBackground survey={survey} product={product}>
-        <LinkSurvey
-          survey={survey}
-          product={product}
-          userId={userId}
-          emailVerificationStatus={emailVerificationStatus}
-          singleUseId={isSingleUseSurvey ? singleUseId : undefined}
-          singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
-          webAppUrl={WEBAPP_URL}
-          responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
-          verifiedEmail={verifiedEmail}
-          languageCode={languageCode}
-        />
-        <LegalFooter
-          IMPRINT_URL={IMPRINT_URL}
-          PRIVACY_URL={PRIVACY_URL}
-          IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-          surveyUrl={WEBAPP_URL + "/s/" + survey.id}
-        />
-      </MediaBackground>
-    </div>
+    <>
+      {googleTag.map((tag) => (
+        <GoogleTagManager gtmId={tag.gtmId} />
+      ))}
+      <div className="relative">
+        <MediaBackground survey={survey} product={product}>
+          <LinkSurvey
+            survey={survey}
+            product={product}
+            userId={userId}
+            emailVerificationStatus={emailVerificationStatus}
+            singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+            singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+            webAppUrl={WEBAPP_URL}
+            responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
+            verifiedEmail={verifiedEmail}
+            languageCode={languageCode}
+          />
+          <LegalFooter
+            IMPRINT_URL={IMPRINT_URL}
+            PRIVACY_URL={PRIVACY_URL}
+            IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+            surveyUrl={WEBAPP_URL + "/s/" + survey.id}
+          />
+        </MediaBackground>
+      </div>
+    </>
   ) : null;
 };
 

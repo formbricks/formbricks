@@ -1,3 +1,4 @@
+import gmtLogo from "@/images/gtm.png";
 import JsLogo from "@/images/jslogo.png";
 import MakeLogo from "@/images/make-small.png";
 import n8nLogo from "@/images/n8n.png";
@@ -203,6 +204,24 @@ const Page = async ({ params }) => {
       icon: <Image src={notionLogo} alt="Notion Logo" />,
       connected: isNotionIntegrationConnected,
       statusText: isNotionIntegrationConnected ? "Connected" : "Not Connected",
+    },
+    {
+      connectHref: `/environments/${params.environmentId}/integrations/tag-manager`,
+      connectText: "Manage",
+      connectNewTab: false,
+      docsHref: "https://formbricks.com/docs/api/management/webhooks",
+      docsText: "Docs",
+      docsNewTab: true,
+      label: "Google Tag Manager",
+      description: "Integrate Formbricks with your Google Analytics Account for precise tracking.",
+      icon: <Image src={gmtLogo} alt="Google Tag Manager Logo" />,
+      connected: userWebhookCount > 0,
+      statusText:
+        userWebhookCount === 1
+          ? "1 webhook"
+          : userWebhookCount === 0
+            ? "Not Connected"
+            : `${userWebhookCount} webhooks`,
     },
   ];
 
