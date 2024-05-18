@@ -212,7 +212,7 @@ const Page = async ({ params }) => {
       connectHref: `/environments/${params.environmentId}/integrations/tag-manager`,
       connectText: "Manage",
       connectNewTab: false,
-      docsHref: "https://formbricks.com/docs/api/management/webhooks",
+      docsHref: "https://formbricks.com/docs/integrations/google-tag-manager",
       docsText: "Docs",
       docsNewTab: true,
       label: "Google Tag Manager",

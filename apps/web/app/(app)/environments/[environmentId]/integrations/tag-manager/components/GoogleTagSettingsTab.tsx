@@ -136,7 +136,7 @@ export default function GoogleTagSettingsTab({
 
             <Button
               variant="secondary"
-              href="https://formbricks.com/docs/api/management/webhooks"
+              href="https://formbricks.com/docs/integrations/google-tag-manager"
               target="_blank">
               Read Docs
             </Button>
