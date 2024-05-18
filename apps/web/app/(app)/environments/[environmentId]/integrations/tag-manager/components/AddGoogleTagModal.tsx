@@ -20,7 +20,7 @@ interface AddGoogleTagModalProps {
   setOpen: (v: boolean) => void;
 }
 
-export default function AddGoogleTagModal({ environmentId, surveys, open, setOpen }: AddGoogleTagModalProps) {
+export const AddGoogleTagModal = ({ environmentId, surveys, open, setOpen }: AddGoogleTagModalProps) => {
   const router = useRouter();
   const {
     handleSubmit,
@@ -163,4 +163,4 @@ export default function AddGoogleTagModal({ environmentId, surveys, open, setOpe
       </div>
     </Modal>
   );
-}
+};

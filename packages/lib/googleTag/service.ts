@@ -80,6 +80,32 @@ export const getGooglesTagsBySurveyId = (environmentId: string, surveyId: string
     }
   )();
 
+export const getGoogleTagCountBySource = (environmentId: string): Promise<number> =>
+  cache(
+    async () => {
+      validateInputs([environmentId, ZId]);
+
+      try {
+        const count = await prisma.googleTag.count({
+          where: {
+            environmentId,
+          },
+        });
+        return count;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
+    },
+    [`getWebhookCountBySource-${environmentId}`],
+    {
+      tags: [googleTagCache.tag.byEnvironmentId(environmentId)],
+    }
+  )();
+
 export const getGoogleTag = async (id: string): Promise<TGoogleTag | null> =>
   cache(
     async () => {

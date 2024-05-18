@@ -1,3 +1,4 @@
+import { AddGoogleTagButton } from "@/app/(app)/environments/[environmentId]/integrations/tag-manager/components/AddGoogleTagButton";
 import GoogleTagRowData from "@/app/(app)/environments/[environmentId]/integrations/tag-manager/components/GoogleTagRowData";
 import GoogleTagTableHeading from "@/app/(app)/environments/[environmentId]/integrations/tag-manager/components/GoogleTagTableHeading";
 import GoogleTagsTable from "@/app/(app)/environments/[environmentId]/integrations/tag-manager/components/GoogleTagsTable";
@@ -5,7 +6,9 @@ import GoogleTagsTable from "@/app/(app)/environments/[environmentId]/integratio
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getGoogleTags } from "@formbricks/lib/googleTag/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import GoBackButton from "@formbricks/ui/GoBackButton";
+import { GoBackButton } from "@formbricks/ui/GoBackButton";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
 export default async function CustomGoogleTagPage({ params }) {
   const [googleTagUnsorted, surveys, environment] = await Promise.all([
@@ -21,15 +24,19 @@ export default async function CustomGoogleTagPage({ params }) {
     if (a.createdAt < b.createdAt) return 1;
     return 0;
   });
+
+  const renderAddGoogleTagButton = () => <AddGoogleTagButton environment={environment} surveys={surveys} />;
+
   return (
-    <>
+    <PageContentWrapper>
       <GoBackButton />
+      <PageHeader pageTitle="Google Tag Manager" cta={renderAddGoogleTagButton()} />
       <GoogleTagsTable environment={environment} googleTags={tags} surveys={surveys}>
         <GoogleTagTableHeading />
         {tags.map((tag) => (
           <GoogleTagRowData key={tag.id} googleTag={tag} surveys={surveys} />
         ))}
       </GoogleTagsTable>
-    </>
+    </PageContentWrapper>
   );
 }

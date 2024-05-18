@@ -117,6 +117,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Overview", href: "/developer-docs/integrations/overview" },
           { title: "Airtable", href: "/developer-docs/integrations/airtable" },
           { title: "Google Sheets", href: "/developer-docs/integrations/google-sheets" },
+          { title: "Google Tag Manager", href: "/developer-docs/integrations/google-tag-manager" },
           { title: "Make", href: "/developer-docs/integrations/make" },
           { title: "n8n", href: "/developer-docs/integrations/n8n" },
           { title: "Notion", href: "/developer-docs/integrations/notion" },

@@ -11,6 +11,7 @@ import Image from "next/image";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getGoogleTagCountBySource } from "@formbricks/lib/googleTag/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -37,6 +38,7 @@ const Page = async ({ params }) => {
     zapierWebhookCount,
     makeWebhookCount,
     n8nwebhookCount,
+    googleTagCount,
   ] = await Promise.all([
     getEnvironment(environmentId),
     getIntegrations(environmentId),
@@ -46,6 +48,7 @@ const Page = async ({ params }) => {
     getWebhookCountBySource(environmentId, "zapier"),
     getWebhookCountBySource(environmentId, "make"),
     getWebhookCountBySource(environmentId, "n8n"),
+    getGoogleTagCountBySource(environmentId),
   ]);
 
   const isIntegrationConnected = (type: TIntegrationType) =>
@@ -215,13 +218,9 @@ const Page = async ({ params }) => {
       label: "Google Tag Manager",
       description: "Integrate Formbricks with your Google Analytics Account for precise tracking.",
       icon: <Image src={gmtLogo} alt="Google Tag Manager Logo" />,
-      connected: userWebhookCount > 0,
+      connected: googleTagCount > 0,
       statusText:
-        userWebhookCount === 1
-          ? "1 webhook"
-          : userWebhookCount === 0
-            ? "Not Connected"
-            : `${userWebhookCount} webhooks`,
+        googleTagCount === 1 ? "1 tag" : googleTagCount === 0 ? "Not Connected" : `${googleTagCount} tags`,
     },
   ];
 
