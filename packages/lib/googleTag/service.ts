@@ -160,8 +160,6 @@ export const createGoogleTag = async (
     return createdGoogleTag;
   } catch (error) {
     if (!(error instanceof InvalidInputError)) {
-      console.log("halo");
-      console.log(error);
       throw new DatabaseError(`Database error when creating google tag for environment ${environmentId}`);
     }
 

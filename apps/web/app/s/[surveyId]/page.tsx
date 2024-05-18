@@ -54,10 +54,6 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
 
   if (survey) {
     googleTag = await getGooglesTagsBySurveyId(survey?.environmentId, survey.id);
-    console.log(googleTag);
-    console.log("rafly");
-    console.log(survey?.environmentId);
-    console.log(survey.id);
   }
 
   const suId = searchParams.suId;
