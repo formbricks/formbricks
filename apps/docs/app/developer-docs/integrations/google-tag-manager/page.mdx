@@ -1,0 +1,88 @@
+import { MdxImage } from "@/components/MdxImage";
+
+import GetContainerId from "./get-container-id.webp";
+import IntegrationPage from "./go-to-integration-page.webp";
+import AddNewTag from "./add-new-tag.webp";
+import SaveTag from "./save-new-tag.webp";
+import SelectNewTag from "./save-new-tag.webp";
+import EditTag from "./edit-tag.webp";
+
+export const metadata = {
+  title: "Google Tag Manager",
+  description:
+    "The Google Tag Manager integration allows you to have detailed tracking insight for your survey.",
+};
+
+#### Integrations
+
+# Google Tag Manager
+
+The Google Tag Manager integration allows you to track the traffic of your survey and use it as a detailed insight metric.
+
+<Note>
+  This feature is enabled by default in both Formbricks Cloud and the self-hosted version.
+</Note>
+
+## Get Your Google Tag ID (Container ID)
+
+1. Go to the [Google Tag Manager website](https://tagmanager.google.com/) to get your GTM ID (Container ID). If you don't have a Tag Manager account, you will need to create one.
+
+<MdxImage
+  src={GetContainerId}
+  alt="Get container ID"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+2. Go to the Formbricks integration tab and select **Google Tag Manager**.
+
+<MdxImage
+  src={IntegrationPage}
+  alt="Formbricks Integration Page"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+3. You will see a new page. Since you don't have any tags yet, add a new one by clicking **Add New Tag**.
+
+<MdxImage
+  src={AddNewTag}
+  alt="Add New Tag"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+<Note>
+  Before proceeding to the next step, ensure that you have a Formbricks Survey with at least one question.
+</Note>
+
+4. Fill in the details and click **Save**.
+
+<MdxImage
+  src={SaveTag}
+  alt="Google Tag Modal"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+Congratulations! You have successfully added a Google Tag to your survey. Now, whenever someone interacts with your survey, an event will be sent to your Tag Manager account.
+
+## Edit or Remove Google Tag Manager
+
+To remove a tag:
+
+1. Visit the Integrations tab in your Formbricks dashboard.
+2. Select the **Manage** button in the Google Tag Manager card.
+3. Select your tag.
+4. Confirm the removal by clicking on the **Delete** button.
+
+<MdxImage
+  src={EditTag}
+  alt="Edit or Delete Google Integration with Formbricks"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+## Additional Information
+
+- You can have multiple tags in the survey.
