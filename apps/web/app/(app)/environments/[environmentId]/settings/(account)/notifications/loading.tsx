@@ -21,30 +21,14 @@ const LoadingCard = ({ title, description, skeletonLines }) => {
 const Loading = () => {
   const cards = [
     {
-      title: "Personal information",
-      description: "Update your personal information",
-      skeletonLines: [
-        { classes: "h-4 w-28" },
-        { classes: "h-6 w-64" },
-        { classes: "h-4 w-28" },
-        { classes: "h-6 w-64" },
-        { classes: "h-8 w-24" },
-      ],
+      title: "Email alerts (Surveys)",
+      description: "Set up an alert to get an email on new responses.",
+      skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-10 w-128" }, { classes: "h-10 w-128" }],
     },
     {
-      title: "Avatar",
-      description: "Assist your organization in identifying you on Formbricks.",
-      skeletonLines: [{ classes: "h-10 w-10" }, { classes: "h-8 w-24" }],
-    },
-    {
-      title: "Security",
-      description: "Manage your password and other security settings.",
-      skeletonLines: [{ classes: "h-4 w-60" }, { classes: "h-8 w-24" }],
-    },
-    {
-      title: "Delete account",
-      description: "Delete your account with all of your personal information and data.",
-      skeletonLines: [{ classes: "h-4 w-60" }, { classes: "h-8 w-24" }],
+      title: "Weekly summary (Products)",
+      description: "Stay up-to-date with a Weekly every Monday.",
+      skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-10 w-128" }, { classes: "h-10 w-128" }],
     },
   ];
 
