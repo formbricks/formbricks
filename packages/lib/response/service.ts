@@ -9,6 +9,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
+  TManagementResponseInput,
   TResponse,
   TResponseFilterCriteria,
   TResponseInput,
@@ -16,6 +17,7 @@ import {
   TResponseUpdateInput,
   TSurveyMetaFieldFilter,
   TSurveyPersonAttributes,
+  ZManagementResponseInput,
   ZResponseFilterCriteria,
   ZResponseInput,
   ZResponseLegacyInput,
@@ -188,8 +190,11 @@ export const getResponseBySingleUseId = (surveyId: string, singleUseId: string):
     }
   )();
 
-export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
-  validateInputs([responseInput, ZResponseInput]);
+const createResponseCommon = async (
+  responseInput: TResponseInput | TManagementResponseInput,
+  isManagement: boolean
+): Promise<TResponse> => {
+  validateInputs([responseInput, isManagement ? ZManagementResponseInput : ZResponseInput]);
   captureTelemetry("response created");
 
   const {
@@ -203,6 +208,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     singleUseId,
     ttc: initialTtc,
   } = responseInput;
+
   try {
     let person: TPerson | null = null;
     let attributes: TAttributes | null = null;
@@ -221,28 +227,35 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
-    const responsePrisma = await prisma.response.create({
-      data: {
-        survey: {
+    const prismaData: Prisma.ResponseCreateInput = {
+      survey: {
+        connect: {
+          id: surveyId,
+        },
+      },
+      finished: finished,
+      data: data,
+      language: language,
+      ...(person?.id && {
+        person: {
           connect: {
-            id: surveyId,
+            id: person.id,
           },
         },
-        finished: finished,
-        data: data,
-        language: language,
-        ...(person?.id && {
-          person: {
-            connect: {
-              id: person.id,
-            },
-          },
-          personAttributes: attributes,
-        }),
-        ...(meta && ({ meta } as Prisma.JsonObject)),
-        singleUseId,
-        ttc: ttc,
-      },
+        personAttributes: attributes,
+      }),
+      ...(meta && ({ meta } as Prisma.JsonObject)),
+      singleUseId,
+      ttc: ttc,
+    };
+
+    if (isManagement) {
+      prismaData.createdAt = (responseInput as TManagementResponseInput).createdAt;
+      prismaData.updatedAt = (responseInput as TManagementResponseInput).updatedAt;
+    }
+
+    const responsePrisma = await prisma.response.create({
+      data: prismaData,
       select: responseSelection,
     });
 
@@ -271,6 +284,16 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     throw error;
   }
+};
+
+export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
+  return createResponseCommon(responseInput, false);
+};
+
+export const createResponseManagement = async (
+  responseInput: TManagementResponseInput
+): Promise<TResponse> => {
+  return createResponseCommon(responseInput, true);
 };
 
 export const createResponseLegacy = async (responseInput: TResponseLegacyInput): Promise<TResponse> => {

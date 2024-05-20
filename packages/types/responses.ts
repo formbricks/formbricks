@@ -258,6 +258,13 @@ export const ZResponseInput = z.object({
 
 export type TResponseInput = z.infer<typeof ZResponseInput>;
 
+export const ZManagementResponseInput = ZResponseInput.extend({
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+});
+
+export type TManagementResponseInput = z.infer<typeof ZManagementResponseInput>;
+
 export const ZResponseLegacyInput = ZResponseInput.omit({ userId: true, environmentId: true }).extend({
   personId: z.string().cuid2().nullable(),
 });
