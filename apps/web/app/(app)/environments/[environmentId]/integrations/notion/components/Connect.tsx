@@ -54,7 +54,7 @@ export const Connect = ({ enabled, environmentId, webAppUrl }: ConnectProps) => 
             Notion Integration is not configured in your instance of Formbricks.
             <br />
             Please follow the{" "}
-            <Link href="https://formbricks.com/docs/integrations/notion" className="underline">
+            <Link href="https://formbricks.com/docs/self-hosting/integrations#notion" className="underline">
               docs
             </Link>{" "}
             to configure it.
