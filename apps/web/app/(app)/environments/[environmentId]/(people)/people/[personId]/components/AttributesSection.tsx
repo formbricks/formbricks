@@ -17,7 +17,7 @@ export const AttributesSection = async ({ personId }: { personId: string }) => {
     <div className="space-y-6">
       <h2 className="text-lg font-bold text-slate-700">Attributes</h2>
       <div>
-        <dt className="text-sm font-medium text-slate-500">Email</dt>
+        <dt className="text-sm font-medium text-slate-500">email</dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
           {attributes.email ? (
             <span>{attributes.email}</span>
@@ -27,7 +27,7 @@ export const AttributesSection = async ({ personId }: { personId: string }) => {
         </dd>
       </div>
       <div>
-        <dt className="text-sm font-medium text-slate-500">Language</dt>
+        <dt className="text-sm font-medium text-slate-500">language</dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
           {attributes.language ? (
             <span>{attributes.language}</span>
@@ -37,7 +37,7 @@ export const AttributesSection = async ({ personId }: { personId: string }) => {
         </dd>
       </div>
       <div>
-        <dt className="text-sm font-medium text-slate-500">User Id</dt>
+        <dt className="text-sm font-medium text-slate-500">userId</dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
           {person.userId ? (
             <span>{person.userId}</span>
