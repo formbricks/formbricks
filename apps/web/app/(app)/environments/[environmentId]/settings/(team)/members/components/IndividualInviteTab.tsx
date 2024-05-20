@@ -77,7 +77,7 @@ export const IndividualInviteTab = ({
           </div>
         </div>
       </div>
-      <div className="flex justify-end p-6">
+      <div className="flex justify-end pt-4">
         <div className="flex space-x-2">
           <Button
             size="sm"
