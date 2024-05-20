@@ -7,7 +7,7 @@ import { ThankYouCard } from "@/components/general/ThankYouCard";
 import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
-import { evaluateCondition } from "@/lib/logicEvaluator";
+import { evaluateCondition, hasRequirementsSatisfied } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
@@ -125,65 +125,81 @@ export const Survey = ({
 
   const getNextQuestionId = (data: TResponseData): string => {
     const questions = survey.questions;
-    const responseValue = data[questionId];
 
-    if (questionId === "start") return questions[0]?.id || "end";
+    const _getNextQuestionId = (currIdxTemp: number) => {
+      if (questionId === "start") return questions[0]?.id || "end";
 
-    if (currIdxTemp === -1) throw new Error("Question not found");
-    if (currQuesTemp?.logic && currQuesTemp?.logic.length > 0 && currentQuestion) {
-      for (let logic of currQuesTemp.logic) {
-        if (!logic.destination) continue;
-        // Check if the current question is of type 'multipleChoiceSingle' or 'multipleChoiceMulti'
-        if (
-          currentQuestion.type === "multipleChoiceSingle" ||
-          currentQuestion.type === "multipleChoiceMulti"
-        ) {
-          let choice;
+      if (currIdxTemp === -1) throw new Error("Question not found");
+      if (currQuesTemp?.logic && currQuesTemp?.logic.length > 0 && currentQuestion) {
+        const responseValue = data[questionId];
+        for (let logic of currQuesTemp.logic) {
+          if (!logic.destination) continue;
+          // Check if the current question is of type 'multipleChoiceSingle' or 'multipleChoiceMulti'
+          if (
+            currentQuestion.type === "multipleChoiceSingle" ||
+            currentQuestion.type === "multipleChoiceMulti"
+          ) {
+            let choice;
 
-          // Check if the response is a string (applies to single choice questions)
-          // Sonne -> sun
-          if (typeof responseValue === "string") {
-            // Find the choice in currentQuestion.choices that matches the responseValue after localization
-            choice = currentQuestion.choices.find((choice) => {
-              return getLocalizedValue(choice.label, languageCode) === responseValue;
-            })?.label;
+            // Check if the response is a string (applies to single choice questions)
+            // Sonne -> sun
+            if (typeof responseValue === "string") {
+              // Find the choice in currentQuestion.choices that matches the responseValue after localization
+              choice = currentQuestion.choices.find((choice) => {
+                return getLocalizedValue(choice.label, languageCode) === responseValue;
+              })?.label;
 
-            // If a matching choice is found, get its default localized value
+              // If a matching choice is found, get its default localized value
+              if (choice) {
+                choice = getLocalizedValue(choice, "default");
+              }
+            }
+            // Check if the response is an array (applies to multiple choices questions)
+            // ["Sonne","Mond"]->["sun","moon"]
+            else if (Array.isArray(responseValue)) {
+              // Filter and map the choices in currentQuestion.choices that are included in responseValue after localization
+              choice = currentQuestion.choices
+                .filter((choice) => {
+                  return responseValue.includes(getLocalizedValue(choice.label, languageCode));
+                })
+                .map((choice) => getLocalizedValue(choice.label, "default"));
+            }
+
+            // If a choice is determined (either single or multiple), evaluate the logic condition with that choice
             if (choice) {
-              choice = getLocalizedValue(choice, "default");
+              if (evaluateCondition(logic, choice)) {
+                return logic.destination;
+              }
+            }
+            // If choice is undefined, it implies an "other" option is selected. Evaluate the logic condition for "Other"
+            else {
+              if (evaluateCondition(logic, "Other")) {
+                return logic.destination;
+              }
             }
           }
-          // Check if the response is an array (applies to multiple choices questions)
-          // ["Sonne","Mond"]->["sun","moon"]
-          else if (Array.isArray(responseValue)) {
-            // Filter and map the choices in currentQuestion.choices that are included in responseValue after localization
-            choice = currentQuestion.choices
-              .filter((choice) => {
-                return responseValue.includes(getLocalizedValue(choice.label, languageCode));
-              })
-              .map((choice) => getLocalizedValue(choice.label, "default"));
+          if (evaluateCondition(logic, responseValue)) {
+            return logic.destination;
           }
+        }
+      }
 
-          // If a choice is determined (either single or multiple), evaluate the logic condition with that choice
-          if (choice) {
-            if (evaluateCondition(logic, choice)) {
-              return logic.destination;
-            }
-          }
-          // If choice is undefined, it implies an "other" option is selected. Evaluate the logic condition for "Other"
-          else {
-            if (evaluateCondition(logic, "Other")) {
-              return logic.destination;
-            }
-          }
-        }
-        if (evaluateCondition(logic, responseValue)) {
-          return logic.destination;
-        }
+      return questions[currIdxTemp + 1]?.id || "end";
+    };
+
+    let nextQuestionId: string | undefined;
+    while (nextQuestionId === undefined) {
+      nextQuestionId = _getNextQuestionId(currIdxTemp);
+      if (nextQuestionId === "end") return nextQuestionId;
+      const nextQuest = survey.questions.find((q) => q.id === nextQuestionId);
+      if (!nextQuest) throw new Error("Question not found");
+      if (!hasRequirementsSatisfied(nextQuest, responseData)) {
+        nextQuestionId = undefined;
+        currIdxTemp++;
       }
     }
 
-    return questions[currIdxTemp + 1]?.id || "end";
+    return nextQuestionId;
   };
 
   const onChange = (responseDataUpdate: TResponseData) => {

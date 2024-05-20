@@ -1,4 +1,5 @@
-import { TSurveyLogic } from "@formbricks/types/surveys";
+import type { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys";
 
 export const evaluateCondition = (
   logic: TSurveyLogic,
@@ -84,4 +85,22 @@ export const evaluateCondition = (
     default:
       return false;
   }
+};
+
+export const hasRequirementsSatisfied = (question: TSurveyQuestion, data: TResponseData): boolean => {
+  if (!(Array.isArray(question?.requirementsLogic) && question.requirementsLogic.length > 0)) {
+    return true;
+  }
+
+  return question.requirementsLogic.every((logic) => {
+    if (!logic.source) {
+      console.warn("invalid source for logic", logic);
+      return true;
+    }
+
+    const responseValue = data[logic.source];
+
+    const isEvaluate = evaluateCondition(logic as TSurveyLogic, responseValue);
+    return isEvaluate;
+  });
 };
