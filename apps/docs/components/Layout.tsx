@@ -32,7 +32,7 @@ export const Layout = ({
               </Link>
             </div>
             <Header />
-            <Navigation className="hidden lg:mt-10 lg:block" />
+            <Navigation className="hidden lg:mt-10 lg:block" isMobile={false} />
           </div>
         </motion.header>
         <div className="relative flex h-full flex-col px-4 pt-14 sm:px-6 lg:px-8">
