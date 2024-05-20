@@ -71,7 +71,7 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
   return (
     <div className="space-y-4">
       <div
-        className="relative flex h-52 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-gray-300"
+        className="relative flex h-52 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-slate-300 bg-slate-50 transition-colors  hover:bg-slate-100"
         onClick={() => fileInputRef.current?.click()}>
         {csvFile ? (
           <XIcon
@@ -97,16 +97,18 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
           </Alert>
         )}
       </div>
-      <div className="flex justify-end pt-6">
+      <div className="flex justify-end">
         <div className="flex space-x-2">
           <Link
             download
             href="/sample-csv/formbricks-organization-members-template.csv"
             target="_blank"
             rel="noopener noreferrer">
-            <Button variant="minimal">Download CSV template</Button>
+            <Button variant="minimal" size="sm">
+              Download CSV template
+            </Button>
           </Link>
-          <Button onClick={onImport} variant="darkCTA" disabled={!csvFile}>
+          <Button onClick={onImport} size="sm" variant="darkCTA" disabled={!csvFile}>
             Import
           </Button>
         </div>
