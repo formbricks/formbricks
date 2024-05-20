@@ -55,9 +55,10 @@ export const SelectQuestionChoice = ({
   surveyLanguageCodes,
   updateQuestion,
 }: ChoiceProps) => {
+  const isDragDisabled = choice.id === "other";
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,
-    disabled: choice.id === "other",
+    disabled: isDragDisabled,
   });
 
   const style = {

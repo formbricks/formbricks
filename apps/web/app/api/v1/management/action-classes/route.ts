@@ -24,7 +24,15 @@ export const POST = async (request: Request): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    const actionClassInput = await request.json();
+
+    let actionClassInput;
+    try {
+      actionClassInput = await request.json();
+    } catch (error) {
+      console.error(`Error parsing JSON input: ${error}`);
+      return responses.badRequestResponse("Malformed JSON input, please check your request body");
+    }
+
     const inputValidation = ZActionClassInput.safeParse(actionClassInput);
 
     if (!inputValidation.success) {

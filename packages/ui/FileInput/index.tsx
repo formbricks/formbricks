@@ -42,7 +42,7 @@ interface SelectedFile {
   uploaded: Boolean;
 }
 
-export const FileInput: React.FC<FileInputProps> = ({
+export const FileInput = ({
   id,
   allowedFileExtensions,
   environmentId,
@@ -53,7 +53,7 @@ export const FileInput: React.FC<FileInputProps> = ({
   imageFit = "cover",
   maxSizeInMB,
   isVideoAllowed = false,
-}) => {
+}: FileInputProps) => {
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState(videoUrl ?? "");
   const [activeTab, setActiveTab] = useState(videoUrl ? "video" : "image");

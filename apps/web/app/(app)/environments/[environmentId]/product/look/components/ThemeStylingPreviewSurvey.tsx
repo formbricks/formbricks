@@ -214,7 +214,7 @@ export const ThemeStylingPreviewSurvey = ({
         <div
           className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
           onClick={() => setPreviewType("app")}>
-          App survey
+          App / Website survey
         </div>
       </div>
     </div>

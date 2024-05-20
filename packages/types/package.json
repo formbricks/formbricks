@@ -11,6 +11,6 @@
     "@formbricks/tsconfig": "workspace:*"
   },
   "dependencies": {
-    "zod": "^3.23.7"
+    "zod": "^3.23.8"
   }
 }
