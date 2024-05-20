@@ -6,7 +6,7 @@ import { Metadata } from "next";
 
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
@@ -15,18 +15,18 @@ export const metadata: Metadata = {
 };
 
 const Page = async ({ params }) => {
-  const [actionClasses, team] = await Promise.all([
+  const [actionClasses, organization] = await Promise.all([
     getActionClasses(params.environmentId),
-    getTeamByEnvironmentId(params.environmentId),
+    getOrganizationByEnvironmentId(params.environmentId),
   ]);
 
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
   // On Formbricks Cloud only render the timeline if the user targeting feature is booked
   const isUserTargetingEnabled = IS_FORMBRICKS_CLOUD
-    ? team.billing.features.userTargeting.status === "active"
+    ? organization.billing.features.userTargeting.status === "active"
     : true;
 
   const renderAddActionButton = () => (

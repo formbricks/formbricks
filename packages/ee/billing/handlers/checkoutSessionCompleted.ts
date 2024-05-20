@@ -3,11 +3,11 @@ import Stripe from "stripe";
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import {
-  getMonthlyActiveTeamPeopleCount,
-  getMonthlyTeamResponseCount,
-  getTeam,
-  updateTeam,
-} from "@formbricks/lib/team/service";
+  getMonthlyActiveOrganizationPeopleCount,
+  getMonthlyOrganizationResponseCount,
+  getOrganization,
+  updateOrganization,
+} from "@formbricks/lib/organization/service";
 
 import { ProductFeatureKeys, StripePriceLookupKeys, StripeProductNames } from "../lib/constants";
 import { reportUsage } from "../lib/reportUsage";
@@ -27,9 +27,9 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
     expand: ["customer"],
   })) as { customer: Stripe.Customer };
 
-  const team = await getTeam(stripeSubscriptionObject.metadata.teamId);
-  if (!team) throw new Error("Team not found.");
-  let updatedFeatures = team.billing.features;
+  const organization = await getOrganization(stripeSubscriptionObject.metadata.organizationId);
+  if (!organization) throw new Error("Organization not found.");
+  let updatedFeatures = organization.billing.features;
 
   for (const item of stripeSubscriptionObject.items.data) {
     const product = await stripe.products.retrieve(item.price.product as string);
@@ -43,11 +43,11 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
         if (isInAppSurveyUnlimited) {
           updatedFeatures.inAppSurvey.unlimited = true;
         } else {
-          const countForTeam = await getMonthlyTeamResponseCount(team.id);
+          const countForOrganization = await getMonthlyOrganizationResponseCount(organization.id);
           await reportUsage(
             stripeSubscriptionObject.items.data,
             ProductFeatureKeys.inAppSurvey,
-            countForTeam
+            countForOrganization
           );
         }
         break;
@@ -70,19 +70,19 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
         if (isUserTargetingUnlimited) {
           updatedFeatures.userTargeting.unlimited = true;
         } else {
-          const countForTeam = await getMonthlyActiveTeamPeopleCount(team.id);
+          const countForOrganization = await getMonthlyActiveOrganizationPeopleCount(organization.id);
 
           await reportUsage(
             stripeSubscriptionObject.items.data,
             ProductFeatureKeys.userTargeting,
-            countForTeam
+            countForOrganization
           );
         }
         break;
     }
   }
 
-  await updateTeam(team.id, {
+  await updateOrganization(organization.id, {
     billing: {
       stripeCustomerId: stripeCustomer.id,
       features: updatedFeatures,
@@ -90,8 +90,8 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
   });
 
   await stripe.customers.update(stripeCustomer.id, {
-    name: team.name,
-    metadata: { team: team.id },
+    name: organization.name,
+    metadata: { organization: organization.id },
     invoice_settings: {
       default_payment_method: stripeSubscriptionObject.default_payment_method as string,
     },

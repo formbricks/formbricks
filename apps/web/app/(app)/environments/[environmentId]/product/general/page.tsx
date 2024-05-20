@@ -3,11 +3,10 @@ import { getServerSession } from "next-auth";
 
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
@@ -19,11 +18,10 @@ import { EditProductName } from "./components/EditProductName";
 import { EditWaitingTime } from "./components/EditWaitingTime";
 
 const Page = async ({ params }: { params: { environmentId: string } }) => {
-  const [, product, session, team] = await Promise.all([
-    getEnvironment(params.environmentId),
+  const [product, session, organization] = await Promise.all([
     getProductByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
-    getTeamByEnvironmentId(params.environmentId),
+    getOrganizationByEnvironmentId(params.environmentId),
   ]);
 
   if (!product) {
@@ -32,11 +30,11 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   if (!session) {
     throw new Error("Unauthorized");
   }
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
-  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
   const isProductNameEditDisabled = isDeveloper ? true : isViewer;
 
@@ -44,7 +42,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
     return <ErrorComponent />;
   }
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
   return (
     <PageContentWrapper>

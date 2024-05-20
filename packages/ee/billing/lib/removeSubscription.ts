@@ -2,7 +2,7 @@ import Stripe from "stripe";
 
 import { STRIPE_API_VERSION, WEBAPP_URL } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
-import { getTeam, updateTeam } from "@formbricks/lib/team/service";
+import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 
 import { StripePriceLookupKeys } from "./constants";
 import { getFirstOfNextMonthTimestamp } from "./createSubscription";
@@ -16,24 +16,24 @@ const baseUrl = process.env.NODE_ENV === "production" ? WEBAPP_URL : "http://loc
 const retrievePriceLookup = async (priceId: string) => (await stripe.prices.retrieve(priceId)).lookup_key;
 
 export const removeSubscription = async (
-  teamId: string,
+  organizationId: string,
   environmentId: string,
   priceLookupKeys: StripePriceLookupKeys[]
 ) => {
   try {
-    const team = await getTeam(teamId);
-    if (!team) throw new Error("Team not found.");
-    if (!team.billing.stripeCustomerId) {
-      return { status: 400, data: "No subscription exists for given team!", newPlan: false, url: "" };
+    const organization = await getOrganization(organizationId);
+    if (!organization) throw new Error("Organization not found.");
+    if (!organization.billing.stripeCustomerId) {
+      return { status: 400, data: "No subscription exists for given organization!", newPlan: false, url: "" };
     }
 
-    const existingCustomer = (await stripe.customers.retrieve(team.billing.stripeCustomerId, {
+    const existingCustomer = (await stripe.customers.retrieve(organization.billing.stripeCustomerId, {
       expand: ["subscriptions"],
     })) as Stripe.Customer;
     const existingSubscription = existingCustomer.subscriptions?.data[0] as Stripe.Subscription;
 
     const allScheduledSubscriptions = await stripe.subscriptionSchedules.list({
-      customer: team.billing.stripeCustomerId,
+      customer: organization.billing.stripeCustomerId,
     });
     const scheduledSubscriptions = allScheduledSubscriptions.data.filter(
       (scheduledSub) => scheduledSub.status === "not_started"
@@ -60,10 +60,10 @@ export const removeSubscription = async (
               start_date: getFirstOfNextMonthTimestamp(),
               items: newPriceIds.map((priceId) => ({ price: priceId })),
               iterations: 1,
-              metadata: { teamId },
+              metadata: { organizationId },
             },
           ],
-          metadata: { teamId },
+          metadata: { organizationId },
         });
       }
     } else {
@@ -76,31 +76,31 @@ export const removeSubscription = async (
 
       if (newPriceIds.length) {
         await stripe.subscriptionSchedules.create({
-          customer: team.billing.stripeCustomerId,
+          customer: organization.billing.stripeCustomerId,
           start_date: getFirstOfNextMonthTimestamp(),
           end_behavior: "release",
           phases: [
             {
               items: newPriceIds.map((priceId) => ({ price: priceId })),
               iterations: 1,
-              metadata: { teamId },
+              metadata: { organizationId },
             },
           ],
-          metadata: { teamId },
+          metadata: { organizationId },
         });
       }
     }
 
     await stripe.subscriptions.update(existingSubscription.id, { cancel_at_period_end: true });
 
-    let updatedFeatures = team.billing.features;
+    let updatedFeatures = organization.billing.features;
     for (const priceLookupKey of priceLookupKeys) {
       updatedFeatures[priceLookupKey as keyof typeof updatedFeatures].status = "cancelled";
     }
 
-    await updateTeam(teamId, {
+    await updateOrganization(organizationId, {
       billing: {
-        ...team.billing,
+        ...organization.billing,
         features: updatedFeatures,
       },
     });

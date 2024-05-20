@@ -64,7 +64,9 @@ export const Home = ({
       <div className="flex w-full justify-end">
         <div className="mr-6 flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
-          <span className="text-slate-500">Connected with {slackIntegration.config.key.team.name}</span>
+          <span className="text-slate-500">
+            Connected with {slackIntegration.config.key.organization.name}
+          </span>
         </div>
         <Button
           variant="darkCTA"

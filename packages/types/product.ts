@@ -42,7 +42,7 @@ export const ZProduct = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string(),
-  teamId: z.string(),
+  organizationId: z.string(),
   styling: ZProductStyling,
   recontactDays: z.number().int(),
   inAppSurveyBranding: z.boolean(),
@@ -61,7 +61,7 @@ export type TProduct = z.infer<typeof ZProduct>;
 
 export const ZProductUpdateInput = z.object({
   name: z.string().optional(),
-  teamId: z.string().optional(),
+  organizationId: z.string().optional(),
   brandColor: ZColor.optional(),
   highlightBorderColor: ZColor.nullish(),
   recontactDays: z.number().int().optional(),

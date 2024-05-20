@@ -9,30 +9,30 @@ import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getSegments } from "@formbricks/lib/segment/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
 const Page = async ({ params }) => {
-  const [environment, segments, attributeClasses, actionClassesFromServer, team] = await Promise.all([
+  const [environment, segments, attributeClasses, actionClassesFromServer, organization] = await Promise.all([
     getEnvironment(params.environmentId),
     getSegments(params.environmentId),
     getAttributeClasses(params.environmentId),
     getActionClasses(params.environmentId),
-    getTeamByEnvironmentId(params.environmentId),
+    getOrganizationByEnvironmentId(params.environmentId),
   ]);
 
   if (!environment) {
     throw new Error("Environment not found");
   }
 
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
-  const isAdvancedTargetingAllowed = await getAdvancedTargetingPermission(team);
+  const isAdvancedTargetingAllowed = await getAdvancedTargetingPermission(organization);
 
   if (!segments) {
     throw new Error("Failed to fetch segments");

@@ -13,8 +13,8 @@ import {
   AZUREAD_CLIENT_ID,
   AZUREAD_CLIENT_SECRET,
   AZUREAD_TENANT_ID,
-  DEFAULT_TEAM_ID,
-  DEFAULT_TEAM_ROLE,
+  DEFAULT_ORGANIZATION_ID,
+  DEFAULT_ORGANIZATION_ROLE,
   EMAIL_VERIFICATION_DISABLED,
   GITHUB_ID,
   GITHUB_SECRET,
@@ -28,8 +28,8 @@ import {
 } from "./constants";
 import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
+import { createOrganization, getOrganization } from "./organization/service";
 import { createProduct } from "./product/service";
-import { createTeam, getTeam } from "./team/service";
 import { createUser, getUserByEmail, updateUser } from "./user/service";
 
 export const authOptions: NextAuthOptions = {
@@ -259,33 +259,36 @@ export const authOptions: NextAuthOptions = {
           identityProviderAccountId: account.providerAccountId,
         });
 
-        // Default team assignment if env variable is set
-        if (DEFAULT_TEAM_ID && DEFAULT_TEAM_ID.length > 0) {
-          // check if team exists
-          let team = await getTeam(DEFAULT_TEAM_ID);
-          let isNewTeam = false;
-          if (!team) {
-            // create team with id from env
-            team = await createTeam({ id: DEFAULT_TEAM_ID, name: userProfile.name + "'s Team" });
-            isNewTeam = true;
+        // Default organization assignment if env variable is set
+        if (DEFAULT_ORGANIZATION_ID && DEFAULT_ORGANIZATION_ID.length > 0) {
+          // check if organization exists
+          let organization = await getOrganization(DEFAULT_ORGANIZATION_ID);
+          let isNewOrganization = false;
+          if (!organization) {
+            // create organization with id from env
+            organization = await createOrganization({
+              id: DEFAULT_ORGANIZATION_ID,
+              name: userProfile.name + "'s Organization",
+            });
+            isNewOrganization = true;
           }
-          const role = isNewTeam ? "owner" : DEFAULT_TEAM_ROLE || "admin";
-          await createMembership(team.id, userProfile.id, { role, accepted: true });
+          const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "admin";
+          await createMembership(organization.id, userProfile.id, { role, accepted: true });
           await createAccount({
             ...account,
             userId: userProfile.id,
           });
           return true;
         }
-        // Without default team assignment
+        // Without default organization assignment
         else {
-          const team = await createTeam({ name: userProfile.name + "'s Team" });
-          await createMembership(team.id, userProfile.id, { role: "owner", accepted: true });
+          const organization = await createOrganization({ name: userProfile.name + "'s Organization" });
+          await createMembership(organization.id, userProfile.id, { role: "owner", accepted: true });
           await createAccount({
             ...account,
             userId: userProfile.id,
           });
-          const product = await createProduct(team.id, { name: "My Product" });
+          const product = await createProduct(organization.id, { name: "My Product" });
           const updatedNotificationSettings = {
             ...userProfile.notificationSettings,
             alert: {
