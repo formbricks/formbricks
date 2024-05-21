@@ -91,5 +91,5 @@ RUN mkdir -p /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/uploads/
 
 CMD supercronic -quiet /app/docker/cronjobs & \
-    (cd packages/database && pnpm db:migrate:deploy) && \
+    (cd packages/database && npm run db:migrate:deploy) && \
     exec node apps/web/server.js
