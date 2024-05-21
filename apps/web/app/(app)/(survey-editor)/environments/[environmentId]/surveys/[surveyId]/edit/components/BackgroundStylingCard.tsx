@@ -75,7 +75,7 @@ export const BackgroundStylingCard = ({
         asChild
         disabled={disabled}
         className={cn(
-          "h-full w-full cursor-pointer rounded-lg hover:bg-slate-50",
+          "w-full cursor-pointer rounded-lg hover:bg-slate-50",
           disabled && "cursor-not-allowed opacity-60 hover:bg-white"
         )}>
         <div className="inline-flex px-4 py-4">

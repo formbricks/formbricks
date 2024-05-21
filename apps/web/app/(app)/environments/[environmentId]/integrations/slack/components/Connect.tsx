@@ -56,7 +56,7 @@ export const Connect = ({ isEnabled, environmentId, webAppUrl }: ConnectProps) =
             Slack Integration is not configured in your instance of Formbricks.
             <br />
             Please follow the{" "}
-            <Link href="https://formbricks.com/docs/integrations/slack" className="underline">
+            <Link href="https://formbricks.com/docs/self-hosting/integrations#slack" className="underline">
               docs
             </Link>{" "}
             to configure it.
