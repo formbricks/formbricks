@@ -104,7 +104,7 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
       }
     },
     [`getIsEnterpriseEdition-${hashedKey}`],
-    { revalidate: 60 * 60 * 24 }
+    { revalidate: 60 * 60 * 24 * 3 }
   )();
 
   const previousResult = await getPreviousResult();
@@ -121,13 +121,14 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
     return isValid;
   } else {
     // if result is undefined -> error
-    // if the last check was less than 24 hours, return the previous value:
-    if (new Date().getTime() - previousResult.lastChecked.getTime() <= 24 * 60 * 60 * 1000) {
+    // if the last check was less than 72 hours, return the previous value:
+    if (new Date().getTime() - previousResult.lastChecked.getTime() <= 3 * 24 * 60 * 60 * 1000) {
       return previousResult.active !== null ? previousResult.active : false;
     }
 
-    // if the last check was more than 24 hours, throw an error
-    throw new Error("Error while checking license");
+    // if the last check was more than 72 hours, return false and log the error
+    console.error("Error while checking license");
+    return false;
   }
 };
 
