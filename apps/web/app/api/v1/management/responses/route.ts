@@ -20,7 +20,7 @@ export const GET = async (request: NextRequest) => {
     if (surveyId) {
       environmentResponses = await getResponses(surveyId, limit, offset);
     } else {
-      environmentResponses = await getResponsesByEnvironmentId(authentication.environmentId!, limit, offset);
+      environmentResponses = await getResponsesByEnvironmentId(authentication.environmentId, limit, offset);
     }
     return responses.successResponse(environmentResponses);
   } catch (error) {

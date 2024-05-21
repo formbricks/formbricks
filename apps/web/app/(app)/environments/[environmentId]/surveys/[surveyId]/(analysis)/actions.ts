@@ -16,8 +16,8 @@ export const revalidateSurveyIdPath = async (environmentId: string, surveyId: st
 
 export const getResponsesAction = async (
   surveyId: string,
-  limit?: number,
-  offset?: number,
+  limit: number = 10,
+  offset: number = 0,
   filterCriteria?: TResponseFilterCriteria
 ): Promise<TResponse[]> => {
   const session = await getServerSession(authOptions);
@@ -26,10 +26,7 @@ export const getResponsesAction = async (
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const _limit = limit ?? 10;
-  const _offset = offset ?? 0;
-
-  const responses = await getResponses(surveyId, _limit, _offset, filterCriteria);
+  const responses = await getResponses(surveyId, limit, offset, filterCriteria);
   return responses;
 };
 
