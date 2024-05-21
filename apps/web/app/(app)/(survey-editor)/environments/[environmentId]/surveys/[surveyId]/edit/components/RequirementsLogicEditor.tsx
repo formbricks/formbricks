@@ -349,13 +349,10 @@ export const RequirementsLogicEditor = ({
   }, [localSurvey]);
 
   const addLogic = () => {
-    console.log("addLogic", question.requirementsLogic);
     if (question.requirementsLogic && question.requirementsLogic?.length >= 0) {
-      console.log("already have");
       const hasUndefinedLogic = question.requirementsLogic.some(
         (logic) => logic.condition === undefined && logic.value === undefined && logic.source === undefined
       );
-      console.log("hasUndefinedLogic:", hasUndefinedLogic);
       if (hasUndefinedLogic) {
         console.error("Please fill previus reuirement first.");
         toast("Please fill previus reuirement first.", {
