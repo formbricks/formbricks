@@ -1,4 +1,4 @@
-name: Docker
+name: Docker Release to GitHub
 
 on:
   workflow_dispatch:
