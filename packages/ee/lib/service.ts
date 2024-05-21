@@ -55,9 +55,9 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
       // first call
       await setPreviousResult({ active: true, lastChecked: new Date() });
       return true;
-    } else if (new Date().getTime() - previousResult.lastChecked.getTime() > 24 * 60 * 60 * 1000) {
-      // Fail after 24 hours
-      console.log("E2E_TESTING is enabled. Enterprise license was revoked after 24 hours.");
+    } else if (new Date().getTime() - previousResult.lastChecked.getTime() > 60 * 60 * 1000) {
+      // Fail after 1 hour
+      console.log("E2E_TESTING is enabled. Enterprise license was revoked after 1 hour.");
       return false;
     }
 
@@ -104,7 +104,7 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
       }
     },
     [`getIsEnterpriseEdition-${hashedKey}`],
-    { revalidate: 60 * 60 * 24 * 3 }
+    { revalidate: 60 * 60 * 24 }
   )();
 
   const previousResult = await getPreviousResult();
