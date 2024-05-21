@@ -104,3 +104,18 @@ p.fb-editor-paragraph {
     width: 0%;
   }
 }
+
+.no-scrollbar {
+  -ms-overflow-style: none !important;  /* Internet Explorer 10+ */
+  scrollbar-width: thin !important;     /* Firefox */
+  scrollbar-color: transparent transparent !important; /* Firefox */
+
+  /* Chrome, Edge, and Safari */
+  &::-webkit-scrollbar {
+    width: 0 !important;
+    background: transparent !important;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: transparent !important;
+  }
+}
