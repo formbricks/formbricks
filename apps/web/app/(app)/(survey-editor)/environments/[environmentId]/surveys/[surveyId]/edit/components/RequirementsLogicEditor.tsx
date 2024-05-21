@@ -14,7 +14,6 @@ import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import {
   TSurvey,
-  TSurveyLogic,
   TSurveyLogicCondition,
   TSurveyQuestion,
   TSurveyQuestionType,
@@ -226,7 +225,7 @@ export const RequirementsLogicItem = (props: RequirementsLogicItemProps) => {
         </SelectTrigger>
         <SelectContent>
           {localSurvey.questions.map(
-            (q, idx) =>
+            (q) =>
               q.id !== question.id && (
                 <SelectItem key={q.id} value={q.id} title={getLocalizedValue(q.headline, "default")}>
                   <div className="w-40">
