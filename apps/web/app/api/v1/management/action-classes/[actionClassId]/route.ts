@@ -48,8 +48,16 @@ export const PUT = async (
     if (!actionClass) {
       return responses.notFoundResponse("Action Class", params.actionClassId);
     }
-    const actionCLassUpdate = await request.json();
-    const inputValidation = ZActionClassInput.safeParse(actionCLassUpdate);
+
+    let actionClassUpdate;
+    try {
+      actionClassUpdate = await request.json();
+    } catch (error) {
+      console.error(`Error parsing JSON: ${error}`);
+      return responses.badRequestResponse("Malformed JSON input, please check your request body");
+    }
+
+    const inputValidation = ZActionClassInput.safeParse(actionClassUpdate);
     if (!inputValidation.success) {
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",
