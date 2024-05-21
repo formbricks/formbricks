@@ -7,9 +7,9 @@ import { ThankYouCard } from "@/components/general/ThankYouCard";
 import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
-import { evaluateCondition, hasRequirementsSatisfied } from "@/lib/logicEvaluator";
+import { getNextQuestionIdByLogicJump, hasRequirementsSatisfied } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
@@ -120,87 +120,37 @@ export const Survey = ({
     }
   }, [getSetIsResponseSendingFinished]);
 
-  let currIdxTemp = currentQuestionIndex;
-  let currQuesTemp = currentQuestion;
+  const getNextQuestionId = useCallback(
+    ({ startQuestionIndex }: { startQuestionIndex?: number }) => {
+      // When startQuestionIndex is not set (the first time getNextQuestionId is called), initialize the cursor with currentQuestionIndex
+      const cursorQuestionIndex = startQuestionIndex ?? currentQuestionIndex;
+      const questions = survey.questions;
 
-  const getNextQuestionId = (data: TResponseData): string => {
-    const questions = survey.questions;
+      // Jump logic is checked only if the cursor points to the current question
+      const checkCurrentQuestionLogicJump = cursorQuestionIndex === currentQuestionIndex && !!currentQuestion;
 
-    const _getNextQuestionId = (currIdxTemp: number) => {
-      if (questionId === "start") return questions[0]?.id || "end";
+      let nextQuestionId =
+        (checkCurrentQuestionLogicJump &&
+          getNextQuestionIdByLogicJump(currentQuestion, responseData, languageCode)) ||
+        questions[cursorQuestionIndex + 1]?.id;
 
-      if (currIdxTemp === -1) throw new Error("Question not found");
-      if (currQuesTemp?.logic && currQuesTemp?.logic.length > 0 && currentQuestion) {
-        const responseValue = data[questionId];
-        for (let logic of currQuesTemp.logic) {
-          if (!logic.destination) continue;
-          // Check if the current question is of type 'multipleChoiceSingle' or 'multipleChoiceMulti'
-          if (
-            currentQuestion.type === "multipleChoiceSingle" ||
-            currentQuestion.type === "multipleChoiceMulti"
-          ) {
-            let choice;
+      if (nextQuestionId) {
+        const nextQuestion = questions.find((q) => q.id === nextQuestionId);
+        if (!nextQuestion) throw new Error(`NextQuestion not found for id:${nextQuestionId}`);
 
-            // Check if the response is a string (applies to single choice questions)
-            // Sonne -> sun
-            if (typeof responseValue === "string") {
-              // Find the choice in currentQuestion.choices that matches the responseValue after localization
-              choice = currentQuestion.choices.find((choice) => {
-                return getLocalizedValue(choice.label, languageCode) === responseValue;
-              })?.label;
-
-              // If a matching choice is found, get its default localized value
-              if (choice) {
-                choice = getLocalizedValue(choice, "default");
-              }
-            }
-            // Check if the response is an array (applies to multiple choices questions)
-            // ["Sonne","Mond"]->["sun","moon"]
-            else if (Array.isArray(responseValue)) {
-              // Filter and map the choices in currentQuestion.choices that are included in responseValue after localization
-              choice = currentQuestion.choices
-                .filter((choice) => {
-                  return responseValue.includes(getLocalizedValue(choice.label, languageCode));
-                })
-                .map((choice) => getLocalizedValue(choice.label, "default"));
-            }
-
-            // If a choice is determined (either single or multiple), evaluate the logic condition with that choice
-            if (choice) {
-              if (evaluateCondition(logic, choice)) {
-                return logic.destination;
-              }
-            }
-            // If choice is undefined, it implies an "other" option is selected. Evaluate the logic condition for "Other"
-            else {
-              if (evaluateCondition(logic, "Other")) {
-                return logic.destination;
-              }
-            }
-          }
-          if (evaluateCondition(logic, responseValue)) {
-            return logic.destination;
-          }
+        if (hasRequirementsSatisfied(nextQuestion, responseData)) {
+          return nextQuestionId;
         }
+
+        return getNextQuestionId({ startQuestionIndex: cursorQuestionIndex + 1 });
       }
 
-      return questions[currIdxTemp + 1]?.id || "end";
-    };
+      return "end";
+    },
+    [currentQuestion, currentQuestionIndex, languageCode, responseData, survey.questions]
+  );
 
-    let nextQuestionId: string | undefined;
-    while (nextQuestionId === undefined) {
-      nextQuestionId = _getNextQuestionId(currIdxTemp);
-      if (nextQuestionId === "end") return nextQuestionId;
-      const nextQuest = survey.questions.find((q) => q.id === nextQuestionId);
-      if (!nextQuest) throw new Error("Question not found");
-      if (!hasRequirementsSatisfied(nextQuest, responseData)) {
-        nextQuestionId = undefined;
-        currIdxTemp++;
-      }
-    }
-
-    return nextQuestionId;
-  };
+  let currIdxTemp = currentQuestionIndex;
 
   const onChange = (responseDataUpdate: TResponseData) => {
     const updatedResponseData = { ...responseData, ...responseDataUpdate };
@@ -210,7 +160,7 @@ export const Survey = ({
   const onSubmit = (responseData: TResponseData, ttc: TResponseTtc) => {
     const questionId = Object.keys(responseData)[0];
     setLoadingElement(true);
-    const nextQuestionId = getNextQuestionId(responseData);
+    const nextQuestionId = getNextQuestionId({ startQuestionIndex: currentQuestionIndex });
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, ttc, finished });
     if (finished) {

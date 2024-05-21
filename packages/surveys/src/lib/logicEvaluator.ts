@@ -1,3 +1,4 @@
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import type { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys";
 
@@ -103,4 +104,63 @@ export const hasRequirementsSatisfied = (question: TSurveyQuestion, data: TRespo
     const isEvaluate = evaluateCondition(logic as TSurveyLogic, responseValue);
     return isEvaluate;
   });
+};
+
+export const getNextQuestionIdByLogicJump = (
+  question: TSurveyQuestion,
+  data: TResponseData,
+  languageCode: string
+) => {
+  if (!(question?.logic && question?.logic.length > 0)) {
+    return;
+  }
+
+  const responseValue = data[question.id];
+  for (let logic of question.logic) {
+    if (!logic.destination) continue;
+    // Check if the current question is of type 'multipleChoiceSingle' or 'multipleChoiceMulti'
+    if (question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti") {
+      let choice;
+
+      // Check if the response is a string (applies to single choice questions)
+      // Sonne -> sun
+      if (typeof responseValue === "string") {
+        // Find the choice in currentQuestion.choices that matches the responseValue after localization
+        choice = question.choices.find((choice) => {
+          return getLocalizedValue(choice.label, languageCode) === responseValue;
+        })?.label;
+
+        // If a matching choice is found, get its default localized value
+        if (choice) {
+          choice = getLocalizedValue(choice, "default");
+        }
+      }
+      // Check if the response is an array (applies to multiple choices questions)
+      // ["Sonne","Mond"]->["sun","moon"]
+      else if (Array.isArray(responseValue)) {
+        // Filter and map the choices in currentQuestion.choices that are included in responseValue after localization
+        choice = question.choices
+          .filter((choice) => {
+            return responseValue.includes(getLocalizedValue(choice.label, languageCode));
+          })
+          .map((choice) => getLocalizedValue(choice.label, "default"));
+      }
+
+      // If a choice is determined (either single or multiple), evaluate the logic condition with that choice
+      if (choice) {
+        if (evaluateCondition(logic, choice)) {
+          return logic.destination;
+        }
+      }
+      // If choice is undefined, it implies an "other" option is selected. Evaluate the logic condition for "Other"
+      else {
+        if (evaluateCondition(logic, "Other")) {
+          return logic.destination;
+        }
+      }
+    }
+    if (evaluateCondition(logic, responseValue)) {
+      return logic.destination;
+    }
+  }
 };
