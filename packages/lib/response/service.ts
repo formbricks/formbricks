@@ -250,8 +250,17 @@ const createResponseCommon = async (
     };
 
     if (isManagement) {
-      prismaData.createdAt = (responseInput as TManagementResponseInput).createdAt;
-      prismaData.updatedAt = (responseInput as TManagementResponseInput).updatedAt;
+      // if there is a createdAt but no updatedAt, set updatedAt to createdAt
+      if (
+        (responseInput as TManagementResponseInput).createdAt &&
+        !(responseInput as TManagementResponseInput).updatedAt
+      ) {
+        prismaData.createdAt = (responseInput as TManagementResponseInput).createdAt;
+        prismaData.updatedAt = (responseInput as TManagementResponseInput).createdAt;
+      } else {
+        prismaData.createdAt = (responseInput as TManagementResponseInput).createdAt;
+        prismaData.updatedAt = (responseInput as TManagementResponseInput).updatedAt;
+      }
     }
 
     const responsePrisma = await prisma.response.create({
