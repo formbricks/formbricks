@@ -12,6 +12,7 @@ import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/
 
 import {
   TResponseFilterCriteria,
+  TResponseHiddenFieldsFilter,
   TSurveyMetaFieldFilter,
   TSurveyPersonAttributes,
 } from "@formbricks/types/responses";
@@ -49,7 +50,8 @@ export const generateQuestionAndFilterOptions = (
   survey: TSurvey,
   environmentTags: TTag[] | undefined,
   attributes: TSurveyPersonAttributes,
-  meta: TSurveyMetaFieldFilter
+  meta: TSurveyMetaFieldFilter,
+  hiddenFields: TResponseHiddenFieldsFilter
 ): {
   questionOptions: QuestionOptions[];
   questionFilterOptions: QuestionFilterOptions[];
@@ -164,6 +166,26 @@ export const generateQuestionAndFilterOptions = (
     });
   }
 
+  if (hiddenFields) {
+    questionOptions = [
+      ...questionOptions,
+      {
+        header: OptionsType.HIDDEN_FIELDS,
+        option: Object.keys(hiddenFields).map((hiddenField) => {
+          return { label: hiddenField, type: OptionsType.HIDDEN_FIELDS, id: hiddenField };
+        }),
+      },
+    ];
+    Object.keys(hiddenFields).forEach((hiddenField) => {
+      questionFilterOptions.push({
+        type: "Hidden Fields",
+        filterOptions: ["Equals", "Not equals"],
+        filterComboBoxOptions: hiddenFields[hiddenField],
+        id: hiddenField,
+      });
+    });
+  }
+
   let languageQuestion: QuestionOption[] = [];
 
   //can be extended to include more properties
@@ -189,8 +211,11 @@ export const getFormattedFilters = (
   dateRange: DateRange
 ): TResponseFilterCriteria => {
   const filters: TResponseFilterCriteria = {};
-  const [questions, tags, attributes, others, meta] = selectedFilter.filter.reduce(
-    (result: [FilterValue[], FilterValue[], FilterValue[], FilterValue[], FilterValue[]], filter) => {
+  const [questions, tags, attributes, others, meta, hiddenFields] = selectedFilter.filter.reduce(
+    (
+      result: [FilterValue[], FilterValue[], FilterValue[], FilterValue[], FilterValue[], FilterValue[]],
+      filter
+    ) => {
       if (filter.questionType?.type === "Questions") {
         result[0].push(filter);
       } else if (filter.questionType?.type === "Tags") {
@@ -201,10 +226,12 @@ export const getFormattedFilters = (
         result[3].push(filter);
       } else if (filter.questionType?.type === "Meta") {
         result[4].push(filter);
+      } else if (filter.questionType?.type === "Hidden Fields") {
+        result[5].push(filter);
       }
       return result;
     },
-    [[], [], [], [], []]
+    [[], [], [], [], [], []]
   );
 
   // for completed responses
@@ -359,10 +386,30 @@ export const getFormattedFilters = (
     });
   }
 
+  // for hidden fields
+  if (hiddenFields.length) {
+    hiddenFields.forEach(({ filterType, questionType }) => {
+      if (!filters.data) filters.data = {};
+      if (!filterType.filterComboBoxValue) return;
+      if (filterType.filterValue === "Equals") {
+        filters.data[questionType.label ?? ""] = {
+          op: "equals",
+          value: filterType.filterComboBoxValue as string,
+        };
+      } else if (filterType.filterValue === "Not equals") {
+        filters.data[questionType.label ?? ""] = {
+          op: "notEquals",
+          value: filterType.filterComboBoxValue as string,
+        };
+      }
+    });
+  }
+
   // for attributes
   if (attributes.length) {
     attributes.forEach(({ filterType, questionType }) => {
       if (!filters.personAttributes) filters.personAttributes = {};
+      if (!filterType.filterComboBoxValue) return;
       if (filterType.filterValue === "Equals") {
         filters.personAttributes[questionType.label ?? ""] = {
           op: "equals",
@@ -381,6 +428,7 @@ export const getFormattedFilters = (
   if (others.length) {
     others.forEach(({ filterType, questionType }) => {
       if (!filters.others) filters.others = {};
+      if (!filterType.filterComboBoxValue) return;
       if (filterType.filterValue === "Equals") {
         filters.others[questionType.label ?? ""] = {
           op: "equals",
@@ -399,6 +447,7 @@ export const getFormattedFilters = (
   if (meta.length) {
     meta.forEach(({ filterType, questionType }) => {
       if (!filters.meta) filters.meta = {};
+      if (!filterType.filterComboBoxValue) return;
       if (filterType.filterValue === "Equals") {
         filters.meta[questionType.label ?? ""] = {
           op: "equals",

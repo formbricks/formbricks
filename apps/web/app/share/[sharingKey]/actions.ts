@@ -2,6 +2,7 @@
 
 import {
   getResponseCountBySurveyId,
+  getResponseHiddenFields,
   getResponseMeta,
   getResponsePersonAttributes,
   getResponses,
@@ -54,11 +55,12 @@ export const getSurveyFilterDataBySurveySharingKeyAction = async (
   const surveyId = await getSurveyIdByResultShareKey(sharingKey);
   if (!surveyId) throw new AuthorizationError("Not authorized");
 
-  const [tags, attributes, meta] = await Promise.all([
+  const [tags, attributes, meta, hiddenFields] = await Promise.all([
     getTagsByEnvironmentId(environmentId),
     getResponsePersonAttributes(surveyId),
     getResponseMeta(surveyId),
+    getResponseHiddenFields(surveyId),
   ]);
 
-  return { environmentTags: tags, attributes, meta };
+  return { environmentTags: tags, attributes, meta, hiddenFields };
 };

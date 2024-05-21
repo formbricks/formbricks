@@ -11,6 +11,7 @@ import { TPerson } from "@formbricks/types/people";
 import {
   TResponse,
   TResponseFilterCriteria,
+  TResponseHiddenFieldsFilter,
   TResponseInput,
   TResponseLegacyInput,
   TResponseUpdateInput,
@@ -485,6 +486,70 @@ export const getResponseMeta = (surveyId: string): Promise<TSurveyMetaFieldFilte
       }
     },
     [`getResponseMeta-${surveyId}`],
+    {
+      tags: [responseCache.tag.bySurveyId(surveyId)],
+    }
+  )();
+
+export const getResponseHiddenFields = (surveyId: string): Promise<TResponseHiddenFieldsFilter> =>
+  cache(
+    async () => {
+      validateInputs([surveyId, ZId]);
+
+      try {
+        const survey = await getSurvey(surveyId);
+
+        if (!survey) {
+          throw new ResourceNotFoundError("Survey", surveyId);
+        }
+
+        const responseHiddenFields = await prisma.response.findMany({
+          where: {
+            surveyId: surveyId,
+          },
+          select: {
+            data: true,
+          },
+        });
+
+        const hiddenFields: { [key: string]: Set<string> } = {};
+
+        const surveyHiddenFields = survey?.hiddenFields.fieldIds;
+        const hasHiddenFields = surveyHiddenFields && surveyHiddenFields.length > 0;
+
+        if (hasHiddenFields) {
+          // adding hidden fields to meta
+          survey?.hiddenFields.fieldIds?.forEach((fieldId) => {
+            hiddenFields[fieldId] = new Set();
+          });
+
+          responseHiddenFields.forEach((response) => {
+            // Handling data fields(Hidden fields)
+            surveyHiddenFields?.forEach((fieldId) => {
+              const hiddenFieldValue = response.data[fieldId];
+              if (hiddenFieldValue) {
+                if (typeof hiddenFieldValue === "string") {
+                  hiddenFields[fieldId].add(hiddenFieldValue);
+                }
+              }
+            });
+          });
+        }
+
+        // Convert Set to Array
+        const result = Object.fromEntries(
+          Object.entries(hiddenFields).map(([key, valueSet]) => [key, Array.from(valueSet)])
+        );
+
+        return result;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+        throw error;
+      }
+    },
+    [`getResponseHiddenFields-${surveyId}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
     }
