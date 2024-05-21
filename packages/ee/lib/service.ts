@@ -127,9 +127,7 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
     }
 
     // if the last check was more than 72 hours, return false and log the error
-    console.error(
-      "Error while checking license: The license check failed and the previous result was too old."
-    );
+    console.error("Error while checking license: The license check failed");
     return false;
   }
 };
