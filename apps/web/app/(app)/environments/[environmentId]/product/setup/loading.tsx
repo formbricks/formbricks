@@ -1,15 +1,25 @@
+"use client";
+
+import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
+
+import { cn } from "@formbricks/lib/cn";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
+
 const LoadingCard = ({ title, description, skeletonLines }) => {
   return (
-    <div className="my-4 rounded-lg border border-slate-200">
-      <div className="grid content-center rounded-lg bg-slate-100 px-6 py-5 text-left text-slate-900">
+    <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4  text-left shadow-sm">
+      <div className="grid content-center   border-b border-slate-200 px-4 pb-4 text-left text-slate-900">
         <h3 className="text-lg font-medium leading-6">{title}</h3>
         <p className="mt-1 text-sm text-slate-500">{description}</p>
       </div>
       <div className="w-full">
-        <div className="rounded-lg px-6 py-5 hover:bg-slate-100">
+        <div className="rounded-lg px-4 ">
           {skeletonLines.map((line, index) => (
             <div key={index} className="mt-4">
-              <div className={`animate-pulse bg-slate-200 ${line.classes}`}></div>
+              <div
+                className={`flex animate-pulse flex-col items-center justify-center space-y-2 rounded-lg bg-slate-200 py-6 text-center ${line.classes}`}></div>
             </div>
           ))}
         </div>
@@ -19,11 +29,18 @@ const LoadingCard = ({ title, description, skeletonLines }) => {
 };
 
 const Loading = () => {
+  const pathname = usePathname();
+
   const cards = [
     {
       title: "Widget Status",
       description: "Check if the Formbricks widget is alive and kicking.",
-      skeletonLines: [{ classes: "h-32 max-w-full rounded-md" }],
+      skeletonLines: [{ classes: " h-44 max-w-full rounded-md" }],
+    },
+    {
+      title: "Your EnvironmentId",
+      description: "This Id uniquely identifies this Formbricks environment.",
+      skeletonLines: [{ classes: "h-6 w-4/6 rounded-full" }],
     },
     {
       title: "How to setup",
@@ -39,12 +56,75 @@ const Loading = () => {
     },
   ];
 
+  let navigation = [
+    {
+      id: "general",
+      label: "General",
+      icon: <UsersIcon className="h-5 w-5" />,
+      current: pathname?.includes("/general"),
+    },
+    {
+      id: "look",
+      label: "Look & Feel",
+      icon: <BrushIcon className="h-5 w-5" />,
+      current: pathname?.includes("/look"),
+    },
+    {
+      id: "languages",
+      label: "Survey Languages",
+      icon: <LanguagesIcon className="h-5 w-5" />,
+      hidden: true,
+      current: pathname?.includes("/languages"),
+    },
+    {
+      id: "tags",
+      label: "Tags",
+      icon: <TagIcon className="h-5 w-5" />,
+      current: pathname?.includes("/tags"),
+    },
+    {
+      id: "api-keys",
+      label: "API Keys",
+      icon: <KeyIcon className="h-5 w-5" />,
+      current: pathname?.includes("/api-keys"),
+    },
+    {
+      id: "setup",
+      label: "Setup Guide",
+      icon: <ListChecksIcon className="h-5 w-5" />,
+      current: pathname?.includes("/setup"),
+    },
+  ];
+
   return (
     <div>
-      <h2 className="my-4 text-2xl font-medium leading-6 text-slate-800">Setup Checklist</h2>
-      {cards.map((card, index) => (
-        <LoadingCard key={index} {...card} />
-      ))}
+      <PageContentWrapper>
+        <PageHeader pageTitle="Configuration">
+          <div className="grid h-10 w-full grid-cols-[auto,1fr] ">
+            <nav className="flex h-full min-w-full items-center space-x-4" aria-label="Tabs">
+              {navigation.map((navElem) => (
+                <div
+                  key={navElem.id}
+                  className={cn(
+                    navElem.id === "setup"
+                      ? "border-brand-dark border-b-2 font-semibold text-slate-900"
+                      : "border-transparent text-slate-500 transition-all duration-150 ease-in-out hover:border-slate-300 hover:text-slate-700",
+                    "flex h-full items-center border-b-2 px-3 text-sm font-medium",
+                    navElem.hidden && "hidden"
+                  )}
+                  aria-current={navElem.id === "setup" ? "page" : undefined}>
+                  {navElem.label}
+                </div>
+              ))}
+            </nav>
+            <div className="justify-self-end"></div>
+          </div>
+        </PageHeader>
+        <div className="mt-4 flex max-w-4xl animate-pulse items-center space-y-4 rounded-lg  border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base"></div>
+        {cards.map((card, index) => (
+          <LoadingCard key={index} {...card} />
+        ))}
+      </PageContentWrapper>
     </div>
   );
 };
