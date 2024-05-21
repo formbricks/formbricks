@@ -3,12 +3,7 @@
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import {
-  getResponseDownloadUrl,
-  getResponseHiddenFields,
-  getResponseMeta,
-  getResponsePersonAttributes,
-} from "@formbricks/lib/response/service";
+import { getResponseDownloadUrl, getResponseFilteringValues } from "@formbricks/lib/response/service";
 import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
 import { updateSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
@@ -37,11 +32,9 @@ export const getSurveyFilterDataAction = async (surveyId: string, environmentId:
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const [tags, attributes, meta, hiddenFields] = await Promise.all([
+  const [tags, { personAttributes: attributes, meta, hiddenFields }] = await Promise.all([
     getTagsByEnvironmentId(environmentId),
-    getResponsePersonAttributes(surveyId),
-    getResponseMeta(surveyId),
-    getResponseHiddenFields(surveyId),
+    getResponseFilteringValues(surveyId),
   ]);
 
   return { environmentTags: tags, attributes, meta, hiddenFields };

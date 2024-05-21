@@ -2,7 +2,14 @@ import "server-only";
 
 import { Prisma } from "@prisma/client";
 
-import { TResponse, TResponseFilterCriteria, TResponseTtc } from "@formbricks/types/responses";
+import {
+  TResponse,
+  TResponseFilterCriteria,
+  TResponseHiddenFieldsFilter,
+  TResponseTtc,
+  TSurveyMetaFieldFilter,
+  TSurveyPersonAttributes,
+} from "@formbricks/types/responses";
 import {
   TSurvey,
   TSurveyLanguage,
@@ -1209,4 +1216,111 @@ export const getQuestionWiseSummary = (
   });
 
   return summary;
+};
+
+export const getResponsePersonAttributes = (
+  responses: Pick<TResponse, "personAttributes" | "data" | "meta">[]
+): TSurveyPersonAttributes => {
+  try {
+    let attributes: TSurveyPersonAttributes = {};
+
+    responses.forEach((response) => {
+      Object.keys(response.personAttributes ?? {}).forEach((key) => {
+        if (response.personAttributes && attributes[key]) {
+          attributes[key].push(response.personAttributes[key].toString());
+        } else if (response.personAttributes) {
+          attributes[key] = [response.personAttributes[key].toString()];
+        }
+      });
+    });
+
+    Object.keys(attributes).forEach((key) => {
+      attributes[key] = Array.from(new Set(attributes[key]));
+    });
+
+    return attributes;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getResponseMeta = (
+  responses: Pick<TResponse, "personAttributes" | "data" | "meta">[]
+): TSurveyMetaFieldFilter => {
+  try {
+    const meta: { [key: string]: Set<string> } = {};
+
+    responses.forEach((response) => {
+      Object.entries(response.meta).forEach(([key, value]) => {
+        // skip url
+        if (key === "url") return;
+
+        // Handling nested objects (like userAgent)
+        if (typeof value === "object" && value !== null) {
+          Object.entries(value).forEach(([nestedKey, nestedValue]) => {
+            if (typeof nestedValue === "string" && nestedValue) {
+              if (!meta[nestedKey]) {
+                meta[nestedKey] = new Set();
+              }
+              meta[nestedKey].add(nestedValue);
+            }
+          });
+        } else if (typeof value === "string" && value) {
+          if (!meta[key]) {
+            meta[key] = new Set();
+          }
+          meta[key].add(value);
+        }
+      });
+    });
+
+    // Convert Set to Array
+    const result = Object.fromEntries(
+      Object.entries(meta).map(([key, valueSet]) => [key, Array.from(valueSet)])
+    );
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getResponseHiddenFields = (
+  survey: TSurvey,
+  responses: Pick<TResponse, "personAttributes" | "data" | "meta">[]
+): TResponseHiddenFieldsFilter => {
+  try {
+    const hiddenFields: { [key: string]: Set<string> } = {};
+
+    const surveyHiddenFields = survey?.hiddenFields.fieldIds;
+    const hasHiddenFields = surveyHiddenFields && surveyHiddenFields.length > 0;
+
+    if (hasHiddenFields) {
+      // adding hidden fields to meta
+      survey?.hiddenFields.fieldIds?.forEach((fieldId) => {
+        hiddenFields[fieldId] = new Set();
+      });
+
+      responses.forEach((response) => {
+        // Handling data fields(Hidden fields)
+        surveyHiddenFields?.forEach((fieldId) => {
+          const hiddenFieldValue = response.data[fieldId];
+          if (hiddenFieldValue) {
+            if (typeof hiddenFieldValue === "string") {
+              hiddenFields[fieldId].add(hiddenFieldValue);
+            }
+          }
+        });
+      });
+    }
+
+    // Convert Set to Array
+    const result = Object.fromEntries(
+      Object.entries(hiddenFields).map(([key, valueSet]) => [key, Array.from(valueSet)])
+    );
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
 };

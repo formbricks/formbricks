@@ -11,12 +11,9 @@ import { TPerson } from "@formbricks/types/people";
 import {
   TResponse,
   TResponseFilterCriteria,
-  TResponseHiddenFieldsFilter,
   TResponseInput,
   TResponseLegacyInput,
   TResponseUpdateInput,
-  TSurveyMetaFieldFilter,
-  TSurveyPersonAttributes,
   ZResponseFilterCriteria,
   ZResponseInput,
   ZResponseLegacyInput,
@@ -45,6 +42,9 @@ import {
   calculateTtcTotal,
   extractSurveyDetails,
   getQuestionWiseSummary,
+  getResponseHiddenFields,
+  getResponseMeta,
+  getResponsePersonAttributes,
   getResponsesFileName,
   getResponsesJson,
   getSurveySummaryDropOff,
@@ -386,170 +386,42 @@ export const getResponse = (responseId: string): Promise<TResponse | null> =>
     }
   )();
 
-export const getResponsePersonAttributes = (surveyId: string): Promise<TSurveyPersonAttributes> =>
-  cache(
-    async () => {
-      validateInputs([surveyId, ZId]);
-
-      try {
-        let attributes: TSurveyPersonAttributes = {};
-        const responseAttributes = await prisma.response.findMany({
-          where: {
-            surveyId: surveyId,
-          },
-          select: {
-            personAttributes: true,
-          },
-        });
-
-        responseAttributes.forEach((response) => {
-          Object.keys(response.personAttributes ?? {}).forEach((key) => {
-            if (response.personAttributes && attributes[key]) {
-              attributes[key].push(response.personAttributes[key].toString());
-            } else if (response.personAttributes) {
-              attributes[key] = [response.personAttributes[key].toString()];
-            }
-          });
-        });
-
-        Object.keys(attributes).forEach((key) => {
-          attributes[key] = Array.from(new Set(attributes[key]));
-        });
-
-        return attributes;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
-      }
-    },
-    [`getResponsePersonAttributes-${surveyId}`],
-    {
-      tags: [responseCache.tag.bySurveyId(surveyId)],
-    }
-  )();
-
-export const getResponseMeta = (surveyId: string): Promise<TSurveyMetaFieldFilter> =>
-  cache(
-    async () => {
-      validateInputs([surveyId, ZId]);
-
-      try {
-        const responseMeta = await prisma.response.findMany({
-          where: {
-            surveyId: surveyId,
-          },
-          select: {
-            meta: true,
-          },
-        });
-
-        const meta: { [key: string]: Set<string> } = {};
-
-        responseMeta.forEach((response) => {
-          Object.entries(response.meta).forEach(([key, value]) => {
-            // skip url
-            if (key === "url") return;
-
-            // Handling nested objects (like userAgent)
-            if (typeof value === "object" && value !== null) {
-              Object.entries(value).forEach(([nestedKey, nestedValue]) => {
-                if (typeof nestedValue === "string" && nestedValue) {
-                  if (!meta[nestedKey]) {
-                    meta[nestedKey] = new Set();
-                  }
-                  meta[nestedKey].add(nestedValue);
-                }
-              });
-            } else if (typeof value === "string" && value) {
-              if (!meta[key]) {
-                meta[key] = new Set();
-              }
-              meta[key].add(value);
-            }
-          });
-        });
-
-        // Convert Set to Array
-        const result = Object.fromEntries(
-          Object.entries(meta).map(([key, valueSet]) => [key, Array.from(valueSet)])
-        );
-
-        return result;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-        throw error;
-      }
-    },
-    [`getResponseMeta-${surveyId}`],
-    {
-      tags: [responseCache.tag.bySurveyId(surveyId)],
-    }
-  )();
-
-export const getResponseHiddenFields = (surveyId: string): Promise<TResponseHiddenFieldsFilter> =>
+export const getResponseFilteringValues = async (surveyId: string) =>
   cache(
     async () => {
       validateInputs([surveyId, ZId]);
 
       try {
         const survey = await getSurvey(surveyId);
-
         if (!survey) {
           throw new ResourceNotFoundError("Survey", surveyId);
         }
 
-        const responseHiddenFields = await prisma.response.findMany({
+        const responses = await prisma.response.findMany({
           where: {
-            surveyId: surveyId,
+            surveyId,
           },
           select: {
             data: true,
+            meta: true,
+            personAttributes: true,
           },
         });
 
-        const hiddenFields: { [key: string]: Set<string> } = {};
+        const personAttributes = getResponsePersonAttributes(responses);
+        const meta = getResponseMeta(responses);
+        const hiddenFields = getResponseHiddenFields(survey, responses);
 
-        const surveyHiddenFields = survey?.hiddenFields.fieldIds;
-        const hasHiddenFields = surveyHiddenFields && surveyHiddenFields.length > 0;
-
-        if (hasHiddenFields) {
-          // adding hidden fields to meta
-          survey?.hiddenFields.fieldIds?.forEach((fieldId) => {
-            hiddenFields[fieldId] = new Set();
-          });
-
-          responseHiddenFields.forEach((response) => {
-            // Handling data fields(Hidden fields)
-            surveyHiddenFields?.forEach((fieldId) => {
-              const hiddenFieldValue = response.data[fieldId];
-              if (hiddenFieldValue) {
-                if (typeof hiddenFieldValue === "string") {
-                  hiddenFields[fieldId].add(hiddenFieldValue);
-                }
-              }
-            });
-          });
-        }
-
-        // Convert Set to Array
-        const result = Object.fromEntries(
-          Object.entries(hiddenFields).map(([key, valueSet]) => [key, Array.from(valueSet)])
-        );
-
-        return result;
+        return { personAttributes, meta, hiddenFields };
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
         }
+
         throw error;
       }
     },
-    [`getResponseHiddenFields-${surveyId}`],
+    [`getResponseFilteringValues-${surveyId}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
     }
