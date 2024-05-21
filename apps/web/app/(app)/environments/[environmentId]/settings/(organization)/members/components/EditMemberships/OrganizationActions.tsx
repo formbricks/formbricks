@@ -39,7 +39,6 @@ export const OrganizationActions = ({
 }: OrganizationActionsProps) => {
   const router = useRouter();
   const [isLeaveOrganizationModalOpen, setLeaveOrganizationModalOpen] = useState(false);
-  const [isCreateOrganizationModalOpen, setCreateOrganizationModalOpen] = useState(false);
   const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -84,15 +83,6 @@ export const OrganizationActions = ({
             Leave organization
           </Button>
         )}
-        <Button
-          variant="secondary"
-          className="mr-2"
-          size="sm"
-          onClick={() => {
-            setCreateOrganizationModalOpen(true);
-          }}>
-          Create new organization
-        </Button>
         {!isInviteDisabled && isAdminOrOwner && (
           <Button
             size="sm"
@@ -104,11 +94,6 @@ export const OrganizationActions = ({
           </Button>
         )}
       </div>
-
-      <CreateOrganizationModal
-        open={isCreateOrganizationModalOpen}
-        setOpen={(val) => setCreateOrganizationModalOpen(val)}
-      />
       <AddMemberModal
         open={isAddMemberModalOpen}
         setOpen={setAddMemberModalOpen}
