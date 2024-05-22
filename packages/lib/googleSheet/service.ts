@@ -9,8 +9,7 @@ import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationGoogleSheets,
-  TIntegrationGoogleSheetsCredential,
-  ZIntegrationGoogleSheetsCredential,
+  ZIntegrationGoogleSheets,
 } from "@formbricks/types/integration/googleSheet";
 
 import {
@@ -18,13 +17,13 @@ import {
   GOOGLE_SHEETS_CLIENT_SECRET,
   GOOGLE_SHEETS_REDIRECT_URL,
 } from "../constants";
-import { getIntegrationByType } from "../integration/service";
+import { createOrUpdateIntegration, getIntegrationByType } from "../integration/service";
 import { validateInputs } from "../utils/validate";
 
 const { google } = require("googleapis");
 
-const fetchSpreadsheets = async (auth: any) => {
-  const authClient = authorize(auth);
+const fetchSpreadsheets = async (googleSheetIntegration: TIntegrationGoogleSheets) => {
+  const authClient = await authorize(googleSheetIntegration);
   const service = google.drive({ version: "v3", auth: authClient });
   try {
     const res = await service.files.list({
@@ -42,12 +41,12 @@ export const getSpreadSheets = async (environmentId: string): Promise<TIntegrati
 
   let spreadsheets: TIntegrationItem[] = [];
   try {
-    const googleIntegration = (await getIntegrationByType(
+    const googleSheetIntegration = (await getIntegrationByType(
       environmentId,
       "googleSheets"
     )) as TIntegrationGoogleSheets;
-    if (googleIntegration && googleIntegration.config?.key) {
-      spreadsheets = await fetchSpreadsheets(googleIntegration.config?.key);
+    if (googleSheetIntegration) {
+      spreadsheets = await fetchSpreadsheets(googleSheetIntegration);
     }
     return spreadsheets;
   } catch (error) {
@@ -58,18 +57,18 @@ export const getSpreadSheets = async (environmentId: string): Promise<TIntegrati
   }
 };
 export const writeData = async (
-  credentials: TIntegrationGoogleSheetsCredential,
+  integrationData: TIntegrationGoogleSheets,
   spreadsheetId: string,
   values: string[][]
 ) => {
   validateInputs(
-    [credentials, ZIntegrationGoogleSheetsCredential],
+    [integrationData, ZIntegrationGoogleSheets],
     [spreadsheetId, ZString],
     [values, z.array(z.array(ZString))]
   );
 
   try {
-    const authClient = authorize(credentials);
+    const authClient = await authorize(integrationData);
     const sheets = google.sheets({ version: "v4", auth: authClient });
     const responses = { values: [values[0]] };
     const question = { values: [values[1]] };
@@ -108,11 +107,25 @@ export const writeData = async (
   }
 };
 
-const authorize = (credentials: any) => {
+const authorize = async (googleSheetIntegrationData: TIntegrationGoogleSheets) => {
   const client_id = GOOGLE_SHEETS_CLIENT_ID;
   const client_secret = GOOGLE_SHEETS_CLIENT_SECRET;
   const redirect_uri = GOOGLE_SHEETS_REDIRECT_URL;
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uri);
+  const refresh_token = googleSheetIntegrationData.config.key.refresh_token;
+  oAuth2Client.setCredentials({
+    refresh_token,
+  });
+  const { credentials } = await oAuth2Client.refreshAccessToken();
+  await createOrUpdateIntegration(googleSheetIntegrationData.environmentId, {
+    type: "googleSheets",
+    config: {
+      data: googleSheetIntegrationData.config?.data ?? [],
+      email: googleSheetIntegrationData.config?.email ?? "",
+      key: credentials,
+    },
+  });
+
   oAuth2Client.setCredentials(credentials);
 
   return oAuth2Client;

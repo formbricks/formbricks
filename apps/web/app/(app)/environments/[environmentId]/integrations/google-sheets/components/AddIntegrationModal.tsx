@@ -70,9 +70,7 @@ export const AddIntegrationModal = ({
   useEffect(() => {
     if (selectedSurvey) {
       const questionIds = selectedSurvey.questions.map((question) => question.id);
-      if (!selectedIntegration) {
-        setSelectedQuestions(questionIds);
-      }
+      setSelectedQuestions(questionIds);
     }
   }, [selectedIntegration, selectedSurvey]);
 
@@ -244,7 +242,9 @@ export const AddIntegrationModal = ({
                                 handleCheckboxChange(question.id);
                               }}
                             />
-                            <span className="ml-2">{getLocalizedValue(question.headline, "default")}</span>
+                            <span className="ml-2 w-[30rem] truncate">
+                              {getLocalizedValue(question.headline, "default")}
+                            </span>
                           </label>
                         </div>
                       ))}
