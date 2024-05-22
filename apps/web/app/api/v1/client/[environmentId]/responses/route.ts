@@ -82,7 +82,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
       url: responseInput?.meta?.url,
       userAgent: {
         browser: agent?.browser.name,
-        device: agent?.device.type,
+        device: agent?.device.type || "desktop",
         os: agent?.os.name,
       },
       country: country,
