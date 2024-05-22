@@ -81,7 +81,6 @@ export const recallToHeadline = <T extends TSurveyQuestionsObject>(
       }
     }
   }
-  console.log("returnng", newHeadline);
   return newHeadline;
 };
 
