@@ -1,8 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { z } from "zod";
 
 import { TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
@@ -11,16 +13,21 @@ import { Label } from "@formbricks/ui/Label";
 
 import { updateProductAction } from "../actions";
 
-type EditWaitingTimeFormValues = {
-  recontactDays: number;
-};
-
 type EditWaitingTimeProps = {
   environmentId: string;
   product: TProduct;
 };
 
-export const EditWaitingTime: React.FC<EditWaitingTimeProps> = ({ product, environmentId }) => {
+const editWaitingTimeSchema = z.object({
+  recontactDays: z
+    .number({ message: "Recontact days is required" })
+    .min(0, { message: "Must be a positive number" })
+    .max(365, { message: "Must be less than 365" }),
+});
+
+type EditWaitingTimeFormValues = z.infer<typeof editWaitingTimeSchema>;
+
+export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product, environmentId }) => {
   const router = useRouter();
   const {
     register,
@@ -30,6 +37,8 @@ export const EditWaitingTime: React.FC<EditWaitingTimeProps> = ({ product, envir
     defaultValues: {
       recontactDays: product.recontactDays,
     },
+    resolver: zodResolver(editWaitingTimeSchema),
+    mode: "onChange",
   });
 
   const updateWaitingTime: SubmitHandler<EditWaitingTimeFormValues> = async (data) => {
@@ -52,13 +61,7 @@ export const EditWaitingTime: React.FC<EditWaitingTimeProps> = ({ product, envir
         id="recontactDays"
         defaultValue={product.recontactDays}
         {...register("recontactDays", {
-          min: { value: 0, message: "Must be a positive number" },
-          max: { value: 365, message: "Must be less than 365" },
           valueAsNumber: true,
-          required: {
-            value: true,
-            message: "Required",
-          },
         })}
       />
 
@@ -68,7 +71,7 @@ export const EditWaitingTime: React.FC<EditWaitingTimeProps> = ({ product, envir
         </div>
       ) : null}
 
-      <Button type="submit" variant="darkCTA" size="sm">
+      <Button type="submit" variant="darkCTA" size="sm" disabled={Object.keys(errors).length > 0}>
         Update
       </Button>
     </form>

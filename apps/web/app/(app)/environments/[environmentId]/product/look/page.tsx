@@ -19,7 +19,7 @@ import { PageHeader } from "@formbricks/ui/PageHeader";
 
 import { SettingsCard } from "../../settings/components/SettingsCard";
 import { EditFormbricksBranding } from "./components/EditBranding";
-import { EditPlacement } from "./components/EditPlacement";
+import { EditPlacementForm } from "./components/EditPlacementForm";
 import { ThemeStyling } from "./components/ThemeStyling";
 
 const Page = async ({ params }: { params: { environmentId: string } }) => {
@@ -77,7 +77,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       <SettingsCard
         title="In-app Survey Placement"
         description="Change where surveys will be shown in your web app.">
-        <EditPlacement product={product} environmentId={params.environmentId} />
+        <EditPlacementForm product={product} environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard
         title="Formbricks Branding"

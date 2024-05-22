@@ -1,8 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { z } from "zod";
 
 import { TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
@@ -11,17 +13,19 @@ import { Label } from "@formbricks/ui/Label";
 
 import { updateProductAction } from "../actions";
 
-type TEditProductName = {
-  name: string;
-};
-
 type EditProductNameProps = {
   product: TProduct;
   environmentId: string;
   isProductNameEditDisabled: boolean;
 };
 
-export const EditProductName: React.FC<EditProductNameProps> = ({
+const editProductNameSchema = z.object({
+  name: z.string().trim().min(1, { message: "Product name cannot be empty" }),
+});
+
+type TEditProductName = z.infer<typeof editProductNameSchema>;
+
+export const EditProductNameForm: React.FC<EditProductNameProps> = ({
   product,
   environmentId,
   isProductNameEditDisabled,
@@ -30,28 +34,32 @@ export const EditProductName: React.FC<EditProductNameProps> = ({
   const {
     register,
     handleSubmit,
-    formState: { isSubmitting },
-    watch,
+    formState: { isSubmitting, errors },
   } = useForm<TEditProductName>({
     defaultValues: {
       name: product.name,
     },
+    resolver: zodResolver(editProductNameSchema),
+    mode: "onChange",
   });
-  const productNameValue = watch("name", product.name || "");
-  const isNotEmptySpaces = (value: string) => value.trim() !== "";
+
+  const nameError = errors.name?.message;
 
   const updateProduct: SubmitHandler<TEditProductName> = async (data) => {
-    data.name = data.name.trim();
+    const name = data.name.trim();
     try {
-      if (!isNotEmptySpaces(data.name)) {
-        toast.error("Please enter at least one character");
+      if (nameError) {
+        toast.error(nameError);
         return;
       }
-      if (data.name === product.name) {
+
+      if (name === product.name) {
         toast.success("This is already your product name");
         return;
       }
-      const updatedProduct = await updateProductAction(environmentId, product.id, { name: data.name });
+
+      const updatedProduct = await updateProductAction(environmentId, product.id, { name });
+
       if (isProductNameEditDisabled) {
         toast.error("Only Owners, Admins and Editors can perform this action.");
         throw new Error();
@@ -70,18 +78,13 @@ export const EditProductName: React.FC<EditProductNameProps> = ({
   return !isProductNameEditDisabled ? (
     <form className="w-full max-w-sm items-center space-y-2" onSubmit={handleSubmit(updateProduct)}>
       <Label htmlFor="fullname">What&apos;s your product called?</Label>
-      <Input
-        type="text"
-        id="fullname"
-        defaultValue={product.name}
-        {...register("name", { required: true })}
-      />
+      <Input type="text" id="fullname" defaultValue={product.name} {...register("name")} />
       <Button
         type="submit"
         variant="darkCTA"
         size="sm"
         loading={isSubmitting}
-        disabled={!isNotEmptySpaces(productNameValue) || isSubmitting}>
+        disabled={!!nameError || isSubmitting}>
         Update
       </Button>
     </form>
