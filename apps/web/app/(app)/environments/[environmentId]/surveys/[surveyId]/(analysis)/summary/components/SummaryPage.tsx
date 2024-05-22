@@ -16,7 +16,6 @@ import {
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
@@ -103,10 +102,6 @@ export const SummaryPage = ({
   }, [filters, isSharingPage, sharingKey, surveyId]);
 
   const searchParams = useSearchParams();
-
-  survey = useMemo(() => {
-    return checkForRecallInHeadline(survey, "default");
-  }, [survey]);
 
   useEffect(() => {
     if (!searchParams?.get("referer")) {

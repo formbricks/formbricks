@@ -1,6 +1,6 @@
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 
-import { TSurveyQuestionSummaryCal } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionSummaryCal } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -8,12 +8,13 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface CalSummaryProps {
   questionSummary: TSurveyQuestionSummaryCal;
   environmentId: string;
+  survey: TSurvey;
 }
 
-export const CalSummary = ({ questionSummary }: CalSummaryProps) => {
+export const CalSummary = ({ questionSummary, survey }: CalSummaryProps) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         <div>
           <div className="text flex justify-between px-2 pb-2">

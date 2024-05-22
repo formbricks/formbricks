@@ -36,7 +36,6 @@ import { putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
-import { checkForRecallInHeadline } from "../utils/recall";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 import {
@@ -577,11 +576,7 @@ export const getSurveySummary = (
 
         const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
         const meta = getSurveySummaryMeta(responses, displayCount);
-        const questionWiseSummary = getQuestionWiseSummary(
-          checkForRecallInHeadline(survey, "default"),
-          responses,
-          dropOff
-        );
+        const questionWiseSummary = getQuestionWiseSummary(survey, responses, dropOff);
 
         return { meta, dropOff, summary: questionWiseSummary };
       } catch (error) {

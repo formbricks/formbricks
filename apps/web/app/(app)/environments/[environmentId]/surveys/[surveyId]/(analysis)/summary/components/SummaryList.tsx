@@ -61,6 +61,7 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
               />
             );
           }
@@ -74,24 +75,53 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 surveyType={survey.type}
+                survey={survey}
               />
             );
           }
           if (questionSummary.type === TSurveyQuestionType.NPS) {
-            return <NPSSummary key={questionSummary.question.id} questionSummary={questionSummary} />;
+            return (
+              <NPSSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+              />
+            );
           }
           if (questionSummary.type === TSurveyQuestionType.CTA) {
-            return <CTASummary key={questionSummary.question.id} questionSummary={questionSummary} />;
+            return (
+              <CTASummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+              />
+            );
           }
           if (questionSummary.type === TSurveyQuestionType.Rating) {
-            return <RatingSummary key={questionSummary.question.id} questionSummary={questionSummary} />;
+            return (
+              <RatingSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+              />
+            );
           }
           if (questionSummary.type === TSurveyQuestionType.Consent) {
-            return <ConsentSummary key={questionSummary.question.id} questionSummary={questionSummary} />;
+            return (
+              <ConsentSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+              />
+            );
           }
           if (questionSummary.type === TSurveyQuestionType.PictureSelection) {
             return (
-              <PictureChoiceSummary key={questionSummary.question.id} questionSummary={questionSummary} />
+              <PictureChoiceSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+              />
             );
           }
           if (questionSummary.type === TSurveyQuestionType.Date) {
@@ -100,6 +130,7 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
               />
             );
           }
@@ -109,6 +140,7 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
               />
             );
           }
@@ -118,12 +150,17 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
               />
             );
           }
           if (questionSummary.type === TSurveyQuestionType.Matrix) {
             return (
-              <MatrixQuestionSummary key={questionSummary.question.id} questionSummary={questionSummary} />
+              <MatrixQuestionSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+              />
             );
           }
           if (questionSummary.type === TSurveyQuestionType.Address) {
@@ -132,6 +169,7 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
               />
             );
           }

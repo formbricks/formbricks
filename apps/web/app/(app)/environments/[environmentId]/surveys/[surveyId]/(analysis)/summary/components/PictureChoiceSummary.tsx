@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { TSurveyQuestionSummaryPictureSelection } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionSummaryPictureSelection } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
 import { convertFloatToNDecimal } from "../lib/utils";
@@ -8,14 +8,15 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface PictureChoiceSummaryProps {
   questionSummary: TSurveyQuestionSummaryPictureSelection;
+  survey: TSurvey;
 }
 
-export const PictureChoiceSummary = ({ questionSummary }: PictureChoiceSummaryProps) => {
+export const PictureChoiceSummary = ({ questionSummary, survey }: PictureChoiceSummaryProps) => {
   const results = questionSummary.choices.sort((a, b) => b.count - a.count);
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result) => (
           <div key={result.id}>

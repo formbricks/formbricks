@@ -1,13 +1,14 @@
-import { TSurveyQuestionSummaryMatrix } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionSummaryMatrix } from "@formbricks/types/surveys";
 import { TooltipRenderer } from "@formbricks/ui/Tooltip";
 
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface MatrixQuestionSummaryProps {
   questionSummary: TSurveyQuestionSummaryMatrix;
+  survey: TSurvey;
 }
 
-export const MatrixQuestionSummary = ({ questionSummary }: MatrixQuestionSummaryProps) => {
+export const MatrixQuestionSummary = ({ questionSummary, survey }: MatrixQuestionSummaryProps) => {
   const getOpacityLevel = (percentage: number): string => {
     const parsedPercentage = percentage;
     const opacity = parsedPercentage * 0.75 + 15;
@@ -27,7 +28,7 @@ export const MatrixQuestionSummary = ({ questionSummary }: MatrixQuestionSummary
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="overflow-x-auto p-6">
         {/* Summary Table  */}
         <table className="mx-auto border-collapse cursor-default text-left">

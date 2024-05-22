@@ -1,4 +1,4 @@
-import { TSurveyQuestionSummaryConsent } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionSummaryConsent } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
 import { convertFloatToNDecimal } from "../lib/utils";
@@ -6,12 +6,13 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface ConsentSummaryProps {
   questionSummary: TSurveyQuestionSummaryConsent;
+  survey: TSurvey;
 }
 
-export const ConsentSummary = ({ questionSummary }: ConsentSummaryProps) => {
+export const ConsentSummary = ({ questionSummary, survey }: ConsentSummaryProps) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         <div>
           <div className="text flex justify-between px-2 pb-2">
