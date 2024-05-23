@@ -1,49 +1,49 @@
 "use client";
 
-import { refreshSheetAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
+import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/ManageIntegration";
+import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/lib/google";
+import googleSheetLogo from "@/images/googleSheetsLogo.png";
 import { useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
-import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
 } from "@formbricks/types/integration/googleSheet";
 import { TSurvey } from "@formbricks/types/surveys";
+import { ConnectIntegration } from "@formbricks/ui/ConnectIntegration";
 
 import { AddIntegrationModal } from "./AddIntegrationModal";
-import { Connect } from "./Connect";
-import { Home } from "./Home";
 
 interface GoogleSheetWrapperProps {
-  enabled: boolean;
+  isEnabled: boolean;
   environment: TEnvironment;
   surveys: TSurvey[];
-  spreadSheetArray: TIntegrationItem[];
   googleSheetIntegration?: TIntegrationGoogleSheets;
   webAppUrl: string;
 }
 
 export const GoogleSheetWrapper = ({
-  enabled,
+  isEnabled,
   environment,
   surveys,
-  spreadSheetArray,
   googleSheetIntegration,
   webAppUrl,
 }: GoogleSheetWrapperProps) => {
   const [isConnected, setIsConnected] = useState(
     googleSheetIntegration ? googleSheetIntegration.config?.key : false
   );
-  const [spreadsheets, setSpreadsheets] = useState(spreadSheetArray);
   const [isModalOpen, setModalOpen] = useState<boolean>(false);
   const [selectedIntegration, setSelectedIntegration] = useState<
     (TIntegrationGoogleSheetsConfigData & { index: number }) | null
   >(null);
 
-  const refreshSheet = async () => {
-    const latestSpreadsheets = await refreshSheetAction(environment.id);
-    setSpreadsheets(latestSpreadsheets);
+  const handleGoogleAuthorization = async () => {
+    authorize(environment.id, webAppUrl).then((url: string) => {
+      if (url) {
+        window.location.replace(url);
+      }
+    });
   };
 
   return (
@@ -55,21 +55,24 @@ export const GoogleSheetWrapper = ({
             surveys={surveys}
             open={isModalOpen}
             setOpen={setModalOpen}
-            spreadsheets={spreadsheets}
             googleSheetIntegration={googleSheetIntegration}
             selectedIntegration={selectedIntegration}
           />
-          <Home
+          <ManageIntegration
             environment={environment}
             googleSheetIntegration={googleSheetIntegration}
             setOpenAddIntegrationModal={setModalOpen}
             setIsConnected={setIsConnected}
             setSelectedIntegration={setSelectedIntegration}
-            refreshSheet={refreshSheet}
           />
         </>
       ) : (
-        <Connect enabled={enabled} environmentId={environment.id} webAppUrl={webAppUrl} />
+        <ConnectIntegration
+          isEnabled={isEnabled}
+          integrationType={"googleSheets"}
+          handleAuthorization={handleGoogleAuthorization}
+          integrationLogoSrc={googleSheetLogo}
+        />
       )}
     </>
   );

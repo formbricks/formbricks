@@ -1,4 +1,11 @@
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
+import { getSpreadsheetNameByIdAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
+import {
+  constructGoogleSheetsUrl,
+  extractSpreadsheetIdFromUrl,
+  isValidGoogleSheetsUrl,
+} from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/lib/util";
+import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -6,7 +13,6 @@ import toast from "react-hot-toast";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
-import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
@@ -16,17 +22,15 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { DropdownSelector } from "@formbricks/ui/DropdownSelector";
+import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
 
-import GoogleSheetLogo from "../images/google-sheets-small.png";
-
-interface AddWebhookModalProps {
+interface AddIntegrationModalProps {
   environmentId: string;
   open: boolean;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
-  spreadsheets: TIntegrationItem[];
   googleSheetIntegration: TIntegrationGoogleSheets;
   selectedIntegration?: (TIntegrationGoogleSheetsConfigData & { index: number }) | null;
 }
@@ -36,12 +40,9 @@ export const AddIntegrationModal = ({
   surveys,
   open,
   setOpen,
-  spreadsheets,
   googleSheetIntegration,
   selectedIntegration,
-}: AddWebhookModalProps) => {
-  const { handleSubmit } = useForm();
-
+}: AddIntegrationModalProps) => {
   const integrationData = {
     spreadsheetId: "",
     spreadsheetName: "",
@@ -51,11 +52,11 @@ export const AddIntegrationModal = ({
     questions: "",
     createdAt: new Date(),
   };
-
+  const { handleSubmit } = useForm();
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [isLinkingSheet, setIsLinkingSheet] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
-  const [selectedSpreadsheet, setSelectedSpreadsheet] = useState<any>(null);
+  const [spreadsheetUrl, setSpreadsheetUrl] = useState("");
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const existingIntegrationData = googleSheetIntegration?.config?.data;
   const googleSheetIntegrationData: TIntegrationGoogleSheetsInput = {
@@ -78,10 +79,7 @@ export const AddIntegrationModal = ({
 
   useEffect(() => {
     if (selectedIntegration) {
-      setSelectedSpreadsheet({
-        id: selectedIntegration.spreadsheetId,
-        name: selectedIntegration.spreadsheetName,
-      });
+      setSpreadsheetUrl(constructGoogleSheetsUrl(selectedIntegration.spreadsheetId));
       setSelectedSurvey(
         surveys.find((survey) => {
           return survey.id === selectedIntegration.surveyId;
@@ -89,25 +87,32 @@ export const AddIntegrationModal = ({
       );
       setSelectedQuestions(selectedIntegration.questionIds);
       return;
+    } else {
+      setSpreadsheetUrl("");
     }
     resetForm();
   }, [selectedIntegration, surveys]);
 
   const linkSheet = async () => {
     try {
-      if (!selectedSpreadsheet) {
-        throw new Error("Please select a spreadsheet");
+      if (isValidGoogleSheetsUrl(spreadsheetUrl)) {
+        throw new Error("Please enter a valid spreadsheet url");
       }
       if (!selectedSurvey) {
         throw new Error("Please select a survey");
       }
-
       if (selectedQuestions.length === 0) {
         throw new Error("Please select at least one question");
       }
+      const spreadsheetId = extractSpreadsheetIdFromUrl(spreadsheetUrl);
+      const spreadsheetName = await getSpreadsheetNameByIdAction(
+        googleSheetIntegration.config.key,
+        environmentId,
+        spreadsheetId
+      );
       setIsLinkingSheet(true);
-      integrationData.spreadsheetId = selectedSpreadsheet.id;
-      integrationData.spreadsheetName = selectedSpreadsheet.name;
+      integrationData.spreadsheetId = spreadsheetId;
+      integrationData.spreadsheetName = spreadsheetName;
       integrationData.surveyId = selectedSurvey.id;
       integrationData.surveyName = selectedSurvey.name;
       integrationData.questionIds = selectedQuestions;
@@ -148,7 +153,6 @@ export const AddIntegrationModal = ({
 
   const resetForm = () => {
     setIsLinkingSheet(false);
-    setSelectedSpreadsheet("");
     setSelectedSurvey(null);
   };
 
@@ -166,15 +170,8 @@ export const AddIntegrationModal = ({
     }
   };
 
-  const hasMatchingId = googleSheetIntegration.config.data.some((configData) => {
-    if (!selectedSpreadsheet) {
-      return false;
-    }
-    return configData.spreadsheetId === selectedSpreadsheet.id;
-  });
-
   return (
-    <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={false}>
+    <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={true}>
       <div className="flex h-full flex-col rounded-lg">
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex w-full items-center justify-between p-6">
@@ -194,23 +191,13 @@ export const AddIntegrationModal = ({
             <div className="w-full space-y-4">
               <div>
                 <div className="mb-4">
-                  <DropdownSelector
-                    label="Select Spreadsheet"
-                    items={spreadsheets}
-                    selectedItem={selectedSpreadsheet}
-                    setSelectedItem={setSelectedSpreadsheet}
-                    disabled={spreadsheets.length === 0}
+                  <Label>Spreadsheet URL</Label>
+                  <Input
+                    value={spreadsheetUrl}
+                    onChange={(e) => setSpreadsheetUrl(e.target.value)}
+                    placeholder="https://docs.google.com/spreadsheets/d/<your-spreadsheet-id>"
+                    className="mt-1"
                   />
-                  {selectedSpreadsheet && hasMatchingId && (
-                    <p className="text-xs text-amber-700">
-                      <strong>Warning:</strong> You have already connected one survey with this sheet. Your
-                      data will be inconsistent
-                    </p>
-                  )}
-                  <p className="m-1 text-xs text-slate-500">
-                    {spreadsheets.length === 0 &&
-                      "You have to create at least one spreadshseet to be able to setup this integration"}
-                  </p>
                 </div>
                 <div>
                   <DropdownSelector
