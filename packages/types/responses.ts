@@ -5,9 +5,16 @@ import { ZId } from "./environment";
 import { ZSurvey, ZSurveyLogicCondition } from "./surveys";
 import { ZTag } from "./tags";
 
-export const ZResponseData = z.record(
-  z.union([z.string(), z.number(), z.array(z.string()), z.record(z.string())])
-);
+export const ZResponseDataValue = z.union([
+  z.string(),
+  z.number(),
+  z.array(z.string()),
+  z.record(z.string()),
+]);
+
+export type TResponseDataValue = z.infer<typeof ZResponseDataValue>;
+
+export const ZResponseData = z.record(ZResponseDataValue);
 
 export type TResponseData = z.infer<typeof ZResponseData>;
 

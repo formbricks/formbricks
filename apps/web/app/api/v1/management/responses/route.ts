@@ -3,19 +3,26 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
 
-import { createResponse, getResponsesByEnvironmentId } from "@formbricks/lib/response/service";
+import { createResponse, getResponses, getResponsesByEnvironmentId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 
 export const GET = async (request: NextRequest) => {
-  const surveyId = request.nextUrl.searchParams.get("surveyId");
+  const searchParams = request.nextUrl.searchParams;
+  const surveyId = searchParams.get("surveyId");
+  const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined;
+  const offset = searchParams.get("skip") ? Number(searchParams.get("skip")) : undefined;
+
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    let environmentResponses = await getResponsesByEnvironmentId(authentication.environmentId!);
+    let environmentResponses: TResponse[] = [];
+
     if (surveyId) {
-      environmentResponses = environmentResponses.filter((response) => response.surveyId === surveyId);
+      environmentResponses = await getResponses(surveyId, limit, offset);
+    } else {
+      environmentResponses = await getResponsesByEnvironmentId(authentication.environmentId, limit, offset);
     }
     return responses.successResponse(environmentResponses);
   } catch (error) {
@@ -25,8 +32,6 @@ export const GET = async (request: NextRequest) => {
     throw error;
   }
 };
-
-// Please use the client API to create a new response
 
 export const POST = async (request: Request): Promise<Response> => {
   try {
