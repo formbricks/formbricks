@@ -123,7 +123,7 @@ export const EditWelcomeCard = ({
               <QuestionFormInput
                 id="headline"
                 value={localSurvey.welcomeCard.headline}
-                label="Note"
+                label="Headline"
                 localSurvey={localSurvey}
                 questionIdx={-1}
                 isInvalid={isInvalid}
