@@ -44,7 +44,9 @@ export const Connect = ({ enabled, environmentId, webAppUrl }: ConnectProps) => 
             Google Sheets Integration is not configured in your instance of Formbricks.
             <br />
             Please follow the{" "}
-            <Link href="https://formbricks.com/docs/integrations/google-sheets" className="underline">
+            <Link
+              href="https://formbricks.com/docs/self-hosting/integrations#google-sheets"
+              className="underline">
               docs
             </Link>{" "}
             to configure it.
