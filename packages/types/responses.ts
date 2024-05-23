@@ -238,6 +238,8 @@ export const ZResponse = z.object({
 export type TResponse = z.infer<typeof ZResponse>;
 
 export const ZResponseInput = z.object({
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
   environmentId: z.string().cuid2(),
   surveyId: z.string().cuid2(),
   userId: z.string().nullish(),

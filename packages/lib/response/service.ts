@@ -203,6 +203,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     singleUseId,
     ttc: initialTtc,
   } = responseInput;
+
   try {
     let person: TPerson | null = null;
     let attributes: TAttributes | null = null;
@@ -221,28 +222,30 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
-    const responsePrisma = await prisma.response.create({
-      data: {
-        survey: {
+    const prismaData: Prisma.ResponseCreateInput = {
+      survey: {
+        connect: {
+          id: surveyId,
+        },
+      },
+      finished: finished,
+      data: data,
+      language: language,
+      ...(person?.id && {
+        person: {
           connect: {
-            id: surveyId,
+            id: person.id,
           },
         },
-        finished: finished,
-        data: data,
-        language: language,
-        ...(person?.id && {
-          person: {
-            connect: {
-              id: person.id,
-            },
-          },
-          personAttributes: attributes,
-        }),
-        ...(meta && ({ meta } as Prisma.JsonObject)),
-        singleUseId,
-        ttc: ttc,
-      },
+        personAttributes: attributes,
+      }),
+      ...(meta && ({ meta } as Prisma.JsonObject)),
+      singleUseId,
+      ttc: ttc,
+    };
+
+    const responsePrisma = await prisma.response.create({
+      data: prismaData,
       select: responseSelection,
     });
 
