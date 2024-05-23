@@ -9,7 +9,7 @@ export interface fallbacks {
 
 // Extracts the ID of recall question from a string containing the "recall" pattern.
 export const extractId = (text: string): string | null => {
-  const pattern = /#recall:([A-Za-z0-9]+)/;
+  const pattern = /#recall:([A-Za-z0-9_-]+)/;
   const match = text.match(pattern);
   if (match && match[1]) {
     return match[1];
@@ -20,7 +20,7 @@ export const extractId = (text: string): string | null => {
 
 // If there are multiple recall infos in a string extracts all recall question IDs from that string and construct an array out of it.
 export const extractIds = (text: string): string[] => {
-  const pattern = /#recall:([A-Za-z0-9]+)/g;
+  const pattern = /#recall:([A-Za-z0-9_-]+)/g;
   const matches = Array.from(text.matchAll(pattern));
   return matches.map((match) => match[1]).filter((id) => id !== null);
 };
@@ -38,7 +38,7 @@ export const extractFallbackValue = (text: string): string => {
 
 // Extracts the complete recall information (ID and fallback) from a headline string.
 export const extractRecallInfo = (headline: string): string | null => {
-  const pattern = /#recall:([A-Za-z0-9]+)\/fallback:(\S*)#/;
+  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:(\S*)#/;
   const match = headline.match(pattern);
   return match ? match[0] : null;
 };
@@ -150,7 +150,7 @@ export const getRecallQuestions = (text: string, survey: TSurvey, langauge: stri
 // Constructs a fallbacks object from a text containing multiple recall and fallback patterns.
 export const getFallbackValues = (text: string): fallbacks => {
   if (!text.includes("#recall:")) return {};
-  const pattern = /#recall:([A-Za-z0-9]+)\/fallback:([\S*]+)#/g;
+  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:([\S*]+)#/g;
   let match;
   const fallbacks: fallbacks = {};
 
