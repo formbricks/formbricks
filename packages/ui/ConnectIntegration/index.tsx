@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { TIntegrationType } from "@formbricks/types/integration";
 
 import { Button } from "../../ui/Button";
-import { FormbricksLogo } from "../icons/FormbricksLogo";
+import { FormbricksLogo } from "../FormbricksLogo";
 import { getIntegrationDetails } from "./lib/utils";
 
 interface ConnectIntegrationProps {
