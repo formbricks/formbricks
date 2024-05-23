@@ -49,7 +49,7 @@ export const LinkSurvey = ({
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
-  const skipPrefilled = searchParams?.get("skipPrefilled") === "1";
+  const skipPrefilled = searchParams?.get("skipPrefilled") === "true";
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
   const defaultLanguageCode = survey.languages?.find((surveyLanguage) => {
