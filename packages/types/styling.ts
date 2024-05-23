@@ -40,3 +40,5 @@ export const ZBaseStyling = z.object({
   hideProgressBar: z.boolean().nullish(),
   isLogoHidden: z.boolean().nullish(),
 });
+
+export type TBaseStyling = z.infer<typeof ZBaseStyling>;

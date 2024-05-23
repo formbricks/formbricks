@@ -4,16 +4,19 @@ import { BackgroundStylingCard } from "@/app/(app)/(survey-editor)/environments/
 import { CardStylingSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/CardStylingSettings";
 import { FormStylingSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
 import { ThemeStylingPreviewSurvey } from "@/app/(app)/environments/[environmentId]/product/look/components/ThemeStylingPreviewSurvey";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { COLOR_DEFAULTS, PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
-import { TProduct } from "@formbricks/types/product";
-import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
+import { TProduct, TProductStyling, ZProductStyling } from "@formbricks/types/product";
+import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
+import { Form, FormControl, FormField, FormItem } from "@formbricks/ui/Form";
 import { Switch } from "@formbricks/ui/Switch";
 
 import { updateProductAction } from "../actions";
@@ -29,6 +32,30 @@ type ThemeStylingProps = {
 
 export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigured }: ThemeStylingProps) => {
   const router = useRouter();
+
+  const form = useForm<TProductStyling>({
+    defaultValues: {
+      ...product.styling,
+
+      // specify the default values for the colors
+      brandColor: { light: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor },
+      questionColor: { light: product.styling.questionColor?.light ?? COLOR_DEFAULTS.questionColor },
+      inputColor: { light: product.styling.inputColor?.light ?? COLOR_DEFAULTS.inputColor },
+      inputBorderColor: { light: product.styling.inputBorderColor?.light ?? COLOR_DEFAULTS.inputBorderColor },
+      cardBackgroundColor: {
+        light: product.styling.cardBackgroundColor?.light ?? COLOR_DEFAULTS.cardBackgroundColor,
+      },
+      cardBorderColor: { light: product.styling.cardBorderColor?.light ?? COLOR_DEFAULTS.cardBorderColor },
+      cardShadowColor: { light: product.styling.cardShadowColor?.light ?? COLOR_DEFAULTS.cardShadowColor },
+      highlightBorderColor: product.styling.highlightBorderColor?.light
+        ? {
+            light: product.styling.highlightBorderColor.light,
+          }
+        : null,
+    },
+    resolver: zodResolver(ZProductStyling),
+  });
+
   const [localProduct, setLocalProduct] = useState(product);
   const [previewSurveyType, setPreviewSurveyType] = useState<TSurveyType>("link");
   const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
@@ -163,103 +190,129 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
     }));
   }, [allowStyleOverwrite, styling]);
 
+  const onSubmit: SubmitHandler<TProductStyling> = async (data) => {
+    console.log("data", data);
+  };
+
+  console.log("brand color: ", form.watch("brandColor.light"));
+  console.log("errors: ", form.formState.errors);
+
   return (
-    <div className="flex">
-      {/* Styling settings */}
-      <div className="relative flex w-1/2 flex-col pr-6">
-        <div className="flex flex-1 flex-col gap-4">
-          <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
-            <div className="flex items-center gap-6">
-              <Switch
-                checked={allowStyleOverwrite}
-                onCheckedChange={(value) => {
-                  setAllowStyleOverwrite(value);
-                }}
-              />
-              <div className="flex flex-col">
-                <h3 className="text-sm font-semibold text-slate-700">Enable custom styling</h3>
-                <p className="text-xs text-slate-500">
-                  Allow users to override this theme in the survey editor.
-                </p>
+    <Form {...form} onSubmit={form.handleSubmit(onSubmit)}>
+      <div className="flex">
+        {/* Styling settings */}
+        <div className="relative flex w-1/2 flex-col pr-6">
+          <div className="flex flex-1 flex-col gap-4">
+            <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
+              <div className="flex items-center gap-6">
+                <FormField
+                  control={form.control}
+                  name="allowStyleOverwrite"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={(value) => {
+                            field.onChange(value);
+                          }}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}></FormField>
+
+                <div className="flex flex-col">
+                  <h3 className="text-sm font-semibold text-slate-700">Enable custom styling</h3>
+                  <p className="text-xs text-slate-500">
+                    Allow users to override this theme in the survey editor.
+                  </p>
+                </div>
               </div>
+            </div>
+
+            <div className="flex flex-col gap-3 rounded-lg bg-slate-50 p-4">
+              <FormStylingSettings
+                open={formStylingOpen}
+                setOpen={setFormStylingOpen}
+                styling={styling}
+                setStyling={setStyling}
+                isSettingsPage
+                form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
+              />
+
+              <CardStylingSettings
+                open={cardStylingOpen}
+                setOpen={setCardStylingOpen}
+                styling={styling}
+                setStyling={setStyling}
+                isSettingsPage
+                localProduct={localProduct}
+                surveyType={previewSurveyType}
+              />
+
+              <BackgroundStylingCard
+                open={backgroundStylingOpen}
+                setOpen={setBackgroundStylingOpen}
+                styling={styling}
+                setStyling={setStyling}
+                environmentId={environmentId}
+                colors={colors}
+                key={styling.background?.bg}
+                isSettingsPage
+                isUnsplashConfigured={isUnsplashConfigured}
+              />
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 rounded-lg bg-slate-50 p-4">
-            <FormStylingSettings
-              open={formStylingOpen}
-              setOpen={setFormStylingOpen}
-              styling={styling}
-              setStyling={setStyling}
-              isSettingsPage
-            />
+          <div className="mt-4 flex items-center gap-2">
+            <Button
+              variant="darkCTA"
+              size="sm"
+              type="submit"
 
-            <CardStylingSettings
-              open={cardStylingOpen}
-              setOpen={setCardStylingOpen}
-              styling={styling}
-              setStyling={setStyling}
-              isSettingsPage
-              localProduct={localProduct}
-              surveyType={previewSurveyType}
-            />
+              // onClick={onSave}
+            >
+              Save
+            </Button>
+            <Button
+              size="sm"
+              variant="minimal"
+              className="flex items-center gap-2"
+              onClick={() => setConfirmResetStylingModalOpen(true)}>
+              Reset to default
+              <RotateCcwIcon className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
 
-            <BackgroundStylingCard
-              open={backgroundStylingOpen}
-              setOpen={setBackgroundStylingOpen}
-              styling={styling}
-              setStyling={setStyling}
-              environmentId={environmentId}
-              colors={colors}
-              key={styling.background?.bg}
-              isSettingsPage
-              isUnsplashConfigured={isUnsplashConfigured}
+        {/* Survey Preview */}
+
+        <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
+          <div className="sticky top-4 mb-4 h-[600px]">
+            <ThemeStylingPreviewSurvey
+              setQuestionId={setQuestionId}
+              survey={styledPreviewSurvey as TSurvey}
+              product={localProduct}
+              previewType={previewSurveyType}
+              setPreviewType={setPreviewSurveyType}
             />
           </div>
         </div>
 
-        <div className="mt-4 flex items-center gap-2">
-          <Button variant="darkCTA" size="sm" onClick={onSave}>
-            Save
-          </Button>
-          <Button
-            size="sm"
-            variant="minimal"
-            className="flex items-center gap-2"
-            onClick={() => setConfirmResetStylingModalOpen(true)}>
-            Reset to default
-            <RotateCcwIcon className="h-4 w-4" />
-          </Button>
-        </div>
+        {/* Confirm reset styling modal */}
+        <AlertDialog
+          open={confirmResetStylingModalOpen}
+          setOpen={setConfirmResetStylingModalOpen}
+          headerText="Reset styling"
+          mainText="Are you sure you want to reset the styling to default?"
+          confirmBtnLabel="Confirm"
+          onConfirm={() => {
+            onReset();
+            setConfirmResetStylingModalOpen(false);
+          }}
+          onDecline={() => setConfirmResetStylingModalOpen(false)}
+        />
       </div>
-
-      {/* Survey Preview */}
-
-      <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
-        <div className="sticky top-4 mb-4 h-[600px]">
-          <ThemeStylingPreviewSurvey
-            setQuestionId={setQuestionId}
-            survey={styledPreviewSurvey as TSurvey}
-            product={localProduct}
-            previewType={previewSurveyType}
-            setPreviewType={setPreviewSurveyType}
-          />
-        </div>
-      </div>
-
-      {/* Confirm reset styling modal */}
-      <AlertDialog
-        open={confirmResetStylingModalOpen}
-        setOpen={setConfirmResetStylingModalOpen}
-        headerText="Reset styling"
-        mainText="Are you sure you want to reset the styling to default?"
-        confirmBtnLabel="Confirm"
-        onConfirm={() => {
-          onReset();
-          setConfirmResetStylingModalOpen(false);
-        }}
-        onDecline={() => setConfirmResetStylingModalOpen(false)}
-      />
-    </div>
+    </Form>
   );
 };
