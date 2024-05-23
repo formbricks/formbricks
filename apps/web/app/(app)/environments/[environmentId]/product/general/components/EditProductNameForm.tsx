@@ -71,34 +71,35 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
   };
 
   return !isProductNameEditDisabled ? (
-    <Form {...form}>
-      <form className="w-full max-w-sm items-center space-y-2" onSubmit={form.handleSubmit(updateProduct)}>
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel htmlFor="name">What&apos;s your product called?</FormLabel>
-              <FormControl>
-                <Input
-                  type="text"
-                  id="name"
-                  {...field}
-                  placeholder="Product Name"
-                  autoComplete="off"
-                  required
-                  isInvalid={!!nameError}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <Form
+      {...form}
+      className="w-full max-w-sm items-center space-y-2"
+      onSubmit={form.handleSubmit(updateProduct)}>
+      <FormField
+        control={form.control}
+        name="name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel htmlFor="name">What&apos;s your product called?</FormLabel>
+            <FormControl>
+              <Input
+                type="text"
+                id="name"
+                {...field}
+                placeholder="Product Name"
+                autoComplete="off"
+                required
+                isInvalid={!!nameError}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-        <Button type="submit" variant="darkCTA" size="sm" loading={isSubmitting} disabled={isSubmitting}>
-          Update
-        </Button>
-      </form>
+      <Button type="submit" variant="darkCTA" size="sm" loading={isSubmitting} disabled={isSubmitting}>
+        Update
+      </Button>
     </Form>
   ) : (
     <p className="text-sm text-red-700">Only Owners, Admins and Editors can perform this action.</p>

@@ -46,40 +46,39 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product, e
   };
 
   return (
-    <Form {...form}>
-      <form
-        className="w-full max-w-sm items-center space-y-2"
-        onSubmit={form.handleSubmit(updateWaitingTime)}>
-        <FormField
-          control={form.control}
-          name="recontactDays"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel htmlFor="recontactDays">Wait X days before showing next survey:</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  id="recontactDays"
-                  {...field}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === "") {
-                      field.onChange("");
-                    }
+    <Form
+      {...form}
+      className="flex w-full max-w-sm flex-col space-y-4"
+      onSubmit={form.handleSubmit(updateWaitingTime)}>
+      <FormField
+        control={form.control}
+        name="recontactDays"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel htmlFor="recontactDays">Wait X days before showing next survey:</FormLabel>
+            <FormControl>
+              <Input
+                type="number"
+                id="recontactDays"
+                {...field}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "") {
+                    field.onChange("");
+                  }
 
-                    field.onChange(parseInt(value, 10));
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  field.onChange(parseInt(value, 10));
+                }}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-        <Button type="submit" variant="darkCTA" size="sm">
-          Update
-        </Button>
-      </form>
+      <Button type="submit" variant="darkCTA" size="sm" className="w-fit">
+        Update
+      </Button>
     </Form>
   );
 };
