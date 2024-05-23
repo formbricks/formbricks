@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { TabBar } from "@formbricks/ui/TabBar";
+import { TabToggle } from "@formbricks/ui/TabToggle";
 
 import { createActionClassAction } from "../actions";
 
@@ -54,7 +54,8 @@ export const CreateNewActionTab = ({
     },
   });
 
-  const [type, setType] = useState("noCode");
+  const [type, setType] = useState<"code" | "noCode">("noCode");
+  const [userAction, setUserAction] = useState<TActionClassNoCodeConfig["type"]>("click");
 
   const [isPageUrl, setIsPageUrl] = useState(false);
   const [isCssSelector, setIsCssSelector] = useState(false);
@@ -184,7 +185,7 @@ export const CreateNewActionTab = ({
   return (
     <div>
       <form onSubmit={handleSubmit(submitHandler)}>
-        <div className="w-full space-y-4">
+        <div className="max-h-[600px] w-full space-y-4 overflow-y-auto">
           <div className="grid w-full grid-cols-2 gap-x-4">
             <div className="col-span-1">
               <Label htmlFor="actionNameInput">What did your user do?</Label>
@@ -200,70 +201,77 @@ export const CreateNewActionTab = ({
             </div>
           </div>
 
-          <div onClick={(e) => e.stopPropagation()}>
-            <Label>Type</Label>
-            <div className="w-3/5">
-              <TabBar
-                tabs={[
-                  {
-                    id: "noCode",
-                    label: "No code",
-                  },
-                  {
-                    id: "code",
-                    label: "Code",
-                  },
-                ]}
-                activeId={type}
-                setActiveId={setType}
-                tabStyle="button"
-                className="rounded-md bg-white"
-                activeTabClassName="bg-slate-100"
-              />
-            </div>
+          <div className="w-3/5">
+            <TabToggle
+              id="type"
+              label="Type"
+              onChange={(value) => setType(value)}
+              options={[
+                { value: "noCode", label: "No code" },
+                { value: "code", label: "Code" },
+              ]}
+              defaultSelected={type}
+            />
           </div>
 
-          <div className="max-h-60 overflow-y-auto">
-            {type === "code" ? (
-              <>
-                <div className="col-span-1">
-                  <Label htmlFor="codeActionKeyInput">Key</Label>
-                  <Input
-                    id="codeActionKeyInput"
-                    placeholder="e.g. download_cta_click_on_home"
-                    {...register("key")}
-                    className="mb-2 w-1/2"
-                  />
-                </div>
-                <Alert className="bg-slate-100">
-                  <Terminal className="h-4 w-4" />
-                  <AlertTitle>How do Code Actions work?</AlertTitle>
-                  <AlertDescription>
-                    You can track code action anywhere in your app using{" "}
-                    <span className="rounded bg-white px-2 py-1 text-xs">
-                      formbricks.track(&quot;{watch("key")}&quot;)
-                    </span>{" "}
-                    in your code. Read more in our{" "}
-                    <a href="https://formbricks.com/docs/actions/code" target="_blank" className="underline">
-                      docs
-                    </a>
-                    .
-                  </AlertDescription>
-                </Alert>
-              </>
-            ) : (
-              <>
-                <div>
-                  <Label>Select By</Label>
-                </div>
-                <CssSelector
-                  isCssSelector={isCssSelector}
-                  setIsCssSelector={setIsCssSelector}
-                  register={register}
+          {type === "code" ? (
+            <>
+              <div className="col-span-1">
+                <Label htmlFor="codeActionKeyInput">Key</Label>
+                <Input
+                  id="codeActionKeyInput"
+                  placeholder="e.g. download_cta_click_on_home"
+                  {...register("key")}
+                  className="mb-2 w-1/2"
                 />
+              </div>
+              <Alert className="bg-slate-100">
+                <Terminal className="h-4 w-4" />
+                <AlertTitle>How do Code Actions work?</AlertTitle>
+                <AlertDescription>
+                  You can track code action anywhere in your app using{" "}
+                  <span className="rounded bg-white px-2 py-1 text-xs">
+                    formbricks.track(&quot;{watch("key")}&quot;)
+                  </span>{" "}
+                  in your code. Read more in our{" "}
+                  <a href="https://formbricks.com/docs/actions/code" target="_blank" className="underline">
+                    docs
+                  </a>
+                  .
+                </AlertDescription>
+              </Alert>
+            </>
+          ) : (
+            <div>
+              <TabToggle
+                id="userAction"
+                label="What is the user doing?"
+                onChange={(value) => setUserAction(value)}
+                options={[
+                  { value: "click", label: "Click" },
+                  { value: "pageView", label: "Page View" },
+                  { value: "exitIntent", label: "Exit Intent" },
+                  { value: "50PercentScroll", label: "50% Scroll" },
+                ]}
+                defaultSelected={userAction}
+              />
+
+              <div className="mt-2">
+                {userAction === "click" && (
+                  <>
+                    <CssSelector
+                      isCssSelector={isCssSelector}
+                      setIsCssSelector={setIsCssSelector}
+                      register={register}
+                    />
+                    <InnerHtmlSelector
+                      isInnerHtml={isInnerHtml}
+                      setIsInnerHtml={setIsInnerText}
+                      register={register}
+                    />
+                  </>
+                )}
                 <PageUrlSelector
-                  isPageUrl={isPageUrl}
-                  setIsPageUrl={setIsPageUrl}
                   register={register}
                   control={control}
                   testUrl={testUrl}
@@ -272,14 +280,9 @@ export const CreateNewActionTab = ({
                   setIsMatch={setIsMatch}
                   handleMatchClick={handleMatchClick}
                 />
-                <InnerHtmlSelector
-                  isInnerHtml={isInnerHtml}
-                  setIsInnerHtml={setIsInnerText}
-                  register={register}
-                />
-              </>
-            )}
-          </div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex justify-end pt-6">
           <div className="flex space-x-2">

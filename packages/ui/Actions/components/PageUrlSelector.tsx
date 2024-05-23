@@ -1,17 +1,18 @@
 import { Label } from "@radix-ui/react-dropdown-menu";
+import { Globe } from "lucide-react";
+import { useState } from "react";
 import { Control, Controller, UseFormRegister } from "react-hook-form";
 
 import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
 
-import { AdvancedOptionToggle } from "../../AdvancedOptionToggle";
+import { Alert, AlertDescription, AlertTitle } from "../../Alert";
 import { Button } from "../../Button";
 import { Input } from "../../Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../Select";
+import { TabToggle } from "../../TabToggle";
 
 interface PageUrlSelectorProps {
-  isPageUrl: boolean;
-  setIsPageUrl: (value: boolean) => void;
   testUrl: string;
   setTestUrl: (value: string) => void;
   isMatch: string;
@@ -22,8 +23,6 @@ interface PageUrlSelectorProps {
 }
 
 export const PageUrlSelector = ({
-  isPageUrl,
-  setIsPageUrl,
   control,
   register,
   testUrl,
@@ -32,88 +31,105 @@ export const PageUrlSelector = ({
   setTestUrl,
   handleMatchClick,
 }: PageUrlSelectorProps) => {
+  const [urlFilter, setUrlFilter] = useState<"all" | "specific">("all");
+
   return (
-    <AdvancedOptionToggle
-      htmlId="PageURL"
-      isChecked={isPageUrl}
-      onToggle={() => {
-        setIsPageUrl(!isPageUrl);
-      }}
-      title="Page URL"
-      description="If a user visits a specific URL"
-      childBorder={true}>
-      <div className="col-span-1 w-full space-y-3 p-4">
-        <div className="flex w-full items-end gap-2">
-          <div>
-            <Label>URL</Label>
-            <Controller
-              name="noCodeConfig.pageUrl.rule"
-              control={control}
-              render={({ field: { onChange, value, name } }) => (
-                <Select onValueChange={onChange} value={value} name={name}>
-                  <SelectTrigger className="w-[160px] bg-white">
-                    <SelectValue placeholder="Select match type" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="exactMatch">Exactly matches</SelectItem>
-                    <SelectItem value="contains">Contains</SelectItem>
-                    <SelectItem value="startsWith">Starts with</SelectItem>
-                    <SelectItem value="endsWith">Ends with</SelectItem>
-                    <SelectItem value="notMatch">Does not exactly match</SelectItem>
-                    <SelectItem value="notContains">Does not contain</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-          <div className="flex flex-1 items-end">
-            <Input
-              type="text"
-              className="bg-white"
-              placeholder="e.g. https://app.com/dashboard"
-              {...register("noCodeConfig.pageUrl.value", { required: isPageUrl })}
-            />
-          </div>
-        </div>
-        <div className="pt-4">
-          <div className="text-sm text-slate-900">Test your URL</div>
-          <div className="text-xs text-slate-400">
-            Enter a URL to see if a user visiting it would be tracked.
-          </div>
-          <div className=" rounded bg-slate-50">
-            <div className="mt-1 flex items-end">
-              <Input
-                type="text"
-                value={testUrl}
-                name="noCodeConfig.pageUrl.testUrl"
-                onChange={(e) => {
-                  setTestUrl(e.target.value);
-                  setIsMatch("default");
-                }}
-                className={cn(
-                  isMatch === "yes"
-                    ? "border-green-500 bg-green-50"
-                    : isMatch === "no"
-                      ? "border-red-200 bg-red-50"
-                      : isMatch === "default"
-                        ? "border-slate-200"
-                        : "bg-white"
-                )}
-                placeholder="e.g. https://app.com/dashboard"
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                className="ml-2 whitespace-nowrap"
-                onClick={() => {
-                  handleMatchClick();
-                }}>
-                Test Match
-              </Button>
+    <>
+      <div className="mt-4 w-4/5">
+        <TabToggle
+          id="filter"
+          label="Filter"
+          subLabel="Limit the pages on which this action gets captured"
+          onChange={(value) => setUrlFilter(value)}
+          options={[
+            { value: "all", label: "On all pages" },
+            { value: "specific", label: "Limit to specific pages" },
+          ]}
+          defaultSelected={urlFilter}
+        />
+      </div>
+      {urlFilter === "specific" ? (
+        <div className={`ml-2 mt-4 flex  items-center space-x-1 rounded-lg border bg-slate-50`}>
+          <div className="col-span-1 w-full space-y-3 p-4">
+            <div className="flex w-full items-end gap-2">
+              <div>
+                <Label>URL</Label>
+                <Controller
+                  name="noCodeConfig.pageUrl.rule"
+                  control={control}
+                  render={({ field: { onChange, value, name } }) => (
+                    <Select onValueChange={onChange} value={value} name={name}>
+                      <SelectTrigger className="w-[160px] bg-white">
+                        <SelectValue placeholder="Select match type" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="exactMatch">Exactly matches</SelectItem>
+                        <SelectItem value="contains">Contains</SelectItem>
+                        <SelectItem value="startsWith">Starts with</SelectItem>
+                        <SelectItem value="endsWith">Ends with</SelectItem>
+                        <SelectItem value="notMatch">Does not exactly match</SelectItem>
+                        <SelectItem value="notContains">Does not contain</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="flex flex-1 items-end">
+                <Input
+                  type="text"
+                  className="bg-white"
+                  placeholder="e.g. https://app.com/dashboard"
+                  {...register("noCodeConfig.pageUrl.value", { required: urlFilter })}
+                />
+              </div>
+            </div>
+            <div className="pt-4">
+              <div className="text-sm text-slate-900">Test your URL</div>
+              <div className="text-xs text-slate-400">
+                Enter a URL to see if a user visiting it would be tracked.
+              </div>
+              <div className=" rounded bg-slate-50">
+                <div className="mt-1 flex items-end">
+                  <Input
+                    type="text"
+                    value={testUrl}
+                    name="noCodeConfig.pageUrl.testUrl"
+                    onChange={(e) => {
+                      setTestUrl(e.target.value);
+                      setIsMatch("default");
+                    }}
+                    className={cn(
+                      isMatch === "yes"
+                        ? "border-green-500 bg-green-50"
+                        : isMatch === "no"
+                          ? "border-red-200 bg-red-50"
+                          : isMatch === "default"
+                            ? "border-slate-200"
+                            : "bg-white"
+                    )}
+                    placeholder="e.g. https://app.com/dashboard"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="ml-2 whitespace-nowrap"
+                    onClick={() => {
+                      handleMatchClick();
+                    }}>
+                    Test Match
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </AdvancedOptionToggle>
+      ) : (
+        <Alert className="my-2 bg-slate-100">
+          <Globe className="h-4 w-4" />
+          <AlertTitle>Visible on all pages</AlertTitle>
+          <AlertDescription>This action will be captured on all pages of your website</AlertDescription>
+        </Alert>
+      )}
+    </>
   );
 };

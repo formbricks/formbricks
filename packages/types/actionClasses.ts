@@ -20,19 +20,65 @@ export const ZActionClassPageUrlRule = z.union([
 
 export type TActionClassPageUrlRule = z.infer<typeof ZActionClassPageUrlRule>;
 
-export const ZActionClassNoCodeConfig = z.object({
-  // The "type field has been made optional to allow for multiple selectors in one noCode action from now on
-  // Use the existence check of the fields to determine the types of the noCode action
-  type: z.optional(z.union([z.literal("innerHtml"), z.literal("pageUrl"), z.literal("cssSelector")])),
-  pageUrl: z.optional(
-    z.object({
-      value: z.string(),
-      rule: ZActionClassPageUrlRule,
-    })
-  ),
-  innerHtml: z.optional(z.object({ value: z.string() })),
-  cssSelector: z.optional(z.object({ value: z.string() })),
+// export const ZActionClassNoCodeConfig = z.object({
+//   // The "type field has been made optional to allow for multiple selectors in one noCode action from now on
+//   // Use the existence check of the fields to determine the types of the noCode action
+//   type: z.optional(z.union([z.literal("innerHtml"), z.literal("pageUrl"), z.literal("cssSelector")])),
+//   pageUrl: z.optional(
+//     z.object({
+//       value: z.string(),
+//       rule: ZActionClassPageUrlRule,
+//     })
+//   ),
+//   innerHtml: z.optional(z.object({ value: z.string() })),
+//   cssSelector: z.optional(z.object({ value: z.string() })),
+// });
+
+const ZActionClassNoCodeConfigBase = z.object({
+  type: z.enum(["click", "pageView", "exitIntent", "50PercentScroll"]),
+  urlFilters: z
+    .array(
+      z.object({
+        value: z.string(),
+        rule: ZActionClassPageUrlRule,
+      })
+    )
+    .optional(),
 });
+
+const ZActionClassNoCodeConfigClick = ZActionClassNoCodeConfigBase.extend({
+  type: z.literal("click"),
+  elementSelector: z
+    .object({
+      cssSelector: z.string().optional(),
+      innerHtml: z.string().optional(),
+    })
+    .superRefine((data) => {
+      if (!data.cssSelector && !data.innerHtml) {
+        throw new Error("Either cssSelector or innerHtml must be provided");
+      }
+      return true;
+    }),
+});
+
+const ZActionClassNoCodeConfigPageView = ZActionClassNoCodeConfigBase.extend({
+  type: z.literal("pageView"),
+});
+
+const ZActionClassNoCodeConfigExitIntent = ZActionClassNoCodeConfigBase.extend({
+  type: z.literal("exitIntent"),
+});
+
+const ZActionClassNoCodeConfig50PercentScroll = ZActionClassNoCodeConfigBase.extend({
+  type: z.literal("50PercentScroll"),
+});
+
+export const ZActionClassNoCodeConfig = z.union([
+  ZActionClassNoCodeConfigClick,
+  ZActionClassNoCodeConfigPageView,
+  ZActionClassNoCodeConfigExitIntent,
+  ZActionClassNoCodeConfig50PercentScroll,
+]);
 
 export type TActionClassNoCodeConfig = z.infer<typeof ZActionClassNoCodeConfig>;
 
