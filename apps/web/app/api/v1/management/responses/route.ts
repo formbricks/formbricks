@@ -1,17 +1,12 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { sendToPipeline } from "@/app/lib/pipelines";
-import { headers } from "next/headers";
 import { NextRequest } from "next/server";
-import { UAParser } from "ua-parser-js";
 
-import { getPerson } from "@formbricks/lib/person/service";
-import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
-import { createResponseManagement, getResponsesByEnvironmentId } from "@formbricks/lib/response/service";
+import { createResponse, getResponsesByEnvironmentId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
-import { TManagementResponseInput, TResponse, ZManagementResponseInput } from "@formbricks/types/responses";
+import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 
 export const GET = async (request: NextRequest) => {
   const surveyId = request.nextUrl.searchParams.get("surveyId");
@@ -38,29 +33,21 @@ export const POST = async (request: Request): Promise<Response> => {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
 
-    let responseInput;
+    const environmentId = authentication.environmentId;
+
+    let jsonInput;
+
     try {
-      responseInput = await request.json();
+      jsonInput = await request.json();
     } catch (err) {
       console.error(`Error parsing JSON input: ${err}`);
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
 
-    const inputValidation = ZManagementResponseInput.safeParse(responseInput);
+    // add environmentId to response
+    jsonInput.environmentId = environmentId;
 
-    // legacy workaround for formbricks-js 1.2.0 & 1.2.1
-    if (responseInput.personId && typeof responseInput.personId === "string") {
-      const person = await getPerson(responseInput.personId);
-      responseInput.userId = person?.userId;
-      delete responseInput.personId;
-    }
-
-    const agent = UAParser(request.headers.get("user-agent"));
-    const country =
-      headers().get("CF-IPCountry") ||
-      headers().get("X-Vercel-IP-Country") ||
-      headers().get("CloudFront-Viewer-Country") ||
-      undefined;
+    const inputValidation = ZResponseInput.safeParse(jsonInput);
 
     if (!inputValidation.success) {
       return responses.badRequestResponse(
@@ -70,8 +57,7 @@ export const POST = async (request: Request): Promise<Response> => {
       );
     }
 
-    const inputData = inputValidation.data;
-    const { environmentId } = inputData;
+    const responseInput = inputValidation.data;
 
     // get and check survey
     const survey = await getSurvey(responseInput.surveyId);
@@ -89,24 +75,14 @@ export const POST = async (request: Request): Promise<Response> => {
       );
     }
 
+    // if there is a createdAt but no updatedAt, set updatedAt to createdAt
+    if (responseInput.createdAt && !responseInput.updatedAt) {
+      responseInput.updatedAt = responseInput.createdAt;
+    }
+
     let response: TResponse;
     try {
-      const meta: TManagementResponseInput["meta"] = {
-        source: responseInput?.meta?.source,
-        url: responseInput?.meta?.url,
-        userAgent: {
-          browser: agent?.browser.name,
-          device: agent?.device.type,
-          os: agent?.os.name,
-        },
-        country: country,
-        action: responseInput?.meta?.action,
-      };
-
-      response = await createResponseManagement({
-        ...inputValidation.data,
-        meta,
-      });
+      response = await createResponse(inputValidation.data);
     } catch (error) {
       if (error instanceof InvalidInputError) {
         return responses.badRequestResponse(error.message);
@@ -116,28 +92,7 @@ export const POST = async (request: Request): Promise<Response> => {
       }
     }
 
-    sendToPipeline({
-      event: "responseCreated",
-      environmentId: survey.environmentId,
-      surveyId: response.surveyId,
-      response: response,
-    });
-
-    if (responseInput.finished) {
-      sendToPipeline({
-        event: "responseFinished",
-        environmentId: survey.environmentId,
-        surveyId: response.surveyId,
-        response: response,
-      });
-    }
-
-    await capturePosthogEnvironmentEvent(survey.environmentId, "response created", {
-      surveyId: response.surveyId,
-      surveyType: survey.type,
-    });
-
-    return responses.successResponse({ id: response.id }, true);
+    return responses.successResponse(response, true);
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);

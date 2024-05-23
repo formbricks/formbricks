@@ -231,6 +231,8 @@ export const ZResponse = z.object({
 export type TResponse = z.infer<typeof ZResponse>;
 
 export const ZResponseInput = z.object({
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
   environmentId: z.string().cuid2(),
   surveyId: z.string().cuid2(),
   userId: z.string().nullish(),
@@ -257,13 +259,6 @@ export const ZResponseInput = z.object({
 });
 
 export type TResponseInput = z.infer<typeof ZResponseInput>;
-
-export const ZManagementResponseInput = ZResponseInput.extend({
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-});
-
-export type TManagementResponseInput = z.infer<typeof ZManagementResponseInput>;
 
 export const ZResponseLegacyInput = ZResponseInput.omit({ userId: true, environmentId: true }).extend({
   personId: z.string().cuid2().nullable(),

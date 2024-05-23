@@ -9,7 +9,6 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
-  TManagementResponseInput,
   TResponse,
   TResponseFilterCriteria,
   TResponseInput,
@@ -17,7 +16,6 @@ import {
   TResponseUpdateInput,
   TSurveyMetaFieldFilter,
   TSurveyPersonAttributes,
-  ZManagementResponseInput,
   ZResponseFilterCriteria,
   ZResponseInput,
   ZResponseLegacyInput,
@@ -190,11 +188,8 @@ export const getResponseBySingleUseId = (surveyId: string, singleUseId: string):
     }
   )();
 
-const createResponseCommon = async (
-  responseInput: TResponseInput | TManagementResponseInput,
-  isManagement: boolean
-): Promise<TResponse> => {
-  validateInputs([responseInput, isManagement ? ZManagementResponseInput : ZResponseInput]);
+export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
+  validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
   const {
@@ -249,20 +244,6 @@ const createResponseCommon = async (
       ttc: ttc,
     };
 
-    if (isManagement) {
-      // if there is a createdAt but no updatedAt, set updatedAt to createdAt
-      if (
-        (responseInput as TManagementResponseInput).createdAt &&
-        !(responseInput as TManagementResponseInput).updatedAt
-      ) {
-        prismaData.createdAt = (responseInput as TManagementResponseInput).createdAt;
-        prismaData.updatedAt = (responseInput as TManagementResponseInput).createdAt;
-      } else {
-        prismaData.createdAt = (responseInput as TManagementResponseInput).createdAt;
-        prismaData.updatedAt = (responseInput as TManagementResponseInput).updatedAt;
-      }
-    }
-
     const responsePrisma = await prisma.response.create({
       data: prismaData,
       select: responseSelection,
@@ -293,16 +274,6 @@ const createResponseCommon = async (
 
     throw error;
   }
-};
-
-export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
-  return createResponseCommon(responseInput, false);
-};
-
-export const createResponseManagement = async (
-  responseInput: TManagementResponseInput
-): Promise<TResponse> => {
-  return createResponseCommon(responseInput, true);
 };
 
 export const createResponseLegacy = async (responseInput: TResponseLegacyInput): Promise<TResponse> => {
