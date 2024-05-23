@@ -9,7 +9,7 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   const url = req.url;
   const environmentId = req.headers.get("environmentId");
   const queryParams = new URLSearchParams(url.split("?")[1]);
@@ -41,4 +41,4 @@ export async function GET(req: NextRequest) {
 
   const tables = await getTables(integration.config.key, baseId.data);
   return responses.successResponse(tables);
-}
+};

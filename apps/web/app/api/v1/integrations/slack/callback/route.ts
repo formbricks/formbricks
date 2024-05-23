@@ -5,7 +5,7 @@ import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/li
 import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
 import { TIntegrationSlackConfig, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   const url = req.url;
   const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
   const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
@@ -64,4 +64,4 @@ export async function GET(req: NextRequest) {
   } else if (error) {
     return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/slack?error=${error}`);
   }
-}
+};

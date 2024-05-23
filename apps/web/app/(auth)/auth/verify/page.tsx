@@ -1,10 +1,10 @@
 "use client";
 
-import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
+import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
 import { SignIn } from "@/app/(auth)/auth/verify/components/SignIn";
 import { useSearchParams } from "next/navigation";
 
-export default function Verify() {
+const Page = () => {
   const searchParams = useSearchParams();
   return searchParams && searchParams?.get("token") ? (
     <FormWrapper>
@@ -14,4 +14,6 @@ export default function Verify() {
   ) : (
     <p className="text-center">No Token provided</p>
   );
-}
+};
+
+export default Page;

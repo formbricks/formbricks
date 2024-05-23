@@ -8,7 +8,10 @@ import { AppConfig } from "./config";
 const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 
-export const updateAttribute = async (key: string, value: string): Promise<Result<void, NetworkError>> => {
+export const updateAttribute = async (
+  key: string,
+  value: string | number
+): Promise<Result<void, NetworkError>> => {
   const { apiHost, environmentId, userId } = appConfig.get();
 
   const api = new FormbricksAPI({
@@ -19,10 +22,17 @@ export const updateAttribute = async (key: string, value: string): Promise<Resul
   const res = await api.client.attribute.update({ userId, attributes: { [key]: value } });
 
   if (!res.ok) {
+    // @ts-expect-error
+    if (res.error.details?.ignore) {
+      logger.error(res.error.message ?? `Error updating person with userId ${userId}`);
+      return okVoid();
+    }
+
     return err({
       code: "network_error",
-      status: 500,
-      message: `Error updating person with userId ${userId}`,
+      // @ts-expect-error
+      status: res.error.status ?? 500,
+      message: res.error.message ?? `Error updating person with userId ${userId}`,
       url: `${appConfig.get().apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
       responseMessage: res.error.message,
     });
@@ -74,15 +84,21 @@ export const updateAttributes = async (
 
   if (res.ok) {
     return ok(updatedAttributes);
-  }
+  } else {
+    // @ts-expect-error
+    if (res.error.details?.ignore) {
+      logger.error(res.error.message ?? `Error updating person with userId ${userId}`);
+      return ok(updatedAttributes);
+    }
 
-  return err({
-    code: "network_error",
-    status: 500,
-    message: `Error updating person with userId ${userId}`,
-    url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
-    responseMessage: res.error.message,
-  });
+    return err({
+      code: "network_error",
+      status: 500,
+      message: `Error updating person with userId ${userId}`,
+      url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
+      responseMessage: res.error.message,
+    });
+  }
 };
 
 export const isExistingAttribute = (key: string, value: string): boolean => {
@@ -108,7 +124,7 @@ export const setAttributeInApp = async (
     return okVoid();
   }
 
-  const result = await updateAttribute(key, value.toString());
+  const result = await updateAttribute(key, value);
 
   if (result.ok) {
     // udpdate attribute in config

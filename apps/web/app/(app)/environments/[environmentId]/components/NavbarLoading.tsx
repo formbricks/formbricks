@@ -1,4 +1,4 @@
-export default function NavbarLoading() {
+export const NavbarLoading = () => {
   return (
     <div>
       <div className="flex justify-between space-x-4 px-4 py-2">
@@ -17,4 +17,4 @@ export default function NavbarLoading() {
       </div>
     </div>
   );
-}
+};

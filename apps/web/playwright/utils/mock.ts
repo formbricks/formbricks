@@ -243,7 +243,7 @@ export const actions = {
         name: "Create Action (Page URL)",
         description: "This is my Create Action (Page URL)",
         matcher: {
-          label: "Starts with",
+          label: "Contains",
           value: "custom-url",
         },
         testURL: "http://localhost:3000/custom-url",
@@ -257,6 +257,7 @@ export const actions = {
     code: {
       name: "Create Action (Code)",
       description: "This is my Create Action (Code)",
+      key: "Create Action (Code)",
     },
   },
   edit: {

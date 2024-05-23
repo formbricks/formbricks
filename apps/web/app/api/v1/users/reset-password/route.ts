@@ -2,7 +2,7 @@ import { prisma } from "@formbricks/database";
 import { sendPasswordResetNotifyEmail } from "@formbricks/email";
 import { verifyToken } from "@formbricks/lib/jwt";
 
-export async function POST(request: Request) {
+export const POST = async (request: Request) => {
   const { token, hashedPassword } = await request.json();
 
   try {
@@ -30,4 +30,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+};

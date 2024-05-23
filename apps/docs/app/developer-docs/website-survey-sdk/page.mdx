@@ -1,0 +1,145 @@
+import { MdxImage } from "@/components/MdxImage";
+
+export const metadata = {
+  title: "Formbricks Website Survey SDK",
+  description:
+    "An overview of all available methods & how to integrate Formbricks Website Surveys for frontend developers in public-facing web applications. Learn the key methods, configuration settings, and best practices.",
+};
+
+#### Developer Docs
+
+# SDK: Website Survey
+
+### Overview
+
+The Formbricks JS SDK is a 2-in-1 SDK for seamlessly integrating both App Surveys and Website Surveys into your projects. In this section, we'll explore how to leverage the SDK specifically for website surveys.
+
+### Install
+
+<Col>
+<CodeGroup title="npm">
+
+```js {{ title: 'npm' }}
+npm install @formbricks/js
+```
+
+```js {{ title: 'yarn' }}
+yarn add @formbricks/js
+```
+
+```js {{ title: 'pnpm' }}
+pnpm add @formbricks/js
+```
+
+</CodeGroup>
+</Col>
+
+## Methods
+
+### Initialize Formbricks
+
+Initialize the Formbricks JS Client specifically for website surveys, ideal for public-facing websites:
+
+<Note>you cannot set any other attribute other than language (optional) in website surveys.</Note>
+
+<Col>
+<CodeGroup title="Initialize Formbricks">
+
+```javascript
+import formbricks from "@formbricks/js/website";
+
+formbricks.init({
+  environmentId: "<your-environment-id>", // required
+  apiHost: "<your-api-host>", // required
+  attributes: {
+    // optional
+    language: "de", // optional
+  },
+});
+```
+
+</CodeGroup>
+</Col>
+
+The moment you initialise Formbricks, your users will start seeing surveys that get triggered on simpler actions such as on New Session, Page Exit, & other custom actions!
+
+<Note>
+Formbricks JS is a client SDK meant to be run client-side in their browser so make sure the window object is accessible. Below is an example of how you can set it!
+
+<Col>
+<CodeGroup>
+
+```js
+if (window !== undefined) {
+  formbricks.init({
+    environmentId: "<your-environment-id>",
+    apiHost: "<your-api-host>",
+  });
+} else {
+  console.error("Window object not accessible to init Formbricks");
+}
+```
+
+</CodeGroup>
+</Col>
+
+</Note>
+
+### Track Action
+
+Track session actions to trigger surveys based on their interactions on your website, such as button clicks or scrolling:
+
+<Col>
+<CodeGroup>
+
+```js
+formbricks.track("Clicked on Claim");
+```
+
+</CodeGroup>
+</Col>
+
+### Reset
+
+Reset the current instance and fetch the latest surveys and state again:
+
+<Col>
+<CodeGroup>
+
+```js
+formbricks.reset();
+```
+
+</CodeGroup>
+</Col>
+
+### Register Route Change:
+
+Listen for page changes and dynamically show surveys configured via no-code actions in the Formbricks website:
+
+<Note>
+  This is only needed when your framework has a custom routing system and you want to trigger surveys on route
+  changes. For example: NextJs
+</Note>
+
+<Col>
+<CodeGroup>
+
+```js
+formbricks.registerRouteChange();
+```
+
+</CodeGroup>
+</Col>
+
+## Debug Mode
+
+To enable debug mode in Formbricks, add `?formbricksDebug=true` to your app’s URL.
+
+For example, if you’ve integrated Formbricks JS to your app hosted at `https://example.com`, then change the URL to `https://example.com?formbricksDebug=true` and refresh the page, now view the console logs to see the debug mode live in action.
+
+This activates detailed debug messages in the browser console, providing deeper insights into Formbricks' operation and potential issues.
+
+---
+
+If you have any questions or need help, feel free to reach out to us on our **[Discord](https://formbricks.com/discord)**

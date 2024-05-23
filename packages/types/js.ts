@@ -32,7 +32,7 @@ export const ZJsAppStateSync = z.object({
   person: ZJsPerson.nullish(),
   userId: z.string().optional(),
   surveys: z.union([z.array(ZSurvey), z.array(ZLegacySurvey)]),
-  noCodeActionClasses: z.array(ZActionClass),
+  actionClasses: z.array(ZActionClass),
   product: ZProduct,
   language: z.string().optional(),
 });
@@ -46,7 +46,7 @@ export type TJsWebsiteStateSync = z.infer<typeof ZJsWebsiteStateSync>;
 export const ZJsAppState = z.object({
   attributes: ZAttributes,
   surveys: z.array(ZSurvey),
-  noCodeActionClasses: z.array(ZActionClass),
+  actionClasses: z.array(ZActionClass),
   product: ZProduct,
 });
 
@@ -54,13 +54,28 @@ export type TJsAppState = z.infer<typeof ZJsAppState>;
 
 export const ZJsWebsiteState = z.object({
   surveys: z.array(ZSurvey),
-  noCodeActionClasses: z.array(ZActionClass),
+  actionClasses: z.array(ZActionClass),
   product: ZProduct,
   displays: z.array(ZJSWebsiteStateDisplay),
   attributes: ZAttributes.optional(),
 });
 
 export type TJsWebsiteState = z.infer<typeof ZJsWebsiteState>;
+
+export const ZJsAppLegacyStateSync = z.object({
+  person: ZJsPerson.nullish(),
+  userId: z.string().optional(),
+  surveys: z.union([z.array(ZSurvey), z.array(ZLegacySurvey)]),
+  noCodeActionClasses: z.array(ZActionClass),
+  product: ZProduct,
+  language: z.string().optional(),
+});
+
+export type TJsAppLegacyStateSync = z.infer<typeof ZJsAppLegacyStateSync>;
+
+export const ZJsWebsiteLegacyStateSync = ZJsAppLegacyStateSync.omit({ person: true });
+
+export type TJsWebsiteLegacyStateSync = z.infer<typeof ZJsWebsiteLegacyStateSync>;
 
 export const ZJsLegacyState = z.object({
   person: ZPerson.nullable().or(z.object({})),
@@ -135,7 +150,7 @@ export const ZJsWebsiteConfigInput = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
-  attributes: ZAttributes.optional(),
+  attributes: z.record(z.string()).optional(),
 });
 
 export type TJsWebsiteConfigInput = z.infer<typeof ZJsWebsiteConfigInput>;
@@ -145,7 +160,7 @@ export const ZJsAppConfigInput = z.object({
   apiHost: z.string(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
   userId: z.string(),
-  attributes: ZAttributes.optional(),
+  attributes: z.record(z.string()).optional(),
 });
 
 export type TJsAppConfigInput = z.infer<typeof ZJsAppConfigInput>;

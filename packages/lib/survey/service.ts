@@ -10,12 +10,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import {
-  TSurvey,
-  TSurveyFilterCriteria,
-  TSurveyInput,
-  ZSurveyWithRefinements,
-} from "@formbricks/types/surveys";
+import { TSurvey, TSurveyFilterCriteria, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
 
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
@@ -39,7 +34,7 @@ import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { anySurveyHasFilters, buildOrderByClause, buildWhereClause, transformPrismaSurvey } from "./util";
+import { anySurveyHasFilters, buildOrderByClause, buildWhereClause, transformPrismaSurvey } from "./utils";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -105,12 +100,12 @@ export const selectSurvey = {
           name: true,
           description: true,
           type: true,
+          key: true,
           noCodeConfig: true,
         },
       },
     },
   },
-  inlineTriggers: true,
   segment: {
     include: {
       surveys: {
@@ -122,62 +117,69 @@ export const selectSurvey = {
   },
 };
 
-const getActionClassIdFromName = (actionClasses: TActionClass[], actionClassName: string): string => {
-  return actionClasses.find((actionClass) => actionClass.name === actionClassName)!.id;
-};
+const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TActionClass[]) => {
+  if (!triggers) return;
 
-const revalidateSurveyByActionClassName = (
-  actionClasses: TActionClass[],
-  actionClassNames: string[]
-): void => {
-  for (const actionClassName of actionClassNames) {
-    const actionClassId: string = getActionClassIdFromName(actionClasses, actionClassName);
-    surveyCache.revalidate({
-      actionClassId,
-    });
+  // check if all the triggers are valid
+  triggers.forEach((trigger) => {
+    if (!actionClasses.find((actionClass) => actionClass.id === trigger.actionClass.id)) {
+      throw new InvalidInputError("Invalid trigger id");
+    }
+  });
+
+  // check if all the triggers are unique
+  const triggerIds = triggers.map((trigger) => trigger.actionClass.id);
+
+  if (new Set(triggerIds).size !== triggerIds.length) {
+    throw new InvalidInputError("Duplicate trigger id");
   }
 };
 
-const processTriggerUpdates = (
-  triggers: string[],
-  currentSurveyTriggers: string[],
+const handleTriggerUpdates = (
+  updatedTriggers: TSurvey["triggers"],
+  currentTriggers: TSurvey["triggers"],
   actionClasses: TActionClass[]
 ) => {
-  const newTriggers: string[] = [];
-  const removedTriggers: string[] = [];
+  if (!updatedTriggers) return {};
+  checkTriggersValidity(updatedTriggers, actionClasses);
 
-  // find added triggers
-  for (const trigger of triggers) {
-    if (!trigger || currentSurveyTriggers.includes(trigger)) {
-      continue;
-    }
-    newTriggers.push(trigger);
-  }
+  const currentTriggerIds = currentTriggers.map((trigger) => trigger.actionClass.id);
+  const updatedTriggerIds = updatedTriggers.map((trigger) => trigger.actionClass.id);
 
-  // find removed triggers
-  for (const trigger of currentSurveyTriggers) {
-    if (!triggers.includes(trigger)) {
-      removedTriggers.push(trigger);
-    }
-  }
+  // added triggers are triggers that are not in the current triggers and are there in the new triggers
+  const addedTriggers = updatedTriggers.filter(
+    (trigger) => !currentTriggerIds.includes(trigger.actionClass.id)
+  );
+
+  // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
+  const deletedTriggers = currentTriggers.filter(
+    (trigger) => !updatedTriggerIds.includes(trigger.actionClass.id)
+  );
 
   // Construct the triggers update object
   const triggersUpdate: TriggerUpdate = {};
 
-  if (newTriggers.length > 0) {
-    triggersUpdate.create = newTriggers.map((trigger) => ({
-      actionClassId: getActionClassIdFromName(actionClasses, trigger),
+  if (addedTriggers.length > 0) {
+    triggersUpdate.create = addedTriggers.map((trigger) => ({
+      actionClassId: trigger.actionClass.id,
     }));
   }
 
-  if (removedTriggers.length > 0) {
+  if (deletedTriggers.length > 0) {
+    // disconnect the public triggers from the survey
     triggersUpdate.deleteMany = {
       actionClassId: {
-        in: removedTriggers.map((trigger) => getActionClassIdFromName(actionClasses, trigger)),
+        in: deletedTriggers.map((trigger) => trigger.actionClass.id),
       },
     };
   }
-  revalidateSurveyByActionClassName(actionClasses, [...newTriggers, ...removedTriggers]);
+
+  [...addedTriggers, ...deletedTriggers].forEach((trigger) => {
+    surveyCache.revalidate({
+      actionClassId: trigger.actionClass.id,
+    });
+  });
+
   return triggersUpdate;
 };
 
@@ -309,8 +311,15 @@ export const transformToLegacySurvey = async (
   languageCode?: string
 ): Promise<TLegacySurvey> => {
   const targetLanguage = languageCode ?? "default";
-  const transformedSurvey = reverseTranslateSurvey(survey, targetLanguage);
 
+  // workaround to handle triggers for legacy surveys
+  // because we dont wanna do this in the `reverseTranslateSurvey` function
+  const surveyToTransform: any = {
+    ...structuredClone(survey),
+    triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
+  };
+
+  const transformedSurvey = reverseTranslateSurvey(surveyToTransform as TSurvey, targetLanguage);
   return transformedSurvey;
 };
 
@@ -342,7 +351,7 @@ export const getSurveyCount = async (environmentId: string): Promise<number> =>
   )();
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
-  validateInputs([updatedSurvey, ZSurveyWithRefinements]);
+  validateInputs([updatedSurvey, ZSurvey]);
 
   try {
     const surveyId = updatedSurvey.id;
@@ -406,8 +415,9 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
 
     if (triggers) {
-      data.triggers = processTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
+      data.triggers = handleTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
     }
+
     // if the survey body has type other than "app" but has a private segment, we delete that segment, and if it has a public segment, we disconnect from to the survey
     if (segment) {
       if (type === "app") {
@@ -489,7 +499,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     // @ts-expect-error
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
-      triggers: updatedSurvey.triggers ? updatedSurvey.triggers : [], // Include triggers from updatedSurvey
       segment: surveySegment,
     };
 
@@ -510,7 +519,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
   }
 };
 
-export async function deleteSurvey(surveyId: string) {
+export const deleteSurvey = async (surveyId: string) => {
   validateInputs([surveyId, ZId]);
 
   try {
@@ -557,7 +566,7 @@ export async function deleteSurvey(surveyId: string) {
       });
     }
 
-    // Revalidate triggers by actionClassId
+    // Revalidate public triggers by actionClassId
     deletedSurvey.triggers.forEach((trigger) => {
       surveyCache.revalidate({
         actionClassId: trigger.actionClass.id,
@@ -573,29 +582,21 @@ export async function deleteSurvey(surveyId: string) {
 
     throw error;
   }
-}
+};
 
 export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
   validateInputs([environmentId, ZId]);
 
   try {
-    // if the survey body has both triggers and inlineTriggers, we throw an error
-    if (surveyBody.triggers && surveyBody.inlineTriggers) {
-      throw new InvalidInputError("Survey body cannot have both triggers and inlineTriggers");
-    }
-
-    if (surveyBody.triggers) {
-      const actionClasses = await getActionClasses(environmentId);
-      revalidateSurveyByActionClassName(actionClasses, surveyBody.triggers);
-    }
     const createdBy = surveyBody.createdBy;
     delete surveyBody.createdBy;
 
+    const actionClasses = await getActionClasses(environmentId);
     const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
       ...surveyBody,
       // TODO: Create with attributeFilters
       triggers: surveyBody.triggers
-        ? processTriggerUpdates(surveyBody.triggers, [], await getActionClasses(environmentId))
+        ? handleTriggerUpdates(surveyBody.triggers, [], actionClasses)
         : undefined,
       attributeFilters: undefined,
     };
@@ -658,7 +659,6 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     // @ts-expect-error
     const transformedSurvey: TSurvey = {
       ...survey,
-      triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
       ...(survey.segment && {
         segment: {
           ...survey.segment,
@@ -697,8 +697,6 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
 
     const defaultLanguageId = existingSurvey.languages.find((l) => l.default)?.language.id;
 
-    const actionClasses = await getActionClasses(environmentId);
-
     // create new survey with the data of the existing survey
     const newSurvey = await prisma.survey.create({
       data: {
@@ -720,10 +718,9 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
         },
         triggers: {
           create: existingSurvey.triggers.map((trigger) => ({
-            actionClassId: getActionClassIdFromName(actionClasses, trigger),
+            actionClassId: trigger.actionClass.id,
           })),
         },
-        inlineTriggers: existingSurvey.inlineTriggers ?? undefined,
         environment: {
           connect: {
             id: environmentId,
@@ -804,8 +801,11 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
       environmentId: newSurvey.environmentId,
     });
 
-    // Revalidate surveys by actionClassId
-    revalidateSurveyByActionClassName(actionClasses, existingSurvey.triggers);
+    existingSurvey.triggers.forEach((trigger) => {
+      surveyCache.revalidate({
+        actionClassId: trigger.actionClass.id,
+      });
+    });
 
     return newSurvey;
   } catch (error) {
@@ -1063,7 +1063,6 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
     // @ts-expect-error
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
-      triggers: prismaSurvey.triggers.map((trigger) => trigger.actionClass.name),
       segment: surveySegment,
     };
 

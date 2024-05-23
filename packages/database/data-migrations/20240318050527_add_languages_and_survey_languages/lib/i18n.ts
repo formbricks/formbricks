@@ -7,12 +7,14 @@ import {
 import { TLanguage } from "@formbricks/types/product";
 import {
   TI18nString,
+  TSurvey,
   TSurveyCTAQuestion,
   TSurveyChoice,
   TSurveyConsentQuestion,
-  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyMultipleChoiceQuestion,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
+  TSurveyQuestion,
   TSurveyQuestions,
   TSurveyRatingQuestion,
   TSurveyThankYouCard,
@@ -21,8 +23,7 @@ import {
   ZSurveyCalQuestion,
   ZSurveyConsentQuestion,
   ZSurveyFileUploadQuestion,
-  ZSurveyMultipleChoiceMultiQuestion,
-  ZSurveyMultipleChoiceSingleQuestion,
+  ZSurveyMultipleChoiceQuestion,
   ZSurveyNPSQuestion,
   ZSurveyOpenTextQuestion,
   ZSurveyPictureSelectionQuestion,
@@ -31,7 +32,6 @@ import {
   ZSurveyThankYouCard,
   ZSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
-import { TSurvey, TSurveyMultipleChoiceMultiQuestion, TSurveyQuestion } from "@formbricks/types/surveys";
 
 // Helper function to create an i18nString from a regular string.
 export const createI18nString = (text: string | TI18nString, languages: string[]): TI18nString => {
@@ -55,8 +55,8 @@ export const createI18nString = (text: string | TI18nString, languages: string[]
     return i18nString;
   } else {
     // It's a regular string, so create a new i18n object
-    const i18nString: any = {
-      ["default"]: text as string, // Type assertion to assure TypeScript `text` is a string
+    const i18nString: TI18nString = {
+      ["default"]: text, // Type assertion to assure TypeScript `text` is a string
     };
 
     // Initialize all provided languages with empty strings
@@ -160,21 +160,17 @@ const translateQuestion = (
 
     case "multipleChoiceSingle":
     case "multipleChoiceMulti":
-      (clonedQuestion as TSurveyMultipleChoiceSingleQuestion | TSurveyMultipleChoiceMultiQuestion).choices =
-        question.choices.map((choice) => {
-          return translateChoice(choice, languages);
-        });
-      if (
-        typeof (clonedQuestion as TSurveyMultipleChoiceSingleQuestion | TSurveyMultipleChoiceMultiQuestion)
-          .otherOptionPlaceholder !== "undefined"
-      ) {
-        (
-          clonedQuestion as TSurveyMultipleChoiceSingleQuestion | TSurveyMultipleChoiceMultiQuestion
-        ).otherOptionPlaceholder = createI18nString(question.otherOptionPlaceholder ?? "", languages);
+      (clonedQuestion as TSurveyMultipleChoiceQuestion).choices = question.choices.map((choice) => {
+        return translateChoice(choice, languages);
+      });
+      if (typeof (clonedQuestion as TSurveyMultipleChoiceQuestion).otherOptionPlaceholder !== "undefined") {
+        (clonedQuestion as TSurveyMultipleChoiceQuestion).otherOptionPlaceholder = createI18nString(
+          question.otherOptionPlaceholder ?? "",
+          languages
+        );
       }
-      if (question.type === "multipleChoiceSingle") {
-        return ZSurveyMultipleChoiceSingleQuestion.parse(clonedQuestion);
-      } else return ZSurveyMultipleChoiceMultiQuestion.parse(clonedQuestion);
+
+      return ZSurveyMultipleChoiceQuestion.parse(clonedQuestion);
 
     case "cta":
       if (typeof question.dismissButtonLabel !== "undefined") {
@@ -227,6 +223,12 @@ const translateQuestion = (
           question.upperLabel ?? "",
           languages
         );
+      }
+      const range = question.range;
+      if (typeof range === "string") {
+        const parsedRange = parseInt(range);
+        // @ts-expect-error
+        clonedQuestion.range = parsedRange;
       }
       return ZSurveyRatingQuestion.parse(clonedQuestion);
 

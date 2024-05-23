@@ -1,4 +1,4 @@
-import SubmitButton from "@/components/buttons/SubmitButton";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
 
 import { processResponseData } from "@formbricks/lib/responses";
 import { type TResponseData } from "@formbricks/types/responses";

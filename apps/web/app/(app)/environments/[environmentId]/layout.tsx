@@ -1,4 +1,4 @@
-import EnvironmentsNavbar from "@/app/(app)/environments/[environmentId]/components/EnvironmentsNavbar";
+import { EnvironmentLayout } from "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
@@ -7,12 +7,12 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { AuthorizationError } from "@formbricks/types/errors";
-import ToasterClient from "@formbricks/ui/ToasterClient";
+import { ToasterClient } from "@formbricks/ui/ToasterClient";
 
-import FormbricksClient from "../../components/FormbricksClient";
-import PosthogIdentify from "./components/PosthogIdentify";
+import { FormbricksClient } from "../../components/FormbricksClient";
+import { PosthogIdentify } from "./components/PosthogIdentify";
 
-export default async function EnvironmentLayout({ children, params }) {
+const EnvLayout = async ({ children, params }) => {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);
@@ -41,12 +41,12 @@ export default async function EnvironmentLayout({ children, params }) {
         />
         <FormbricksClient session={session} />
         <ToasterClient />
-        <EnvironmentsNavbar environmentId={params.environmentId} session={session} />
-        <main className="h-full flex-1 overflow-y-auto bg-slate-50">
+        <EnvironmentLayout environmentId={params.environmentId} session={session}>
           {children}
-          <main />
-        </main>
+        </EnvironmentLayout>
       </ResponseFilterProvider>
     </>
   );
-}
+};
+
+export default EnvLayout;

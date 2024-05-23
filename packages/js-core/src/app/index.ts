@@ -3,7 +3,7 @@ import { TJsAppConfigInput } from "@formbricks/types/js";
 import { CommandQueue } from "../shared/commandQueue";
 import { ErrorHandler } from "../shared/errors";
 import { Logger } from "../shared/logger";
-import { trackAction } from "./lib/actions";
+import { trackCodeAction } from "./lib/actions";
 import { getApi } from "./lib/api";
 import { setAttributeInApp } from "./lib/attributes";
 import { initialize } from "./lib/initialize";
@@ -42,7 +42,7 @@ const reset = async (): Promise<void> => {
 };
 
 const track = async (name: string, properties: any = {}): Promise<void> => {
-  queue.add<any>(true, "app", trackAction, name, properties);
+  queue.add<any>(true, "app", trackCodeAction, name, properties);
   await queue.wait();
 };
 

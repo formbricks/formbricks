@@ -19,7 +19,7 @@ type FormValues = {
   name: string;
 };
 
-export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps) {
+export const CreateTeamModal = ({ open, setOpen }: CreateTeamModalProps) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [teamName, setTeamName] = useState("");
@@ -97,4 +97,4 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
       </div>
     </Modal>
   );
-}
+};

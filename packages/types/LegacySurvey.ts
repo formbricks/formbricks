@@ -8,8 +8,7 @@ import {
   ZSurveyCalLogic,
   ZSurveyConsentLogic,
   ZSurveyFileUploadLogic,
-  ZSurveyMultipleChoiceMultiLogic,
-  ZSurveyMultipleChoiceSingleLogic,
+  ZSurveyMultipleChoiceLogic,
   ZSurveyNPSLogic,
   ZSurveyOpenTextLogic,
   ZSurveyOpenTextQuestionInputType,
@@ -56,7 +55,7 @@ export type TLegacySurveyChoice = z.infer<typeof ZLegacySurveyChoice>;
 export const ZLegacySurveyMultipleChoiceSingleQuestion = ZLegacySurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.MultipleChoiceSingle),
   choices: z.array(ZLegacySurveyChoice),
-  logic: z.array(ZSurveyMultipleChoiceSingleLogic).optional(),
+  logic: z.array(ZSurveyMultipleChoiceLogic).optional(),
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
   otherOptionPlaceholder: z.string().optional(),
 });
@@ -68,7 +67,7 @@ export type TLegacySurveyMultipleChoiceSingleQuestion = z.infer<
 export const ZLegacySurveyMultipleChoiceMultiQuestion = ZLegacySurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.MultipleChoiceMulti),
   choices: z.array(ZLegacySurveyChoice),
-  logic: z.array(ZSurveyMultipleChoiceMultiLogic).optional(),
+  logic: z.array(ZSurveyMultipleChoiceLogic).optional(),
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
   otherOptionPlaceholder: z.string().optional(),
 });
@@ -188,6 +187,7 @@ export const ZLegacySurvey = ZSurvey.extend({
   questions: ZLegacySurveyQuestions,
   thankYouCard: ZLegacySurveyThankYouCard,
   welcomeCard: ZLegacySurveyWelcomeCard,
+  triggers: z.array(z.string()),
 });
 
 export type TLegacySurvey = z.infer<typeof ZLegacySurvey>;

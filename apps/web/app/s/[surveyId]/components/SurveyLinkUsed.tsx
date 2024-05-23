@@ -10,7 +10,7 @@ type SurveyLinkUsedProps = {
   singleUseMessage: TSurveySingleUse | null;
 };
 
-const SurveyLinkUsed = ({ singleUseMessage }: SurveyLinkUsedProps) => {
+export const SurveyLinkUsed = ({ singleUseMessage }: SurveyLinkUsedProps) => {
   const defaultHeading = "The survey has already been answered.";
   const defaultSubheading = "You can only use this link once.";
   return (
@@ -33,5 +33,3 @@ const SurveyLinkUsed = ({ singleUseMessage }: SurveyLinkUsedProps) => {
     </div>
   );
 };
-
-export default SurveyLinkUsed;

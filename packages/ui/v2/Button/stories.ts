@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 
 import { Button } from "./index";
 
-const meta = {
+export const meta = {
   title: "Button",
   component: Button,
   tags: ["autodocs"],
@@ -16,7 +16,6 @@ const meta = {
   },
 } satisfies Meta<typeof Button>;
 
-export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {

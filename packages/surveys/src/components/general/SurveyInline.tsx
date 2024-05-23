@@ -4,7 +4,7 @@ import { SurveyInlineProps } from "@formbricks/types/formbricksSurveys";
 
 import { Survey } from "./Survey";
 
-export function SurveyInline(props: SurveyInlineProps) {
+export const SurveyInline = (props: SurveyInlineProps) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768); // Assuming 768px as a breakpoint for mobile
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export function SurveyInline(props: SurveyInlineProps) {
     <div id="fbjs" className="formbricks-form h-full w-full">
       {isMobile ? (
         <div className="flex h-screen w-full flex-col justify-end overflow-hidden">
-          <div className="overflow-auto pt-[11vh]">
+          <div>
             <Survey {...props} />
           </div>
         </div>
@@ -29,4 +29,4 @@ export function SurveyInline(props: SurveyInlineProps) {
       )}
     </div>
   );
-}
+};

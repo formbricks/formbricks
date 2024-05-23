@@ -9,7 +9,7 @@ import { TTag } from "@formbricks/types/tags";
 
 import { Button } from "../../Button";
 import { Tag } from "../../Tag";
-import TagsCombobox from "../../TagsCombobox";
+import { TagsCombobox } from "../../TagsCombobox";
 import { createTagAction, createTagToResponeAction, deleteTagOnResponseAction } from "../actions";
 
 interface ResponseTagsWrapperProps {
@@ -24,7 +24,7 @@ interface ResponseTagsWrapperProps {
   isViewer?: boolean;
 }
 
-const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
+export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   tags,
   environmentId,
   responseId,
@@ -58,14 +58,14 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   }, [tagIdToHighlight]);
 
   return (
-    <div className="flex items-center gap-3 p-6">
+    <div className="flex items-center gap-3 border-t border-slate-200 px-6 py-4">
       {!isViewer && (
         <Button
           variant="minimal"
           size="sm"
           className="cursor-pointer p-0"
           onClick={() => {
-            router.push(`/environments/${environmentId}/settings/tags`);
+            router.push(`/environments/${environmentId}/product/tags`);
           }}>
           <SettingsIcon className="h-5 w-5 text-slate-300 hover:text-slate-400" />
         </Button>
@@ -145,5 +145,3 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
     </div>
   );
 };
-
-export default ResponseTagsWrapper;

@@ -1,6 +1,8 @@
 import { Label } from "@radix-ui/react-dropdown-menu";
-import clsx from "clsx";
 import { Control, Controller, UseFormRegister } from "react-hook-form";
+
+import { cn } from "@formbricks/lib/cn";
+import { TActionClass } from "@formbricks/types/actionClasses";
 
 import { AdvancedOptionToggle } from "../../AdvancedOptionToggle";
 import { Button } from "../../Button";
@@ -15,8 +17,8 @@ interface PageUrlSelectorProps {
   isMatch: string;
   setIsMatch: (value: string) => void;
   handleMatchClick: () => void;
-  control: Control<any>;
-  register: UseFormRegister<any>;
+  control: Control<TActionClass>;
+  register: UseFormRegister<TActionClass>;
 }
 
 export const PageUrlSelector = ({
@@ -40,15 +42,15 @@ export const PageUrlSelector = ({
       title="Page URL"
       description="If a user visits a specific URL"
       childBorder={true}>
-      <div className="col-span-1 space-y-3 p-4">
-        <div className="grid grid-cols-3 gap-x-8">
-          <div className="col-span-1">
+      <div className="col-span-1 w-full space-y-3 p-4">
+        <div className="flex w-full items-end gap-2">
+          <div>
             <Label>URL</Label>
             <Controller
-              name="noCodeConfig.[pageUrl].rule"
+              name="noCodeConfig.pageUrl.rule"
               control={control}
               render={({ field: { onChange, value, name } }) => (
-                <Select onValueChange={onChange} {...value} value={value} name={name}>
+                <Select onValueChange={onChange} value={value} name={name}>
                   <SelectTrigger className="w-[160px] bg-white">
                     <SelectValue placeholder="Select match type" />
                   </SelectTrigger>
@@ -64,12 +66,12 @@ export const PageUrlSelector = ({
               )}
             />
           </div>
-          <div className="col-span-2 flex items-end">
+          <div className="flex flex-1 items-end">
             <Input
               type="text"
               className="bg-white"
               placeholder="e.g. https://app.com/dashboard"
-              {...register("noCodeConfig.[pageUrl].value", { required: isPageUrl })}
+              {...register("noCodeConfig.pageUrl.value", { required: isPageUrl })}
             />
           </div>
         </div>
@@ -79,16 +81,16 @@ export const PageUrlSelector = ({
             Enter a URL to see if a user visiting it would be tracked.
           </div>
           <div className=" rounded bg-slate-50">
-            <div className="mt-1 flex">
+            <div className="mt-1 flex items-end">
               <Input
                 type="text"
                 value={testUrl}
-                name="noCodeConfig.[pageUrl].testUrl"
+                name="noCodeConfig.pageUrl.testUrl"
                 onChange={(e) => {
                   setTestUrl(e.target.value);
                   setIsMatch("default");
                 }}
-                className={clsx(
+                className={cn(
                   isMatch === "yes"
                     ? "border-green-500 bg-green-50"
                     : isMatch === "no"

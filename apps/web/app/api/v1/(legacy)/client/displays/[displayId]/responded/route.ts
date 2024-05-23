@@ -2,11 +2,11 @@ import { responses } from "@/app/lib/api/response";
 
 import { markDisplayRespondedLegacy } from "@formbricks/lib/display/service";
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(_: Request, { params }: { params: { displayId: string } }): Promise<Response> {
+export const POST = async (_: Request, { params }: { params: { displayId: string } }): Promise<Response> => {
   const { displayId } = params;
 
   if (!displayId) {
@@ -19,4 +19,4 @@ export async function POST(_: Request, { params }: { params: { displayId: string
   } catch (error) {
     return responses.internalServerErrorResponse(error.message);
   }
-}
+};

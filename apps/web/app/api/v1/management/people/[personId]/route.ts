@@ -7,10 +7,10 @@ import { TPerson } from "@formbricks/types/people";
 
 // Please use the methods provided by the client API to update a person
 
-async function fetchAndAuthorizePerson(
+const fetchAndAuthorizePerson = async (
   authentication: TAuthenticationApiKey,
   personId: string
-): Promise<TPerson | null> {
+): Promise<TPerson | null> => {
   const person = await getPerson(personId);
   if (!person) {
     return null;
@@ -19,9 +19,12 @@ async function fetchAndAuthorizePerson(
     throw new Error("Unauthorized");
   }
   return person;
-}
+};
 
-export async function GET(request: Request, { params }: { params: { personId: string } }): Promise<Response> {
+export const GET = async (
+  request: Request,
+  { params }: { params: { personId: string } }
+): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -33,9 +36,9 @@ export async function GET(request: Request, { params }: { params: { personId: st
   } catch (error) {
     return handleErrorResponse(error);
   }
-}
+};
 
-export async function DELETE(request: Request, { params }: { params: { personId: string } }) {
+export const DELETE = async (request: Request, { params }: { params: { personId: string } }) => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -48,4 +51,4 @@ export async function DELETE(request: Request, { params }: { params: { personId:
   } catch (error) {
     return handleErrorResponse(error);
   }
-}
+};

@@ -6,7 +6,7 @@ interface BackButtonProps {
   tabIndex?: number;
 }
 
-export function BackButton({ onClick, backButtonLabel, tabIndex = 2 }: BackButtonProps) {
+export const BackButton = ({ onClick, backButtonLabel, tabIndex = 2 }: BackButtonProps) => {
   return (
     <button
       tabIndex={tabIndex}
@@ -18,4 +18,4 @@ export function BackButton({ onClick, backButtonLabel, tabIndex = 2 }: BackButto
       {backButtonLabel || "Back"}
     </button>
   );
-}
+};

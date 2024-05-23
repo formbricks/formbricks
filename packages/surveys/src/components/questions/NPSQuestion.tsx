@@ -1,8 +1,8 @@
 import { BackButton } from "@/components/buttons/BackButton";
-import SubmitButton from "@/components/buttons/SubmitButton";
-import Headline from "@/components/general/Headline";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { Headline } from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
-import Subheader from "@/components/general/Subheader";
+import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ interface NPSQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
+  currentQuestionId: string;
 }
 
 export const NPSQuestion = ({
@@ -37,12 +38,27 @@ export const NPSQuestion = ({
   languageCode,
   ttc,
   setTtc,
+  currentQuestionId,
 }: NPSQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
 
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
+
+  const handleClick = (number: number) => {
+    onChange({ [question.id]: number });
+    const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
+    setTimeout(() => {
+      onSubmit(
+        {
+          [question.id]: number,
+        },
+        updatedTtcObj
+      );
+    }, 250);
+  };
 
   return (
     <form
@@ -98,21 +114,7 @@ export const NPSQuestion = ({
                         value={number}
                         checked={value === number}
                         className="absolute left-0 h-full w-full cursor-pointer opacity-0"
-                        onClick={() => {
-                          const updatedTtcObj = getUpdatedTtc(
-                            ttc,
-                            question.id,
-                            performance.now() - startTime
-                          );
-                          setTtc(updatedTtcObj);
-                          onSubmit(
-                            {
-                              [question.id]: number,
-                            },
-                            updatedTtcObj
-                          );
-                          onChange({ [question.id]: number });
-                        }}
+                        onClick={() => handleClick(number)}
                         required={question.required}
                       />
                       {number}

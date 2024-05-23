@@ -6,10 +6,10 @@ import { deleteActionClass, getActionClass, updateActionClass } from "@formbrick
 import { TActionClass, ZActionClassInput } from "@formbricks/types/actionClasses";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 
-async function fetchAndAuthorizeActionClass(
+const fetchAndAuthorizeActionClass = async (
   authentication: TAuthenticationApiKey,
   actionClassId: string
-): Promise<TActionClass | null> {
+): Promise<TActionClass | null> => {
   const actionClass = await getActionClass(actionClassId);
   if (!actionClass) {
     return null;
@@ -18,12 +18,12 @@ async function fetchAndAuthorizeActionClass(
     throw new Error("Unauthorized");
   }
   return actionClass;
-}
+};
 
-export async function GET(
+export const GET = async (
   request: Request,
   { params }: { params: { actionClassId: string } }
-): Promise<Response> {
+): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -35,12 +35,12 @@ export async function GET(
   } catch (error) {
     return handleErrorResponse(error);
   }
-}
+};
 
-export async function PUT(
+export const PUT = async (
   request: Request,
   { params }: { params: { actionClassId: string } }
-): Promise<Response> {
+): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -48,8 +48,16 @@ export async function PUT(
     if (!actionClass) {
       return responses.notFoundResponse("Action Class", params.actionClassId);
     }
-    const actionCLassUpdate = await request.json();
-    const inputValidation = ZActionClassInput.safeParse(actionCLassUpdate);
+
+    let actionClassUpdate;
+    try {
+      actionClassUpdate = await request.json();
+    } catch (error) {
+      console.error(`Error parsing JSON: ${error}`);
+      return responses.badRequestResponse("Malformed JSON input, please check your request body");
+    }
+
+    const inputValidation = ZActionClassInput.safeParse(actionClassUpdate);
     if (!inputValidation.success) {
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",
@@ -68,12 +76,12 @@ export async function PUT(
   } catch (error) {
     return handleErrorResponse(error);
   }
-}
+};
 
-export async function DELETE(
+export const DELETE = async (
   request: Request,
   { params }: { params: { actionClassId: string } }
-): Promise<Response> {
+): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -89,4 +97,4 @@ export async function DELETE(
   } catch (error) {
     return handleErrorResponse(error);
   }
-}
+};

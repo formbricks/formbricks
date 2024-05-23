@@ -1,4 +1,4 @@
-function Pagination({
+export const Pagination = ({
   baseUrl,
   currentPage,
   totalItems,
@@ -8,7 +8,7 @@ function Pagination({
   currentPage: number;
   totalItems: number;
   itemsPerPage: number;
-}) {
+}) => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   const previousPageLink = currentPage === 1 ? "#" : `${baseUrl}?page=${currentPage - 1}`;
@@ -67,6 +67,4 @@ function Pagination({
       </ul>
     </nav>
   );
-}
-
-export { Pagination };
+};

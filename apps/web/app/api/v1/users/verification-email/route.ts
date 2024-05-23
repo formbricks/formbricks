@@ -1,7 +1,7 @@
 import { prisma } from "@formbricks/database";
 import { sendVerificationEmail } from "@formbricks/email";
 
-export async function POST(request: Request) {
+export const POST = async (request: Request) => {
   const { email } = await request.json();
   // check for user in DB
   try {
@@ -25,4 +25,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+};

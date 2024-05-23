@@ -5,7 +5,7 @@ import { translateSurvey } from "./lib/i18n";
 
 const prisma = new PrismaClient();
 
-async function main() {
+const main = async () => {
   await prisma.$transaction(
     async (tx) => {
       // Translate Surveys
@@ -20,9 +20,10 @@ async function main() {
 
       if (!surveys) {
         // stop the migration if there are no surveys
+        console.log("No survey found");
         return;
       }
-
+      console.log("Translating surveys");
       for (const survey of surveys) {
         if (survey.questions.length > 0 && typeof survey.questions[0].headline === "string") {
           const translatedSurvey = translateSurvey(survey, []);
@@ -34,6 +35,7 @@ async function main() {
           });
         }
       }
+      console.log("Survey translation completed");
 
       // Add language attributeClass
       const environments = await tx.environment.findMany({
@@ -44,10 +46,12 @@ async function main() {
       });
 
       if (!environments) {
+        console.log("No environments found");
         // stop the migration if there are no environments
         return;
       }
 
+      console.log("Adding language attribute class");
       for (const environment of environments) {
         const languageAttributeClass = environment.attributeClasses.find((attributeClass) => {
           return attributeClass.name === "language";
@@ -82,12 +86,13 @@ async function main() {
           });
         }
       }
+      console.log("Adding language attribute class finished");
     },
     {
       timeout: 50000,
     }
   );
-}
+};
 
 main()
   .catch(async (e) => {

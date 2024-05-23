@@ -2,7 +2,7 @@ import { responses } from "@/app/lib/api/response";
 
 import { getUploadSignedUrl } from "@formbricks/lib/storage/service";
 
-const uploadPrivateFile = async (
+export const uploadPrivateFile = async (
   fileName: string,
   environmentId: string,
   fileType: string,
@@ -21,5 +21,3 @@ const uploadPrivateFile = async (
     return responses.internalServerErrorResponse("Internal server error");
   }
 };
-
-export default uploadPrivateFile;

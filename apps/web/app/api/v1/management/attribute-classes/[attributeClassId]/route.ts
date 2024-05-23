@@ -10,10 +10,10 @@ import {
 import { TAttributeClass, ZAttributeClassUpdateInput } from "@formbricks/types/attributeClasses";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 
-async function fetchAndAuthorizeAttributeClass(
+const fetchAndAuthorizeAttributeClass = async (
   authentication: TAuthenticationApiKey,
   attributeId: string
-): Promise<TAttributeClass | null> {
+): Promise<TAttributeClass | null> => {
   const attributeClass = await getAttributeClass(attributeId);
   if (!attributeClass) {
     return null;
@@ -22,12 +22,12 @@ async function fetchAndAuthorizeAttributeClass(
     throw new Error("Unauthorized");
   }
   return attributeClass;
-}
+};
 
-export async function GET(
+export const GET = async (
   request: Request,
   { params }: { params: { attributeClassId: string } }
-): Promise<Response> {
+): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -39,12 +39,12 @@ export async function GET(
   } catch (error) {
     return handleErrorResponse(error);
   }
-}
+};
 
-export async function DELETE(
+export const DELETE = async (
   request: Request,
   { params }: { params: { attributeClassId: string } }
-): Promise<Response> {
+): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -60,12 +60,12 @@ export async function DELETE(
   } catch (error) {
     return handleErrorResponse(error);
   }
-}
+};
 
-export async function PUT(
+export const PUT = async (
   request: Request,
   { params }: { params: { attributeClassId: string } }
-): Promise<Response> {
+): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -73,7 +73,15 @@ export async function PUT(
     if (!attributeClass) {
       return responses.notFoundResponse("Attribute Class", params.attributeClassId);
     }
-    const attributeClassUpdate = await request.json();
+
+    let attributeClassUpdate;
+    try {
+      attributeClassUpdate = await request.json();
+    } catch (error) {
+      console.error(`Error parsing JSON input: ${error}`);
+      return responses.badRequestResponse("Malformed JSON input, please check your request body");
+    }
+
     const inputValidation = ZAttributeClassUpdateInput.safeParse(attributeClassUpdate);
     if (!inputValidation.success) {
       return responses.badRequestResponse(
@@ -89,4 +97,4 @@ export async function PUT(
   } catch (error) {
     return handleErrorResponse(error);
   }
-}
+};

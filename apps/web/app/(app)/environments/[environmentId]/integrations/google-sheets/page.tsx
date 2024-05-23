@@ -11,9 +11,11 @@ import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
-import GoBackButton from "@formbricks/ui/GoBackButton";
+import { GoBackButton } from "@formbricks/ui/GoBackButton";
+import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function googleSheetIntegrationPage({ params }) {
+const Page = async ({ params }) => {
   const isEnabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);
   const [surveys, integrations, environment] = await Promise.all([
     getSurveys(params.environmentId),
@@ -33,8 +35,9 @@ export default async function googleSheetIntegrationPage({ params }) {
   );
 
   return (
-    <>
+    <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
+      <PageHeader pageTitle="Google Sheets Integration" />
       <div className="h-[75vh] w-full">
         <GoogleSheetWrapper
           isEnabled={isEnabled}
@@ -44,6 +47,8 @@ export default async function googleSheetIntegrationPage({ params }) {
           webAppUrl={WEBAPP_URL}
         />
       </div>
-    </>
+    </PageContentWrapper>
   );
-}
+};
+
+export default Page;

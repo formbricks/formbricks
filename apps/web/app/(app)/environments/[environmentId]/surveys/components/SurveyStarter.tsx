@@ -1,71 +1,33 @@
 "use client";
 
-import { TemplateList } from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "react-hot-toast";
-
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
-import { TSurveyInput } from "@formbricks/types/surveys";
-import { TTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { TemplateList } from "@formbricks/ui/TemplateList";
 
-import { createSurveyAction } from "../actions";
-
-export default function SurveyStarter({
-  environmentId,
-  environment,
-  product,
-  user,
-}: {
+interface SurveyStarterProps {
   environmentId: string;
   environment: TEnvironment;
   product: TProduct;
   user: TUser;
-}) {
-  const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
-  const router = useRouter();
-
-  const newSurveyFromTemplate = async (template: TTemplate) => {
-    setIsCreateSurveyLoading(true);
-    const surveyType = environment?.widgetSetupCompleted ? "app" : "link";
-    const augmentedTemplate: TSurveyInput = {
-      ...template.preset,
-      type: surveyType,
-      createdBy: user.id,
-    };
-    try {
-      const survey = await createSurveyAction(environmentId, augmentedTemplate);
-      router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
-    } catch (e) {
-      toast.error("An error occured creating a new survey");
-      setIsCreateSurveyLoading(false);
-    }
-  };
-  return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col py-12">
-      {isCreateSurveyLoading ? (
-        <LoadingSpinner />
-      ) : (
-        <>
-          <div className="px-7 pb-4">
-            <h1 className="text-3xl font-extrabold text-slate-700">
-              You&apos;re all set! Time to create your first survey.
-            </h1>
-          </div>
-          <TemplateList
-            environmentId={environmentId}
-            onTemplateClick={(template) => {
-              newSurveyFromTemplate(template);
-            }}
-            environment={environment}
-            product={product}
-            user={user}
-          />
-        </>
-      )}
-    </div>
-  );
 }
+
+export const SurveyStarter = ({ environmentId, environment, product, user }: SurveyStarterProps) => {
+  return (
+    <>
+      <h1 className="px-6 text-3xl font-extrabold text-slate-700">
+        You&apos;re all set! Time to create your first survey.
+      </h1>
+
+      <TemplateList
+        environmentId={environmentId}
+        /* onTemplateClick={(template) => {
+              newSurveyFromTemplate(template);
+            }} */
+        environment={environment}
+        product={product}
+        user={user}
+      />
+    </>
+  );
+};

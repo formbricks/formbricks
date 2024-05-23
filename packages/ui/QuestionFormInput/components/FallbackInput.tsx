@@ -14,13 +14,13 @@ interface FallbackInputProps {
   addFallback: () => void;
 }
 
-export function FallbackInput({
+export const FallbackInput = ({
   filteredRecallQuestions,
   fallbacks,
   setFallbacks,
   fallbackInputRef,
   addFallback,
-}: FallbackInputProps) {
+}: FallbackInputProps) => {
   const containsEmptyFallback = () => {
     return (
       Object.values(fallbacks)
@@ -75,4 +75,4 @@ export function FallbackInput({
       </div>
     </div>
   );
-}
+};

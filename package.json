@@ -32,13 +32,13 @@
     "prepare": "husky install"
   },
   "devDependencies": {
-    "@playwright/test": "^1.43.1",
+    "@playwright/test": "^1.44.0",
     "eslint-config-formbricks": "workspace:*",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",
-    "rimraf": "^5.0.5",
-    "tsx": "^4.7.2",
-    "turbo": "^1.13.2"
+    "rimraf": "^5.0.7",
+    "tsx": "^4.10.4",
+    "turbo": "^1.13.3"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
@@ -63,7 +63,7 @@
     "showDetails": true
   },
   "dependencies": {
-    "@changesets/cli": "^2.27.1",
-    "playwright": "^1.43.1"
+    "@changesets/cli": "^2.27.2",
+    "playwright": "^1.44.0"
   }
 }

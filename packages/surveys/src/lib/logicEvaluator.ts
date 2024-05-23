@@ -1,9 +1,9 @@
 import { TSurveyLogic } from "@formbricks/types/surveys";
 
-export function evaluateCondition(
+export const evaluateCondition = (
   logic: TSurveyLogic,
   responseValue: string | number | string[] | Record<string, string>
-): boolean {
+): boolean => {
   const isObject = typeof responseValue === "object" && responseValue !== null;
   switch (logic.condition) {
     case "equals":
@@ -84,4 +84,4 @@ export function evaluateCondition(
     default:
       return false;
   }
-}
+};

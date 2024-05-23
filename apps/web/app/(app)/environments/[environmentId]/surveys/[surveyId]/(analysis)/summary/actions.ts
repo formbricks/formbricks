@@ -39,7 +39,7 @@ export const sendEmbedSurveyPreviewEmailAction = async (surveyId: string) => {
   );
 };
 
-export async function generateResultShareUrlAction(surveyId: string): Promise<string> {
+export const generateResultShareUrlAction = async (surveyId: string): Promise<string> => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -59,9 +59,9 @@ export async function generateResultShareUrlAction(surveyId: string): Promise<st
   await updateSurvey({ ...survey, resultShareKey });
 
   return resultShareKey;
-}
+};
 
-export async function getResultShareUrlAction(surveyId: string): Promise<string | null> {
+export const getResultShareUrlAction = async (surveyId: string): Promise<string | null> => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -74,9 +74,9 @@ export async function getResultShareUrlAction(surveyId: string): Promise<string 
   }
 
   return survey.resultShareKey;
-}
+};
 
-export async function deleteResultShareUrlAction(surveyId: string): Promise<void> {
+export const deleteResultShareUrlAction = async (surveyId: string): Promise<void> => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -89,7 +89,7 @@ export async function deleteResultShareUrlAction(surveyId: string): Promise<void
   }
 
   await updateSurvey({ ...survey, resultShareKey: null });
-}
+};
 
 export const getEmailHtmlAction = async (surveyId: string) => {
   const session = await getServerSession(authOptions);

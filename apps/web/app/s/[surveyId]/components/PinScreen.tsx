@@ -1,20 +1,19 @@
 "use client";
 
 import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
-import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
-import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
-import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
+import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
+import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
-import type { NextPage } from "next";
 import { useCallback, useEffect, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
+import { MediaBackground } from "@formbricks/ui/MediaBackground";
 import { OTPInput } from "@formbricks/ui/OTPInput";
 
-interface LinkSurveyPinScreenProps {
+interface PinScreenProps {
   surveyId: string;
   product: TProduct;
   userId?: string;
@@ -29,7 +28,7 @@ interface LinkSurveyPinScreenProps {
   languageCode: string;
 }
 
-const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
+export const PinScreen = (props: PinScreenProps) => {
   const {
     surveyId,
     product,
@@ -134,5 +133,3 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
     </div>
   );
 };
-
-export default LinkSurveyPinScreen;

@@ -2,14 +2,14 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
-import formbricksWebsite from "@formbricks/js/website";
+import formbricks from "@formbricks/js/website";
 
 import { SurveySwitch } from "../../components/SurveySwitch";
 import fbsetup from "../../public/fb-setup.png";
 
 declare const window: any;
 
-export default function AppPage({}) {
+const AppPage = ({}) => {
   const [darkMode, setDarkMode] = useState(false);
   const router = useRouter();
 
@@ -39,7 +39,7 @@ export default function AppPage({}) {
         language: "de",
       };
 
-      formbricksWebsite.init({
+      formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         attributes: defaultAttributes,
@@ -48,7 +48,7 @@ export default function AppPage({}) {
 
     // Connect next.js router to Formbricks
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
-      const handleRouteChange = formbricksWebsite?.registerRouteChange;
+      const handleRouteChange = formbricks?.registerRouteChange;
       router.events.on("routeChangeComplete", handleRouteChange);
 
       return () => {
@@ -61,7 +61,7 @@ export default function AppPage({}) {
     <div className="h-screen bg-white px-12 py-6 dark:bg-slate-800">
       <div className="flex flex-col items-center justify-between md:flex-row">
         <div className="flex items-center gap-2">
-          <SurveySwitch value="website" formbricks={formbricksWebsite} />
+          <SurveySwitch value="website" formbricks={formbricks} />
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
               Formbricks Website Survey Demo App
@@ -115,7 +115,7 @@ export default function AppPage({}) {
         </div>
 
         <div className="md:grid md:grid-cols-3">
-          <div className="col-span-3 rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-800">
+          <div className="col-span-3 self-start rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-800">
             <h3 className="text-lg font-semibold dark:text-white">
               Reset person / pull data from Formbricks app
             </h3>
@@ -126,7 +126,7 @@ export default function AppPage({}) {
             <button
               className="my-4 rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
               onClick={() => {
-                formbricksWebsite.reset();
+                formbricks.reset();
               }}>
               Reset
             </button>
@@ -135,62 +135,10 @@ export default function AppPage({}) {
               try again.
             </p>
           </div>
-
-          <div className="pt-6">
-            <div>
-              <button
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
-                onClick={() => {
-                  formbricksWebsite.track("New Session");
-                }}>
-                Track New Session
-              </button>
-            </div>
-            <div>
-              <p className="text-xs text-slate-700 dark:text-slate-300">
-                This button sends an Action to the Formbricks API called &apos;New Session&apos;. You will
-                find it in the Actions Tab.
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-6">
-            <div>
-              <button
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
-                onClick={() => {
-                  formbricksWebsite.track("Exit Intent");
-                }}>
-                Track Exit Intent
-              </button>
-            </div>
-            <div>
-              <p className="text-xs text-slate-700 dark:text-slate-300">
-                This button sends an Action to the Formbricks API called &apos;Exit Intent&apos;. You can also
-                move your mouse to the top of the browser to trigger the exit intent.
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-6">
-            <div>
-              <button
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
-                onClick={() => {
-                  formbricksWebsite.track("50% Scroll");
-                }}>
-                Track 50% Scroll
-              </button>
-            </div>
-            <div>
-              <p className="text-xs text-slate-700 dark:text-slate-300">
-                This button sends an Action to the Formbricks API called &apos;50% Scroll&apos;. You can also
-                scroll down to trigger the 50% scroll.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default AppPage;

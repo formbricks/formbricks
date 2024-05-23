@@ -12,9 +12,9 @@ type Props = {
 export const generateMetadata = async ({ params }: Props): Promise<Metadata> => {
   const session = await getServerSession(authOptions);
   const survey = await getSurvey(params.surveyId);
+  const responseCount = await getResponseCountBySurveyId(params.surveyId);
 
   if (session) {
-    const responseCount = await getResponseCountBySurveyId(params.surveyId);
     return {
       title: `${responseCount} Responses | ${survey?.name} Results`,
     };
@@ -24,8 +24,8 @@ export const generateMetadata = async ({ params }: Props): Promise<Metadata> => 
   };
 };
 
-const SurveyLayout = ({ children }) => {
-  return <div>{children}</div>;
+const SurveyLayout = async ({ children }) => {
+  return <>{children}</>;
 };
 
 export default SurveyLayout;

@@ -17,7 +17,7 @@ if (typeof window !== "undefined") {
   }
 }
 
-export function PostHogPageview(): JSX.Element {
+export const PostHogPageview = (): JSX.Element => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -34,8 +34,8 @@ export function PostHogPageview(): JSX.Element {
   }, [pathname, searchParams]);
 
   return <></>;
-}
+};
 
-export function PHProvider({ children }: { children: React.ReactNode }) {
+export const PHProvider = ({ children }: { children: React.ReactNode }) => {
   return posthogEnabled ? <PostHogProvider client={posthog}>{children}</PostHogProvider> : children;
-}
+};

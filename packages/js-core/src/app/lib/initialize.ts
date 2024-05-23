@@ -14,7 +14,7 @@ import {
 } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import { getIsDebug } from "../../shared/utils";
-import { trackAction } from "./actions";
+import { trackNoCodeAction } from "./actions";
 import { updateAttributes } from "./attributes";
 import { AppConfig, IN_APP_LOCAL_STORAGE_KEY } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
@@ -34,7 +34,8 @@ export const setIsInitialized = (value: boolean) => {
 export const initialize = async (
   configInput: TJsAppConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
-  if (getIsDebug()) {
+  const isDebug = getIsDebug();
+  if (isDebug) {
     logger.configure({ logLevel: "debug" });
   }
 
@@ -53,6 +54,14 @@ export const initialize = async (
 
   // formbricks is in error state, skip initialization
   if (existingConfig?.status === "error") {
+    if (isDebug) {
+      logger.debug(
+        "Formbricks is in error state, but debug mode is active. Resetting config and continuing."
+      );
+      appConfig.resetConfig();
+      return okVoid();
+    }
+
     logger.debug("Formbricks was set to an error state.");
     if (existingConfig?.expiresAt && new Date(existingConfig.expiresAt) > new Date()) {
       logger.debug("Error state is not expired, skipping initialization");
@@ -150,8 +159,9 @@ export const initialize = async (
     } catch (e) {
       handleErrorOnFirstInit();
     }
+
     // and track the new session event
-    await trackAction("New Session");
+    await trackNoCodeAction("New Session");
   }
   // update attributes in config
   if (updatedAttributes && Object.keys(updatedAttributes).length > 0) {
@@ -181,6 +191,11 @@ export const initialize = async (
 };
 
 const handleErrorOnFirstInit = () => {
+  if (getIsDebug()) {
+    logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
+    return;
+  }
+
   // put formbricks in error state (by creating a new config) and throw error
   const initialErrorConfig: Partial<TJSAppConfig> = {
     status: "error",
@@ -212,6 +227,11 @@ export const deinitalize = (): void => {
 };
 
 export const putFormbricksInErrorState = (): void => {
+  if (getIsDebug()) {
+    logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
+    return;
+  }
+
   logger.debug("Putting formbricks in error state");
   // change formbricks status to error
   appConfig.update({

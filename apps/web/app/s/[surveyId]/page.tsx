@@ -1,9 +1,8 @@
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
-import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
-import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
-import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
-import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
+import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
+import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
+import { PinScreen } from "@/app/s/[surveyId]/components/PinScreen";
+import { SurveyInactive } from "@/app/s/[surveyId]/components/SurveyInactive";
 import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -17,6 +16,7 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ZId } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
+import { MediaBackground } from "@formbricks/ui/MediaBackground";
 
 import { getEmailVerificationDetails } from "./lib/helpers";
 
@@ -32,16 +32,16 @@ interface LinkSurveyPageProps {
   };
 }
 
-export async function generateMetadata({ params }: LinkSurveyPageProps): Promise<Metadata> {
+export const generateMetadata = async ({ params }: LinkSurveyPageProps): Promise<Metadata> => {
   const validId = ZId.safeParse(params.surveyId);
   if (!validId.success) {
     notFound();
   }
 
   return getMetadataForLinkSurvey(params.surveyId);
-}
+};
 
-export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
+const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   const validId = ZId.safeParse(params.surveyId);
   if (!validId.success) {
     notFound();
@@ -61,7 +61,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   if (!team) {
     throw new Error("Team not found");
   }
-  const isMultiLanguageAllowed = getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
 
   if (survey && survey.status !== "inProgress") {
     return (
@@ -195,4 +195,6 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
       </MediaBackground>
     </div>
   ) : null;
-}
+};
+
+export default Page;

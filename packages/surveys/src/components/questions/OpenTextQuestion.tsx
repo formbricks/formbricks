@@ -1,8 +1,8 @@
 import { BackButton } from "@/components/buttons/BackButton";
-import SubmitButton from "@/components/buttons/SubmitButton";
-import Headline from "@/components/general/Headline";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { Headline } from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
-import Subheader from "@/components/general/Subheader";
+import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
@@ -26,6 +26,7 @@ interface OpenTextQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
+  currentQuestionId: string;
 }
 
 export const OpenTextQuestion = ({
@@ -40,10 +41,12 @@ export const OpenTextQuestion = ({
   ttc,
   setTtc,
   isInIframe,
+  currentQuestionId,
 }: OpenTextQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const handleInputChange = (inputValue: string) => {
     onChange({ [question.id]: inputValue });
@@ -113,6 +116,7 @@ export const OpenTextQuestion = ({
                 rows={3}
                 name={question.id}
                 tabIndex={1}
+                aria-label="textarea"
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
                 required={question.required}

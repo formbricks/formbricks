@@ -87,7 +87,7 @@ export const SurveyCard = ({
       <Link
         href={linkHref}
         key={survey.id}
-        className="relative col-span-2 flex h-44 flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all ease-in-out hover:scale-105 ">
+        className="relative col-span-1 flex h-44 flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all ease-in-out hover:scale-105">
         <div className="flex justify-between">
           <SurveyTypeIndicator type={survey.type} />
           <SurveyDropDownMenu
@@ -128,8 +128,8 @@ export const SurveyCard = ({
         key={survey.id}
         className="relative grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4
     shadow-sm transition-all ease-in-out hover:scale-[101%]">
-        <div className="col-span-2 flex max-w-full items-center justify-self-start truncate whitespace-nowrap text-sm font-medium text-slate-900">
-          {survey.name}
+        <div className="col-span-2 flex max-w-full items-center justify-self-start text-sm font-medium text-slate-900">
+          <div className="w-full truncate">{survey.name}</div>
         </div>
         <div
           className={cn(

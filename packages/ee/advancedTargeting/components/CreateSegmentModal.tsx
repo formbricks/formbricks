@@ -1,6 +1,6 @@
 "use client";
 
-import { FilterIcon, UsersIcon } from "lucide-react";
+import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -14,8 +14,8 @@ import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
 
 import { createSegmentAction } from "../lib/actions";
-import AddFilterModal from "./AddFilterModal";
-import SegmentFilters from "./SegmentEditor";
+import { AddFilterModal } from "./AddFilterModal";
+import { SegmentEditor } from "./SegmentEditor";
 
 type TCreateSegmentModalProps = {
   environmentId: string;
@@ -23,7 +23,8 @@ type TCreateSegmentModalProps = {
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
 };
-const CreateSegmentModal = ({
+
+export const CreateSegmentModal = ({
   environmentId,
   actionClasses,
   attributeClasses,
@@ -120,11 +121,9 @@ const CreateSegmentModal = ({
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
-        <Button variant="darkCTA" onClick={() => setOpen(true)}>
-          Create Segment
-        </Button>
-      </div>
+      <Button variant="darkCTA" size="sm" onClick={() => setOpen(true)} EndIcon={PlusIcon}>
+        Create segment
+      </Button>
 
       <Modal
         open={open}
@@ -193,7 +192,7 @@ const CreateSegmentModal = ({
                 </div>
               )}
 
-              <SegmentFilters
+              <SegmentEditor
                 environmentId={environmentId}
                 segment={segment}
                 setSegment={setSegment}
@@ -241,7 +240,7 @@ const CreateSegmentModal = ({
                   onClick={() => {
                     handleCreateSegment();
                   }}>
-                  Create Segment
+                  Create segment
                 </Button>
               </div>
             </div>
@@ -251,5 +250,3 @@ const CreateSegmentModal = ({
     </>
   );
 };
-
-export default CreateSegmentModal;

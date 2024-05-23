@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { VNode } from "preact";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 
 import { TPlacement } from "@formbricks/types/common";
 
@@ -14,15 +14,7 @@ interface ModalProps {
   onClose: () => void;
 }
 
-export default function Modal({
-  children,
-  isOpen,
-  placement,
-  clickOutside,
-  darkOverlay,
-  highlightBorderColor,
-  onClose,
-}: ModalProps) {
+export const Modal = ({ children, isOpen, placement, clickOutside, darkOverlay, onClose }: ModalProps) => {
   const [show, setShow] = useState(false);
   const isCenter = placement === "center";
   const modalRef = useRef(null);
@@ -34,7 +26,7 @@ export default function Modal({
   useEffect(() => {
     if (!isCenter) return;
 
-    function handleClickOutside(e: MouseEvent) {
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         clickOutside &&
         show &&
@@ -43,7 +35,7 @@ export default function Modal({
       ) {
         onClose();
       }
-    }
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -67,19 +59,6 @@ export default function Modal({
         return "sm:bottom-3 sm:right-3";
     }
   };
-
-  const highlightBorderColorStyle = useMemo(() => {
-    if (!highlightBorderColor)
-      return {
-        overflow: "visible",
-      };
-
-    return {
-      borderRadius: "var(--fb-border-radius)",
-      border: "2px solid",
-      borderColor: highlightBorderColor,
-    };
-  }, [highlightBorderColor]);
 
   if (!show) return null;
 
@@ -106,28 +85,9 @@ export default function Modal({
             show ? "opacity-100" : "opacity-0",
             "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
           )}>
-          {!isCenter && (
-            <div class="absolute right-0 top-0 block pr-2 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                class="text-close-button hover:text-close-button-focus focus:ring-close-button-focus relative h-5 w-5 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2">
-                <span class="sr-only">Close survey</span>
-                <svg
-                  class="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                  stroke="currentColor"
-                  aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4L20 20M4 20L20 4" />
-                </svg>
-              </button>
-            </div>
-          )}
-          <div style={highlightBorderColorStyle}>{children}</div>
+          <div>{children}</div>
         </div>
       </div>
     </div>
   );
-}
+};

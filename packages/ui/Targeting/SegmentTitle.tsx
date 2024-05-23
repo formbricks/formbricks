@@ -1,5 +1,4 @@
 import { UsersIcon } from "lucide-react";
-import { FC } from "react";
 
 interface SegmentTitleProps {
   title?: string;
@@ -7,7 +6,7 @@ interface SegmentTitleProps {
   isPrivate?: boolean;
 }
 
-const SurveySegment: FC<SegmentTitleProps> = ({ title, description, isPrivate }) => {
+export const SegmentTitle = ({ title, description, isPrivate }: SegmentTitleProps) => {
   if (isPrivate) {
     return (
       <div className="mb-4">
@@ -28,5 +27,3 @@ const SurveySegment: FC<SegmentTitleProps> = ({ title, description, isPrivate })
     </div>
   );
 };
-
-export default SurveySegment;
