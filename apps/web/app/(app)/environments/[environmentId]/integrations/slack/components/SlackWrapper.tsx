@@ -4,7 +4,6 @@ import { refreshChannelsAction } from "@/app/(app)/environments/[environmentId]/
 import { AddChannelMappingModal } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/AddChannelMappingModal";
 import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/ManageIntegration";
 import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/slack/lib/slack";
-import formbricksLogo from "@/images/logo.svg";
 import slackLogo from "@/images/slacklogo.png";
 import { useState } from "react";
 
@@ -77,7 +76,6 @@ export const SlackWrapper = ({
       integrationType={"slack"}
       handleAuthorization={handleSlackAuthorization}
       integrationLogoSrc={slackLogo}
-      formbricksLogoSrc={formbricksLogo}
     />
   );
 };

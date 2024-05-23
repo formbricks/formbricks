@@ -3,7 +3,6 @@
 import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/ManageIntegration";
 import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/lib/google";
 import googleSheetLogo from "@/images/googleSheetsLogo.png";
-import formbricksLogo from "@/images/logo.svg";
 import { useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -73,7 +72,6 @@ export const GoogleSheetWrapper = ({
           integrationType={"googleSheets"}
           handleAuthorization={handleGoogleAuthorization}
           integrationLogoSrc={googleSheetLogo}
-          formbricksLogoSrc={formbricksLogo}
         />
       )}
     </>

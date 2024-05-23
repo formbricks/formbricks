@@ -3,7 +3,6 @@
 import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/ManageIntegration";
 import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
 import airtableLogo from "@/images/airtableLogo.svg";
-import formbricksLogo from "@/images/logo.svg";
 import { useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -58,7 +57,6 @@ export const AirtableWrapper = ({
       integrationType={"airtable"}
       handleAuthorization={handleAirtableAuthorization}
       integrationLogoSrc={airtableLogo}
-      formbricksLogoSrc={formbricksLogo}
     />
   );
 };

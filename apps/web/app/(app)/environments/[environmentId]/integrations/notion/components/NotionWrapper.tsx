@@ -2,7 +2,6 @@
 
 import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/AddIntegrationModal";
 import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/ManageIntegration";
-import formbricksLogo from "@/images/logo.svg";
 import notionLogo from "@/images/notion.png";
 import { useState } from "react";
 
@@ -77,7 +76,6 @@ export const NotionWrapper = ({
           integrationType={"notion"}
           handleAuthorization={handleNotionAuthorization}
           integrationLogoSrc={notionLogo}
-          formbricksLogoSrc={formbricksLogo}
         />
       )}
     </>

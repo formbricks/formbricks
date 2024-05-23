@@ -7,14 +7,14 @@ import toast from "react-hot-toast";
 import { TIntegrationType } from "@formbricks/types/integration";
 
 import { Button } from "../../ui/Button";
-import { getIntegrationDetails } from "./util";
+import { FormbricksLogo } from "../icons/FormbricksLogo";
+import { getIntegrationDetails } from "./lib/utils";
 
 interface ConnectIntegrationProps {
   isEnabled: boolean;
   integrationType: TIntegrationType;
   handleAuthorization: () => void;
   integrationLogoSrc: string | StaticImageData;
-  formbricksLogoSrc: string;
 }
 
 export const ConnectIntegration = ({
@@ -22,7 +22,6 @@ export const ConnectIntegration = ({
   integrationType,
   handleAuthorization,
   integrationLogoSrc,
-  formbricksLogoSrc,
 }: ConnectIntegrationProps) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const searchParams = useSearchParams();
@@ -50,8 +49,8 @@ export const ConnectIntegration = ({
     <div className="flex h-[75vh] w-full items-center justify-center">
       <div className="flex w-1/2 flex-col items-center justify-center rounded-lg bg-white p-8 shadow">
         <div className="flex w-1/2 justify-center -space-x-4">
-          <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white p-4 shadow-md">
-            <Image className="w-1/2" src={formbricksLogoSrc} alt="Formbricks Logo" />
+          <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white p-6 shadow-md">
+            <FormbricksLogo />
           </div>
           <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white p-4 shadow-md">
             <Image className="w-1/2" src={integrationLogoSrc} alt="logo" />
