@@ -1,15 +1,15 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
-import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { notFound } from "next/navigation";
 
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
-import EditLanguage from "@formbricks/ee/multiLanguage/components/EditLanguage";
+import { EditLanguage } from "@formbricks/ee/multiLanguage/components/EditLanguage";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTeam } from "@formbricks/lib/team/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function LanguageSettingsPage({ params }: { params: { environmentId: string } }) {
+const Page = async ({ params }: { params: { environmentId: string } }) => {
   const product = await getProductByEnvironmentId(params.environmentId);
 
   if (!product) {
@@ -44,4 +44,6 @@ export default async function LanguageSettingsPage({ params }: { params: { envir
       </SettingsCard>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

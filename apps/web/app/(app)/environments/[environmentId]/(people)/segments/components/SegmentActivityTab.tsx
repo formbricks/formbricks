@@ -12,7 +12,7 @@ interface SegmentActivityTabProps {
   };
 }
 
-export default function SegmentActivityTab({ currentSegment }: SegmentActivityTabProps) {
+export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) => {
   const activeSurveys = currentSegment?.activeSurveys;
   const inactiveSurveys = currentSegment?.inactiveSurveys;
 
@@ -48,4 +48,4 @@ export default function SegmentActivityTab({ currentSegment }: SegmentActivityTa
       </div>
     </div>
   );
-}
+};

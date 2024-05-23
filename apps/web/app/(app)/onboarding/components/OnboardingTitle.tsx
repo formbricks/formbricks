@@ -6,7 +6,7 @@ type OnboardingTitleProps = {
   subtitle: string;
 };
 
-const OnboardingTitle: React.FC<OnboardingTitleProps> = ({ title, subtitle }) => {
+export const OnboardingTitle: React.FC<OnboardingTitleProps> = ({ title, subtitle }) => {
   return (
     <div className="space-y-4 text-center">
       <p className="text-4xl font-medium text-slate-800">{title}</p>
@@ -14,5 +14,3 @@ const OnboardingTitle: React.FC<OnboardingTitleProps> = ({ title, subtitle }) =>
     </div>
   );
 };
-
-export default OnboardingTitle;

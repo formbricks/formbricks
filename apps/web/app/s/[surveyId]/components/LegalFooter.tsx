@@ -7,12 +7,12 @@ interface LegalFooterProps {
   surveyUrl: string;
 }
 
-export default function LegalFooter({
+export const LegalFooter = ({
   IMPRINT_URL,
   PRIVACY_URL,
   IS_FORMBRICKS_CLOUD,
   surveyUrl,
-}: LegalFooterProps) {
+}: LegalFooterProps) => {
   if (!IMPRINT_URL && !PRIVACY_URL && !IS_FORMBRICKS_CLOUD) return null;
 
   const createMailToLink = (surveyLink) => {
@@ -46,4 +46,4 @@ export default function LegalFooter({
       </div>
     </div>
   );
-}
+};

@@ -1,6 +1,6 @@
 "use client";
 
-import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
+import { SurveyLinkUsed } from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import { VerifyEmail } from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
 import { useSearchParams } from "next/navigation";
@@ -36,7 +36,7 @@ interface LinkSurveyProps {
   attributeClasses: TAttributeClass[];
 }
 
-export default function LinkSurvey({
+export const LinkSurvey = ({
   survey,
   product,
   userId,
@@ -48,7 +48,7 @@ export default function LinkSurvey({
   verifiedEmail,
   languageCode,
   attributeClasses,
-}: LinkSurveyProps) {
+}: LinkSurveyProps) => {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
@@ -287,4 +287,4 @@ export default function LinkSurvey({
       </div>
     </div>
   );
-}
+};

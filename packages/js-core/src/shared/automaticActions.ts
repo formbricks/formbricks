@@ -6,7 +6,7 @@ import { err } from "./errors";
 
 let exitIntentListenerAdded = false;
 
-let exitIntentListenerWrapper = async function (e: MouseEvent, packageType: TJsPackageType) {
+let exitIntentListenerWrapper = async (e: MouseEvent, packageType: TJsPackageType) => {
   if (e.clientY <= 0) {
     const trackResult =
       packageType === "app"

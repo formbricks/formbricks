@@ -1,4 +1,4 @@
-import AirtableWrapper from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirtableWrapper";
+import { AirtableWrapper } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirtableWrapper";
 
 import { getAirtableTables } from "@formbricks/lib/airtable/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
@@ -13,7 +13,7 @@ import { GoBackButton } from "@formbricks/ui/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Airtable({ params }) {
+const Page = async ({ params }) => {
   const enabled = !!AIRTABLE_CLIENT_ID;
   const [surveys, integrations, environment, attributeClasses] = await Promise.all([
     getSurveys(params.environmentId),
@@ -56,4 +56,6 @@ export default async function Airtable({ params }) {
       </div>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

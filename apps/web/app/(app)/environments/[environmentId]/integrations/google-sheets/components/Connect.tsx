@@ -16,7 +16,7 @@ interface ConnectProps {
   webAppUrl: string;
 }
 
-export default function Connect({ enabled, environmentId, webAppUrl }: ConnectProps) {
+export const Connect = ({ enabled, environmentId, webAppUrl }: ConnectProps) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const handleGoogleLogin = async () => {
     setIsConnecting(true);
@@ -44,7 +44,9 @@ export default function Connect({ enabled, environmentId, webAppUrl }: ConnectPr
             Google Sheets Integration is not configured in your instance of Formbricks.
             <br />
             Please follow the{" "}
-            <Link href="https://formbricks.com/docs/integrations/google-sheets" className="underline">
+            <Link
+              href="https://formbricks.com/docs/self-hosting/integrations#google-sheets"
+              className="underline">
               docs
             </Link>{" "}
             to configure it.
@@ -56,4 +58,4 @@ export default function Connect({ enabled, environmentId, webAppUrl }: ConnectPr
       </div>
     </div>
   );
-}
+};

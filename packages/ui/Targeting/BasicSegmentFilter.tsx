@@ -486,7 +486,7 @@ const PersonSegmentFilter = ({
   );
 };
 
-const BasicSegmentFilter = ({
+export const BasicSegmentFilter = ({
   resource,
   connector,
   environmentId,
@@ -546,5 +546,3 @@ const BasicSegmentFilter = ({
       return null;
   }
 };
-
-export default BasicSegmentFilter;

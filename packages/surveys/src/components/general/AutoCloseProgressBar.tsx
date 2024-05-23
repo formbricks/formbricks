@@ -2,7 +2,7 @@ interface AutoCloseProgressBarProps {
   autoCloseTimeout: number;
 }
 
-export function AutoCloseProgressBar({ autoCloseTimeout }: AutoCloseProgressBarProps) {
+export const AutoCloseProgressBar = ({ autoCloseTimeout }: AutoCloseProgressBarProps) => {
   return (
     <div className="bg-accent-bg h-2 w-full overflow-hidden rounded-full">
       <div
@@ -13,4 +13,4 @@ export function AutoCloseProgressBar({ autoCloseTimeout }: AutoCloseProgressBarP
         }}></div>
     </div>
   );
-}
+};

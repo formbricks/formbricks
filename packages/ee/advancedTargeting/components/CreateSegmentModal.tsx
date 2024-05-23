@@ -14,8 +14,8 @@ import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
 
 import { createSegmentAction } from "../lib/actions";
-import AddFilterModal from "./AddFilterModal";
-import SegmentFilters from "./SegmentEditor";
+import { AddFilterModal } from "./AddFilterModal";
+import { SegmentEditor } from "./SegmentEditor";
 
 type TCreateSegmentModalProps = {
   environmentId: string;
@@ -23,7 +23,8 @@ type TCreateSegmentModalProps = {
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
 };
-const CreateSegmentModal = ({
+
+export const CreateSegmentModal = ({
   environmentId,
   actionClasses,
   attributeClasses,
@@ -191,7 +192,7 @@ const CreateSegmentModal = ({
                 </div>
               )}
 
-              <SegmentFilters
+              <SegmentEditor
                 environmentId={environmentId}
                 segment={segment}
                 setSegment={setSegment}
@@ -249,5 +250,3 @@ const CreateSegmentModal = ({
     </>
   );
 };
-
-export default CreateSegmentModal;

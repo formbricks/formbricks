@@ -14,11 +14,11 @@ import { getProduct } from "@formbricks/lib/product/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TLanguageInput } from "@formbricks/types/product";
 
-export async function createLanguageAction(
+export const createLanguageAction = async (
   productId: string,
   environmentId: string,
   languageInput: TLanguageInput
-) {
+) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -31,9 +31,9 @@ export async function createLanguageAction(
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await createLanguage(productId, environmentId, languageInput);
-}
+};
 
-export async function deleteLanguageAction(productId: string, environmentId: string, languageId: string) {
+export const deleteLanguageAction = async (productId: string, environmentId: string, languageId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -46,9 +46,9 @@ export async function deleteLanguageAction(productId: string, environmentId: str
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await deleteLanguage(environmentId, languageId);
-}
+};
 
-export async function getSurveysUsingGivenLanguageAction(productId: string, languageId: string) {
+export const getSurveysUsingGivenLanguageAction = async (productId: string, languageId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -56,14 +56,14 @@ export async function getSurveysUsingGivenLanguageAction(productId: string, lang
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   return await getSurveysUsingGivenLanguage(languageId);
-}
+};
 
-export async function updateLanguageAction(
+export const updateLanguageAction = async (
   productId: string,
   environmentId: string,
   languageId: string,
   languageInput: TLanguageInput
-) {
+) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -76,4 +76,4 @@ export async function updateLanguageAction(
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await updateLanguage(environmentId, languageId, languageInput);
-}
+};

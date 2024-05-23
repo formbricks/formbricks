@@ -5,17 +5,14 @@ import type { TProduct } from "@formbricks/types/product";
 import { TUser } from "@formbricks/types/user";
 import { TemplateList } from "@formbricks/ui/TemplateList";
 
-export default function SurveyStarter({
-  environmentId,
-  environment,
-  product,
-  user,
-}: {
+interface SurveyStarterProps {
   environmentId: string;
   environment: TEnvironment;
   product: TProduct;
   user: TUser;
-}) {
+}
+
+export const SurveyStarter = ({ environmentId, environment, product, user }: SurveyStarterProps) => {
   return (
     <>
       <h1 className="px-6 text-3xl font-extrabold text-slate-700">
@@ -33,4 +30,4 @@ export default function SurveyStarter({
       />
     </>
   );
-}
+};

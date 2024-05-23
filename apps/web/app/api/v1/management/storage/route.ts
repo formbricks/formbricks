@@ -5,7 +5,7 @@ import { NextRequest } from "next/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
-import getSignedUrlForPublicFile from "./lib/getSignedUrl";
+import { getSignedUrlForPublicFile } from "./lib/getSignedUrl";
 
 // api endpoint for uploading public files
 // uploaded files will be public, anyone can access the file
@@ -13,8 +13,17 @@ import getSignedUrlForPublicFile from "./lib/getSignedUrl";
 // use this to upload files for a specific resource, e.g. a user profile picture or a survey
 // this api endpoint will return a signed url for uploading the file to s3 and another url for uploading file to the local storage
 
-export async function POST(req: NextRequest): Promise<Response> {
-  const { fileName, fileType, environmentId, allowedFileExtensions } = await req.json();
+export const POST = async (req: NextRequest): Promise<Response> => {
+  let storageInput;
+
+  try {
+    storageInput = await req.json();
+  } catch (error) {
+    console.error(`Error parsing JSON input: ${error}`);
+    return responses.badRequestResponse("Malformed JSON input, please check your request body");
+  }
+
+  const { fileName, fileType, environmentId, allowedFileExtensions } = storageInput;
 
   if (!fileName) {
     return responses.badRequestResponse("fileName is required");
@@ -51,4 +60,4 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   return await getSignedUrlForPublicFile(fileName, environmentId, fileType);
-}
+};

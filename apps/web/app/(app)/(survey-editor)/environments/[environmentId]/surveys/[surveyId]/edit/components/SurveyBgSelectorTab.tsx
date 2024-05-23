@@ -25,14 +25,14 @@ const tabs = [
   { id: "image", label: "Image" },
 ];
 
-export default function SurveyBgSelectorTab({
+export const SurveyBgSelectorTab = ({
   styling,
   handleBgChange,
   colors,
   bgType,
   environmentId,
   isUnsplashConfigured,
-}: SurveyBgSelectorTabProps) {
+}: SurveyBgSelectorTabProps) => {
   const [activeTab, setActiveTab] = useState(bgType || "color");
   const bgUrl = styling?.background?.bg || "";
 
@@ -103,4 +103,4 @@ export default function SurveyBgSelectorTab({
       </div>
     </div>
   );
-}
+};

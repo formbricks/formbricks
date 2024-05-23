@@ -13,7 +13,7 @@ import { ProductFeatureKeys, StripePriceLookupKeys } from "@formbricks/ee/billin
 import { TTeam } from "@formbricks/types/teams";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 import { PricingCard } from "@formbricks/ui/PricingCard";
 
 interface PricingTableProps {
@@ -25,14 +25,14 @@ interface PricingTableProps {
   inAppSurveyFreeResponses: number;
 }
 
-export default function PricingTableComponent({
+export const PricingTable = ({
   team,
   environmentId,
   peopleCount,
   responseCount,
   userTargetingFreeMtu,
   inAppSurveyFreeResponses: appSurveyFreeResponses,
-}: PricingTableProps) {
+}: PricingTableProps) => {
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
   const [upgradingPlan, setUpgradingPlan] = useState(false);
@@ -352,4 +352,4 @@ export default function PricingTableComponent({
       />
     </div>
   );
-}
+};

@@ -1,8 +1,8 @@
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
-import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
-import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
-import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
+import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
+import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
+import { PinScreen } from "@/app/s/[surveyId]/components/PinScreen";
+import { SurveyInactive } from "@/app/s/[surveyId]/components/SurveyInactive";
 import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -33,16 +33,16 @@ interface LinkSurveyPageProps {
   };
 }
 
-export async function generateMetadata({ params }: LinkSurveyPageProps): Promise<Metadata> {
+export const generateMetadata = async ({ params }: LinkSurveyPageProps): Promise<Metadata> => {
   const validId = ZId.safeParse(params.surveyId);
   if (!validId.success) {
     notFound();
   }
 
   return getMetadataForLinkSurvey(params.surveyId);
-}
+};
 
-export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
+const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   const validId = ZId.safeParse(params.surveyId);
   if (!validId.success) {
     notFound();
@@ -200,4 +200,6 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
       </MediaBackground>
     </div>
   ) : null;
-}
+};
+
+export default Page;

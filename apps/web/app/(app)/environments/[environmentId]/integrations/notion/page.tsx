@@ -1,4 +1,4 @@
-import NotionWrapper from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
+import { NotionWrapper } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
 
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import {
@@ -17,7 +17,7 @@ import { GoBackButton } from "@formbricks/ui/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Notion({ params }) {
+const Page = async ({ params }) => {
   const enabled = !!(
     NOTION_OAUTH_CLIENT_ID &&
     NOTION_OAUTH_CLIENT_SECRET &&
@@ -55,4 +55,6 @@ export default async function Notion({ params }) {
       />
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { Button } from "@formbricks/ui/Button";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
-export default function GlobalError({ error, reset }: { error: Error; reset: () => void }) {
+const GlobalError = ({ error, reset }: { error: Error; reset: () => void }) => {
   useEffect(() => {
     Sentry.captureException(error);
   }, [error]);
@@ -30,4 +30,6 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
       </body>
     </html>
   );
-}
+};
+
+export default GlobalError;

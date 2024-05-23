@@ -24,7 +24,7 @@ import { PageHeader } from "@formbricks/ui/PageHeader";
 import AirtableLogo from "./airtable/images/airtable.svg";
 import GoogleSheetsLogo from "./google-sheets/images/google-sheets-small.png";
 
-export default async function IntegrationsPage({ params }) {
+const Page = async ({ params }) => {
   const environmentId = params.environmentId;
 
   const [
@@ -231,4 +231,6 @@ export default async function IntegrationsPage({ params }) {
       </div>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

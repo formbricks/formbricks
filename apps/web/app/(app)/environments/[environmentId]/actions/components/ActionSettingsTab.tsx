@@ -34,13 +34,13 @@ interface ActionSettingsTabProps {
   membershipRole?: TMembershipRole;
 }
 
-export default function ActionSettingsTab({
+export const ActionSettingsTab = ({
   environmentId,
   actionClass,
   actionClasses,
   setOpen,
   membershipRole,
-}: ActionSettingsTabProps) {
+}: ActionSettingsTabProps) => {
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [testUrl, setTestUrl] = useState("");
@@ -200,7 +200,7 @@ export default function ActionSettingsTab({
             This is a code action. Please make changes in your code base.
           </p>
         ) : actionClass.type === "noCode" ? (
-          <>
+          <div className="max-h-60 overflow-auto">
             <div>
               <Label>Select By</Label>
             </div>
@@ -225,7 +225,7 @@ export default function ActionSettingsTab({
               setIsInnerHtml={setIsInnerHtml}
               register={register}
             />
-          </>
+          </div>
         ) : actionClass.type === "automatic" ? (
           <p className="text-sm text-slate-600">
             This action was created automatically. You cannot make changes to it.
@@ -268,4 +268,4 @@ export default function ActionSettingsTab({
       />
     </div>
   );
-}
+};

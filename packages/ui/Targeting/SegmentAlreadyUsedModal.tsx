@@ -9,7 +9,7 @@ type TSegmentAlreadyUsedModalProps = {
   environmentId: string;
 };
 
-const SegmentAlreadyUsedModal = ({ open, setOpen, environmentId }: TSegmentAlreadyUsedModalProps) => {
+export const SegmentAlreadyUsedModal = ({ open, setOpen, environmentId }: TSegmentAlreadyUsedModalProps) => {
   const router = useRouter();
 
   return (
@@ -34,5 +34,3 @@ const SegmentAlreadyUsedModal = ({ open, setOpen, environmentId }: TSegmentAlrea
     </Modal>
   );
 };
-
-export default SegmentAlreadyUsedModal;

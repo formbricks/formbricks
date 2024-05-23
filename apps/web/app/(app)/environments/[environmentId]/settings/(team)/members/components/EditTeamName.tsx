@@ -23,7 +23,7 @@ interface EditTeamNameProps {
   membershipRole?: TMembershipRole;
 }
 
-export default function EditTeamName({ team, membershipRole }: EditTeamNameProps) {
+export const EditTeamName = ({ team, membershipRole }: EditTeamNameProps) => {
   const router = useRouter();
   const {
     register,
@@ -93,4 +93,4 @@ export default function EditTeamName({ team, membershipRole }: EditTeamNameProps
       </Button>
     </form>
   );
-}
+};

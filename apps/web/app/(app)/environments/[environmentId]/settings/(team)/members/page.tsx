@@ -1,5 +1,5 @@
 import { TeamSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(team)/components/TeamSettingsNavbar";
-import TeamActions from "@/app/(app)/environments/[environmentId]/settings/(team)/members/components/EditMemberships/TeamActions";
+import { TeamActions } from "@/app/(app)/environments/[environmentId]/settings/(team)/members/components/EditMemberships/TeamActions";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
 
@@ -14,10 +14,10 @@ import { PageHeader } from "@formbricks/ui/PageHeader";
 import { SettingsId } from "@formbricks/ui/SettingsId";
 import { Skeleton } from "@formbricks/ui/Skeleton";
 
-import SettingsCard from "../../components/SettingsCard";
-import DeleteTeam from "./components/DeleteTeam";
+import { SettingsCard } from "../../components/SettingsCard";
+import { DeleteTeam } from "./components/DeleteTeam";
 import { EditMemberships } from "./components/EditMemberships";
-import EditTeamName from "./components/EditTeamName";
+import { EditTeamName } from "./components/EditTeamName";
 
 const MembersLoading = () => (
   <div className="rounded-lg border border-slate-200">
@@ -43,7 +43,7 @@ const MembersLoading = () => (
   </div>
 );
 
-export default async function MembersSettingsPage({ params }: { params: { environmentId: string } }) {
+const Page = async ({ params }: { params: { environmentId: string } }) => {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Unauthenticated");
@@ -119,4 +119,6 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
       <SettingsId title="Team" id={team.id}></SettingsId>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

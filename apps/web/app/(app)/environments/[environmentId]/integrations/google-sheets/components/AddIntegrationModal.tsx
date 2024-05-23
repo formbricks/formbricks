@@ -33,7 +33,7 @@ interface AddWebhookModalProps {
   attributeClasses: TAttributeClass[];
 }
 
-export default function AddIntegrationModal({
+export const AddIntegrationModal = ({
   environmentId,
   surveys,
   open,
@@ -42,7 +42,7 @@ export default function AddIntegrationModal({
   googleSheetIntegration,
   selectedIntegration,
   attributeClasses,
-}: AddWebhookModalProps) {
+}: AddWebhookModalProps) => {
   const { handleSubmit } = useForm();
 
   const integrationData = {
@@ -291,4 +291,4 @@ export default function AddIntegrationModal({
       </div>
     </Modal>
   );
-}
+};

@@ -11,24 +11,26 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { SingleResponseCard } from "@formbricks/ui/SingleResponseCard";
 
-export default function ResponseFeed({
+interface ResponseTimelineProps {
+  surveys: TSurvey[];
+  user: TUser;
+  responses: TResponse[];
+  environment: TEnvironment;
+  environmentTags: TTag[];
+  attributeClasses: TAttributeClass[];
+}
+
+export const ResponseFeed = ({
   responses,
   environment,
   surveys,
   user,
   environmentTags,
   attributeClasses,
-}: {
-  responses: TResponse[];
-  environment: TEnvironment;
-  surveys: TSurvey[];
-  user: TUser;
-  environmentTags: TTag[];
-  attributeClasses: TAttributeClass[];
-}) {
+}: ResponseTimelineProps) => {
   const [fetchedResponses, setFetchedResponses] = useState(responses);
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export default function ResponseFeed({
       )}
     </>
   );
-}
+};
 
 const ResponseSurveyCard = ({
   response,

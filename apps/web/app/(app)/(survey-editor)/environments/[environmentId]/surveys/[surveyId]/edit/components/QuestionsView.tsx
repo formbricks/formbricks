@@ -1,8 +1,15 @@
 "use client";
 
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { createId } from "@paralleldrive/cuid2";
-import { useEffect, useMemo, useState } from "react";
-import { DragDropContext } from "react-beautiful-dnd";
+import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { MultiLanguageCard } from "@formbricks/ee/multiLanguage/components/MultiLanguageCard";
@@ -14,16 +21,15 @@ import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
 import { isCardValid, validateQuestion, validateSurveyQuestionsInBatch } from "../lib/validation";
-import AddQuestionButton from "./AddQuestionButton";
-import EditThankYouCard from "./EditThankYouCard";
-import EditWelcomeCard from "./EditWelcomeCard";
-import HiddenFieldsCard from "./HiddenFieldsCard";
-import QuestionCard from "./QuestionCard";
-import { StrictModeDroppable } from "./StrictModeDroppable";
+import { AddQuestionButton } from "./AddQuestionButton";
+import { EditThankYouCard } from "./EditThankYouCard";
+import { EditWelcomeCard } from "./EditWelcomeCard";
+import { HiddenFieldsCard } from "./HiddenFieldsCard";
+import { QuestionsDroppable } from "./QuestionsDroppable";
 
 interface QuestionsViewProps {
   localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
+  setLocalSurvey: React.Dispatch<SetStateAction<TSurvey>>;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   product: TProduct;
@@ -56,6 +62,7 @@ export const QuestionsView = ({
       return acc;
     }, {});
   }, [localSurvey.questions]);
+
   const surveyLanguages = localSurvey.languages;
   const [backButtonLabel, setbackButtonLabel] = useState(null);
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
@@ -214,17 +221,6 @@ export const QuestionsView = ({
     internalQuestionIdMap[question.id] = createId();
   };
 
-  const onDragEnd = (result) => {
-    if (!result.destination) {
-      return;
-    }
-    const newQuestions = Array.from(localSurvey.questions);
-    const [reorderedQuestion] = newQuestions.splice(result.source.index, 1);
-    newQuestions.splice(result.destination.index, 0, reorderedQuestion);
-    const updatedSurvey = { ...localSurvey, questions: newQuestions };
-    setLocalSurvey(updatedSurvey);
-  };
-
   const moveQuestion = (questionIndex: number, up: boolean) => {
     const newQuestions = Array.from(localSurvey.questions);
     const [reorderedQuestion] = newQuestions.splice(questionIndex, 1);
@@ -306,6 +302,26 @@ export const QuestionsView = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeQuestionId, setActiveQuestionId]);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  );
+
+  const onDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    const newQuestions = Array.from(localSurvey.questions);
+    const sourceIndex = newQuestions.findIndex((question) => question.id === active.id);
+    const destinationIndex = newQuestions.findIndex((question) => question.id === over?.id);
+    const [reorderedQuestion] = newQuestions.splice(sourceIndex, 1);
+    newQuestions.splice(destinationIndex, 0, reorderedQuestion);
+    const updatedSurvey = { ...localSurvey, questions: newQuestions };
+    setLocalSurvey(updatedSurvey);
+  };
+
   return (
     <div className="mt-16 px-5 py-4">
       <div className="mb-5 flex flex-col gap-5">
@@ -320,37 +336,25 @@ export const QuestionsView = ({
           attributeClasses={attributeClasses}
         />
       </div>
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="mb-5 grid grid-cols-1 gap-5 ">
-          <StrictModeDroppable droppableId="questionsList">
-            {(provided) => (
-              <div className="grid w-full gap-5" ref={provided.innerRef} {...provided.droppableProps}>
-                {localSurvey.questions.map((question, questionIdx) => (
-                  // display a question form
-                  <QuestionCard
-                    key={internalQuestionIdMap[question.id]}
-                    localSurvey={localSurvey}
-                    product={product}
-                    questionIdx={questionIdx}
-                    moveQuestion={moveQuestion}
-                    updateQuestion={updateQuestion}
-                    duplicateQuestion={duplicateQuestion}
-                    selectedLanguageCode={selectedLanguageCode}
-                    setSelectedLanguageCode={setSelectedLanguageCode}
-                    deleteQuestion={deleteQuestion}
-                    activeQuestionId={activeQuestionId}
-                    setActiveQuestionId={setActiveQuestionId}
-                    lastQuestion={questionIdx === localSurvey.questions.length - 1}
-                    isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
-                    attributeClasses={attributeClasses}
-                  />
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </StrictModeDroppable>
-        </div>
-      </DragDropContext>
+
+      <DndContext sensors={sensors} onDragEnd={onDragEnd} collisionDetection={closestCorners}>
+        <QuestionsDroppable
+          localSurvey={localSurvey}
+          product={product}
+          moveQuestion={moveQuestion}
+          updateQuestion={updateQuestion}
+          duplicateQuestion={duplicateQuestion}
+          selectedLanguageCode={selectedLanguageCode}
+          setSelectedLanguageCode={setSelectedLanguageCode}
+          deleteQuestion={deleteQuestion}
+          activeQuestionId={activeQuestionId}
+          setActiveQuestionId={setActiveQuestionId}
+          invalidQuestions={invalidQuestions}
+          internalQuestionIdMap={internalQuestionIdMap}
+          attributeClasses={attributeClasses}
+        />
+      </DndContext>
+
       <AddQuestionButton addQuestion={addQuestion} product={product} />
       <div className="mt-5 flex flex-col gap-5">
         <EditThankYouCard

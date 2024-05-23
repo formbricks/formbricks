@@ -1,3 +1,5 @@
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { Headline } from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
@@ -9,10 +11,8 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
 
 import { BackButton } from "../buttons/BackButton";
-import SubmitButton from "../buttons/SubmitButton";
-import FileInput from "../general/FileInput";
-import Headline from "../general/Headline";
-import Subheader from "../general/Subheader";
+import { FileInput } from "../general/FileInput";
+import { Subheader } from "../general/Subheader";
 
 interface FileUploadQuestionProps {
   question: TSurveyFileUploadQuestion;
@@ -85,6 +85,7 @@ export const FileUploadQuestion = ({
             questionId={question.id}
           />
           <FileInput
+            htmlFor={question.id}
             surveyId={surveyId}
             onFileUpload={onFileUpload}
             onUploadCallback={(urls: string[]) => {

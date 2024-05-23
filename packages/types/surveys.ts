@@ -177,13 +177,8 @@ export const ZSurveyConsentLogic = ZSurveyLogicBase.extend({
   value: z.undefined(),
 });
 
-export const ZSurveyMultipleChoiceSingleLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped", "equals", "notEquals", "includesOne"]).optional(),
-  value: z.union([z.array(z.string()), z.string()]).optional(),
-});
-
-export const ZSurveyMultipleChoiceMultiLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped", "includesAll", "includesOne", "equals"]).optional(),
+export const ZSurveyMultipleChoiceLogic = ZSurveyLogicBase.extend({
+  condition: z.enum(["submitted", "skipped", "equals", "notEquals", "includesOne", "includesAll"]).optional(),
   value: z.union([z.array(z.string()), z.string()]).optional(),
 });
 
@@ -243,8 +238,7 @@ const ZSurveyMatrixLogic = ZSurveyLogicBase.extend({
 export const ZSurveyLogic = z.union([
   ZSurveyOpenTextLogic,
   ZSurveyConsentLogic,
-  ZSurveyMultipleChoiceSingleLogic,
-  ZSurveyMultipleChoiceMultiLogic,
+  ZSurveyMultipleChoiceLogic,
   ZSurveyNPSLogic,
   ZSurveyCTALogic,
   ZSurveyRatingLogic,
@@ -296,29 +290,38 @@ export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyConsentQuestion = z.infer<typeof ZSurveyConsentQuestion>;
 
-export const ZSurveyMultipleChoiceSingleQuestion = ZSurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.MultipleChoiceSingle),
-  choices: z.array(ZSurveyChoice),
-  logic: z.array(ZSurveyMultipleChoiceSingleLogic).optional(),
-  shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
-  otherOptionPlaceholder: ZI18nString.optional(),
-});
-
-export type TSurveyMultipleChoiceSingleQuestion = z.infer<typeof ZSurveyMultipleChoiceSingleQuestion>;
-
 export const ZShuffleOption = z.enum(["none", "all", "exceptLast"]);
 
 export type TShuffleOption = z.infer<typeof ZShuffleOption>;
 
-export const ZSurveyMultipleChoiceMultiQuestion = ZSurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.MultipleChoiceMulti),
+export const ZSurveyMultipleChoiceQuestion = ZSurveyQuestionBase.extend({
+  type: z.union([
+    z.literal(TSurveyQuestionType.MultipleChoiceSingle),
+    z.literal(TSurveyQuestionType.MultipleChoiceMulti),
+  ]),
   choices: z.array(ZSurveyChoice),
-  logic: z.array(ZSurveyMultipleChoiceMultiLogic).optional(),
+  logic: z.array(ZSurveyMultipleChoiceLogic).optional(),
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
-});
+}).refine(
+  (question) => {
+    const { logic, type } = question;
 
-export type TSurveyMultipleChoiceMultiQuestion = z.infer<typeof ZSurveyMultipleChoiceMultiQuestion>;
+    if (type === TSurveyQuestionType.MultipleChoiceSingle) {
+      // The single choice question should not have 'includesAll' logic
+      return !logic?.some((l) => l.condition === "includesAll");
+    } else {
+      // The multi choice question should not have 'notEquals' logic
+      return !logic?.some((l) => l.condition === "notEquals");
+    }
+  },
+  {
+    message:
+      "MultipleChoiceSingle question should not have 'includesAll' logic and MultipleChoiceMulti question should not have 'notEquals' logic",
+  }
+);
+
+export type TSurveyMultipleChoiceQuestion = z.infer<typeof ZSurveyMultipleChoiceQuestion>;
 
 export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.NPS),
@@ -409,8 +412,7 @@ export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 export const ZSurveyQuestion = z.union([
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
-  ZSurveyMultipleChoiceSingleQuestion,
-  ZSurveyMultipleChoiceMultiQuestion,
+  ZSurveyMultipleChoiceQuestion,
   ZSurveyNPSQuestion,
   ZSurveyCTAQuestion,
   ZSurveyRatingQuestion,
@@ -560,7 +562,7 @@ export type TSurveyQuestionSummaryOpenText = z.infer<typeof ZSurveyQuestionSumma
 
 export const ZSurveyQuestionSummaryMultipleChoice = z.object({
   type: z.union([z.literal("multipleChoiceMulti"), z.literal("multipleChoiceSingle")]),
-  question: z.union([ZSurveyMultipleChoiceSingleQuestion, ZSurveyMultipleChoiceMultiQuestion]),
+  question: ZSurveyMultipleChoiceQuestion,
   responseCount: z.number(),
   choices: z.array(
     z.object({

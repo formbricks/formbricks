@@ -1,6 +1,6 @@
 "use client";
 
-import NavigationLink from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
+import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import {
@@ -35,7 +35,7 @@ import { TProduct } from "@formbricks/types/product";
 import { TTeam } from "@formbricks/types/teams";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
-import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
+import { CreateTeamModal } from "@formbricks/ui/CreateTeamModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,7 +50,7 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 
-import AddProductModal from "./AddProductModal";
+import { AddProductModal } from "./AddProductModal";
 
 interface NavigationProps {
   environment: TEnvironment;
@@ -78,7 +78,7 @@ export const MainNavigation = ({
   const [currentTeamId, setCurrentTeamId] = useState("");
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(localStorage.getItem("isMainNavCollapsed") === "true");
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
 
   const product = products.find((product) => product.id === environment.productId);
@@ -89,6 +89,11 @@ export const MainNavigation = ({
     setIsCollapsed(!isCollapsed);
     localStorage.setItem("isMainNavCollapsed", isCollapsed ? "false" : "true");
   };
+
+  useEffect(() => {
+    const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
+    setIsCollapsed(isCollapsedValueFromLocalStorage);
+  }, []);
 
   useEffect(() => {
     const toggleTextOpacity = () => {
@@ -200,7 +205,7 @@ export const MainNavigation = ({
       {product && (
         <aside
           className={cn(
-            "z-20 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
+            "z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
             !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded",
             environment.type === "development" ? `h-[calc(100vh-1.25rem)]` : "h-screen"
           )}>

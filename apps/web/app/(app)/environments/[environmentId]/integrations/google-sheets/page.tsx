@@ -1,4 +1,4 @@
-import GoogleSheetWrapper from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/GoogleSheetWrapper";
+import { GoogleSheetWrapper } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/GoogleSheetWrapper";
 
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import {
@@ -18,7 +18,7 @@ import { GoBackButton } from "@formbricks/ui/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function GoogleSheet({ params }) {
+const Page = async ({ params }) => {
   const enabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);
   const [surveys, integrations, environment, attributeClasses] = await Promise.all([
     getSurveys(params.environmentId),
@@ -58,4 +58,6 @@ export default async function GoogleSheet({ params }) {
       </div>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

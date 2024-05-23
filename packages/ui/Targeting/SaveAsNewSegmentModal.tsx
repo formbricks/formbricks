@@ -1,7 +1,7 @@
 "use client";
 
 import { UsersIcon } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -28,7 +28,7 @@ type SaveAsNewSegmentModalForm = {
   description?: string;
 };
 
-const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
+export const SaveAsNewSegmentModal = ({
   open,
   setOpen,
   localSurvey,
@@ -37,7 +37,7 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
   setIsSegmentEditorOpen,
   onCreateSegment,
   onUpdateSegment,
-}) => {
+}: SaveAsNewSegmentModalProps) => {
   const {
     register,
     formState: { errors },
@@ -197,5 +197,3 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
     </Modal>
   );
 };
-
-export default SaveAsNewSegmentModal;

@@ -1,6 +1,6 @@
 "use client";
 
-import ResponseFeed from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponsesFeed";
+import { ResponseFeed } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponsesFeed";
 import { ArrowDownUpIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -11,21 +11,23 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 
-export default function ResponseTimeline({
-  surveys,
-  user,
-  environment,
-  responses,
-  environmentTags,
-  attributeClasses,
-}: {
+interface ResponseTimelineProps {
   surveys: TSurvey[];
   user: TUser;
   responses: TResponse[];
   environment: TEnvironment;
   environmentTags: TTag[];
   attributeClasses: TAttributeClass[];
-}) {
+}
+
+export const ResponseTimeline = ({
+  surveys,
+  user,
+  environment,
+  responses,
+  environmentTags,
+  attributeClasses,
+}: ResponseTimelineProps) => {
   const [sortedResponses, setSortedResponses] = useState(responses);
   const toggleSortResponses = () => {
     setSortedResponses([...sortedResponses].reverse());
@@ -58,4 +60,4 @@ export default function ResponseTimeline({
       />
     </div>
   );
-}
+};

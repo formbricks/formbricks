@@ -1,7 +1,7 @@
 import { Label } from "@radix-ui/react-dropdown-menu";
-import clsx from "clsx";
 import { Control, Controller, UseFormRegister } from "react-hook-form";
 
+import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
 
 import { AdvancedOptionToggle } from "../../AdvancedOptionToggle";
@@ -42,9 +42,9 @@ export const PageUrlSelector = ({
       title="Page URL"
       description="If a user visits a specific URL"
       childBorder={true}>
-      <div className="col-span-1 space-y-3 p-4">
-        <div className="grid grid-cols-3 gap-x-8">
-          <div className="col-span-1">
+      <div className="col-span-1 w-full space-y-3 p-4">
+        <div className="flex w-full items-end gap-2">
+          <div>
             <Label>URL</Label>
             <Controller
               name="noCodeConfig.pageUrl.rule"
@@ -66,7 +66,7 @@ export const PageUrlSelector = ({
               )}
             />
           </div>
-          <div className="col-span-2 flex items-end">
+          <div className="flex flex-1 items-end">
             <Input
               type="text"
               className="bg-white"
@@ -81,7 +81,7 @@ export const PageUrlSelector = ({
             Enter a URL to see if a user visiting it would be tracked.
           </div>
           <div className=" rounded bg-slate-50">
-            <div className="mt-1 flex">
+            <div className="mt-1 flex items-end">
               <Input
                 type="text"
                 value={testUrl}
@@ -90,7 +90,7 @@ export const PageUrlSelector = ({
                   setTestUrl(e.target.value);
                   setIsMatch("default");
                 }}
-                className={clsx(
+                className={cn(
                   isMatch === "yes"
                     ? "border-green-500 bg-green-50"
                     : isMatch === "no"

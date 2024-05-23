@@ -29,13 +29,13 @@ interface WhenToSendCardProps {
   membershipRole?: TMembershipRole;
 }
 
-export default function WhenToSendCard({
+export const WhenToSendCard = ({
   environmentId,
   localSurvey,
   setLocalSurvey,
   propActionClasses,
   membershipRole,
-}: WhenToSendCardProps) {
+}: WhenToSendCardProps) => {
   const [open, setOpen] = useState(
     localSurvey.type === "app" || localSurvey.type === "website" ? true : false
   );
@@ -326,4 +326,4 @@ export default function WhenToSendCard({
       />
     </>
   );
-}
+};

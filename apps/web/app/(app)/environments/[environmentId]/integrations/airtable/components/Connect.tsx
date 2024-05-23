@@ -3,6 +3,7 @@
 import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
 import FormbricksLogo from "@/images/logo.svg";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@formbricks/ui/Button";
@@ -15,7 +16,7 @@ interface AirtableConnectProps {
   webAppUrl: string;
 }
 
-export default function AirtableConnect({ environmentId, enabled, webAppUrl }: AirtableConnectProps) {
+export const AirtableConnect = ({ environmentId, enabled, webAppUrl }: AirtableConnectProps) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const handleGoogleLogin = async () => {
     setIsConnecting(true);
@@ -41,6 +42,12 @@ export default function AirtableConnect({ environmentId, enabled, webAppUrl }: A
         {!enabled && (
           <p className="mb-8 rounded border-slate-200 bg-slate-100 p-3 text-sm">
             Airtable Integration is not configured in your instance of Formbricks.
+            <br />
+            Please follow the{" "}
+            <Link href="https://formbricks.com/docs/self-hosting/integrations#airtable" className="underline">
+              docs
+            </Link>{" "}
+            to configure it.
           </p>
         )}
         <Button variant="darkCTA" loading={isConnecting} onClick={handleGoogleLogin} disabled={!enabled}>
@@ -49,4 +56,4 @@ export default function AirtableConnect({ environmentId, enabled, webAppUrl }: A
       </div>
     </div>
   );
-}
+};

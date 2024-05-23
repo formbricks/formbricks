@@ -43,7 +43,7 @@ interface FilterDateContextProps {
 
 const ResponseFilterContext = createContext<FilterDateContextProps | undefined>(undefined);
 
-function ResponseFilterProvider({ children }: { children: React.ReactNode }) {
+const ResponseFilterProvider = ({ children }: { children: React.ReactNode }) => {
   // state holds the filter selected value
   const [selectedFilter, setSelectedFilter] = useState<SelectedFilterValue>({
     filter: [],
@@ -85,14 +85,14 @@ function ResponseFilterProvider({ children }: { children: React.ReactNode }) {
       {children}
     </ResponseFilterContext.Provider>
   );
-}
+};
 
-function useResponseFilter() {
+const useResponseFilter = () => {
   const context = useContext(ResponseFilterContext);
   if (context === undefined) {
     throw new Error("useFilterDate must be used within a FilterDateProvider");
   }
   return context;
-}
+};
 
 export { ResponseFilterContext, ResponseFilterProvider, useResponseFilter };

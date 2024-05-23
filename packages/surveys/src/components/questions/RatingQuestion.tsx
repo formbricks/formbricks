@@ -1,6 +1,6 @@
 import { BackButton } from "@/components/buttons/BackButton";
-import SubmitButton from "@/components/buttons/SubmitButton";
-import Headline from "@/components/general/Headline";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { Headline } from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
@@ -23,7 +23,7 @@ import {
   TiredFace,
   WearyFace,
 } from "../general/Smileys";
-import Subheader from "../general/Subheader";
+import { Subheader } from "../general/Subheader";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
@@ -208,8 +208,8 @@ export const RatingQuestion = ({
                 ))}
               </div>
               <div className="text-subheading mt-4 flex justify-between px-1.5 text-xs leading-6">
-                <p className="w-1/2 text-left">{getLocalizedValue(question.lowerLabel, "default")}</p>
-                <p className="w-1/2 text-right">{getLocalizedValue(question.upperLabel, "default")}</p>
+                <p className="w-1/2 text-left">{getLocalizedValue(question.lowerLabel, languageCode)}</p>
+                <p className="w-1/2 text-right">{getLocalizedValue(question.upperLabel, languageCode)}</p>
               </div>
             </fieldset>
           </div>

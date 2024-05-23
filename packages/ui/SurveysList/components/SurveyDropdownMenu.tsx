@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../DropdownMenu";
-import LoadingSpinner from "../../LoadingSpinner";
+import { LoadingSpinner } from "../../LoadingSpinner";
 import {
   copyToOtherEnvironmentAction,
   deleteSurveyAction,

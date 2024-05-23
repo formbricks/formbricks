@@ -1,4 +1,4 @@
-import UrlShortenerForm from "@/app/(app)/environments/[environmentId]/components/UrlShortenerForm";
+import { UrlShortenerForm } from "@/app/(app)/environments/[environmentId]/components/UrlShortenerForm";
 import Link from "next/link";
 
 import { TSurvey } from "@formbricks/types/surveys";
@@ -11,7 +11,7 @@ interface LinkTabProps {
   setSurveyUrl: (url: string) => void;
 }
 
-export default function LinkTab({ survey, webAppUrl, surveyUrl, setSurveyUrl }: LinkTabProps) {
+export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: LinkTabProps) => {
   const docsLinks = [
     {
       title: "Identify users",
@@ -69,4 +69,4 @@ export default function LinkTab({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
       </div>
     </div>
   );
-}
+};

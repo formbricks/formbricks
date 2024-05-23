@@ -9,7 +9,7 @@ interface CalEmbedProps {
   onSuccessfulBooking: () => void;
 }
 
-export default function CalEmbed({ question, onSuccessfulBooking }: CalEmbedProps) {
+export const CalEmbed = ({ question, onSuccessfulBooking }: CalEmbedProps) => {
   const cal = useMemo(() => {
     const calInline = snippet("https://cal.com/embed.js");
 
@@ -53,4 +53,4 @@ export default function CalEmbed({ question, onSuccessfulBooking }: CalEmbedProp
       <div id="fb-cal-embed" className={cn("border-border rounded-lg border")} />
     </div>
   );
-}
+};

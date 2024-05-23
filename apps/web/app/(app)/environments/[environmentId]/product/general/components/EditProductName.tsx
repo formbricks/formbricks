@@ -21,7 +21,7 @@ type EditProductNameProps = {
   isProductNameEditDisabled: boolean;
 };
 
-const EditProductName: React.FC<EditProductNameProps> = ({
+export const EditProductName: React.FC<EditProductNameProps> = ({
   product,
   environmentId,
   isProductNameEditDisabled,
@@ -89,5 +89,3 @@ const EditProductName: React.FC<EditProductNameProps> = ({
     <p className="text-sm text-red-700">Only Owners, Admins and Editors can perform this action.</p>
   );
 };
-
-export default EditProductName;

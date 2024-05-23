@@ -24,8 +24,7 @@ import {
   TSurveyDateQuestion,
   TSurveyFileUploadQuestion,
   TSurveyMatrixQuestion,
-  TSurveyMultipleChoiceMultiQuestion,
-  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyMultipleChoiceQuestion,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
@@ -69,7 +68,7 @@ export const questionTypes: TSurveyQuestionType[] = [
         { id: createId(), label: { default: "Have the cake 🎂" } },
       ],
       shuffleOption: "none",
-    } as Partial<TSurveyMultipleChoiceSingleQuestion>,
+    } as Partial<TSurveyMultipleChoiceQuestion>,
   },
   {
     id: QuestionId.MultipleChoiceMulti,
@@ -84,7 +83,7 @@ export const questionTypes: TSurveyQuestionType[] = [
         { id: createId(), label: { default: "Palms 🌴" } },
       ],
       shuffleOption: "none",
-    } as Partial<TSurveyMultipleChoiceMultiQuestion>,
+    } as Partial<TSurveyMultipleChoiceQuestion>,
   },
   {
     id: QuestionId.PictureSelection,

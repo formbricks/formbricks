@@ -286,6 +286,7 @@ export const Survey = ({
         <ResponseErrorComponent responseData={responseData} questions={survey.questions} onRetry={onRetry} />
       );
     }
+
     const content = () => {
       if (questionIdx === -1) {
         return (
@@ -347,13 +348,14 @@ export const Survey = ({
         );
       }
     };
+
     return (
       <AutoCloseWrapper survey={survey} onClose={onClose}>
         {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
         <div
           className={cn(
             "no-scrollbar md:rounded-custom rounded-t-custom bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",
-            survey.type === "link" ? "fb-survey-shadow" : "",
+            cardArrangement === "simple" ? "fb-survey-shadow" : "",
             offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>

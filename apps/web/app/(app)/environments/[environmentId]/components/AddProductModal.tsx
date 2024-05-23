@@ -18,7 +18,7 @@ interface AddProductModalProps {
   setOpen: (v: boolean) => void;
 }
 
-export default function AddProductModal({ environmentId, open, setOpen }: AddProductModalProps) {
+export const AddProductModal = ({ environmentId, open, setOpen }: AddProductModalProps) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [productName, setProductName] = useState("");
@@ -94,4 +94,4 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
       </div>
     </Modal>
   );
-}
+};

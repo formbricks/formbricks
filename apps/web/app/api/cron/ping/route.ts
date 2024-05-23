@@ -6,7 +6,7 @@ import { prisma } from "@formbricks/database";
 import { CRON_SECRET } from "@formbricks/lib/constants";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 
-export async function POST() {
+export const POST = async () => {
   const headersList = headers();
   const apiKey = headersList.get("x-api-key");
 
@@ -28,4 +28,4 @@ export async function POST() {
   });
 
   return responses.successResponse({}, true);
-}
+};

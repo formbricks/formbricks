@@ -8,7 +8,7 @@ import { ENCRYPTION_KEY } from "../constants";
 import { symmetricDecrypt } from "../crypto";
 import { getIntegrationByType } from "../integration/service";
 
-async function fetchPages(config: TIntegrationNotionConfig) {
+const fetchPages = async (config: TIntegrationNotionConfig) => {
   try {
     const res = await fetch("https://api.notion.com/v1/search", {
       headers: getHeaders(config),
@@ -25,7 +25,7 @@ async function fetchPages(config: TIntegrationNotionConfig) {
   } catch (error) {
     throw error;
   }
-}
+};
 
 export const getNotionDatabases = async (environmentId: string): Promise<TIntegrationNotionDatabase[]> => {
   let results: TIntegrationNotionDatabase[] = [];
@@ -40,11 +40,11 @@ export const getNotionDatabases = async (environmentId: string): Promise<TIntegr
   }
 };
 
-export async function writeData(
+export const writeData = async (
   databaseId: string,
   properties: Record<string, Object>,
   config: TIntegrationNotionConfig
-) {
+) => {
   try {
     await fetch(`https://api.notion.com/v1/pages`, {
       headers: getHeaders(config),
@@ -59,9 +59,9 @@ export async function writeData(
   } catch (error) {
     throw error;
   }
-}
+};
 
-function getHeaders(config: TIntegrationNotionConfig) {
+const getHeaders = (config: TIntegrationNotionConfig) => {
   const decryptedToken = symmetricDecrypt(config.key.access_token, ENCRYPTION_KEY!);
   return {
     Accept: "application/json",
@@ -69,4 +69,4 @@ function getHeaders(config: TIntegrationNotionConfig) {
     Authorization: `Bearer ${decryptedToken}`,
     "Notion-Version": "2022-06-28",
   };
-}
+};

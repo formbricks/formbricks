@@ -8,8 +8,8 @@ import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys";
 
-import Connect from "./Connect";
-import Home from "./Home";
+import { AirtableConnect } from "./Connect";
+import { Home } from "./Home";
 
 interface AirtableWrapperProps {
   environmentId: string;
@@ -22,7 +22,7 @@ interface AirtableWrapperProps {
   attributeClasses: TAttributeClass[];
 }
 
-export default function AirtableWrapper({
+export const AirtableWrapper = ({
   environmentId,
   airtableArray,
   airtableIntegration,
@@ -31,7 +31,7 @@ export default function AirtableWrapper({
   enabled,
   webAppUrl,
   attributeClasses,
-}: AirtableWrapperProps) {
+}: AirtableWrapperProps) => {
   const [isConnected, setIsConnected_] = useState(
     airtableIntegration ? airtableIntegration.config?.key : false
   );
@@ -51,6 +51,6 @@ export default function AirtableWrapper({
       attributeClasses={attributeClasses}
     />
   ) : (
-    <Connect enabled={enabled} environmentId={environment.id} webAppUrl={webAppUrl} />
+    <AirtableConnect enabled={enabled} environmentId={environment.id} webAppUrl={webAppUrl} />
   );
-}
+};

@@ -1,6 +1,6 @@
 import { Skeleton } from "@formbricks/ui/Skeleton";
 
-function LoadingCard({
+const LoadingCard = ({
   title,
   description,
   skeleton,
@@ -8,7 +8,7 @@ function LoadingCard({
   title: string;
   description: string;
   skeleton: React.ReactNode;
-}) {
+}) => {
   return (
     <div className="my-4 rounded-lg border border-slate-200">
       <div className="grid content-center rounded-lg bg-slate-100 px-6 py-5 text-left text-slate-900">
@@ -18,9 +18,9 @@ function LoadingCard({
       <div className="w-full">{skeleton}</div>
     </div>
   );
-}
+};
 
-export default function Loading() {
+const Loading = () => {
   const cards = [
     {
       title: "Manage members",
@@ -77,4 +77,6 @@ export default function Loading() {
       ))}
     </div>
   );
-}
+};
+
+export default Loading;

@@ -4,9 +4,9 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 
-import TemplateContainerWithPreview from "./components/TemplateContainer";
+import { TemplateContainerWithPreview } from "./components/TemplateContainer";
 
-export default async function SurveyTemplatesPage({ params }) {
+const Page = async ({ params }) => {
   const session = await getServerSession(authOptions);
   const environmentId = params.environmentId;
 
@@ -35,4 +35,6 @@ export default async function SurveyTemplatesPage({ params }) {
       product={product}
     />
   );
-}
+};
+
+export default Page;

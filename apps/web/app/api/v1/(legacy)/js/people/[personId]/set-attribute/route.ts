@@ -8,11 +8,11 @@ import { getPerson } from "@formbricks/lib/person/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { ZJsPeopleLegacyAttributeInput } from "@formbricks/types/js";
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(req: Request, { params }): Promise<Response> {
+export const POST = async (req: Request, { params }): Promise<Response> => {
   try {
     const { personId } = params;
 
@@ -67,4 +67,4 @@ export async function POST(req: Request, { params }): Promise<Response> {
     console.error(error);
     return responses.internalServerErrorResponse(`Unable to complete request: ${error.message}`, true);
   }
-}
+};

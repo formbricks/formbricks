@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 
-export function EditAvatar({ session, environmentId }: { session: Session; environmentId: string }) {
+export const EditAvatar = ({ session, environmentId }: { session: Session; environmentId: string }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -108,4 +108,4 @@ export function EditAvatar({ session, environmentId }: { session: Session; envir
       </div>
     </div>
   );
-}
+};

@@ -15,7 +15,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TTeam } from "@formbricks/types/teams";
 import { TUser } from "@formbricks/types/user";
 
-import PathwaySelect from "./PathwaySelect";
+import { PathwaySelect } from "./PathwaySelect";
 import { OnboardingHeader } from "./ProgressBar";
 
 interface OnboardingProps {
@@ -27,14 +27,14 @@ interface OnboardingProps {
   webAppUrl: string;
 }
 
-export function Onboarding({
+export const Onboarding = ({
   isFormbricksCloud,
   session,
   environment,
   user,
   team,
   webAppUrl,
-}: OnboardingProps) {
+}: OnboardingProps) => {
   const router = useRouter();
   const [selectedPathway, setSelectedPathway] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(16);
@@ -82,14 +82,11 @@ export function Onboarding({
   }, [iframeVisible, currentStep]); // Depend on iframeVisible and currentStep to re-evaluate when needed
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Access localStorage only when window is available
-      const pathwayValueFromLocalStorage = localStorage.getItem("onboardingPathway");
-      const currentStepValueFromLocalStorage = parseInt(localStorage.getItem("onboardingCurrentStep") ?? "1");
+    const pathwayValueFromLocalStorage = localStorage.getItem("onboardingPathway");
+    const currentStepValueFromLocalStorage = parseInt(localStorage.getItem("onboardingCurrentStep") ?? "1");
 
-      setSelectedPathway(pathwayValueFromLocalStorage);
-      setCurrentStep(currentStepValueFromLocalStorage);
-    }
+    setSelectedPathway(pathwayValueFromLocalStorage);
+    setCurrentStep(currentStepValueFromLocalStorage);
   }, []);
 
   useEffect(() => {
@@ -188,4 +185,4 @@ export function Onboarding({
       </div>
     </div>
   );
-}
+};

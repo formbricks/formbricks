@@ -55,7 +55,7 @@ export const LogicEditor = ({
   questionIdx,
   updateQuestion,
   attributeClasses,
-}: LogicEditorProps): JSX.Element => {
+}: LogicEditorProps) => {
   const [searchValue, setSearchValue] = useState<string>("");
   localSurvey = useMemo(() => {
     return checkForRecallInHeadline(localSurvey, "default", attributeClasses);

@@ -1,4 +1,4 @@
-import SlackWrapper from "@/app/(app)/environments/[environmentId]/integrations/slack/components/SlackWrapper";
+import { SlackWrapper } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/SlackWrapper";
 
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -12,7 +12,7 @@ import { GoBackButton } from "@formbricks/ui/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Slack({ params }) {
+const Page = async ({ params }) => {
   const isEnabled = !!(SLACK_CLIENT_ID && SLACK_CLIENT_SECRET);
 
   const [surveys, slackIntegration, environment, attributeClasses] = await Promise.all([
@@ -48,4 +48,6 @@ export default async function Slack({ params }) {
       </div>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

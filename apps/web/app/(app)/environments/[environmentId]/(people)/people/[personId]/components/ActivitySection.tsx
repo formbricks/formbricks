@@ -1,17 +1,17 @@
-import ActivityTimeline from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ActivityTimeline";
+import { ActivityTimeline } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ActivityTimeline";
 
 import { getActionsByPersonId } from "@formbricks/lib/action/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
-export default async function ActivitySection({
+export const ActivitySection = async ({
   environmentId,
   personId,
 }: {
   environmentId: string;
   personId: string;
-}) {
+}) => {
   const team = await getTeamByEnvironmentId(environmentId);
 
   if (!team) {
@@ -41,4 +41,4 @@ export default async function ActivitySection({
       />
     </div>
   );
-}
+};

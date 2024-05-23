@@ -8,14 +8,14 @@ import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/in
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TIntegrationInput } from "@formbricks/types/integration";
 
-export async function createOrUpdateIntegrationAction(
+export const createOrUpdateIntegrationAction = async (
   environmentId: string,
   integrationData: TIntegrationInput
-) {
+) => {
   return await createOrUpdateIntegration(environmentId, integrationData);
-}
+};
 
-export async function deleteIntegrationAction(integrationId: string) {
+export const deleteIntegrationAction = async (integrationId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -23,4 +23,4 @@ export async function deleteIntegrationAction(integrationId: string) {
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   return await deleteIntegration(integrationId);
-}
+};

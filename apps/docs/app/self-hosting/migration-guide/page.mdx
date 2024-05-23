@@ -17,6 +17,14 @@ Formbricks v2.0 comes with huge features such as Multi-Language Surveys and Adva
   the upgrade. Follow the below steps thoroughly to upgrade your Formbricks instance to v2.0.
 </Note>
 
+and
+
+<Note>
+  If you've used the Formbricks Enterprise Edition with a free beta license key, your instance will be
+  downgraded to the Community Edition 2.0. You find all license details on the [license
+  page.](/self-hosting/license/)
+</Note>
+
 ### Steps to Migrate
 
 This guide is for users who are self-hosting Formbricks using our one-click setup. If you are using a different setup, you might adjust the commands accordingly.
@@ -29,7 +37,7 @@ To run all these steps, please navigate to the `formbricks` folder where your `d
 <CodeGroup title="Backup Postgres">
 
 ```bash
-docker exec formbricks-quickstart-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v2.0_$(date +%Y%m%d_%H%M%S).dump
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v2.0_$(date +%Y%m%d_%H%M%S).dump
 ```
 
 </CodeGroup>
@@ -45,7 +53,19 @@ docker exec formbricks-quickstart-postgres-1 pg_dump -Fc -U postgres -d formbric
   restore scenario you will need to use `psql` then with an empty `formbricks` database.
 </Note>
 
-2. Stop the running Formbricks instance & remove the related containers:
+2. Pull the latest version of Formbricks:
+
+<Col>
+<CodeGroup title="Stop the containers">
+
+```bash
+docker-compose pull
+```
+
+</CodeGroup>
+</Col>
+
+3. Stop the running Formbricks instance & remove the related containers:
 
 <Col>
 <CodeGroup title="Stop the containers">
@@ -57,7 +77,7 @@ docker-compose down
 </CodeGroup>
 </Col>
 
-3. Restarting the containers will automatically pull the latest version of Formbricks:
+4. Restarting the containers with the latest version of Formbricks:
 
 <Col>
 <CodeGroup title="Restart the containers">
@@ -69,7 +89,7 @@ docker-compose up -d
 </CodeGroup>
 </Col>
 
-4. Now let's migrate the data to the latest schema:
+5. Now let's migrate the data to the latest schema:
 
 <Note>To find your Docker Network name for your Postgres Database, find it using `docker network ls`</Note>
 
@@ -77,6 +97,7 @@ docker-compose up -d
 <CodeGroup title="Migrate the data">
 
 ```bash
+docker pull ghcr.io/formbricks/data-migrations:latest && \
 docker run --rm \
   --network=formbricks_default \
   -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
@@ -89,7 +110,7 @@ docker run --rm \
 
 The above command will migrate your data to the latest schema. This is a crucial step to migrate your existing data to the new structure. Only if the script runs successful, changes are made to the database. The script can safely run multiple times.
 
-5. That's it! Once the migration is complete, you can **now access your Formbricks instance** at the same URL as before.
+6. That's it! Once the migration is complete, you can **now access your Formbricks instance** at the same URL as before.
 
 ### App Surveys with @formbricks/js
 

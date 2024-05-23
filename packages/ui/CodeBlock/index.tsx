@@ -18,13 +18,13 @@ interface CodeBlockProps {
   showCopyToClipboard?: boolean;
 }
 
-const CodeBlock: React.FC<CodeBlockProps> = ({
+export const CodeBlock = ({
   children,
   language,
   customEditorClass = "",
   customCodeClass = "",
   showCopyToClipboard = true,
-}) => {
+}: CodeBlockProps) => {
   useEffect(() => {
     Prism.highlightAll();
   }, [children]);
@@ -49,5 +49,3 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
     </div>
   );
 };
-
-export default CodeBlock;

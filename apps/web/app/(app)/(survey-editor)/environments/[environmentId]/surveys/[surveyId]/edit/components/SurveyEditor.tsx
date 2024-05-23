@@ -38,7 +38,7 @@ interface SurveyEditorProps {
   isUnsplashConfigured: boolean;
 }
 
-export default function SurveyEditor({
+export const SurveyEditor = ({
   survey,
   product,
   environment,
@@ -52,7 +52,7 @@ export default function SurveyEditor({
   isUserTargetingAllowed = false,
   isFormbricksCloud,
   isUnsplashConfigured,
-}: SurveyEditorProps): JSX.Element {
+}: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
@@ -215,4 +215,4 @@ export default function SurveyEditor({
       </div>
     </>
   );
-}
+};

@@ -23,7 +23,7 @@ interface EditThankYouCardProps {
   attributeClasses: TAttributeClass[];
 }
 
-export default function EditThankYouCard({
+export const EditThankYouCard = ({
   localSurvey,
   setLocalSurvey,
   setActiveQuestionId,
@@ -32,7 +32,7 @@ export default function EditThankYouCard({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
-}: EditThankYouCardProps) {
+}: EditThankYouCardProps) => {
   // const [open, setOpen] = useState(false);
   let open = activeQuestionId == "end";
   const [showThankYouCardCTA, setshowThankYouCardCTA] = useState<boolean>(
@@ -197,4 +197,4 @@ export default function EditThankYouCard({
       </Collapsible.Root>
     </div>
   );
-}
+};

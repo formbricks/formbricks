@@ -17,7 +17,7 @@ import { TUserNotificationSettings } from "@formbricks/types/user";
 
 import { handleIntegrations } from "./lib/handleIntegrations";
 
-export async function POST(request: Request) {
+export const POST = async (request: Request) => {
   // check authentication with x-api-key header and CRON_SECRET env variable
   if (headers().get("x-api-key") !== INTERNAL_SECRET) {
     return responses.notAuthenticatedResponse();
@@ -162,4 +162,4 @@ export async function POST(request: Request) {
   }
 
   return Response.json({ data: {} });
-}
+};

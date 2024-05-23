@@ -16,7 +16,7 @@ interface ConnectProps {
   webAppUrl: string;
 }
 
-export default function Connect({ enabled, environmentId, webAppUrl }: ConnectProps) {
+export const Connect = ({ enabled, environmentId, webAppUrl }: ConnectProps) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const searchParams = useSearchParams();
 
@@ -54,7 +54,7 @@ export default function Connect({ enabled, environmentId, webAppUrl }: ConnectPr
             Notion Integration is not configured in your instance of Formbricks.
             <br />
             Please follow the{" "}
-            <Link href="https://formbricks.com/docs/integrations/notion" className="underline">
+            <Link href="https://formbricks.com/docs/self-hosting/integrations#notion" className="underline">
               docs
             </Link>{" "}
             to configure it.
@@ -66,4 +66,4 @@ export default function Connect({ enabled, environmentId, webAppUrl }: ConnectPr
       </div>
     </div>
   );
-}
+};

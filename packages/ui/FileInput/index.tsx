@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 
-import LoadingSpinner from "../LoadingSpinner";
+import { LoadingSpinner } from "../LoadingSpinner";
 import { TabBar } from "../TabBar";
 import { Uploader } from "./components/Uploader";
 import { VideoSettings } from "./components/VideoSettings";
@@ -42,7 +42,7 @@ interface SelectedFile {
   uploaded: Boolean;
 }
 
-export const FileInput: React.FC<FileInputProps> = ({
+export const FileInput = ({
   id,
   allowedFileExtensions,
   environmentId,
@@ -53,7 +53,7 @@ export const FileInput: React.FC<FileInputProps> = ({
   imageFit = "cover",
   maxSizeInMB,
   isVideoAllowed = false,
-}) => {
+}: FileInputProps) => {
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState(videoUrl ?? "");
   const [activeTab, setActiveTab] = useState(videoUrl ? "video" : "image");

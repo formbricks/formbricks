@@ -24,7 +24,7 @@ interface EditWelcomeCardProps {
   attributeClasses: TAttributeClass[];
 }
 
-export default function EditWelcomeCard({
+export const EditWelcomeCard = ({
   localSurvey,
   setLocalSurvey,
   setActiveQuestionId,
@@ -33,7 +33,7 @@ export default function EditWelcomeCard({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
-}: EditWelcomeCardProps) {
+}: EditWelcomeCardProps) => {
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
   const environmentId = path?.split("/environments/")[1]?.split("/")[0];
@@ -216,4 +216,4 @@ export default function EditWelcomeCard({
       </Collapsible.Root>
     </div>
   );
-}
+};

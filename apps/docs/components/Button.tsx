@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import Link from "next/link";
 
-function ArrowIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+const ArrowIcon = (props: React.ComponentPropsWithoutRef<"svg">) => {
   return (
     <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
       <path
@@ -12,7 +12,7 @@ function ArrowIcon(props: React.ComponentPropsWithoutRef<"svg">) {
       />
     </svg>
   );
-}
+};
 
 const variantStyles = {
   primary:
@@ -34,7 +34,7 @@ type ButtonProps = {
   | (React.ComponentPropsWithoutRef<"button"> & { href?: undefined })
 );
 
-export function Button({ variant = "primary", className, children, arrow, ...props }: ButtonProps) {
+export const Button = ({ variant = "primary", className, children, arrow, ...props }: ButtonProps) => {
   className = clsx(
     "inline-flex gap-0.5 justify-center items-center overflow-hidden font-medium transition text-center",
     variantStyles[variant],
@@ -74,4 +74,4 @@ export function Button({ variant = "primary", className, children, arrow, ...pro
       {inner}
     </Link>
   );
-}
+};

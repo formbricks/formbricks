@@ -1,8 +1,8 @@
 "use client";
 
-import AddIntegrationModal from "@/app/(app)/environments/[environmentId]/integrations/notion/components/AddIntegrationModal";
-import Connect from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Connect";
-import Home from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Home";
+import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/AddIntegrationModal";
+import { Connect } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Connect";
+import { Home } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Home";
 import { useState } from "react";
 
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -24,7 +24,7 @@ interface NotionWrapperProps {
   attributeClasses: TAttributeClass[];
 }
 
-export default function NotionWrapper({
+export const NotionWrapper = ({
   notionIntegration,
   enabled,
   environment,
@@ -32,7 +32,7 @@ export default function NotionWrapper({
   surveys,
   databasesArray,
   attributeClasses,
-}: NotionWrapperProps) {
+}: NotionWrapperProps) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(
     notionIntegration ? notionIntegration.config.key?.bot_id : false
@@ -68,4 +68,4 @@ export default function NotionWrapper({
       )}
     </>
   );
-}
+};

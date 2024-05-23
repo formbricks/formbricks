@@ -13,19 +13,19 @@ import { AuthorizationError } from "@formbricks/types/errors";
 import { TResponse, TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveySummary } from "@formbricks/types/surveys";
 
-export async function getResponsesBySurveySharingKeyAction(
+export const getResponsesBySurveySharingKeyAction = async (
   sharingKey: string,
   page: number,
   batchSize?: number,
   filterCriteria?: TResponseFilterCriteria
-): Promise<TResponse[]> {
+): Promise<TResponse[]> => {
   const surveyId = await getSurveyIdByResultShareKey(sharingKey);
   if (!surveyId) throw new AuthorizationError("Not authorized");
 
   batchSize = batchSize ?? 10;
   const responses = await getResponses(surveyId, page, batchSize, filterCriteria);
   return responses;
-}
+};
 
 export const getSummaryBySurveySharingKeyAction = async (
   sharingKey: string,

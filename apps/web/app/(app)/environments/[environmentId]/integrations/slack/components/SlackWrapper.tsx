@@ -1,8 +1,8 @@
 "use client";
 
 import { AddChannelMappingModal } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/AddChannelMappingModal";
-import Connect from "@/app/(app)/environments/[environmentId]/integrations/slack/components/Connect";
-import Home from "@/app/(app)/environments/[environmentId]/integrations/slack/components/Home";
+import { Connect } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/Connect";
+import { Home } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/Home";
 import { useState } from "react";
 
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -23,7 +23,7 @@ interface SlackWrapperProps {
   attributeClasses: TAttributeClass[];
 }
 
-export default function SlackWrapper({
+export const SlackWrapper = ({
   isEnabled,
   environment,
   surveys,
@@ -31,7 +31,7 @@ export default function SlackWrapper({
   slackIntegration,
   webAppUrl,
   attributeClasses,
-}: SlackWrapperProps) {
+}: SlackWrapperProps) => {
   const [isConnected, setIsConnected] = useState(slackIntegration ? slackIntegration.config?.key : false);
   const [slackChannels, setSlackChannels] = useState(channelsArray);
   const [isModalOpen, setModalOpen] = useState<boolean>(false);
@@ -68,4 +68,4 @@ export default function SlackWrapper({
   ) : (
     <Connect isEnabled={isEnabled} environmentId={environment.id} webAppUrl={webAppUrl} />
   );
-}
+};

@@ -7,7 +7,7 @@ import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 
-interface MultipleFileInputProps {
+interface FileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
   surveyId: string | undefined;
   onUploadCallback: (uploadedUrls: string[]) => void;
@@ -15,9 +15,10 @@ interface MultipleFileInputProps {
   fileUrls: string[] | undefined;
   maxSizeInMB?: number;
   allowMultipleFiles?: boolean;
+  htmlFor?: string;
 }
 
-export default function FileInput({
+export const FileInput = ({
   allowedFileExtensions,
   surveyId,
   onUploadCallback,
@@ -25,7 +26,8 @@ export default function FileInput({
   fileUrls,
   maxSizeInMB,
   allowMultipleFiles,
-}: MultipleFileInputProps) {
+  htmlFor = "",
+}: FileInputProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -206,6 +208,8 @@ export default function FileInput({
     return true;
   }, [allowMultipleFiles, fileUrls, isUploading]);
 
+  const uniqueHtmlFor = useMemo(() => `selectedFile-${htmlFor}`, [htmlFor]);
+
   return (
     <div
       className={`items-left bg-input-bg hover:bg-input-bg-selected border-border relative mt-3 flex w-full flex-col justify-center rounded-lg border-2 border-dashed dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800`}>
@@ -259,13 +263,13 @@ export default function FileInput({
       <div>
         {isUploading && (
           <div className="inset-0 flex animate-pulse items-center justify-center rounded-lg py-4">
-            <label htmlFor="selectedFile" className="text-subheading text-sm font-medium">
+            <label htmlFor={uniqueHtmlFor} className="text-subheading text-sm font-medium">
               Uploading...
             </label>
           </div>
         )}
 
-        <label htmlFor="selectedFile" onDragOver={(e) => handleDragOver(e)} onDrop={(e) => handleDrop(e)}>
+        <label htmlFor={uniqueHtmlFor} onDragOver={(e) => handleDragOver(e)} onDrop={(e) => handleDrop(e)}>
           {showUploader && (
             <div
               className="focus:outline-brand flex flex-col items-center justify-center py-6 hover:cursor-pointer"
@@ -274,8 +278,8 @@ export default function FileInput({
                 // Accessibility: if spacebar was pressed pass this down to the input
                 if (e.key === " ") {
                   e.preventDefault();
-                  document.getElementById("selectedFile")?.click();
-                  document.getElementById("selectedFile")?.focus();
+                  document.getElementById(uniqueHtmlFor)?.click();
+                  document.getElementById(uniqueHtmlFor)?.focus();
                 }
               }}>
               <svg
@@ -297,8 +301,8 @@ export default function FileInput({
               </p>
               <input
                 type="file"
-                id="selectedFile"
-                name="selectedFile"
+                id={uniqueHtmlFor}
+                name={uniqueHtmlFor}
                 accept={allowedFileExtensions?.map((ext) => `.${ext}`).join(",")}
                 className="hidden"
                 onChange={(e) => {
@@ -314,4 +318,4 @@ export default function FileInput({
       </div>
     </div>
   );
-}
+};

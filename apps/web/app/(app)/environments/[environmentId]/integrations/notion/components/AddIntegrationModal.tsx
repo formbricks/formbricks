@@ -39,7 +39,7 @@ interface AddIntegrationModalProps {
   attributeClasses: TAttributeClass[];
 }
 
-export default function AddIntegrationModal({
+export const AddIntegrationModal = ({
   environmentId,
   surveys,
   open,
@@ -48,7 +48,7 @@ export default function AddIntegrationModal({
   databases,
   selectedIntegration,
   attributeClasses,
-}: AddIntegrationModalProps) {
+}: AddIntegrationModalProps) => {
   const { handleSubmit } = useForm();
   const [selectedDatabase, setSelectedDatabase] = useState<TIntegrationNotionDatabase | null>();
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
@@ -520,4 +520,4 @@ export default function AddIntegrationModal({
       </div>
     </Modal>
   );
-}
+};

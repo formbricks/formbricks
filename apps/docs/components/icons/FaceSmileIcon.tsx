@@ -1,4 +1,4 @@
-export function FaceSmileIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+export const FaceSmileIcon = (props: React.ComponentPropsWithoutRef<"svg">) => {
   return (
     <svg viewBox="0 0 20 20" aria-hidden="true" {...props}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M10 1.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17Z" />
@@ -10,4 +10,4 @@ export function FaceSmileIcon(props: React.ComponentPropsWithoutRef<"svg">) {
       />
     </svg>
   );
-}
+};
