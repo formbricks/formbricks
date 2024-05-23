@@ -6,10 +6,10 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 
-import { TProduct } from "@formbricks/types/product";
+import { TProduct, ZProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
 
 import { updateProductAction } from "../actions";
 
@@ -19,9 +19,7 @@ type EditProductNameProps = {
   isProductNameEditDisabled: boolean;
 };
 
-const editProductNameSchema = z.object({
-  name: z.string().trim().min(1, { message: "Product name cannot be empty" }),
-});
+const editProductNameSchema = ZProduct.pick({ name: true });
 
 type TEditProductName = z.infer<typeof editProductNameSchema>;
 
@@ -31,11 +29,7 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
   isProductNameEditDisabled,
 }) => {
   const router = useRouter();
-  const {
-    register,
-    handleSubmit,
-    formState: { isSubmitting, errors },
-  } = useForm<TEditProductName>({
+  const form = useForm<TEditProductName>({
     defaultValues: {
       name: product.name,
     },
@@ -43,7 +37,8 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
     mode: "onChange",
   });
 
-  const nameError = errors.name?.message;
+  const nameError = form.formState.errors.name?.message;
+  const isSubmitting = form.formState.isSubmitting;
 
   const updateProduct: SubmitHandler<TEditProductName> = async (data) => {
     const name = data.name.trim();
@@ -54,7 +49,7 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
       }
 
       if (name === product.name) {
-        toast.success("This is already your product name");
+        form.setError("name", { type: "manual", message: "Product name is the same" }, { shouldFocus: true });
         return;
       }
 
@@ -62,7 +57,7 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
 
       if (isProductNameEditDisabled) {
         toast.error("Only Owners, Admins and Editors can perform this action.");
-        throw new Error();
+        return;
       }
 
       if (!!updatedProduct?.id) {
@@ -76,18 +71,35 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
   };
 
   return !isProductNameEditDisabled ? (
-    <form className="w-full max-w-sm items-center space-y-2" onSubmit={handleSubmit(updateProduct)}>
-      <Label htmlFor="fullname">What&apos;s your product called?</Label>
-      <Input type="text" id="fullname" defaultValue={product.name} {...register("name")} />
-      <Button
-        type="submit"
-        variant="darkCTA"
-        size="sm"
-        loading={isSubmitting}
-        disabled={!!nameError || isSubmitting}>
-        Update
-      </Button>
-    </form>
+    <Form {...form}>
+      <form className="w-full max-w-sm items-center space-y-2" onSubmit={form.handleSubmit(updateProduct)}>
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="name">What&apos;s your product called?</FormLabel>
+              <FormControl>
+                <Input
+                  type="text"
+                  id="name"
+                  {...field}
+                  placeholder="Product Name"
+                  autoComplete="off"
+                  required
+                  isInvalid={!!nameError}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit" variant="darkCTA" size="sm" loading={isSubmitting} disabled={isSubmitting}>
+          Update
+        </Button>
+      </form>
+    </Form>
   ) : (
     <p className="text-sm text-red-700">Only Owners, Admins and Editors can perform this action.</p>
   );
