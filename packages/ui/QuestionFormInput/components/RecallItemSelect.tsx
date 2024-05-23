@@ -158,7 +158,7 @@ export const RecallItemSelect = ({
             placeholder="Search options"
             className="mb-1 w-full bg-white"
             onChange={(e) => setSearchValue(e.target.value)}
-            autoFocus
+            autoFocus={true}
             value={searchValue}
             onKeyDown={(e) => {
               if (e.key === "ArrowDown") {
@@ -178,6 +178,7 @@ export const RecallItemSelect = ({
                     addRecallItem({ id: recallItem.id, label: recallItem.label, type: recallItem.type });
                     setShowRecallItemSelect(false);
                   }}
+                  autoFocus={false}
                   className="flex w-full cursor-pointer rounded-md p-2 focus:bg-slate-200 focus:outline-none"
                   onKeyDown={(e) => {
                     if (e.key === "ArrowUp" && index === 0) {

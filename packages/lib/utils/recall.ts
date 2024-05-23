@@ -47,8 +47,9 @@ export const extractFallbackValue = (text: string): string => {
 };
 
 // Extracts the complete recall information (ID and fallback) from a headline string.
-export const extractRecallInfo = (headline: string): string | null => {
-  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:(\S*)#/;
+export const extractRecallInfo = (headline: string, id?: string): string | null => {
+  const idPattern = id ? id : "[A-Za-z0-9_-]+";
+  const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:(\\S*)#`);
   const match = headline.match(pattern);
   return match ? match[0] : null;
 };
@@ -239,7 +240,7 @@ export const parseRecallInfo = (
     attributeKeys.forEach((attributeKey) => {
       const recallPattern = `#recall:${attributeKey}`;
       while (modifiedText.includes(recallPattern)) {
-        const recallInfo = extractRecallInfo(modifiedText);
+        const recallInfo = extractRecallInfo(modifiedText, attributeKey);
         if (!recallInfo) break; // Exit the loop if no recall info is found
 
         const recallItemId = extractId(recallInfo);

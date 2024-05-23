@@ -2,7 +2,7 @@ import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/
 import {
   checkForAttributeRecall,
   checkForAttributeRecallInLegacySurveys,
-} from "@/app/api/v1/client/[environmentId]/app/sync/lib/util";
+} from "@/app/api/v1/client/[environmentId]/app/sync/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";

@@ -218,12 +218,14 @@ export const Survey = ({
       if (!recallInfo) break; // Exit the loop if no recall info is found
 
       const recallItemId = extractId(recallInfo);
+      console.log(recallItemId);
       if (!recallItemId) return modifiedText; // Return the text if no ID could be extracted
 
       const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
       let value = null;
 
       // Fetching value from responseData or attributes based on recallItemId
+      console.log(responseData);
       if (responseData[recallItemId]) {
         value = (responseData[recallItemId] as string) ?? fallback;
       } else if (attributes && attributes.hasOwnProperty(recallItemId.replace("nbsp", " "))) {

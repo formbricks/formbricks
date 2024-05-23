@@ -288,6 +288,7 @@ export const MultipleChoiceQuestionForm = ({
                       question={question}
                       updateQuestion={updateQuestion}
                       surveyLanguageCodes={surveyLanguageCodes}
+                      attributeClasses={attributeClasses}
                     />
                   ))}
               </div>
