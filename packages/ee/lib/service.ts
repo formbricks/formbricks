@@ -7,7 +7,7 @@ import { TTeam } from "@formbricks/types/teams";
 
 import { prisma } from "../../database/src";
 
-const hashedKey = hashString(ENTERPRISE_LICENSE_KEY);
+const hashedKey = ENTERPRISE_LICENSE_KEY ? hashString(ENTERPRISE_LICENSE_KEY) : undefined;
 const PREVIOUS_RESULTS_CACHE_TAG_KEY = `getPreviousResult-${hashedKey}` as const;
 
 // This function is used to get the previous result of the license check from the cache
