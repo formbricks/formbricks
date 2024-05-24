@@ -7,7 +7,8 @@ import { TTeam } from "@formbricks/types/teams";
 
 import { prisma } from "../../database/src";
 
-const PREVIOUS_RESULTS_CACHE_TAG = "getPreviousResult";
+const hashedKey = ENTERPRISE_LICENSE_KEY ? hashString(ENTERPRISE_LICENSE_KEY) : undefined;
+const PREVIOUS_RESULTS_CACHE_TAG_KEY = `getPreviousResult-${hashedKey}` as const;
 
 // This function is used to get the previous result of the license check from the cache
 // This might seem confusing at first since we only return the default value from this function,
@@ -18,16 +19,16 @@ const getPreviousResult = (): Promise<{ active: boolean | null; lastChecked: Dat
       active: null,
       lastChecked: new Date(0),
     }),
-    [PREVIOUS_RESULTS_CACHE_TAG],
+    [PREVIOUS_RESULTS_CACHE_TAG_KEY],
     {
-      tags: [PREVIOUS_RESULTS_CACHE_TAG],
+      tags: [PREVIOUS_RESULTS_CACHE_TAG_KEY],
     }
   )();
 
 // This function is used to set the previous result of the license check to the cache so that we can use it in the next call
 // Uses the same cache key as the getPreviousResult function
 const setPreviousResult = async (previousResult: { active: boolean | null; lastChecked: Date }) => {
-  revalidateTag(PREVIOUS_RESULTS_CACHE_TAG);
+  revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
   const { lastChecked, active } = previousResult;
 
   await cache(
@@ -35,9 +36,9 @@ const setPreviousResult = async (previousResult: { active: boolean | null; lastC
       active,
       lastChecked,
     }),
-    [PREVIOUS_RESULTS_CACHE_TAG],
+    [PREVIOUS_RESULTS_CACHE_TAG_KEY],
     {
-      tags: [PREVIOUS_RESULTS_CACHE_TAG],
+      tags: [PREVIOUS_RESULTS_CACHE_TAG_KEY],
     }
   )();
 };
@@ -47,17 +48,15 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
     return false;
   }
 
-  const hashedKey = hashString(ENTERPRISE_LICENSE_KEY);
-
   if (E2E_TESTING) {
     const previousResult = await getPreviousResult();
     if (previousResult.lastChecked.getTime() === new Date(0).getTime()) {
       // first call
       await setPreviousResult({ active: true, lastChecked: new Date() });
       return true;
-    } else if (new Date().getTime() - previousResult.lastChecked.getTime() > 24 * 60 * 60 * 1000) {
-      // Fail after 24 hours
-      console.log("E2E_TESTING is enabled. Enterprise license was revoked after 24 hours.");
+    } else if (new Date().getTime() - previousResult.lastChecked.getTime() > 60 * 60 * 1000) {
+      // Fail after 1 hour
+      console.log("E2E_TESTING is enabled. Enterprise license was revoked after 1 hour.");
       return false;
     }
 
@@ -121,13 +120,14 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
     return isValid;
   } else {
     // if result is undefined -> error
-    // if the last check was less than 24 hours, return the previous value:
-    if (new Date().getTime() - previousResult.lastChecked.getTime() <= 24 * 60 * 60 * 1000) {
+    // if the last check was less than 72 hours, return the previous value:
+    if (new Date().getTime() - previousResult.lastChecked.getTime() <= 3 * 24 * 60 * 60 * 1000) {
       return previousResult.active !== null ? previousResult.active : false;
     }
 
-    // if the last check was more than 24 hours, throw an error
-    throw new Error("Error while checking license");
+    // if the last check was more than 72 hours, return false and log the error
+    console.error("Error while checking license: The license check failed");
+    return false;
   }
 };
 

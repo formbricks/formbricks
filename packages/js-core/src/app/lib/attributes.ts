@@ -8,7 +8,10 @@ import { AppConfig } from "./config";
 const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 
-export const updateAttribute = async (key: string, value: string): Promise<Result<void, NetworkError>> => {
+export const updateAttribute = async (
+  key: string,
+  value: string | number
+): Promise<Result<void, NetworkError>> => {
   const { apiHost, environmentId, userId } = appConfig.get();
 
   const api = new FormbricksAPI({
@@ -121,7 +124,7 @@ export const setAttributeInApp = async (
     return okVoid();
   }
 
-  const result = await updateAttribute(key, value.toString());
+  const result = await updateAttribute(key, value);
 
   if (result.ok) {
     // udpdate attribute in config
