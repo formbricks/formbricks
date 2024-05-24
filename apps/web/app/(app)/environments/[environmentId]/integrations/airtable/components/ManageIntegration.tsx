@@ -17,7 +17,7 @@ import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 
-interface handleModalProps {
+interface ManageIntegrationProps {
   airtableIntegration: TIntegrationAirtable;
   environment: TEnvironment;
   environmentId: string;
@@ -28,7 +28,7 @@ interface handleModalProps {
 
 const tableHeaders = ["Survey", "Table Name", "Questions", "Updated At"];
 
-export const Home = (props: handleModalProps) => {
+export const ManageIntegration = (props: ManageIntegrationProps) => {
   const { airtableIntegration, environment, environmentId, setIsConnected, surveys, airtableArray } = props;
   const [isDeleting, setisDeleting] = useState(false);
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);

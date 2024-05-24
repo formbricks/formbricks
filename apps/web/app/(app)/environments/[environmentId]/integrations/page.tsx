@@ -1,3 +1,5 @@
+import AirtableLogo from "@/images/airtableLogo.svg";
+import GoogleSheetsLogo from "@/images/googleSheetsLogo.png";
 import JsLogo from "@/images/jslogo.png";
 import MakeLogo from "@/images/make-small.png";
 import n8nLogo from "@/images/n8n.png";
@@ -20,9 +22,6 @@ import { Card } from "@formbricks/ui/Card";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
-
-import AirtableLogo from "./airtable/images/airtable.svg";
-import GoogleSheetsLogo from "./google-sheets/images/google-sheets-small.png";
 
 const Page = async ({ params }) => {
   const environmentId = params.environmentId;
