@@ -21,7 +21,8 @@ export const metadata = {
 The Google Sheets integration allows you to automatically send responses to a Google Sheet of your choice.
 
 <Note>
-    If you are on a self-hosted instance, you will need to configure this integration separately. Please follow the guides [here](/self-hosting/integrations) to configure integrations on your self-hosted instance.
+  If you are on a self-hosted instance, you will need to configure this integration separately. Please follow
+  the guides [here](/self-hosting/integrations) to configure integrations on your self-hosted instance.
 </Note>
 
 ## Connect Google Sheets
@@ -70,7 +71,7 @@ Before the next step, make sure that you have a Formbricks Survey with at least 
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-6. Select the Google Sheet you want to link with Formbricks and the Survey. On doing so, you will be asked with what questions' responses you want to feed in the Google Sheet. Select the questions and click on the "Link Sheet" button.
+6. Enter the spreadsheet URL for the Google Sheet you want to link with Formbricks and the Survey. On doing so, you will be asked with what questions' responses you want to feed in the Google Sheet. Select the questions and click on the "Link Sheet" button.
 
 <MdxImage
   src={LinkWithQuestions}
@@ -115,7 +116,6 @@ To remove the integration with Google Account,
 For the above, we ask for:
 
 1. **User Email**: To identify you (that's it, nothing else, we're opensource, see this in our codebase [here](https://github.com/formbricks/formbricks/blob/main/apps/web/app/api/google-sheet/callback/route.ts#L47C17-L47C25))
-1. **Google Drive API**: To list all your google sheets (that's it, nothing else, we're opensource, see this method in our codebase [here](https://github.com/formbricks/formbricks/blob/main/packages/lib/googleSheet/service.ts#L13))
 1. **Google Spreadsheet API**: To write to the spreadsheet you select (that's it, nothing else, we're opensource, see this method in our codebase [here](https://github.com/formbricks/formbricks/blob/main/packages/lib/googleSheet/service.ts#L70))
 
 <Note>We store as little personal information as possible.</Note>

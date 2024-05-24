@@ -24,6 +24,13 @@ export const POST = async (req: Request, context: Context): Promise<Response> =>
     const { userId, environmentId } = context.params;
     const jsonInput = await req.json();
 
+    // transform all attributes to string if attributes are present
+    if (jsonInput.attributes) {
+      for (const key in jsonInput.attributes) {
+        jsonInput.attributes[key] = String(jsonInput.attributes[key]);
+      }
+    }
+
     // validate using zod
     const inputValidation = z.object({ attributes: ZAttributes }).safeParse(jsonInput);
 
