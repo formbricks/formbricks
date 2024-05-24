@@ -1,4 +1,7 @@
-import gmtLogo from "@/images/gtm.png";
+
+import GmtLogo from "@/images/gtm.png";
+import AirtableLogo from "@/images/airtableLogo.svg";
+import GoogleSheetsLogo from "@/images/googleSheetsLogo.png";
 import JsLogo from "@/images/jslogo.png";
 import MakeLogo from "@/images/make-small.png";
 import n8nLogo from "@/images/n8n.png";
@@ -22,9 +25,6 @@ import { Card } from "@formbricks/ui/Card";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
-
-import AirtableLogo from "./airtable/images/airtable.svg";
-import GoogleSheetsLogo from "./google-sheets/images/google-sheets-small.png";
 
 const Page = async ({ params }) => {
   const environmentId = params.environmentId;
@@ -217,7 +217,7 @@ const Page = async ({ params }) => {
       docsNewTab: true,
       label: "Google Tag Manager",
       description: "Integrate Formbricks with your Google Analytics Account for precise tracking.",
-      icon: <Image src={gmtLogo} alt="Google Tag Manager Logo" />,
+      icon: <Image src={GmtLogo} alt="Google Tag Manager Logo" />,
       connected: googleTagCount > 0,
       statusText:
         googleTagCount === 1 ? "1 tag" : googleTagCount === 0 ? "Not Connected" : `${googleTagCount} tags`,

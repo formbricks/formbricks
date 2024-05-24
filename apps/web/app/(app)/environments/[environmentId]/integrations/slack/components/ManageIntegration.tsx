@@ -1,5 +1,6 @@
 "use client";
 
+import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import { Trash2Icon } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
@@ -11,9 +12,7 @@ import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 
-import { deleteIntegrationAction } from "../../actions";
-
-interface HomeProps {
+interface ManageIntegrationProps {
   environment: TEnvironment;
   slackIntegration: TIntegrationSlack;
   setOpenAddIntegrationModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -24,14 +23,14 @@ interface HomeProps {
   refreshChannels: () => void;
 }
 
-export const Home = ({
+export const ManageIntegration = ({
   environment,
   slackIntegration,
   setOpenAddIntegrationModal,
   setIsConnected,
   setSelectedIntegration,
   refreshChannels,
-}: HomeProps) => {
+}: ManageIntegrationProps) => {
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [isDeleting, setisDeleting] = useState(false);
   const integrationArray = slackIntegration
