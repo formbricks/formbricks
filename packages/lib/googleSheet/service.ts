@@ -1,7 +1,6 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
-import { createOrUpdateIntegration } from "integration/service";
 import { z } from "zod";
 
 import { ZString } from "@formbricks/types/common";
@@ -16,6 +15,7 @@ import {
   GOOGLE_SHEETS_CLIENT_SECRET,
   GOOGLE_SHEETS_REDIRECT_URL,
 } from "../constants";
+import { createOrUpdateIntegration } from "../integration/service";
 import { validateInputs } from "../utils/validate";
 
 const { google } = require("googleapis");
@@ -78,7 +78,7 @@ export const getSpreadsheetNameById = async (
   validateInputs([googleSheetIntegrationData, ZIntegrationGoogleSheets]);
 
   try {
-    const authClient = authorize(googleSheetIntegrationData);
+    const authClient = await authorize(googleSheetIntegrationData);
     const sheets = google.sheets({ version: "v4", auth: authClient });
 
     return new Promise((resolve, reject) => {
