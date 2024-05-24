@@ -9,24 +9,12 @@ import {
   FieldPath,
   FieldValues,
   FormProvider,
-  FormProviderProps,
   useFormContext,
 } from "react-hook-form";
 
 import { cn } from "@formbricks/lib/cn";
 
 import { Label } from "../Label";
-
-type FormProps<TFieldValues extends FieldValues = FieldValues> = FormProviderProps<TFieldValues> &
-  React.FormHTMLAttributes<HTMLFormElement>;
-
-const Form = <TFieldValues extends FieldValues>({ children, ...props }: FormProps<TFieldValues>) => {
-  return (
-    <FormProvider {...props}>
-      <form {...props}>{children}</form>
-    </FormProvider>
-  );
-};
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
@@ -154,4 +142,13 @@ const FormMessage = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<
 );
 FormMessage.displayName = "FormMessage";
 
-export { useFormField, Form, FormItem, FormLabel, FormControl, FormDescription, FormMessage, FormField };
+export {
+  useFormField,
+  FormProvider,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormMessage,
+  FormField,
+};
