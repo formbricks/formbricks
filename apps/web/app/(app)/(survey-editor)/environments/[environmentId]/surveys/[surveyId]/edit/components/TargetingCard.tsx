@@ -370,7 +370,7 @@ export const TargetingCard = ({
               <UpgradePlanNotice
                 message="For advanced targeting, please"
                 textForUrl="request an Enterprise license."
-                url="https://formbricks.com/docs/self-hosting/enterprise"
+                url={`/environments/${environmentId}/settings/enterprise`}
               />
             )}
           </div>
