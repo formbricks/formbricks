@@ -114,7 +114,7 @@ export const GET = async (
     const noCodeActionClasses = actionClasses.filter((actionClass) => actionClass.type === "noCode");
 
     // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
-    let transformedSurveys: TLegacySurvey[] | TSurvey[] = surveys;
+    let transformedSurveys: TLegacySurvey[] | TSurvey[] = filteredSurveys;
     let state: TJsWebsiteStateSync | TJsWebsiteLegacyStateSync = {
       surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
       actionClasses,

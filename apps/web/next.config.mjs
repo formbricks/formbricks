@@ -21,9 +21,12 @@ const nextConfig = {
   output: "standalone",
   experimental: {
     serverComponentsExternalPackages: ["@aws-sdk"],
-    instrumentationHook: true,
+    //instrumentationHook: true,
     outputFileTracingIncludes: {
       "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
+    },
+    staleTimes: {
+      dynamic: 0,
     },
   },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],

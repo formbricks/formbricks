@@ -218,13 +218,13 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
               <UpgradePlanNotice
                 message="To enable multi-language surveys, you need an active"
                 url={`/environments/${environmentId}/settings/enterprise`}
-                textForUrl="enterprise license."
+                textForUrl="Enterprise License."
               />
             ) : !isMultiLanguageAllowed && isFormbricksCloud && !isMultiLanguageActivated ? (
               <UpgradePlanNotice
                 message="To enable multi-language surveys,"
                 url={`/environments/${environmentId}/settings/billing`}
-                textForUrl="please add your credit card."
+                textForUrl="please upgrade your plan."
               />
             ) : (
               <>
