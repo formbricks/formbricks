@@ -28,13 +28,13 @@ interface EditPlacementProps {
   environmentId: string;
 }
 
-const editPlacementSchema = z.object({
+const ZProductPlacementInput = z.object({
   placement: z.enum(["bottomRight", "topRight", "topLeft", "bottomLeft", "center"]),
   darkOverlay: z.boolean(),
   clickOutsideClose: z.boolean(),
 });
 
-type EditPlacementFormValues = z.infer<typeof editPlacementSchema>;
+type EditPlacementFormValues = z.infer<typeof ZProductPlacementInput>;
 
 export const EditPlacementForm = ({ product }: EditPlacementProps) => {
   const form = useForm<EditPlacementFormValues>({
@@ -43,7 +43,7 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
       darkOverlay: product.darkOverlay ?? false,
       clickOutsideClose: product.clickOutsideClose ?? false,
     },
-    resolver: zodResolver(editPlacementSchema),
+    resolver: zodResolver(ZProductPlacementInput),
   });
 
   const currentPlacement = form.watch("placement");

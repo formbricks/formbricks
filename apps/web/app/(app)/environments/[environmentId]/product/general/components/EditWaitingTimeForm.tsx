@@ -18,9 +18,9 @@ type EditWaitingTimeProps = {
   product: TProduct;
 };
 
-const editWaitingTimeSchema = ZProduct.pick({ recontactDays: true });
+const ZProductRecontactDaysInput = ZProduct.pick({ recontactDays: true });
 
-type EditWaitingTimeFormValues = z.infer<typeof editWaitingTimeSchema>;
+type EditWaitingTimeFormValues = z.infer<typeof ZProductRecontactDaysInput>;
 
 export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product, environmentId }) => {
   const router = useRouter();
@@ -29,11 +29,22 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product, e
     defaultValues: {
       recontactDays: product.recontactDays,
     },
-    resolver: zodResolver(editWaitingTimeSchema),
+    resolver: zodResolver(ZProductRecontactDaysInput),
     mode: "onChange",
   });
 
+  const { isDirty } = form.formState;
+
   const updateWaitingTime: SubmitHandler<EditWaitingTimeFormValues> = async (data) => {
+    if (!isDirty) {
+      form.setError(
+        "recontactDays",
+        { type: "manual", message: "Waiting period is the same" },
+        { shouldFocus: true }
+      );
+      return;
+    }
+
     try {
       const updatedProduct = await updateProductAction(environmentId, product.id, data);
       if (!!updatedProduct?.id) {

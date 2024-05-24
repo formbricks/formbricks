@@ -19,9 +19,9 @@ type EditProductNameProps = {
   isProductNameEditDisabled: boolean;
 };
 
-const editProductNameSchema = ZProduct.pick({ name: true });
+const ZProductNameInput = ZProduct.pick({ name: true });
 
-type TEditProductName = z.infer<typeof editProductNameSchema>;
+type TEditProductName = z.infer<typeof ZProductNameInput>;
 
 export const EditProductNameForm: React.FC<EditProductNameProps> = ({
   product,
@@ -33,11 +33,13 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
     defaultValues: {
       name: product.name,
     },
-    resolver: zodResolver(editProductNameSchema),
+    resolver: zodResolver(ZProductNameInput),
     mode: "onChange",
   });
 
-  const nameError = form.formState.errors.name?.message;
+  const { errors, isDirty } = form.formState;
+  const nameError = errors.name?.message;
+
   const isSubmitting = form.formState.isSubmitting;
 
   const updateProduct: SubmitHandler<TEditProductName> = async (data) => {
@@ -48,7 +50,7 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
         return;
       }
 
-      if (name === product.name) {
+      if (!isDirty) {
         form.setError("name", { type: "manual", message: "Product name is the same" }, { shouldFocus: true });
         return;
       }
