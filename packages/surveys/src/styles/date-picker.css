@@ -93,3 +93,13 @@ margin-bottom: 0px;
 .react-calendar__month-view__weekdays__weekday > abbr {
   text-decoration: none;
 }
+
+.react-calendar{
+  width: 100%;
+  line-height: 2rem;
+}
+
+.react-calendar__tile--active{
+  background: var(--fb-brand-color) !important;
+  border-radius: 10%;
+}
