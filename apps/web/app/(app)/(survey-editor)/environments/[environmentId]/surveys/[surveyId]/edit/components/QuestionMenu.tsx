@@ -49,14 +49,12 @@ export const QuestionMenu = ({
 
     // if going from single select to multi select or vice versa, we need to keep the choices as well
 
-    console.log({ type, questionType: question.type });
     if (
       (type === TSurveyQuestionType.MultipleChoiceSingle &&
         question.type === TSurveyQuestionType.MultipleChoiceMulti) ||
       (type === TSurveyQuestionType.MultipleChoiceMulti &&
         question.type === TSurveyQuestionType.MultipleChoiceSingle)
     ) {
-      console.log("here");
       updateQuestion(questionIdx, {
         choices: question.choices,
         type,
