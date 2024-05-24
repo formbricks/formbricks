@@ -10,31 +10,29 @@ const inAppConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 
-// Page URL Event
+// Event types for various listeners
 const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
+
+// Page URL Event Handlers
 let arePageUrlEventListenersAdded = false;
+
 export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
   logger.debug(`Checking page url: ${window.location.href}`);
   const { state } = inAppConfig.get();
-
   const { actionClasses = [] } = state ?? {};
 
   const noCodePageViewActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageView"
   );
 
-  if (noCodePageViewActionClasses.length > 0) {
-    for (const event of noCodePageViewActionClasses) {
-      const urlFilters = event.noCodeConfig?.urlFilters ?? [];
+  for (const event of noCodePageViewActionClasses) {
+    const urlFilters = event.noCodeConfig?.urlFilters ?? [];
+    const isValidUrl = handleUrlFilters(urlFilters);
 
-      const isValidUrl = handleUrlFilters(urlFilters);
+    if (!isValidUrl) continue;
 
-      if (!isValidUrl) continue;
-
-      const trackResult = await trackNoCodeAction(event.name);
-
-      if (trackResult.ok !== true) return err(trackResult.error);
-    }
+    const trackResult = await trackNoCodeAction(event.name);
+    if (trackResult.ok !== true) return err(trackResult.error);
   }
 
   return okVoid();
@@ -54,8 +52,9 @@ export const removePageUrlEventListeners = (): void => {
   arePageUrlEventListenersAdded = false;
 };
 
-// Click Event
+// Click Event Handlers
 let isClickEventListenerAdded = false;
+
 const checkClickMatch = (event: MouseEvent) => {
   const { state } = inAppConfig.get();
   if (!state) return;
@@ -65,54 +64,38 @@ const checkClickMatch = (event: MouseEvent) => {
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "click"
   );
 
-  if (!noCodeClickActionClasses.length) {
-    return;
-  }
-
   const targetElement = event.target as HTMLElement;
 
   noCodeClickActionClasses.forEach((action: TActionClass) => {
-    const isMatch = evaluateNoCodeConfigClick(targetElement, action);
-    if (isMatch) {
+    if (evaluateNoCodeConfigClick(targetElement, action)) {
       trackNoCodeAction(action.name).then((res) => {
         match(
           res,
           (_value: unknown) => {},
-          (err: any) => {
-            errorHandler.handle(err);
-          }
+          (err: any) => errorHandler.handle(err)
         );
       });
     }
   });
-
-  // check for the inline triggers as well
-  const activeSurveys = state.surveys;
-  if (!activeSurveys || activeSurveys.length === 0) {
-    return;
-  }
 };
 
 const checkClickMatchWrapper = (e: MouseEvent) => checkClickMatch(e);
 
 export const addClickEventListener = (): void => {
   if (typeof window === "undefined" || isClickEventListenerAdded) return;
-
   document.addEventListener("click", checkClickMatchWrapper);
-
   isClickEventListenerAdded = true;
 };
 
 export const removeClickEventListener = (): void => {
   if (!isClickEventListenerAdded) return;
-
   document.removeEventListener("click", checkClickMatchWrapper);
-
   isClickEventListenerAdded = false;
 };
 
-// Exit Intent
+// Exit Intent Handlers
 let isExitIntentListenerAdded = false;
+
 const checkExitIntent = async (e: MouseEvent) => {
   const { state } = inAppConfig.get();
   const { actionClasses = [] } = state ?? {};
@@ -124,13 +107,11 @@ const checkExitIntent = async (e: MouseEvent) => {
   if (e.clientY <= 0 && noCodeExitIntentActionClasses.length > 0) {
     for (const event of noCodeExitIntentActionClasses) {
       const urlFilters = event.noCodeConfig?.urlFilters ?? [];
-
       const isValidUrl = handleUrlFilters(urlFilters);
 
       if (!isValidUrl) continue;
 
       const trackResult = await trackNoCodeAction(event.name);
-
       if (trackResult.ok !== true) return err(trackResult.error);
     }
   }
@@ -140,19 +121,19 @@ const checkExitIntentWrapper = (e: MouseEvent) => checkExitIntent(e);
 
 export const addExitIntentListener = (): void => {
   if (typeof document !== "undefined" && !isExitIntentListenerAdded) {
-    document.querySelector("body")!.addEventListener("mouseleave", (e) => checkExitIntentWrapper(e));
+    document.querySelector("body")!.addEventListener("mouseleave", checkExitIntentWrapper);
     isExitIntentListenerAdded = true;
   }
 };
 
 export const removeExitIntentListener = (): void => {
   if (isExitIntentListenerAdded) {
-    document.removeEventListener("mouseleave", (e) => checkExitIntentWrapper(e));
+    document.removeEventListener("mouseleave", checkExitIntentWrapper);
     isExitIntentListenerAdded = false;
   }
 };
 
-// 50% Scroll
+// Scroll Depth Handlers
 let scrollDepthListenerAdded = false;
 let scrollDepthTriggered = false;
 
@@ -165,9 +146,7 @@ const checkScrollDepth = async () => {
     scrollDepthTriggered = false;
   }
 
-  const is50PercentScrollEvent = !scrollDepthTriggered && scrollPosition / (bodyHeight - windowSize) >= 0.5;
-
-  if (is50PercentScrollEvent) {
+  if (!scrollDepthTriggered && scrollPosition / (bodyHeight - windowSize) >= 0.5) {
     scrollDepthTriggered = true;
 
     const { state } = inAppConfig.get();
@@ -179,16 +158,12 @@ const checkScrollDepth = async () => {
 
     for (const event of noCode50PercentScrollActionClasses) {
       const urlFilters = event.noCodeConfig?.urlFilters ?? [];
-
       const isValidUrl = handleUrlFilters(urlFilters);
 
       if (!isValidUrl) continue;
 
       const trackResult = await trackNoCodeAction(event.name);
-
-      if (trackResult.ok !== true) {
-        return err(trackResult.error);
-      }
+      if (trackResult.ok !== true) return err(trackResult.error);
     }
   }
 
@@ -200,7 +175,7 @@ const checkScrollDepthWrapper = () => checkScrollDepth();
 export const addScrollDepthListener = (): void => {
   if (typeof window !== "undefined" && !scrollDepthListenerAdded) {
     window.addEventListener("load", () => {
-      window.addEventListener("scroll", () => checkScrollDepthWrapper());
+      window.addEventListener("scroll", checkScrollDepthWrapper);
     });
     scrollDepthListenerAdded = true;
   }
@@ -208,7 +183,7 @@ export const addScrollDepthListener = (): void => {
 
 export const removeScrollDepthListener = (): void => {
   if (scrollDepthListenerAdded) {
-    window.removeEventListener("scroll", () => checkScrollDepthWrapper());
+    window.removeEventListener("scroll", checkScrollDepthWrapper);
     scrollDepthListenerAdded = false;
   }
 };
