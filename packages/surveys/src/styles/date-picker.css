@@ -103,3 +103,8 @@ margin-bottom: 0px;
   background: var(--fb-brand-color) !important;
   border-radius: 10%;
 }
+
+.react-calendar button:hover{
+  background: rgb(226 232 240) !important;
+  border-radius: 10%;
+}
