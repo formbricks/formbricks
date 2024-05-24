@@ -1,8 +1,8 @@
 "use client";
 
 import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/AddIntegrationModal";
-import { Connect } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Connect";
-import { Home } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Home";
+import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/ManageIntegration";
+import notionLogo from "@/images/notion.png";
 import { useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -12,6 +12,9 @@ import {
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { TSurvey } from "@formbricks/types/surveys";
+import { ConnectIntegration } from "@formbricks/ui/ConnectIntegration";
+
+import { authorize } from "../lib/notion";
 
 interface NotionWrapperProps {
   notionIntegration: TIntegrationNotion | undefined;
@@ -38,6 +41,14 @@ export const NotionWrapper = ({
     (TIntegrationNotionConfigData & { index: number }) | null
   >(null);
 
+  const handleNotionAuthorization = async () => {
+    authorize(environment.id, webAppUrl).then((url: string) => {
+      if (url) {
+        window.location.replace(url);
+      }
+    });
+  };
+
   return (
     <>
       {isConnected && notionIntegration ? (
@@ -51,7 +62,7 @@ export const NotionWrapper = ({
             databases={databasesArray}
             selectedIntegration={selectedIntegration}
           />
-          <Home
+          <ManageIntegration
             environment={environment}
             notionIntegration={notionIntegration}
             setOpenAddIntegrationModal={setModalOpen}
@@ -60,7 +71,12 @@ export const NotionWrapper = ({
           />
         </>
       ) : (
-        <Connect enabled={enabled} environmentId={environment.id} webAppUrl={webAppUrl} />
+        <ConnectIntegration
+          isEnabled={enabled}
+          integrationType={"notion"}
+          handleAuthorization={handleNotionAuthorization}
+          integrationLogoSrc={notionLogo}
+        />
       )}
     </>
   );
