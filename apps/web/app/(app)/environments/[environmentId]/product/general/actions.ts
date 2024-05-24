@@ -9,8 +9,29 @@ import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service"
 import { deleteProduct, getProducts, updateProduct } from "@formbricks/lib/product/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TEnvironment } from "@formbricks/types/environment";
+import { Result, ok } from "@formbricks/types/errorHandlers";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
+
+interface State {
+  params: { environmentId: string; productId: string };
+  response?: Result<TProduct>;
+}
+
+export const updateProductFormAction = async (state: State, data: FormData): Promise<State> => {
+  console.log({ state });
+  const formData = Object.fromEntries(data);
+  console.log({ formData });
+
+  const updatedProduct = await updateProductAction(state.params.environmentId, state.params.productId, {
+    name: formData.name as string,
+  });
+
+  return {
+    ...state,
+    response: ok(updatedProduct),
+  };
+};
 
 export const updateProductAction = async (
   environmentId: string,
