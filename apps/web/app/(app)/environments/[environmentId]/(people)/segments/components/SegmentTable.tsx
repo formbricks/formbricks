@@ -25,15 +25,21 @@ export const SegmentTable = ({
         <div className="col-span-1 hidden text-center sm:block">Updated</div>
         <div className="col-span-1 hidden text-center sm:block">Created</div>
       </div>
-      {segments.map((segment) => (
-        <SegmentTableDataRowContainer
-          currentSegment={segment}
-          segments={segments}
-          actionClasses={actionClasses}
-          attributeClasses={attributeClasses}
-          isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
-        />
-      ))}
+      {segments.length === 0 ? (
+        <p className="py-6 text-center text-sm text-slate-400">Create your first Segment to get started.</p>
+      ) : (
+        <>
+          {segments.map((segment) => (
+            <SegmentTableDataRowContainer
+              currentSegment={segment}
+              segments={segments}
+              actionClasses={actionClasses}
+              attributeClasses={attributeClasses}
+              isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
+            />
+          ))}
+        </>
+      )}
     </div>
   );
 };

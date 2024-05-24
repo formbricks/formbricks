@@ -11,7 +11,6 @@ import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
@@ -70,24 +69,15 @@ const Page = async ({ params }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="People" cta={renderCreateSegmentButton()}>
+      <PageHeader pageTitle="Segments" cta={renderCreateSegmentButton()}>
         <PeopleSecondaryNavigation activeId="segments" environmentId={params.environmentId} />
       </PageHeader>
-      {filteredSegments.length === 0 ? (
-        <EmptySpaceFiller
-          type="table"
-          environment={environment}
-          emptyMessage="No segments yet. Add your first one to get started."
-          noWidgetRequired={true}
-        />
-      ) : (
-        <SegmentTable
-          segments={filteredSegments}
-          actionClasses={actionClasses}
-          attributeClasses={attributeClasses}
-          isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
-        />
-      )}
+      <SegmentTable
+        segments={filteredSegments}
+        actionClasses={actionClasses}
+        attributeClasses={attributeClasses}
+        isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
+      />
     </PageContentWrapper>
   );
 };
