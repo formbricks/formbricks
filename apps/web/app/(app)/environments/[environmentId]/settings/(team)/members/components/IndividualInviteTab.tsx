@@ -70,8 +70,8 @@ export const IndividualInviteTab = ({
               ) : (
                 <UpgradePlanNotice
                   message="To manage access roles for your team,"
-                  url="https://formbricks.com/docs/self-hosting/enterprise"
-                  textForUrl="get a enterprise license."
+                  url={`/environments/${environmentId}/settings/enterprise`}
+                  textForUrl="get an Enterprise License."
                 />
               ))}
           </div>
