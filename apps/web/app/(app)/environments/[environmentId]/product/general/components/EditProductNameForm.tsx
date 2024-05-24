@@ -38,8 +38,8 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
   });
 
   const { errors, isDirty } = form.formState;
-  const nameError = errors.name?.message;
 
+  const nameError = errors.name?.message;
   const isSubmitting = form.formState.isSubmitting;
 
   const updateProduct: SubmitHandler<TEditProductName> = async (data) => {
@@ -47,11 +47,6 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
     try {
       if (nameError) {
         toast.error(nameError);
-        return;
-      }
-
-      if (!isDirty) {
-        form.setError("name", { type: "manual", message: "Product name is the same" }, { shouldFocus: true });
         return;
       }
 
@@ -65,6 +60,7 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
       if (!!updatedProduct?.id) {
         toast.success("Product name updated successfully.");
         router.refresh();
+        form.resetField("name", { defaultValue: updatedProduct.name });
       }
     } catch (err) {
       console.error(err);
@@ -99,7 +95,12 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
         )}
       />
 
-      <Button type="submit" variant="darkCTA" size="sm" loading={isSubmitting} disabled={isSubmitting}>
+      <Button
+        type="submit"
+        variant="darkCTA"
+        size="sm"
+        loading={isSubmitting}
+        disabled={isSubmitting || !isDirty}>
         Update
       </Button>
     </Form>

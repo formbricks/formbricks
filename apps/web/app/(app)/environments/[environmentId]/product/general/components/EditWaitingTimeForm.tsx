@@ -33,23 +33,15 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product, e
     mode: "onChange",
   });
 
-  const { isDirty } = form.formState;
+  const { isDirty, isSubmitting } = form.formState;
 
   const updateWaitingTime: SubmitHandler<EditWaitingTimeFormValues> = async (data) => {
-    if (!isDirty) {
-      form.setError(
-        "recontactDays",
-        { type: "manual", message: "Waiting period is the same" },
-        { shouldFocus: true }
-      );
-      return;
-    }
-
     try {
       const updatedProduct = await updateProductAction(environmentId, product.id, data);
       if (!!updatedProduct?.id) {
         toast.success("Waiting period updated successfully.");
         router.refresh();
+        form.resetField("recontactDays", { defaultValue: updatedProduct.recontactDays });
       }
     } catch (err) {
       toast.error(`Error: ${err.message}`);
@@ -87,7 +79,13 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product, e
         )}
       />
 
-      <Button type="submit" variant="darkCTA" size="sm" className="w-fit">
+      <Button
+        type="submit"
+        variant="darkCTA"
+        size="sm"
+        className="w-fit"
+        loading={isSubmitting}
+        disabled={isSubmitting || !isDirty}>
         Update
       </Button>
     </Form>
