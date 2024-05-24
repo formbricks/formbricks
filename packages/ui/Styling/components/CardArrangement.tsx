@@ -1,11 +1,9 @@
 import { useMemo } from "react";
 
-import { cn } from "@formbricks/lib/cn";
-import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyType } from "@formbricks/types/surveys";
 
-import { Button } from "../../Button";
+import { Tabs } from "../../Tabs";
 import {
   CasualCardArrangementIcon,
   NoCardsArrangementIcon,
@@ -28,8 +26,6 @@ export const CardArrangement = ({
   const surveyTypeDerived = useMemo(() => {
     return surveyType == "link" ? "Link" : "App / Website";
   }, [surveyType]);
-  const cardArrangementTypes: TCardArrangementOptions[] = ["casual", "straight", "simple"];
-
   const handleCardArrangementChange = (arrangement: TCardArrangementOptions) => {
     if (disabled) return;
     setActiveCardArrangement(arrangement, surveyType);
@@ -57,23 +53,21 @@ export const CardArrangement = ({
         </p>
       </div>
 
-      <div className="flex gap-2 rounded-md border border-slate-300 bg-white p-1">
-        {cardArrangementTypes.map((cardArrangement) => {
-          return (
-            <Button
-              variant="minimal"
-              size="sm"
-              className={cn(
-                "flex flex-1 justify-center space-x-4 bg-white text-center",
-                activeCardArrangement === cardArrangement && "bg-slate-200"
-              )}
-              disabled={disabled}
-              onClick={() => handleCardArrangementChange(cardArrangement)}>
-              <p> {capitalizeFirstLetter(cardArrangement)}</p>
-              {getCardArrangementIcon(cardArrangement)}
-            </Button>
-          );
-        })}
+      <div className="flex w-full gap-2 rounded-md bg-white">
+        <Tabs
+          id="card-arrangement"
+          onChange={(value) => {
+            handleCardArrangementChange(value);
+          }}
+          options={[
+            { value: "casual", label: "Casual", icon: getCardArrangementIcon("casual") },
+            { value: "straight", label: "Straight", icon: getCardArrangementIcon("straight") },
+            { value: "simple", label: "Simple", icon: getCardArrangementIcon("simple") },
+          ]}
+          defaultSelected={activeCardArrangement}
+          className="w-full"
+          tabsContainerClassName="p-1 gap-2"
+        />
       </div>
     </div>
   );

@@ -51,7 +51,13 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
         ? {
             light: product.styling.highlightBorderColor.light,
           }
-        : null,
+        : undefined,
+      isDarkModeEnabled: product.styling.isDarkModeEnabled ?? false,
+      roundness: product.styling.roundness ?? 8,
+      cardArrangement: product.styling.cardArrangement ?? {
+        linkSurveys: "simple",
+        appSurveys: "simple",
+      },
     },
     resolver: zodResolver(ZProductStyling),
   });
@@ -191,10 +197,16 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
   }, [allowStyleOverwrite, styling]);
 
   const onSubmit: SubmitHandler<TProductStyling> = async (data) => {
-    console.log("data", data);
+    // console.log("data", data);
+
+    await updateProductAction(product.id, {
+      styling: data,
+    });
+
+    toast.success("Styling updated successfully.");
+    router.refresh();
   };
 
-  console.log("brand color: ", form.watch("brandColor.light"));
   console.log("errors: ", form.formState.errors);
 
   return (
@@ -248,6 +260,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
                 isSettingsPage
                 localProduct={localProduct}
                 surveyType={previewSurveyType}
+                form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
               />
 
               <BackgroundStylingCard

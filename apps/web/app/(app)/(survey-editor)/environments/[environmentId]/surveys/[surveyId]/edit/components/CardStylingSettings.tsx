@@ -2,15 +2,16 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
-import React, { useMemo } from "react";
+import React, { useState } from "react";
+import { UseFormReturn } from "react-hook-form";
 
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
-import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { FormField } from "@formbricks/ui/Form";
 import { Label } from "@formbricks/ui/Label";
 import { Slider } from "@formbricks/ui/Slider";
 import { CardArrangement, ColorSelectorWithLabel } from "@formbricks/ui/Styling";
@@ -25,134 +26,27 @@ type CardStylingSettingsProps = {
   surveyType?: TSurveyType;
   disabled?: boolean;
   localProduct: TProduct;
+  form: UseFormReturn<TProductStyling | TSurveyStyling>;
 };
 
 export const CardStylingSettings = ({
-  setStyling,
-  styling,
+  // setStyling,
+  // styling,
   isSettingsPage = false,
   surveyType,
   disabled,
   open,
   localProduct,
   setOpen,
+  form,
 }: CardStylingSettingsProps) => {
   const isAppSurvey = surveyType === "app" || surveyType === "website";
-  const cardBgColor = styling?.cardBackgroundColor?.light || COLOR_DEFAULTS.cardBackgroundColor;
-
-  const isLogoHidden = styling?.isLogoHidden ?? false;
-
   const isLogoVisible = !!localProduct.logo?.url;
 
-  const linkSurveyCardArrangement = styling?.cardArrangement?.linkSurveys ?? "straight";
+  const highlightBorderColor = form.watch("highlightBorderColor.light");
+  const setHighlightBorderColor = (color: string) => form.setValue("highlightBorderColor.light", color);
 
-  const inAppSurveyCardArrangement = styling?.cardArrangement?.appSurveys ?? "straight";
-
-  const setCardBgColor = (color: string) => {
-    setStyling((prev) => ({
-      ...prev,
-      cardBackgroundColor: {
-        ...(prev.cardBackgroundColor ?? {}),
-        light: color,
-      },
-    }));
-  };
-
-  const cardBorderColor = styling?.cardBorderColor?.light || COLOR_DEFAULTS.cardBorderColor;
-  const setCardBorderColor = (color: string) => {
-    setStyling((prev) => ({
-      ...prev,
-      cardBorderColor: {
-        ...(prev.cardBorderColor ?? {}),
-        light: color,
-      },
-    }));
-  };
-
-  const cardShadowColor = styling?.cardShadowColor?.light || COLOR_DEFAULTS.cardShadowColor;
-  const setCardShadowColor = (color: string) => {
-    setStyling((prev) => ({
-      ...prev,
-      cardShadowColor: {
-        ...(prev.cardShadowColor ?? {}),
-        light: color,
-      },
-    }));
-  };
-
-  const isHighlightBorderAllowed = !!styling?.highlightBorderColor;
-  const setIsHighlightBorderAllowed = (open: boolean) => {
-    if (!open) {
-      const { highlightBorderColor, ...rest } = styling ?? {};
-
-      setStyling({
-        ...rest,
-      });
-    } else {
-      setStyling((prev) => ({
-        ...prev,
-        highlightBorderColor: {
-          ...(prev.highlightBorderColor ?? {}),
-          light: COLOR_DEFAULTS.highlightBorderColor,
-        },
-      }));
-    }
-  };
-
-  const highlightBorderColor = styling?.highlightBorderColor?.light || COLOR_DEFAULTS.highlightBorderColor;
-  const setHighlightBorderColor = (color: string) => {
-    setStyling((prev) => ({
-      ...prev,
-      highlightBorderColor: {
-        ...(prev.highlightBorderColor ?? {}),
-        light: color,
-      },
-    }));
-  };
-
-  const roundness = styling?.roundness ?? 8;
-  const setRoundness = (value: number) => {
-    setStyling((prev) => ({
-      ...prev,
-      roundness: value,
-    }));
-  };
-
-  const setCardArrangement = (arrangement: TCardArrangementOptions, surveyType: TSurveyType) => {
-    const newCardArrangement = {
-      linkSurveys: linkSurveyCardArrangement,
-      appSurveys: inAppSurveyCardArrangement,
-    };
-
-    if (surveyType === "link") {
-      newCardArrangement.linkSurveys = arrangement;
-    } else if (surveyType === "app" || surveyType === "website") {
-      newCardArrangement.appSurveys = arrangement;
-    }
-
-    setStyling((prev) => ({
-      ...prev,
-      cardArrangement: newCardArrangement,
-    }));
-  };
-
-  const toggleProgressBarVisibility = (hideProgressBar: boolean) => {
-    setStyling({
-      ...styling,
-      hideProgressBar,
-    });
-  };
-
-  const toggleLogoVisibility = () => {
-    setStyling((prev) => ({
-      ...prev,
-      isLogoHidden: !prev.isLogoHidden,
-    }));
-  };
-
-  const hideProgressBar = useMemo(() => {
-    return styling?.hideProgressBar;
-  }, [styling]);
+  const [isHighlightBorderAllowed, setIsHighlightBorderAllowed] = useState(!!highlightBorderColor);
 
   return (
     <Collapsible.Root
@@ -200,43 +94,90 @@ export const CardStylingSettings = ({
               <p className="text-xs text-slate-500">Change the border radius of the card and the inputs.</p>
             </div>
             <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
-              <Slider value={[roundness]} max={22} onValueChange={(value) => setRoundness(value[0])} />
+              <FormField
+                control={form.control}
+                name="roundness"
+                render={({ field }) => (
+                  <Slider
+                    value={[field.value ?? 8]}
+                    max={22}
+                    onValueChange={(value) => field.onChange(value[0])}
+                  />
+                )}
+              />
             </div>
           </div>
 
-          <ColorSelectorWithLabel
-            label="Card background color"
-            color={cardBgColor}
-            setColor={setCardBgColor}
-            description="Change the background color of the card."
+          <FormField
+            control={form.control}
+            name="cardBackgroundColor.light"
+            render={({ field }) => (
+              <ColorSelectorWithLabel
+                label="Card background color"
+                color={field.value ?? COLOR_DEFAULTS.cardBackgroundColor}
+                setColor={(color: string) => field.onChange(color)}
+                description="Change the background color of the card."
+              />
+            )}
           />
 
-          <ColorSelectorWithLabel
-            label="Card border color"
-            color={cardBorderColor}
-            setColor={setCardBorderColor}
-            description="Change the border color of the card."
+          <FormField
+            control={form.control}
+            name="cardBorderColor.light"
+            render={({ field }) => (
+              <ColorSelectorWithLabel
+                label="Card border color"
+                color={field.value ?? COLOR_DEFAULTS.cardBorderColor}
+                setColor={(color: string) => field.onChange(color)}
+                description="Change the border color of the card."
+              />
+            )}
           />
 
-          <ColorSelectorWithLabel
-            label="Card shadow color"
-            color={cardShadowColor}
-            setColor={setCardShadowColor}
-            description="Change the shadow color of the card."
+          <FormField
+            control={form.control}
+            name="cardShadowColor.light"
+            render={({ field }) => (
+              <ColorSelectorWithLabel
+                label="Card shadow color"
+                color={field.value ?? COLOR_DEFAULTS.cardShadowColor}
+                setColor={(color: string) => field.onChange(color)}
+                description="Change the shadow color of the card."
+              />
+            )}
           />
 
-          <CardArrangement
-            surveyType={isAppSurvey ? "app" : "link"}
-            activeCardArrangement={isAppSurvey ? inAppSurveyCardArrangement : linkSurveyCardArrangement}
-            setActiveCardArrangement={setCardArrangement}
+          <FormField
+            control={form.control}
+            name="cardArrangement"
+            render={({ field }) => (
+              <CardArrangement
+                surveyType={isAppSurvey ? "app" : "link"}
+                activeCardArrangement={
+                  isAppSurvey ? field.value?.appSurveys ?? "straight" : field.value?.linkSurveys ?? "straight"
+                }
+                setActiveCardArrangement={(arrangement) => {
+                  field.onChange({
+                    ...field.value,
+                    [isAppSurvey ? "appSurveys" : "linkSurveys"]: arrangement,
+                  });
+                }}
+              />
+            )}
           />
 
           <>
             <div className="flex items-center space-x-1">
-              <Switch
-                id="hideProgressBar"
-                checked={!!hideProgressBar}
-                onCheckedChange={(checked) => toggleProgressBarVisibility(checked)}
+              <FormField
+                control={form.control}
+                name="hideProgressBar"
+                render={({ field }) => (
+                  <Switch
+                    id="hideProgressBar"
+                    checked={!!field.value}
+                    onCheckedChange={(checked) => field.onChange(checked)}
+                  />
+                )}
               />
               <Label htmlFor="hideProgressBar" className="cursor-pointer">
                 <div className="ml-2">
@@ -250,7 +191,17 @@ export const CardStylingSettings = ({
 
             {isLogoVisible && (!surveyType || surveyType === "link") && !isSettingsPage && (
               <div className="flex items-center space-x-1">
-                <Switch id="isLogoHidden" checked={isLogoHidden} onCheckedChange={toggleLogoVisibility} />
+                <FormField
+                  control={form.control}
+                  name="isLogoHidden"
+                  render={({ field }) => (
+                    <Switch
+                      id="isLogoHidden"
+                      checked={!!field.value}
+                      onCheckedChange={(checked) => field.onChange(checked)}
+                    />
+                  )}
+                />
                 <Label htmlFor="isLogoHidden" className="cursor-pointer">
                   <div className="ml-2 flex flex-col">
                     <div className="flex items-center gap-2">
@@ -268,7 +219,19 @@ export const CardStylingSettings = ({
             {(!surveyType || isAppSurvey) && (
               <div className="flex max-w-xs flex-col gap-4">
                 <div className="flex items-center gap-2">
-                  <Switch checked={isHighlightBorderAllowed} onCheckedChange={setIsHighlightBorderAllowed} />
+                  <Switch
+                    checked={isHighlightBorderAllowed}
+                    onCheckedChange={(checked) => {
+                      setIsHighlightBorderAllowed(checked);
+                      if (checked) {
+                        if (!highlightBorderColor) {
+                          setHighlightBorderColor(COLOR_DEFAULTS.highlightBorderColor);
+                        }
+                      } else {
+                        form.setValue("highlightBorderColor", undefined);
+                      }
+                    }}
+                  />
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
                       <h3 className="whitespace-nowrap text-sm font-semibold text-slate-700">
@@ -286,10 +249,16 @@ export const CardStylingSettings = ({
                 </div>
 
                 {isHighlightBorderAllowed && (
-                  <ColorPicker
-                    color={highlightBorderColor}
-                    onChange={setHighlightBorderColor}
-                    containerClass="my-0"
+                  <FormField
+                    control={form.control}
+                    name="highlightBorderColor.light"
+                    render={({ field }) => (
+                      <ColorPicker
+                        color={field.value ?? COLOR_DEFAULTS.highlightBorderColor}
+                        onChange={(color: string) => field.onChange(color)}
+                        containerClass="my-0"
+                      />
+                    )}
                   />
                 )}
               </div>
