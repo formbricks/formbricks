@@ -12,13 +12,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
-import {
-  TActionClass,
-  TActionClassInput,
-  TActionClassNoCodeConfig,
-  TNoCodeConfig,
-} from "@formbricks/types/actionClasses";
+import { MatchType, testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
+import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Button } from "@formbricks/ui/Button";
@@ -45,9 +40,13 @@ export const ActionSettingsTab = ({
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [testUrl, setTestUrl] = useState("");
   const [isMatch, setIsMatch] = useState("");
-  const [isPageUrl, setIsPageUrl] = useState(actionClass.noCodeConfig?.pageUrl ? true : false);
-  const [isCssSelector, setIsCssSelector] = useState(actionClass.noCodeConfig?.cssSelector ? true : false);
-  const [isInnerHtml, setIsInnerHtml] = useState(actionClass.noCodeConfig?.innerHtml ? true : false);
+  const [isCssSelector, setIsCssSelector] = useState(
+    !!(actionClass.noCodeConfig?.type === "click" && actionClass.noCodeConfig.elementSelector.cssSelector)
+  );
+  const [isInnerHtml, setIsInnerHtml] = useState(
+    !!(actionClass.noCodeConfig?.type === "click" && actionClass.noCodeConfig.elementSelector.innerHtml)
+  );
+
   const [isUpdatingAction, setIsUpdatingAction] = useState(false);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
   const { isViewer } = getAccessFlags(membershipRole);
@@ -66,32 +65,35 @@ export const ActionSettingsTab = ({
     },
   });
 
-  const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
-    const { pageUrl, innerHtml, cssSelector } = noCodeConfig;
-    const filteredNoCodeConfig: TActionClassNoCodeConfig = {};
+  // const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
+  //   const { pageUrl, innerHtml, cssSelector } = noCodeConfig;
+  //   const filteredNoCodeConfig: TActionClassNoCodeConfig = {};
 
-    if (isPageUrl && pageUrl?.rule && pageUrl?.value) {
-      filteredNoCodeConfig.pageUrl = { rule: pageUrl.rule, value: pageUrl.value };
-    }
-    if (isInnerHtml && innerHtml?.value) {
-      filteredNoCodeConfig.innerHtml = { value: innerHtml.value };
-    }
-    if (isCssSelector && cssSelector?.value) {
-      filteredNoCodeConfig.cssSelector = { value: cssSelector.value };
-    }
+  //   if (isPageUrl && pageUrl?.rule && pageUrl?.value) {
+  //     filteredNoCodeConfig.pageUrl = { rule: pageUrl.rule, value: pageUrl.value };
+  //   }
+  //   if (isInnerHtml && innerHtml?.value) {
+  //     filteredNoCodeConfig.innerHtml = { value: innerHtml.value };
+  //   }
+  //   if (isCssSelector && cssSelector?.value) {
+  //     filteredNoCodeConfig.cssSelector = { value: cssSelector.value };
+  //   }
 
-    return filteredNoCodeConfig;
-  };
+  //   return filteredNoCodeConfig;
+  // };
 
   const handleMatchClick = () => {
-    const match = testURLmatch(
-      testUrl,
-      watch("noCodeConfig.pageUrl.value"),
-      watch("noCodeConfig.pageUrl.rule")
-    );
-    setIsMatch(match);
-    if (match === "yes") toast.success("Your survey would be shown on this URL.");
-    if (match === "no") toast.error("Your survey would not be shown.");
+    const match =
+      watch("noCodeConfig.urlFilters")?.some((urlFilter) => {
+        const res = testURLmatch(testUrl, urlFilter.value, urlFilter.rule as MatchType) === "yes";
+        return res;
+      }) || false;
+
+    const isMatch = match ? "yes" : "no";
+
+    setIsMatch(isMatch);
+    if (isMatch === "yes") toast.success("Your survey would be shown on this URL.");
+    if (isMatch === "no") toast.error("Your survey would not be shown.");
   };
 
   const onSubmit = async (data) => {
@@ -107,21 +109,21 @@ export const ActionSettingsTab = ({
         throw new Error(`Action with name ${data.name} already exist`);
       }
 
-      if (actionClass.type === "noCode") {
-        if (!isPageUrl && !isCssSelector && !isInnerHtml)
-          throw new Error("Please select at least one selector");
+      if (data.type === "noCode" && data.noCodeConfig?.type === "click") {
+        if (!isCssSelector && !isInnerHtml) throw new Error("Please select at least one selector");
 
-        if (isCssSelector && !isValidCssSelector(actionClass.noCodeConfig?.cssSelector?.value))
+        if (isCssSelector && !isValidCssSelector(data.noCodeConfig?.elementSelector?.cssSelector))
           throw new Error("Please enter a valid CSS Selector");
 
-        if (isPageUrl && actionClass.noCodeConfig?.pageUrl?.rule === undefined)
-          throw new Error("Please select a rule for page URL");
+        if (isInnerHtml && !data.noCodeConfig?.elementSelector?.innerHtml)
+          throw new Error("Please enter a valid Inner HTML");
       }
 
       let filteredNoCodeConfig = data.noCodeConfig;
       const isCodeAction = actionClass.type === "code";
       if (!isCodeAction) {
-        filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TNoCodeConfig);
+        // filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig );
+        filteredNoCodeConfig = data.noCodeConfig;
       }
       const updatedData: TActionClassInput = {
         ...data,
@@ -210,8 +212,6 @@ export const ActionSettingsTab = ({
               register={register}
             />
             <PageUrlSelector
-              isPageUrl={isPageUrl}
-              setIsPageUrl={setIsPageUrl}
               register={register}
               control={control}
               testUrl={testUrl}

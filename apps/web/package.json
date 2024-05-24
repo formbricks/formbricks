@@ -25,6 +25,7 @@
     "@formbricks/tailwind-config": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@formbricks/ui": "workspace:*",
+    "@hookform/resolvers": "^3.4.2",
     "@json2csv/node": "^7.0.6",
     "@opentelemetry/auto-instrumentations-node": "^0.46.1",
     "@opentelemetry/exporter-trace-otlp-http": "^0.51.1",

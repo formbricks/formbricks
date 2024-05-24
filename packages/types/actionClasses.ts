@@ -36,14 +36,12 @@ export type TActionClassPageUrlRule = z.infer<typeof ZActionClassPageUrlRule>;
 
 const ZActionClassNoCodeConfigBase = z.object({
   type: z.enum(["click", "pageView", "exitIntent", "50PercentScroll"]),
-  urlFilters: z
-    .array(
-      z.object({
-        value: z.string(),
-        rule: ZActionClassPageUrlRule,
-      })
-    )
-    .optional(),
+  urlFilters: z.array(
+    z.object({
+      value: z.string(),
+      rule: ZActionClassPageUrlRule,
+    })
+  ),
 });
 
 const ZActionClassNoCodeConfigClick = ZActionClassNoCodeConfigBase.extend({
@@ -119,26 +117,3 @@ export const ZActionClassAutomaticInput = z.object({
 export type TActionClassAutomaticInput = z.infer<typeof ZActionClassAutomaticInput>;
 
 export type TActionClassInput = z.infer<typeof ZActionClassInput>;
-
-// Define NoCodeConfig schema
-export const ZNoCodeConfig = z.object({
-  type: z.union([z.literal("innerHtml"), z.literal("pageUrl"), z.literal("cssSelector")]),
-  pageUrl: z.optional(
-    z.object({
-      value: z.string(),
-      rule: ZActionClassMatchType, // Assuming MatchType is a Zod schema, otherwise you'll need to convert it too.
-    })
-  ),
-  innerHtml: z.optional(
-    z.object({
-      value: z.string(),
-    })
-  ),
-  cssSelector: z.optional(
-    z.object({
-      value: z.string(),
-    })
-  ),
-});
-
-export type TNoCodeConfig = z.infer<typeof ZNoCodeConfig>;

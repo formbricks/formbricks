@@ -41,6 +41,7 @@ export const TabToggle = <T extends string | number>({
       <div className="mt-2 flex overflow-hidden rounded-md border border-gray-300 p-2">
         {options.map((option) => (
           <label
+            key={option.value}
             htmlFor={option.value.toString()}
             className={cn(
               "flex-1 cursor-pointer rounded-md py-2 text-center text-sm",

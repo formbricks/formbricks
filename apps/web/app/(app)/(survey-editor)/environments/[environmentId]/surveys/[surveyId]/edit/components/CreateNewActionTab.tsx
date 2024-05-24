@@ -1,11 +1,17 @@
 import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Terminal } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { MatchType, testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
-import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+import {
+  TActionClass,
+  TActionClassInput,
+  TActionClassNoCodeConfig,
+  ZActionClass,
+} from "@formbricks/types/actionClasses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
@@ -33,31 +39,31 @@ export const CreateNewActionTab = ({
   setLocalSurvey,
   environmentId,
 }: CreateNewActionTabProps) => {
-  const { register, control, handleSubmit, watch, reset } = useForm<TActionClass>({
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<TActionClass>({
     defaultValues: {
       name: "",
       description: "",
       type: "noCode",
       key: "",
       noCodeConfig: {
-        pageUrl: {
-          rule: "contains",
-          value: "",
+        type: "click",
+        elementSelector: {
+          cssSelector: "abcd",
+          innerHtml: "",
         },
-        cssSelector: {
-          value: "",
-        },
-        innerHtml: {
-          value: "",
-        },
+        urlFilters: [{ rule: "exactMatch", value: "" }],
       },
     },
+    resolver: zodResolver(ZActionClass),
   });
 
-  const [type, setType] = useState<"code" | "noCode">("noCode");
-  const [userAction, setUserAction] = useState<TActionClassNoCodeConfig["type"]>("click");
-
-  const [isPageUrl, setIsPageUrl] = useState(false);
   const [isCssSelector, setIsCssSelector] = useState(false);
   const [isInnerHtml, setIsInnerText] = useState(false);
   const [isCreatingAction, setIsCreatingAction] = useState(false);
@@ -76,37 +82,61 @@ export const CreateNewActionTab = ({
     [actionClasses]
   );
 
-  const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
-    const { pageUrl, innerHtml, cssSelector } = noCodeConfig;
-    const filteredNoCodeConfig: TActionClassNoCodeConfig = {};
+  // const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
+  //   const { type, urlFilters } = noCodeConfig;
 
-    if (isPageUrl && pageUrl?.rule && pageUrl?.value) {
-      filteredNoCodeConfig.pageUrl = { rule: pageUrl.rule, value: pageUrl.value };
-    }
-    if (isInnerHtml && innerHtml?.value) {
-      filteredNoCodeConfig.innerHtml = { value: innerHtml.value };
-    }
-    if (isCssSelector && cssSelector?.value) {
-      filteredNoCodeConfig.cssSelector = { value: cssSelector.value };
-    }
+  //   let filteredNoCodeConfig: TActionClassNoCodeConfig = {
+  //     type,
+  //     urlFilters,
+  //   };
 
-    return filteredNoCodeConfig;
-  };
+  //   if (type === "click") {
+  //     const { elementSelector } = noCodeConfig;
+  //     filteredNoCodeConfig = {
+  //       ...filteredNoCodeConfig,
+  //       elementSelector: {},
+  //     };
+
+  //     if (isCssSelector && elementSelector?.cssSelector) {
+  //       filteredNoCodeConfig.elementSelector = { cssSelector: elementSelector.cssSelector };
+  //     }
+  //     if (isInnerHtml && elementSelector?.innerHtml) {
+  //       filteredNoCodeConfig.elementSelector = { innerHtml: elementSelector.innerHtml };
+  //     }
+  //   }
+
+  //   // if (isPageUrl && pageUrl?.rule && pageUrl?.value) {
+  //   //   filteredNoCodeConfig.urlFilters = [{ rule: pageUrl.rule, value: pageUrl.value }];
+  //   // }
+  //   // if(noCodeConfig.type === "click") {
+
+  //   // if (isInnerHtml && innerHtml?.value) {
+  //   //   filteredNoCodeConfig. =  innerHtml.value
+  //   // }
+  //   // if (isCssSelector && cssSelector?.value) {
+  //   //   filteredNoCodeConfig.cssSelector =  cssSelector.value
+  //   // }
+  //   // }
+
+  //   return filteredNoCodeConfig;
+  // };
 
   const handleMatchClick = () => {
-    const match = testURLmatch(
-      testUrl,
-      watch("noCodeConfig.pageUrl.value"),
-      watch("noCodeConfig.pageUrl.rule") as MatchType
-    );
+    const match =
+      watch("noCodeConfig.urlFilters")?.some((urlFilter) => {
+        const res = testURLmatch(testUrl, urlFilter.value, urlFilter.rule as MatchType) === "yes";
+        return res;
+      }) || false;
+    const isMatch = match ? "yes" : "no";
 
-    setIsMatch(match);
-    if (match === "yes") toast.success("Your survey would be shown on this URL.");
-    if (match === "no") toast.error("Your survey would not be shown.");
+    setIsMatch(isMatch);
+    if (isMatch === "yes") toast.success("Your survey would be shown on this URL.");
+    if (isMatch === "no") toast.error("Your survey would not be shown.");
   };
 
   const submitHandler = async (data: Partial<TActionClass>) => {
-    const { noCodeConfig } = data;
+    const { noCodeConfig, type } = data;
+    console.log("data", data);
     try {
       if (isViewer) {
         throw new Error("You are not authorised to perform this action.");
@@ -119,15 +149,14 @@ export const CreateNewActionTab = ({
       if (data.name && actionClassNames.includes(data.name)) {
         throw new Error(`Action with name ${data.name} already exist`);
       }
-      if (type === "noCode") {
-        if (!isPageUrl && !isCssSelector && !isInnerHtml)
-          throw new Error("Please select at least one selector");
+      if (type === "noCode" && noCodeConfig?.type === "click") {
+        if (!isCssSelector && !isInnerHtml) throw new Error("Please select at least one selector");
 
-        if (isCssSelector && !isValidCssSelector(noCodeConfig?.cssSelector?.value))
+        if (isCssSelector && !isValidCssSelector(noCodeConfig?.elementSelector?.cssSelector))
           throw new Error("Please enter a valid CSS Selector");
 
-        if (isPageUrl && noCodeConfig?.pageUrl?.rule === undefined)
-          throw new Error("Please select a rule for page URL");
+        if (isInnerHtml && !noCodeConfig?.elementSelector?.innerHtml)
+          throw new Error("Please enter a valid Inner HTML");
       }
       if (type === "code" && !data.key) {
         throw new Error("Please enter a code key");
@@ -144,7 +173,8 @@ export const CreateNewActionTab = ({
       };
 
       if (type === "noCode") {
-        const filteredNoCodeConfig = filterNoCodeConfig(noCodeConfig as TActionClassNoCodeConfig);
+        // const filteredNoCodeConfig = filterNoCodeConfig(noCodeConfig as TActionClassNoCodeConfig);
+        const filteredNoCodeConfig = noCodeConfig;
         updatedAction.noCodeConfig = filteredNoCodeConfig;
       } else {
         updatedAction.key = data.key;
@@ -172,9 +202,7 @@ export const CreateNewActionTab = ({
   };
 
   const resetAllStates = () => {
-    setType("noCode");
     setIsCssSelector(false);
-    setIsPageUrl(false);
     setIsInnerText(false);
     setTestUrl("");
     setIsMatch("");
@@ -202,19 +230,25 @@ export const CreateNewActionTab = ({
           </div>
 
           <div className="w-3/5">
-            <TabToggle
-              id="type"
-              label="Type"
-              onChange={(value) => setType(value)}
-              options={[
-                { value: "noCode", label: "No code" },
-                { value: "code", label: "Code" },
-              ]}
-              defaultSelected={type}
+            <Controller
+              name={`type`}
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <TabToggle
+                  id="type"
+                  label="Type"
+                  onChange={onChange}
+                  options={[
+                    { value: "noCode", label: "No code" },
+                    { value: "code", label: "Code" },
+                  ]}
+                  defaultSelected={value}
+                />
+              )}
             />
           </div>
 
-          {type === "code" ? (
+          {watch("type") === "code" ? (
             <>
               <div className="col-span-1">
                 <Label htmlFor="codeActionKeyInput">Key</Label>
@@ -243,21 +277,27 @@ export const CreateNewActionTab = ({
             </>
           ) : (
             <div>
-              <TabToggle
-                id="userAction"
-                label="What is the user doing?"
-                onChange={(value) => setUserAction(value)}
-                options={[
-                  { value: "click", label: "Click" },
-                  { value: "pageView", label: "Page View" },
-                  { value: "exitIntent", label: "Exit Intent" },
-                  { value: "50PercentScroll", label: "50% Scroll" },
-                ]}
-                defaultSelected={userAction}
+              <Controller
+                name={`noCodeConfig.type`}
+                control={control}
+                render={({ field: { onChange, value } }) => (
+                  <TabToggle
+                    id="userAction"
+                    label="What is the user doing?"
+                    onChange={onChange}
+                    options={[
+                      { value: "click", label: "Click" },
+                      { value: "pageView", label: "Page View" },
+                      { value: "exitIntent", label: "Exit Intent" },
+                      { value: "50PercentScroll", label: "50% Scroll" },
+                    ]}
+                    defaultSelected={value}
+                  />
+                )}
               />
 
               <div className="mt-2">
-                {userAction === "click" && (
+                {watch("noCodeConfig.type") === "click" && (
                   <>
                     <CssSelector
                       isCssSelector={isCssSelector}

@@ -1,7 +1,14 @@
 import { Label } from "@radix-ui/react-dropdown-menu";
-import { Globe } from "lucide-react";
+import { Globe, PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
-import { Control, Controller, UseFormRegister } from "react-hook-form";
+import {
+  Control,
+  Controller,
+  FieldArrayWithId,
+  UseFieldArrayRemove,
+  UseFormRegister,
+  useFieldArray,
+} from "react-hook-form";
 
 import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
@@ -31,7 +38,20 @@ export const PageUrlSelector = ({
   setTestUrl,
   handleMatchClick,
 }: PageUrlSelectorProps) => {
-  const [urlFilter, setUrlFilter] = useState<"all" | "specific">("all");
+  const [filterType, setFilterType] = useState<"all" | "specific">("all");
+
+  const {
+    fields,
+    append: appendUrlRule,
+    remove: removeUrlRule,
+  } = useFieldArray({
+    control,
+    name: "noCodeConfig.urlFilters",
+  });
+
+  const handleAddMore = () => {
+    appendUrlRule({ rule: "exactMatch", value: "" });
+  };
 
   return (
     <>
@@ -40,49 +60,23 @@ export const PageUrlSelector = ({
           id="filter"
           label="Filter"
           subLabel="Limit the pages on which this action gets captured"
-          onChange={(value) => setUrlFilter(value)}
+          onChange={(value) => setFilterType(value)}
           options={[
             { value: "all", label: "On all pages" },
             { value: "specific", label: "Limit to specific pages" },
           ]}
-          defaultSelected={urlFilter}
+          defaultSelected={filterType}
         />
       </div>
-      {urlFilter === "specific" ? (
+      {filterType === "specific" ? (
         <div className={`ml-2 mt-4 flex  items-center space-x-1 rounded-lg border bg-slate-50`}>
           <div className="col-span-1 w-full space-y-3 p-4">
-            <div className="flex w-full items-end gap-2">
-              <div>
-                <Label>URL</Label>
-                <Controller
-                  name="noCodeConfig.pageUrl.rule"
-                  control={control}
-                  render={({ field: { onChange, value, name } }) => (
-                    <Select onValueChange={onChange} value={value} name={name}>
-                      <SelectTrigger className="w-[160px] bg-white">
-                        <SelectValue placeholder="Select match type" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white">
-                        <SelectItem value="exactMatch">Exactly matches</SelectItem>
-                        <SelectItem value="contains">Contains</SelectItem>
-                        <SelectItem value="startsWith">Starts with</SelectItem>
-                        <SelectItem value="endsWith">Ends with</SelectItem>
-                        <SelectItem value="notMatch">Does not exactly match</SelectItem>
-                        <SelectItem value="notContains">Does not contain</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-              <div className="flex flex-1 items-end">
-                <Input
-                  type="text"
-                  className="bg-white"
-                  placeholder="e.g. https://app.com/dashboard"
-                  {...register("noCodeConfig.pageUrl.value", { required: urlFilter })}
-                />
-              </div>
-            </div>
+            <Label>URL</Label>
+            <UrlInput control={control} register={register} fields={fields} removeUrlRule={removeUrlRule} />
+            <Button variant="secondary" size="sm" type="button" onClick={handleAddMore}>
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Add URL
+            </Button>
             <div className="pt-4">
               <div className="text-sm text-slate-900">Test your URL</div>
               <div className="text-xs text-slate-400">
@@ -131,5 +125,54 @@ export const PageUrlSelector = ({
         </Alert>
       )}
     </>
+  );
+};
+
+const UrlInput = ({
+  control,
+  register,
+  fields,
+  removeUrlRule,
+}: {
+  control: Control<TActionClass>;
+  register: UseFormRegister<TActionClass>;
+  fields: FieldArrayWithId<TActionClass, "noCodeConfig.urlFilters", "id">[];
+  removeUrlRule: UseFieldArrayRemove;
+}) => {
+  return (
+    <div className="flex w-full flex-col gap-2">
+      {fields.map((field, index) => (
+        <div key={field.id} className="flex items-center space-x-2">
+          <Controller
+            name={`noCodeConfig.urlFilters.${index}.rule`}
+            control={control}
+            render={({ field: { onChange, value, name } }) => (
+              <Select onValueChange={onChange} value={value} name={name}>
+                <SelectTrigger className="w-[250px] bg-white">
+                  <SelectValue placeholder="Select match type" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="exactMatch">Exactly matches</SelectItem>
+                  <SelectItem value="contains">Contains</SelectItem>
+                  <SelectItem value="startsWith">Starts with</SelectItem>
+                  <SelectItem value="endsWith">Ends with</SelectItem>
+                  <SelectItem value="notMatch">Does not exactly match</SelectItem>
+                  <SelectItem value="notContains">Does not contain</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+          <Input
+            type="text"
+            className="bg-white"
+            placeholder="e.g. https://app.com/dashboard"
+            {...register(`noCodeConfig.urlFilters.${index}.value`, { required: true })}
+          />
+          <Button variant="secondary" size="sm" type="button" onClick={() => removeUrlRule(index)}>
+            <TrashIcon className="h-4 w-4" />
+          </Button>
+        </div>
+      ))}
+    </div>
   );
 };

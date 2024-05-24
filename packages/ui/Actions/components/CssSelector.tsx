@@ -27,7 +27,7 @@ export const CssSelector = ({ isCssSelector, setIsCssSelector, register }: CssSe
           type="text"
           className="bg-white"
           placeholder="Add .css-class or #css-id"
-          {...register("noCodeConfig.cssSelector.value", { required: isCssSelector })}
+          {...register("noCodeConfig.elementSelector.cssSelector", { required: isCssSelector })}
         />
       </div>
     </AdvancedOptionToggle>

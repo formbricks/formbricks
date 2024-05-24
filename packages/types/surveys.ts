@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ZActionClass, ZNoCodeConfig } from "./actionClasses";
+import { ZActionClass, ZActionClassNoCodeConfig } from "./actionClasses";
 import { ZAttributes } from "./attributes";
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { ZId } from "./environment";
@@ -456,7 +456,7 @@ export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
 export const ZSurveyInlineTriggers = z.object({
   codeConfig: z.object({ identifier: z.string() }).optional(),
-  noCodeConfig: ZNoCodeConfig.omit({ type: true }).optional(),
+  noCodeConfig: ZActionClassNoCodeConfig.optional(),
 });
 
 export type TSurveyInlineTriggers = z.infer<typeof ZSurveyInlineTriggers>;
