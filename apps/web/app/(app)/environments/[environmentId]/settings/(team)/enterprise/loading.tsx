@@ -1,23 +1,3 @@
-const LoadingCard = ({ title, description, skeletonLines }) => {
-  return (
-    <div className="my-4 w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4 shadow-sm">
-      <div className="grid content-center border-b border-slate-200  px-4 pb-4 text-left text-slate-900">
-        <h3 className="text-lg font-medium leading-6">{title}</h3>
-        <p className="mt-1 text-sm text-slate-500">{description}</p>
-      </div>
-      <div className="w-full">
-        <div className="rounded-lg px-6 py-5">
-          {skeletonLines.map((line, index) => (
-            <div key={index} className="mt-4">
-              <div className={`animate-pulse rounded-full bg-slate-200 ${line.classes}`}></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const pages = ["Members", "Enterprise License"];
 
 const Loading = () => {

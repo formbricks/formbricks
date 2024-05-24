@@ -28,7 +28,6 @@ const Loading = () => {
         { classes: "h-6 w-64" },
         { classes: "h-4 w-28" },
         { classes: "h-6 w-64" },
-        { classes: "h-8 w-24" },
       ],
     },
     {

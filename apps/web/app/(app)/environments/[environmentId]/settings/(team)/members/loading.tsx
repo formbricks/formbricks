@@ -6,7 +6,7 @@ const LoadingCard = ({ title, description, skeletonLines }) => {
         <p className="mt-1 text-sm text-slate-500">{description}</p>
       </div>
       <div className="w-full">
-        <div className="rounded-lg px-6 py-5">
+        <div className="rounded-lg px-6">
           {skeletonLines.map((line, index) => (
             <div key={index} className="mt-4">
               <div className={`animate-pulse rounded-full bg-slate-200 ${line.classes}`}></div>
