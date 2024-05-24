@@ -333,6 +333,9 @@ importers:
       '@formbricks/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@hookform/resolvers':
+        specifier: ^3.4.2
+        version: 3.4.2(react-hook-form@7.51.4)
       '@json2csv/node':
         specifier: ^7.0.6
         version: 7.0.6
@@ -3427,6 +3430,14 @@ packages:
       tailwindcss: ^3.0
     dependencies:
       tailwindcss: 3.4.3
+    dev: false
+
+  /@hookform/resolvers@3.4.2(react-hook-form@7.51.4):
+    resolution: {integrity: sha512-1m9uAVIO8wVf7VCDAGsuGA0t6Z3m6jVGAN50HkV9vYLl0yixKK/Z1lr01vaRvYCkIKGoy1noVRxMzQYb4y/j1Q==}
+    peerDependencies:
+      react-hook-form: ^7.0.0
+    dependencies:
+      react-hook-form: 7.51.4(react@18.3.1)
     dev: false
 
   /@httptoolkit/websocket-stream@6.0.1:

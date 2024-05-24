@@ -129,7 +129,10 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
     if (!langParam || !isMultiLanguageAllowed) return "default";
     else {
       const selectedLanguage = survey.languages.find((surveyLanguage) => {
-        return surveyLanguage.language.code === langParam || surveyLanguage.language.alias === langParam;
+        return (
+          surveyLanguage.language.code === langParam.toLowerCase() ||
+          surveyLanguage.language.alias?.toLowerCase() === langParam.toLowerCase()
+        );
       });
       if (selectedLanguage?.default || !selectedLanguage?.enabled) {
         return "default";
