@@ -7,11 +7,14 @@ import {
   FieldArrayWithId,
   UseFieldArrayRemove,
   UseFormRegister,
+  UseFormWatch,
   useFieldArray,
 } from "react-hook-form";
+import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
-import { TActionClass } from "@formbricks/types/actionClasses";
+import { testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
+import { TActionClass, TActionClassPageUrlRule } from "@formbricks/types/actionClasses";
 
 import { Alert, AlertDescription, AlertTitle } from "../../Alert";
 import { Button } from "../../Button";
@@ -20,25 +23,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { TabToggle } from "../../TabToggle";
 
 interface PageUrlSelectorProps {
-  testUrl: string;
-  setTestUrl: (value: string) => void;
-  isMatch: string;
-  setIsMatch: (value: string) => void;
-  handleMatchClick: () => void;
+  watch: UseFormWatch<TActionClass>;
   control: Control<TActionClass>;
   register: UseFormRegister<TActionClass>;
 }
 
-export const PageUrlSelector = ({
-  control,
-  register,
-  testUrl,
-  isMatch,
-  setIsMatch,
-  setTestUrl,
-  handleMatchClick,
-}: PageUrlSelectorProps) => {
-  const [filterType, setFilterType] = useState<"all" | "specific">("all");
+export const PageUrlSelector = ({ watch, control, register }: PageUrlSelectorProps) => {
+  const [testUrl, setTestUrl] = useState("");
+  const [isMatch, setIsMatch] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "specific">(
+    watch("noCodeConfig.urlFilters")?.length ? "specific" : "all"
+  );
+
+  const handleMatchClick = () => {
+    const match =
+      watch("noCodeConfig.urlFilters")?.some((urlFilter) => {
+        const res =
+          testURLmatch(testUrl, urlFilter.value, urlFilter.rule as TActionClassPageUrlRule) === "yes";
+        return res;
+      }) || false;
+
+    const isMatch = match ? "yes" : "no";
+
+    setIsMatch(isMatch);
+    if (isMatch === "yes") toast.success("Your survey would be shown on this URL.");
+    if (isMatch === "no") toast.error("Your survey would not be shown.");
+  };
 
   const {
     fields,

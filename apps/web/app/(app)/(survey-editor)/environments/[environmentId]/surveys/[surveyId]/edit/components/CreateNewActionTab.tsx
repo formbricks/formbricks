@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { MatchType, testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
 import {
   TActionClass,
   TActionClassInput,
@@ -61,14 +60,12 @@ export const CreateNewActionTab = ({
         urlFilters: [{ rule: "exactMatch", value: "" }],
       },
     },
-    resolver: zodResolver(ZActionClass),
+    // resolver: zodResolver(ZActionClass),
   });
 
   const [isCssSelector, setIsCssSelector] = useState(false);
   const [isInnerHtml, setIsInnerText] = useState(false);
   const [isCreatingAction, setIsCreatingAction] = useState(false);
-  const [testUrl, setTestUrl] = useState("");
-  const [isMatch, setIsMatch] = useState("");
   const actionClassNames = useMemo(
     () => actionClasses.map((actionClass) => actionClass.name),
     [actionClasses]
@@ -120,19 +117,6 @@ export const CreateNewActionTab = ({
 
   //   return filteredNoCodeConfig;
   // };
-
-  const handleMatchClick = () => {
-    const match =
-      watch("noCodeConfig.urlFilters")?.some((urlFilter) => {
-        const res = testURLmatch(testUrl, urlFilter.value, urlFilter.rule as MatchType) === "yes";
-        return res;
-      }) || false;
-    const isMatch = match ? "yes" : "no";
-
-    setIsMatch(isMatch);
-    if (isMatch === "yes") toast.success("Your survey would be shown on this URL.");
-    if (isMatch === "no") toast.error("Your survey would not be shown.");
-  };
 
   const submitHandler = async (data: Partial<TActionClass>) => {
     const { noCodeConfig, type } = data;
@@ -204,8 +188,6 @@ export const CreateNewActionTab = ({
   const resetAllStates = () => {
     setIsCssSelector(false);
     setIsInnerText(false);
-    setTestUrl("");
-    setIsMatch("");
     reset();
     setOpen(false);
   };
@@ -311,15 +293,7 @@ export const CreateNewActionTab = ({
                     />
                   </>
                 )}
-                <PageUrlSelector
-                  register={register}
-                  control={control}
-                  testUrl={testUrl}
-                  setTestUrl={setTestUrl}
-                  isMatch={isMatch}
-                  setIsMatch={setIsMatch}
-                  handleMatchClick={handleMatchClick}
-                />
+                <PageUrlSelector watch={watch} register={register} control={control} />
               </div>
             </div>
           )}

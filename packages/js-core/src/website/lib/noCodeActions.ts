@@ -1,17 +1,8 @@
 import type { TActionClass } from "@formbricks/types/actionClasses";
-import type { TActionClassPageUrlRule } from "@formbricks/types/actionClasses";
 
-import {
-  ErrorHandler,
-  InvalidMatchTypeError,
-  NetworkError,
-  Result,
-  err,
-  match,
-  ok,
-  okVoid,
-} from "../../shared/errors";
+import { ErrorHandler, NetworkError, Result, err, match, okVoid } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
+import { evaluateNoCodeConfigClick, handleUrlFilters } from "../../shared/utils";
 import { trackNoCodeAction } from "./actions";
 import { WebsiteConfig } from "./config";
 
@@ -19,33 +10,26 @@ const websiteConfig = WebsiteConfig.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 
-export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError | NetworkError>> => {
+// Page URL Event
+const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
+let arePageUrlEventListenersAdded = false;
+export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
   logger.debug(`Checking page url: ${window.location.href}`);
   const { state } = websiteConfig.get();
+
   const { actionClasses = [] } = state ?? {};
 
-  const noCodeActionClasses = actionClasses.filter((action) => action.type === "noCode");
+  const noCodePageViewActionClasses = actionClasses.filter(
+    (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageView"
+  );
 
-  const actionsWithPageUrl: TActionClass[] = noCodeActionClasses.filter((action) => {
-    const { innerHtml, cssSelector, pageUrl } = action.noCodeConfig || {};
-    return pageUrl && !innerHtml && !cssSelector;
-  });
+  if (noCodePageViewActionClasses.length > 0) {
+    for (const event of noCodePageViewActionClasses) {
+      const urlFilters = event.noCodeConfig?.urlFilters ?? [];
 
-  if (actionsWithPageUrl.length > 0) {
-    for (const event of actionsWithPageUrl) {
-      if (!event.noCodeConfig?.pageUrl) {
-        continue;
-      }
+      const isValidUrl = handleUrlFilters(urlFilters);
 
-      const {
-        noCodeConfig: { pageUrl },
-      } = event;
-
-      const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule);
-
-      if (match.ok !== true) return err(match.error);
-
-      if (match.value === false) continue;
+      if (!isValidUrl) continue;
 
       const trackResult = await trackNoCodeAction(event.name);
 
@@ -56,9 +40,7 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
   return okVoid();
 };
 
-let arePageUrlEventListenersAdded = false;
 const checkPageUrlWrapper = () => checkPageUrl();
-const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
 
 export const addPageUrlEventListeners = (): void => {
   if (typeof window === "undefined" || arePageUrlEventListenersAdded) return;
@@ -72,89 +54,31 @@ export const removePageUrlEventListeners = (): void => {
   arePageUrlEventListenersAdded = false;
 };
 
-export const checkUrlMatch = (
-  url: string,
-  pageUrlValue: string,
-  pageUrlRule: TActionClassPageUrlRule
-): Result<boolean, InvalidMatchTypeError> => {
-  switch (pageUrlRule) {
-    case "exactMatch":
-      return ok(url === pageUrlValue);
-    case "contains":
-      return ok(url.includes(pageUrlValue));
-    case "startsWith":
-      return ok(url.startsWith(pageUrlValue));
-    case "endsWith":
-      return ok(url.endsWith(pageUrlValue));
-    case "notMatch":
-      return ok(url !== pageUrlValue);
-    case "notContains":
-      return ok(!url.includes(pageUrlValue));
-    default:
-      return err({
-        code: "invalid_match_type",
-        message: "Invalid match type",
-      });
-  }
-};
-
-const evaluateNoCodeConfig = (targetElement: HTMLElement, action: TActionClass): boolean => {
-  const innerHtml = action.noCodeConfig?.innerHtml?.value;
-  const cssSelectors = action.noCodeConfig?.cssSelector?.value;
-  const pageUrl = action.noCodeConfig?.pageUrl?.value;
-  const pageUrlRule = action.noCodeConfig?.pageUrl?.rule;
-
-  if (!innerHtml && !cssSelectors && !pageUrl) {
-    return false;
-  }
-
-  if (innerHtml && targetElement.innerHTML !== innerHtml) {
-    return false;
-  }
-
-  if (cssSelectors) {
-    // Split selectors that start with a . or # including the . or #
-    const individualSelectors = cssSelectors.split(/\s*(?=[.#])/);
-    for (let selector of individualSelectors) {
-      if (!targetElement.matches(selector)) {
-        return false;
-      }
-    }
-  }
-
-  if (pageUrl && pageUrlRule) {
-    const urlMatch = checkUrlMatch(window.location.href, pageUrl, pageUrlRule);
-    if (!urlMatch.ok || !urlMatch.value) {
-      return false;
-    }
-  }
-
-  return true;
-};
-
-export const checkClickMatch = (event: MouseEvent) => {
+// Click Event
+let isClickEventListenerAdded = false;
+const checkClickMatch = (event: MouseEvent) => {
   const { state } = websiteConfig.get();
-  if (!state) {
-    return;
-  }
+  if (!state) return;
 
   const { actionClasses = [] } = state;
-  const noCodeActionClasses = actionClasses.filter((action) => action.type === "noCode");
+  const noCodeClickActionClasses = actionClasses.filter(
+    (action) => action.type === "noCode" && action.noCodeConfig?.type === "click"
+  );
 
-  if (!noCodeActionClasses) {
+  if (!noCodeClickActionClasses.length) {
     return;
   }
 
   const targetElement = event.target as HTMLElement;
 
-  noCodeActionClasses.forEach((action: TActionClass) => {
-    const isMatch = evaluateNoCodeConfig(targetElement, action);
+  noCodeClickActionClasses.forEach((action: TActionClass) => {
+    const isMatch = evaluateNoCodeConfigClick(targetElement, action);
     if (isMatch) {
       trackNoCodeAction(action.name).then((res) => {
         match(
           res,
-          (_value) => {},
-          (err) => {
+          (_value: unknown) => {},
+          (err: any) => {
             errorHandler.handle(err);
           }
         );
@@ -169,7 +93,6 @@ export const checkClickMatch = (event: MouseEvent) => {
   }
 };
 
-let isClickEventListenerAdded = false;
 const checkClickMatchWrapper = (e: MouseEvent) => checkClickMatch(e);
 
 export const addClickEventListener = (): void => {
@@ -186,4 +109,106 @@ export const removeClickEventListener = (): void => {
   document.removeEventListener("click", checkClickMatchWrapper);
 
   isClickEventListenerAdded = false;
+};
+
+// Exit Intent
+let isExitIntentListenerAdded = false;
+const checkExitIntent = async (e: MouseEvent) => {
+  const { state } = websiteConfig.get();
+  const { actionClasses = [] } = state ?? {};
+
+  const noCodeExitIntentActionClasses = actionClasses.filter(
+    (action) => action.type === "noCode" && action.noCodeConfig?.type === "exitIntent"
+  );
+
+  if (e.clientY <= 0 && noCodeExitIntentActionClasses.length > 0) {
+    for (const event of noCodeExitIntentActionClasses) {
+      const urlFilters = event.noCodeConfig?.urlFilters ?? [];
+
+      const isValidUrl = handleUrlFilters(urlFilters);
+
+      if (!isValidUrl) continue;
+
+      const trackResult = await trackNoCodeAction(event.name);
+
+      if (trackResult.ok !== true) return err(trackResult.error);
+    }
+  }
+};
+
+const checkExitIntentWrapper = (e: MouseEvent) => checkExitIntent(e);
+
+export const addExitIntentListener = (): void => {
+  if (typeof document !== "undefined" && !isExitIntentListenerAdded) {
+    document.querySelector("body")!.addEventListener("mouseleave", (e) => checkExitIntentWrapper(e));
+    isExitIntentListenerAdded = true;
+  }
+};
+
+export const removeExitIntentListener = (): void => {
+  if (isExitIntentListenerAdded) {
+    document.removeEventListener("mouseleave", (e) => checkExitIntentWrapper(e));
+    isExitIntentListenerAdded = false;
+  }
+};
+
+// 50% Scroll
+let scrollDepthListenerAdded = false;
+let scrollDepthTriggered = false;
+
+const checkScrollDepth = async () => {
+  const scrollPosition = window.scrollY;
+  const windowSize = window.innerHeight;
+  const bodyHeight = document.documentElement.scrollHeight;
+
+  if (scrollPosition === 0) {
+    scrollDepthTriggered = false;
+  }
+
+  const is50PercentScrollEvent = !scrollDepthTriggered && scrollPosition / (bodyHeight - windowSize) >= 0.5;
+
+  if (is50PercentScrollEvent) {
+    scrollDepthTriggered = true;
+
+    const { state } = websiteConfig.get();
+    const { actionClasses = [] } = state ?? {};
+
+    const noCode50PercentScrollActionClasses = actionClasses.filter(
+      (action) => action.type === "noCode" && action.noCodeConfig?.type === "50PercentScroll"
+    );
+
+    for (const event of noCode50PercentScrollActionClasses) {
+      const urlFilters = event.noCodeConfig?.urlFilters ?? [];
+
+      const isValidUrl = handleUrlFilters(urlFilters);
+
+      if (!isValidUrl) continue;
+
+      const trackResult = await trackNoCodeAction(event.name);
+
+      if (trackResult.ok !== true) {
+        return err(trackResult.error);
+      }
+    }
+  }
+
+  return okVoid();
+};
+
+const checkScrollDepthWrapper = () => checkScrollDepth();
+
+export const addScrollDepthListener = (): void => {
+  if (typeof window !== "undefined" && !scrollDepthListenerAdded) {
+    window.addEventListener("load", () => {
+      window.addEventListener("scroll", () => checkScrollDepthWrapper());
+    });
+    scrollDepthListenerAdded = true;
+  }
+};
+
+export const removeScrollDepthListener = (): void => {
+  if (scrollDepthListenerAdded) {
+    window.removeEventListener("scroll", () => checkScrollDepthWrapper());
+    scrollDepthListenerAdded = false;
+  }
 };
