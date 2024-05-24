@@ -14,7 +14,7 @@ import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
 const Page = async ({ params }) => {
-  const enabled = !!AIRTABLE_CLIENT_ID;
+  const isEnabled = !!AIRTABLE_CLIENT_ID;
   const [surveys, integrations, environment, attributeClasses] = await Promise.all([
     getSurveys(params.environmentId),
     getIntegrations(params.environmentId),
@@ -44,7 +44,7 @@ const Page = async ({ params }) => {
       <PageHeader pageTitle="Airtable Integration" />
       <div className="h-[75vh] w-full">
         <AirtableWrapper
-          enabled={enabled}
+          isEnabled={isEnabled}
           airtableIntegration={airtableIntegration}
           airtableArray={airtableArray}
           environmentId={environment.id}

@@ -1,4 +1,3 @@
-import { TAttributes } from "./attributes";
 import { TProductStyling } from "./product";
 import { TResponseData, TResponseUpdate } from "./responses";
 import { TUploadFileConfig } from "./storage";
@@ -19,6 +18,7 @@ export interface SurveyBaseProps {
   autoFocus?: boolean;
   isRedirectDisabled?: boolean;
   prefillResponseData?: TResponseData;
+  skipPrefilled?: boolean;
   languageCode: string;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
@@ -26,7 +26,7 @@ export interface SurveyBaseProps {
   startAtQuestionId?: string;
   hiddenFieldsRecord?: TResponseData;
   clickOutside?: boolean;
-  attributes?: TAttributes;
+  shouldResetQuestionId?: boolean;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

@@ -8,16 +8,13 @@ import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
 import { evaluateCondition } from "@/lib/logicEvaluator";
+import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
-import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";
-import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
+import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 
 export const Survey = ({
   survey,
@@ -30,6 +27,7 @@ export const Survey = ({
   onRetry = () => {},
   isRedirectDisabled = false,
   prefillResponseData,
+  skipPrefilled,
   languageCode,
   getSetIsError,
   getSetIsResponseSendingFinished,
@@ -38,13 +36,21 @@ export const Survey = ({
   responseCount,
   startAtQuestionId,
   hiddenFieldsRecord,
-  attributes,
   clickOutside,
+  shouldResetQuestionId,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
-  const [questionId, setQuestionId] = useState(
-    survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
-  );
+
+  const [questionId, setQuestionId] = useState(() => {
+    if (startAtQuestionId) {
+      return startAtQuestionId;
+    } else if (survey.welcomeCard.enabled) {
+      return "start";
+    } else {
+      return survey?.questions[0]?.id;
+    }
+  });
+  // );
   const [showError, setShowError] = useState(false);
   // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
@@ -89,12 +95,7 @@ export const Survey = ({
   useEffect(() => {
     // call onDisplay when component is mounted
     onDisplay();
-    if (prefillResponseData) {
-      onChange(prefillResponseData);
-    }
-    if (startAtQuestionId) {
-      setQuestionId(startAtQuestionId);
-    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -198,6 +199,7 @@ export const Survey = ({
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId(responseData);
     const finished = nextQuestionId === "end";
+    onChange(responseData);
     onResponse({ data: responseData, ttc, finished });
     if (finished) {
       // Post a message to the parent window indicating that the survey is completed.
@@ -208,61 +210,6 @@ export const Survey = ({
     // add to history
     setHistory([...history, questionId]);
     setLoadingElement(false);
-  };
-
-  const replaceRecallInfo = (text: string): string => {
-    let modifiedText = text;
-
-    while (modifiedText.includes("recall:")) {
-      const recallInfo = extractRecallInfo(modifiedText);
-      if (!recallInfo) break; // Exit the loop if no recall info is found
-
-      const recallItemId = extractId(recallInfo);
-      if (!recallItemId) return modifiedText; // Return the text if no ID could be extracted
-
-      const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
-      let value = null;
-
-      // Fetching value from responseData or attributes based on recallItemId
-      if (responseData[recallItemId]) {
-        value = (responseData[recallItemId] as string) ?? fallback;
-      } else if (attributes && attributes.hasOwnProperty(recallItemId.replace("nbsp", " "))) {
-        value = attributes[recallItemId.replace("nbsp", " ")];
-      }
-
-      // Additional value formatting if it exists
-      if (value) {
-        if (isValidDateString(value)) {
-          value = formatDateWithOrdinal(new Date(value));
-        } else if (Array.isArray(value)) {
-          value = value.filter((item) => item).join(", "); // Filters out empty values and joins with a comma
-        }
-      }
-
-      // Replace the recallInfo in the text with the obtained or fallback value
-      modifiedText = modifiedText.replace(recallInfo, value || fallback);
-    }
-
-    return modifiedText;
-  };
-
-  const parseRecallInformation = (question: TSurveyQuestion) => {
-    const modifiedQuestion = structuredClone(question);
-    if (question.headline && question.headline[languageCode]?.includes("recall:")) {
-      modifiedQuestion.headline[languageCode] = replaceRecallInfo(
-        getLocalizedValue(modifiedQuestion.headline, languageCode)
-      );
-    }
-    if (
-      question.subheader &&
-      question.subheader[languageCode]?.includes("recall:") &&
-      modifiedQuestion.subheader
-    ) {
-      modifiedQuestion.subheader[languageCode] = replaceRecallInfo(
-        getLocalizedValue(modifiedQuestion.subheader, languageCode)
-      );
-    }
-    return modifiedQuestion;
   };
 
   const onBack = (): void => {
@@ -278,6 +225,13 @@ export const Survey = ({
     }
     if (!prevQuestionId) throw new Error("Question not found");
     setQuestionId(prevQuestionId);
+  };
+
+  const getQuestionPrefillData = (questionId: string, offset: number): TResponseDataValue | undefined => {
+    if (offset === 0 && prefillResponseData) {
+      return prefillResponseData[questionId];
+    }
+    return undefined;
   };
 
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
@@ -300,23 +254,26 @@ export const Survey = ({
             languageCode={languageCode}
             responseCount={responseCount}
             isInIframe={isInIframe}
-            replaceRecallInfo={replaceRecallInfo}
           />
         );
       } else if (questionIdx === survey.questions.length) {
         return (
           <ThankYouCard
-            headline={survey.thankYouCard.headline}
-            subheader={survey.thankYouCard.subheader}
+            headline={replaceRecallInfo(
+              getLocalizedValue(survey.thankYouCard.headline, languageCode),
+              responseData
+            )}
+            subheader={replaceRecallInfo(
+              getLocalizedValue(survey.thankYouCard.subheader, languageCode),
+              responseData
+            )}
             isResponseSendingFinished={isResponseSendingFinished}
-            buttonLabel={survey.thankYouCard.buttonLabel}
+            buttonLabel={getLocalizedValue(survey.thankYouCard.buttonLabel, languageCode)}
             buttonLink={survey.thankYouCard.buttonLink}
             imageUrl={survey.thankYouCard.imageUrl}
             videoUrl={survey.thankYouCard.videoUrl}
             redirectUrl={survey.redirectUrl}
             isRedirectDisabled={isRedirectDisabled}
-            languageCode={languageCode}
-            replaceRecallInfo={replaceRecallInfo}
             isInIframe={isInIframe}
           />
         );
@@ -326,7 +283,7 @@ export const Survey = ({
           question && (
             <QuestionConditional
               surveyId={survey.id}
-              question={parseRecallInformation(question)}
+              question={parseRecallInformation(question, languageCode, responseData)}
               value={responseData[question.id]}
               onChange={onChange}
               onSubmit={onSubmit}
@@ -334,11 +291,9 @@ export const Survey = ({
               ttc={ttc}
               setTtc={setTtc}
               onFileUpload={onFileUpload}
-              isFirstQuestion={
-                history && prefillResponseData
-                  ? history[history.length - 1] === survey.questions[0].id
-                  : question.id === survey?.questions[0]?.id
-              }
+              isFirstQuestion={question.id === survey?.questions[0]?.id}
+              skipPrefilled={skipPrefilled}
+              prefilledQuestionValue={getQuestionPrefillData(question.id, offset)}
               isLastQuestion={question.id === survey.questions[survey.questions.length - 1].id}
               languageCode={languageCode}
               isInIframe={isInIframe}
@@ -378,6 +333,7 @@ export const Survey = ({
       survey={survey}
       styling={styling}
       setQuestionId={setQuestionId}
+      shouldResetQuestionId={shouldResetQuestionId}
     />
   );
 };

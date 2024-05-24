@@ -15,15 +15,14 @@ import { TSurveySummary } from "@formbricks/types/surveys";
 
 export const getResponsesBySurveySharingKeyAction = async (
   sharingKey: string,
-  page: number,
-  batchSize?: number,
+  limit: number = 10,
+  offset: number = 0,
   filterCriteria?: TResponseFilterCriteria
 ): Promise<TResponse[]> => {
   const surveyId = await getSurveyIdByResultShareKey(sharingKey);
   if (!surveyId) throw new AuthorizationError("Not authorized");
 
-  batchSize = batchSize ?? 10;
-  const responses = await getResponses(surveyId, page, batchSize, filterCriteria);
+  const responses = await getResponses(surveyId, limit, offset, filterCriteria);
   return responses;
 };
 
