@@ -101,10 +101,15 @@ margin-bottom: 0px;
 
 .react-calendar__tile--active{
   background: var(--fb-brand-color) !important;
-  border-radius: 10%;
+  border-radius: 6px;
 }
 
 .react-calendar button:hover{
   background: rgb(226 232 240) !important;
   border-radius: 10%;
+}
+
+.react-calendar button:focus{
+  outline: 2px solid rgb(226 232 240) !important;
+  border-radius: 6px;
 }
