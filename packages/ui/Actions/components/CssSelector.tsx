@@ -1,6 +1,6 @@
 import { UseFormRegister } from "react-hook-form";
 
-import { TActionClass } from "@formbricks/types/actionClasses";
+import { TActionClassInput } from "@formbricks/types/actionClasses";
 
 import { AdvancedOptionToggle } from "../../AdvancedOptionToggle";
 import { Input } from "../../Input";
@@ -8,7 +8,7 @@ import { Input } from "../../Input";
 interface CssSelectorProps {
   isCssSelector: boolean;
   setIsCssSelector: (value: boolean) => void;
-  register: UseFormRegister<TActionClass>;
+  register: UseFormRegister<TActionClassInput>;
 }
 
 export const CssSelector = ({ isCssSelector, setIsCssSelector, register }: CssSelectorProps) => {

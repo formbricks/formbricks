@@ -27,7 +27,6 @@ import {
   resetSegmentFiltersAction,
   updateSegmentAction,
 } from "../lib/actions";
-import { ACTIONS_TO_EXCLUDE } from "../lib/constants";
 import { AddFilterModal } from "./AddFilterModal";
 import { SegmentEditor } from "./SegmentEditor";
 
@@ -61,17 +60,7 @@ export const AdvancedTargetingCard = ({
   const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(!!localSurvey.segment?.isPrivate);
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(true);
 
-  const actionClasses = actionClassesProps.filter((actionClass) => {
-    if (actionClass.type === "automatic") {
-      if (ACTIONS_TO_EXCLUDE.includes(actionClass.name)) {
-        return false;
-      }
-
-      return true;
-    }
-
-    return true;
-  });
+  const actionClasses = actionClassesProps;
 
   useEffect(() => {
     setLocalSurvey((localSurveyOld) => ({

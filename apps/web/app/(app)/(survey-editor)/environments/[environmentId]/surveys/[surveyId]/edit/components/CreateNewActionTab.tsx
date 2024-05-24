@@ -1,16 +1,10 @@
-import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Terminal } from "lucide-react";
+import { InfoIcon, Terminal } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import {
-  TActionClass,
-  TActionClassInput,
-  TActionClassNoCodeConfig,
-  ZActionClass,
-} from "@formbricks/types/actionClasses";
+import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/actionClasses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
@@ -45,22 +39,22 @@ export const CreateNewActionTab = ({
     watch,
     reset,
     formState: { errors },
-  } = useForm<TActionClass>({
+  } = useForm<TActionClassInput>({
     defaultValues: {
       name: "",
       description: "",
+      environmentId,
       type: "noCode",
-      key: "",
       noCodeConfig: {
         type: "click",
         elementSelector: {
-          cssSelector: "abcd",
+          cssSelector: "",
           innerHtml: "",
         },
-        urlFilters: [{ rule: "exactMatch", value: "" }],
+        urlFilters: [],
       },
     },
-    // resolver: zodResolver(ZActionClass),
+    resolver: zodResolver(ZActionClassInput),
   });
 
   const [isCssSelector, setIsCssSelector] = useState(false);
@@ -79,92 +73,43 @@ export const CreateNewActionTab = ({
     [actionClasses]
   );
 
-  // const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
-  //   const { type, urlFilters } = noCodeConfig;
-
-  //   let filteredNoCodeConfig: TActionClassNoCodeConfig = {
-  //     type,
-  //     urlFilters,
-  //   };
-
-  //   if (type === "click") {
-  //     const { elementSelector } = noCodeConfig;
-  //     filteredNoCodeConfig = {
-  //       ...filteredNoCodeConfig,
-  //       elementSelector: {},
-  //     };
-
-  //     if (isCssSelector && elementSelector?.cssSelector) {
-  //       filteredNoCodeConfig.elementSelector = { cssSelector: elementSelector.cssSelector };
-  //     }
-  //     if (isInnerHtml && elementSelector?.innerHtml) {
-  //       filteredNoCodeConfig.elementSelector = { innerHtml: elementSelector.innerHtml };
-  //     }
-  //   }
-
-  //   // if (isPageUrl && pageUrl?.rule && pageUrl?.value) {
-  //   //   filteredNoCodeConfig.urlFilters = [{ rule: pageUrl.rule, value: pageUrl.value }];
-  //   // }
-  //   // if(noCodeConfig.type === "click") {
-
-  //   // if (isInnerHtml && innerHtml?.value) {
-  //   //   filteredNoCodeConfig. =  innerHtml.value
-  //   // }
-  //   // if (isCssSelector && cssSelector?.value) {
-  //   //   filteredNoCodeConfig.cssSelector =  cssSelector.value
-  //   // }
-  //   // }
-
-  //   return filteredNoCodeConfig;
-  // };
-
-  const submitHandler = async (data: Partial<TActionClass>) => {
-    const { noCodeConfig, type } = data;
-    console.log("data", data);
+  const submitHandler = async (data: TActionClassInput) => {
+    const { type } = data;
     try {
       if (isViewer) {
         throw new Error("You are not authorised to perform this action.");
       }
       setIsCreatingAction(true);
 
-      if (!data.name || data.name?.trim() === "") {
-        throw new Error("Please give your action a name");
-      }
       if (data.name && actionClassNames.includes(data.name)) {
         throw new Error(`Action with name ${data.name} already exist`);
       }
-      if (type === "noCode" && noCodeConfig?.type === "click") {
-        if (!isCssSelector && !isInnerHtml) throw new Error("Please select at least one selector");
 
-        if (isCssSelector && !isValidCssSelector(noCodeConfig?.elementSelector?.cssSelector))
-          throw new Error("Please enter a valid CSS Selector");
-
-        if (isInnerHtml && !noCodeConfig?.elementSelector?.innerHtml)
-          throw new Error("Please enter a valid Inner HTML");
-      }
-      if (type === "code" && !data.key) {
-        throw new Error("Please enter a code key");
-      }
-      if (data.key && actionClassKeys.includes(data.key)) {
+      if (type === "code" && data.key && actionClassKeys.includes(data.key)) {
         throw new Error(`Action with key ${data.key} already exist`);
       }
 
-      const updatedAction: TActionClassInput = {
-        name: data.name.trim(),
-        description: data.description,
-        environmentId,
-        type: type as TActionClass["type"],
-      };
+      let updatedAction = {};
 
       if (type === "noCode") {
-        // const filteredNoCodeConfig = filterNoCodeConfig(noCodeConfig as TActionClassNoCodeConfig);
-        const filteredNoCodeConfig = noCodeConfig;
-        updatedAction.noCodeConfig = filteredNoCodeConfig;
-      } else {
-        updatedAction.key = data.key;
+        updatedAction = {
+          name: data.name.trim(),
+          description: data.description,
+          environmentId,
+          type: "noCode",
+          noCodeConfig: data.noCodeConfig,
+        };
+      } else if (type === "code") {
+        updatedAction = {
+          name: data.name.trim(),
+          description: data.description,
+          environmentId,
+          type: "code",
+          key: data.key,
+        };
       }
 
-      const newActionClass: TActionClass = await createActionClassAction(updatedAction);
+      const newActionClass: TActionClass = await createActionClassAction(updatedAction as TActionClassInput);
       if (setActionClasses) {
         setActionClasses((prevActionClasses: TActionClass[]) => [...prevActionClasses, newActionClass]);
       }
@@ -199,7 +144,13 @@ export const CreateNewActionTab = ({
           <div className="grid w-full grid-cols-2 gap-x-4">
             <div className="col-span-1">
               <Label htmlFor="actionNameInput">What did your user do?</Label>
-              <Input id="actionNameInput" placeholder="E.g. Clicked Download" {...register("name")} />
+              <Controller
+                name={`name`}
+                control={control}
+                render={({ field }) => (
+                  <Input id="actionNameInput" placeholder="E.g. Clicked Download" {...field} />
+                )}
+              />
             </div>
             <div className="col-span-1">
               <Label htmlFor="actionDescriptionInput">Description</Label>
@@ -292,6 +243,24 @@ export const CreateNewActionTab = ({
                       register={register}
                     />
                   </>
+                )}
+                {watch("noCodeConfig.type") === "pageView" && (
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <InfoIcon className=" h-4 w-4 " />
+                    <p>This action will be triggered when the page is loaded.</p>
+                  </div>
+                )}
+                {watch("noCodeConfig.type") === "exitIntent" && (
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <InfoIcon className=" h-4 w-4 " />
+                    <p>This action will be triggered when the user tries to leave the page.</p>
+                  </div>
+                )}
+                {watch("noCodeConfig.type") === "50PercentScroll" && (
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <InfoIcon className=" h-4 w-4 " />
+                    <p>This action will be triggered when the user scrolls 50% of the page.</p>
+                  </div>
                 )}
                 <PageUrlSelector watch={watch} register={register} control={control} />
               </div>

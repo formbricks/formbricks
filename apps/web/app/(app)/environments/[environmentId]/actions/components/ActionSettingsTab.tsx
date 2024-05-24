@@ -5,6 +5,7 @@ import {
   updateActionClassAction,
 } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { InfoIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -12,7 +13,7 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Button } from "@formbricks/ui/Button";
@@ -54,13 +55,19 @@ export const ActionSettingsTab = ({
     [actionClass.id, actionClasses]
   );
 
-  const { register, handleSubmit, control, watch } = useForm<TActionClass>({
+  const { register, handleSubmit, control, watch } = useForm<TActionClassInput>({
     defaultValues: {
       name: actionClass.name,
       description: actionClass.description,
-      key: actionClass.key,
-      noCodeConfig: actionClass.noCodeConfig,
+      type: actionClass.type as any,
+      // key: actionClass.key,
+      ...(actionClass.type === "code"
+        ? { key: actionClass.key }
+        : actionClass.type === "noCode"
+          ? { noCodeConfig: actionClass.noCodeConfig }
+          : {}),
     },
+    resolver: zodResolver(ZActionClassInput),
   });
 
   // const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
@@ -86,9 +93,7 @@ export const ActionSettingsTab = ({
         throw new Error("You are not authorised to perform this action.");
       }
       setIsUpdatingAction(true);
-      if (!data.name || data.name?.trim() === "") {
-        throw new Error("Please give your action a name");
-      }
+
       if (data.name && actionClassNames.includes(data.name)) {
         throw new Error(`Action with name ${data.name} already exist`);
       }

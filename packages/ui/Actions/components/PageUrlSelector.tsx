@@ -1,6 +1,6 @@
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Globe, PlusIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Control,
   Controller,
@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
 import { testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
-import { TActionClass, TActionClassPageUrlRule } from "@formbricks/types/actionClasses";
+import { TActionClassInput, TActionClassPageUrlRule } from "@formbricks/types/actionClasses";
 
 import { Alert, AlertDescription, AlertTitle } from "../../Alert";
 import { Button } from "../../Button";
@@ -23,9 +23,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { TabToggle } from "../../TabToggle";
 
 interface PageUrlSelectorProps {
-  watch: UseFormWatch<TActionClass>;
-  control: Control<TActionClass>;
-  register: UseFormRegister<TActionClass>;
+  watch: UseFormWatch<TActionClassInput>;
+  control: Control<TActionClassInput>;
+  register: UseFormRegister<TActionClassInput>;
 }
 
 export const PageUrlSelector = ({ watch, control, register }: PageUrlSelectorProps) => {
@@ -62,6 +62,17 @@ export const PageUrlSelector = ({ watch, control, register }: PageUrlSelectorPro
   const handleAddMore = () => {
     appendUrlRule({ rule: "exactMatch", value: "" });
   };
+
+  useEffect(() => {
+    if (filterType === "all") {
+      removeUrlRule();
+    } else {
+      if (fields.length === 0) {
+        handleAddMore();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fields.length, filterType]);
 
   return (
     <>
@@ -144,9 +155,9 @@ const UrlInput = ({
   fields,
   removeUrlRule,
 }: {
-  control: Control<TActionClass>;
-  register: UseFormRegister<TActionClass>;
-  fields: FieldArrayWithId<TActionClass, "noCodeConfig.urlFilters", "id">[];
+  control: Control<TActionClassInput>;
+  register: UseFormRegister<TActionClassInput>;
+  fields: FieldArrayWithId<TActionClassInput, "noCodeConfig.urlFilters", "id">[];
   removeUrlRule: UseFieldArrayRemove;
 }) => {
   return (

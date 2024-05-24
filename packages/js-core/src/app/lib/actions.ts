@@ -11,8 +11,6 @@ import { triggerSurvey } from "./widget";
 const logger = Logger.getInstance();
 const inAppConfig = AppConfig.getInstance();
 
-const intentsToNotCreateOnApp = ["Exit Intent (Desktop)", "50% Scroll"];
-
 export const trackAction = async (name: string, alias?: string): Promise<Result<void, NetworkError>> => {
   const aliasName = alias || name;
   const { userId } = inAppConfig.get();
@@ -24,7 +22,7 @@ export const trackAction = async (name: string, alias?: string): Promise<Result<
   };
 
   // don't send actions to the backend if the person is not identified
-  if (userId && !intentsToNotCreateOnApp.includes(name)) {
+  if (userId) {
     logger.debug(`Sending action "${aliasName}" to backend`);
 
     const api = new FormbricksAPI({

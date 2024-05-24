@@ -16,7 +16,7 @@ const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
 // Page URL Event Handlers
 let arePageUrlEventListenersAdded = false;
 
-const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
+export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
   logger.debug(`Checking page url: ${window.location.href}`);
   const { state } = websiteConfig.get();
   const { actionClasses = [] } = state ?? {};
