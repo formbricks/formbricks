@@ -254,6 +254,7 @@ export const Survey = ({
             languageCode={languageCode}
             responseCount={responseCount}
             isInIframe={isInIframe}
+            replaceRecallInfo={replaceRecallInfo}
           />
         );
       } else if (questionIdx === survey.questions.length) {
