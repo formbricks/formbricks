@@ -115,7 +115,7 @@ export const PageUrlSelector = ({ watch, control, register }: PageUrlSelectorPro
                   <Input
                     type="text"
                     value={testUrl}
-                    name="noCodeConfig.pageUrl.testUrl"
+                    name="noCodeConfig.urlFilters.testUrl"
                     onChange={(e) => {
                       setTestUrl(e.target.value);
                       setIsMatch("default");

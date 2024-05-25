@@ -142,7 +142,7 @@ export const ActionSettingsTab = ({
     <div>
       <FormProvider {...form}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="max-h-[600px] w-full space-y-4 overflow-y-auto">
+          <div className="max-h-[400px] w-full space-y-4 overflow-y-auto">
             <div className="grid w-full grid-cols-2 gap-x-4">
               <div className="col-span-1">
                 <FormField
