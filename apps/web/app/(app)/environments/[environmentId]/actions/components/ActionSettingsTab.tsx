@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { InfoIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -18,6 +18,7 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { TabToggle } from "@formbricks/ui/TabToggle";
@@ -37,13 +38,22 @@ export const ActionSettingsTab = ({
   setOpen,
   membershipRole,
 }: ActionSettingsTabProps) => {
+  const { createdAt, updatedAt, id, ...restActionClass } = actionClass;
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [isCssSelector, setIsCssSelector] = useState(
-    !!(actionClass.noCodeConfig?.type === "click" && actionClass.noCodeConfig.elementSelector.cssSelector)
+    !!(
+      actionClass.type === "noCode" &&
+      actionClass.noCodeConfig?.type === "click" &&
+      actionClass.noCodeConfig.elementSelector.cssSelector
+    )
   );
   const [isInnerHtml, setIsInnerHtml] = useState(
-    !!(actionClass.noCodeConfig?.type === "click" && actionClass.noCodeConfig.elementSelector.innerHtml)
+    !!(
+      actionClass.type === "noCode" &&
+      actionClass.noCodeConfig?.type === "click" &&
+      actionClass.noCodeConfig.elementSelector.innerHtml
+    )
   );
 
   const [isUpdatingAction, setIsUpdatingAction] = useState(false);
@@ -55,39 +65,16 @@ export const ActionSettingsTab = ({
     [actionClass.id, actionClasses]
   );
 
-  const { register, handleSubmit, control, watch } = useForm<TActionClassInput>({
+  const form = useForm<TActionClassInput>({
     defaultValues: {
-      name: actionClass.name,
-      description: actionClass.description,
-      type: actionClass.type as any,
-      // key: actionClass.key,
-      ...(actionClass.type === "code"
-        ? { key: actionClass.key }
-        : actionClass.type === "noCode"
-          ? { noCodeConfig: actionClass.noCodeConfig }
-          : {}),
+      ...restActionClass,
     },
     resolver: zodResolver(ZActionClassInput),
   });
 
-  // const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
-  //   const { pageUrl, innerHtml, cssSelector } = noCodeConfig;
-  //   const filteredNoCodeConfig: TActionClassNoCodeConfig = {};
+  const { register, handleSubmit, control, watch } = form;
 
-  //   if (isPageUrl && pageUrl?.rule && pageUrl?.value) {
-  //     filteredNoCodeConfig.pageUrl = { rule: pageUrl.rule, value: pageUrl.value };
-  //   }
-  //   if (isInnerHtml && innerHtml?.value) {
-  //     filteredNoCodeConfig.innerHtml = { value: innerHtml.value };
-  //   }
-  //   if (isCssSelector && cssSelector?.value) {
-  //     filteredNoCodeConfig.cssSelector = { value: cssSelector.value };
-  //   }
-
-  //   return filteredNoCodeConfig;
-  // };
-
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: TActionClassInput) => {
     try {
       if (isViewer) {
         throw new Error("You are not authorised to perform this action.");
@@ -98,26 +85,32 @@ export const ActionSettingsTab = ({
         throw new Error(`Action with name ${data.name} already exist`);
       }
 
-      if (data.type === "noCode" && data.noCodeConfig?.type === "click") {
-        if (!isCssSelector && !isInnerHtml) throw new Error("Please select at least one selector");
-
-        if (isCssSelector && !isValidCssSelector(data.noCodeConfig?.elementSelector?.cssSelector))
-          throw new Error("Please enter a valid CSS Selector");
-
-        if (isInnerHtml && !data.noCodeConfig?.elementSelector?.innerHtml)
-          throw new Error("Please enter a valid Inner HTML");
+      if (
+        data.type === "noCode" &&
+        data.noCodeConfig?.type === "click" &&
+        !isValidCssSelector(data.noCodeConfig.elementSelector.cssSelector)
+      ) {
+        throw new Error("Invalid CSS Selector");
       }
 
-      let filteredNoCodeConfig = data.noCodeConfig;
-      const isCodeAction = actionClass.type === "code";
-      if (!isCodeAction) {
-        // filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig );
-        filteredNoCodeConfig = data.noCodeConfig;
-      }
       const updatedData: TActionClassInput = {
         ...data,
-        ...(isCodeAction ? {} : { noCodeConfig: filteredNoCodeConfig }),
-        name: data.name.trim(),
+        ...(data.type === "noCode" &&
+          data.noCodeConfig?.type === "click" && {
+            noCodeConfig: {
+              ...data.noCodeConfig,
+              elementSelector: {
+                cssSelector:
+                  isCssSelector && data.noCodeConfig.elementSelector.cssSelector
+                    ? data.noCodeConfig.elementSelector.cssSelector
+                    : undefined,
+                innerHtml:
+                  isInnerHtml && data.noCodeConfig.elementSelector.innerHtml
+                    ? data.noCodeConfig.elementSelector.innerHtml
+                    : undefined,
+              },
+            },
+          }),
       };
       await updateActionClassAction(environmentId, actionClass.id, updatedData);
       setOpen(false);
@@ -146,144 +139,182 @@ export const ActionSettingsTab = ({
 
   return (
     <div>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="max-h-[600px] w-full space-y-4 overflow-y-auto">
-          <div className="grid w-full grid-cols-2 gap-x-4">
-            <div className="col-span-1">
-              <Label htmlFor="actionNameSettingsInput">
-                {actionClass.type === "noCode" ? "What did your user do?" : "Display name"}
-              </Label>
-              <Input
-                id="actionNameSettingsInput"
-                placeholder="E.g. Clicked Download"
-                {...register("name", {
-                  disabled: actionClass.type === "automatic" ? true : false,
-                })}
-              />
-            </div>
-            {!isViewer && (
+      <FormProvider {...form}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="max-h-[600px] w-full space-y-4 overflow-y-auto">
+            <div className="grid w-full grid-cols-2 gap-x-4">
               <div className="col-span-1">
-                <Label htmlFor="actionDescriptionSettingsInput">Description</Label>
-                <Input
-                  id="actionDescriptionSettingsInput"
-                  placeholder="User clicked Download Button "
-                  {...register("description", {
-                    disabled: actionClass.type === "automatic" ? true : false,
-                  })}
+                <FormField
+                  control={control}
+                  name="name"
+                  render={({ field, fieldState: { error } }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="actionNameSettingsInput">
+                        {actionClass.type === "noCode" ? "What did your user do?" : "Display name"}
+                      </FormLabel>
+
+                      <FormControl>
+                        <Input
+                          type="text"
+                          id="actionNameSettingsInput"
+                          {...field}
+                          placeholder="E.g. Clicked Download"
+                          isInvalid={!!error?.message}
+                          disabled={actionClass.type === "automatic" ? true : false}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
                 />
               </div>
-            )}
+              {!isViewer && (
+                <div className="col-span-1">
+                  <FormField
+                    control={control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="actionDescriptionSettingsInput">Description</FormLabel>
 
-            {actionClass.type === "code" && (
-              <div className="col-span-1 mt-4">
-                <Label htmlFor="actionKeySettingsInput">Key</Label>
-                <Input
-                  id="actionKeySettingsInput"
-                  placeholder="E.g. download_button_clicked"
-                  {...register("key")}
-                  readOnly
-                  disabled
-                />
-              </div>
-            )}
-          </div>
-
-          {actionClass.type === "code" ? (
-            <p className="text-sm text-slate-600">
-              This is a code action. Please make changes in your code base.
-            </p>
-          ) : actionClass.type === "noCode" ? (
-            <div>
-              <Controller
-                name={`noCodeConfig.type`}
-                control={control}
-                render={({ field: { onChange, value } }) => (
-                  <TabToggle
-                    id="userAction"
-                    label="What is the user doing?"
-                    onChange={onChange}
-                    options={[
-                      { value: "click", label: "Click" },
-                      { value: "pageView", label: "Page View" },
-                      { value: "exitIntent", label: "Exit Intent" },
-                      { value: "50PercentScroll", label: "50% Scroll" },
-                    ]}
-                    defaultSelected={value}
+                        <FormControl>
+                          <Input
+                            type="text"
+                            id="actionDescriptionSettingsInput"
+                            {...field}
+                            placeholder="User clicked Download Button"
+                            value={field.value ?? ""}
+                            disabled={actionClass.type === "automatic" ? true : false}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
                   />
-                )}
-              />
+                </div>
+              )}
 
-              <div className="mt-2">
-                {watch("noCodeConfig.type") === "click" && (
-                  <>
-                    <CssSelector
-                      isCssSelector={isCssSelector}
-                      setIsCssSelector={setIsCssSelector}
-                      register={register}
-                    />
-                    <InnerHtmlSelector
-                      isInnerHtml={isInnerHtml}
-                      setIsInnerHtml={setIsInnerHtml}
-                      register={register}
-                    />
-                  </>
-                )}
-                {watch("noCodeConfig.type") === "pageView" && (
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <InfoIcon className=" h-4 w-4 " />
-                    <p>This action will be triggered when the page is loaded.</p>
-                  </div>
-                )}
-                {watch("noCodeConfig.type") === "exitIntent" && (
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <InfoIcon className=" h-4 w-4 " />
-                    <p>This action will be triggered when the user tries to leave the page.</p>
-                  </div>
-                )}
-                {watch("noCodeConfig.type") === "50PercentScroll" && (
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <InfoIcon className=" h-4 w-4 " />
-                    <p>This action will be triggered when the user scrolls 50% of the page.</p>
-                  </div>
-                )}
-                <PageUrlSelector watch={watch} register={register} control={control} />
-              </div>
+              {actionClass.type === "code" && (
+                <div className="col-span-1 mt-4">
+                  <Label htmlFor="actionKeySettingsInput">Key</Label>
+                  <Input
+                    id="actionKeySettingsInput"
+                    placeholder="E.g. download_button_clicked"
+                    {...register("key")}
+                    readOnly
+                    disabled
+                  />
+                </div>
+              )}
             </div>
-          ) : actionClass.type === "automatic" ? (
-            <p className="text-sm text-slate-600">
-              This action was created automatically. You cannot make changes to it.
-            </p>
-          ) : null}
-        </div>
 
-        <div className="flex justify-between border-t border-slate-200 py-6">
-          <div>
-            {!isViewer && actionClass.type !== "automatic" && (
-              <Button
-                type="button"
-                variant="warn"
-                onClick={() => setOpenDeleteDialog(true)}
-                StartIcon={TrashIcon}
-                className="mr-3"
-                id="deleteActionModalTrigger">
-                Delete
-              </Button>
-            )}
+            {actionClass.type === "code" ? (
+              <p className="text-sm text-slate-600">
+                This is a code action. Please make changes in your code base.
+              </p>
+            ) : actionClass.type === "noCode" ? (
+              <div>
+                <Controller
+                  name={`noCodeConfig.type`}
+                  control={control}
+                  render={({ field: { onChange, value } }) => (
+                    <TabToggle
+                      id="userAction"
+                      label="What is the user doing?"
+                      onChange={onChange}
+                      options={[
+                        { value: "click", label: "Click" },
+                        { value: "pageView", label: "Page View" },
+                        { value: "exitIntent", label: "Exit Intent" },
+                        { value: "50PercentScroll", label: "50% Scroll" },
+                      ]}
+                      defaultSelected={value}
+                    />
+                  )}
+                />
 
-            <Button variant="secondary" href="https://formbricks.com/docs/actions/no-code" target="_blank">
-              Read Docs
-            </Button>
+                <div className="mt-2">
+                  {watch("noCodeConfig.type") === "click" && (
+                    <FormField
+                      control={control}
+                      name="noCodeConfig.elementSelector"
+                      render={() => (
+                        <FormItem>
+                          <FormControl>
+                            <>
+                              <CssSelector
+                                isCssSelector={isCssSelector}
+                                setIsCssSelector={setIsCssSelector}
+                                control={control}
+                              />
+                              <InnerHtmlSelector
+                                isInnerHtml={isInnerHtml}
+                                setIsInnerHtml={setIsInnerHtml}
+                                control={control}
+                              />
+                            </>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  {watch("noCodeConfig.type") === "pageView" && (
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <InfoIcon className=" h-4 w-4 " />
+                      <p>This action will be triggered when the page is loaded.</p>
+                    </div>
+                  )}
+                  {watch("noCodeConfig.type") === "exitIntent" && (
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <InfoIcon className=" h-4 w-4 " />
+                      <p>This action will be triggered when the user tries to leave the page.</p>
+                    </div>
+                  )}
+                  {watch("noCodeConfig.type") === "50PercentScroll" && (
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <InfoIcon className=" h-4 w-4 " />
+                      <p>This action will be triggered when the user scrolls 50% of the page.</p>
+                    </div>
+                  )}
+                  <PageUrlSelector watch={watch} register={register} control={control} />
+                </div>
+              </div>
+            ) : actionClass.type === "automatic" ? (
+              <p className="text-sm text-slate-600">
+                This action was created automatically. You cannot make changes to it.
+              </p>
+            ) : null}
           </div>
 
-          {actionClass.type !== "automatic" && (
-            <div className="flex space-x-2">
-              <Button type="submit" variant="darkCTA" loading={isUpdatingAction}>
-                Save changes
+          <div className="flex justify-between border-t border-slate-200 py-6">
+            <div>
+              {!isViewer && actionClass.type !== "automatic" && (
+                <Button
+                  type="button"
+                  variant="warn"
+                  onClick={() => setOpenDeleteDialog(true)}
+                  StartIcon={TrashIcon}
+                  className="mr-3"
+                  id="deleteActionModalTrigger">
+                  Delete
+                </Button>
+              )}
+
+              <Button variant="secondary" href="https://formbricks.com/docs/actions/no-code" target="_blank">
+                Read Docs
               </Button>
             </div>
-          )}
-        </div>
-      </form>
+
+            {actionClass.type !== "automatic" && (
+              <div className="flex space-x-2">
+                <Button type="submit" variant="darkCTA" loading={isUpdatingAction}>
+                  Save changes
+                </Button>
+              </div>
+            )}
+          </div>
+        </form>
+      </FormProvider>
+
       <DeleteDialog
         open={openDeleteDialog}
         setOpen={setOpenDeleteDialog}

@@ -18,6 +18,7 @@ import { TActionClassInput, TActionClassPageUrlRule } from "@formbricks/types/ac
 
 import { Alert, AlertDescription, AlertTitle } from "../../Alert";
 import { Button } from "../../Button";
+import { FormControl, FormField, FormItem } from "../../Form";
 import { Input } from "../../Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../Select";
 import { TabToggle } from "../../TabToggle";
@@ -93,7 +94,13 @@ export const PageUrlSelector = ({ watch, control, register }: PageUrlSelectorPro
         <div className={`ml-2 mt-4 flex  items-center space-x-1 rounded-lg border bg-slate-50`}>
           <div className="col-span-1 w-full space-y-3 p-4">
             <Label>URL</Label>
-            <UrlInput control={control} register={register} fields={fields} removeUrlRule={removeUrlRule} />
+            <UrlInput
+              control={control}
+              watch={watch}
+              register={register}
+              fields={fields}
+              removeUrlRule={removeUrlRule}
+            />
             <Button variant="secondary" size="sm" type="button" onClick={handleAddMore}>
               <PlusIcon className="mr-2 h-4 w-4" />
               Add URL
@@ -151,11 +158,11 @@ export const PageUrlSelector = ({ watch, control, register }: PageUrlSelectorPro
 
 const UrlInput = ({
   control,
-  register,
   fields,
   removeUrlRule,
 }: {
   control: Control<TActionClassInput>;
+  watch: UseFormWatch<TActionClassInput>;
   register: UseFormRegister<TActionClassInput>;
   fields: FieldArrayWithId<TActionClassInput, "noCodeConfig.urlFilters", "id">[];
   removeUrlRule: UseFieldArrayRemove;
@@ -183,12 +190,25 @@ const UrlInput = ({
               </Select>
             )}
           />
-          <Input
-            type="text"
-            className="bg-white"
-            placeholder="e.g. https://app.com/dashboard"
-            {...register(`noCodeConfig.urlFilters.${index}.value`, { required: true })}
+          <FormField
+            control={control}
+            name={`noCodeConfig.urlFilters.${index}.value`}
+            render={({ field, fieldState: { error } }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    type="text"
+                    className="bg-white"
+                    {...field}
+                    placeholder="e.g. https://app.com/dashboard"
+                    autoComplete="off"
+                    isInvalid={!!error?.message}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
           />
+
           <Button variant="secondary" size="sm" type="button" onClick={() => removeUrlRule(index)}>
             <TrashIcon className="h-4 w-4" />
           </Button>
