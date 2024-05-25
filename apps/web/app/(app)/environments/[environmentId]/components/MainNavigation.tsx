@@ -9,6 +9,7 @@ import {
   ChevronRightIcon,
   Cog,
   CreditCardIcon,
+  KeyIcon,
   LogOutIcon,
   MessageCircle,
   MousePointerClick,
@@ -185,6 +186,12 @@ export const MainNavigation = ({
       href: `/environments/${environment.id}/settings/billing`,
       hidden: !isFormbricksCloud || isPricingDisabled,
       icon: CreditCardIcon,
+    },
+    {
+      label: "License",
+      href: `/environments/${environment.id}/settings/enterprise`,
+      hidden: isFormbricksCloud || isPricingDisabled,
+      icon: KeyIcon,
     },
     {
       label: "Documentation",
