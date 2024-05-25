@@ -171,7 +171,7 @@ export const FileUploadQuestionForm = ({
           onToggle={() => updateQuestion(questionIdx, { allowMultipleFiles: !question.allowMultipleFiles })}
           htmlId="allowMultipleFile"
           title="Allow Multiple Files"
-          description="Let people upload up to 10 files at the same time."
+          description="Let people upload up to 25 files at the same time."
           childBorder
           customContainerClass="p-0"></AdvancedOptionToggle>
 

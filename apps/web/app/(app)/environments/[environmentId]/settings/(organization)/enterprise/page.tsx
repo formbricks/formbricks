@@ -42,17 +42,17 @@ const Page = async ({ params }) => {
 
   const paidFeatures = [
     {
+      title: "Multi-Language Surveys",
+      comingSoon: false,
+      onRequest: false,
+    },
+    {
       title: "Organization Roles (Admin, Editor, Developer, etc.)",
       comingSoon: false,
       onRequest: false,
     },
     {
       title: "Advanced Targeting and Segmentation (In-app Surveys)",
-      comingSoon: false,
-      onRequest: false,
-    },
-    {
-      title: "Multi-Language Surveys",
       comingSoon: false,
       onRequest: false,
     },
@@ -73,11 +73,6 @@ const Page = async ({ params }) => {
     },
     {
       title: "SOC2, HIPAA, ISO 27001 Compliance check",
-      comingSoon: false,
-      onRequest: true,
-    },
-    {
-      title: "Extensive Whitelabeling",
       comingSoon: false,
       onRequest: true,
     },
@@ -140,7 +135,7 @@ const Page = async ({ params }) => {
             </svg>
             <div className="mx-auto text-center lg:mx-0 lg:flex-auto lg:py-16 lg:text-left">
               <h2 className="text-2xl font-bold text-white sm:text-3xl">
-                Unlock the full power of Formbricks.
+                Unlock the full power of Formbricks. Free for 30 days.
               </h2>
               <p className="text-md mt-6 leading-8 text-slate-300">
                 Keep full control over your data privacy and security.
@@ -172,15 +167,17 @@ const Page = async ({ params }) => {
                   </li>
                 ))}
               </ul>
-              <p className="my-6 text-sm text-slate-500">
-                Please request all Enterprise License info incl. pricing here:
+              <p className="my-6 text-sm  text-slate-700">
+                No call needed, no strings attached: Request a free 30-day trial license to test all features
+                by filling out this form:
               </p>
               <Button
                 variant="darkCTA"
                 href="https://app.formbricks.com/s/clvupq3y205i5yrm3sm9v1xt5"
                 target="_blank">
-                Request Enterprise License Info
+                Request 30-day Trial License
               </Button>
+              <p className="mt-2 text-xs  text-slate-500">No credit card. No sales call. Just test it :)</p>
             </div>
           </div>
         </div>

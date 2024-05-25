@@ -1,3 +1,4 @@
+import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
@@ -18,8 +19,6 @@ import { Checkbox } from "@formbricks/ui/Checkbox";
 import { DropdownSelector } from "@formbricks/ui/DropdownSelector";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
-
-import { createOrUpdateIntegrationAction } from "../../actions";
 
 interface AddChannelMappingModalProps {
   environmentId: string;

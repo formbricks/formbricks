@@ -1,5 +1,3 @@
-version: "3.3"
-
 # This should be the same as below if you are running via docker compose up
 x-webapp-url: &webapp_url http://localhost:3000
 
