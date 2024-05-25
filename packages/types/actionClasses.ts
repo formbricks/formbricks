@@ -72,31 +72,17 @@ export const ZActionClassType = z.enum(["code", "noCode", "automatic"]);
 
 export type TActionClassType = z.infer<typeof ZActionClassType>;
 
-const ZActionClassBase = z.object({
+export const ZActionClass = z.object({
   id: z.string().cuid2(),
   name: z.string().trim().min(1),
   description: z.string().nullable(),
   type: ZActionClassType,
+  key: z.string().trim().min(1).nullable(),
+  noCodeConfig: ZActionClassNoCodeConfig.nullable(),
   environmentId: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
-
-const ZActionClassCode = ZActionClassBase.extend({
-  type: z.literal("code"),
-  key: z.string().trim().min(1),
-});
-
-const ZActionClassNoCode = ZActionClassBase.extend({
-  type: z.literal("noCode"),
-  noCodeConfig: ZActionClassNoCodeConfig,
-});
-
-const ZActionClassAutomatic = ZActionClassBase.extend({
-  type: z.literal("automatic"),
-});
-
-export const ZActionClass = z.union([ZActionClassCode, ZActionClassNoCode, ZActionClassAutomatic]);
 
 export type TActionClass = z.infer<typeof ZActionClass>;
 
@@ -109,14 +95,14 @@ const ZActionClassInputBase = z.object({
 
 export const ZActionClassInputCode = ZActionClassInputBase.extend({
   type: z.literal("code"),
-  key: z.string().trim().min(1),
+  key: z.string().trim().min(1).nullable(),
 });
 
 export type TActionClassInputCode = z.infer<typeof ZActionClassInputCode>;
 
 const ZActionClassInputNoCode = ZActionClassInputBase.extend({
   type: z.literal("noCode"),
-  noCodeConfig: ZActionClassNoCodeConfig,
+  noCodeConfig: ZActionClassNoCodeConfig.nullable(),
 });
 
 const ZActionClassInputAutomatic = ZActionClassInputBase.extend({

@@ -143,11 +143,14 @@ export const createActionClass = async (
   validateInputs([environmentId, ZId], [actionClass, ZActionClassInput]);
 
   const { environmentId: _, ...actionClassInput } = actionClass;
+
   try {
     const actionClassPrisma = await prisma.actionClass.create({
       data: {
         ...actionClassInput,
         environment: { connect: { id: environmentId } },
+        key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
+        noCodeConfig: actionClassInput.type === "noCode" ? actionClassInput.noCodeConfig || {} : undefined,
       },
       select,
     });
@@ -185,6 +188,9 @@ export const updateActionClass = async (
       },
       data: {
         ...actionClassInput,
+        environment: { connect: { id: environmentId } },
+        key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
+        noCodeConfig: actionClassInput.type === "noCode" ? actionClassInput.noCodeConfig || {} : undefined,
       },
       select,
     });

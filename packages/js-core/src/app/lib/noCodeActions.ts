@@ -23,7 +23,7 @@ export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
 
   const noCodePageViewActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageView"
-  );
+  ) as TActionClass[];
 
   for (const event of noCodePageViewActionClasses) {
     const urlFilters = event.noCodeConfig?.urlFilters ?? [];
@@ -62,7 +62,7 @@ const checkClickMatch = (event: MouseEvent) => {
   const { actionClasses = [] } = state;
   const noCodeClickActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "click"
-  );
+  ) as TActionClass[];
 
   const targetElement = event.target as HTMLElement;
 
@@ -102,7 +102,7 @@ const checkExitIntent = async (e: MouseEvent) => {
 
   const noCodeExitIntentActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "exitIntent"
-  );
+  ) as TActionClass[];
 
   if (e.clientY <= 0 && noCodeExitIntentActionClasses.length > 0) {
     for (const event of noCodeExitIntentActionClasses) {
@@ -154,7 +154,7 @@ const checkScrollDepth = async () => {
 
     const noCode50PercentScrollActionClasses = actionClasses.filter(
       (action) => action.type === "noCode" && action.noCodeConfig?.type === "50PercentScroll"
-    );
+    ) as TActionClass[];
 
     for (const event of noCode50PercentScrollActionClasses) {
       const urlFilters = event.noCodeConfig?.urlFilters ?? [];

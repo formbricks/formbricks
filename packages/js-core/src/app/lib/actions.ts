@@ -1,4 +1,5 @@
 import { FormbricksAPI } from "@formbricks/api";
+import { TActionClass } from "@formbricks/types/actionClasses";
 import { TJsActionInput } from "@formbricks/types/js";
 
 import { InvalidCodeError, NetworkError, Result, err, okVoid } from "../../shared/errors";
@@ -87,7 +88,7 @@ export const trackCodeAction = (
     state: { actionClasses = [] },
   } = inAppConfig.get();
 
-  const codeActionClasses = actionClasses.filter((action) => action.type === "code");
+  const codeActionClasses = actionClasses.filter((action) => action.type === "code") as TActionClass[];
   const action = codeActionClasses.find((action) => action.key === code);
 
   if (!action) {

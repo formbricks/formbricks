@@ -248,6 +248,7 @@ export const CreateNewActionTab = ({
                             placeholder="e.g. download_cta_click_on_home"
                             {...field}
                             className="mb-2 w-1/2"
+                            value={field.value ?? ""}
                             isInvalid={!!error?.message}
                           />
                         </FormControl>

@@ -215,8 +215,10 @@ export const WhenToSendCard = ({
                               {trigger.actionClass.noCodeConfig.urlFilters.map((urlFilter, index) => (
                                 <span key={index}>
                                   {urlFilter.rule} <b>{urlFilter.value}</b>
-                                  {index !==
-                                    (trigger.actionClass.noCodeConfig?.urlFilters || []).length - 1 && ", "}
+                                  {trigger.actionClass.type === "noCode" &&
+                                    index !==
+                                      (trigger.actionClass.noCodeConfig?.urlFilters?.length || 0) - 1 &&
+                                    ", "}
                                 </span>
                               ))}
                             </span>
