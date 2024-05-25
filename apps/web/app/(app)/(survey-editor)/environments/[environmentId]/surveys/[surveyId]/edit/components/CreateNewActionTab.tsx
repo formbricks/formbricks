@@ -94,6 +94,7 @@ export const CreateNewActionTab = ({
       if (
         data.type === "noCode" &&
         data.noCodeConfig?.type === "click" &&
+        isCssSelector &&
         !isValidCssSelector(data.noCodeConfig.elementSelector.cssSelector)
       ) {
         throw new Error("Invalid CSS Selector");
