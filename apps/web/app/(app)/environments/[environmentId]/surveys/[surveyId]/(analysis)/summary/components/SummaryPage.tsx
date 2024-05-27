@@ -16,7 +16,7 @@ import {
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys";
@@ -108,7 +108,7 @@ export const SummaryPage = ({
   const searchParams = useSearchParams();
 
   const surveyMemoized = useMemo(() => {
-    return checkForRecallInHeadline(survey, "default", attributeClasses);
+    return replaceHeadlineRecall(survey, "default", attributeClasses);
   }, [survey, attributeClasses]);
 
   useEffect(() => {

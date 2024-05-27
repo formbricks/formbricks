@@ -3,7 +3,7 @@ import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TSurvey } from "@formbricks/types/surveys";
 
-export const replaceAttributeRecalls = (survey: TSurvey, attributes: TAttributes): TSurvey => {
+export const replaceAttributeRecall = (survey: TSurvey, attributes: TAttributes): TSurvey => {
   const surveyTemp = structuredClone(survey);
   const languages = Object.keys(survey.questions[0].headline);
   surveyTemp.questions.forEach((question) => {
@@ -51,7 +51,7 @@ export const replaceAttributeRecalls = (survey: TSurvey, attributes: TAttributes
   return surveyTemp;
 };
 
-export const replaceAttributeRecallsInLegacySurveys = (
+export const replaceAttributeRecallInLegacySurveys = (
   survey: TLegacySurvey,
   attributes: TAttributes
 ): TLegacySurvey => {

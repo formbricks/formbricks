@@ -11,7 +11,7 @@ import { toast } from "react-hot-toast";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   TSurvey,
@@ -58,7 +58,7 @@ export const LogicEditor = ({
 }: LogicEditorProps) => {
   const [searchValue, setSearchValue] = useState<string>("");
   localSurvey = useMemo(() => {
-    return checkForRecallInHeadline(localSurvey, "default", attributeClasses);
+    return replaceHeadlineRecall(localSurvey, "default", attributeClasses);
   }, [localSurvey, attributeClasses]);
 
   const questionValues = useMemo(() => {

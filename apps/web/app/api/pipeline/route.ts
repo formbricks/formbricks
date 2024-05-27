@@ -11,7 +11,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
-import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { ZPipelineInput } from "@formbricks/types/pipelines";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
@@ -108,7 +108,7 @@ export const POST = async (request: Request) => {
       getIntegrations(environmentId),
       getSurvey(surveyId),
     ]);
-    const survey = surveyData ? checkForRecallInHeadline(surveyData, "default", attributeClasses) : undefined;
+    const survey = surveyData ? replaceHeadlineRecall(surveyData, "default", attributeClasses) : undefined;
 
     if (integrations.length > 0 && survey) {
       handleIntegrations(integrations, inputValidation.data, survey);

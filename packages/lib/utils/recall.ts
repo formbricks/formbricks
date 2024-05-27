@@ -150,7 +150,7 @@ export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): T
 };
 
 // Processes each question in a survey to ensure headlines are formatted correctly for recall and return the modified survey.
-export const checkForRecallInHeadline = <T extends TSurveyQuestionsObject>(
+export const replaceHeadlineRecall = <T extends TSurveyQuestionsObject>(
   survey: T,
   language: string,
   attributeClasses: TAttributeClass[]
