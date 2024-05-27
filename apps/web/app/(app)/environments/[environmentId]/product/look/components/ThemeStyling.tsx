@@ -213,7 +213,11 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
   };
 
   return (
-    <Form {...form} onSubmit={form.handleSubmit(onSubmit)}>
+    <Form
+      {...form}
+      onSubmit={form.handleSubmit(onSubmit, (errors) => {
+        console.log({ errors });
+      })}>
       <div className="flex">
         {/* Styling settings */}
         <div className="relative flex w-1/2 flex-col pr-6">

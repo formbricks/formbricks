@@ -1,10 +1,13 @@
 import { RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
+import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct } from "@formbricks/types/product";
+import { TProduct, TProductStyling } from "@formbricks/types/product";
+import { TBaseStyling } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
@@ -39,6 +42,50 @@ export const StylingView = ({
   setLocalStylingChanges,
   isUnsplashConfigured,
 }: StylingViewProps) => {
+  const getStylingDefaults = (): TBaseStyling => {
+    let stylingDefaults: TBaseStyling;
+    const isOverwriteEnabled = localSurvey.styling?.overwriteThemeStyling ?? false;
+
+    if (isOverwriteEnabled) {
+      const { overwriteThemeStyling, ...baseSurveyStyles } = localSurvey.styling ?? {};
+      stylingDefaults = baseSurveyStyles;
+    } else {
+      const { allowStyleOverwrite, ...baseProductStyles } = product.styling ?? {};
+      stylingDefaults = baseProductStyles;
+    }
+
+    return {
+      brandColor: { light: stylingDefaults.brandColor?.light ?? COLOR_DEFAULTS.brandColor },
+      questionColor: { light: stylingDefaults.questionColor?.light ?? COLOR_DEFAULTS.questionColor },
+      inputColor: { light: stylingDefaults.inputColor?.light ?? COLOR_DEFAULTS.inputColor },
+      inputBorderColor: { light: stylingDefaults.inputBorderColor?.light ?? COLOR_DEFAULTS.inputBorderColor },
+      cardBackgroundColor: {
+        light: stylingDefaults.cardBackgroundColor?.light ?? COLOR_DEFAULTS.cardBackgroundColor,
+      },
+      cardBorderColor: { light: stylingDefaults.cardBorderColor?.light ?? COLOR_DEFAULTS.cardBorderColor },
+      cardShadowColor: { light: stylingDefaults.cardShadowColor?.light ?? COLOR_DEFAULTS.cardShadowColor },
+      highlightBorderColor: stylingDefaults.highlightBorderColor?.light
+        ? {
+            light: stylingDefaults.highlightBorderColor.light,
+          }
+        : undefined,
+      isDarkModeEnabled: stylingDefaults.isDarkModeEnabled ?? false,
+      roundness: stylingDefaults.roundness ?? 8,
+      cardArrangement: stylingDefaults.cardArrangement ?? {
+        linkSurveys: "simple",
+        appSurveys: "simple",
+      },
+    };
+  };
+
+  const stylingDefaults = getStylingDefaults();
+  const form = useForm<TSurveyStyling>({
+    defaultValues: {
+      ...localSurvey.styling,
+      ...stylingDefaults,
+    },
+  });
+
   const [overwriteThemeStyling, setOverwriteThemeStyling] = useState(
     localSurvey?.styling?.overwriteThemeStyling ?? false
   );
@@ -141,31 +188,34 @@ export const StylingView = ({
       <FormStylingSettings
         open={formStylingOpen}
         setOpen={setFormStylingOpen}
-        styling={styling}
-        setStyling={setStyling}
+        // styling={styling}
+        // setStyling={setStyling}
         disabled={!overwriteThemeStyling}
+        form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
       />
 
       <CardStylingSettings
         open={cardStylingOpen}
         setOpen={setCardStylingOpen}
-        styling={styling}
-        setStyling={setStyling}
+        // styling={styling}
+        // setStyling={setStyling}
         surveyType={localSurvey.type}
         disabled={!overwriteThemeStyling}
         localProduct={product}
+        form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
       />
 
       {localSurvey.type === "link" && (
         <BackgroundStylingCard
           open={stylingOpen}
           setOpen={setStylingOpen}
-          styling={styling}
-          setStyling={setStyling}
+          // styling={styling}
+          // setStyling={setStyling}
           environmentId={environment.id}
           colors={colors}
           disabled={!overwriteThemeStyling}
           isUnsplashConfigured={isUnsplashConfigured}
+          form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
         />
       )}
 
