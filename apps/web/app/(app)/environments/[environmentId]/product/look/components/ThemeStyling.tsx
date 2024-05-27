@@ -105,41 +105,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
   }, [localProduct, product.id, router]);
 
   const onReset = useCallback(async () => {
-    await updateProductAction(product.id, {
-      styling: {
-        allowStyleOverwrite: true,
-        brandColor: {
-          light: COLOR_DEFAULTS.brandColor,
-        },
-        questionColor: {
-          light: COLOR_DEFAULTS.questionColor,
-        },
-        inputColor: {
-          light: COLOR_DEFAULTS.inputColor,
-        },
-        inputBorderColor: {
-          light: COLOR_DEFAULTS.inputBorderColor,
-        },
-        cardBackgroundColor: {
-          light: COLOR_DEFAULTS.cardBackgroundColor,
-        },
-        cardBorderColor: {
-          light: COLOR_DEFAULTS.cardBorderColor,
-        },
-        isLogoHidden: undefined,
-        highlightBorderColor: undefined,
-        isDarkModeEnabled: false,
-        roundness: 8,
-        cardArrangement: {
-          linkSurveys: "simple",
-          appSurveys: "simple",
-        },
-      },
-    });
-
-    setAllowStyleOverwrite(true);
-
-    setStyling({
+    const defaultStyling: TProductStyling = {
       allowStyleOverwrite: true,
       brandColor: {
         light: COLOR_DEFAULTS.brandColor,
@@ -167,24 +133,62 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
         linkSurveys: "simple",
         appSurveys: "simple",
       },
+    };
+
+    await updateProductAction(product.id, {
+      styling: { ...defaultStyling },
     });
 
-    // Update the background of the PREVIEW SURVEY
-    setStyledPreviewSurvey((currentSurvey) => ({
-      ...currentSurvey,
-      styling: {
-        ...currentSurvey.styling,
-        background: {
-          ...(currentSurvey.styling?.background ?? {}),
-          bg: "#ffffff",
-          bgType: "color",
-        },
-      },
-    }));
+    // setAllowStyleOverwrite(true);
+
+    // setStyling({
+    //   allowStyleOverwrite: true,
+    //   brandColor: {
+    //     light: COLOR_DEFAULTS.brandColor,
+    //   },
+    //   questionColor: {
+    //     light: COLOR_DEFAULTS.questionColor,
+    //   },
+    //   inputColor: {
+    //     light: COLOR_DEFAULTS.inputColor,
+    //   },
+    //   inputBorderColor: {
+    //     light: COLOR_DEFAULTS.inputBorderColor,
+    //   },
+    //   cardBackgroundColor: {
+    //     light: COLOR_DEFAULTS.cardBackgroundColor,
+    //   },
+    //   cardBorderColor: {
+    //     light: COLOR_DEFAULTS.cardBorderColor,
+    //   },
+    //   isLogoHidden: undefined,
+    //   highlightBorderColor: undefined,
+    //   isDarkModeEnabled: false,
+    //   roundness: 8,
+    //   cardArrangement: {
+    //     linkSurveys: "simple",
+    //     appSurveys: "simple",
+    //   },
+    // });
+
+    // // Update the background of the PREVIEW SURVEY
+    // setStyledPreviewSurvey((currentSurvey) => ({
+    //   ...currentSurvey,
+    //   styling: {
+    //     ...currentSurvey.styling,
+    //     background: {
+    //       ...(currentSurvey.styling?.background ?? {}),
+    //       bg: "#ffffff",
+    //       bgType: "color",
+    //     },
+    //   },
+    // }));
+
+    form.reset({ ...defaultStyling });
 
     toast.success("Styling updated successfully.");
     router.refresh();
-  }, [product.id, router]);
+  }, [form, product.id, router]);
 
   useEffect(() => {
     setLocalProduct((prev) => ({
@@ -197,7 +201,8 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
   }, [allowStyleOverwrite, styling]);
 
   const onSubmit: SubmitHandler<TProductStyling> = async (data) => {
-    // console.log("data", data);
+    console.log("errors: ", form.formState.errors);
+    console.log("data: ", data);
 
     await updateProductAction(product.id, {
       styling: data,
@@ -206,8 +211,6 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
     toast.success("Styling updated successfully.");
     router.refresh();
   };
-
-  console.log("errors: ", form.formState.errors);
 
   return (
     <Form {...form} onSubmit={form.handleSubmit(onSubmit)}>
@@ -231,7 +234,8 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
                         />
                       </FormControl>
                     </FormItem>
-                  )}></FormField>
+                  )}
+                />
 
                 <div className="flex flex-col">
                   <h3 className="text-sm font-semibold text-slate-700">Enable custom styling</h3>
@@ -246,8 +250,6 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
               <FormStylingSettings
                 open={formStylingOpen}
                 setOpen={setFormStylingOpen}
-                styling={styling}
-                setStyling={setStyling}
                 isSettingsPage
                 form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
               />
@@ -255,8 +257,6 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
               <CardStylingSettings
                 open={cardStylingOpen}
                 setOpen={setCardStylingOpen}
-                styling={styling}
-                setStyling={setStyling}
                 isSettingsPage
                 localProduct={localProduct}
                 surveyType={previewSurveyType}
@@ -266,25 +266,18 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
               <BackgroundStylingCard
                 open={backgroundStylingOpen}
                 setOpen={setBackgroundStylingOpen}
-                styling={styling}
-                setStyling={setStyling}
                 environmentId={environmentId}
                 colors={colors}
                 key={styling.background?.bg}
                 isSettingsPage
                 isUnsplashConfigured={isUnsplashConfigured}
+                form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
               />
             </div>
           </div>
 
           <div className="mt-4 flex items-center gap-2">
-            <Button
-              variant="darkCTA"
-              size="sm"
-              type="submit"
-
-              // onClick={onSave}
-            >
+            <Button variant="darkCTA" size="sm" type="submit">
               Save
             </Button>
             <Button
@@ -305,7 +298,10 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
             <ThemeStylingPreviewSurvey
               setQuestionId={setQuestionId}
               survey={styledPreviewSurvey as TSurvey}
-              product={localProduct}
+              product={{
+                ...localProduct,
+                styling: form.getValues(),
+              }}
               previewType={previewSurveyType}
               setPreviewType={setPreviewSurveyType}
             />

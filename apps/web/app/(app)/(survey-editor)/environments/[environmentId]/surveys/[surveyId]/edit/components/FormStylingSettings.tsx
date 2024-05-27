@@ -3,21 +3,18 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon, SparklesIcon } from "lucide-react";
 import React from "react";
-import { Control, FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
+import { UseFormReturn } from "react-hook-form";
 
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { mixColor } from "@formbricks/lib/utils";
-import { TProduct, TProductStyling } from "@formbricks/types/product";
-import { TBaseStyling } from "@formbricks/types/styling";
+import { TProductStyling } from "@formbricks/types/product";
 import { TSurveyStyling } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormField } from "@formbricks/ui/Form";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { ColorSelectorWithLabel } from "@formbricks/ui/Styling";
 
 type FormStylingSettingsProps = {
-  styling: TSurveyStyling | TProductStyling | null;
-  setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | TProductStyling>>;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isSettingsPage?: boolean;
@@ -26,8 +23,6 @@ type FormStylingSettingsProps = {
 };
 
 export const FormStylingSettings = ({
-  styling,
-  setStyling,
   open,
   isSettingsPage = false,
   disabled = false,
@@ -35,13 +30,24 @@ export const FormStylingSettings = ({
   form,
 }: FormStylingSettingsProps) => {
   const brandColor = form.watch("brandColor.light") || COLOR_DEFAULTS.brandColor;
-  const questionColor = form.watch("questionColor.light") || COLOR_DEFAULTS.questionColor;
-  const inputColor = form.watch("inputColor.light") || COLOR_DEFAULTS.inputColor;
-  const inputBorderColor = form.watch("inputBorderColor.light") || COLOR_DEFAULTS.inputBorderColor;
+  const background = form.watch("background");
+  const highlightBorderColor = form.watch("highlightBorderColor");
 
   const setQuestionColor = (color: string) => form.setValue("questionColor.light", color);
   const setInputColor = (color: string) => form.setValue("inputColor.light", color);
   const setInputBorderColor = (color: string) => form.setValue("inputBorderColor.light", color);
+  const setCardBackgroundColor = (color: string) => form.setValue("cardBackgroundColor.light", color);
+  const setCardBorderColor = (color: string) => form.setValue("cardBorderColor.light", color);
+  const setCardShadowColor = (color: string) => form.setValue("cardShadowColor.light", color);
+  const setBackgroundColor = (color: string) => {
+    form.setValue("background", {
+      bg: color,
+      bgType: "color",
+    });
+  };
+  const setHighlightBorderColor = (color: string) => {
+    form.setValue("highlightBorderColor.light", color);
+  };
 
   const suggestColors = () => {
     // mix the brand color with different weights of white and set the result as the other colors
@@ -49,43 +55,17 @@ export const FormStylingSettings = ({
     setInputColor(mixColor(brandColor, "#ffffff", 0.92));
     setInputBorderColor(mixColor(brandColor, "#ffffff", 0.6));
 
-    // // card background, border and shadow colors
-    // setStyling((prev) => ({
-    //   ...prev,
-    //   cardBackgroundColor: {
-    //     ...(prev.cardBackgroundColor ?? {}),
-    //     light: mixColor(brandColor, "#ffffff", 0.97),
-    //   },
-    //   cardBorderColor: {
-    //     ...(prev.cardBorderColor ?? {}),
-    //     light: mixColor(brandColor, "#ffffff", 0.8),
-    //   },
-    //   cardShadowColor: {
-    //     ...(prev.cardShadowColor ?? {}),
-    //     light: brandColor,
-    //   },
-    // }));
+    setCardBackgroundColor(mixColor(brandColor, "#ffffff", 0.97));
+    setCardBorderColor(mixColor(brandColor, "#ffffff", 0.8));
+    setCardShadowColor(brandColor);
 
-    // if (!styling?.background || styling?.background?.bgType === "color") {
-    //   setStyling((prev) => ({
-    //     ...prev,
-    //     background: {
-    //       ...(prev.background ?? {}),
-    //       bg: mixColor(brandColor, "#ffffff", 0.855),
-    //       bgType: "color",
-    //     },
-    //   }));
-    // }
+    if (!background || background?.bgType === "color") {
+      setBackgroundColor(mixColor(brandColor, "#ffffff", 0.855));
+    }
 
-    // if (styling?.highlightBorderColor) {
-    //   setStyling((prev) => ({
-    //     ...prev,
-    //     highlightBorderColor: {
-    //       ...(prev.highlightBorderColor ?? {}),
-    //       light: mixColor(brandColor, "#ffffff", 0.25),
-    //     },
-    //   }));
-    // }
+    if (!highlightBorderColor) {
+      setHighlightBorderColor(mixColor(brandColor, "#ffffff", 0.25));
+    }
   };
 
   return (
@@ -133,12 +113,19 @@ export const FormStylingSettings = ({
               control={form.control}
               name="brandColor.light"
               render={({ field }) => (
-                <ColorSelectorWithLabel
-                  label="Brand color"
-                  color={field.value || COLOR_DEFAULTS.brandColor}
-                  setColor={(color) => field.onChange(color)}
-                  description="Change the brand color of the survey"
-                />
+                <FormItem className="space-y-4">
+                  <div>
+                    <FormLabel className="text-sm font-semibold text-slate-700">Brand color</FormLabel>
+                    <FormDescription>Change the brand color of the survey.</FormDescription>
+                  </div>
+
+                  <FormControl>
+                    <ColorSelectorWithLabel
+                      color={field.value || COLOR_DEFAULTS.brandColor}
+                      setColor={(color) => field.onChange(color)}
+                    />
+                  </FormControl>
+                </FormItem>
               )}
             />
 
@@ -157,12 +144,19 @@ export const FormStylingSettings = ({
             control={form.control}
             name="questionColor.light"
             render={({ field }) => (
-              <ColorSelectorWithLabel
-                label="Question color"
-                color={questionColor}
-                setColor={(color) => field.onChange(color)}
-                description="Change the question color of the survey"
-              />
+              <FormItem className="space-y-4">
+                <div>
+                  <FormLabel className="text-sm font-semibold text-slate-700">Question color</FormLabel>
+                  <FormDescription>Change the question color of the survey.</FormDescription>
+                </div>
+
+                <FormControl>
+                  <ColorSelectorWithLabel
+                    color={field.value || COLOR_DEFAULTS.questionColor}
+                    setColor={(color) => field.onChange(color)}
+                  />
+                </FormControl>
+              </FormItem>
             )}
           />
 
@@ -170,12 +164,19 @@ export const FormStylingSettings = ({
             control={form.control}
             name="inputColor.light"
             render={({ field }) => (
-              <ColorSelectorWithLabel
-                label="Input color"
-                color={inputColor}
-                setColor={(color: string) => field.onChange(color)}
-                description="Change the background color of the input fields."
-              />
+              <FormItem className="space-y-4">
+                <div>
+                  <FormLabel className="text-sm font-semibold text-slate-700">Input color</FormLabel>
+                  <FormDescription>Change the background color of the input fields.</FormDescription>
+                </div>
+
+                <FormControl>
+                  <ColorSelectorWithLabel
+                    color={field.value || COLOR_DEFAULTS.inputColor}
+                    setColor={(color: string) => field.onChange(color)}
+                  />
+                </FormControl>
+              </FormItem>
             )}
           />
 
@@ -183,12 +184,19 @@ export const FormStylingSettings = ({
             control={form.control}
             name="inputBorderColor.light"
             render={({ field }) => (
-              <ColorSelectorWithLabel
-                label="Input border color"
-                color={inputBorderColor}
-                setColor={(color: string) => field.onChange(color)}
-                description="Change the border color of the input fields."
-              />
+              <FormItem className="space-y-4">
+                <div>
+                  <FormLabel className="text-sm font-semibold text-slate-700">Input border color</FormLabel>
+                  <FormDescription>Change the border color of the input fields.</FormDescription>
+                </div>
+
+                <FormControl>
+                  <ColorSelectorWithLabel
+                    color={field.value || COLOR_DEFAULTS.inputBorderColor}
+                    setColor={(color: string) => field.onChange(color)}
+                  />
+                </FormControl>
+              </FormItem>
             )}
           />
         </div>

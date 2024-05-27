@@ -23,9 +23,6 @@ export const CardArrangement = ({
   setActiveCardArrangement,
   disabled = false,
 }: CardArrangementProps) => {
-  const surveyTypeDerived = useMemo(() => {
-    return surveyType == "link" ? "Link" : "App / Website";
-  }, [surveyType]);
   const handleCardArrangementChange = (arrangement: TCardArrangementOptions) => {
     if (disabled) return;
     setActiveCardArrangement(arrangement, surveyType);
@@ -43,32 +40,21 @@ export const CardArrangement = ({
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col">
-        <h3 className="text-sm font-semibold text-slate-700">
-          Card Arrangement for {surveyTypeDerived} Surveys
-        </h3>
-        <p className="text-xs text-slate-500">
-          How funky do you want your cards in {surveyTypeDerived} Surveys
-        </p>
-      </div>
-
-      <div className="flex w-full gap-2 rounded-md bg-white">
-        <Tabs
-          id="card-arrangement"
-          onChange={(value) => {
-            handleCardArrangementChange(value);
-          }}
-          options={[
-            { value: "casual", label: "Casual", icon: getCardArrangementIcon("casual") },
-            { value: "straight", label: "Straight", icon: getCardArrangementIcon("straight") },
-            { value: "simple", label: "Simple", icon: getCardArrangementIcon("simple") },
-          ]}
-          defaultSelected={activeCardArrangement}
-          className="w-full"
-          tabsContainerClassName="p-1 gap-2"
-        />
-      </div>
+    <div className="w-full gap-2 rounded-md bg-white">
+      <Tabs
+        id="card-arrangement"
+        onChange={(value) => {
+          handleCardArrangementChange(value);
+        }}
+        options={[
+          { value: "casual", label: "Casual", icon: getCardArrangementIcon("casual") },
+          { value: "straight", label: "Straight", icon: getCardArrangementIcon("straight") },
+          { value: "simple", label: "Simple", icon: getCardArrangementIcon("simple") },
+        ]}
+        defaultSelected={activeCardArrangement}
+        className="w-full"
+        tabsContainerClassName="p-1 gap-2"
+      />
     </div>
   );
 };

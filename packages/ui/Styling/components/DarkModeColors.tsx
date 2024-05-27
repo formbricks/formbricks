@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 
 import { Switch } from "../../Switch";
-import { ColorSelectorWithLabel } from "./ColorSelectorWithLabel";
+import { ColorSelector } from "./ColorSelectorWithLabel";
 
 type DarModeColorProps = {
   isDarkMode: boolean;
@@ -65,37 +65,37 @@ export const DarkModeColors = ({
 
       {isDarkMode && (
         <div className="grid grid-cols-2 gap-4">
-          <ColorSelectorWithLabel
+          <ColorSelector
             label="Brand color"
             color={brandColor ?? COLOR_DEFAULTS.brandColor}
             setColor={setBrandColor}
             className="gap-2"
           />
-          <ColorSelectorWithLabel
+          <ColorSelector
             label="Text color"
             color={questionColor ?? COLOR_DEFAULTS.questionColor}
             setColor={setQuestionColor}
             className="gap-2"
           />
-          <ColorSelectorWithLabel
+          <ColorSelector
             label="Input color"
             color={inputColor ?? COLOR_DEFAULTS.inputColor}
             setColor={setInputColor}
             className="gap-2"
           />
-          <ColorSelectorWithLabel
+          <ColorSelector
             label="Input border color"
             color={inputBorderColor ?? COLOR_DEFAULTS.inputBorderColor}
             setColor={setInputBorderColor}
             className="gap-2"
           />
-          <ColorSelectorWithLabel
+          <ColorSelector
             label="Card background color"
             color={cardBackgroundColor ?? COLOR_DEFAULTS.cardBackgroundColor}
             setColor={setCardBackgroundColor}
             className="gap-2"
           />
-          <ColorSelectorWithLabel
+          <ColorSelector
             label="Highlight border color"
             color={highlightBorderColor ?? COLOR_DEFAULTS.highlightBorderColor}
             setColor={setHighlighBorderColor}
