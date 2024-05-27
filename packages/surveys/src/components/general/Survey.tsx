@@ -1,4 +1,5 @@
 import { FormbricksBranding } from "@/components/general/FormbricksBranding";
+import { LanguageSwitch } from "@/components/general/LanguageSwitch";
 import { ProgressBar } from "@/components/general/ProgressBar";
 import { QuestionConditional } from "@/components/general/QuestionConditional";
 import { ResponseErrorComponent } from "@/components/general/ResponseErrorComponent";
@@ -37,6 +38,7 @@ export const Survey = ({
   startAtQuestionId,
   clickOutside,
   shouldResetQuestionId,
+  isMultiLanguageAllowed,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
 
@@ -55,7 +57,7 @@ export const Survey = ({
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
     getSetIsResponseSendingFinished ? false : true
   );
-
+  const [selectedLanguage, setselectedLanguage] = useState(languageCode);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
@@ -147,7 +149,7 @@ export const Survey = ({
           if (typeof responseValue === "string") {
             // Find the choice in currentQuestion.choices that matches the responseValue after localization
             choice = currentQuestion.choices.find((choice) => {
-              return getLocalizedValue(choice.label, languageCode) === responseValue;
+              return getLocalizedValue(choice.label, selectedLanguage) === responseValue;
             })?.label;
 
             // If a matching choice is found, get its default localized value
@@ -161,7 +163,7 @@ export const Survey = ({
             // Filter and map the choices in currentQuestion.choices that are included in responseValue after localization
             choice = currentQuestion.choices
               .filter((choice) => {
-                return responseValue.includes(getLocalizedValue(choice.label, languageCode));
+                return responseValue.includes(getLocalizedValue(choice.label, selectedLanguage));
               })
               .map((choice) => getLocalizedValue(choice.label, "default"));
           }
@@ -199,7 +201,7 @@ export const Survey = ({
     const nextQuestionId = getNextQuestionId(responseData);
     const finished = nextQuestionId === "end";
     onChange(responseData);
-    onResponse({ data: responseData, ttc, finished });
+    onResponse({ data: responseData, ttc, finished, language: selectedLanguage });
     if (finished) {
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*");
@@ -250,7 +252,7 @@ export const Survey = ({
             buttonLabel={survey.welcomeCard.buttonLabel}
             onSubmit={onSubmit}
             survey={survey}
-            languageCode={languageCode}
+            languageCode={selectedLanguage}
             responseCount={responseCount}
             isInIframe={isInIframe}
           />
@@ -259,15 +261,15 @@ export const Survey = ({
         return (
           <ThankYouCard
             headline={replaceRecallInfo(
-              getLocalizedValue(survey.thankYouCard.headline, languageCode),
+              getLocalizedValue(survey.thankYouCard.headline, selectedLanguage),
               responseData
             )}
             subheader={replaceRecallInfo(
-              getLocalizedValue(survey.thankYouCard.subheader, languageCode),
+              getLocalizedValue(survey.thankYouCard.subheader, selectedLanguage),
               responseData
             )}
             isResponseSendingFinished={isResponseSendingFinished}
-            buttonLabel={getLocalizedValue(survey.thankYouCard.buttonLabel, languageCode)}
+            buttonLabel={getLocalizedValue(survey.thankYouCard.buttonLabel, selectedLanguage)}
             buttonLink={survey.thankYouCard.buttonLink}
             imageUrl={survey.thankYouCard.imageUrl}
             videoUrl={survey.thankYouCard.videoUrl}
@@ -282,7 +284,7 @@ export const Survey = ({
           question && (
             <QuestionConditional
               surveyId={survey.id}
-              question={parseRecallInformation(question, languageCode, responseData)}
+              question={parseRecallInformation(question, selectedLanguage, responseData)}
               value={responseData[question.id]}
               onChange={onChange}
               onSubmit={onSubmit}
@@ -294,7 +296,7 @@ export const Survey = ({
               skipPrefilled={skipPrefilled}
               prefilledQuestionValue={getQuestionPrefillData(question.id, offset)}
               isLastQuestion={question.id === survey.questions[survey.questions.length - 1].id}
-              languageCode={languageCode}
+              languageCode={selectedLanguage}
               isInIframe={isInIframe}
               currentQuestionId={questionId}
             />
@@ -306,6 +308,13 @@ export const Survey = ({
     return (
       <AutoCloseWrapper survey={survey} onClose={onClose}>
         {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
+        {isMultiLanguageAllowed && survey.languages.length > 0 && offset <= 0 && (
+          <LanguageSwitch
+            surveyLanguages={survey.languages}
+            setSelectedLanguageCode={setselectedLanguage}
+            selectedLanguageCode={selectedLanguage}
+          />
+        )}
         <div
           className={cn(
             "no-scrollbar md:rounded-custom rounded-t-custom bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",

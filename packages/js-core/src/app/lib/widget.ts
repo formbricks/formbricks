@@ -139,7 +139,8 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
-          language: languageCode === "default" ? getDefaultLanguageCode(survey) : languageCode,
+          language:
+            responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
           meta: {
             url: window.location.href,
             action,
@@ -159,6 +160,7 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
         setIsError(false);
         responseQueue.processQueue();
       },
+      isMultiLanguageAllowed: true,
     });
   }, survey.delay * 1000);
 };

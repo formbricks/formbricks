@@ -32,6 +32,7 @@ interface LinkSurveyProps {
   responseCount?: number;
   verifiedEmail?: string;
   languageCode: string;
+  isMultiLanguageAllowed: boolean;
 }
 
 export const LinkSurvey = ({
@@ -45,6 +46,7 @@ export const LinkSurvey = ({
   responseCount,
   verifiedEmail,
   languageCode,
+  isMultiLanguageAllowed,
 }: LinkSurveyProps) => {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
@@ -256,7 +258,9 @@ export const LinkSurvey = ({
                 ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
                 language:
-                  languageCode === "default" && defaultLanguageCode ? defaultLanguageCode : languageCode,
+                  responseUpdate.language === "default" && defaultLanguageCode
+                    ? defaultLanguageCode
+                    : responseUpdate.language,
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",
@@ -280,6 +284,7 @@ export const LinkSurvey = ({
             setQuestionId = f;
           }}
           startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
+          isMultiLanguageAllowed={isMultiLanguageAllowed}
         />
       </div>
     </div>

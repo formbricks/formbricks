@@ -4,6 +4,7 @@ import { InfoIcon, PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
+import { iso639Languages } from "@formbricks/lib/i18n/utils";
 import { TLanguage, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
@@ -16,7 +17,6 @@ import {
   getSurveysUsingGivenLanguageAction,
   updateLanguageAction,
 } from "../lib/actions";
-import { iso639Languages } from "../lib/isoLanguages";
 import { LanguageRow } from "./LanguageRow";
 
 interface EditLanguageProps {

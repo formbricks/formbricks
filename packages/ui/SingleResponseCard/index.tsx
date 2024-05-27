@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
 import { getLanguageCode, getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
@@ -24,7 +25,6 @@ import {
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 
-import { getLanguageLabel } from "../../ee/multiLanguage/lib/isoLanguages";
 import { AddressResponse } from "../AddressResponse";
 import { PersonAvatar } from "../Avatars";
 import { DeleteDialog } from "../DeleteDialog";

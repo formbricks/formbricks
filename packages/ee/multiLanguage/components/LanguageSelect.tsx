@@ -1,12 +1,11 @@
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { TIso639Language, iso639Languages } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TLanguage } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-
-import { TIso639Language, iso639Languages } from "../lib/isoLanguages";
 
 interface LanguageSelectProps {
   language: TLanguage;
