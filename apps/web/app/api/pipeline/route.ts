@@ -81,12 +81,12 @@ export const POST = async (request: Request) => {
 
   if (event === "responseFinished") {
     // check for email notifications
-    // get all users that have a membership of this environment's team
+    // get all users that have a membership of this environment's organization
     const users = await prisma.user.findMany({
       where: {
         memberships: {
           some: {
-            team: {
+            organization: {
               products: {
                 some: {
                   environments: {

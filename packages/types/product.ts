@@ -42,7 +42,7 @@ export const ZProduct = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string().trim().min(1, { message: "Product name cannot be empty" }),
-  teamId: z.string(),
+  organizationId: z.string(),
   styling: ZProductStyling,
   recontactDays: z
     .number({ message: "Recontact days is required" })
@@ -65,7 +65,7 @@ export type TProduct = z.infer<typeof ZProduct>;
 
 export const ZProductUpdateInput = z.object({
   name: z.string().optional(),
-  teamId: z.string().optional(),
+  organizationId: z.string().optional(),
   brandColor: ZColor.optional(),
   highlightBorderColor: ZColor.nullish(),
   recontactDays: z.number().int().optional(),

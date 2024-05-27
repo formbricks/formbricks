@@ -7,15 +7,15 @@ import {
 } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { reverseTranslateSurvey } from "@formbricks/lib/i18n/reverseTranslation";
+import {
+  getMonthlyActiveOrganizationPeopleCount,
+  getMonthlyOrganizationResponseCount,
+  getOrganizationByEnvironmentId,
+} from "@formbricks/lib/organization/service";
 import { getPerson } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSurveys, getSyncSurveys } from "@formbricks/lib/survey/service";
-import {
-  getMonthlyActiveTeamPeopleCount,
-  getMonthlyTeamResponseCount,
-  getTeamByEnvironmentId,
-} from "@formbricks/lib/team/service";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsLegacyState, TSurveyWithTriggers } from "@formbricks/types/js";
 import { TPerson } from "@formbricks/types/people";
@@ -43,19 +43,19 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
     throw new Error("Environment does not exist");
   }
 
-  // check team subscriptons
-  const team = await getTeamByEnvironmentId(environmentId);
+  // check organization subscriptons
+  const organization = await getOrganizationByEnvironmentId(environmentId);
 
-  if (!team) {
-    throw new Error("Team does not exist");
+  if (!organization) {
+    throw new Error("Organization does not exist");
   }
 
   // check if Monthly Active Users limit is reached
   if (IS_FORMBRICKS_CLOUD) {
     const hasUserTargetingSubscription =
-      team?.billing?.features.userTargeting.status &&
-      ["active", "canceled"].includes(team?.billing?.features.userTargeting.status);
-    const currentMau = await getMonthlyActiveTeamPeopleCount(team.id);
+      organization?.billing?.features.userTargeting.status &&
+      ["active", "canceled"].includes(organization?.billing?.features.userTargeting.status);
+    const currentMau = await getMonthlyActiveOrganizationPeopleCount(organization.id);
     const isMauLimitReached = !hasUserTargetingSubscription && currentMau >= PRICING_USERTARGETING_FREE_MTU;
     if (isMauLimitReached) {
       const errorMessage = `Monthly Active Users limit reached in ${environmentId} (${currentMau}/${MAU_LIMIT})`;
@@ -82,9 +82,9 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
   let isAppSurveyLimitReached = false;
   if (IS_FORMBRICKS_CLOUD) {
     const hasAppSurveySubscription =
-      team?.billing?.features.inAppSurvey.status &&
-      ["active", "canceled"].includes(team?.billing?.features.inAppSurvey.status);
-    const monthlyResponsesCount = await getMonthlyTeamResponseCount(team.id);
+      organization?.billing?.features.inAppSurvey.status &&
+      ["active", "canceled"].includes(organization?.billing?.features.inAppSurvey.status);
+    const monthlyResponsesCount = await getMonthlyOrganizationResponseCount(organization.id);
     isAppSurveyLimitReached =
       IS_FORMBRICKS_CLOUD &&
       !hasAppSurveySubscription &&

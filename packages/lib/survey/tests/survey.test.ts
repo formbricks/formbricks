@@ -23,11 +23,11 @@ import {
   mockAttributeClass,
   mockDisplay,
   mockId,
+  mockOrganizationOutput,
   mockPrismaPerson,
   mockProduct,
   mockSurveyOutput,
   mockSyncSurveyOutput,
-  mockTeamOutput,
   mockTransformedSurveyOutput,
   mockTransformedSyncSurveyOutput,
   mockUser,
@@ -210,7 +210,7 @@ describe("Tests for createSurvey", () => {
   describe("Happy Path", () => {
     it("Creates a survey successfully", async () => {
       prisma.survey.create.mockResolvedValueOnce(mockSurveyOutput);
-      prisma.team.findFirst.mockResolvedValueOnce(mockTeamOutput);
+      prisma.organization.findFirst.mockResolvedValueOnce(mockOrganizationOutput);
       prisma.actionClass.findMany.mockResolvedValue([mockActionClass]);
       prisma.user.findMany.mockResolvedValueOnce([
         {
