@@ -84,7 +84,7 @@ export const RecallItemSelect = ({
   }, [localSurvey.hiddenFields]);
 
   const attributeClassRecallItems = useMemo(() => {
-    if (localSurvey.type === "link") return [];
+    if (localSurvey.type !== "app") return [];
     return attributeClasses
       .filter((attributeClass) => !recallItemIds.includes(attributeClass.name.replaceAll(" ", "nbsp")))
       .map((attributeClass) => {
