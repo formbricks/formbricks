@@ -1,8 +1,8 @@
 import { prisma } from "@formbricks/database";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/email";
 import {
-  DEFAULT_TEAM_ID,
-  DEFAULT_TEAM_ROLE,
+  DEFAULT_ORGANIZATION_ID,
+  DEFAULT_ORGANIZATION_ROLE,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   INVITE_DISABLED,
@@ -11,8 +11,8 @@ import {
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
+import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
-import { createTeam, getTeam } from "@formbricks/lib/team/service";
 import { createUser, updateUser } from "@formbricks/lib/user/service";
 
 export const POST = async (request: Request) => {
@@ -53,10 +53,10 @@ export const POST = async (request: Request) => {
     // create the user
     user = await createUser(user);
 
-    // User is invited to team
+    // User is invited to organization
     if (isInviteValid) {
-      // assign user to existing team
-      await createMembership(invite.teamId, user.id, {
+      // assign user to existing organization
+      await createMembership(invite.organizationId, user.id, {
         accepted: true,
         role: invite.role,
       });
@@ -72,24 +72,27 @@ export const POST = async (request: Request) => {
     }
 
     // User signs up without invite
-    // Default team assignment is enabled
-    if (DEFAULT_TEAM_ID && DEFAULT_TEAM_ID.length > 0) {
-      // check if team exists
-      let team = await getTeam(DEFAULT_TEAM_ID);
-      let isNewTeam = false;
-      if (!team) {
-        // create team with id from env
-        team = await createTeam({ id: DEFAULT_TEAM_ID, name: user.name + "'s Team" });
-        isNewTeam = true;
+    // Default organization assignment is enabled
+    if (DEFAULT_ORGANIZATION_ID && DEFAULT_ORGANIZATION_ID.length > 0) {
+      // check if organization exists
+      let organization = await getOrganization(DEFAULT_ORGANIZATION_ID);
+      let isNewOrganization = false;
+      if (!organization) {
+        // create organization with id from env
+        organization = await createOrganization({
+          id: DEFAULT_ORGANIZATION_ID,
+          name: user.name + "'s Organization",
+        });
+        isNewOrganization = true;
       }
-      const role = isNewTeam ? "owner" : DEFAULT_TEAM_ROLE || "admin";
-      await createMembership(team.id, user.id, { role, accepted: true });
+      const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "admin";
+      await createMembership(organization.id, user.id, { role, accepted: true });
     }
-    // Without default team assignment
+    // Without default organization assignment
     else {
-      const team = await createTeam({ name: user.name + "'s Team" });
-      await createMembership(team.id, user.id, { role: "owner", accepted: true });
-      const product = await createProduct(team.id, { name: "My Product" });
+      const organization = await createOrganization({ name: user.name + "'s Organization" });
+      await createMembership(organization.id, user.id, { role: "owner", accepted: true });
+      const product = await createProduct(organization.id, { name: "My Product" });
 
       const updatedNotificationSettings = {
         ...user.notificationSettings,

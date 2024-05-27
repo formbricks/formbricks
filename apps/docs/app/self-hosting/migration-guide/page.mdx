@@ -17,12 +17,16 @@ Formbricks v2.0 comes with huge features such as Multi-Language Surveys and Adva
   the upgrade. Follow the below steps thoroughly to upgrade your Formbricks instance to v2.0.
 </Note>
 
-and
-
 <Note>
   If you've used the Formbricks Enterprise Edition with a free beta license key, your instance will be
   downgraded to the Community Edition 2.0. You find all license details on the [license
   page.](/self-hosting/license/)
+</Note>
+
+<Note>
+  We are moving from DockerHub to Github Packages for our images. If you are still pulling the images from
+  DockerHub please change `image: formbricks/formbricks:latest` to
+  `image:ghcr.io/formbricks/formbricks:latest` in your `docker-compose.yml` file.
 </Note>
 
 ### Steps to Migrate

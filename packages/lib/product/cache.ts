@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 interface RevalidateProps {
   id?: string;
   userId?: string;
-  teamId?: string;
+  organizationId?: string;
   environmentId?: string;
 }
 
@@ -15,20 +15,20 @@ export const productCache = {
     byUserId(userId: string) {
       return `users-${userId}-products`;
     },
-    byTeamId(teamId: string) {
-      return `teams-${teamId}-products`;
+    byOrganizationId(organizationId: string) {
+      return `organizations-${organizationId}-products`;
     },
     byEnvironmentId(environmentId: string) {
       return `environments-${environmentId}-products`;
     },
   },
-  revalidate({ id, userId, teamId, environmentId }: RevalidateProps): void {
+  revalidate({ id, userId, organizationId, environmentId }: RevalidateProps): void {
     if (id) {
       revalidateTag(this.tag.byId(id));
     }
 
-    if (teamId) {
-      revalidateTag(this.tag.byTeamId(teamId));
+    if (organizationId) {
+      revalidateTag(this.tag.byOrganizationId(organizationId));
     }
 
     if (environmentId) {

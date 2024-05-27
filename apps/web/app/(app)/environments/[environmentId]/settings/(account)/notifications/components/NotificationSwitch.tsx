@@ -9,15 +9,15 @@ import { Switch } from "@formbricks/ui/Switch";
 import { updateNotificationSettingsAction } from "../actions";
 
 interface NotificationSwitchProps {
-  surveyOrProductOrTeamId: string;
+  surveyOrProductOrOrganizationId: string;
   notificationSettings: TUserNotificationSettings;
-  notificationType: "alert" | "weeklySummary" | "unsubscribedTeamIds";
+  notificationType: "alert" | "weeklySummary" | "unsubscribedOrganizationIds";
   autoDisableNotificationType?: string;
   autoDisableNotificationElementId?: string;
 }
 
 export const NotificationSwitch = ({
-  surveyOrProductOrTeamId,
+  surveyOrProductOrOrganizationId,
   notificationSettings,
   notificationType,
   autoDisableNotificationType,
@@ -26,26 +26,29 @@ export const NotificationSwitch = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const isChecked =
-    notificationType === "unsubscribedTeamIds"
-      ? !notificationSettings.unsubscribedTeamIds?.includes(surveyOrProductOrTeamId)
-      : notificationSettings[notificationType][surveyOrProductOrTeamId] === true;
+    notificationType === "unsubscribedOrganizationIds"
+      ? !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProductOrOrganizationId)
+      : notificationSettings[notificationType][surveyOrProductOrOrganizationId] === true;
 
   const handleSwitchChange = async () => {
     setIsLoading(true);
 
     let updatedNotificationSettings = { ...notificationSettings };
-    if (notificationType === "unsubscribedTeamIds") {
-      const unsubscribedTeamIds = updatedNotificationSettings.unsubscribedTeamIds ?? [];
-      if (unsubscribedTeamIds.includes(surveyOrProductOrTeamId)) {
-        updatedNotificationSettings.unsubscribedTeamIds = unsubscribedTeamIds.filter(
-          (id) => id !== surveyOrProductOrTeamId
+    if (notificationType === "unsubscribedOrganizationIds") {
+      const unsubscribedOrganizationIds = updatedNotificationSettings.unsubscribedOrganizationIds ?? [];
+      if (unsubscribedOrganizationIds.includes(surveyOrProductOrOrganizationId)) {
+        updatedNotificationSettings.unsubscribedOrganizationIds = unsubscribedOrganizationIds.filter(
+          (id) => id !== surveyOrProductOrOrganizationId
         );
       } else {
-        updatedNotificationSettings.unsubscribedTeamIds = [...unsubscribedTeamIds, surveyOrProductOrTeamId];
+        updatedNotificationSettings.unsubscribedOrganizationIds = [
+          ...unsubscribedOrganizationIds,
+          surveyOrProductOrOrganizationId,
+        ];
       }
     } else {
-      updatedNotificationSettings[notificationType][surveyOrProductOrTeamId] =
-        !updatedNotificationSettings[notificationType][surveyOrProductOrTeamId];
+      updatedNotificationSettings[notificationType][surveyOrProductOrOrganizationId] =
+        !updatedNotificationSettings[notificationType][surveyOrProductOrOrganizationId];
     }
 
     await updateNotificationSettingsAction(updatedNotificationSettings);
@@ -55,12 +58,12 @@ export const NotificationSwitch = ({
   useEffect(() => {
     if (
       autoDisableNotificationType &&
-      autoDisableNotificationElementId === surveyOrProductOrTeamId &&
+      autoDisableNotificationElementId === surveyOrProductOrOrganizationId &&
       isChecked
     ) {
       switch (notificationType) {
         case "alert":
-          if (notificationSettings[notificationType][surveyOrProductOrTeamId] === true) {
+          if (notificationSettings[notificationType][surveyOrProductOrOrganizationId] === true) {
             handleSwitchChange();
             toast.success("You will not receive any more emails for responses on this survey!", {
               id: "notification-switch",
@@ -68,10 +71,10 @@ export const NotificationSwitch = ({
           }
           break;
 
-        case "unsubscribedTeamIds":
-          if (!notificationSettings.unsubscribedTeamIds?.includes(surveyOrProductOrTeamId)) {
+        case "unsubscribedOrganizationIds":
+          if (!notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProductOrOrganizationId)) {
             handleSwitchChange();
-            toast.success("You will not be auto-subscribed to this team's surveys anymore!", {
+            toast.success("You will not be auto-subscribed to this organization's surveys anymore!", {
               id: "notification-switch",
             });
           }
