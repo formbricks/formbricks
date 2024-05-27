@@ -2,9 +2,9 @@ import { DeleteProductRender } from "@/app/(app)/environments/[environmentId]/pr
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProducts } from "@formbricks/lib/product/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TProduct } from "@formbricks/types/product";
 
 type DeleteProductProps = {
@@ -17,13 +17,13 @@ export const DeleteProduct = async ({ environmentId, product }: DeleteProductPro
   if (!session) {
     throw new Error("Session not found");
   }
-  const team = await getTeamByEnvironmentId(environmentId);
-  if (!team) {
-    throw new Error("Team not found");
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+  if (!organization) {
+    throw new Error("Organization not found");
   }
-  const availableProducts = team ? await getProducts(team.id) : null;
+  const availableProducts = organization ? await getProducts(organization.id) : null;
 
-  const membership = await getMembershipByUserIdTeamId(session.user.id, team.id);
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
   if (!membership) {
     throw new Error("Membership not found");
   }

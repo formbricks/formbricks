@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { ONBOARDING_DISABLED } from "@formbricks/lib/constants";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
-import { getTeamsByUserId } from "@formbricks/lib/team/service";
+import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { ClientLogout } from "@formbricks/ui/ClientLogout";
 
 const Page = async () => {
@@ -19,10 +19,10 @@ const Page = async () => {
     return <ClientLogout />;
   }
 
-  const teams = await getTeamsByUserId(session.user.id);
-  if (!teams || teams.length === 0) {
-    console.error("Failed to get teams, redirecting to create-first-team");
-    return redirect("/create-first-team");
+  const organizations = await getOrganizationsByUserId(session.user.id);
+  if (!organizations || organizations.length === 0) {
+    console.error("Failed to get organizations, redirecting to create-first-organization");
+    return redirect("/create-first-organization");
   }
 
   if (!ONBOARDING_DISABLED && !session.user.onboardingCompleted) {

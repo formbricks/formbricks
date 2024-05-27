@@ -1,15 +1,15 @@
 "use server";
 
-import { Team } from "@prisma/client";
+import { Organization } from "@prisma/client";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { createMembership } from "@formbricks/lib/membership/service";
+import { createOrganization, getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { createShortUrl } from "@formbricks/lib/shortUrl/service";
-import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { updateUser } from "@formbricks/lib/user/service";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 
@@ -27,20 +27,20 @@ export const createShortUrlAction = async (url: string) => {
   return fullShortUrl;
 };
 
-export const createTeamAction = async (teamName: string): Promise<Team> => {
+export const createOrganizationAction = async (organizationName: string): Promise<Organization> => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const newTeam = await createTeam({
-    name: teamName,
+  const newOrganization = await createOrganization({
+    name: organizationName,
   });
 
-  await createMembership(newTeam.id, session.user.id, {
+  await createMembership(newOrganization.id, session.user.id, {
     role: "owner",
     accepted: true,
   });
 
-  const product = await createProduct(newTeam.id, {
+  const product = await createProduct(newOrganization.id, {
     name: "My Product",
   });
 
@@ -59,7 +59,7 @@ export const createTeamAction = async (teamName: string): Promise<Team> => {
     notificationSettings: updatedNotificationSettings,
   });
 
-  return newTeam;
+  return newOrganization;
 };
 
 export const createProductAction = async (environmentId: string, productName: string) => {
@@ -69,10 +69,10 @@ export const createProductAction = async (environmentId: string, productName: st
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const team = await getTeamByEnvironmentId(environmentId);
-  if (!team) throw new ResourceNotFoundError("Team from environment", environmentId);
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+  if (!organization) throw new ResourceNotFoundError("Organization from environment", environmentId);
 
-  const product = await createProduct(team.id, {
+  const product = await createProduct(organization.id, {
     name: productName,
   });
   const updatedNotificationSettings = {

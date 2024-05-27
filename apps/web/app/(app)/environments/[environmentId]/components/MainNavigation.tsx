@@ -9,6 +9,7 @@ import {
   ChevronRightIcon,
   Cog,
   CreditCardIcon,
+  KeyIcon,
   LogOutIcon,
   MessageCircle,
   MousePointerClick,
@@ -31,11 +32,11 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter, truncate } from "@formbricks/lib/strings";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
-import { TTeam } from "@formbricks/types/teams";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
-import { CreateTeamModal } from "@formbricks/ui/CreateTeamModal";
+import { CreateOrganizationModal } from "@formbricks/ui/CreateOrganizationModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,9 +55,9 @@ import { AddProductModal } from "./AddProductModal";
 
 interface NavigationProps {
   environment: TEnvironment;
-  teams: TTeam[];
+  organizations: TOrganization[];
   session: Session;
-  team: TTeam;
+  organization: TOrganization;
   products: TProduct[];
   isFormbricksCloud: boolean;
   membershipRole?: TMembershipRole;
@@ -64,8 +65,8 @@ interface NavigationProps {
 
 export const MainNavigation = ({
   environment,
-  teams,
-  team,
+  organizations,
+  organization,
   session,
   products,
   isFormbricksCloud,
@@ -74,10 +75,10 @@ export const MainNavigation = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  const [currentTeamName, setCurrentTeamName] = useState("");
-  const [currentTeamId, setCurrentTeamId] = useState("");
+  const [currentOrganizationName, setCurrentOrganizationName] = useState("");
+  const [currentOrganizationId, setCurrentOrganizationId] = useState("");
   const [showAddProductModal, setShowAddProductModal] = useState(false);
-  const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
+  const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
 
@@ -104,15 +105,15 @@ export const MainNavigation = ({
   }, [isCollapsed]);
 
   useEffect(() => {
-    if (team && team.name !== "") {
-      setCurrentTeamName(team.name);
-      setCurrentTeamId(team.id);
+    if (organization && organization.name !== "") {
+      setCurrentOrganizationName(organization.name);
+      setCurrentOrganizationId(organization.id);
     }
-  }, [team]);
+  }, [organization]);
 
-  const sortedTeams = useMemo(() => {
-    return [...teams].sort((a, b) => a.name.localeCompare(b.name));
-  }, [teams]);
+  const sortedOrganizations = useMemo(() => {
+    return [...organizations].sort((a, b) => a.name.localeCompare(b.name));
+  }, [organizations]);
 
   const sortedProducts = useMemo(() => {
     return [...products].sort((a, b) => a.name.localeCompare(b.name));
@@ -122,8 +123,8 @@ export const MainNavigation = ({
     router.push(`/products/${productId}/`);
   };
 
-  const handleEnvironmentChangeByTeam = (teamId: string) => {
-    router.push(`/teams/${teamId}/`);
+  const handleEnvironmentChangeByOrganization = (organizationId: string) => {
+    router.push(`/organizations/${organizationId}/`);
   };
 
   const mainNavigation = useMemo(
@@ -176,7 +177,7 @@ export const MainNavigation = ({
       icon: UserCircleIcon,
     },
     {
-      label: "Team",
+      label: "Organization",
       href: `/environments/${environment.id}/settings/members`,
       icon: UsersIcon,
     },
@@ -185,6 +186,12 @@ export const MainNavigation = ({
       href: `/environments/${environment.id}/settings/billing`,
       hidden: !isFormbricksCloud || isPricingDisabled,
       icon: CreditCardIcon,
+    },
+    {
+      label: "License",
+      href: `/environments/${environment.id}/settings/enterprise`,
+      hidden: isFormbricksCloud || isPricingDisabled,
+      icon: KeyIcon,
     },
     {
       label: "Documentation",
@@ -356,7 +363,9 @@ export const MainNavigation = ({
                               <span>{truncate(session?.user?.email, 30)}</span>
                             )}
                           </p>
-                          <p className={cn("text-sm text-slate-500")}>{capitalizeFirstLetter(team?.name)}</p>
+                          <p className={cn("text-sm text-slate-500")}>
+                            {capitalizeFirstLetter(organization?.name)}
+                          </p>
                         </div>
                         <ChevronRightIcon className={cn("h-5 w-5 text-slate-700 hover:text-slate-500")} />
                       </>
@@ -403,13 +412,13 @@ export const MainNavigation = ({
                     Logout
                   </DropdownMenuItem>
 
-                  {/* Team Switch */}
+                  {/* Organization Switch */}
 
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger className="rounded-lg">
                       <div>
-                        <p>{currentTeamName}</p>
-                        <p className="block text-xs text-slate-500">Switch team</p>
+                        <p>{currentOrganizationName}</p>
+                        <p className="block text-xs text-slate-500">Switch organization</p>
                       </div>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
@@ -418,21 +427,25 @@ export const MainNavigation = ({
                         sideOffset={10}
                         alignOffset={5}>
                         <DropdownMenuRadioGroup
-                          value={currentTeamId}
-                          onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
-                          {sortedTeams.map((team) => (
+                          value={currentOrganizationId}
+                          onValueChange={(organizationId) =>
+                            handleEnvironmentChangeByOrganization(organizationId)
+                          }>
+                          {sortedOrganizations.map((organization) => (
                             <DropdownMenuRadioItem
-                              value={team.id}
+                              value={organization.id}
                               className="cursor-pointer rounded-lg"
-                              key={team.id}>
-                              {team.name}
+                              key={organization.id}>
+                              {organization.name}
                             </DropdownMenuRadioItem>
                           ))}
                         </DropdownMenuRadioGroup>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setShowCreateTeamModal(true)} className="rounded-lg">
+                        <DropdownMenuItem
+                          onClick={() => setShowCreateOrganizationModal(true)}
+                          className="rounded-lg">
                           <PlusIcon className="mr-2 h-4 w-4" />
-                          <span>Create new team</span>
+                          <span>Create new organization</span>
                         </DropdownMenuItem>
                       </DropdownMenuSubContent>
                     </DropdownMenuPortal>
@@ -443,7 +456,10 @@ export const MainNavigation = ({
           </div>
         </aside>
       )}
-      <CreateTeamModal open={showCreateTeamModal} setOpen={(val) => setShowCreateTeamModal(val)} />
+      <CreateOrganizationModal
+        open={showCreateOrganizationModal}
+        setOpen={(val) => setShowCreateOrganizationModal(val)}
+      />
       <AddProductModal
         open={showAddProductModal}
         setOpen={(val) => setShowAddProductModal(val)}
