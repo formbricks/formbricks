@@ -82,7 +82,7 @@ Formbricks is both a free and open source survey platform - and a privacy-first 
 
 - 🔗 Create shareable **link surveys**.
 
-- 👨‍👩‍👦 Invite your team members to **collaborate** on your surveys.
+- 👨‍👩‍👦 Invite your organization members to **collaborate** on your surveys.
 
 - 🔌 Integrate Formbricks with **Slack, Notion, Zapier, n8n and more**.
 

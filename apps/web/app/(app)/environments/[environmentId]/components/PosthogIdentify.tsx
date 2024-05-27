@@ -5,15 +5,15 @@ import { usePostHog } from "posthog-js/react";
 import { useEffect } from "react";
 
 import { env } from "@formbricks/lib/env";
-import { TSubscriptionStatus } from "@formbricks/types/teams";
+import { TSubscriptionStatus } from "@formbricks/types/organizations";
 
 const posthogEnabled = env.NEXT_PUBLIC_POSTHOG_API_KEY && env.NEXT_PUBLIC_POSTHOG_API_HOST;
 
 interface PosthogIdentifyProps {
   session: Session;
   environmentId?: string;
-  teamId?: string;
-  teamName?: string;
+  organizationId?: string;
+  organizationName?: string;
   inAppSurveyBillingStatus?: TSubscriptionStatus;
   linkSurveyBillingStatus?: TSubscriptionStatus;
   userTargetingBillingStatus?: TSubscriptionStatus;
@@ -22,8 +22,8 @@ interface PosthogIdentifyProps {
 export const PosthogIdentify = ({
   session,
   environmentId,
-  teamId,
-  teamName,
+  organizationId,
+  organizationName,
   inAppSurveyBillingStatus,
   linkSurveyBillingStatus,
   userTargetingBillingStatus,
@@ -41,9 +41,9 @@ export const PosthogIdentify = ({
       if (environmentId) {
         posthog.group("environment", environmentId, { name: environmentId });
       }
-      if (teamId) {
-        posthog.group("team", teamId, {
-          name: teamName,
+      if (organizationId) {
+        posthog.group("organization", organizationId, {
+          name: organizationName,
           inAppSurveyBillingStatus,
           linkSurveyBillingStatus,
           userTargetingBillingStatus,
@@ -54,8 +54,8 @@ export const PosthogIdentify = ({
     posthog,
     session.user,
     environmentId,
-    teamId,
-    teamName,
+    organizationId,
+    organizationName,
     inAppSurveyBillingStatus,
     linkSurveyBillingStatus,
     userTargetingBillingStatus,

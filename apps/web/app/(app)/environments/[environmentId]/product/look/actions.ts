@@ -17,7 +17,7 @@ export const updateProductAction = async (productId: string, inputProduct: TProd
 
   const product = await getProduct(productId);
 
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.teamId, session.user.id);
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.organizationId, session.user.id);
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await updateProduct(productId, inputProduct);
