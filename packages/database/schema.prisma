@@ -422,8 +422,8 @@ model Product {
   createdAt            DateTime        @default(now()) @map(name: "created_at")
   updatedAt            DateTime        @updatedAt @map(name: "updated_at")
   name                 String
-  team                 Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId               String
+  organization         Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId       String
   environments         Environment[]
   brandColor           String?
   highlightBorderColor String?
@@ -441,11 +441,11 @@ model Product {
   /// [Logo]
   logo                 Json?
 
-  @@unique([teamId, name])
-  @@index([teamId])
+  @@unique([organizationId, name])
+  @@index([organizationId])
 }
 
-model Team {
+model Organization {
   id          String       @id @default(cuid())
   createdAt   DateTime     @default(now()) @map(name: "created_at")
   updatedAt   DateTime     @updatedAt @map(name: "updated_at")
@@ -467,35 +467,35 @@ enum MembershipRole {
 }
 
 model Membership {
-  team     Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId   String
-  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
-  accepted Boolean        @default(false)
-  role     MembershipRole
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  accepted       Boolean        @default(false)
+  role           MembershipRole
 
-  @@id([userId, teamId])
+  @@id([userId, organizationId])
   @@index([userId])
-  @@index([teamId])
+  @@index([organizationId])
 }
 
 model Invite {
-  id         String         @id @default(uuid())
-  email      String
-  name       String?
-  team       Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId     String
-  creator    User           @relation("inviteCreatedBy", fields: [creatorId], references: [id])
-  creatorId  String
-  acceptor   User?          @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
-  acceptorId String?
-  accepted   Boolean        @default(false)
-  createdAt  DateTime       @default(now())
-  expiresAt  DateTime
-  role       MembershipRole @default(admin)
+  id             String         @id @default(uuid())
+  email          String
+  name           String?
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  creator        User           @relation("inviteCreatedBy", fields: [creatorId], references: [id])
+  creatorId      String
+  acceptor       User?          @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
+  acceptorId     String?
+  accepted       Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  expiresAt      DateTime
+  role           MembershipRole @default(admin)
 
-  @@index([email, teamId])
-  @@index([teamId])
+  @@index([email, organizationId])
+  @@index([organizationId])
 }
 
 model ApiKey {

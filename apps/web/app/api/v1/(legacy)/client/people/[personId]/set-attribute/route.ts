@@ -3,12 +3,12 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { updateAttributes } from "@formbricks/lib/attribute/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { personCache } from "@formbricks/lib/person/cache";
 import { getPerson } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ZJsPeopleAttributeInput } from "@formbricks/types/js";
 
 interface Context {
@@ -57,10 +57,10 @@ export const POST = async (req: Request, context: Context): Promise<Response> =>
       environmentId,
     });
 
-    const team = await getTeamByEnvironmentId(environmentId);
+    const organization = await getOrganizationByEnvironmentId(environmentId);
 
-    if (!team) {
-      throw new Error("Team not found");
+    if (!organization) {
+      throw new Error("Organization not found");
     }
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([

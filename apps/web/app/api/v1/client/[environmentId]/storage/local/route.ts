@@ -8,9 +8,9 @@ import { NextRequest } from "next/server";
 import { getBiggerUploadFileSizePermission } from "@formbricks/ee/lib/service";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
 interface Context {
   params: {
@@ -70,14 +70,17 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
     return responses.unauthorizedResponse();
   }
 
-  const [survey, team] = await Promise.all([getSurvey(surveyId), getTeamByEnvironmentId(environmentId)]);
+  const [survey, organization] = await Promise.all([
+    getSurvey(surveyId),
+    getOrganizationByEnvironmentId(environmentId),
+  ]);
 
   if (!survey) {
     return responses.notFoundResponse("Survey", surveyId);
   }
 
-  if (!team) {
-    return responses.notFoundResponse("TeamByEnvironmentId", environmentId);
+  if (!organization) {
+    return responses.notFoundResponse("OrganizationByEnvironmentId", environmentId);
   }
 
   const fileName = decodeURIComponent(encodedFileName);
@@ -106,7 +109,7 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   }
 
   try {
-    const plan = (await getBiggerUploadFileSizePermission(team)) ? "pro" : "free";
+    const plan = (await getBiggerUploadFileSizePermission(organization)) ? "pro" : "free";
     const bytes = await file.arrayBuffer();
     const fileBuffer = Buffer.from(bytes);
 

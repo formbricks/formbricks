@@ -117,7 +117,7 @@ export const RecallQuestionSelect = ({
   }, [showQuestionSelect, localSurvey.questions, focusedQuestionIdx]);
 
   return (
-    <div className="absolute z-30 mt-1 flex max-w-[85%] flex-col overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3  text-xs ">
+    <div className="absolute z-30 mt-1 flex max-h-40 max-w-[85%] flex-col overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3  text-xs ">
       {filteredRecallQuestions.length === 0 ? (
         <p className="font-medium text-slate-900">There is no information to recall yet 🤷</p>
       ) : (

@@ -2,7 +2,7 @@ import Stripe from "stripe";
 
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
-import { getTeam, updateTeam } from "@formbricks/lib/team/service";
+import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
@@ -21,27 +21,27 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
     expand: ["customer"],
   })) as { customer: Stripe.Customer };
 
-  const team = await getTeam(checkoutSession.metadata!.teamId);
-  if (!team) throw new Error("Team not found.");
+  const organization = await getOrganization(checkoutSession.metadata!.organizationId);
+  if (!organization) throw new Error("Organization not found.");
 
   await stripe.subscriptions.update(stripeSubscriptionObject.id, {
     metadata: {
-      teamId: team.id,
+      teamId: organization.id,
       responses: checkoutSession.metadata.responses,
       miu: checkoutSession.metadata.miu,
     },
   });
 
-  await updateTeam(team.id, {
+  await updateOrganization(organization.id, {
     billing: {
-      ...team.billing,
+      ...organization.billing,
       stripeCustomerId: stripeCustomer.id,
     },
   });
 
   await stripe.customers.update(stripeCustomer.id, {
-    name: team.name,
-    metadata: { team: team.id },
+    name: organization.name,
+    metadata: { organization: organization.id },
     invoice_settings: {
       default_payment_method: stripeSubscriptionObject.default_payment_method as string,
     },

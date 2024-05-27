@@ -2,7 +2,7 @@ import Stripe from "stripe";
 
 import { STRIPE_API_VERSION, WEBAPP_URL } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
-import { getTeam } from "@formbricks/lib/team/service";
+import { getOrganization } from "@formbricks/lib/organization/service";
 
 import { StripePriceLookupKeys } from "./constants";
 
@@ -18,15 +18,16 @@ export const getFirstOfNextMonthTimestamp = (): number => {
 };
 
 export const createSubscription = async (
-  teamId: string,
+  organizationId: string,
   environmentId: string,
   priceLookupKey: StripePriceLookupKeys
 ) => {
   try {
-    const team = await getTeam(teamId);
-    if (!team) throw new Error("Team not found.");
-    let isNewTeam =
-      !team.billing.stripeCustomerId || !(await stripe.customers.retrieve(team.billing.stripeCustomerId));
+    const organization = await getOrganization(organizationId);
+    if (!organization) throw new Error("Organization not found.");
+    let isNewOrganization =
+      !organization.billing.stripeCustomerId ||
+      !(await stripe.customers.retrieve(organization.billing.stripeCustomerId));
 
     const priceObject = (
       await stripe.prices.list({
@@ -39,7 +40,8 @@ export const createSubscription = async (
     const responses = (priceObject.product as Stripe.Product).metadata.responses as unknown as number;
     const miu = (priceObject.product as Stripe.Product).metadata.miu as unknown as number;
 
-    if (isNewTeam) {
+    // if the organization has never purchased a plan then we just create a new session and store their stripe customer id
+    if (isNewOrganization) {
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         line_items: [
@@ -53,9 +55,9 @@ export const createSubscription = async (
         allow_promotion_codes: true,
         subscription_data: {
           billing_cycle_anchor: getFirstOfNextMonthTimestamp(),
-          metadata: { teamId },
+          metadata: { organizationId },
         },
-        metadata: { teamId, responses, miu },
+        metadata: { organizationId, responses, miu },
         automatic_tax: { enabled: true },
       });
 
@@ -63,7 +65,7 @@ export const createSubscription = async (
     }
 
     const existingSubscription = await stripe.subscriptions.list({
-      customer: team.billing.stripeCustomerId as string,
+      customer: organization.billing.stripeCustomerId as string,
     });
 
     if (existingSubscription) {

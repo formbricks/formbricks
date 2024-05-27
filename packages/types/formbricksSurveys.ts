@@ -18,12 +18,14 @@ export interface SurveyBaseProps {
   autoFocus?: boolean;
   isRedirectDisabled?: boolean;
   prefillResponseData?: TResponseData;
+  skipPrefilled?: boolean;
   languageCode: string;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
   isCardBorderVisible?: boolean;
   startAtQuestionId?: string;
   clickOutside?: boolean;
+  shouldResetQuestionId?: boolean;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

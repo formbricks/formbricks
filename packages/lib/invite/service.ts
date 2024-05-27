@@ -17,7 +17,7 @@ import {
 
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
-import { getMembershipByUserIdTeamId } from "../membership/service";
+import { getMembershipByUserIdOrganizationId } from "../membership/service";
 import { validateInputs } from "../utils/validate";
 import { inviteCache } from "./cache";
 
@@ -25,7 +25,7 @@ const inviteSelect = {
   id: true,
   email: true,
   name: true,
-  teamId: true,
+  organizationId: true,
   creatorId: true,
   acceptorId: true,
   accepted: true,
@@ -39,14 +39,14 @@ interface InviteWithCreator extends TInvite {
     email: string;
   };
 }
-export const getInvitesByTeamId = (teamId: string, page?: number): Promise<TInvite[]> =>
+export const getInvitesByOrganizationId = (organizationId: string, page?: number): Promise<TInvite[]> =>
   cache(
     async () => {
-      validateInputs([teamId, ZString], [page, ZOptionalNumber]);
+      validateInputs([organizationId, ZString], [page, ZOptionalNumber]);
 
       try {
         const invites = await prisma.invite.findMany({
-          where: { teamId },
+          where: { organizationId },
           select: inviteSelect,
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
@@ -61,9 +61,9 @@ export const getInvitesByTeamId = (teamId: string, page?: number): Promise<TInvi
         throw error;
       }
     },
-    [`getInvitesByTeamId-${teamId}-${page}`],
+    [`getInvitesByOrganizationId-${organizationId}-${page}`],
     {
-      tags: [inviteCache.tag.byTeamId(teamId)],
+      tags: [inviteCache.tag.byOrganizationId(organizationId)],
     }
   )();
 
@@ -83,7 +83,7 @@ export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): 
 
     inviteCache.revalidate({
       id: invite.id,
-      teamId: invite.teamId,
+      organizationId: invite.organizationId,
     });
 
     return invite;
@@ -112,7 +112,7 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
 
     inviteCache.revalidate({
       id: invite.id,
-      teamId: invite.teamId,
+      organizationId: invite.organizationId,
     });
 
     return invite;
@@ -190,7 +190,7 @@ export const resendInvite = async (inviteId: string): Promise<TInvite> => {
 
     inviteCache.revalidate({
       id: updatedInvite.id,
-      teamId: updatedInvite.teamId,
+      organizationId: updatedInvite.organizationId,
     });
 
     return updatedInvite;
@@ -206,18 +206,18 @@ export const resendInvite = async (inviteId: string): Promise<TInvite> => {
 export const inviteUser = async ({
   currentUser,
   invitee,
-  teamId,
+  organizationId,
 }: {
-  teamId: string;
+  organizationId: string;
   invitee: TInvitee;
   currentUser: TCurrentUser;
 }): Promise<TInvite> => {
-  validateInputs([teamId, ZString], [invitee, ZInvitee], [currentUser, ZCurrentUser]);
+  validateInputs([organizationId, ZString], [invitee, ZInvitee], [currentUser, ZCurrentUser]);
 
   try {
     const { name, email, role } = invitee;
     const { id: currentUserId } = currentUser;
-    const existingInvite = await prisma.invite.findFirst({ where: { email, teamId } });
+    const existingInvite = await prisma.invite.findFirst({ where: { email, organizationId } });
 
     if (existingInvite) {
       throw new ValidationError("Invite already exists");
@@ -226,10 +226,10 @@ export const inviteUser = async ({
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (user) {
-      const member = await getMembershipByUserIdTeamId(user.id, teamId);
+      const member = await getMembershipByUserIdOrganizationId(user.id, organizationId);
 
       if (member) {
-        throw new ValidationError("User is already a member of this team");
+        throw new ValidationError("User is already a member of this organization");
       }
     }
 
@@ -240,7 +240,7 @@ export const inviteUser = async ({
       data: {
         email,
         name,
-        team: { connect: { id: teamId } },
+        organization: { connect: { id: organizationId } },
         creator: { connect: { id: currentUserId } },
         acceptor: user ? { connect: { id: user.id } } : undefined,
         role,
@@ -250,7 +250,7 @@ export const inviteUser = async ({
 
     inviteCache.revalidate({
       id: invite.id,
-      teamId: invite.teamId,
+      organizationId: invite.organizationId,
     });
 
     return invite;

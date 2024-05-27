@@ -4,7 +4,7 @@ import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionsByPersonId } from "@formbricks/lib/action/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 
 export const ActivitySection = async ({
   environmentId,
@@ -13,14 +13,16 @@ export const ActivitySection = async ({
   environmentId: string;
   personId: string;
 }) => {
-  const team = await getTeamByEnvironmentId(environmentId);
+  const organization = await getOrganizationByEnvironmentId(environmentId);
 
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
   // On Formbricks Cloud only render the timeline if the user targeting feature is booked
-  const isUserTargetingEnabled = IS_FORMBRICKS_CLOUD ? await getAdvancedTargetingPermission(team) : true;
+  const isUserTargetingEnabled = IS_FORMBRICKS_CLOUD
+    ? await getAdvancedTargetingPermission(organization)
+    : true;
 
   const [environment, actions] = await Promise.all([
     getEnvironment(environmentId),

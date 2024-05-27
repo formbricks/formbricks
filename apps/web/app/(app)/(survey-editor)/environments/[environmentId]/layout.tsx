@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { DevEnvironmentBanner } from "@formbricks/ui/DevEnvironmentBanner";
 import { ToasterClient } from "@formbricks/ui/ToasterClient";
@@ -22,9 +22,9 @@ const EnvLayout = async ({ children, params }) => {
     throw new AuthorizationError("Not authorized");
   }
 
-  const team = await getTeamByEnvironmentId(params.environmentId);
-  if (!team) {
-    throw new Error("Team not found");
+  const organization = await getOrganizationByEnvironmentId(params.environmentId);
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
   const environment = await getEnvironment(params.environmentId);
@@ -39,9 +39,9 @@ const EnvLayout = async ({ children, params }) => {
         <PosthogIdentify
           session={session}
           environmentId={params.environmentId}
-          teamId={team.id}
-          teamName={team.name}
-          billing={team.billing}
+          organizationId={organization.id}
+          organizationName={organization.name}
+          organizationBilling={organization.billing}
         />
         <FormbricksClient session={session} />
         <ToasterClient />

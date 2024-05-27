@@ -57,7 +57,7 @@ export const AttributeClassesTable = ({ attributeClasses }: AttributeClassesTabl
           {displayedAttributeClasses.map((attributeClass, index) => (
             <button
               onClick={() => handleOpenAttributeDetailModalClick(attributeClass)}
-              className="w-full"
+              className="w-full cursor-default"
               key={attributeClass.id}>
               <AttributeClassDataRow attributeClass={attributeClass} key={index} />
             </button>

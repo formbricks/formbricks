@@ -37,7 +37,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Recontact Options", href: "/app-surveys/recontact" },
           { title: "Multi Language Surveys", href: "/global/multi-language-surveys" }, // global
           { title: "User Metadata", href: "/global/metadata" }, // global
-          { title: "Custom Styling", href: "/global/custom-styling" }, // global
+          { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/global/conditional-logic" }, // global
           { title: "Custom Start & End Conditions", href: "/global/custom-start-end-conditions" }, // global
           { title: "Recall Functionality", href: "/global/recall" }, // global
@@ -59,7 +59,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Recontact Options", href: "/app-surveys/recontact" },
           { title: "Multi Language Surveys", href: "/global/multi-language-surveys" }, // global
           { title: "User Metadata", href: "/global/metadata" }, // global
-          { title: "Custom Styling", href: "/global/custom-styling" }, // global
+          { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/global/conditional-logic" }, // global
           { title: "Custom Start & End Conditions", href: "/global/custom-start-end-conditions" }, // global
           { title: "Recall Functionality", href: "/global/recall" }, // global
@@ -84,7 +84,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Embed Surveys Anywhere", href: "/link-surveys/embed-surveys" },
           { title: "Multi Language Surveys", href: "/global/multi-language-surveys" },
           { title: "User Metadata", href: "/global/metadata" },
-          { title: "Custom Styling", href: "/global/custom-styling" },
+          { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/global/conditional-logic" },
           { title: "Custom Start & End Conditions", href: "/global/custom-start-end-conditions" },
           { title: "Recall Functionality", href: "/global/recall" },
@@ -93,6 +93,13 @@ export const navigation: Array<NavGroup> = [
           { title: "Partial Submissions", href: "/global/partial-submissions" },
         ],
       },
+    ],
+  },
+  {
+    title: "Core Features",
+    links: [
+      { title: "Access Roles", href: "/global/access-roles" },
+      { title: "Styling Theme", href: "/global/styling-theme" },
     ],
   },
   {

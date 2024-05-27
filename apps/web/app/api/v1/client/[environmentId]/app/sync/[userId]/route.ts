@@ -8,15 +8,15 @@ import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttribute } from "@formbricks/lib/attribute/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
+import {
+  getMonthlyActiveOrganizationPeopleCount,
+  getMonthlyOrganizationResponseCount,
+  getOrganizationByEnvironmentId,
+} from "@formbricks/lib/organization/service";
 import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
-import {
-  getMonthlyActiveTeamPeopleCount,
-  getMonthlyTeamResponseCount,
-  getTeamByEnvironmentId,
-} from "@formbricks/lib/team/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -72,11 +72,11 @@ export const GET = async (
       await updateEnvironment(environment.id, { widgetSetupCompleted: true });
     }
 
-    // check team subscriptions
-    const team = await getTeamByEnvironmentId(environmentId);
+    // check organization subscriptions
+    const organization = await getOrganizationByEnvironmentId(environmentId);
 
-    if (!team) {
-      throw new Error("Team does not exist");
+    if (!organization) {
+      throw new Error("Organization does not exist");
     }
 
     // check if MAU limit is reached
@@ -84,13 +84,14 @@ export const GET = async (
     let isInAppSurveyLimitReached = false;
     if (IS_FORMBRICKS_CLOUD) {
       const [hasUserTargetingSubscription, currentMau] = await Promise.all([
-        getAdvancedTargetingPermission(team),
-        getMonthlyActiveTeamPeopleCount(team.id),
+        getAdvancedTargetingPermission(organization),
+        getMonthlyActiveOrganizationPeopleCount(organization.id),
       ]);
 
-      isMauLimitReached = !hasUserTargetingSubscription && currentMau >= team.billing.limits.monthly.miu;
-      const currentResponseCount = await getMonthlyTeamResponseCount(team.id);
-      isInAppSurveyLimitReached = currentResponseCount >= team.billing.limits.monthly.responses;
+      isMauLimitReached =
+        !hasUserTargetingSubscription && currentMau >= organization.billing.limits.monthly.miu;
+      const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
+      isInAppSurveyLimitReached = currentResponseCount >= organization.billing.limits.monthly.responses;
     }
 
     let person = await getPersonByUserId(environmentId, userId);

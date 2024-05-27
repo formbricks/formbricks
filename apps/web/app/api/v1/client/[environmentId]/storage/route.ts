@@ -2,8 +2,8 @@ import { responses } from "@/app/lib/api/response";
 import { NextRequest } from "next/server";
 
 import { getBiggerUploadFileSizePermission } from "@formbricks/ee/lib/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
 import { uploadPrivateFile } from "./lib/uploadPrivateFile";
 
@@ -40,17 +40,20 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
     return responses.badRequestResponse("contentType is required");
   }
 
-  const [survey, team] = await Promise.all([getSurvey(surveyId), getTeamByEnvironmentId(environmentId)]);
+  const [survey, organization] = await Promise.all([
+    getSurvey(surveyId),
+    getOrganizationByEnvironmentId(environmentId),
+  ]);
 
   if (!survey) {
     return responses.notFoundResponse("Survey", surveyId);
   }
 
-  if (!team) {
-    return responses.notFoundResponse("TeamByEnvironmentId", environmentId);
+  if (!organization) {
+    return responses.notFoundResponse("OrganizationByEnvironmentId", environmentId);
   }
 
-  const plan = (await getBiggerUploadFileSizePermission(team)) ? "pro" : "free";
+  const plan = (await getBiggerUploadFileSizePermission(organization)) ? "pro" : "free";
 
   return await uploadPrivateFile(fileName, environmentId, fileType, plan);
 };

@@ -77,12 +77,17 @@ export const ResponsePage = ({
     if (isSharingPage) {
       newResponses = await getResponsesBySurveySharingKeyAction(
         sharingKey,
-        newPage,
         responsesPerPage,
+        (newPage - 1) * responsesPerPage,
         filters
       );
     } else {
-      newResponses = await getResponsesAction(surveyId, newPage, responsesPerPage, filters);
+      newResponses = await getResponsesAction(
+        surveyId,
+        responsesPerPage,
+        (newPage - 1) * responsesPerPage,
+        filters
+      );
     }
 
     if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
@@ -132,9 +137,9 @@ export const ResponsePage = ({
         let responses: TResponse[] = [];
 
         if (isSharingPage) {
-          responses = await getResponsesBySurveySharingKeyAction(sharingKey, 1, responsesPerPage, filters);
+          responses = await getResponsesBySurveySharingKeyAction(sharingKey, responsesPerPage, 0, filters);
         } else {
-          responses = await getResponsesAction(surveyId, 1, responsesPerPage, filters);
+          responses = await getResponsesAction(surveyId, responsesPerPage, 0, filters);
         }
 
         if (responses.length < responsesPerPage) {

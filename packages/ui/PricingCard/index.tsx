@@ -1,6 +1,6 @@
 import { CheckIcon } from "lucide-react";
 
-import { TTeam } from "@formbricks/types/teams";
+import { TOrganization } from "@formbricks/types/organizations";
 
 import { Badge } from "../Badge";
 import { Button } from "../Button";
@@ -11,7 +11,7 @@ export const PricingCard = ({
   subtitle,
   monthlyPrice,
   actionText,
-  team,
+  organization,
   paidFeatures,
   loading,
   onUpgrade,
@@ -21,7 +21,7 @@ export const PricingCard = ({
   subtitle: string;
   monthlyPrice?: number;
   actionText?: string;
-  team: TTeam;
+  organization: TOrganization;
   paidFeatures: string[];
   loading: boolean;
   onUpgrade: any;
@@ -30,7 +30,7 @@ export const PricingCard = ({
     <div className="mt-8 rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
       <div className="relative p-8">
         <h2 className="mr-2 inline-flex text-2xl font-bold text-slate-700">{title}</h2>
-        {team.billing.plan === plan && <Badge text="Subscribed" size="normal" type="success" />}
+        {organization.billing.plan === plan && <Badge text="Subscribed" size="normal" type="success" />}
         <p className=" mt-1 whitespace-pre-wrap text-sm text-slate-600">{subtitle}</p>
 
         <div className={`flex py-3 ${plan === "free" ? "flex-col md:flex-row" : ""}`}>
@@ -100,12 +100,12 @@ export const PricingCard = ({
               )}
             </div>
 
-            {team.billing.plan !== plan && plan !== "enterprise" && plan !== "free" && (
+            {organization.billing.plan !== plan && plan !== "enterprise" && plan !== "free" && (
               <Button variant="darkCTA" loading={loading} onClick={() => onUpgrade()}>
                 Switch Plan
               </Button>
             )}
-            {team.billing.plan !== plan && plan === "enterprise" && (
+            {organization.billing.plan !== plan && plan === "enterprise" && (
               <Button variant="darkCTA" loading={loading} onClick={() => onUpgrade()}>
                 Contact Us
               </Button>

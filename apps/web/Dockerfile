@@ -18,11 +18,10 @@ RUN turbo prune @formbricks/web --docker
 FROM base AS installer
 
 # Enable corepack and prepare pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable
 
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
-
 
 # Set hardcoded environment variables
 ENV DATABASE_URL="postgresql://placeholder:for@build:5432/gets_overwritten_at_runtime?schema=public"
@@ -59,7 +58,7 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 ## step 3: setup production runner
 #
 FROM base AS runner
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable
 
 RUN apk add --no-cache curl \
     && apk add --no-cache supercronic \
@@ -92,5 +91,5 @@ RUN mkdir -p /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/uploads/
 
 CMD supercronic -quiet /app/docker/cronjobs & \
-    (cd packages/database && pnpm db:migrate:deploy) && \
+    (cd packages/database && npm run db:migrate:deploy) && \
     exec node apps/web/server.js

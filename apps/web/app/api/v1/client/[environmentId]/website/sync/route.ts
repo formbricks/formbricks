@@ -6,10 +6,13 @@ import { NextRequest } from "next/server";
 import { getActionClassByEnvironmentIdAndName, getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
+import {
+  getMonthlyOrganizationResponseCount,
+  getOrganizationByEnvironmentId,
+} from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { createSurvey, getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
-import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getExampleSurveyTemplate } from "@formbricks/lib/templates";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
@@ -46,9 +49,9 @@ export const GET = async (
     const { environmentId } = syncInputValidation.data;
 
     const environment = await getEnvironment(environmentId);
-    const team = await getTeamByEnvironmentId(environmentId);
-    if (!team) {
-      throw new Error("Team does not exist");
+    const organization = await getOrganizationByEnvironmentId(environmentId);
+    if (!organization) {
+      throw new Error("Organization does not exist");
     }
 
     if (!environment) {
@@ -58,11 +61,12 @@ export const GET = async (
     // check if MAU limit is reached
     let isWebsiteSurveyResponseLimitReached = false;
     if (IS_FORMBRICKS_CLOUD) {
-      // check team subscriptons
+      // check organization subscriptons
 
       // check inAppSurvey subscription
-      const currentResponseCount = await getMonthlyTeamResponseCount(team.id);
-      isWebsiteSurveyResponseLimitReached = currentResponseCount >= team.billing.limits.monthly.responses;
+      const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
+      isWebsiteSurveyResponseLimitReached =
+        currentResponseCount >= organization.billing.limits.monthly.responses;
       if (isWebsiteSurveyResponseLimitReached) {
         await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "websiteSurvey");
       }
@@ -106,7 +110,7 @@ export const GET = async (
     const noCodeActionClasses = actionClasses.filter((actionClass) => actionClass.type === "noCode");
 
     // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
-    let transformedSurveys: TLegacySurvey[] | TSurvey[] = surveys;
+    let transformedSurveys: TLegacySurvey[] | TSurvey[] = filteredSurveys;
     let state: TJsWebsiteStateSync | TJsWebsiteLegacyStateSync = {
       surveys: !isWebsiteSurveyResponseLimitReached ? transformedSurveys : [],
       actionClasses,
