@@ -5,14 +5,14 @@ import { ProductFeatureKeys } from "@formbricks/ee/billing/lib/constants";
 import { reportUsageToStripe } from "@formbricks/ee/billing/lib/reportUsage";
 import { CRON_SECRET, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import {
-  getMonthlyActiveTeamPeopleCount,
-  getMonthlyTeamResponseCount,
-  getTeamsWithPaidPlan,
-} from "@formbricks/lib/team/service";
-import { TTeam } from "@formbricks/types/teams";
+  getMonthlyActiveOrganizationPeopleCount,
+  getMonthlyOrganizationResponseCount,
+  getOrganizationsWithPaidPlan,
+} from "@formbricks/lib/organization/service";
+import { TOrganization } from "@formbricks/types/organizations";
 
-const reportTeamUsage = async (team: TTeam) => {
-  const stripeCustomerId = team.billing.stripeCustomerId;
+const reportOrganizationUsage = async (organization: TOrganization) => {
+  const stripeCustomerId = organization.billing.stripeCustomerId;
   if (!stripeCustomerId) {
     return;
   }
@@ -22,16 +22,17 @@ const reportTeamUsage = async (team: TTeam) => {
   }
 
   let calculateResponses =
-    team.billing.features.inAppSurvey.status !== "inactive" && !team.billing.features.inAppSurvey.unlimited;
+    organization.billing.features.inAppSurvey.status !== "inactive" &&
+    !organization.billing.features.inAppSurvey.unlimited;
   let calculatePeople =
-    team.billing.features.userTargeting.status !== "inactive" &&
-    !team.billing.features.userTargeting.unlimited;
+    organization.billing.features.userTargeting.status !== "inactive" &&
+    !organization.billing.features.userTargeting.unlimited;
 
   if (!calculatePeople && !calculateResponses) {
     return;
   }
-  let people = await getMonthlyActiveTeamPeopleCount(team.id);
-  let responses = await getMonthlyTeamResponseCount(team.id);
+  let people = await getMonthlyActiveOrganizationPeopleCount(organization.id);
+  let responses = await getMonthlyOrganizationResponseCount(organization.id);
 
   if (calculatePeople) {
     await reportUsageToStripe(
@@ -60,8 +61,8 @@ export const POST = async (): Promise<Response> => {
   }
 
   try {
-    const teamsWithPaidPlan = await getTeamsWithPaidPlan();
-    await Promise.all(teamsWithPaidPlan.map(reportTeamUsage));
+    const organizationsWithPaidPlan = await getOrganizationsWithPaidPlan();
+    await Promise.all(organizationsWithPaidPlan.map(reportOrganizationUsage));
 
     return responses.successResponse({}, true);
   } catch (error) {

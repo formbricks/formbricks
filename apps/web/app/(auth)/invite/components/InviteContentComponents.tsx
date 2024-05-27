@@ -51,7 +51,7 @@ export const WrongAccountContent = () => {
 
 export const RightAccountContent = () => {
   return (
-    <ContentLayout headline="You’re in 🎉" description="Welcome to the team.">
+    <ContentLayout headline="You’re in 🎉" description="Welcome to the organization.">
       <Button variant="darkCTA" href="/">
         Go to app
       </Button>

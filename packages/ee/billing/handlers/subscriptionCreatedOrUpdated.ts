@@ -3,11 +3,11 @@ import Stripe from "stripe";
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import {
-  getMonthlyActiveTeamPeopleCount,
-  getMonthlyTeamResponseCount,
-  getTeam,
-  updateTeam,
-} from "@formbricks/lib/team/service";
+  getMonthlyActiveOrganizationPeopleCount,
+  getMonthlyOrganizationResponseCount,
+  getOrganization,
+  updateOrganization,
+} from "@formbricks/lib/organization/service";
 
 import { ProductFeatureKeys, StripePriceLookupKeys, StripeProductNames } from "../lib/constants";
 import { reportUsage } from "../lib/reportUsage";
@@ -39,25 +39,25 @@ const isProductScheduled = async (
 
 export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) => {
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
-  const teamId = stripeSubscriptionObject.metadata.teamId;
+  const organizationId = stripeSubscriptionObject.metadata.organizationId;
 
   if (stripeSubscriptionObject.status !== "active") {
     return;
   }
 
-  if (!teamId) {
-    console.error("No teamId found in subscription");
-    return { status: 400, message: "skipping, no teamId found" };
+  if (!organizationId) {
+    console.error("No organizationId found in subscription");
+    return { status: 400, message: "skipping, no organizationId found" };
   }
 
-  const team = await getTeam(teamId);
-  if (!team) throw new Error("Team not found.");
-  let updatedFeatures = team.billing.features;
+  const organization = await getOrganization(organizationId);
+  if (!organization) throw new Error("Organization not found.");
+  let updatedFeatures = organization.billing.features;
 
   let scheduledSubscriptions: Stripe.SubscriptionSchedule[] = [];
   if (stripeSubscriptionObject.cancel_at_period_end) {
     const allScheduledSubscriptions = await stripe.subscriptionSchedules.list({
-      customer: team.billing.stripeCustomerId as string,
+      customer: organization.billing.stripeCustomerId as string,
     });
     scheduledSubscriptions = allScheduledSubscriptions.data.filter(
       (scheduledSub) => scheduledSub.status === "not_started"
@@ -75,18 +75,18 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
 
         // If the current subscription is scheduled to cancel at the end of the period
         if (stripeSubscriptionObject.cancel_at_period_end) {
-          // Check if the team has a scheduled subscription for this product
+          // Check if the organization has a scheduled subscription for this product
           const isInAppProductScheduled = await isProductScheduled(
             scheduledSubscriptions,
             StripeProductNames.inAppSurvey
           );
 
-          // If the team does not have a scheduled subscription for this product, we cancel the feature
-          if (team.billing.features.inAppSurvey.status === "active" && !isInAppProductScheduled) {
-            team.billing.features.inAppSurvey.status = "cancelled";
+          // If the organization does not have a scheduled subscription for this product, we cancel the feature
+          if (organization.billing.features.inAppSurvey.status === "active" && !isInAppProductScheduled) {
+            organization.billing.features.inAppSurvey.status = "cancelled";
           }
 
-          // If the team has a scheduled subscription for this product, we don't cancel the feature
+          // If the organization has a scheduled subscription for this product, we don't cancel the feature
           if (isInAppProductScheduled) {
             updatedFeatures.inAppSurvey.status = "active";
           }
@@ -97,11 +97,11 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
           if (isInAppSurveyUnlimited) {
             updatedFeatures.inAppSurvey.unlimited = true;
           } else {
-            const countForTeam = await getMonthlyTeamResponseCount(team.id);
+            const countForOrganization = await getMonthlyOrganizationResponseCount(organization.id);
             await reportUsage(
               stripeSubscriptionObject.items.data,
               ProductFeatureKeys.inAppSurvey,
-              countForTeam
+              countForOrganization
             );
           }
         }
@@ -118,8 +118,8 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
             StripeProductNames.linkSurvey
           );
 
-          if (team.billing.features.linkSurvey.status === "active" && !isLinkSurveyScheduled) {
-            team.billing.features.linkSurvey.status = "cancelled";
+          if (organization.billing.features.linkSurvey.status === "active" && !isLinkSurveyScheduled) {
+            organization.billing.features.linkSurvey.status = "cancelled";
           }
 
           if (isLinkSurveyScheduled) {
@@ -144,8 +144,8 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
             StripeProductNames.userTargeting
           );
 
-          if (team.billing.features.userTargeting.status === "active" && !isUserTargetingScheduled) {
-            team.billing.features.userTargeting.status = "cancelled";
+          if (organization.billing.features.userTargeting.status === "active" && !isUserTargetingScheduled) {
+            organization.billing.features.userTargeting.status = "cancelled";
           }
 
           if (isUserTargetingScheduled) {
@@ -156,11 +156,11 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
           if (isUserTargetingUnlimited) {
             updatedFeatures.userTargeting.unlimited = true;
           } else {
-            const countForTeam = await getMonthlyActiveTeamPeopleCount(team.id);
+            const countForOrganization = await getMonthlyActiveOrganizationPeopleCount(organization.id);
             await reportUsage(
               stripeSubscriptionObject.items.data,
               ProductFeatureKeys.userTargeting,
-              countForTeam
+              countForOrganization
             );
           }
         }
@@ -168,7 +168,7 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
     }
   }
 
-  await updateTeam(teamId, {
+  await updateOrganization(organizationId, {
     billing: {
       stripeCustomerId: stripeSubscriptionObject.customer as string,
       features: updatedFeatures,

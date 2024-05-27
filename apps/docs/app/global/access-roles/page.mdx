@@ -1,0 +1,100 @@
+import { MdxImage } from "@/components/MdxImage";
+import AddMember from "./images/add-member.webp";
+import BulkInvite from "./images/bulk-invite.webp";
+import IndvInvite from "./images/individual-invite.webp";
+import MenuItem from "./images/team-settings-menu.webp";
+
+export const metadata = {
+  title: "Team Access Roles",
+  description:
+    "Assign different roles to team members to grant them specific rights like creating surveys, viewing responses, or managing team members.",
+};
+
+# Team Access Roles
+
+Assign different roles to team members to grant them specific rights like creating surveys, viewing responses, or managing team members.
+
+<Note>Access Roles is a feature of the **Enterprise Edition**. In the **Community Edition** and on the **Free** and **Startup** plan in the Cloud you can invite unlimited team members as `Admins`.</Note>
+
+
+| Role | Rights |
+| --- | --- |
+| Owner | Full rights; there can only one owner per team. Ownership can be transferred. |
+| Admin | Full access rights incl. managing team members |
+| Developer | Full product access to setup and run surveys incl. global styling, actions and attribute management, etc |
+| Editor | Create and edit surveys. No access to features related to setting up or maintaining Formbricks. |
+| Viewer | View survey results only. |
+
+## Inviting team members
+
+There are two ways to invite team members: One by one or in bulk.
+
+### Invite team members one by one
+
+1. Go to the `Team Settings` page via the menu in the lower right corner:
+
+<MdxImage 
+src={MenuItem}
+  alt="Where to find the Menu Item for Team Settings"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+2. Click on the `Add Member` button:
+
+<MdxImage
+  src={AddMember}
+  alt="Add Member Button Position"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+3. In the modal, add the Name, Email and Role of the team member you want to invite:
+
+<MdxImage
+  src={IndvInvite}
+  alt="Individual Invite Modal Tab"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+<Note>Access Roles is a feature of the **Enterprise Edition**. In the **Community Edition** and on the **Free** and **Startup** plan in the Cloud you can invite unlimited team members as `Admins`.</Note>
+
+
+Formbricks sends an email to the team member with an invitation link. The team member can accept the invitation or create a new account by clicking on the link.
+
+
+### Invite team members in bulk
+
+1. Go to the `Team Settings` page via the menu in the lower right corner:
+
+<MdxImage
+  src={MenuItem}
+  alt="Where to find the Menu Item for Team Settings"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+2. Click on the `Add Member` button:
+
+<MdxImage
+  src={AddMember}
+  alt="Add Member Button Position"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+3. In the modal, switch to `Bulk Invite`. You can download an example .CSV file to fill in the Name, Email and Role of the team members you want to invite:
+
+<MdxImage
+  src={BulkInvite}
+  alt="Individual Invite Modal Tab"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+4. Upload the filled .CSV file and invite the team members in bulk ✅
+
+Formbricks sends an email to each team member in the CSV. The member can accept the invitation or create a new account by clicking on the link.
+
+---

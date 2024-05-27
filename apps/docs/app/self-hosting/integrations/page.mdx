@@ -116,7 +116,7 @@ Integrating Google Sheets with a self-hosted Formbricks instance requires config
 1. Go to the **[Google Cloud Console](https://console.cloud.google.com/)** and **create a new project**.
 2. Enable necessary APIs:
    - Now select the project you just created and go to the **APIs & Services** section.
-   - Click on the **Enable APIs and Services** button and search for **Google Sheets API** & **Google Drive API** and enable it.
+   - Click on the **Enable APIs and Services** button and search for **Google Sheets API** and enable it.
 3. Configure OAuth Consent Screen:
    - Go to **OAuth Consent screen** and select the appropriate User Type (External or Internal). Select **Internal** if you want only the users of your Google Workspace to be able to use the integration.
    - Fill the required details:
@@ -128,12 +128,11 @@ Integrating Google Sheets with a self-hosted Formbricks instance requires config
 - Click on the **Add or Remove Scopes** button and add the scopes:
   - `https://www.googleapis.com/auth/userinfo.email`
   - `https://www.googleapis.com/auth/spreadsheets`
-  - `https://www.googleapis.com/auth/drive`
 - Click on the **Update** button. Verify the scopes and click on the **Save and Continue** button.
 - Skip the **Test Users** section and click on the **Save and Continue** button.
 
-1. View the OAuth Consent Screen summary and click on the **Back to Dashboard** button.
-2. Register OAuth Client:
+5. View the OAuth Consent Screen summary and click on the **Back to Dashboard** button.
+6. Register OAuth Client:
 
 - Navigate to **Credentials** > **Create Credentials** > **OAuth Client ID**.
 - Select **Web Application** and set:
@@ -142,13 +141,10 @@ Integrating Google Sheets with a self-hosted Formbricks instance requires config
   - Authorized redirect URIs: `https://<your-public-facing-url>/api/google-sheet/callback`
 - Save and note the Client ID and Client Secret.
 
-1. Copy the Client ID and Client Secret and set them as environment variables in your Formbricks instance:
+7. Copy the Client ID and Client Secret and set them as environment variables in your Formbricks instance:
    - `GOOGLE_SHEETS_CLIENT_ID`
    - `GOOGLE_SHEETS_CLIENT_SECRET`
    - `GOOGLE_SHEETS_REDIRECT_URL`
-2. Enable Google Drive API:
-   - Go to the **APIs & Services** section and click on the **Enable APIs and Services** button.
-   - Search for **Google Drive API** and enable it.
 
 Now just copy **GOOGLE_SHEETS_CLIENT_ID**, **GOOGLE_SHEETS_CLIENT_SECRET** and **GOOGLE_SHEETS_REDIRECT_URL** for your integration & add it to your **Formbricks environment variables** as in the docker compose file:
 

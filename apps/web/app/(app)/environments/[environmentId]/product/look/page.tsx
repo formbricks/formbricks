@@ -9,23 +9,23 @@ import {
 } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
 import { SettingsCard } from "../../settings/components/SettingsCard";
 import { EditFormbricksBranding } from "./components/EditBranding";
-import { EditPlacement } from "./components/EditPlacement";
+import { EditPlacementForm } from "./components/EditPlacementForm";
 import { ThemeStyling } from "./components/ThemeStyling";
 
 const Page = async ({ params }: { params: { environmentId: string } }) => {
-  const [session, team, product] = await Promise.all([
+  const [session, organization, product] = await Promise.all([
     getServerSession(authOptions),
-    getTeamByEnvironmentId(params.environmentId),
+    getOrganizationByEnvironmentId(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
   ]);
 
@@ -35,21 +35,21 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   if (!session) {
     throw new Error("Unauthorized");
   }
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
-  const canRemoveInAppBranding = getRemoveInAppBrandingPermission(team);
-  const canRemoveLinkBranding = getRemoveLinkBrandingPermission(team);
+  const canRemoveInAppBranding = getRemoveInAppBrandingPermission(organization);
+  const canRemoveLinkBranding = getRemoveLinkBrandingPermission(organization);
 
-  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
   if (isViewer) {
     return <ErrorComponent />;
   }
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
   return (
     <PageContentWrapper>
@@ -77,7 +77,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       <SettingsCard
         title="In-app Survey Placement"
         description="Change where surveys will be shown in your web app.">
-        <EditPlacement product={product} environmentId={params.environmentId} />
+        <EditPlacementForm product={product} environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard
         title="Formbricks Branding"
