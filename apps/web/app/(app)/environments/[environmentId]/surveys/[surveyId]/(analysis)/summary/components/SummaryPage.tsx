@@ -107,7 +107,7 @@ export const SummaryPage = ({
 
   const searchParams = useSearchParams();
 
-  survey = useMemo(() => {
+  const surveyMemoized = useMemo(() => {
     return checkForRecallInHeadline(survey, "default", attributeClasses);
   }, [survey, attributeClasses]);
 
@@ -126,13 +126,13 @@ export const SummaryPage = ({
       />
       {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
       <div className="flex gap-1.5">
-        <CustomFilter survey={survey} />
-        {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />}
+        <CustomFilter survey={surveyMemoized} />
+        {!isSharingPage && <ResultsShareButton survey={surveyMemoized} webAppUrl={webAppUrl} user={user} />}
       </div>
       <SummaryList
         summary={surveySummary.summary}
         responseCount={responseCount}
-        survey={survey}
+        survey={surveyMemoized}
         environment={environment}
         fetchingSummary={isFetchingSummary}
         totalResponseCount={totalResponseCount}
