@@ -6,23 +6,37 @@ import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 
 export const replaceRecallInfo = (text: string, responseData: TResponseData): string => {
-  while (text.includes("recall:")) {
-    const recallInfo = extractRecallInfo(text);
-    if (recallInfo) {
-      const questionId = extractId(recallInfo);
-      const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
-      let value = questionId && responseData[questionId] ? (responseData[questionId] as string) : fallback;
+  let modifiedText = text;
 
+  while (modifiedText.includes("recall:")) {
+    const recallInfo = extractRecallInfo(modifiedText);
+    if (!recallInfo) break; // Exit the loop if no recall info is found
+
+    const recallItemId = extractId(recallInfo);
+    if (!recallItemId) return modifiedText; // Return the text if no ID could be extracted
+
+    const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
+    let value = null;
+
+    // Fetching value from responseData or attributes based on recallItemId
+    if (responseData[recallItemId]) {
+      value = (responseData[recallItemId] as string) ?? fallback;
+    }
+
+    // Additional value formatting if it exists
+    if (value) {
       if (isValidDateString(value)) {
         value = formatDateWithOrdinal(new Date(value));
+      } else if (Array.isArray(value)) {
+        value = value.filter((item) => item).join(", "); // Filters out empty values and joins with a comma
       }
-      if (Array.isArray(value)) {
-        value = value.filter((item) => item !== null && item !== undefined && item !== "").join(", ");
-      }
-      text = text.replace(recallInfo, value);
     }
+
+    // Replace the recallInfo in the text with the obtained or fallback value
+    modifiedText = modifiedText.replace(recallInfo, value || fallback);
   }
-  return text;
+
+  return modifiedText;
 };
 
 export const parseRecallInformation = (

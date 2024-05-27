@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -19,6 +20,7 @@ interface ResponseTimelineProps {
   responses: TResponse[];
   environment: TEnvironment;
   environmentTags: TTag[];
+  attributeClasses: TAttributeClass[];
 }
 
 export const ResponseFeed = ({
@@ -27,6 +29,7 @@ export const ResponseFeed = ({
   surveys,
   user,
   environmentTags,
+  attributeClasses,
 }: ResponseTimelineProps) => {
   const [fetchedResponses, setFetchedResponses] = useState(responses);
 
@@ -59,6 +62,7 @@ export const ResponseFeed = ({
             environment={environment}
             deleteResponse={deleteResponse}
             updateResponse={updateResponse}
+            attributeClasses={attributeClasses}
           />
         ))
       )}
@@ -74,6 +78,7 @@ const ResponseSurveyCard = ({
   environment,
   deleteResponse,
   updateResponse,
+  attributeClasses,
 }: {
   response: TResponse;
   surveys: TSurvey[];
@@ -82,6 +87,7 @@ const ResponseSurveyCard = ({
   environment: TEnvironment;
   deleteResponse: (responseId: string) => void;
   updateResponse: (responseId: string, response: TResponse) => void;
+  attributeClasses: TAttributeClass[];
 }) => {
   const survey = surveys.find((survey) => {
     return survey.id === response.surveyId;
@@ -95,7 +101,7 @@ const ResponseSurveyCard = ({
       {survey && (
         <SingleResponseCard
           response={response}
-          survey={checkForRecallInHeadline(survey, "default")}
+          survey={replaceHeadlineRecall(survey, "default", attributeClasses)}
           user={user}
           pageType="people"
           environmentTags={environmentTags}
