@@ -5,8 +5,8 @@ import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail }
 import { CRON_SECRET } from "@formbricks/lib/constants";
 
 import { getNotificationResponse } from "./lib/notificationResponse";
-import { getProductsByTeamId } from "./lib/product";
-import { getTeamIds } from "./lib/team";
+import { getOrganizationIds } from "./lib/organization";
+import { getProductsByOrganizationId } from "./lib/product";
 
 const BATCH_SIZE = 500;
 
@@ -18,41 +18,43 @@ export const POST = async (): Promise<Response> => {
 
   const emailSendingPromises: Promise<void>[] = [];
 
-  // Fetch all team IDs
-  const teamIds = await getTeamIds();
+  // Fetch all organization IDs
+  const organizationIds = await getOrganizationIds();
 
-  // Paginate through teams
-  for (let i = 0; i < teamIds.length; i += BATCH_SIZE) {
-    const batchedTeamIds = teamIds.slice(i, i + BATCH_SIZE);
-    // Fetch products for batched teams asynchronously
-    const batchedProductsPromises = batchedTeamIds.map((teamId) => getProductsByTeamId(teamId));
+  // Paginate through organizations
+  for (let i = 0; i < organizationIds.length; i += BATCH_SIZE) {
+    const batchedOrganizationIds = organizationIds.slice(i, i + BATCH_SIZE);
+    // Fetch products for batched organizations asynchronously
+    const batchedProductsPromises = batchedOrganizationIds.map((organizationId) =>
+      getProductsByOrganizationId(organizationId)
+    );
 
     const batchedProducts = await Promise.all(batchedProductsPromises);
     for (const products of batchedProducts) {
       for (const product of products) {
-        const teamMembers = product.team.memberships;
-        const teamMembersWithNotificationEnabled = teamMembers.filter(
+        const organizationMembers = product.organization.memberships;
+        const organizationMembersWithNotificationEnabled = organizationMembers.filter(
           (member) =>
             member.user.notificationSettings?.weeklySummary &&
             member.user.notificationSettings.weeklySummary[product.id]
         );
 
-        if (teamMembersWithNotificationEnabled.length === 0) continue;
+        if (organizationMembersWithNotificationEnabled.length === 0) continue;
 
         const notificationResponse = getNotificationResponse(product.environments[0], product.name);
 
         if (notificationResponse.insights.numLiveSurvey === 0) {
-          for (const teamMember of teamMembersWithNotificationEnabled) {
+          for (const organizationMember of organizationMembersWithNotificationEnabled) {
             emailSendingPromises.push(
-              sendNoLiveSurveyNotificationEmail(teamMember.user.email, notificationResponse)
+              sendNoLiveSurveyNotificationEmail(organizationMember.user.email, notificationResponse)
             );
           }
           continue;
         }
 
-        for (const teamMember of teamMembersWithNotificationEnabled) {
+        for (const organizationMember of organizationMembersWithNotificationEnabled) {
           emailSendingPromises.push(
-            sendWeeklySummaryNotificationEmail(teamMember.user.email, notificationResponse)
+            sendWeeklySummaryNotificationEmail(organizationMember.user.email, notificationResponse)
           );
         }
       }

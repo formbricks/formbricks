@@ -32,7 +32,9 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           <SettingsCard title="Personal information" description="Update your personal information.">
             <EditName user={user} />
           </SettingsCard>
-          <SettingsCard title="Avatar" description="Assist your team in identifying you on Formbricks.">
+          <SettingsCard
+            title="Avatar"
+            description="Assist your organization in identifying you on Formbricks.">
             <EditAvatar session={session} environmentId={environmentId} />
           </SettingsCard>
           {user.identityProvider === "email" && (

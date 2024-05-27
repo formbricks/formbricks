@@ -76,7 +76,7 @@ const Page = async ({ searchParams }) => {
         </ContentLayout>
       );
     } else {
-      await createMembership(invite.teamId, session.user.id, { accepted: true, role: invite.role });
+      await createMembership(invite.organizationId, session.user.id, { accepted: true, role: invite.role });
       await deleteInvite(inviteId);
 
       await sendInviteAcceptedEmail(
@@ -86,7 +86,7 @@ const Page = async ({ searchParams }) => {
       );
       await updateUser(session.user.id, { onboardingCompleted: true });
       return (
-        <ContentLayout headline="You’re in 🎉" description="Welcome to the team.">
+        <ContentLayout headline="You’re in 🎉" description="Welcome to the organization.">
           <Button variant="darkCTA" href="/">
             Go to app
           </Button>

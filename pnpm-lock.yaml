@@ -444,9 +444,6 @@ importers:
       redis:
         specifier: ^4.6.14
         version: 4.6.14
-      sharp:
-        specifier: ^0.33.4
-        version: 0.33.4
       ua-parser-js:
         specifier: ^1.0.37
         version: 1.0.37

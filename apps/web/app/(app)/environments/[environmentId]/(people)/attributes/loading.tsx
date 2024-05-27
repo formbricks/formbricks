@@ -8,7 +8,7 @@ const Loading = () => {
   return (
     <>
       <PageContentWrapper>
-        <PageHeader pageTitle="Attributes">
+        <PageHeader pageTitle="People">
           <PeopleSecondaryNavigation activeId="attributes" loading />
         </PageHeader>
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
