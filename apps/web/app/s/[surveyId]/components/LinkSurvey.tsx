@@ -32,7 +32,6 @@ interface LinkSurveyProps {
   responseCount?: number;
   verifiedEmail?: string;
   languageCode: string;
-  isMultiLanguageAllowed: boolean;
 }
 
 export const LinkSurvey = ({
@@ -46,7 +45,6 @@ export const LinkSurvey = ({
   responseCount,
   verifiedEmail,
   languageCode,
-  isMultiLanguageAllowed,
 }: LinkSurveyProps) => {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
@@ -284,7 +282,6 @@ export const LinkSurvey = ({
             setQuestionId = f;
           }}
           startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
-          isMultiLanguageAllowed={isMultiLanguageAllowed}
         />
       </div>
     </div>

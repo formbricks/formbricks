@@ -1,7 +1,6 @@
 "use client";
 
 import { PlusIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
 import { toast } from "react-hot-toast";
 
 import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -32,7 +31,6 @@ export const MatrixQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
 }: MatrixQuestionFormProps): JSX.Element => {
-  const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   // Function to add a new Label input field
   const handleAddLabel = (type: "row" | "column") => {
@@ -112,7 +110,7 @@ export const MatrixQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
       />
       <div>
-        {showSubheader && (
+        {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
@@ -126,23 +124,19 @@ export const MatrixQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
-
-            <TrashIcon
-              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => {
-                setShowSubheader(false);
-                updateQuestion(questionIdx, { subheader: undefined });
-              }}
-            />
           </div>
         )}
-        {!showSubheader && (
+        {question.subheader === undefined && (
           <Button
             size="sm"
             variant="minimal"
             className="mt-3"
             type="button"
-            onClick={() => setShowSubheader(true)}>
+            onClick={() => {
+              updateQuestion(questionIdx, {
+                subheader: createI18nString("", languageCodes),
+              });
+            }}>
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>

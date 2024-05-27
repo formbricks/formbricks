@@ -1,5 +1,4 @@
-import { PlusIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
+import { PlusIcon } from "lucide-react";
 
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys";
@@ -28,7 +27,6 @@ export const CalQuestionForm = ({
   setSelectedLanguageCode,
   isInvalid,
 }: CalQuestionFormProps): JSX.Element => {
-  const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   return (
@@ -44,7 +42,7 @@ export const CalQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
       />
       <div>
-        {showSubheader && (
+        {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
@@ -58,17 +56,9 @@ export const CalQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
-
-            <TrashIcon
-              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => {
-                setShowSubheader(false);
-                updateQuestion(questionIdx, { subheader: undefined });
-              }}
-            />
           </div>
         )}
-        {!showSubheader && (
+        {question.subheader === undefined && (
           <Button
             size="sm"
             className="mt-3"
@@ -78,7 +68,6 @@ export const CalQuestionForm = ({
               updateQuestion(questionIdx, {
                 subheader: createI18nString("", surveyLanguageCodes),
               });
-              setShowSubheader(true);
             }}>
             {" "}
             <PlusIcon className="mr-1 h-4 w-4" />

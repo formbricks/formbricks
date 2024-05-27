@@ -26,7 +26,6 @@ interface PinScreenProps {
   IS_FORMBRICKS_CLOUD: boolean;
   verifiedEmail?: string;
   languageCode: string;
-  isMultiLanguageAllowed: boolean;
 }
 
 export const PinScreen = (props: PinScreenProps) => {
@@ -43,7 +42,6 @@ export const PinScreen = (props: PinScreenProps) => {
     IS_FORMBRICKS_CLOUD,
     verifiedEmail,
     languageCode,
-    isMultiLanguageAllowed,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -124,7 +122,6 @@ export const PinScreen = (props: PinScreenProps) => {
           webAppUrl={webAppUrl}
           verifiedEmail={verifiedEmail}
           languageCode={languageCode}
-          isMultiLanguageAllowed={isMultiLanguageAllowed}
         />
       </MediaBackground>
       <LegalFooter

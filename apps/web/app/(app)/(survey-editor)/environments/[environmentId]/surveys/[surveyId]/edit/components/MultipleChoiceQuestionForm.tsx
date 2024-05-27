@@ -3,7 +3,7 @@
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { createId } from "@paralleldrive/cuid2";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
@@ -44,7 +44,6 @@ export const MultipleChoiceQuestionForm = ({
 }: OpenQuestionFormProps): JSX.Element => {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
-  const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
 
   const questionRef = useRef<HTMLInputElement>(null);
@@ -193,7 +192,7 @@ export const MultipleChoiceQuestionForm = ({
       />
 
       <div>
-        {showSubheader && (
+        {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
@@ -207,17 +206,9 @@ export const MultipleChoiceQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
-
-            <TrashIcon
-              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => {
-                setShowSubheader(false);
-                updateQuestion(questionIdx, { subheader: undefined });
-              }}
-            />
           </div>
         )}
-        {!showSubheader && (
+        {question.subheader === undefined && (
           <Button
             size="sm"
             variant="minimal"
@@ -227,9 +218,7 @@ export const MultipleChoiceQuestionForm = ({
               updateQuestion(questionIdx, {
                 subheader: createI18nString("", surveyLanguageCodes),
               });
-              setShowSubheader(true);
             }}>
-            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>

@@ -174,7 +174,6 @@ export const ThemeStylingPreviewSurvey = ({
                 getSetQuestionId={(f: (value: string) => void) => {
                   setQuestionId = f;
                 }}
-                isMultiLanguageAllowed={false}
               />
             </Modal>
           ) : (
@@ -197,7 +196,6 @@ export const ThemeStylingPreviewSurvey = ({
                   getSetQuestionId={(f: (value: string) => void) => {
                     setQuestionId = f;
                   }}
-                  isMultiLanguageAllowed={false}
                 />
               </div>
             </MediaBackground>

@@ -160,7 +160,6 @@ const renderWidget = async (survey: TSurvey, action?: string) => {
         setIsError(false);
         responseQueue.processQueue();
       },
-      isMultiLanguageAllowed: true,
     });
   }, survey.delay * 1000);
 };

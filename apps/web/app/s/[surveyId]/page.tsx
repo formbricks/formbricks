@@ -170,7 +170,6 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
-        isMultiLanguageAllowed={isMultiLanguageAllowed}
       />
     );
   }
@@ -189,7 +188,6 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
           responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
           verifiedEmail={verifiedEmail}
           languageCode={languageCode}
-          isMultiLanguageAllowed={isMultiLanguageAllowed}
         />
         <LegalFooter
           IMPRINT_URL={IMPRINT_URL}

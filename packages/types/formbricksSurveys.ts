@@ -26,7 +26,6 @@ export interface SurveyBaseProps {
   startAtQuestionId?: string;
   clickOutside?: boolean;
   shouldResetQuestionId?: boolean;
-  isMultiLanguageAllowed: boolean;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

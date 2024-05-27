@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusIcon, TrashIcon, XCircleIcon } from "lucide-react";
+import { PlusIcon, XCircleIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -37,7 +37,6 @@ export const FileUploadQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
 }: FileUploadFormProps): JSX.Element => {
-  const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [extension, setExtension] = useState("");
   const {
     billingInfo,
@@ -123,7 +122,7 @@ export const FileUploadQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
       />
       <div>
-        {showSubheader && (
+        {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
@@ -137,17 +136,9 @@ export const FileUploadQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
-
-            <TrashIcon
-              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => {
-                setShowSubheader(false);
-                updateQuestion(questionIdx, { subheader: undefined });
-              }}
-            />
           </div>
         )}
-        {!showSubheader && (
+        {question.subheader === undefined && (
           <Button
             size="sm"
             className="mt-3"
@@ -157,9 +148,7 @@ export const FileUploadQuestionForm = ({
               updateQuestion(questionIdx, {
                 subheader: createI18nString("", surveyLanguageCodes),
               });
-              setShowSubheader(true);
             }}>
-            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>

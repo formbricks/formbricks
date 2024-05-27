@@ -258,7 +258,6 @@ export const PreviewSurvey = ({
                       setQuestionId = f;
                     }}
                     onFinished={onFinished}
-                    isMultiLanguageAllowed={false}
                   />
                 </Modal>
               ) : (
@@ -279,7 +278,6 @@ export const PreviewSurvey = ({
                       getSetQuestionId={(f: (value: string) => void) => {
                         setQuestionId = f;
                       }}
-                      isMultiLanguageAllowed={false}
                     />
                   </div>
                 </div>
@@ -345,7 +343,6 @@ export const PreviewSurvey = ({
                     setQuestionId = f;
                   }}
                   onFinished={onFinished}
-                  isMultiLanguageAllowed={false}
                 />
               </Modal>
             ) : (
@@ -367,7 +364,6 @@ export const PreviewSurvey = ({
                     getSetQuestionId={(f: (value: string) => void) => {
                       setQuestionId = f;
                     }}
-                    isMultiLanguageAllowed={false}
                   />
                 </div>
               </MediaBackground>

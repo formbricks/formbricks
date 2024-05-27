@@ -1,5 +1,4 @@
-import { HashIcon, PlusIcon, SmileIcon, StarIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
+import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
@@ -29,7 +28,6 @@ export const RatingQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
 }: RatingQuestionFormProps) => {
-  const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   return (
@@ -46,7 +44,7 @@ export const RatingQuestionForm = ({
       />
 
       <div>
-        {showSubheader && (
+        {question.subheader !== undefined && (
           <div className="mt-2 inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
@@ -60,17 +58,9 @@ export const RatingQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
-
-            <TrashIcon
-              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => {
-                setShowSubheader(false);
-                updateQuestion(questionIdx, { subheader: undefined });
-              }}
-            />
           </div>
         )}
-        {!showSubheader && (
+        {question.subheader === undefined && (
           <Button
             size="sm"
             variant="minimal"
@@ -80,9 +70,7 @@ export const RatingQuestionForm = ({
               updateQuestion(questionIdx, {
                 subheader: createI18nString("", surveyLanguageCodes),
               });
-              setShowSubheader(true);
             }}>
-            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>

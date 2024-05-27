@@ -38,7 +38,6 @@ export const Survey = ({
   startAtQuestionId,
   clickOutside,
   shouldResetQuestionId,
-  isMultiLanguageAllowed,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
 
@@ -123,6 +122,10 @@ export const Survey = ({
       });
     }
   }, [getSetIsResponseSendingFinished]);
+
+  useEffect(() => {
+    setselectedLanguage(languageCode);
+  }, [languageCode]);
 
   let currIdxTemp = currentQuestionIndex;
   let currQuesTemp = currentQuestion;
@@ -308,7 +311,7 @@ export const Survey = ({
     return (
       <AutoCloseWrapper survey={survey} onClose={onClose}>
         {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
-        {isMultiLanguageAllowed && survey.languages.length > 0 && offset <= 0 && (
+        {survey.languages.length > 0 && offset <= 0 && (
           <LanguageSwitch
             surveyLanguages={survey.languages}
             setSelectedLanguageCode={setselectedLanguage}
@@ -334,14 +337,18 @@ export const Survey = ({
   };
 
   return (
-    <StackedCardsContainer
-      cardArrangement={cardArrangement}
-      currentQuestionId={questionId}
-      getCardContent={getCardContent}
-      survey={survey}
-      styling={styling}
-      setQuestionId={setQuestionId}
-      shouldResetQuestionId={shouldResetQuestionId}
-    />
+    <>
+      {console.log({ languageCode })}
+      {console.log({ selectedLanguage })}
+      <StackedCardsContainer
+        cardArrangement={cardArrangement}
+        currentQuestionId={questionId}
+        getCardContent={getCardContent}
+        survey={survey}
+        styling={styling}
+        setQuestionId={setQuestionId}
+        shouldResetQuestionId={shouldResetQuestionId}
+      />
+    </>
   );
 };
