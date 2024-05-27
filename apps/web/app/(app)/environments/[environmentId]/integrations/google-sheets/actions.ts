@@ -6,10 +6,10 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getSpreadsheetNameById } from "@formbricks/lib/googleSheet/service";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { TIntegrationGoogleSheetsCredential } from "@formbricks/types/integration/googleSheet";
+import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
 
 export async function getSpreadsheetNameByIdAction(
-  credentials: TIntegrationGoogleSheetsCredential,
+  googleSheetIntegration: TIntegrationGoogleSheets,
   environmentId: string,
   spreadsheetId: string
 ) {
@@ -19,5 +19,5 @@ export async function getSpreadsheetNameByIdAction(
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  return await getSpreadsheetNameById(credentials, spreadsheetId);
+  return await getSpreadsheetNameById(googleSheetIntegration, spreadsheetId);
 }
