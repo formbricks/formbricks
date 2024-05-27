@@ -4,8 +4,8 @@ import { notFound } from "next/navigation";
 
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { EditLanguage } from "@formbricks/ee/multiLanguage/components/EditLanguage";
+import { getOrganization } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getTeam } from "@formbricks/lib/team/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
@@ -16,13 +16,13 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
     throw new Error("Product not found");
   }
 
-  const team = await getTeam(product?.teamId);
+  const organization = await getOrganization(product?.organizationId);
 
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
   if (!isMultiLanguageAllowed) {
     notFound();

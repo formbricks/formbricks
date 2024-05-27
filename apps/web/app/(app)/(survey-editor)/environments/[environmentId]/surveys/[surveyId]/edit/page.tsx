@@ -6,13 +6,13 @@ import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 import { SurveyEditor } from "./components/SurveyEditor";
@@ -32,7 +32,7 @@ const Page = async ({ params }) => {
     actionClasses,
     attributeClasses,
     responseCount,
-    team,
+    organization,
     session,
     segments,
   ] = await Promise.all([
@@ -42,7 +42,7 @@ const Page = async ({ params }) => {
     getActionClasses(params.environmentId),
     getAttributeClasses(params.environmentId),
     getResponseCountBySurveyId(params.surveyId),
-    getTeamByEnvironmentId(params.environmentId),
+    getOrganizationByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
     getSegments(params.environmentId),
   ]);
@@ -51,16 +51,16 @@ const Page = async ({ params }) => {
     throw new Error("Session not found");
   }
 
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
-  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
   const isSurveyCreationDeletionDisabled = isViewer;
 
-  const isUserTargetingAllowed = await getAdvancedTargetingPermission(team);
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+  const isUserTargetingAllowed = await getAdvancedTargetingPermission(organization);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
   if (
     !survey ||

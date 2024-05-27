@@ -3,7 +3,7 @@ import "server-only";
 import { cache, revalidateTag } from "@formbricks/lib/cache";
 import { E2E_TESTING, ENTERPRISE_LICENSE_KEY, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { hashString } from "@formbricks/lib/hashString";
-import { TTeam } from "@formbricks/types/teams";
+import { TOrganization } from "@formbricks/types/organizations";
 
 import { prisma } from "../../database/src";
 
@@ -131,32 +131,32 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
   }
 };
 
-export const getRemoveInAppBrandingPermission = (team: TTeam): boolean => {
-  if (IS_FORMBRICKS_CLOUD) return team.billing.features.inAppSurvey.status !== "inactive";
+export const getRemoveInAppBrandingPermission = (organization: TOrganization): boolean => {
+  if (IS_FORMBRICKS_CLOUD) return organization.billing.features.inAppSurvey.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return true;
   else return false;
 };
 
-export const getRemoveLinkBrandingPermission = (team: TTeam): boolean => {
-  if (IS_FORMBRICKS_CLOUD) return team.billing.features.linkSurvey.status !== "inactive";
+export const getRemoveLinkBrandingPermission = (organization: TOrganization): boolean => {
+  if (IS_FORMBRICKS_CLOUD) return organization.billing.features.linkSurvey.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return true;
   else return false;
 };
 
-export const getRoleManagementPermission = async (team: TTeam): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD) return team.billing.features.inAppSurvey.status !== "inactive";
+export const getRoleManagementPermission = async (organization: TOrganization): Promise<boolean> => {
+  if (IS_FORMBRICKS_CLOUD) return organization.billing.features.inAppSurvey.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
   else return false;
 };
 
-export const getAdvancedTargetingPermission = async (team: TTeam): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD) return team.billing.features.userTargeting.status !== "inactive";
+export const getAdvancedTargetingPermission = async (organization: TOrganization): Promise<boolean> => {
+  if (IS_FORMBRICKS_CLOUD) return organization.billing.features.userTargeting.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
   else return false;
 };
 
-export const getMultiLanguagePermission = async (team: TTeam): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD) return team.billing.features.inAppSurvey.status !== "inactive";
+export const getMultiLanguagePermission = async (organization: TOrganization): Promise<boolean> => {
+  if (IS_FORMBRICKS_CLOUD) return organization.billing.features.inAppSurvey.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
   else return false;
 };

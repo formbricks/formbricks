@@ -15,15 +15,15 @@ import {
   PRICING_USERTARGETING_FREE_MTU,
 } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
+import {
+  getMonthlyActiveOrganizationPeopleCount,
+  getMonthlyOrganizationResponseCount,
+  getOrganizationByEnvironmentId,
+} from "@formbricks/lib/organization/service";
 import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
-import {
-  getMonthlyActiveTeamPeopleCount,
-  getMonthlyTeamResponseCount,
-  getTeamByEnvironmentId,
-} from "@formbricks/lib/team/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -79,11 +79,11 @@ export const GET = async (
       await updateEnvironment(environment.id, { widgetSetupCompleted: true });
     }
 
-    // check team subscriptions
-    const team = await getTeamByEnvironmentId(environmentId);
+    // check organization subscriptions
+    const organization = await getOrganizationByEnvironmentId(environmentId);
 
-    if (!team) {
-      throw new Error("Team does not exist");
+    if (!organization) {
+      throw new Error("Organization does not exist");
     }
 
     // check if MAU limit is reached
@@ -92,15 +92,15 @@ export const GET = async (
     if (IS_FORMBRICKS_CLOUD) {
       // check userTargeting subscription
       const hasUserTargetingSubscription =
-        team.billing.features.userTargeting.status &&
-        ["active", "canceled"].includes(team.billing.features.userTargeting.status);
-      const currentMau = await getMonthlyActiveTeamPeopleCount(team.id);
+        organization.billing.features.userTargeting.status &&
+        ["active", "canceled"].includes(organization.billing.features.userTargeting.status);
+      const currentMau = await getMonthlyActiveOrganizationPeopleCount(organization.id);
       isMauLimitReached = !hasUserTargetingSubscription && currentMau >= PRICING_USERTARGETING_FREE_MTU;
       // check inAppSurvey subscription
       const hasInAppSurveySubscription =
-        team.billing.features.inAppSurvey.status &&
-        ["active", "canceled"].includes(team.billing.features.inAppSurvey.status);
-      const currentResponseCount = await getMonthlyTeamResponseCount(team.id);
+        organization.billing.features.inAppSurvey.status &&
+        ["active", "canceled"].includes(organization.billing.features.inAppSurvey.status);
+      const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
       isInAppSurveyLimitReached =
         !hasInAppSurveySubscription && currentResponseCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
     }

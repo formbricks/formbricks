@@ -5,11 +5,11 @@ import { getServerSession } from "next-auth";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTagsOnResponsesCount } from "@formbricks/lib/tagOnResponse/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
@@ -23,25 +23,25 @@ const Page = async ({ params }) => {
   }
   const tags = await getTagsByEnvironmentId(params.environmentId);
   const environmentTagsCount = await getTagsOnResponsesCount(params.environmentId);
-  const team = await getTeamByEnvironmentId(params.environmentId);
+  const organization = await getOrganizationByEnvironmentId(params.environmentId);
   const session = await getServerSession(authOptions);
 
   if (!environment) {
     throw new Error("Environment not found");
   }
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
   if (!session) {
     throw new Error("Unauthenticated");
   }
 
-  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
   const isTagSettingDisabled = isViewer;
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
   return !isTagSettingDisabled ? (
     <PageContentWrapper>

@@ -3,7 +3,7 @@
 import { EmptyAppSurveys } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import { useEffect, useRef, useState } from "react";
 
-import { getMembershipByUserIdTeamIdAction } from "@formbricks/lib/membership/hooks/actions";
+import { getMembershipByUserIdOrganizationIdAction } from "@formbricks/lib/membership/hooks/actions";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
@@ -76,7 +76,7 @@ export const ResponseTimeline = ({
     const getRole = async () => {
       if (isSharingPage) return setIsViewer(true);
 
-      const membershipRole = await getMembershipByUserIdTeamIdAction(survey.environmentId);
+      const membershipRole = await getMembershipByUserIdOrganizationIdAction(survey.environmentId);
       const { isViewer } = getAccessFlags(membershipRole);
       setIsViewer(isViewer);
     };

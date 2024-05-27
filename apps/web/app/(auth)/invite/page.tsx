@@ -41,7 +41,7 @@ const Page = async ({ searchParams }) => {
     } else if (session.user?.email !== email) {
       return <WrongAccountContent />;
     } else {
-      await createMembership(invite.teamId, session.user.id, { accepted: true, role: invite.role });
+      await createMembership(invite.organizationId, session.user.id, { accepted: true, role: invite.role });
       await deleteInvite(inviteId);
 
       sendInviteAcceptedEmail(invite.creator.name ?? "", session.user?.name ?? "", invite.creator.email);

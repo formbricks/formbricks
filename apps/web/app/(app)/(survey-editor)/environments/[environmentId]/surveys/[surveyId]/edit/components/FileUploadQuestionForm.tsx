@@ -6,7 +6,7 @@ import { toast } from "react-hot-toast";
 
 import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
-import { useGetBillingInfo } from "@formbricks/lib/team/hooks/useGetBillingInfo";
+import { useGetBillingInfo } from "@formbricks/lib/organization/hooks/useGetBillingInfo";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { TProduct } from "@formbricks/types/product";
@@ -46,7 +46,7 @@ export const FileUploadQuestionForm = ({
     billingInfo,
     error: billingInfoError,
     isLoading: billingInfoLoading,
-  } = useGetBillingInfo(product?.teamId ?? "");
+  } = useGetBillingInfo(product?.organizationId ?? "");
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   const handleInputChange = (event) => {

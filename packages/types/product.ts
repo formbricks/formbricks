@@ -41,10 +41,14 @@ export const ZProduct = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  name: z.string(),
-  teamId: z.string(),
+  name: z.string().trim().min(1, { message: "Product name cannot be empty" }),
+  organizationId: z.string(),
   styling: ZProductStyling,
-  recontactDays: z.number().int(),
+  recontactDays: z
+    .number({ message: "Recontact days is required" })
+    .int()
+    .min(0, { message: "Must be a positive number" })
+    .max(365, { message: "Must be less than 365" }),
   inAppSurveyBranding: z.boolean(),
   linkSurveyBranding: z.boolean(),
   placement: ZPlacement,
@@ -61,7 +65,7 @@ export type TProduct = z.infer<typeof ZProduct>;
 
 export const ZProductUpdateInput = z.object({
   name: z.string().optional(),
-  teamId: z.string().optional(),
+  organizationId: z.string().optional(),
   brandColor: ZColor.optional(),
   highlightBorderColor: ZColor.nullish(),
   recontactDays: z.number().int().optional(),

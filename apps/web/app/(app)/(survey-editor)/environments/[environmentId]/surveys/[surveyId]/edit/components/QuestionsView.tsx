@@ -20,7 +20,12 @@ import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
-import { isCardValid, validateQuestion, validateSurveyQuestionsInBatch } from "../lib/validation";
+import {
+  findQuestionsWithCyclicLogic,
+  isCardValid,
+  validateQuestion,
+  validateSurveyQuestionsInBatch,
+} from "../lib/validation";
 import { AddQuestionButton } from "./AddQuestionButton";
 import { EditThankYouCard } from "./EditThankYouCard";
 import { EditWelcomeCard } from "./EditWelcomeCard";
@@ -92,8 +97,12 @@ export const QuestionsView = ({
     const isFirstQuestion = question.id === localSurvey.questions[0].id;
     let temp = structuredClone(invalidQuestions);
     if (validateQuestion(question, surveyLanguages, isFirstQuestion)) {
-      temp = invalidQuestions.filter((id) => id !== question.id);
-      setInvalidQuestions(temp);
+      // If question is valid, we now check for cyclic logic
+      const questionsWithCyclicLogic = findQuestionsWithCyclicLogic(localSurvey.questions);
+      if (!questionsWithCyclicLogic.includes(question.id)) {
+        temp = invalidQuestions.filter((id) => id !== question.id);
+        setInvalidQuestions(temp);
+      }
     } else if (!invalidQuestions.includes(question.id)) {
       temp.push(question.id);
       setInvalidQuestions(temp);

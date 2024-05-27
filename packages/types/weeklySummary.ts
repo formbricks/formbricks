@@ -87,17 +87,17 @@ export const ZWeeklySummaryMembershipData = z.object({
 
 export type TWeeklySummaryMembershipData = z.infer<typeof ZWeeklySummaryMembershipData>;
 
-export const ZWeeklyEmailTeamData = z.object({
+export const ZWeeklyEmailOrganizationData = z.object({
   memberships: z.array(ZWeeklySummaryMembershipData),
 });
 
-export type TWeeklyEmailTeamData = z.infer<typeof ZWeeklyEmailTeamData>;
+export type TWeeklyEmailOrganizationData = z.infer<typeof ZWeeklyEmailOrganizationData>;
 
 export const ZWeeklySummaryProductData = z.object({
   id: z.string(),
   name: z.string(),
   environments: z.array(ZWeeklySummaryEnvironmentData),
-  team: ZWeeklyEmailTeamData,
+  organization: ZWeeklyEmailOrganizationData,
 });
 
 export type TWeeklySummaryProductData = z.infer<typeof ZWeeklySummaryProductData>;
