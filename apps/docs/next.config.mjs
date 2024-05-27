@@ -111,6 +111,11 @@ const nextConfig = {
         destination: "/developer-docs/integrations/:path",
         permanent: true,
       },
+      {
+        source: "/global/custom-styling",
+        destination: "/global/overwrite-styling",
+        permanent: true,
+      },
     ];
   },
 };
