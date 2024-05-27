@@ -1,7 +1,7 @@
 import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/app/sync/lib/posthog";
 import {
-  checkForAttributeRecall,
-  checkForAttributeRecallInLegacySurveys,
+  replaceAttributeRecalls,
+  replaceAttributeRecallsInLegacySurveys,
 } from "@/app/api/v1/client/[environmentId]/app/sync/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -169,7 +169,7 @@ export const GET = async (
     // creating state object
     let state: TJsAppStateSync | TJsAppLegacyStateSync = {
       surveys: !isInAppSurveyLimitReached
-        ? transformedSurveys.map((survey) => checkForAttributeRecall(survey, attributes))
+        ? transformedSurveys.map((survey) => replaceAttributeRecalls(survey, attributes))
         : [],
       actionClasses,
       language,
@@ -190,7 +190,7 @@ export const GET = async (
 
       state = {
         surveys: !isInAppSurveyLimitReached
-          ? transformedSurveys.map((survey) => checkForAttributeRecallInLegacySurveys(survey, attributes))
+          ? transformedSurveys.map((survey) => replaceAttributeRecallsInLegacySurveys(survey, attributes))
           : [],
         person,
         noCodeActionClasses,
