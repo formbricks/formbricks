@@ -1,7 +1,8 @@
 import { z } from "zod";
 
+import { ZAttributeClass } from "./attributeClasses";
 import { ZResponseData } from "./responses";
-import { ZSurveyQuestion, ZSurveyStatus } from "./surveys";
+import { ZSurveyHiddenFields, ZSurveyQuestion, ZSurveyStatus } from "./surveys";
 import { ZUserNotificationSettings } from "./user";
 
 const ZWeeklySummaryInsights = z.object({
@@ -60,6 +61,7 @@ export const ZWeeklySummarySurveyData = z.object({
   status: ZSurveyStatus,
   responses: z.array(ZWeeklyEmailResponseData),
   displays: z.array(z.object({ id: z.string() })),
+  hiddenFields: ZSurveyHiddenFields,
 });
 
 export type TWeeklySummarySurveyData = z.infer<typeof ZWeeklySummarySurveyData>;
@@ -67,6 +69,7 @@ export type TWeeklySummarySurveyData = z.infer<typeof ZWeeklySummarySurveyData>;
 export const ZWeeklySummaryEnvironmentData = z.object({
   id: z.string(),
   surveys: z.array(ZWeeklySummarySurveyData),
+  attributeClasses: z.array(ZAttributeClass),
 });
 
 export type TWeeklySummaryEnvironmentData = z.infer<typeof ZWeeklySummaryEnvironmentData>;

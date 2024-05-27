@@ -9,7 +9,7 @@ export const getProductsByOrganizationId = async (
 
   return await prisma.product.findMany({
     where: {
-      organizationId,
+      organizationId: organizationId,
     },
     select: {
       id: true,
@@ -72,6 +72,19 @@ export const getProductsByOrganizationId = async (
                   id: true,
                 },
               },
+              hiddenFields: true,
+            },
+          },
+          attributeClasses: {
+            select: {
+              id: true,
+              createdAt: true,
+              updatedAt: true,
+              name: true,
+              description: true,
+              type: true,
+              environmentId: true,
+              archived: true,
             },
           },
         },

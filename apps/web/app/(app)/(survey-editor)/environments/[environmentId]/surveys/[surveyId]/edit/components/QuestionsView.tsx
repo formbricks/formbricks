@@ -16,6 +16,7 @@ import { MultiLanguageCard } from "@formbricks/ee/multiLanguage/components/Multi
 import { extractLanguageCodes, getLocalizedValue, translateQuestion } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
@@ -43,6 +44,7 @@ interface QuestionsViewProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
+  attributeClasses: TAttributeClass[];
 }
 
 export const QuestionsView = ({
@@ -57,6 +59,7 @@ export const QuestionsView = ({
   selectedLanguageCode,
   isMultiLanguageAllowed,
   isFormbricksCloud,
+  attributeClasses,
 }: QuestionsViewProps) => {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -339,6 +342,7 @@ export const QuestionsView = ({
           isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
           setSelectedLanguageCode={setSelectedLanguageCode}
           selectedLanguageCode={selectedLanguageCode}
+          attributeClasses={attributeClasses}
         />
       </div>
 
@@ -356,6 +360,7 @@ export const QuestionsView = ({
           setActiveQuestionId={setActiveQuestionId}
           invalidQuestions={invalidQuestions}
           internalQuestionIdMap={internalQuestionIdMap}
+          attributeClasses={attributeClasses}
         />
       </DndContext>
 
@@ -369,6 +374,7 @@ export const QuestionsView = ({
           isInvalid={invalidQuestions ? invalidQuestions.includes("end") : false}
           setSelectedLanguageCode={setSelectedLanguageCode}
           selectedLanguageCode={selectedLanguageCode}
+          attributeClasses={attributeClasses}
         />
 
         {localSurvey.type === "link" ? (

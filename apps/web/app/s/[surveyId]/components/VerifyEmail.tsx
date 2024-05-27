@@ -7,7 +7,8 @@ import { useMemo, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -20,6 +21,7 @@ interface VerifyEmailProps {
   singleUseId?: string;
   languageCode: string;
   styling: TProductStyling;
+  attributeClasses: TAttributeClass[];
 }
 
 export const VerifyEmail = ({
@@ -28,10 +30,11 @@ export const VerifyEmail = ({
   singleUseId,
   languageCode,
   styling,
+  attributeClasses,
 }: VerifyEmailProps) => {
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey, "default");
-  }, [survey]);
+    return replaceHeadlineRecall(survey, "default", attributeClasses);
+  }, [survey, attributeClasses]);
 
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
