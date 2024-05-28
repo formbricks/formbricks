@@ -1,5 +1,6 @@
 import { TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TIntegrationConfig } from "@formbricks/types/integration";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TProductStyling } from "@formbricks/types/product";
 import { TResponseData, TResponseMeta, TResponsePersonAttributes } from "@formbricks/types/responses";
 import { TBaseFilters } from "@formbricks/types/segment";
@@ -14,7 +15,6 @@ import {
   TSurveyVerifyEmail,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
-import { TTeamBilling } from "@formbricks/types/teams";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
 declare global {
@@ -34,7 +34,7 @@ declare global {
     export type SurveyClosedMessage = TSurveyClosedMessage;
     export type SurveySingleUse = TSurveySingleUse;
     export type SurveyVerifyEmail = TSurveyVerifyEmail;
-    export type TeamBilling = TTeamBilling;
+    export type OrganizationBilling = TOrganizationBilling;
     export type UserNotificationSettings = TUserNotificationSettings;
     export type SegmentFilter = TBaseFilters;
     export type Styling = TProductStyling;

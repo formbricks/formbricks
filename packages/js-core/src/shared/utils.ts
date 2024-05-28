@@ -9,7 +9,10 @@ export const getLanguageCode = (survey: TSurvey, attributes: TAttributes): strin
   if (!language) return "default";
   else {
     const selectedLanguage = survey.languages.find((surveyLanguage) => {
-      return surveyLanguage.language.code === language || surveyLanguage.language.alias === language;
+      return (
+        surveyLanguage.language.code === language.toLowerCase() ||
+        surveyLanguage.language.alias?.toLowerCase() === language.toLowerCase()
+      );
     });
     if (selectedLanguage?.default) {
       return "default";
