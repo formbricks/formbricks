@@ -54,7 +54,9 @@ export const SingleResponseCardHeader = ({
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger>{children}</TooltipTrigger>
-            <TooltipContent>{tooltipContent}</TooltipContent>
+            <TooltipContent avoidCollisions align="start">
+              {tooltipContent}
+            </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       );
