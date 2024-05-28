@@ -64,3 +64,12 @@ export const ZUserCreateInput = z.object({
 });
 
 export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;
+
+export const ZEditProfileDetailsFormSchema = z.object({
+  name: z
+    .string({ message: "Name is required" })
+    .trim()
+    .min(1, { message: "Name should be at least 1 character long" }),
+});
+
+export type TEditProfileDetailsForm = z.infer<typeof ZEditProfileDetailsFormSchema>;
