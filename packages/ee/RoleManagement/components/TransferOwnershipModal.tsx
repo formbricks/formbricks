@@ -39,10 +39,10 @@ export const TransferOwnershipModal = ({
       <div className="py-5">
         <ul className="list-disc pb-6 pl-6">
           <li>
-            There can only be one owner of each team. If you transfer your ownership to <b>{memberName}</b>,
-            you will lose all of your ownership rights.
+            There can only be one owner of each organization. If you transfer your ownership to{" "}
+            <b>{memberName}</b>, you will lose all of your ownership rights.
           </li>
-          <li>When you transfer the ownership, you will remain an Admin of the team.</li>
+          <li>When you transfer the ownership, you will remain an Admin of the organization.</li>
         </ul>
         <form>
           <label htmlFor="transferOwnershipConfirmation">

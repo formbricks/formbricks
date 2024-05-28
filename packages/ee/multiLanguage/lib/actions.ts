@@ -27,7 +27,7 @@ export const createLanguageAction = async (
 
   const product = await getProduct(productId);
 
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.teamId, session.user?.id);
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.organizationId, session.user?.id);
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await createLanguage(productId, environmentId, languageInput);
@@ -42,7 +42,7 @@ export const deleteLanguageAction = async (productId: string, environmentId: str
 
   const product = await getProduct(productId);
 
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.teamId, session.user?.id);
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.organizationId, session.user?.id);
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await deleteLanguage(environmentId, languageId);
@@ -72,7 +72,7 @@ export const updateLanguageAction = async (
 
   const product = await getProduct(productId);
 
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.teamId, session.user?.id);
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.organizationId, session.user?.id);
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await updateLanguage(environmentId, languageId, languageInput);

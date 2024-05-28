@@ -24,7 +24,7 @@ const goToProduct = async (router) => {
   router.push("/");
 };
 
-const goToTeamInvitePage = async () => {
+const goToOrganizationInvitePage = async () => {
   localStorage.setItem("onboardingCurrentStep", "5");
 };
 
@@ -75,7 +75,7 @@ const ConnectedState = ({ goToProduct }) => {
   );
 };
 
-const NotConnectedState = ({ environment, webAppUrl, jsPackageVersion, goToTeamInvitePage }) => {
+const NotConnectedState = ({ environment, webAppUrl, jsPackageVersion, goToOrganizationInvitePage }) => {
   return (
     <div className="mb-8 w-full max-w-xl space-y-8">
       <OnboardingTitle
@@ -98,7 +98,7 @@ const NotConnectedState = ({ environment, webAppUrl, jsPackageVersion, goToTeamI
           id="onboarding-inapp-connect-not-sure-how-to-do-this"
           className="mt-8 font-normal text-slate-400"
           variant="minimal"
-          onClick={goToTeamInvitePage}>
+          onClick={goToOrganizationInvitePage}>
           Skip
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
@@ -145,10 +145,10 @@ export const ConnectWithFormbricks = ({
       jsPackageVersion={jsPackageVersion}
       webAppUrl={webAppUrl}
       environment={environment}
-      goToTeamInvitePage={() => {
+      goToOrganizationInvitePage={() => {
         setCurrentStep(5);
         localStorage.setItem("onboardingCurrentStep", "5");
-        goToTeamInvitePage();
+        goToOrganizationInvitePage();
       }}
     />
   );
