@@ -20,8 +20,8 @@ import type { NextRequest } from "next/server";
 import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 
 export const middleware = async (request: NextRequest) => {
-  // issue with next auth types: https://github.com/nextauthjs/next-auth/issues/10912#issuecomment-2126737913
-  // @ts-ignore
+  // issue with next auth types & Next 15; let's review when new fixes are available
+  // @ts-expect-error
   const token = await getToken({ req: request });
 
   if (isWebAppRoute(request.nextUrl.pathname) && !token) {
