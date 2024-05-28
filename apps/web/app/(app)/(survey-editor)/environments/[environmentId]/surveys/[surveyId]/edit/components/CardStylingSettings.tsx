@@ -22,7 +22,7 @@ type CardStylingSettingsProps = {
   isSettingsPage?: boolean;
   surveyType?: TSurveyType;
   disabled?: boolean;
-  localProduct: TProduct;
+  product: TProduct;
   form: UseFormReturn<TProductStyling | TSurveyStyling>;
 };
 
@@ -31,14 +31,13 @@ export const CardStylingSettings = ({
   surveyType,
   disabled,
   open,
-  localProduct,
+  product,
   setOpen,
   form,
 }: CardStylingSettingsProps) => {
   const isAppSurvey = surveyType === "app" || surveyType === "website";
   const surveyTypeDerived = isAppSurvey ? "App / Website" : "Link";
-  const isLogoVisible = !!localProduct.logo?.url;
-  const isHighlightBorderAllowed = !!form.watch("highlightBorderColor");
+  const isLogoVisible = !!product.logo?.url;
 
   return (
     <Collapsible.Root
@@ -261,41 +260,53 @@ export const CardStylingSettings = ({
                   control={form.control}
                   name="highlightBorderColor"
                   render={({ field }) => (
-                    <FormItem className="flex w-full items-center gap-2 space-y-0">
-                      <FormControl>
-                        <Switch
-                          id="highlightBorderColor"
-                          checked={!!field.value}
-                          onCheckedChange={(checked) => field.onChange(checked)}
-                        />
-                      </FormControl>
+                    <FormItem className="flex w-full flex-col gap-2 space-y-0">
+                      <div className="flex items-center gap-2">
+                        <FormControl>
+                          <Switch
+                            id="highlightBorderColor"
+                            checked={!!field.value}
+                            onCheckedChange={(checked) => {
+                              if (!checked) {
+                                field.onChange(null);
+                                return;
+                              }
 
-                      <div>
-                        <FormLabel className="text-sm font-semibold text-slate-700">
-                          Add highlight border
-                        </FormLabel>
-                        <FormDescription className="text-xs font-normal text-slate-500">
-                          Add an outer border to your survey card.
-                        </FormDescription>
+                              field.onChange({
+                                light: COLOR_DEFAULTS.highlightBorderColor,
+                              });
+                            }}
+                          />
+                        </FormControl>
+
+                        <div>
+                          <FormLabel className="text-sm font-semibold text-slate-700">
+                            Add highlight border
+                          </FormLabel>
+                          <FormDescription className="text-xs font-normal text-slate-500">
+                            Add an outer border to your survey card.
+                          </FormDescription>
+                        </div>
                       </div>
+
+                      {!!field.value && (
+                        <FormControl>
+                          <ColorPicker
+                            color={field.value?.light ?? COLOR_DEFAULTS.highlightBorderColor}
+                            onChange={(color: string) =>
+                              field.onChange({
+                                ...field.value,
+                                light: color,
+                              })
+                            }
+                            containerClass="my-0"
+                          />
+                        </FormControl>
+                      )}
                     </FormItem>
                   )}
                 />
               </div>
-
-              {isHighlightBorderAllowed && (
-                <FormField
-                  control={form.control}
-                  name="highlightBorderColor.light"
-                  render={({ field }) => (
-                    <ColorPicker
-                      color={field.value ?? COLOR_DEFAULTS.highlightBorderColor}
-                      onChange={(color: string) => field.onChange(color)}
-                      containerClass="my-0"
-                    />
-                  )}
-                />
-              )}
             </div>
           )}
         </div>

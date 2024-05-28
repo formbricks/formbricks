@@ -1,7 +1,7 @@
 import { RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
-import { UseFormReturn, useForm } from "react-hook-form";
+import { UseFormReturn, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
@@ -11,6 +11,14 @@ import { TBaseStyling } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormProvider,
+} from "@formbricks/ui/Form";
 import { Switch } from "@formbricks/ui/Switch";
 
 import { BackgroundStylingCard } from "./BackgroundStylingCard";
@@ -42,7 +50,7 @@ export const StylingView = ({
   setLocalStylingChanges,
   isUnsplashConfigured,
 }: StylingViewProps) => {
-  const getStylingDefaults = (): TBaseStyling => {
+  const stylingDefaults: TBaseStyling = useMemo(() => {
     let stylingDefaults: TBaseStyling;
     const isOverwriteEnabled = localSurvey.styling?.overwriteThemeStyling ?? false;
 
@@ -75,10 +83,12 @@ export const StylingView = ({
         linkSurveys: "simple",
         appSurveys: "simple",
       },
+      background: stylingDefaults.background,
+      hideProgressBar: stylingDefaults.hideProgressBar ?? false,
+      isLogoHidden: stylingDefaults.isLogoHidden ?? false,
     };
-  };
+  }, [localSurvey.styling, product.styling]);
 
-  const stylingDefaults = getStylingDefaults();
   const form = useForm<TSurveyStyling>({
     defaultValues: {
       ...localSurvey.styling,
@@ -86,9 +96,8 @@ export const StylingView = ({
     },
   });
 
-  const [overwriteThemeStyling, setOverwriteThemeStyling] = useState(
-    localSurvey?.styling?.overwriteThemeStyling ?? false
-  );
+  const overwriteThemeStyling = form.watch("overwriteThemeStyling");
+  const setOverwriteThemeStyling = (value: boolean) => form.setValue("overwriteThemeStyling", value);
 
   const [formStylingOpen, setFormStylingOpen] = useState(false);
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
@@ -103,8 +112,13 @@ export const StylingView = ({
       ...baseStyling,
       overwriteThemeStyling: true,
     });
-    setConfirmResetStylingModalOpen(false);
 
+    form.reset({
+      ...baseStyling,
+      overwriteThemeStyling: true,
+    });
+
+    setConfirmResetStylingModalOpen(false);
     toast.success("Styling set to theme styles");
   };
 
@@ -116,14 +130,20 @@ export const StylingView = ({
     }
   }, [overwriteThemeStyling]);
 
+  const watchedValues = useWatch({
+    control: form.control,
+  });
+
   useEffect(() => {
-    if (styling) {
-      setLocalSurvey((prev) => ({
-        ...prev,
-        styling,
-      }));
-    }
-  }, [setLocalSurvey, styling]);
+    // @ts-expect-error
+    setLocalSurvey((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        ...watchedValues,
+      },
+    }));
+  }, [watchedValues, setLocalSurvey]);
 
   const defaultProductStyling = useMemo(() => {
     const { styling: productStyling } = product;
@@ -176,82 +196,96 @@ export const StylingView = ({
   };
 
   return (
-    <div className="mt-12 space-y-3 p-5">
-      <div className="flex items-center gap-4 py-4">
-        <Switch checked={overwriteThemeStyling} onCheckedChange={handleOverwriteToggle} />
-        <div className="flex flex-col">
-          <h3 className="text-base font-semibold text-slate-900">Add custom styles</h3>
-          <p className="text-sm text-slate-800">Override the theme with individual styles for this survey.</p>
-        </div>
-      </div>
+    <FormProvider {...form}>
+      <form onSubmit={(e) => e.preventDefault()}>
+        <div className="mt-12 space-y-3 p-5">
+          <div className="flex items-center gap-4 py-4">
+            <FormField
+              control={form.control}
+              name="overwriteThemeStyling"
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-2 space-y-0">
+                  <FormControl>
+                    <Switch checked={!!field.value} onCheckedChange={handleOverwriteToggle} />
+                  </FormControl>
 
-      <FormStylingSettings
-        open={formStylingOpen}
-        setOpen={setFormStylingOpen}
-        // styling={styling}
-        // setStyling={setStyling}
-        disabled={!overwriteThemeStyling}
-        form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
-      />
+                  <div>
+                    <FormLabel className="text-base font-semibold text-slate-900">
+                      Add custom styles
+                    </FormLabel>
+                    <FormDescription className="text-sm text-slate-800">
+                      Override the theme with individual styles for this survey.
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
 
-      <CardStylingSettings
-        open={cardStylingOpen}
-        setOpen={setCardStylingOpen}
-        // styling={styling}
-        // setStyling={setStyling}
-        surveyType={localSurvey.type}
-        disabled={!overwriteThemeStyling}
-        localProduct={product}
-        form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
-      />
+          <FormStylingSettings
+            open={formStylingOpen}
+            setOpen={setFormStylingOpen}
+            disabled={!overwriteThemeStyling}
+            form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
+          />
 
-      {localSurvey.type === "link" && (
-        <BackgroundStylingCard
-          open={stylingOpen}
-          setOpen={setStylingOpen}
-          // styling={styling}
-          // setStyling={setStyling}
-          environmentId={environment.id}
-          colors={colors}
-          disabled={!overwriteThemeStyling}
-          isUnsplashConfigured={isUnsplashConfigured}
-          form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
-        />
-      )}
+          <CardStylingSettings
+            open={cardStylingOpen}
+            setOpen={setCardStylingOpen}
+            surveyType={localSurvey.type}
+            disabled={!overwriteThemeStyling}
+            product={product}
+            form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
+          />
 
-      <div className="mt-4 flex h-8 items-center justify-between">
-        <div>
-          {overwriteThemeStyling && (
-            <Button
-              variant="minimal"
-              className="flex items-center gap-2"
-              onClick={() => setConfirmResetStylingModalOpen(true)}>
-              Reset to theme styles
-              <RotateCcwIcon className="h-4 w-4" />
-            </Button>
+          {localSurvey.type === "link" && (
+            <BackgroundStylingCard
+              open={stylingOpen}
+              setOpen={setStylingOpen}
+              environmentId={environment.id}
+              colors={colors}
+              disabled={!overwriteThemeStyling}
+              isUnsplashConfigured={isUnsplashConfigured}
+              form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
+            />
           )}
-        </div>
-        <p className="text-sm text-slate-500">
-          Adjust the theme in the{" "}
-          <Link
-            href={`/environments/${environment.id}/product/look`}
-            target="_blank"
-            className="font-semibold underline">
-            Look & Feel
-          </Link>{" "}
-          settings
-        </p>
-      </div>
 
-      <AlertDialog
-        open={confirmResetStylingModalOpen}
-        setOpen={setConfirmResetStylingModalOpen}
-        headerText="Reset to theme styles"
-        mainText="Are you sure you want to reset the styling to the theme styles? This will remove all custom styling."
-        confirmBtnLabel="Confirm"
-        onDecline={() => setConfirmResetStylingModalOpen(false)}
-        onConfirm={onResetThemeStyling}
-      />
-    </div>
+          <div className="mt-4 flex h-8 items-center justify-between">
+            <div>
+              {overwriteThemeStyling && (
+                <Button
+                  type="button"
+                  variant="minimal"
+                  className="flex items-center gap-2"
+                  onClick={() => setConfirmResetStylingModalOpen(true)}>
+                  Reset to theme styles
+                  <RotateCcwIcon className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <p className="text-sm text-slate-500">
+              Adjust the theme in the{" "}
+              <Link
+                href={`/environments/${environment.id}/product/look`}
+                target="_blank"
+                className="font-semibold underline">
+                Look & Feel
+              </Link>{" "}
+              settings
+            </p>
+          </div>
+
+          <AlertDialog
+            open={confirmResetStylingModalOpen}
+            setOpen={setConfirmResetStylingModalOpen}
+            headerText="Reset to theme styles"
+            mainText="Are you sure you want to reset the styling to the theme styles? This will remove all custom styling."
+            confirmBtnLabel="Confirm"
+            onDecline={() => setConfirmResetStylingModalOpen(false)}
+            onConfirm={onResetThemeStyling}
+          />
+        </div>
+      </form>
+    </FormProvider>
   );
 };

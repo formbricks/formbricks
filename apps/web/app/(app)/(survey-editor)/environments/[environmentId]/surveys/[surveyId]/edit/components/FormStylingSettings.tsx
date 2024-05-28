@@ -46,7 +46,7 @@ export const FormStylingSettings = ({
     });
   };
   const setHighlightBorderColor = (color: string) => {
-    form.setValue("highlightBorderColor.light", color);
+    form.setValue("highlightBorderColor", { light: mixColor(color, "#ffffff", 0.25) });
   };
 
   const suggestColors = () => {
@@ -64,7 +64,7 @@ export const FormStylingSettings = ({
     }
 
     if (!highlightBorderColor) {
-      setHighlightBorderColor(mixColor(brandColor, "#ffffff", 0.25));
+      setHighlightBorderColor(brandColor);
     }
   };
 
