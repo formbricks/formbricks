@@ -3,8 +3,8 @@ import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
 import { TJSWebsiteStateDisplay, TTrackProperties } from "@formbricks/types/js";
-import { TResponseData, TResponseUpdate } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TResponseUpdate } from "@formbricks/types/responses";
+import { THiddenFieldValue, TSurvey } from "@formbricks/types/surveys";
 
 import { Logger } from "../../shared/logger";
 import { getDefaultLanguageCode, getLanguageCode, handleHiddenFields } from "../../shared/utils";
@@ -43,12 +43,15 @@ export const triggerSurvey = async (
     }
   }
 
-  const hiddenFieldsObject: TResponseData = handleHiddenFields(survey.hiddenFields, properties?.hiddenFields);
+  const hiddenFieldsObject: THiddenFieldValue = handleHiddenFields(
+    survey.hiddenFields,
+    properties?.hiddenFields
+  );
 
   await renderWidget(survey, action, hiddenFieldsObject);
 };
 
-const renderWidget = async (survey: TSurvey, action?: string, hiddenFields: TResponseData = {}) => {
+const renderWidget = async (survey: TSurvey, action?: string, hiddenFields: THiddenFieldValue = {}) => {
   if (isSurveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;

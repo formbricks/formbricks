@@ -1,7 +1,6 @@
 import { TAttributes } from "@formbricks/types/attributes";
 import { TTrackProperties } from "@formbricks/types/js";
-import { TResponseData } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { THiddenFieldValue, TSurvey } from "@formbricks/types/surveys";
 
 export const getIsDebug = () => window.location.search.includes("formbricksDebug=true");
 
@@ -40,10 +39,10 @@ export const getDefaultLanguageCode = (survey: TSurvey) => {
 export const handleHiddenFields = (
   hiddenFieldsConfig: TSurvey["hiddenFields"],
   hiddenFields: TTrackProperties["hiddenFields"]
-): TResponseData => {
+): THiddenFieldValue => {
   const { enabled: enabledHiddenFields, fieldIds: hiddenFieldIds } = hiddenFieldsConfig || {};
 
-  let hiddenFieldsObject: TResponseData = {};
+  let hiddenFieldsObject: THiddenFieldValue = {};
 
   if (!enabledHiddenFields) {
     console.warn("Hidden fields are not enabled for this survey");
@@ -61,7 +60,7 @@ export const handleHiddenFields = (
         unknownHiddenFields.push(key);
       }
       return acc;
-    }, {} as TResponseData);
+    }, {} as THiddenFieldValue);
 
     if (unknownHiddenFields.length > 0) {
       console.warn(
