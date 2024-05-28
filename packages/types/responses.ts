@@ -6,9 +6,16 @@ import { ZTrackProperties } from "./js";
 import { ZSurvey, ZSurveyLogicCondition } from "./surveys";
 import { ZTag } from "./tags";
 
-export const ZResponseData = z.record(
-  z.union([z.string(), z.number(), z.array(z.string()), z.record(z.string())])
-);
+export const ZResponseDataValue = z.union([
+  z.string(),
+  z.number(),
+  z.array(z.string()),
+  z.record(z.string()),
+]);
+
+export type TResponseDataValue = z.infer<typeof ZResponseDataValue>;
+
+export const ZResponseData = z.record(ZResponseDataValue);
 
 export type TResponseData = z.infer<typeof ZResponseData>;
 
@@ -232,6 +239,8 @@ export const ZResponse = z.object({
 export type TResponse = z.infer<typeof ZResponse>;
 
 export const ZResponseInput = z.object({
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
   environmentId: z.string().cuid2(),
   surveyId: z.string().cuid2(),
   userId: z.string().nullish(),

@@ -1,5 +1,3 @@
-version: "3.3"
-
 # This should be the same as below if you are running via docker compose up
 x-webapp-url: &webapp_url http://localhost:3000
 
@@ -7,13 +5,14 @@ x-webapp-url: &webapp_url http://localhost:3000
 x-database-url: &database_url postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
 
 x-redis-url: &redis_url
+  # NextJS Auth
+  # @see: https://next-auth.js.org/configuration/options#nextauth_secret
+  # You can use: `openssl rand -hex 32` to generate one
 
-# NextJS Auth
-# @see: https://next-auth.js.org/configuration/options#nextauth_secret
-# You can use: `openssl rand -hex 32` to generate one
 x-nextauth-secret: &nextauth_secret
   # Set this to your public-facing URL, e.g., https://example.com
   # You do not need the NEXTAUTH_URL environment variable in Vercel.
+
 
 x-nextauth-url: &nextauth_url http://localhost:3000
 
@@ -45,7 +44,7 @@ x-signup-disabled: &signup_disabled 0
 # Email login. Disable the ability for users to login with email.
 x-auth-disabled: &email_auth_disabled 0
 
-# Team Invite. Disable the ability for invited users to create an account.
+# Organization Invite. Disable the ability for invited users to create an account.
 x-invite-disabled: &invite_disabled 0
 
 # Set the below values to display privacy policy, imprint and terms of service links in the footer of signup & public pages.

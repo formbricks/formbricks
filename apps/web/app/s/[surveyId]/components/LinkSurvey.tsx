@@ -9,10 +9,11 @@ import { useEffect, useMemo, useState } from "react";
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
-import { TResponse, TResponseUpdate } from "@formbricks/types/responses";
+import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { THiddenFieldValue, TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
 import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
 import { SurveyInline } from "@formbricks/ui/Survey";
@@ -32,6 +33,7 @@ interface LinkSurveyProps {
   responseCount?: number;
   verifiedEmail?: string;
   languageCode: string;
+  attributeClasses: TAttributeClass[];
 }
 
 export const LinkSurvey = ({
@@ -45,10 +47,12 @@ export const LinkSurvey = ({
   responseCount,
   verifiedEmail,
   languageCode,
+  attributeClasses,
 }: LinkSurveyProps) => {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
+  const skipPrefilled = searchParams?.get("skipPrefilled") === "true";
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
   const defaultLanguageCode = survey.languages?.find((surveyLanguage) => {
@@ -119,8 +123,8 @@ export const LinkSurvey = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hiddenFieldsRecord = useMemo<THiddenFieldValue>(() => {
-    const fieldsRecord: THiddenFieldValue = {};
+  const hiddenFieldsRecord = useMemo<TResponseData>(() => {
+    const fieldsRecord: TResponseData = {};
 
     survey.hiddenFields?.fieldIds?.forEach((field) => {
       const answer = searchParams?.get(field);
@@ -156,6 +160,7 @@ export const LinkSurvey = ({
           isErrorComponent={true}
           languageCode={languageCode}
           styling={product.styling}
+          attributeClasses={attributeClasses}
         />
       );
     }
@@ -166,6 +171,7 @@ export const LinkSurvey = ({
         survey={survey}
         languageCode={languageCode}
         styling={product.styling}
+        attributeClasses={attributeClasses}
       />
     );
   }
@@ -208,6 +214,7 @@ export const LinkSurvey = ({
           styling={determineStyling()}
           languageCode={languageCode}
           isBrandingEnabled={product.linkSurveyBranding}
+          shouldResetQuestionId={false}
           getSetIsError={(f: (value: boolean) => void) => {
             setIsError = f;
           }}
@@ -269,6 +276,7 @@ export const LinkSurvey = ({
           }}
           autoFocus={autoFocus}
           prefillResponseData={prefillValue}
+          skipPrefilled={skipPrefilled}
           responseCount={responseCount}
           getSetQuestionId={(f: (value: string) => void) => {
             setQuestionId = f;

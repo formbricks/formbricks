@@ -1,7 +1,5 @@
-import { TI18nString } from "@formbricks/types/surveys";
-
 interface HeadlineProps {
-  headline?: TI18nString | string;
+  headline?: string;
   questionId: string;
   required?: boolean;
   alignTextCenter?: boolean;
@@ -19,7 +17,7 @@ export const Headline = ({
         {headline}
         {!required && (
           <span
-            className="text-heading ml-2 self-start text-sm font-normal leading-7 opacity-60"
+            className="text-heading mx-2 self-start text-sm font-normal leading-7 opacity-60"
             tabIndex={-1}>
             Optional
           </span>

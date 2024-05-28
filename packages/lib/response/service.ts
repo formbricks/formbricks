@@ -25,6 +25,7 @@ import { TSurveySummary } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
 import { getAttributes } from "../attribute/service";
+import { getAttributeClasses } from "../attributeClass/service";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { displayCache } from "../display/cache";
@@ -36,7 +37,7 @@ import { putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
-import { checkForRecallInHeadline } from "../utils/recall";
+import { replaceHeadlineRecall } from "../utils/recall";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 import {
@@ -203,6 +204,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     singleUseId,
     ttc: initialTtc,
   } = responseInput;
+
   try {
     let person: TPerson | null = null;
     let attributes: TAttributes | null = null;
@@ -221,28 +223,30 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
-    const responsePrisma = await prisma.response.create({
-      data: {
-        survey: {
+    const prismaData: Prisma.ResponseCreateInput = {
+      survey: {
+        connect: {
+          id: surveyId,
+        },
+      },
+      finished: finished,
+      data: data,
+      language: language,
+      ...(person?.id && {
+        person: {
           connect: {
-            id: surveyId,
+            id: person.id,
           },
         },
-        finished: finished,
-        data: data,
-        language: language,
-        ...(person?.id && {
-          person: {
-            connect: {
-              id: person.id,
-            },
-          },
-          personAttributes: attributes,
-        }),
-        ...(meta && ({ meta } as Prisma.JsonObject)),
-        singleUseId,
-        ttc: ttc,
-      },
+        personAttributes: attributes,
+      }),
+      ...(meta && ({ meta } as Prisma.JsonObject)),
+      singleUseId,
+      ttc: ttc,
+    };
+
+    const responsePrisma = await prisma.response.create({
+      data: prismaData,
       select: responseSelection,
     });
 
@@ -492,19 +496,20 @@ export const getResponseMeta = (surveyId: string): Promise<TSurveyMetaFieldFilte
 
 export const getResponses = (
   surveyId: string,
-  page?: number,
-  batchSize?: number,
+  limit?: number,
+  offset?: number,
   filterCriteria?: TResponseFilterCriteria
 ): Promise<TResponse[]> =>
   cache(
     async () => {
       validateInputs(
         [surveyId, ZId],
-        [page, ZOptionalNumber],
-        [batchSize, ZOptionalNumber],
+        [limit, ZOptionalNumber],
+        [offset, ZOptionalNumber],
         [filterCriteria, ZResponseFilterCriteria.optional()]
       );
-      batchSize = batchSize ?? RESPONSES_PER_PAGE;
+
+      limit = limit ?? RESPONSES_PER_PAGE;
       try {
         const responses = await prisma.response.findMany({
           where: {
@@ -517,8 +522,8 @@ export const getResponses = (
               createdAt: "desc",
             },
           ],
-          take: page ? batchSize : undefined,
-          skip: page ? batchSize * (page - 1) : undefined,
+          take: limit ? limit : undefined,
+          skip: offset ? offset : undefined,
         });
 
         const transformedResponses: TResponse[] = await Promise.all(
@@ -539,7 +544,7 @@ export const getResponses = (
         throw error;
       }
     },
-    [`getResponses-${surveyId}-${page}-${batchSize}-${JSON.stringify(filterCriteria)}`],
+    [`getResponses-${surveyId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
     }
@@ -555,10 +560,10 @@ export const getSurveySummary = (
 
       try {
         const survey = await getSurvey(surveyId);
-
         if (!survey) {
           throw new ResourceNotFoundError("Survey", surveyId);
         }
+        const attributeClasses = await getAttributeClasses(survey.environmentId);
 
         const batchSize = 3000;
         const responseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
@@ -566,7 +571,7 @@ export const getSurveySummary = (
 
         const responsesArray = await Promise.all(
           Array.from({ length: pages }, (_, i) => {
-            return getResponses(surveyId, i + 1, batchSize, filterCriteria);
+            return getResponses(surveyId, batchSize, i * batchSize, filterCriteria);
           })
         );
         const responses = responsesArray.flat();
@@ -578,7 +583,7 @@ export const getSurveySummary = (
         const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
         const meta = getSurveySummaryMeta(responses, displayCount);
         const questionWiseSummary = getQuestionWiseSummary(
-          checkForRecallInHeadline(survey, "default"),
+          replaceHeadlineRecall(survey, "default", attributeClasses),
           responses,
           dropOff
         );
@@ -620,7 +625,7 @@ export const getResponseDownloadUrl = async (
 
     const responsesArray = await Promise.all(
       Array.from({ length: pages }, (_, i) => {
-        return getResponses(surveyId, i + 1, batchSize, filterCriteria);
+        return getResponses(surveyId, batchSize, i * batchSize, filterCriteria);
       })
     );
     const responses = responsesArray.flat();
@@ -669,10 +674,14 @@ export const getResponseDownloadUrl = async (
   }
 };
 
-export const getResponsesByEnvironmentId = (environmentId: string, page?: number): Promise<TResponse[]> =>
+export const getResponsesByEnvironmentId = (
+  environmentId: string,
+  limit?: number,
+  offset?: number
+): Promise<TResponse[]> =>
   cache(
     async () => {
-      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+      validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
       try {
         const responses = await prisma.response.findMany({
@@ -687,8 +696,8 @@ export const getResponsesByEnvironmentId = (environmentId: string, page?: number
               createdAt: "desc",
             },
           ],
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          take: limit ? limit : undefined,
+          skip: offset ? offset : undefined,
         });
 
         const transformedResponses: TResponse[] = await Promise.all(
@@ -709,7 +718,7 @@ export const getResponsesByEnvironmentId = (environmentId: string, page?: number
         throw error;
       }
     },
-    [`getResponsesByEnvironmentId-${environmentId}-${page}`],
+    [`getResponsesByEnvironmentId-${environmentId}-${limit}-${offset}`],
     {
       tags: [responseCache.tag.byEnvironmentId(environmentId)],
     }

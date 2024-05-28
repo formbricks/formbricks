@@ -5,7 +5,7 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn, shuffleQuestions } from "@/lib/utils";
+import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -47,18 +47,27 @@ export const MultipleChoiceSingleQuestion = ({
   const choicesContainerRef = useRef<HTMLDivElement | null>(null);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
 
+  const shuffledChoicesIds = useMemo(() => {
+    if (question.shuffleOption) {
+      return getShuffledChoicesIds(question.choices, question.shuffleOption);
+    } else return question.choices.map((choice) => choice.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question.shuffleOption, question.choices.length, question.choices[question.choices.length - 1].id]);
+
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const questionChoices = useMemo(() => {
     if (!question.choices) {
       return [];
     }
-    const choicesWithoutOther = question.choices.filter((choice) => choice.id !== "other");
-    if (question.shuffleOption) {
-      return shuffleQuestions(choicesWithoutOther, question.shuffleOption);
-    }
-    return choicesWithoutOther;
-  }, [question.choices, question.shuffleOption]);
+    if (question.shuffleOption === "none" || question.shuffleOption === undefined) return question.choices;
+    return shuffledChoicesIds.map((choiceId) => {
+      const choice = question.choices.find((choice) => {
+        return choice.id === choiceId;
+      });
+      return choice;
+    });
+  }, [question.choices, question.shuffleOption, shuffledChoicesIds]);
 
   const otherOption = useMemo(
     () => question.choices.find((choice) => choice.id === "other"),
@@ -77,7 +86,7 @@ export const MultipleChoiceSingleQuestion = ({
     }
 
     const isOtherSelected =
-      value !== undefined && !questionChoices.some((choice) => choice.label[languageCode] === value);
+      value !== undefined && !questionChoices.some((choice) => choice?.label[languageCode] === value);
     setOtherSelected(isOtherSelected);
   }, [isFirstQuestion, languageCode, otherOption, question.id, questionChoices, value]);
 
@@ -116,45 +125,50 @@ export const MultipleChoiceSingleQuestion = ({
               <legend className="sr-only">Options</legend>
 
               <div className="bg-survey-bg relative space-y-2" role="radiogroup" ref={choicesContainerRef}>
-                {questionChoices.map((choice, idx) => (
-                  <label
-                    tabIndex={idx + 1}
-                    key={choice.id}
-                    className={cn(
-                      value === choice.label ? "border-brand z-10" : "border-border",
-                      "text-heading bg-input-bg focus-within:border-brand focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
-                    )}
-                    onKeyDown={(e) => {
-                      // Accessibility: if spacebar was pressed pass this down to the input
-                      if (e.key === " ") {
-                        e.preventDefault();
-                        document.getElementById(choice.id)?.click();
-                        document.getElementById(choice.id)?.focus();
-                      }
-                    }}
-                    autoFocus={idx === 0 && !isInIframe}>
-                    <span className="flex items-center text-sm">
-                      <input
-                        tabIndex={-1}
-                        type="radio"
-                        id={choice.id}
-                        name={question.id}
-                        value={choice.label}
-                        className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
-                        aria-labelledby={`${choice.id}-label`}
-                        onChange={() => {
-                          setOtherSelected(false);
-                          onChange({ [question.id]: getLocalizedValue(choice.label, languageCode) });
-                        }}
-                        checked={value === getLocalizedValue(choice.label, languageCode)}
-                        required={question.required && idx === 0}
-                      />
-                      <span id={`${choice.id}-label`} className="ml-3 font-medium">
-                        {getLocalizedValue(choice.label, languageCode)}
+                {questionChoices.map((choice, idx) => {
+                  if (!choice || choice.id === "other") return;
+                  return (
+                    <label
+                      tabIndex={idx + 1}
+                      key={choice.id}
+                      className={cn(
+                        value === getLocalizedValue(choice.label, languageCode)
+                          ? "border-brand z-10"
+                          : "border-border",
+                        "text-heading bg-input-bg focus-within:border-brand focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                      )}
+                      onKeyDown={(e) => {
+                        // Accessibility: if spacebar was pressed pass this down to the input
+                        if (e.key === " ") {
+                          e.preventDefault();
+                          document.getElementById(choice.id)?.click();
+                          document.getElementById(choice.id)?.focus();
+                        }
+                      }}
+                      autoFocus={idx === 0 && !isInIframe}>
+                      <span className="flex items-center text-sm">
+                        <input
+                          tabIndex={-1}
+                          type="radio"
+                          id={choice.id}
+                          name={question.id}
+                          value={getLocalizedValue(choice.label, languageCode)}
+                          className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
+                          aria-labelledby={`${choice.id}-label`}
+                          onChange={() => {
+                            setOtherSelected(false);
+                            onChange({ [question.id]: getLocalizedValue(choice.label, languageCode) });
+                          }}
+                          checked={value === getLocalizedValue(choice.label, languageCode)}
+                          required={question.required && idx === 0}
+                        />
+                        <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                          {getLocalizedValue(choice.label, languageCode)}
+                        </span>
                       </span>
-                    </span>
-                  </label>
-                ))}
+                    </label>
+                  );
+                })}
                 {otherOption && (
                   <label
                     tabIndex={questionChoices.length + 1}

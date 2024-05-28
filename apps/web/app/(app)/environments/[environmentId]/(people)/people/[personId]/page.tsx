@@ -5,28 +5,31 @@ import { ResponseSection } from "@/app/(app)/environments/[environmentId]/(peopl
 import { getServerSession } from "next-auth";
 
 import { getAttributes } from "@formbricks/lib/attribute/service";
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getPerson } from "@formbricks/lib/person/service";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
 const Page = async ({ params }) => {
-  const [environment, environmentTags, product, session, team, person, attributes] = await Promise.all([
-    getEnvironment(params.environmentId),
-    getTagsByEnvironmentId(params.environmentId),
-    getProductByEnvironmentId(params.environmentId),
-    getServerSession(authOptions),
-    getTeamByEnvironmentId(params.environmentId),
-    getPerson(params.personId),
-    getAttributes(params.personId),
-  ]);
+  const [environment, environmentTags, product, session, organization, person, attributes, attributeClasses] =
+    await Promise.all([
+      getEnvironment(params.environmentId),
+      getTagsByEnvironmentId(params.environmentId),
+      getProductByEnvironmentId(params.environmentId),
+      getServerSession(authOptions),
+      getOrganizationByEnvironmentId(params.environmentId),
+      getPerson(params.personId),
+      getAttributes(params.personId),
+      getAttributeClasses(params.environmentId),
+    ]);
 
   if (!product) {
     throw new Error("Product not found");
@@ -40,15 +43,15 @@ const Page = async ({ params }) => {
     throw new Error("Session not found");
   }
 
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
   if (!person) {
     throw new Error("Person not found");
   }
 
-  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
   const getDeletePersonButton = () => {
@@ -67,6 +70,7 @@ const Page = async ({ params }) => {
             environment={environment}
             personId={params.personId}
             environmentTags={environmentTags}
+            attributeClasses={attributeClasses}
           />
           <ActivitySection environmentId={params.environmentId} personId={params.personId} />
         </div>

@@ -438,7 +438,10 @@ export const ZSurveyQuestions = z.array(ZSurveyQuestion);
 
 export type TSurveyQuestions = z.infer<typeof ZSurveyQuestions>;
 
-export const ZSurveyQuestionsObject = z.object({ questions: ZSurveyQuestions });
+export const ZSurveyQuestionsObject = z.object({
+  questions: ZSurveyQuestions,
+  hiddenFields: ZSurveyHiddenFields,
+});
 
 export type TSurveyQuestionsObject = z.infer<typeof ZSurveyQuestionsObject>;
 
@@ -878,5 +881,10 @@ const ZSortOption = z.object({
 export type TSortOption = z.infer<typeof ZSortOption>;
 export type TSurveySummary = z.infer<typeof ZSurveySummary>;
 
-export const ZHiddenFieldValue = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
-export type THiddenFieldValue = z.infer<typeof ZHiddenFieldValue>;
+export const ZSurveyRecallItem = z.object({
+  id: z.string(),
+  label: z.string(),
+  type: z.enum(["question", "hiddenField", "attributeClass"]),
+});
+
+export type TSurveyRecallItem = z.infer<typeof ZSurveyRecallItem>;

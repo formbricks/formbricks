@@ -73,7 +73,15 @@ export const PUT = async (
     if (!attributeClass) {
       return responses.notFoundResponse("Attribute Class", params.attributeClassId);
     }
-    const attributeClassUpdate = await request.json();
+
+    let attributeClassUpdate;
+    try {
+      attributeClassUpdate = await request.json();
+    } catch (error) {
+      console.error(`Error parsing JSON input: ${error}`);
+      return responses.badRequestResponse("Malformed JSON input, please check your request body");
+    }
+
     const inputValidation = ZAttributeClassUpdateInput.safeParse(attributeClassUpdate);
     if (!inputValidation.success) {
       return responses.badRequestResponse(

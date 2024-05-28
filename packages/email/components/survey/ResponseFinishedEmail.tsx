@@ -3,9 +3,9 @@ import React from "react";
 
 import { getQuestionResponseMapping } from "@formbricks/lib/responses";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
+import { TOrganization } from "@formbricks/types/organizations";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TTeam } from "@formbricks/types/teams";
 
 import { EmailButton } from "../general/EmailButton";
 
@@ -51,7 +51,7 @@ interface ResponseFinishedEmailProps {
   response: TResponse;
   WEBAPP_URL: string;
   environmentId: string;
-  team: TTeam | null;
+  organization: TOrganization | null;
 }
 
 export const ResponseFinishedEmail = ({
@@ -60,7 +60,7 @@ export const ResponseFinishedEmail = ({
   response,
   WEBAPP_URL,
   environmentId,
-  team,
+  organization,
 }: ResponseFinishedEmailProps) => {
   const questions = getQuestionResponseMapping(survey, response);
 
@@ -108,7 +108,7 @@ export const ResponseFinishedEmail = ({
               Turn off notifications for{" "}
               <Link
                 className="text-black underline"
-                href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedTeamIds&elementId=${team?.id}`}>
+                href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization?.id}`}>
                 all newly created forms{" "}
               </Link>
             </Text>
