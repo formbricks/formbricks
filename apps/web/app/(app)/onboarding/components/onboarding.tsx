@@ -3,7 +3,7 @@
 import jsPackageJson from "@/../../packages/js/package.json";
 import { finishOnboardingAction } from "@/app/(app)/onboarding/actions";
 import { ConnectWithFormbricks } from "@/app/(app)/onboarding/components/inapp/ConnectWithFormbricks";
-import { InviteTeamMate } from "@/app/(app)/onboarding/components/inapp/InviteTeamMate";
+import { InviteOrganizationMember } from "@/app/(app)/onboarding/components/inapp/InviteOrganizationMate";
 import { Objective } from "@/app/(app)/onboarding/components/inapp/SurveyObjective";
 import { Role } from "@/app/(app)/onboarding/components/inapp/SurveyRole";
 import { CreateFirstSurvey } from "@/app/(app)/onboarding/components/link/CreateFirstSurvey";
@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
-import { TTeam } from "@formbricks/types/teams";
+import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 
 import { PathwaySelect } from "./PathwaySelect";
@@ -23,7 +23,7 @@ interface OnboardingProps {
   session: Session;
   environment: TEnvironment;
   user: TUser;
-  team: TTeam;
+  organization: TOrganization;
   webAppUrl: string;
 }
 
@@ -32,7 +32,7 @@ export const Onboarding = ({
   session,
   environment,
   user,
-  team,
+  organization,
   webAppUrl,
 }: OnboardingProps) => {
   const router = useRouter();
@@ -82,14 +82,11 @@ export const Onboarding = ({
   }, [iframeVisible, currentStep]); // Depend on iframeVisible and currentStep to re-evaluate when needed
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Access localStorage only when window is available
-      const pathwayValueFromLocalStorage = localStorage.getItem("onboardingPathway");
-      const currentStepValueFromLocalStorage = parseInt(localStorage.getItem("onboardingCurrentStep") ?? "1");
+    const pathwayValueFromLocalStorage = localStorage.getItem("onboardingPathway");
+    const currentStepValueFromLocalStorage = parseInt(localStorage.getItem("onboardingCurrentStep") ?? "1");
 
-      setSelectedPathway(pathwayValueFromLocalStorage);
-      setCurrentStep(currentStepValueFromLocalStorage);
-    }
+    setSelectedPathway(pathwayValueFromLocalStorage);
+    setCurrentStep(currentStepValueFromLocalStorage);
   }, []);
 
   useEffect(() => {
@@ -143,7 +140,11 @@ export const Onboarding = ({
         return selectedPathway === "link" ? (
           <CreateFirstSurvey environmentId={environment.id} />
         ) : (
-          <InviteTeamMate environmentId={environment.id} team={team} setCurrentStep={setCurrentStep} />
+          <InviteOrganizationMember
+            environmentId={environment.id}
+            organization={organization}
+            setCurrentStep={setCurrentStep}
+          />
         );
       default:
         return null;

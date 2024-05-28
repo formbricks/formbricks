@@ -23,7 +23,7 @@ const selectProduct = {
   createdAt: true,
   updatedAt: true,
   name: true,
-  teamId: true,
+  organizationId: true,
   languages: true,
   recontactDays: true,
   linkSurveyBranding: true,
@@ -36,15 +36,15 @@ const selectProduct = {
   logo: true,
 };
 
-export const getProducts = (teamId: string, page?: number): Promise<TProduct[]> =>
+export const getProducts = (organizationId: string, page?: number): Promise<TProduct[]> =>
   cache(
     async () => {
-      validateInputs([teamId, ZId], [page, ZOptionalNumber]);
+      validateInputs([organizationId, ZId], [page, ZOptionalNumber]);
 
       try {
         const products = await prisma.product.findMany({
           where: {
-            teamId,
+            organizationId,
           },
           select: selectProduct,
           take: page ? ITEMS_PER_PAGE : undefined,
@@ -59,9 +59,9 @@ export const getProducts = (teamId: string, page?: number): Promise<TProduct[]> 
         throw error;
       }
     },
-    [`getProducts-${teamId}-${page}`],
+    [`getProducts-${organizationId}-${page}`],
     {
-      tags: [productCache.tag.byTeamId(teamId)],
+      tags: [productCache.tag.byOrganizationId(organizationId)],
     }
   )();
 
@@ -131,7 +131,7 @@ export const updateProduct = async (
 
     productCache.revalidate({
       id: product.id,
-      teamId: product.teamId,
+      organizationId: product.organizationId,
     });
 
     product.environments.forEach((environment) => {
@@ -214,7 +214,7 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
 
       productCache.revalidate({
         id: product.id,
-        teamId: product.teamId,
+        organizationId: product.organizationId,
       });
 
       environmentCache.revalidate({
@@ -242,10 +242,10 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
 };
 
 export const createProduct = async (
-  teamId: string,
+  organizationId: string,
   productInput: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
-  validateInputs([teamId, ZString], [productInput, ZProductUpdateInput.partial()]);
+  validateInputs([organizationId, ZString], [productInput, ZProductUpdateInput.partial()]);
 
   if (!productInput.name) {
     throw new ValidationError("Product Name is required");
@@ -258,14 +258,14 @@ export const createProduct = async (
       data: {
         ...data,
         name: productInput.name,
-        teamId,
+        organizationId,
       },
       select: selectProduct,
     });
 
     productCache.revalidate({
       id: product.id,
-      teamId: product.teamId,
+      organizationId: product.organizationId,
     });
 
     const devEnvironment = await createEnvironment(product.id, {
