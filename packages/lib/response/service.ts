@@ -558,7 +558,6 @@ export const getSurveySummary = (
 
       try {
         const survey = await getSurvey(surveyId);
-
         if (!survey) {
           throw new ResourceNotFoundError("Survey", surveyId);
         }
