@@ -13,7 +13,8 @@ import { Badge } from "@formbricks/ui/Badge";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Slider } from "@formbricks/ui/Slider";
-import { CardArrangement, ColorSelectorWithLabel } from "@formbricks/ui/Styling";
+import { CardArrangement } from "@formbricks/ui/Styling/CardArrangement";
+import { ColorSelector } from "@formbricks/ui/Styling/ColorSelector";
 import { Switch } from "@formbricks/ui/Switch";
 
 type CardStylingSettingsProps = {
@@ -121,7 +122,7 @@ export const CardStylingSettings = ({
                 </div>
 
                 <FormControl>
-                  <ColorSelectorWithLabel
+                  <ColorSelector
                     color={field.value || COLOR_DEFAULTS.cardBackgroundColor}
                     setColor={(color) => field.onChange(color)}
                   />
@@ -141,7 +142,7 @@ export const CardStylingSettings = ({
                 </div>
 
                 <FormControl>
-                  <ColorSelectorWithLabel
+                  <ColorSelector
                     color={field.value || COLOR_DEFAULTS.cardBorderColor}
                     setColor={(color) => field.onChange(color)}
                   />
@@ -161,7 +162,7 @@ export const CardStylingSettings = ({
                 </div>
 
                 <FormControl>
-                  <ColorSelectorWithLabel
+                  <ColorSelector
                     color={field.value || COLOR_DEFAULTS.cardShadowColor}
                     setColor={(color) => field.onChange(color)}
                   />

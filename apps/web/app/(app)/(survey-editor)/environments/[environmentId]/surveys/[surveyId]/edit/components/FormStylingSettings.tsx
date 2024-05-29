@@ -12,7 +12,7 @@ import { TProductStyling } from "@formbricks/types/product";
 import { TSurveyStyling } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
-import { ColorSelectorWithLabel } from "@formbricks/ui/Styling";
+import { ColorSelector } from "@formbricks/ui/Styling/ColorSelector";
 
 type FormStylingSettingsProps = {
   open: boolean;
@@ -120,7 +120,7 @@ export const FormStylingSettings = ({
                   </div>
 
                   <FormControl>
-                    <ColorSelectorWithLabel
+                    <ColorSelector
                       color={field.value || COLOR_DEFAULTS.brandColor}
                       setColor={(color) => field.onChange(color)}
                     />
@@ -151,7 +151,7 @@ export const FormStylingSettings = ({
                 </div>
 
                 <FormControl>
-                  <ColorSelectorWithLabel
+                  <ColorSelector
                     color={field.value || COLOR_DEFAULTS.questionColor}
                     setColor={(color) => field.onChange(color)}
                   />
@@ -171,7 +171,7 @@ export const FormStylingSettings = ({
                 </div>
 
                 <FormControl>
-                  <ColorSelectorWithLabel
+                  <ColorSelector
                     color={field.value || COLOR_DEFAULTS.inputColor}
                     setColor={(color: string) => field.onChange(color)}
                   />
@@ -191,7 +191,7 @@ export const FormStylingSettings = ({
                 </div>
 
                 <FormControl>
-                  <ColorSelectorWithLabel
+                  <ColorSelector
                     color={field.value || COLOR_DEFAULTS.inputBorderColor}
                     setColor={(color: string) => field.onChange(color)}
                   />

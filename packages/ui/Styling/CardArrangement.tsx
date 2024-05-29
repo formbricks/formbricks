@@ -1,12 +1,10 @@
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyType } from "@formbricks/types/surveys";
 
-import { Tabs } from "../../Tabs";
-import {
-  CasualCardArrangementIcon,
-  NoCardsArrangementIcon,
-  StraightCardArrangementIcon,
-} from "./CardArrangementIcons";
+import { Tabs } from "../Tabs";
+import { CasualCardArrangementIcon } from "../icons/CasualCardArrangementIcon";
+import { SimpleCardsArrangementIcon } from "../icons/SimpleCardArrangementIcon";
+import { StraightCardArrangementIcon } from "../icons/StraightCardArrangementIcon";
 
 interface CardArrangementProps {
   surveyType: TSurveyType;
@@ -33,7 +31,7 @@ export const CardArrangement = ({
       case "straight":
         return <StraightCardArrangementIcon />;
       default:
-        return <NoCardsArrangementIcon />;
+        return <SimpleCardsArrangementIcon />;
     }
   };
 
