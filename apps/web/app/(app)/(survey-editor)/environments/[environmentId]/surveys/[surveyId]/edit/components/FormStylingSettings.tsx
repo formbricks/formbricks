@@ -115,7 +115,7 @@ export const FormStylingSettings = ({
               render={({ field }) => (
                 <FormItem className="space-y-4">
                   <div>
-                    <FormLabel className="text-sm font-semibold text-slate-700">Brand color</FormLabel>
+                    <FormLabel>Brand color</FormLabel>
                     <FormDescription>Change the brand color of the survey.</FormDescription>
                   </div>
 
@@ -146,7 +146,7 @@ export const FormStylingSettings = ({
             render={({ field }) => (
               <FormItem className="space-y-4">
                 <div>
-                  <FormLabel className="text-sm font-semibold text-slate-700">Question color</FormLabel>
+                  <FormLabel>Question color</FormLabel>
                   <FormDescription>Change the question color of the survey.</FormDescription>
                 </div>
 
@@ -166,7 +166,7 @@ export const FormStylingSettings = ({
             render={({ field }) => (
               <FormItem className="space-y-4">
                 <div>
-                  <FormLabel className="text-sm font-semibold text-slate-700">Input color</FormLabel>
+                  <FormLabel>Input color</FormLabel>
                   <FormDescription>Change the background color of the input fields.</FormDescription>
                 </div>
 
@@ -186,7 +186,7 @@ export const FormStylingSettings = ({
             render={({ field }) => (
               <FormItem className="space-y-4">
                 <div>
-                  <FormLabel className="text-sm font-semibold text-slate-700">Input border color</FormLabel>
+                  <FormLabel>Input border color</FormLabel>
                   <FormDescription>Change the border color of the input fields.</FormDescription>
                 </div>
 

@@ -90,7 +90,7 @@ export const CardStylingSettings = ({
               render={() => (
                 <FormItem>
                   <div>
-                    <FormLabel className="text-sm font-semibold text-slate-700">Roundness</FormLabel>
+                    <FormLabel>Roundness</FormLabel>
                     <FormDescription>Change the border radius of the card and the inputs.</FormDescription>
                   </div>
 
@@ -116,9 +116,7 @@ export const CardStylingSettings = ({
             render={({ field }) => (
               <FormItem className="space-y-4">
                 <div>
-                  <FormLabel className="text-sm font-semibold text-slate-700">
-                    Card background color
-                  </FormLabel>
+                  <FormLabel>Card background color</FormLabel>
                   <FormDescription>Change the background color of the card.</FormDescription>
                 </div>
 
@@ -138,7 +136,7 @@ export const CardStylingSettings = ({
             render={({ field }) => (
               <FormItem className="space-y-4">
                 <div>
-                  <FormLabel className="text-sm font-semibold text-slate-700">Card border color</FormLabel>
+                  <FormLabel>Card border color</FormLabel>
                   <FormDescription>Change the border color of the card.</FormDescription>
                 </div>
 
@@ -158,7 +156,7 @@ export const CardStylingSettings = ({
             render={({ field }) => (
               <FormItem className="space-y-4">
                 <div>
-                  <FormLabel className="text-sm font-semibold text-slate-700">Card shadow color</FormLabel>
+                  <FormLabel>Card shadow color</FormLabel>
                   <FormDescription>Change the shadow color of the card.</FormDescription>
                 </div>
 
@@ -178,9 +176,7 @@ export const CardStylingSettings = ({
             render={() => (
               <FormItem>
                 <div>
-                  <FormLabel className="text-sm font-semibold text-slate-700">
-                    Card Arrangement for {surveyTypeDerived} Surveys
-                  </FormLabel>
+                  <FormLabel>Card Arrangement for {surveyTypeDerived} Surveys</FormLabel>
 
                   <FormDescription>
                     How funky do you want your cards in {surveyTypeDerived} Surveys
@@ -216,10 +212,8 @@ export const CardStylingSettings = ({
                   </FormControl>
 
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-700">Hide progress bar</h3>
-                    <p className="text-xs font-normal text-slate-500">
-                      Disable the visibility of survey progress.
-                    </p>
+                    <FormLabel>Hide progress bar</FormLabel>
+                    <FormDescription>Disable the visibility of survey progress.</FormDescription>
                   </div>
                 </FormItem>
               )}
@@ -242,7 +236,7 @@ export const CardStylingSettings = ({
                     </FormControl>
 
                     <div>
-                      <FormLabel className="text-sm font-semibold text-slate-700">
+                      <FormLabel>
                         Hide logo
                         <Badge text="Link Surveys" type="gray" size="normal" />
                       </FormLabel>
@@ -281,9 +275,7 @@ export const CardStylingSettings = ({
                         </FormControl>
 
                         <div>
-                          <FormLabel className="text-sm font-semibold text-slate-700">
-                            Add highlight border
-                          </FormLabel>
+                          <FormLabel>Add highlight border</FormLabel>
                           <FormDescription className="text-xs font-normal text-slate-500">
                             Add an outer border to your survey card.
                           </FormDescription>

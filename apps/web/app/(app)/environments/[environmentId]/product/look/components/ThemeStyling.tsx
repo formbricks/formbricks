@@ -160,9 +160,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
                         </FormControl>
 
                         <div>
-                          <FormLabel className="text-sm font-semibold text-slate-700">
-                            Enable custom styling
-                          </FormLabel>
+                          <FormLabel>Enable custom styling</FormLabel>
                           <FormDescription>
                             Allow users to override this theme in the survey editor.
                           </FormDescription>

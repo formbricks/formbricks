@@ -83,7 +83,7 @@ export const BackgroundStylingCard = ({
             render={({ field }) => (
               <FormItem>
                 <div>
-                  <FormLabel className="text-sm font-semibold text-slate-700">Change background</FormLabel>
+                  <FormLabel>Change background</FormLabel>
                   <FormDescription>Pick a background from our library or upload your own.</FormDescription>
                 </div>
 
@@ -117,7 +117,7 @@ export const BackgroundStylingCard = ({
                   render={({ field }) => (
                     <FormItem>
                       <div>
-                        <FormLabel className="text-sm font-semibold text-slate-700">Brightness</FormLabel>
+                        <FormLabel>Brightness</FormLabel>
                         <FormDescription>Darken or lighten background of your choice.</FormDescription>
                       </div>
 
