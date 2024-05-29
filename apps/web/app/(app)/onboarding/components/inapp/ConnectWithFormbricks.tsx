@@ -6,6 +6,7 @@ import Lost from "@/images/onboarding-lost.gif";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { usePostHog } from "posthog-js/react";
 import { useEffect, useState } from "react";
 
@@ -84,7 +85,7 @@ const NotConnectedState = ({ environment, webAppUrl, jsPackageVersion, goToOrgan
       />
 
       <div className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-12 py-3 text-slate-700">
-        Waiting for your signal...
+        <span className="animate-pulse">Waiting for your signal...</span>
         <Image src={Lost} alt="lost" height={75} />
       </div>
       <div className="w-full border-b border-slate-200 " />
@@ -99,7 +100,9 @@ const NotConnectedState = ({ environment, webAppUrl, jsPackageVersion, goToOrgan
           className="mt-8 font-normal text-slate-400"
           variant="minimal"
           onClick={goToOrganizationInvitePage}>
-          Skip
+          {posthog.getFeatureFlag("website-survey-activation") === "test"
+            ? "Skip"
+            : "I don't know how to do this"}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
