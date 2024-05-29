@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import {
   TSurvey,
@@ -11,7 +12,6 @@ import {
   TSurveyQuestionType,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
-import { TTeam } from "@formbricks/types/teams";
 import { TUser } from "@formbricks/types/user";
 
 import { selectPerson } from "../../../person/service";
@@ -62,7 +62,7 @@ export const mockProduct: TProduct = {
   createdAt: currentDate,
   updatedAt: currentDate,
   name: "mock Product",
-  teamId: mockId,
+  organizationId: mockId,
   brandColor: "#000000",
   highlightBorderColor: "#000000",
   recontactDays: 0,
@@ -103,7 +103,7 @@ export const mockUser: TUser = {
   notificationSettings: {
     alert: {},
     weeklySummary: {},
-    unsubscribedTeamIds: [],
+    unsubscribedOrganizationIds: [],
   },
   role: "other",
 };
@@ -184,9 +184,9 @@ const baseSurveyProperties = {
   ...commonMockProperties,
 };
 
-export const mockTeamOutput: TTeam = {
+export const mockOrganizationOutput: TOrganization = {
   id: mockId,
-  name: "mock Team",
+  name: "mock Organization",
   createdAt: currentDate,
   updatedAt: currentDate,
   billing: {

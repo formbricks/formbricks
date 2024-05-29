@@ -21,11 +21,11 @@ export const OnboardingInviteEmail = ({
       <Text>{inviteMessage}</Text>
       <Text className="text-xl font-medium">Get Started in Minutes</Text>
       <ol>
-        <li>Create an account to join {inviterName}&apos;s team.</li>
+        <li>Create an account to join {inviterName}&apos;s organization.</li>
         <li>Connect Formbricks to your app or website via HTML Snippet or NPM in just a few minutes.</li>
         <li>Done ✅</li>
       </ol>
-      <EmailButton label={`Join ${inviterName}'s team`} href={verifyLink} />
+      <EmailButton label={`Join ${inviterName}'s organization`} href={verifyLink} />
       <EmailFooter />
     </Container>
   );

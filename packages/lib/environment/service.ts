@@ -18,8 +18,8 @@ import {
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 
 import { cache } from "../cache";
+import { getOrganizationsByUserId } from "../organization/service";
 import { getProducts } from "../product/service";
-import { getTeamsByUserId } from "../team/service";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
 
@@ -127,14 +127,16 @@ export const updateEnvironment = async (
 
 export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvironment | null> => {
   try {
-    const teams = await getTeamsByUserId(userId);
-    if (teams.length === 0) {
-      throw new Error(`Unable to get first environment: User ${userId} has no teams`);
+    const organizations = await getOrganizationsByUserId(userId);
+    if (organizations.length === 0) {
+      throw new Error(`Unable to get first environment: User ${userId} has no organizations`);
     }
-    const firstTeam = teams[0];
-    const products = await getProducts(firstTeam.id);
+    const firstOrganization = organizations[0];
+    const products = await getProducts(firstOrganization.id);
     if (products.length === 0) {
-      throw new Error(`Unable to get first environment: Team ${firstTeam.id} has no products`);
+      throw new Error(
+        `Unable to get first environment: Organization ${firstOrganization.id} has no products`
+      );
     }
     const firstProduct = products[0];
     const productionEnvironment = firstProduct.environments.find(

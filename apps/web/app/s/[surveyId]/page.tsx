@@ -8,12 +8,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ZId } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { MediaBackground } from "@formbricks/ui/MediaBackground";
@@ -57,11 +58,11 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
     notFound();
   }
 
-  const team = await getTeamByEnvironmentId(survey?.environmentId);
-  if (!team) {
-    throw new Error("Team not found");
+  const organization = await getOrganizationByEnvironmentId(survey?.environmentId);
+  if (!organization) {
+    throw new Error("Organization not found");
   }
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
   if (survey && survey.status !== "inProgress") {
     return (
@@ -125,6 +126,8 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
     throw new Error("Product not found");
   }
 
+  const attributeClasses = await getAttributeClasses(survey.environmentId);
+
   const getLanguageCode = (): string => {
     if (!langParam || !isMultiLanguageAllowed) return "default";
     else {
@@ -170,6 +173,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
+        attributeClasses={attributeClasses}
       />
     );
   }
@@ -188,6 +192,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
           responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
           verifiedEmail={verifiedEmail}
           languageCode={languageCode}
+          attributeClasses={attributeClasses}
         />
         <LegalFooter
           IMPRINT_URL={IMPRINT_URL}
