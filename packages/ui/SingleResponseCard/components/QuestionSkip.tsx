@@ -1,6 +1,8 @@
 import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { parseRecallInfo } from "@formbricks/lib/utils/recall";
+import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
@@ -10,6 +12,7 @@ interface QuestionSkipProps {
   status: string;
   questions: TSurveyQuestion[];
   isFirstQuestionAnswered?: boolean;
+  responseData: TResponseData;
 }
 
 export const QuestionSkip = ({
@@ -17,6 +20,7 @@ export const QuestionSkip = ({
   status,
   questions,
   isFirstQuestionAnswered,
+  responseData,
 }: QuestionSkipProps) => {
   return (
     <div>
@@ -65,9 +69,13 @@ export const QuestionSkip = ({
                   skippedQuestions.map((questionId) => {
                     return (
                       <p className="my-2" key={questionId}>
-                        {getLocalizedValue(
-                          questions.find((question) => question.id === questionId)!.headline,
-                          "default"
+                        {parseRecallInfo(
+                          getLocalizedValue(
+                            questions.find((question) => question.id === questionId)!.headline,
+                            "default"
+                          ),
+                          {},
+                          responseData
                         )}
                       </p>
                     );
@@ -95,9 +103,13 @@ export const QuestionSkip = ({
                   skippedQuestions.map((questionId) => {
                     return (
                       <p className="my-2" key={questionId}>
-                        {getLocalizedValue(
-                          questions.find((question) => question.id === questionId)!.headline,
-                          "default"
+                        {parseRecallInfo(
+                          getLocalizedValue(
+                            questions.find((question) => question.id === questionId)!.headline,
+                            "default"
+                          ),
+                          {},
+                          responseData
                         )}
                       </p>
                     );
