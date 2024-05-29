@@ -24,8 +24,8 @@ export const ActivityTimeline = ({
 
       {!isUserTargetingEnabled ? (
         <UpgradePlanNotice
-          message="Upgrade to the User Targeting plan to store action history."
-          textForUrl="Upgrade now."
+          message="Upgrade your plan to store action history."
+          textForUrl="More info."
           url={`/environments/${environment.id}/settings/billing`}
         />
       ) : (

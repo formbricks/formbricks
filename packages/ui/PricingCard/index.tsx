@@ -1,6 +1,6 @@
 import { CheckIcon } from "lucide-react";
 
-import { TTeam } from "@formbricks/types/teams";
+import { TOrganization } from "@formbricks/types/organizations";
 
 import { Badge } from "../Badge";
 import { BillingSlider } from "../BillingSlider";
@@ -12,7 +12,7 @@ export const PricingCard = ({
   featureName,
   monthlyPrice,
   actionText,
-  team,
+  organization,
   metric,
   sliderValue,
   sliderLimit,
@@ -28,7 +28,7 @@ export const PricingCard = ({
   featureName: string;
   monthlyPrice: number;
   actionText: string;
-  team: TTeam;
+  organization: TOrganization;
   metric?: string;
   sliderValue?: number;
   sliderLimit?: number;
@@ -43,13 +43,13 @@ export const PricingCard = ({
   onUpgrade: any;
   onUnsubscribe: any;
 }) => {
-  const featureNameKey = featureName as keyof typeof team.billing.features;
+  const featureNameKey = featureName as keyof typeof organization.billing.features;
   return (
     <div className="mt-8 rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
       <div className="relative p-8">
         <h2 className="mr-2 inline-flex text-2xl font-bold text-slate-700">{title}</h2>
-        {team.billing.features[featureNameKey].status === "active" ? (
-          team.billing.features[featureNameKey].unlimited ? (
+        {organization.billing.features[featureNameKey].status === "active" ? (
+          organization.billing.features[featureNameKey].unlimited ? (
             <Badge text="Unlimited" size="normal" type="success" />
           ) : (
             <>
@@ -62,7 +62,7 @@ export const PricingCard = ({
               </Button>
             </>
           )
-        ) : team.billing.features[featureNameKey].status === "cancelled" ? (
+        ) : organization.billing.features[featureNameKey].status === "cancelled" ? (
           <Badge text="Cancelling at End of this Month" size="normal" type="warning" />
         ) : null}
 
@@ -71,7 +71,7 @@ export const PricingCard = ({
         {metric && perMetricCharge && (
           <div className="rounded-xl bg-slate-100 py-4 dark:bg-slate-800">
             <div className="mb-2 flex items-center gap-x-4"></div>
-            {team.billing.features[featureNameKey].unlimited ? (
+            {organization.billing.features[featureNameKey].unlimited ? (
               <p>
                 <span className="text-sm font-medium text-slate-400">
                   Usage this month: {sliderValue} {metric}
@@ -94,7 +94,7 @@ export const PricingCard = ({
 
         <div className="flex py-3">
           <div className="w-3/5">
-            {team.billing.features[featureNameKey].status === "inactive" && (
+            {organization.billing.features[featureNameKey].status === "inactive" && (
               <p className="whitespace-pre-wrap text-sm leading-6 text-slate-600">
                 You&apos;re on the <b>Free plan</b> in {title}.<br />
                 Upgrade now to unlock the following:
@@ -119,9 +119,9 @@ export const PricingCard = ({
           </div>
 
           <div className="ml-6 flex w-2/5 flex-col items-end space-y-2">
-            {!team.billing.features[featureNameKey].unlimited && (
+            {!organization.billing.features[featureNameKey].unlimited && (
               <div className="my-2">
-                {team.billing.features[featureNameKey].status !== "inactive" ? (
+                {organization.billing.features[featureNameKey].status !== "inactive" ? (
                   <div className="mt-8">
                     {perMetricCharge ? (
                       <>
@@ -158,7 +158,7 @@ export const PricingCard = ({
                 )}
               </div>
             )}
-            {team.billing.features[featureNameKey].status === "inactive" && (
+            {organization.billing.features[featureNameKey].status === "inactive" && (
               <Button variant="darkCTA" loading={loading} onClick={() => onUpgrade()}>
                 Upgrade {title !== "Link Survey Pro" ? "for free" : "now"}
               </Button>

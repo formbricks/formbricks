@@ -2,6 +2,7 @@ import { PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -17,6 +18,7 @@ interface CalQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
+  attributeClasses: TAttributeClass[];
 }
 
 export const CalQuestionForm = ({
@@ -27,6 +29,7 @@ export const CalQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   isInvalid,
+  attributeClasses,
 }: CalQuestionFormProps): JSX.Element => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -42,6 +45,7 @@ export const CalQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
+        attributeClasses={attributeClasses}
       />
       <div>
         {showSubheader && (
@@ -56,6 +60,7 @@ export const CalQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
+                attributeClasses={attributeClasses}
               />
             </div>
 

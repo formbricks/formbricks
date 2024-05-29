@@ -12,7 +12,7 @@ import { TUser, TUserCreateInput, TUserUpdateInput, ZUserUpdateInput } from "@fo
 import { cache } from "../cache";
 import { createCustomerIoCustomer } from "../customerio";
 import { deleteMembership, updateMembership } from "../membership/service";
-import { deleteTeam } from "../team/service";
+import { deleteOrganization } from "../organization/service";
 import { validateInputs } from "../utils/validate";
 import { userCache } from "./cache";
 
@@ -179,7 +179,7 @@ export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
   }
 };
 
-// function to delete a user's user including teams
+// function to delete a user's user including organizations
 export const deleteUser = async (id: string): Promise<TUser> => {
   validateInputs([id, ZId]);
 
@@ -189,7 +189,7 @@ export const deleteUser = async (id: string): Promise<TUser> => {
         userId: id,
       },
       include: {
-        team: {
+        organization: {
           select: {
             id: true,
             name: true,
@@ -200,23 +200,23 @@ export const deleteUser = async (id: string): Promise<TUser> => {
     });
 
     for (const currentUserMembership of currentUserMemberships) {
-      const teamMemberships = currentUserMembership.team.memberships;
+      const organizationMemberships = currentUserMembership.organization.memberships;
       const role = currentUserMembership.role;
-      const teamId = currentUserMembership.teamId;
+      const organizationId = currentUserMembership.organizationId;
 
-      const teamAdminMemberships = getAdminMemberships(teamMemberships);
-      const teamHasAtLeastOneAdmin = teamAdminMemberships.length > 0;
-      const teamHasOnlyOneMember = teamMemberships.length === 1;
-      const currentUserIsTeamOwner = role === "owner";
-      await deleteMembership(id, teamId);
+      const organizationAdminMemberships = getAdminMemberships(organizationMemberships);
+      const organizationHasAtLeastOneAdmin = organizationAdminMemberships.length > 0;
+      const organizationHasOnlyOneMember = organizationMemberships.length === 1;
+      const currentUserIsOrganizationOwner = role === "owner";
+      await deleteMembership(id, organizationId);
 
-      if (teamHasOnlyOneMember) {
-        await deleteTeam(teamId);
-      } else if (currentUserIsTeamOwner && teamHasAtLeastOneAdmin) {
-        const firstAdmin = teamAdminMemberships[0];
-        await updateMembership(firstAdmin.userId, teamId, { role: "owner" });
-      } else if (currentUserIsTeamOwner) {
-        await deleteTeam(teamId);
+      if (organizationHasOnlyOneMember) {
+        await deleteOrganization(organizationId);
+      } else if (currentUserIsOrganizationOwner && organizationHasAtLeastOneAdmin) {
+        const firstAdmin = organizationAdminMemberships[0];
+        await updateMembership(firstAdmin.userId, organizationId, { role: "owner" });
+      } else if (currentUserIsOrganizationOwner) {
+        await deleteOrganization(organizationId);
       }
     }
 
@@ -232,15 +232,15 @@ export const deleteUser = async (id: string): Promise<TUser> => {
   }
 };
 
-export const getUsersWithTeam = async (teamId: string): Promise<TUser[]> => {
-  validateInputs([teamId, ZId]);
+export const getUsersWithOrganization = async (organizationId: string): Promise<TUser[]> => {
+  validateInputs([organizationId, ZId]);
 
   try {
     const users = await prisma.user.findMany({
       where: {
         memberships: {
           some: {
-            teamId,
+            organizationId,
           },
         },
       },

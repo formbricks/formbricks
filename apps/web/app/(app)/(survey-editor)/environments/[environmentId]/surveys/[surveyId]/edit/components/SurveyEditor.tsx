@@ -163,6 +163,7 @@ export const SurveyEditor = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 isMultiLanguageAllowed={isMultiLanguageAllowed}
                 isFormbricksCloud={isFormbricksCloud}
+                attributeClasses={attributeClasses}
               />
             )}
 

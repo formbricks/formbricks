@@ -6,7 +6,7 @@ export const ZInvite = z.object({
   id: z.string(),
   email: z.string().email(),
   name: z.string().nullish(),
-  teamId: z.string(),
+  organizationId: z.string(),
   creatorId: z.string(),
   acceptorId: z.string().nullish(),
   accepted: z.boolean(),
