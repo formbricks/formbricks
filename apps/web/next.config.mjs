@@ -19,14 +19,11 @@ const getHostname = (url) => {
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
+  serverExternalPackages: ["@aws-sdk"],
   experimental: {
-    serverComponentsExternalPackages: ["@aws-sdk"],
     //instrumentationHook: true,
     outputFileTracingIncludes: {
       "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
-    },
-    staleTimes: {
-      dynamic: 0,
     },
   },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],

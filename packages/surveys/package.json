@@ -44,7 +44,7 @@
     "autoprefixer": "^10.4.19",
     "concurrently": "8.2.2",
     "eslint-config-formbricks": "workspace:*",
-    "isomorphic-dompurify": "^2.10.0",
+    "isomorphic-dompurify": "^2.11.0",
     "postcss": "^8.4.38",
     "preact": "^10.22.0",
     "react-date-picker": "^11.0.0",

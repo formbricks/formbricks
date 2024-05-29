@@ -434,7 +434,7 @@ const EmailTemplateWrapper = ({
               "signature-color": signatureColor,
             },
             borderRadius: {
-              custom: styling.roundness ?? 8,
+              custom: (styling.roundness ?? 8).toString() + "px",
             },
           },
         },
