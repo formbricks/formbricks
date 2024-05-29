@@ -2,10 +2,11 @@ import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
 
 interface PeopleSegmentsTabsProps {
   activeId: string;
-  environmentId: string;
+  environmentId?: string;
+  loading?: boolean;
 }
 
-export const PeopleSecondaryNavigation = ({ activeId, environmentId }: PeopleSegmentsTabsProps) => {
+export const PeopleSecondaryNavigation = ({ activeId, environmentId, loading }: PeopleSegmentsTabsProps) => {
   const navigation = [
     {
       id: "people",
@@ -24,5 +25,5 @@ export const PeopleSecondaryNavigation = ({ activeId, environmentId }: PeopleSeg
     },
   ];
 
-  return <SecondaryNavigation navigation={navigation} activeId={activeId} />;
+  return <SecondaryNavigation navigation={navigation} activeId={activeId} loading={loading} />;
 };

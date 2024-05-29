@@ -13,12 +13,12 @@ export const verifyPassword = async (password: string, hashedPassword: string) =
   return isValid;
 };
 
-export const hasTeamAccess = async (userId: string, teamId: string) => {
+export const hasOrganizationAccess = async (userId: string, organizationId: string) => {
   const membership = await prisma.membership.findUnique({
     where: {
-      userId_teamId: {
+      userId_organizationId: {
         userId,
-        teamId,
+        organizationId,
       },
     },
   });
@@ -30,12 +30,12 @@ export const hasTeamAccess = async (userId: string, teamId: string) => {
   return false;
 };
 
-export const isAdminOrOwner = async (userId: string, teamId: string) => {
+export const isAdminOrOwner = async (userId: string, organizationId: string) => {
   const membership = await prisma.membership.findUnique({
     where: {
-      userId_teamId: {
+      userId_organizationId: {
         userId,
-        teamId,
+        organizationId,
       },
     },
   });
@@ -47,12 +47,12 @@ export const isAdminOrOwner = async (userId: string, teamId: string) => {
   return false;
 };
 
-export const isOwner = async (userId: string, teamId: string) => {
+export const isOwner = async (userId: string, organizationId: string) => {
   const membership = await prisma.membership.findUnique({
     where: {
-      userId_teamId: {
+      userId_organizationId: {
         userId,
-        teamId,
+        organizationId,
       },
     },
   });
@@ -64,29 +64,29 @@ export const isOwner = async (userId: string, teamId: string) => {
   return false;
 };
 
-export const hasTeamAuthority = async (userId: string, teamId: string) => {
-  const hasAccess = await hasTeamAccess(userId, teamId);
+export const hasOrganizationAuthority = async (userId: string, organizationId: string) => {
+  const hasAccess = await hasOrganizationAccess(userId, organizationId);
   if (!hasAccess) {
     throw new AuthenticationError("Not authorized");
   }
 
-  const isAdminOrOwnerAccess = await isAdminOrOwner(userId, teamId);
+  const isAdminOrOwnerAccess = await isAdminOrOwner(userId, organizationId);
   if (!isAdminOrOwnerAccess) {
-    throw new AuthenticationError("You are not the admin or owner of this team");
+    throw new AuthenticationError("You are not the admin or owner of this organization");
   }
 
   return true;
 };
 
-export const hasTeamOwnership = async (userId: string, teamId: string) => {
-  const hasAccess = await hasTeamAccess(userId, teamId);
+export const hasOrganizationOwnership = async (userId: string, organizationId: string) => {
+  const hasAccess = await hasOrganizationAccess(userId, organizationId);
   if (!hasAccess) {
     throw new AuthenticationError("Not authorized");
   }
 
-  const isOwnerAccess = await isOwner(userId, teamId);
+  const isOwnerAccess = await isOwner(userId, organizationId);
   if (!isOwnerAccess) {
-    throw new AuthenticationError("You are not the owner of this team");
+    throw new AuthenticationError("You are not the owner of this organization");
   }
 
   return true;

@@ -239,12 +239,13 @@ export const validateId = (
   return true;
 };
 
-// Checks if there is a cycle present in the survey data logic.
-export const isSurveyLogicCyclic = (questions: TSurveyQuestions) => {
+// Checks if there is a cycle present in the survey data logic and returns all questions responsible for the cycle.
+export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestions): string[] => {
   const visited: Record<string, boolean> = {};
   const recStack: Record<string, boolean> = {};
+  const cyclicQuestions: Set<string> = new Set();
 
-  const checkForCycle = (questionId: string) => {
+  const checkForCyclicLogic = (questionId: string): boolean => {
     if (!visited[questionId]) {
       visited[questionId] = true;
       recStack[questionId] = true;
@@ -254,12 +255,14 @@ export const isSurveyLogicCyclic = (questions: TSurveyQuestions) => {
         for (const logic of question.logic) {
           const destination = logic.destination;
           if (!destination) {
-            return false;
+            continue;
           }
 
-          if (!visited[destination] && checkForCycle(destination)) {
+          if (!visited[destination] && checkForCyclicLogic(destination)) {
+            cyclicQuestions.add(questionId);
             return true;
           } else if (recStack[destination]) {
+            cyclicQuestions.add(questionId);
             return true;
           }
         }
@@ -267,7 +270,7 @@ export const isSurveyLogicCyclic = (questions: TSurveyQuestions) => {
         // Handle default behavior
         const nextQuestionIndex = questions.findIndex((question) => question.id === questionId) + 1;
         const nextQuestion = questions[nextQuestionIndex];
-        if (nextQuestion && !visited[nextQuestion.id] && checkForCycle(nextQuestion.id)) {
+        if (nextQuestion && !visited[nextQuestion.id] && checkForCyclicLogic(nextQuestion.id)) {
           return true;
         }
       }
@@ -279,12 +282,10 @@ export const isSurveyLogicCyclic = (questions: TSurveyQuestions) => {
 
   for (const question of questions) {
     const questionId = question.id;
-    if (checkForCycle(questionId)) {
-      return true;
-    }
+    checkForCyclicLogic(questionId);
   }
 
-  return false;
+  return Array.from(cyclicQuestions);
 };
 
 export const isSurveyValid = (
@@ -444,7 +445,9 @@ export const isSurveyValid = (
   }
 
   // Detecting any cyclic dependencies in survey logic.
-  if (isSurveyLogicCyclic(survey.questions)) {
+  const questionsWithCyclicLogic = findQuestionsWithCyclicLogic(survey.questions);
+  if (questionsWithCyclicLogic.length > 0) {
+    setInvalidQuestions(questionsWithCyclicLogic);
     toast.error("Cyclic logic detected. Please fix it before saving.");
     return false;
   }

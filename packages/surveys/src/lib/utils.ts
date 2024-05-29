@@ -1,4 +1,4 @@
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyChoice } from "@formbricks/types/surveys";
 
 export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
@@ -11,24 +11,28 @@ const shuffle = (array: any[]) => {
   }
 };
 
-export const shuffleQuestions = (array: any[], shuffleOption: string) => {
-  const arrayCopy = [...array];
-  const otherIndex = arrayCopy.findIndex((element) => element.id === "other");
-  const otherElement = otherIndex !== -1 ? arrayCopy.splice(otherIndex, 1)[0] : null;
+export const getShuffledChoicesIds = (choices: TSurveyChoice[], shuffleOption: string): string[] => {
+  const otherOption = choices.find((choice) => {
+    return choice.id === "other";
+  });
+  const shuffledChoices = otherOption ? [...choices.filter((choice) => choice.id !== "other")] : [...choices];
 
   if (shuffleOption === "all") {
-    shuffle(arrayCopy);
+    shuffle(shuffledChoices);
   } else if (shuffleOption === "exceptLast") {
-    const lastElement = arrayCopy.pop();
-    shuffle(arrayCopy);
-    arrayCopy.push(lastElement);
+    if (otherOption) {
+      shuffle(shuffledChoices);
+    } else {
+      const lastElement = shuffledChoices.pop();
+      if (lastElement) {
+        shuffle(shuffledChoices);
+        shuffledChoices.push(lastElement);
+      }
+    }
   }
+  if (otherOption) shuffledChoices.push(otherOption);
 
-  if (otherElement) {
-    arrayCopy.push(otherElement);
-  }
-
-  return arrayCopy;
+  return shuffledChoices.map((choice) => choice.id);
 };
 
 export const calculateElementIdx = (survey: TSurvey, currentQustionIdx: number): number => {

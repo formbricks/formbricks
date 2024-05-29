@@ -200,7 +200,7 @@ export const ActionSettingsTab = ({
             This is a code action. Please make changes in your code base.
           </p>
         ) : actionClass.type === "noCode" ? (
-          <>
+          <div className="max-h-60 overflow-auto">
             <div>
               <Label>Select By</Label>
             </div>
@@ -225,7 +225,7 @@ export const ActionSettingsTab = ({
               setIsInnerHtml={setIsInnerHtml}
               register={register}
             />
-          </>
+          </div>
         ) : actionClass.type === "automatic" ? (
           <p className="text-sm text-slate-600">
             This action was created automatically. You cannot make changes to it.

@@ -94,18 +94,18 @@ export const HiddenFieldsCard = ({
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <div className="flex gap-2">
             {localSurvey.hiddenFields?.fieldIds && localSurvey.hiddenFields?.fieldIds?.length > 0 ? (
-              localSurvey.hiddenFields?.fieldIds?.map((question) => {
+              localSurvey.hiddenFields?.fieldIds?.map((fieldId) => {
                 return (
                   <Tag
-                    key={question}
+                    key={fieldId}
                     onDelete={() => {
                       updateSurvey({
                         enabled: true,
-                        fieldIds: localSurvey.hiddenFields?.fieldIds?.filter((q) => q !== question),
+                        fieldIds: localSurvey.hiddenFields?.fieldIds?.filter((q) => q !== fieldId),
                       });
                     }}
-                    tagId={question}
-                    tagName={question}
+                    tagId={fieldId}
+                    tagName={fieldId}
                   />
                 );
               })
