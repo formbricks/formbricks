@@ -6,19 +6,19 @@ import { CasualCardArrangementIcon } from "../icons/CasualCardArrangementIcon";
 import { SimpleCardsArrangementIcon } from "../icons/SimpleCardArrangementIcon";
 import { StraightCardArrangementIcon } from "../icons/StraightCardArrangementIcon";
 
-interface CardArrangementProps {
+interface CardArrangementTabsProps {
   surveyType: TSurveyType;
   activeCardArrangement: TCardArrangementOptions;
   setActiveCardArrangement: (arrangement: TCardArrangementOptions, surveyType: TSurveyType) => void;
   disabled?: boolean;
 }
 
-export const CardArrangement = ({
+export const CardArrangementTabs = ({
   activeCardArrangement,
   surveyType,
   setActiveCardArrangement,
   disabled = false,
-}: CardArrangementProps) => {
+}: CardArrangementTabsProps) => {
   const handleCardArrangementChange = (arrangement: TCardArrangementOptions) => {
     if (disabled) return;
     setActiveCardArrangement(arrangement, surveyType);

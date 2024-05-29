@@ -10,11 +10,11 @@ import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
+import { CardArrangementTabs } from "@formbricks/ui/CardArrangementTabs";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { ColorSelector } from "@formbricks/ui/ColorSelector";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Slider } from "@formbricks/ui/Slider";
-import { CardArrangement } from "@formbricks/ui/Styling/CardArrangement";
-import { ColorSelector } from "@formbricks/ui/Styling/ColorSelector";
 import { Switch } from "@formbricks/ui/Switch";
 
 type CardStylingSettingsProps = {
@@ -184,7 +184,7 @@ export const CardStylingSettings = ({
                   </FormDescription>
                 </div>
                 <FormControl>
-                  <CardArrangement
+                  <CardArrangementTabs
                     key={isAppSurvey ? "app" : "link"}
                     surveyType={isAppSurvey ? "app" : "link"}
                     activeCardArrangement={isAppSurvey ? appCardArrangement : linkCardArrangement}
