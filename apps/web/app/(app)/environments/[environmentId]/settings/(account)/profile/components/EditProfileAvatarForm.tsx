@@ -17,30 +17,32 @@ import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 import { FormField, FormItem, FormMessage, FormProvider } from "@formbricks/ui/Form";
 
-export const EditProfileAvatarForm = ({
-  session,
-  environmentId,
-}: {
+interface EditProfileAvatarFormProps {
   session: Session;
   environmentId: string;
-}) => {
+}
+
+export const EditProfileAvatarForm = ({ session, environmentId }: EditProfileAvatarFormProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const fileSchema = z
-    .instanceof(FileList)
-    .refine((files) => files.length === 1, "You must select a file.")
-    .refine((files) => {
-      const file = files[0];
-      const allowedTypes = ["image/jpeg", "image/png"];
-      return allowedTypes.includes(file.type);
-    }, "Invalid file type. Only JPEG and PNG are allowed.")
-    .refine((files) => {
-      const file = files[0];
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      return file.size <= maxSize;
-    }, "File size must be less than 10MB.");
+  const fileSchema =
+    typeof window !== "undefined"
+      ? z
+          .instanceof(FileList)
+          .refine((files) => files.length === 1, "You must select a file.")
+          .refine((files) => {
+            const file = files[0];
+            const allowedTypes = ["image/jpeg", "image/png"];
+            return allowedTypes.includes(file.type);
+          }, "Invalid file type. Only JPEG and PNG are allowed.")
+          .refine((files) => {
+            const file = files[0];
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            return file.size <= maxSize;
+          }, "File size must be less than 10MB.")
+      : z.any();
 
   const formSchema = z.object({
     file: fileSchema,

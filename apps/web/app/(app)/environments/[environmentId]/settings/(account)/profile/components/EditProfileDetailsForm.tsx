@@ -23,16 +23,15 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
     resolver: zodResolver(ZEditProfileDetailsFormSchema),
   });
 
-  const isSubmitting = form.formState.isSubmitting;
-  const isDirty = form.formState.isDirty;
+  const { isSubmitting, isDirty } = form.formState;
 
   const onSubmit: SubmitHandler<TEditProfileNameForm> = async (data) => {
     try {
-      const nameTrimmed = data.name.trim();
-      await updateUserAction({ name: nameTrimmed });
+      const name = data.name.trim();
+      await updateUserAction({ name });
       toast.success("Your name was updated successfully");
 
-      form.reset({ name: nameTrimmed });
+      form.reset({ name });
     } catch (error) {
       toast.error(`Error: ${error.message}`);
     }
