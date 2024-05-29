@@ -39,6 +39,10 @@ export const CardStylingSettings = ({
   const surveyTypeDerived = isAppSurvey ? "App / Website" : "Link";
   const isLogoVisible = !!product.logo?.url;
 
+  const linkCardArrangement = form.watch("cardArrangement.linkSurveys") ?? "simple";
+  const appCardArrangement = form.watch("cardArrangement.appSurveys") ?? "simple";
+  const roundness = form.watch("roundness") ?? 8;
+
   return (
     <Collapsible.Root
       open={open}
@@ -83,7 +87,7 @@ export const CardStylingSettings = ({
             <FormField
               control={form.control}
               name="roundness"
-              render={({ field }) => (
+              render={() => (
                 <FormItem>
                   <div>
                     <FormLabel className="text-sm font-semibold text-slate-700">Roundness</FormLabel>
@@ -93,9 +97,11 @@ export const CardStylingSettings = ({
                   <FormControl>
                     <div className="rounded-lg border bg-slate-50 p-6">
                       <Slider
-                        value={[field.value ?? 8]}
+                        value={[roundness]}
                         max={22}
-                        onValueChange={(value) => field.onChange(value[0])}
+                        onValueChange={(value) => {
+                          form.setValue("roundness", value[0]);
+                        }}
                       />
                     </div>
                   </FormControl>
@@ -168,8 +174,8 @@ export const CardStylingSettings = ({
 
           <FormField
             control={form.control}
-            name="cardArrangement"
-            render={({ field }) => (
+            name={"cardArrangement"}
+            render={() => (
               <FormItem>
                 <div>
                   <FormLabel className="text-sm font-semibold text-slate-700">
@@ -182,24 +188,19 @@ export const CardStylingSettings = ({
                 </div>
                 <FormControl>
                   <CardArrangement
+                    key={isAppSurvey ? "app" : "link"}
                     surveyType={isAppSurvey ? "app" : "link"}
-                    activeCardArrangement={
-                      isAppSurvey
-                        ? field.value?.appSurveys ?? "straight"
-                        : field.value?.linkSurveys ?? "straight"
-                    }
-                    setActiveCardArrangement={(arrangement) => {
-                      field.onChange({
-                        ...field.value,
-                        [isAppSurvey ? "appSurveys" : "linkSurveys"]: arrangement,
-                      });
+                    activeCardArrangement={isAppSurvey ? appCardArrangement : linkCardArrangement}
+                    setActiveCardArrangement={(value, type) => {
+                      type === "app"
+                        ? form.setValue("cardArrangement.appSurveys", value)
+                        : form.setValue("cardArrangement.linkSurveys", value);
                     }}
                   />
                 </FormControl>
               </FormItem>
             )}
           />
-
           <div className="flex items-center space-x-1">
             <FormField
               control={form.control}

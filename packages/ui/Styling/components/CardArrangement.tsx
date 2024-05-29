@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyType } from "@formbricks/types/surveys";
 
