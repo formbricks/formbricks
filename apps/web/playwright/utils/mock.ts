@@ -74,21 +74,21 @@ export const users = {
       password: "XpP%X9UU3efj8vJa",
     },
   ],
-  team: [
+  organization: [
     {
-      name: "Team User 1",
-      email: "team1@formbricks.com",
+      name: "Organization User 1",
+      email: "organization1@formbricks.com",
       password: "Test#1234",
     },
     {
-      name: "Team User 2",
-      email: "team2@formbricks.com",
+      name: "Organization User 2",
+      email: "organization2@formbricks.com",
       password: "Test#1234",
     },
   ],
 };
 
-export const teams = {
+export const organizations = {
   onboarding: [
     {
       role: "Founder",
@@ -301,7 +301,7 @@ export const actions = {
 
 export const invites = {
   addMember: {
-    name: "Team User 2",
-    email: "team2@formbricks.com",
+    name: "Organization User 2",
+    email: "organization2@formbricks.com",
   },
 };

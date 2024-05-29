@@ -16,10 +16,16 @@ import { MultiLanguageCard } from "@formbricks/ee/multiLanguage/components/Multi
 import { extractLanguageCodes, getLocalizedValue, translateQuestion } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
-import { isCardValid, validateQuestion, validateSurveyQuestionsInBatch } from "../lib/validation";
+import {
+  findQuestionsWithCyclicLogic,
+  isCardValid,
+  validateQuestion,
+  validateSurveyQuestionsInBatch,
+} from "../lib/validation";
 import { AddQuestionButton } from "./AddQuestionButton";
 import { EditThankYouCard } from "./EditThankYouCard";
 import { EditWelcomeCard } from "./EditWelcomeCard";
@@ -38,6 +44,7 @@ interface QuestionsViewProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
+  attributeClasses: TAttributeClass[];
 }
 
 export const QuestionsView = ({
@@ -52,6 +59,7 @@ export const QuestionsView = ({
   selectedLanguageCode,
   isMultiLanguageAllowed,
   isFormbricksCloud,
+  attributeClasses,
 }: QuestionsViewProps) => {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -89,8 +97,12 @@ export const QuestionsView = ({
     const isFirstQuestion = question.id === localSurvey.questions[0].id;
     let temp = structuredClone(invalidQuestions);
     if (validateQuestion(question, surveyLanguages, isFirstQuestion)) {
-      temp = invalidQuestions.filter((id) => id !== question.id);
-      setInvalidQuestions(temp);
+      // If question is valid, we now check for cyclic logic
+      const questionsWithCyclicLogic = findQuestionsWithCyclicLogic(localSurvey.questions);
+      if (!questionsWithCyclicLogic.includes(question.id)) {
+        temp = invalidQuestions.filter((id) => id !== question.id);
+        setInvalidQuestions(temp);
+      }
     } else if (!invalidQuestions.includes(question.id)) {
       temp.push(question.id);
       setInvalidQuestions(temp);
@@ -330,6 +342,7 @@ export const QuestionsView = ({
           isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
           setSelectedLanguageCode={setSelectedLanguageCode}
           selectedLanguageCode={selectedLanguageCode}
+          attributeClasses={attributeClasses}
         />
       </div>
 
@@ -347,6 +360,7 @@ export const QuestionsView = ({
           setActiveQuestionId={setActiveQuestionId}
           invalidQuestions={invalidQuestions}
           internalQuestionIdMap={internalQuestionIdMap}
+          attributeClasses={attributeClasses}
         />
       </DndContext>
 
@@ -360,6 +374,7 @@ export const QuestionsView = ({
           isInvalid={invalidQuestions ? invalidQuestions.includes("end") : false}
           setSelectedLanguageCode={setSelectedLanguageCode}
           selectedLanguageCode={selectedLanguageCode}
+          attributeClasses={attributeClasses}
         />
 
         {localSurvey.type === "link" ? (

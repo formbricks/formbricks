@@ -4,9 +4,12 @@ import type { Session } from "next-auth";
 
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import {
+  getOrganizationByEnvironmentId,
+  getOrganizationsByUserId,
+} from "@formbricks/lib/organization/service";
 import { getProducts } from "@formbricks/lib/product/service";
-import { getTeamByEnvironmentId, getTeamsByUserId } from "@formbricks/lib/team/service";
 import { DevEnvironmentBanner } from "@formbricks/ui/DevEnvironmentBanner";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
@@ -17,25 +20,25 @@ interface EnvironmentLayoutProps {
 }
 
 export const EnvironmentLayout = async ({ environmentId, session, children }: EnvironmentLayoutProps) => {
-  const [environment, teams, team] = await Promise.all([
+  const [environment, organizations, organization] = await Promise.all([
     getEnvironment(environmentId),
-    getTeamsByUserId(session.user.id),
-    getTeamByEnvironmentId(environmentId),
+    getOrganizationsByUserId(session.user.id),
+    getOrganizationByEnvironmentId(environmentId),
   ]);
 
-  if (!team || !environment) {
+  if (!organization || !environment) {
     return <ErrorComponent />;
   }
 
   const [products, environments] = await Promise.all([
-    getProducts(team.id),
+    getProducts(organization.id),
     getEnvironments(environment.productId),
   ]);
 
-  if (!products || !environments || !teams) {
+  if (!products || !environments || !organizations) {
     return <ErrorComponent />;
   }
-  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
@@ -43,8 +46,8 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
       <div className="flex h-full">
         <MainNavigation
           environment={environment}
-          team={team}
-          teams={teams}
+          organization={organization}
+          organizations={organizations}
           products={products}
           session={session}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}

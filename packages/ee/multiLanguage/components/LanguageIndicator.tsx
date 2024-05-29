@@ -31,7 +31,7 @@ export const LanguageIndicator = ({
     setShowLanguageDropdown(false);
   };
 
-  const langaugeToBeDisplayed = surveyLanguages.find((language) => {
+  const languageToBeDisplayed = surveyLanguages.find((language) => {
     return selectedLanguageCode === "default"
       ? language.default === true
       : language.language.code === selectedLanguageCode;
@@ -48,7 +48,7 @@ export const LanguageIndicator = ({
         tabIndex={-1}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}>
-        {langaugeToBeDisplayed ? getLanguageLabel(langaugeToBeDisplayed?.language.code) : ""}
+        {languageToBeDisplayed ? getLanguageLabel(languageToBeDisplayed?.language.code) : ""}
         <ChevronDown className="ml-1 h-4 w-4" />
       </button>
       {showLanguageDropdown && (
@@ -57,7 +57,7 @@ export const LanguageIndicator = ({
           ref={languageDropdownRef}>
           {surveyLanguages.map(
             (language) =>
-              language.language.code !== langaugeToBeDisplayed?.language.code && (
+              language.language.code !== languageToBeDisplayed?.language.code && (
                 <button
                   key={language.language.id}
                   type="button"

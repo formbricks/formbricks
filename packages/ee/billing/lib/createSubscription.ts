@@ -2,7 +2,7 @@ import Stripe from "stripe";
 
 import { STRIPE_API_VERSION, WEBAPP_URL } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
-import { getTeam } from "@formbricks/lib/team/service";
+import { getOrganization } from "@formbricks/lib/organization/service";
 
 import { StripePriceLookupKeys } from "./constants";
 
@@ -18,15 +18,16 @@ export const getFirstOfNextMonthTimestamp = (): number => {
 };
 
 export const createSubscription = async (
-  teamId: string,
+  organizationId: string,
   environmentId: string,
   priceLookupKeys: StripePriceLookupKeys[]
 ) => {
   try {
-    const team = await getTeam(teamId);
-    if (!team) throw new Error("Team not found.");
-    let isNewTeam =
-      !team.billing.stripeCustomerId || !(await stripe.customers.retrieve(team.billing.stripeCustomerId));
+    const organization = await getOrganization(organizationId);
+    if (!organization) throw new Error("Organization not found.");
+    let isNewOrganization =
+      !organization.billing.stripeCustomerId ||
+      !(await stripe.customers.retrieve(organization.billing.stripeCustomerId));
 
     let lineItems: { price: string; quantity?: number }[] = [];
 
@@ -44,8 +45,8 @@ export const createSubscription = async (
       });
     });
 
-    // if the team has never purchased a plan then we just create a new session and store their stripe customer id
-    if (isNewTeam) {
+    // if the organization has never purchased a plan then we just create a new session and store their stripe customer id
+    if (isNewOrganization) {
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         line_items: lineItems,
@@ -54,7 +55,7 @@ export const createSubscription = async (
         allow_promotion_codes: true,
         subscription_data: {
           billing_cycle_anchor: getFirstOfNextMonthTimestamp(),
-          metadata: { teamId },
+          metadata: { organizationId },
         },
         automatic_tax: { enabled: true },
       });
@@ -63,24 +64,24 @@ export const createSubscription = async (
     }
 
     const existingSubscription = (
-      (await stripe.customers.retrieve(team.billing.stripeCustomerId as string, {
+      (await stripe.customers.retrieve(organization.billing.stripeCustomerId as string, {
         expand: ["subscriptions"],
       })) as any
     ).subscriptions.data[0] as Stripe.Subscription;
 
-    // the team has an active subscription
+    // the organization has an active subscription
     if (existingSubscription) {
-      // now we see if the team's current subscription is scheduled to cancel at the month end
-      // this is a case where the team cancelled an already purchased product
+      // now we see if the organization's current subscription is scheduled to cancel at the month end
+      // this is a case where the organization cancelled an already purchased product
       if (existingSubscription.cancel_at_period_end) {
         const allScheduledSubscriptions = await stripe.subscriptionSchedules.list({
-          customer: team.billing.stripeCustomerId as string,
+          customer: organization.billing.stripeCustomerId as string,
         });
         const scheduledSubscriptions = allScheduledSubscriptions.data.filter(
           (scheduledSub) => scheduledSub.status === "not_started"
         );
 
-        // if a team has a scheduled subscritpion upcoming, then we update that as well with their
+        // if an organization has a scheduled subscritpion upcoming, then we update that as well with their
         // newly purchased product since the current one is ending this month end
         if (scheduledSubscriptions.length) {
           const existingItemsInScheduledSubscription = scheduledSubscriptions[0].phases[0].items.map(
@@ -111,27 +112,27 @@ export const createSubscription = async (
                 start_date: getFirstOfNextMonthTimestamp(),
                 items: lineItemsForScheduledSubscription,
                 iterations: 1,
-                metadata: { teamId },
+                metadata: { organizationId },
               },
             ],
-            metadata: { teamId },
+            metadata: { organizationId },
           });
         } else {
           // if they do not have an upcoming new subscription schedule,
           // we create one since the current one with other products is expiring
-          // so the new schedule only has the new product the team has subscribed to
+          // so the new schedule only has the new product the organization has subscribed to
           await stripe.subscriptionSchedules.create({
-            customer: team.billing.stripeCustomerId as string,
+            customer: organization.billing.stripeCustomerId as string,
             start_date: getFirstOfNextMonthTimestamp(),
             end_behavior: "release",
             phases: [
               {
                 items: lineItems,
                 iterations: 1,
-                metadata: { teamId },
+                metadata: { organizationId },
               },
             ],
-            metadata: { teamId },
+            metadata: { organizationId },
           });
         }
       }
@@ -143,7 +144,8 @@ export const createSubscription = async (
         if (
           !(
             existingSubscription.cancel_at_period_end &&
-            team.billing.features[priceLookupKey as keyof typeof team.billing.features].status === "cancelled"
+            organization.billing.features[priceLookupKey as keyof typeof organization.billing.features]
+              .status === "cancelled"
           )
         ) {
           let alreadyInSubscription = false;
@@ -160,13 +162,13 @@ export const createSubscription = async (
         }
       }
     } else {
-      // case where team does not have a subscription but has a stripe customer id
+      // case where organization does not have a subscription but has a stripe customer id
       // so we just attach that to a new subscription
       await stripe.subscriptions.create({
-        customer: team.billing.stripeCustomerId as string,
+        customer: organization.billing.stripeCustomerId as string,
         items: lineItems,
         billing_cycle_anchor: getFirstOfNextMonthTimestamp(),
-        metadata: { teamId },
+        metadata: { organizationId },
       });
     }
 

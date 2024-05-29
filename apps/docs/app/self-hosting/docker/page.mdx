@@ -8,7 +8,7 @@ export const metadata = {
 
 # Advanced Setup
 
-Quickly set up and start using Formbricks with our [official Docker image](https://github.com/formbricks/formbricks/pkgs/container/formbricks) that we've already built for you. 
+Quickly set up and start using Formbricks with our [official Docker image](https://github.com/formbricks/formbricks/pkgs/container/formbricks) that we've already built for you.
 
 The pre-built image is ready-to-run, and it only requires minimal configuration on your part. It's as easy as downloading the Docker image and firing up the container.
 
@@ -104,20 +104,12 @@ You're now ready to start the Formbricks Docker setup. The following command wil
 
 ## Update
 
-1.  Stop the Formbricks stack
+<Note>
+  Please take a look at our [migration guide](/self-hosting/migration-guide) for version specific steps to
+  update Formbricks.
+</Note>
 
-<Col>
-   <CodeGroup title="Stop the docker instance">
-
-    ```bash
-    docker compose down
-    ```
-
-    </CodeGroup>
-
-</Col>
-
-2.  Pull the latest changes
+1.  Pull the latest Formbricks image
 
 <Col>
    <CodeGroup title="Pull the changes into docker">
@@ -130,8 +122,20 @@ You're now ready to start the Formbricks Docker setup. The following command wil
 
 </Col>
 
-3.  Update env vars as necessary in the docker-compose file.
-4.  Re-start the Formbricks stack
+2.  Stop the Formbricks stack
+
+<Col>
+   <CodeGroup title="Stop the docker instance">
+
+    ```bash
+    docker compose down
+    ```
+
+    </CodeGroup>
+
+</Col>
+
+3.  Re-start the Formbricks stack with the updated image
 
 <Col>
    <CodeGroup title="Relaunch the Docker Instance">
