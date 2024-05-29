@@ -32,12 +32,12 @@
     "prepare": "husky install"
   },
   "devDependencies": {
-    "@playwright/test": "^1.44.0",
+    "@playwright/test": "^1.44.1",
     "eslint-config-formbricks": "workspace:*",
     "husky": "^9.0.11",
-    "lint-staged": "^15.2.2",
+    "lint-staged": "^15.2.5",
     "rimraf": "^5.0.7",
-    "tsx": "^4.10.4",
+    "tsx": "^4.11.0",
     "turbo": "^1.13.3"
   },
   "lint-staged": {
@@ -55,7 +55,7 @@
   "engines": {
     "node": ">=16.0.0"
   },
-  "packageManager": "pnpm@8.11.0",
+  "packageManager": "pnpm@9.1.3",
   "nextBundleAnalysis": {
     "budget": 358400,
     "budgetPercentIncreaseRed": 20,
@@ -63,7 +63,7 @@
     "showDetails": true
   },
   "dependencies": {
-    "@changesets/cli": "^2.27.2",
-    "playwright": "^1.44.0"
+    "@changesets/cli": "^2.27.3",
+    "playwright": "^1.44.1"
   }
 }
