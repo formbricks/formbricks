@@ -211,28 +211,29 @@ export const getFormattedFilters = (
   dateRange: DateRange
 ): TResponseFilterCriteria => {
   const filters: TResponseFilterCriteria = {};
-  const [questions, tags, attributes, others, meta, hiddenFields] = selectedFilter.filter.reduce(
-    (
-      result: [FilterValue[], FilterValue[], FilterValue[], FilterValue[], FilterValue[], FilterValue[]],
-      filter
-    ) => {
-      if (filter.questionType?.type === "Questions") {
-        result[0].push(filter);
-      } else if (filter.questionType?.type === "Tags") {
-        result[1].push(filter);
-      } else if (filter.questionType?.type === "Attributes") {
-        result[2].push(filter);
-      } else if (filter.questionType?.type === "Other Filters") {
-        result[3].push(filter);
-      } else if (filter.questionType?.type === "Meta") {
-        result[4].push(filter);
-      } else if (filter.questionType?.type === "Hidden Fields") {
-        result[5].push(filter);
-      }
-      return result;
-    },
-    [[], [], [], [], [], []]
-  );
+
+  const questions: FilterValue[] = [];
+  const tags: FilterValue[] = [];
+  const attributes: FilterValue[] = [];
+  const others: FilterValue[] = [];
+  const meta: FilterValue[] = [];
+  const hiddenFields: FilterValue[] = [];
+
+  selectedFilter.filter.forEach((filter) => {
+    if (filter.questionType?.type === "Questions") {
+      questions.push(filter);
+    } else if (filter.questionType?.type === "Tags") {
+      tags.push(filter);
+    } else if (filter.questionType?.type === "Attributes") {
+      attributes.push(filter);
+    } else if (filter.questionType?.type === "Other Filters") {
+      others.push(filter);
+    } else if (filter.questionType?.type === "Meta") {
+      meta.push(filter);
+    } else if (filter.questionType?.type === "Hidden Fields") {
+      hiddenFields.push(filter);
+    }
+  });
 
   // for completed responses
   if (selectedFilter.onlyComplete) {
