@@ -2,12 +2,7 @@ import { Prisma } from "@prisma/client";
 import { isAfter, isBefore, isSameDay } from "date-fns";
 
 import { TDisplay } from "@formbricks/types/displays";
-import {
-  TResponse,
-  TResponseFilterCriteria,
-  TResponseUpdateInput,
-  TSurveyPersonAttributes,
-} from "@formbricks/types/responses";
+import { TResponse, TResponseFilterCriteria, TResponseUpdateInput } from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
@@ -103,98 +98,6 @@ export const mockResponse: ResponseMock = {
   language: "English",
   ttc: {},
 };
-
-export const mockResponsePersonAttributes: ResponseMock[] = [
-  {
-    id: mockResponseId,
-    surveyId: mockSurveyId,
-    singleUseId: mockSingleUseId,
-    data: {},
-    createdAt: new Date(),
-    finished: constantsForTests.boolean,
-    meta: mockMeta,
-    notes: [mockResponseNote],
-    tags: mockTags,
-    personId: mockPersonId,
-    updatedAt: new Date(),
-    ttc: {},
-    person: null,
-    language: null,
-    personAttributes: { Plan: "Paid", "Init Attribute 1": "one", "Init Attribute 2": "two" },
-  },
-  {
-    id: mockResponseId,
-    surveyId: mockSurveyId,
-    singleUseId: mockSingleUseId,
-    data: {},
-    createdAt: new Date(),
-    finished: constantsForTests.boolean,
-    meta: mockMeta,
-    notes: [mockResponseNote],
-    tags: mockTags,
-    personId: mockPersonId,
-    updatedAt: new Date(),
-    ttc: {},
-    person: null,
-    language: null,
-    personAttributes: {
-      Plan: "Paid",
-      "Init Attribute 1": "three",
-      "Init Attribute 2": "four",
-    },
-  },
-  {
-    id: mockResponseId,
-    surveyId: mockSurveyId,
-    singleUseId: mockSingleUseId,
-    data: {},
-    createdAt: new Date(),
-    finished: constantsForTests.boolean,
-    meta: mockMeta,
-    notes: [mockResponseNote],
-    tags: mockTags,
-    personId: mockPersonId,
-    updatedAt: new Date(),
-    ttc: {},
-    person: null,
-    language: null,
-    personAttributes: { Plan: "Paid", "Init Attribute 1": "five", "Init Attribute 2": "six" },
-  },
-  {
-    id: mockResponseId,
-    surveyId: mockSurveyId,
-    singleUseId: mockSingleUseId,
-    data: {},
-    createdAt: new Date(),
-    finished: constantsForTests.boolean,
-    meta: mockMeta,
-    notes: [mockResponseNote],
-    tags: mockTags,
-    personId: mockPersonId,
-    updatedAt: new Date(),
-    ttc: {},
-    person: null,
-    language: null,
-    personAttributes: { Plan: "Paid", "Init Attribute 1": "five", "Init Attribute 2": "four" },
-  },
-  {
-    id: mockResponseId,
-    surveyId: mockSurveyId,
-    singleUseId: mockSingleUseId,
-    data: {},
-    createdAt: new Date(),
-    finished: constantsForTests.boolean,
-    meta: mockMeta,
-    notes: [mockResponseNote],
-    tags: mockTags,
-    personId: mockPersonId,
-    updatedAt: new Date(),
-    ttc: {},
-    person: null,
-    language: null,
-    personAttributes: { Plan: "Paid", "Init Attribute 1": "three", "Init Attribute 2": "two" },
-  },
-];
 
 const getMockTags = (tags: string[]): { tag: TTag }[] => {
   return tags.map((tag) => ({
@@ -443,12 +346,6 @@ export const mockResponseData: TResponseUpdateInput["data"] = {
   key1: "value",
   key2: ["value1", "value2"],
   key3: 20,
-};
-
-export const mockPersonAttributesData: TSurveyPersonAttributes = {
-  Plan: ["Paid"],
-  "Init Attribute 1": ["one", "three", "five"],
-  "Init Attribute 2": ["two", "four", "six"],
 };
 
 export const getMockUpdateResponseInput = (finished: boolean = false): TResponseUpdateInput => ({
