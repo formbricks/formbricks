@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyQuestionSummaryPictureSelection } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
@@ -9,14 +10,23 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface PictureChoiceSummaryProps {
   questionSummary: TSurveyQuestionSummaryPictureSelection;
   survey: TSurvey;
+  attributeClasses: TAttributeClass[];
 }
 
-export const PictureChoiceSummary = ({ questionSummary, survey }: PictureChoiceSummaryProps) => {
+export const PictureChoiceSummary = ({
+  questionSummary,
+  survey,
+  attributeClasses,
+}: PictureChoiceSummaryProps) => {
   const results = questionSummary.choices.sort((a, b) => b.count - a.count);
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
+      <QuestionSummaryHeader
+        questionSummary={questionSummary}
+        survey={survey}
+        attributeClasses={attributeClasses}
+      />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result) => (
           <div key={result.id}>

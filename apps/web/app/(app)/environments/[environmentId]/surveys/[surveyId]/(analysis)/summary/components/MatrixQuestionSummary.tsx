@@ -1,3 +1,4 @@
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyQuestionSummaryMatrix } from "@formbricks/types/surveys";
 import { TooltipRenderer } from "@formbricks/ui/Tooltip";
 
@@ -6,9 +7,14 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface MatrixQuestionSummaryProps {
   questionSummary: TSurveyQuestionSummaryMatrix;
   survey: TSurvey;
+  attributeClasses: TAttributeClass[];
 }
 
-export const MatrixQuestionSummary = ({ questionSummary, survey }: MatrixQuestionSummaryProps) => {
+export const MatrixQuestionSummary = ({
+  questionSummary,
+  survey,
+  attributeClasses,
+}: MatrixQuestionSummaryProps) => {
   const getOpacityLevel = (percentage: number): string => {
     const parsedPercentage = percentage;
     const opacity = parsedPercentage * 0.75 + 15;
@@ -28,7 +34,11 @@ export const MatrixQuestionSummary = ({ questionSummary, survey }: MatrixQuestio
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
+      <QuestionSummaryHeader
+        questionSummary={questionSummary}
+        survey={survey}
+        attributeClasses={attributeClasses}
+      />
       <div className="overflow-x-auto p-6">
         {/* Summary Table  */}
         <table className="mx-auto border-collapse cursor-default text-left">

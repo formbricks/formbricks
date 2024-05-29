@@ -1,3 +1,4 @@
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyQuestionSummaryConsent } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
@@ -7,12 +8,17 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface ConsentSummaryProps {
   questionSummary: TSurveyQuestionSummaryConsent;
   survey: TSurvey;
+  attributeClasses: TAttributeClass[];
 }
 
-export const ConsentSummary = ({ questionSummary, survey }: ConsentSummaryProps) => {
+export const ConsentSummary = ({ questionSummary, survey, attributeClasses }: ConsentSummaryProps) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
+      <QuestionSummaryHeader
+        questionSummary={questionSummary}
+        survey={survey}
+        attributeClasses={attributeClasses}
+      />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         <div>
           <div className="text flex justify-between px-2 pb-2">

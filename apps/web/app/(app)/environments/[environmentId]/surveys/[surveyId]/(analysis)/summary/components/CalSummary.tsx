@@ -1,5 +1,6 @@
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyQuestionSummaryCal } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
@@ -9,12 +10,17 @@ interface CalSummaryProps {
   questionSummary: TSurveyQuestionSummaryCal;
   environmentId: string;
   survey: TSurvey;
+  attributeClasses: TAttributeClass[];
 }
 
-export const CalSummary = ({ questionSummary, survey }: CalSummaryProps) => {
+export const CalSummary = ({ questionSummary, survey, attributeClasses }: CalSummaryProps) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
+      <QuestionSummaryHeader
+        questionSummary={questionSummary}
+        survey={survey}
+        attributeClasses={attributeClasses}
+      />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         <div>
           <div className="text flex justify-between px-2 pb-2">
