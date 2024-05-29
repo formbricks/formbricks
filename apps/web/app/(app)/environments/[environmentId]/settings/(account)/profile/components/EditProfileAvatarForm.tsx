@@ -39,7 +39,7 @@ export const EditProfileAvatarForm = ({ session, environmentId }: EditProfileAva
           }, "Invalid file type. Only JPEG and PNG are allowed.")
           .refine((files) => {
             const file = files[0];
-            const maxSize = 10 * 1024 * 1024; // 10MB
+            const maxSize = 10 * 1024 * 1024;
             return file.size <= maxSize;
           }, "File size must be less than 10MB.")
       : z.any();
