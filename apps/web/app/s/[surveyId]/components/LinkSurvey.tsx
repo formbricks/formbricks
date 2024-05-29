@@ -262,7 +262,7 @@ export const LinkSurvey = ({
                   url: window.location.href,
                   source: sourceParam || "",
                 },
-                hiddenFields: hiddenFieldsRecord,
+                ...(Object.keys(hiddenFieldsRecord).length > 0 && { hiddenFields: hiddenFieldsRecord }),
               });
           }}
           onFileUpload={async (file: File, params: TUploadFileConfig) => {

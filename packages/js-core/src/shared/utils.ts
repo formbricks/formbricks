@@ -46,12 +46,7 @@ export const handleHiddenFields = (
 
   if (!enabledHiddenFields) {
     console.warn("Hidden fields are not enabled for this survey");
-  } else if (
-    hiddenFieldIds &&
-    hiddenFieldIds?.length > 0 &&
-    hiddenFields &&
-    Object.keys(hiddenFields).length > 0
-  ) {
+  } else if (hiddenFieldIds && hiddenFields) {
     const unknownHiddenFields: string[] = [];
     hiddenFieldsObject = Object.keys(hiddenFields).reduce((acc, key) => {
       if (hiddenFieldIds?.includes(key)) {
