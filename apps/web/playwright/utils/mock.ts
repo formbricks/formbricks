@@ -73,6 +73,11 @@ export const users = {
       email: "action5@formbricks.com",
       password: "XpP%X9UU3efj8vJa",
     },
+    {
+      name: "Action User 6",
+      email: "action6@formbricks.com",
+      password: "XpP%X9UU3efj8vJa",
+    },
   ],
   organization: [
     {
@@ -234,24 +239,27 @@ export type CreateSurveyParams = typeof surveys.createAndSubmit;
 export const actions = {
   create: {
     noCode: {
-      cssSelector: {
-        name: "Create Action (CSS Selector)",
-        description: "This is my Create Action (CSS Selector)",
+      click: {
+        name: "Create Click Action (CSS Selector)",
+        description: "This is my Create Action (click, CSS Selector)",
         selector: ".my-custom-class",
       },
-      pageURL: {
-        name: "Create Action (Page URL)",
-        description: "This is my Create Action (Page URL)",
+      pageView: {
+        name: "Create Page view Action (specific Page URL)",
+        description: "This is my Create Action (Page view)",
         matcher: {
           label: "Contains",
           value: "custom-url",
         },
         testURL: "http://localhost:3000/custom-url",
       },
-      innerText: {
-        name: "Create Action (Inner Text)",
-        description: "This is my Create Action (Inner Text)",
-        innerText: "Download",
+      exitIntent: {
+        name: "Create Exit Intent Action",
+        description: "This is my Create Action (Exit Intent)",
+      },
+      "50PercentScroll": {
+        name: "Create 50% Scroll Action",
+        description: "This is my Create Action (50% Scroll)",
       },
     },
     code: {
@@ -262,24 +270,27 @@ export const actions = {
   },
   edit: {
     noCode: {
-      cssSelector: {
-        name: "Edit Action (CSS Selector)",
-        description: "This is my Edit Action (CSS Selector)",
+      click: {
+        name: "Edit Click Action (CSS Selector)",
+        description: "This is my Edit Action (click, CSS Selector)",
         selector: ".my-custom-class-edited",
       },
-      pageURL: {
-        name: "Edit Action (Page URL)",
-        description: "This is my Edit Action (Page URL)",
+      pageView: {
+        name: "Edit Page view Action (specific Page URL)",
+        description: "This is my Edit Action (Page view)",
         matcher: {
           label: "Starts with",
           value: "custom-url0-edited",
         },
         testURL: "http://localhost:3000/custom-url",
       },
-      innerText: {
-        name: "Edit Action (Inner Text)",
-        description: "This is my Edit Action (Inner Text)",
-        innerText: "Download Edited",
+      exitIntent: {
+        name: "Edit Exit Intent Action",
+        description: "This is my Edit Action (Exit Intent)",
+      },
+      "50PercentScroll": {
+        name: "Edit 50% Scroll Action",
+        description: "This is my Edit Action (50% Scroll)",
       },
     },
     code: {
@@ -288,7 +299,7 @@ export const actions = {
   },
   delete: {
     noCode: {
-      name: "Delete Action (CSS Selector)",
+      name: "Delete click Action (CSS Selector)",
       description: "This is my Delete Action (CSS Selector)",
       selector: ".my-custom-class-deleted",
     },
