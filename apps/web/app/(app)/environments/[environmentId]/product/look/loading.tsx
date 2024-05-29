@@ -70,7 +70,7 @@ const Loading = () => {
           </div>
 
           <div className="w-1/2 bg-slate-100 px-6 pt-4">
-            <div className="relative flex h-[95] max-h-[95%] w-full items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+            <div className="relative flex h-[95%] max-h-[95%] w-full items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
               <div className="flex h-full w-5/6 flex-1 flex-col">
                 <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
                   <div className="ml-6 flex space-x-2">
