@@ -1,7 +1,7 @@
 "use client";
 
-import { getQuestionDefaults } from "@/app/lib/questions";
-import { QUESTIONS_ICON_MAP, QUESTIONS_NAME_MAP } from "@/app/lib/surveys/constants";
+import { QUESTIONS_ICON_MAP, QUESTIONS_NAME_MAP, getQuestionDefaults } from "@/app/lib/questions";
+import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import React, { useState } from "react";
 
@@ -27,6 +27,7 @@ interface QuestionDropdownProps {
   question: TSurveyQuestion;
   product: TProduct;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  addQuestion: (question: any, index?: number) => void;
 }
 
 export const QuestionMenu = ({
@@ -38,6 +39,7 @@ export const QuestionMenu = ({
   product,
   question,
   updateQuestion,
+  addQuestion,
 }: QuestionDropdownProps) => {
   const [logicWarningModal, setLogicWarningModal] = useState(false);
   const [changeToType, setChangeToType] = useState(question.type);
@@ -76,6 +78,24 @@ export const QuestionMenu = ({
       backButtonLabel,
       logic: undefined,
     });
+  };
+
+  const addQuestionBelow = (type: TSurveyQuestionType) => {
+    const questionDefaults = getQuestionDefaults(type, product);
+
+    addQuestion(
+      {
+        ...questionDefaults,
+        type,
+        id: createId(),
+        required: true,
+      },
+      questionIdx + 1
+    );
+
+    // scroll to the new question
+    const section = document.getElementById(`${question.id}`);
+    section?.scrollIntoView({ behavior: "smooth", block: "end", inline: "end" });
   };
 
   const onConfirm = () => {
@@ -130,6 +150,33 @@ export const QuestionMenu = ({
                         }
 
                         changeQuestionType(type as TSurveyQuestionType);
+                      }}>
+                      {QUESTIONS_ICON_MAP[type as TSurveyQuestionType]}
+                      <span className="ml-2">{name}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <div className="cursor-pointer text-slate-500 hover:text-slate-600">
+                  <span className="text-xs text-slate-500">Add question below</span>
+                </div>
+              </DropdownMenuSubTrigger>
+
+              <DropdownMenuSubContent className="ml-4 border border-slate-200">
+                {Object.entries(QUESTIONS_NAME_MAP).map(([type, name]) => {
+                  if (type === question.type) return null;
+
+                  return (
+                    <DropdownMenuItem
+                      key={type}
+                      className="min-h-8 cursor-pointer text-slate-500"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addQuestionBelow(type as TSurveyQuestionType);
                       }}>
                       {QUESTIONS_ICON_MAP[type as TSurveyQuestionType]}
                       <span className="ml-2">{name}</span>

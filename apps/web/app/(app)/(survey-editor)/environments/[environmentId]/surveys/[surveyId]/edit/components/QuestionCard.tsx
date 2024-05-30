@@ -1,7 +1,6 @@
 "use client";
 
-import { getTSurveyQuestionTypeName } from "@/app/lib/questions";
-import { QUESTIONS_ICON_MAP } from "@/app/lib/surveys/constants";
+import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeName } from "@/app/lib/questions";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -48,6 +47,7 @@ interface QuestionCardProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  addQuestion: (question: any, index?: number) => void;
 }
 
 export const QuestionCard = ({
@@ -66,6 +66,7 @@ export const QuestionCard = ({
   setSelectedLanguageCode,
   isInvalid,
   attributeClasses,
+  addQuestion,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
@@ -138,7 +139,8 @@ export const QuestionCard = ({
         "flex flex-row rounded-lg bg-white transition-all duration-300 ease-in-out"
       )}
       ref={setNodeRef}
-      style={style}>
+      style={style}
+      id={question.id}>
       <div
         {...listeners}
         {...attributes}
@@ -208,6 +210,7 @@ export const QuestionCard = ({
                 question={question}
                 product={product}
                 updateQuestion={updateQuestion}
+                addQuestion={addQuestion}
               />
             </div>
           </div>
