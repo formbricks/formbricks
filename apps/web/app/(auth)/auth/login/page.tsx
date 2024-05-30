@@ -13,13 +13,15 @@ import {
   PASSWORD_RESET_DISABLED,
   SIGNUP_ENABLED,
 } from "@formbricks/lib/constants";
+import { getOrganizationCount } from "@formbricks/lib/organization/service";
 
 export const metadata: Metadata = {
   title: "Login",
   description: "Open-source Experience Management. Free & open source.",
 };
 
-const Page = () => {
+const Page = async () => {
+  const belongsToSingleOrganization = (await getOrganizationCount()) === 1;
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">
@@ -36,6 +38,7 @@ const Page = () => {
             azureOAuthEnabled={AZURE_OAUTH_ENABLED}
             oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
             oidcDisplayName={OIDC_DISPLAY_NAME}
+            belongsToSingleOrganization={belongsToSingleOrganization}
           />
         </FormWrapper>
       </div>

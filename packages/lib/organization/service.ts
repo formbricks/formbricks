@@ -450,3 +450,16 @@ export const subscribeOrganizationMembersToSurveyResponses = async (
     throw error;
   }
 };
+
+// function to check if there are no users in the database
+export const getOrganizationCount = async (): Promise<number> => {
+  try {
+    const organizationCount = await prisma.organization.count();
+    return organizationCount;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};

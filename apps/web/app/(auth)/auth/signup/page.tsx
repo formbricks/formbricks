@@ -2,6 +2,7 @@ import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
 import { Testimonial } from "@/app/(auth)/auth/components/Testimonial";
 import { SignupForm } from "@/app/(auth)/auth/signup/components/SignupForm";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import {
   AZURE_OAUTH_ENABLED,
@@ -18,10 +19,15 @@ import {
   TERMS_URL,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
+import { getOrganizationCount } from "@formbricks/lib/organization/service";
 
-const Page = ({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) => {
+const Page = async ({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) => {
   const inviteToken = searchParams["inviteToken"] ?? null;
+  const belongsToSingleOrganization = await getOrganizationCount();
 
+  if (belongsToSingleOrganization && !inviteToken) {
+    redirect("/auth/login");
+  }
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">

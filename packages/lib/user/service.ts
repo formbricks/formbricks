@@ -283,3 +283,16 @@ export const userIdRelatedToApiKey = async (apiKey: string) => {
     throw error;
   }
 };
+
+// function to check if there are no users in the database
+export const getUserCount = async (): Promise<number> => {
+  try {
+    const userCount = await prisma.user.count();
+    return userCount;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};

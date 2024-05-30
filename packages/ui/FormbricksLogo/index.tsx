@@ -1,6 +1,16 @@
-export const FormbricksLogo = () => {
+interface FormbricksLogoProps {
+  className?: string;
+}
+
+export const FormbricksLogo = ({ className }: FormbricksLogoProps) => {
   return (
-    <svg width="220" height="220" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      width="220"
+      height="220"
+      viewBox="0 0 220 220"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}>
       <path
         d="M39.1602 147.334H95.8321V175.67C95.8321 191.32 83.1457 204.006 67.4962 204.006C51.8466 204.006 39.1602 191.32 39.1602 175.67V147.334Z"
         fill="url(#paint0_linear_415_2)"
