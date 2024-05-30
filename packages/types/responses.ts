@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import { ZAttributes } from "./attributes";
 import { ZId } from "./environment";
-import { ZJsTrackProperties } from "./js";
 import { ZSurvey, ZSurveyLogicCondition } from "./surveys";
 import { ZTag } from "./tags";
 
@@ -304,7 +303,7 @@ export const ZResponseUpdate = z.object({
       action: z.string().optional(),
     })
     .optional(),
-  hiddenFields: ZJsTrackProperties.shape.hiddenFields.optional(),
+  hiddenFields: ZResponseHiddenFieldValue.optional(),
 });
 
 export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;
