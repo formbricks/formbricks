@@ -136,6 +136,7 @@ export const SummaryPage = ({
         environment={environment}
         fetchingSummary={isFetchingSummary}
         totalResponseCount={totalResponseCount}
+        attributeClasses={attributeClasses}
       />
     </>
   );

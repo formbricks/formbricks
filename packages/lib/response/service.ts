@@ -23,7 +23,6 @@ import { TSurveySummary } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
 import { getAttributes } from "../attribute/service";
-import { getAttributeClasses } from "../attributeClass/service";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { displayCache } from "../display/cache";
@@ -35,7 +34,6 @@ import { putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
-import { replaceHeadlineRecall } from "../utils/recall";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 import {
@@ -500,7 +498,6 @@ export const getSurveySummary = (
         if (!survey) {
           throw new ResourceNotFoundError("Survey", surveyId);
         }
-        const attributeClasses = await getAttributeClasses(survey.environmentId);
 
         const batchSize = 3000;
         const responseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
@@ -519,11 +516,7 @@ export const getSurveySummary = (
 
         const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
         const meta = getSurveySummaryMeta(responses, displayCount);
-        const questionWiseSummary = getQuestionWiseSummary(
-          replaceHeadlineRecall(survey, "default", attributeClasses),
-          responses,
-          dropOff
-        );
+        const questionWiseSummary = getQuestionWiseSummary(survey, responses, dropOff);
 
         return { meta, dropOff, summary: questionWiseSummary };
       } catch (error) {
