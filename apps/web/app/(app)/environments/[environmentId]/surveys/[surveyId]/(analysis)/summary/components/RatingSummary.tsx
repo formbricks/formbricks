@@ -1,6 +1,7 @@
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 
-import { TSurveyQuestionSummaryRating } from "@formbricks/types/surveys";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TSurvey, TSurveyQuestionSummaryRating } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { RatingResponse } from "@formbricks/ui/RatingResponse";
 
@@ -8,12 +9,18 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface RatingSummaryProps {
   questionSummary: TSurveyQuestionSummaryRating;
+  survey: TSurvey;
+  attributeClasses: TAttributeClass[];
 }
 
-export const RatingSummary = ({ questionSummary }: RatingSummaryProps) => {
+export const RatingSummary = ({ questionSummary, survey, attributeClasses }: RatingSummaryProps) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} />
+      <QuestionSummaryHeader
+        questionSummary={questionSummary}
+        survey={survey}
+        attributeClasses={attributeClasses}
+      />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {questionSummary.choices.map((result) => (
           <div key={result.rating}>

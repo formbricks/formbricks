@@ -110,21 +110,14 @@ FormControl.displayName = "FormControl";
 
 const FormDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
   ({ className, ...props }, ref) => {
-    const { formDescriptionId } = useFormField();
+    const { formItemId } = useFormField();
 
-    return (
-      <p
-        ref={ref}
-        id={formDescriptionId}
-        className={cn("text-muted-foreground text-sm", className)}
-        {...props}
-      />
-    );
+    return <p ref={ref} id={formItemId} className={cn("text-xs text-slate-500", className)} {...props} />;
   }
 );
 FormDescription.displayName = "FormDescription";
 
-const FormMessage = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
+const FormError = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
   ({ className, children, ...props }, ref) => {
     const { error, formMessageId } = useFormField();
     const errorMessage = error?.message || error?.root?.message;
@@ -141,7 +134,7 @@ const FormMessage = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<
     );
   }
 );
-FormMessage.displayName = "FormMessage";
+FormError.displayName = "FormError";
 
 export {
   useFormField,
@@ -150,6 +143,6 @@ export {
   FormLabel,
   FormControl,
   FormDescription,
-  FormMessage,
+  FormError,
   FormField,
 };

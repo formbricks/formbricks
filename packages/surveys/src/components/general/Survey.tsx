@@ -50,7 +50,6 @@ export const Survey = ({
       return survey?.questions[0]?.id;
     }
   });
-  // );
   const [showError, setShowError] = useState(false);
   // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
