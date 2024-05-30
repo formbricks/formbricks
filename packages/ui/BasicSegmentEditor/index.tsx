@@ -3,7 +3,7 @@ import { deleteResource, isResourceFilter, moveResource } from "@formbricks/lib/
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 
-import { BasicSegmentFilter } from "./BasicSegmentFilter";
+import { BasicSegmentFilter } from "../BasicSegmentFilter";
 
 type TBasicSegmentEditorProps = {
   group: TBaseFilters;
