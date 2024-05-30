@@ -31,6 +31,7 @@ export interface SurveyBaseProps {
 
 export interface SurveyInlineProps extends SurveyBaseProps {
   containerId: string;
+  isEmbed: boolean;
 }
 
 export interface SurveyModalProps extends SurveyBaseProps {

@@ -18,7 +18,7 @@ export const SurveyInline = (props: SurveyInlineProps) => {
 
   return (
     <div id="fbjs" className="formbricks-form h-full w-full">
-      {isMobile ? (
+      {isMobile && !props.isEmbed ? (
         <div className="flex h-screen w-full flex-col justify-end overflow-hidden">
           <div>
             <Survey {...props} />

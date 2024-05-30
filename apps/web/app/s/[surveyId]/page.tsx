@@ -30,6 +30,7 @@ interface LinkSurveyPageProps {
     userId?: string;
     verify?: string;
     lang?: string;
+    embed?: string;
   };
 }
 
@@ -53,6 +54,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   const langParam = searchParams.lang; //can either be language code or alias
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
+  const isEmbed = searchParams.embed === "true" ? true : false;
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
@@ -193,6 +195,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
           verifiedEmail={verifiedEmail}
           languageCode={languageCode}
           attributeClasses={attributeClasses}
+          isEmbed={isEmbed}
         />
         <LegalFooter
           IMPRINT_URL={IMPRINT_URL}
