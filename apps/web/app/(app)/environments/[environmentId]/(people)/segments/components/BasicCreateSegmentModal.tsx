@@ -218,14 +218,14 @@ export const BasicCreateSegmentModal = ({
             {isFormbricksCloud ? (
               <UpgradePlanNotice
                 message="For advanced targeting, please"
-                textForUrl="upgrade to the User Identification plan."
+                textForUrl="upgrade your plan."
                 url={`/environments/${environmentId}/settings/billing`}
               />
             ) : (
               <UpgradePlanNotice
                 message="For advanced targeting, please"
-                textForUrl="request an Enterprise license."
-                url="https://formbricks.com/docs/self-hosting/enterprise"
+                textForUrl="request an Enterprise License."
+                url={`/environments/${environmentId}/settings/enterprise`}
               />
             )}
 

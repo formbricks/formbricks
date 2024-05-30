@@ -1,16 +1,18 @@
 "use client";
 
+import { refreshChannelsAction } from "@/app/(app)/environments/[environmentId]/integrations/slack/actions";
 import { AddChannelMappingModal } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/AddChannelMappingModal";
-import { Connect } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/Connect";
-import { Home } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/Home";
+import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/ManageIntegration";
+import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/slack/lib/slack";
+import slackLogo from "@/images/slacklogo.png";
 import { useState } from "react";
 
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys";
-
-import { refreshChannelsAction } from "../actions";
+import { ConnectIntegration } from "@formbricks/ui/ConnectIntegration";
 
 interface SlackWrapperProps {
   isEnabled: boolean;
@@ -19,6 +21,7 @@ interface SlackWrapperProps {
   channelsArray: TIntegrationItem[];
   slackIntegration?: TIntegrationSlack;
   webAppUrl: string;
+  attributeClasses: TAttributeClass[];
 }
 
 export const SlackWrapper = ({
@@ -28,6 +31,7 @@ export const SlackWrapper = ({
   channelsArray,
   slackIntegration,
   webAppUrl,
+  attributeClasses,
 }: SlackWrapperProps) => {
   const [isConnected, setIsConnected] = useState(slackIntegration ? slackIntegration.config?.key : false);
   const [slackChannels, setSlackChannels] = useState(channelsArray);
@@ -41,6 +45,14 @@ export const SlackWrapper = ({
     setSlackChannels(latestSlackChannels);
   };
 
+  const handleSlackAuthorization = async () => {
+    authorize(environment.id, webAppUrl).then((url: string) => {
+      if (url) {
+        window.location.replace(url);
+      }
+    });
+  };
+
   return isConnected && slackIntegration ? (
     <>
       <AddChannelMappingModal
@@ -51,8 +63,9 @@ export const SlackWrapper = ({
         channels={slackChannels}
         slackIntegration={slackIntegration}
         selectedIntegration={selectedIntegration}
+        attributeClasses={attributeClasses}
       />
-      <Home
+      <ManageIntegration
         environment={environment}
         slackIntegration={slackIntegration}
         setOpenAddIntegrationModal={setModalOpen}
@@ -62,6 +75,11 @@ export const SlackWrapper = ({
       />
     </>
   ) : (
-    <Connect isEnabled={isEnabled} environmentId={environment.id} webAppUrl={webAppUrl} />
+    <ConnectIntegration
+      isEnabled={isEnabled}
+      integrationType={"slack"}
+      handleAuthorization={handleSlackAuthorization}
+      integrationLogoSrc={slackLogo}
+    />
   );
 };

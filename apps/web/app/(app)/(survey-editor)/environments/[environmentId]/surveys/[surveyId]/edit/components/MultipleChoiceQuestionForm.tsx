@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   TI18nString,
   TShuffleOption,
@@ -31,6 +32,7 @@ interface OpenQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
+  attributeClasses: TAttributeClass[];
 }
 
 export const MultipleChoiceQuestionForm = ({
@@ -41,6 +43,7 @@ export const MultipleChoiceQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
+  attributeClasses,
 }: OpenQuestionFormProps): JSX.Element => {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
@@ -190,6 +193,7 @@ export const MultipleChoiceQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
+        attributeClasses={attributeClasses}
       />
 
       <div>
@@ -205,6 +209,7 @@ export const MultipleChoiceQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
+                attributeClasses={attributeClasses}
               />
             </div>
 
@@ -283,6 +288,7 @@ export const MultipleChoiceQuestionForm = ({
                       question={question}
                       updateQuestion={updateQuestion}
                       surveyLanguageCodes={surveyLanguageCodes}
+                      attributeClasses={attributeClasses}
                     />
                   ))}
               </div>

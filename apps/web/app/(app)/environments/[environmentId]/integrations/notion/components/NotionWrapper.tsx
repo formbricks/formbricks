@@ -1,10 +1,11 @@
 "use client";
 
 import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/AddIntegrationModal";
-import { Connect } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Connect";
-import { Home } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Home";
+import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/ManageIntegration";
+import notionLogo from "@/images/notion.png";
 import { useState } from "react";
 
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationNotion,
@@ -12,6 +13,9 @@ import {
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { TSurvey } from "@formbricks/types/surveys";
+import { ConnectIntegration } from "@formbricks/ui/ConnectIntegration";
+
+import { authorize } from "../lib/notion";
 
 interface NotionWrapperProps {
   notionIntegration: TIntegrationNotion | undefined;
@@ -20,6 +24,7 @@ interface NotionWrapperProps {
   webAppUrl: string;
   surveys: TSurvey[];
   databasesArray: TIntegrationNotionDatabase[];
+  attributeClasses: TAttributeClass[];
 }
 
 export const NotionWrapper = ({
@@ -29,6 +34,7 @@ export const NotionWrapper = ({
   webAppUrl,
   surveys,
   databasesArray,
+  attributeClasses,
 }: NotionWrapperProps) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(
@@ -37,6 +43,14 @@ export const NotionWrapper = ({
   const [selectedIntegration, setSelectedIntegration] = useState<
     (TIntegrationNotionConfigData & { index: number }) | null
   >(null);
+
+  const handleNotionAuthorization = async () => {
+    authorize(environment.id, webAppUrl).then((url: string) => {
+      if (url) {
+        window.location.replace(url);
+      }
+    });
+  };
 
   return (
     <>
@@ -50,8 +64,9 @@ export const NotionWrapper = ({
             notionIntegration={notionIntegration}
             databases={databasesArray}
             selectedIntegration={selectedIntegration}
+            attributeClasses={attributeClasses}
           />
-          <Home
+          <ManageIntegration
             environment={environment}
             notionIntegration={notionIntegration}
             setOpenAddIntegrationModal={setModalOpen}
@@ -60,7 +75,12 @@ export const NotionWrapper = ({
           />
         </>
       ) : (
-        <Connect enabled={enabled} environmentId={environment.id} webAppUrl={webAppUrl} />
+        <ConnectIntegration
+          isEnabled={enabled}
+          integrationType={"notion"}
+          handleAuthorization={handleNotionAuthorization}
+          integrationLogoSrc={notionLogo}
+        />
       )}
     </>
   );

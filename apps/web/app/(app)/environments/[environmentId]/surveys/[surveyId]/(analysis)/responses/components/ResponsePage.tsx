@@ -16,7 +16,6 @@ import {
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -65,10 +64,6 @@ export const ResponsePage = ({
 
   const searchParams = useSearchParams();
 
-  survey = useMemo(() => {
-    return checkForRecallInHeadline(survey, "default");
-  }, [survey]);
-
   const fetchNextPage = useCallback(async () => {
     const newPage = page + 1;
 
@@ -77,12 +72,17 @@ export const ResponsePage = ({
     if (isSharingPage) {
       newResponses = await getResponsesBySurveySharingKeyAction(
         sharingKey,
-        newPage,
         responsesPerPage,
+        (newPage - 1) * responsesPerPage,
         filters
       );
     } else {
-      newResponses = await getResponsesAction(surveyId, newPage, responsesPerPage, filters);
+      newResponses = await getResponsesAction(
+        surveyId,
+        responsesPerPage,
+        (newPage - 1) * responsesPerPage,
+        filters
+      );
     }
 
     if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
@@ -132,9 +132,9 @@ export const ResponsePage = ({
         let responses: TResponse[] = [];
 
         if (isSharingPage) {
-          responses = await getResponsesBySurveySharingKeyAction(sharingKey, 1, responsesPerPage, filters);
+          responses = await getResponsesBySurveySharingKeyAction(sharingKey, responsesPerPage, 0, filters);
         } else {
-          responses = await getResponsesAction(surveyId, 1, responsesPerPage, filters);
+          responses = await getResponsesAction(surveyId, responsesPerPage, 0, filters);
         }
 
         if (responses.length < responsesPerPage) {

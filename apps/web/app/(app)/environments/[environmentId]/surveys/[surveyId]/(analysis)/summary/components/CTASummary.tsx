@@ -1,6 +1,7 @@
 import { InboxIcon } from "lucide-react";
 
-import { TSurveyQuestionSummaryCta } from "@formbricks/types/surveys";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TSurvey, TSurveyQuestionSummaryCta } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
 import { convertFloatToNDecimal } from "../lib/utils";
@@ -8,14 +9,18 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface CTASummaryProps {
   questionSummary: TSurveyQuestionSummaryCta;
+  survey: TSurvey;
+  attributeClasses: TAttributeClass[];
 }
 
-export const CTASummary = ({ questionSummary }: CTASummaryProps) => {
+export const CTASummary = ({ questionSummary, survey, attributeClasses }: CTASummaryProps) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
+        survey={survey}
         questionSummary={questionSummary}
         showResponses={false}
+        attributeClasses={attributeClasses}
         insights={
           <>
             <div className="flex items-center rounded-lg bg-slate-100 p-2">

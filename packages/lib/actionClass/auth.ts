@@ -4,9 +4,9 @@ import { ZId } from "@formbricks/types/environment";
 
 import { cache } from "../cache";
 import { hasUserEnvironmentAccess } from "../environment/auth";
-import { getMembershipByUserIdTeamId } from "../membership/service";
+import { getMembershipByUserIdOrganizationId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
-import { getTeamByEnvironmentId } from "../team/service";
+import { getOrganizationByEnvironmentId } from "../organization/service";
 import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
 import { getActionClass } from "./service";
@@ -51,12 +51,12 @@ export const verifyUserRoleAccess = async (
       hasDeleteAccess: true,
     };
 
-    const team = await getTeamByEnvironmentId(environmentId);
-    if (!team) {
-      throw new Error("Team not found");
+    const organization = await getOrganizationByEnvironmentId(environmentId);
+    if (!organization) {
+      throw new Error("Organization not found");
     }
 
-    const currentUserMembership = await getMembershipByUserIdTeamId(userId, team.id);
+    const currentUserMembership = await getMembershipByUserIdOrganizationId(userId, organization.id);
     const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
     if (isViewer) {

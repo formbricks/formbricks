@@ -1,4 +1,5 @@
-import { TSurveyQuestionSummaryNps } from "@formbricks/types/surveys";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TSurvey, TSurveyQuestionSummaryNps } from "@formbricks/types/surveys";
 import { HalfCircle, ProgressBar } from "@formbricks/ui/ProgressBar";
 
 import { convertFloatToNDecimal } from "../lib/utils";
@@ -6,12 +7,18 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface NPSSummaryProps {
   questionSummary: TSurveyQuestionSummaryNps;
+  survey: TSurvey;
+  attributeClasses: TAttributeClass[];
 }
 
-export const NPSSummary = ({ questionSummary }: NPSSummaryProps) => {
+export const NPSSummary = ({ questionSummary, survey, attributeClasses }: NPSSummaryProps) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} />
+      <QuestionSummaryHeader
+        questionSummary={questionSummary}
+        survey={survey}
+        attributeClasses={attributeClasses}
+      />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {["promoters", "passives", "detractors"].map((group) => (
           <div key={group}>

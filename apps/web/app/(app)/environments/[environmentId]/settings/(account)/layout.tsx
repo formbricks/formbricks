@@ -1,18 +1,18 @@
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
 const AccountSettingsLayout = async ({ children, params }) => {
-  const [team, product, session] = await Promise.all([
-    getTeamByEnvironmentId(params.environmentId),
+  const [organization, product, session] = await Promise.all([
+    getOrganizationByEnvironmentId(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
   ]);
 
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
   if (!product) {
