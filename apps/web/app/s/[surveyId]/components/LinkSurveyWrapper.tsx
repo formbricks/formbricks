@@ -9,20 +9,20 @@ interface LinkSurveyWrapperProps {
   children: JSX.Element;
   product: TProduct;
   survey: TSurvey;
-  setQuestionId: (_: string) => void;
   isPreview: boolean;
   isEmbed: boolean;
   determineStyling: () => TSurveyStyling | TProductStyling;
+  setQuestionId: (_: string) => void;
 }
 
 export const LinkSurveyWrapper = ({
   children,
   product,
   survey,
-  setQuestionId,
   isPreview,
   isEmbed,
   determineStyling,
+  setQuestionId,
 }: LinkSurveyWrapperProps) => {
   //for embedded survey strip away all surrounding css
   if (isEmbed) return <div className="m-auto max-w-md">{children}</div>;

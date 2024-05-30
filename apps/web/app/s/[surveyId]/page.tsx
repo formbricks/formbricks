@@ -176,6 +176,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
         attributeClasses={attributeClasses}
+        isEmbed={isEmbed}
       />
     );
   }

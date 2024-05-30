@@ -28,6 +28,7 @@ interface PinScreenProps {
   verifiedEmail?: string;
   languageCode: string;
   attributeClasses: TAttributeClass[];
+  isEmbed: boolean;
 }
 
 export const PinScreen = (props: PinScreenProps) => {
@@ -45,6 +46,7 @@ export const PinScreen = (props: PinScreenProps) => {
     verifiedEmail,
     languageCode,
     attributeClasses,
+    isEmbed,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -126,6 +128,7 @@ export const PinScreen = (props: PinScreenProps) => {
           verifiedEmail={verifiedEmail}
           languageCode={languageCode}
           attributeClasses={attributeClasses}
+          isEmbed={isEmbed}
         />
       </MediaBackground>
       <LegalFooter
