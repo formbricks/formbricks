@@ -34,6 +34,10 @@ export const ZSurveyMetaFieldFilter = z.record(z.array(z.string()));
 
 export type TSurveyMetaFieldFilter = z.infer<typeof ZSurveyMetaFieldFilter>;
 
+export const ZResponseHiddenFieldsFilter = z.record(z.array(z.string()));
+
+export type TResponseHiddenFieldsFilter = z.infer<typeof ZResponseHiddenFieldsFilter>;
+
 const ZResponseFilterCriteriaDataLessThan = z.object({
   op: z.literal(ZSurveyLogicCondition.Values.lessThan),
   value: z.number(),

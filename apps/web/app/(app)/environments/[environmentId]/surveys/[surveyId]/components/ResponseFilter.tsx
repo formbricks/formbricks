@@ -46,7 +46,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     // Fetch the initial data for the filter and load it into the state
     const handleInitialData = async () => {
       if (isOpen) {
-        const { attributes, meta, environmentTags } = isSharingPage
+        const { attributes, meta, environmentTags, hiddenFields } = isSharingPage
           ? await getSurveyFilterDataBySurveySharingKeyAction(sharingKey, survey.environmentId)
           : await getSurveyFilterDataAction(survey.id, survey.environmentId);
 
@@ -54,7 +54,8 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
           survey,
           environmentTags,
           attributes,
-          meta
+          meta,
+          hiddenFields
         );
         setSelectedOptions({ questionFilterOptions, questionOptions });
       }
