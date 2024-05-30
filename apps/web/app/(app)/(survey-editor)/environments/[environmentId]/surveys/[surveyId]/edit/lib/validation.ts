@@ -227,6 +227,7 @@ export const validateId = (
     "hidden",
     "verifiedEmail",
     "multiLanguage",
+    "embed",
   ];
   if (forbiddenIds.includes(field)) {
     toast.error(`${type} Id not allowed.`);
