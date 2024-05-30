@@ -1,6 +1,11 @@
 import { TAttributes } from "@formbricks/types/attributes";
-import { TTrackProperties } from "@formbricks/types/js";
-import { THiddenFieldValue, TSurvey } from "@formbricks/types/surveys";
+import { TJsTrackProperties } from "@formbricks/types/js";
+import { TResponseHiddenFieldValue } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+
+import { Logger } from "../shared/logger";
+
+const logger = Logger.getInstance();
 
 export const getIsDebug = () => window.location.search.includes("formbricksDebug=true");
 
@@ -38,14 +43,14 @@ export const getDefaultLanguageCode = (survey: TSurvey) => {
 
 export const handleHiddenFields = (
   hiddenFieldsConfig: TSurvey["hiddenFields"],
-  hiddenFields: TTrackProperties["hiddenFields"]
-): THiddenFieldValue => {
+  hiddenFields: TJsTrackProperties["hiddenFields"]
+): TResponseHiddenFieldValue => {
   const { enabled: enabledHiddenFields, fieldIds: hiddenFieldIds } = hiddenFieldsConfig || {};
 
-  let hiddenFieldsObject: THiddenFieldValue = {};
+  let hiddenFieldsObject: TResponseHiddenFieldValue = {};
 
   if (!enabledHiddenFields) {
-    console.warn("Hidden fields are not enabled for this survey");
+    logger.error("Hidden fields are not enabled for this survey");
   } else if (hiddenFieldIds && hiddenFields) {
     const unknownHiddenFields: string[] = [];
     hiddenFieldsObject = Object.keys(hiddenFields).reduce((acc, key) => {
@@ -55,10 +60,10 @@ export const handleHiddenFields = (
         unknownHiddenFields.push(key);
       }
       return acc;
-    }, {} as THiddenFieldValue);
+    }, {} as TResponseHiddenFieldValue);
 
     if (unknownHiddenFields.length > 0) {
-      console.warn(
+      logger.error(
         `Unknown hidden fields: ${unknownHiddenFields.join(", ")}. Please add them to the survey hidden fields.`
       );
     }

@@ -1,5 +1,5 @@
 import { FormbricksAPI } from "@formbricks/api";
-import { TJsActionInput, TTrackProperties } from "@formbricks/types/js";
+import { TJsActionInput, TJsTrackProperties } from "@formbricks/types/js";
 
 import { InvalidCodeError, NetworkError, Result, err, okVoid } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
@@ -16,7 +16,7 @@ const intentsToNotCreateOnApp = ["Exit Intent (Desktop)", "50% Scroll"];
 export const trackAction = async (
   name: string,
   alias?: string,
-  properties?: TTrackProperties
+  properties?: TJsTrackProperties
 ): Promise<Result<void, NetworkError>> => {
   const aliasName = alias || name;
   const { userId } = inAppConfig.get();
@@ -88,7 +88,7 @@ export const trackAction = async (
 
 export const trackCodeAction = (
   code: string,
-  properties?: TTrackProperties
+  properties?: TJsTrackProperties
 ): Promise<Result<void, NetworkError>> | Result<void, InvalidCodeError> => {
   const {
     state: { actionClasses = [] },

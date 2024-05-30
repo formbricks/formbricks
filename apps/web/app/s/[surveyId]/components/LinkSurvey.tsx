@@ -11,9 +11,9 @@ import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
-import { TResponse, TResponseUpdate } from "@formbricks/types/responses";
+import { TResponse, TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { THiddenFieldValue, TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
 import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
 import { SurveyInline } from "@formbricks/ui/Survey";
@@ -123,8 +123,8 @@ export const LinkSurvey = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hiddenFieldsRecord = useMemo<THiddenFieldValue>(() => {
-    const fieldsRecord: THiddenFieldValue = {};
+  const hiddenFieldsRecord = useMemo<TResponseHiddenFieldValue>(() => {
+    const fieldsRecord: TResponseHiddenFieldValue = {};
 
     survey.hiddenFields?.fieldIds?.forEach((field) => {
       const answer = searchParams?.get(field);

@@ -2,9 +2,9 @@ import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
-import { TJSWebsiteStateDisplay, TTrackProperties } from "@formbricks/types/js";
-import { TResponseUpdate } from "@formbricks/types/responses";
-import { THiddenFieldValue, TSurvey } from "@formbricks/types/surveys";
+import { TJSWebsiteStateDisplay, TJsTrackProperties } from "@formbricks/types/js";
+import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 
 import { Logger } from "../../shared/logger";
 import { getDefaultLanguageCode, getLanguageCode, handleHiddenFields } from "../../shared/utils";
@@ -32,7 +32,7 @@ const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
 export const triggerSurvey = async (
   survey: TSurvey,
   action?: string,
-  properties?: TTrackProperties
+  properties?: TJsTrackProperties
 ): Promise<void> => {
   // Check if the survey should be displayed based on displayPercentage
   if (survey.displayPercentage) {
@@ -43,7 +43,7 @@ export const triggerSurvey = async (
     }
   }
 
-  const hiddenFieldsObject: THiddenFieldValue = handleHiddenFields(
+  const hiddenFieldsObject: TResponseHiddenFieldValue = handleHiddenFields(
     survey.hiddenFields,
     properties?.hiddenFields
   );
@@ -51,7 +51,11 @@ export const triggerSurvey = async (
   await renderWidget(survey, action, hiddenFieldsObject);
 };
 
-const renderWidget = async (survey: TSurvey, action?: string, hiddenFields: THiddenFieldValue = {}) => {
+const renderWidget = async (
+  survey: TSurvey,
+  action?: string,
+  hiddenFields: TResponseHiddenFieldValue = {}
+) => {
   if (isSurveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
