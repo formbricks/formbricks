@@ -23,7 +23,10 @@ export type TUserNotificationSettings = z.infer<typeof ZUserNotificationSettings
 
 export const ZUser = z.object({
   id: z.string(),
-  name: z.string().nullable(),
+  name: z
+    .string({ message: "Name is required" })
+    .trim()
+    .min(1, { message: "Name should be at least 1 character long" }),
   email: z.string().email(),
   emailVerified: z.date().nullable(),
   imageUrl: z.string().url().nullable(),
@@ -40,7 +43,7 @@ export const ZUser = z.object({
 export type TUser = z.infer<typeof ZUser>;
 
 export const ZUserUpdateInput = z.object({
-  name: z.string().nullish(),
+  name: z.string().optional(),
   email: z.string().email().optional(),
   emailVerified: z.date().nullish(),
   onboardingCompleted: z.boolean().optional(),
@@ -53,7 +56,10 @@ export const ZUserUpdateInput = z.object({
 export type TUserUpdateInput = z.infer<typeof ZUserUpdateInput>;
 
 export const ZUserCreateInput = z.object({
-  name: z.string().optional(),
+  name: z
+    .string({ message: "Name is required" })
+    .trim()
+    .min(1, { message: "Name should be at least 1 character long" }),
   email: z.string().email(),
   emailVerified: z.date().optional(),
   onboardingCompleted: z.boolean().optional(),
@@ -64,12 +70,3 @@ export const ZUserCreateInput = z.object({
 });
 
 export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;
-
-export const ZEditProfileDetailsFormSchema = z.object({
-  name: z
-    .string({ message: "Name is required" })
-    .trim()
-    .min(1, { message: "Name should be at least 1 character long" }),
-});
-
-export type TEditProfileDetailsForm = z.infer<typeof ZEditProfileDetailsFormSchema>;

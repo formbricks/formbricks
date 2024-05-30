@@ -5,7 +5,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 
-import { TUser, ZEditProfileDetailsFormSchema } from "@formbricks/types/user";
+import { TUser, ZUser } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage, FormProvider } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
@@ -13,14 +13,14 @@ import { Label } from "@formbricks/ui/Label";
 
 import { updateUserAction } from "../actions";
 
-const ZEditProfileNameFormSchema = ZEditProfileDetailsFormSchema.pick({ name: true });
+const ZEditProfileNameFormSchema = ZUser.pick({ name: true });
 type TEditProfileNameForm = z.infer<typeof ZEditProfileNameFormSchema>;
 
 export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
   const form = useForm<TEditProfileNameForm>({
-    defaultValues: { name: user.name ?? "" },
+    defaultValues: { name: user.name },
     mode: "onChange",
-    resolver: zodResolver(ZEditProfileDetailsFormSchema),
+    resolver: zodResolver(ZEditProfileNameFormSchema),
   });
 
   const { isSubmitting, isDirty } = form.formState;
