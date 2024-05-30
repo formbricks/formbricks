@@ -16,11 +16,22 @@ export const ZCardArrangement = z.object({
   appSurveys: ZCardArrangementOptions,
 });
 
-export const ZSurveyStylingBackground = z.object({
-  bg: z.string().nullish(),
-  bgType: z.enum(["animation", "color", "image", "upload"]).nullish(),
-  brightness: z.number().nullish(),
-});
+export const ZSurveyStylingBackground = z
+  .object({
+    bg: z.string().nullish(),
+    bgType: z.enum(["animation", "color", "image", "upload"]).nullish(),
+    brightness: z.number().nullish(),
+  })
+  .refine(
+    (surveyBackground) => {
+      if (surveyBackground.bgType === "upload") {
+        return !!surveyBackground.bg;
+      }
+
+      return true;
+    },
+    { message: "Invalid background" }
+  );
 
 export type TSurveyStylingBackground = z.infer<typeof ZSurveyStylingBackground>;
 
@@ -40,3 +51,5 @@ export const ZBaseStyling = z.object({
   hideProgressBar: z.boolean().nullish(),
   isLogoHidden: z.boolean().nullish(),
 });
+
+export type TBaseStyling = z.infer<typeof ZBaseStyling>;
