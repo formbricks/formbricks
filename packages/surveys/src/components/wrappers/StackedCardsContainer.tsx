@@ -10,9 +10,10 @@ interface StackedCardsContainerProps {
   cardArrangement: TCardArrangementOptions;
   currentQuestionId: string;
   survey: TSurvey;
-  getCardContent: (questionIdx: number, offset: number) => JSX.Element | undefined;
+  getCardContent: (questionIdxTemp: number, offset: number) => JSX.Element | undefined;
   styling: TProductStyling | TSurveyStyling;
   setQuestionId: (questionId: string) => void;
+  shouldResetQuestionId?: boolean;
 }
 
 export const StackedCardsContainer = ({
@@ -22,6 +23,7 @@ export const StackedCardsContainer = ({
   getCardContent,
   styling,
   setQuestionId,
+  shouldResetQuestionId = true,
 }: StackedCardsContainerProps) => {
   const [hovered, setHovered] = useState(false);
   const highlightBorderColor =
@@ -31,22 +33,41 @@ export const StackedCardsContainer = ({
   const resizeObserver = useRef<ResizeObserver | null>(null);
   const [cardHeight, setCardHeight] = useState("auto");
 
-  const cardIndexes = useMemo(() => {
-    let cardIndexTemp = survey.questions.map((_, index) => index);
-    if (survey.welcomeCard.enabled) {
-      cardIndexTemp.unshift(-1);
-    }
-    if (survey.thankYouCard.enabled) {
-      cardIndexTemp.push(survey.questions.length);
-    }
-    return cardIndexTemp;
-  }, [survey]);
-
-  const questionIdx = useMemo(() => {
+  const questionIdxTemp = useMemo(() => {
     if (currentQuestionId === "start") return survey.welcomeCard.enabled ? -1 : 0;
     if (currentQuestionId === "end") return survey.thankYouCard.enabled ? survey.questions.length : 0;
     return survey.questions.findIndex((question) => question.id === currentQuestionId);
   }, [currentQuestionId, survey.welcomeCard.enabled, survey.thankYouCard.enabled, survey.questions]);
+
+  const [prevQuestionIdx, setPrevQuestionIdx] = useState(questionIdxTemp - 1);
+  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(questionIdxTemp);
+  const [nextQuestionIdx, setNextQuestionIdx] = useState(questionIdxTemp + 1);
+  const [visitedQuestions, setVisitedQuestions] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (questionIdxTemp > currentQuestionIdx) {
+      // Next button is clicked
+      setPrevQuestionIdx(currentQuestionIdx);
+      setCurrentQuestionIdx(questionIdxTemp);
+      setNextQuestionIdx(questionIdxTemp + 1);
+      setVisitedQuestions((prev) => {
+        return [...prev, currentQuestionIdx];
+      });
+    } else if (questionIdxTemp < currentQuestionIdx) {
+      // Back button is clicked
+      setNextQuestionIdx(currentQuestionIdx);
+      setCurrentQuestionIdx(questionIdxTemp);
+      setPrevQuestionIdx(visitedQuestions[visitedQuestions.length - 2]);
+      setVisitedQuestions((prev) => {
+        if (prev.length > 0) {
+          const newStack = prev.slice(0, -1);
+          return newStack;
+        }
+        return prev;
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionIdxTemp]);
 
   const borderStyles = useMemo(() => {
     const baseStyle = {
@@ -87,7 +108,7 @@ export const StackedCardsContainer = ({
 
   // UseEffect to handle the resize of current question card and set cardHeight accordingly
   useEffect(() => {
-    const currentElement = cardRefs.current[questionIdx];
+    const currentElement = cardRefs.current[questionIdxTemp];
     if (currentElement) {
       if (resizeObserver.current) resizeObserver.current.disconnect();
       resizeObserver.current = new ResizeObserver((entries) => {
@@ -96,11 +117,13 @@ export const StackedCardsContainer = ({
       resizeObserver.current.observe(currentElement);
     }
     return () => resizeObserver.current?.disconnect();
-  }, [questionIdx, cardArrangement]);
+  }, [questionIdxTemp, cardArrangement]);
 
   // Reset question progress, when card arrangement changes
   useEffect(() => {
-    setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
+    if (shouldResetQuestionId) {
+      setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardArrangement]);
 
@@ -130,38 +153,46 @@ export const StackedCardsContainer = ({
       <div style={{ height: cardHeight }}></div>
       {cardArrangement === "simple" ? (
         <div
+          className="w-full"
           style={{
             ...borderStyles,
           }}>
-          {getCardContent(questionIdx, 0)}
+          {getCardContent(questionIdxTemp, 0)}
         </div>
       ) : (
-        questionIdx !== undefined &&
-        cardIndexes.map((_, idx) => {
-          const index = survey.welcomeCard.enabled ? idx - 1 : idx;
-          const offset = index - questionIdx;
-          const isHidden = offset < 0;
-          return (
-            <div
-              ref={(el) => (cardRefs.current[index] = el)}
-              id={`questionCard-${index}`}
-              key={index}
-              style={{
-                zIndex: 1000 - index,
-                transform: `${calculateCardTransform(offset)}`,
-                opacity: isHidden ? 0 : (100 - 30 * offset) / 100,
-                height: getCardHeight(offset),
-                transitionDuration: "600ms",
-                pointerEvents: offset === 0 ? "auto" : "none",
-                ...borderStyles,
-                ...straightCardArrangementStyles(offset),
-                ...getBottomStyles(),
-              }}
-              className="pointer rounded-custom bg-survey-bg absolute inset-x-0 backdrop-blur-md transition-all ease-in-out">
-              {getCardContent(index, offset)}
-            </div>
-          );
-        })
+        questionIdxTemp !== undefined &&
+        [prevQuestionIdx, currentQuestionIdx, nextQuestionIdx, nextQuestionIdx + 1].map(
+          (questionIdxTemp, index) => {
+            //Check for hiding extra card
+            if (survey.thankYouCard.enabled) {
+              if (questionIdxTemp > survey.questions.length) return;
+            } else {
+              if (questionIdxTemp > survey.questions.length - 1) return;
+            }
+            const offset = index - 1;
+            const isHidden = offset < 0;
+            return (
+              <div
+                ref={(el) => (cardRefs.current[questionIdxTemp] = el)}
+                id={`questionCard-${questionIdxTemp}`}
+                key={questionIdxTemp}
+                style={{
+                  zIndex: 1000 - questionIdxTemp,
+                  transform: `${calculateCardTransform(offset)}`,
+                  opacity: isHidden ? 0 : (100 - 0 * offset) / 100,
+                  height: getCardHeight(offset),
+                  transitionDuration: "600ms",
+                  pointerEvents: offset === 0 ? "auto" : "none",
+                  ...borderStyles,
+                  ...straightCardArrangementStyles(offset),
+                  ...getBottomStyles(),
+                }}
+                className="pointer rounded-custom bg-survey-bg absolute inset-x-0 backdrop-blur-md transition-all ease-in-out">
+                {getCardContent(questionIdxTemp, offset)}
+              </div>
+            );
+          }
+        )
       )}
     </div>
   );

@@ -55,7 +55,7 @@ export const AddProductModal = ({ environmentId, open, setOpen }: AddProductModa
               </div>
               <div>
                 <div className="text-xl font-medium text-slate-700">Add Product</div>
-                <div className="text-sm text-slate-500">Create a new product for your team.</div>
+                <div className="text-sm text-slate-500">Create a new product for your organization.</div>
               </div>
             </div>
           </div>

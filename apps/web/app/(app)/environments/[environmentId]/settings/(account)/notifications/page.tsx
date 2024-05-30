@@ -21,10 +21,10 @@ const setCompleteNotificationSettings = (
   const newNotificationSettings = {
     alert: {},
     weeklySummary: {},
-    unsubscribedTeamIds: notificationSettings.unsubscribedTeamIds || [],
+    unsubscribedOrganizationIds: notificationSettings.unsubscribedOrganizationIds || [],
   };
   for (const membership of memberships) {
-    for (const product of membership.team.products) {
+    for (const product of membership.organization.products) {
       // set default values for weekly summary
       newNotificationSettings.weeklySummary[product.id] =
         (notificationSettings.weeklySummary && notificationSettings.weeklySummary[product.id]) || false;
@@ -48,7 +48,7 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
       userId,
     },
     select: {
-      team: {
+      organization: {
         select: {
           id: true,
           name: true,

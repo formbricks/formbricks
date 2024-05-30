@@ -12,7 +12,7 @@ import {
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
@@ -160,7 +160,7 @@ export const sendInviteMemberEmail = async (
 export const sendInviteAcceptedEmail = async (inviterName: string, inviteeName: string, email: string) => {
   await sendEmail({
     to: email,
-    subject: `You've got a new team member!`,
+    subject: `You've got a new organization member!`,
     html: render(EmailTemplate({ content: InviteAcceptedEmail({ inviteeName, inviterName }) })),
   });
 };
@@ -173,7 +173,7 @@ export const sendResponseFinishedEmail = async (
   responseCount: number
 ) => {
   const personEmail = response.personAttributes?.email;
-  const team = await getTeamByEnvironmentId(environmentId);
+  const organization = await getOrganizationByEnvironmentId(environmentId);
 
   await sendEmail({
     to: email,
@@ -183,7 +183,14 @@ export const sendResponseFinishedEmail = async (
     replyTo: personEmail?.toString() || MAIL_FROM,
     html: render(
       EmailTemplate({
-        content: ResponseFinishedEmail({ survey, responseCount, response, WEBAPP_URL, environmentId, team }),
+        content: ResponseFinishedEmail({
+          survey,
+          responseCount,
+          response,
+          WEBAPP_URL,
+          environmentId,
+          organization,
+        }),
       })
     ),
   });

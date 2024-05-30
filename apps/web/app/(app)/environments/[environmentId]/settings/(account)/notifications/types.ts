@@ -1,7 +1,7 @@
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
 export interface Membership {
-  team: {
+  organization: {
     id: string;
     name: string;
     products: {

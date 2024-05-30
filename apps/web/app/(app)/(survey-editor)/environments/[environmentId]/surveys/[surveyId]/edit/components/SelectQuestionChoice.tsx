@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   TI18nString,
   TSurvey,
@@ -35,6 +36,7 @@ interface ChoiceProps {
   question: TSurveyMultipleChoiceQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceQuestion>) => void;
   surveyLanguageCodes: string[];
+  attributeClasses: TAttributeClass[];
 }
 
 export const SelectQuestionChoice = ({
@@ -54,10 +56,12 @@ export const SelectQuestionChoice = ({
   question,
   surveyLanguageCodes,
   updateQuestion,
+  attributeClasses,
 }: ChoiceProps) => {
+  const isDragDisabled = choice.id === "other";
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,
-    disabled: choice.id === "other",
+    disabled: isDragDisabled,
   });
 
   const style = {
@@ -99,6 +103,7 @@ export const SelectQuestionChoice = ({
             isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
           }
           className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
+          attributeClasses={attributeClasses}
         />
         {choice.id === "other" && (
           <QuestionFormInput
@@ -118,6 +123,7 @@ export const SelectQuestionChoice = ({
               isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
             }
             className="border border-dashed"
+            attributeClasses={attributeClasses}
           />
         )}
       </div>

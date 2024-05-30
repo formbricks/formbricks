@@ -4,7 +4,7 @@ import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { EnvironmentNotice } from "@formbricks/ui/EnvironmentNotice";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
@@ -14,20 +14,20 @@ import { EnvironmentIdField } from "./components/EnvironmentIdField";
 import { SetupInstructions } from "./components/SetupInstructions";
 
 const Page = async ({ params }) => {
-  const [environment, team] = await Promise.all([
+  const [environment, organization] = await Promise.all([
     getEnvironment(params.environmentId),
-    getTeamByEnvironmentId(params.environmentId),
+    getOrganizationByEnvironmentId(params.environmentId),
   ]);
 
   if (!environment) {
     throw new Error("Environment not found");
   }
 
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
   return (
     <PageContentWrapper>

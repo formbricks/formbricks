@@ -23,17 +23,15 @@ export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
 
   useEffect(() => {
     const loadScript = async () => {
-      if (typeof window !== "undefined") {
-        if (!window.formbricksSurveys) {
-          try {
-            await loadSurveyScript();
-            renderInline();
-          } catch (error) {
-            console.error("Failed to load the surveys package: ", error);
-          }
-        } else {
+      if (!window.formbricksSurveys) {
+        try {
+          await loadSurveyScript();
           renderInline();
+        } catch (error) {
+          console.error("Failed to load the surveys package: ", error);
         }
+      } else {
+        renderInline();
       }
     };
 
