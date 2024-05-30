@@ -12,6 +12,7 @@ import { OpenTextSummary } from "@/app/(app)/environments/[environmentId]/survey
 import { PictureChoiceSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary";
 import { RatingSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/RatingSummary";
 
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveySummary } from "@formbricks/types/surveys";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
@@ -28,6 +29,7 @@ interface SummaryListProps {
   survey: TSurvey;
   fetchingSummary: boolean;
   totalResponseCount: number;
+  attributeClasses: TAttributeClass[];
 }
 
 export const SummaryList = ({
@@ -37,6 +39,7 @@ export const SummaryList = ({
   survey,
   fetchingSummary,
   totalResponseCount,
+  attributeClasses,
 }: SummaryListProps) => {
   return (
     <div className="mt-10 space-y-8">
@@ -61,6 +64,8 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
+                attributeClasses={attributeClasses}
               />
             );
           }
@@ -74,24 +79,59 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 surveyType={survey.type}
+                survey={survey}
+                attributeClasses={attributeClasses}
               />
             );
           }
           if (questionSummary.type === TSurveyQuestionType.NPS) {
-            return <NPSSummary key={questionSummary.question.id} questionSummary={questionSummary} />;
+            return (
+              <NPSSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+                attributeClasses={attributeClasses}
+              />
+            );
           }
           if (questionSummary.type === TSurveyQuestionType.CTA) {
-            return <CTASummary key={questionSummary.question.id} questionSummary={questionSummary} />;
+            return (
+              <CTASummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+                attributeClasses={attributeClasses}
+              />
+            );
           }
           if (questionSummary.type === TSurveyQuestionType.Rating) {
-            return <RatingSummary key={questionSummary.question.id} questionSummary={questionSummary} />;
+            return (
+              <RatingSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+                attributeClasses={attributeClasses}
+              />
+            );
           }
           if (questionSummary.type === TSurveyQuestionType.Consent) {
-            return <ConsentSummary key={questionSummary.question.id} questionSummary={questionSummary} />;
+            return (
+              <ConsentSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+                attributeClasses={attributeClasses}
+              />
+            );
           }
           if (questionSummary.type === TSurveyQuestionType.PictureSelection) {
             return (
-              <PictureChoiceSummary key={questionSummary.question.id} questionSummary={questionSummary} />
+              <PictureChoiceSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+                attributeClasses={attributeClasses}
+              />
             );
           }
           if (questionSummary.type === TSurveyQuestionType.Date) {
@@ -100,6 +140,8 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
+                attributeClasses={attributeClasses}
               />
             );
           }
@@ -109,6 +151,8 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
+                attributeClasses={attributeClasses}
               />
             );
           }
@@ -118,12 +162,19 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
+                attributeClasses={attributeClasses}
               />
             );
           }
           if (questionSummary.type === TSurveyQuestionType.Matrix) {
             return (
-              <MatrixQuestionSummary key={questionSummary.question.id} questionSummary={questionSummary} />
+              <MatrixQuestionSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+                attributeClasses={attributeClasses}
+              />
             );
           }
           if (questionSummary.type === TSurveyQuestionType.Address) {
@@ -132,6 +183,8 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
+                attributeClasses={attributeClasses}
               />
             );
           }
