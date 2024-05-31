@@ -429,6 +429,7 @@ export const QuestionCard = ({
                       <QuestionFormInput
                         id="buttonLabel"
                         value={question.buttonLabel}
+                        label={`"Next" Button Label`}
                         localSurvey={localSurvey}
                         questionIdx={questionIdx}
                         maxLength={48}
@@ -454,6 +455,7 @@ export const QuestionCard = ({
                       <QuestionFormInput
                         id="backButtonLabel"
                         value={question.backButtonLabel}
+                        label={`"Back" Button Label`}
                         localSurvey={localSurvey}
                         questionIdx={questionIdx}
                         maxLength={48}
@@ -474,6 +476,7 @@ export const QuestionCard = ({
                       <QuestionFormInput
                         id="backButtonLabel"
                         value={question.backButtonLabel}
+                        label={`"Back" Button Label`}
                         localSurvey={localSurvey}
                         questionIdx={questionIdx}
                         maxLength={48}

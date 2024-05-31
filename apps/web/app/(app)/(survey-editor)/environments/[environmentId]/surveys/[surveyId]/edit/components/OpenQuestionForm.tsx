@@ -77,6 +77,7 @@ export const OpenQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        label={"Question*"}
       />
 
       <div>
@@ -93,6 +94,7 @@ export const OpenQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                label={"Description"}
               />
             </div>
 
@@ -137,6 +139,7 @@ export const OpenQuestionForm = ({
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
           attributeClasses={attributeClasses}
+          label={"Placeholder"}
         />
       </div>
 
