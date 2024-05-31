@@ -30,46 +30,48 @@ Here are the different access permissions, ranked from highest to lowest access
 
 For more information on user roles & permissions, see below:
 
-|                       | Owner | Admin | Developer | Editor | Viewer |
-| --------------------- | ----- | ----- | --------- | ------ | ------ |
-| **Organization**      |       |       |           |        |        |
-| Create organization   | ✅    | ✅    | ✅        | ✅     | ✅     |
-| Update organization   | ✅    | ✅    | ❌        | ❌     | ❌     |
-| Delete organization   | ✅    | ❌    | ❌        | ❌     | ❌     |
-| Add new Member        | ✅    | ✅    | ❌        | ❌     | ❌     |
-| Delete Member         | ✅    | ✅    | ❌        | ❌     | ❌     |
-| Update Member Access  | ✅    | ✅    | ❌        | ❌     | ❌     |
-| **Product**           |       |       |           |        |        |
-| Create Product        | ✅    | ✅    | ✅        | ✅     | ❌     |
-| Update Product        | ✅    | ✅    | ✅        | ✅     | ❌     |
-| Delete Product        | ✅    | ✅    | ✅        | ✅     | ❌     |
-| **Surveys**           |       |       |           |        |        |
-| Create New Survey     | ✅    | ✅    | ✅        | ✅     | ❌     |
-| Edit Survey           | ✅    | ✅    | ✅        | ✅     | ❌     |
-| Delete Survey         | ✅    | ✅    | ✅        | ✅     | ❌     |
-| View survey results   | ✅    | ✅    | ✅        | ✅     | ✅     |
-| **Response**          |       |       |           |        |        |
-| Delete response       | ✅    | ✅    | ✅        | ✅     | ❌     |
-| Add tags on response  | ✅    | ✅    | ✅        | ✅     | ❌     |
-| Edit tags on response | ✅    | ✅    | ✅        | ✅     | ❌     |
-| **Actions**           |       |       |           |        |        |
-| Create Action         | ✅    | ✅    | ✅        | ✅     | ❌     |
-| Update Action         | ✅    | ✅    | ✅        | ✅     | ❌     |
-| Delete Action         | ✅    | ✅    | ✅        | ✅     | ❌     |
-| **Tags**              |       |       |           |        |        |
-| Create tags           | ✅    | ✅    | ✅        | ✅     | ❌     |
-| Edit tags             | ✅    | ✅    | ✅        | ✅     | ❌     |
-| Delete tags           | ✅    | ✅    | ✅        | ✅     | ❌     |
-| **Settings**          |       |       |           |        |        |
-| Account               | ✅    | ✅    | ✅        | ✅     | ✅     |
-| Organization          | ✅    | ✅    | ✅        | ✅     | ✅     |
-| Product               | ✅    | ✅    | ✅        | ✅     | ❌     |
-| Billing               | ✅    | ✅    | ❌        | ❌     | ❌     |
-| Enterprise License    | ✅    | ✅    | ❌        | ❌     | ❌     |
-| **People**            |       |       |           |        |        |
-| Delete Person         | ✅    | ✅    | ✅        | ✅     | ❌     |
-| **Integrations**      |       |       |           |        |        |
-| Integrations Page     | ✅    | ✅    | ✅        | ✅     | ❌     |
+|                                  | Owner | Admin | Editor | Developer | Viewer |
+| -------------------------------- | ----- | ----- | ------ | --------- | ------ |
+| **Organization**                 |       |       |        |           |        |
+| Update organization              | ✅    | ✅    | ❌     | ❌        | ❌     |
+| Delete organization              | ✅    | ❌    | ❌     | ❌        | ❌     |
+| Add new Member                   | ✅    | ✅    | ❌     | ❌        | ❌     |
+| Delete Member                    | ✅    | ✅    | ❌     | ❌        | ❌     |
+| Update Member Access             | ✅    | ✅    | ❌     | ❌        | ❌     |
+| Update Billing                   | ✅    | ✅    | ❌     | ❌        | ❌     |
+| **Product**                      |       |       |        |           |        |
+| Create Product                   | ✅    | ✅    | ✅     | ✅        | ❌     |
+| Update Product Name              | ✅    | ✅    | ✅     | ❌        | ❌     |
+| Update Product Name              | ✅    | ✅    | ✅     | ❌        | ❌     |
+| Update Product Recontact Options | ✅    | ✅    | ✅     | ✅        | ❌     |
+| Update Look & Feel               | ✅    | ✅    | ✅     | ✅        | ❌     |
+| Update Survey Languages          | ✅    | ✅    | ✅     | ✅        | ❌     |
+| Delete Product                   | ✅    | ✅    | ✅     | ✅        | ❌     |
+| **Surveys**                      |       |       |        |           |        |
+| Create New Survey                | ✅    | ✅    | ✅     | ✅        | ❌     |
+| Edit Survey                      | ✅    | ✅    | ✅     | ✅        | ❌     |
+| Delete Survey                    | ✅    | ✅    | ✅     | ✅        | ❌     |
+| View survey results              | ✅    | ✅    | ✅     | ✅        | ✅     |
+| **Response**                     |       |       |        |           |        |
+| Delete response                  | ✅    | ✅    | ✅     | ✅        | ❌     |
+| Add tags on response             | ✅    | ✅    | ✅     | ✅        | ❌     |
+| Edit tags on response            | ✅    | ✅    | ✅     | ✅        | ❌     |
+| **Actions**                      |       |       |        |           |        |
+| Create Action                    | ✅    | ✅    | ✅     | ✅        | ❌     |
+| Update Action                    | ✅    | ✅    | ✅     | ✅        | ❌     |
+| Delete Action                    | ✅    | ✅    | ✅     | ✅        | ❌     |
+| **API Keys**                     |       |       |        |           |        |
+| Create API key                   | ✅    | ✅    | ✅     | ✅        | ❌     |
+| Update API key                   | ✅    | ✅    | ✅     | ✅        | ❌     |
+| Delete API key                   | ✅    | ✅    | ✅     | ✅        | ❌     |
+| **Tags**                         |       |       |        |           |        |
+| Create tags                      | ✅    | ✅    | ✅     | ✅        | ❌     |
+| Update tags                      | ✅    | ✅    | ✅     | ✅        | ❌     |
+| Delete tags                      | ✅    | ✅    | ✅     | ✅        | ❌     |
+| **People**                       |       |       |        |           |        |
+| Delete Person                    | ✅    | ✅    | ✅     | ✅        | ❌     |
+| **Integrations**                 |       |       |        |           |        |
+| Manage Integrations              | ✅    | ✅    | ✅     | ✅        | ❌     |
 
 ## Inviting organization members
 
