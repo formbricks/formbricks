@@ -5,7 +5,7 @@ const Loading = () => {
     <div className="p-6">
       <div>
         <div className="flex items-center justify-between space-x-4 pb-4">
-          <h1 className="text-3xl font-bold text-slate-800">Team Settings</h1>
+          <h1 className="text-3xl font-bold text-slate-800">Organization Settings</h1>
         </div>
       </div>
       <div className="mb-6 border-b border-slate-200">

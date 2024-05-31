@@ -1,3 +1,5 @@
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+
 const LoadingCard = ({ title, description, skeletonLines }) => {
   return (
     <div className="my-4 w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4 shadow-sm">
@@ -18,58 +20,33 @@ const LoadingCard = ({ title, description, skeletonLines }) => {
   );
 };
 
+const cards = [
+  {
+    title: "Manage members",
+    description: "Add or remove members in your organization.",
+    skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-8 w-80" }, { classes: "h-8 w-80" }],
+  },
+  {
+    title: "Organization Name",
+    description: "Give your organization a descriptive name.",
+    skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-8 w-80" }],
+  },
+  {
+    title: "Delete Organization",
+    description:
+      "Delete organization with all its products including all surveys, responses, people, actions and attributes",
+    skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-8 w-80" }],
+  },
+];
+
+const pages = ["Members", IS_FORMBRICKS_CLOUD ? "Billing & Plan" : "Enterprise License"];
+
 const Loading = () => {
-  const cards = [
-    {
-      title: "Manage members",
-      description: "Add or remove members in your organization",
-      skeleton: (
-        <div className="flex flex-col space-y-4 p-4">
-          <div className="flex items-center justify-end gap-4">
-            <Skeleton className="h-12 w-40 rounded-lg" />
-            <Skeleton className="h-12 w-40 rounded-lg" />
-          </div>
-
-          <div className="rounded-lg border border-slate-200">
-            <div className="grid-cols-20 grid h-12 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-              <div className="col-span-2"></div>
-              <div className="col-span-5">Fullname</div>
-              <div className="col-span-5">Email</div>
-              <div className="col-span-3">Role</div>
-              <div className="col-span-5"></div>
-            </div>
-
-            <div className="h-10"></div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Organization Name",
-      description: "Give your organization a descriptive name",
-      skeleton: (
-        <div className="flex flex-col p-4">
-          <Skeleton className="mb-2 h-5 w-32" />
-          <Skeleton className="mb-4 h-12 w-96 rounded-lg" />
-          <Skeleton className="h-12 w-36 rounded-lg" />
-        </div>
-      ),
-    },
-    {
-      title: "Delete Team",
-      description:
-        "Delete team with all its products including all surveys, responses, people, actions and attributes",
-      skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-8 w-80" }],
-    },
-  ];
-
-  const pages = ["Members", "Enterprise License"];
-
   return (
     <div className="p-6">
       <div>
         <div className="flex items-center justify-between space-x-4 pb-4">
-          <h1 className="text-3xl font-bold text-slate-800">Team Settings</h1>
+          <h1 className="text-3xl font-bold text-slate-800">Organization Settings</h1>
         </div>
       </div>
       <div className="mb-6 border-b border-slate-200">
