@@ -15,7 +15,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@formbricks/ui/Form";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
 import { TabToggle } from "@formbricks/ui/TabToggle";
 
@@ -315,7 +315,7 @@ export const CreateNewActionTab = ({
                               />
                             </>
                           </FormControl>
-                          <FormMessage />
+                          <FormError />
                         </FormItem>
                       )}
                     />

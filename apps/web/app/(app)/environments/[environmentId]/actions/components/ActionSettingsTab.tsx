@@ -18,7 +18,7 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@formbricks/ui/Form";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { TabToggle } from "@formbricks/ui/TabToggle";
@@ -253,7 +253,7 @@ export const ActionSettingsTab = ({
                               />
                             </>
                           </FormControl>
-                          <FormMessage />
+                          <FormError />
                         </FormItem>
                       )}
                     />
