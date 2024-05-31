@@ -3,6 +3,7 @@
 import { Organization } from "@prisma/client";
 import { getServerSession } from "next-auth";
 
+import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
@@ -27,7 +28,11 @@ export const createShortUrlAction = async (url: string) => {
   return fullShortUrl;
 };
 
-export const createOrganizationAction = async (organizationName: string): Promise<Organization> => {
+export const createOrganizationAction = async (
+  organizationName: string
+): Promise<Organization | undefined> => {
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  if (!isMultiOrgEnabled) return;
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 

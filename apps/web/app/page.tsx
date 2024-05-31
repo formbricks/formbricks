@@ -5,15 +5,15 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { ONBOARDING_DISABLED } from "@formbricks/lib/constants";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
-import { getOrganizationCount, getOrganizationsByUserId } from "@formbricks/lib/organization/service";
-import { getUserCount } from "@formbricks/lib/user/service";
+import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
+import { getIsFreshInstance } from "@formbricks/lib/user/service";
 import { ClientLogout } from "@formbricks/ui/ClientLogout";
 
 const Page = async () => {
   const session: Session | null = await getServerSession(authOptions);
+  const isFreshInstance = await getIsFreshInstance();
 
   if (!session) {
-    const isFreshInstance = (await getUserCount()) === 0;
     console.log(isFreshInstance);
     if (isFreshInstance) {
       redirect("/setup/intro");
@@ -28,14 +28,7 @@ const Page = async () => {
 
   const userOrganizations = await getOrganizationsByUserId(session.user.id);
   if (!userOrganizations || userOrganizations.length === 0) {
-    const hasNoOrganizations = (await getOrganizationCount()) === 0;
-    if (hasNoOrganizations) {
-      console.log("redirecting");
-      return redirect("/setup/create-first-organization");
-    } else {
-      console.error("Failed to get organizations, redirecting to create-first-organization");
-      return redirect("/create-first-organization");
-    }
+    return redirect("/setup/create-first-organization");
   }
 
   if (!ONBOARDING_DISABLED && !session.user.onboardingCompleted) {

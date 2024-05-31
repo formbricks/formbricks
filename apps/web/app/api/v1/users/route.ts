@@ -1,4 +1,5 @@
 import { prisma } from "@formbricks/database";
+import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/email";
 import {
   DEFAULT_ORGANIZATION_ID,
@@ -11,11 +12,7 @@ import {
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
-import {
-  createOrganization,
-  getOrganization,
-  getOrganizationCount,
-} from "@formbricks/lib/organization/service";
+import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { createUser, updateUser } from "@formbricks/lib/user/service";
 
@@ -94,8 +91,8 @@ export const POST = async (request: Request) => {
     }
     // Without default organization assignment
     else {
-      const totalOrganizations = await getOrganizationCount();
-      if (totalOrganizations !== 0) {
+      const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+      if (isMultiOrgEnabled) {
         const organization = await createOrganization({ name: user.name + "'s Organization" });
         await createMembership(organization.id, user.id, { role: "owner", accepted: true });
         const product = await createProduct(organization.id, { name: "My Product" });
@@ -115,7 +112,6 @@ export const POST = async (request: Request) => {
           notificationSettings: updatedNotificationSettings,
         });
       } else {
-        console.log("here");
         const updatedNotificationSettings = {
           ...user.notificationSettings,
           alert: {

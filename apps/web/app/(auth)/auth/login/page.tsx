@@ -3,6 +3,7 @@ import { Testimonial } from "@/app/(auth)/auth/components/Testimonial";
 import { SigninForm } from "@/app/(auth)/auth/login/components/SigninForm";
 import { Metadata } from "next";
 
+import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,
@@ -13,7 +14,6 @@ import {
   PASSWORD_RESET_DISABLED,
   SIGNUP_ENABLED,
 } from "@formbricks/lib/constants";
-import { getOrganizationCount } from "@formbricks/lib/organization/service";
 
 export const metadata: Metadata = {
   title: "Login",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 const Page = async () => {
-  const belongsToSingleOrganization = (await getOrganizationCount()) === 1;
+  const isMultOrgEnabled = await getIsMultiOrgEnabled();
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">
@@ -38,7 +38,7 @@ const Page = async () => {
             azureOAuthEnabled={AZURE_OAUTH_ENABLED}
             oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
             oidcDisplayName={OIDC_DISPLAY_NAME}
-            belongsToSingleOrganization={belongsToSingleOrganization}
+            isMultOrgEnabled={isMultOrgEnabled}
           />
         </FormWrapper>
       </div>

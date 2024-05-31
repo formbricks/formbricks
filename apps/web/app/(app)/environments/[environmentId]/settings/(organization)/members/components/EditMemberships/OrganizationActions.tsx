@@ -25,6 +25,7 @@ type OrganizationActionsProps = {
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
+  isMultiOrgEnabled: boolean;
 };
 
 export const OrganizationActions = ({
@@ -36,6 +37,7 @@ export const OrganizationActions = ({
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
+  isMultiOrgEnabled,
 }: OrganizationActionsProps) => {
   const router = useRouter();
   const [isLeaveOrganizationModalOpen, setLeaveOrganizationModalOpen] = useState(false);
@@ -86,6 +88,7 @@ export const OrganizationActions = ({
         <Button
           variant="secondary"
           size="sm"
+          disabled={!isMultiOrgEnabled}
           onClick={() => {
             setCreateOrganizationModalOpen(true);
           }}>

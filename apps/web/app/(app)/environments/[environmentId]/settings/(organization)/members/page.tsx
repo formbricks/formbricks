@@ -3,7 +3,7 @@ import { OrganizationActions } from "@/app/(app)/environments/[environmentId]/se
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
 
-import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
+import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import {
@@ -61,6 +61,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role);
   const userMemberships = await getMembershipsByUserId(session.user.id);
+  const isMultiOrgEnabled = (await getIsMultiOrgEnabled()) === true ? true : false;
 
   const isDeleteDisabled = !isOwner;
   const currentUserRole = currentUserMembership?.role;
@@ -89,6 +90,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
             canDoRoleManagement={canDoRoleManagement}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             environmentId={params.environmentId}
+            isMultiOrgEnabled={isMultiOrgEnabled}
           />
         )}
 

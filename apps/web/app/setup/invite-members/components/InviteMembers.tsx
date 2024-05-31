@@ -28,13 +28,15 @@ export const InviteMembers = () => {
 
     // Validate all emails first
     for (const teamMemberEmail of teamMemberEmails) {
-      if (teamMemberEmail.trim() !== "" && isValidEmail(teamMemberEmail)) {
+      if (teamMemberEmail.trim() === "") {
+        continue;
+      } else if (isValidEmail(teamMemberEmail)) {
         validEmails.push(teamMemberEmail);
       }
     }
 
     // If there are valid emails, proceed to send invitations
-    if (validEmails.length === teamMemberEmails.length) {
+    if (validEmails.length > 0) {
       for (const email of validEmails) {
         try {
           await inviteOrganizationMemberAction(email);
