@@ -101,7 +101,19 @@ export const WhenToSendCard = ({
   };
 
   const handleRandomizerInput = (e) => {
-    const updatedSurvey = { ...localSurvey, displayPercentage: parseInt(e.target.value) };
+    let value = parseFloat(e.target.value);
+
+    if (Number.isNaN(value)) {
+      value = 1;
+    }
+
+    if (value < 0.01) value = 0.01;
+    if (value > 100) value = 100;
+
+    // Round value to two decimal places. eg: 10.555(and higher like 10.556) -> 10.56 and 10.554(and lower like 10.553) ->10.55
+    value = Math.round(value * 100) / 100;
+
+    const updatedSurvey = { ...localSurvey, displayPercentage: value };
     setLocalSurvey(updatedSurvey);
   };
 
@@ -294,22 +306,21 @@ export const WhenToSendCard = ({
               title="Show survey to % of users"
               description="Only display the survey to a subset of the users"
               childBorder={true}>
-              <div className="w-full">
-                <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
-                  <h3 className="mb-4 text-sm font-semibold text-slate-700">
-                    Show to {localSurvey.displayPercentage}% of targeted users
-                  </h3>
-                  <input
+              <label htmlFor="small-range" className="cursor-pointer p-4">
+                <p className="text-sm font-semibold text-slate-700">
+                  Show to {localSurvey.displayPercentage}% of targeted users
+                  <Input
                     id="small-range"
-                    type="range"
-                    min="1"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
                     max="100"
                     value={localSurvey.displayPercentage ?? 50}
                     onChange={handleRandomizerInput}
-                    className="range-sm mb-6 h-1 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 dark:bg-slate-700"
+                    className="mx-2 inline w-20 bg-white text-center text-sm"
                   />
-                </div>
-              </div>
+                </p>
+              </label>
             </AdvancedOptionToggle>
           </div>
         </Collapsible.CollapsibleContent>
