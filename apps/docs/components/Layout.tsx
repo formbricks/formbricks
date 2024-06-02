@@ -2,6 +2,7 @@
 
 import { Logo } from "@/components/Logo";
 import { Navigation } from "@/components/Navigation";
+import SideNavigation from "@/components/SideNavigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -37,6 +38,7 @@ export const Layout = ({
         </motion.header>
         <div className="relative flex h-full flex-col px-4 pt-14 sm:px-6 lg:px-8">
           <main className="flex-auto">{children}</main>
+          <SideNavigation pathname={pathname} />
           <Footer />
         </div>
       </div>
