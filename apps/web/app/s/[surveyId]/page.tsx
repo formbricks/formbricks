@@ -1,5 +1,4 @@
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
 import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
 import { PinScreen } from "@/app/s/[surveyId]/components/PinScreen";
 import { SurveyInactive } from "@/app/s/[surveyId]/components/SurveyInactive";
@@ -17,7 +16,6 @@ import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbrick
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
-import { MediaBackground } from "@formbricks/ui/MediaBackground";
 
 import { getEmailVerificationDetails } from "./lib/helpers";
 
@@ -182,30 +180,23 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   }
 
   return survey ? (
-    <div className="relative">
-      <MediaBackground survey={survey} product={product}>
-        <LinkSurvey
-          survey={survey}
-          product={product}
-          userId={userId}
-          emailVerificationStatus={emailVerificationStatus}
-          singleUseId={isSingleUseSurvey ? singleUseId : undefined}
-          singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
-          webAppUrl={WEBAPP_URL}
-          responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
-          verifiedEmail={verifiedEmail}
-          languageCode={languageCode}
-          attributeClasses={attributeClasses}
-          isEmbed={isEmbed}
-        />
-        <LegalFooter
-          IMPRINT_URL={IMPRINT_URL}
-          PRIVACY_URL={PRIVACY_URL}
-          IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-          surveyUrl={WEBAPP_URL + "/s/" + survey.id}
-        />
-      </MediaBackground>
-    </div>
+    <LinkSurvey
+      survey={survey}
+      product={product}
+      userId={userId}
+      emailVerificationStatus={emailVerificationStatus}
+      singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+      singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+      webAppUrl={WEBAPP_URL}
+      responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
+      verifiedEmail={verifiedEmail}
+      languageCode={languageCode}
+      attributeClasses={attributeClasses}
+      isEmbed={isEmbed}
+      IMPRINT_URL={IMPRINT_URL}
+      PRIVACY_URL={PRIVACY_URL}
+      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+    />
   ) : null;
 };
 

@@ -34,6 +34,9 @@ interface LinkSurveyProps {
   languageCode: string;
   attributeClasses: TAttributeClass[];
   isEmbed: boolean;
+  IMPRINT_URL?: string;
+  PRIVACY_URL?: string;
+  IS_FORMBRICKS_CLOUD: boolean;
 }
 
 export const LinkSurvey = ({
@@ -49,6 +52,9 @@ export const LinkSurvey = ({
   languageCode,
   attributeClasses,
   isEmbed,
+  IMPRINT_URL,
+  PRIVACY_URL,
+  IS_FORMBRICKS_CLOUD,
 }: LinkSurveyProps) => {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
@@ -207,7 +213,11 @@ export const LinkSurvey = ({
       isPreview={isPreview}
       setQuestionId={setQuestionId}
       determineStyling={determineStyling}
-      isEmbed={isEmbed}>
+      isEmbed={isEmbed}
+      webAppUrl={webAppUrl}
+      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+      IMPRINT_URL={IMPRINT_URL}
+      PRIVACY_URL={PRIVACY_URL}>
       <SurveyInline
         survey={survey}
         styling={determineStyling()}
