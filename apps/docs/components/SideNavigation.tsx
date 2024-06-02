@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 
-interface Heading {
+type Heading = {
   id: string;
   text: string | null;
   level: number;
-}
+};
 
 const SideNavigation = ({ pathname }) => {
   const [headings, setHeadings] = useState<Heading[]>([]);
@@ -25,7 +25,7 @@ const SideNavigation = ({ pathname }) => {
     getHeadings();
   }, [pathname]);
 
-  const scrollToSection = (id) => {
+  const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
@@ -35,27 +35,32 @@ const SideNavigation = ({ pathname }) => {
 
   if (headings.length) {
     return (
-      <nav className={`fixed right-0 top-10 hidden h-full w-96 overflow-y-auto lg:mt-10 lg:block`}>
-        <div className="'border-gray-700' border-l-2">
+      <aside className="fixed right-0 top-10 z-50 hidden h-full w-72 overflow-hidden overflow-y-auto lg:mt-10 lg:block">
+        <div className="border-l-2 border-gray-700">
+          <h3 className="ml-2 mt-1 text-slate-900 dark:text-white ">On this page</h3>
           <ul className="px-4 py-6">
             {headings.map((heading) => (
               <li
                 key={heading.id}
-                className={`mb-4 font-semibold text-slate-900 dark:text-white ${heading.id === activeId ? "rounded-r-md bg-slate-100 px-2 py-1 transition dark:bg-slate-800" : ""}`}>
+                className={`mb-4 font-semibold text-slate-900 dark:text-white ${
+                  heading.id === activeId
+                    ? "rounded-r-md bg-slate-100 px-2 py-1 transition dark:bg-slate-800"
+                    : ""
+                }`}>
                 <a
                   href={`#${heading.id}`}
                   onClick={(e) => {
                     e.preventDefault();
                     scrollToSection(heading.id);
                   }}
-                  className={`font-semibold text-slate-900 dark:text-white`}>
+                  className="font-semibold text-slate-900 dark:text-white">
                   {heading.text}
                 </a>
               </li>
             ))}
           </ul>
         </div>
-      </nav>
+      </aside>
     );
   }
 
