@@ -105,6 +105,13 @@ export const WhenToSendCard = ({
     setLocalSurvey(updatedSurvey);
   };
 
+  const handleInputResponseBlur = (e) => {
+    if (parseInt(e.target.value) > 100) {
+      e.target.value = 100;
+      return;
+    }
+  };
+  
   useEffect(() => {
     if (localSurvey.type === "link") {
       setOpen(false);
@@ -300,13 +307,15 @@ export const WhenToSendCard = ({
                     Show to {localSurvey.displayPercentage}% of targeted users
                   </h3>
                   <input
+                    step="0.01"
                     id="small-range"
                     type="range"
                     min="1"
                     max="100"
                     value={localSurvey.displayPercentage ?? 50}
                     onChange={handleRandomizerInput}
-                    className="range-sm mb-6 h-1 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 dark:bg-slate-700"
+                    onBlur={handleInputResponseBlur}
+                    className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
                   />
                 </div>
               </div>
