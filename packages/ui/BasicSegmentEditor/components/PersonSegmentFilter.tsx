@@ -25,7 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { SegmentFilterItemConnector } from "./SegmentFilterItemConnector";
 import { SegmentFilterItemContextMenu } from "./SegmentFilterItemContextMenu";
 
-type TPersonSegmentFilterProps = {
+interface PersonSegmentFilterProps {
   connector: TSegmentConnector;
   environmentId: string;
   segment: TSegment;
@@ -35,7 +35,7 @@ type TPersonSegmentFilterProps = {
   viewOnly?: boolean;
   resource: TSegmentPersonFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
-};
+}
 
 export const PersonSegmentFilter = ({
   connector,
@@ -46,7 +46,7 @@ export const PersonSegmentFilter = ({
   segment,
   setSegment,
   viewOnly,
-}: TPersonSegmentFilterProps) => {
+}: PersonSegmentFilterProps) => {
   const { personIdentifier } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
 

@@ -29,7 +29,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { capitalizeFirstLetter, truncate } from "@formbricks/lib/strings";
+import { capitalizeFirstLetter, truncate } from "@formbricks/lib/utils/strings";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";

@@ -9,7 +9,7 @@ import {
   updateAttributeClassNameInFilter,
   updateOperatorInFilter,
 } from "@formbricks/lib/segment/utils";
-import { isCapitalized } from "@formbricks/lib/utils";
+import { isCapitalized } from "@formbricks/lib/utils/strings";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   ARITHMETIC_OPERATORS,
@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { SegmentFilterItemConnector } from "./SegmentFilterItemConnector";
 import { SegmentFilterItemContextMenu } from "./SegmentFilterItemContextMenu";
 
-type TAttributeSegmentFilterProps = {
+interface AttributeSegmentFilterProps {
   connector: TSegmentConnector;
   environmentId: string;
   segment: TSegment;
@@ -38,7 +38,7 @@ type TAttributeSegmentFilterProps = {
   viewOnly?: boolean;
   resource: TSegmentAttributeFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
-};
+}
 
 export const AttributeSegmentFilter = ({
   connector,
@@ -50,7 +50,7 @@ export const AttributeSegmentFilter = ({
   setSegment,
   attributeClasses,
   viewOnly,
-}: TAttributeSegmentFilterProps) => {
+}: AttributeSegmentFilterProps) => {
   const { attributeClassName } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
 

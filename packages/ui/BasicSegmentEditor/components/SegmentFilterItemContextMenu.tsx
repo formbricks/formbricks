@@ -5,17 +5,19 @@ import { cn } from "@formbricks/lib/cn";
 import { Button } from "../../Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
 
+interface SegmentFilterItemContextMenuProps {
+  filterId: string;
+  onDeleteFilter: (filterId: string) => void;
+  onMoveFilter: (filterId: string, direction: "up" | "down") => void;
+  viewOnly?: boolean;
+}
+
 export const SegmentFilterItemContextMenu = ({
   filterId,
   onDeleteFilter,
   onMoveFilter,
   viewOnly,
-}: {
-  filterId: string;
-  onDeleteFilter: (filterId: string) => void;
-  onMoveFilter: (filterId: string, direction: "up" | "down") => void;
-  viewOnly?: boolean;
-}) => {
+}: SegmentFilterItemContextMenuProps) => {
   return (
     <div className="flex items-center gap-2">
       <DropdownMenu>

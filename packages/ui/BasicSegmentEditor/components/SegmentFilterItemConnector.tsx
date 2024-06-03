@@ -2,19 +2,21 @@ import { cn } from "@formbricks/lib/cn";
 import { toggleFilterConnector } from "@formbricks/lib/segment/utils";
 import { TSegment, TSegmentConnector } from "@formbricks/types/segment";
 
+interface SegmentFilterItemConnectorProps {
+  connector: TSegmentConnector;
+  segment: TSegment;
+  setSegment: (segment: TSegment) => void;
+  filterId: string;
+  viewOnly?: boolean;
+}
+
 export const SegmentFilterItemConnector = ({
   connector,
   segment,
   setSegment,
   filterId,
   viewOnly,
-}: {
-  connector: TSegmentConnector;
-  segment: TSegment;
-  setSegment: (segment: TSegment) => void;
-  filterId: string;
-  viewOnly?: boolean;
-}) => {
+}: SegmentFilterItemConnectorProps) => {
   const updateLocalSurvey = (newConnector: TSegmentConnector) => {
     const updatedSegment = structuredClone(segment);
     if (updatedSegment.filters) {

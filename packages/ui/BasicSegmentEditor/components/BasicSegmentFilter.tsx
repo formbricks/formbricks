@@ -9,10 +9,10 @@ import {
   TSegmentPersonFilter,
 } from "@formbricks/types/segment";
 
-import { AttributeSegmentFilter } from "./components/AttributeSegmentFilter";
-import { PersonSegmentFilter } from "./components/PersonSegmentFilter";
+import { AttributeSegmentFilter } from "./AttributeSegmentFilter";
+import { PersonSegmentFilter } from "./PersonSegmentFilter";
 
-type TBasicSegmentFilterProps = {
+interface BasicSegmentFilterProps {
   connector: TSegmentConnector;
   resource: TSegmentFilter;
   environmentId: string;
@@ -22,7 +22,7 @@ type TBasicSegmentFilterProps = {
   onDeleteFilter: (filterId: string) => void;
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
   viewOnly?: boolean;
-};
+}
 
 export const BasicSegmentFilter = ({
   resource,
@@ -34,7 +34,7 @@ export const BasicSegmentFilter = ({
   onDeleteFilter,
   onMoveFilter,
   viewOnly,
-}: TBasicSegmentFilterProps) => {
+}: BasicSegmentFilterProps) => {
   const updateFilterValueInSegment = (filterId: string, newValue: string | number) => {
     const updatedSegment = structuredClone(segment);
     if (updatedSegment.filters) {

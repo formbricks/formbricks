@@ -3,16 +3,16 @@ import { deleteResource, isResourceFilter, moveResource } from "@formbricks/lib/
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 
-import { BasicSegmentFilter } from "../BasicSegmentFilter";
+import { BasicSegmentFilter } from "./components/BasicSegmentFilter";
 
-type TBasicSegmentEditorProps = {
+interface BasicSegmentEditorProps {
   group: TBaseFilters;
   environmentId: string;
   segment: TSegment;
   attributeClasses: TAttributeClass[];
   setSegment: React.Dispatch<React.SetStateAction<TSegment>>;
   viewOnly?: boolean;
-};
+}
 
 export const BasicSegmentEditor = ({
   group,
@@ -21,7 +21,7 @@ export const BasicSegmentEditor = ({
   segment,
   attributeClasses,
   viewOnly,
-}: TBasicSegmentEditorProps) => {
+}: BasicSegmentEditorProps) => {
   const handleMoveResource = (resourceId: string, direction: "up" | "down") => {
     const localSegmentCopy = structuredClone(segment);
     if (localSegmentCopy.filters) {

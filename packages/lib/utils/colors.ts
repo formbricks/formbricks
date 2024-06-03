@@ -1,7 +1,3 @@
-export const delay = (ms: number) => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};
-
 export const hexToRGBA = (hex: string | undefined, opacity: number): string | undefined => {
   // return undefined if hex is undefined, this is important for adding the default values to the CSS variables
   // TODO: find a better way to handle this
@@ -83,5 +79,3 @@ export const isLight = (color: string) => {
   }
   return r * 0.299 + g * 0.587 + b * 0.114 > 128;
 };
-
-export const isCapitalized = (str: string) => str.charAt(0) === str.charAt(0).toUpperCase();

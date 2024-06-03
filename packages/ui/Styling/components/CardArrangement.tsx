@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import { cn } from "@formbricks/lib/cn";
-import { capitalizeFirstLetter } from "@formbricks/lib/strings";
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyType } from "@formbricks/types/surveys";
 

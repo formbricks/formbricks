@@ -21,9 +21,9 @@ import {
 
 import { getLocalizedValue } from "../i18n/utils";
 import { processResponseData } from "../responses";
-import { sanitizeString } from "../strings";
 import { getTodaysDateTimeFormatted } from "../time";
 import { evaluateCondition } from "../utils/evaluateLogic";
+import { sanitizeString } from "../utils/strings";
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {
   const result = { ...ttc };
