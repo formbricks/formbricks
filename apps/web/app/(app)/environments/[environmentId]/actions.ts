@@ -12,7 +12,12 @@ import { createOrganization, getOrganizationByEnvironmentId } from "@formbricks/
 import { createProduct } from "@formbricks/lib/product/service";
 import { createShortUrl } from "@formbricks/lib/shortUrl/service";
 import { updateUser } from "@formbricks/lib/user/service";
-import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 
 export const createShortUrlAction = async (url: string) => {
   const session = await getServerSession(authOptions);
@@ -32,7 +37,10 @@ export const createOrganizationAction = async (
   organizationName: string
 ): Promise<Organization | undefined> => {
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  if (!isMultiOrgEnabled) return;
+  if (!isMultiOrgEnabled)
+    throw new OperationNotAllowedError(
+      "Creating Multiple organization is restricted in your instance of Formbricks"
+    );
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 

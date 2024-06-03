@@ -21,12 +21,13 @@ interface EnvironmentLayoutProps {
 }
 
 export const EnvironmentLayout = async ({ environmentId, session, children }: EnvironmentLayoutProps) => {
-  const [environment, organizations, organization, isMultiOrgEnabled] = await Promise.all([
+  const [environment, organizations, organization] = await Promise.all([
     getEnvironment(environmentId),
     getOrganizationsByUserId(session.user.id),
     getOrganizationByEnvironmentId(environmentId),
-    getIsMultiOrgEnabled(),
   ]);
+
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
   if (!organization || !environment) {
     return <ErrorComponent />;

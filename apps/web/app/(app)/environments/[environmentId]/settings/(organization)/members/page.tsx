@@ -61,7 +61,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role);
   const userMemberships = await getMembershipsByUserId(session.user.id);
-  const isMultiOrgEnabled = (await getIsMultiOrgEnabled()) === true ? true : false;
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
   const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
   const currentUserRole = currentUserMembership?.role;

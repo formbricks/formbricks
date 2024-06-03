@@ -37,7 +37,7 @@ export const inviteOrganizationMemberAction = async (email: string) => {
       email,
       session.user.name ?? "",
       "",
-      true // is onboarding invite
+      false // is onboarding invite
     );
   }
 

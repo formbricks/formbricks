@@ -40,11 +40,9 @@ const Page = async ({ searchParams }: { searchParams: { [key: string]: string | 
                 create an account.
               </p>
               <hr className="my-4" />
-              <Link href="/">
-                <Button variant="darkCTA" className="flex w-full justify-center">
-                  Login
-                </Button>
-              </Link>
+              <Button variant="darkCTA" className="flex w-full justify-center" href="/">
+                Login
+              </Button>
             </>
           ) : (
             <SignupForm

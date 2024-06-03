@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 const Page = async () => {
-  const isMultOrgEnabled = await getIsMultiOrgEnabled();
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">
@@ -38,7 +38,7 @@ const Page = async () => {
             azureOAuthEnabled={AZURE_OAUTH_ENABLED}
             oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
             oidcDisplayName={OIDC_DISPLAY_NAME}
-            isMultOrgEnabled={isMultOrgEnabled}
+            isMultiOrgEnabled={isMultiOrgEnabled}
           />
         </FormWrapper>
       </div>

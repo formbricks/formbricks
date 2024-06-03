@@ -33,7 +33,7 @@ interface SignInFormProps {
   azureOAuthEnabled: boolean;
   oidcOAuthEnabled: boolean;
   oidcDisplayName?: string;
-  isMultOrgEnabled: boolean;
+  isMultiOrgEnabled: boolean;
 }
 
 export const SigninForm = ({
@@ -45,7 +45,7 @@ export const SigninForm = ({
   azureOAuthEnabled,
   oidcOAuthEnabled,
   oidcDisplayName,
-  isMultOrgEnabled,
+  isMultiOrgEnabled,
 }: SignInFormProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -244,7 +244,7 @@ export const SigninForm = ({
           )}
         </div>
 
-        {publicSignUpEnabled && !totpLogin && isMultOrgEnabled && (
+        {publicSignUpEnabled && !totpLogin && isMultiOrgEnabled && (
           <div className="mt-9 text-center text-xs ">
             <span className="leading-5 text-slate-500">New to Formbricks?</span>
             <br />

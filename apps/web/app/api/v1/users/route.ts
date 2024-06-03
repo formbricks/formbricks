@@ -111,20 +111,6 @@ export const POST = async (request: Request) => {
         await updateUser(user.id, {
           notificationSettings: updatedNotificationSettings,
         });
-      } else {
-        const updatedNotificationSettings = {
-          ...user.notificationSettings,
-          alert: {
-            ...user.notificationSettings?.alert,
-          },
-          weeklySummary: {
-            ...user.notificationSettings?.weeklySummary,
-          },
-        };
-
-        await updateUser(user.id, {
-          notificationSettings: updatedNotificationSettings,
-        });
       }
     }
     // send verification email amd return user
