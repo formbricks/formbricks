@@ -1,5 +1,8 @@
 import { Metadata } from "next";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 
+import { authOptions } from "@formbricks/lib/authOptions";
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,
@@ -10,6 +13,7 @@ import {
   OIDC_OAUTH_ENABLED,
   PASSWORD_RESET_DISABLED,
 } from "@formbricks/lib/constants";
+import { getIsFreshInstance } from "@formbricks/lib/user/service";
 import { SignupOptions } from "@formbricks/ui/SignupOptions";
 
 export const metadata: Metadata = {
@@ -17,7 +21,16 @@ export const metadata: Metadata = {
   description: "Open-source Experience Management. Free & open source.",
 };
 
-const Page = () => {
+const Page = async () => {
+  const session = await getServerSession(authOptions);
+  const isFreshInstance = await getIsFreshInstance();
+  if (session) {
+    redirect("/");
+  }
+  if (!isFreshInstance) {
+    redirect("/auth/login");
+  }
+
   return (
     <div className="flex flex-col items-center space-y-4">
       <h2 className="text-2xl font-medium">Create Administrator</h2>

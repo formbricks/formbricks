@@ -416,7 +416,7 @@ export const MainNavigation = ({
 
                   {/* Organization Switch */}
 
-                  {isMultiOrgEnabled && (
+                  {(isMultiOrgEnabled || organizations.length > 1) && (
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger className="rounded-lg">
                         <div>
