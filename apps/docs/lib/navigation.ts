@@ -108,6 +108,7 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: "Overview", href: "/self-hosting/overview" },
       { title: "One-Click Setup", href: "/self-hosting/one-click" },
+      { title: "Custom SSL Certificate", href: "/self-hosting/custom-ssl" },
       { title: "Docker Setup", href: "/self-hosting/docker" },
       { title: "Migration Guide", href: "/self-hosting/migration-guide" },
       { title: "Configuration", href: "/self-hosting/configuration" },
