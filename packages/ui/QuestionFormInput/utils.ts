@@ -62,27 +62,6 @@ export const determineImageUploaderVisibility = (questionIdx: number, localSurve
   }
 };
 
-export const getLabelById = (id: string) => {
-  switch (id) {
-    case "headline":
-      return "Question";
-    case "subheader":
-      return "Description";
-    case "placeholder":
-      return "Placeholder";
-    case "buttonLabel":
-      return `"Next" Button Label`;
-    case "backButtonLabel":
-      return `"Back" Button Label`;
-    case "lowerLabel":
-      return "Lower Label";
-    case "upperLabel":
-      return "Upper Label";
-    default:
-      return "";
-  }
-};
-
 export const getPlaceHolderById = (id: string) => {
   switch (id) {
     case "headline":
