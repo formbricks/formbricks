@@ -81,8 +81,8 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
   // if the server responds with a boolean, we return it
   // if the server errors, we return null
   // null signifies an error
-  const licenseResult = await getLicenseDetails();
-  const isValid = licenseResult ? licenseResult.status === "active" : null;
+  const licenseDetails = await getLicenseDetails();
+  const isValid = licenseDetails ? licenseDetails.status === "active" : null;
 
   const previousResult = await getPreviousResult();
   if (previousResult.active === null) {
@@ -96,8 +96,8 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
     }
   }
 
-  if (isValid !== null && licenseResult) {
-    await setPreviousResult({ active: isValid, features: licenseResult.features, lastChecked: new Date() });
+  if (isValid !== null && licenseDetails) {
+    await setPreviousResult({ active: isValid, features: licenseDetails.features, lastChecked: new Date() });
     return isValid;
   } else {
     // if result is undefined -> error
