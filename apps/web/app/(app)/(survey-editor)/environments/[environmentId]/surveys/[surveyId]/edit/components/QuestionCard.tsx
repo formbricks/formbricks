@@ -1,27 +1,10 @@
 "use client";
 
-import { getTSurveyQuestionTypeName } from "@/app/lib/questions";
+import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeName } from "@/app/lib/questions";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import {
-  ArrowUpFromLineIcon,
-  CalendarDaysIcon,
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  Grid3X3Icon,
-  GripIcon,
-  HomeIcon,
-  ImageIcon,
-  ListIcon,
-  MessageSquareTextIcon,
-  MousePointerClickIcon,
-  PhoneIcon,
-  PresentationIcon,
-  Rows3Icon,
-  StarIcon,
-} from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
@@ -45,7 +28,7 @@ import { MultipleChoiceQuestionForm } from "./MultipleChoiceQuestionForm";
 import { NPSQuestionForm } from "./NPSQuestionForm";
 import { OpenQuestionForm } from "./OpenQuestionForm";
 import { PictureSelectionForm } from "./PictureSelectionForm";
-import { QuestionDropdown } from "./QuestionMenu";
+import { QuestionMenu } from "./QuestionMenu";
 import { RatingQuestionForm } from "./RatingQuestionForm";
 
 interface QuestionCardProps {
@@ -64,6 +47,7 @@ interface QuestionCardProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  addQuestion: (question: any, index?: number) => void;
 }
 
 export const QuestionCard = ({
@@ -82,6 +66,7 @@ export const QuestionCard = ({
   setSelectedLanguageCode,
   isInvalid,
   attributeClasses,
+  addQuestion,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
@@ -154,7 +139,8 @@ export const QuestionCard = ({
         "flex flex-row rounded-lg bg-white transition-all duration-300 ease-in-out"
       )}
       ref={setNodeRef}
-      style={style}>
+      style={style}
+      id={question.id}>
       <div
         {...listeners}
         {...attributes}
@@ -186,33 +172,7 @@ export const QuestionCard = ({
           <div>
             <div className="inline-flex">
               <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
-                {question.type === TSurveyQuestionType.FileUpload ? (
-                  <ArrowUpFromLineIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.OpenText ? (
-                  <MessageSquareTextIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
-                  <Rows3Icon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
-                  <ListIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.NPS ? (
-                  <PresentationIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.CTA ? (
-                  <MousePointerClickIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Rating ? (
-                  <StarIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Consent ? (
-                  <CheckIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.PictureSelection ? (
-                  <ImageIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Date ? (
-                  <CalendarDaysIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Cal ? (
-                  <PhoneIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Matrix ? (
-                  <Grid3X3Icon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Address ? (
-                  <HomeIcon className="h-5 w-5" />
-                ) : null}
+                {QUESTIONS_ICON_MAP[question.type]}
               </div>
               <div>
                 <p className="text-sm font-semibold">
@@ -241,12 +201,16 @@ export const QuestionCard = ({
             </div>
 
             <div className="flex items-center space-x-2">
-              <QuestionDropdown
+              <QuestionMenu
                 questionIdx={questionIdx}
                 lastQuestion={lastQuestion}
                 duplicateQuestion={duplicateQuestion}
                 deleteQuestion={deleteQuestion}
                 moveQuestion={moveQuestion}
+                question={question}
+                product={product}
+                updateQuestion={updateQuestion}
+                addQuestion={addQuestion}
               />
             </div>
           </div>

@@ -216,14 +216,19 @@ export const QuestionsView = ({
     toast.success("Question duplicated.");
   };
 
-  const addQuestion = (question: any) => {
+  const addQuestion = (question: any, index?: number) => {
     const updatedSurvey = { ...localSurvey };
     if (backButtonLabel) {
       question.backButtonLabel = backButtonLabel;
     }
     const languageSymbols = extractLanguageCodes(localSurvey.languages);
     const translatedQuestion = translateQuestion(question, languageSymbols);
-    updatedSurvey.questions.push({ ...translatedQuestion, isDraft: true });
+
+    if (index) {
+      updatedSurvey.questions.splice(index, 0, { ...translatedQuestion, isDraft: true });
+    } else {
+      updatedSurvey.questions.push({ ...translatedQuestion, isDraft: true });
+    }
 
     setLocalSurvey(updatedSurvey);
     setActiveQuestionId(question.id);
@@ -361,6 +366,7 @@ export const QuestionsView = ({
           invalidQuestions={invalidQuestions}
           internalQuestionIdMap={internalQuestionIdMap}
           attributeClasses={attributeClasses}
+          addQuestion={addQuestion}
         />
       </DndContext>
 
