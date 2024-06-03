@@ -1,0 +1,242 @@
+# Default values for formbricks.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# see: https://formbricks.com/docs/self-hosting/docker#important-run-time-variables
+formbricks: 
+  webappUrl: http://localhost:3000                                # REQUIRED: Base URL of the site.
+  nextauthUrl: "http://localhost:3000"                            # REQUIRED: Location of the auth server.
+  # NOTE: these secrets are required and must be created before deployment
+  # SEE: https://github.com/nmcclain/formbricks-helm?tab=readme-ov-file#create-formbricks-secret
+  databaseUrl:
+    existingSecret:
+      name: formbricks-secrets
+      key: database_url
+  nextauth:
+    existingSecret:
+      name: formbricks-secrets
+      key: nextauth_secret
+  encryptionKey:
+    existingSecret:
+      name: formbricks-secrets
+      key: encryption_key
+
+  # NOTE: all settings below are OPTIONAL
+
+  ## OPTIONAL URL and branding settings
+  # privacyUrl: ""
+  # termsUrl: ""
+  # imprintUrl: ""
+  # defaultBrandColor: #64748b
+  # shortUrlBase: ""
+  # apiHost: ""
+
+  ## OPTIONAL email settings
+  # mail:
+  #   mailFrom: ""
+  #   smtpHost: ""
+  #   smtpPort: 25
+  #   smtpSecureEnabled: 0
+  #   smtpUser: ""
+  #   existingSecret:
+  #     name: ""
+  #     key: ""
+
+  ## OPTIONAL auth settings
+  # formbricksEncryptionKey:
+  #   existingSecret:
+  #     name: ""
+  #     key: ""
+  signupDisabled: 0
+  passwordResetDisabled: 0
+  emailVerificationDisabled: 0
+  inviteDisabled: 0
+  onboardingDisabled: 0
+  emailAuthDisabled: 0
+  rateLimitingDisabled: 0
+  # environmentId: 0
+  # onboardingSurveyId: 0
+  # defaultTeam:
+  #   id: 0
+  #   role: ""
+
+  ## OPTIONAL Oauth2 settings
+  # azureAd:
+  #   existingSecret:
+  #     name: ""
+  #     tenantId: ""
+  #     clientId: ""
+  #     clientSecret: ""
+  # github:
+  #   existingSecret:
+  #     name: ""
+  #     githubId: ""
+  #     githubSecret: ""
+  # google:
+  #   existingSecret:
+  #     name: ""
+  #     clientId: ""
+  #     clientSecret: ""
+  # oidc:
+  #   displayName: ""
+  #   issuer: ""
+  #   signingAlgorithm: ""
+  #   existingSecret:
+  #     name: ""
+  #     clientId: ""
+  #     clientSecret: ""
+
+  ## OPTIONAL external integrations
+  # airtable:
+  #   clientId: ""
+  # aws:
+  #   existingSecret:
+  #     name: ""
+  #     accessKey: ""
+  #     secretKey: ""
+  #   s3:
+  #     bucketName: ""
+  #     endpointUrl: ""
+  #     region: ""
+  #     existingSecret:
+  #       name: ""
+  #       accessKey: ""
+  #       secretKey: ""
+  # cron:
+  #   existingSecret:
+  #     name: ""
+  #     key: ""
+  # customerIo:
+  #   existingSecret:
+  #     name: ""
+  #     siteId: ""
+  #     apiKey: ""
+  # googleSheets:
+  #   redirectUrl: ""
+  #   existingSecret:
+  #     name: ""
+  #     clientId: ""
+  #     clientSecret: ""
+  # notion:
+  #   existingSecret:
+  #     name: ""
+  #     clientId: ""
+  #     clientSecret: ""
+  # stripe:
+  #   existingSecret:
+  #     name: ""
+  #     secretKey: ""
+  #     webhook: ""
+
+  ## OPTIONAL monitoring settings
+  telemetryDisabled: 0
+  debug: 0
+  # sentryDsn: ""
+  # posthog:
+  #   apiHost: ""
+  #   apiKey: ""
+
+  ## OPTIONAL additional settings
+  # enterpriseLicenseKey: ""
+
+replicaCount: 1  # WARNING: multiple replics will only work if "uploads" is a shared filesystem
+
+image:
+  repository: formbricks/formbricks
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: Prefix
+      # NOTE: if you don't want to expose the UI to the internet, you can
+      #       remove the above path and uncomment the following paths:
+      # - path: /s/
+      #   pathType: Prefix
+      # - path: /_next/
+      #   pathType: Prefix
+      # - path: /api/v1/client/displays
+      #   pathType: Prefix
+      # - path: /api/v1/client/responses
+      #   pathType: Exact
+      # - path: /favicon.ico
+      #   pathType: Exact
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# Persistence is required for storing user uploads
+# WARNING: you MUST use a ReadWriteMany volume (such as NFS/EFS) if you intend to run more than one replica.
+# NOTE: you may be able to disable persistence here if you configure S3 above.
+persistence:
+  enabled: true
+  storageClassName: ""
+  annotations: {}
+  size: 10Gi
+  accessModes:
+    - ReadWriteOnce
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

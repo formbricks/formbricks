@@ -1,0 +1,25 @@
+{{- if eq .Chart.AppVersion "2.0.3" }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: formbricks-data-migrations-v2-0
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    spec:
+      containers:
+      - name: formbricks-data-migrations-v2-0
+        image: ghcr.io/formbricks/data-migrations:v2.0.3
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.formbricks.databaseUrl.existingSecret.name }}
+              key: {{ .Values.formbricks.databaseUrl.existingSecret.key }}
+        - name: UPGRADE_TO_VERSION
+          value: "v2.0"
+      restartPolicy: Never
+  backoffLimit: 2
+{{- end }}

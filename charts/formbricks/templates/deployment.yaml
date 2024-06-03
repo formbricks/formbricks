@@ -1,0 +1,378 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "formbricks.fullname" . }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "formbricks.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "formbricks.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "formbricks.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          env:
+            - name: WEBAPP_URL
+              value: "{{ .Values.formbricks.webappUrl }}"
+            - name: NEXTAUTH_URL
+              value: "{{ .Values.formbricks.nextauthUrl }}"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.databaseUrl.existingSecret.name }}
+                  key: {{ .Values.formbricks.databaseUrl.existingSecret.key }}
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.nextauth.existingSecret.name }}
+                  key: {{ .Values.formbricks.nextauth.existingSecret.key }}
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.encryptionKey.existingSecret.name }}
+                  key: {{ .Values.formbricks.encryptionKey.existingSecret.key }}
+            # NOTE: all settings below are optional
+            {{- if and
+              .Values.formbricks.formbricksEncryptionKey
+              .Values.formbricks.formbricksEncryptionKey.existingSecret
+            }}
+            - name: FORMBRICKS_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.formbricksEncryptionKey.existingSecret.name }}
+                  key: {{ .Values.formbricks.formbricksEncryptionKey.existingSecret.key }}
+            {{- end }}
+            {{- if .Values.formbricks.privacyUrl }}
+            - name: PRIVACY_URL
+              value: "{{ .Values.formbricks.privacyUrl }}"
+            {{- end }}
+            {{- if .Values.formbricks.termsUrl }}
+            - name: TERMS_URL
+              value: "{{ .Values.formbricks.termsUrl }}"
+            {{- end }}
+            {{- if .Values.formbricks.imprintUrl }}
+            - name: IMPRINT_URL
+              value: "{{ .Values.formbricks.imprintUrl }}"
+            {{- end }}
+            {{- if .Values.formbricks.enterpriseLicenseKey }}
+            - name: ENTERPRISE_LICENSE_KEY
+              value: "{{ .Values.formbricks.enterpriseLicenseKey }}"
+            {{- end }}
+            - name: SIGNUP_DISABLED
+              value: "{{ .Values.formbricks.signupDisabled }}"
+            - name: PASSWORD_RESET_DISABLED
+              value: "{{ .Values.formbricks.passwordResetDisabled }}"
+            - name: EMAIL_VERIFICATION_DISABLED
+              value: "{{ .Values.formbricks.emailVerificationDisabled }}"
+            - name: INVITE_DISABLED
+              value: "{{ .Values.formbricks.inviteDisabled }}"
+            - name: ONBOARDING_DISABLED
+              value: "{{ .Values.formbricks.onboardingDisabled }}"
+            - name: RATE_LIMITING_DISABLED
+              value: "{{ .Values.formbricks.rateLimitingDisabled }}"
+            - name: EMAIL_AUTH_DISABLED
+              value: "{{ .Values.formbricks.emailAuthDisabled }}"
+            {{- if and .Values.formbricks.mail .Values.formbricks.mail.mailFrom }}
+            - name: MAIL_FROM
+              value: "{{ .Values.formbricks.mail.mailFrom }}"
+            {{- end }}
+            {{- if and .Values.formbricks.mail .Values.formbricks.mail.smtpHost }}
+            - name: SMTP_HOST
+              value: "{{ .Values.formbricks.mail.smtpHost }}"
+            {{- end }}
+            {{- if and .Values.formbricks.mail .Values.formbricks.mail.smtpPort }}
+            - name: SMTP_PORT
+              value: "{{ .Values.formbricks.mail.smtpPort }}"
+            {{- end }}
+            {{- if and .Values.formbricks.mail .Values.formbricks.mail.smtpUser }}
+            - name: SMTP_USER
+              value: "{{ .Values.formbricks.mail.smtpUser }}"
+            {{- end }}
+            {{- if and .Values.formbricks.mail .Values.formbricks.mail.existingSecret }}
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.mail.existingSecret.name }}
+                  key: {{ .Values.formbricks.mail.existingSecret.key }}
+            {{- end }}
+            {{- if and .Values.formbricks.mail .Values.formbricks.mail.smtpSecureEnabled }}
+            - name: SMTP_SECURE_ENABLED
+              value: "{{ .Values.formbricks.mail.smtpSecureEnabled }}"
+            {{- end }}
+            {{- if and .Values.formbricks.github .Values.formbricks.github.existingSecret }}
+            - name: GITHUB_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.github.existingSecret.name }}
+                  key: {{ .Values.formbricks.github.existingSecret.githubId }}
+            - name: GITHUB_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.github.existingSecret.name }}
+                  key: {{ .Values.formbricks.github.existingSecret.githubSecret }}
+            {{- end }}
+            {{- if and .Values.formbricks.google .Values.formbricks.google.existingSecret }}
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.google.existingSecret.name }}
+                  key: {{ .Values.formbricks.google.existingSecret.clientId }}
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.google.existingSecret.name }}
+                  key: {{ .Values.formbricks.google.existingSecret.clientSecret }}
+            {{- end }}
+            {{- if and .Values.formbricks.googleSheets .Values.formbricks.googleSheets.existingSecret }}
+            - name: GOOGLE_SHEETS_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.googleSheets.existingSecret.name }}
+                  key: {{ .Values.formbricks.googleSheets.existingSecret.clientId }}
+            - name: GOOGLE_SHEETS_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.googleSheets.existingSecret.name }}
+                  key: {{ .Values.formbricks.googleSheets.existingSecret.clientSecret }}
+            {{- end }}
+            {{- if and .Values.formbricks.googleSheets .Values.formbricks.googleSheets.redirectUrl }}
+            - name: GOOGLE_SHEETS_REDIRECT_URL
+              value: "{{ .Values.formbricks.googleSheets.redirectUrl }}"
+            {{- end }}
+            {{- if and .Values.formbricks.azureAd .Values.formbricks.azureAd.existingSecret }}
+            - name: AZUREAD_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.azureAd.existingSecret.name }}
+                  key: {{ .Values.formbricks.azureAd.existingSecret.clientId }}
+            - name: AZUREAD_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.azureAd.existingSecret.name }}
+                  key: {{ .Values.formbricks.azureAd.existingSecret.clientSecret }}
+            - name: AZUREAD_TENANT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.azureAd.existingSecret.name }}
+                  key: {{ .Values.formbricks.azureAd.existingSecret.tenantId }}
+            {{- end }}
+            {{- if and .Values.formbricks.oidc .Values.formbricks.oidc.existingSecret }}
+            - name: OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.oidc.existingSecret.name }}
+                  key: {{ .Values.formbricks.oidc.existingSecret.clientId }}
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.oidc.existingSecret.name }}
+                  key: {{ .Values.formbricks.oidc.existingSecret.clientSecret }}
+            - name: OIDC_DISPLAY_NAME
+              value: "{{ .Values.formbricks.oidc.displayName }}"
+            - name: OIDC_ISSUER
+              value: "{{ .Values.formbricks.oidc.issuer }}"
+            - name: OIDC_SIGNING_ALGORITHM
+              value: "{{ .Values.formbricks.oidc.signingAlgorithm }}"
+            {{- end }}
+            {{- if and .Values.formbricks.notion .Values.formbricks.notion.existingSecret }}
+            - name: NOTION_OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.notion.existingSecret.name }}
+                  key: {{ .Values.formbricks.notion.existingSecret.clientId }}
+            - name: NOTION_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.notion.existingSecret.name }}
+                  key: {{ .Values.formbricks.notion.existingSecret.clientSecret }}
+            {{- end }}
+            {{- if and .Values.formbricks.airtable .Values.formbricks.airtable.clientId }}
+            - name: AIRTABLE_CLIENT_ID
+              value: "{{ .Values.formbricks.airtable.clientId }}"
+            {{- end }}
+            {{- if and .Values.formbricks.cron .Values.formbricks.cron.existingSecret }}
+            - name: CRON_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.cron.existingSecret.name }}
+                  key: {{ .Values.formbricks.cron.existingSecret.key }}
+            {{- end }}
+            {{- if and .Values.formbricks.stripe .Values.formbricks.stripe.existingSecret }}
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.stripe.existingSecret.name }}
+                  key: {{ .Values.formbricks.stripe.existingSecret.secretKey }}
+            - name: STRIPE_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.stripe.existingSecret.name }}
+                  key: {{ .Values.formbricks.stripe.existingSecret.webhook }}
+            {{- end }}
+            - name: TELEMETRY_DISABLED
+              value: "{{ .Values.formbricks.telemetryDisabled }}"
+            - name: DEBUG
+              value: "{{ .Values.formbricks.debug }}"
+            {{- if and .Values.formbricks.defaultTeam .Values.formbricks.defaultTeam.id }}
+            - name: DEFAULT_TEAM_ID
+              value: "{{ .Values.formbricks.defaultTeam.id }}"
+            {{- end }}
+            {{- if and .Values.formbricks.defaultTeam .Values.formbricks.defaultTeam.role }}
+            - name: DEFAULT_TEAM_ROLE
+              value: "{{ .Values.formbricks.defaultTeam.role }}"
+            {{- end }}
+            {{- if .Values.formbricks.shortUrlBase }}
+            - name: SHORT_URL_BASE
+              value: "{{ .Values.formbricks.shortUrlBase }}"
+            {{- end }}
+            {{- if .Values.formbricks.defaultBrandColor }}
+            - name: DEFAULT_BRAND_COLOR
+              value: "{{ .Values.formbricks.defaultBrandColor }}"
+            {{- end }}
+            {{- if and 
+                .Values.formbricks.aws
+                .Values.formbricks.aws.existingSecret
+                .Values.formbricks.aws.existingSecret.name 
+                .Values.formbricks.aws.existingSecret.accessKey 
+                .Values.formbricks.aws.existingSecret.secretKey 
+            }}
+            - name: AWS_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.aws.existingSecret.name }}
+                  key: {{ .Values.formbricks.aws.existingSecret.accessKey }}
+            - name: AWS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.aws.existingSecret.name }}
+                  key: {{ .Values.formbricks.aws.existingSecret.secretKey }}
+            {{- end }}
+            {{- if and 
+                .Values.formbricks.aws
+                .Values.formbricks.aws.s3
+                .Values.formbricks.aws.s3.existingSecret
+                .Values.formbricks.aws.s3.existingSecret.name 
+                .Values.formbricks.aws.s3.existingSecret.accessKey 
+                .Values.formbricks.aws.s3.existingSecret.secretKey 
+            }}
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.aws.s3.existingSecret.name }}
+                  key: {{ .Values.formbricks.aws.s3.existingSecret.accessKey }}
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.aws.s3.existingSecret.name }}
+                  key: {{ .Values.formbricks.aws.s3.existingSecret.secretKey }}
+            {{- end }}
+            {{- if and .Values.formbricks.aws .Values.formbricks.aws.s3 .Values.formbricks.aws.s3.region }}
+            - name: S3_REGION 
+              value: "{{ .Values.formbricks.aws.s3.region }}"
+            {{- end }}
+            {{- if and .Values.formbricks.aws .Values.formbricks.aws.s3 .Values.formbricks.aws.s3.bucketName }}
+            - name: S3_BUCKET_NAME
+              value: "{{ .Values.formbricks.aws.s3.bucketName }}"
+            {{- end }}
+            {{- if and .Values.formbricks.aws .Values.formbricks.aws.s3 .Values.formbricks.aws.s3.endpointUrl }}
+            - name: S3_ENDPOINT_URL
+              value: "{{ .Values.formbricks.aws.s3.endpointUrl }}"
+            {{- end }}
+            {{- if .Values.formbricks.apiHost }}
+            - name: NEXT_PUBLIC_FORMBRICKS_API_HOST
+              value: "{{ .Values.formbricks.apiHost }}"
+            {{- end }}
+            {{- if .Values.formbricks.environmentId }}
+            - name: NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID
+              value: "{{ .Values.formbricks.environmentId }}"
+            {{- end }}
+            {{- if .Values.formbricks.onboardingSurveyId }}
+            - name: NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID
+              value: "{{ .Values.formbricks.onboardingSurveyId }}"
+            {{- end }}
+            {{- if and .Values.formbricks.posthog .Values.formbricks.posthog.apiHost }}
+            - name: NEXT_PUBLIC_POSTHOG_API_HOST
+              value: "{{ .Values.formbricks.posthog.apiHost }}"
+            {{- end }}
+            {{- if and .Values.formbricks.posthog .Values.formbricks.posthog.apiKey }}
+            - name: NEXT_PUBLIC_POSTHOG_API_KEY
+              value: "{{ .Values.formbricks.posthog.apiKey }}"
+            {{- end }}
+            {{- if and .Values.formbricks.customerIo .Values.formbricks.customerIo.existingSecret }}
+            - name: CUSTOMER_IO_SITE_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.customerIo.existingSecret.name }}
+                  key: {{ .Values.formbricks.customerIo.existingSecret.siteId }}
+            - name: CUSTOMER_IO_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.customerIo.existingSecret.name }}
+                  key: {{ .Values.formbricks.customerIo.existingSecret.apiKey }}
+            {{- end }}
+            {{- if .Values.formbricks.sentryDsn }}
+            - name: NEXT_PUBLIC_SENTRY_DSN
+              value: "{{ .Values.formbricks.sentryDsn }}"
+            {{- end }}
+            - name: IS_FORMBRICKS_CLOUD
+              value: "0"
+
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - mountPath: /apps/web/uploads
+              name: formbricks-uploads
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        {{- if .Values.persistence.enabled }}
+        - name: formbricks-uploads
+          persistentVolumeClaim:
+            claimName: {{ include "formbricks.fullname" . }}-pvc
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
