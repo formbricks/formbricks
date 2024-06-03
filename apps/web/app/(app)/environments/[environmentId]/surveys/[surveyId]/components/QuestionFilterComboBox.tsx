@@ -23,13 +23,7 @@ type QuestionFilterComboBoxProps = {
   filterComboBoxValue: string | string[] | undefined;
   onChangeFilterValue: (o: string) => void;
   onChangeFilterComboBoxValue: (o: string | string[]) => void;
-  type:
-    | OptionsType.OTHERS
-    | TSurveyQuestionType
-    | OptionsType.ATTRIBUTES
-    | OptionsType.TAGS
-    | OptionsType.META
-    | undefined;
+  type?: TSurveyQuestionType | Omit<OptionsType, OptionsType.QUESTIONS>;
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
 };

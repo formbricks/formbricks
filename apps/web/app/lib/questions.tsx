@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import {
-  ArrowUpFromLine,
+  ArrowUpFromLineIcon,
   CalendarDaysIcon,
   CheckIcon,
   Grid3X3Icon,
@@ -28,12 +28,13 @@ import {
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
+  TSurveyQuestionType,
   TSurveyRatingQuestion,
 } from "@formbricks/types/surveys";
 
 import { replaceQuestionPresetPlaceholders } from "./templates";
 
-export type TSurveyQuestionType = {
+export type TQuestion = {
   id: string;
   label: string;
   description: string;
@@ -41,7 +42,7 @@ export type TSurveyQuestionType = {
   preset: any;
 };
 
-export const questionTypes: TSurveyQuestionType[] = [
+export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.OpenText,
     label: "Free text",
@@ -172,7 +173,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     id: QuestionId.FileUpload,
     label: "File Upload",
     description: "Allow respondents to upload a file",
-    icon: ArrowUpFromLine,
+    icon: ArrowUpFromLineIcon,
     preset: {
       headline: { default: "File Upload" },
       allowMultipleFiles: false,
@@ -216,6 +217,22 @@ export const questionTypes: TSurveyQuestionType[] = [
     } as Partial<TSurveyAddressQuestion>,
   },
 ];
+
+export const QUESTIONS_ICON_MAP = questionTypes.reduce(
+  (prev, curr) => ({
+    ...prev,
+    [curr.id]: <curr.icon className="h-5 w-5" />,
+  }),
+  {}
+);
+
+export const QUESTIONS_NAME_MAP = questionTypes.reduce(
+  (prev, curr) => ({
+    ...prev,
+    [curr.id]: curr.label,
+  }),
+  {}
+) as Record<TSurveyQuestionType, string>;
 
 export const universalQuestionPresets = {
   required: true,
