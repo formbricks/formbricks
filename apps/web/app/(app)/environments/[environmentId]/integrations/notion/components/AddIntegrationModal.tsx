@@ -263,11 +263,14 @@ export const AddIntegrationModal = ({
               </>
             );
           case ERRORS.MAPPING:
+            const question = questionTypes.find((qt) => qt.id === ques.type);
+            if (!question) return null;
             return (
               <>
-                - <i>&quot;{ques.name}&quot;</i> of type{" "}
-                <b>{questionTypes.find((qt) => qt.id === ques.type)?.label}</b> can&apos;t be mapped to the
-                column <i>&quot;{col.name}&quot;</i> of type <b>{col.type}</b>
+                - <i>&quot;{ques.name}&quot;</i> of type <b>{question.label}</b> can&apos;t be mapped to the
+                column <i>&quot;{col.name}&quot;</i> of type <b>{col.type}</b>. Instead use column of type{" "}
+                {""}
+                <b>{TYPE_MAPPING[question.id].join(" ,")}.</b>
               </>
             );
           default:
