@@ -28,6 +28,7 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
+      {{- include "containers.cloudsqlproxy" . | nindent 8 }}
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -364,6 +365,7 @@ spec:
           persistentVolumeClaim:
             claimName: {{ include "formbricks.fullname" . }}-pvc
         {{- end }}
+        {{- include "volumes" . | nindent 8 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

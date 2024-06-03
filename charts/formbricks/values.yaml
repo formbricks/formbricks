@@ -2,6 +2,11 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+cloudsql:
+  enable: false
+  instances: 'common-project-bd8c:europe-west8:postgres-production=tcp:5432'
+  credentials: 'pippolo'
+
 # see: https://formbricks.com/docs/self-hosting/docker#important-run-time-variables
 formbricks: 
   webappUrl: http://localhost:3000                                # REQUIRED: Base URL of the site.
