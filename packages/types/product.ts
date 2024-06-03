@@ -16,12 +16,14 @@ export const ZLanguage = z.object({
   updatedAt: z.date(),
   code: z.string(),
   alias: z.string().nullable(),
+  rtl: z.boolean().default(false).optional(),
 });
 export type TLanguage = z.infer<typeof ZLanguage>;
 
 export const ZLanguageInput = z.object({
   code: z.string(),
   alias: z.string().nullable(),
+  rtl: z.boolean().default(false).optional(),
 });
 export type TLanguageInput = z.infer<typeof ZLanguageInput>;
 

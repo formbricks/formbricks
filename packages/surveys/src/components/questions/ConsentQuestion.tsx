@@ -24,6 +24,7 @@ interface ConsentQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
   currentQuestionId: string;
+  isRtl: boolean;
 }
 
 export const ConsentQuestion = ({
@@ -38,6 +39,7 @@ export const ConsentQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
+  isRtl,
 }: ConsentQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -60,13 +62,16 @@ export const ConsentQuestion = ({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
+            isRtl={isRtl}
           />
           <HtmlBody
             htmlString={getLocalizedValue(question.html, languageCode) || ""}
             questionId={question.id}
+            isRtl={isRtl}
           />
           <div className="bg-survey-bg sticky -bottom-2 z-10 w-full px-1 py-1">
             <label
+              dir={isRtl ? "rtl" : "ltr"}
               tabIndex={1}
               id={`${question.id}-label`}
               onKeyDown={(e) => {
@@ -95,7 +100,7 @@ export const ConsentQuestion = ({
                 aria-labelledby={`${question.id}-label`}
                 required={question.required}
               />
-              <span id={`${question.id}-label`} className="ml-3 font-medium">
+              <span id={`${question.id}-label`} className="ml-3 mr-3 font-medium" dir={isRtl ? "rtl" : "ltr"}>
                 {getLocalizedValue(question.label, languageCode)}
               </span>
             </label>
@@ -114,6 +119,7 @@ export const ConsentQuestion = ({
               onSubmit({ [question.id]: value }, updatedTtcObj);
               onBack();
             }}
+            isRtl={isRtl}
           />
         )}
         <div />
@@ -121,6 +127,7 @@ export const ConsentQuestion = ({
           tabIndex={2}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
+          isRtl={isRtl}
         />
       </div>
     </form>

@@ -38,6 +38,7 @@ interface RatingQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
   currentQuestionId: string;
+  isRtl: boolean;
 }
 
 export const RatingQuestion = ({
@@ -52,6 +53,7 @@ export const RatingQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
+  isRtl,
 }: RatingQuestionProps) => {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
@@ -107,10 +109,12 @@ export const RatingQuestion = ({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
+            isRtl={isRtl}
           />
           <Subheader
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
+            isRtl={isRtl}
           />
           <div className="mb-4 mt-6 flex items-center justify-center">
             <fieldset className="w-full">
@@ -208,8 +212,12 @@ export const RatingQuestion = ({
                 ))}
               </div>
               <div className="text-subheading mt-4 flex justify-between px-1.5 text-xs leading-6">
-                <p className="w-1/2 text-left">{getLocalizedValue(question.lowerLabel, languageCode)}</p>
-                <p className="w-1/2 text-right">{getLocalizedValue(question.upperLabel, languageCode)}</p>
+                <p className="w-1/2 text-left" dir={isRtl ? "rtl" : "ltr"}>
+                  {getLocalizedValue(question.lowerLabel, languageCode)}
+                </p>
+                <p className="w-1/2 text-right" dir={isRtl ? "rtl" : "ltr"}>
+                  {getLocalizedValue(question.upperLabel, languageCode)}
+                </p>
               </div>
             </fieldset>
           </div>
@@ -225,6 +233,7 @@ export const RatingQuestion = ({
               setTtc(updatedTtcObj);
               onBack();
             }}
+            isRtl={isRtl}
           />
         )}
         <div></div>
@@ -233,6 +242,7 @@ export const RatingQuestion = ({
             tabIndex={question.range + 1}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
+            isRtl={isRtl}
           />
         )}
       </div>

@@ -7,6 +7,7 @@ interface SubmitButtonProps {
   focus?: boolean;
   tabIndex?: number;
   type?: "submit" | "button";
+  isRtl?: boolean;
 }
 
 export const SubmitButton = ({
@@ -16,6 +17,7 @@ export const SubmitButton = ({
   tabIndex = 1,
   focus = false,
   type = "submit",
+  isRtl = false,
 }: SubmitButtonProps) => {
   const buttonRef = useCallback(
     (currentButton: HTMLButtonElement | null) => {
@@ -30,6 +32,7 @@ export const SubmitButton = ({
 
   return (
     <button
+      dir={isRtl ? "rtl" : "ltr"}
       ref={buttonRef}
       type={type}
       tabIndex={tabIndex}

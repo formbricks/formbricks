@@ -33,6 +33,7 @@ interface QuestionConditionalProps {
   surveyId: string;
   isInIframe: boolean;
   currentQuestionId: string;
+  isRtl?: boolean;
 }
 
 export const QuestionConditional = ({
@@ -52,6 +53,7 @@ export const QuestionConditional = ({
   onFileUpload,
   isInIframe,
   currentQuestionId,
+  isRtl = false,
 }: QuestionConditionalProps) => {
   if (!value && prefilledQuestionValue) {
     if (skipPrefilled) {
@@ -76,6 +78,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
+      isRtl={isRtl}
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
@@ -92,6 +95,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
+      isRtl={isRtl}
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
@@ -108,6 +112,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
+      isRtl={isRtl}
     />
   ) : question.type === TSurveyQuestionType.NPS ? (
     <NPSQuestion
@@ -124,6 +129,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
+      isRtl={isRtl}
     />
   ) : question.type === TSurveyQuestionType.CTA ? (
     <CTAQuestion
@@ -140,6 +146,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
+      isRtl={isRtl}
     />
   ) : question.type === TSurveyQuestionType.Rating ? (
     <RatingQuestion
@@ -156,6 +163,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
+      isRtl={isRtl}
     />
   ) : question.type === TSurveyQuestionType.Consent ? (
     <ConsentQuestion
@@ -172,6 +180,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
+      isRtl={isRtl}
     />
   ) : question.type === TSurveyQuestionType.Date ? (
     <DateQuestion
@@ -188,6 +197,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
+      isRtl={isRtl}
     />
   ) : question.type === TSurveyQuestionType.PictureSelection ? (
     <PictureSelectionQuestion
@@ -204,6 +214,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
+      isRtl={isRtl}
     />
   ) : question.type === TSurveyQuestionType.FileUpload ? (
     <FileUploadQuestion
@@ -222,6 +233,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
+      isRtl={isRtl}
     />
   ) : question.type === TSurveyQuestionType.Cal ? (
     <CalQuestion
@@ -238,6 +250,7 @@ export const QuestionConditional = ({
       isInIframe={isInIframe}
       setTtc={setTtc}
       currentQuestionId={currentQuestionId}
+      isRtl={isRtl}
     />
   ) : question.type === TSurveyQuestionType.Matrix ? (
     <MatrixQuestion
@@ -252,6 +265,7 @@ export const QuestionConditional = ({
       ttc={ttc}
       setTtc={setTtc}
       currentQuestionId={currentQuestionId}
+      isRtl={isRtl}
     />
   ) : question.type === TSurveyQuestionType.Address ? (
     <AddressQuestion
@@ -267,6 +281,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
+      isRtl={isRtl}
     />
   ) : null;
 };

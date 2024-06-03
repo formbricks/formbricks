@@ -1,6 +1,7 @@
 export interface TIso639Language {
   alpha2: string;
   english: string;
+  rtl?: boolean;
 }
 
 export const iso639Languages = [
@@ -35,6 +36,7 @@ export const iso639Languages = [
   {
     alpha2: "ar",
     english: "Arabic",
+    rtl: true,
   },
   {
     alpha2: "as",
@@ -51,6 +53,7 @@ export const iso639Languages = [
   {
     alpha2: "az",
     english: "Azerbaijani",
+    rtl: true,
   },
   {
     alpha2: "ba",
@@ -139,6 +142,7 @@ export const iso639Languages = [
   {
     alpha2: "dv",
     english: "Divehi; Dhivehi; Maldivian",
+    rtl: true,
   },
   {
     alpha2: "dz",
@@ -175,6 +179,7 @@ export const iso639Languages = [
   {
     alpha2: "fa",
     english: "Persian",
+    rtl: true,
   },
   {
     alpha2: "ff",
@@ -231,6 +236,7 @@ export const iso639Languages = [
   {
     alpha2: "he",
     english: "Hebrew",
+    rtl: true,
   },
   {
     alpha2: "hi",
@@ -355,6 +361,7 @@ export const iso639Languages = [
   {
     alpha2: "ku",
     english: "Kurdish",
+    rtl: true,
   },
   {
     alpha2: "kv",
@@ -691,6 +698,7 @@ export const iso639Languages = [
   {
     alpha2: "ur",
     english: "Urdu",
+    rtl: true,
   },
   {
     alpha2: "uz",

@@ -30,6 +30,7 @@ interface DateQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
   currentQuestionId: string;
+  isRtl: boolean;
 }
 
 const CalendarIcon = () => (
@@ -89,6 +90,7 @@ export const DateQuestion = ({
   setTtc,
   ttc,
   currentQuestionId,
+  isRtl,
 }: DateQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
@@ -149,10 +151,12 @@ export const DateQuestion = ({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
+            isRtl={isRtl}
           />
           <Subheader
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
+            isRtl={isRtl}
           />
           <div className={"text-red-600"}>
             <span>{errorMessage}</span>
@@ -267,6 +271,7 @@ export const DateQuestion = ({
                 setTtc(updatedTtcObj);
                 onBack();
               }}
+              isRtl={isRtl}
             />
           )}
         </div>
@@ -275,6 +280,7 @@ export const DateQuestion = ({
           isLastQuestion={isLastQuestion}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           tabIndex={0}
+          isRtl={isRtl}
         />
       </div>
     </form>

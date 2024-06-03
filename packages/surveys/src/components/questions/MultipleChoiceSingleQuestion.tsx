@@ -25,6 +25,7 @@ interface MultipleChoiceSingleProps {
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
   currentQuestionId: string;
+  isRtl: boolean;
 }
 
 export const MultipleChoiceSingleQuestion = ({
@@ -40,6 +41,7 @@ export const MultipleChoiceSingleQuestion = ({
   setTtc,
   isInIframe,
   currentQuestionId,
+  isRtl,
 }: MultipleChoiceSingleProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherSelected, setOtherSelected] = useState(false);
@@ -115,10 +117,12 @@ export const MultipleChoiceSingleQuestion = ({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
+            isRtl={isRtl}
           />
           <Subheader
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
+            isRtl={isRtl}
           />
           <div className="mt-4">
             <fieldset>
@@ -129,6 +133,7 @@ export const MultipleChoiceSingleQuestion = ({
                   if (!choice || choice.id === "other") return;
                   return (
                     <label
+                      dir={isRtl ? "rtl" : "ltr"}
                       tabIndex={idx + 1}
                       key={choice.id}
                       className={cn(
@@ -153,6 +158,7 @@ export const MultipleChoiceSingleQuestion = ({
                           id={choice.id}
                           name={question.id}
                           value={getLocalizedValue(choice.label, languageCode)}
+                          dir={isRtl ? "rtl" : "ltr"}
                           className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
                           aria-labelledby={`${choice.id}-label`}
                           onChange={() => {
@@ -162,7 +168,7 @@ export const MultipleChoiceSingleQuestion = ({
                           checked={value === getLocalizedValue(choice.label, languageCode)}
                           required={question.required && idx === 0}
                         />
-                        <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                        <span id={`${choice.id}-label`} className="ml-3 mr-3 font-medium">
                           {getLocalizedValue(choice.label, languageCode)}
                         </span>
                       </span>
@@ -171,6 +177,7 @@ export const MultipleChoiceSingleQuestion = ({
                 })}
                 {otherOption && (
                   <label
+                    dir={isRtl ? "rtl" : "ltr"}
                     tabIndex={questionChoices.length + 1}
                     className={cn(
                       value === getLocalizedValue(otherOption.label, languageCode)
@@ -201,7 +208,10 @@ export const MultipleChoiceSingleQuestion = ({
                         }}
                         checked={otherSelected}
                       />
-                      <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
+                      <span
+                        id={`${otherOption.id}-label`}
+                        className="ml-3 mr-3 font-medium"
+                        dir={isRtl ? "rtl" : "ltr"}>
                         {getLocalizedValue(otherOption.label, languageCode)}
                       </span>
                     </span>
@@ -210,6 +220,7 @@ export const MultipleChoiceSingleQuestion = ({
                         ref={otherSpecify}
                         tabIndex={questionChoices.length + 1}
                         id={`${otherOption.id}-label`}
+                        dir={isRtl ? "rtl" : "ltr"}
                         name={question.id}
                         value={value}
                         onChange={(e) => {
@@ -240,6 +251,7 @@ export const MultipleChoiceSingleQuestion = ({
               setTtc(updatedTtcObj);
               onBack();
             }}
+            isRtl={isRtl}
           />
         )}
         <div></div>
@@ -247,6 +259,7 @@ export const MultipleChoiceSingleQuestion = ({
           tabIndex={questionChoices.length + 2}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
+          isRtl={isRtl}
         />
       </div>
     </form>

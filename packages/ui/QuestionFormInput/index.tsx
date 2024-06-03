@@ -390,6 +390,10 @@ export const QuestionFormInput = ({
     else return question.videoUrl;
   };
 
+  const selectedLanguage = localSurvey.languages?.find(
+    (language) => language.language.code === selectedLanguageCode
+  )?.language;
+
   return (
     <div className="w-full">
       <div className="w-full">
@@ -443,6 +447,7 @@ export const QuestionFormInput = ({
               )}
               <Input
                 key={`${questionId}-${id}-${selectedLanguageCode}`}
+                dir={selectedLanguage?.rtl ? "rtl" : "ltr"}
                 className={`absolute top-0 text-black caret-black ${localSurvey.languages?.length > 1 ? "pr-24" : ""} ${className}`}
                 placeholder={placeholder ? placeholder : getPlaceHolderById(id)}
                 id={id}

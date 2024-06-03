@@ -33,7 +33,7 @@ export const LanguageSelect = ({ language, onLanguageChange, disabled }: Languag
 
   const handleOptionSelect = (option: TIso639Language) => {
     setSelectedOption(option);
-    onLanguageChange({ ...language, code: option?.alpha2 || "" });
+    onLanguageChange({ ...language, code: option?.alpha2 || "", rtl: option?.rtl || false });
     setIsOpen(false);
   };
 

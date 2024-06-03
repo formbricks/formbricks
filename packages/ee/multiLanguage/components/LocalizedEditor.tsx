@@ -56,6 +56,12 @@ export const LocalizedEditor = ({
     [id, isInvalid, surveyLanguageCodes, value, selectedLanguageCode]
   );
 
+  const selectedLanguage = localSurvey.languages?.find(
+    (l) => l.language.code === selectedLanguageCode
+  )?.language;
+
+  const isRtl = selectedLanguage?.rtl ?? false;
+
   return (
     <div className="relative w-full">
       <Editor
@@ -78,6 +84,7 @@ export const LocalizedEditor = ({
         disableLists
         firstRender={firstRender}
         setFirstRender={setFirstRender}
+        isRtl={isRtl}
       />
       {localSurvey.languages?.length > 1 && (
         <div>

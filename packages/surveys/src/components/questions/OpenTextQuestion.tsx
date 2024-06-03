@@ -27,6 +27,7 @@ interface OpenTextQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
   currentQuestionId: string;
+  isRtl: boolean;
 }
 
 export const OpenTextQuestion = ({
@@ -42,6 +43,7 @@ export const OpenTextQuestion = ({
   setTtc,
   isInIframe,
   currentQuestionId,
+  isRtl = false,
 }: OpenTextQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -87,10 +89,12 @@ export const OpenTextQuestion = ({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
+            isRtl={isRtl}
           />
           <Subheader
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
+            isRtl={isRtl}
           />
           <div className="mt-4">
             {question.longAnswer === false ? (
@@ -100,6 +104,7 @@ export const OpenTextQuestion = ({
                 name={question.id}
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
+                dir={isRtl ? "rtl" : "ltr"}
                 step={"any"}
                 required={question.required}
                 value={value ? (value as string) : ""}
@@ -119,6 +124,7 @@ export const OpenTextQuestion = ({
                 aria-label="textarea"
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
+                dir={isRtl ? "rtl" : "ltr"}
                 required={question.required}
                 value={value as string}
                 type={question.inputType}
@@ -144,6 +150,7 @@ export const OpenTextQuestion = ({
               setTtc(updatedttc);
               onBack();
             }}
+            isRtl={isRtl}
           />
         )}
         <div></div>
@@ -151,6 +158,7 @@ export const OpenTextQuestion = ({
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
+          isRtl={isRtl}
         />
       </div>
     </form>

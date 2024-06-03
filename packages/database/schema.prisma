@@ -628,6 +628,7 @@ model Language {
   updatedAt       DateTime         @updatedAt @map(name: "updated_at")
   code            String
   alias           String?
+  rtl             Boolean          @default(false)
   product         Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId       String
   surveyLanguages SurveyLanguage[]

@@ -4,11 +4,13 @@ interface BackButtonProps {
   onClick: () => void;
   backButtonLabel?: string;
   tabIndex?: number;
+  isRtl?: boolean;
 }
 
-export const BackButton = ({ onClick, backButtonLabel, tabIndex = 2 }: BackButtonProps) => {
+export const BackButton = ({ onClick, backButtonLabel, tabIndex = 2, isRtl = false }: BackButtonProps) => {
   return (
     <button
+      dir={isRtl ? "rtl" : "ltr"}
       tabIndex={tabIndex}
       type={"button"}
       className={cn(

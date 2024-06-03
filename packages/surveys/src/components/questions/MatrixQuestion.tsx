@@ -24,6 +24,7 @@ interface MatrixQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   currentQuestionId: string;
+  isRtl: boolean;
 }
 
 export const MatrixQuestion = ({
@@ -38,6 +39,7 @@ export const MatrixQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
+  isRtl,
 }: MatrixQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -85,11 +87,14 @@ export const MatrixQuestion = ({
   const columnsHeaders = useMemo(
     () =>
       question.columns.map((column, index) => (
-        <th key={index} className="text-heading max-w-40 break-words px-4 py-2 font-normal">
+        <th
+          key={index}
+          className="text-heading max-w-40 break-words px-4 py-2 font-normal"
+          dir={isRtl ? "rtl" : "ltr"}>
           {getLocalizedValue(column, languageCode)}
         </th>
       )),
-    [question.columns, languageCode]
+    [question.columns, languageCode, isRtl]
   );
 
   return (
@@ -101,10 +106,12 @@ export const MatrixQuestion = ({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
+            isRtl={isRtl}
           />
           <Subheader
             subheader={getLocalizedValue(question.subheader, languageCode)}
             questionId={question.id}
+            isRtl={isRtl}
           />
           <div className="overflow-x-auto py-4">
             <table className="no-scrollbar min-w-full table-auto border-collapse text-sm">
@@ -118,7 +125,9 @@ export const MatrixQuestion = ({
                 {question.rows.map((row, rowIndex) => (
                   // Table rows
                   <tr className={`${rowIndex % 2 === 0 ? "bg-input-bg" : ""}`}>
-                    <td className="text-heading rounded-l-custom max-w-40 break-words px-4 py-2">
+                    <td
+                      className="text-heading rounded-l-custom max-w-40 break-words px-4 py-2"
+                      dir={isRtl ? "rtl" : "ltr"}>
                       {getLocalizedValue(row, languageCode)}
                     </td>
                     {question.columns.map((column, columnIndex) => (
@@ -140,10 +149,12 @@ export const MatrixQuestion = ({
                               getLocalizedValue(row, languageCode)
                             );
                           }
-                        }}>
+                        }}
+                        dir={isRtl ? "rtl" : "ltr"}>
                         <div className="flex items-center justify-center p-2">
                           {/* radio input  */}
                           <input
+                            dir={isRtl ? "rtl" : "ltr"}
                             type="radio"
                             tabIndex={-1}
                             id={`${row}-${column}`}
@@ -173,6 +184,7 @@ export const MatrixQuestion = ({
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={handleBackButtonClick}
             tabIndex={0}
+            isRtl={isRtl}
           />
         )}
         <div></div>
@@ -182,6 +194,7 @@ export const MatrixQuestion = ({
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
             tabIndex={0}
+            isRtl={isRtl}
           />
         )}
       </div>

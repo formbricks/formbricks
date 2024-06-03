@@ -29,6 +29,7 @@ interface FileUploadQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
   currentQuestionId: string;
+  isRtl: boolean;
 }
 
 export const FileUploadQuestion = ({
@@ -45,6 +46,7 @@ export const FileUploadQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
+  isRtl,
 }: FileUploadQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -79,10 +81,12 @@ export const FileUploadQuestion = ({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
+            isRtl={isRtl}
           />
           <Subheader
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
+            isRtl={isRtl}
           />
           <FileInput
             htmlFor={question.id}
@@ -111,12 +115,14 @@ export const FileUploadQuestion = ({
             onClick={() => {
               onBack();
             }}
+            isRtl={isRtl}
           />
         )}
         <div></div>
         <SubmitButton
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
+          isRtl={isRtl}
         />
       </div>
     </form>

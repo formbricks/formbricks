@@ -233,6 +233,9 @@ export const Survey = ({
     return undefined;
   };
 
+  const activeLanguage = survey.languages.find((lang) => lang.language.code === languageCode)?.language;
+  const isRtl = activeLanguage?.rtl ?? false;
+
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
     if (showError) {
       return (
@@ -254,6 +257,7 @@ export const Survey = ({
             responseCount={responseCount}
             isInIframe={isInIframe}
             replaceRecallInfo={replaceRecallInfo}
+            isRtl={isRtl}
           />
         );
       } else if (questionIdx === survey.questions.length) {
@@ -275,6 +279,7 @@ export const Survey = ({
             redirectUrl={survey.redirectUrl}
             isRedirectDisabled={isRedirectDisabled}
             isInIframe={isInIframe}
+            isRtl={isRtl}
           />
         );
       } else {
@@ -298,6 +303,7 @@ export const Survey = ({
               languageCode={languageCode}
               isInIframe={isInIframe}
               currentQuestionId={questionId}
+              isRtl={isRtl}
             />
           )
         );
