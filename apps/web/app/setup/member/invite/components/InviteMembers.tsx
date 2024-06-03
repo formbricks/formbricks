@@ -50,7 +50,7 @@ export const InviteMembers = () => {
 
   // Check if all input fields are empty
   const watchedFields = form.watch();
-  const allFieldsEmpty = Object.values(watchedFields).every((value) => value.trim() === "");
+  const allFieldsEmpty = Object.values(watchedFields).every((value) => value?.trim() === "");
 
   return (
     <FormProvider {...form}>
@@ -120,7 +120,7 @@ export const InviteMembers = () => {
               className="flex w-80 justify-center"
               type="submit"
               loading={isSubmitting}
-              disabled={isSubmitting || allFieldsEmpty}>
+              disabled={isSubmitting || isSkipping || allFieldsEmpty}>
               Continue
             </Button>
             <Button
