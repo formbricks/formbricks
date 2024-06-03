@@ -63,7 +63,7 @@ const Page = async ({ params }) => {
     <PageContentWrapper>
       {surveyCount > 0 ? (
         <>
-          <PageHeader pageTitle="Surveys" cta={CreateSurveyButton} />
+          <PageHeader pageTitle="Surveys" cta={isViewer ? <></> : CreateSurveyButton} />
           <SurveysList
             environment={environment}
             otherEnvironment={otherEnvironment}
