@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 cloudsql:
-  enable: false
+  enable: true
   instances: 'common-project-bd8c:europe-west8:postgres-production=tcp:5432'
   credentials: 'pippolo'
 
@@ -226,7 +226,7 @@ resources: {}
 # WARNING: you MUST use a ReadWriteMany volume (such as NFS/EFS) if you intend to run more than one replica.
 # NOTE: you may be able to disable persistence here if you configure S3 above.
 persistence:
-  enabled: true
+  enabled: false
   storageClassName: ""
   annotations: {}
   size: 10Gi
