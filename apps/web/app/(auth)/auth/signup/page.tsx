@@ -1,7 +1,6 @@
 import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
 import { Testimonial } from "@/app/(auth)/auth/components/Testimonial";
 import { SignupForm } from "@/app/(auth)/auth/signup/components/SignupForm";
-import Link from "next/link";
 
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import {

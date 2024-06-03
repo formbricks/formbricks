@@ -27,7 +27,7 @@ const Page = async () => {
 
   const userOrganizations = await getOrganizationsByUserId(session.user.id);
   if (!userOrganizations || userOrganizations.length === 0) {
-    return redirect("/setup/create-first-organization");
+    return redirect("/setup/organization/create");
   }
 
   if (!ONBOARDING_DISABLED && !session.user.onboardingCompleted) {

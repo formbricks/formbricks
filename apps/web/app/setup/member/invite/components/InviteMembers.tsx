@@ -1,6 +1,6 @@
 "use client";
 
-import { inviteOrganizationMemberAction } from "@/app/setup/invite-members/actions";
+import { inviteOrganizationMemberAction } from "@/app/setup/member/invite/actions";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";

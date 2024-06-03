@@ -1,6 +1,6 @@
 "use client";
 
-import { createOrganizationAction } from "@/app/setup/create-first-organization/actions";
+import { createOrganizationAction } from "@/app/setup/organization/create/actions";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -17,7 +17,7 @@ export const CreateFirstOrganization = () => {
     try {
       setIsCreating(true);
       await createOrganizationAction(organizationName);
-      router.push("/setup/invite-members");
+      router.push("/setup/member/invite");
     } catch (error) {
       setIsCreating(false);
       toast.error("Some error occurred while creating organization");

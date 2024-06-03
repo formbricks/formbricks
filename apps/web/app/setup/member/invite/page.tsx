@@ -1,4 +1,4 @@
-import { InviteMembers } from "@/app/setup/invite-members/components/InviteMembers";
+import { InviteMembers } from "@/app/setup/member/invite/components/InviteMembers";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
@@ -20,7 +20,7 @@ const Page = async () => {
 
   const organizations = await getOrganizationsByUserId(session.user.id);
   if (organizations.length === 0) {
-    redirect("/setup/create-first-organization");
+    redirect("/setup/organization/create");
   }
   return <InviteMembers />;
 };

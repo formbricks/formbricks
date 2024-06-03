@@ -1,4 +1,3 @@
-import Link from "next/link";
 import React from "react";
 
 import { Button } from "@formbricks/ui/Button";
@@ -13,9 +12,9 @@ export const FormbricksIntro = () => {
       <p>Survey customers, users or employees at any points with a perfectly timed and targeted survey.</p>
       <p>Keep full control over your data</p>
       <div>
-        <Link href="/setup/signup">
-          <Button variant="darkCTA">Get started</Button>
-        </Link>
+        <Button variant="darkCTA" href="/setup/signup">
+          Get started
+        </Button>
       </div>
       <p>Made with 🤍 in Kiel, Germany</p>
     </div>
