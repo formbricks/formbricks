@@ -26,7 +26,7 @@ export const setIsSurveyRunning = (value: boolean) => {
 };
 
 const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
-  const randomNum = Math.floor(Math.random() * 100) + 1;
+  const randomNum = Math.floor(Math.random() * 10000) + 1;
   return randomNum <= displayPercentage;
 };
 

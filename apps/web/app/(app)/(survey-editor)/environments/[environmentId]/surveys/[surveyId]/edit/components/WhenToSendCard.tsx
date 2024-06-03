@@ -101,17 +101,21 @@ export const WhenToSendCard = ({
   };
 
   const handleRandomizerInput = (e) => {
-    let value = parseFloat(e.target.value);
+    let value: number | null = null;
 
-    if (Number.isNaN(value)) {
-      value = 1;
+    if (e.target.value !== "") {
+      value = parseFloat(e.target.value);
+
+      if (Number.isNaN(value)) {
+        value = 1;
+      }
+
+      if (value < 0.01) value = 0.01;
+      if (value > 100) value = 100;
+
+      // Round value to two decimal places. eg: 10.555(and higher like 10.556) -> 10.56 and 10.554(and lower like 10.553) ->10.55
+      value = Math.round(value * 100) / 100;
     }
-
-    if (value < 0.01) value = 0.01;
-    if (value > 100) value = 100;
-
-    // Round value to two decimal places. eg: 10.555(and higher like 10.556) -> 10.56 and 10.554(and lower like 10.553) ->10.55
-    value = Math.round(value * 100) / 100;
 
     const updatedSurvey = { ...localSurvey, displayPercentage: value };
     setLocalSurvey(updatedSurvey);
@@ -315,7 +319,7 @@ export const WhenToSendCard = ({
                     step="0.01"
                     min="0.01"
                     max="100"
-                    value={localSurvey.displayPercentage ?? 50}
+                    value={localSurvey.displayPercentage ?? ""}
                     onChange={handleRandomizerInput}
                     className="mx-2 inline w-20 bg-white text-center text-sm"
                   />
