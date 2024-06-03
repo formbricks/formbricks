@@ -33,9 +33,7 @@ export const createShortUrlAction = async (url: string) => {
   return fullShortUrl;
 };
 
-export const createOrganizationAction = async (
-  organizationName: string
-): Promise<Organization | undefined> => {
+export const createOrganizationAction = async (organizationName: string): Promise<Organization> => {
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   if (!isMultiOrgEnabled)
     throw new OperationNotAllowedError(
