@@ -2,6 +2,7 @@ import { MainNavigation } from "@/app/(app)/environments/[environmentId]/compone
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import type { Session } from "next-auth";
 
+import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -20,10 +21,11 @@ interface EnvironmentLayoutProps {
 }
 
 export const EnvironmentLayout = async ({ environmentId, session, children }: EnvironmentLayoutProps) => {
-  const [environment, organizations, organization] = await Promise.all([
+  const [environment, organizations, organization, isMultiOrgEnabled] = await Promise.all([
     getEnvironment(environmentId),
     getOrganizationsByUserId(session.user.id),
     getOrganizationByEnvironmentId(environmentId),
+    getIsMultiOrgEnabled(),
   ]);
 
   if (!organization || !environment) {
@@ -52,6 +54,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           session={session}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
+          isMultiOrgEnabled={isMultiOrgEnabled}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
           <TopControlBar environment={environment} environments={environments} />

@@ -3,11 +3,17 @@ import { redirect } from "next/navigation";
 import { Toaster } from "react-hot-toast";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { getIsFreshInstance } from "@formbricks/lib/user/service";
 
 const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
   const session = await getServerSession(authOptions);
+  const isFreshInstance = await getIsFreshInstance();
   if (session) {
     redirect(`/`);
+  }
+
+  if (isFreshInstance) {
+    redirect("/setup/intro");
   }
   return (
     <>

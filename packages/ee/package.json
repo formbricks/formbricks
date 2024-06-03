@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@formbricks/lib": "workspace:*",
-    "stripe": "^15.8.0"
+    "stripe": "^15.8.0",
+    "zod": "^3.23.8"
   }
 }

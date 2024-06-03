@@ -14,7 +14,6 @@ const Page = async () => {
   const isFreshInstance = await getIsFreshInstance();
 
   if (!session) {
-    console.log(isFreshInstance);
     if (isFreshInstance) {
       redirect("/setup/intro");
     } else {

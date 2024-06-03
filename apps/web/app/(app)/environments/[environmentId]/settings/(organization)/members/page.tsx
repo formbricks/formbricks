@@ -63,7 +63,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   const userMemberships = await getMembershipsByUserId(session.user.id);
   const isMultiOrgEnabled = (await getIsMultiOrgEnabled()) === true ? true : false;
 
-  const isDeleteDisabled = !isOwner;
+  const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
   const currentUserRole = currentUserMembership?.role;
 
   const isLeaveOrganizationDisabled = userMemberships.length <= 1;
@@ -119,6 +119,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           organization={organization}
           isDeleteDisabled={isDeleteDisabled}
           isUserOwner={currentUserRole === "owner"}
+          isMultiOrgEnabled={isMultiOrgEnabled}
         />
       </SettingsCard>
       <SettingsId title="Organization" id={organization.id}></SettingsId>

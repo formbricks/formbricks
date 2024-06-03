@@ -15,7 +15,7 @@ const Page = async () => {
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    redirect("/setup/auth");
+    redirect("/setup/signup");
   }
 
   const organizations = await getOrganizationsByUserId(session.user.id);

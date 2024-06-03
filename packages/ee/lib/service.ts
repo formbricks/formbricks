@@ -6,16 +6,10 @@ import { hashString } from "@formbricks/lib/hashString";
 import { TOrganization } from "@formbricks/types/organizations";
 
 import { prisma } from "../../database/src";
+import { TEnterpriseLicenseDetails, TEnterpriseLicenseFeatures } from "./types";
 
 const hashedKey = ENTERPRISE_LICENSE_KEY ? hashString(ENTERPRISE_LICENSE_KEY) : undefined;
 const PREVIOUS_RESULTS_CACHE_TAG_KEY = `getPreviousResult-${hashedKey}` as const;
-
-interface TLicenseDetails {
-  status: "active" | "expired";
-  features: {
-    isMultiOrgEnabled: boolean;
-  };
-}
 
 // This function is used to get the previous result of the license check from the cache
 // This might seem confusing at first since we only return the default value from this function,
@@ -23,9 +17,7 @@ interface TLicenseDetails {
 const getPreviousResult = (): Promise<{
   active: boolean | null;
   lastChecked: Date;
-  features: {
-    isMultiOrgEnabled: boolean;
-  } | null;
+  features: TEnterpriseLicenseFeatures | null;
 }> =>
   cache(
     async () => ({
@@ -44,9 +36,7 @@ const getPreviousResult = (): Promise<{
 const setPreviousResult = async (previousResult: {
   active: boolean | null;
   lastChecked: Date;
-  features: {
-    isMultiOrgEnabled: boolean;
-  } | null;
+  features: TEnterpriseLicenseFeatures | null;
 }) => {
   revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
   const { lastChecked, active, features } = previousResult;
@@ -122,7 +112,7 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
   }
 };
 
-export const getLicenseFeatures = async (): Promise<{ isMultiOrgEnabled: boolean } | null> => {
+export const getLicenseFeatures = async (): Promise<TEnterpriseLicenseFeatures | null> => {
   const previousResult = await getPreviousResult();
   if (previousResult.features) {
     return previousResult.features;
@@ -135,7 +125,7 @@ export const getLicenseFeatures = async (): Promise<{ isMultiOrgEnabled: boolean
 };
 
 export const getLicenseDetails = async () => {
-  const licenseResult: TLicenseDetails | null = await cache(
+  const licenseResult: TEnterpriseLicenseDetails | null = await cache(
     async () => {
       try {
         const now = new Date();
@@ -159,7 +149,6 @@ export const getLicenseDetails = async () => {
           headers: { "Content-Type": "application/json" },
           method: "POST",
         });
-        console.log(res);
         if (res.ok) {
           const responseJson = await res.json();
           return { status: responseJson.data.status, features: responseJson.data.features };
@@ -208,6 +197,7 @@ export const getMultiLanguagePermission = async (organization: TOrganization): P
 };
 
 export const getIsMultiOrgEnabled = async (): Promise<boolean> => {
+  // if (process.env.NODE_ENV === "development") return true;
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
   return licenseFeatures.isMultiOrgEnabled;

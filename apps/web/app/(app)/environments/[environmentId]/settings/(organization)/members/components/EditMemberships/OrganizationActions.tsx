@@ -10,11 +10,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
+import { cn } from "@formbricks/lib/cn";
 import { TInvitee } from "@formbricks/types/invites";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Button } from "@formbricks/ui/Button";
 import { CreateOrganizationModal } from "@formbricks/ui/CreateOrganizationModal";
 import { CustomDialog } from "@formbricks/ui/CustomDialog";
+import { TooltipRenderer } from "@formbricks/ui/Tooltip";
 
 type OrganizationActionsProps = {
   role: string;
@@ -85,15 +87,23 @@ export const OrganizationActions = ({
             Leave organization
           </Button>
         )}
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={!isMultiOrgEnabled}
-          onClick={() => {
-            setCreateOrganizationModalOpen(true);
-          }}>
-          Create new organization
-        </Button>
+        <TooltipRenderer
+          shouldRender={!isMultiOrgEnabled}
+          tooltipContent="Updragde your enterprise license to create multiple organizations">
+          <div
+            className={cn(
+              "rounded-md bg-slate-200 px-3 py-2 text-sm font-medium leading-4",
+              isMultiOrgEnabled
+                ? "cursor-pointer bg-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-500 focus:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-1 dark:bg-slate-700  dark:text-slate-300 dark:hover:bg-slate-600"
+                : "cursor-not-allowed bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
+            )}
+            onClick={() => {
+              if (!isMultiOrgEnabled) return;
+              setCreateOrganizationModalOpen(true);
+            }}>
+            Create new organization
+          </div>
+        </TooltipRenderer>
         {!isInviteDisabled && isAdminOrOwner && (
           <Button
             size="sm"

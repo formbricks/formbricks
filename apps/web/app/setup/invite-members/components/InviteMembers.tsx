@@ -7,7 +7,6 @@ import { toast } from "react-hot-toast";
 
 import { isValidEmail } from "@formbricks/lib/utils/email";
 import { Button } from "@formbricks/ui/Button";
-import { FormbricksLogo } from "@formbricks/ui/FormbricksLogo";
 import { Input } from "@formbricks/ui/Input";
 
 export const InviteMembers = () => {
@@ -62,9 +61,8 @@ export const InviteMembers = () => {
   const isButtonDisabled = teamMemberEmails.every((member) => member.trim() === "");
 
   return (
-    <div className="flex w-[40rem] flex-col items-center space-y-4 rounded-lg border bg-white p-20 text-center shadow">
-      <FormbricksLogo className="h-20 w-20 rounded-lg bg-black p-2" />
-      <h2 className="text-2xl font-medium">Invite your team.</h2>
+    <div className="flex flex-col items-center space-y-4">
+      <h2 className="text-2xl font-medium">Invite your Organization members</h2>
       <p>Life&apos;s no fun alone.</p>
       {teamMemberEmails.map((member, index) => (
         <Input

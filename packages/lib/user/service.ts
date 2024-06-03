@@ -136,6 +136,7 @@ const deleteUserById = async (id: string): Promise<TUser> => {
     userCache.revalidate({
       email: user.email,
       id,
+      count: true,
     });
 
     return user;
@@ -160,6 +161,7 @@ export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
     userCache.revalidate({
       email: user.email,
       id: user.id,
+      count: true,
     });
 
     // send new user customer.io to customer.io
@@ -284,16 +286,20 @@ export const userIdRelatedToApiKey = async (apiKey: string) => {
   }
 };
 
-// function to check if there are no users in the database
-export const getIsFreshInstance = async (): Promise<boolean> => {
-  try {
-    const userCount = await prisma.user.count();
-    if (userCount === 0) return true;
-    else return false;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
+// Function to check if there are any users in the database
+export const getIsFreshInstance = cache(
+  async () => {
+    try {
+      const userCount = await prisma.user.count();
+      if (userCount === 0) return true;
+      else return false;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
     }
-    throw error;
-  }
-};
+  },
+  ["users-count"],
+  { tags: [userCache.tag.byCount()] }
+);
