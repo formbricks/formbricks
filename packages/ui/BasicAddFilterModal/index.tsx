@@ -10,12 +10,12 @@ import { Input } from "../Input";
 import { Modal } from "../Modal";
 import { handleAddFilter } from "./lib/utils";
 
-type TBasicAddFilterModalProps = {
+interface TBasicAddFilterModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   onAddFilter: (filter: TBaseFilter) => void;
   attributeClasses: TAttributeClass[];
-};
+}
 
 export const BasicAddFilterModal = ({
   onAddFilter,
