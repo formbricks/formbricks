@@ -39,7 +39,6 @@ import {
   getCardText,
   getChoiceLabel,
   getIndex,
-  getLabelById,
   getMatrixLabel,
   getPlaceHolderById,
   isValueIncomplete,
@@ -57,7 +56,7 @@ interface QuestionFormInputProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  label?: string;
+  label: string;
   maxLength?: number;
   placeholder?: string;
   ref?: RefObject<HTMLInputElement>;
@@ -398,7 +397,7 @@ export const QuestionFormInput = ({
     <div className="w-full">
       <div className="w-full">
         <div className="mb-2 mt-3">
-          <Label htmlFor={id}>{label || getLabelById(id)}</Label>
+          <Label htmlFor={id}>{label}</Label>
         </div>
 
         <div className="flex flex-col gap-4 bg-white">
@@ -452,7 +451,7 @@ export const QuestionFormInput = ({
                 placeholder={placeholder ? placeholder : getPlaceHolderById(id)}
                 id={id}
                 name={id}
-                aria-label={label || getLabelById(id)}
+                aria-label={label}
                 autoComplete={showRecallItemSelect ? "off" : "on"}
                 value={
                   recallToHeadline(text, localSurvey, false, selectedLanguageCode, attributeClasses)[

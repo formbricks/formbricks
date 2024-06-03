@@ -42,6 +42,7 @@ export const PictureSelectionForm = ({
     <form>
       <QuestionFormInput
         id="headline"
+        label={"Question*"}
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -58,6 +59,7 @@ export const PictureSelectionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
+                label={"Description"}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
