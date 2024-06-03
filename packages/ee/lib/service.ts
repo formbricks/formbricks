@@ -197,7 +197,7 @@ export const getMultiLanguagePermission = async (organization: TOrganization): P
 };
 
 export const getIsMultiOrgEnabled = async (): Promise<boolean> => {
-  if (process.env.NODE_ENV === "development") return true;
+  if (process.env.NODE_ENV === "development" || E2E_TESTING) return true;
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
   return licenseFeatures.isMultiOrgEnabled;
