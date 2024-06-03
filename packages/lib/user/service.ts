@@ -287,19 +287,20 @@ export const userIdRelatedToApiKey = async (apiKey: string) => {
 };
 
 // Function to check if there are any users in the database
-export const getIsFreshInstance = cache(
-  async () => {
-    try {
-      const userCount = await prisma.user.count();
-      if (userCount === 0) return true;
-      else return false;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
+export const getIsFreshInstance = (): Promise<boolean> =>
+  cache(
+    async () => {
+      try {
+        const userCount = await prisma.user.count();
+        if (userCount === 0) return true;
+        else return false;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+        throw error;
       }
-      throw error;
-    }
-  },
-  ["users-count"],
-  { tags: [userCache.tag.byCount()] }
-);
+    },
+    ["users-count"],
+    { tags: [userCache.tag.byCount()] }
+  )();
