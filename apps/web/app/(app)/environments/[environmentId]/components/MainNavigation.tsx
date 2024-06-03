@@ -166,7 +166,7 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/product/general`,
         icon: Cog,
         isActive: pathname?.includes("/product"),
-        isHidden: false,
+        isHidden: isViewer,
       },
     ],
     [environment.id, pathname, isViewer]
