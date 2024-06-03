@@ -35,7 +35,7 @@ const SideNavigation = ({ pathname }) => {
 
   if (headings.length) {
     return (
-      <aside className="fixed right-0 top-10 z-50 hidden h-full w-72 overflow-hidden overflow-y-auto pt-14 lg:mt-10 lg:block">
+      <aside className="fixed right-0 top-0 z-50 hidden h-full w-72 overflow-hidden overflow-y-auto pt-16 lg:mt-10 lg:block">
         <div className="border-l-2 border-gray-700">
           <h3 className="ml-2 mt-1">On this page</h3>
           <ul className="px-5 py-5">
