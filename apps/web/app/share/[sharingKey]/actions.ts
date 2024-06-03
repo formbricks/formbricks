@@ -2,8 +2,7 @@
 
 import {
   getResponseCountBySurveyId,
-  getResponseMeta,
-  getResponsePersonAttributes,
+  getResponseFilteringValues,
   getResponses,
   getSurveySummary,
 } from "@formbricks/lib/response/service";
@@ -53,11 +52,10 @@ export const getSurveyFilterDataBySurveySharingKeyAction = async (
   const surveyId = await getSurveyIdByResultShareKey(sharingKey);
   if (!surveyId) throw new AuthorizationError("Not authorized");
 
-  const [tags, attributes, meta] = await Promise.all([
+  const [tags, { personAttributes: attributes, meta, hiddenFields }] = await Promise.all([
     getTagsByEnvironmentId(environmentId),
-    getResponsePersonAttributes(surveyId),
-    getResponseMeta(surveyId),
+    getResponseFilteringValues(surveyId),
   ]);
 
-  return { environmentTags: tags, attributes, meta };
+  return { environmentTags: tags, attributes, meta, hiddenFields };
 };

@@ -7,7 +7,7 @@ import { z } from "zod";
 
 import { TProduct, ZProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage, FormProvider } from "@formbricks/ui/Form";
+import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
 
 import { updateProductAction } from "../actions";
@@ -70,7 +70,7 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product, e
                   }}
                 />
               </FormControl>
-              <FormMessage />
+              <FormError />
             </FormItem>
           )}
         />
