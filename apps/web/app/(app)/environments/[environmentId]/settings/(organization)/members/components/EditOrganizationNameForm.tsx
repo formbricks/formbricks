@@ -10,7 +10,7 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization, ZOrganization } from "@formbricks/types/organizations";
 import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage, FormProvider } from "@formbricks/ui/Form";
+import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
 
 interface EditOrganizationNameProps {
@@ -70,7 +70,7 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
                 />
               </FormControl>
 
-              <FormMessage />
+              <FormError />
             </FormItem>
           )}
         />

@@ -7,7 +7,7 @@ import { z } from "zod";
 
 import { TUser, ZUser } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage, FormProvider } from "@formbricks/ui/Form";
+import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 
@@ -56,7 +56,7 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
                 />
               </FormControl>
 
-              <FormMessage />
+              <FormError />
             </FormItem>
           )}
         />

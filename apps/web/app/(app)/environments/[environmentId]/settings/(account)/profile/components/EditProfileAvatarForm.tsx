@@ -15,7 +15,7 @@ import { z } from "zod";
 
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
-import { FormField, FormItem, FormMessage, FormProvider } from "@formbricks/ui/Form";
+import { FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/Form";
 
 interface EditProfileAvatarFormProps {
   session: Session;
@@ -160,7 +160,7 @@ export const EditProfileAvatarForm = ({ session, environmentId }: EditProfileAva
                   )}
                 </div>
 
-                <FormMessage />
+                <FormError />
               </FormItem>
             )}
           />
