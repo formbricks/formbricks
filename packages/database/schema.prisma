@@ -312,7 +312,7 @@ model Survey {
   verifyEmail       Json?
   pin               String?
   resultShareKey    String?          @unique
-  displayPercentage Int?
+  displayPercentage Decimal?
   languages         SurveyLanguage[]
 
   @@index([environmentId, updatedAt])
