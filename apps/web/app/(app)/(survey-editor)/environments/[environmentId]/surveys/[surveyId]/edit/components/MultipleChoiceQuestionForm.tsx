@@ -187,6 +187,7 @@ export const MultipleChoiceQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
+        label={"Question*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -203,6 +204,7 @@ export const MultipleChoiceQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
+                label={"Description"}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -242,7 +244,7 @@ export const MultipleChoiceQuestionForm = ({
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="choices">Options</Label>
+        <Label htmlFor="choices">Options*</Label>
         <div className="mt-2" id="choices">
           <DndContext
             onDragEnd={(event) => {
