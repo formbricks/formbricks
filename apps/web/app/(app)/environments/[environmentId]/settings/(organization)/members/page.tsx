@@ -19,7 +19,7 @@ import { SettingsId } from "@formbricks/ui/SettingsId";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditMemberships } from "./components/EditMemberships";
-import { EditOrganizationName } from "./components/EditOrganizationName";
+import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
 
 const MembersLoading = () => (
   <div className="px-2">
@@ -89,7 +89,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
         )}
       </SettingsCard>
       <SettingsCard title="Organization Name" description="Give your organization a descriptive name.">
-        <EditOrganizationName
+        <EditOrganizationNameForm
           organization={organization}
           environmentId={params.environmentId}
           membershipRole={currentUserMembership?.role}
