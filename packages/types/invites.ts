@@ -35,3 +35,11 @@ export const ZInviteUpdateInput = z.object({
   role: ZMembershipRole,
 });
 export type TInviteUpdateInput = z.infer<typeof ZInviteUpdateInput>;
+
+export const ZInviteMembersFormSchema = z.object({
+  member1Email: z.string().email("Invalid email address").optional().or(z.literal("")),
+  member2Email: z.string().email("Invalid email address").optional().or(z.literal("")),
+  member3Email: z.string().email("Invalid email address").optional().or(z.literal("")),
+});
+
+export type TInviteMembersFormSchema = z.infer<typeof ZInviteMembersFormSchema>;

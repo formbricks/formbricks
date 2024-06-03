@@ -22,6 +22,7 @@ const Page = async () => {
   if (organizations.length === 0) {
     redirect("/setup/organization/create");
   }
+
   return <InviteMembers />;
 };
 

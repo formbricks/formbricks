@@ -1,55 +1,46 @@
 "use client";
 
 import { inviteOrganizationMemberAction } from "@/app/setup/member/invite/actions";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 
-import { isValidEmail } from "@formbricks/lib/utils/email";
+import { TInviteMembersFormSchema, ZInviteMembersFormSchema } from "@formbricks/types/invites";
 import { Button } from "@formbricks/ui/Button";
+import { FormControl, FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
 
 export const InviteMembers = () => {
-  const [teamMemberEmails, setTeamMemberEmails] = useState(["", "", ""]);
-  const [isInviting, setIsInviting] = useState(false);
   const [isSkipping, setIsSkipping] = useState(false);
   const router = useRouter();
 
-  const handleInputChange = (index, event) => {
-    const newTeamMembers = [...teamMemberEmails];
-    newTeamMembers[index] = event.target.value;
-    setTeamMemberEmails(newTeamMembers);
-  };
+  const form = useForm<TInviteMembersFormSchema>({
+    resolver: zodResolver(ZInviteMembersFormSchema),
+  });
 
-  const inviteTeamMembers = async () => {
-    setIsInviting(true);
-    const validEmails: string[] = [];
+  const { isSubmitting } = form.formState;
 
-    // Validate all emails first
-    for (const teamMemberEmail of teamMemberEmails) {
-      if (teamMemberEmail.trim() === "") {
-        continue;
-      } else if (isValidEmail(teamMemberEmail)) {
-        validEmails.push(teamMemberEmail);
-      }
-    }
+  const inviteTeamMembers = async (data: TInviteMembersFormSchema) => {
+    const emails = Object.values(data).filter((email) => email && email.trim() !== "");
 
-    // If there are valid emails, proceed to send invitations
-    if (validEmails.length > 0) {
-      for (const email of validEmails) {
-        try {
-          await inviteOrganizationMemberAction(email);
-          toast.success(`Invitation sent to: ${email}`);
-        } catch (error) {
-          console.error("Failed to invite:", email, error);
-        }
-      }
+    if (!emails?.length) {
       router.push("/onboarding");
-    } else {
-      toast.error("Some emails are invalid. No invitations sent.");
+      return;
     }
 
-    setIsInviting(false);
+    for (const email of emails) {
+      try {
+        await inviteOrganizationMemberAction(email);
+        toast.success(`Invitation sent to members!`);
+      } catch (error) {
+        console.error("Failed to invite:", email, error);
+        toast.error(`Failed to invite members, something went wrong.`);
+      }
+    }
+
+    router.push("/onboarding");
   };
 
   const handleSkip = () => {
@@ -58,38 +49,91 @@ export const InviteMembers = () => {
   };
 
   // Check if all input fields are empty
-  const isButtonDisabled = teamMemberEmails.every((member) => member.trim() === "");
+  const watchedFields = form.watch();
+  const allFieldsEmpty = Object.values(watchedFields).every((value) => value.trim() === "");
 
   return (
-    <div className="flex flex-col items-center space-y-4">
-      <h2 className="text-2xl font-medium">Invite your Organization members</h2>
-      <p>Life&apos;s no fun alone.</p>
-      {teamMemberEmails.map((member, index) => (
-        <Input
-          key={index}
-          placeholder={`member${index + 1}@web.com`}
-          className="w-80"
-          value={member}
-          onChange={(e) => handleInputChange(index, e)}
-        />
-      ))}
-      <div className="space-y-2">
-        <Button
-          variant="darkCTA"
-          className="flex w-80 justify-center"
-          onClick={inviteTeamMembers}
-          loading={isInviting}
-          disabled={isButtonDisabled}>
-          Continue
-        </Button>
-        <Button
-          variant="minimal"
-          className="flex w-80 justify-center"
-          onClick={handleSkip}
-          loading={isSkipping}>
-          Skip
-        </Button>
-      </div>
-    </div>
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(inviteTeamMembers)} className="space-y-4">
+        <div className="flex flex-col items-center space-y-4">
+          <h2 className="text-2xl font-medium">Invite your Organization members</h2>
+          <p>Life&apos;s no fun alone.</p>
+          <FormField
+            control={form.control}
+            name="member1Email"
+            render={({ field, fieldState: { error } }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="member1@web.com"
+                    className="w-80"
+                    isInvalid={!!error?.message}
+                  />
+                </FormControl>
+
+                <FormError className="text-left" />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="member2Email"
+            render={({ field, fieldState: { error } }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="member2@web.com"
+                    className="w-80"
+                    isInvalid={!!error?.message}
+                  />
+                </FormControl>
+
+                <FormError className="text-left" />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="member3Email"
+            render={({ field, fieldState: { error } }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="member3@web.com"
+                    className="w-80"
+                    isInvalid={!!error?.message}
+                  />
+                </FormControl>
+
+                <FormError className="text-left" />
+              </FormItem>
+            )}
+          />
+          <div className="space-y-2">
+            <Button
+              variant="darkCTA"
+              className="flex w-80 justify-center"
+              type="submit"
+              loading={isSubmitting}
+              disabled={isSubmitting || allFieldsEmpty}>
+              Continue
+            </Button>
+            <Button
+              type="button"
+              variant="minimal"
+              className="flex w-80 justify-center"
+              onClick={handleSkip}
+              loading={isSkipping}>
+              Skip
+            </Button>
+          </div>
+        </div>
+      </form>
+    </FormProvider>
   );
 };
