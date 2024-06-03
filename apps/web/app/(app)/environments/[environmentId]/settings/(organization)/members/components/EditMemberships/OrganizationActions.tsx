@@ -89,7 +89,7 @@ export const OrganizationActions = ({
         )}
         <TooltipRenderer
           shouldRender={!isMultiOrgEnabled}
-          tooltipContent="Updragde your enterprise license to create multiple organizations">
+          tooltipContent="Upgrade your enterprise license to create multiple organizations">
           <div
             className={cn(
               "rounded-md bg-slate-200 px-3 py-2 text-sm font-medium leading-4",
