@@ -84,6 +84,7 @@ export const SelectQuestionChoice = ({
           key={choice.id}
           id={`choice-${choiceIdx}`}
           placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
+          label={""}
           localSurvey={localSurvey}
           questionIdx={questionIdx}
           value={choice.label}
@@ -110,6 +111,7 @@ export const SelectQuestionChoice = ({
             id="otherOptionPlaceholder"
             localSurvey={localSurvey}
             placeholder={"Please specify"}
+            label={""}
             questionIdx={questionIdx}
             value={
               question.otherOptionPlaceholder

@@ -20,6 +20,7 @@ interface QuestionsDraggableProps {
   invalidQuestions: string[] | null;
   internalQuestionIdMap: Record<string, string>;
   attributeClasses: TAttributeClass[];
+  addQuestion: (question: any, index?: number) => void;
 }
 
 export const QuestionsDroppable = ({
@@ -36,6 +37,7 @@ export const QuestionsDroppable = ({
   updateQuestion,
   internalQuestionIdMap,
   attributeClasses,
+  addQuestion,
 }: QuestionsDraggableProps) => {
   return (
     <div className="group mb-5 grid w-full gap-5">
@@ -58,6 +60,7 @@ export const QuestionsDroppable = ({
             lastQuestion={questionIdx === localSurvey.questions.length - 1}
             isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
             attributeClasses={attributeClasses}
+            addQuestion={addQuestion}
           />
         ))}
       </SortableContext>

@@ -140,14 +140,14 @@ export const createSurvey = async (
   await expect(page.locator("#welcome-toggle")).toBeVisible();
   await page.getByText("Welcome Card").click();
   await page.locator("#welcome-toggle").check();
-  await page.getByLabel("Headline").fill(params.welcomeCard.headline);
+  await page.getByLabel("Note*").fill(params.welcomeCard.headline);
   await page.locator("form").getByText("Thanks for providing your").fill(params.welcomeCard.description);
   await page.getByText("Welcome CardOn").click();
 
   // Open Text Question
   await page.getByRole("main").getByText("What would you like to know?").click();
 
-  await page.getByLabel("Question").fill(params.openTextQuestion.question);
+  await page.getByLabel("Question*").fill(params.openTextQuestion.question);
   await page.getByLabel("Description").fill(params.openTextQuestion.description);
   await page.getByLabel("Placeholder").fill(params.openTextQuestion.placeholder);
 
@@ -160,7 +160,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Single-Select" }).click();
-  await page.getByLabel("Question").fill(params.singleSelectQuestion.question);
+  await page.getByLabel("Question*").fill(params.singleSelectQuestion.question);
   await page.getByLabel("Description").fill(params.singleSelectQuestion.description);
   await page.getByPlaceholder("Option 1").fill(params.singleSelectQuestion.options[0]);
   await page.getByPlaceholder("Option 2").fill(params.singleSelectQuestion.options[1]);
@@ -173,7 +173,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Multi-Select" }).click();
-  await page.getByLabel("Question").fill(params.multiSelectQuestion.question);
+  await page.getByLabel("Question*").fill(params.multiSelectQuestion.question);
   await page.getByRole("button", { name: "Add Description", exact: true }).click();
   await page.getByLabel("Description").fill(params.multiSelectQuestion.description);
   await page.getByPlaceholder("Option 1").fill(params.multiSelectQuestion.options[0]);
@@ -187,7 +187,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Rating" }).click();
-  await page.getByLabel("Question").fill(params.ratingQuestion.question);
+  await page.getByLabel("Question*").fill(params.ratingQuestion.question);
   await page.getByLabel("Description").fill(params.ratingQuestion.description);
   await page.getByPlaceholder("Not good").fill(params.ratingQuestion.lowLabel);
   await page.getByPlaceholder("Very satisfied").fill(params.ratingQuestion.highLabel);
@@ -199,7 +199,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Net Promoter Score (NPS)" }).click();
-  await page.getByLabel("Question").fill(params.npsQuestion.question);
+  await page.getByLabel("Question*").fill(params.npsQuestion.question);
   await page.getByLabel("Lower label").fill(params.npsQuestion.lowLabel);
   await page.getByLabel("Upper label").fill(params.npsQuestion.highLabel);
 
@@ -220,7 +220,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Consent" }).click();
-  await page.getByLabel("Question").fill(params.consentQuestion.question);
+  await page.getByLabel("Question*").fill(params.consentQuestion.question);
   await page.getByPlaceholder("I agree to the terms and").fill(params.consentQuestion.checkboxLabel);
 
   // Picture Select Question
@@ -230,7 +230,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Picture Selection" }).click();
-  await page.getByLabel("Question").fill(params.pictureSelectQuestion.question);
+  await page.getByLabel("Question*").fill(params.pictureSelectQuestion.question);
   await page.getByLabel("Description").fill(params.pictureSelectQuestion.description);
 
   // File Upload Question
@@ -240,7 +240,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "File Upload" }).click();
-  await page.getByLabel("Question").fill(params.fileUploadQuestion.question);
+  await page.getByLabel("Question*").fill(params.fileUploadQuestion.question);
 
   // Fill Matrix question in german
   // File Upload Question
@@ -250,7 +250,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Matrix" }).click();
-  await page.getByLabel("Question").fill(params.matrix.question);
+  await page.getByLabel("Question*").fill(params.matrix.question);
   await page.getByLabel("Description").fill(params.matrix.description);
   await page.locator("#row-0").click();
   await page.locator("#row-0").fill(params.matrix.rows[0]);
@@ -274,10 +274,10 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Address" }).click();
-  await page.getByLabel("Question").fill(params.address.question);
+  await page.getByLabel("Question*").fill(params.address.question);
 
   // Thank You Card
   await page.getByText("Thank You CardShown").click();
-  await page.getByLabel("Headline").fill(params.thankYouCard.headline);
+  await page.getByLabel("Note*").fill(params.thankYouCard.headline);
   await page.getByLabel("Description").fill(params.thankYouCard.description);
 };

@@ -148,17 +148,17 @@ export const QuestionsView = ({
         setbackButtonLabel(updatedAttributes.backButtonLabel);
       }
     }
-    // If the value of buttonLabel is equal to {default:""}, then delete buttonLabel key
-    if ("buttonLabel" in updatedAttributes) {
-      const currentButtonLabel = updatedSurvey.questions[questionIdx].buttonLabel;
-      if (
-        currentButtonLabel &&
-        Object.keys(currentButtonLabel).length === 1 &&
-        currentButtonLabel["default"].trim() === ""
-      ) {
-        delete updatedSurvey.questions[questionIdx].buttonLabel;
+    const attributesToCheck = ["buttonLabel", "upperLabel", "lowerLabel"];
+
+    // If the value of buttonLabel, lowerLabel or upperLabel is equal to {default:""}, then delete buttonLabel key
+    attributesToCheck.forEach((attribute) => {
+      if (Object.keys(updatedAttributes).includes(attribute)) {
+        const currentLabel = updatedSurvey.questions[questionIdx][attribute];
+        if (currentLabel && Object.keys(currentLabel).length === 1 && currentLabel["default"].trim() === "") {
+          delete updatedSurvey.questions[questionIdx][attribute];
+        }
       }
-    }
+    });
     setLocalSurvey(updatedSurvey);
     validateSurveyQuestion(updatedSurvey.questions[questionIdx]);
   };
@@ -216,14 +216,19 @@ export const QuestionsView = ({
     toast.success("Question duplicated.");
   };
 
-  const addQuestion = (question: any) => {
+  const addQuestion = (question: any, index?: number) => {
     const updatedSurvey = { ...localSurvey };
     if (backButtonLabel) {
       question.backButtonLabel = backButtonLabel;
     }
     const languageSymbols = extractLanguageCodes(localSurvey.languages);
     const translatedQuestion = translateQuestion(question, languageSymbols);
-    updatedSurvey.questions.push({ ...translatedQuestion, isDraft: true });
+
+    if (index) {
+      updatedSurvey.questions.splice(index, 0, { ...translatedQuestion, isDraft: true });
+    } else {
+      updatedSurvey.questions.push({ ...translatedQuestion, isDraft: true });
+    }
 
     setLocalSurvey(updatedSurvey);
     setActiveQuestionId(question.id);
@@ -361,6 +366,7 @@ export const QuestionsView = ({
           invalidQuestions={invalidQuestions}
           internalQuestionIdMap={internalQuestionIdMap}
           attributeClasses={attributeClasses}
+          addQuestion={addQuestion}
         />
       </DndContext>
 

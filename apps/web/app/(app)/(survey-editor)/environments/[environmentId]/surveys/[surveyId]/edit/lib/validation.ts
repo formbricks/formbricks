@@ -124,7 +124,11 @@ export const validationRules = {
     }
 
     for (const field of fieldsToValidate) {
-      if (question[field] && typeof question[field][defaultLanguageCode] !== "undefined") {
+      if (
+        question[field] &&
+        typeof question[field][defaultLanguageCode] !== "undefined" &&
+        question[field][defaultLanguageCode].trim() !== ""
+      ) {
         isValid = isValid && isLabelValidForAllLanguages(question[field], languages);
       }
     }

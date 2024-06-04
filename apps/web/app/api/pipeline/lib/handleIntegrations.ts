@@ -165,7 +165,7 @@ const buildNotionPayloadProperties = (
     const value = responses[map.question.id];
 
     properties[map.column.name] = {
-      [map.column.type]: getValue(map.column.type, value),
+      [map.column.type]: getValue(map.column.type, processResponseData(value)),
     };
   });
 
