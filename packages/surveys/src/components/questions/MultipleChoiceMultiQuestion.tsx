@@ -25,7 +25,6 @@ interface MultipleChoiceMultiProps {
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
   currentQuestionId: string;
-  isRtl: boolean;
 }
 
 export const MultipleChoiceMultiQuestion = ({
@@ -41,7 +40,6 @@ export const MultipleChoiceMultiQuestion = ({
   setTtc,
   isInIframe,
   currentQuestionId,
-  isRtl,
 }: MultipleChoiceMultiProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -154,12 +152,10 @@ export const MultipleChoiceMultiQuestion = ({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
-            isRtl={isRtl}
           />
           <Subheader
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
-            isRtl={isRtl}
           />
           <div className="mt-4">
             <fieldset>
@@ -169,7 +165,7 @@ export const MultipleChoiceMultiQuestion = ({
                   if (!choice || choice.id === "other") return;
                   return (
                     <label
-                      dir={isRtl ? "rtl" : "ltr"}
+                      dir="auto"
                       key={choice.id}
                       tabIndex={idx + 1}
                       className={cn(
@@ -189,7 +185,6 @@ export const MultipleChoiceMultiQuestion = ({
                       autoFocus={idx === 0 && !isInIframe}>
                       <span className="flex items-center text-sm">
                         <input
-                          dir={isRtl ? "rtl" : "ltr"}
                           type="checkbox"
                           id={choice.id}
                           name={question.id}
@@ -214,10 +209,7 @@ export const MultipleChoiceMultiQuestion = ({
                               : question.required
                           }
                         />
-                        <span
-                          id={`${choice.id}-label`}
-                          className="ml-3 mr-3 font-medium"
-                          dir={isRtl ? "rtl" : "ltr"}>
+                        <span id={`${choice.id}-label`} className="ml-3 mr-3 font-medium" dir="auto">
                           {getLocalizedValue(choice.label, languageCode)}
                         </span>
                       </span>
@@ -227,6 +219,7 @@ export const MultipleChoiceMultiQuestion = ({
                 {otherOption && (
                   <label
                     tabIndex={questionChoices.length + 1}
+                    dir="auto"
                     className={cn(
                       value.includes(getLocalizedValue(otherOption.label, languageCode))
                         ? "border-border bg-input-selected-bg z-10"
@@ -260,10 +253,7 @@ export const MultipleChoiceMultiQuestion = ({
                         }}
                         checked={otherSelected}
                       />
-                      <span
-                        id={`${otherOption.id}-label`}
-                        className="ml-3 mr-3 font-medium"
-                        dir={isRtl ? "rtl" : "ltr"}>
+                      <span id={`${otherOption.id}-label`} className="ml-3 mr-3 font-medium" dir="auto">
                         {getLocalizedValue(otherOption.label, languageCode)}
                       </span>
                     </span>
@@ -304,7 +294,6 @@ export const MultipleChoiceMultiQuestion = ({
               setTtc(updatedTtcObj);
               onBack();
             }}
-            isRtl={isRtl}
           />
         )}
         <div></div>
@@ -312,7 +301,6 @@ export const MultipleChoiceMultiQuestion = ({
           tabIndex={questionChoices.length + 2}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          isRtl={isRtl}
         />
       </div>
     </form>

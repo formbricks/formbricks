@@ -25,7 +25,6 @@ interface CTAQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
   currentQuestionId: string;
-  isRtl: boolean;
 }
 
 export const CTAQuestion = ({
@@ -40,7 +39,6 @@ export const CTAQuestion = ({
   setTtc,
   isInIframe,
   currentQuestionId,
-  isRtl,
 }: CTAQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -56,13 +54,8 @@ export const CTAQuestion = ({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
-            isRtl={isRtl}
           />
-          <HtmlBody
-            htmlString={getLocalizedValue(question.html, languageCode)}
-            questionId={question.id}
-            isRtl={isRtl}
-          />
+          <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} questionId={question.id} />
         </div>
       </ScrollableContainer>
       <div className="flex w-full justify-between px-6 py-4">
@@ -75,13 +68,12 @@ export const CTAQuestion = ({
               onSubmit({ [question.id]: "" }, updatedTtcObj);
               onBack();
             }}
-            isRtl={isRtl}
           />
         )}
         <div className="flex w-full justify-end">
           {!question.required && (
             <button
-              dir={isRtl ? "rtl" : "ltr"}
+              dir="auto"
               tabIndex={0}
               type="button"
               onClick={() => {
@@ -108,7 +100,6 @@ export const CTAQuestion = ({
               onChange({ [question.id]: "clicked" });
             }}
             type="button"
-            isRtl={isRtl}
           />
         </div>
       </div>

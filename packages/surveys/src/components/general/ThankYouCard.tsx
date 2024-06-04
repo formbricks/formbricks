@@ -17,7 +17,6 @@ interface ThankYouCardProps {
   videoUrl?: string;
   isResponseSendingFinished: boolean;
   isInIframe: boolean;
-  isRtl?: boolean;
 }
 
 export const ThankYouCard = ({
@@ -31,7 +30,6 @@ export const ThankYouCard = ({
   videoUrl,
   isResponseSendingFinished,
   isInIframe,
-  isRtl = false,
 }: ThankYouCardProps) => {
   const media = imageUrl || videoUrl ? <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} /> : null;
   const checkmark = (
@@ -59,8 +57,8 @@ export const ThankYouCard = ({
         {isResponseSendingFinished ? (
           <>
             {media || checkmark}
-            <Headline alignTextCenter={true} headline={headline} questionId="thankYouCard" isRtl={isRtl} />
-            <Subheader subheader={subheader} questionId="thankYouCard" isRtl={isRtl} />
+            <Headline alignTextCenter={true} headline={headline} questionId="thankYouCard" />
+            <Subheader subheader={subheader} questionId="thankYouCard" />
             <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
             {buttonLabel && (
               <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">

@@ -26,7 +26,6 @@ interface CalQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
   currentQuestionId: string;
-  isRtl: boolean;
 }
 
 export const CalQuestion = ({
@@ -41,7 +40,6 @@ export const CalQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
-  isRtl,
 }: CalQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -79,12 +77,10 @@ export const CalQuestion = ({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
-            isRtl={isRtl}
           />
           <Subheader
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
-            isRtl={isRtl}
           />
           <>
             {errorMessage && <span className="text-red-500">{errorMessage}</span>}
@@ -99,7 +95,6 @@ export const CalQuestion = ({
             onClick={() => {
               onBack();
             }}
-            isRtl={isRtl}
           />
         )}
         <div></div>
@@ -107,7 +102,6 @@ export const CalQuestion = ({
           <SubmitButton
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            isRtl={isRtl}
           />
         )}
       </div>

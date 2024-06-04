@@ -25,7 +25,6 @@ interface PictureSelectionProps {
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
   currentQuestionId: string;
-  isRtl: boolean;
 }
 
 export const PictureSelectionQuestion = ({
@@ -40,7 +39,6 @@ export const PictureSelectionQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
-  isRtl,
 }: PictureSelectionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -105,12 +103,10 @@ export const PictureSelectionQuestion = ({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
-            isRtl={isRtl}
           />
           <Subheader
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
-            isRtl={isRtl}
           />
           <div className="mt-4">
             <fieldset>
@@ -212,7 +208,6 @@ export const PictureSelectionQuestion = ({
               setTtc(updatedTtcObj);
               onBack();
             }}
-            isRtl={isRtl}
           />
         )}
         <div></div>
@@ -220,7 +215,6 @@ export const PictureSelectionQuestion = ({
           tabIndex={questionChoices.length + 2}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          isRtl={isRtl}
         />
       </div>
     </form>

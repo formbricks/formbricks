@@ -25,7 +25,6 @@ interface AddressQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
   currentQuestionId: string;
-  isRtl: boolean;
 }
 
 export const AddressQuestion = ({
@@ -41,7 +40,6 @@ export const AddressQuestion = ({
   setTtc,
   isInIframe,
   currentQuestionId,
-  isRtl,
 }: AddressQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [hasFilled, setHasFilled] = useState(false);
@@ -141,12 +139,10 @@ export const AddressQuestion = ({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
-            isRtl={isRtl}
           />
           <Subheader
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
-            isRtl={isRtl}
           />
           <div className="mt-4 space-y-2">
             {inputConfig.map(({ name, placeholder, required }, index) => (
@@ -178,7 +174,6 @@ export const AddressQuestion = ({
               setTtc(updatedttc);
               onBack();
             }}
-            isRtl={isRtl}
           />
         )}
         <div></div>
@@ -187,7 +182,6 @@ export const AddressQuestion = ({
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
-          isRtl={isRtl}
         />
       </div>
     </form>

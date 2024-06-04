@@ -24,7 +24,7 @@ export const HtmlBody = ({ htmlString, questionId, isRtl = false }: HtmlBodyProp
   return (
     <label
       htmlFor={questionId}
-      className={cn("fb-htmlbody break-words", isRtl ? "rtl" : "")} // styles are in global.css
+      className={cn("fb-htmlbody break-words")} // styles are in global.css
       dangerouslySetInnerHTML={{ __html: safeHtml }}
     />
   );

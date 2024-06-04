@@ -446,7 +446,7 @@ export const QuestionFormInput = ({
               )}
               <Input
                 key={`${questionId}-${id}-${selectedLanguageCode}`}
-                dir={selectedLanguage?.rtl ? "rtl" : "ltr"}
+                dir="auto"
                 className={`absolute top-0 text-black caret-black ${localSurvey.languages?.length > 1 ? "pr-24" : ""} ${className}`}
                 placeholder={placeholder ? placeholder : getPlaceHolderById(id)}
                 id={id}

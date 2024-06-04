@@ -73,10 +73,6 @@ export const Editor = (props: TextEditorProps) => {
         initialConfig={{
           ...editorConfig,
           editable,
-          theme: {
-            ...editorConfig.theme,
-            ltr: props.isRtl ? "fb-editor-rtl" : "",
-          },
         }}>
         <div className="editor-container rounded-md p-0">
           <ToolbarPlugin

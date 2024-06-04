@@ -3,7 +3,6 @@ interface HeadlineProps {
   questionId: string;
   required?: boolean;
   alignTextCenter?: boolean;
-  isRtl?: boolean;
 }
 
 export const Headline = ({
@@ -11,13 +10,12 @@ export const Headline = ({
   questionId,
   required = true,
   alignTextCenter = false,
-  isRtl = false,
 }: HeadlineProps) => {
   return (
     <label
       htmlFor={questionId}
       className="text-heading mb-1.5 block text-base font-semibold leading-6"
-      dir={isRtl ? "rtl" : "ltr"}>
+      dir="auto">
       <div className={`flex items-center  ${alignTextCenter ? "justify-center" : "justify-between"}`}>
         {headline}
         {!required && (

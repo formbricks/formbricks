@@ -139,12 +139,10 @@ export const EditLanguage = ({ product, environmentId }: EditLanguageProps) => {
           ? createLanguageAction(product.id, environmentId, {
               code: lang.code,
               alias: lang.alias,
-              rtl: lang.rtl,
             })
           : updateLanguageAction(product.id, environmentId, lang.id, {
               code: lang.code,
               alias: lang.alias,
-              rtl: lang.rtl,
             });
       })
     );

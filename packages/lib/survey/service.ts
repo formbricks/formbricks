@@ -83,7 +83,6 @@ export const selectSurvey = {
           id: true,
           code: true,
           alias: true,
-          rtl: true,
           createdAt: true,
           updatedAt: true,
         },

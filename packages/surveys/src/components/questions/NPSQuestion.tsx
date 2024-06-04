@@ -25,7 +25,6 @@ interface NPSQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   isInIframe: boolean;
   currentQuestionId: string;
-  isRtl: boolean;
 }
 
 export const NPSQuestion = ({
@@ -40,7 +39,6 @@ export const NPSQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
-  isRtl,
 }: NPSQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
@@ -78,12 +76,10 @@ export const NPSQuestion = ({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
-            isRtl={isRtl}
           />
           <Subheader
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
-            isRtl={isRtl}
           />
           <div className="my-4">
             <fieldset>
@@ -127,8 +123,8 @@ export const NPSQuestion = ({
                 })}
               </div>
               <div className="text-subheading mt-2 flex justify-between px-1.5 text-xs leading-6">
-                <p dir={isRtl ? "rtl" : "ltr"}>{getLocalizedValue(question.lowerLabel, languageCode)}</p>
-                <p dir={isRtl ? "rtl" : "ltr"}>{getLocalizedValue(question.upperLabel, languageCode)}</p>
+                <p dir="auto">{getLocalizedValue(question.lowerLabel, languageCode)}</p>
+                <p dir="auto">{getLocalizedValue(question.upperLabel, languageCode)}</p>
               </div>
             </fieldset>
           </div>
@@ -144,7 +140,6 @@ export const NPSQuestion = ({
               setTtc(updatedTtcObj);
               onBack();
             }}
-            isRtl={isRtl}
           />
         )}
         <div></div>
@@ -153,7 +148,6 @@ export const NPSQuestion = ({
             tabIndex={12}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            isRtl={isRtl}
           />
         )}
       </div>
