@@ -26,6 +26,7 @@ import {
   updatePersonIdentifierInFilter,
   updateSegmentIdInFilter,
 } from "@formbricks/lib/segment/utils";
+import { isCapitalized } from "@formbricks/lib/utils/strings";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
@@ -79,8 +80,6 @@ type TSegmentFilterProps = {
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
   viewOnly?: boolean;
 };
-
-const isCapitalized = (str: string) => str.charAt(0) === str.charAt(0).toUpperCase();
 
 const SegmentFilterItemConnector = ({
   connector,
