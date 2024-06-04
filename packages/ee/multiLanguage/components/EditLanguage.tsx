@@ -136,14 +136,8 @@ export const EditLanguage = ({ product, environmentId }: EditLanguageProps) => {
     await Promise.all(
       languages.map((lang) => {
         return lang.id === "new"
-          ? createLanguageAction(product.id, environmentId, {
-              code: lang.code,
-              alias: lang.alias,
-            })
-          : updateLanguageAction(product.id, environmentId, lang.id, {
-              code: lang.code,
-              alias: lang.alias,
-            });
+          ? createLanguageAction(product.id, environmentId, { code: lang.code, alias: lang.alias })
+          : updateLanguageAction(product.id, environmentId, lang.id, { code: lang.code, alias: lang.alias });
       })
     );
     toast.success("Languages updated successfully.");

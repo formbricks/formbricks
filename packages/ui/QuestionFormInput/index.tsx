@@ -389,10 +389,6 @@ export const QuestionFormInput = ({
     else return question.videoUrl;
   };
 
-  const selectedLanguage = localSurvey.languages?.find(
-    (language) => language.language.code === selectedLanguageCode
-  )?.language;
-
   return (
     <div className="w-full">
       <div className="w-full">

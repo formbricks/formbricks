@@ -40,7 +40,6 @@ export type TextEditorProps = {
   firstRender?: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
   editable?: boolean;
-  isRtl?: boolean;
 };
 
 const editorConfig = {
@@ -69,11 +68,7 @@ export const Editor = (props: TextEditorProps) => {
 
   return (
     <div className="editor cursor-text rounded-md">
-      <LexicalComposer
-        initialConfig={{
-          ...editorConfig,
-          editable,
-        }}>
+      <LexicalComposer initialConfig={{ ...editorConfig, editable }}>
         <div className="editor-container rounded-md p-0">
           <ToolbarPlugin
             getText={props.getText}

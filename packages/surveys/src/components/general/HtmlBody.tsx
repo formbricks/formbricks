@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 interface HtmlBodyProps {
   htmlString?: string;
   questionId: string;
-  isRtl?: boolean;
 }
 
-export const HtmlBody = ({ htmlString, questionId, isRtl = false }: HtmlBodyProps) => {
+export const HtmlBody = ({ htmlString, questionId }: HtmlBodyProps) => {
   const [safeHtml, setSafeHtml] = useState("");
 
   useEffect(() => {
@@ -26,6 +25,7 @@ export const HtmlBody = ({ htmlString, questionId, isRtl = false }: HtmlBodyProp
       htmlFor={questionId}
       className={cn("fb-htmlbody break-words")} // styles are in global.css
       dangerouslySetInnerHTML={{ __html: safeHtml }}
+      dir="auto"
     />
   );
 };
