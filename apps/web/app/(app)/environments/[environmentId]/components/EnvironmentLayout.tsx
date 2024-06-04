@@ -27,8 +27,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     getOrganizationByEnvironmentId(environmentId),
   ]);
 
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-
   if (!organization || !environment) {
     return <ErrorComponent />;
   }
@@ -41,7 +39,9 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   if (!products || !environments || !organizations) {
     return <ErrorComponent />;
   }
+
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
