@@ -3,11 +3,11 @@ import { TJsAppConfigInput, TJsTrackProperties } from "@formbricks/types/js";
 import { CommandQueue } from "../shared/commandQueue";
 import { ErrorHandler } from "../shared/errors";
 import { Logger } from "../shared/logger";
+import { checkPageUrl } from "../shared/noCodeActions";
 import { trackCodeAction } from "./lib/actions";
 import { getApi } from "./lib/api";
 import { setAttributeInApp } from "./lib/attributes";
 import { initialize } from "./lib/initialize";
-import { checkPageUrl } from "./lib/noCodeActions";
 import { logoutPerson, resetPerson } from "./lib/person";
 
 const logger = Logger.getInstance();
