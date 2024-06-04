@@ -12,11 +12,10 @@ export const Headline = ({
   alignTextCenter = false,
 }: HeadlineProps) => {
   return (
-    <label
-      htmlFor={questionId}
-      className="text-heading mb-1.5 block text-base font-semibold leading-6"
-      dir="auto">
-      <div className={`flex items-center  ${alignTextCenter ? "justify-center" : "justify-between"}`}>
+    <label htmlFor={questionId} className="text-heading mb-1.5 block text-base font-semibold leading-6">
+      <div
+        className={`flex items-center  ${alignTextCenter ? "justify-center" : "justify-between"}`}
+        dir="auto">
         {headline}
         {!required && (
           <span

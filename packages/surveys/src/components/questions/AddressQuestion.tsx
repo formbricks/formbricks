@@ -148,6 +148,7 @@ export const AddressQuestion = ({
             {inputConfig.map(({ name, placeholder, required }, index) => (
               <input
                 ref={index === 0 ? addressTextRef : null}
+                dir="auto"
                 key={index}
                 name={name}
                 autoComplete={name}

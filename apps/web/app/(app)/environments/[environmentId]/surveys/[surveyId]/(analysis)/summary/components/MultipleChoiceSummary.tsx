@@ -84,7 +84,7 @@ export const MultipleChoiceSummary = ({
                   .filter((otherValue) => otherValue.value !== "")
                   .slice(0, visibleOtherResponses)
                   .map((otherValue, idx) => (
-                    <div key={idx}>
+                    <div key={idx} dir="auto">
                       {surveyType === "link" && (
                         <div
                           key={idx}
