@@ -185,11 +185,11 @@ service:
 ingress:
   enabled: false
   className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: le-clusterissuer # cert-manager issuer
   hosts:
-    - host: chart-example.local
+    - host: example.com
       paths:
         - path: /
           pathType: Prefix
@@ -205,10 +205,10 @@ ingress:
       #   pathType: Exact
       # - path: /favicon.ico
       #   pathType: Exact
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  tls: 
+   - secretName: example-tls
+     hosts:
+       - example.com
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
