@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 
 import { CreateFirstOrganization } from "./components/CreateFirstOrganiztion";
 
@@ -16,6 +17,10 @@ const Page = async () => {
 
   if (!session) {
     redirect("/setup/signup");
+  }
+  const organizations = await getOrganizationsByUserId(session.user.id);
+  if (organizations.length !== 0) {
+    redirect("/404");
   }
 
   return <CreateFirstOrganization />;

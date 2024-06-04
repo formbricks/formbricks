@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER } from "@formbricks/lib/constants";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 
 export const metadata: Metadata = {
@@ -23,7 +24,13 @@ const Page = async () => {
     redirect("/setup/organization/create");
   }
 
-  return <InviteMembers />;
+  if (session.user.onboardingCompleted) {
+    redirect("/404");
+  }
+
+  const IS_SMTP_CONFIGURED: boolean = SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASSWORD ? true : false;
+
+  return <InviteMembers IS_SMTP_CONFIGURED={IS_SMTP_CONFIGURED} />;
 };
 
 export default Page;

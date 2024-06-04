@@ -25,7 +25,7 @@ const Page = async () => {
   const session = await getServerSession(authOptions);
   const isFreshInstance = await getIsFreshInstance();
   if (session) {
-    redirect("/");
+    redirect("/404");
   }
   if (!isFreshInstance) {
     redirect("/auth/login");
