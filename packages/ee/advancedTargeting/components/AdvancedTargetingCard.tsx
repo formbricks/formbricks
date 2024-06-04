@@ -15,10 +15,10 @@ import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from 
 import { TSurvey } from "@formbricks/types/surveys";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
-import { LoadSegmentModal } from "@formbricks/ui/Targeting/LoadSegmentModal";
-import { SaveAsNewSegmentModal } from "@formbricks/ui/Targeting/SaveAsNewSegmentModal";
-import { SegmentTitle } from "@formbricks/ui/Targeting/SegmentTitle";
-import { TargetingIndicator } from "@formbricks/ui/Targeting/TargetingIndicator";
+import { LoadSegmentModal } from "@formbricks/ui/LoadSegmentModal";
+import { SaveAsNewSegmentModal } from "@formbricks/ui/SaveAsNewSegmentModal";
+import { SegmentTitle } from "@formbricks/ui/SegmentTitle";
+import { TargetingIndicator } from "@formbricks/ui/TargetingIndicator";
 
 import {
   cloneSegmentAction,
