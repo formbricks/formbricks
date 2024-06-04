@@ -164,7 +164,7 @@ export const MultipleChoiceSingleQuestion = ({
                           checked={value === getLocalizedValue(choice.label, languageCode)}
                           required={question.required && idx === 0}
                         />
-                        <span id={`${choice.id}-label`} className="ml-3 mr-3 font-medium">
+                        <span id={`${choice.id}-label`} className="ml-3 mr-3 font-medium" dir="auto">
                           {getLocalizedValue(choice.label, languageCode)}
                         </span>
                       </span>
@@ -191,6 +191,7 @@ export const MultipleChoiceSingleQuestion = ({
                     }}>
                     <span className="flex items-center text-sm">
                       <input
+                        dir="auto"
                         type="radio"
                         id={otherOption.id}
                         tabIndex={-1}
@@ -204,7 +205,7 @@ export const MultipleChoiceSingleQuestion = ({
                         }}
                         checked={otherSelected}
                       />
-                      <span id={`${otherOption.id}-label`} className="ml-3 mr-3 font-medium" dir="auto">
+                      <span id={`${otherOption.id}-label`} className="ml-3 mr-3 grow font-medium" dir="auto">
                         {getLocalizedValue(otherOption.label, languageCode)}
                       </span>
                     </span>

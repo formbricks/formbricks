@@ -186,6 +186,7 @@ export const MultipleChoiceMultiQuestion = ({
                       <span className="flex items-center text-sm">
                         <input
                           type="checkbox"
+                          dir="auto"
                           id={choice.id}
                           name={question.id}
                           tabIndex={-1}
@@ -209,7 +210,7 @@ export const MultipleChoiceMultiQuestion = ({
                               : question.required
                           }
                         />
-                        <span id={`${choice.id}-label`} className="ml-3 mr-3 font-medium" dir="auto">
+                        <span id={`${choice.id}-label`} className="ml-3 mr-3 grow font-medium" dir="auto">
                           {getLocalizedValue(choice.label, languageCode)}
                         </span>
                       </span>
@@ -237,6 +238,7 @@ export const MultipleChoiceMultiQuestion = ({
                     <span className="flex items-center text-sm">
                       <input
                         type="checkbox"
+                        dir="auto"
                         tabIndex={-1}
                         id={otherOption.id}
                         name={question.id}
@@ -253,13 +255,14 @@ export const MultipleChoiceMultiQuestion = ({
                         }}
                         checked={otherSelected}
                       />
-                      <span id={`${otherOption.id}-label`} className="ml-3 mr-3 font-medium" dir="auto">
+                      <span id={`${otherOption.id}-label`} className="ml-3 mr-3 grow font-medium" dir="auto">
                         {getLocalizedValue(otherOption.label, languageCode)}
                       </span>
                     </span>
                     {otherSelected && (
                       <input
                         ref={otherSpecify}
+                        dir="auto"
                         id={`${otherOption.id}-label`}
                         name={question.id}
                         tabIndex={questionChoices.length + 1}
