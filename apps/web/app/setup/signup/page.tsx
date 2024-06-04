@@ -32,9 +32,10 @@ const Page = async () => {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-4">
-      <h2 className="text-2xl font-medium">Create Administrator</h2>
-      <p>This user has all the power.</p>
+    <div className="flex flex-col items-center">
+      <h2 className="mb-6 text-xl font-medium">Create Administrator</h2>
+      <p className="mb-6 text-sm text-slate-800">This user has all the power.</p>
+      <hr className="my-4" />
       <SignupOptions
         emailAuthEnabled={EMAIL_AUTH_ENABLED}
         emailFromSearchParams={""}
@@ -48,7 +49,6 @@ const Page = async () => {
         callbackUrl={""}
         oidcDisplayName={OIDC_DISPLAY_NAME}
       />
-      <p className="text-slate-400">Privacy-first Experience Management</p>
     </div>
   );
 };

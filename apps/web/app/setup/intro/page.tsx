@@ -1,8 +1,8 @@
-import { FormbricksIntro } from "@/app/setup/intro/components/FormbricksIntro";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { getIsFreshInstance } from "@formbricks/lib/user/service";
+import { Button } from "@formbricks/ui/Button";
 
 export const metadata: Metadata = {
   title: "Intro",
@@ -14,7 +14,25 @@ const Page = async () => {
   if (!isFreshInstance) {
     redirect("/404");
   }
-  return <FormbricksIntro />;
+
+  return (
+    <div className="flex flex-col items-center">
+      <h2 className="mb-6 text-xl font-medium">Welcome to Formbricks!</h2>
+      <div className="space-y-4 text-sm text-slate-800">
+        <p>
+          Formbricks is a versatile open source platform with an Experience Management Suite built on top of
+          it.
+        </p>
+        <p>Survey customers, users or employees at any points with a perfectly timed and targeted survey.</p>
+        <p>Keep full control over your data</p>
+      </div>
+      <Button variant="darkCTA" href="/setup/signup" className="mt-6">
+        Get started
+      </Button>
+
+      <p className="pt-6 text-xs text-slate-500">Made with 🤍 in Kiel, Germany</p>
+    </div>
+  );
 };
 
 export default Page;
