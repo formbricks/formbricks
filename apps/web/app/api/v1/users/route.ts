@@ -14,11 +14,12 @@ import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
-import { createUser, updateUser } from "@formbricks/lib/user/service";
+import { createUser, getIsFreshInstance, updateUser } from "@formbricks/lib/user/service";
 
 export const POST = async (request: Request) => {
   let { inviteToken, ...user } = await request.json();
-  if (!EMAIL_AUTH_ENABLED || inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED) {
+  const isFreshInstance = await getIsFreshInstance();
+  if (!isFreshInstance && (!EMAIL_AUTH_ENABLED || inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED)) {
     return Response.json({ error: "Signup disabled" }, { status: 403 });
   }
 
