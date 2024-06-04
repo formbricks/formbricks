@@ -24,7 +24,7 @@ const ZActionClassNoCodeConfigBase = z.object({
   type: z.enum(["click", "pageView", "exitIntent", "50PercentScroll"]),
   urlFilters: z.array(
     z.object({
-      value: z.string().trim().min(1),
+      value: z.string().trim().min(1, { message: "Value must contain atleast 1 character" }),
       rule: ZActionClassPageUrlRule,
     })
   ),
@@ -87,7 +87,10 @@ export const ZActionClass = z.object({
 export type TActionClass = z.infer<typeof ZActionClass>;
 
 const ZActionClassInputBase = z.object({
-  name: z.string().trim().min(1),
+  name: z
+    .string({ message: "Name is required" })
+    .trim()
+    .min(1, { message: "Name must be at least 1 character long" }),
   description: z.string().nullable(),
   environmentId: z.string(),
   type: ZActionClassType,

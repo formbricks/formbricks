@@ -2,8 +2,9 @@ import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { InfoIcon, Terminal } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Controller, FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { z } from "zod";
 
 import {
   TActionClass,
@@ -40,7 +41,7 @@ export const CreateNewActionTab = ({
 }: CreateNewActionTabProps) => {
   const [isCssSelector, setIsCssSelector] = useState(false);
   const [isInnerHtml, setIsInnerText] = useState(false);
-  const [isCreatingAction, setIsCreatingAction] = useState(false);
+
   const actionClassNames = useMemo(
     () => actionClasses.map((actionClass) => actionClass.name),
     [actionClasses]
@@ -61,11 +62,22 @@ export const CreateNewActionTab = ({
         urlFilters: [],
       },
     },
-    resolver: zodResolver(ZActionClassInput),
+    resolver: zodResolver(
+      ZActionClassInput.superRefine((data, ctx) => {
+        if (data.name && actionClassNames.includes(data.name)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["name"],
+            message: `Action with name ${data.name} already exists`,
+          });
+        }
+      })
+    ),
     mode: "onChange",
   });
 
-  const { register, control, handleSubmit, watch, reset } = form;
+  const { control, handleSubmit, watch, reset } = form;
+  const { isSubmitting } = form.formState;
 
   const actionClassKeys = useMemo(() => {
     const codeActionClasses: TActionClassInputCode[] = actionClasses.filter(
@@ -81,7 +93,6 @@ export const CreateNewActionTab = ({
       if (isViewer) {
         throw new Error("You are not authorised to perform this action.");
       }
-      setIsCreatingAction(true);
 
       if (data.name && actionClassNames.includes(data.name)) {
         throw new Error(`Action with name ${data.name} already exist`);
@@ -110,7 +121,6 @@ export const CreateNewActionTab = ({
           type: "noCode",
           noCodeConfig: {
             ...data.noCodeConfig,
-
             ...(data.type === "noCode" &&
               data.noCodeConfig?.type === "click" && {
                 elementSelector: {
@@ -152,8 +162,6 @@ export const CreateNewActionTab = ({
       resetAllStates();
     } catch (e: any) {
       toast.error(e.message);
-    } finally {
-      setIsCreatingAction(false);
     }
   };
 
@@ -187,6 +195,8 @@ export const CreateNewActionTab = ({
                           isInvalid={!!error?.message}
                         />
                       </FormControl>
+
+                      <FormError />
                     </FormItem>
                   )}
                 />
@@ -215,19 +225,19 @@ export const CreateNewActionTab = ({
             </div>
 
             <div className="w-3/5">
-              <Controller
+              <FormField
                 name={`type`}
                 control={control}
-                render={({ field: { onChange, value } }) => (
+                render={({ field }) => (
                   <TabToggle
                     id="type"
                     label="Type"
-                    onChange={onChange}
                     options={[
                       { value: "noCode", label: "No code" },
                       { value: "code", label: "Code" },
                     ]}
-                    defaultSelected={value}
+                    {...field}
+                    defaultSelected={field.value}
                   />
                 )}
               />
@@ -275,22 +285,26 @@ export const CreateNewActionTab = ({
               </>
             ) : (
               <div>
-                <Controller
+                <FormField
                   name={`noCodeConfig.type`}
                   control={control}
-                  render={({ field: { onChange, value } }) => (
-                    <TabToggle
-                      id="userAction"
-                      label="What is the user doing?"
-                      onChange={onChange}
-                      options={[
-                        { value: "click", label: "Click" },
-                        { value: "pageView", label: "Page View" },
-                        { value: "exitIntent", label: "Exit Intent" },
-                        { value: "50PercentScroll", label: "50% Scroll" },
-                      ]}
-                      defaultSelected={value}
-                    />
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <TabToggle
+                          id="userAction"
+                          {...field}
+                          defaultSelected={field.value}
+                          label="What is the user doing?"
+                          options={[
+                            { value: "click", label: "Click" },
+                            { value: "pageView", label: "Page View" },
+                            { value: "exitIntent", label: "Exit Intent" },
+                            { value: "50PercentScroll", label: "50% Scroll" },
+                          ]}
+                        />
+                      </FormControl>
+                    </FormItem>
                   )}
                 />
 
@@ -338,7 +352,7 @@ export const CreateNewActionTab = ({
                       <p>This action will be triggered when the user scrolls 50% of the page.</p>
                     </div>
                   )}
-                  <PageUrlSelector watch={watch} register={register} control={control} />
+                  <PageUrlSelector form={form} />
                 </div>
               </div>
             )}
@@ -348,7 +362,7 @@ export const CreateNewActionTab = ({
               <Button type="button" variant="minimal" onClick={resetAllStates}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit" loading={isCreatingAction}>
+              <Button variant="darkCTA" type="submit" loading={isSubmitting}>
                 Create action
               </Button>
             </div>

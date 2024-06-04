@@ -276,7 +276,7 @@ export const ActionSettingsTab = ({
                       <p>This action will be triggered when the user scrolls 50% of the page.</p>
                     </div>
                   )}
-                  <PageUrlSelector watch={watch} register={register} control={control} />
+                  <PageUrlSelector form={form} />
                 </div>
               </div>
             ) : actionClass.type === "automatic" ? (
