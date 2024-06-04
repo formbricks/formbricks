@@ -9,8 +9,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { InfoIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { Controller, FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+import { z } from "zod";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/actionClasses";
@@ -69,7 +70,18 @@ export const ActionSettingsTab = ({
     defaultValues: {
       ...restActionClass,
     },
-    resolver: zodResolver(ZActionClassInput),
+    resolver: zodResolver(
+      ZActionClassInput.superRefine((data, ctx) => {
+        if (data.name && actionClassNames.includes(data.name)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["name"],
+            message: `Action with name ${data.name} already exists`,
+          });
+        }
+      })
+    ),
+    mode: "onChange",
   });
 
   const { register, handleSubmit, control, watch } = form;
@@ -164,6 +176,8 @@ export const ActionSettingsTab = ({
                           disabled={actionClass.type === "automatic" ? true : false}
                         />
                       </FormControl>
+
+                      <FormError />
                     </FormItem>
                   )}
                 />
@@ -213,22 +227,26 @@ export const ActionSettingsTab = ({
               </p>
             ) : actionClass.type === "noCode" ? (
               <div>
-                <Controller
+                <FormField
                   name={`noCodeConfig.type`}
                   control={control}
                   render={({ field: { onChange, value } }) => (
-                    <TabToggle
-                      id="userAction"
-                      label="What is the user doing?"
-                      onChange={onChange}
-                      options={[
-                        { value: "click", label: "Click" },
-                        { value: "pageView", label: "Page View" },
-                        { value: "exitIntent", label: "Exit Intent" },
-                        { value: "50PercentScroll", label: "50% Scroll" },
-                      ]}
-                      defaultSelected={value}
-                    />
+                    <FormItem>
+                      <FormControl>
+                        <TabToggle
+                          id="userAction"
+                          label="What is the user doing?"
+                          onChange={onChange}
+                          options={[
+                            { value: "click", label: "Click" },
+                            { value: "pageView", label: "Page View" },
+                            { value: "exitIntent", label: "Exit Intent" },
+                            { value: "50PercentScroll", label: "50% Scroll" },
+                          ]}
+                          defaultSelected={value}
+                        />
+                      </FormControl>
+                    </FormItem>
                   )}
                 />
 

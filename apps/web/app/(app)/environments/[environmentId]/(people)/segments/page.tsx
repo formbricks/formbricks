@@ -14,7 +14,7 @@ import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
 const Page = async ({ params }) => {
-  const [environment, segments, attributeClasses, actionClassesFromServer, organization] = await Promise.all([
+  const [environment, segments, attributeClasses, actionClasses, organization] = await Promise.all([
     getEnvironment(params.environmentId),
     getSegments(params.environmentId),
     getAttributeClasses(params.environmentId),
@@ -37,8 +37,6 @@ const Page = async ({ params }) => {
   }
 
   const filteredSegments = segments.filter((segment) => !segment.isPrivate);
-
-  const actionClasses = actionClassesFromServer;
 
   const renderCreateSegmentButton = () =>
     isAdvancedTargetingAllowed ? (
