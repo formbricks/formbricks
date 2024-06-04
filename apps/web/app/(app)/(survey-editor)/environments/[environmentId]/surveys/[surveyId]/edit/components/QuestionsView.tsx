@@ -383,14 +383,12 @@ export const QuestionsView = ({
           attributeClasses={attributeClasses}
         />
 
-        {localSurvey.type === "link" ? (
-          <HiddenFieldsCard
-            localSurvey={localSurvey}
-            setLocalSurvey={setLocalSurvey}
-            setActiveQuestionId={setActiveQuestionId}
-            activeQuestionId={activeQuestionId}
-          />
-        ) : null}
+        <HiddenFieldsCard
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+          setActiveQuestionId={setActiveQuestionId}
+          activeQuestionId={activeQuestionId}
+        />
 
         <MultiLanguageCard
           localSurvey={localSurvey}
