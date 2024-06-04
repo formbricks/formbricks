@@ -1,5 +1,5 @@
-import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 import { timeSinceConditionally } from "@formbricks/lib/time";
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TWebhook } from "@formbricks/types/webhooks";
 import { Badge } from "@formbricks/ui/Badge";
