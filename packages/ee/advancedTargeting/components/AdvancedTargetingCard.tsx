@@ -44,7 +44,7 @@ export const AdvancedTargetingCard = ({
   localSurvey,
   setLocalSurvey,
   environmentId,
-  actionClasses: actionClassesProps,
+  actionClasses,
   attributeClasses,
   segments,
   initialSegment,
@@ -59,8 +59,6 @@ export const AdvancedTargetingCard = ({
   const [loadSegmentModalOpen, setLoadSegmentModalOpen] = useState(false);
   const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(!!localSurvey.segment?.isPrivate);
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(true);
-
-  const actionClasses = actionClassesProps;
 
   useEffect(() => {
     setLocalSurvey((localSurveyOld) => ({
