@@ -18,3 +18,5 @@ export const truncate = (str: string, length: number) => {
 export const sanitizeString = (str: string, delimiter: string = "_", length: number = 255) => {
   return str.replace(/[^0-9a-zA-Z\-._]+/g, delimiter).substring(0, length);
 };
+
+export const isCapitalized = (str: string) => str.charAt(0) === str.charAt(0).toUpperCase();
