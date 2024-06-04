@@ -325,8 +325,8 @@ export type TSurveyMultipleChoiceQuestion = z.infer<typeof ZSurveyMultipleChoice
 
 export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.NPS),
-  lowerLabel: ZI18nString,
-  upperLabel: ZI18nString,
+  lowerLabel: ZI18nString.optional(),
+  upperLabel: ZI18nString.optional(),
   logic: z.array(ZSurveyNPSLogic).optional(),
 });
 
@@ -347,8 +347,8 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Rating),
   scale: z.enum(["number", "smiley", "star"]),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]),
-  lowerLabel: ZI18nString,
-  upperLabel: ZI18nString,
+  lowerLabel: ZI18nString.optional(),
+  upperLabel: ZI18nString.optional(),
   logic: z.array(ZSurveyRatingLogic).optional(),
 });
 

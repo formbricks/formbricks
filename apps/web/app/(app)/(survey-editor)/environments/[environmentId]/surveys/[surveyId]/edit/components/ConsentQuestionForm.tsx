@@ -35,6 +35,7 @@ export const ConsentQuestionForm = ({
     <form>
       <QuestionFormInput
         id="headline"
+        label="Question*"
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -65,7 +66,7 @@ export const ConsentQuestionForm = ({
 
       <QuestionFormInput
         id="label"
-        label="Checkbox Label"
+        label="Checkbox Label*"
         placeholder="I agree to the terms and conditions"
         value={question.label}
         localSurvey={localSurvey}

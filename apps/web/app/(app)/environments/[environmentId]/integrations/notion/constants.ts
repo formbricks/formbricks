@@ -22,6 +22,10 @@ export const TYPE_MAPPING = {
   [TSurveyQuestionType.Rating]: ["number"],
   [TSurveyQuestionType.PictureSelection]: ["url"],
   [TSurveyQuestionType.FileUpload]: ["url"],
+  [TSurveyQuestionType.Date]: ["date"],
+  [TSurveyQuestionType.Address]: ["rich_text"],
+  [TSurveyQuestionType.Matrix]: ["rich_text"],
+  [TSurveyQuestionType.Cal]: ["checkbox"],
 };
 
 export const UNSUPPORTED_TYPES_BY_NOTION = [

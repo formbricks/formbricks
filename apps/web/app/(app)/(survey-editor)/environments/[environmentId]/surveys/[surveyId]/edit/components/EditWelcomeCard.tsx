@@ -126,7 +126,7 @@ export const EditWelcomeCard = ({
               <QuestionFormInput
                 id="headline"
                 value={localSurvey.welcomeCard.headline}
-                label="Headline"
+                label="Note*"
                 localSurvey={localSurvey}
                 questionIdx={-1}
                 isInvalid={isInvalid}
@@ -169,6 +169,7 @@ export const EditWelcomeCard = ({
                     selectedLanguageCode={selectedLanguageCode}
                     setSelectedLanguageCode={setSelectedLanguageCode}
                     attributeClasses={attributeClasses}
+                    label={`"Next" Button Label`}
                   />
                 </div>
               </div>
