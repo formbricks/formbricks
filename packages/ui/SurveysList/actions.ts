@@ -76,6 +76,17 @@ export const copyToOtherEnvironmentAction = async (
           attributeClass: true,
         },
       },
+      languages: {
+        select: {
+          default: true,
+          enabled: true,
+          language: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      },
       segment: true,
     },
   });
@@ -156,6 +167,8 @@ export const copyToOtherEnvironmentAction = async (
     }
   }
 
+  const defaultLanguageId = existingSurvey.languages.find((l) => l.default)?.language.id;
+
   // create new survey with the data of the existing survey
   const newSurvey = await prisma.survey.create({
     data: {
@@ -168,6 +181,12 @@ export const copyToOtherEnvironmentAction = async (
       status: "draft",
       questions: structuredClone(existingSurvey.questions),
       thankYouCard: structuredClone(existingSurvey.thankYouCard),
+      languages: {
+        create: existingSurvey.languages?.map((surveyLanguage) => ({
+          languageId: surveyLanguage.language.id,
+          default: surveyLanguage.language.id === defaultLanguageId,
+        })),
+      },
       triggers: {
         create: targetEnvironmentTriggers.map((actionClassId) => ({
           actionClassId: actionClassId,
