@@ -11,7 +11,7 @@ import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
-import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
+import { TResponse, TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
@@ -123,20 +123,17 @@ export const LinkSurvey = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hiddenFieldsRecord = useMemo<TResponseData | undefined>(() => {
-    const fieldsRecord: TResponseData = {};
-    let fieldsSet = false;
+  const hiddenFieldsRecord = useMemo<TResponseHiddenFieldValue>(() => {
+    const fieldsRecord: TResponseHiddenFieldValue = {};
 
     survey.hiddenFields?.fieldIds?.forEach((field) => {
       const answer = searchParams?.get(field);
       if (answer) {
         fieldsRecord[field] = answer;
-        fieldsSet = true;
       }
     });
 
-    // Only return the record if at least one field was set.
-    return fieldsSet ? fieldsRecord : undefined;
+    return fieldsRecord;
   }, [searchParams, survey.hiddenFields?.fieldIds]);
 
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
@@ -255,7 +252,6 @@ export const LinkSurvey = ({
               responseQueue.add({
                 data: {
                   ...responseUpdate.data,
-                  ...hiddenFieldsRecord,
                   ...getVerifiedEmail,
                 },
                 ttc: responseUpdate.ttc,
@@ -266,6 +262,7 @@ export const LinkSurvey = ({
                   url: window.location.href,
                   source: sourceParam || "",
                 },
+                ...(Object.keys(hiddenFieldsRecord).length > 0 && { hiddenFields: hiddenFieldsRecord }),
               });
           }}
           onFileUpload={async (file: File, params: TUploadFileConfig) => {
@@ -285,7 +282,6 @@ export const LinkSurvey = ({
             setQuestionId = f;
           }}
           startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
-          hiddenFieldsRecord={hiddenFieldsRecord}
         />
       </div>
     </div>

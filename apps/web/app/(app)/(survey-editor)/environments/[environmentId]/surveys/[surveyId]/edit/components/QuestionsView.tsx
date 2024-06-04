@@ -148,17 +148,17 @@ export const QuestionsView = ({
         setbackButtonLabel(updatedAttributes.backButtonLabel);
       }
     }
-    // If the value of buttonLabel is equal to {default:""}, then delete buttonLabel key
-    if ("buttonLabel" in updatedAttributes) {
-      const currentButtonLabel = updatedSurvey.questions[questionIdx].buttonLabel;
-      if (
-        currentButtonLabel &&
-        Object.keys(currentButtonLabel).length === 1 &&
-        currentButtonLabel["default"].trim() === ""
-      ) {
-        delete updatedSurvey.questions[questionIdx].buttonLabel;
+    const attributesToCheck = ["buttonLabel", "upperLabel", "lowerLabel"];
+
+    // If the value of buttonLabel, lowerLabel or upperLabel is equal to {default:""}, then delete buttonLabel key
+    attributesToCheck.forEach((attribute) => {
+      if (Object.keys(updatedAttributes).includes(attribute)) {
+        const currentLabel = updatedSurvey.questions[questionIdx][attribute];
+        if (currentLabel && Object.keys(currentLabel).length === 1 && currentLabel["default"].trim() === "") {
+          delete updatedSurvey.questions[questionIdx][attribute];
+        }
       }
-    }
+    });
     setLocalSurvey(updatedSurvey);
     validateSurveyQuestion(updatedSurvey.questions[questionIdx]);
   };
@@ -383,14 +383,12 @@ export const QuestionsView = ({
           attributeClasses={attributeClasses}
         />
 
-        {localSurvey.type === "link" ? (
-          <HiddenFieldsCard
-            localSurvey={localSurvey}
-            setLocalSurvey={setLocalSurvey}
-            setActiveQuestionId={setActiveQuestionId}
-            activeQuestionId={activeQuestionId}
-          />
-        ) : null}
+        <HiddenFieldsCard
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+          setActiveQuestionId={setActiveQuestionId}
+          activeQuestionId={activeQuestionId}
+        />
 
         <MultiLanguageCard
           localSurvey={localSurvey}

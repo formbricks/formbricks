@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-import { capitalizeFirstLetter } from "@formbricks/lib/strings";
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";

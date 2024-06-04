@@ -112,7 +112,7 @@ export const EditThankYouCard = ({
           <form>
             <QuestionFormInput
               id="headline"
-              label="Headline"
+              label="Note*"
               value={localSurvey?.thankYouCard?.headline}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
@@ -126,6 +126,7 @@ export const EditThankYouCard = ({
             <QuestionFormInput
               id="subheader"
               value={localSurvey.thankYouCard.subheader}
+              label={"Description"}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
               isInvalid={isInvalid}
