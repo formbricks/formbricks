@@ -21,7 +21,7 @@ export const ZActionClassPageUrlRule = z.union([
 export type TActionClassPageUrlRule = z.infer<typeof ZActionClassPageUrlRule>;
 
 const ZActionClassNoCodeConfigBase = z.object({
-  type: z.enum(["click", "pageView", "exitIntent", "50PercentScroll"]),
+  type: z.enum(["click", "pageView", "exitIntent", "fiftyPercentScroll"]),
   urlFilters: z.array(
     z.object({
       value: z.string().trim().min(1, { message: "Value must contain atleast 1 character" }),
@@ -55,15 +55,15 @@ const ZActionClassNoCodeConfigExitIntent = ZActionClassNoCodeConfigBase.extend({
   type: z.literal("exitIntent"),
 });
 
-const ZActionClassNoCodeConfig50PercentScroll = ZActionClassNoCodeConfigBase.extend({
-  type: z.literal("50PercentScroll"),
+const ZActionClassNoCodeConfigfiftyPercentScroll = ZActionClassNoCodeConfigBase.extend({
+  type: z.literal("fiftyPercentScroll"),
 });
 
 export const ZActionClassNoCodeConfig = z.union([
   ZActionClassNoCodeConfigClick,
   ZActionClassNoCodeConfigPageView,
   ZActionClassNoCodeConfigExitIntent,
-  ZActionClassNoCodeConfig50PercentScroll,
+  ZActionClassNoCodeConfigfiftyPercentScroll,
 ]);
 
 export type TActionClassNoCodeConfig = z.infer<typeof ZActionClassNoCodeConfig>;

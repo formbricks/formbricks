@@ -75,7 +75,7 @@ const main = async () => {
           data: {
             type: "noCode",
             noCodeConfig: {
-              type: idx === 0 ? "exitIntent" : "50PercentScroll",
+              type: idx === 0 ? "exitIntent" : "fiftyPercentScroll",
               urlFilters: [],
             },
           },

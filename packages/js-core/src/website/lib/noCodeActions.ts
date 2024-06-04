@@ -152,11 +152,11 @@ const checkScrollDepth = async () => {
     const { state } = websiteConfig.get();
     const { actionClasses = [] } = state ?? {};
 
-    const noCode50PercentScrollActionClasses = actionClasses.filter(
-      (action) => action.type === "noCode" && action.noCodeConfig?.type === "50PercentScroll"
+    const noCodefiftyPercentScrollActionClasses = actionClasses.filter(
+      (action) => action.type === "noCode" && action.noCodeConfig?.type === "fiftyPercentScroll"
     ) as TActionClass[];
 
-    for (const event of noCode50PercentScrollActionClasses) {
+    for (const event of noCodefiftyPercentScrollActionClasses) {
       const urlFilters = event.noCodeConfig?.urlFilters ?? [];
       const isValidUrl = handleUrlFilters(urlFilters);
 

@@ -257,7 +257,7 @@ export const actions = {
         name: "Create Exit Intent Action",
         description: "This is my Create Action (Exit Intent)",
       },
-      "50PercentScroll": {
+      fiftyPercentScroll: {
         name: "Create 50% Scroll Action",
         description: "This is my Create Action (50% Scroll)",
       },
@@ -288,7 +288,7 @@ export const actions = {
         name: "Edit Exit Intent Action",
         description: "This is my Edit Action (Exit Intent)",
       },
-      "50PercentScroll": {
+      fiftyPercentScroll: {
         name: "Edit 50% Scroll Action",
         description: "This is my Edit Action (50% Scroll)",
       },

@@ -300,7 +300,7 @@ export const CreateNewActionTab = ({
                             { value: "click", label: "Click" },
                             { value: "pageView", label: "Page View" },
                             { value: "exitIntent", label: "Exit Intent" },
-                            { value: "50PercentScroll", label: "50% Scroll" },
+                            { value: "fiftyPercentScroll", label: "50% Scroll" },
                           ]}
                         />
                       </FormControl>
@@ -346,7 +346,7 @@ export const CreateNewActionTab = ({
                       <p>This action will be triggered when the user tries to leave the page.</p>
                     </div>
                   )}
-                  {watch("noCodeConfig.type") === "50PercentScroll" && (
+                  {watch("noCodeConfig.type") === "fiftyPercentScroll" && (
                     <div className="flex items-center gap-2 text-slate-600">
                       <InfoIcon className=" h-4 w-4 " />
                       <p>This action will be triggered when the user scrolls 50% of the page.</p>

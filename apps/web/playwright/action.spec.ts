@@ -270,8 +270,8 @@ test.describe("Create and Edit No Code 50% scroll Action", async () => {
       username,
       email,
       password,
-      actions.create.noCode["50PercentScroll"].name,
-      actions.create.noCode["50PercentScroll"].description,
+      actions.create.noCode["fiftyPercentScroll"].name,
+      actions.create.noCode["fiftyPercentScroll"].description,
       "50% Scroll"
     );
   });
@@ -281,17 +281,17 @@ test.describe("Create and Edit No Code 50% scroll Action", async () => {
     await page.getByRole("link", { name: "Actions" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/actions/);
 
-    const actionButton = getActionButtonLocator(page, actions.create.noCode["50PercentScroll"].name);
+    const actionButton = getActionButtonLocator(page, actions.create.noCode["fiftyPercentScroll"].name);
     await expect(actionButton).toBeVisible();
     await actionButton.click();
 
     await page.getByRole("button", { name: "Settings", exact: true }).click();
 
     await expect(page.getByLabel("What did your user do?")).toBeVisible();
-    await page.getByLabel("What did your user do?").fill(actions.edit.noCode["50PercentScroll"].name);
+    await page.getByLabel("What did your user do?").fill(actions.edit.noCode["fiftyPercentScroll"].name);
 
     await expect(page.getByLabel("Description")).toBeVisible();
-    await page.getByLabel("Description").fill(actions.edit.noCode["50PercentScroll"].description);
+    await page.getByLabel("Description").fill(actions.edit.noCode["fiftyPercentScroll"].description);
 
     await page.getByRole("button", { name: "Save changes", exact: true }).click();
   });
