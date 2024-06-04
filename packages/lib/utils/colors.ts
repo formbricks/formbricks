@@ -1,7 +1,3 @@
-export const delay = (ms: number) => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};
-
 export const hexToRGBA = (hex: string | undefined, opacity: number): string | undefined => {
   // return undefined if hex is undefined, this is important for adding the default values to the CSS variables
   // TODO: find a better way to handle this

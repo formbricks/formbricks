@@ -5,12 +5,12 @@ import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 
-type ConfirmDeleteSegmentModalProps = {
+interface ConfirmDeleteSegmentModalProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   segment: TSegmentWithSurveyNames;
   onDelete: () => Promise<void>;
-};
+}
 
 export const ConfirmDeleteSegmentModal = ({
   onDelete,
