@@ -29,7 +29,8 @@
     "release": "turbo run build --filter=js... && turbo run build --filter=n8n-node... && changeset publish",
     "test": "turbo run test --no-cache",
     "test:e2e": "playwright test",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "storybook": "turbo run storybook"
   },
   "devDependencies": {
     "@playwright/test": "^1.44.1",
