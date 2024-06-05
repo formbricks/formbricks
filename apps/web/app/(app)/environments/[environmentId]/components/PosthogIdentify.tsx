@@ -40,9 +40,9 @@ export const PosthogIdentify = ({
       if (organizationId) {
         posthog.group("organization", organizationId, {
           name: organizationName,
-          plan: organizationBilling.plan,
-          responseLimit: organizationBilling.limits.monthly.responses,
-          miuLimit: organizationBilling.limits.monthly.miu,
+          plan: organizationBilling?.plan,
+          responseLimit: organizationBilling?.limits.monthly.responses,
+          miuLimit: organizationBilling?.limits.monthly.miu,
         });
       }
     }

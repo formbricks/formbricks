@@ -3,8 +3,9 @@ import Stripe from "stripe";
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 
-import { ProductFeatureKeys, StripeProductNames } from "../lib/constants";
+import { PRODUCT_FEATURE_KEYS, STRIPE_PRODUCT_NAMES } from "../lib/constants";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
@@ -25,36 +26,40 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
   }
 
   const organization = await getOrganization(organizationId);
-  if (!organization) throw new Error("Team not found");
+  if (!organization) throw new ResourceNotFoundError("Organization not found", organizationId);
 
   const product = await stripe.products.retrieve(
     stripeSubscriptionObject.items.data[0].price.product as string
   );
-  if (!product) throw new Error("Product not found");
+  if (!product)
+    throw new ResourceNotFoundError(
+      "Product not found",
+      stripeSubscriptionObject.items.data[0].price.product.toString()
+    );
 
   let updatedBilling = organization.billing;
-  let responses = product.metadata.responses as unknown as number;
-  let miu = product.metadata.miu as unknown as number;
+  let responses = parseInt(product.metadata.responses);
+  let miu = parseInt(product.metadata.miu);
 
   if (!responses || !miu) {
     // Enteprise Plan Payment via Payment Link
-    responses = stripeSubscriptionObject.metadata.responses as unknown as number;
-    miu = stripeSubscriptionObject.metadata.miu as unknown as number;
+    responses = parseInt(stripeSubscriptionObject.metadata.responses);
+    miu = parseInt(stripeSubscriptionObject.metadata.miu);
   }
 
   updatedBilling.limits.monthly = { responses, miu };
 
   switch (product.name) {
-    case StripeProductNames.startup:
-      updatedBilling.plan = ProductFeatureKeys.startup;
+    case STRIPE_PRODUCT_NAMES.STARTUP:
+      updatedBilling.plan = PRODUCT_FEATURE_KEYS.STARTUP;
       break;
 
-    case StripeProductNames.scale:
-      updatedBilling.plan = ProductFeatureKeys.scale;
+    case STRIPE_PRODUCT_NAMES.SCALE:
+      updatedBilling.plan = PRODUCT_FEATURE_KEYS.SCALE;
       break;
 
-    case StripeProductNames.enterprise:
-      updatedBilling.plan = ProductFeatureKeys.enterprise;
+    case STRIPE_PRODUCT_NAMES.ENTERPRISE:
+      updatedBilling.plan = PRODUCT_FEATURE_KEYS.ENTERPRISE;
       break;
   }
 
@@ -68,7 +73,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
 
   await stripe.customers.update(stripeSubscriptionObject.customer as string, {
     name: organization.name,
-    metadata: { team: organization.id },
+    metadata: { orgnizationId: organization.id },
     invoice_settings: {
       default_payment_method: stripeSubscriptionObject.default_payment_method as string,
     },

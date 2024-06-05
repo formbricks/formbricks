@@ -2,7 +2,7 @@
 
 import { getServerSession } from "next-auth";
 
-import { StripePriceLookupKeys } from "@formbricks/ee/billing/lib/constants";
+import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/ee/billing/lib/constants";
 import { createCustomerPortalSession } from "@formbricks/ee/billing/lib/createCustomerPortalSession";
 import { createSubscription } from "@formbricks/ee/billing/lib/createSubscription";
 import { isSubscriptionCancelled } from "@formbricks/ee/billing/lib/isSubscriptionCancelled";
@@ -15,7 +15,7 @@ import { AuthorizationError } from "@formbricks/types/errors";
 export const upgradePlanAction = async (
   organizationId: string,
   environmentId: string,
-  priceLookupKey: StripePriceLookupKeys
+  priceLookupKey: STRIPE_PRICE_LOOKUP_KEYS
 ) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");

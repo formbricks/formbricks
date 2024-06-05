@@ -1,20 +1,20 @@
-export enum ProductFeatureKeys {
-  free = "free",
-  startup = "startup",
-  scale = "scale",
-  enterprise = "enterprise",
+export enum PRODUCT_FEATURE_KEYS {
+  FREE = "free",
+  STARTUP = "startup",
+  SCALE = "scale",
+  ENTERPRISE = "enterprise",
 }
 
-export enum StripeProductNames {
-  startup = "Formbricks Startup",
-  scale = "Formbricks Scale",
-  enterprise = "Formbricks Enterprise",
+export enum STRIPE_PRODUCT_NAMES {
+  STARTUP = "Formbricks Startup",
+  SCALE = "Formbricks Scale",
+  ENTERPRISE = "Formbricks Enterprise",
 }
-export enum StripePriceLookupKeys {
-  startupMonthly = "formbricks_startup_monthly",
-  startupYearly = "formbricks_startup_yearly",
-  scaleMonthly = "formbricks_scale_monthly",
-  scaleYearly = "formbricks_scale_yearly",
+export enum STRIPE_PRICE_LOOKUP_KEYS {
+  STARTUP_MONTHLY = "formbricks_startup_monthly",
+  STARTUP_YEARLY = "formbricks_startup_yearly",
+  SCALE_MONTHLY = "formbricks_scale_monthly",
+  SCALE_YEARLY = "formbricks_scale_yearly",
 }
 
 export const LIMITS = {

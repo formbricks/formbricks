@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { StripePriceLookupKeys } from "@formbricks/ee/billing/lib/constants";
+import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/ee/billing/lib/constants";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Badge } from "@formbricks/ui/Badge";
 import { BillingSlider } from "@formbricks/ui/BillingSlider";
@@ -52,7 +52,7 @@ export const PricingTable = ({
     setLoadingCustomerPortal(false);
   };
 
-  const upgradePlan = async (priceLookupKey: StripePriceLookupKeys) => {
+  const upgradePlan = async (priceLookupKey: STRIPE_PRICE_LOOKUP_KEYS) => {
     try {
       setUpgradingPlan(true);
       const { status, newPlan, url } = await upgradePlanAction(
@@ -161,7 +161,7 @@ export const PricingTable = ({
           <div className="mb-2 flex items-center gap-x-4"></div>
           {
             <div className="relative mx-8 mb-16 mt-4">
-              Responses
+              <p className="text-md font-semibold text-slate-700">Responses</p>
               <BillingSlider
                 className="slider-class"
                 value={responseCount}
@@ -174,7 +174,7 @@ export const PricingTable = ({
           <div className="mb-2 flex items-center gap-x-4"></div>
           {
             <div className="relative mx-8 mb-16 mt-4">
-              Monthly Identified Users
+              <p className="text-md font-semibold text-slate-700">Monthly Identified Users</p>
               <BillingSlider
                 className="slider-class"
                 value={peopleCount}
@@ -195,7 +195,7 @@ export const PricingTable = ({
             organization={organization}
             paidFeatures={startupFeatures}
             loading={upgradingPlan}
-            onUpgrade={() => upgradePlan(StripePriceLookupKeys.startupMonthly)}
+            onUpgrade={() => upgradePlan(STRIPE_PRICE_LOOKUP_KEYS.STARTUP_MONTHLY)}
           />
           <PricingCard
             title={"Formbricks Scale"}
@@ -206,7 +206,7 @@ export const PricingTable = ({
             organization={organization}
             paidFeatures={scaleFeatures}
             loading={upgradingPlan}
-            onUpgrade={() => upgradePlan(StripePriceLookupKeys.scaleMonthly)}
+            onUpgrade={() => upgradePlan(STRIPE_PRICE_LOOKUP_KEYS.SCALE_MONTHLY)}
           />
           <PricingCard
             title={"Formbricks Enterprise"}

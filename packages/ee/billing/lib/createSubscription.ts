@@ -4,7 +4,7 @@ import { STRIPE_API_VERSION, WEBAPP_URL } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getOrganization } from "@formbricks/lib/organization/service";
 
-import { StripePriceLookupKeys } from "./constants";
+import { STRIPE_PRICE_LOOKUP_KEYS } from "./constants";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   apiVersion: STRIPE_API_VERSION,
@@ -20,7 +20,7 @@ export const getFirstOfNextMonthTimestamp = (): number => {
 export const createSubscription = async (
   organizationId: string,
   environmentId: string,
-  priceLookupKey: StripePriceLookupKeys
+  priceLookupKey: STRIPE_PRICE_LOOKUP_KEYS
 ) => {
   try {
     const organization = await getOrganization(organizationId);
@@ -37,8 +37,8 @@ export const createSubscription = async (
     ).data[0];
 
     if (!priceObject) throw new Error("Price not found");
-    const responses = (priceObject.product as Stripe.Product).metadata.responses as unknown as number;
-    const miu = (priceObject.product as Stripe.Product).metadata.miu as unknown as number;
+    const responses = parseInt((priceObject.product as Stripe.Product).metadata.responses);
+    const miu = parseInt((priceObject.product as Stripe.Product).metadata.miu);
 
     // if the organization has never purchased a plan then we just create a new session and store their stripe customer id
     if (isNewOrganization) {

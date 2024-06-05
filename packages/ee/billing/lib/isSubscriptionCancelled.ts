@@ -2,25 +2,26 @@ import Stripe from "stripe";
 
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
-import { getTeam } from "@formbricks/lib/team/service";
+import { getOrganization } from "@formbricks/lib/organization/service";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   apiVersion: STRIPE_API_VERSION,
 });
 
 export const isSubscriptionCancelled = async (
-  teamId: string
+  organizationId: string
 ): Promise<{
   cancelled: boolean;
   date: Date | null;
 }> => {
   try {
-    const team = await getTeam(teamId);
-    if (!team) throw new Error("Team not found.");
+    const organization = await getOrganization(organizationId);
+    if (!organization) throw new Error("Team not found.");
     let isNewTeam =
-      !team.billing.stripeCustomerId || !(await stripe.customers.retrieve(team.billing.stripeCustomerId));
+      !organization.billing.stripeCustomerId ||
+      !(await stripe.customers.retrieve(organization.billing.stripeCustomerId));
 
-    if (!team.billing.stripeCustomerId || isNewTeam) {
+    if (!organization.billing.stripeCustomerId || isNewTeam) {
       return {
         cancelled: false,
         date: null,
@@ -28,7 +29,7 @@ export const isSubscriptionCancelled = async (
     }
 
     const subscriptions = await stripe.subscriptions.list({
-      customer: team.billing.stripeCustomerId,
+      customer: organization.billing.stripeCustomerId,
     });
 
     for (const subscription of subscriptions.data) {

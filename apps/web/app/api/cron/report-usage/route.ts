@@ -1,7 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
 
-import { ProductFeatureKeys } from "@formbricks/ee/billing/lib/constants";
+import { PRODUCT_FEATURE_KEYS } from "@formbricks/ee/billing/lib/constants";
 import { reportUsageToStripe } from "@formbricks/ee/billing/lib/reportUsage";
 import { CRON_SECRET, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import {
@@ -38,7 +38,7 @@ const reportOrganizationUsage = async (organization: TOrganization) => {
     await reportUsageToStripe(
       stripeCustomerId,
       people,
-      ProductFeatureKeys.userTargeting,
+      PRODUCT_FEATURE_KEYS.userTargeting,
       Math.floor(Date.now() / 1000)
     );
   }
@@ -46,7 +46,7 @@ const reportOrganizationUsage = async (organization: TOrganization) => {
     await reportUsageToStripe(
       stripeCustomerId,
       responses,
-      ProductFeatureKeys.inAppSurvey,
+      PRODUCT_FEATURE_KEYS.inAppSurvey,
       Math.floor(Date.now() / 1000)
     );
   }

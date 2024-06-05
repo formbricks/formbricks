@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
@@ -11,8 +12,8 @@ const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
 
 export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
   const checkoutSession = event.data.object as Stripe.Checkout.Session;
-  if (!checkoutSession.metadata || !checkoutSession.metadata.teamId)
-    throw new Error("No teamId found in checkout session");
+  if (!checkoutSession.metadata || !checkoutSession.metadata.organizationId)
+    throw new ResourceNotFoundError("No organizationId found in checkout session", checkoutSession.id);
 
   const stripeSubscriptionObject = await stripe.subscriptions.retrieve(
     checkoutSession.subscription as string
@@ -22,11 +23,12 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
   })) as { customer: Stripe.Customer };
 
   const organization = await getOrganization(checkoutSession.metadata!.organizationId);
-  if (!organization) throw new Error("Organization not found.");
+  if (!organization)
+    throw new ResourceNotFoundError("Organization not found", checkoutSession.metadata.organizationId);
 
   await stripe.subscriptions.update(stripeSubscriptionObject.id, {
     metadata: {
-      teamId: organization.id,
+      organizationId: organization.id,
       responses: checkoutSession.metadata.responses,
       miu: checkoutSession.metadata.miu,
     },
