@@ -30,8 +30,8 @@ const displayOptions: DisplayOption[] = [
   },
   {
     id: "displaySome",
-    name: "Show a few times",
-    description: "The survey will be shown a few times until they respond",
+    name: "Show multiple times",
+    description: "The survey will be shown multiple times until they respond",
   },
   {
     id: "respondMultiple",
