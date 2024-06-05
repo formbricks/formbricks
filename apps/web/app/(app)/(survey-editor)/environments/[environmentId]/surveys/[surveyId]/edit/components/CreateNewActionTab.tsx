@@ -224,6 +224,8 @@ export const CreateNewActionTab = ({
               </div>
             </div>
 
+            <hr className="border-slate-200" />
+
             <div className="w-3/5">
               <FormField
                 name={`type`}

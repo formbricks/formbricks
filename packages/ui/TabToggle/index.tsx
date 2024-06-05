@@ -38,14 +38,14 @@ export const TabToggle = <T extends string | number>({
     <div role="radiogroup" aria-labelledby={`${id}-toggle-label`} className="flex flex-col">
       <Label className="font-semibold">{label}</Label>
       {subLabel && <p className="text-sm font-normal text-slate-500">{subLabel}</p>}
-      <div className="mt-2 flex overflow-hidden rounded-md border border-gray-300 p-2">
+      <div className="mt-2 flex overflow-hidden rounded-md bg-slate-100 p-1">
         {options.map((option) => (
           <label
             key={option.value}
             htmlFor={option.value.toString()}
             className={cn(
-              "flex-1 cursor-pointer rounded-md py-2 text-center text-sm",
-              selectedOption === option.value ? "bg-slate-100" : "bg-white",
+              "flex-1 cursor-pointer rounded-md py-2 text-center text-sm text-slate-800",
+              selectedOption === option.value && "bg-white",
               "focus:ring-brand-dark focus:outline-none focus:ring-2 focus:ring-opacity-50"
             )}>
             <input
