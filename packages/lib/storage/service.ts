@@ -17,6 +17,7 @@ import path, { join } from "path";
 import { TAccessType } from "@formbricks/types/storage";
 
 import {
+  IS_FORMBRICKS_CLOUD,
   MAX_SIZES,
   S3_ACCESS_KEY,
   S3_BUCKET_NAME,
@@ -215,8 +216,11 @@ export const getS3UploadSignedUrl = async (
   isPublic: boolean,
   plan: "free" | "pro" = "free"
 ) => {
-  const maxSize = isPublic ? MAX_SIZES.public : MAX_SIZES[plan];
-  const postConditions: PresignedPostOptions["Conditions"] = [["content-length-range", 0, maxSize]];
+  const maxSize = IS_FORMBRICKS_CLOUD ? (isPublic ? MAX_SIZES.public : MAX_SIZES[plan]) : Infinity;
+
+  const postConditions: PresignedPostOptions["Conditions"] = IS_FORMBRICKS_CLOUD
+    ? [["content-length-range", 0, maxSize]]
+    : undefined;
 
   try {
     const s3Client = getS3Client();
@@ -256,7 +260,7 @@ export const putFileToLocalStorage = async (
     const buffer = Buffer.from(fileBuffer);
     const bufferBytes = buffer.byteLength;
 
-    const maxSize = isPublic ? MAX_SIZES.public : MAX_SIZES[plan];
+    const maxSize = IS_FORMBRICKS_CLOUD ? (isPublic ? MAX_SIZES.public : MAX_SIZES[plan]) : Infinity;
 
     if (bufferBytes > maxSize) {
       const err = new Error(`File size exceeds the ${maxSize / (1024 * 1024)} MB limit`);

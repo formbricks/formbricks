@@ -27,6 +27,7 @@ interface FileUploadFormProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  isFormbricksCloud: boolean;
 }
 
 export const FileUploadQuestionForm = ({
@@ -39,6 +40,7 @@ export const FileUploadQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  isFormbricksCloud,
 }: FileUploadFormProps): JSX.Element => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [extension, setExtension] = useState("");
@@ -113,6 +115,12 @@ export const FileUploadQuestionForm = ({
     return 10;
   }, [billingInfo, billingInfoError, billingInfoLoading]);
 
+  const handleMaxSizeInMBToggle = (checked: boolean) => {
+    const defaultMaxSizeInMB = isFormbricksCloud ? maxSizeInMBLimit : 1024;
+
+    updateQuestion(questionIdx, { maxSizeInMB: checked ? defaultMaxSizeInMB : undefined });
+  };
+
   return (
     <form>
       <QuestionFormInput
@@ -184,7 +192,7 @@ export const FileUploadQuestionForm = ({
 
         <AdvancedOptionToggle
           isChecked={!!question.maxSizeInMB}
-          onToggle={(checked) => updateQuestion(questionIdx, { maxSizeInMB: checked ? 10 : undefined })}
+          onToggle={handleMaxSizeInMBToggle}
           htmlId="maxFileSize"
           title="Max file size"
           description="Limit the maximum file size."
@@ -201,7 +209,7 @@ export const FileUploadQuestionForm = ({
                 onChange={(e) => {
                   const parsedValue = parseInt(e.target.value, 10);
 
-                  if (parsedValue > maxSizeInMBLimit) {
+                  if (isFormbricksCloud && parsedValue > maxSizeInMBLimit) {
                     toast.error(`Max file size limit is ${maxSizeInMBLimit} MB`);
                     updateQuestion(questionIdx, { maxSizeInMB: maxSizeInMBLimit });
                     return;

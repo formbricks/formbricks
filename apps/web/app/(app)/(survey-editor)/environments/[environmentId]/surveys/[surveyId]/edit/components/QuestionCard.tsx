@@ -48,6 +48,7 @@ interface QuestionCardProps {
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
   addQuestion: (question: any, index?: number) => void;
+  isFormbricksCloud: boolean;
 }
 
 export const QuestionCard = ({
@@ -67,6 +68,7 @@ export const QuestionCard = ({
   isInvalid,
   attributeClasses,
   addQuestion,
+  isFormbricksCloud,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
@@ -335,6 +337,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              isFormbricksCloud={isFormbricksCloud}
             />
           ) : question.type === TSurveyQuestionType.Cal ? (
             <CalQuestionForm
