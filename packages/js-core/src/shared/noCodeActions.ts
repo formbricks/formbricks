@@ -15,7 +15,7 @@ const websiteConfig = WebsiteConfig.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 
-const getConfig = (packageType: TJsPackageType) => {
+const getConfig = (packageType: TJsPackageType): WebsiteConfig | AppConfig => {
   switch (packageType) {
     case "website":
       return websiteConfig;
@@ -24,7 +24,7 @@ const getConfig = (packageType: TJsPackageType) => {
   }
 };
 
-const getTrackNoCodeAction = (packageType: TJsPackageType) => {
+const getNoCodeActionTracker = (packageType: TJsPackageType) => {
   switch (packageType) {
     case "website":
       return trackNoCodeWebsiteAction;
@@ -49,7 +49,7 @@ export const checkPageUrl = async (packageType: TJsPackageType): Promise<Result<
 
   const noCodePageViewActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageView"
-  ) as TActionClass[];
+  );
 
   for (const event of noCodePageViewActionClasses) {
     const urlFilters = event.noCodeConfig?.urlFilters ?? [];
@@ -57,7 +57,7 @@ export const checkPageUrl = async (packageType: TJsPackageType): Promise<Result<
 
     if (!isValidUrl) continue;
 
-    const trackNoCodeAction = getTrackNoCodeAction(packageType);
+    const trackNoCodeAction = getNoCodeActionTracker(packageType);
     const trackResult = await trackNoCodeAction(event.name);
     if (trackResult.ok !== true) return err(trackResult.error);
   }
@@ -90,11 +90,11 @@ const checkClickMatch = (event: MouseEvent, packageType: TJsPackageType) => {
   const { actionClasses = [] } = state;
   const noCodeClickActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "click"
-  ) as TActionClass[];
+  );
 
   const targetElement = event.target as HTMLElement;
 
-  const trackNoCodeAction = getTrackNoCodeAction(packageType);
+  const trackNoCodeAction = getNoCodeActionTracker(packageType);
 
   noCodeClickActionClasses.forEach((action: TActionClass) => {
     if (evaluateNoCodeConfigClick(targetElement, action)) {
@@ -132,11 +132,11 @@ const checkExitIntent = async (e: MouseEvent, packageType: TJsPackageType) => {
   const { state } = config.get();
   const { actionClasses = [] } = state ?? {};
 
-  const trackNoCodeAction = getTrackNoCodeAction(packageType);
+  const trackNoCodeAction = getNoCodeActionTracker(packageType);
 
   const noCodeExitIntentActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "exitIntent"
-  ) as TActionClass[];
+  );
 
   if (e.clientY <= 0 && noCodeExitIntentActionClasses.length > 0) {
     for (const event of noCodeExitIntentActionClasses) {
@@ -191,11 +191,11 @@ const checkScrollDepth = async (packageType: TJsPackageType) => {
     const { state } = config.get();
     const { actionClasses = [] } = state ?? {};
 
-    const trackNoCodeAction = getTrackNoCodeAction(packageType);
+    const trackNoCodeAction = getNoCodeActionTracker(packageType);
 
     const noCodefiftyPercentScrollActionClasses = actionClasses.filter(
       (action) => action.type === "noCode" && action.noCodeConfig?.type === "fiftyPercentScroll"
-    ) as TActionClass[];
+    );
 
     for (const event of noCodefiftyPercentScrollActionClasses) {
       const urlFilters = event.noCodeConfig?.urlFilters ?? [];

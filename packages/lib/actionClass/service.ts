@@ -15,7 +15,7 @@ import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
 
-const select = {
+const selectActionClass = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -25,7 +25,7 @@ const select = {
   key: true,
   noCodeConfig: true,
   environmentId: true,
-};
+} satisfies Prisma.ActionClassSelect;
 
 export const getActionClasses = (environmentId: string, page?: number): Promise<TActionClass[]> =>
   cache(
@@ -37,7 +37,7 @@ export const getActionClasses = (environmentId: string, page?: number): Promise<
           where: {
             environmentId: environmentId,
           },
-          select,
+          select: selectActionClass,
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
           orderBy: {
@@ -69,7 +69,7 @@ export const getActionClassByEnvironmentIdAndName = (
             name,
             environmentId,
           },
-          select,
+          select: selectActionClass,
         });
 
         return actionClass;
@@ -93,7 +93,7 @@ export const getActionClass = (actionClassId: string): Promise<TActionClass | nu
           where: {
             id: actionClassId,
           },
-          select,
+          select: selectActionClass,
         });
 
         return actionClass;
@@ -118,7 +118,7 @@ export const deleteActionClass = async (
       where: {
         id: actionClassId,
       },
-      select,
+      select: selectActionClass,
     });
     if (actionClass === null) throw new ResourceNotFoundError("Action", actionClassId);
 
@@ -152,7 +152,7 @@ export const createActionClass = async (
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig: actionClassInput.type === "noCode" ? actionClassInput.noCodeConfig || {} : undefined,
       },
-      select,
+      select: selectActionClass,
     });
 
     actionClassCache.revalidate({
@@ -192,7 +192,7 @@ export const updateActionClass = async (
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig: actionClassInput.type === "noCode" ? actionClassInput.noCodeConfig || {} : undefined,
       },
-      select,
+      select: selectActionClass,
     });
 
     // revalidate cache

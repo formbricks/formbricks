@@ -1,4 +1,3 @@
-import { TActionClass } from "@formbricks/types/actionClasses";
 import { TJsTrackProperties } from "@formbricks/types/js";
 
 import { InvalidCodeError, NetworkError, Result, err, okVoid } from "../../shared/errors";
@@ -43,7 +42,7 @@ export const trackCodeAction = (
     state: { actionClasses = [] },
   } = websiteConfig.get();
 
-  const codeActionClasses = actionClasses.filter((action) => action.type === "code") as TActionClass[];
+  const codeActionClasses = actionClasses.filter((action) => action.type === "code");
   const action = codeActionClasses.find((action) => action.key === code);
 
   if (!action) {
