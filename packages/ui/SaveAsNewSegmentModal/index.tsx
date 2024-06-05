@@ -12,7 +12,7 @@ import { Button } from "../Button";
 import { Input } from "../Input";
 import { Modal } from "../Modal";
 
-type SaveAsNewSegmentModalProps = {
+interface SaveAsNewSegmentModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   localSurvey: TSurvey;
@@ -21,7 +21,7 @@ type SaveAsNewSegmentModalProps = {
   setIsSegmentEditorOpen: (isOpen: boolean) => void;
   onCreateSegment: (data: TSegmentCreateInput) => Promise<TSegment>;
   onUpdateSegment: (environmentId: string, segmentId: string, data: TSegmentUpdateInput) => Promise<TSegment>;
-};
+}
 
 type SaveAsNewSegmentModalForm = {
   title: string;

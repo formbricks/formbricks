@@ -1,4 +1,5 @@
 import { TActionClass } from "@formbricks/types/actionClasses";
+import { TJsTrackProperties } from "@formbricks/types/js";
 
 import { InvalidCodeError, NetworkError, Result, err, okVoid } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
@@ -8,7 +9,11 @@ import { triggerSurvey } from "./widget";
 const logger = Logger.getInstance();
 const websiteConfig = WebsiteConfig.getInstance();
 
-export const trackAction = async (name: string, alias?: string): Promise<Result<void, NetworkError>> => {
+export const trackAction = async (
+  name: string,
+  alias?: string,
+  properties?: TJsTrackProperties
+): Promise<Result<void, NetworkError>> => {
   const aliasName = alias || name;
   logger.debug(`Formbricks: Action "${aliasName}" tracked`);
 
@@ -19,7 +24,7 @@ export const trackAction = async (name: string, alias?: string): Promise<Result<
     for (const survey of activeSurveys) {
       for (const trigger of survey.triggers) {
         if (trigger.actionClass.name === name) {
-          await triggerSurvey(survey, name);
+          await triggerSurvey(survey, name, properties);
         }
       }
     }
@@ -31,7 +36,8 @@ export const trackAction = async (name: string, alias?: string): Promise<Result<
 };
 
 export const trackCodeAction = (
-  code: string
+  code: string,
+  properties?: TJsTrackProperties
 ): Promise<Result<void, NetworkError>> | Result<void, InvalidCodeError> => {
   const {
     state: { actionClasses = [] },
@@ -47,7 +53,7 @@ export const trackCodeAction = (
     });
   }
 
-  return trackAction(action.name, code);
+  return trackAction(action.name, code, properties);
 };
 
 export const trackNoCodeAction = (name: string): Promise<Result<void, NetworkError>> => {

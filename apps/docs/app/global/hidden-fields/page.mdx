@@ -10,11 +10,11 @@ export const metadata = {
   description: "Add hidden fields to your surveys to capture additional data without requiring user inputs!",
 };
 
-#### Link Surveys
-
 # Hidden Fields
 
 Hidden fields are a powerful feature in Formbricks that allows you to add data to a submission without asking the user to type it in. This feature is especially useful when you already have information about a user that you want to use in the analysis of the survey results (e.g. `payment plan` or `email`)
+
+<Note>Hidden fields are now available in the Formbricks in-app and website surveys as well</Note>
 
 ## How to Add Hidden Fields
 
@@ -45,25 +45,18 @@ Hidden fields are a powerful feature in Formbricks that allows you to add data t
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-### Set Single Hidden Field
+### Set Hidden Field
 
 <Col>
 <CodeGroup title="Example Screen from which the User filled it">
 
 ```sh
-https://formbricks.com/clin3dxja02k8l80hpwmx4bjy?screen=pricing
-```
-
-</CodeGroup>
-</Col>
-
-### Set Multiple Hidden Fields
-
-<Col>
-<CodeGroup title="Example Screen from which the User filled it">
-
-```sh
-https://formbricks.com/clin3dxja02k8l80hpwmx4bjy?screen=landing_page&job=Founder
+formbricks.track("my event", {
+  hiddenFields: {
+    screen: "landing_page",
+    job: "Founder"
+  },
+});
 ```
 
 </CodeGroup>
@@ -82,6 +75,5 @@ These hidden fields will now be visible in the responses tab just like other fie
 
 ## Use Cases
 
-- **Tracking Source**: You can add a hidden field to track the source of the survey. For a detailed guide on Source Tracking, check out the [Source Tracking](/link-surveys/source-tracking) guide.
 - **User Metadata**: You can add hidden fields to capture user metadata such as user ID, email, or any other user-specific information.
 - **Survey Metadata**: You can add hidden fields to capture other metadata, e.g. the screen from which the survey was filled, or any other app specific information.
