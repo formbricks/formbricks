@@ -32,6 +32,16 @@
     },
     "./*": "./dist/*"
   },
+  "typesVersions": {
+    "*": {
+      "app": [
+        "./dist/app.d.ts"
+      ],
+      "website": [
+        "./dist/website.d.ts"
+      ]
+    }
+  },
   "scripts": {
     "dev": "vite build --watch --mode dev",
     "build:app": "tsc && vite build --config app.vite.config.ts",
