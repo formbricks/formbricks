@@ -11,7 +11,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 
 import { Modal } from "../Modal";
 
-type SegmentDetailProps = {
+interface SegmentDetailProps {
   segment: TSegment;
   setSegment: (segment: TSegment) => void;
   setOpen: (open: boolean) => void;
@@ -19,7 +19,7 @@ type SegmentDetailProps = {
   onSegmentLoad: (surveyId: string, segmentId: string) => Promise<TSurvey>;
   surveyId: string;
   currentSegment: TSegment;
-};
+}
 
 const SegmentDetail = ({
   segment,
