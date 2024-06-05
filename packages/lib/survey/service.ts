@@ -530,15 +530,10 @@ export const deleteSurvey = async (surveyId: string) => {
       select: selectSurvey,
     });
 
-    if (deletedSurvey.type === "app") {
+    if (deletedSurvey.type === "app" && deletedSurvey.segment?.isPrivate) {
       const deletedSegment = await prisma.segment.delete({
         where: {
-          title: surveyId,
-          isPrivate: true,
-          environmentId_title: {
-            environmentId: deletedSurvey.environmentId,
-            title: surveyId,
-          },
+          id: deletedSurvey.segment.id,
         },
       });
 
