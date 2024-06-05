@@ -56,9 +56,7 @@ export const RecontactOptionsCard = ({
   const [inputDays, setInputDays] = useState(
     localSurvey.recontactDays !== null ? localSurvey.recontactDays : 1
   );
-  const [recontactSessions, setRecontactSessions] = useState(
-    localSurvey.recontactSessions !== null ? localSurvey.recontactSessions : 1
-  );
+  const [recontactSessions, setRecontactSessions] = useState(localSurvey.recontactSessions ?? 1);
 
   const handleCheckMark = () => {
     if (ignoreWaiting) {

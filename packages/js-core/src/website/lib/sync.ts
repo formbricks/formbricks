@@ -98,30 +98,36 @@ export const filterPublicSurveys = (state: TJsWebsiteState): TJsWebsiteState => 
     return state;
   }
 
-  const displaysForSurvey = (surveyId: string) => displays.filter((display) => display.surveyId === surveyId);
-
-  // filter surveys that meet the displayOption criteria
-  let filteredSurveys = surveys.filter((survey) => {
-    if (survey.displayOption === "respondMultiple") {
-      return true;
-    } else if (survey.displayOption === "displayOnce") {
-      return displaysForSurvey(survey.id).length === 0;
-    } else if (survey.displayOption === "displayMultiple") {
-      return displaysForSurvey(survey.id).filter((display) => display.responded).length === 0;
-    } else if (survey.displayOption === "displaySome") {
-      if (survey.recontactSessions === null) {
+  // Function to filter surveys based on displayOption criteria
+  let filteredSurveys = surveys.filter((survey: TSurvey) => {
+    switch (survey.displayOption) {
+      case "respondMultiple":
         return true;
-      }
+      case "displayOnce":
+        return displays.filter((display) => display.surveyId === survey.id).length === 0;
+      case "displayMultiple":
+        return (
+          displays.filter((display) => display.surveyId === survey.id).filter((display) => display.responded)
+            .length === 0
+        );
 
-      const displays = displaysForSurvey(survey.id);
+      case "displaySome":
+        if (survey.recontactSessions === null) {
+          return true;
+        }
 
-      if (displays.length !== 0 && displays.some((display) => display.responded)) {
-        return false;
-      }
+        // Check if any display has responded, if so, stop here
+        if (
+          displays.filter((display) => display.surveyId === survey.id).some((display) => display.responded)
+        ) {
+          return false;
+        }
 
-      return displays.length < survey.recontactSessions;
-    } else {
-      throw Error("Invalid displayOption");
+        // Otherwise, check if displays length is less than recontactSessions
+        return displays.filter((display) => display.surveyId === survey.id).length < survey.recontactSessions;
+
+      default:
+        throw Error("Invalid displayOption");
     }
   });
 
@@ -132,7 +138,7 @@ export const filterPublicSurveys = (state: TJsWebsiteState): TJsWebsiteState => 
     if (!latestDisplay) {
       return true;
     } else if (survey.recontactDays !== null) {
-      const lastDisplaySurvey = displaysForSurvey(survey.id)[0];
+      const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
       if (!lastDisplaySurvey) {
         return true;
       }

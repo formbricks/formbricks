@@ -28,7 +28,6 @@ import { structuredClone } from "../pollyfills/structuredClone";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
-import { getPersonResponsesBySurveyId } from "../response/service";
 import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
@@ -850,42 +849,40 @@ export const getSyncSurveys = (
         }
 
         const displays = await getDisplaysByPersonId(person.id);
-        const displaysForSurvey = (surveyId: string) =>
-          displays.filter((display) => display.surveyId === surveyId);
 
         // filter surveys that meet the displayOption criteria
-        let filteredSurveys: TSurvey[] = [];
-        for (let survey of surveys) {
-          if (survey.displayOption === "respondMultiple") {
-            filteredSurveys.push(survey);
-          } else if (survey.displayOption === "displayOnce") {
-            if (displaysForSurvey(survey.id).length === 0) {
-              filteredSurveys.push(survey);
-            }
-          } else if (survey.displayOption === "displayMultiple") {
-            if (displaysForSurvey(survey.id).filter((display) => display.responseId !== null).length === 0) {
-              filteredSurveys.push(survey);
-            }
-          } else if (survey.displayOption === "displaySome") {
-            if (survey.recontactSessions === null) {
-              filteredSurveys.push(survey);
-            } else {
-              const displays = displaysForSurvey(survey.id);
-              const responses = await getPersonResponsesBySurveyId(personId, survey.id);
-
-              if (responses && responses.some((response) => response.finished)) {
-                continue;
+        surveys = surveys.filter((survey) => {
+          switch (survey.displayOption) {
+            case "respondMultiple":
+              return true;
+            case "displayOnce":
+              return displays.filter((display) => display.surveyId === survey.id).length === 0;
+            case "displayMultiple":
+              return (
+                displays
+                  .filter((display) => display.surveyId === survey.id)
+                  .filter((display) => display.responseId).length === 0
+              );
+            case "displaySome":
+              if (survey.recontactSessions === null) {
+                return true;
               }
 
-              if (displays.length < survey.recontactSessions) {
-                filteredSurveys.push(survey);
+              if (
+                displays
+                  .filter((display) => display.surveyId === survey.id)
+                  .some((display) => display.responseId)
+              ) {
+                return false;
               }
-            }
-          } else {
-            throw Error("Invalid displayOption");
+
+              return (
+                displays.filter((display) => display.surveyId === survey.id).length < survey.recontactSessions
+              );
+            default:
+              throw Error("Invalid displayOption");
           }
-        }
-        surveys = filteredSurveys;
+        });
 
         const latestDisplay = displays[0];
 
@@ -894,7 +891,7 @@ export const getSyncSurveys = (
           if (!latestDisplay) {
             return true;
           } else if (survey.recontactDays !== null) {
-            const lastDisplaySurvey = displaysForSurvey(survey.id)[0];
+            const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
             if (!lastDisplaySurvey) {
               return true;
             }
