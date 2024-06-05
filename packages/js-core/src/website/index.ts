@@ -1,4 +1,4 @@
-import { TJsWebsiteConfigInput } from "@formbricks/types/js";
+import { TJsTrackProperties, TJsWebsiteConfigInput } from "@formbricks/types/js";
 
 // Shared imports
 import { CommandQueue } from "../shared/commandQueue";
@@ -26,7 +26,7 @@ const reset = async (): Promise<void> => {
   await queue.wait();
 };
 
-const track = async (name: string, properties: any = {}): Promise<void> => {
+const track = async (name: string, properties?: TJsTrackProperties): Promise<void> => {
   queue.add<any>(true, "website", trackCodeAction, name, properties);
   await queue.wait();
 };

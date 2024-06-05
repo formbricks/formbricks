@@ -35,7 +35,6 @@ export const Survey = ({
   onFileUpload,
   responseCount,
   startAtQuestionId,
-  hiddenFieldsRecord,
   clickOutside,
   shouldResetQuestionId,
 }: SurveyBaseProps) => {
@@ -58,7 +57,7 @@ export const Survey = ({
 
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
-  const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
+  const [responseData, setResponseData] = useState<TResponseData>({});
   const [ttc, setTtc] = useState<TResponseTtc>({});
   const cardArrangement = useMemo(() => {
     if (survey.type === "link") {
@@ -305,7 +304,7 @@ export const Survey = ({
     };
 
     return (
-      <AutoCloseWrapper survey={survey} onClose={onClose}>
+      <AutoCloseWrapper survey={survey} onClose={onClose} offset={offset}>
         {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
         <div
           className={cn(
