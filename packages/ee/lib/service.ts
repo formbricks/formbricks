@@ -81,8 +81,8 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
   // if the server responds with a boolean, we return it
   // if the server errors, we return null
   // null signifies an error
-  const licenseDetails = await getLicenseDetails();
-  const isValid = licenseDetails ? licenseDetails.status === "active" : null;
+  const license = await fetchLicense();
+  const isValid = license ? license.status === "active" : null;
 
   const previousResult = await getPreviousResult();
   if (previousResult.active === null) {
@@ -96,8 +96,8 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
     }
   }
 
-  if (isValid !== null && licenseDetails) {
-    await setPreviousResult({ active: isValid, features: licenseDetails.features, lastChecked: new Date() });
+  if (isValid !== null && license) {
+    await setPreviousResult({ active: isValid, features: license.features, lastChecked: new Date() });
     return isValid;
   } else {
     // if result is undefined -> error
@@ -117,14 +117,14 @@ export const getLicenseFeatures = async (): Promise<TEnterpriseLicenseFeatures |
   if (previousResult.features) {
     return previousResult.features;
   } else {
-    const licenseDetails = await getLicenseDetails();
-    if (!licenseDetails) return null;
-    const features = await licenseDetails.features;
+    const license = await fetchLicense();
+    if (!license) return null;
+    const features = await license.features;
     return features;
   }
 };
 
-export const getLicenseDetails = async () => {
+export const fetchLicense = async () => {
   const licenseResult: TEnterpriseLicenseDetails | null = await cache(
     async () => {
       try {
@@ -160,7 +160,7 @@ export const getLicenseDetails = async () => {
         return null;
       }
     },
-    [`getLicenseDetails-${hashedKey}`],
+    [`fetchLicense-${hashedKey}`],
     { revalidate: 60 * 60 * 24 }
   )();
   return licenseResult;
