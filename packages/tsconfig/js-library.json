@@ -5,8 +5,8 @@
   "compilerOptions": {
     "outDir": "./dist",
     "declaration": true,
-    "moduleResolution": "Bundler",
-    "lib": ["ESNext", "DOM"],
+    "moduleResolution": "node",
+    "lib": ["es2022", "dom", "dom.iterable"],
     "module": "esnext",
     "target": "ES2021",
     "strict": true,

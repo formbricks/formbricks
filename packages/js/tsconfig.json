@@ -3,12 +3,11 @@
   "include": ["src", "package.json"],
   "compilerOptions": {
     "strict": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
     "declaration": true,
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    "module": "ESNext"
   }
 }
