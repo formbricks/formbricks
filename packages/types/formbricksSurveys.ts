@@ -24,7 +24,6 @@ export interface SurveyBaseProps {
   responseCount?: number;
   isCardBorderVisible?: boolean;
   startAtQuestionId?: string;
-  hiddenFieldsRecord?: TResponseData;
   clickOutside?: boolean;
   shouldResetQuestionId?: boolean;
   fullSizeCards?: boolean;

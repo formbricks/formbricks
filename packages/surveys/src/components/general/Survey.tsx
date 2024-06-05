@@ -40,7 +40,6 @@ export const Survey = ({
   fullSizeCards = false,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
-  const maxHeightWidth = true;
 
   const [questionId, setQuestionId] = useState(() => {
     if (startAtQuestionId) {
@@ -316,7 +315,7 @@ export const Survey = ({
           )}>
           <div
             ref={contentRef}
-            className={cn(loadingElement ? "animate-pulse opacity-60" : "", maxHeightWidth ? "" : "my-auto")}>
+            className={cn(loadingElement ? "animate-pulse opacity-60" : "", fullSizeCards ? "" : "my-auto")}>
             {content()}
           </div>
           <div className="mx-6 mb-10 mt-2 space-y-3 md:mb-6 md:mt-6">

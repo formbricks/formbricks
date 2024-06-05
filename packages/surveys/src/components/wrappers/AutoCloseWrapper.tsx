@@ -9,7 +9,6 @@ interface AutoCloseProps {
   onClose: () => void;
   offset: number;
   children: React.ReactNode;
-  offset: number;
 }
 
 export const AutoCloseWrapper = ({ survey, onClose, children, offset }: AutoCloseProps) => {
