@@ -40,6 +40,10 @@ To prefill the questions of a survey, add query parameters to the survey URL. Th
 
 <Note>Please make sure the answer is [URL encoded](https://www.urlencoder.org/).</Note>
 
+## Prefilling Customisation
+
+You can customize the prefilling behavior using the `skipPrefilled` parameter in the URL. If you want to skip the prefilled questions and show the next available question, you can add `skipPrefilled=true` to the URL. By default, the `skipPrefilled` parameter is set to `false`.
+
 ## Prefilling multiple values
 
 Formbricks let's you prefill as many values as you want. You can combine multiple values in the URL using `&` so for example `name=Bernadette&age=18`. The order of the query parameters does not matter so you can always move around questions or add new ones without having to worry about the order of the query parameters.

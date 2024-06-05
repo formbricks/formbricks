@@ -4,7 +4,8 @@ import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
-import { TSurveyQuestionSummaryDate } from "@formbricks/types/surveys";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TSurvey, TSurveyQuestionSummaryDate } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 
@@ -13,9 +14,16 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface DateQuestionSummary {
   questionSummary: TSurveyQuestionSummaryDate;
   environmentId: string;
+  survey: TSurvey;
+  attributeClasses: TAttributeClass[];
 }
 
-export const DateQuestionSummary = ({ questionSummary, environmentId }: DateQuestionSummary) => {
+export const DateQuestionSummary = ({
+  questionSummary,
+  environmentId,
+  survey,
+  attributeClasses,
+}: DateQuestionSummary) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
 
   const handleLoadMore = () => {
@@ -27,7 +35,11 @@ export const DateQuestionSummary = ({ questionSummary, environmentId }: DateQues
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} />
+      <QuestionSummaryHeader
+        questionSummary={questionSummary}
+        survey={survey}
+        attributeClasses={attributeClasses}
+      />
       <div className="">
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
           <div className="pl-4 md:pl-6">User</div>

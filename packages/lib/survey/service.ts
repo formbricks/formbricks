@@ -21,6 +21,7 @@ import { ITEMS_PER_PAGE } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
 import { reverseTranslateSurvey } from "../i18n/reverseTranslation";
+import { subscribeOrganizationMembersToSurveyResponses } from "../organization/service";
 import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
 import { structuredClone } from "../pollyfills/structuredClone";
@@ -31,7 +32,6 @@ import { getResponsesByPersonIdBySurveyId } from "../response/service";
 import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
-import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
@@ -376,7 +376,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
         : [];
       const updatedLanguageIds =
         languages.length > 1 ? updatedSurvey.languages.map((l) => l.language.id) : [];
-      const enabledLangaugeIds = languages.map((language) => {
+      const enabledLanguageIds = languages.map((language) => {
         if (language.enabled) return language.language.id;
       });
 
@@ -394,7 +394,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
         where: { languageId: surveyLanguage.language.id },
         data: {
           default: surveyLanguage.language.id === defaultLanguageId,
-          enabled: enabledLangaugeIds.includes(surveyLanguage.language.id),
+          enabled: enabledLanguageIds.includes(surveyLanguage.language.id),
         },
       }));
 
@@ -403,7 +403,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
         data.languages.create = languagesToAdd.map((languageId) => ({
           languageId: languageId,
           default: languageId === defaultLanguageId,
-          enabled: enabledLangaugeIds.includes(languageId),
+          enabled: enabledLanguageIds.includes(languageId),
         }));
       }
 
@@ -411,7 +411,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       if (languagesToRemove.length > 0) {
         data.languages.deleteMany = languagesToRemove.map((languageId) => ({
           languageId: languageId,
-          enabled: enabledLangaugeIds.includes(languageId),
+          enabled: enabledLanguageIds.includes(languageId),
         }));
       }
     }
@@ -532,15 +532,10 @@ export const deleteSurvey = async (surveyId: string) => {
       select: selectSurvey,
     });
 
-    if (deletedSurvey.type === "app") {
+    if (deletedSurvey.type === "app" && deletedSurvey.segment?.isPrivate) {
       const deletedSegment = await prisma.segment.delete({
         where: {
-          title: surveyId,
-          isPrivate: true,
-          environmentId_title: {
-            environmentId: deletedSurvey.environmentId,
-            title: surveyId,
-          },
+          id: deletedSurvey.segment.id,
         },
       });
 
@@ -669,7 +664,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
       }),
     };
 
-    await subscribeTeamMembersToSurveyResponses(environmentId, survey.id);
+    await subscribeOrganizationMembersToSurveyResponses(environmentId, survey.id);
 
     surveyCache.revalidate({
       id: survey.id,

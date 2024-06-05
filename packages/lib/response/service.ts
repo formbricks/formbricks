@@ -14,8 +14,6 @@ import {
   TResponseInput,
   TResponseLegacyInput,
   TResponseUpdateInput,
-  TSurveyMetaFieldFilter,
-  TSurveyPersonAttributes,
   ZResponseFilterCriteria,
   ZResponseInput,
   ZResponseLegacyInput,
@@ -36,7 +34,6 @@ import { putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
-import { checkForRecallInHeadline } from "../utils/recall";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 import {
@@ -44,6 +41,9 @@ import {
   calculateTtcTotal,
   extractSurveyDetails,
   getQuestionWiseSummary,
+  getResponseHiddenFields,
+  getResponseMeta,
+  getResponsePersonAttributes,
   getResponsesFileName,
   getResponsesJson,
   getSurveySummaryDropOff,
@@ -258,6 +258,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     singleUseId,
     ttc: initialTtc,
   } = responseInput;
+
   try {
     let person: TPerson | null = null;
     let attributes: TAttributes | null = null;
@@ -276,28 +277,30 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
-    const responsePrisma = await prisma.response.create({
-      data: {
-        survey: {
+    const prismaData: Prisma.ResponseCreateInput = {
+      survey: {
+        connect: {
+          id: surveyId,
+        },
+      },
+      finished: finished,
+      data: data,
+      language: language,
+      ...(person?.id && {
+        person: {
           connect: {
-            id: surveyId,
+            id: person.id,
           },
         },
-        finished: finished,
-        data: data,
-        language: language,
-        ...(person?.id && {
-          person: {
-            connect: {
-              id: person.id,
-            },
-          },
-          personAttributes: attributes,
-        }),
-        ...(meta && ({ meta } as Prisma.JsonObject)),
-        singleUseId,
-        ttc: ttc,
-      },
+        personAttributes: attributes,
+      }),
+      ...(meta && ({ meta } as Prisma.JsonObject)),
+      singleUseId,
+      ttc: ttc,
+    };
+
+    const responsePrisma = await prisma.response.create({
+      data: prismaData,
       select: responseSelection,
     });
 
@@ -440,37 +443,33 @@ export const getResponse = (responseId: string): Promise<TResponse | null> =>
     }
   )();
 
-export const getResponsePersonAttributes = (surveyId: string): Promise<TSurveyPersonAttributes> =>
+export const getResponseFilteringValues = async (surveyId: string) =>
   cache(
     async () => {
       validateInputs([surveyId, ZId]);
 
       try {
-        let attributes: TSurveyPersonAttributes = {};
-        const responseAttributes = await prisma.response.findMany({
+        const survey = await getSurvey(surveyId);
+        if (!survey) {
+          throw new ResourceNotFoundError("Survey", surveyId);
+        }
+
+        const responses = await prisma.response.findMany({
           where: {
-            surveyId: surveyId,
+            surveyId,
           },
           select: {
+            data: true,
+            meta: true,
             personAttributes: true,
           },
         });
 
-        responseAttributes.forEach((response) => {
-          Object.keys(response.personAttributes ?? {}).forEach((key) => {
-            if (response.personAttributes && attributes[key]) {
-              attributes[key].push(response.personAttributes[key].toString());
-            } else if (response.personAttributes) {
-              attributes[key] = [response.personAttributes[key].toString()];
-            }
-          });
-        });
+        const personAttributes = getResponsePersonAttributes(responses);
+        const meta = getResponseMeta(responses);
+        const hiddenFields = getResponseHiddenFields(survey, responses);
 
-        Object.keys(attributes).forEach((key) => {
-          attributes[key] = Array.from(new Set(attributes[key]));
-        });
-
-        return attributes;
+        return { personAttributes, meta, hiddenFields };
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -479,67 +478,7 @@ export const getResponsePersonAttributes = (surveyId: string): Promise<TSurveyPe
         throw error;
       }
     },
-    [`getResponsePersonAttributes-${surveyId}`],
-    {
-      tags: [responseCache.tag.bySurveyId(surveyId)],
-    }
-  )();
-
-export const getResponseMeta = (surveyId: string): Promise<TSurveyMetaFieldFilter> =>
-  cache(
-    async () => {
-      validateInputs([surveyId, ZId]);
-
-      try {
-        const responseMeta = await prisma.response.findMany({
-          where: {
-            surveyId: surveyId,
-          },
-          select: {
-            meta: true,
-          },
-        });
-
-        const meta: { [key: string]: Set<string> } = {};
-
-        responseMeta.forEach((response) => {
-          Object.entries(response.meta).forEach(([key, value]) => {
-            // skip url
-            if (key === "url") return;
-
-            // Handling nested objects (like userAgent)
-            if (typeof value === "object" && value !== null) {
-              Object.entries(value).forEach(([nestedKey, nestedValue]) => {
-                if (typeof nestedValue === "string" && nestedValue) {
-                  if (!meta[nestedKey]) {
-                    meta[nestedKey] = new Set();
-                  }
-                  meta[nestedKey].add(nestedValue);
-                }
-              });
-            } else if (typeof value === "string" && value) {
-              if (!meta[key]) {
-                meta[key] = new Set();
-              }
-              meta[key].add(value);
-            }
-          });
-        });
-
-        // Convert Set to Array
-        const result = Object.fromEntries(
-          Object.entries(meta).map(([key, valueSet]) => [key, Array.from(valueSet)])
-        );
-
-        return result;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-        throw error;
-      }
-    },
-    [`getResponseMeta-${surveyId}`],
+    [`getResponseFilteringValues-${surveyId}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
     }
@@ -547,19 +486,20 @@ export const getResponseMeta = (surveyId: string): Promise<TSurveyMetaFieldFilte
 
 export const getResponses = (
   surveyId: string,
-  page?: number,
-  batchSize?: number,
+  limit?: number,
+  offset?: number,
   filterCriteria?: TResponseFilterCriteria
 ): Promise<TResponse[]> =>
   cache(
     async () => {
       validateInputs(
         [surveyId, ZId],
-        [page, ZOptionalNumber],
-        [batchSize, ZOptionalNumber],
+        [limit, ZOptionalNumber],
+        [offset, ZOptionalNumber],
         [filterCriteria, ZResponseFilterCriteria.optional()]
       );
-      batchSize = batchSize ?? RESPONSES_PER_PAGE;
+
+      limit = limit ?? RESPONSES_PER_PAGE;
       try {
         const responses = await prisma.response.findMany({
           where: {
@@ -572,8 +512,8 @@ export const getResponses = (
               createdAt: "desc",
             },
           ],
-          take: page ? batchSize : undefined,
-          skip: page ? batchSize * (page - 1) : undefined,
+          take: limit ? limit : undefined,
+          skip: offset ? offset : undefined,
         });
 
         const transformedResponses: TResponse[] = await Promise.all(
@@ -594,7 +534,7 @@ export const getResponses = (
         throw error;
       }
     },
-    [`getResponses-${surveyId}-${page}-${batchSize}-${JSON.stringify(filterCriteria)}`],
+    [`getResponses-${surveyId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
     }
@@ -610,7 +550,6 @@ export const getSurveySummary = (
 
       try {
         const survey = await getSurvey(surveyId);
-
         if (!survey) {
           throw new ResourceNotFoundError("Survey", surveyId);
         }
@@ -621,7 +560,7 @@ export const getSurveySummary = (
 
         const responsesArray = await Promise.all(
           Array.from({ length: pages }, (_, i) => {
-            return getResponses(surveyId, i + 1, batchSize, filterCriteria);
+            return getResponses(surveyId, batchSize, i * batchSize, filterCriteria);
           })
         );
         const responses = responsesArray.flat();
@@ -632,11 +571,7 @@ export const getSurveySummary = (
 
         const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
         const meta = getSurveySummaryMeta(responses, displayCount);
-        const questionWiseSummary = getQuestionWiseSummary(
-          checkForRecallInHeadline(survey, "default"),
-          responses,
-          dropOff
-        );
+        const questionWiseSummary = getQuestionWiseSummary(survey, responses, dropOff);
 
         return { meta, dropOff, summary: questionWiseSummary };
       } catch (error) {
@@ -675,7 +610,7 @@ export const getResponseDownloadUrl = async (
 
     const responsesArray = await Promise.all(
       Array.from({ length: pages }, (_, i) => {
-        return getResponses(surveyId, i + 1, batchSize, filterCriteria);
+        return getResponses(surveyId, batchSize, i * batchSize, filterCriteria);
       })
     );
     const responses = responsesArray.flat();
@@ -724,10 +659,14 @@ export const getResponseDownloadUrl = async (
   }
 };
 
-export const getResponsesByEnvironmentId = (environmentId: string, page?: number): Promise<TResponse[]> =>
+export const getResponsesByEnvironmentId = (
+  environmentId: string,
+  limit?: number,
+  offset?: number
+): Promise<TResponse[]> =>
   cache(
     async () => {
-      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+      validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
       try {
         const responses = await prisma.response.findMany({
@@ -742,8 +681,8 @@ export const getResponsesByEnvironmentId = (environmentId: string, page?: number
               createdAt: "desc",
             },
           ],
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          take: limit ? limit : undefined,
+          skip: offset ? offset : undefined,
         });
 
         const transformedResponses: TResponse[] = await Promise.all(
@@ -764,7 +703,7 @@ export const getResponsesByEnvironmentId = (environmentId: string, page?: number
         throw error;
       }
     },
-    [`getResponsesByEnvironmentId-${environmentId}-${page}`],
+    [`getResponsesByEnvironmentId-${environmentId}-${limit}-${offset}`],
     {
       tags: [responseCache.tag.byEnvironmentId(environmentId)],
     }

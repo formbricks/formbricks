@@ -59,8 +59,12 @@ const handleGoogleSheetsIntegration = async (
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds as string[], survey);
-        await writeData(integration.config.key, element.spreadsheetId, values);
+        const values = await extractResponses(data, element.questionIds, survey);
+        const integrationData = structuredClone(integration);
+        integrationData.config.data.forEach((data) => {
+          data.createdAt = new Date(data.createdAt);
+        });
+        await writeData(integrationData, element.spreadsheetId, values);
       }
     }
   }
@@ -161,7 +165,7 @@ const buildNotionPayloadProperties = (
     const value = responses[map.question.id];
 
     properties[map.column.name] = {
-      [map.column.type]: getValue(map.column.type, value),
+      [map.column.type]: getValue(map.column.type, processResponseData(value)),
     };
   });
 

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 
 const Page = async () => {
@@ -24,11 +24,11 @@ const Page = async () => {
   const userId = session.user.id;
   const environment = await getFirstEnvironmentByUserId(userId);
   const user = await getUser(userId);
-  const team = environment ? await getTeamByEnvironmentId(environment.id) : null;
+  const organization = environment ? await getOrganizationByEnvironmentId(environment.id) : null;
 
   // Ensure all necessary data is available
-  if (!environment || !user || !team) {
-    throw new Error("Failed to get necessary user, environment, or team information");
+  if (!environment || !user || !organization) {
+    throw new Error("Failed to get necessary user, environment, or organization information");
   }
 
   return (
@@ -37,7 +37,7 @@ const Page = async () => {
       session={session}
       environment={environment}
       user={user}
-      team={team}
+      organization={organization}
       webAppUrl={WEBAPP_URL}
     />
   );

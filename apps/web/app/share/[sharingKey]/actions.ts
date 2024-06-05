@@ -2,8 +2,7 @@
 
 import {
   getResponseCountBySurveyId,
-  getResponseMeta,
-  getResponsePersonAttributes,
+  getResponseFilteringValues,
   getResponses,
   getSurveySummary,
 } from "@formbricks/lib/response/service";
@@ -15,15 +14,14 @@ import { TSurveySummary } from "@formbricks/types/surveys";
 
 export const getResponsesBySurveySharingKeyAction = async (
   sharingKey: string,
-  page: number,
-  batchSize?: number,
+  limit: number = 10,
+  offset: number = 0,
   filterCriteria?: TResponseFilterCriteria
 ): Promise<TResponse[]> => {
   const surveyId = await getSurveyIdByResultShareKey(sharingKey);
   if (!surveyId) throw new AuthorizationError("Not authorized");
 
-  batchSize = batchSize ?? 10;
-  const responses = await getResponses(surveyId, page, batchSize, filterCriteria);
+  const responses = await getResponses(surveyId, limit, offset, filterCriteria);
   return responses;
 };
 
@@ -54,11 +52,10 @@ export const getSurveyFilterDataBySurveySharingKeyAction = async (
   const surveyId = await getSurveyIdByResultShareKey(sharingKey);
   if (!surveyId) throw new AuthorizationError("Not authorized");
 
-  const [tags, attributes, meta] = await Promise.all([
+  const [tags, { personAttributes: attributes, meta, hiddenFields }] = await Promise.all([
     getTagsByEnvironmentId(environmentId),
-    getResponsePersonAttributes(surveyId),
-    getResponseMeta(surveyId),
+    getResponseFilteringValues(surveyId),
   ]);
 
-  return { environmentTags: tags, attributes, meta };
+  return { environmentTags: tags, attributes, meta, hiddenFields };
 };

@@ -2,6 +2,7 @@ import { HashIcon, PlusIcon, SmileIcon, StarIcon, TrashIcon } from "lucide-react
 import { useState } from "react";
 
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
@@ -18,6 +19,7 @@ interface RatingQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
+  attributeClasses: TAttributeClass[];
 }
 
 export const RatingQuestionForm = ({
@@ -28,6 +30,7 @@ export const RatingQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
+  attributeClasses,
 }: RatingQuestionFormProps) => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -37,12 +40,14 @@ export const RatingQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
+        label={"Question*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
+        attributeClasses={attributeClasses}
       />
 
       <div>
@@ -52,12 +57,14 @@ export const RatingQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
+                label={"Description"}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
+                attributeClasses={attributeClasses}
               />
             </div>
 
@@ -129,12 +136,14 @@ export const RatingQuestionForm = ({
             id="lowerLabel"
             placeholder="Not good"
             value={question.lowerLabel}
+            label={"Lower Label"}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
+            attributeClasses={attributeClasses}
           />
         </div>
         <div className="flex-1">
@@ -142,12 +151,14 @@ export const RatingQuestionForm = ({
             id="upperLabel"
             placeholder="Very satisfied"
             value={question.upperLabel}
+            label={"Upper Label"}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
+            attributeClasses={attributeClasses}
           />
         </div>
       </div>
@@ -158,6 +169,7 @@ export const RatingQuestionForm = ({
             <QuestionFormInput
               id="buttonLabel"
               value={question.buttonLabel}
+              label={`"Next" Button Label`}
               localSurvey={localSurvey}
               questionIdx={questionIdx}
               placeholder={"skip"}
@@ -165,6 +177,7 @@ export const RatingQuestionForm = ({
               updateQuestion={updateQuestion}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
+              attributeClasses={attributeClasses}
             />
           </div>
         )}

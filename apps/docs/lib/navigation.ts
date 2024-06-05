@@ -35,9 +35,10 @@ export const navigation: Array<NavGroup> = [
           { title: "Advanced Targeting", href: "/app-surveys/advanced-targeting" },
           { title: "Show Survey to % of users", href: "/global/show-survey-to-percent-of-users" }, // app and website
           { title: "Recontact Options", href: "/app-surveys/recontact" },
+          { title: "Hidden Fields", href: "/global/hidden-fields" }, // global
           { title: "Multi Language Surveys", href: "/global/multi-language-surveys" }, // global
           { title: "User Metadata", href: "/global/metadata" }, // global
-          { title: "Custom Styling", href: "/global/custom-styling" }, // global
+          { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/global/conditional-logic" }, // global
           { title: "Custom Start & End Conditions", href: "/global/custom-start-end-conditions" }, // global
           { title: "Recall Functionality", href: "/global/recall" }, // global
@@ -57,9 +58,10 @@ export const navigation: Array<NavGroup> = [
           { title: "Actions & Targeting", href: "/website-surveys/actions-and-targeting" },
           { title: "Show Survey to % of users", href: "/global/show-survey-to-percent-of-users" }, // app and website
           { title: "Recontact Options", href: "/app-surveys/recontact" },
+          { title: "Hidden Fields", href: "/global/hidden-fields" }, // global
           { title: "Multi Language Surveys", href: "/global/multi-language-surveys" }, // global
           { title: "User Metadata", href: "/global/metadata" }, // global
-          { title: "Custom Styling", href: "/global/custom-styling" }, // global
+          { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/global/conditional-logic" }, // global
           { title: "Custom Start & End Conditions", href: "/global/custom-start-end-conditions" }, // global
           { title: "Recall Functionality", href: "/global/recall" }, // global
@@ -84,7 +86,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Embed Surveys Anywhere", href: "/link-surveys/embed-surveys" },
           { title: "Multi Language Surveys", href: "/global/multi-language-surveys" },
           { title: "User Metadata", href: "/global/metadata" },
-          { title: "Custom Styling", href: "/global/custom-styling" },
+          { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/global/conditional-logic" },
           { title: "Custom Start & End Conditions", href: "/global/custom-start-end-conditions" },
           { title: "Recall Functionality", href: "/global/recall" },
@@ -96,10 +98,18 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
+    title: "Core Features",
+    links: [
+      { title: "Access Roles", href: "/global/access-roles" },
+      { title: "Styling Theme", href: "/global/styling-theme" },
+    ],
+  },
+  {
     title: "Self-Hosting",
     links: [
       { title: "Overview", href: "/self-hosting/overview" },
       { title: "One-Click Setup", href: "/self-hosting/one-click" },
+      { title: "Custom SSL Certificate", href: "/self-hosting/custom-ssl" },
       { title: "Docker Setup", href: "/self-hosting/docker" },
       { title: "Migration Guide", href: "/self-hosting/migration-guide" },
       { title: "Configuration", href: "/self-hosting/configuration" },

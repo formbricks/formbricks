@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-import { capitalizeFirstLetter } from "@formbricks/lib/strings";
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
@@ -23,7 +23,7 @@ import { TransferOwnershipModal } from "./TransferOwnershipModal";
 interface Role {
   isAdminOrOwner: boolean;
   memberRole: TMembershipRole;
-  teamId: string;
+  organizationId: string;
   memberId?: string;
   memberName: string;
   userId: string;
@@ -35,7 +35,7 @@ interface Role {
 export const EditMembershipRole = ({
   isAdminOrOwner,
   memberRole,
-  teamId,
+  organizationId,
   memberId,
   memberName,
   userId,
@@ -55,11 +55,11 @@ export const EditMembershipRole = ({
 
     try {
       if (memberAccepted && memberId) {
-        await updateMembershipAction(memberId, teamId, { role });
+        await updateMembershipAction(memberId, organizationId, { role });
       }
 
       if (inviteId) {
-        await updateInviteAction(inviteId, teamId, { role });
+        await updateInviteAction(inviteId, organizationId, { role });
       }
     } catch (error) {
       toast.error("Something went wrong");
@@ -73,7 +73,7 @@ export const EditMembershipRole = ({
     setLoading(true);
     try {
       if (memberId) {
-        await transferOwnershipAction(teamId, memberId);
+        await transferOwnershipAction(organizationId, memberId);
       }
 
       setLoading(false);

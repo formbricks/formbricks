@@ -14,13 +14,13 @@ import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
+import { BasicAddFilterModal } from "@formbricks/ui/BasicAddFilterModal";
+import { BasicSegmentEditor } from "@formbricks/ui/BasicSegmentEditor";
 import { Button } from "@formbricks/ui/Button";
-import { BasicAddFilterModal } from "@formbricks/ui/Targeting/BasicAddFilterModal";
-import { BasicSegmentEditor } from "@formbricks/ui/Targeting/BasicSegmentEditor";
-import { LoadSegmentModal } from "@formbricks/ui/Targeting/LoadSegmentModal";
-import { SaveAsNewSegmentModal } from "@formbricks/ui/Targeting/SaveAsNewSegmentModal";
-import { SegmentTitle } from "@formbricks/ui/Targeting/SegmentTitle";
-import { TargetingIndicator } from "@formbricks/ui/Targeting/TargetingIndicator";
+import { LoadSegmentModal } from "@formbricks/ui/LoadSegmentModal";
+import { SaveAsNewSegmentModal } from "@formbricks/ui/SaveAsNewSegmentModal";
+import { SegmentTitle } from "@formbricks/ui/SegmentTitle";
+import { TargetingIndicator } from "@formbricks/ui/TargetingIndicator";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 import {
@@ -370,7 +370,7 @@ export const TargetingCard = ({
               <UpgradePlanNotice
                 message="For advanced targeting, please"
                 textForUrl="request an Enterprise license."
-                url="https://formbricks.com/docs/self-hosting/enterprise"
+                url={`/environments/${environmentId}/settings/enterprise`}
               />
             )}
           </div>

@@ -1,25 +1,29 @@
 import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/app/sync/lib/posthog";
+import {
+  replaceAttributeRecall,
+  replaceAttributeRecallInLegacySurveys,
+} from "@/app/api/v1/client/[environmentId]/app/sync/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
 
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { getAttribute } from "@formbricks/lib/attribute/service";
+import { getAttributes } from "@formbricks/lib/attribute/service";
 import {
   IS_FORMBRICKS_CLOUD,
   PRICING_APPSURVEYS_FREE_RESPONSES,
   PRICING_USERTARGETING_FREE_MTU,
 } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
+import {
+  getMonthlyActiveOrganizationPeopleCount,
+  getMonthlyOrganizationResponseCount,
+  getOrganizationByEnvironmentId,
+} from "@formbricks/lib/organization/service";
 import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
-import {
-  getMonthlyActiveTeamPeopleCount,
-  getMonthlyTeamResponseCount,
-  getTeamByEnvironmentId,
-} from "@formbricks/lib/team/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -75,11 +79,11 @@ export const GET = async (
       await updateEnvironment(environment.id, { widgetSetupCompleted: true });
     }
 
-    // check team subscriptions
-    const team = await getTeamByEnvironmentId(environmentId);
+    // check organization subscriptions
+    const organization = await getOrganizationByEnvironmentId(environmentId);
 
-    if (!team) {
-      throw new Error("Team does not exist");
+    if (!organization) {
+      throw new Error("Organization does not exist");
     }
 
     // check if MAU limit is reached
@@ -88,15 +92,15 @@ export const GET = async (
     if (IS_FORMBRICKS_CLOUD) {
       // check userTargeting subscription
       const hasUserTargetingSubscription =
-        team.billing.features.userTargeting.status &&
-        ["active", "canceled"].includes(team.billing.features.userTargeting.status);
-      const currentMau = await getMonthlyActiveTeamPeopleCount(team.id);
+        organization.billing.features.userTargeting.status &&
+        ["active", "canceled"].includes(organization.billing.features.userTargeting.status);
+      const currentMau = await getMonthlyActiveOrganizationPeopleCount(organization.id);
       isMauLimitReached = !hasUserTargetingSubscription && currentMau >= PRICING_USERTARGETING_FREE_MTU;
       // check inAppSurvey subscription
       const hasInAppSurveySubscription =
-        team.billing.features.inAppSurvey.status &&
-        ["active", "canceled"].includes(team.billing.features.inAppSurvey.status);
-      const currentResponseCount = await getMonthlyTeamResponseCount(team.id);
+        organization.billing.features.inAppSurvey.status &&
+        ["active", "canceled"].includes(organization.billing.features.inAppSurvey.status);
+      const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
       isInAppSurveyLimitReached =
         !hasInAppSurveySubscription && currentResponseCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
     }
@@ -154,8 +158,8 @@ export const GET = async (
         highlightBorderColor: product.styling.highlightBorderColor.light,
       }),
     };
-
-    const language = await getAttribute("language", person.id);
+    const attributes = await getAttributes(person.id);
+    const language = attributes["language"];
     const noCodeActionClasses = actionClasses.filter((actionClass) => actionClass.type === "noCode");
 
     // Scenario 1: Multi language and updated trigger action classes supported.
@@ -164,7 +168,9 @@ export const GET = async (
 
     // creating state object
     let state: TJsAppStateSync | TJsAppLegacyStateSync = {
-      surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
+      surveys: !isInAppSurveyLimitReached
+        ? transformedSurveys.map((survey) => replaceAttributeRecall(survey, attributes))
+        : [],
       actionClasses,
       language,
       product: updatedProduct,
@@ -183,7 +189,9 @@ export const GET = async (
       );
 
       state = {
-        surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
+        surveys: !isInAppSurveyLimitReached
+          ? transformedSurveys.map((survey) => replaceAttributeRecallInLegacySurveys(survey, attributes))
+          : [],
         person,
         noCodeActionClasses,
         language,

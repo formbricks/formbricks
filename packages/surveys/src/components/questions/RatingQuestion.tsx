@@ -159,7 +159,7 @@ export const RatingQuestion = ({
                         className={cn(
                           number <= hoveredNumber || number <= (value as number)
                             ? "text-amber-400"
-                            : "text-input-bg-selected",
+                            : "text-[#8696AC]",
                           hoveredNumber === number ? "text-amber-400 " : "",
                           "relative flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none"
                         )}
@@ -208,8 +208,8 @@ export const RatingQuestion = ({
                 ))}
               </div>
               <div className="text-subheading mt-4 flex justify-between px-1.5 text-xs leading-6">
-                <p className="w-1/2 text-left">{getLocalizedValue(question.lowerLabel, "default")}</p>
-                <p className="w-1/2 text-right">{getLocalizedValue(question.upperLabel, "default")}</p>
+                <p className="w-1/2 text-left">{getLocalizedValue(question.lowerLabel, languageCode)}</p>
+                <p className="w-1/2 text-right">{getLocalizedValue(question.upperLabel, languageCode)}</p>
               </div>
             </fieldset>
           </div>

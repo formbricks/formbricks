@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 import { signUpAndLogin } from "./utils/helper";
-import { teams, users } from "./utils/mock";
+import { organizations, users } from "./utils/mock";
 
-const { productName } = teams.onboarding[0];
+const { productName } = organizations.onboarding[0];
 
 test.describe("Onboarding Flow Test", async () => {
   test("link survey", async ({ page }) => {
@@ -14,6 +14,7 @@ test.describe("Onboarding Flow Test", async () => {
 
     await page.getByRole("button", { name: "Link Surveys Create a new" }).click();
     await page.getByRole("button", { name: "Collect Feedback Collect" }).click();
+    await page.waitForTimeout(2000);
     await page.getByRole("button", { name: "Publish" }).click();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);

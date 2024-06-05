@@ -16,7 +16,7 @@ import React from "react";
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { isLight, mixColor } from "@formbricks/lib/utils";
+import { isLight, mixColor } from "@formbricks/lib/utils/colors";
 import { TSurvey, TSurveyQuestionType, TSurveyStyling } from "@formbricks/types/surveys";
 import { RatingSmiley } from "@formbricks/ui/RatingSmiley";
 
@@ -34,7 +34,7 @@ export const getPreviewEmailTemplateHtml = (survey: TSurvey, surveyUrl: string, 
 
 export const PreviewEmailTemplate = ({ survey, surveyUrl, styling }: PreviewEmailTemplateProps) => {
   const url = `${surveyUrl}?preview=true`;
-  const urlWithPrefilling = `${surveyUrl}?preview=true&`;
+  const urlWithPrefilling = `${surveyUrl}?preview=true&skipPrefilled=true&`;
   const defaultLanguageCode = "default";
   const firstQuestion = survey.questions[0];
 
@@ -434,7 +434,7 @@ const EmailTemplateWrapper = ({
               "signature-color": signatureColor,
             },
             borderRadius: {
-              custom: styling.roundness ?? 8,
+              custom: (styling.roundness ?? 8).toString() + "px",
             },
           },
         },
