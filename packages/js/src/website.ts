@@ -1,5 +1,5 @@
-import { TFormbricksApp } from "@formbricks/js-core/app";
-import { TFormbricksWebsite } from "@formbricks/js-core/website";
+import { TFormbricksApp } from "@formbricks/js-core/dist/app";
+import { TFormbricksWebsite } from "@formbricks/js-core/dist/website";
 
 import { loadFormbricksToProxy } from "./shared/loadFormbricks";
 

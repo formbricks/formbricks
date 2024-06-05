@@ -28,7 +28,8 @@
       "import": "./dist/website.js",
       "require": "./dist/website.cjs",
       "types": "./dist/website.d.ts"
-    }
+    },
+    "./*": "./dist/*"
   },
   "scripts": {
     "dev": "vite build --watch --mode dev",
