@@ -208,6 +208,10 @@
     "clean": {
       "outputs": [],
       "cache": false
+    },
+    "storybook": {
+      "cache": false,
+      "persistent": true
     }
   }
 }
