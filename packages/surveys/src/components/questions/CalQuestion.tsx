@@ -4,7 +4,6 @@ import { CalEmbed } from "@/components/general/CalEmbed";
 import { Headline } from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
-import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useState } from "preact/hooks";
 
@@ -70,25 +69,23 @@ export const CalQuestion = ({
         onSubmit({ [question.id]: value }, updatedttc);
       }}
       className="w-full">
-      <ScrollableContainer>
-        <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-          <Headline
-            headline={getLocalizedValue(question.headline, languageCode)}
-            questionId={question.id}
-            required={question.required}
-          />
-          <Subheader
-            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-            questionId={question.id}
-          />
-          <>
-            {errorMessage && <span className="text-red-500">{errorMessage}</span>}
-            <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
-          </>
-        </div>
-      </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div>
+        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
+        <>
+          {errorMessage && <span className="text-red-500">{errorMessage}</span>}
+          <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
+        </>
+      </div>
+      <div className="flex w-full justify-between py-4">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

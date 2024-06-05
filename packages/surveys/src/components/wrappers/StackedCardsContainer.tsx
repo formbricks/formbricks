@@ -30,8 +30,6 @@ export const StackedCardsContainer = ({
     survey.styling?.highlightBorderColor?.light || styling.highlightBorderColor?.light;
   const cardBorderColor = survey.styling?.cardBorderColor?.light || styling.cardBorderColor?.light;
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const resizeObserver = useRef<ResizeObserver | null>(null);
-  const [cardHeight, setCardHeight] = useState("auto");
 
   const questionIdxTemp = useMemo(() => {
     if (currentQuestionId === "start") return survey.welcomeCard.enabled ? -1 : 0;
@@ -106,19 +104,6 @@ export const StackedCardsContainer = ({
     }
   };
 
-  // UseEffect to handle the resize of current question card and set cardHeight accordingly
-  useEffect(() => {
-    const currentElement = cardRefs.current[questionIdxTemp];
-    if (currentElement) {
-      if (resizeObserver.current) resizeObserver.current.disconnect();
-      resizeObserver.current = new ResizeObserver((entries) => {
-        for (const entry of entries) setCardHeight(entry.contentRect.height + "px");
-      });
-      resizeObserver.current.observe(currentElement);
-    }
-    return () => resizeObserver.current?.disconnect();
-  }, [questionIdxTemp, cardArrangement]);
-
   // Reset question progress, when card arrangement changes
   useEffect(() => {
     if (shouldResetQuestionId) {
@@ -126,15 +111,6 @@ export const StackedCardsContainer = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardArrangement]);
-
-  const getCardHeight = (offset: number): string => {
-    // Take default height depending upon card content
-    if (offset === 0) return "auto";
-    // Preserve original height
-    else if (offset < 0) return "initial";
-    // Assign the height of the foremost card to all cards behind it
-    else return cardHeight;
-  };
 
   const getBottomStyles = () => {
     if (survey.type !== "link")
@@ -145,15 +121,14 @@ export const StackedCardsContainer = ({
 
   return (
     <div
-      className="relative flex items-end justify-center md:items-center"
+      className="relative flex h-full items-end justify-center overflow-visible md:items-center"
       onMouseEnter={() => {
         setHovered(true);
       }}
       onMouseLeave={() => setHovered(false)}>
-      <div style={{ height: cardHeight }}></div>
       {cardArrangement === "simple" ? (
         <div
-          className="w-full"
+          className="h-full w-full"
           style={{
             ...borderStyles,
           }}>
@@ -180,14 +155,13 @@ export const StackedCardsContainer = ({
                   zIndex: 1000 - questionIdxTemp,
                   transform: `${calculateCardTransform(offset)}`,
                   opacity: isHidden ? 0 : (100 - 0 * offset) / 100,
-                  height: getCardHeight(offset),
                   transitionDuration: "600ms",
                   pointerEvents: offset === 0 ? "auto" : "none",
                   ...borderStyles,
                   ...straightCardArrangementStyles(offset),
                   ...getBottomStyles(),
                 }}
-                className="pointer rounded-custom bg-survey-bg absolute inset-x-0 backdrop-blur-md transition-all ease-in-out">
+                className="pointer rounded-custom bg-survey-bg absolute inset-x-0 h-full backdrop-blur-md transition-all ease-in-out">
                 {getCardContent(questionIdxTemp, offset)}
               </div>
             );

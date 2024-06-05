@@ -3,7 +3,6 @@ import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
-import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useState } from "preact/hooks";
@@ -69,68 +68,66 @@ export const NPSQuestion = ({
         setTtc(updatedTtcObj);
         onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}>
-      <ScrollableContainer>
-        <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-          <Headline
-            headline={getLocalizedValue(question.headline, languageCode)}
-            questionId={question.id}
-            required={question.required}
-          />
-          <Subheader
-            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-            questionId={question.id}
-          />
-          <div className="my-4">
-            <fieldset>
-              <legend className="sr-only">Options</legend>
-              <div className="flex">
-                {Array.from({ length: 11 }, (_, i) => i).map((number, idx) => {
-                  return (
-                    <label
-                      key={number}
-                      tabIndex={idx + 1}
-                      onMouseOver={() => setHoveredNumber(number)}
-                      onMouseLeave={() => setHoveredNumber(-1)}
-                      onKeyDown={(e) => {
-                        // Accessibility: if spacebar was pressed pass this down to the input
-                        if (e.key === " ") {
-                          e.preventDefault();
-                          document.getElementById(number.toString())?.click();
-                          document.getElementById(number.toString())?.focus();
-                        }
-                      }}
-                      className={cn(
-                        value === number
-                          ? "border-border-highlight bg-accent-selected-bg z-10 border"
-                          : "border-border",
-                        "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative h-10 flex-1 cursor-pointer border-b border-l border-t text-center text-sm leading-10 last:border-r focus:border-2 focus:outline-none",
-                        hoveredNumber === number ? "bg-accent-bg" : ""
-                      )}>
-                      <input
-                        type="radio"
-                        id={number.toString()}
-                        name="nps"
-                        value={number}
-                        checked={value === number}
-                        className="absolute left-0 h-full w-full cursor-pointer opacity-0"
-                        onClick={() => handleClick(number)}
-                        required={question.required}
-                      />
-                      {number}
-                    </label>
-                  );
-                })}
-              </div>
-              <div className="text-subheading mt-2 flex justify-between px-1.5 text-xs leading-6">
-                <p>{getLocalizedValue(question.lowerLabel, languageCode)}</p>
-                <p>{getLocalizedValue(question.upperLabel, languageCode)}</p>
-              </div>
-            </fieldset>
-          </div>
+      <div>
+        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
+        <div className="my-4">
+          <fieldset>
+            <legend className="sr-only">Options</legend>
+            <div className="flex">
+              {Array.from({ length: 11 }, (_, i) => i).map((number, idx) => {
+                return (
+                  <label
+                    key={number}
+                    tabIndex={idx + 1}
+                    onMouseOver={() => setHoveredNumber(number)}
+                    onMouseLeave={() => setHoveredNumber(-1)}
+                    onKeyDown={(e) => {
+                      // Accessibility: if spacebar was pressed pass this down to the input
+                      if (e.key === " ") {
+                        e.preventDefault();
+                        document.getElementById(number.toString())?.click();
+                        document.getElementById(number.toString())?.focus();
+                      }
+                    }}
+                    className={cn(
+                      value === number
+                        ? "border-border-highlight bg-accent-selected-bg z-10 border"
+                        : "border-border",
+                      "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative h-10 flex-1 cursor-pointer border-b border-l border-t text-center text-sm leading-10 last:border-r focus:border-2 focus:outline-none",
+                      hoveredNumber === number ? "bg-accent-bg" : ""
+                    )}>
+                    <input
+                      type="radio"
+                      id={number.toString()}
+                      name="nps"
+                      value={number}
+                      checked={value === number}
+                      className="absolute left-0 h-full w-full cursor-pointer opacity-0"
+                      onClick={() => handleClick(number)}
+                      required={question.required}
+                    />
+                    {number}
+                  </label>
+                );
+              })}
+            </div>
+            <div className="text-subheading mt-2 flex justify-between px-1.5 text-xs leading-6">
+              <p>{getLocalizedValue(question.lowerLabel, languageCode)}</p>
+              <p>{getLocalizedValue(question.upperLabel, languageCode)}</p>
+            </div>
+          </fieldset>
         </div>
-      </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      </div>
+      <div className="flex w-full justify-between py-4">
         {!isFirstQuestion && (
           <BackButton
             tabIndex={isLastQuestion ? 12 : 13}

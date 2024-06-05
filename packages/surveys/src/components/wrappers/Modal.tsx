@@ -83,9 +83,9 @@ export const Modal = ({ children, isOpen, placement, clickOutside, darkOverlay, 
           className={cn(
             getPlacementStyle(placement),
             show ? "opacity-100" : "opacity-0",
-            "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
+            "rounded-custom pointer-events-auto absolute bottom-0 h-[60dvh] w-full overflow-visible bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
           )}>
-          <div>{children}</div>
+          {children}
         </div>
       </div>
     </div>

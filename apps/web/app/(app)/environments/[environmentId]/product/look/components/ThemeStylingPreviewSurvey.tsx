@@ -184,7 +184,7 @@ export const ThemeStylingPreviewSurvey = ({
                 </div>
               )}
               <div
-                className={`${product.logo?.url && !product.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0 w-full max-w-md rounded-lg p-4`}>
+                className={`${product.logo?.url && !product.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0 h-[50dvh] w-full max-w-md rounded-lg p-4`}>
                 <SurveyInline
                   survey={{ ...survey, type: "link" }}
                   isBrandingEnabled={product.linkSurveyBranding}

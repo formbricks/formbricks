@@ -1,7 +1,6 @@
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
-import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 
@@ -72,39 +71,37 @@ export const FileUploadQuestion = ({
         }
       }}
       className="w-full ">
-      <ScrollableContainer>
-        <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-          <Headline
-            headline={getLocalizedValue(question.headline, languageCode)}
-            questionId={question.id}
-            required={question.required}
-          />
-          <Subheader
-            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-            questionId={question.id}
-          />
-          <FileInput
-            htmlFor={question.id}
-            surveyId={surveyId}
-            onFileUpload={onFileUpload}
-            onUploadCallback={(urls: string[]) => {
-              if (urls) {
-                onChange({ [question.id]: urls });
-              } else {
-                onChange({ [question.id]: "skipped" });
-              }
-            }}
-            fileUrls={value as string[]}
-            allowMultipleFiles={question.allowMultipleFiles}
-            {...(!!question.allowedFileExtensions
-              ? { allowedFileExtensions: question.allowedFileExtensions }
-              : {})}
-            {...(!!question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
-          />
-        </div>
-      </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div>
+        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
+        <FileInput
+          htmlFor={question.id}
+          surveyId={surveyId}
+          onFileUpload={onFileUpload}
+          onUploadCallback={(urls: string[]) => {
+            if (urls) {
+              onChange({ [question.id]: urls });
+            } else {
+              onChange({ [question.id]: "skipped" });
+            }
+          }}
+          fileUrls={value as string[]}
+          allowMultipleFiles={question.allowMultipleFiles}
+          {...(!!question.allowedFileExtensions
+            ? { allowedFileExtensions: question.allowedFileExtensions }
+            : {})}
+          {...(!!question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
+        />
+      </div>
+      <div className="flex w-full justify-between py-4">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

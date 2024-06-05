@@ -3,7 +3,6 @@ import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
 import { HtmlBody } from "@/components/general/HtmlBody";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
-import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "react";
 
@@ -47,18 +46,16 @@ export const CTAQuestion = ({
 
   return (
     <div key={question.id}>
-      <ScrollableContainer>
-        <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-          <Headline
-            headline={getLocalizedValue(question.headline, languageCode)}
-            questionId={question.id}
-            required={question.required}
-          />
-          <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} questionId={question.id} />
-        </div>
-      </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div>
+        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} questionId={question.id} />
+      </div>
+      <div className="flex w-full justify-between py-4">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
