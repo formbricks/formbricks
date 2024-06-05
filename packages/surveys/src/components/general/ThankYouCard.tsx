@@ -4,6 +4,7 @@ import { LoadingSpinner } from "@/components/general/LoadingSpinner";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { RedirectCountDown } from "@/components/general/RedirectCountdown";
 import { Subheader } from "@/components/general/Subheader";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 
 interface ThankYouCardProps {
   headline?: string;
@@ -51,36 +52,38 @@ export const ThankYouCard = ({
   );
 
   return (
-    <div className="text-center">
-      {isResponseSendingFinished ? (
-        <>
-          {media || checkmark}
-          <Headline alignTextCenter={true} headline={headline} questionId="thankYouCard" />
-          <Subheader subheader={subheader} questionId="thankYouCard" />
-          <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
-          {buttonLabel && (
-            <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
-              <SubmitButton
-                buttonLabel={buttonLabel}
-                isLastQuestion={false}
-                focus={!isInIframe}
-                onClick={() => {
-                  if (!buttonLink) return;
-                  window.location.replace(buttonLink);
-                }}
-              />
-              <p className="text-subheading hidden text-xs md:flex">Press Enter ↵</p>
+    <ScrollableContainer>
+      <div className="text-center">
+        {isResponseSendingFinished ? (
+          <>
+            {media || checkmark}
+            <Headline alignTextCenter={true} headline={headline} questionId="thankYouCard" />
+            <Subheader subheader={subheader} questionId="thankYouCard" />
+            <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
+            {buttonLabel && (
+              <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
+                <SubmitButton
+                  buttonLabel={buttonLabel}
+                  isLastQuestion={false}
+                  focus={!isInIframe}
+                  onClick={() => {
+                    if (!buttonLink) return;
+                    window.location.replace(buttonLink);
+                  }}
+                />
+                <p className="text-subheading hidden text-xs md:flex">Press Enter ↵</p>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="my-3">
+              <LoadingSpinner />
             </div>
-          )}
-        </>
-      ) : (
-        <>
-          <div className="my-3">
-            <LoadingSpinner />
-          </div>
-          <h1 className="text-brand">Sending responses...</h1>
-        </>
-      )}
-    </div>
+            <h1 className="text-brand">Sending responses...</h1>
+          </>
+        )}
+      </div>
+    </ScrollableContainer>
   );
 };

@@ -1,4 +1,5 @@
 import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { calculateElementIdx } from "@/lib/utils";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -103,23 +104,25 @@ export const WelcomeCard = ({
 
   return (
     <div>
-      <div>
-        {fileUrl && (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
-        )}
+      <ScrollableContainer>
+        <div>
+          {fileUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
+          )}
 
-        <Headline
-          headline={replaceRecallInfo(getLocalizedValue(headline, languageCode), {})}
-          questionId="welcomeCard"
-        />
-        <HtmlBody
-          htmlString={replaceRecallInfo(getLocalizedValue(html, languageCode), {})}
-          questionId="welcomeCard"
-        />
-      </div>
+          <Headline
+            headline={replaceRecallInfo(getLocalizedValue(headline, languageCode), {})}
+            questionId="welcomeCard"
+          />
+          <HtmlBody
+            htmlString={replaceRecallInfo(getLocalizedValue(html, languageCode), {})}
+            questionId="welcomeCard"
+          />
+        </div>
+      </ScrollableContainer>
 
-      <div className="mt-4 flex gap-4 py-4">
+      <div className="mx-6 mt-4 flex gap-4 py-4">
         <SubmitButton
           buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
           isLastQuestion={false}
