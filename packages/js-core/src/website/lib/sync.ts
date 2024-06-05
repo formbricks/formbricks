@@ -119,7 +119,7 @@ export const filterPublicSurveys = (state: TJsWebsiteState): TJsWebsiteState => 
         return false;
       }
 
-      return displays.length <= survey.recontactSessions;
+      return displays.length < survey.recontactSessions;
     } else {
       throw Error("Invalid displayOption");
     }

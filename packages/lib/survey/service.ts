@@ -28,7 +28,7 @@ import { structuredClone } from "../pollyfills/structuredClone";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
-import { getResponsesByPersonIdBySurveyId } from "../response/service";
+import { getPersonResponsesBySurveyId } from "../response/service";
 import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
@@ -871,7 +871,7 @@ export const getSyncSurveys = (
               filteredSurveys.push(survey);
             } else {
               const displays = displaysForSurvey(survey.id);
-              const responses = await getResponsesByPersonIdBySurveyId(personId, survey.id);
+              const responses = await getPersonResponsesBySurveyId(personId, survey.id);
 
               if (responses && responses.some((response) => response.finished)) {
                 continue;
