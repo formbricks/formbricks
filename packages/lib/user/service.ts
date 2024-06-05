@@ -301,6 +301,6 @@ export const getIsFreshInstance = (): Promise<boolean> =>
         throw error;
       }
     },
-    ["users-count"],
+    ["getIsFreshInstance"],
     { tags: [userCache.tag.byCount()] }
   )();
