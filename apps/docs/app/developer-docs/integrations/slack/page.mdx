@@ -22,7 +22,8 @@ export const metadata = {
 The slack integration allows you to automatically send responses to a Slack channel of your choice.
 
 <Note>
-    If you are on a self-hosted instance, you will need to configure this integration separately. Please follow the guides [here](/self-hosting/integrations) to configure integrations on your self-hosted instance.
+  If you are on a self-hosted instance, you will need to configure this integration separately. Please follow
+  the guides [here](/self-hosting/integrations) to configure integrations on your self-hosted instance.
 </Note>
 
 ## Formbricks Cloud
@@ -129,7 +130,7 @@ Enabling the Slack Integration in a self-hosted environment requires a setup usi
 
 5. Add the **Redirect URLs** under **OAuth & Permissions** tab. You can add the following URLs:
 
-   - If you are running formbricks locally, you can enter `https://localhost:3000/api/v1/integrations/slack/callback`.
+   - If you are running formbricks locally, you can enter `http://localhost:3000/api/v1/integrations/slack/callback`.
    - Or, you can enter `https://<your-public-facing-url>/api/v1/integrations/slack/callback`
 
 6. Now, click on **Install to Workspace** and **Allow** the permissions.
