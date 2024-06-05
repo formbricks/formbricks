@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { TProductStyling } from "@formbricks/types/product";
@@ -155,7 +156,7 @@ export const StackedCardsContainer = ({
       <div style={{ height: cardHeight }}></div>
       {cardArrangement === "simple" ? (
         <div
-          className="w-full"
+          className={cn("w-full", fullSizeCards ? "h-full" : "")}
           style={{
             ...borderStyles,
           }}>
