@@ -11,7 +11,9 @@ export type ButtonBaseProps = {
   size?: "base" | "sm" | "lg" | "fab" | "icon";
   loading?: boolean;
   disabled?: boolean;
-  onClick?: (event: React.MouseEvent<HTMLElement, MouseEvent>) => void;
+  onClick?: (
+    event: React.MouseEvent<HTMLElement, MouseEvent> & React.MouseEvent<HTMLAnchorElement, MouseEvent>
+  ) => void;
   StartIcon?: SVGComponent | React.ComponentType<React.ComponentProps<"svg">>;
   startIconClassName?: string;
   EndIcon?: SVGComponent | React.ComponentType<React.ComponentProps<"svg">>;
