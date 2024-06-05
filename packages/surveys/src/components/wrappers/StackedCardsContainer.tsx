@@ -90,7 +90,7 @@ export const StackedCardsContainer = ({
     return (offset: number) => {
       switch (cardArrangement) {
         case "casual":
-          return offset < 0 ? `translateX(33%)` : `translateX(0) rotate(-${(hovered ? 3.5 : 3) * offset}deg)`;
+          return offset < 0 ? `translateX(33%)` : `translateX(0) rotate(-${(hovered ? 3 : 2.5) * offset}deg)`;
         case "straight":
           return offset < 0 ? `translateY(25%)` : `translateY(-${(hovered ? 12 : 10) * offset}px)`;
         default:

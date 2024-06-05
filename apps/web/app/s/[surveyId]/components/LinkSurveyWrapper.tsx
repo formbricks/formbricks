@@ -1,6 +1,7 @@
 import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
 import React from "react";
 
+import { cn } from "@formbricks/lib/cn";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
@@ -35,13 +36,24 @@ export const LinkSurveyWrapper = ({
   webAppUrl,
 }: LinkSurveyWrapperProps) => {
   //for embedded survey strip away all surrounding css
-  if (isEmbed) return <div className="h-full w-full overflow-hidden">{children}</div>;
+  const styling = determineStyling();
+  if (isEmbed)
+    return (
+      <div
+        className={cn(
+          "h-full w-full overflow-clip",
+          styling.cardArrangement?.linkSurveys === "straight" && "pt-5",
+          styling.cardArrangement?.linkSurveys === "casual" && "p-10"
+        )}>
+        {children}
+      </div>
+    );
   else
     return (
       <div>
         <MediaBackground survey={survey} product={product}>
           <div className="flex max-h-dvh min-h-dvh items-end justify-center overflow-clip md:items-center">
-            {!determineStyling().isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
+            {!styling.isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
             <div className="h-full w-full space-y-6 p-0 md:max-w-md">
               {isPreview && (
                 <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
