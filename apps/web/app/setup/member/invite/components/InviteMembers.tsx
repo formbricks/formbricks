@@ -55,7 +55,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED }: InviteMembersProps) => {
 
   return (
     <FormProvider {...form}>
-      {IS_SMTP_CONFIGURED && (
+      {!IS_SMTP_CONFIGURED && (
         <Alert variant="warning">
           <AlertTitle>SMTP not configured</AlertTitle>
           <AlertDescription>

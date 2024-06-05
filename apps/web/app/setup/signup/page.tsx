@@ -34,8 +34,8 @@ const Page = async () => {
   return (
     <div className="flex flex-col items-center">
       <h2 className="mb-6 text-xl font-medium">Create Administrator</h2>
-      <p className="mb-6 text-sm text-slate-800">This user has all the power.</p>
-      <hr className="my-4" />
+      <p className="text-sm text-slate-800">This user has all the power.</p>
+      <hr className="my-6 w-full border-slate-200" />
       <SignupOptions
         emailAuthEnabled={EMAIL_AUTH_ENABLED}
         emailFromSearchParams={""}
