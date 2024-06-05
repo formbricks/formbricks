@@ -6,7 +6,6 @@ import { SurveyCloseButton } from "@/components/general/SurveyCloseButton";
 import { ThankYouCard } from "@/components/general/ThankYouCard";
 import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
-import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
@@ -38,8 +37,10 @@ export const Survey = ({
   startAtQuestionId,
   clickOutside,
   shouldResetQuestionId,
+  fullSizeCards = false,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
+  const maxHeightWidth = true;
 
   const [questionId, setQuestionId] = useState(() => {
     if (startAtQuestionId) {
@@ -305,18 +306,20 @@ export const Survey = ({
     };
 
     return (
-      <AutoCloseWrapper survey={survey} onClose={onClose}>
+      <AutoCloseWrapper survey={survey} onClose={onClose} offset={offset}>
         {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
         <div
           className={cn(
-            "no-scrollbar md:rounded-custom rounded-t-custom bg-survey-bg relative flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",
+            "no-scrollbar md:rounded-custom rounded-t-custom bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",
             cardArrangement === "simple" ? "fb-survey-shadow" : "",
             offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
-          <ScrollableContainer loadingElement={loadingElement} contentRef={contentRef}>
+          <div
+            ref={contentRef}
+            className={cn(loadingElement ? "animate-pulse opacity-60" : "", maxHeightWidth ? "" : "my-auto")}>
             {content()}
-          </ScrollableContainer>
-          <div className="absolute inset-x-0 bottom-0 mx-6 mb-10 mt-2 space-y-3 md:mb-6 md:mt-6">
+          </div>
+          <div className="mx-6 mb-10 mt-2 space-y-3 md:mb-6 md:mt-6">
             {isBrandingEnabled && <FormbricksBranding />}
             {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
           </div>
@@ -334,6 +337,7 @@ export const Survey = ({
       styling={styling}
       setQuestionId={setQuestionId}
       shouldResetQuestionId={shouldResetQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   );
 };

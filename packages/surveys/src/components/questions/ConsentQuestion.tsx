@@ -3,6 +3,7 @@ import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
 import { HtmlBody } from "@/components/general/HtmlBody";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 
@@ -52,55 +53,57 @@ export const ConsentQuestion = ({
         setTtc(updatedTtcObj);
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}>
-      <div>
-        {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
-        <Headline
-          headline={getLocalizedValue(question.headline, languageCode)}
-          questionId={question.id}
-          required={question.required}
-        />
-        <HtmlBody
-          htmlString={getLocalizedValue(question.html, languageCode) || ""}
-          questionId={question.id}
-        />
-        <div className="bg-survey-bg sticky -bottom-2 z-10 w-full px-1 py-1">
-          <label
-            tabIndex={1}
-            id={`${question.id}-label`}
-            onKeyDown={(e) => {
-              // Accessibility: if spacebar was pressed pass this down to the input
-              if (e.key === " ") {
-                e.preventDefault();
-                document.getElementById(question.id)?.click();
-                document.getElementById(`${question.id}-label`)?.focus();
-              }
-            }}
-            className="border-border bg-input-bg text-heading hover:bg-input-bg-selected focus:bg-input-bg-selected focus:ring-brand rounded-custom relative z-10 my-2 flex w-full cursor-pointer items-center border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
-            <input
-              type="checkbox"
-              id={question.id}
-              name={question.id}
-              value={getLocalizedValue(question.label, languageCode)}
-              onChange={(e) => {
-                if (e.target instanceof HTMLInputElement && e.target.checked) {
-                  onChange({ [question.id]: "accepted" });
-                } else {
-                  onChange({ [question.id]: "dismissed" });
+      <ScrollableContainer>
+        <div>
+          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          <Headline
+            headline={getLocalizedValue(question.headline, languageCode)}
+            questionId={question.id}
+            required={question.required}
+          />
+          <HtmlBody
+            htmlString={getLocalizedValue(question.html, languageCode) || ""}
+            questionId={question.id}
+          />
+          <div className="bg-survey-bg sticky -bottom-2 z-10 w-full px-1 py-1">
+            <label
+              tabIndex={1}
+              id={`${question.id}-label`}
+              onKeyDown={(e) => {
+                // Accessibility: if spacebar was pressed pass this down to the input
+                if (e.key === " ") {
+                  e.preventDefault();
+                  document.getElementById(question.id)?.click();
+                  document.getElementById(`${question.id}-label`)?.focus();
                 }
               }}
-              checked={value === "accepted"}
-              className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
-              aria-labelledby={`${question.id}-label`}
-              required={question.required}
-            />
-            <span id={`${question.id}-label`} className="ml-3 font-medium">
-              {getLocalizedValue(question.label, languageCode)}
-            </span>
-          </label>
+              className="border-border bg-input-bg text-heading hover:bg-input-bg-selected focus:bg-input-bg-selected focus:ring-brand rounded-custom relative z-10 my-2 flex w-full cursor-pointer items-center border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
+              <input
+                type="checkbox"
+                id={question.id}
+                name={question.id}
+                value={getLocalizedValue(question.label, languageCode)}
+                onChange={(e) => {
+                  if (e.target instanceof HTMLInputElement && e.target.checked) {
+                    onChange({ [question.id]: "accepted" });
+                  } else {
+                    onChange({ [question.id]: "dismissed" });
+                  }
+                }}
+                checked={value === "accepted"}
+                className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
+                aria-labelledby={`${question.id}-label`}
+                required={question.required}
+              />
+              <span id={`${question.id}-label`} className="ml-3 font-medium">
+                {getLocalizedValue(question.label, languageCode)}
+              </span>
+            </label>
+          </div>
         </div>
-      </div>
+      </ScrollableContainer>
 
-      <div className="flex w-full justify-between py-4">
+      <div className="flex w-full justify-between px-6 py-4">
         {!isFirstQuestion && (
           <BackButton
             tabIndex={3}

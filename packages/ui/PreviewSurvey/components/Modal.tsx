@@ -146,7 +146,7 @@ export const Modal = ({
           }),
         }}
         className={cn(
-          "no-scrollbar pointer-events-auto absolute h-[60dvh] w-full max-w-sm transition-all duration-500 ease-in-out ",
+          "no-scrollbar pointer-events-auto absolute h-fit max-h-[90%] w-full max-w-sm transition-all duration-500 ease-in-out ",
           previewMode === "desktop" ? getPlacementStyle(placement) : "max-w-full",
           slidingAnimationClass
         )}>

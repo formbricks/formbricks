@@ -27,6 +27,7 @@ export interface SurveyBaseProps {
   hiddenFieldsRecord?: TResponseData;
   clickOutside?: boolean;
   shouldResetQuestionId?: boolean;
+  fullSizeCards?: boolean;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

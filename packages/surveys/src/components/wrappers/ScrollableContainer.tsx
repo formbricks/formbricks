@@ -1,21 +1,21 @@
 import { cn } from "@/lib/utils";
-import { MutableRef, useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 
 interface ScrollableContainerProps {
   children: JSX.Element;
-  loadingElement: boolean;
-  contentRef: MutableRef<HTMLDivElement | null>;
 }
 
-export const ScrollableContainer = ({ children, loadingElement, contentRef }: ScrollableContainerProps) => {
+export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
   const [isOverflowHidden, setIsOverflowHidden] = useState(true);
   const [isAtBottom, setIsAtBottom] = useState(false);
   const [isAtTop, setIsAtTop] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isSurveyPreview = !!document.getElementById("survey-preview");
 
   const checkScroll = () => {
-    if (!contentRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+    if (!containerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
 
     setIsAtBottom(Math.round(scrollTop) + clientHeight >= scrollHeight);
 
@@ -33,10 +33,8 @@ export const ScrollableContainer = ({ children, loadingElement, contentRef }: Sc
   };
 
   useEffect(() => {
-    const element = contentRef.current;
+    const element = containerRef.current;
     if (!element) return;
-    console.log("running");
-    element.scrollTop = 0;
 
     const handleScroll = () => checkScroll();
     element.addEventListener("scroll", handleScroll);
@@ -51,16 +49,17 @@ export const ScrollableContainer = ({ children, loadingElement, contentRef }: Sc
   }, [children]);
 
   return (
-    <div className={cn("relative h-[85%] pt-6", loadingElement ? "animate-pulse opacity-60" : "")}>
+    <div className="relative pt-6">
       {!isAtTop && (
         <div className="from-survey-bg absolute left-0 right-2 top-6 z-10 h-4 bg-gradient-to-b to-transparent"></div>
       )}
       <div
-        ref={contentRef}
+        ref={containerRef}
         style={{
           scrollbarGutter: "stable both-edges",
+          maxHeight: isSurveyPreview ? "40dvh" : "60dvh",
         }}
-        className={cn(" h-full overflow-auto px-4 pb-1", isOverflowHidden ? "no-scrollbar" : "bg-survey-bg")}
+        className={cn("overflow-auto px-4 pb-1", isOverflowHidden ? "no-scrollbar" : "bg-survey-bg")}
         onMouseEnter={() => toggleOverflow(false)}
         onMouseLeave={() => toggleOverflow(true)}>
         {children}
