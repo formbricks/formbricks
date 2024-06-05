@@ -38,7 +38,7 @@ export const Layout = ({
         </motion.header>
         <div className="flex h-screen flex-col">
           <div className="relative flex flex-1 flex-col px-4 pt-14 sm:px-6 lg:px-8">
-            <main className="flex-auto overflow-y-auto  lg:w-[calc(100%-18rem)]">{children}</main>
+            <main className="flex-auto overflow-y-auto  lg:w-[calc(100%-20rem)]">{children}</main>
             <Footer />
           </div>
           <SideNavigation pathname={pathname} />
