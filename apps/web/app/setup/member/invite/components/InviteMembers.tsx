@@ -19,18 +19,18 @@ interface InviteMembersProps {
 }
 
 export const InviteMembers = ({ IS_SMTP_CONFIGURED }: InviteMembersProps) => {
-  const [fieldNames, setFieldNames] = useState(["member1", "member2", "member3"]);
+  const [membersCount, setMembersCount] = useState(1);
   const router = useRouter();
 
   const form = useForm<TInviteMembersFormSchema>({
     resolver: zodResolver(ZInviteMembersFormSchema),
-    defaultValues: fieldNames.reduce((acc, fieldName) => ({ ...acc, [fieldName]: "" }), {}),
   });
 
   const { isSubmitting } = form.formState;
 
   const inviteTeamMembers = async (data: TInviteMembersFormSchema) => {
     const emails = Object.values(data).filter((email) => email && email.trim());
+    console.log("emails", emails);
     if (!emails.length) {
       router.push("/onboarding");
       return;
@@ -69,11 +69,11 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED }: InviteMembersProps) => {
           <h2 className="text-2xl font-medium">Invite your Organization members</h2>
           <p>Life&apos;s no fun alone.</p>
 
-          {fieldNames.map((fieldName, index) => (
+          {Array.from({ length: membersCount }).map((_, index) => (
             <FormField
-              key={fieldName}
+              key={`member-${index}`}
               control={form.control}
-              name={fieldName}
+              name={`member-${index}`}
               render={({ field, fieldState: { error } }) => (
                 <FormItem>
                   <FormControl>
@@ -81,18 +81,10 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED }: InviteMembersProps) => {
                       <div className="relative">
                         <Input
                           {...field}
-                          placeholder={`Member ${index + 1} email`}
+                          placeholder={`user@example.com`}
                           className="w-80"
                           isInvalid={!!error?.message}
                         />
-                        {index === fieldNames.length - 1 && (
-                          <PlusIcon
-                            className="absolute -right-8 top-2 cursor-pointer text-slate-500"
-                            onClick={() =>
-                              setFieldNames([...fieldNames, `member${fieldNames.length + 1}Email`])
-                            }
-                          />
-                        )}
                       </div>
                       {error?.message && <FormError className="text-left">{error.message}</FormError>}
                     </div>
@@ -101,6 +93,16 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED }: InviteMembersProps) => {
               )}
             />
           ))}
+
+          <Button
+            variant="minimal"
+            onClick={() => setMembersCount((count) => count + 1)}
+            type="button"
+            StartIcon={PlusIcon}>
+            Add another member
+          </Button>
+
+          <hr className="my-6 w-full border-slate-200" />
 
           <div className="space-y-2">
             <Button

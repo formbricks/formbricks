@@ -8,7 +8,7 @@ import { SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER } from "@formbricks/lib/
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 
 export const metadata: Metadata = {
-  title: "Login",
+  title: "Invite",
   description: "Open-source Experience Management. Free & open source.",
 };
 
