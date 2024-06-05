@@ -8,6 +8,8 @@ import { deleteIntegration, getIntegrationByType } from "../integration/service"
 
 export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIntegrationItem[]> => {
   let channels: TIntegrationItem[] = [];
+  // `nextCursor` is a pagination token returned by the Slack API. It indicates the presence of additional pages of data.
+  // When `nextCursor` is not empty, it should be included in subsequent requests to fetch the next page of data.
   let nextCursor: string | undefined = undefined;
 
   do {
