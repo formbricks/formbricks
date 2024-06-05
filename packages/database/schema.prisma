@@ -569,7 +569,7 @@ model User {
   id                        String           @id @default(cuid())
   createdAt                 DateTime         @default(now()) @map(name: "created_at")
   updatedAt                 DateTime         @updatedAt @map(name: "updated_at")
-  name                      String?
+  name                      String
   email                     String           @unique
   emailVerified             DateTime?        @map(name: "email_verified")
   imageUrl                  String?

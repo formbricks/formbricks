@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { FileInput } from "@formbricks/ui/FileInput";
@@ -20,6 +21,7 @@ interface PictureSelectionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
+  attributeClasses: TAttributeClass[];
 }
 
 export const PictureSelectionForm = ({
@@ -30,6 +32,7 @@ export const PictureSelectionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   isInvalid,
+  attributeClasses,
 }: PictureSelectionFormProps): JSX.Element => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const environmentId = localSurvey.environmentId;
@@ -39,6 +42,7 @@ export const PictureSelectionForm = ({
     <form>
       <QuestionFormInput
         id="headline"
+        label={"Question*"}
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -46,6 +50,7 @@ export const PictureSelectionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
+        attributeClasses={attributeClasses}
       />
       <div>
         {showSubheader && (
@@ -54,12 +59,14 @@ export const PictureSelectionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
+                label={"Description"}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
+                attributeClasses={attributeClasses}
               />
             </div>
 

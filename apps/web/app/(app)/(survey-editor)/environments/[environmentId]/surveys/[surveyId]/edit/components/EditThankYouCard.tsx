@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
@@ -19,6 +20,7 @@ interface EditThankYouCardProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
+  attributeClasses: TAttributeClass[];
 }
 
 export const EditThankYouCard = ({
@@ -29,6 +31,7 @@ export const EditThankYouCard = ({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
+  attributeClasses,
 }: EditThankYouCardProps) => {
   // const [open, setOpen] = useState(false);
   let open = activeQuestionId == "end";
@@ -109,7 +112,7 @@ export const EditThankYouCard = ({
           <form>
             <QuestionFormInput
               id="headline"
-              label="Headline"
+              label="Note*"
               value={localSurvey?.thankYouCard?.headline}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
@@ -117,17 +120,20 @@ export const EditThankYouCard = ({
               updateSurvey={updateSurvey}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
+              attributeClasses={attributeClasses}
             />
 
             <QuestionFormInput
               id="subheader"
               value={localSurvey.thankYouCard.subheader}
+              label={"Description"}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
               isInvalid={isInvalid}
               updateSurvey={updateSurvey}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
+              attributeClasses={attributeClasses}
             />
             <div className="mt-4">
               <div className="flex items-center space-x-1">
@@ -170,6 +176,7 @@ export const EditThankYouCard = ({
                       updateSurvey={updateSurvey}
                       selectedLanguageCode={selectedLanguageCode}
                       setSelectedLanguageCode={setSelectedLanguageCode}
+                      attributeClasses={attributeClasses}
                     />
                   </div>
                   <div className="space-y-2">

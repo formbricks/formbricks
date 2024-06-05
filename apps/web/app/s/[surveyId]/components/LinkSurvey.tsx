@@ -9,8 +9,9 @@ import { useEffect, useMemo, useState } from "react";
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
-import { TResponse, TResponseUpdate } from "@formbricks/types/responses";
+import { TResponse, TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
@@ -32,6 +33,7 @@ interface LinkSurveyProps {
   responseCount?: number;
   verifiedEmail?: string;
   languageCode: string;
+  attributeClasses: TAttributeClass[];
 }
 
 export const LinkSurvey = ({
@@ -45,6 +47,7 @@ export const LinkSurvey = ({
   responseCount,
   verifiedEmail,
   languageCode,
+  attributeClasses,
 }: LinkSurveyProps) => {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
@@ -120,20 +123,17 @@ export const LinkSurvey = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hiddenFieldsRecord = useMemo<Record<string, string | number | string[]> | null>(() => {
-    const fieldsRecord: Record<string, string | number | string[]> = {};
-    let fieldsSet = false;
+  const hiddenFieldsRecord = useMemo<TResponseHiddenFieldValue>(() => {
+    const fieldsRecord: TResponseHiddenFieldValue = {};
 
     survey.hiddenFields?.fieldIds?.forEach((field) => {
       const answer = searchParams?.get(field);
       if (answer) {
         fieldsRecord[field] = answer;
-        fieldsSet = true;
       }
     });
 
-    // Only return the record if at least one field was set.
-    return fieldsSet ? fieldsRecord : null;
+    return fieldsRecord;
   }, [searchParams, survey.hiddenFields?.fieldIds]);
 
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
@@ -160,6 +160,7 @@ export const LinkSurvey = ({
           isErrorComponent={true}
           languageCode={languageCode}
           styling={product.styling}
+          attributeClasses={attributeClasses}
         />
       );
     }
@@ -170,6 +171,7 @@ export const LinkSurvey = ({
         survey={survey}
         languageCode={languageCode}
         styling={product.styling}
+        attributeClasses={attributeClasses}
       />
     );
   }
@@ -250,7 +252,6 @@ export const LinkSurvey = ({
               responseQueue.add({
                 data: {
                   ...responseUpdate.data,
-                  ...hiddenFieldsRecord,
                   ...getVerifiedEmail,
                 },
                 ttc: responseUpdate.ttc,
@@ -261,6 +262,7 @@ export const LinkSurvey = ({
                   url: window.location.href,
                   source: sourceParam || "",
                 },
+                ...(Object.keys(hiddenFieldsRecord).length > 0 && { hiddenFields: hiddenFieldsRecord }),
               });
           }}
           onFileUpload={async (file: File, params: TUploadFileConfig) => {

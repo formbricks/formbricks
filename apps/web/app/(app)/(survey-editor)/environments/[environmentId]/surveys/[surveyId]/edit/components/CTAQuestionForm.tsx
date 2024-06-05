@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
@@ -18,6 +19,7 @@ interface CTAQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
+  attributeClasses: TAttributeClass[];
 }
 
 export const CTAQuestionForm = ({
@@ -29,6 +31,7 @@ export const CTAQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
+  attributeClasses,
 }: CTAQuestionFormProps): JSX.Element => {
   const [firstRender, setFirstRender] = useState(true);
 
@@ -37,12 +40,14 @@ export const CTAQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
+        label={"Question*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
+        attributeClasses={attributeClasses}
       />
 
       <div className="mt-3">
@@ -87,6 +92,7 @@ export const CTAQuestionForm = ({
           <QuestionFormInput
             id="buttonLabel"
             value={question.buttonLabel}
+            label={`"Next" Button Label`}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             maxLength={48}
@@ -95,12 +101,14 @@ export const CTAQuestionForm = ({
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
+            attributeClasses={attributeClasses}
           />
 
           {questionIdx !== 0 && (
             <QuestionFormInput
               id="backButtonLabel"
               value={question.backButtonLabel}
+              label={`"Back" Button Label`}
               localSurvey={localSurvey}
               questionIdx={questionIdx}
               maxLength={48}
@@ -109,6 +117,7 @@ export const CTAQuestionForm = ({
               updateQuestion={updateQuestion}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
+              attributeClasses={attributeClasses}
             />
           )}
         </div>
@@ -130,21 +139,20 @@ export const CTAQuestionForm = ({
       )}
 
       {!question.required && (
-        <div className="mt-3 flex-1">
-          <Label htmlFor="buttonLabel">Skip Button Label</Label>
-          <div className="mt-2">
-            <QuestionFormInput
-              id="dismissButtonLabel"
-              value={question.dismissButtonLabel}
-              localSurvey={localSurvey}
-              questionIdx={questionIdx}
-              placeholder={"skip"}
-              isInvalid={isInvalid}
-              updateQuestion={updateQuestion}
-              selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
-            />
-          </div>
+        <div className="mt-2">
+          <QuestionFormInput
+            id="dismissButtonLabel"
+            value={question.dismissButtonLabel}
+            label={"Skip Button Label"}
+            localSurvey={localSurvey}
+            questionIdx={questionIdx}
+            placeholder={"skip"}
+            isInvalid={isInvalid}
+            updateQuestion={updateQuestion}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
+            attributeClasses={attributeClasses}
+          />
         </div>
       )}
     </form>

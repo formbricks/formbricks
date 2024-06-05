@@ -18,23 +18,24 @@ const Page = async ({ params }) => {
     return notFound();
   }
 
-  const survey = await getSurvey(surveyId);
+  const [survey, environment, product, tags] = await Promise.all([
+    getSurvey(params.surveyId),
+    getEnvironment(params.environmentId),
+    getProductByEnvironmentId(params.environmentId),
+    getTagsByEnvironmentId(params.environmentId),
+  ]);
 
   if (!survey) {
     throw new Error("Survey not found");
   }
 
-  const environment = await getEnvironment(survey.environmentId);
-
   if (!environment) {
     throw new Error("Environment not found");
   }
-  const product = await getProductByEnvironmentId(environment.id);
   if (!product) {
     throw new Error("Product not found");
   }
 
-  const tags = await getTagsByEnvironmentId(environment.id);
   const totalResponseCount = await getResponseCountBySurveyId(surveyId);
 
   return (

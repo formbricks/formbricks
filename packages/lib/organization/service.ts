@@ -198,7 +198,6 @@ export const updateOrganization = async (
 
     organizationCache.revalidate({
       id: organization.id,
-      environmentId,
     });
 
     return organization;

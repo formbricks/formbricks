@@ -11,8 +11,8 @@ import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment, TSegmentWithSurveyNames, ZSegmentFilters } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
+import { ConfirmDeleteSegmentModal } from "@formbricks/ui/ConfirmDeleteSegmentModal";
 import { Input } from "@formbricks/ui/Input";
-import { ConfirmDeleteSegmentModal } from "@formbricks/ui/Targeting/ConfirmDeleteSegmentModal";
 
 import { deleteSegmentAction, updateSegmentAction } from "../lib/actions";
 import { AddFilterModal } from "./AddFilterModal";

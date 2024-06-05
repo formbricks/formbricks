@@ -49,7 +49,6 @@ export const Survey = ({
       return survey?.questions[0]?.id;
     }
   });
-  // );
   const [showError, setShowError] = useState(false);
   // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
@@ -253,6 +252,7 @@ export const Survey = ({
             languageCode={languageCode}
             responseCount={responseCount}
             isInIframe={isInIframe}
+            replaceRecallInfo={replaceRecallInfo}
           />
         );
       } else if (questionIdx === survey.questions.length) {
@@ -304,7 +304,7 @@ export const Survey = ({
     };
 
     return (
-      <AutoCloseWrapper survey={survey} onClose={onClose}>
+      <AutoCloseWrapper survey={survey} onClose={onClose} offset={offset}>
         {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
         <div
           className={cn(

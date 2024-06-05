@@ -6,6 +6,7 @@ import {
   CheckIcon,
   ChevronDown,
   ChevronUp,
+  EyeOff,
   GlobeIcon,
   GridIcon,
   HashIcon,
@@ -41,6 +42,7 @@ export enum OptionsType {
   ATTRIBUTES = "Attributes",
   OTHERS = "Other Filters",
   META = "Meta",
+  HIDDEN_FIELDS = "Hidden Fields",
 }
 
 export type QuestionOption = {
@@ -88,6 +90,9 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
         }
       case OptionsType.ATTRIBUTES:
         return <User width={18} height={18} className="text-white" />;
+
+      case OptionsType.HIDDEN_FIELDS:
+        return <EyeOff width={18} height={18} className="text-white" />;
       case OptionsType.META:
         switch (label) {
           case "device":
