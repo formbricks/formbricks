@@ -42,10 +42,10 @@ const SideNavigation = ({ pathname }) => {
               <Link
                 href={`#${heading.id}`}
                 onClick={() => setActiveId(heading.id)}
-                className={`font-normal text-slate-900 dark:text-white ${
+                className={`${
                   heading.id === activeId
-                    ? "rounded-r-md font-semibold text-blue-800 transition dark:text-amber-300"
-                    : ""
+                    ? "font-semibold text-blue-800 dark:text-amber-300"
+                    : "font-normal text-slate-900 dark:text-white"
                 }`}>
                 {heading.text}
               </Link>
