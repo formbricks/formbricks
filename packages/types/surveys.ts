@@ -445,7 +445,12 @@ export const ZSurveyQuestionsObject = z.object({
 
 export type TSurveyQuestionsObject = z.infer<typeof ZSurveyQuestionsObject>;
 
-export const ZSurveyDisplayOption = z.enum(["displayOnce", "displayMultiple", "respondMultiple"]);
+export const ZSurveyDisplayOption = z.enum([
+  "displayOnce",
+  "displayMultiple",
+  "respondMultiple",
+  "displaySome",
+]);
 
 export type TSurveyDisplayOption = z.infer<typeof ZSurveyDisplayOption>;
 
@@ -478,6 +483,7 @@ export const ZSurvey = z.object({
   triggers: z.array(z.object({ actionClass: ZActionClass })),
   redirectUrl: z.string().url().nullable(),
   recontactDays: z.number().nullable(),
+  displayLimit: z.number().nullable(),
   welcomeCard: ZSurveyWelcomeCard,
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,

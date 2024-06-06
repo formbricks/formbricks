@@ -199,11 +199,7 @@ export const GET = async (
       };
     }
 
-    return responses.successResponse(
-      { ...state },
-      true,
-      "public, s-maxage=100, max-age=110, stale-while-revalidate=100, stale-if-error=100"
-    );
+    return responses.successResponse({ ...state }, true);
   } catch (error) {
     console.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
