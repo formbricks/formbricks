@@ -23,7 +23,6 @@ export const InnerHtmlSelector = ({ form }: InnerHtmlSelectorProps) => {
               htmlId="InnerText"
               isChecked={!!watch("noCodeConfig.elementSelector.innerHtml")}
               onToggle={(checked) => {
-                console.log("checked", checked);
                 field.onChange(checked ? "Download Report" : undefined);
               }}
               title="Inner Text"
