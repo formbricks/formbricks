@@ -35,25 +35,22 @@ module.exports = {
           dark: "#00C4B8",
         },
         focus: "var(--formbricks-focus, #1982fc)",
-        error: "var(--formbricks-error, #d13a3a)",
+        error: "rgb(from var(--formbricks-error) r g b / <alpha-value>)",
         brandnew: "var(--formbricks-brand, #038178)",
         borderColor: {
           primary: "var(--formbricks-border-primary, #e0e0e0)",
           secondary: "var(--formbricks-border-secondary, #0f172a)",
           disabled: "var(--formbricks-border-disabled, #ececec)",
-          error: "var(--formbricks-error, #d13a3a)",
         },
         labelColor: {
           primary: "var(--formbricks-label-primary, #0f172a)",
           secondary: "var(--formbricks-label-secondary, #384258)",
           disabled: "var(--formbricks-label-disabled, #bdbdbd)",
-          error: "var(--formbricks-error, #d13a3a)",
         },
         fill: {
           primary: "var(--formbricks-fill-primary, #fefefe)",
           secondary: "var(--formbricks-fill-secondary, #0f172a)",
           disabled: "var(--formbricks-fill-disabled, #e0e0e0)",
-          error: "var(--formbricks-error, #d13a3a)",
         },
       },
       keyframes: {

@@ -3,8 +3,6 @@
   "include": ["src", "package.json", "../types/surveys.d.ts"],
   "compilerOptions": {
     "strict": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
