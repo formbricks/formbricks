@@ -49,17 +49,12 @@ runs:
       run: cp .env.example .env
       shell: bash
 
-    - name: Add E2E Testing Mode
-      run: |
-        echo "E2E_TESTING=${{ inputs.e2e_testing_mode }}" >> $GITHUB_ENV
-      shell: bash
-
     - name: Generate Random ENCRYPTION_KEY and fill in .env
       run: |
         RANDOM_KEY=$(openssl rand -hex 32)
         sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
         sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${RANDOM_KEY}/" .env
-        echo "E2E_TESTING=1" >> .env.example
+        echo "E2E_TESTING=${{ inputs.e2e_testing_mode }}" >> .env.example
       shell: bash
 
     - run: |
