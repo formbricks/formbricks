@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Open-source Experience Management. Free & open source.",
 };
 
-const Page = async () => {
+const Page = () => {
   return (
     <div className="flex flex-col items-center">
       <h2 className="mb-6 text-xl font-medium">Welcome to Formbricks!</h2>
