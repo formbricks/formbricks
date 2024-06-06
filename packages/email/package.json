@@ -7,6 +7,8 @@
     "clean": "rimraf .turbo node_modules dist"
   },
   "dependencies": {
+    "@davincihealthcare/microservices-core": "^1.2.0",
+    "@davincihealthcare/microservices-notifications": "^1.4.4",
     "@formbricks/lib": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@formbricks/ui": "workspace:*",

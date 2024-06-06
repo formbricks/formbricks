@@ -66,6 +66,14 @@ x-next-public-sentry-dsn: &next_public_sentry_dsn # Enable Sentry Error Tracking
 
 x-cron-secret: &cron_secret # Set this to a random string to secure your cron endpoints
 
+x-moleculer-log-level: &moleculer_log_level 'info'
+x-moleculer-enable-metrics-prometheus: &moleculer_enable_metrics_prometheus false
+x-moleculer-enable-metrics: &moleculer_enable_metrics false
+x-moleculer-enable-tracking: &moleculer_enable_tracking false
+x-moleculer-enable-channel-middleware: &moleculer_enable_channel_middleware false
+x-moleculer-microservice-client-name: &moleculer_microservice_client_name 'formbricks-dev'
+x-moleculer-microservice-client-secret: &moleculer_microservice_client_secret 
+
 
 services:
   postgres:
@@ -115,6 +123,13 @@ services:
       GOOGLE_CLIENT_SECRET: *google_client_secret
       CRON_SECRET: *cron_secret
       REDIS_URL: *redis_url
+      MOLECULER_LOG_LEVEL: *moleculer_log_level
+      MOLECULER_ENABLE_METRICS_PROMETHEUS: *moleculer_enable_metrics_prometheus
+      MOLECULER_ENABLE_METRICS: *moleculer_enable_metrics
+      MOLECULER_ENABLE_TRACKING: *moleculer_enable_tracking
+      MOLECULER_ENABLE_CHANNEL_MIDDLEWARE: *moleculer_enable_channel_middleware
+      MOLECULER_MICROSERVICE_CLIENT_NAME: *moleculer_microservice_client_name
+      MOLECULER_MICROSERVICE_CLIENT_SECRET: *moleculer_microservice_client_secret
 
     volumes:
       - uploads:/home/nextjs/apps/web/uploads/

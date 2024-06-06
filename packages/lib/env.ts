@@ -85,6 +85,8 @@ export const env = createEnv({
     VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
     UNSPLASH_ACCESS_KEY: z.string().optional(),
+    MOLECULER_MICROSERVICE_CLIENT_NAME: z.string().optional(),
+    MOLECULER_MICROSERVICE_CLIENT_SECRET: z.string().optional(),
   },
 
   /*
@@ -183,5 +185,7 @@ export const env = createEnv({
     VERCEL_URL: process.env.VERCEL_URL,
     WEBAPP_URL: process.env.WEBAPP_URL,
     UNSPLASH_ACCESS_KEY: process.env.UNSPLASH_ACCESS_KEY,
+    MOLECULER_MICROSERVICE_CLIENT_NAME: process.env.MOLECULER_MICROSERVICE_CLIENT_NAME,
+    MOLECULER_MICROSERVICE_CLIENT_SECRET: process.env.MOLECULER_MICROSERVICE_CLIENT_SECRET,
   },
 });
