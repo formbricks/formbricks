@@ -35,6 +35,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Advanced Targeting", href: "/app-surveys/advanced-targeting" },
           { title: "Show Survey to % of users", href: "/global/show-survey-to-percent-of-users" }, // app and website
           { title: "Recontact Options", href: "/app-surveys/recontact" },
+          { title: "Hidden Fields", href: "/global/hidden-fields" }, // global
           { title: "Multi Language Surveys", href: "/global/multi-language-surveys" }, // global
           { title: "User Metadata", href: "/global/metadata" }, // global
           { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
@@ -57,6 +58,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Actions & Targeting", href: "/website-surveys/actions-and-targeting" },
           { title: "Show Survey to % of users", href: "/global/show-survey-to-percent-of-users" }, // app and website
           { title: "Recontact Options", href: "/app-surveys/recontact" },
+          { title: "Hidden Fields", href: "/global/hidden-fields" }, // global
           { title: "Multi Language Surveys", href: "/global/multi-language-surveys" }, // global
           { title: "User Metadata", href: "/global/metadata" }, // global
           { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
