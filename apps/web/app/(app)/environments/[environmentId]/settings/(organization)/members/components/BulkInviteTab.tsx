@@ -86,9 +86,9 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
       </div>
       <div>
         {!canDoRoleManagement && (
-          <Alert variant="destructive" className="mt-1.5 flex items-start bg-slate-50">
+          <Alert variant="error" className="mt-1.5 flex items-start bg-slate-50">
             <AlertDescription className="ml-2">
-              <p className="text-sm text-slate-700 ">
+              <p className="text-sm text-slate-700">
                 <strong>Warning: </strong> Please note that on the Free Plan, all organization members are
                 automatically assigned the &quot;Admin&quot; role regardless of the role specified in the CSV
                 file.
