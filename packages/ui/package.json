@@ -5,13 +5,14 @@
   "version": "1.0.0",
   "main": "./index.tsx",
   "scripts": {
-    "clean": "rimraf .turbo node_modules dist"
+    "clean": "rimraf .turbo node_modules dist",
+    "lint": "eslint . --ext .ts,.js,.tsx,.jsx"
   },
   "devDependencies": {
-    "@formbricks/tsconfig": "workspace:*",
+    "@formbricks/config-typescript": "workspace:*",
     "@formbricks/types": "workspace:*",
     "concurrently": "^8.2.2",
-    "eslint-config-formbricks": "workspace:*",
+    "@formbricks/eslint-config": "workspace:*",
     "postcss": "^8.4.38",
     "react": "18.3.1"
   },
