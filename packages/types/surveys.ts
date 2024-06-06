@@ -500,7 +500,7 @@ export const ZSurvey = z.object({
   verifyEmail: ZSurveyVerifyEmail.nullable(),
   pin: z.string().nullish(),
   resultShareKey: z.string().nullable(),
-  displayPercentage: z.number().min(1).max(100).nullable(),
+  displayPercentage: z.number().min(0.01).max(100).nullable(),
   languages: z.array(ZSurveyLanguage),
 });
 
@@ -527,7 +527,7 @@ export const ZSurveyInput = z.object({
   verifyEmail: ZSurveyVerifyEmail.optional(),
   pin: z.string().nullish(),
   resultShareKey: z.string().nullish(),
-  displayPercentage: z.number().min(1).max(100).nullish(),
+  displayPercentage: z.number().min(0.01).max(100).nullish(),
   triggers: z.array(z.object({ actionClass: ZActionClass })).optional(),
 });
 

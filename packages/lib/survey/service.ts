@@ -500,6 +500,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     // @ts-expect-error
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
+      displayPercentage: Number(prismaSurvey.displayPercentage) || null,
       segment: surveySegment,
     };
 
