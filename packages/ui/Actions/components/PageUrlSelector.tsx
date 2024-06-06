@@ -1,4 +1,3 @@
-import { Label } from "@radix-ui/react-dropdown-menu";
 import { Globe, PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { Control, FieldArrayWithId, UseFieldArrayRemove, useFieldArray } from "react-hook-form";
@@ -13,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "../../Alert";
 import { Button } from "../../Button";
 import { FormControl, FormField, FormItem } from "../../Form";
 import { Input } from "../../Input";
+import { Label } from "../../Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../Select";
 import { TabToggle } from "../../TabToggle";
 
@@ -82,60 +82,60 @@ export const PageUrlSelector = ({ form }: PageUrlSelectorProps) => {
         />
       </div>
       {filterType === "specific" ? (
-        <div className={`ml-2 mt-4 flex  items-center space-x-1 rounded-lg border bg-slate-50`}>
-          <div className="col-span-1 w-full space-y-3 p-4">
-            <Label>URL</Label>
-            <UrlInput control={form.control} fields={fields} removeUrlRule={removeUrlRule} />
-            <Button variant="secondary" size="sm" type="button" onClick={handleAddMore}>
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Add URL
-            </Button>
-            <div className="pt-4">
-              <div className="text-sm text-slate-900">Test your URL</div>
-              <div className="text-xs text-slate-400">
-                Enter a URL to see if a user visiting it would be tracked.
-              </div>
-              <div className=" rounded bg-slate-50">
-                <div className="mt-1 flex items-end">
-                  <Input
-                    type="text"
-                    value={testUrl}
-                    name="noCodeConfig.urlFilters.testUrl"
-                    onChange={(e) => {
-                      setTestUrl(e.target.value);
-                      setIsMatch("default");
-                    }}
-                    className={cn(
-                      isMatch === "yes"
-                        ? "border-green-500 bg-green-50"
-                        : isMatch === "no"
-                          ? "border-red-200 bg-red-50"
-                          : isMatch === "default"
-                            ? "border-slate-200"
-                            : "bg-white"
-                    )}
-                    placeholder="e.g. https://app.com/dashboard"
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="ml-2 whitespace-nowrap"
-                    onClick={() => {
-                      handleMatchClick();
-                    }}>
-                    Test Match
-                  </Button>
-                </div>
+        <div className="mb-2 mt-4 w-full space-y-3 pe-2">
+          <Label>URL</Label>
+          <UrlInput control={form.control} fields={fields} removeUrlRule={removeUrlRule} />
+          <Button variant="secondary" size="sm" type="button" onClick={handleAddMore}>
+            <PlusIcon className="mr-2 h-4 w-4" />
+            Add URL
+          </Button>
+          <div className="mt-4">
+            <div className="text-sm text-slate-900">Test your URL</div>
+            <div className="text-xs text-slate-400">
+              Enter a URL to see if a user visiting it would be tracked.
+            </div>
+            <div className=" rounded bg-slate-50">
+              <div className="mt-1 flex items-end">
+                <Input
+                  type="text"
+                  value={testUrl}
+                  name="noCodeConfig.urlFilters.testUrl"
+                  onChange={(e) => {
+                    setTestUrl(e.target.value);
+                    setIsMatch("default");
+                  }}
+                  className={cn(
+                    isMatch === "yes"
+                      ? "border-green-500 bg-green-50"
+                      : isMatch === "no"
+                        ? "border-red-200 bg-red-50"
+                        : isMatch === "default"
+                          ? "border-slate-200"
+                          : "bg-white"
+                  )}
+                  placeholder="e.g. https://app.com/dashboard"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="ml-2 whitespace-nowrap"
+                  onClick={() => {
+                    handleMatchClick();
+                  }}>
+                  Test Match
+                </Button>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        <Alert className="my-2 bg-slate-100">
-          <Globe className="h-4 w-4" />
-          <AlertTitle>Visible on all pages</AlertTitle>
-          <AlertDescription>This action will be captured on all pages of your website</AlertDescription>
-        </Alert>
+        <div className="mr-2">
+          <Alert className="my-2 bg-slate-100">
+            <Globe className="h-4 w-4" />
+            <AlertTitle>Visible on all pages</AlertTitle>
+            <AlertDescription>This action will be captured on all pages of your website</AlertDescription>
+          </Alert>
+        </div>
       )}
     </>
   );

@@ -337,22 +337,31 @@ export const CreateNewActionTab = ({
                     />
                   )}
                   {watch("noCodeConfig.type") === "pageView" && (
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <InfoIcon className=" h-4 w-4 " />
-                      <p>This action will be triggered when the page is loaded.</p>
-                    </div>
+                    <Alert>
+                      <InfoIcon className=" h-4 w-4" />
+                      <AlertTitle>Page View</AlertTitle>
+                      <AlertDescription>
+                        This action will be triggered when the page is loaded.
+                      </AlertDescription>
+                    </Alert>
                   )}
                   {watch("noCodeConfig.type") === "exitIntent" && (
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <InfoIcon className=" h-4 w-4 " />
-                      <p>This action will be triggered when the user tries to leave the page.</p>
-                    </div>
+                    <Alert>
+                      <InfoIcon className=" h-4 w-4" />
+                      <AlertTitle>Exit Intent</AlertTitle>
+                      <AlertDescription>
+                        This action will be triggered when the user tries to leave the page.
+                      </AlertDescription>
+                    </Alert>
                   )}
                   {watch("noCodeConfig.type") === "fiftyPercentScroll" && (
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <InfoIcon className=" h-4 w-4 " />
-                      <p>This action will be triggered when the user scrolls 50% of the page.</p>
-                    </div>
+                    <Alert>
+                      <InfoIcon className=" h-4 w-4" />
+                      <AlertTitle>50% Scroll</AlertTitle>
+                      <AlertDescription>
+                        This action will be triggered when the user scrolls 50% of the page.
+                      </AlertDescription>
+                    </Alert>
                   )}
                   <PageUrlSelector form={form} />
                 </div>
