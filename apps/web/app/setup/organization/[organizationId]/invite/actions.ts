@@ -6,10 +6,11 @@ import { sendInviteMemberEmail } from "@formbricks/email";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
+import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { AuthenticationError } from "@formbricks/types/errors";
 
-export const inviteOrganizationMemberAction = async (email: string) => {
+export const inviteOrganizationMemberAction = async (email: string, organizationId: string) => {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -21,9 +22,13 @@ export const inviteOrganizationMemberAction = async (email: string) => {
     throw new AuthenticationError("Invite disabled");
   }
 
+  const { hasCreateOrUpdateMembersAccess } = await verifyUserRoleAccess(organizationId, session.user.id);
+  if (!hasCreateOrUpdateMembersAccess) {
+    throw new AuthenticationError("Not authorized");
+  }
+
   const invite = await inviteUser({
     organizationId: organizations[0].id,
-    currentUser: { id: session.user.id, name: session.user.name },
     invitee: {
       email,
       name: "",

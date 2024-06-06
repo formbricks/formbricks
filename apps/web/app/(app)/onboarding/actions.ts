@@ -50,7 +50,6 @@ export const inviteOrganizationMemberAction = async (
 
   const invite = await inviteUser({
     organizationId,
-    currentUser: { id: session.user.id, name: session.user.name },
     invitee: {
       email,
       name: "",

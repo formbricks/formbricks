@@ -1,6 +1,6 @@
 "use client";
 
-import { inviteOrganizationMemberAction } from "@/app/setup/member/invite/actions";
+import { inviteOrganizationMemberAction } from "@/app/setup/organization/[organizationId]/invite/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -16,9 +16,10 @@ import { Input } from "@formbricks/ui/Input";
 
 interface InviteMembersProps {
   IS_SMTP_CONFIGURED: boolean;
+  organizationId: string;
 }
 
-export const InviteMembers = ({ IS_SMTP_CONFIGURED }: InviteMembersProps) => {
+export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMembersProps) => {
   const [membersCount, setMembersCount] = useState(1);
   const router = useRouter();
 
@@ -30,7 +31,6 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED }: InviteMembersProps) => {
 
   const inviteTeamMembers = async (data: TInviteMembersFormSchema) => {
     const emails = Object.values(data).filter((email) => email && email.trim());
-    console.log("emails", emails);
     if (!emails.length) {
       router.push("/onboarding");
       return;
@@ -38,7 +38,8 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED }: InviteMembersProps) => {
 
     for (const email of emails) {
       try {
-        await inviteOrganizationMemberAction(email ?? "");
+        if (!email) continue;
+        await inviteOrganizationMemberAction(email, organizationId);
         toast.success(`Invitation sent to ${email}!`);
       } catch (error) {
         console.error("Failed to invite:", email, error);

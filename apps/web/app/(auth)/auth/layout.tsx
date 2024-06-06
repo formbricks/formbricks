@@ -15,7 +15,7 @@ const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
   }
 
   if (isFreshInstance && !isMultiOrgEnabled) {
-    redirect("/setup/intro");
+    redirect("/setup/freshInstance/intro");
   }
   return (
     <>

@@ -1,9 +1,12 @@
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
+import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
+import { gethasNoOrganizations } from "@formbricks/lib/instance/service";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
+import { AuthenticationError } from "@formbricks/types/errors";
 
 import { CreateFirstOrganization } from "./components/CreateFirstOrganiztion";
 
@@ -15,12 +18,13 @@ export const metadata: Metadata = {
 const Page = async () => {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
-    redirect("/setup/signup");
-  }
-  const organizations = await getOrganizationsByUserId(session.user.id);
-  if (organizations.length !== 0) {
-    redirect("/404");
+  if (!session) throw new AuthenticationError("Not Authenticated");
+
+  const hasNoOrganizations = await gethasNoOrganizations();
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  const userOrganizations = await getOrganizationsByUserId(session.user.id);
+  if (userOrganizations.length !== 0 || (!hasNoOrganizations && !isMultiOrgEnabled)) {
+    return notFound();
   }
 
   return <CreateFirstOrganization />;

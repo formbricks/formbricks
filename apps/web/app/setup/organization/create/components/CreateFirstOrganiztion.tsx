@@ -3,6 +3,7 @@
 import { createOrganizationAction } from "@/app/setup/organization/create/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
@@ -17,6 +18,7 @@ type TCreateFirstOrganizationForm = z.infer<typeof ZCreateFirstOrganizationFormS
 
 export const CreateFirstOrganization = () => {
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<TCreateFirstOrganizationForm>({
     defaultValues: {
@@ -26,16 +28,17 @@ export const CreateFirstOrganization = () => {
     resolver: zodResolver(ZCreateFirstOrganizationFormSchema),
   });
 
-  const { isSubmitting } = form.formState;
   const organizationName = form.watch("name");
 
   const onSubmit: SubmitHandler<TCreateFirstOrganizationForm> = async (data) => {
     try {
+      setIsSubmitting(true);
       const organizationName = data.name.trim();
-      await createOrganizationAction(organizationName);
-      router.push("/setup/member/invite");
+      const organizatiion = await createOrganizationAction(organizationName);
+      router.push(`/setup/organization/${organizatiion.id}/invite`);
     } catch (error) {
       toast.error("Some error occurred while creating organization");
+      setIsSubmitting(false);
     }
   };
 

@@ -1,7 +1,5 @@
 import { Metadata } from "next";
-import { redirect } from "next/navigation";
 
-import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { Button } from "@formbricks/ui/Button";
 
 export const metadata: Metadata = {
@@ -10,11 +8,6 @@ export const metadata: Metadata = {
 };
 
 const Page = async () => {
-  const isFreshInstance = await getIsFreshInstance();
-  if (!isFreshInstance) {
-    redirect("/404");
-  }
-
   return (
     <div className="flex flex-col items-center">
       <h2 className="mb-6 text-xl font-medium">Welcome to Formbricks!</h2>
@@ -26,7 +19,7 @@ const Page = async () => {
         <p>Survey customers, users or employees at any points with a perfectly timed and targeted survey.</p>
         <p>Keep full control over your data</p>
       </div>
-      <Button variant="darkCTA" href="/setup/signup" className="mt-6">
+      <Button variant="darkCTA" href="/setup/freshInstance/signup" className="mt-6">
         Get started
       </Button>
 

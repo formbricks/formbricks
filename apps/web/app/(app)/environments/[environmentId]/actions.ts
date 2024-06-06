@@ -37,7 +37,7 @@ export const createOrganizationAction = async (organizationName: string): Promis
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   if (!isMultiOrgEnabled)
     throw new OperationNotAllowedError(
-      "Creating Multiple organization is restricted in your instance of Formbricks"
+      "Creating Multiple organization is restricted on your instance of Formbricks"
     );
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");

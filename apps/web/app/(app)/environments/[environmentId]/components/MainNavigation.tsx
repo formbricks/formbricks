@@ -444,12 +444,14 @@ export const MainNavigation = ({
                             ))}
                           </DropdownMenuRadioGroup>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setShowCreateOrganizationModal(true)}
-                            className="rounded-lg">
-                            <PlusIcon className="mr-2 h-4 w-4" />
-                            <span>Create new organization</span>
-                          </DropdownMenuItem>
+                          {isMultiOrgEnabled && (
+                            <DropdownMenuItem
+                              onClick={() => setShowCreateOrganizationModal(true)}
+                              className="rounded-lg">
+                              <PlusIcon className="mr-2 h-4 w-4" />
+                              <span>Create new organization</span>
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
                     </DropdownMenuSub>
