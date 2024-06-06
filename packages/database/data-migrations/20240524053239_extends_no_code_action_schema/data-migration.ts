@@ -60,13 +60,16 @@ const main = async () => {
         })
       );
 
-      const targetAutomaticActionNames = ["Exit Intent (Desktop)", "50% Scroll"];
+      const targetAutomaticActions = [
+        { name: "Exit Intent (Desktop)", type: "exitIntent" },
+        { name: "50% Scroll", type: "fiftyPercentScroll" },
+      ];
 
       // 2.  Update "Exit Intent (Desktop)", "50% Scroll" automatic actions classes that have atleast one survey trigger to noCode actions, update them one by one
-      const automaticActionClassesToUpdatePromises = targetAutomaticActionNames.map((name, idx) => {
+      const automaticActionClassesToUpdatePromises = targetAutomaticActions.map((action) => {
         return tx.actionClass.updateMany({
           where: {
-            name,
+            name: action.name,
             type: "automatic",
             surveys: {
               some: {},
@@ -75,18 +78,20 @@ const main = async () => {
           data: {
             type: "noCode",
             noCodeConfig: {
-              type: idx === 0 ? "exitIntent" : "fiftyPercentScroll",
+              type: action.type as "exitIntent" | "fiftyPercentScroll",
               urlFilters: [],
             },
           },
         });
       });
 
-      console.log(`Updating ${targetAutomaticActionNames.length} automatic action classes...`);
+      const targetAutomaticActionNames = targetAutomaticActions.map((action) => action.name);
+
+      console.log(`Updating ${targetAutomaticActionNames.join(" and ")} action classes...`);
 
       await Promise.all(automaticActionClassesToUpdatePromises);
 
-      // 3.  Delete all automatic code actions(50% scroll and exit intent)
+      // 3. Delete all automatic action classes that are not associated with a survey
       const automaticActionClassesToDelete = await tx.actionClass.deleteMany({
         where: {
           name: {
