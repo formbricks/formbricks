@@ -59,13 +59,7 @@ runs:
         RANDOM_KEY=$(openssl rand -hex 32)
         sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
         sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${RANDOM_KEY}/" .env
-      shell: bash
-
-    - name: Generate Random ENCRYPTION_KEY
-      run: |
-        SECRET=$(openssl rand -hex 32)
-        echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
-        echo "ENTERPRISE_LICENSE_KEY=$SECRET" >> $GITHUB_ENV
+        echo "E2E_TESTING=1" >> .env.example
       shell: bash
 
     - run: |
