@@ -1,9 +1,14 @@
+import { serviceBrokerManager } from "@davincihealthcare/microservices-core/dist/core/moleculer";
+import { ServiceBroker } from "@davincihealthcare/microservices-core/dist/core/types/types";
+import { MicroserviceInterface as NotificationsMicroserviceInterface } from "@davincihealthcare/microservices-notifications";
 import { render } from "@react-email/render";
 import nodemailer from "nodemailer";
 
 import {
   DEBUG,
   MAIL_FROM,
+  MOLECULER_MICROSERVICE_CLIENT_NAME,
+  MOLECULER_MICROSERVICE_CLIENT_SECRET,
   SMTP_HOST,
   SMTP_PASSWORD,
   SMTP_PORT,
@@ -32,6 +37,9 @@ import { WeeklySummaryNotificationEmail } from "./components/weekly-summary/Week
 
 export const IS_SMTP_CONFIGURED: boolean =
   SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASSWORD ? true : false;
+
+const USE_MICROSERVICE_NOTIFICATION =
+  MOLECULER_MICROSERVICE_CLIENT_NAME && MOLECULER_MICROSERVICE_CLIENT_SECRET ? true : false;
 
 interface sendEmailData {
   to: string;
@@ -65,7 +73,54 @@ const getEmailSubject = (productName: string): string => {
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+let broker: ServiceBroker<[NotificationsMicroserviceInterface]>;
+if (USE_MICROSERVICE_NOTIFICATION) {
+  // eslint-disable-next-line turbo/no-undeclared-env-vars
+  process.env.MOLECULER_ENABLE_METRICS = "false";
+  // eslint-disable-next-line turbo/no-undeclared-env-vars
+  process.env.MOLECULER_ENABLE_TRACKING = "false";
+  // eslint-disable-next-line turbo/no-undeclared-env-vars
+  process.env.MOLECULER_LOG_LEVEL = "info";
+  // eslint-disable-next-line turbo/no-undeclared-env-vars
+  process.env.MOLECULER_ENABLE_CHANNEL_MIDDLEWARE = "false";
+
+  broker = serviceBrokerManager.getServiceBroker({
+    options: { metadata: { appId: MOLECULER_MICROSERVICE_CLIENT_NAME } },
+    clientSecret: MOLECULER_MICROSERVICE_CLIENT_SECRET,
+  });
+  console.info(`MICROSERVICE_NOTIFICATION available`);
+} else {
+  console.warn(
+    `MICROSERVICE_NOTIFICATION not available. check env MOLECULER_MICROSERVICE_CLIENT_NAME && MOLECULER_MICROSERVICE_CLIENT_SECRET`
+  );
+}
+
 export const sendEmail = async (emailData: sendEmailData) => {
+  if (USE_MICROSERVICE_NOTIFICATION) {
+    if (!broker.started) {
+      await broker.start();
+    }
+    try {
+      await broker.call("notifications.sendEmailNotification", [
+        {
+          sender: `Formbricks <${MAIL_FROM || "noreply@formbricks.com"}>`,
+          recipient: {
+            to: [emailData.to],
+          },
+          content: {
+            subject: emailData.subject,
+            text: emailData.text,
+            html: emailData.html,
+          },
+          options: {
+            immediate: true,
+          },
+        },
+      ]);
+      return;
+    } catch (error) {}
+  }
+
   try {
     if (IS_SMTP_CONFIGURED) {
       let transporter = nodemailer.createTransport({
@@ -202,6 +257,7 @@ export const sendEmbedSurveyPreviewEmail = async (
   html: string,
   environmentId: string
 ) => {
+  console.log("sendEmbedSurveyPreviewEmail");
   await sendEmail({
     to: to,
     subject: subject,
