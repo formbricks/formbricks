@@ -15,7 +15,7 @@ const Page = async () => {
 
   if (!session) {
     if (isFreshInstance) {
-      redirect("/setup/freshInstance/intro");
+      redirect("/setup/fresh-instance/intro");
     } else {
       redirect("/auth/login");
     }

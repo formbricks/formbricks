@@ -19,7 +19,7 @@ const Page = async () => {
         <p>Survey customers, users or employees at any points with a perfectly timed and targeted survey.</p>
         <p>Keep full control over your data</p>
       </div>
-      <Button variant="darkCTA" href="/setup/freshInstance/signup" className="mt-6">
+      <Button variant="darkCTA" href="/setup/fresh-instance/signup" className="mt-6">
         Get started
       </Button>
 
