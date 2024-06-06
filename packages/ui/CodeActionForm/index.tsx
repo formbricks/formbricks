@@ -38,12 +38,12 @@ export const CodeActionForm = ({ form, isEdit }: CodeActionFormProps) => {
           )}
         />
       </div>
-      <Alert className="bg-slate-100">
+      <Alert>
         <Terminal className="h-4 w-4" />
         <AlertTitle>How do Code Actions work?</AlertTitle>
         <AlertDescription>
           You can track code action anywhere in your app using{" "}
-          <span className="rounded bg-white px-2 py-1 text-xs">
+          <span className="rounded bg-slate-100 px-2 py-1 text-xs">
             formbricks.track(&quot;{watch("key")}&quot;)
           </span>{" "}
           in your code. Read more in our{" "}
