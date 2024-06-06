@@ -34,8 +34,8 @@ export const CreateFirstOrganization = () => {
     try {
       setIsSubmitting(true);
       const organizationName = data.name.trim();
-      const organizatiion = await createOrganizationAction(organizationName);
-      router.push(`/setup/organization/${organizatiion.id}/invite`);
+      const organization = await createOrganizationAction(organizationName);
+      router.push(`/setup/organization/${organization.id}/invite`);
     } catch (error) {
       toast.error("Some error occurred while creating organization");
       setIsSubmitting(false);
