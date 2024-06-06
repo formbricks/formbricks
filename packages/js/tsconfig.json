@@ -3,8 +3,6 @@
   "include": ["src", "package.json"],
   "compilerOptions": {
     "strict": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
     "declaration": true,
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
