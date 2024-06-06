@@ -6,7 +6,7 @@ import {
 } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { InfoIcon, TrashIcon } from "lucide-react";
+import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -16,13 +16,12 @@ import { z } from "zod";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
-import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Button } from "@formbricks/ui/Button";
+import { CodeActionForm } from "@formbricks/ui/CodeActionForm";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { TabToggle } from "@formbricks/ui/TabToggle";
+import { NoCodeActionForm } from "@formbricks/ui/NoCodeActionForm";
 
 interface ActionSettingsTabProps {
   environmentId: string;
@@ -81,10 +80,11 @@ export const ActionSettingsTab = ({
         }
       })
     ),
+
     mode: "onChange",
   });
 
-  const { register, handleSubmit, control, watch } = form;
+  const { handleSubmit, control } = form;
 
   const onSubmit = async (data: TActionClassInput) => {
     try {
@@ -206,102 +206,28 @@ export const ActionSettingsTab = ({
                   />
                 </div>
               )}
-
-              {actionClass.type === "code" && (
-                <div className="col-span-1 mt-4">
-                  <Label htmlFor="actionKeySettingsInput">Key</Label>
-                  <Input
-                    id="actionKeySettingsInput"
-                    placeholder="E.g. download_button_clicked"
-                    {...register("key")}
-                    readOnly
-                    disabled
-                  />
-                </div>
-              )}
             </div>
 
             {actionClass.type === "code" ? (
-              <p className="text-sm text-slate-600">
-                This is a code action. Please make changes in your code base.
-              </p>
+              <>
+                <CodeActionForm form={form} isEdit={true} />
+                <p className="text-sm text-slate-600">
+                  This is a code action. Please make changes in your code base.
+                </p>
+              </>
             ) : actionClass.type === "noCode" ? (
-              <div>
-                <FormField
-                  name={`noCodeConfig.type`}
-                  control={control}
-                  render={({ field: { onChange, value } }) => (
-                    <FormItem>
-                      <FormControl>
-                        <TabToggle
-                          id="userAction"
-                          label="What is the user doing?"
-                          onChange={onChange}
-                          options={[
-                            { value: "click", label: "Click" },
-                            { value: "pageView", label: "Page View" },
-                            { value: "exitIntent", label: "Exit Intent" },
-                            { value: "fiftyPercentScroll", label: "50% Scroll" },
-                          ]}
-                          defaultSelected={value}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <div className="mt-2">
-                  {watch("noCodeConfig.type") === "click" && (
-                    <FormField
-                      control={control}
-                      name="noCodeConfig.elementSelector"
-                      render={() => (
-                        <FormItem>
-                          <FormControl>
-                            <>
-                              <CssSelector
-                                isCssSelector={isCssSelector}
-                                setIsCssSelector={setIsCssSelector}
-                                control={control}
-                              />
-                              <InnerHtmlSelector
-                                isInnerHtml={isInnerHtml}
-                                setIsInnerHtml={setIsInnerHtml}
-                                control={control}
-                              />
-                            </>
-                          </FormControl>
-                          <FormError />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                  {watch("noCodeConfig.type") === "pageView" && (
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <InfoIcon className=" h-4 w-4 " />
-                      <p>This action will be triggered when the page is loaded.</p>
-                    </div>
-                  )}
-                  {watch("noCodeConfig.type") === "exitIntent" && (
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <InfoIcon className=" h-4 w-4 " />
-                      <p>This action will be triggered when the user tries to leave the page.</p>
-                    </div>
-                  )}
-                  {watch("noCodeConfig.type") === "fiftyPercentScroll" && (
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <InfoIcon className=" h-4 w-4 " />
-                      <p>This action will be triggered when the user scrolls 50% of the page.</p>
-                    </div>
-                  )}
-                  <PageUrlSelector form={form} />
-                </div>
-              </div>
-            ) : actionClass.type === "automatic" ? (
+              <NoCodeActionForm
+                form={form}
+                isInnerHtml={isInnerHtml}
+                isCssSelector={isCssSelector}
+                setIsInnerText={setIsInnerHtml}
+                setIsCssSelector={setIsCssSelector}
+              />
+            ) : (
               <p className="text-sm text-slate-600">
                 This action was created automatically. You cannot make changes to it.
               </p>
-            ) : null}
+            )}
           </div>
 
           <div className="flex justify-between border-t border-slate-200 py-6">

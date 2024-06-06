@@ -1,6 +1,5 @@
 import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { InfoIcon, Terminal } from "lucide-react";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -13,11 +12,11 @@ import {
   ZActionClassInput,
 } from "@formbricks/types/actionClasses";
 import { TSurvey } from "@formbricks/types/surveys";
-import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
-import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
+import { CodeActionForm } from "@formbricks/ui/CodeActionForm";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
+import { NoCodeActionForm } from "@formbricks/ui/NoCodeActionForm";
 import { TabToggle } from "@formbricks/ui/TabToggle";
 
 import { createActionClassAction } from "../actions";
@@ -177,6 +176,25 @@ export const CreateNewActionTab = ({
       <FormProvider {...form}>
         <form onSubmit={handleSubmit(submitHandler)}>
           <div className="max-h-[400px] w-full space-y-4 overflow-y-auto">
+            <div className="w-3/5">
+              <FormField
+                name={`type`}
+                control={control}
+                render={({ field }) => (
+                  <TabToggle
+                    id="type"
+                    label="Type"
+                    options={[
+                      { value: "noCode", label: "No code" },
+                      { value: "code", label: "Code" },
+                    ]}
+                    {...field}
+                    defaultSelected={field.value}
+                  />
+                )}
+              />
+            </div>
+
             <div className="grid w-full grid-cols-2 gap-x-4">
               <div className="col-span-1">
                 <FormField
@@ -226,146 +244,16 @@ export const CreateNewActionTab = ({
 
             <hr className="border-slate-200" />
 
-            <div className="w-3/5">
-              <FormField
-                name={`type`}
-                control={control}
-                render={({ field }) => (
-                  <TabToggle
-                    id="type"
-                    label="Type"
-                    options={[
-                      { value: "noCode", label: "No code" },
-                      { value: "code", label: "Code" },
-                    ]}
-                    {...field}
-                    defaultSelected={field.value}
-                  />
-                )}
-              />
-            </div>
-
             {watch("type") === "code" ? (
-              <>
-                <div className="col-span-1">
-                  <FormField
-                    control={control}
-                    name="key"
-                    render={({ field, fieldState: { error } }) => (
-                      <FormItem>
-                        <FormLabel htmlFor="codeActionKeyInput">Key</FormLabel>
-
-                        <FormControl>
-                          <Input
-                            id="codeActionKeyInput"
-                            placeholder="e.g. download_cta_click_on_home"
-                            {...field}
-                            className="mb-2 w-1/2"
-                            value={field.value ?? ""}
-                            isInvalid={!!error?.message}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <Alert className="bg-slate-100">
-                  <Terminal className="h-4 w-4" />
-                  <AlertTitle>How do Code Actions work?</AlertTitle>
-                  <AlertDescription>
-                    You can track code action anywhere in your app using{" "}
-                    <span className="rounded bg-white px-2 py-1 text-xs">
-                      formbricks.track(&quot;{watch("key")}&quot;)
-                    </span>{" "}
-                    in your code. Read more in our{" "}
-                    <a href="https://formbricks.com/docs/actions/code" target="_blank" className="underline">
-                      docs
-                    </a>
-                    .
-                  </AlertDescription>
-                </Alert>
-              </>
+              <CodeActionForm form={form} isEdit={false} />
             ) : (
-              <div>
-                <FormField
-                  name={`noCodeConfig.type`}
-                  control={control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <TabToggle
-                          id="userAction"
-                          {...field}
-                          defaultSelected={field.value}
-                          label="What is the user doing?"
-                          options={[
-                            { value: "click", label: "Click" },
-                            { value: "pageView", label: "Page View" },
-                            { value: "exitIntent", label: "Exit Intent" },
-                            { value: "fiftyPercentScroll", label: "50% Scroll" },
-                          ]}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <div className="mt-2">
-                  {watch("noCodeConfig.type") === "click" && (
-                    <FormField
-                      control={control}
-                      name="noCodeConfig.elementSelector"
-                      render={() => (
-                        <FormItem>
-                          <FormControl>
-                            <>
-                              <CssSelector
-                                isCssSelector={isCssSelector}
-                                setIsCssSelector={setIsCssSelector}
-                                control={control}
-                              />
-                              <InnerHtmlSelector
-                                isInnerHtml={isInnerHtml}
-                                setIsInnerHtml={setIsInnerText}
-                                control={control}
-                              />
-                            </>
-                          </FormControl>
-                          <FormError />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                  {watch("noCodeConfig.type") === "pageView" && (
-                    <Alert>
-                      <InfoIcon className=" h-4 w-4" />
-                      <AlertTitle>Page View</AlertTitle>
-                      <AlertDescription>
-                        This action will be triggered when the page is loaded.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  {watch("noCodeConfig.type") === "exitIntent" && (
-                    <Alert>
-                      <InfoIcon className=" h-4 w-4" />
-                      <AlertTitle>Exit Intent</AlertTitle>
-                      <AlertDescription>
-                        This action will be triggered when the user tries to leave the page.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  {watch("noCodeConfig.type") === "fiftyPercentScroll" && (
-                    <Alert>
-                      <InfoIcon className=" h-4 w-4" />
-                      <AlertTitle>50% Scroll</AlertTitle>
-                      <AlertDescription>
-                        This action will be triggered when the user scrolls 50% of the page.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  <PageUrlSelector form={form} />
-                </div>
-              </div>
+              <NoCodeActionForm
+                form={form}
+                isCssSelector={isCssSelector}
+                isInnerHtml={isInnerHtml}
+                setIsCssSelector={setIsCssSelector}
+                setIsInnerText={setIsInnerText}
+              />
             )}
           </div>
           <div className="flex justify-end pt-6">
