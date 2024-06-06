@@ -59,6 +59,7 @@ runs:
         RANDOM_KEY=$(openssl rand -hex 32)
         sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
         sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${RANDOM_KEY}/" .env
+      shell: bash
 
     - name: Generate Random ENCRYPTION_KEY
       run: |
