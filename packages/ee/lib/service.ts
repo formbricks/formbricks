@@ -5,7 +5,7 @@ import { E2E_TESTING, ENTERPRISE_LICENSE_KEY, IS_FORMBRICKS_CLOUD } from "@formb
 import { hashString } from "@formbricks/lib/hashString";
 import { TOrganization } from "@formbricks/types/organizations";
 
-import { prisma } from "../../database/src";
+import { prisma } from "../../database";
 import { TEnterpriseLicenseDetails, TEnterpriseLicenseFeatures } from "./types";
 
 const hashedKey = ENTERPRISE_LICENSE_KEY ? hashString(ENTERPRISE_LICENSE_KEY) : undefined;
