@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 
-const freshInstanceLayout = async ({ children }: { children: React.ReactNode }) => {
+const FreshInstanceLayout = async ({ children }: { children: React.ReactNode }) => {
   const isFreshInstance = await getIsFreshInstance();
   const session = await getServerSession(authOptions);
   if (session || !isFreshInstance) {
@@ -14,4 +14,4 @@ const freshInstanceLayout = async ({ children }: { children: React.ReactNode }) 
   return <>{children}</>;
 };
 
-export default freshInstanceLayout;
+export default FreshInstanceLayout;
