@@ -14,7 +14,7 @@ export const minimalSurvey: TSurvey = {
   triggers: [],
   redirectUrl: null,
   recontactDays: null,
-  recontactSessions: null,
+  displayLimit: null,
   welcomeCard: {
     enabled: false,
     headline: { default: "Welcome!" },

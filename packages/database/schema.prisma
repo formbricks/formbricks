@@ -279,7 +279,7 @@ model Survey {
   responses           Response[]
   displayOption       displayOptions          @default(displayOnce)
   recontactDays       Int?
-  recontactSessions   Int?
+  displayLimit        Int?
   triggers            SurveyTrigger[]
   /// @zod.custom(imports.ZSurveyInlineTriggers)
   /// [SurveyInlineTriggers]

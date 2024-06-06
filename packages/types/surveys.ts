@@ -483,7 +483,7 @@ export const ZSurvey = z.object({
   triggers: z.array(z.object({ actionClass: ZActionClass })),
   redirectUrl: z.string().url().nullable(),
   recontactDays: z.number().nullable(),
-  recontactSessions: z.number().nullable(),
+  displayLimit: z.number().nullable(),
   welcomeCard: ZSurveyWelcomeCard,
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,

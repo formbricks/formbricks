@@ -112,7 +112,7 @@ export const filterPublicSurveys = (state: TJsWebsiteState): TJsWebsiteState => 
         );
 
       case "displaySome":
-        if (survey.recontactSessions === null) {
+        if (survey.displayLimit === null) {
           return true;
         }
 
@@ -123,8 +123,8 @@ export const filterPublicSurveys = (state: TJsWebsiteState): TJsWebsiteState => 
           return false;
         }
 
-        // Otherwise, check if displays length is less than recontactSessions
-        return displays.filter((display) => display.surveyId === survey.id).length < survey.recontactSessions;
+        // Otherwise, check if displays length is less than displayLimit
+        return displays.filter((display) => display.surveyId === survey.id).length < survey.displayLimit;
 
       default:
         throw Error("Invalid displayOption");

@@ -60,7 +60,7 @@ export const selectSurvey = {
   hiddenFields: true,
   displayOption: true,
   recontactDays: true,
-  recontactSessions: true,
+  displayLimit: true,
   autoClose: true,
   runOnDate: true,
   closeOnDate: true,
@@ -865,7 +865,7 @@ export const getSyncSurveys = (
                   .filter((display) => display.responseId).length === 0
               );
             case "displaySome":
-              if (survey.recontactSessions === null) {
+              if (survey.displayLimit === null) {
                 return true;
               }
 
@@ -878,7 +878,7 @@ export const getSyncSurveys = (
               }
 
               return (
-                displays.filter((display) => display.surveyId === survey.id).length < survey.recontactSessions
+                displays.filter((display) => display.surveyId === survey.id).length < survey.displayLimit
               );
             default:
               throw Error("Invalid displayOption");

@@ -113,7 +113,7 @@ export const PREVIEW_SURVEY = {
   },
   displayOption: "displayOnce",
   recontactDays: null,
-  recontactSessions: null,
+  displayLimit: null,
   autoClose: null,
   runOnDate: null,
   closeOnDate: null,

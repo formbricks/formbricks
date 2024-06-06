@@ -24,14 +24,14 @@ const displayOptions: DisplayOption[] = [
     description: "The survey will be shown once, even if person doesn't respond.",
   },
   {
-    id: "displayMultiple",
-    name: "Until they submit a response",
-    description: "If you really want that answer, ask until you get it.",
-  },
-  {
     id: "displaySome",
     name: "Show multiple times",
     description: "The survey will be shown multiple times until they respond",
+  },
+  {
+    id: "displayMultiple",
+    name: "Until they submit a response",
+    description: "If you really want that answer, ask until you get it.",
   },
   {
     id: "respondMultiple",
@@ -56,7 +56,7 @@ export const RecontactOptionsCard = ({
   const [inputDays, setInputDays] = useState(
     localSurvey.recontactDays !== null ? localSurvey.recontactDays : 1
   );
-  const [recontactSessions, setRecontactSessions] = useState(localSurvey.recontactSessions ?? 1);
+  const [displayLimit, setDisplayLimit] = useState(localSurvey.displayLimit ?? 1);
 
   const handleCheckMark = () => {
     if (ignoreWaiting) {
@@ -78,9 +78,9 @@ export const RecontactOptionsCard = ({
 
   const handleRecontactSessionDaysChange = (event) => {
     const value = Number(event.target.value);
-    setRecontactSessions(value);
+    setDisplayLimit(value);
 
-    const updatedSurvey = { ...localSurvey, recontactSessions: value } satisfies TSurvey;
+    const updatedSurvey = { ...localSurvey, displayLimit: value } satisfies TSurvey;
     setLocalSurvey(updatedSurvey);
   };
 
@@ -133,7 +133,7 @@ export const RecontactOptionsCard = ({
                 const updatedSurvey: TSurvey = {
                   ...localSurvey,
                   displayOption: v,
-                  recontactSessions,
+                  displayLimit,
                 };
                 setLocalSurvey(updatedSurvey);
               }
@@ -156,14 +156,14 @@ export const RecontactOptionsCard = ({
                   </div>
                 </Label>
                 {option.id === "displaySome" && localSurvey.displayOption === "displaySome" && (
-                  <label htmlFor="recontactSessions" className="cursor-pointer p-4">
+                  <label htmlFor="displayLimit" className="cursor-pointer p-4">
                     <p className="text-sm font-semibold text-slate-700">
                       Show survey maximum of
                       <Input
                         type="number"
                         min="1"
-                        id="recontactSessions"
-                        value={recontactSessions.toString()}
+                        id="displayLimit"
+                        value={displayLimit.toString()}
                         onChange={(e) => handleRecontactSessionDaysChange(e)}
                         className="mx-2 inline w-16 bg-white text-center text-sm"
                       />
