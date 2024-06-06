@@ -1,4 +1,4 @@
-import { Control } from "react-hook-form";
+import { UseFormReturn } from "react-hook-form";
 
 import { TActionClassInput } from "@formbricks/types/actionClasses";
 
@@ -7,12 +7,11 @@ import { FormControl, FormField, FormItem } from "../../Form";
 import { Input } from "../../Input";
 
 interface InnerHtmlSelectorProps {
-  isInnerHtml: boolean;
-  setIsInnerHtml: (value: boolean) => void;
-  control: Control<TActionClassInput>;
+  form: UseFormReturn<TActionClassInput>;
 }
 
-export const InnerHtmlSelector = ({ isInnerHtml, setIsInnerHtml, control }: InnerHtmlSelectorProps) => {
+export const InnerHtmlSelector = ({ form }: InnerHtmlSelectorProps) => {
+  const { watch, control } = form;
   return (
     <FormField
       control={control}
@@ -22,10 +21,10 @@ export const InnerHtmlSelector = ({ isInnerHtml, setIsInnerHtml, control }: Inne
           <FormControl>
             <AdvancedOptionToggle
               htmlId="InnerText"
-              isChecked={isInnerHtml}
-              onToggle={() => {
-                setIsInnerHtml(!isInnerHtml);
-                field.onChange("");
+              isChecked={!!watch("noCodeConfig.elementSelector.innerHtml")}
+              onToggle={(checked) => {
+                console.log("checked", checked);
+                field.onChange(checked ? "Download Report" : undefined);
               }}
               title="Inner Text"
               description="If a user clicks a button with a specific text"
@@ -39,7 +38,6 @@ export const InnerHtmlSelector = ({ isInnerHtml, setIsInnerHtml, control }: Inne
                       placeholder="e.g. 'Install App'"
                       {...field}
                       isInvalid={!!error}
-                      required={isInnerHtml}
                     />
                   </div>
                 </div>

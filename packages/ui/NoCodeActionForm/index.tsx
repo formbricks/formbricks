@@ -1,4 +1,7 @@
 import { InfoIcon } from "lucide-react";
+import { UseFormReturn } from "react-hook-form";
+
+import { TActionClassInput } from "@formbricks/types/actionClasses";
 
 import { Alert, AlertDescription, AlertTitle } from "../Alert";
 import { FormControl, FormError, FormField, FormItem } from "../Form";
@@ -8,20 +11,10 @@ import { InnerHtmlSelector } from "./components/InnerHtmlSelector";
 import { PageUrlSelector } from "./components/PageUrlSelector";
 
 interface NoCodeActionFormProps {
-  form: any;
-  isCssSelector: boolean;
-  setIsCssSelector: React.Dispatch<React.SetStateAction<boolean>>;
-  isInnerHtml: boolean;
-  setIsInnerText: React.Dispatch<React.SetStateAction<boolean>>;
+  form: UseFormReturn<TActionClassInput>;
 }
 
-export const NoCodeActionForm = ({
-  form,
-  isCssSelector,
-  isInnerHtml,
-  setIsCssSelector,
-  setIsInnerText,
-}: NoCodeActionFormProps) => {
+export const NoCodeActionForm = ({ form }: NoCodeActionFormProps) => {
   const { control, watch } = form;
 
   return (
@@ -58,16 +51,8 @@ export const NoCodeActionForm = ({
               <FormItem>
                 <FormControl>
                   <>
-                    <CssSelector
-                      isCssSelector={isCssSelector}
-                      setIsCssSelector={setIsCssSelector}
-                      control={control}
-                    />
-                    <InnerHtmlSelector
-                      isInnerHtml={isInnerHtml}
-                      setIsInnerHtml={setIsInnerText}
-                      control={control}
-                    />
+                    <CssSelector form={form} />
+                    <InnerHtmlSelector form={form} />
                   </>
                 </FormControl>
                 <FormError />

@@ -1,6 +1,6 @@
 import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -38,9 +38,6 @@ export const CreateNewActionTab = ({
   setLocalSurvey,
   environmentId,
 }: CreateNewActionTabProps) => {
-  const [isCssSelector, setIsCssSelector] = useState(false);
-  const [isInnerHtml, setIsInnerText] = useState(false);
-
   const actionClassNames = useMemo(
     () => actionClasses.map((actionClass) => actionClass.name),
     [actionClasses]
@@ -104,7 +101,7 @@ export const CreateNewActionTab = ({
       if (
         data.type === "noCode" &&
         data.noCodeConfig?.type === "click" &&
-        isCssSelector &&
+        data.noCodeConfig.elementSelector.cssSelector &&
         !isValidCssSelector(data.noCodeConfig.elementSelector.cssSelector)
       ) {
         throw new Error("Invalid CSS Selector");
@@ -123,14 +120,8 @@ export const CreateNewActionTab = ({
             ...(data.type === "noCode" &&
               data.noCodeConfig?.type === "click" && {
                 elementSelector: {
-                  cssSelector:
-                    isCssSelector && data.noCodeConfig.elementSelector.cssSelector
-                      ? data.noCodeConfig.elementSelector.cssSelector
-                      : undefined,
-                  innerHtml:
-                    isInnerHtml && data.noCodeConfig.elementSelector.innerHtml
-                      ? data.noCodeConfig.elementSelector.innerHtml
-                      : undefined,
+                  cssSelector: data.noCodeConfig.elementSelector.cssSelector,
+                  innerHtml: data.noCodeConfig.elementSelector.innerHtml,
                 },
               }),
           },
@@ -165,8 +156,6 @@ export const CreateNewActionTab = ({
   };
 
   const resetAllStates = () => {
-    setIsCssSelector(false);
-    setIsInnerText(false);
     reset();
     setOpen(false);
   };
@@ -247,13 +236,7 @@ export const CreateNewActionTab = ({
             {watch("type") === "code" ? (
               <CodeActionForm form={form} isEdit={false} />
             ) : (
-              <NoCodeActionForm
-                form={form}
-                isCssSelector={isCssSelector}
-                isInnerHtml={isInnerHtml}
-                setIsCssSelector={setIsCssSelector}
-                setIsInnerText={setIsInnerText}
-              />
+              <NoCodeActionForm form={form} />
             )}
           </div>
           <div className="flex justify-end pt-6">

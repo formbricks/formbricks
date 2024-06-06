@@ -41,20 +41,6 @@ export const ActionSettingsTab = ({
   const { createdAt, updatedAt, id, ...restActionClass } = actionClass;
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [isCssSelector, setIsCssSelector] = useState(
-    !!(
-      actionClass.type === "noCode" &&
-      actionClass.noCodeConfig?.type === "click" &&
-      actionClass.noCodeConfig.elementSelector.cssSelector
-    )
-  );
-  const [isInnerHtml, setIsInnerHtml] = useState(
-    !!(
-      actionClass.type === "noCode" &&
-      actionClass.noCodeConfig?.type === "click" &&
-      actionClass.noCodeConfig.elementSelector.innerHtml
-    )
-  );
 
   const [isUpdatingAction, setIsUpdatingAction] = useState(false);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
@@ -100,7 +86,7 @@ export const ActionSettingsTab = ({
       if (
         data.type === "noCode" &&
         data.noCodeConfig?.type === "click" &&
-        isCssSelector &&
+        data.noCodeConfig.elementSelector.cssSelector &&
         !isValidCssSelector(data.noCodeConfig.elementSelector.cssSelector)
       ) {
         throw new Error("Invalid CSS Selector");
@@ -113,14 +99,8 @@ export const ActionSettingsTab = ({
             noCodeConfig: {
               ...data.noCodeConfig,
               elementSelector: {
-                cssSelector:
-                  isCssSelector && data.noCodeConfig.elementSelector.cssSelector
-                    ? data.noCodeConfig.elementSelector.cssSelector
-                    : undefined,
-                innerHtml:
-                  isInnerHtml && data.noCodeConfig.elementSelector.innerHtml
-                    ? data.noCodeConfig.elementSelector.innerHtml
-                    : undefined,
+                cssSelector: data.noCodeConfig.elementSelector.cssSelector,
+                innerHtml: data.noCodeConfig.elementSelector.innerHtml,
               },
             },
           }),
@@ -216,13 +196,7 @@ export const ActionSettingsTab = ({
                 </p>
               </>
             ) : actionClass.type === "noCode" ? (
-              <NoCodeActionForm
-                form={form}
-                isInnerHtml={isInnerHtml}
-                isCssSelector={isCssSelector}
-                setIsInnerText={setIsInnerHtml}
-                setIsCssSelector={setIsCssSelector}
-              />
+              <NoCodeActionForm form={form} />
             ) : (
               <p className="text-sm text-slate-600">
                 This action was created automatically. You cannot make changes to it.

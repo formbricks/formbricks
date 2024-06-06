@@ -1,4 +1,4 @@
-import { Control } from "react-hook-form";
+import { UseFormReturn } from "react-hook-form";
 
 import { TActionClassInput } from "@formbricks/types/actionClasses";
 
@@ -7,12 +7,11 @@ import { FormControl, FormField, FormItem } from "../../Form";
 import { Input } from "../../Input";
 
 interface CssSelectorProps {
-  isCssSelector: boolean;
-  setIsCssSelector: (value: boolean) => void;
-  control: Control<TActionClassInput>;
+  form: UseFormReturn<TActionClassInput>;
 }
 
-export const CssSelector = ({ isCssSelector, setIsCssSelector, control }: CssSelectorProps) => {
+export const CssSelector = ({ form }: CssSelectorProps) => {
+  const { watch, control } = form;
   return (
     <FormField
       control={control}
@@ -22,10 +21,9 @@ export const CssSelector = ({ isCssSelector, setIsCssSelector, control }: CssSel
           <FormControl>
             <AdvancedOptionToggle
               htmlId="CssSelector"
-              isChecked={isCssSelector}
-              onToggle={() => {
-                setIsCssSelector(!isCssSelector);
-                field.onChange("");
+              isChecked={!!watch("noCodeConfig.elementSelector.cssSelector")}
+              onToggle={(checked) => {
+                field.onChange(checked ? ".css-class" : undefined);
               }}
               title="CSS Selector"
               description="If a user clicks a button with a specific CSS class or id"
@@ -37,7 +35,6 @@ export const CssSelector = ({ isCssSelector, setIsCssSelector, control }: CssSel
                   placeholder="Add .css-class or #css-id"
                   {...field}
                   isInvalid={!!error}
-                  required={isCssSelector}
                 />
               </div>
             </AdvancedOptionToggle>
