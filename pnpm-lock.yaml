@@ -650,6 +650,9 @@ importers:
       '@formbricks/lib':
         specifier: workspace:*
         version: link:../lib
+      axios:
+        specifier: ^1.7.2
+        version: 1.7.2
       stripe:
         specifier: ^15.8.0
         version: 15.8.0

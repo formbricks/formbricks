@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@formbricks/lib": "workspace:*",
+    "axios": "^1.7.2",
     "stripe": "^15.8.0"
   }
 }
