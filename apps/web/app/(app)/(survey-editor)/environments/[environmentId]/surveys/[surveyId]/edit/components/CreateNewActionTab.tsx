@@ -13,11 +13,11 @@ import {
 } from "@formbricks/types/actionClasses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { CodeActionForm } from "@formbricks/ui/CodeActionForm";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
-import { NoCodeActionForm } from "@formbricks/ui/NoCodeActionForm";
 import { TabToggle } from "@formbricks/ui/TabToggle";
+import { CodeActionForm } from "@formbricks/ui/organisms/CodeActionForm";
+import { NoCodeActionForm } from "@formbricks/ui/organisms/NoCodeActionForm";
 
 import { createActionClassAction } from "../actions";
 

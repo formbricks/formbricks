@@ -3,9 +3,9 @@ import { UseFormReturn } from "react-hook-form";
 
 import { TActionClassInput } from "@formbricks/types/actionClasses";
 
-import { Alert, AlertDescription, AlertTitle } from "../Alert";
-import { FormControl, FormError, FormField, FormItem } from "../Form";
-import { TabToggle } from "../TabToggle";
+import { Alert, AlertDescription, AlertTitle } from "../../Alert";
+import { FormControl, FormError, FormField, FormItem } from "../../Form";
+import { TabToggle } from "../../TabToggle";
 import { CssSelector } from "./components/CssSelector";
 import { InnerHtmlSelector } from "./components/InnerHtmlSelector";
 import { PageUrlSelector } from "./components/PageUrlSelector";

@@ -1,8 +1,8 @@
 import { Terminal } from "lucide-react";
 
-import { Alert, AlertDescription, AlertTitle } from "../Alert";
-import { FormControl, FormField, FormItem, FormLabel } from "../Form";
-import { Input } from "../Input";
+import { Alert, AlertDescription, AlertTitle } from "../../Alert";
+import { FormControl, FormField, FormItem, FormLabel } from "../../Form";
+import { Input } from "../../Input";
 
 interface CodeActionFormProps {
   form: any;

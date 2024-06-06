@@ -8,13 +8,13 @@ import { cn } from "@formbricks/lib/cn";
 import { testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
 import { TActionClassInput, TActionClassPageUrlRule } from "@formbricks/types/actionClasses";
 
-import { Alert, AlertDescription, AlertTitle } from "../../Alert";
-import { Button } from "../../Button";
-import { FormControl, FormField, FormItem } from "../../Form";
-import { Input } from "../../Input";
-import { Label } from "../../Label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../Select";
-import { TabToggle } from "../../TabToggle";
+import { Alert, AlertDescription, AlertTitle } from "../../../Alert";
+import { Button } from "../../../Button";
+import { FormControl, FormField, FormItem } from "../../../Form";
+import { Input } from "../../../Input";
+import { Label } from "../../../Label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../Select";
+import { TabToggle } from "../../../TabToggle";
 
 interface PageUrlSelectorProps {
   form: UseFormReturn<TActionClassInput>;

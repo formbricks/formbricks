@@ -17,11 +17,11 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { Button } from "@formbricks/ui/Button";
-import { CodeActionForm } from "@formbricks/ui/CodeActionForm";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
-import { NoCodeActionForm } from "@formbricks/ui/NoCodeActionForm";
+import { CodeActionForm } from "@formbricks/ui/organisms/CodeActionForm";
+import { NoCodeActionForm } from "@formbricks/ui/organisms/NoCodeActionForm";
 
 interface ActionSettingsTabProps {
   environmentId: string;
