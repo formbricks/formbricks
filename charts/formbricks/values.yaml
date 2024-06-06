@@ -25,6 +25,12 @@ formbricks:
     existingSecret:
       name: formbricks-secrets
       key: encryption_key
+  moleculerMicroservice:
+    clientName: "formbricks"
+    clientSecret:
+      existingSecret:
+        name: formbricks-secrets
+        key: moleculer_microservice_client_secret
 
   # NOTE: all settings below are OPTIONAL
 

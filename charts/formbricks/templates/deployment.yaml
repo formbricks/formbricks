@@ -61,6 +61,13 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.formbricks.nextauth.existingSecret.name }}
                   key: {{ .Values.formbricks.nextauth.existingSecret.key }}
+            - name: MOLECULER_MICROSERVICE_CLIENT_NAME
+              value: "{{ .Values.formbricks.moleculerMicroservice.clientName }}"
+            - name: MOLECULER_MICROSERVICE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.formbricks.moleculerMicroservice.clientSecret.existingSecret.name }}
+                  key: {{ .Values.formbricks.moleculerMicroservice.clientSecret.existingSecret.key }}
             - name: ENCRYPTION_KEY
               valueFrom:
                 secretKeyRef:
