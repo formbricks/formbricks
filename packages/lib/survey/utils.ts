@@ -18,6 +18,7 @@ export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
 
   const transformedSurvey: TSurvey = {
     ...surveyPrisma,
+    displayPercentage: Number(surveyPrisma.displayPercentage) || null,
     segment,
   };
 
