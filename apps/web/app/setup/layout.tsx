@@ -2,7 +2,7 @@ import { Toaster } from "react-hot-toast";
 
 import { FormbricksLogo } from "@formbricks/ui/FormbricksLogo";
 
-const SetupLayout = async ({ children }: { children: React.ReactNode }) => {
+const SetupLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <Toaster />
