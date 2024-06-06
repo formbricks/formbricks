@@ -43,7 +43,7 @@ export const LinkSurveyWrapper = ({
         className={cn(
           "h-full w-full overflow-clip",
           styling.cardArrangement?.linkSurveys === "straight" && "pt-5",
-          styling.cardArrangement?.linkSurveys === "casual" && "p-10"
+          styling.cardArrangement?.linkSurveys === "casual" && "px-6 py-10"
         )}>
         {children}
       </div>
