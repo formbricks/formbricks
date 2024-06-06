@@ -130,7 +130,7 @@ export const PageUrlSelector = ({ form }: PageUrlSelectorProps) => {
         </div>
       ) : (
         <div className="mr-2">
-          <Alert className="my-2 bg-slate-100">
+          <Alert className="my-2">
             <Globe className="h-4 w-4" />
             <AlertTitle>Visible on all pages</AlertTitle>
             <AlertDescription>This action will be captured on all pages of your website</AlertDescription>
