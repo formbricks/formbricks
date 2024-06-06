@@ -29,6 +29,17 @@
       "import": "./dist/website.js",
       "require": "./dist/website.umd.cjs",
       "types": "./dist/website.d.ts"
+    },
+    "./*": "./dist/*"
+  },
+  "typesVersions": {
+    "*": {
+      "app": [
+        "./dist/app.d.ts"
+      ],
+      "website": [
+        "./dist/website.d.ts"
+      ]
     }
   },
   "scripts": {
