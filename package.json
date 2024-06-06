@@ -26,7 +26,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint",
-    "release": "turbo run build --filter=js... && turbo run build --filter=n8n-node... && changeset publish",
+    "release": "turbo run build --filter=@formbricks/js... && changeset publish",
     "test": "turbo run test --no-cache",
     "test:e2e": "playwright test",
     "prepare": "husky install",
