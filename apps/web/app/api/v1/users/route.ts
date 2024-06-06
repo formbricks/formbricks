@@ -9,12 +9,13 @@ import {
   INVITE_DISABLED,
   SIGNUP_ENABLED,
 } from "@formbricks/lib/constants";
+import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
-import { createUser, getIsFreshInstance, updateUser } from "@formbricks/lib/user/service";
+import { createUser, updateUser } from "@formbricks/lib/user/service";
 
 export const POST = async (request: Request) => {
   let { inviteToken, ...user } = await request.json();

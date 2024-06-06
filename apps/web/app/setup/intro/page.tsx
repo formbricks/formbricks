@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { getIsFreshInstance } from "@formbricks/lib/user/service";
+import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { Button } from "@formbricks/ui/Button";
 
 export const metadata: Metadata = {

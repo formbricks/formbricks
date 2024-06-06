@@ -4,7 +4,7 @@ import { Toaster } from "react-hot-toast";
 
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getIsFreshInstance } from "@formbricks/lib/user/service";
+import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 
 const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
   const session = await getServerSession(authOptions);

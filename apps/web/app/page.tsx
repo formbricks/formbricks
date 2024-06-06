@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { ONBOARDING_DISABLED } from "@formbricks/lib/constants";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
+import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
-import { getIsFreshInstance } from "@formbricks/lib/user/service";
 import { ClientLogout } from "@formbricks/ui/ClientLogout";
 
 const Page = async () => {

@@ -13,7 +13,7 @@ import {
   OIDC_OAUTH_ENABLED,
   PASSWORD_RESET_DISABLED,
 } from "@formbricks/lib/constants";
-import { getIsFreshInstance } from "@formbricks/lib/user/service";
+import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { SignupOptions } from "@formbricks/ui/SignupOptions";
 
 export const metadata: Metadata = {
