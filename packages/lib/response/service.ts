@@ -101,7 +101,7 @@ export const responseSelection = {
   },
 };
 
-export const getResponsesByPersonId = (personId: string, page?: number): Promise<Array<TResponse> | null> =>
+export const getResponsesByPersonId = (personId: string, page?: number): Promise<TResponse[] | null> =>
   cache(
     async () => {
       validateInputs([personId, ZId], [page, ZOptionalNumber]);
@@ -123,7 +123,7 @@ export const getResponsesByPersonId = (personId: string, page?: number): Promise
           throw new ResourceNotFoundError("Response from PersonId", personId);
         }
 
-        let responses: Array<TResponse> = [];
+        let responses: TResponse[] = [];
 
         await Promise.all(
           responsePrisma.map(async (response) => {

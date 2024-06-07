@@ -60,6 +60,7 @@ export const selectSurvey = {
   hiddenFields: true,
   displayOption: true,
   recontactDays: true,
+  displayLimit: true,
   autoClose: true,
   runOnDate: true,
   closeOnDate: true,
@@ -499,6 +500,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     // @ts-expect-error
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
+      displayPercentage: Number(prismaSurvey.displayPercentage) || null,
       segment: surveySegment,
     };
 
@@ -530,15 +532,10 @@ export const deleteSurvey = async (surveyId: string) => {
       select: selectSurvey,
     });
 
-    if (deletedSurvey.type === "app") {
+    if (deletedSurvey.type === "app" && deletedSurvey.segment?.isPrivate) {
       const deletedSegment = await prisma.segment.delete({
         where: {
-          title: surveyId,
-          isPrivate: true,
-          environmentId_title: {
-            environmentId: deletedSurvey.environmentId,
-            title: surveyId,
-          },
+          id: deletedSurvey.segment.id,
         },
       });
 
@@ -856,17 +853,35 @@ export const getSyncSurveys = (
 
         // filter surveys that meet the displayOption criteria
         surveys = surveys.filter((survey) => {
-          if (survey.displayOption === "respondMultiple") {
-            return true;
-          } else if (survey.displayOption === "displayOnce") {
-            return displays.filter((display) => display.surveyId === survey.id).length === 0;
-          } else if (survey.displayOption === "displayMultiple") {
-            return (
-              displays.filter((display) => display.surveyId === survey.id && display.responseId !== null)
-                .length === 0
-            );
-          } else {
-            throw Error("Invalid displayOption");
+          switch (survey.displayOption) {
+            case "respondMultiple":
+              return true;
+            case "displayOnce":
+              return displays.filter((display) => display.surveyId === survey.id).length === 0;
+            case "displayMultiple":
+              return (
+                displays
+                  .filter((display) => display.surveyId === survey.id)
+                  .filter((display) => display.responseId).length === 0
+              );
+            case "displaySome":
+              if (survey.displayLimit === null) {
+                return true;
+              }
+
+              if (
+                displays
+                  .filter((display) => display.surveyId === survey.id)
+                  .some((display) => display.responseId)
+              ) {
+                return false;
+              }
+
+              return (
+                displays.filter((display) => display.surveyId === survey.id).length < survey.displayLimit
+              );
+            default:
+              throw Error("Invalid displayOption");
           }
         });
 
