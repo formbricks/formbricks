@@ -1,5 +1,5 @@
 {
-  "name": "@formbricks/prettier-config",
+  "name": "@formbricks/config-prettier",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",

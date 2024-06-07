@@ -34,7 +34,6 @@ export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionM
 
   return (
     <div className="group/image relative mb-4 block rounded-md">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       {imgUrl && <img src={imgUrl} alt={altText} className="rounded-custom" />}
       {videoUrlWithParams && (
         <div className="relative">

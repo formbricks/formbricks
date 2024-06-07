@@ -11,10 +11,10 @@
   },
   "devDependencies": {
     "@formbricks/lib": "*",
-    "@formbricks/tsconfig": "*",
+    "@formbricks/config-typescript": "*",
     "@formbricks/types": "*",
     "@formbricks/ui": "*",
-    "eslint-config-formbricks": "workspace:*"
+    "@formbricks/eslint-config": "workspace:*"
   },
   "dependencies": {
     "@formbricks/lib": "workspace:*",
