@@ -12,7 +12,7 @@ import {
 import { ProductFeatureKeys, StripePriceLookupKeys, StripeProductNames } from "../lib/constants";
 import { reportUsage } from "../lib/reportUsage";
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
   // https://github.com/stripe/stripe-node#configuration
   apiVersion: STRIPE_API_VERSION,
 });
@@ -29,7 +29,7 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
 
   const organization = await getOrganization(stripeSubscriptionObject.metadata.organizationId);
   if (!organization) throw new Error("Organization not found.");
-  let updatedFeatures = organization.billing.features;
+  const updatedFeatures = organization.billing.features;
 
   for (const item of stripeSubscriptionObject.items.data) {
     const product = await stripe.products.retrieve(item.price.product as string);

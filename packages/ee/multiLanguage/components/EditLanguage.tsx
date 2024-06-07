@@ -4,7 +4,7 @@ import { InfoIcon, PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
-import { TLanguage, TProduct } from "@formbricks/types/product";
+import type { TLanguage, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
 import { Label } from "@formbricks/ui/Label";
@@ -55,7 +55,7 @@ const validateLanguages = (languages: TLanguage[]) => {
   }
 
   // Check if the chosen alias matches an ISO identifier of a language that hasn’t been added
-  for (let alias of languageAliases) {
+  for (const alias of languageAliases) {
     if (iso639Languages.some((language) => language.alpha2 === alias && !languageCodes.includes(alias))) {
       toast.error(
         "There is a conflict between the selected alias and another language that has this identifier. Please add the language with this identifier to your product instead to avoid inconsistencies.",
@@ -68,7 +68,7 @@ const validateLanguages = (languages: TLanguage[]) => {
   return true;
 };
 
-export const EditLanguage = ({ product, environmentId }: EditLanguageProps) => {
+export function EditLanguage({ product, environmentId }: EditLanguageProps) {
   const [languages, setLanguages] = useState<TLanguage[]>(product.languages);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
@@ -146,7 +146,7 @@ export const EditLanguage = ({ product, environmentId }: EditLanguageProps) => {
 
   const AddLanguageButton: React.FC<{ onClick: () => void }> = ({ onClick }) =>
     isEditing && languages.length === product.languages.length ? (
-      <Button variant="secondary" onClick={onClick} size="sm">
+      <Button onClick={onClick} size="sm" variant="secondary">
         <PlusIcon /> Add Language
       </Button>
     ) : null;
@@ -159,16 +159,16 @@ export const EditLanguage = ({ product, environmentId }: EditLanguageProps) => {
             <LanguageLabels />
             {languages.map((language, index) => (
               <LanguageRow
+                index={index}
+                isEditing={isEditing}
                 key={language.id}
                 language={language}
-                isEditing={isEditing}
-                index={index}
+                onDelete={() => handleDeleteLanguage(language.id)}
                 onLanguageChange={(newLanguage: TLanguage) => {
                   const updatedLanguages = [...languages];
                   updatedLanguages[index] = newLanguage;
                   setLanguages(updatedLanguages);
                 }}
-                onDelete={() => handleDeleteLanguage(language.id)}
               />
             ))}
           </>
@@ -179,24 +179,28 @@ export const EditLanguage = ({ product, environmentId }: EditLanguageProps) => {
       </div>
       <EditSaveButtons
         isEditing={isEditing}
-        onSave={handleSaveChanges}
         onCancel={handleCancelChanges}
-        onEdit={() => setIsEditing(true)}
+        onEdit={() => {
+          setIsEditing(true);
+        }}
+        onSave={handleSaveChanges}
       />
       <ConfirmationModal
-        title="Remove Language"
-        buttonText={"Remove Language"}
-        open={confirmationModal.isOpen}
-        setOpen={() => setConfirmationModal((prev) => ({ ...prev, isOpen: !prev.isOpen }))}
-        text={confirmationModal.text}
-        onConfirm={() => performLanguageDeletion(confirmationModal.languageId)}
+        buttonText="Remove Language"
         isButtonDisabled={confirmationModal.isButtonDisabled}
+        onConfirm={() => performLanguageDeletion(confirmationModal.languageId)}
+        open={confirmationModal.isOpen}
+        setOpen={() => {
+          setConfirmationModal((prev) => ({ ...prev, isOpen: !prev.isOpen }));
+        }}
+        text={confirmationModal.text}
+        title="Remove Language"
       />
     </div>
   );
-};
+}
 
-const AliasTooltip = () => {
+function AliasTooltip() {
   return (
     <TooltipProvider delayDuration={80}>
       <Tooltip>
@@ -211,17 +215,19 @@ const AliasTooltip = () => {
       </Tooltip>
     </TooltipProvider>
   );
-};
+}
 
-const LanguageLabels = () => (
-  <div className="mb-2 grid w-full grid-cols-4 gap-4">
-    <Label htmlFor="languagesId">Language</Label>
-    <Label htmlFor="languagesId">Identifier (ISO)</Label>
-    <Label htmlFor="Alias" className="flex items-center space-x-2">
-      <span>Alias</span> <AliasTooltip />
-    </Label>
-  </div>
-);
+function LanguageLabels() {
+  return (
+    <div className="mb-2 grid w-full grid-cols-4 gap-4">
+      <Label htmlFor="languagesId">Language</Label>
+      <Label htmlFor="languagesId">Identifier (ISO)</Label>
+      <Label className="flex items-center space-x-2" htmlFor="Alias">
+        <span>Alias</span> <AliasTooltip />
+      </Label>
+    </div>
+  );
+}
 
 const EditSaveButtons: React.FC<{
   isEditing: boolean;
@@ -231,15 +237,15 @@ const EditSaveButtons: React.FC<{
 }> = ({ isEditing, onEdit, onSave, onCancel }) =>
   isEditing ? (
     <div className="flex gap-4">
-      <Button variant="darkCTA" size="sm" onClick={onSave}>
+      <Button onClick={onSave} size="sm" variant="darkCTA">
         Save Changes
       </Button>
-      <Button variant="minimal" size="sm" onClick={onCancel}>
+      <Button onClick={onCancel} size="sm" variant="minimal">
         Cancel
       </Button>
     </div>
   ) : (
-    <Button variant="darkCTA" size="sm" onClick={onEdit} className="w-fit">
+    <Button className="w-fit" onClick={onEdit} size="sm" variant="darkCTA">
       Edit Languages
     </Button>
   );

@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { extractLanguageCodes, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
 import { md } from "@formbricks/lib/markdownIt";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TI18nString, TSurvey } from "@formbricks/types/surveys";
+import type { TI18nString, TSurvey } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 
 import { LanguageIndicator } from "./LanguageIndicator";
@@ -31,11 +31,11 @@ const checkIfValueIsIncomplete = (
 ) => {
   const labelIds = ["subheader"];
   if (value === undefined) return false;
-  const isDefaultIncomplete = labelIds.includes(id) ? value["default"]?.trim() !== "" : false;
+  const isDefaultIncomplete = labelIds.includes(id) ? value.default.trim() !== "" : false;
   return isInvalid && !isLabelValidForAllLanguages(value, surveyLanguageCodes) && isDefaultIncomplete;
 };
 
-export const LocalizedEditor = ({
+export function LocalizedEditor({
   id,
   value,
   localSurvey,
@@ -46,24 +46,28 @@ export const LocalizedEditor = ({
   questionIdx,
   firstRender,
   setFirstRender,
-}: LocalizedEditorProps) => {
+}: LocalizedEditorProps) {
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),
     [localSurvey.languages]
   );
   const isInComplete = useMemo(
     () => checkIfValueIsIncomplete(id, isInvalid, surveyLanguageCodes, value),
-    [id, isInvalid, surveyLanguageCodes, value, selectedLanguageCode]
+    [id, isInvalid, surveyLanguageCodes, value]
   );
 
   return (
     <div className="relative w-full">
       <Editor
-        key={`${questionIdx}-${selectedLanguageCode}`}
+        disableLists
+        excludedToolbarItems={["blockType"]}
+        firstRender={firstRender}
         getText={() => md.render(value ? value[selectedLanguageCode] ?? "" : "")}
+        key={`${questionIdx}-${selectedLanguageCode}`}
+        setFirstRender={setFirstRender}
         setText={(v: string) => {
           if (!value) return;
-          let translatedHtml = {
+          const translatedHtml = {
             ...value,
             [selectedLanguageCode]: v,
           };
@@ -74,36 +78,35 @@ export const LocalizedEditor = ({
           }
           updateQuestion(questionIdx, { html: translatedHtml });
         }}
-        excludedToolbarItems={["blockType"]}
-        disableLists
-        firstRender={firstRender}
-        setFirstRender={setFirstRender}
       />
-      {localSurvey.languages?.length > 1 && (
+      {localSurvey.languages.length > 1 && (
         <div>
           <LanguageIndicator
             selectedLanguageCode={selectedLanguageCode}
-            surveyLanguages={localSurvey.languages}
-            setSelectedLanguageCode={setSelectedLanguageCode}
             setFirstRender={setFirstRender}
+            setSelectedLanguageCode={setSelectedLanguageCode}
+            surveyLanguages={localSurvey.languages}
           />
 
-          {value && selectedLanguageCode !== "default" && value["default"] && (
+          {value && selectedLanguageCode !== "default" && value.default ? (
             <div className="mt-1 flex text-xs text-gray-500">
               <strong>Translate:</strong>
               <label
                 className="fb-htmlbody ml-1" // styles are in global.css
                 dangerouslySetInnerHTML={{
                   __html: DOMPurify.sanitize(
-                    recallToHeadline(value, localSurvey, false, "default", [])["default"] ?? ""
+                    recallToHeadline(value, localSurvey, false, "default", []).default ?? ""
                   ),
-                }}></label>
+                }}
+              />
             </div>
-          )}
+          ) : null}
         </div>
       )}
 
-      {isInComplete && <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>}
+      {isInComplete ? (
+        <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>
+      ) : null}
     </div>
   );
-};
+}

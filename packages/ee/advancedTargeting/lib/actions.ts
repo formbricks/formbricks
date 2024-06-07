@@ -15,7 +15,8 @@ import {
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { TSegmentCreateInput, TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
+import type { TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
+import { ZSegmentFilters } from "@formbricks/types/segment";
 
 export const createSegmentAction = async ({
   description,

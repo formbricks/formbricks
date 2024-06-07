@@ -12,7 +12,7 @@ import {
 import { canUserAccessProduct, verifyUserRoleAccess } from "@formbricks/lib/product/auth";
 import { getProduct } from "@formbricks/lib/product/service";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { TLanguageInput } from "@formbricks/types/product";
+import type { TLanguageInput } from "@formbricks/types/product";
 
 export const createLanguageAction = async (
   productId: string,

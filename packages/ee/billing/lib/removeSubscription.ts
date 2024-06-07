@@ -4,10 +4,10 @@ import { STRIPE_API_VERSION, WEBAPP_URL } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 
-import { StripePriceLookupKeys } from "./constants";
+import type { StripePriceLookupKeys } from "./constants";
 import { getFirstOfNextMonthTimestamp } from "./createSubscription";
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
   apiVersion: STRIPE_API_VERSION,
 });
 
@@ -30,7 +30,7 @@ export const removeSubscription = async (
     const existingCustomer = (await stripe.customers.retrieve(organization.billing.stripeCustomerId, {
       expand: ["subscriptions"],
     })) as Stripe.Customer;
-    const existingSubscription = existingCustomer.subscriptions?.data[0] as Stripe.Subscription;
+    const existingSubscription = existingCustomer.subscriptions?.data[0]!;
 
     const allScheduledSubscriptions = await stripe.subscriptionSchedules.list({
       customer: organization.billing.stripeCustomerId,
@@ -93,7 +93,7 @@ export const removeSubscription = async (
 
     await stripe.subscriptions.update(existingSubscription.id, { cancel_at_period_end: true });
 
-    let updatedFeatures = organization.billing.features;
+    const updatedFeatures = organization.billing.features;
     for (const priceLookupKey of priceLookupKeys) {
       updatedFeatures[priceLookupKey as keyof typeof updatedFeatures].status = "cancelled";
     }

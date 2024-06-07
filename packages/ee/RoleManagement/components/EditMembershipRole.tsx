@@ -6,7 +6,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import type { TMembershipRole } from "@formbricks/types/memberships";
 import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
 import {
@@ -32,7 +32,7 @@ interface Role {
   currentUserRole: string;
 }
 
-export const EditMembershipRole = ({
+export function EditMembershipRole({
   isAdminOrOwner,
   memberRole,
   organizationId,
@@ -42,7 +42,7 @@ export const EditMembershipRole = ({
   memberAccepted,
   inviteId,
   currentUserRole,
-}: Role) => {
+}: Role) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isTransferOwnershipModalOpen, setTransferOwnershipModalOpen] = useState(false);
@@ -110,11 +110,11 @@ export const EditMembershipRole = ({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              disabled={disableRole}
-              variant="secondary"
               className="flex items-center gap-1 p-2 text-xs"
+              disabled={disableRole}
               loading={loading}
-              size="sm">
+              size="sm"
+              variant="secondary">
               <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>
               <ChevronDownIcon className="h-4 w-4" />
             </Button>
@@ -122,10 +122,12 @@ export const EditMembershipRole = ({
           {!disableRole && (
             <DropdownMenuContent>
               <DropdownMenuRadioGroup
-                value={capitalizeFirstLetter(memberRole)}
-                onValueChange={(value) => handleRoleChange(value.toLowerCase() as TMembershipRole)}>
+                onValueChange={(value) => {
+                  handleRoleChange(value.toLowerCase() as TMembershipRole);
+                }}
+                value={capitalizeFirstLetter(memberRole)}>
                 {getMembershipRoles().map((role) => (
-                  <DropdownMenuRadioItem key={role} value={role} className="capitalize">
+                  <DropdownMenuRadioItem className="capitalize" key={role} value={role}>
                     {role.toLowerCase()}
                   </DropdownMenuRadioItem>
                 ))}
@@ -134,15 +136,15 @@ export const EditMembershipRole = ({
           )}
         </DropdownMenu>
         <TransferOwnershipModal
-          open={isTransferOwnershipModalOpen}
-          setOpen={setTransferOwnershipModalOpen}
+          isLoading={loading}
           memberName={memberName}
           onSubmit={handleOwnershipTransfer}
-          isLoading={loading}
+          open={isTransferOwnershipModalOpen}
+          setOpen={setTransferOwnershipModalOpen}
         />
       </>
     );
   }
 
-  return <Badge text={capitalizeFirstLetter(memberRole)} type="gray" size="tiny" />;
-};
+  return <Badge size="tiny" text={capitalizeFirstLetter(memberRole)} type="gray" />;
+}

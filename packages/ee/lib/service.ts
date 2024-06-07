@@ -2,12 +2,11 @@ import "server-only";
 
 import axios from "axios";
 
+import { prisma } from "@formbricks/database/src/src";
 import { cache, revalidateTag } from "@formbricks/lib/cache";
 import { E2E_TESTING, ENTERPRISE_LICENSE_KEY, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { hashString } from "@formbricks/lib/hashString";
-import { TOrganization } from "@formbricks/types/organizations";
-
-import { prisma } from "../../database/src";
+import type { TOrganization } from "@formbricks/types/organizations";
 
 const hashedKey = ENTERPRISE_LICENSE_KEY ? hashString(ENTERPRISE_LICENSE_KEY) : undefined;
 const PREVIOUS_RESULTS_CACHE_TAG_KEY = `getPreviousResult-${hashedKey}` as const;
@@ -86,7 +85,7 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
 
         const response = await axios.post("https://ee.formbricks.com/api/licenses/check", {
           licenseKey: process.env.ENTERPRISE_LICENSE_KEY,
-          usage: { responseCount: responseCount },
+          usage: { responseCount },
         });
 
         if (response.status === 200) {
@@ -116,45 +115,44 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
   if (isValid !== null) {
     await setPreviousResult({ active: isValid, lastChecked: new Date() });
     return isValid;
-  } else {
-    // if result is undefined -> error
-    // if the last check was less than 72 hours, return the previous value:
-    if (new Date().getTime() - previousResult.lastChecked.getTime() <= 3 * 24 * 60 * 60 * 1000) {
-      return previousResult.active !== null ? previousResult.active : false;
-    }
-
-    // if the last check was more than 72 hours, return false and log the error
-    console.error("Error while checking license: The license check failed");
-    return false;
   }
+  // if result is undefined -> error
+  // if the last check was less than 72 hours, return the previous value:
+  if (new Date().getTime() - previousResult.lastChecked.getTime() <= 3 * 24 * 60 * 60 * 1000) {
+    return previousResult.active !== null ? previousResult.active : false;
+  }
+
+  // if the last check was more than 72 hours, return false and log the error
+  console.error("Error while checking license: The license check failed");
+  return false;
 };
 
 export const getRemoveInAppBrandingPermission = (organization: TOrganization): boolean => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.features.inAppSurvey.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return true;
-  else return false;
+  return false;
 };
 
 export const getRemoveLinkBrandingPermission = (organization: TOrganization): boolean => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.features.linkSurvey.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return true;
-  else return false;
+  return false;
 };
 
 export const getRoleManagementPermission = async (organization: TOrganization): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.features.inAppSurvey.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
-  else return false;
+  return false;
 };
 
 export const getAdvancedTargetingPermission = async (organization: TOrganization): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.features.userTargeting.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
-  else return false;
+  return false;
 };
 
 export const getMultiLanguagePermission = async (organization: TOrganization): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.features.inAppSurvey.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
-  else return false;
+  return false;
 };

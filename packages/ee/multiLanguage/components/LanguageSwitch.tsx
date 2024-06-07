@@ -2,7 +2,7 @@
 
 import { ChevronDownIcon } from "lucide-react";
 
-import { TSurveyLanguage } from "@formbricks/types/surveys";
+import type { TSurveyLanguage } from "@formbricks/types/surveys";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,15 +17,15 @@ interface LanguageSwitchProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
 }
-export const LanguageSwitch = ({
+export function LanguageSwitch({
   surveyLanguages,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: LanguageSwitchProps) => {
+}: LanguageSwitchProps) {
   if (selectedLanguageCode === "default") {
     selectedLanguageCode =
       surveyLanguages.find((surveyLanguage) => {
-        return surveyLanguage.default === true;
+        return surveyLanguage.default;
       })?.language.code ?? "default";
   }
   return (
@@ -45,14 +45,15 @@ export const LanguageSwitch = ({
           {surveyLanguages.length > 0 ? (
             surveyLanguages.map((surveyLanguage) => (
               <DropdownMenuItem
-                key={surveyLanguage.language.id}
                 className="m-0 p-0"
+                key={surveyLanguage.language.id}
                 onClick={() => {
                   setSelectedLanguageCode(surveyLanguage.language.code);
                 }}>
                 <div className="flex h-full w-full items-center space-x-2 px-2 py-1 hover:bg-slate-700">
                   <span
-                    className={`h-4 w-4 rounded-full border ${surveyLanguage.language.code === selectedLanguageCode ? "bg-brand-dark outline-brand-dark border-black outline" : "border-white"}`}></span>
+                    className={`h-4 w-4 rounded-full border ${surveyLanguage.language.code === selectedLanguageCode ? "bg-brand-dark outline-brand-dark border-black outline" : "border-white"}`}
+                  />
                   <p className="font-normal text-white">{getLanguageLabel(surveyLanguage.language.code)}</p>
                 </div>
               </DropdownMenuItem>
@@ -64,4 +65,4 @@ export const LanguageSwitch = ({
       </DropdownMenu>
     </div>
   );
-};
+}

@@ -2,7 +2,7 @@ import { ChevronDown } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import { TSurveyLanguage } from "@formbricks/types/surveys";
+import type { TSurveyLanguage } from "@formbricks/types/surveys";
 
 import { getLanguageLabel } from "../lib/isoLanguages";
 
@@ -12,14 +12,16 @@ interface LanguageIndicatorProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   setFirstRender?: (firstRender: boolean) => void;
 }
-export const LanguageIndicator = ({
+export function LanguageIndicator({
   surveyLanguages,
   selectedLanguageCode,
   setSelectedLanguageCode,
   setFirstRender,
-}: LanguageIndicatorProps) => {
+}: LanguageIndicatorProps) {
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
-  const toggleDropdown = () => setShowLanguageDropdown((prev) => !prev);
+  const toggleDropdown = () => {
+    setShowLanguageDropdown((prev) => !prev);
+  };
   const languageDropdownRef = useRef(null);
 
   const changeLanguage = (language: TSurveyLanguage) => {
@@ -33,25 +35,27 @@ export const LanguageIndicator = ({
 
   const languageToBeDisplayed = surveyLanguages.find((language) => {
     return selectedLanguageCode === "default"
-      ? language.default === true
+      ? language.default
       : language.language.code === selectedLanguageCode;
   });
 
-  useClickOutside(languageDropdownRef, () => setShowLanguageDropdown(false));
+  useClickOutside(languageDropdownRef, () => {
+    setShowLanguageDropdown(false);
+  });
 
   return (
     <div className="absolute right-2 top-2">
       <button
-        type="button"
+        aria-expanded={showLanguageDropdown}
+        aria-haspopup="true"
         className="flex items-center justify-center rounded-md bg-slate-900 p-1 px-2 text-xs text-white hover:bg-slate-700"
         onClick={toggleDropdown}
         tabIndex={-1}
-        aria-haspopup="true"
-        aria-expanded={showLanguageDropdown}>
-        {languageToBeDisplayed ? getLanguageLabel(languageToBeDisplayed?.language.code) : ""}
+        type="button">
+        {languageToBeDisplayed ? getLanguageLabel(languageToBeDisplayed.language.code) : ""}
         <ChevronDown className="ml-1 h-4 w-4" />
       </button>
-      {showLanguageDropdown && (
+      {showLanguageDropdown ? (
         <div
           className="absolute right-0 z-30 mt-1 space-y-2 rounded-md bg-slate-900 p-1 text-xs text-white "
           ref={languageDropdownRef}>
@@ -59,16 +63,18 @@ export const LanguageIndicator = ({
             (language) =>
               language.language.code !== languageToBeDisplayed?.language.code && (
                 <button
-                  key={language.language.id}
-                  type="button"
                   className="block w-full rounded-sm p-1 text-left hover:bg-slate-700"
-                  onClick={() => changeLanguage(language)}>
+                  key={language.language.id}
+                  onClick={() => {
+                    changeLanguage(language);
+                  }}
+                  type="button">
                   {getLanguageLabel(language.language.code)}
                 </button>
               )
           )}
         </div>
-      )}
+      ) : null}
     </div>
   );
-};
+}

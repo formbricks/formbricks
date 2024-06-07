@@ -7,7 +7,7 @@ import { getOrganization, updateOrganization } from "@formbricks/lib/organizatio
 import { ProductFeatureKeys, StripeProductNames } from "../lib/constants";
 import { unsubscribeCoreAndAppSurveyFeatures, unsubscribeLinkSurveyProFeatures } from "../lib/downgradePlan";
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
   // https://github.com/stripe/stripe-node#configuration
   apiVersion: STRIPE_API_VERSION,
 });
@@ -23,7 +23,7 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const organization = await getOrganization(organizationId);
   if (!organization) throw new Error("Organization not found.");
 
-  let updatedFeatures = organization.billing.features;
+  const updatedFeatures = organization.billing.features;
 
   for (const item of stripeSubscriptionObject.items.data) {
     const product = await stripe.products.retrieve(item.price.product as string);

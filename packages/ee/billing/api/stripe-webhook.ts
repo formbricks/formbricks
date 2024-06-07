@@ -7,11 +7,11 @@ import { handleCheckoutSessionCompleted } from "../handlers/checkoutSessionCompl
 import { handleSubscriptionUpdatedOrCreated } from "../handlers/subscriptionCreatedOrUpdated";
 import { handleSubscriptionDeleted } from "../handlers/subscriptionDeleted";
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
   apiVersion: STRIPE_API_VERSION,
 });
 
-const webhookSecret: string = env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret: string = env.STRIPE_WEBHOOK_SECRET;
 
 export const webhookHandler = async (requestBody: string, stripeSignature: string) => {
   let event: Stripe.Event;

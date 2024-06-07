@@ -2,11 +2,12 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import { TLanguage } from "@formbricks/types/product";
+import type { TLanguage } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 
-import { TIso639Language, iso639Languages } from "../lib/isoLanguages";
+import type { TIso639Language } from "../lib/isoLanguages";
+import { iso639Languages } from "../lib/isoLanguages";
 
 interface LanguageSelectProps {
   language: TLanguage;
@@ -14,7 +15,7 @@ interface LanguageSelectProps {
   disabled: boolean;
 }
 
-export const LanguageSelect = ({ language, onLanguageChange, disabled }: LanguageSelectProps) => {
+export function LanguageSelect({ language, onLanguageChange, disabled }: LanguageSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOption, setSelectedOption] = useState(
@@ -29,11 +30,13 @@ export const LanguageSelect = ({ language, onLanguageChange, disabled }: Languag
     setIsOpen(!isOpen);
   };
 
-  useClickOutside(languageSelectRef, () => setIsOpen(false));
+  useClickOutside(languageSelectRef, () => {
+    setIsOpen(false);
+  });
 
   const handleOptionSelect = (option: TIso639Language) => {
     setSelectedOption(option);
-    onLanguageChange({ ...language, code: option?.alpha2 || "" });
+    onLanguageChange({ ...language, code: option.alpha2 || "" });
     setIsOpen(false);
   };
 
@@ -49,29 +52,33 @@ export const LanguageSelect = ({ language, onLanguageChange, disabled }: Languag
   return (
     <div className="group relative h-full" ref={languageSelectRef}>
       <Button
+        className="flex h-full w-full justify-between border border-slate-200 px-3 py-2"
         disabled={disabled}
-        variant="minimal"
         onClick={toggleDropdown}
-        className="flex h-full w-full justify-between border border-slate-200 px-3 py-2">
+        variant="minimal">
         <span className="mr-2">{selectedOption?.english ?? "Select"}</span>
         <ChevronDown className="h-4 w-4" />
       </Button>
       <div
         className={`absolute right-0 z-30 mt-2 space-y-1 rounded-md bg-white p-1 shadow-lg ring-1 ring-black ring-opacity-5 ${isOpen ? "" : "hidden"}`}>
         <Input
-          type="text"
-          placeholder="Search items"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
           autoComplete="off"
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+          }}
+          placeholder="Search items"
           ref={inputRef}
+          type="text"
+          value={searchTerm}
         />
         <div className="max-h-96 overflow-auto">
           {filteredItems.map((item, index) => (
             <div
+              className="block cursor-pointer rounded-md px-4 py-2 text-gray-700 hover:bg-gray-100 active:bg-blue-100"
               key={index}
-              onClick={() => handleOptionSelect(item)}
-              className="block cursor-pointer rounded-md px-4 py-2 text-gray-700 hover:bg-gray-100 active:bg-blue-100">
+              onClick={() => {
+                handleOptionSelect(item);
+              }}>
               {item.english}
             </div>
           ))}
@@ -79,4 +86,4 @@ export const LanguageSelect = ({ language, onLanguageChange, disabled }: Languag
       </div>
     </div>
   );
-};
+}

@@ -9,10 +9,15 @@ import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { TActionClass } from "@formbricks/types/actionClasses";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys";
+import type { TActionClass } from "@formbricks/types/actionClasses";
+import type { TAttributeClass } from "@formbricks/types/attributeClasses";
+import type {
+  TBaseFilter,
+  TSegment,
+  TSegmentCreateInput,
+  TSegmentUpdateInput,
+} from "@formbricks/types/segment";
+import type { TSurvey } from "@formbricks/types/surveys";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { LoadSegmentModal } from "@formbricks/ui/LoadSegmentModal";
@@ -41,7 +46,7 @@ interface UserTargetingAdvancedCardProps {
   initialSegment?: TSegment;
 }
 
-export const AdvancedTargetingCard = ({
+export function AdvancedTargetingCard({
   localSurvey,
   setLocalSurvey,
   environmentId,
@@ -49,7 +54,7 @@ export const AdvancedTargetingCard = ({
   attributeClasses,
   segments,
   initialSegment,
-}: UserTargetingAdvancedCardProps) => {
+}: UserTargetingAdvancedCardProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
@@ -58,7 +63,7 @@ export const AdvancedTargetingCard = ({
   const [saveAsNewSegmentModalOpen, setSaveAsNewSegmentModalOpen] = useState(false);
   const [resetAllFiltersModalOpen, setResetAllFiltersModalOpen] = useState(false);
   const [loadSegmentModalOpen, setLoadSegmentModalOpen] = useState(false);
-  const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(!!localSurvey.segment?.isPrivate);
+  const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(Boolean(localSurvey.segment?.isPrivate));
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(true);
 
   const actionClasses = actionClassesProps.filter((actionClass) => {
@@ -76,12 +81,12 @@ export const AdvancedTargetingCard = ({
   useEffect(() => {
     setLocalSurvey((localSurveyOld) => ({
       ...localSurveyOld,
-      segment: segment,
+      segment,
     }));
   }, [setLocalSurvey, segment]);
 
   const isSegmentUsedInOtherSurveys = useMemo(
-    () => (localSurvey?.segment ? localSurvey.segment?.surveys?.length > 1 : false),
+    () => (localSurvey.segment ? localSurvey.segment.surveys.length > 1 : false),
     [localSurvey.segment]
   );
 
@@ -97,10 +102,10 @@ export const AdvancedTargetingCard = ({
   };
 
   useEffect(() => {
-    if (!!segment && segment?.filters?.length > 0) {
+    if (Boolean(segment) && segment.filters.length > 0) {
       setOpen(true);
     }
-  }, [segment, segment?.filters?.length]);
+  }, [segment, segment?.filters.length]);
 
   useEffect(() => {
     if (localSurvey.type === "link") {
@@ -110,7 +115,7 @@ export const AdvancedTargetingCard = ({
 
   const handleAddFilterInGroup = (filter: TBaseFilter) => {
     const updatedSegment = structuredClone(segment);
-    if (updatedSegment?.filters?.length === 0) {
+    if (updatedSegment?.filters.length === 0) {
       updatedSegment.filters.push({
         ...filter,
         connector: null,
@@ -144,7 +149,7 @@ export const AdvancedTargetingCard = ({
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
     try {
       if (!segment) throw new Error("Invalid segment");
-      await updateSegmentAction(environmentId, segment?.id, data);
+      await updateSegmentAction(environmentId, segment.id, data);
       toast.success("Segment saved successfully");
 
       setIsSegmentEditorOpen(false);
@@ -168,17 +173,17 @@ export const AdvancedTargetingCard = ({
 
   return (
     <Collapsible.Root
-      open={open}
+      className="w-full rounded-lg border border-slate-300 bg-white"
       onOpenChange={setOpen}
-      className="w-full rounded-lg border border-slate-300 bg-white">
+      open={open}>
       <Collapsible.CollapsibleTrigger
         asChild
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pl-2 pr-5">
             <CheckIcon
-              strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+              strokeWidth={3}
             />
           </div>
           <div>
@@ -194,37 +199,37 @@ export const AdvancedTargetingCard = ({
           <TargetingIndicator segment={segment} />
 
           <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
-            {!!segment && (
+            {Boolean(segment) && (
               <LoadSegmentModal
-                open={loadSegmentModalOpen}
-                setOpen={setLoadSegmentModalOpen}
-                surveyId={localSurvey.id}
                 currentSegment={segment}
-                segments={segments}
-                setSegment={setSegment}
-                setIsSegmentEditorOpen={setIsSegmentEditorOpen}
                 onSegmentLoad={handleLoadNewSegment}
+                open={loadSegmentModalOpen}
+                segments={segments}
+                setIsSegmentEditorOpen={setIsSegmentEditorOpen}
+                setOpen={setLoadSegmentModalOpen}
+                setSegment={setSegment}
+                surveyId={localSurvey.id}
               />
             )}
 
             {isSegmentEditorOpen ? (
               <div className="flex w-full flex-col gap-2">
                 <SegmentTitle
-                  title={localSurvey.segment?.title}
                   description={localSurvey.segment?.description}
                   isPrivate={segment?.isPrivate}
+                  title={localSurvey.segment?.title}
                 />
-                {!!segment?.filters?.length && (
+                {Boolean(segment?.filters.length) && (
                   <div className="w-full">
                     <SegmentEditor
-                      key={segment.filters.toString()}
-                      group={segment.filters}
-                      environmentId={environmentId}
-                      segment={segment}
-                      setSegment={setSegment}
                       actionClasses={actionClasses}
                       attributeClasses={attributeClasses}
+                      environmentId={environmentId}
+                      group={segment.filters}
+                      key={segment.filters.toString()}
+                      segment={segment}
                       segments={segments}
+                      setSegment={setSegment}
                     />
                   </div>
                 )}
@@ -232,27 +237,30 @@ export const AdvancedTargetingCard = ({
                 <div
                   className={cn(
                     "mt-3 flex items-center gap-2",
-                    segment?.isPrivate && !segment?.filters?.length && "mt-0"
+                    segment?.isPrivate && !segment.filters.length && "mt-0"
                   )}>
-                  <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
+                  <Button
+                    onClick={() => {
+                      setAddFilterModalOpen(true);
+                    }}
+                    size="sm"
+                    variant="secondary">
                     Add filter
                   </Button>
 
-                  {isSegmentEditorOpen && !segment?.isPrivate && (
+                  {isSegmentEditorOpen && !segment?.isPrivate ? (
                     <Button
-                      variant="secondary"
-                      size="sm"
                       onClick={() => {
                         handleSaveSegment({ filters: segment?.filters ?? [] });
-                      }}>
+                      }}
+                      size="sm"
+                      variant="secondary">
                       Save changes
                     </Button>
-                  )}
+                  ) : null}
 
-                  {isSegmentEditorOpen && !segment?.isPrivate && (
+                  {isSegmentEditorOpen && !segment?.isPrivate ? (
                     <Button
-                      variant="minimal"
-                      size="sm"
                       className="flex items-center gap-2"
                       onClick={() => {
                         setIsSegmentEditorOpen(false);
@@ -261,68 +269,68 @@ export const AdvancedTargetingCard = ({
                         if (initialSegment) {
                           setSegment(initialSegment);
                         }
-                      }}>
+                      }}
+                      size="sm"
+                      variant="minimal">
                       Cancel
                     </Button>
-                  )}
+                  ) : null}
                 </div>
 
-                <>
-                  <AddFilterModal
-                    onAddFilter={(filter) => {
-                      handleAddFilterInGroup(filter);
-                    }}
-                    open={addFilterModalOpen}
-                    setOpen={setAddFilterModalOpen}
-                    actionClasses={actionClasses}
-                    attributeClasses={attributeClasses}
-                    segments={segments}
+                <AddFilterModal
+                  actionClasses={actionClasses}
+                  attributeClasses={attributeClasses}
+                  onAddFilter={(filter) => {
+                    handleAddFilterInGroup(filter);
+                  }}
+                  open={addFilterModalOpen}
+                  segments={segments}
+                  setOpen={setAddFilterModalOpen}
+                />
+                {Boolean(segment) && (
+                  <SaveAsNewSegmentModal
+                    localSurvey={localSurvey}
+                    onCreateSegment={handleSaveAsNewSegmentCreate}
+                    onUpdateSegment={handleSaveAsNewSegmentUpdate}
+                    open={saveAsNewSegmentModalOpen}
+                    segment={segment}
+                    setIsSegmentEditorOpen={setIsSegmentEditorOpen}
+                    setOpen={setSaveAsNewSegmentModalOpen}
+                    setSegment={setSegment}
                   />
-                  {!!segment && (
-                    <SaveAsNewSegmentModal
-                      open={saveAsNewSegmentModalOpen}
-                      setOpen={setSaveAsNewSegmentModalOpen}
-                      localSurvey={localSurvey}
-                      segment={segment}
-                      setSegment={setSegment}
-                      setIsSegmentEditorOpen={setIsSegmentEditorOpen}
-                      onCreateSegment={handleSaveAsNewSegmentCreate}
-                      onUpdateSegment={handleSaveAsNewSegmentUpdate}
-                    />
-                  )}
-                </>
+                )}
               </div>
             ) : (
               <div className="flex flex-col gap-2 rounded-lg">
                 <SegmentTitle
-                  title={localSurvey.segment?.title}
                   description={localSurvey.segment?.description}
                   isPrivate={segment?.isPrivate}
+                  title={localSurvey.segment?.title}
                 />
 
-                {segmentEditorViewOnly && segment && (
+                {segmentEditorViewOnly && segment ? (
                   <div className="opacity-60">
                     <SegmentEditor
-                      key={segment.filters.toString()}
-                      group={segment.filters}
-                      environmentId={environmentId}
-                      segment={segment}
                       actionClasses={actionClasses}
                       attributeClasses={attributeClasses}
+                      environmentId={environmentId}
+                      group={segment.filters}
+                      key={segment.filters.toString()}
+                      segment={segment}
                       segments={segments}
                       setSegment={setSegment}
                       viewOnly={segmentEditorViewOnly}
                     />
                   </div>
-                )}
+                ) : null}
 
                 <div className="mt-3 flex items-center gap-3">
                   <Button
-                    variant="secondary"
-                    size="sm"
                     onClick={() => {
                       setSegmentEditorViewOnly(!segmentEditorViewOnly);
-                    }}>
+                    }}
+                    size="sm"
+                    variant="secondary">
                     {segmentEditorViewOnly ? "Hide" : "View"} Filters{" "}
                     {segmentEditorViewOnly ? (
                       <ChevronUpIcon className="ml-2 h-3 w-3" />
@@ -331,71 +339,78 @@ export const AdvancedTargetingCard = ({
                     )}
                   </Button>
 
-                  {isSegmentUsedInOtherSurveys && (
-                    <Button variant="secondary" size="sm" onClick={() => handleCloneSegment()}>
+                  {isSegmentUsedInOtherSurveys ? (
+                    <Button onClick={() => handleCloneSegment()} size="sm" variant="secondary">
                       Clone & Edit Segment
                     </Button>
-                  )}
+                  ) : null}
                   {!isSegmentUsedInOtherSurveys && (
                     <Button
-                      variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}
-                      size="sm"
                       onClick={() => {
                         setIsSegmentEditorOpen(true);
                         setSegmentEditorViewOnly(false);
-                      }}>
+                      }}
+                      size="sm"
+                      variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}>
                       Edit Segment
                       <PencilIcon className="ml-2 h-3 w-3" />
                     </Button>
                   )}
                 </div>
-                {isSegmentUsedInOtherSurveys && (
+                {isSegmentUsedInOtherSurveys ? (
                   <p className="mt-1 flex items-center text-xs text-slate-500">
                     <AlertCircle className="mr-1 inline h-3 w-3" />
                     This segment is used in other surveys. Make changes{" "}
                     <Link
+                      className="ml-1 underline"
                       href={`/environments/${environmentId}/segments`}
-                      target="_blank"
-                      className="ml-1 underline">
+                      target="_blank">
                       here.
                     </Link>
                   </p>
-                )}
+                ) : null}
               </div>
             )}
           </div>
 
           <div className="flex gap-3">
-            <Button variant="secondary" size="sm" onClick={() => setLoadSegmentModalOpen(true)}>
+            <Button
+              onClick={() => {
+                setLoadSegmentModalOpen(true);
+              }}
+              size="sm"
+              variant="secondary">
               Load Segment
             </Button>
 
-            {!segment?.isPrivate && !!segment?.filters?.length && (
-              <Button variant="secondary" size="sm" onClick={() => setResetAllFiltersModalOpen(true)}>
+            {!segment?.isPrivate && Boolean(segment?.filters.length) && (
+              <Button
+                onClick={() => {
+                  setResetAllFiltersModalOpen(true);
+                }}
+                size="sm"
+                variant="secondary">
                 Reset all filters
               </Button>
             )}
 
-            {isSegmentEditorOpen && !!segment?.filters?.length && (
+            {isSegmentEditorOpen && Boolean(segment?.filters.length) ? (
               <Button
-                variant="secondary"
-                size="sm"
                 className="flex items-center gap-2"
-                onClick={() => setSaveAsNewSegmentModalOpen(true)}>
+                onClick={() => {
+                  setSaveAsNewSegmentModalOpen(true);
+                }}
+                size="sm"
+                variant="secondary">
                 Save as new Segment
               </Button>
-            )}
+            ) : null}
 
             <AlertDialog
-              headerText="Are you sure?"
-              open={resetAllFiltersModalOpen}
-              setOpen={setResetAllFiltersModalOpen}
-              mainText="This action resets all filters in this survey."
-              declineBtnLabel="Cancel"
-              onDecline={() => {
-                setResetAllFiltersModalOpen(false);
-              }}
               confirmBtnLabel="Remove all filters"
+              declineBtnLabel="Cancel"
+              headerText="Are you sure?"
+              mainText="This action resets all filters in this survey."
               onConfirm={async () => {
                 const segment = await handleResetAllFilters();
                 if (segment) {
@@ -407,10 +422,15 @@ export const AdvancedTargetingCard = ({
                   router.refresh();
                 }
               }}
+              onDecline={() => {
+                setResetAllFiltersModalOpen(false);
+              }}
+              open={resetAllFiltersModalOpen}
+              setOpen={setResetAllFiltersModalOpen}
             />
           </div>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
-};
+}

@@ -12,9 +12,9 @@ import {
   moveResource,
   toggleGroupConnector,
 } from "@formbricks/lib/segment/utils";
-import { TActionClass } from "@formbricks/types/actionClasses";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TBaseFilters, TSegment, TSegmentConnector } from "@formbricks/types/segment";
+import type { TActionClass } from "@formbricks/types/actionClasses";
+import type { TAttributeClass } from "@formbricks/types/attributeClasses";
+import type { TBaseFilter, TBaseFilters, TSegment, TSegmentConnector } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,
@@ -26,7 +26,7 @@ import {
 import { AddFilterModal } from "./AddFilterModal";
 import { SegmentFilter } from "./SegmentFilter";
 
-type TSegmentEditorProps = {
+interface TSegmentEditorProps {
   group: TBaseFilters;
   environmentId: string;
   segment: TSegment;
@@ -35,9 +35,9 @@ type TSegmentEditorProps = {
   attributeClasses: TAttributeClass[];
   setSegment: React.Dispatch<React.SetStateAction<TSegment>>;
   viewOnly?: boolean;
-};
+}
 
-export const SegmentEditor = ({
+export function SegmentEditor({
   group,
   environmentId,
   setSegment,
@@ -46,7 +46,7 @@ export const SegmentEditor = ({
   attributeClasses,
   segments,
   viewOnly = false,
-}: TSegmentEditorProps) => {
+}: TSegmentEditorProps) {
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [addFilterModalOpenedFromBelow, setAddFilterModalOpenedFromBelow] = useState(false);
 
@@ -118,146 +118,149 @@ export const SegmentEditor = ({
 
   return (
     <div className="flex flex-col gap-4 rounded-lg">
-      {group?.map((groupItem) => {
+      {group.map((groupItem) => {
         const { connector, resource, id: groupId } = groupItem;
 
         if (isResourceFilter(resource)) {
           return (
             <SegmentFilter
-              key={groupId}
-              connector={connector}
-              resource={resource}
-              environmentId={environmentId}
-              segment={segment}
-              segments={segments}
               actionClasses={actionClasses}
               attributeClasses={attributeClasses}
-              setSegment={setSegment}
+              connector={connector}
+              environmentId={environmentId}
               handleAddFilterBelow={handleAddFilterBelow}
-              onCreateGroup={(filterId: string) => handleCreateGroup(filterId)}
-              onDeleteFilter={(filterId: string) => handleDeleteResource(filterId)}
-              onMoveFilter={(filterId: string, direction: "up" | "down") =>
-                handleMoveResource(filterId, direction)
-              }
+              key={groupId}
+              onCreateGroup={(filterId: string) => {
+                handleCreateGroup(filterId);
+              }}
+              onDeleteFilter={(filterId: string) => {
+                handleDeleteResource(filterId);
+              }}
+              onMoveFilter={(filterId: string, direction: "up" | "down") => {
+                handleMoveResource(filterId, direction);
+              }}
+              resource={resource}
+              segment={segment}
+              segments={segments}
+              setSegment={setSegment}
               viewOnly={viewOnly}
             />
           );
-        } else {
-          return (
-            <div key={groupId}>
-              <div className="flex items-start gap-2">
-                <div key={connector} className="w-auto">
-                  <span
-                    className={cn(
-                      !!connector && "cursor-pointer underline",
-                      "text-sm",
-                      viewOnly && "cursor-not-allowed"
-                    )}
-                    onClick={() => {
-                      if (viewOnly) return;
-                      onConnectorChange(groupId, connector);
-                    }}>
-                    {!!connector ? connector : "Where"}
-                  </span>
-                </div>
+        }
+        return (
+          <div key={groupId}>
+            <div className="flex items-start gap-2">
+              <div className="w-auto" key={connector}>
+                <span
+                  className={cn(
+                    Boolean(connector) && "cursor-pointer underline",
+                    "text-sm",
+                    viewOnly && "cursor-not-allowed"
+                  )}
+                  onClick={() => {
+                    if (viewOnly) return;
+                    onConnectorChange(groupId, connector);
+                  }}>
+                  {connector ? connector : "Where"}
+                </span>
+              </div>
 
-                <div className="rounded-lg border-2 border-slate-300 bg-white p-4">
-                  <SegmentEditor
-                    group={resource}
-                    environmentId={environmentId}
-                    segment={segment}
-                    setSegment={setSegment}
-                    actionClasses={actionClasses}
-                    attributeClasses={attributeClasses}
-                    segments={segments}
-                    viewOnly={viewOnly}
-                  />
+              <div className="rounded-lg border-2 border-slate-300 bg-white p-4">
+                <SegmentEditor
+                  actionClasses={actionClasses}
+                  attributeClasses={attributeClasses}
+                  environmentId={environmentId}
+                  group={resource}
+                  segment={segment}
+                  segments={segments}
+                  setSegment={setSegment}
+                  viewOnly={viewOnly}
+                />
 
-                  <div className="mt-4">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        if (viewOnly) return;
-                        setAddFilterModalOpen(true);
-                      }}
-                      disabled={viewOnly}>
-                      Add filter
-                    </Button>
-                  </div>
-
-                  <AddFilterModal
-                    open={addFilterModalOpen}
-                    setOpen={setAddFilterModalOpen}
-                    onAddFilter={(filter) => {
-                      if (addFilterModalOpenedFromBelow) {
-                        handleAddFilterBelow(groupId, filter);
-                        setAddFilterModalOpenedFromBelow(false);
-                      } else {
-                        handleAddFilterInGroup(groupId, filter);
-                      }
-                    }}
-                    actionClasses={actionClasses}
-                    attributeClasses={attributeClasses}
-                    segments={segments}
-                  />
-                </div>
-
-                <div className="flex items-center gap-2 p-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger disabled={viewOnly}>
-                      <MoreVertical className="h-4 w-4" />
-                    </DropdownMenuTrigger>
-
-                    <DropdownMenuContent>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setAddFilterModalOpenedFromBelow(true);
-                          setAddFilterModalOpen(true);
-                        }}>
-                        Add filter below
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={() => {
-                          handleCreateGroup(groupId);
-                        }}>
-                        Create group
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={() => {
-                          handleMoveResource(groupId, "up");
-                        }}>
-                        Move up
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={() => {
-                          if (viewOnly) return;
-                          handleMoveResource(groupId, "down");
-                        }}>
-                        Move down
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
+                <div className="mt-4">
                   <Button
-                    variant="minimal"
-                    className="p-0"
                     disabled={viewOnly}
                     onClick={() => {
                       if (viewOnly) return;
-                      handleDeleteResource(groupId);
-                    }}>
-                    <Trash2 className={cn("h-4 w-4 cursor-pointer", viewOnly && "cursor-not-allowed")} />
+                      setAddFilterModalOpen(true);
+                    }}
+                    size="sm"
+                    variant="secondary">
+                    Add filter
                   </Button>
                 </div>
+
+                <AddFilterModal
+                  actionClasses={actionClasses}
+                  attributeClasses={attributeClasses}
+                  onAddFilter={(filter) => {
+                    if (addFilterModalOpenedFromBelow) {
+                      handleAddFilterBelow(groupId, filter);
+                      setAddFilterModalOpenedFromBelow(false);
+                    } else {
+                      handleAddFilterInGroup(groupId, filter);
+                    }
+                  }}
+                  open={addFilterModalOpen}
+                  segments={segments}
+                  setOpen={setAddFilterModalOpen}
+                />
+              </div>
+
+              <div className="flex items-center gap-2 p-4">
+                <DropdownMenu>
+                  <DropdownMenuTrigger disabled={viewOnly}>
+                    <MoreVertical className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setAddFilterModalOpenedFromBelow(true);
+                        setAddFilterModalOpen(true);
+                      }}>
+                      Add filter below
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => {
+                        handleCreateGroup(groupId);
+                      }}>
+                      Create group
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => {
+                        handleMoveResource(groupId, "up");
+                      }}>
+                      Move up
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (viewOnly) return;
+                        handleMoveResource(groupId, "down");
+                      }}>
+                      Move down
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Button
+                  className="p-0"
+                  disabled={viewOnly}
+                  onClick={() => {
+                    if (viewOnly) return;
+                    handleDeleteResource(groupId);
+                  }}
+                  variant="minimal">
+                  <Trash2 className={cn("h-4 w-4 cursor-pointer", viewOnly && "cursor-not-allowed")} />
+                </Button>
               </div>
             </div>
-          );
-        }
+          </div>
+        );
       })}
     </div>
   );
-};
+}

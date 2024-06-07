@@ -6,9 +6,10 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { TActionClass } from "@formbricks/types/actionClasses";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segment";
+import type { TActionClass } from "@formbricks/types/actionClasses";
+import type { TAttributeClass } from "@formbricks/types/attributeClasses";
+import type { TBaseFilter, TSegment } from "@formbricks/types/segment";
+import { ZSegmentFilters } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
@@ -17,19 +18,19 @@ import { createSegmentAction } from "../lib/actions";
 import { AddFilterModal } from "./AddFilterModal";
 import { SegmentEditor } from "./SegmentEditor";
 
-type TCreateSegmentModalProps = {
+interface TCreateSegmentModalProps {
   environmentId: string;
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
-};
+}
 
-export const CreateSegmentModal = ({
+export function CreateSegmentModal({
   environmentId,
   actionClasses,
   attributeClasses,
   segments,
-}: TCreateSegmentModalProps) => {
+}: TCreateSegmentModalProps) {
   const router = useRouter();
   const initialSegmentState = {
     title: "",
@@ -55,13 +56,13 @@ export const CreateSegmentModal = ({
 
   const handleAddFilterInGroup = (filter: TBaseFilter) => {
     const updatedSegment = structuredClone(segment);
-    if (updatedSegment?.filters?.length === 0) {
+    if (updatedSegment.filters.length === 0) {
       updatedSegment.filters.push({
         ...filter,
         connector: null,
       });
     } else {
-      updatedSegment?.filters.push(filter);
+      updatedSegment.filters.push(filter);
     }
 
     setSegment(updatedSegment);
@@ -121,18 +122,24 @@ export const CreateSegmentModal = ({
 
   return (
     <>
-      <Button variant="darkCTA" size="sm" onClick={() => setOpen(true)} EndIcon={PlusIcon}>
+      <Button
+        EndIcon={PlusIcon}
+        onClick={() => {
+          setOpen(true);
+        }}
+        size="sm"
+        variant="darkCTA">
         Create segment
       </Button>
 
       <Modal
+        className="md:w-full"
+        closeOnOutsideClick={false}
+        noPadding
         open={open}
         setOpen={() => {
           handleResetState();
         }}
-        noPadding
-        closeOnOutsideClick={false}
-        className="md:w-full"
         size="lg">
         <div className="rounded-lg bg-slate-50">
           <div className="rounded-t-lg bg-slate-100">
@@ -157,14 +164,14 @@ export const CreateSegmentModal = ({
                 <label className="text-sm font-medium text-slate-900">Title</label>
                 <div className="relative flex flex-col gap-1">
                   <Input
-                    placeholder="Ex. Power Users"
+                    className="w-auto"
                     onChange={(e) => {
                       setSegment((prev) => ({
                         ...prev,
                         title: e.target.value,
                       }));
                     }}
-                    className="w-auto"
+                    placeholder="Ex. Power Users"
                   />
                 </div>
               </div>
@@ -172,20 +179,20 @@ export const CreateSegmentModal = ({
               <div className="flex w-1/2 flex-col gap-2">
                 <label className="text-sm font-medium text-slate-900">Description</label>
                 <Input
-                  placeholder="Ex. Fully activated recurring users"
                   onChange={(e) => {
                     setSegment((prev) => ({
                       ...prev,
                       description: e.target.value,
                     }));
                   }}
+                  placeholder="Ex. Fully activated recurring users"
                 />
               </div>
             </div>
 
             <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
             <div className="filter-scrollbar flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
-              {segment?.filters?.length === 0 && (
+              {segment.filters.length === 0 && (
                 <div className="-mb-2 flex items-center gap-1">
                   <FilterIcon className="h-5 w-5 text-slate-700" />
                   <h3 className="text-sm font-medium text-slate-700">Add your first filter to get started</h3>
@@ -193,53 +200,55 @@ export const CreateSegmentModal = ({
               )}
 
               <SegmentEditor
-                environmentId={environmentId}
-                segment={segment}
-                setSegment={setSegment}
-                group={segment.filters}
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
+                environmentId={environmentId}
+                group={segment.filters}
+                segment={segment}
                 segments={segments}
+                setSegment={setSegment}
               />
 
               <Button
                 className="w-fit"
-                variant="secondary"
+                onClick={() => {
+                  setAddFilterModalOpen(true);
+                }}
                 size="sm"
-                onClick={() => setAddFilterModalOpen(true)}>
+                variant="secondary">
                 Add Filter
               </Button>
 
               <AddFilterModal
+                actionClasses={actionClasses}
+                attributeClasses={attributeClasses}
                 onAddFilter={(filter) => {
                   handleAddFilterInGroup(filter);
                 }}
                 open={addFilterModalOpen}
-                setOpen={setAddFilterModalOpen}
-                actionClasses={actionClasses}
-                attributeClasses={attributeClasses}
                 segments={segments}
+                setOpen={setAddFilterModalOpen}
               />
             </div>
 
             <div className="flex justify-end pt-4">
               <div className="flex space-x-2">
                 <Button
-                  type="button"
-                  variant="minimal"
                   onClick={() => {
                     handleResetState();
-                  }}>
+                  }}
+                  type="button"
+                  variant="minimal">
                   Cancel
                 </Button>
                 <Button
-                  variant="darkCTA"
-                  type="submit"
-                  loading={isCreatingSegment}
                   disabled={isSaveDisabled}
+                  loading={isCreatingSegment}
                   onClick={() => {
                     handleCreateSegment();
-                  }}>
+                  }}
+                  type="submit"
+                  variant="darkCTA">
                   Create segment
                 </Button>
               </div>
@@ -249,4 +258,4 @@ export const CreateSegmentModal = ({
       </Modal>
     </>
   );
-};
+}

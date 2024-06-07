@@ -11,9 +11,9 @@ import {
   updateMembership,
 } from "@formbricks/lib/membership/service";
 import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/errors";
-import { TInviteUpdateInput } from "@formbricks/types/invites";
-import { TMembershipUpdateInput } from "@formbricks/types/memberships";
-import { TUser } from "@formbricks/types/user";
+import type { TInviteUpdateInput } from "@formbricks/types/invites";
+import type { TMembershipUpdateInput } from "@formbricks/types/memberships";
+import type { TUser } from "@formbricks/types/user";
 
 export const transferOwnershipAction = async (organizationId: string, newOwnerId: string) => {
   const session = await getServerSession(authOptions);

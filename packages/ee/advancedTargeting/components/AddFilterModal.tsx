@@ -5,9 +5,9 @@ import { FingerprintIcon, MonitorSmartphoneIcon, MousePointerClick, TagIcon, Use
 import React, { useMemo, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
-import { TActionClass } from "@formbricks/types/actionClasses";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import {
+import type { TActionClass } from "@formbricks/types/actionClasses";
+import type { TAttributeClass } from "@formbricks/types/attributeClasses";
+import type {
   TBaseFilter,
   TSegment,
   TSegmentAttributeFilter,
@@ -17,14 +17,14 @@ import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
 import { TabBar } from "@formbricks/ui/TabBar";
 
-type TAddFilterModalProps = {
+interface TAddFilterModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   onAddFilter: (filter: TBaseFilter) => void;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   segments: TSegment[];
-};
+}
 
 type TFilterType = "action" | "attribute" | "segment" | "device" | "person";
 
@@ -54,7 +54,7 @@ const handleAddFilter = ({
       resource: {
         id: createId(),
         root: {
-          type: type,
+          type,
           actionClassId,
         },
         qualifier: {
@@ -122,7 +122,7 @@ const handleAddFilter = ({
       resource: {
         id: createId(),
         root: {
-          type: type,
+          type,
           segmentId,
         },
         qualifier: {
@@ -145,7 +145,7 @@ const handleAddFilter = ({
       resource: {
         id: createId(),
         root: {
-          type: type,
+          type,
           deviceType,
         },
         qualifier: {
@@ -160,27 +160,27 @@ const handleAddFilter = ({
   }
 };
 
-type AttributeTabContentProps = {
+interface AttributeTabContentProps {
   attributeClasses: TAttributeClass[];
   onAddFilter: (filter: TBaseFilter) => void;
   setOpen: (open: boolean) => void;
-};
+}
 
-const AttributeTabContent = ({ attributeClasses, onAddFilter, setOpen }: AttributeTabContentProps) => {
+function AttributeTabContent({ attributeClasses, onAddFilter, setOpen }: AttributeTabContentProps) {
   return (
     <div className="flex flex-col gap-2">
       <div>
         <h2 className="text-base font-medium">Person</h2>
         <div>
           <div
+            className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
             onClick={() => {
               handleAddFilter({
                 type: "person",
                 onAddFilter,
                 setOpen,
               });
-            }}
-            className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+            }}>
             <FingerprintIcon className="h-4 w-4" />
             <p>userId</p>
           </div>
@@ -192,7 +192,7 @@ const AttributeTabContent = ({ attributeClasses, onAddFilter, setOpen }: Attribu
       <div>
         <h2 className="text-base font-medium">Attributes</h2>
       </div>
-      {attributeClasses?.length === 0 && (
+      {attributeClasses.length === 0 && (
         <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
           <p>There are no attributes yet!</p>
         </div>
@@ -200,6 +200,7 @@ const AttributeTabContent = ({ attributeClasses, onAddFilter, setOpen }: Attribu
       {attributeClasses.map((attributeClass) => {
         return (
           <div
+            className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
             onClick={() => {
               handleAddFilter({
                 type: "attribute",
@@ -207,8 +208,7 @@ const AttributeTabContent = ({ attributeClasses, onAddFilter, setOpen }: Attribu
                 setOpen,
                 attributeClassName: attributeClass.name,
               });
-            }}
-            className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+            }}>
             <TagIcon className="h-4 w-4" />
             <p>{attributeClass.name}</p>
           </div>
@@ -216,16 +216,16 @@ const AttributeTabContent = ({ attributeClasses, onAddFilter, setOpen }: Attribu
       })}
     </div>
   );
-};
+}
 
-export const AddFilterModal = ({
+export function AddFilterModal({
   onAddFilter,
   open,
   setOpen,
   actionClasses,
   attributeClasses,
   segments,
-}: TAddFilterModalProps) => {
+}: TAddFilterModalProps) {
   const [activeTabId, setActiveTabId] = useState("all");
   const [searchValue, setSearchValue] = useState("");
 
@@ -313,7 +313,7 @@ export const AddFilterModal = ({
   const getAllTabContent = () => {
     return (
       <>
-        {allFiltersFiltered?.every((filterArr) => {
+        {allFiltersFiltered.every((filterArr) => {
           return (
             filterArr.actions.length === 0 &&
             filterArr.attributes.length === 0 &&
@@ -321,11 +321,11 @@ export const AddFilterModal = ({
             filterArr.devices.length === 0 &&
             filterArr.personAttributes.length === 0
           );
-        }) && (
+        }) ? (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
             <p>There are no filters yet!</p>
           </div>
-        )}
+        ) : null}
 
         {allFiltersFiltered.map((filters) => {
           return (
@@ -333,6 +333,7 @@ export const AddFilterModal = ({
               {filters.actions.map((actionClass) => {
                 return (
                   <div
+                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
                     onClick={() => {
                       handleAddFilter({
                         type: "action",
@@ -340,8 +341,7 @@ export const AddFilterModal = ({
                         setOpen,
                         actionClassId: actionClass.id,
                       });
-                    }}
-                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+                    }}>
                     <MousePointerClick className="h-4 w-4" />
                     <p>{actionClass.name}</p>
                   </div>
@@ -351,6 +351,7 @@ export const AddFilterModal = ({
               {filters.attributes.map((attributeClass) => {
                 return (
                   <div
+                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
                     onClick={() => {
                       handleAddFilter({
                         type: "attribute",
@@ -358,8 +359,7 @@ export const AddFilterModal = ({
                         setOpen,
                         attributeClassName: attributeClass.name,
                       });
-                    }}
-                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+                    }}>
                     <TagIcon className="h-4 w-4" />
                     <p>{attributeClass.name}</p>
                   </div>
@@ -369,14 +369,14 @@ export const AddFilterModal = ({
               {filters.personAttributes.map((personAttribute) => {
                 return (
                   <div
+                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
                     onClick={() => {
                       handleAddFilter({
                         type: "person",
                         onAddFilter,
                         setOpen,
                       });
-                    }}
-                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+                    }}>
                     <FingerprintIcon className="h-4 w-4" />
                     <p>{personAttribute.name}</p>
                   </div>
@@ -386,6 +386,7 @@ export const AddFilterModal = ({
               {filters.segments.map((segment) => {
                 return (
                   <div
+                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
                     onClick={() => {
                       handleAddFilter({
                         type: "segment",
@@ -393,8 +394,7 @@ export const AddFilterModal = ({
                         setOpen,
                         segmentId: segment.id,
                       });
-                    }}
-                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+                    }}>
                     <Users2Icon className="h-4 w-4" />
                     <p>{segment.title}</p>
                   </div>
@@ -403,8 +403,8 @@ export const AddFilterModal = ({
 
               {filters.devices.map((deviceType) => (
                 <div
-                  key={deviceType.id}
                   className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
+                  key={deviceType.id}
                   onClick={() => {
                     handleAddFilter({
                       type: "device",
@@ -427,7 +427,7 @@ export const AddFilterModal = ({
   const getActionsTabContent = () => {
     return (
       <>
-        {actionClassesFiltered?.length === 0 && (
+        {actionClassesFiltered.length === 0 && (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
             <p>There are no actions yet!</p>
           </div>
@@ -435,6 +435,7 @@ export const AddFilterModal = ({
         {actionClassesFiltered.map((actionClass) => {
           return (
             <div
+              className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
               onClick={() => {
                 handleAddFilter({
                   type: "action",
@@ -442,8 +443,7 @@ export const AddFilterModal = ({
                   setOpen,
                   actionClassId: actionClass.id,
                 });
-              }}
-              className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+              }}>
               <MousePointerClick className="h-4 w-4" />
               <p>{actionClass.name}</p>
             </div>
@@ -466,16 +466,17 @@ export const AddFilterModal = ({
   const getSegmentsTabContent = () => {
     return (
       <>
-        {segmentsFiltered?.length === 0 && (
+        {segmentsFiltered.length === 0 && (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
             <p>You currently have no saved segments.</p>
           </div>
         )}
         {segmentsFiltered
-          ?.filter((segment) => !segment.isPrivate)
-          ?.map((segment) => {
+          .filter((segment) => !segment.isPrivate)
+          .map((segment) => {
             return (
               <div
+                className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
                 onClick={() => {
                   handleAddFilter({
                     type: "segment",
@@ -483,8 +484,7 @@ export const AddFilterModal = ({
                     setOpen,
                     segmentId: segment.id,
                   });
-                }}
-                className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+                }}>
                 <Users2Icon className="h-4 w-4" />
                 <p>{segment.title}</p>
               </div>
@@ -499,8 +499,8 @@ export const AddFilterModal = ({
       <div className="flex flex-col">
         {deviceTypesFiltered.map((deviceType) => (
           <div
-            key={deviceType.id}
             className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
+            key={deviceType.id}
             onClick={() => {
               handleAddFilter({
                 type: "device",
@@ -542,14 +542,20 @@ export const AddFilterModal = ({
 
   return (
     <Modal
+      className="sm:w-[650px] sm:max-w-full"
+      closeOnOutsideClick
       hideCloseButton
       open={open}
-      setOpen={setOpen}
-      closeOnOutsideClick
-      className="sm:w-[650px] sm:max-w-full">
+      setOpen={setOpen}>
       <div className="flex w-auto flex-col">
-        <Input placeholder="Browse filters..." autoFocus onChange={(e) => setSearchValue(e.target.value)} />
-        <TabBar className="bg-white" tabs={tabs} activeId={activeTabId} setActiveId={setActiveTabId} />
+        <Input
+          autoFocus
+          onChange={(e) => {
+            setSearchValue(e.target.value);
+          }}
+          placeholder="Browse filters..."
+        />
+        <TabBar activeId={activeTabId} className="bg-white" setActiveId={setActiveTabId} tabs={tabs} />
       </div>
 
       <div className={cn("mt-2 flex max-h-80 flex-col gap-1 overflow-y-auto")}>
@@ -557,4 +563,4 @@ export const AddFilterModal = ({
       </div>
     </Modal>
   );
-};
+}

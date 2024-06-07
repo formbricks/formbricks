@@ -4,9 +4,9 @@ import { STRIPE_API_VERSION, WEBAPP_URL } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getOrganization } from "@formbricks/lib/organization/service";
 
-import { StripePriceLookupKeys } from "./constants";
+import type { StripePriceLookupKeys } from "./constants";
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
   apiVersion: STRIPE_API_VERSION,
 });
 
@@ -25,11 +25,11 @@ export const createSubscription = async (
   try {
     const organization = await getOrganization(organizationId);
     if (!organization) throw new Error("Organization not found.");
-    let isNewOrganization =
+    const isNewOrganization =
       !organization.billing.stripeCustomerId ||
       !(await stripe.customers.retrieve(organization.billing.stripeCustomerId));
 
-    let lineItems: { price: string; quantity?: number }[] = [];
+    const lineItems: { price: string; quantity?: number }[] = [];
 
     const prices = (
       await stripe.prices.list({
@@ -64,7 +64,7 @@ export const createSubscription = async (
     }
 
     const existingSubscription = (
-      (await stripe.customers.retrieve(organization.billing.stripeCustomerId as string, {
+      (await stripe.customers.retrieve(organization.billing.stripeCustomerId!, {
         expand: ["subscriptions"],
       })) as any
     ).subscriptions.data[0] as Stripe.Subscription;
@@ -75,7 +75,7 @@ export const createSubscription = async (
       // this is a case where the organization cancelled an already purchased product
       if (existingSubscription.cancel_at_period_end) {
         const allScheduledSubscriptions = await stripe.subscriptionSchedules.list({
-          customer: organization.billing.stripeCustomerId as string,
+          customer: organization.billing.stripeCustomerId!,
         });
         const scheduledSubscriptions = allScheduledSubscriptions.data.filter(
           (scheduledSub) => scheduledSub.status === "not_started"
@@ -95,13 +95,12 @@ export const createSubscription = async (
 
           const combinedLineItems = [...lineItems, ...existingItemsInScheduledSubscription];
 
-          const uniqueItemsMap = combinedLineItems.reduce(
-            (acc, item) => {
-              acc[item.price] = item; // This will overwrite duplicate items based on price
-              return acc;
-            },
-            {} as { [key: string]: { price: string; quantity?: number } }
-          );
+          const uniqueItemsMap = combinedLineItems.reduce<
+            Record<string, { price: string; quantity?: number }>
+          >((acc, item) => {
+            acc[item.price] = item; // This will overwrite duplicate items based on price
+            return acc;
+          }, {});
 
           const lineItemsForScheduledSubscription = Object.values(uniqueItemsMap);
 
@@ -122,7 +121,7 @@ export const createSubscription = async (
           // we create one since the current one with other products is expiring
           // so the new schedule only has the new product the organization has subscribed to
           await stripe.subscriptionSchedules.create({
-            customer: organization.billing.stripeCustomerId as string,
+            customer: organization.billing.stripeCustomerId!,
             start_date: getFirstOfNextMonthTimestamp(),
             end_behavior: "release",
             phases: [
@@ -165,7 +164,7 @@ export const createSubscription = async (
       // case where organization does not have a subscription but has a stripe customer id
       // so we just attach that to a new subscription
       await stripe.subscriptions.create({
-        customer: organization.billing.stripeCustomerId as string,
+        customer: organization.billing.stripeCustomerId!,
         items: lineItems,
         billing_cycle_anchor: getFirstOfNextMonthTimestamp(),
         metadata: { organizationId },

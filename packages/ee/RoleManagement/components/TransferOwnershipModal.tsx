@@ -1,6 +1,7 @@
 "use client";
 
-import { Dispatch, SetStateAction, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
+import { useState } from "react";
 
 import { CustomDialog } from "@formbricks/ui/CustomDialog";
 import { Input } from "@formbricks/ui/Input";
@@ -13,13 +14,13 @@ interface TransferOwnershipModalProps {
   isLoading?: boolean;
 }
 
-export const TransferOwnershipModal = ({
+export function TransferOwnershipModal({
   setOpen,
   open,
   memberName,
   onSubmit,
   isLoading,
-}: TransferOwnershipModalProps) => {
+}: TransferOwnershipModalProps) {
   const [inputValue, setInputValue] = useState("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,14 +29,14 @@ export const TransferOwnershipModal = ({
 
   return (
     <CustomDialog
-      open={open}
-      setOpen={setOpen}
-      onOk={onSubmit}
-      okBtnText="Transfer ownership"
-      title="There can only be ONE owner! Are you sure?"
       cancelBtnText="CANCEL"
       disabled={inputValue !== memberName}
-      isLoading={isLoading}>
+      isLoading={isLoading}
+      okBtnText="Transfer ownership"
+      onOk={onSubmit}
+      open={open}
+      setOpen={setOpen}
+      title="There can only be ONE owner! Are you sure?">
       <div className="py-5">
         <ul className="list-disc pb-6 pl-6">
           <li>
@@ -49,16 +50,16 @@ export const TransferOwnershipModal = ({
             Type in <b>{memberName}</b> to confirm:
           </label>
           <Input
-            value={inputValue}
-            onChange={handleInputChange}
-            placeholder={memberName}
             className="mt-5"
-            type="text"
             id="transferOwnershipConfirmation"
             name="transferOwnershipConfirmation"
+            onChange={handleInputChange}
+            placeholder={memberName}
+            type="text"
+            value={inputValue}
           />
         </form>
       </div>
     </CustomDialog>
   );
-};
+}

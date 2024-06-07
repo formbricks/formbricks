@@ -3,13 +3,15 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, Languages } from "lucide-react";
 import Link from "next/link";
-import { FC, useState } from "react";
+import type { FC } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
 import { extractLanguageCodes, translateSurvey } from "@formbricks/lib/i18n/utils";
-import { TLanguage, TProduct } from "@formbricks/types/product";
-import { TSurvey, TSurveyLanguage, ZSurvey } from "@formbricks/types/surveys";
+import type { TLanguage, TProduct } from "@formbricks/types/product";
+import type { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys";
+import { ZSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
 import { Label } from "@formbricks/ui/Label";
@@ -51,7 +53,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 }) => {
   const environmentId = localSurvey.environmentId;
   const open = activeQuestionId == "multiLanguage";
-  const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages?.length > 1);
+  const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 1);
   const [confirmationModalInfo, setConfirmationModalInfo] = useState<ConfirmationModalProps>({
     title: "",
     open: false,
@@ -61,8 +63,8 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   });
 
   const [defaultLanguage, setDefaultLanguage] = useState(
-    localSurvey.languages?.find((language) => {
-      return language.default === true;
+    localSurvey.languages.find((language) => {
+      return language.default;
     })?.language
   );
 
@@ -121,13 +123,12 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 
       // Update all languages and check if the new default language already exists
       const newLanguages =
-        localSurvey.languages?.map((lang) => {
+        localSurvey.languages.map((lang) => {
           if (lang.language.code === language.code) {
             languageExists = true;
             return { ...lang, default: true };
-          } else {
-            return { ...lang, default: false };
           }
+          return { ...lang, default: false };
         }) ?? [];
 
       if (!languageExists) {
@@ -147,7 +148,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 
   const handleActivationSwitchLogic = () => {
     if (isMultiLanguageActivated) {
-      if (localSurvey.languages?.length > 0) {
+      if (localSurvey.languages.length > 0) {
         setConfirmationModalInfo({
           open: true,
           title: "Remove translations",
@@ -185,9 +186,9 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         </p>
       </div>
       <Collapsible.Root
-        open={open}
+        className="flex-1 rounded-r-lg border border-slate-200 transition-all duration-300 ease-in-out"
         onOpenChange={setOpen}
-        className="flex-1 rounded-r-lg border border-slate-200 transition-all duration-300 ease-in-out">
+        open={open}>
         <Collapsible.CollapsibleTrigger
           asChild
           className="flex cursor-pointer justify-between p-4 hover:bg-slate-50">
@@ -202,12 +203,12 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
               <Label htmlFor="multi-lang-toggle">{isMultiLanguageActivated ? "On" : "Off"}</Label>
 
               <Switch
-                id="multi-lang-toggle"
                 checked={isMultiLanguageActivated}
+                disabled={!isMultiLanguageAllowed || product.languages.length === 0}
+                id="multi-lang-toggle"
                 onClick={() => {
                   handleActivationSwitchLogic();
                 }}
-                disabled={!isMultiLanguageAllowed || product.languages.length === 0}
               />
             </div>
           </div>
@@ -217,14 +218,14 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
             {!isMultiLanguageAllowed && !isFormbricksCloud && !isMultiLanguageActivated ? (
               <UpgradePlanNotice
                 message="To enable multi-language surveys, you need an active"
-                url={`/environments/${environmentId}/settings/enterprise`}
                 textForUrl="Enterprise License."
+                url={`/environments/${environmentId}/settings/enterprise`}
               />
             ) : !isMultiLanguageAllowed && isFormbricksCloud && !isMultiLanguageActivated ? (
               <UpgradePlanNotice
                 message="To enable multi-language surveys,"
-                url={`/environments/${environmentId}/settings/billing`}
                 textForUrl="please upgrade your plan."
+                url={`/environments/${environmentId}/settings/billing`}
               />
             ) : (
               <>
@@ -238,14 +239,14 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                 {product.languages.length > 1 && (
                   <div className="my-4 space-y-4">
                     <div>
-                      {isMultiLanguageAllowed && !isMultiLanguageActivated && (
+                      {isMultiLanguageAllowed && !isMultiLanguageActivated ? (
                         <div className="text-sm italic text-slate-500">
                           Switch multi-lanugage on to get started 👉
                         </div>
-                      )}
+                      ) : null}
                     </div>
 
-                    {isMultiLanguageActivated && (
+                    {isMultiLanguageActivated ? (
                       <div className="space-y-4">
                         <DefaultLanguageSelect
                           defaultLanguage={defaultLanguage}
@@ -253,23 +254,23 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                           product={product}
                           setConfirmationModalInfo={setConfirmationModalInfo}
                         />
-                        {defaultLanguage && (
+                        {defaultLanguage ? (
                           <SecondaryLanguageSelect
-                            product={product}
                             defaultLanguage={defaultLanguage}
                             localSurvey={localSurvey}
-                            updateSurveyLanguages={updateSurveyLanguages}
+                            product={product}
                             setActiveQuestionId={setActiveQuestionId}
                             setSelectedLanguageCode={setSelectedLanguageCode}
+                            updateSurveyLanguages={updateSurveyLanguages}
                           />
-                        )}
+                        ) : null}
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 )}
 
                 <Link href={`/environments/${environmentId}/product/languages`} target="_blank">
-                  <Button className="mt-2" variant="secondary" size="sm">
+                  <Button className="mt-2" size="sm" variant="secondary">
                     Manage Languages <ArrowUpRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -277,13 +278,15 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
             )}
 
             <ConfirmationModal
-              title={confirmationModalInfo.title}
-              open={confirmationModalInfo.open}
-              setOpen={() => setConfirmationModalInfo((prev) => ({ ...prev, open: !prev.open }))}
-              text={confirmationModalInfo.text}
-              onConfirm={confirmationModalInfo.onConfirm}
               buttonText={confirmationModalInfo.buttonText}
               buttonVariant={confirmationModalInfo.buttonVariant}
+              onConfirm={confirmationModalInfo.onConfirm}
+              open={confirmationModalInfo.open}
+              setOpen={() => {
+                setConfirmationModalInfo((prev) => ({ ...prev, open: !prev.open }));
+              }}
+              text={confirmationModalInfo.text}
+              title={confirmationModalInfo.title}
             />
           </div>
         </Collapsible.CollapsibleContent>

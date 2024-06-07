@@ -1,4 +1,4 @@
-import { TLanguage } from "@formbricks/types/product";
+import type { TLanguage } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 
@@ -12,26 +12,28 @@ interface LanguageRowProps {
   onDelete: () => void;
 }
 
-export const LanguageRow = ({ language, isEditing, onLanguageChange, onDelete }: LanguageRowProps) => {
+export function LanguageRow({ language, isEditing, onLanguageChange, onDelete }: LanguageRowProps) {
   return (
     <div className="my-3 grid grid-cols-4 gap-4">
       <LanguageSelect
+        disabled={language.id !== "new"}
         language={language}
         onLanguageChange={onLanguageChange}
-        disabled={language.id !== "new"}
       />
       <Input disabled value={language.code} />
       <Input
         disabled={!isEditing}
-        value={language.alias || ""}
+        onChange={(e) => {
+          onLanguageChange({ ...language, alias: e.target.value });
+        }}
         placeholder="e.g. en_us"
-        onChange={(e) => onLanguageChange({ ...language, alias: e.target.value })}
+        value={language.alias || ""}
       />
-      {language.id !== "new" && isEditing && (
-        <Button variant="warn" onClick={onDelete} className="w-fit" size="sm">
+      {language.id !== "new" && isEditing ? (
+        <Button className="w-fit" onClick={onDelete} size="sm" variant="warn">
           Remove
         </Button>
-      )}
+      ) : null}
     </div>
   );
-};
+}

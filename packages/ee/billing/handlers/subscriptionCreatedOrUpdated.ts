@@ -12,7 +12,7 @@ import {
 import { ProductFeatureKeys, StripePriceLookupKeys, StripeProductNames } from "../lib/constants";
 import { reportUsage } from "../lib/reportUsage";
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
   // https://github.com/stripe/stripe-node#configuration
   apiVersion: STRIPE_API_VERSION,
 });
@@ -52,12 +52,12 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
 
   const organization = await getOrganization(organizationId);
   if (!organization) throw new Error("Organization not found.");
-  let updatedFeatures = organization.billing.features;
+  const updatedFeatures = organization.billing.features;
 
   let scheduledSubscriptions: Stripe.SubscriptionSchedule[] = [];
   if (stripeSubscriptionObject.cancel_at_period_end) {
     const allScheduledSubscriptions = await stripe.subscriptionSchedules.list({
-      customer: organization.billing.stripeCustomerId as string,
+      customer: organization.billing.stripeCustomerId!,
     });
     scheduledSubscriptions = allScheduledSubscriptions.data.filter(
       (scheduledSub) => scheduledSub.status === "not_started"

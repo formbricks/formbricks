@@ -1,4 +1,5 @@
-import { Control, Controller } from "react-hook-form";
+import type { Control } from "react-hook-form";
+import { Controller } from "react-hook-form";
 
 import { Label } from "@formbricks/ui/Label";
 import {
@@ -17,24 +18,26 @@ enum MembershipRole {
   Viewer = "viewer",
 }
 
-type AddMemberRoleProps = {
-  control: Control<{ name: string; email: string; role: MembershipRole }, any>;
+interface AddMemberRoleProps {
+  control: Control<{ name: string; email: string; role: MembershipRole }>;
   canDoRoleManagement: boolean;
-};
+}
 
-export const AddMemberRole = ({ control, canDoRoleManagement }: AddMemberRoleProps) => {
+export function AddMemberRole({ control, canDoRoleManagement }: AddMemberRoleProps) {
   return (
     <Controller
-      name="role"
       control={control}
+      name="role"
       render={({ field: { onChange, value } }) => (
         <div>
           <Label>Role</Label>
           <Select
             defaultValue="admin"
-            value={value}
-            onValueChange={(v) => onChange(v as MembershipRole)}
-            disabled={!canDoRoleManagement}>
+            disabled={!canDoRoleManagement}
+            onValueChange={(v) => {
+              onChange(v as MembershipRole);
+            }}
+            value={value}>
             <SelectTrigger className="capitalize">
               <SelectValue />
             </SelectTrigger>
@@ -52,4 +55,4 @@ export const AddMemberRole = ({ control, canDoRoleManagement }: AddMemberRolePro
       )}
     />
   );
-};
+}

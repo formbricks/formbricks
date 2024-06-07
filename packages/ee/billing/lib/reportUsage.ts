@@ -5,7 +5,7 @@ import { env } from "@formbricks/lib/env";
 
 import { ProductFeatureKeys } from "./constants";
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
   // https://github.com/stripe/stripe-node#configuration
   apiVersion: STRIPE_API_VERSION,
 });
@@ -25,7 +25,7 @@ export const reportUsage = async (
 
   await stripe.subscriptionItems.createUsageRecord(subscriptionItem.id, {
     action: "set",
-    quantity: quantity,
+    quantity,
     timestamp: Math.floor(Date.now() / 1000),
   });
 };
@@ -53,11 +53,11 @@ export const reportUsageToStripe = async (
     const usageRecord = await stripe.subscriptionItems.createUsageRecord(subId, {
       action: "set",
       quantity: usage,
-      timestamp: timestamp,
+      timestamp,
     });
 
     return { status: 200, data: usageRecord.quantity };
   } catch (error) {
-    return { status: 500, data: "Something went wrong: " + error };
+    return { status: 500, data: `Something went wrong: ${error}` };
   }
 };

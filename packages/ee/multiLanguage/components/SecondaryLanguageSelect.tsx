@@ -1,5 +1,5 @@
-import { TLanguage, TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
+import type { TLanguage, TProduct } from "@formbricks/types/product";
+import type { TSurvey } from "@formbricks/types/surveys";
 
 import { LanguageToggle } from "./LanguageToggle";
 
@@ -12,14 +12,14 @@ interface secondaryLanguageSelectProps {
   updateSurveyLanguages: (language: TLanguage) => void;
 }
 
-export const SecondaryLanguageSelect = ({
+export function SecondaryLanguageSelect({
   product,
   defaultLanguage,
   setSelectedLanguageCode,
   setActiveQuestionId,
   localSurvey,
   updateSurveyLanguages,
-}: secondaryLanguageSelectProps) => {
+}: secondaryLanguageSelectProps) {
   const isLanguageToggled = (language: TLanguage) => {
     return localSurvey.languages.some(
       (surveyLanguage) => surveyLanguage.language.code === language.code && surveyLanguage.enabled
@@ -33,16 +33,18 @@ export const SecondaryLanguageSelect = ({
         .filter((lang) => lang.id !== defaultLanguage.id)
         .map((language) => (
           <LanguageToggle
+            isChecked={isLanguageToggled(language)}
             key={language.id}
             language={language}
-            isChecked={isLanguageToggled(language)}
-            onToggle={() => updateSurveyLanguages(language)}
             onEdit={() => {
               setSelectedLanguageCode(language.code);
               setActiveQuestionId(localSurvey.questions[0]?.id);
+            }}
+            onToggle={() => {
+              updateSurveyLanguages(language);
             }}
           />
         ))}
     </div>
   );
-};
+}
