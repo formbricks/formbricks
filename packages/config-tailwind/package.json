@@ -1,5 +1,5 @@
 {
-  "name": "@formbricks/tailwind-config",
+  "name": "@formbricks/config-tailwind",
   "version": "0.0.0",
   "private": true,
   "main": "index.js",

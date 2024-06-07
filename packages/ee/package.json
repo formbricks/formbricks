@@ -11,14 +11,15 @@
   },
   "devDependencies": {
     "@formbricks/lib": "*",
-    "@formbricks/tsconfig": "*",
+    "@formbricks/config-typescript": "*",
     "@formbricks/types": "*",
     "@formbricks/ui": "*",
-    "eslint-config-formbricks": "workspace:*"
+    "@formbricks/eslint-config": "workspace:*"
   },
   "dependencies": {
     "@formbricks/lib": "workspace:*",
-    "stripe": "^15.8.0",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "axios": "^1.7.2",
+    "stripe": "^15.8.0"
   }
 }
