@@ -1,3 +1,3 @@
 module.exports = {
-  extends: ["@formbricks/eslint-config/legacy-next.js"],
+  extends: ["@formbricks/eslint-config/react.js"],
 };
