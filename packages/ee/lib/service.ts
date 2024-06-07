@@ -56,28 +56,43 @@ const setPreviousResult = async (previousResult: {
   )();
 };
 
+const fetchLicenseForE2ETesting = async (): Promise<{
+  active: boolean | null;
+  lastChecked: Date;
+  features: TEnterpriseLicenseFeatures | null;
+} | null> => {
+  const currentTime = new Date();
+  try {
+    const previousResult = await getPreviousResult();
+    if (previousResult.lastChecked.getTime() === new Date(0).getTime()) {
+      // first call
+      const newResult = {
+        active: true,
+        features: { isMultiOrgEnabled: true },
+        lastChecked: currentTime,
+      };
+      await setPreviousResult(newResult);
+      return newResult;
+    } else if (currentTime.getTime() - previousResult.lastChecked.getTime() > 60 * 60 * 1000) {
+      // Fail after 1 hour
+      console.log("E2E_TESTING is enabled. Enterprise license was revoked after 1 hour.");
+      return null;
+    }
+    return previousResult;
+  } catch (error) {
+    console.error("Error fetching license: ", error);
+    return null;
+  }
+};
+
 export const getIsEnterpriseEdition = async (): Promise<boolean> => {
   if (!ENTERPRISE_LICENSE_KEY || ENTERPRISE_LICENSE_KEY.length === 0) {
     return false;
   }
 
   if (E2E_TESTING) {
-    const previousResult = await getPreviousResult();
-    if (previousResult.lastChecked.getTime() === new Date(0).getTime()) {
-      // first call
-      await setPreviousResult({
-        active: true,
-        features: { isMultiOrgEnabled: true },
-        lastChecked: new Date(),
-      });
-      return true;
-    } else if (new Date().getTime() - previousResult.lastChecked.getTime() > 60 * 60 * 1000) {
-      // Fail after 1 hour
-      console.log("E2E_TESTING is enabled. Enterprise license was revoked after 1 hour.");
-      return false;
-    }
-
-    return previousResult.active !== null ? previousResult.active : false;
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult && previousResult.active !== null ? previousResult.active : false;
   }
 
   // if the server responds with a boolean, we return it
@@ -195,6 +210,10 @@ export const getMultiLanguagePermission = async (organization: TOrganization): P
 };
 
 export const getIsMultiOrgEnabled = async (): Promise<boolean> => {
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult && previousResult.features ? previousResult.features.isMultiOrgEnabled : false;
+  }
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
   return licenseFeatures.isMultiOrgEnabled;
