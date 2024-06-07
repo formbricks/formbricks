@@ -1,13 +1,12 @@
 import { Column, Container, Row, Section, Text } from "@react-email/components";
 import React from "react";
-
-import { TWeeklySummaryInsights } from "@formbricks/types/weeklySummary";
+import type { TWeeklySummaryInsights } from "@formbricks/types/weeklySummary";
 
 interface NotificationInsightProps {
   insights: TWeeklySummaryInsights;
 }
 
-export const NotificationInsight = ({ insights }: NotificationInsightProps) => {
+export function NotificationInsight({ insights }: NotificationInsightProps) {
   return (
     <Container>
       <Section className="my-4 rounded-md bg-slate-100">
@@ -40,4 +39,4 @@ export const NotificationInsight = ({ insights }: NotificationInsightProps) => {
       </Section>
     </Container>
   );
-};
+}

@@ -1,14 +1,13 @@
 import { Container, Hr, Link, Tailwind, Text } from "@react-email/components";
 import React from "react";
-
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import {
+import type { TSurveyStatus } from "@formbricks/types/surveys";
+import type {
   TWeeklySummaryNotificationDataSurvey,
   TWeeklySummarySurveyResponseData,
 } from "@formbricks/types/weeklySummary";
-
-import { EmailButton } from "../general/EmailButton";
-import { renderEmailResponseValue } from "../survey/ResponseFinishedEmail";
+import { EmailButton } from "../general/email-button";
+import { renderEmailResponseValue } from "../survey/response-finished-email";
 
 const getButtonLabel = (count: number): string => {
   if (count === 1) {
@@ -17,7 +16,7 @@ const getButtonLabel = (count: number): string => {
   return `View ${count > 2 ? count - 1 : "1"} more Response${count > 2 ? "s" : ""}`;
 };
 
-const convertSurveyStatus = (status: string): string => {
+const convertSurveyStatus = (status: TSurveyStatus): string => {
   const statusMap = {
     inProgress: "In Progress",
     paused: "Paused",
@@ -43,7 +42,7 @@ export const LiveSurveyNotification = ({ environmentId, surveys }: LiveSurveyNot
         </Container>
       );
     }
-    let surveyFields: JSX.Element[] = [];
+    const surveyFields: JSX.Element[] = [];
     const responseCount = surveyResponses.length;
 
     surveyResponses.forEach((surveyResponse, index) => {
@@ -78,8 +77,8 @@ export const LiveSurveyNotification = ({ environmentId, surveys }: LiveSurveyNot
         <Container className="mt-12">
           <Text className="mb-0 inline">
             <Link
-              href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
-              className="text-xl text-black underline">
+              className="text-xl text-black underline"
+              href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}>
               {survey.name}
             </Link>
           </Text>
@@ -96,8 +95,8 @@ export const LiveSurveyNotification = ({ environmentId, surveys }: LiveSurveyNot
           {survey.responseCount > 0 && (
             <Container className="mt-4 block">
               <EmailButton
-                label={noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responseCount)}
                 href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
+                label={noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responseCount)}
               />
             </Container>
           )}

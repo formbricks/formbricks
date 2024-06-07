@@ -5,7 +5,8 @@
     "paths": {
       "~/*": ["/*"]
     },
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "strictNullChecks": true
   },
   "include": [".", "../../packages/types/*.d.ts"],
   "exclude": ["dist", "build", "node_modules"]

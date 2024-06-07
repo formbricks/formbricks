@@ -1,8 +1,7 @@
 import { Container, Heading, Text } from "@react-email/components";
 import React from "react";
-
-import { EmailButton } from "../general/EmailButton";
-import { EmailFooter } from "../general/EmailFooter";
+import { EmailButton } from "../general/email-button";
+import { EmailFooter } from "../general/email-footer";
 
 interface OnboardingInviteEmailProps {
   inviteMessage: string;
@@ -10,11 +9,11 @@ interface OnboardingInviteEmailProps {
   verifyLink: string;
 }
 
-export const OnboardingInviteEmail = ({
+export function OnboardingInviteEmail({
   inviteMessage,
   inviterName,
   verifyLink,
-}: OnboardingInviteEmailProps) => {
+}: OnboardingInviteEmailProps) {
   return (
     <Container>
       <Heading>Hey 👋</Heading>
@@ -25,8 +24,8 @@ export const OnboardingInviteEmail = ({
         <li>Connect Formbricks to your app or website via HTML Snippet or NPM in just a few minutes.</li>
         <li>Done ✅</li>
       </ol>
-      <EmailButton label={`Join ${inviterName}'s organization`} href={verifyLink} />
+      <EmailButton href={verifyLink} label={`Join ${inviterName}'s organization`} />
       <EmailFooter />
     </Container>
   );
-};
+}

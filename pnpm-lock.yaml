@@ -429,9 +429,6 @@ importers:
       next:
         specifier: 15.0.0-rc.0
         version: 15.0.0-rc.0(@babel/core@7.24.6)(@opentelemetry/api@1.8.0)(@playwright/test@1.44.1)(react-dom@19.0.0-rc-935180c7e0-20240524)(react@19.0.0-rc-935180c7e0-20240524)
-      nodemailer:
-        specifier: ^6.9.13
-        version: 6.9.13
       optional:
         specifier: ^0.1.4
         version: 0.1.4
@@ -708,6 +705,9 @@ importers:
 
   packages/email:
     dependencies:
+      '@formbricks/config-typescript':
+        specifier: workspace:*
+        version: link:../config-typescript
       '@formbricks/lib':
         specifier: workspace:*
         version: link:../lib
@@ -719,19 +719,26 @@ importers:
         version: link:../ui
       '@react-email/components':
         specifier: ^0.0.19
-        version: 0.0.19(react@18.3.1)
+        version: 0.0.19(@types/react@18.3.3)(react@18.3.1)
       '@react-email/render':
         specifier: ^0.0.15
         version: 0.0.15
       lucide-react:
-        specifier: ^0.379.0
-        version: 0.379.0(react@18.3.1)
+        specifier: ^0.390.0
+        version: 0.390.0(react@18.3.1)
       nodemailer:
         specifier: ^6.9.13
         version: 6.9.13
       react-email:
         specifier: ^2.1.4
         version: 2.1.4(eslint@8.57.0)
+    devDependencies:
+      '@types/nodemailer':
+        specifier: ^6.4.15
+        version: 6.4.15
+      '@types/react':
+        specifier: 18.3.3
+        version: 18.3.3
 
   packages/js:
     devDependencies:
@@ -8216,7 +8223,7 @@ packages:
       react: 19.0.0-rc-935180c7e0-20240524
     dev: false
 
-  /@react-email/components@0.0.19(react@18.3.1):
+  /@react-email/components@0.0.19(@types/react@18.3.3)(react@18.3.1):
     resolution: {integrity: sha512-yf49eIq0NDDXzO2RTZaT8fKa16eKUFMdWWMx4V5Bq+b2JdGuAMobO5s9Ea6azSVL6RDcJ8epdY1TCR2kL2PPHw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
@@ -8230,7 +8237,7 @@ packages:
       '@react-email/container': 0.0.12(react@18.3.1)
       '@react-email/font': 0.0.6(react@18.3.1)
       '@react-email/head': 0.0.9(react@18.3.1)
-      '@react-email/heading': 0.0.12(react@18.3.1)
+      '@react-email/heading': 0.0.12(@types/react@18.3.3)(react@18.3.1)
       '@react-email/hr': 0.0.8(react@18.3.1)
       '@react-email/html': 0.0.8(react@18.3.1)
       '@react-email/img': 0.0.8(react@18.3.1)
@@ -8330,7 +8337,7 @@ packages:
       react: 19.0.0-rc-935180c7e0-20240524
     dev: false
 
-  /@react-email/heading@0.0.12(react@18.3.1):
+  /@react-email/heading@0.0.12(@types/react@18.3.3)(react@18.3.1):
     resolution: {integrity: sha512-eB7mpnAvDmwvQLoPuwEiPRH4fPXWe6ltz6Ptbry2BlI88F0a2k11Ghb4+sZHBqg7vVw/MKbqEgtLqr3QJ/KfCQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
@@ -11084,6 +11091,12 @@ packages:
     resolution: {integrity: sha512-eWLDGF/FOSPtAvEqeRAQ4C8LSA7M1I7i0ky1I8U7kD1J5ITyW3AsRhQrKVoWf5pFKZ2kILsEGJhsI9r93PYnOw==}
     dependencies:
       undici-types: 5.26.5
+
+  /@types/nodemailer@6.4.15:
+    resolution: {integrity: sha512-0EBJxawVNjPkng1zm2vopRctuWVCxk34JcIlRuXSf54habUWdz1FB7wHDqOqvDa8Mtpt0Q3LTXQkAs2LNyK5jQ==}
+    dependencies:
+      '@types/node': 20.12.12
+    dev: true
 
   /@types/normalize-package-data@2.4.4:
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}

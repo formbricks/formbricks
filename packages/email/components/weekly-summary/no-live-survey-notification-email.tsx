@@ -1,9 +1,7 @@
 import React from "react";
-
-import { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
-
-import { CreateReminderNotificationBody } from "./CreateReminderNotificationBody";
-import { NotificationHeader } from "./NotificationHeader";
+import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
+import { CreateReminderNotificationBody } from "./create-reminder-notification-body";
+import { NotificationHeader } from "./notification-header";
 
 interface NoLiveSurveyNotificationEmailProps {
   notificationData: TWeeklySummaryNotificationResponse;
@@ -13,23 +11,23 @@ interface NoLiveSurveyNotificationEmailProps {
   endYear: number;
 }
 
-export const NoLiveSurveyNotificationEmail = ({
+export function NoLiveSurveyNotificationEmail({
   notificationData,
   startDate,
   endDate,
   startYear,
   endYear,
-}: NoLiveSurveyNotificationEmailProps) => {
+}: NoLiveSurveyNotificationEmailProps) {
   return (
     <div>
       <NotificationHeader
+        endDate={endDate}
+        endYear={endYear}
         productName={notificationData.productName}
         startDate={startDate}
-        endDate={endDate}
         startYear={startYear}
-        endYear={endYear}
       />
       <CreateReminderNotificationBody notificationData={notificationData} />
     </div>
   );
-};
+}

@@ -6,7 +6,7 @@ interface EmbedSurveyPreviewEmailProps {
   environmentId: string;
 }
 
-export const EmbedSurveyPreviewEmail = ({ html, environmentId }: EmbedSurveyPreviewEmailProps) => {
+export function EmbedSurveyPreviewEmail({ html, environmentId }: EmbedSurveyPreviewEmailProps) {
   return (
     <Container>
       <Heading>Preview Email Embed</Heading>
@@ -14,8 +14,8 @@ export const EmbedSurveyPreviewEmail = ({ html, environmentId }: EmbedSurveyPrev
       <Text className="text-sm">
         <b>Didn&apos;t request this?</b> Help us fight spam and forward this mail to hola@formbricks.com
       </Text>
-      <div dangerouslySetInnerHTML={{ __html: html }}></div>
+      <div dangerouslySetInnerHTML={{ __html: html }} />
       <Text className="text-center text-sm text-slate-700">Environment ID: {environmentId}</Text>
     </Container>
   );
-};
+}

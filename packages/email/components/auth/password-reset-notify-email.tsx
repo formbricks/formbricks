@@ -1,9 +1,8 @@
 import { Container, Heading, Text } from "@react-email/components";
 import React from "react";
+import { EmailFooter } from "../general/email-footer";
 
-import { EmailFooter } from "../general/EmailFooter";
-
-export const PasswordResetNotifyEmail = () => {
+export function PasswordResetNotifyEmail() {
   return (
     <Container>
       <Heading>Password changed</Heading>
@@ -11,4 +10,4 @@ export const PasswordResetNotifyEmail = () => {
       <EmailFooter />
     </Container>
   );
-};
+}

@@ -1,14 +1,13 @@
 import { Container, Text } from "@react-email/components";
 import React from "react";
-
-import { EmailFooter } from "../general/EmailFooter";
+import { EmailFooter } from "../general/email-footer";
 
 interface InviteAcceptedEmailProps {
   inviterName: string;
   inviteeName: string;
 }
 
-export const InviteAcceptedEmail = ({ inviterName, inviteeName }: InviteAcceptedEmailProps) => {
+export function InviteAcceptedEmail({ inviterName, inviteeName }: InviteAcceptedEmailProps) {
   return (
     <Container>
       <Text>Hey {inviterName},</Text>
@@ -16,4 +15,4 @@ export const InviteAcceptedEmail = ({ inviterName, inviteeName }: InviteAccepted
       <EmailFooter />
     </Container>
   );
-};
+}

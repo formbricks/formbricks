@@ -1,11 +1,9 @@
 import React from "react";
-
-import { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
-
-import { LiveSurveyNotification } from "./LiveSurveyNotification";
-import { NotificationFooter } from "./NotificationFooter";
-import { NotificationHeader } from "./NotificationHeader";
-import { NotificationInsight } from "./NotificationInsight";
+import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
+import { LiveSurveyNotification } from "./live-survey-notification";
+import { NotificationFooter } from "./notification-footer";
+import { NotificationHeader } from "./notification-header";
+import { NotificationInsight } from "./notification-insight";
 
 interface WeeklySummaryNotificationEmailProps {
   notificationData: TWeeklySummaryNotificationResponse;
@@ -15,28 +13,28 @@ interface WeeklySummaryNotificationEmailProps {
   endYear: number;
 }
 
-export const WeeklySummaryNotificationEmail = ({
+export function WeeklySummaryNotificationEmail({
   notificationData,
   startDate,
   endDate,
   startYear,
   endYear,
-}: WeeklySummaryNotificationEmailProps) => {
+}: WeeklySummaryNotificationEmailProps) {
   return (
     <div>
       <NotificationHeader
+        endDate={endDate}
+        endYear={endYear}
         productName={notificationData.productName}
         startDate={startDate}
-        endDate={endDate}
         startYear={startYear}
-        endYear={endYear}
       />
       <NotificationInsight insights={notificationData.insights} />
       <LiveSurveyNotification
-        surveys={notificationData.surveys}
         environmentId={notificationData.environmentId}
+        surveys={notificationData.surveys}
       />
       <NotificationFooter environmentId={notificationData.environmentId} />
     </div>
   );
-};
+}

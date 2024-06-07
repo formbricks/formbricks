@@ -1,39 +1,42 @@
 import { Column, Container, Hr, Img, Link, Row, Section, Text } from "@react-email/components";
-import React from "react";
-
 import { getQuestionResponseMapping } from "@formbricks/lib/responses";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
-import { TOrganization } from "@formbricks/types/organizations";
-import { TResponse } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import type { TOrganization } from "@formbricks/types/organizations";
+import type { TResponse } from "@formbricks/types/responses";
+import type { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
+import { EmailButton } from "../general/email-button";
 
-import { EmailButton } from "../general/EmailButton";
-
-export const renderEmailResponseValue = (response: string | string[], questionType: string) => {
+export const renderEmailResponseValue = (response: string | string[], questionType: TSurveyQuestionType) => {
   switch (questionType) {
-    case TSurveyQuestionType.FileUpload:
+    case TSurveyQuestionTypeEnum.FileUpload:
       return (
         <Container>
           {typeof response !== "string" &&
-            response.map((response) => (
+            response.map((responseItem) => (
               <Link
-                href={response}
-                key={response}
-                className="mt-2 flex flex-col items-center justify-center rounded-lg bg-gray-200 p-2 text-black shadow-sm">
+                className="mt-2 flex flex-col items-center justify-center rounded-lg bg-gray-200 p-2 text-black shadow-sm"
+                href={responseItem}
+                key={responseItem}>
                 <FileIcon />
-                <Text className="mx-auto mb-0 truncate">{getOriginalFileNameFromUrl(response)}</Text>
+                <Text className="mx-auto mb-0 truncate">{getOriginalFileNameFromUrl(responseItem)}</Text>
               </Link>
             ))}
         </Container>
       );
-    case TSurveyQuestionType.PictureSelection:
+    case TSurveyQuestionTypeEnum.PictureSelection:
       return (
         <Container className="flex">
           <Row>
             {typeof response !== "string" &&
-              response.map((response) => (
-                <Column>
-                  <Img src={response} id={response} alt={response.split("/").pop()} className="m-2 h-28" />
+              response.map((responseItem) => (
+                <Column key={responseItem}>
+                  <Img
+                    alt={responseItem.split("/").pop()}
+                    className="m-2 h-28"
+                    id={responseItem}
+                    src={responseItem}
+                  />
                 </Column>
               ))}
           </Row>
@@ -54,14 +57,14 @@ interface ResponseFinishedEmailProps {
   organization: TOrganization | null;
 }
 
-export const ResponseFinishedEmail = ({
+export function ResponseFinishedEmail({
   survey,
   responseCount,
   response,
   WEBAPP_URL,
   environmentId,
   organization,
-}: ResponseFinishedEmailProps) => {
+}: ResponseFinishedEmailProps) {
   const questions = getQuestionResponseMapping(survey, response);
 
   return (
@@ -117,23 +120,23 @@ export const ResponseFinishedEmail = ({
       </Row>
     </Container>
   );
-};
+}
 
-const FileIcon = () => {
+function FileIcon() {
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
+      className="lucide lucide-file"
       fill="none"
+      height="24"
       stroke="currentColor"
-      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="lucide lucide-file">
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      width="24"
+      xmlns="http://www.w3.org/2000/svg">
       <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
       <path d="M14 2v4a2 2 0 0 0 2 2h4" />
     </svg>
   );
-};
+}

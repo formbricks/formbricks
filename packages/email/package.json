@@ -8,13 +8,18 @@
     "lint": "eslint --ext .ts,.tsx --fix ."
   },
   "dependencies": {
+    "@formbricks/config-typescript": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "@react-email/components": "^0.0.19",
     "@react-email/render": "^0.0.15",
-    "lucide-react": "^0.379.0",
+    "lucide-react": "^0.390.0",
     "nodemailer": "^6.9.13",
     "react-email": "^2.1.4"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.15",
+    "@types/react": "18.3.3"
   }
 }

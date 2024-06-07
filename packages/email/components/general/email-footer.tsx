@@ -1,10 +1,11 @@
 import { Text } from "@react-email/components";
 import React from "react";
 
-export const EmailFooter = () => {
+export function EmailFooter() {
   return (
     <Text>
-      Have a great day!<br></br> The Formbricks Team!
+      Have a great day!
+      <br /> The Formbricks Team!
     </Text>
   );
-};
+}

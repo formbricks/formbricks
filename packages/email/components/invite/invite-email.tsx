@@ -1,8 +1,7 @@
 import { Container, Text } from "@react-email/components";
 import React from "react";
-
-import { EmailButton } from "../general/EmailButton";
-import { EmailFooter } from "../general/EmailFooter";
+import { EmailButton } from "../general/email-button";
+import { EmailFooter } from "../general/email-footer";
 
 interface InviteEmailProps {
   inviteeName: string;
@@ -10,7 +9,7 @@ interface InviteEmailProps {
   verifyLink: string;
 }
 
-export const InviteEmail = ({ inviteeName, inviterName, verifyLink }: InviteEmailProps) => {
+export function InviteEmail({ inviteeName, inviterName, verifyLink }: InviteEmailProps) {
   return (
     <Container>
       <Text>Hey {inviteeName},</Text>
@@ -18,8 +17,8 @@ export const InviteEmail = ({ inviteeName, inviterName, verifyLink }: InviteEmai
         Your colleague {inviterName} invited you to join them at Formbricks. To accept the invitation, please
         click the link below:
       </Text>
-      <EmailButton label="Join organization" href={verifyLink} />
+      <EmailButton href={verifyLink} label="Join organization" />
       <EmailFooter />
     </Container>
   );
-};
+}
