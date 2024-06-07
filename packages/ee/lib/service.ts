@@ -1,5 +1,7 @@
 import "server-only";
 
+import axios from "axios";
+
 import { cache, revalidateTag } from "@formbricks/lib/cache";
 import { E2E_TESTING, ENTERPRISE_LICENSE_KEY, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { hashString } from "@formbricks/lib/hashString";
@@ -82,17 +84,13 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
           },
         });
 
-        const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
-          body: JSON.stringify({
-            licenseKey: ENTERPRISE_LICENSE_KEY,
-            usage: { responseCount: responseCount },
-          }),
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
+        const response = await axios.post("https://ee.formbricks.com/api/licenses/check", {
+          licenseKey: process.env.ENTERPRISE_LICENSE_KEY,
+          usage: { responseCount: responseCount },
         });
 
-        if (res.ok) {
-          const responseJson = await res.json();
+        if (response.status === 200) {
+          const responseJson = response.data;
           return responseJson.data.status === "active";
         }
 

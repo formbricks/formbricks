@@ -59,7 +59,7 @@ const AppPage = ({}) => {
         router.events.off("routeChangeComplete", handleRouteChange);
       };
     }
-  });
+  }, []);
 
   return (
     <div className="h-screen bg-white px-12 py-6 dark:bg-slate-800">
