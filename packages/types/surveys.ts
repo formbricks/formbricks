@@ -445,7 +445,12 @@ export const ZSurveyQuestionsObject = z.object({
 
 export type TSurveyQuestionsObject = z.infer<typeof ZSurveyQuestionsObject>;
 
-export const ZSurveyDisplayOption = z.enum(["displayOnce", "displayMultiple", "respondMultiple"]);
+export const ZSurveyDisplayOption = z.enum([
+  "displayOnce",
+  "displayMultiple",
+  "respondMultiple",
+  "displaySome",
+]);
 
 export type TSurveyDisplayOption = z.infer<typeof ZSurveyDisplayOption>;
 
@@ -478,6 +483,7 @@ export const ZSurvey = z.object({
   triggers: z.array(z.object({ actionClass: ZActionClass })),
   redirectUrl: z.string().url().nullable(),
   recontactDays: z.number().nullable(),
+  displayLimit: z.number().nullable(),
   welcomeCard: ZSurveyWelcomeCard,
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
@@ -494,7 +500,7 @@ export const ZSurvey = z.object({
   verifyEmail: ZSurveyVerifyEmail.nullable(),
   pin: z.string().nullish(),
   resultShareKey: z.string().nullable(),
-  displayPercentage: z.number().min(1).max(100).nullable(),
+  displayPercentage: z.number().min(0.01).max(100).nullable(),
   languages: z.array(ZSurveyLanguage),
 });
 
@@ -521,7 +527,7 @@ export const ZSurveyInput = z.object({
   verifyEmail: ZSurveyVerifyEmail.optional(),
   pin: z.string().nullish(),
   resultShareKey: z.string().nullish(),
-  displayPercentage: z.number().min(1).max(100).nullish(),
+  displayPercentage: z.number().min(0.01).max(100).nullish(),
   triggers: z.array(z.object({ actionClass: ZActionClass })).optional(),
 });
 

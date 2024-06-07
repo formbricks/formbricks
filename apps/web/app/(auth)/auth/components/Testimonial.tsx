@@ -40,7 +40,7 @@ export const Testimonial = () => {
             <Image
               src={Peer}
               alt="Cal.com Co-Founder Peer Richelsen"
-              className="-mb-12 h-28 w-28 rounded-full border border-slate-200 shadow-sm"
+              className="h-28 w-28 rounded-full border border-slate-200 shadow-sm"
             />
             <div>
               <p className="mb-1.5 text-sm text-slate-500">Peer Richelsen, Co-Founder Cal.com</p>
