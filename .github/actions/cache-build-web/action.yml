@@ -49,20 +49,16 @@ runs:
       run: cp .env.example .env
       shell: bash
 
-    - name: Add E2E Testing Mode
+    - name: Fill ENCRYPTION_KE, ENTERPRISE_LICENSE_KEY and E2E_TESTING in .env
       run: |
-        echo "E2E_TESTING=${{ inputs.e2e_testing_mode }}" >> $GITHUB_ENV
-      shell: bash
-
-    - name: Generate Random ENCRYPTION_KEY
-      run: |
-        SECRET=$(openssl rand -hex 32)
-        echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
-        echo "ENTERPRISE_LICENSE_KEY=$SECRET" >> $GITHUB_ENV
+        RANDOM_KEY=$(openssl rand -hex 32)
+        sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
+        sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${RANDOM_KEY}/" .env
+        echo "E2E_TESTING=${{ inputs.e2e_testing_mode }}" >> .env
       shell: bash
 
     - run: |
-        pnpm build --filter=web...
+        pnpm build --filter=@formbricks/web...
 
       if: steps.cache-build.outputs.cache-hit != 'true'
       shell: bash

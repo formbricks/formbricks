@@ -4,9 +4,8 @@ import { QUESTIONS_ICON_MAP, QUESTIONS_NAME_MAP, getQuestionDefaults } from "@/a
 import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import React, { useState } from "react";
-
 import { TProduct } from "@formbricks/types/product";
-import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
 import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
 import {
   DropdownMenu,
@@ -44,7 +43,7 @@ export const QuestionMenu = ({
   const [logicWarningModal, setLogicWarningModal] = useState(false);
   const [changeToType, setChangeToType] = useState(question.type);
 
-  const changeQuestionType = (type: TSurveyQuestionType) => {
+  const changeQuestionType = (type: TSurveyQuestionTypeEnum) => {
     const { headline, required, subheader, imageUrl, videoUrl, buttonLabel, backButtonLabel } = question;
 
     const questionDefaults = getQuestionDefaults(type, product);
@@ -52,10 +51,10 @@ export const QuestionMenu = ({
     // if going from single select to multi select or vice versa, we need to keep the choices as well
 
     if (
-      (type === TSurveyQuestionType.MultipleChoiceSingle &&
-        question.type === TSurveyQuestionType.MultipleChoiceMulti) ||
-      (type === TSurveyQuestionType.MultipleChoiceMulti &&
-        question.type === TSurveyQuestionType.MultipleChoiceSingle)
+      (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle &&
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) ||
+      (type === TSurveyQuestionTypeEnum.MultipleChoiceMulti &&
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle)
     ) {
       updateQuestion(questionIdx, {
         choices: question.choices,
@@ -80,7 +79,7 @@ export const QuestionMenu = ({
     });
   };
 
-  const addQuestionBelow = (type: TSurveyQuestionType) => {
+  const addQuestionBelow = (type: TSurveyQuestionTypeEnum) => {
     const questionDefaults = getQuestionDefaults(type, product);
 
     addQuestion(
@@ -143,15 +142,15 @@ export const QuestionMenu = ({
                       key={type}
                       className="min-h-8 cursor-pointer text-slate-500"
                       onClick={() => {
-                        setChangeToType(type as TSurveyQuestionType);
+                        setChangeToType(type as TSurveyQuestionTypeEnum);
                         if (question.logic) {
                           setLogicWarningModal(true);
                           return;
                         }
 
-                        changeQuestionType(type as TSurveyQuestionType);
+                        changeQuestionType(type as TSurveyQuestionTypeEnum);
                       }}>
-                      {QUESTIONS_ICON_MAP[type as TSurveyQuestionType]}
+                      {QUESTIONS_ICON_MAP[type as TSurveyQuestionTypeEnum]}
                       <span className="ml-2">{name}</span>
                     </DropdownMenuItem>
                   );
@@ -176,9 +175,9 @@ export const QuestionMenu = ({
                       className="min-h-8 cursor-pointer text-slate-500"
                       onClick={(e) => {
                         e.stopPropagation();
-                        addQuestionBelow(type as TSurveyQuestionType);
+                        addQuestionBelow(type as TSurveyQuestionTypeEnum);
                       }}>
-                      {QUESTIONS_ICON_MAP[type as TSurveyQuestionType]}
+                      {QUESTIONS_ICON_MAP[type as TSurveyQuestionTypeEnum]}
                       <span className="ml-2">{name}</span>
                     </DropdownMenuItem>
                   );

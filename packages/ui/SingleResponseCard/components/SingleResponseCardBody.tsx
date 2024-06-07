@@ -1,5 +1,4 @@
 import { CheckCircle2Icon } from "lucide-react";
-
 import { getLanguageCode, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
@@ -9,9 +8,8 @@ import {
   TSurveyMatrixQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestion,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys";
-
 import { AddressResponse } from "../../AddressResponse";
 import { FileUploadResponse } from "../../FileUploadResponse";
 import { PictureSelectionResponse } from "../../PictureSelectionResponse";
@@ -64,23 +62,23 @@ export const SingleResponseCardBody = ({
   };
 
   const renderResponse = (
-    questionType: TSurveyQuestionType,
+    questionType: TSurveyQuestionTypeEnum,
     responseData: string | number | string[] | Record<string, string>,
     question: TSurveyQuestion
   ) => {
     switch (questionType) {
-      case TSurveyQuestionType.Rating:
+      case TSurveyQuestionTypeEnum.Rating:
         if (typeof responseData === "number")
           return <RatingResponse scale={question.scale} answer={responseData} range={question.range} />;
-      case TSurveyQuestionType.Date:
+      case TSurveyQuestionTypeEnum.Date:
         if (typeof responseData === "string") {
           const formattedDateString = formatDateWithOrdinal(new Date(responseData));
           return <p className="ph-no-capture my-1 font-semibold text-slate-700">{formattedDateString}</p>;
         }
-      case TSurveyQuestionType.Cal:
+      case TSurveyQuestionTypeEnum.Cal:
         if (typeof responseData === "string")
           return <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">{responseData}</p>;
-      case TSurveyQuestionType.PictureSelection:
+      case TSurveyQuestionTypeEnum.PictureSelection:
         if (Array.isArray(responseData))
           return (
             <PictureSelectionResponse
@@ -88,9 +86,9 @@ export const SingleResponseCardBody = ({
               selected={responseData}
             />
           );
-      case TSurveyQuestionType.FileUpload:
+      case TSurveyQuestionTypeEnum.FileUpload:
         if (Array.isArray(responseData)) return <FileUploadResponse selected={responseData} />;
-      case TSurveyQuestionType.Matrix:
+      case TSurveyQuestionTypeEnum.Matrix:
         if (typeof responseData === "object" && !Array.isArray(responseData)) {
           return (question as TSurveyMatrixQuestion).rows.map((row) => {
             const languagCode = getLanguageCode(survey.languages, response.language);
@@ -103,7 +101,7 @@ export const SingleResponseCardBody = ({
             );
           });
         }
-      case TSurveyQuestionType.Address:
+      case TSurveyQuestionTypeEnum.Address:
         if (Array.isArray(responseData)) {
           return <AddressResponse value={responseData} />;
         }

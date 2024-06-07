@@ -43,7 +43,6 @@ To be able to keep working on Formbricks over the coming years, we need to colle
 
 Once you open a PR, you will get a message from the CLA bot to fill out the form. Please note that we can only get your contribution merged when we have a CLA signed by you.
 
-
 ## Setup Dev Environment
 
 We currently officially support the below methods to set up your development environment for Formbricks.
@@ -425,7 +424,7 @@ This usually happens when the Formbricks Widget wasn't correctly or completely b
 <CodeGroup title="Build js library first and then run again">
 
 ```bash
-pnpm build --filter=js
+pnpm build --filter=@formbricks/js
 
 // Run the app again
 pnpm dev
@@ -441,15 +440,15 @@ Since we're working with a monorepo structure, the repository can get quite big.
 <CodeGroup title="Only run the required project">
 
 ```bash {{ title: 'Formbricks Web-App' }}
-pnpm dev --filter=web...
+pnpm dev --filter=@formbricks/web...
 ```
 
-```bash {{ title: 'Formbricks Landing Page' }}
-pnpm dev --filter=formbricks-com...
+```bash {{ title: 'Formbricks Docs' }}
+pnpm dev --filter=@formbricks/docs...
 ```
 
 ```bash {{ title: 'Formbricks Demo App' }}
-pnpm dev --filter=demo...
+pnpm dev --filter=@formbricks/demo...
 ```
 
 </CodeGroup>
@@ -468,4 +467,3 @@ However, in our experience it's better to run `pnpm dev` than having two termina
 This happens when you're using the Demo App and delete the Person within the Formbricks app which the widget is currently connected with. We're fixing it, but you can also just logout your test person and reload the page to get rid of it.
 
 <MdxImage src={Logout} alt="Logout Person" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
-
