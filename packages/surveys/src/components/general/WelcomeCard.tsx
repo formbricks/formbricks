@@ -1,11 +1,9 @@
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { calculateElementIdx } from "@/lib/utils";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys";
-
 import { Headline } from "./Headline";
 import { HtmlBody } from "./HtmlBody";
 
@@ -107,7 +105,6 @@ export const WelcomeCard = ({
       <ScrollableContainer>
         <div>
           {fileUrl && (
-            /* eslint-disable-next-line @next/next/no-img-element */
             <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
           )}
 

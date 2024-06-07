@@ -12,12 +12,13 @@
   },
   "dependencies": {
     "@formbricks/ui": "workspace:*",
+    "eslint-plugin-react-refresh": "^0.4.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^1.5.0",
-    "@formbricks/tsconfig": "workspace:*",
+    "@formbricks/config-typescript": "workspace:*",
     "@storybook/addon-essentials": "^8.1.5",
     "@storybook/addon-interactions": "^8.1.5",
     "@storybook/addon-links": "^8.1.5",
