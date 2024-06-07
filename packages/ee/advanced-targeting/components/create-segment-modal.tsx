@@ -15,8 +15,8 @@ import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
 
 import { createSegmentAction } from "../lib/actions";
-import { AddFilterModal } from "./AddFilterModal";
-import { SegmentEditor } from "./SegmentEditor";
+import { AddFilterModal } from "./add-filter-modal";
+import { SegmentEditor } from "./segment-editor";
 
 interface TCreateSegmentModalProps {
   environmentId: string;

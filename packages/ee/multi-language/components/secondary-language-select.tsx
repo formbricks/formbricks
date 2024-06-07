@@ -1,9 +1,9 @@
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import type { TSurvey } from "@formbricks/types/surveys";
 
-import { LanguageToggle } from "./LanguageToggle";
+import { LanguageToggle } from "./language-toggle";
 
-interface secondaryLanguageSelectProps {
+interface SecondaryLanguageSelectProps {
   product: TProduct;
   defaultLanguage: TLanguage;
   setSelectedLanguageCode: (languageCode: string) => void;
@@ -19,7 +19,7 @@ export function SecondaryLanguageSelect({
   setActiveQuestionId,
   localSurvey,
   updateSurveyLanguages,
-}: secondaryLanguageSelectProps) {
+}: SecondaryLanguageSelectProps) {
   const isLanguageToggled = (language: TLanguage) => {
     return localSurvey.languages.some(
       (surveyLanguage) => surveyLanguage.language.code === language.code && surveyLanguage.enabled

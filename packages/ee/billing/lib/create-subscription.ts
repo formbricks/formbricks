@@ -6,12 +6,6 @@ import { getOrganization } from "@formbricks/lib/organization/service";
 
 import type { StripePriceLookupKeys } from "./constants";
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-  apiVersion: STRIPE_API_VERSION,
-});
-
-const baseUrl = process.env.NODE_ENV === "production" ? WEBAPP_URL : "http://localhost:3000";
-
 export const getFirstOfNextMonthTimestamp = (): number => {
   const nextMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
   return Math.floor(nextMonth.getTime() / 1000);
@@ -22,6 +16,12 @@ export const createSubscription = async (
   environmentId: string,
   priceLookupKeys: StripePriceLookupKeys[]
 ) => {
+  if (!env.STRIPE_SECRET_KEY) throw new Error("Stripe is not enabled; STRIPE_SECRET_KEY is not set.");
+
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+    apiVersion: STRIPE_API_VERSION,
+  });
+
   try {
     const organization = await getOrganization(organizationId);
     if (!organization) throw new Error("Organization not found.");
@@ -50,8 +50,8 @@ export const createSubscription = async (
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         line_items: lineItems,
-        success_url: `${baseUrl}/billing-confirmation?environmentId=${environmentId}`,
-        cancel_url: `${baseUrl}/environments/${environmentId}/settings/billing`,
+        success_url: `${WEBAPP_URL}/billing-confirmation?environmentId=${environmentId}`,
+        cancel_url: `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
         allow_promotion_codes: true,
         subscription_data: {
           billing_cycle_anchor: getFirstOfNextMonthTimestamp(),
@@ -183,7 +183,7 @@ export const createSubscription = async (
       status: 500,
       data: "Something went wrong!",
       newPlan: true,
-      url: `${baseUrl}/environments/${environmentId}/settings/billing`,
+      url: `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
     };
   }
 };

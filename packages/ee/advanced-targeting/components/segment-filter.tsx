@@ -65,7 +65,7 @@ import {
 import { Input } from "@formbricks/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
-import { AddFilterModal } from "./AddFilterModal";
+import { AddFilterModal } from "./add-filter-modal";
 
 interface TSegmentFilterProps {
   connector: TSegmentConnector;

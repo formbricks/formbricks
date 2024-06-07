@@ -18,8 +18,8 @@ import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
-import { DefaultLanguageSelect } from "./DefaultLanguageSelect";
-import { SecondaryLanguageSelect } from "./SecondaryLanguageSelect";
+import { DefaultLanguageSelect } from "./default-language-select";
+import { SecondaryLanguageSelect } from "./secondary-language-select";
 
 interface MultiLanguageCardProps {
   localSurvey: TSurvey;
@@ -52,7 +52,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   setSelectedLanguageCode,
 }) => {
   const environmentId = localSurvey.environmentId;
-  const open = activeQuestionId == "multiLanguage";
+  const open = activeQuestionId === "multiLanguage";
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 1);
   const [confirmationModalInfo, setConfirmationModalInfo] = useState<ConfirmationModalProps>({
     title: "",

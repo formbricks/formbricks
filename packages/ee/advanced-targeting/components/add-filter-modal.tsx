@@ -44,7 +44,7 @@ const handleAddFilter = ({
   attributeClassName?: string;
   segmentId?: string;
   deviceType?: string;
-}) => {
+}): void => {
   if (type === "action") {
     if (!actionClassId) return;
 
@@ -180,6 +180,16 @@ function AttributeTabContent({ attributeClasses, onAddFilter, setOpen }: Attribu
                 onAddFilter,
                 setOpen,
               });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleAddFilter({
+                  type: "person",
+                  onAddFilter,
+                  setOpen,
+                });
+              }
             }}>
             <FingerprintIcon className="h-4 w-4" />
             <p>userId</p>
@@ -201,6 +211,7 @@ function AttributeTabContent({ attributeClasses, onAddFilter, setOpen }: Attribu
         return (
           <div
             className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
+            key={attributeClass.id}
             onClick={() => {
               handleAddFilter({
                 type: "attribute",
@@ -241,15 +252,12 @@ export function AddFilterModal({
     { id: "devices", label: "Devices", icon: <MonitorSmartphoneIcon className="h-4 w-4" /> },
   ];
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const devices = [
     { id: "phone", name: "Phone" },
     { id: "desktop", name: "Desktop" },
   ];
 
   const actionClassesFiltered = useMemo(() => {
-    if (!actionClasses) return [];
-
     if (!searchValue) return actionClasses;
 
     return actionClasses.filter((actionClass) =>
@@ -334,6 +342,7 @@ export function AddFilterModal({
                 return (
                   <div
                     className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
+                    key={actionClass.id}
                     onClick={() => {
                       handleAddFilter({
                         type: "action",

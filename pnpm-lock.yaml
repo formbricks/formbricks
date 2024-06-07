@@ -647,15 +647,45 @@ importers:
 
   packages/ee:
     dependencies:
+      '@formbricks/database':
+        specifier: workspace:*
+        version: link:../database
       '@formbricks/lib':
         specifier: workspace:*
         version: link:../lib
+      '@paralleldrive/cuid2':
+        specifier: ^2.2.2
+        version: 2.2.2
+      '@radix-ui/react-collapsible':
+        specifier: ^1.0.3
+        version: 1.0.3(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1)(react@18.3.1)
       axios:
         specifier: ^1.7.2
         version: 1.7.2
+      lucide-react:
+        specifier: ^0.390.0
+        version: 0.390.0(react@18.3.1)
+      next:
+        specifier: ^14.2.3
+        version: 14.2.3(@playwright/test@1.44.1)(react-dom@18.3.1)(react@18.3.1)
+      next-auth:
+        specifier: ^4.24.7
+        version: 4.24.7(next@14.2.3)(react-dom@18.3.1)(react@18.3.1)
+      react-hook-form:
+        specifier: ^7.51.5
+        version: 7.51.5(react@18.3.1)
+      react-hot-toast:
+        specifier: ^2.4.1
+        version: 2.4.1(csstype@3.1.3)(react-dom@18.3.1)(react@18.3.1)
+      server-only:
+        specifier: ^0.0.1
+        version: 0.0.1
       stripe:
         specifier: ^15.8.0
         version: 15.8.0
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
     devDependencies:
       '@formbricks/config-typescript':
         specifier: '*'
@@ -669,6 +699,12 @@ importers:
       '@formbricks/ui':
         specifier: '*'
         version: link:../ui
+      '@types/dompurify':
+        specifier: ^3.0.5
+        version: 3.0.5
+      '@types/react':
+        specifier: 18.3.3
+        version: 18.3.3
 
   packages/email:
     dependencies:
@@ -17181,6 +17217,14 @@ packages:
       react: 19.0.0-rc-935180c7e0-20240524
     dev: false
 
+  /lucide-react@0.390.0(react@18.3.1):
+    resolution: {integrity: sha512-APqbfEcVuHnZbiy3E97gYWLeBdkE4e6NbY6AuVETZDZVn/bQCHYUoHyxcUHyvRopfPOHhFUEvDyyQzHwM+S9/w==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0
+    dependencies:
+      react: 18.3.1
+    dev: false
+
   /lucide@0.378.0:
     resolution: {integrity: sha512-bwWXuZf2jZbCI0Y+MWyv5bedWIxYKtgAEzC2Yl87Nrt/KcG9qTwAQxVFcZ6IwBioML06QUQsG+qRjyQvYHdbBQ==}
     dev: false
@@ -19833,6 +19877,15 @@ packages:
       highlight-words-core: 1.2.2
       memoize-one: 4.0.3
       prop-types: 15.8.1
+      react: 18.3.1
+    dev: false
+
+  /react-hook-form@7.51.5(react@18.3.1):
+    resolution: {integrity: sha512-J2ILT5gWx1XUIJRETiA7M19iXHlG74+6O3KApzvqB/w8S5NQR7AbU8HVZrMALdmDgWpRPYiZJl0zx8Z4L2mP6Q==}
+    engines: {node: '>=12.22.0'}
+    peerDependencies:
+      react: ^16.8.0 || ^17 || ^18
+    dependencies:
       react: 18.3.1
     dev: false
 

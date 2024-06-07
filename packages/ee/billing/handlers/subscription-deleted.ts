@@ -5,14 +5,15 @@ import { env } from "@formbricks/lib/env";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 
 import { ProductFeatureKeys, StripeProductNames } from "../lib/constants";
-import { unsubscribeCoreAndAppSurveyFeatures, unsubscribeLinkSurveyProFeatures } from "../lib/downgradePlan";
-
-const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-  // https://github.com/stripe/stripe-node#configuration
-  apiVersion: STRIPE_API_VERSION,
-});
+import { unsubscribeCoreAndAppSurveyFeatures, unsubscribeLinkSurveyProFeatures } from "../lib/downgrade-plan";
 
 export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
+  if (!env.STRIPE_SECRET_KEY) throw new Error("Stripe is not enabled; STRIPE_SECRET_KEY is not set.");
+
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+    apiVersion: STRIPE_API_VERSION,
+  });
+
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
   const organizationId = stripeSubscriptionObject.metadata.organizationId;
   if (!organizationId) {

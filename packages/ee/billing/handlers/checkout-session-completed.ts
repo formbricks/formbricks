@@ -10,15 +10,17 @@ import {
 } from "@formbricks/lib/organization/service";
 
 import { ProductFeatureKeys, StripePriceLookupKeys, StripeProductNames } from "../lib/constants";
-import { reportUsage } from "../lib/reportUsage";
-
-const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-  // https://github.com/stripe/stripe-node#configuration
-  apiVersion: STRIPE_API_VERSION,
-});
+import { reportUsage } from "../lib/report-usage";
 
 export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
+  if (!env.STRIPE_SECRET_KEY) throw new Error("Stripe is not enabled; STRIPE_SECRET_KEY is not set.");
+
   const checkoutSession = event.data.object as Stripe.Checkout.Session;
+
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+    apiVersion: STRIPE_API_VERSION,
+  });
+
   const stripeSubscriptionObject = await stripe.subscriptions.retrieve(
     checkoutSession.subscription as string
   );

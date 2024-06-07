@@ -6,8 +6,8 @@ import type { TLanguage } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 
-import type { TIso639Language } from "../lib/isoLanguages";
-import { iso639Languages } from "../lib/isoLanguages";
+import type { TIso639Language } from "../lib/iso-languages";
+import { iso639Languages } from "../lib/iso-languages";
 
 interface LanguageSelectProps {
   language: TLanguage;

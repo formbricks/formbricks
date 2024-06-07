@@ -16,8 +16,8 @@ import { ConfirmDeleteSegmentModal } from "@formbricks/ui/ConfirmDeleteSegmentMo
 import { Input } from "@formbricks/ui/Input";
 
 import { deleteSegmentAction, updateSegmentAction } from "../lib/actions";
-import { AddFilterModal } from "./AddFilterModal";
-import { SegmentEditor } from "./SegmentEditor";
+import { AddFilterModal } from "./add-filter-modal";
+import { SegmentEditor } from "./segment-editor";
 
 interface TSegmentSettingsTabProps {
   environmentId: string;

@@ -2,7 +2,7 @@ import "server-only";
 
 import axios from "axios";
 
-import { prisma } from "@formbricks/database/src/src";
+import { prisma } from "@formbricks/database";
 import { cache, revalidateTag } from "@formbricks/lib/cache";
 import { E2E_TESTING, ENTERPRISE_LICENSE_KEY, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { hashString } from "@formbricks/lib/hashString";

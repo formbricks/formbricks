@@ -10,17 +10,18 @@ import {
 } from "@formbricks/lib/organization/service";
 
 import { ProductFeatureKeys, StripePriceLookupKeys, StripeProductNames } from "../lib/constants";
-import { reportUsage } from "../lib/reportUsage";
-
-const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-  // https://github.com/stripe/stripe-node#configuration
-  apiVersion: STRIPE_API_VERSION,
-});
+import { reportUsage } from "../lib/report-usage";
 
 const isProductScheduled = async (
   scheduledSubscriptions: Stripe.SubscriptionSchedule[],
   productName: StripeProductNames
 ) => {
+  if (!env.STRIPE_SECRET_KEY) throw new Error("Stripe is not enabled; STRIPE_SECRET_KEY is not set.");
+
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+    apiVersion: STRIPE_API_VERSION,
+  });
+
   for (const scheduledSub of scheduledSubscriptions) {
     if (scheduledSub.phases && scheduledSub.phases.length > 0) {
       const firstPhase = scheduledSub.phases[0];
@@ -38,6 +39,12 @@ const isProductScheduled = async (
 };
 
 export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) => {
+  if (!env.STRIPE_SECRET_KEY) throw new Error("Stripe is not enabled; STRIPE_SECRET_KEY is not set.");
+
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+    apiVersion: STRIPE_API_VERSION,
+  });
+
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
   const organizationId = stripeSubscriptionObject.metadata.organizationId;
 

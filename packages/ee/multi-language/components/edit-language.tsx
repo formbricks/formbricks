@@ -16,8 +16,8 @@ import {
   getSurveysUsingGivenLanguageAction,
   updateLanguageAction,
 } from "../lib/actions";
-import { iso639Languages } from "../lib/isoLanguages";
-import { LanguageRow } from "./LanguageRow";
+import { iso639Languages } from "../lib/iso-languages";
+import { LanguageRow } from "./language-row";
 
 interface EditLanguageProps {
   product: TProduct;

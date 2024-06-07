@@ -33,8 +33,8 @@ import {
   updateSegmentAction,
 } from "../lib/actions";
 import { ACTIONS_TO_EXCLUDE } from "../lib/constants";
-import { AddFilterModal } from "./AddFilterModal";
-import { SegmentEditor } from "./SegmentEditor";
+import { AddFilterModal } from "./add-filter-modal";
+import { SegmentEditor } from "./segment-editor";
 
 interface UserTargetingAdvancedCardProps {
   localSurvey: TSurvey;
@@ -102,7 +102,7 @@ export function AdvancedTargetingCard({
   };
 
   useEffect(() => {
-    if (Boolean(segment) && segment.filters.length > 0) {
+    if (segment && segment.filters.length > 0) {
       setOpen(true);
     }
   }, [segment, segment?.filters.length]);
@@ -169,6 +169,10 @@ export function AdvancedTargetingCard({
 
   if (localSurvey.type === "link") {
     return null; // Hide card completely
+  }
+
+  if (!segment) {
+    throw new Error("Survey segment is missing");
   }
 
   return (

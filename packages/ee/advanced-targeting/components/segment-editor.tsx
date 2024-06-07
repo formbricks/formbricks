@@ -23,8 +23,8 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 
-import { AddFilterModal } from "./AddFilterModal";
-import { SegmentFilter } from "./SegmentFilter";
+import { AddFilterModal } from "./add-filter-modal";
+import { SegmentFilter } from "./segment-filter";
 
 interface TSegmentEditorProps {
   group: TBaseFilters;
@@ -33,7 +33,7 @@ interface TSegmentEditorProps {
   segments: TSegment[];
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
-  setSegment: React.Dispatch<React.SetStateAction<TSegment>>;
+  setSegment: React.Dispatch<React.SetStateAction<TSegment | null>>;
   viewOnly?: boolean;
 }
 

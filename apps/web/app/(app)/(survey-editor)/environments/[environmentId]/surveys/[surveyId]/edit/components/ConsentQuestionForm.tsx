@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
+import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";

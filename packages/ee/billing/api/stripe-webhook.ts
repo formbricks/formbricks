@@ -3,21 +3,24 @@ import Stripe from "stripe";
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 
-import { handleCheckoutSessionCompleted } from "../handlers/checkoutSessionCompleted";
-import { handleSubscriptionUpdatedOrCreated } from "../handlers/subscriptionCreatedOrUpdated";
-import { handleSubscriptionDeleted } from "../handlers/subscriptionDeleted";
-
-const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-  apiVersion: STRIPE_API_VERSION,
-});
-
-const webhookSecret: string = env.STRIPE_WEBHOOK_SECRET;
+import { handleCheckoutSessionCompleted } from "../handlers/checkout-session-completed";
+import { handleSubscriptionUpdatedOrCreated } from "../handlers/subscription-created-or-updated";
+import { handleSubscriptionDeleted } from "../handlers/subscription-deleted";
 
 export const webhookHandler = async (requestBody: string, stripeSignature: string) => {
   let event: Stripe.Event;
 
+  if (!env.STRIPE_SECRET_KEY || !env.STRIPE_WEBHOOK_SECRET) {
+    console.error("Stripe is not enabled, skipping webhook");
+    return { status: 400, message: "Stripe is not enabled, skipping webhook" };
+  }
+
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+    apiVersion: STRIPE_API_VERSION,
+  });
+
   try {
-    event = stripe.webhooks.constructEvent(requestBody, stripeSignature, webhookSecret);
+    event = stripe.webhooks.constructEvent(requestBody, stripeSignature, env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     if (err! instanceof Error) console.error(err);

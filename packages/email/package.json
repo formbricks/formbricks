@@ -4,7 +4,8 @@
   "description": "Email package",
   "main": "./index.tsx",
   "scripts": {
-    "clean": "rimraf .turbo node_modules dist"
+    "clean": "rimraf .turbo node_modules dist",
+    "lint": "eslint --ext .ts,.tsx --fix ."
   },
   "dependencies": {
     "@formbricks/lib": "workspace:*",

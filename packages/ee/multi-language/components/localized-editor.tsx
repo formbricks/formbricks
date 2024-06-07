@@ -8,7 +8,7 @@ import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import type { TI18nString, TSurvey } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 
-import { LanguageIndicator } from "./LanguageIndicator";
+import { LanguageIndicator } from "./language-indicator";
 
 interface LocalizedEditorProps {
   id: string;

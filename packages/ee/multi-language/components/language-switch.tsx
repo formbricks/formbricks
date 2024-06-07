@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 
-import { getLanguageLabel } from "../lib/isoLanguages";
+import { getLanguageLabel } from "../lib/iso-languages";
 
 interface LanguageSwitchProps {
   surveyLanguages: TSurveyLanguage[];

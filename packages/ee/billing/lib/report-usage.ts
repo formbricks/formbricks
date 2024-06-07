@@ -5,16 +5,17 @@ import { env } from "@formbricks/lib/env";
 
 import { ProductFeatureKeys } from "./constants";
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-  // https://github.com/stripe/stripe-node#configuration
-  apiVersion: STRIPE_API_VERSION,
-});
-
 export const reportUsage = async (
   items: Stripe.SubscriptionItem[],
   lookupKey: ProductFeatureKeys,
   quantity: number
 ) => {
+  if (!env.STRIPE_SECRET_KEY) throw new Error("Stripe is not enabled; STRIPE_SECRET_KEY is not set.");
+
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+    apiVersion: STRIPE_API_VERSION,
+  });
+
   const subscriptionItem = items.find(
     (subItem) => subItem.price.lookup_key === ProductFeatureKeys[lookupKey]
   );
@@ -36,6 +37,12 @@ export const reportUsageToStripe = async (
   lookupKey: ProductFeatureKeys,
   timestamp: number
 ) => {
+  if (!env.STRIPE_SECRET_KEY) throw new Error("Stripe is not enabled; STRIPE_SECRET_KEY is not set.");
+
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+    apiVersion: STRIPE_API_VERSION,
+  });
+
   try {
     const subscription = await stripe.subscriptions.list({
       customer: stripeCustomerId,

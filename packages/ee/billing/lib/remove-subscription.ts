@@ -5,21 +5,31 @@ import { env } from "@formbricks/lib/env";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 
 import type { StripePriceLookupKeys } from "./constants";
-import { getFirstOfNextMonthTimestamp } from "./createSubscription";
-
-const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-  apiVersion: STRIPE_API_VERSION,
-});
+import { getFirstOfNextMonthTimestamp } from "./create-subscription";
 
 const baseUrl = process.env.NODE_ENV === "production" ? WEBAPP_URL : "http://localhost:3000";
 
-const retrievePriceLookup = async (priceId: string) => (await stripe.prices.retrieve(priceId)).lookup_key;
+const retrievePriceLookup = async (priceId: string) => {
+  if (!env.STRIPE_SECRET_KEY) throw new Error("Stripe is not enabled; STRIPE_SECRET_KEY is not set.");
+
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+    apiVersion: STRIPE_API_VERSION,
+  });
+
+  return (await stripe.prices.retrieve(priceId)).lookup_key;
+};
 
 export const removeSubscription = async (
   organizationId: string,
   environmentId: string,
   priceLookupKeys: StripePriceLookupKeys[]
 ) => {
+  if (!env.STRIPE_SECRET_KEY) throw new Error("Stripe is not enabled; STRIPE_SECRET_KEY is not set.");
+
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+    apiVersion: STRIPE_API_VERSION,
+  });
+
   try {
     const organization = await getOrganization(organizationId);
     if (!organization) throw new Error("Organization not found.");
