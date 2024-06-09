@@ -4,6 +4,7 @@ import fetch from "node-fetch";
 import { prisma } from "@formbricks/database";
 import { cache, revalidateTag } from "@formbricks/lib/cache";
 import { E2E_TESTING, ENTERPRISE_LICENSE_KEY, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { env } from "@formbricks/lib/env";
 import { hashString } from "@formbricks/lib/hashString";
 import type { TOrganization } from "@formbricks/types/organizations";
 
@@ -82,7 +83,7 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
           },
         });
 
-        const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+        const proxyUrl = env.HTTPS_PROXY || env.HTTP_PROXY;
         const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
 
         const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
@@ -96,7 +97,9 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
         });
 
         if (res.ok) {
-          const responseJson = await res.json();
+          const responseJson = (await res.json()) as {
+            data: { status: string; features: { isMultiOrgEnabled: boolean } };
+          };
           return responseJson.data.status === "active";
         }
 
