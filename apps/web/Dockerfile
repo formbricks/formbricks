@@ -36,8 +36,9 @@ WORKDIR /app
 
 # Copy the package information
 COPY .gitignore .gitignore
-COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+# COPY --from=builder /app/out/json/ .
+# COPY --from=builder . .
+# COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
 # Install the dependencies
 RUN pnpm install
