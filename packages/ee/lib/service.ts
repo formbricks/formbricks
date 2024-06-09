@@ -1,7 +1,6 @@
 import "server-only";
-
-import axios from "axios";
-
+import { HttpsProxyAgent } from "https-proxy-agent";
+import fetch from "node-fetch";
 import { prisma } from "@formbricks/database";
 import { cache, revalidateTag } from "@formbricks/lib/cache";
 import { E2E_TESTING, ENTERPRISE_LICENSE_KEY, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -83,13 +82,21 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
           },
         });
 
-        const response = await axios.post("https://ee.formbricks.com/api/licenses/check", {
-          licenseKey: process.env.ENTERPRISE_LICENSE_KEY,
-          usage: { responseCount },
+        const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+        const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
+
+        const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
+          body: JSON.stringify({
+            licenseKey: ENTERPRISE_LICENSE_KEY,
+            usage: { responseCount: responseCount },
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+          agent,
         });
 
-        if (response.status === 200) {
-          const responseJson = response.data;
+        if (res.ok) {
+          const responseJson = await res.json();
           return responseJson.data.status === "active";
         }
 
