@@ -1,10 +1,6 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "tasks": {
-    "@formbricks/database#build": {
-      "cache": false,
-      "dependsOn": ["post-install"]
-    },
     "@formbricks/web#go": {
       "cache": false,
       "persistent": true,
@@ -153,12 +149,6 @@
     "build:dev": {
       "dependsOn": ["^build:dev"],
       "outputs": ["dist/**", ".next/**"]
-    },
-    "post-install": {
-      "cache": false,
-      "dependsOn": [],
-      "outputs": [],
-      "inputs": ["./schema.prisma"]
     },
     "db:setup": {
       "cache": false,

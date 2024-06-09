@@ -3,13 +3,13 @@ FROM node:20-alpine AS base
 #
 ## step 1: Prune monorepo
 #
-FROM base AS builder
-RUN apk add --no-cache libc6-compat
-RUN apk update
+# FROM base AS builder
+# RUN apk add --no-cache libc6-compat
+# RUN apk update
 # Set working directory
-WORKDIR /app
-RUN yarn global add turbo
-COPY . .
+# WORKDIR /app
+# RUN yarn global add turbo
+# COPY . .
 # RUN turbo prune @formbricks/web --docker
 
 #
@@ -35,22 +35,23 @@ ARG SENTRY_AUTH_TOKEN
 WORKDIR /app
 
 # Copy the package information
-COPY .gitignore .gitignore
+# COPY .gitignore .gitignore
 # COPY --from=builder /app/out/json/ .
-# COPY --from=builder . .
 # COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
 # Install the dependencies
-RUN pnpm install
+# RUN pnpm install
 
 # Prepare the build
-COPY --from=builder /app/out/full/ .
+COPY . .
 # Create a .env file
-RUN touch /app/apps/web/.env
+RUN touch apps/web/.env
+
+RUN pnpm install
 
 # Build the project
-RUN pnpm post-install --filter=@formbricks/web...
-RUN pnpm turbo run build --filter=@formbricks/web...
+# RUN pnpm post-install --filter=@formbricks/web...
+RUN pnpm build --filter=@formbricks/web...
 
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
