@@ -60,6 +60,7 @@ These variables are present inside your machine’s docker-compose file. Restart
 | OIDC_ISSUER                 | Issuer URL for Custom OpenID Connect Provider (should have .well-known configured at this) | optional (required if OIDC auth is enabled)             |                           |
 | OIDC_SIGNING_ALGORITHM      | Signing Algorithm for Custom OpenID Connect Provider                                       | optional                                                | RS256                     |
 | OPENTELEMETRY_LISTENER_URL  | URL for OpenTelemetry listener inside Formbricks.                                          | optional                                                |                           |
+| CUSTOM_CACHE_DISABLED       | Instead of vercel specific env to control the cacheHandler behaviour.                      | required                                                |                           |
 | `<add more>`                |                                                                                            |                                                         |                           |
 |                             |                                                                                            |                                                         |                           |
 
