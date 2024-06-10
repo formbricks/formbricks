@@ -57,6 +57,7 @@ x-environment: &environment
     PASSWORD_RESET_DISABLED: 1
 
     # Set the below to 1 to disable signups. The first user will be created in the Onboarding process and all other users must be invited.
+    # Note: Signup cannot be enabled on self-hosting instances.
     SIGNUP_DISABLED: 1
 
     # Set the below to 1 to disable logins with email

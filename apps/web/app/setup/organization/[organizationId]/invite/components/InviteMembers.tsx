@@ -40,7 +40,9 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
       try {
         if (!email) continue;
         await inviteOrganizationMemberAction(email, organizationId);
-        toast.success(`Invitation sent to ${email}!`);
+        if (IS_SMTP_CONFIGURED) {
+          toast.success(`Invitation sent to ${email}!`);
+        }
       } catch (error) {
         console.error("Failed to invite:", email, error);
         toast.error(`Failed to invite ${email}.`);
@@ -60,8 +62,8 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
         <Alert variant="warning">
           <AlertTitle>SMTP not configured</AlertTitle>
           <AlertDescription>
-            Invitations cannot be sent at this time because the email service is not configured. You can send
-            them later from organization settings
+            Invitations cannot be sent at this time because the email service is not configured. You can copy
+            the invite link in the organization settings later.
           </AlertDescription>
         </Alert>
       )}
@@ -111,7 +113,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
               className="flex w-80 justify-center"
               type="submit"
               loading={isSubmitting}
-              disabled={isSubmitting || !IS_SMTP_CONFIGURED}>
+              disabled={isSubmitting}>
               Continue
             </Button>
             <Button type="button" variant="minimal" className="flex w-80 justify-center" onClick={handleSkip}>

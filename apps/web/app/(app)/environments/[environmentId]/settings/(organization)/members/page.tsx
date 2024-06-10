@@ -97,16 +97,19 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           membershipRole={currentUserMembership?.role}
         />
       </SettingsCard>
-      <SettingsCard
-        title="Delete Organization"
-        description="Delete organization with all its products including all surveys, responses, people, actions and attributes">
-        <DeleteOrganization
-          organization={organization}
-          isDeleteDisabled={isDeleteDisabled}
-          isUserOwner={currentUserRole === "owner"}
-          isMultiOrgEnabled={isMultiOrgEnabled}
-        />
-      </SettingsCard>
+      {isMultiOrgEnabled && (
+        <SettingsCard
+          title="Delete Organization"
+          description="Delete organization with all its products including all surveys, responses, people, actions and attributes">
+          <DeleteOrganization
+            organization={organization}
+            isDeleteDisabled={isDeleteDisabled}
+            isUserOwner={currentUserRole === "owner"}
+            isMultiOrgEnabled={isMultiOrgEnabled}
+          />
+        </SettingsCard>
+      )}
+
       <SettingsId title="Organization" id={organization.id}></SettingsId>
     </PageContentWrapper>
   );

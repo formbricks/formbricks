@@ -19,8 +19,12 @@ import { createUser, updateUser } from "@formbricks/lib/user/service";
 
 export const POST = async (request: Request) => {
   let { inviteToken, ...user } = await request.json();
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   const isFreshInstance = await getIsFreshInstance();
-  if (!isFreshInstance && (!EMAIL_AUTH_ENABLED || inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED)) {
+  if (
+    !isFreshInstance &&
+    (!EMAIL_AUTH_ENABLED || inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED || !isMultiOrgEnabled)
+  ) {
     return Response.json({ error: "Signup disabled" }, { status: 403 });
   }
 

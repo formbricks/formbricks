@@ -21,7 +21,6 @@ export const DeleteOrganization = ({
   organization,
   isDeleteDisabled = false,
   isUserOwner = false,
-  isMultiOrgEnabled,
 }: DeleteOrganizationProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -44,13 +43,11 @@ export const DeleteOrganization = ({
   };
 
   const deleteDisabledWarning = useMemo(() => {
-    if (!isMultiOrgEnabled) return "Organization deletion is disabled on your instance of Formbricks";
-
     if (isUserOwner)
       return "This is your only organization, it cannot be deleted. Create a new organization first.";
 
     return "Only Owner can delete the organization.";
-  }, [isMultiOrgEnabled, isUserOwner]);
+  }, [isUserOwner]);
 
   return (
     <div>
