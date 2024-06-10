@@ -37,6 +37,7 @@ export const StackedCardsContainer = ({
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const resizeObserver = useRef<ResizeObserver | null>(null);
   const [cardHeight, setCardHeight] = useState("auto");
+  const [cardWidth, setCardWidth] = useState<number>(0);
 
   const questionIdxTemp = useMemo(() => {
     if (currentQuestionId === "start") return survey.welcomeCard.enabled ? -1 : 0;
@@ -89,17 +90,20 @@ export const StackedCardsContainer = ({
   }, [survey.type, cardBorderColor, highlightBorderColor]);
 
   const calculateCardTransform = useMemo(() => {
+    const rotationCoefficient = cardWidth >= 1000 ? 1.5 : cardWidth > 650 ? 2 : 3;
     return (offset: number) => {
       switch (cardArrangement) {
         case "casual":
-          return offset < 0 ? `translateX(33%)` : `translateX(0) rotate(-${(hovered ? 3 : 2.5) * offset}deg)`;
+          return offset < 0
+            ? `translateX(33%)`
+            : `translateX(0) rotate(-${(hovered ? rotationCoefficient : rotationCoefficient - 0.5) * offset}deg)`;
         case "straight":
           return offset < 0 ? `translateY(25%)` : `translateY(-${(hovered ? 12 : 10) * offset}px)`;
         default:
           return offset < 0 ? `translateX(0)` : `translateX(0)`;
       }
     };
-  }, [cardArrangement, hovered]);
+  }, [cardArrangement, hovered, cardWidth]);
 
   const straightCardArrangementStyles = (offset: number) => {
     if (cardArrangement === "straight") {
@@ -117,7 +121,10 @@ export const StackedCardsContainer = ({
     if (currentElement) {
       if (resizeObserver.current) resizeObserver.current.disconnect();
       resizeObserver.current = new ResizeObserver((entries) => {
-        for (const entry of entries) setCardHeight(entry.contentRect.height + "px");
+        for (const entry of entries) {
+          setCardHeight(entry.contentRect.height + "px");
+          setCardWidth(entry.contentRect.width);
+        }
       });
       resizeObserver.current.observe(currentElement);
     }
