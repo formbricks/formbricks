@@ -2,11 +2,13 @@
 
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-
 import { TProductStyling } from "@formbricks/types/product";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
 
+// offset = 0 -> Current question card
+// offset < 0 -> Question cards that are already answered
+// offset > 0 -> Question that aren't answered yet
 interface StackedCardsContainerProps {
   cardArrangement: TCardArrangementOptions;
   currentQuestionId: string;
@@ -200,7 +202,3 @@ export const StackedCardsContainer = ({
     </div>
   );
 };
-
-// offset = 0 -> Current question card
-// offset < 0 -> Question cards that are already answered
-// offset > 0 -> Question that aren't answered yet

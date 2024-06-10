@@ -16,6 +16,6 @@ module.exports = {
     "^~/(.*)$",
     "^[./]",
   ],
-  importOrderSeparation: true,
+  importOrderSeparation: false,
   importOrderSortSpecifiers: true,
 };

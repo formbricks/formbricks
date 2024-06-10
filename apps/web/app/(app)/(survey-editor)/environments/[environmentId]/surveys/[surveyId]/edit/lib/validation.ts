@@ -1,7 +1,6 @@
 // extend this object in order to add more validation rules
 import { isEqual } from "lodash";
 import { toast } from "react-hot-toast";
-
 import { extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { ZSegmentFilters } from "@formbricks/types/segment";
@@ -16,7 +15,7 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestion,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
   TSurveyQuestions,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
@@ -364,8 +363,8 @@ export const isSurveyValid = (
     existingQuestionIds.add(question.id);
 
     if (
-      question.type === TSurveyQuestionType.MultipleChoiceSingle ||
-      question.type === TSurveyQuestionType.MultipleChoiceMulti
+      question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
+      question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
     ) {
       const haveSameChoices =
         question.choices.some((element) => element.label[selectedLanguageCode]?.trim() === "") ||

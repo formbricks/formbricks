@@ -1,5 +1,5 @@
 {
-  "extends": "@formbricks/config-typescript/react-library.json",
+  "extends": "@formbricks/config-typescript/nextjs.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
@@ -7,6 +7,6 @@
     },
     "resolveJsonModule": true
   },
-  "include": [".", "../ui/TargetingIndicator.tsx"],
+  "include": [".", "../../packages/types/*.d.ts"],
   "exclude": ["dist", "build", "node_modules"]
 }

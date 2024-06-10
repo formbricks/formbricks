@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 
-import { AddMemberRole } from "@formbricks/ee/RoleManagement/components/AddMemberRole";
+import { AddMemberRole } from "@formbricks/ee/role-management/components/add-member-role";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";

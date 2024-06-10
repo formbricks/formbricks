@@ -12,7 +12,7 @@ import { createId } from "@paralleldrive/cuid2";
 import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { MultiLanguageCard } from "@formbricks/ee/multiLanguage/components/MultiLanguageCard";
+import { MultiLanguageCard } from "@formbricks/ee/multi-language/components/multi-language-card";
 import { extractLanguageCodes, getLocalizedValue, translateQuestion } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
