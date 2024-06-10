@@ -2,7 +2,7 @@
 
 import { UsersIcon } from "lucide-react";
 
-import { SegmentSettings } from "@formbricks/ee/advancedTargeting/components/SegmentSettings";
+import { SegmentSettings } from "@formbricks/ee/advanced-targeting/components/segment-settings";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";

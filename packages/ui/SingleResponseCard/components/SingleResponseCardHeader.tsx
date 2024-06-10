@@ -9,7 +9,7 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
 
-import { getLanguageLabel } from "../../../ee/multiLanguage/lib/isoLanguages";
+import { getLanguageLabel } from "../../../ee/multi-language/lib/iso-languages";
 import { PersonAvatar } from "../../Avatars";
 import { SurveyStatusIndicator } from "../../SurveyStatusIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";

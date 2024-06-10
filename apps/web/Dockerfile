@@ -10,7 +10,7 @@ RUN apk update
 WORKDIR /app
 RUN yarn global add turbo
 COPY . .
-RUN turbo prune @formbricks/web --docker
+# RUN turbo prune @formbricks/web --docker
 
 #
 ## step 2: Install & build
@@ -48,8 +48,8 @@ COPY --from=builder /app/out/full/ .
 RUN touch /app/apps/web/.env
 
 # Build the project
-RUN pnpm post-install --filter=web...
-RUN pnpm turbo run build --filter=web...
+RUN pnpm post-install --filter=@formbricks/web...
+RUN pnpm turbo run build --filter=@formbricks/web...
 
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt

@@ -1,6 +1,6 @@
 {
   "$schema": "https://turborepo.org/schema.json",
-  "pipeline": {
+  "tasks": {
     "@formbricks/database#build": {
       "cache": false,
       "dependsOn": ["post-install"]
@@ -66,6 +66,7 @@
         "CUSTOM_CACHE_DISABLED",
         "CUSTOMER_IO_API_KEY",
         "CUSTOMER_IO_SITE_ID",
+        "DATABASE_URL",
         "DEBUG",
         "E2E_TESTING",
         "EMAIL_AUTH_DISABLED",
@@ -144,6 +145,7 @@
         "UPLOADS_DIR",
         "VERCEL",
         "VERCEL_URL",
+        "VERSION",
         "WEBAPP_URL",
         "UNSPLASH_ACCESS_KEY"
       ]
