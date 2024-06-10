@@ -11,7 +11,7 @@ import { mixColor } from "@formbricks/lib/utils/colors";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurveyStyling } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { ColorSelector } from "@formbricks/ui/ColorSelector";
+import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 
 type FormStylingSettingsProps = {
@@ -120,9 +120,10 @@ export const FormStylingSettings = ({
                   </div>
 
                   <FormControl>
-                    <ColorSelector
+                    <ColorPicker
                       color={field.value || COLOR_DEFAULTS.brandColor}
-                      setColor={(color) => field.onChange(color)}
+                      onChange={(color) => field.onChange(color)}
+                      containerClass="max-w-xs"
                     />
                   </FormControl>
                 </FormItem>
@@ -151,9 +152,10 @@ export const FormStylingSettings = ({
                 </div>
 
                 <FormControl>
-                  <ColorSelector
+                  <ColorPicker
                     color={field.value || COLOR_DEFAULTS.questionColor}
-                    setColor={(color) => field.onChange(color)}
+                    onChange={(color) => field.onChange(color)}
+                    containerClass="max-w-xs"
                   />
                 </FormControl>
               </FormItem>
@@ -171,9 +173,10 @@ export const FormStylingSettings = ({
                 </div>
 
                 <FormControl>
-                  <ColorSelector
+                  <ColorPicker
                     color={field.value || COLOR_DEFAULTS.inputColor}
-                    setColor={(color: string) => field.onChange(color)}
+                    onChange={(color: string) => field.onChange(color)}
+                    containerClass="max-w-xs"
                   />
                 </FormControl>
               </FormItem>
@@ -191,9 +194,10 @@ export const FormStylingSettings = ({
                 </div>
 
                 <FormControl>
-                  <ColorSelector
+                  <ColorPicker
                     color={field.value || COLOR_DEFAULTS.inputBorderColor}
-                    setColor={(color: string) => field.onChange(color)}
+                    onChange={(color: string) => field.onChange(color)}
+                    containerClass="max-w-xs"
                   />
                 </FormControl>
               </FormItem>
