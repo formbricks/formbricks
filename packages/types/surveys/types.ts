@@ -9,6 +9,7 @@ import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
 import {
   extractLanguageCodes,
+  findQuestionsWithCyclicLogic,
   handleI18nCheckForMatrixLabels,
   handleI18nCheckForMultipleChoice,
   hasDuplicates,
@@ -510,7 +511,7 @@ export const ZSurvey = z
     displayOption: ZSurveyDisplayOption,
     autoClose: z.number().nullable(),
     triggers: z.array(z.object({ actionClass: ZActionClass })),
-    redirectUrl: z.string().url().nullable(),
+    redirectUrl: z.string().url({ message: "Invalid redirect URL" }).nullable(),
     recontactDays: z.number().nullable(),
     displayLimit: z.number().nullable(),
     welcomeCard: ZSurveyWelcomeCard,
@@ -569,21 +570,22 @@ export const ZSurvey = z
     }
 
     // Custom default validation for each question
-    questions.forEach((question, index) => {
+    questions.forEach((question, questionIndex) => {
+      const existingLogicConditions = new Set();
       const isHeadlineValid = isLabelValidForAllLanguages(question.headline, languages);
       if (!isHeadlineValid) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Headline for question ${index + 1} is invalid for all languages.`,
-          path: ["questions", index, "headline"],
+          message: `Headline for question ${questionIndex + 1} is invalid for all languages.`,
+          path: ["questions", questionIndex, "headline"],
         });
       }
 
       if (question.subheader && !isLabelValidForAllLanguages(question.subheader, languages)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Subheader for question ${index + 1} is invalid for all languages.`,
-          path: ["questions", index, "subheader"],
+          message: `Subheader for question ${questionIndex + 1} is invalid for all languages.`,
+          path: ["questions", questionIndex, "subheader"],
         });
       }
 
@@ -599,7 +601,7 @@ export const ZSurvey = z
       ];
 
       const fieldsToValidate =
-        index === 0
+        questionIndex === 0
           ? initialFieldsToValidate.filter((_, idx) => idx !== initialFieldsToValidate.length - 1)
           : initialFieldsToValidate;
 
@@ -613,8 +615,8 @@ export const ZSurvey = z
           if (!isLabelValidForAllLanguages(questionFieldValue, languages)) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: `${field} for question ${index + 1} is not valid for all languages.`,
-              path: [index, field],
+              message: `${field} for question ${questionIndex + 1} is not valid for all languages.`,
+              path: [questionIndex, field],
             });
           }
         }
@@ -624,8 +626,8 @@ export const ZSurvey = z
         if (question.placeholder && !isLabelValidForAllLanguages(question.placeholder, languages)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Placeholder for question ${index + 1} is not valid for all languages.`,
-            path: ["questions", index, "placeholder"],
+            message: `Placeholder for question ${questionIndex + 1} is not valid for all languages.`,
+            path: ["questions", questionIndex, "placeholder"],
           });
         }
       }
@@ -637,8 +639,8 @@ export const ZSurvey = z
         if (!handleI18nCheckForMultipleChoice(question as TSurveyMultipleChoiceQuestion, languages)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Choices for question ${index + 1} are not valid for all languages.`,
-            path: ["questions", index, "choices"],
+            message: `Choices for question ${questionIndex + 1} are not valid for all languages.`,
+            path: ["questions", questionIndex, "choices"],
           });
         }
 
@@ -654,8 +656,8 @@ export const ZSurvey = z
           if (uniqueLabels.size !== choiceLabels.length) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: `Choice labels for language ${language} in question ${index + 1} are not unique.`,
-              path: [index, "choices"],
+              message: `Choice labels for language ${language} in question ${questionIndex + 1} are not unique.`,
+              path: [questionIndex, "choices"],
             });
           }
         });
@@ -665,8 +667,8 @@ export const ZSurvey = z
         if (!isLabelValidForAllLanguages((question as TSurveyConsentQuestion).label, languages)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Label for question ${index + 1} is not valid for all languages.`,
-            path: ["questions", index, "label"],
+            message: `Label for question ${questionIndex + 1} is not valid for all languages.`,
+            path: ["questions", questionIndex, "label"],
           });
         }
       }
@@ -680,8 +682,8 @@ export const ZSurvey = z
         ) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `dismissButtonLabel for question ${index + 1} is invalid for all languages.`,
-            path: ["questions", index, "dismissButtonLabel"],
+            message: `dismissButtonLabel for question ${questionIndex + 1} is invalid for all languages.`,
+            path: ["questions", questionIndex, "dismissButtonLabel"],
           });
         }
       }
@@ -690,12 +692,59 @@ export const ZSurvey = z
         if (!handleI18nCheckForMatrixLabels(question as TSurveyMatrixQuestion, languages)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Rows and columns for question ${index + 1} are invalid for all languages.`,
-            path: ["questions", index],
+            message: `Rows and columns for question ${questionIndex + 1} are invalid for all languages.`,
+            path: ["questions", questionIndex],
           });
         }
       }
+
+      if (question.logic) {
+        question.logic.forEach((logic, logicIndex) => {
+          const logicConditions = ["condition", "value", "destination"] as const;
+          const validFields = logicConditions.filter((field) => logic[field] !== undefined)?.length;
+
+          if (validFields < 2) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Logic for question ${questionIndex + 1} is missing required fields`,
+              path: ["questions", questionIndex, "logic"],
+            });
+          }
+
+          if (question.required && logic.condition === "skipped") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Logic for question ${questionIndex + 1} is invalid. Required questions cannot be skipped.`,
+              path: ["questions", questionIndex, "logic"],
+            });
+          }
+
+          // logic condition and value mapping should not be repeated
+          const thisLogic = `${logic.condition}-${logic.value}`;
+          if (existingLogicConditions.has(thisLogic)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message:
+                "There are two competing logic conditions: Please update or delete one in the Questions tab.",
+              path: ["questions", questionIndex, "logic", logicIndex],
+            });
+          }
+          existingLogicConditions.add(thisLogic);
+        });
+      }
     });
+
+    const questionsWithCyclicLogic = findQuestionsWithCyclicLogic(questions);
+    if (questionsWithCyclicLogic.length > 0) {
+      questionsWithCyclicLogic.forEach((questionId) => {
+        const questionIndex = questions.findIndex((q) => q.id === questionId);
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Cyclic logic detected.",
+          path: ["questions", questionIndex, "logic"],
+        });
+      });
+    }
   });
 
 export const ZSurveyInput = z.object({

@@ -3,6 +3,7 @@ import {
   TSurveyLanguage,
   TSurveyMatrixQuestion,
   TSurveyMultipleChoiceQuestion,
+  TSurveyQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
 } from "./types";
@@ -70,4 +71,51 @@ export const handleI18nCheckForMatrixLabels = (
 ): boolean => {
   const rowsAndColumns = [...question.rows, ...question.columns];
   return rowsAndColumns.every((label) => isLabelValidForAllLanguages(label, languages));
+};
+
+export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): string[] => {
+  const visited: Record<string, boolean> = {};
+  const recStack: Record<string, boolean> = {};
+  const cyclicQuestions: Set<string> = new Set();
+
+  const checkForCyclicLogic = (questionId: string): boolean => {
+    if (!visited[questionId]) {
+      visited[questionId] = true;
+      recStack[questionId] = true;
+
+      const question = questions.find((question) => question.id === questionId);
+      if (question && question.logic && question.logic.length > 0) {
+        for (const logic of question.logic) {
+          const destination = logic.destination;
+          if (!destination) {
+            continue;
+          }
+
+          if (!visited[destination] && checkForCyclicLogic(destination)) {
+            cyclicQuestions.add(questionId);
+            return true;
+          } else if (recStack[destination]) {
+            cyclicQuestions.add(questionId);
+            return true;
+          }
+        }
+      } else {
+        // Handle default behavior
+        const nextQuestionIndex = questions.findIndex((question) => question.id === questionId) + 1;
+        const nextQuestion = questions[nextQuestionIndex];
+        if (nextQuestion && !visited[nextQuestion.id] && checkForCyclicLogic(nextQuestion.id)) {
+          return true;
+        }
+      }
+    }
+
+    recStack[questionId] = false;
+    return false;
+  };
+
+  for (const question of questions) {
+    checkForCyclicLogic(question.id);
+  }
+
+  return Array.from(cyclicQuestions);
 };
