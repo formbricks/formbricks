@@ -1,28 +1,27 @@
 import clsx from "clsx";
 import { AlertTriangleIcon, CheckIcon } from "lucide-react";
 import Link from "next/link";
-
 import { TEnvironment } from "@formbricks/types/environment";
 import { Label } from "@formbricks/ui/Label";
 
 interface WidgetStatusIndicatorProps {
   environment: TEnvironment;
-  type: "large" | "mini";
+  size: "large" | "mini";
+  type: "app" | "website";
 }
 
-export const WidgetStatusIndicator = ({ environment, type }: WidgetStatusIndicatorProps) => {
+export const WidgetStatusIndicator = ({ environment, size, type }: WidgetStatusIndicatorProps) => {
   const stati = {
     notImplemented: {
       icon: AlertTriangleIcon,
-      title: "Connect Formbricks to your app or website.",
-      subtitle:
-        "Your app or website is not yet connected with Formbricks. To run in-app surveys follow the setup guide.",
-      shortText: "Connect Formbricks to your app or website",
+      title: `Connect Formbricks to your ${type}.`,
+      subtitle: `Your ${type} is not yet connected with Formbricks. To run ${type === "app" ? "in-app" : "website"} surveys follow the setup guide.`,
+      shortText: `Connect Formbricks to your ${type}`,
     },
     running: {
       icon: CheckIcon,
       title: "Receiving data.",
-      subtitle: "Your app or website is connected with Formbricks.",
+      subtitle: `Your ${type} is connected with Formbricks.`,
       shortText: "Connected",
     },
   };
@@ -37,7 +36,7 @@ export const WidgetStatusIndicator = ({ environment, type }: WidgetStatusIndicat
 
   const currentStatus = stati[status];
 
-  if (type === "large") {
+  if (size === "large") {
     return (
       <div
         className={clsx(
@@ -58,25 +57,27 @@ export const WidgetStatusIndicator = ({ environment, type }: WidgetStatusIndicat
       </div>
     );
   }
-  if (type === "mini") {
+  if (size === "mini") {
     return (
-      <Link href={`/environments/${environment.id}/product/setup`}>
-        <div className="group flex justify-center">
-          <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
-            <Label className="group-hover:cursor-pointer group-hover:underline">
-              {currentStatus.shortText}
-            </Label>
-            <div
-              className={clsx(
-                "h-5 w-5 rounded-full",
-                status === "notImplemented" && "text-amber-600",
-                status === "running" && "bg-green-100 text-green-700"
-              )}>
-              <currentStatus.icon className="h-5 w-5" />
+      <div className="flex gap-2">
+        <Link href={`/environments/${environment.id}/product/${type}-connection`}>
+          <div className="group flex justify-center">
+            <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
+              <Label className="group-hover:cursor-pointer group-hover:underline">
+                {currentStatus.shortText}
+              </Label>
+              {status === "running" ? (
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
+                </span>
+              ) : (
+                <AlertTriangleIcon className="h-[14px] w-[14px] text-amber-600" />
+              )}
             </div>
           </div>
-        </div>
-      </Link>
+        </Link>
+      </div>
     );
   } else {
     return null;

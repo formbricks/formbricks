@@ -4,7 +4,6 @@ import packageJson from "@/package.json";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
-
 import { CodeBlock } from "@formbricks/ui/CodeBlock";
 import { TabBar } from "@formbricks/ui/TabBar";
 import { Html5Icon, NpmIcon } from "@formbricks/ui/icons";
@@ -22,12 +21,14 @@ interface SetupInstructionsProps {
   environmentId: string;
   webAppUrl: string;
   isFormbricksCloud: boolean;
+  type: "app" | "website";
 }
 
 export const SetupInstructions = ({
   environmentId,
   webAppUrl,
   isFormbricksCloud,
+  type,
 }: SetupInstructionsProps) => {
   const [activeTab, setActiveTab] = useState(tabs[0].id);
 
@@ -43,7 +44,7 @@ export const SetupInstructions = ({
             <CodeBlock language="sh">yarn add @formbricks/js</CodeBlock>
             <p className="pt-4 text-lg font-semibold text-slate-800">Step 2: Initialize widget</p>
             <p>Import Formbricks and initialize the widget in your Component (e.g. App.tsx):</p>
-            <CodeBlock language="js">{`import formbricks from "@formbricks/js/website";
+            <CodeBlock language="js">{`import formbricks from "@formbricks/js/${type}";
 
 if (typeof window !== "undefined") {
   formbricks.init({
@@ -63,7 +64,8 @@ if (typeof window !== "undefined") {
             </ul>
             <p className="text-lg font-semibold text-slate-800">You&apos;re done 🎉</p>
             <p>
-              Your app now communicates with Formbricks - sending events, and loading surveys automatically!
+              Your {type} now communicates with Formbricks - sending events, and loading surveys
+              automatically!
             </p>
 
             <ul className="list-disc text-slate-700">
@@ -112,7 +114,7 @@ if (typeof window !== "undefined") {
           <div className="prose prose-slate">
             <p className="text-lg font-semibold text-slate-800">Step 1: Copy and paste code</p>
             <p>
-              Insert this code into the <code>{`<head>`}</code> tag of your website:
+              Insert this code into the <code>{`<head>`}</code> tag of your {type}:
             </p>
             <CodeBlock language="js">{`<!-- START Formbricks Surveys -->
 <script type="text/javascript">
@@ -121,7 +123,8 @@ if (typeof window !== "undefined") {
 <!-- END Formbricks Surveys -->`}</CodeBlock>
             <p className="text-lg font-semibold text-slate-800">You&apos;re done 🎉</p>
             <p>
-              Your app now communicates with Formbricks - sending events, and loading surveys automatically!
+              Your {type} now communicates with Formbricks - sending events, and loading surveys
+              automatically!
             </p>
 
             <ul className="list-disc text-slate-700">

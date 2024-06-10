@@ -2,7 +2,6 @@
 
 import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-
 import { cn } from "@formbricks/lib/cn";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
@@ -89,10 +88,16 @@ const Loading = () => {
       current: pathname?.includes("/api-keys"),
     },
     {
-      id: "setup",
-      label: "Setup Guide",
+      id: "website-connection",
+      label: "Website Connection",
       icon: <ListChecksIcon className="h-5 w-5" />,
-      current: pathname?.includes("/setup"),
+      current: pathname?.includes("/website-connection"),
+    },
+    {
+      id: "app-connection",
+      label: "App Connection",
+      icon: <ListChecksIcon className="h-5 w-5" />,
+      current: pathname?.includes("/app-connection"),
     },
   ];
 
@@ -106,13 +111,13 @@ const Loading = () => {
                 <div
                   key={navElem.id}
                   className={cn(
-                    navElem.id === "setup"
+                    navElem.id === "website-connection"
                       ? "border-brand-dark border-b-2 font-semibold text-slate-900"
                       : "border-transparent text-slate-500 transition-all duration-150 ease-in-out hover:border-slate-300 hover:text-slate-700",
                     "flex h-full items-center border-b-2 px-3 text-sm font-medium",
                     navElem.hidden && "hidden"
                   )}
-                  aria-current={navElem.id === "setup" ? "page" : undefined}>
+                  aria-current={navElem.id === "website-connection" ? "page" : undefined}>
                   {navElem.label}
                 </div>
               ))}
