@@ -38,5 +38,5 @@ export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
     loadScript();
   }, [containerId, props, renderInline]);
 
-  return <div id={containerId} className="w-full" />;
+  return <div id={containerId} className="h-full w-full" />;
 };
