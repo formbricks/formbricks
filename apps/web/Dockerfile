@@ -10,7 +10,7 @@ RUN apk update
 WORKDIR /app
 RUN yarn global add turbo
 COPY . .
-RUN turbo prune @formbricks/web --docker
+# RUN turbo prune @formbricks/web --docker
 
 #
 ## step 2: Install & build
