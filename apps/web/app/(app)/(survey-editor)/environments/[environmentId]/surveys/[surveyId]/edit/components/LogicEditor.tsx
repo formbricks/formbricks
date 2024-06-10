@@ -378,8 +378,10 @@ export const LogicEditor = ({
                           key={question.id}
                           value={question.id}
                           title={getLocalizedValue(question.headline, "default")}>
-                          <div className="w-40">
+                          <div className="w-96">
                             <p className="truncate text-left">
+                              {idx + 1}
+                              {". "}
                               {getLocalizedValue(question.headline, "default")}
                             </p>
                           </div>
