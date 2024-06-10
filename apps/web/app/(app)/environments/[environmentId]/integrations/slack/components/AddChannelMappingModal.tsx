@@ -14,7 +14,7 @@ import {
   TIntegrationSlackConfigData,
   TIntegrationSlackInput,
 } from "@formbricks/types/integration/slack";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { DropdownSelector } from "@formbricks/ui/DropdownSelector";

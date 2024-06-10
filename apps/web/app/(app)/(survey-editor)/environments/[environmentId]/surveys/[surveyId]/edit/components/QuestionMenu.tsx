@@ -6,7 +6,7 @@ import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "l
 import React, { useState } from "react";
 
 import { TProduct } from "@formbricks/types/product";
-import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys/types";
 import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
 import {
   DropdownMenu,

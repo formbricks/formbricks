@@ -10,7 +10,7 @@ import { useEffect, useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
+import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;

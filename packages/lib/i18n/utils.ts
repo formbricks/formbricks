@@ -31,7 +31,7 @@ import {
   ZSurveyRatingQuestion,
   ZSurveyThankYouCard,
   ZSurveyWelcomeCard,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 
 import { structuredClone } from "../pollyfills/structuredClone";
 

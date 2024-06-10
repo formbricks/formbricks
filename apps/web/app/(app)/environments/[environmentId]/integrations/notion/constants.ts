@@ -1,4 +1,4 @@
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys/types";
 
 export const TYPE_MAPPING = {
   [TSurveyQuestionType.CTA]: ["checkbox"],

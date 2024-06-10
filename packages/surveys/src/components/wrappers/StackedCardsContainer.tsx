@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { TProductStyling } from "@formbricks/types/product";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
-import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 
 interface StackedCardsContainerProps {
   cardArrangement: TCardArrangementOptions;

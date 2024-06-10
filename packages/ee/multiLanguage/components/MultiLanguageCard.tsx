@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { extractLanguageCodes, translateSurvey } from "@formbricks/lib/i18n/utils";
 import { TLanguage, TProduct } from "@formbricks/types/product";
-import { TSurvey, TSurveyLanguage, ZSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyLanguage, ZSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
 import { Label } from "@formbricks/ui/Label";

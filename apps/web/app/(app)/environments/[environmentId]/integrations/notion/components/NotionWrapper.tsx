@@ -12,7 +12,7 @@ import {
   TIntegrationNotionConfigData,
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { ConnectIntegration } from "@formbricks/ui/ConnectIntegration";
 
 import { authorize } from "../lib/notion";

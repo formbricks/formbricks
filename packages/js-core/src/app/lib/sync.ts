@@ -1,6 +1,6 @@
 import { TAttributes } from "@formbricks/types/attributes";
 import { TJsAppState, TJsAppStateSync, TJsAppSyncParams } from "@formbricks/types/js";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 import { NetworkError, Result, err, ok } from "../../shared/errors";
 import { Logger } from "../../shared/logger";

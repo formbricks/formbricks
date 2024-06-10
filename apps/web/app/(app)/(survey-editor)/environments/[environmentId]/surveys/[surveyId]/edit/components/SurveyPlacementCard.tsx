@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { TPlacement } from "@formbricks/types/common";
-import { TSurvey, TSurveyProductOverwrites } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyProductOverwrites } from "@formbricks/types/surveys/types";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 

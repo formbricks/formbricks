@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { convertDateString, timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 import { SurveyStatusIndicator } from "../../SurveyStatusIndicator";
 import { generateSingleUseIdAction } from "../actions";

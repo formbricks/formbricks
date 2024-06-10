@@ -12,7 +12,7 @@ import {
   TSurveyThankYouCard,
   TSurveyType,
   TSurveyWelcomeCard,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { TTemplate } from "@formbricks/types/templates";
 
 const thankYouCardDefault: TSurveyThankYouCard = {

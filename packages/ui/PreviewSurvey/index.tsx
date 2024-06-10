@@ -8,7 +8,7 @@ import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 
 import { ClientLogo } from "../ClientLogo";
 import { MediaBackground } from "../MediaBackground";

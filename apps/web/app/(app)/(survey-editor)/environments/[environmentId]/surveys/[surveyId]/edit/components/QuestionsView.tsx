@@ -18,7 +18,7 @@ import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 import {
   findQuestionsWithCyclicLogic,

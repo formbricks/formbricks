@@ -11,7 +11,7 @@ import {
   TSurveyQuestion,
   TSurveyQuestionType,
   TSurveyWelcomeCard,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 
 import { selectPerson } from "../../../person/service";

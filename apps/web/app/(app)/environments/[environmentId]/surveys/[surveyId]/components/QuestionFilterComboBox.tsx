@@ -7,7 +7,7 @@ import * as React from "react";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys/types";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@formbricks/ui/Command";
 import {
   DropdownMenu,

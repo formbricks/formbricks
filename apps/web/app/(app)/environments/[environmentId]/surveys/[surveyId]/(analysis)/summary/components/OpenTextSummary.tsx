@@ -4,7 +4,7 @@ import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 

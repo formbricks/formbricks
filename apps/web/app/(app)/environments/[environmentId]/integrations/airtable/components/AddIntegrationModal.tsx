@@ -20,7 +20,7 @@ import {
   TIntegrationAirtableInput,
   TIntegrationAirtableTables,
 } from "@formbricks/types/integration/airtable";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";

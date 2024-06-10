@@ -19,7 +19,7 @@ import {
   TSurveyLogicCondition,
   TSurveyQuestion,
   TSurveyQuestionType,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,

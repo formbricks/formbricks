@@ -19,7 +19,7 @@ import {
   TIntegrationGoogleSheetsConfigData,
   TIntegrationGoogleSheetsInput,
 } from "@formbricks/types/integration/googleSheet";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { DropdownSelector } from "@formbricks/ui/DropdownSelector";

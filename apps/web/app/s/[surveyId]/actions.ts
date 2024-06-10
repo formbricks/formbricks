@@ -5,7 +5,7 @@ import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import { LinkSurveyEmailData, sendLinkSurveyToVerifiedEmail } from "@formbricks/email";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface TSurveyPinValidationResponse {
   error?: TSurveyPinValidationResponseError;

@@ -11,7 +11,7 @@ import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/action
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyEditorTabs } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyEditorTabs, ZSurvey } from "@formbricks/types/surveys/types";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -144,19 +144,25 @@ export const SurveyMenuBar = ({
 
   const handleSurveySave = async () => {
     setIsSurveySaving(true);
+
+    const localSurveyValidation = ZSurvey.safeParse(localSurvey);
+    if (!localSurveyValidation.success) {
+      console.log(localSurveyValidation.error.errors);
+    }
+
     try {
-      if (
-        !isSurveyValid(
-          localSurvey,
-          faultyQuestions,
-          setInvalidQuestions,
-          selectedLanguageCode,
-          setSelectedLanguageCode
-        )
-      ) {
-        setIsSurveySaving(false);
-        return;
-      }
+      // if (
+      //   !isSurveyValid(
+      //     localSurvey,
+      //     faultyQuestions,
+      //     setInvalidQuestions,
+      //     selectedLanguageCode,
+      //     setSelectedLanguageCode
+      //   )
+      // ) {
+      //   setIsSurveySaving(false);
+      //   return;
+      // }
 
       localSurvey.questions = localSurvey.questions.map((question) => {
         const { isDraft, ...rest } = question;
@@ -266,7 +272,8 @@ export const SurveyMenuBar = ({
             variant="secondary"
             className="mr-3"
             loading={isSurveySaving}
-            onClick={() => handleSurveySave()}>
+            onClick={() => handleSurveySave()}
+            type="submit">
             Save
           </Button>
           {localSurvey.status !== "draft" && (

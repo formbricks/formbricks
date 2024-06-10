@@ -8,7 +8,7 @@ import { getResponseCountBySurveyId, getResponses, getSurveySummary } from "@for
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TResponse, TResponseFilterCriteria } from "@formbricks/types/responses";
-import { TSurveySummary } from "@formbricks/types/surveys";
+import { TSurveySummary } from "@formbricks/types/surveys/types";
 
 export const revalidateSurveyIdPath = async (environmentId: string, surveyId: string) => {
   revalidatePath(`/environments/${environmentId}/surveys/${surveyId}`);

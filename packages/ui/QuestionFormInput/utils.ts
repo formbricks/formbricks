@@ -6,7 +6,7 @@ import {
   TSurveyMatrixQuestion,
   TSurveyMultipleChoiceQuestion,
   TSurveyQuestion,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 
 // Function to get index for choice /rowLabel /columnLabel
 export const getIndex = (id: string, isChoice: boolean) => {

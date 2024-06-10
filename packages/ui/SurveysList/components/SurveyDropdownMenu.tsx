@@ -8,7 +8,7 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import type { TEnvironment } from "@formbricks/types/environment";
-import type { TSurvey } from "@formbricks/types/surveys";
+import type { TSurvey } from "@formbricks/types/surveys/types";
 
 import { DeleteDialog } from "../../DeleteDialog";
 import {

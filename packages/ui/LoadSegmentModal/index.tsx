@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { formatDate, timeSinceDate } from "@formbricks/lib/time";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 import { Modal } from "../Modal";
 

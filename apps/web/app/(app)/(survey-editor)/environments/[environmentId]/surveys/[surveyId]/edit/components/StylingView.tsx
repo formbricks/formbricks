@@ -8,7 +8,7 @@ import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
 import { TBaseStyling } from "@formbricks/types/styling";
-import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import {

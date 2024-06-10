@@ -19,7 +19,7 @@ import { useEffect, useMemo, useState } from "react";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey, TSurveySummary } from "@formbricks/types/surveys";
+import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 
 import { SummaryList } from "./SummaryList";

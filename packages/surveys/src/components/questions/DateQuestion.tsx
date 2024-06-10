@@ -12,7 +12,7 @@ import DatePicker from "react-date-picker";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getMonthName, getOrdinalDate } from "@formbricks/lib/utils/datetime";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyDateQuestion } from "@formbricks/types/surveys";
+import type { TSurveyDateQuestion } from "@formbricks/types/surveys/types";
 
 import "../../styles/date-picker.css";
 

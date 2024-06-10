@@ -10,7 +10,7 @@ import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSh
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { TPipelineInput } from "@formbricks/types/pipelines";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys/types";
 
 export const handleIntegrations = async (
   integrations: TIntegration[],

@@ -10,7 +10,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { TPipelineTrigger } from "@formbricks/types/pipelines";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhookInput } from "@formbricks/types/webhooks";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";

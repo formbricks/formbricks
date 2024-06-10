@@ -6,7 +6,7 @@ import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TSurvey, TSurveyQuestionSummaryFileUpload } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionSummaryFileUpload } from "@formbricks/types/surveys/types";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 

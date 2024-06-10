@@ -2,7 +2,7 @@ import { SubmitButton } from "@/components/buttons/SubmitButton";
 
 import { processResponseData } from "@formbricks/lib/responses";
 import { type TResponseData } from "@formbricks/types/responses";
-import { type TSurveyQuestion } from "@formbricks/types/surveys";
+import { type TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 type ResponseErrorComponentProps = {
   questions: TSurveyQuestion[];

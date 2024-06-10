@@ -22,7 +22,7 @@ import {
   TIntegrationNotionConfigData,
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { DropdownSelector } from "@formbricks/ui/DropdownSelector";
 import { Label } from "@formbricks/ui/Label";

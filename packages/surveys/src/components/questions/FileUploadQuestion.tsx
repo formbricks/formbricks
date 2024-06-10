@@ -8,7 +8,7 @@ import { useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import type { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
+import type { TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 
 import { BackButton } from "../buttons/BackButton";
 import { FileInput } from "../general/FileInput";

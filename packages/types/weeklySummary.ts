@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { ZAttributeClass } from "./attributeClasses";
 import { ZResponseData } from "./responses";
-import { ZSurveyHiddenFields, ZSurveyQuestion, ZSurveyStatus } from "./surveys";
+import { ZSurveyHiddenFields, ZSurveyQuestion, ZSurveyStatus } from "./surveys/types";
 import { ZUserNotificationSettings } from "./user";
 
 const ZWeeklySummaryInsights = z.object({

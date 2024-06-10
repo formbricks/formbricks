@@ -1,5 +1,5 @@
 import { TLanguage, TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 import { LanguageToggle } from "./LanguageToggle";
 

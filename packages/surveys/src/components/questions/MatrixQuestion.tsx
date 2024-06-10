@@ -10,7 +10,7 @@ import { useCallback, useMemo, useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TI18nString, TSurveyMatrixQuestion } from "@formbricks/types/surveys";
+import type { TI18nString, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
 
 interface MatrixQuestionProps {
   question: TSurveyMatrixQuestion;

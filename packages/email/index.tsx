@@ -14,7 +14,7 @@ import {
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
 
 import { ForgotPasswordEmail } from "./components/auth/ForgotPasswordEmail";

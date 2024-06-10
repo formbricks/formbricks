@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 

@@ -9,7 +9,7 @@ import { createResponseLegacy } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, ZResponseLegacyInput } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);

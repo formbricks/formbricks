@@ -4,7 +4,7 @@ import { calculateElementIdx } from "@/lib/utils";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import { TI18nString, TSurvey } from "@formbricks/types/surveys";
+import { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
 
 import { Headline } from "./Headline";
 import { HtmlBody } from "./HtmlBody";

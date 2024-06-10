@@ -30,7 +30,7 @@ import {
   TSurveyPictureSelectionQuestion,
   TSurveyQuestionType,
   TSurveyRatingQuestion,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 
 import { replaceQuestionPresetPlaceholders } from "./templates";
 

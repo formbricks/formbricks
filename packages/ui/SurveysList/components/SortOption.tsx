@@ -1,4 +1,4 @@
-import { TSortOption, TSurveyFilters } from "@formbricks/types/surveys";
+import { TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
 
 import { DropdownMenuItem } from "../../DropdownMenu";
 

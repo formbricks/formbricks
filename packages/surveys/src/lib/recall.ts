@@ -3,7 +3,7 @@ import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
 import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 export const replaceRecallInfo = (text: string, responseData: TResponseData): string => {
   let modifiedText = text;

@@ -10,7 +10,7 @@ import { useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
+import type { TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;

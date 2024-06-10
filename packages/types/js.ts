@@ -6,7 +6,8 @@ import { ZAttributes } from "./attributes";
 import { ZPerson } from "./people";
 import { ZProduct } from "./product";
 import { ZResponseHiddenFieldValue } from "./responses";
-import { ZSurvey } from "./surveys";
+import { ZSurvey } from "./surveys/types";
+import { mergeWithEffect } from "./zod-utils";
 
 export const ZJsPerson = z.object({
   id: z.string().cuid2().optional(),
@@ -15,9 +16,12 @@ export const ZJsPerson = z.object({
 
 export type TJsPerson = z.infer<typeof ZJsPerson>;
 
-const ZSurveyWithTriggers = ZSurvey.extend({
-  triggers: z.array(ZActionClass).or(z.array(z.string())),
-});
+const ZSurveyWithTriggers = mergeWithEffect(
+  ZSurvey,
+  z.object({
+    triggers: z.array(ZActionClass).or(z.array(z.string())),
+  })
+);
 
 export type TSurveyWithTriggers = z.infer<typeof ZSurveyWithTriggers>;
 
@@ -219,36 +223,6 @@ export type TJsAppSyncParams = z.infer<typeof ZJsAppSyncParams>;
 export const ZJsWebsiteSyncParams = ZJsAppSyncParams.omit({ userId: true });
 
 export type TJsWebsiteSyncParams = z.infer<typeof ZJsWebsiteSyncParams>;
-
-const ZJsSettingsSurvey = ZSurvey.pick({
-  id: true,
-  welcomeCard: true,
-  questions: true,
-  triggers: true,
-  thankYouCard: true,
-  autoClose: true,
-  delay: true,
-});
-
-export const ZJsSettings = z.object({
-  surveys: z.optional(z.array(ZJsSettingsSurvey)),
-  noCodeEvents: z.optional(z.array(z.any())), // You might want to further refine this.
-  brandColor: z.optional(z.string()),
-  formbricksSignature: z.optional(z.boolean()),
-  placement: z.optional(
-    z.union([
-      z.literal("bottomLeft"),
-      z.literal("bottomRight"),
-      z.literal("topLeft"),
-      z.literal("topRight"),
-      z.literal("center"),
-    ])
-  ),
-  clickOutsideClose: z.optional(z.boolean()),
-  darkOverlay: z.optional(z.boolean()),
-});
-
-export type TSettings = z.infer<typeof ZJsSettings>;
 
 export const ZJsPackageType = z.union([z.literal("app"), z.literal("website")]);
 

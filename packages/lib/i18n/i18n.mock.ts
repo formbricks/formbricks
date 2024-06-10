@@ -17,7 +17,7 @@ import {
   TSurveyRatingQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 
 export const mockWelcomeCard: TSurveyWelcomeCard = {
   html: {

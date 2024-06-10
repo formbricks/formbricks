@@ -2,7 +2,7 @@
 
 import { ChevronDownIcon } from "lucide-react";
 
-import { TSurveyLanguage } from "@formbricks/types/surveys";
+import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import {
   DropdownMenu,
   DropdownMenuContent,

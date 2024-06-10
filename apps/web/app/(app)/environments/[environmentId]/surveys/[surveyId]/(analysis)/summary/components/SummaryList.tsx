@@ -14,9 +14,9 @@ import { RatingSummary } from "@/app/(app)/environments/[environmentId]/surveys/
 
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurveySummary } from "@formbricks/types/surveys";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurveySummary } from "@formbricks/types/surveys/types";
+import { TSurveyQuestionType } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { SkeletonLoader } from "@formbricks/ui/SkeletonLoader";
 

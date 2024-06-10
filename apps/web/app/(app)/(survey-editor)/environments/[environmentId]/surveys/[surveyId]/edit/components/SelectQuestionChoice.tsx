@@ -11,7 +11,7 @@ import {
   TSurvey,
   TSurveyLanguage,
   TSurveyMultipleChoiceQuestion,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 
 import { isLabelValidForAllLanguages } from "../lib/validation";

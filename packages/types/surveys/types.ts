@@ -1,12 +1,20 @@
 import { z } from "zod";
 
-import { ZActionClass, ZNoCodeConfig } from "./actionClasses";
-import { ZAttributes } from "./attributes";
-import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
-import { ZId } from "./environment";
-import { ZLanguage } from "./product";
-import { ZSegment } from "./segment";
-import { ZBaseStyling } from "./styling";
+import { ZActionClass, ZNoCodeConfig } from "../actionClasses";
+import { ZAttributes } from "../attributes";
+import { ZAllowedFileExtension, ZColor, ZPlacement } from "../common";
+import { ZId } from "../environment";
+import { ZLanguage } from "../product";
+import { ZSegment } from "../segment";
+import { ZBaseStyling } from "../styling";
+import {
+  extractLanguageCodes,
+  handleI18nCheckForMatrixLabels,
+  handleI18nCheckForMultipleChoice,
+  hasDuplicates,
+  isCardValid,
+  isLabelValidForAllLanguages,
+} from "./validation";
 
 export const ZI18nString = z.record(z.string()).refine((obj) => "default" in obj, {
   message: "Object must have a 'default' key",
@@ -299,7 +307,9 @@ export const ZSurveyMultipleChoiceQuestion = ZSurveyQuestionBase.extend({
     z.literal(TSurveyQuestionType.MultipleChoiceSingle),
     z.literal(TSurveyQuestionType.MultipleChoiceMulti),
   ]),
-  choices: z.array(ZSurveyChoice),
+  choices: z
+    .array(ZSurveyChoice)
+    .min(2, { message: "Multiple Choice Question must have at least two choices" }),
   logic: z.array(ZSurveyMultipleChoiceLogic).optional(),
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
@@ -394,6 +404,24 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
   rows: z.array(ZI18nString),
   columns: z.array(ZI18nString),
   logic: z.array(ZSurveyMatrixLogic).optional(),
+}).superRefine((question, ctx) => {
+  const { rows, columns } = question;
+
+  if (hasDuplicates(rows)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Duplicate rows found",
+      path: ["rows"],
+    });
+  }
+
+  if (hasDuplicates(columns)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Duplicate columns found",
+      path: ["columns"],
+    });
+  }
 });
 
 export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
@@ -469,40 +497,206 @@ export const ZSurveyInlineTriggers = z.object({
 
 export type TSurveyInlineTriggers = z.infer<typeof ZSurveyInlineTriggers>;
 
-export const ZSurvey = z.object({
-  id: z.string().cuid2(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  name: z.string(),
-  type: ZSurveyType,
-  environmentId: z.string(),
-  createdBy: z.string().nullable(),
-  status: ZSurveyStatus,
-  displayOption: ZSurveyDisplayOption,
-  autoClose: z.number().nullable(),
-  triggers: z.array(z.object({ actionClass: ZActionClass })),
-  redirectUrl: z.string().url().nullable(),
-  recontactDays: z.number().nullable(),
-  displayLimit: z.number().nullable(),
-  welcomeCard: ZSurveyWelcomeCard,
-  questions: ZSurveyQuestions,
-  thankYouCard: ZSurveyThankYouCard,
-  hiddenFields: ZSurveyHiddenFields,
-  delay: z.number(),
-  autoComplete: z.number().nullable(),
-  runOnDate: z.date().nullable(),
-  closeOnDate: z.date().nullable(),
-  productOverwrites: ZSurveyProductOverwrites.nullable(),
-  styling: ZSurveyStyling.nullable(),
-  surveyClosedMessage: ZSurveyClosedMessage.nullable(),
-  segment: ZSegment.nullable(),
-  singleUse: ZSurveySingleUse.nullable(),
-  verifyEmail: ZSurveyVerifyEmail.nullable(),
-  pin: z.string().nullish(),
-  resultShareKey: z.string().nullable(),
-  displayPercentage: z.number().min(0.01).max(100).nullable(),
-  languages: z.array(ZSurveyLanguage),
-});
+export const ZSurvey = z
+  .object({
+    id: z.string().cuid2(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+    name: z.string(),
+    type: ZSurveyType,
+    environmentId: z.string(),
+    createdBy: z.string().nullable(),
+    status: ZSurveyStatus,
+    displayOption: ZSurveyDisplayOption,
+    autoClose: z.number().nullable(),
+    triggers: z.array(z.object({ actionClass: ZActionClass })),
+    redirectUrl: z.string().url().nullable(),
+    recontactDays: z.number().nullable(),
+    displayLimit: z.number().nullable(),
+    welcomeCard: ZSurveyWelcomeCard,
+    questions: ZSurveyQuestions.min(1, {
+      message: "Survey must have at least one question",
+    }).superRefine((questions, ctx) => {
+      const questionIds = questions.map((q) => q.id);
+      const uniqueQuestionIds = new Set(questionIds);
+      if (uniqueQuestionIds.size !== questionIds.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Question IDs must be unique",
+          path: [questionIds.findIndex((id, index) => questionIds.indexOf(id) !== index), "id"],
+        });
+      }
+    }),
+    thankYouCard: ZSurveyThankYouCard,
+    hiddenFields: ZSurveyHiddenFields,
+    delay: z.number(),
+    autoComplete: z.number().nullable(),
+    runOnDate: z.date().nullable(),
+    closeOnDate: z.date().nullable(),
+    productOverwrites: ZSurveyProductOverwrites.nullable(),
+    styling: ZSurveyStyling.nullable(),
+    surveyClosedMessage: ZSurveyClosedMessage.nullable(),
+    segment: ZSegment.nullable(),
+    singleUse: ZSurveySingleUse.nullable(),
+    verifyEmail: ZSurveyVerifyEmail.nullable(),
+    pin: z.string().min(4, { message: "PIN must be a four digit number" }).nullish(),
+    resultShareKey: z.string().nullable(),
+    displayPercentage: z.number().min(0.01).max(100).nullable(),
+    languages: z.array(ZSurveyLanguage),
+  })
+  .superRefine((survey, ctx) => {
+    const { questions, languages, welcomeCard, thankYouCard } = survey;
+    // welcome card
+    if (welcomeCard.enabled) {
+      if (!isCardValid(survey.welcomeCard, "start", survey.languages)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Invalid welcome card",
+          path: ["welcomeCard"],
+        });
+      }
+    }
+
+    // thank you card
+    if (thankYouCard.enabled) {
+      if (!isCardValid(survey.thankYouCard, "end", survey.languages)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Invalid thank you card",
+          path: ["thankYouCard"],
+        });
+      }
+    }
+
+    // Custom default validation for each question
+    questions.forEach((question, index) => {
+      const isHeadlineValid = isLabelValidForAllLanguages(question.headline, languages);
+      if (!isHeadlineValid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Headline for question ${index + 1} is invalid for all languages.`,
+          path: ["questions", index, "headline"],
+        });
+      }
+
+      if (question.subheader && !isLabelValidForAllLanguages(question.subheader, languages)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Subheader for question ${index + 1} is invalid for all languages.`,
+          path: ["questions", index, "subheader"],
+        });
+      }
+
+      const defaultLanguageCode = "default";
+      const initialFieldsToValidate = [
+        "html",
+        "buttonLabel",
+        "upperLabel",
+        "lowerLabel",
+        "label",
+        "placeholder",
+        "backButtonLabel",
+      ];
+
+      const fieldsToValidate =
+        index === 0
+          ? initialFieldsToValidate.filter((_, idx) => idx !== initialFieldsToValidate.length - 1)
+          : initialFieldsToValidate;
+
+      fieldsToValidate.forEach((field) => {
+        const questionFieldValue = question[field as keyof typeof question] as TI18nString;
+        if (
+          questionFieldValue &&
+          typeof questionFieldValue[defaultLanguageCode] !== "undefined" &&
+          questionFieldValue[defaultLanguageCode].trim() !== ""
+        ) {
+          if (!isLabelValidForAllLanguages(questionFieldValue, languages)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `${field} for question ${index + 1} is not valid for all languages.`,
+              path: [index, field],
+            });
+          }
+        }
+      });
+
+      if (question.type === TSurveyQuestionType.OpenText) {
+        if (question.placeholder && !isLabelValidForAllLanguages(question.placeholder, languages)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Placeholder for question ${index + 1} is not valid for all languages.`,
+            path: ["questions", index, "placeholder"],
+          });
+        }
+      }
+
+      if (
+        question.type === TSurveyQuestionType.MultipleChoiceSingle ||
+        question.type === TSurveyQuestionType.MultipleChoiceMulti
+      ) {
+        if (!handleI18nCheckForMultipleChoice(question as TSurveyMultipleChoiceQuestion, languages)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Choices for question ${index + 1} are not valid for all languages.`,
+            path: ["questions", index, "choices"],
+          });
+        }
+
+        const enabledLanguages = languages.filter((lang) => lang.enabled);
+        const languageCodes = extractLanguageCodes(enabledLanguages);
+
+        const languagesToCheck = languageCodes.length === 0 ? ["default"] : languageCodes;
+
+        languagesToCheck.forEach((language) => {
+          const choiceLabels = question.choices.map((choice) => choice.label[language]).filter(Boolean);
+          const uniqueLabels = new Set(choiceLabels);
+
+          if (uniqueLabels.size !== choiceLabels.length) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Choice labels for language ${language} in question ${index + 1} are not unique.`,
+              path: [index, "choices"],
+            });
+          }
+        });
+      }
+
+      if (question.type === TSurveyQuestionType.Consent) {
+        if (!isLabelValidForAllLanguages((question as TSurveyConsentQuestion).label, languages)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Label for question ${index + 1} is not valid for all languages.`,
+            path: ["questions", index, "label"],
+          });
+        }
+      }
+
+      if (question.type === TSurveyQuestionType.CTA) {
+        const ctxQuestion = question as TSurveyCTAQuestion;
+        if (
+          !ctxQuestion.required &&
+          ctxQuestion.dismissButtonLabel &&
+          !isLabelValidForAllLanguages(ctxQuestion.dismissButtonLabel, languages)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `dismissButtonLabel for question ${index + 1} is invalid for all languages.`,
+            path: ["questions", index, "dismissButtonLabel"],
+          });
+        }
+      }
+
+      if (question.type === TSurveyQuestionType.Matrix) {
+        if (!handleI18nCheckForMatrixLabels(question as TSurveyMatrixQuestion, languages)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Rows and columns for question ${index + 1} are invalid for all languages.`,
+            path: ["questions", index],
+          });
+        }
+      }
+    });
+  });
 
 export const ZSurveyInput = z.object({
   name: z.string(),

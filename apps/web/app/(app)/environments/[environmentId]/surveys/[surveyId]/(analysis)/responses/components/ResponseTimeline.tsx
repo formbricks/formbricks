@@ -7,7 +7,7 @@ import { getMembershipByUserIdOrganizationIdAction } from "@formbricks/lib/membe
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";

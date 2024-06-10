@@ -1,6 +1,6 @@
 import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 export const getPrefillValue = (
   survey: TSurvey,

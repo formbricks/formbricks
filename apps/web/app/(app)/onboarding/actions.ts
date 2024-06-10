@@ -17,7 +17,7 @@ import { updateUser } from "@formbricks/lib/user/service";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProductUpdateInput } from "@formbricks/types/product";
-import { TSurveyInput, TSurveyType } from "@formbricks/types/surveys";
+import { TSurveyInput, TSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate } from "@formbricks/types/templates";
 import { TUserUpdateInput } from "@formbricks/types/user";
 

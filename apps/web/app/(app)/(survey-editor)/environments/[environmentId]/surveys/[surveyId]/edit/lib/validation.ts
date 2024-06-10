@@ -20,7 +20,7 @@ import {
   TSurveyQuestions,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 
 // Utility function to check if label is valid for all required languages
 export const isLabelValidForAllLanguages = (

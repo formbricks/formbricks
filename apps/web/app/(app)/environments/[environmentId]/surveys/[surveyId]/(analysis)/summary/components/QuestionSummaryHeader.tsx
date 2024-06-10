@@ -3,7 +3,7 @@ import { InboxIcon } from "lucide-react";
 
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
 
 interface HeadProps {
   questionSummary: TSurveyQuestionSummary;

@@ -2,7 +2,7 @@ import { CheckCircle2Icon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { TSurveySingleUse } from "@formbricks/types/surveys";
+import { TSurveySingleUse } from "@formbricks/types/surveys/types";
 
 import footerLogo from "../lib/footerlogo.svg";
 

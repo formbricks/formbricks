@@ -11,7 +11,7 @@ import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
 } from "@formbricks/types/integration/googleSheet";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { ConnectIntegration } from "@formbricks/ui/ConnectIntegration";
 
 import { AddIntegrationModal } from "./AddIntegrationModal";

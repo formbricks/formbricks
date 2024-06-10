@@ -1,7 +1,12 @@
 import { z } from "zod";
 
 import { ZLegacySurveyQuestions, ZLegacySurveyThankYouCard, ZLegacySurveyWelcomeCard } from "./LegacySurvey";
-import { ZSurveyHiddenFields, ZSurveyQuestions, ZSurveyThankYouCard, ZSurveyWelcomeCard } from "./surveys";
+import {
+  ZSurveyHiddenFields,
+  ZSurveyQuestions,
+  ZSurveyThankYouCard,
+  ZSurveyWelcomeCard,
+} from "./surveys/types";
 import { ZUserObjective } from "./user";
 
 export const ZTemplate = z.object({

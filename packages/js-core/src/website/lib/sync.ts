@@ -1,6 +1,6 @@
 import { diffInDays } from "@formbricks/lib/utils/datetime";
 import { TJsWebsiteState, TJsWebsiteSyncParams } from "@formbricks/types/js";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 import { NetworkError, Result, err, ok } from "../../shared/errors";
 import { Logger } from "../../shared/logger";

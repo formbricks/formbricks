@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys/types";
 
 import { Button } from "../v2/Button";
 import { getSurveysAction } from "./actions";

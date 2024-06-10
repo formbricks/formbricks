@@ -8,7 +8,7 @@ import { cn } from "@formbricks/lib/cn";
 import { customSurvey, templates, testTemplate } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
-import { TSurveyInput } from "@formbricks/types/surveys";
+import { TSurveyInput } from "@formbricks/types/surveys/types";
 import { TTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 

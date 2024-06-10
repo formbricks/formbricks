@@ -3,7 +3,7 @@ import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
 

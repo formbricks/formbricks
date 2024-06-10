@@ -9,7 +9,7 @@ import { CopyIcon, DownloadIcon, GlobeIcon, LinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import {
   DropdownMenu,

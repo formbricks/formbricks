@@ -14,7 +14,7 @@ import { surveyCache } from "@formbricks/lib/survey/cache";
 import { deleteSurvey, duplicateSurvey, getSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSurveyFilterCriteria } from "@formbricks/types/surveys";
+import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 
 export const getSurveyAction = async (surveyId: string) => {
   const session = await getServerSession(authOptions);
