@@ -10,7 +10,6 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -46,7 +45,7 @@ export const AddIntegrationModal = ({
   selectedIntegration,
   attributeClasses,
 }: AddIntegrationModalProps) => {
-  const integrationData = {
+  const integrationData: TIntegrationGoogleSheetsConfigData = {
     spreadsheetId: "",
     spreadsheetName: "",
     surveyId: "",
@@ -62,6 +61,8 @@ export const AddIntegrationModal = ({
   const [spreadsheetUrl, setSpreadsheetUrl] = useState("");
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const existingIntegrationData = googleSheetIntegration?.config?.data;
+  const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
+  const [includeMetadata, setIncludeMetadata] = useState(false);
   const googleSheetIntegrationData: TIntegrationGoogleSheetsInput = {
     type: "googleSheets",
     config: {
@@ -87,6 +88,8 @@ export const AddIntegrationModal = ({
         })!
       );
       setSelectedQuestions(selectedIntegration.questionIds);
+      setIncludeHiddenFields(!!selectedIntegration.includesHiddenFields);
+      setIncludeMetadata(!!selectedIntegration.includesMetadata);
       return;
     } else {
       setSpreadsheetUrl("");
@@ -96,7 +99,7 @@ export const AddIntegrationModal = ({
 
   const linkSheet = async () => {
     try {
-      if (isValidGoogleSheetsUrl(spreadsheetUrl)) {
+      if (!isValidGoogleSheetsUrl(spreadsheetUrl)) {
         throw new Error("Please enter a valid spreadsheet url");
       }
       if (!selectedSurvey) {
@@ -106,11 +109,14 @@ export const AddIntegrationModal = ({
         throw new Error("Please select at least one question");
       }
       const spreadsheetId = extractSpreadsheetIdFromUrl(spreadsheetUrl);
+      console.log(typeof googleSheetIntegration.config.data[0].createdAt);
       const spreadsheetName = await getSpreadsheetNameByIdAction(
         googleSheetIntegration,
         environmentId,
         spreadsheetId
       );
+      console.log("here2");
+
       setIsLinkingSheet(true);
       integrationData.spreadsheetId = spreadsheetId;
       integrationData.spreadsheetName = spreadsheetName;
@@ -122,13 +128,17 @@ export const AddIntegrationModal = ({
           ? "All questions"
           : "Selected questions";
       integrationData.createdAt = new Date();
+      integrationData.includesHiddenFields = includeHiddenFields;
+      integrationData.includesMetadata = includeMetadata;
       if (selectedIntegration) {
         // update action
+        console.log("updating");
         googleSheetIntegrationData.config!.data[selectedIntegration.index] = integrationData;
       } else {
         // create action
         googleSheetIntegrationData.config!.data.push(integrationData);
       }
+      console.log(typeof googleSheetIntegrationData.config.data[0].createdAt);
       await createOrUpdateIntegrationAction(environmentId, googleSheetIntegrationData);
       toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`);
       resetForm();
@@ -149,12 +159,16 @@ export const AddIntegrationModal = ({
   };
 
   const setOpenWithStates = (isOpen: boolean) => {
+    resetForm();
     setOpen(isOpen);
   };
 
   const resetForm = () => {
+    setSpreadsheetUrl("");
     setIsLinkingSheet(false);
     setSelectedSurvey(null);
+    setIncludeHiddenFields(false);
+    setIncludeMetadata(false);
   };
 
   const deleteLink = async () => {
@@ -216,30 +230,67 @@ export const AddIntegrationModal = ({
               </div>
               {selectedSurvey && (
                 <div>
-                  <Label htmlFor="Surveys">Questions</Label>
-                  <div className="mt-1 rounded-lg border border-slate-200">
-                    <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                      {replaceHeadlineRecall(selectedSurvey, "default", attributeClasses)?.questions.map(
-                        (question) => (
-                          <div key={question.id} className="my-1 flex items-center space-x-2">
-                            <label htmlFor={question.id} className="flex cursor-pointer items-center">
-                              <Checkbox
-                                type="button"
-                                id={question.id}
-                                value={question.id}
-                                className="bg-white"
-                                checked={selectedQuestions.includes(question.id)}
-                                onCheckedChange={() => {
-                                  handleCheckboxChange(question.id);
-                                }}
-                              />
-                              <span className="ml-2 w-[30rem] truncate">
-                                {getLocalizedValue(question.headline, "default")}
-                              </span>
-                            </label>
-                          </div>
-                        )
-                      )}
+                  <div>
+                    <Label htmlFor="Surveys">Questions</Label>
+                    <div className="mt-1 rounded-lg border border-slate-200">
+                      <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
+                        {replaceHeadlineRecall(selectedSurvey, "default", attributeClasses)?.questions.map(
+                          (question) => (
+                            <div key={question.id} className="my-1 flex items-center space-x-2">
+                              <label htmlFor={question.id} className="flex cursor-pointer items-center">
+                                <Checkbox
+                                  type="button"
+                                  id={question.id}
+                                  value={question.id}
+                                  className="bg-white"
+                                  checked={selectedQuestions.includes(question.id)}
+                                  onCheckedChange={() => {
+                                    handleCheckboxChange(question.id);
+                                  }}
+                                />
+                                <span className="ml-2 w-[30rem] truncate">
+                                  {getLocalizedValue(question.headline, "default")}
+                                </span>
+                              </label>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Label htmlFor="Surveys">Additional Setings</Label>
+                    <div className="text-sm">
+                      <div key={"includeHiddenFields"} className="my-1 flex items-center space-x-2">
+                        <label htmlFor={"includeHiddenFields"} className="flex cursor-pointer items-center">
+                          <Checkbox
+                            type="button"
+                            id={"includeHiddenFields"}
+                            value={"includeHiddenFields"}
+                            className="bg-white"
+                            checked={includeHiddenFields}
+                            onCheckedChange={() => {
+                              setIncludeHiddenFields(!includeHiddenFields);
+                            }}
+                          />
+                          <span className="ml-2 w-[30rem] truncate">Include hidden fields</span>
+                        </label>
+                      </div>
+                      <div key={"includeMetadata"} className="my-1 flex items-center space-x-2">
+                        <label htmlFor={"includeMetadata"} className="flex cursor-pointer items-center">
+                          <Checkbox
+                            type="button"
+                            id={"includeMetadata"}
+                            value={"includeMetadata"}
+                            className="bg-white"
+                            checked={includeMetadata}
+                            onCheckedChange={() => {
+                              setIncludeMetadata(!includeMetadata);
+                            }}
+                          />
+                          <span className="ml-2 w-[30rem] truncate">Include Metadata</span>
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>

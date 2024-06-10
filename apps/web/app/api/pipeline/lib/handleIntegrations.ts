@@ -10,7 +10,22 @@ import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSh
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { TPipelineInput } from "@formbricks/types/pipelines";
+import { TResponseMeta } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
+
+const convertMetaObjectToString = (metadata: TResponseMeta) => {
+  let result: string[] = [];
+  if (metadata.source) result.push(`Source: ${metadata.source}`);
+  if (metadata.url) result.push(`URL: ${metadata.url}`);
+  if (metadata.userAgent?.browser) result.push(`Browser: ${metadata.userAgent.browser}`);
+  if (metadata.userAgent?.os) result.push(`OS: ${metadata.userAgent.os}`);
+  if (metadata.userAgent?.device) result.push(`Device: ${metadata.userAgent.device}`);
+  if (metadata.country) result.push(`Country: ${metadata.country}`);
+  if (metadata.action) result.push(`Action: ${metadata.action}`);
+
+  // Join all the elements in the result array with a newline for formatting
+  return result.join("\n");
+};
 
 export const handleIntegrations = async (
   integrations: TIntegration[],
@@ -59,7 +74,15 @@ const handleGoogleSheetsIntegration = async (
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds, survey);
+        const ids =
+          element.includesHiddenFields && survey.hiddenFields.fieldIds
+            ? [...element.questionIds, ...survey.hiddenFields.fieldIds]
+            : element.questionIds;
+        const values = await extractResponses(data, ids, survey);
+        if (element.includesMetadata) {
+          values[0].push(convertMetaObjectToString(data.response.meta));
+          values[1].push("Metadata");
+        }
         const integrationData = structuredClone(integration);
         integrationData.config.data.forEach((data) => {
           data.createdAt = new Date(data.createdAt);
@@ -86,7 +109,7 @@ const handleSlackIntegration = async (
 };
 
 const extractResponses = async (
-  data: TPipelineInput,
+  pipelineData: TPipelineInput,
   questionIds: string[],
   survey: TSurvey
 ): Promise<string[][]> => {
@@ -94,12 +117,18 @@ const extractResponses = async (
   const questions: string[] = [];
 
   for (const questionId of questionIds) {
+    //check for hidden field Ids
+    if (survey.hiddenFields.fieldIds?.includes(questionId)) {
+      responses.push(processResponseData(pipelineData.response.data[questionId]));
+      questions.push(questionId);
+      continue;
+    }
     const question = survey?.questions.find((q) => q.id === questionId);
     if (!question) {
       continue;
     }
 
-    const responseValue = data.response.data[questionId];
+    const responseValue = pipelineData.response.data[questionId];
 
     if (responseValue !== undefined) {
       let answer: typeof responseValue;
