@@ -22,13 +22,14 @@ export const WidgetStatusIndicator = ({ environment, size, type }: WidgetStatusI
       icon: CheckIcon,
       title: "Receiving data.",
       subtitle: `Your ${type} is connected with Formbricks.`,
-      shortText: "Connected",
+      shortText: `${type === "app" ? "App" : "Website"} Connected`,
     },
   };
 
+  const setupStatus = type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
   let status: "notImplemented" | "running" | "issue";
 
-  if (environment.widgetSetupCompleted) {
+  if (setupStatus) {
     status = "running";
   } else {
     status = "notImplemented";
@@ -63,9 +64,6 @@ export const WidgetStatusIndicator = ({ environment, size, type }: WidgetStatusI
         <Link href={`/environments/${environment.id}/product/${type}-connection`}>
           <div className="group flex justify-center">
             <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
-              <Label className="group-hover:cursor-pointer group-hover:underline">
-                {currentStatus.shortText}
-              </Label>
               {status === "running" ? (
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
@@ -74,6 +72,9 @@ export const WidgetStatusIndicator = ({ environment, size, type }: WidgetStatusI
               ) : (
                 <AlertTriangleIcon className="h-[14px] w-[14px] text-amber-600" />
               )}
+              <Label className="group-hover:cursor-pointer group-hover:underline">
+                {currentStatus.shortText}
+              </Label>
             </div>
           </div>
         </Link>

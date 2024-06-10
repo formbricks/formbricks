@@ -37,7 +37,7 @@ const Page = async ({ params }) => {
         />
       </PageHeader>
       <div className="space-y-4">
-        <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/product/setup" />
+        <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/product/website-connection" />
         <SettingsCard
           title="Website Connection Status"
           description="Check if your website is successfully connected with Formbricks.">

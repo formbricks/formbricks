@@ -8,10 +8,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useEffect, useState } from "react";
-
 import { TEnvironment } from "@formbricks/types/environment";
 import { Button } from "@formbricks/ui/Button";
-
 import { fetchEnvironment, finishOnboardingAction } from "../../actions";
 import { SetupInstructionsOnboarding } from "./SetupInstructions";
 
@@ -125,6 +123,8 @@ export const ConnectWithFormbricks = ({
 
   useVisibilityChange(environment, setLocalEnvironment);
 
+  const widgetSetupCompleted = localEnvironment.websiteSetupCompleted || localEnvironment.appSetupCompleted;
+
   useEffect(() => {
     const fetchLatestEnvironmentOnFirstLoad = async () => {
       const refetchedEnvironment = await fetchEnvironment(environment.id);
@@ -134,7 +134,7 @@ export const ConnectWithFormbricks = ({
     fetchLatestEnvironmentOnFirstLoad();
   }, [environment.id]);
 
-  return localEnvironment.widgetSetupCompleted ? (
+  return widgetSetupCompleted ? (
     <ConnectedState
       goToProduct={() => {
         goToProduct(router);

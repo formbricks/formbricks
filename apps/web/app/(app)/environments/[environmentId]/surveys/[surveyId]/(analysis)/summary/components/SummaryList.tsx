@@ -39,11 +39,13 @@ export const SummaryList = ({
   totalResponseCount,
   attributeClasses,
 }: SummaryListProps) => {
+  const widgetSetupCompleted = environment?.appSetupCompleted || environment?.websiteSetupCompleted;
+
   return (
     <div className="mt-10 space-y-8">
       {(survey.type === "app" || survey.type === "website") &&
       responseCount === 0 &&
-      !environment.widgetSetupCompleted ? (
+      !widgetSetupCompleted ? (
         <EmptyAppSurveys environment={environment} surveyType={survey.type} />
       ) : fetchingSummary ? (
         <SkeletonLoader type="summary" />

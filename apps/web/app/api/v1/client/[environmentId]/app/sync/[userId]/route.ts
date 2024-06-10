@@ -6,7 +6,6 @@ import {
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
-
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import {
@@ -75,8 +74,8 @@ export const GET = async (
       throw new Error("Environment does not exist");
     }
 
-    if (!environment.widgetSetupCompleted) {
-      await updateEnvironment(environment.id, { widgetSetupCompleted: true });
+    if (!environment.appSetupCompleted) {
+      await updateEnvironment(environment.id, { appSetupCompleted: true });
     }
 
     // check organization subscriptions

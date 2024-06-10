@@ -2,7 +2,6 @@ import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
-
 import { getActionClassByEnvironmentIdAndName, getActionClasses } from "@formbricks/lib/actionClass/service";
 import {
   IS_FORMBRICKS_CLOUD,
@@ -79,14 +78,14 @@ export const GET = async (
       }
     }
 
-    if (!environment?.widgetSetupCompleted) {
+    if (!environment?.websiteSetupCompleted) {
       const exampleTrigger = await getActionClassByEnvironmentIdAndName(environmentId, "New Session");
       if (!exampleTrigger) {
         throw new Error("Example trigger not found");
       }
       const firstSurvey = getExampleSurveyTemplate(WEBAPP_URL, exampleTrigger);
       await createSurvey(environmentId, firstSurvey);
-      await updateEnvironment(environment.id, { widgetSetupCompleted: true });
+      await updateEnvironment(environment.id, { websiteSetupCompleted: true });
     }
 
     const [surveys, actionClasses, product] = await Promise.all([
