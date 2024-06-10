@@ -7,8 +7,8 @@ import {
 } from "@/app/middleware/bucket";
 import {
   clientSideApiRoute,
+  isAuthProtectedRoute,
   isSyncWithUserIdentificationEndpoint,
-  isWebAppRoute,
   loginRoute,
   shareUrlRoute,
   signupRoute,
@@ -24,7 +24,7 @@ export const middleware = async (request: NextRequest) => {
   // @ts-expect-error
   const token = await getToken({ req: request });
 
-  if (isWebAppRoute(request.nextUrl.pathname) && !token) {
+  if (isAuthProtectedRoute(request.nextUrl.pathname) && !token) {
     const loginUrl = `${WEBAPP_URL}/auth/login?callbackUrl=${encodeURIComponent(WEBAPP_URL + request.nextUrl.pathname + request.nextUrl.search)}`;
     return NextResponse.redirect(loginUrl);
   }
@@ -77,6 +77,7 @@ export const config = {
     "/api/v1/client/storage",
     "/share/(.*)/:path",
     "/environments/:path*",
+    "/setup/organization/:path*",
     "/api/auth/signout",
     "/auth/login",
     "/api/packages/:path*",

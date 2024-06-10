@@ -1,5 +1,4 @@
 import Stripe from "stripe";
-
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import {
@@ -8,7 +7,6 @@ import {
   getOrganization,
   updateOrganization,
 } from "@formbricks/lib/organization/service";
-
 import { ProductFeatureKeys, StripePriceLookupKeys, StripeProductNames } from "../lib/constants";
 import { reportUsage } from "../lib/report-usage";
 

@@ -1,6 +1,5 @@
 import type { Control } from "react-hook-form";
 import { Controller } from "react-hook-form";
-
 import { Label } from "@formbricks/ui/Label";
 import {
   Select,

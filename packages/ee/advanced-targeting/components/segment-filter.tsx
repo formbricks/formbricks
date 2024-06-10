@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import z from "zod";
-
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import {
@@ -64,7 +63,6 @@ import {
 } from "@formbricks/ui/DropdownMenu";
 import { Input } from "@formbricks/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-
 import { AddFilterModal } from "./add-filter-modal";
 
 interface TSegmentFilterProps {
