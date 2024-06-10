@@ -1,7 +1,6 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
 import * as React from "react";
-
 import { cn } from "@formbricks/lib/cn";
 
 const DialogPortal = DialogPrimitive.Portal;
@@ -25,7 +24,7 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 interface DialogContentProps
   extends Pick<
     ModalProps,
-    "blur" | "noPadding" | "size" | "hideCloseButton" | "closeOnOutsideClick" | "title"
+    "blur" | "noPadding" | "size" | "hideCloseButton" | "closeOnOutsideClick" | "title" | "restrictOverflow"
   > {}
 
 const sizeClassName = {
@@ -38,7 +37,18 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & DialogContentProps
 >(
   (
-    { className, children, blur, noPadding, size, hideCloseButton, closeOnOutsideClick, title, ...props },
+    {
+      className,
+      children,
+      blur,
+      noPadding,
+      size,
+      hideCloseButton,
+      restrictOverflow = false,
+      closeOnOutsideClick,
+      title,
+      ...props
+    },
     ref
   ) => (
     <DialogPortal>
@@ -46,10 +56,11 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl",
+          "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl",
           `${noPadding ? "" : "px-4 pb-4 pt-5 sm:p-6"}`,
           "data-[state='closed']:animate-fadeOut data-[state='open']:animate-fadeIn",
           size && sizeClassName && sizeClassName[size],
+          !restrictOverflow && "overflow-hidden",
           className
         )}
         {...props}
@@ -85,6 +96,7 @@ interface ModalProps {
   className?: string;
   size?: "md" | "lg";
   hideCloseButton?: boolean;
+  restrictOverflow?: boolean;
 }
 
 export const Modal = ({
@@ -98,6 +110,7 @@ export const Modal = ({
   closeOnOutsideClick = true,
   title,
   className,
+  restrictOverflow = false,
 }: ModalProps) => {
   if (!open) return null;
 
@@ -110,7 +123,8 @@ export const Modal = ({
         hideCloseButton={hideCloseButton}
         closeOnOutsideClick={closeOnOutsideClick}
         title={title}
-        className={className}>
+        className={className}
+        restrictOverflow={restrictOverflow}>
         {children}
       </DialogContent>
     </DialogPrimitive.Root>

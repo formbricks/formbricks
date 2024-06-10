@@ -13,12 +13,12 @@ import {
   wrapThrows,
 } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
+import { checkPageUrl } from "../../shared/noCodeActions";
 import { getIsDebug } from "../../shared/utils";
 import { trackNoCodeAction } from "./actions";
 import { updateAttributes } from "./attributes";
 import { AppConfig, IN_APP_LOCAL_STORAGE_KEY } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
-import { checkPageUrl } from "./noCodeActions";
 import { sync } from "./sync";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
@@ -186,7 +186,7 @@ export const initialize = async (
 
   // check page url if initialized after page load
 
-  checkPageUrl();
+  checkPageUrl("app");
   return okVoid();
 };
 

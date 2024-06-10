@@ -12,11 +12,10 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
-import { structuredClone } from "../pollyfills/structuredClone";
 import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
 
-const select = {
+const selectActionClass = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -26,7 +25,7 @@ const select = {
   key: true,
   noCodeConfig: true,
   environmentId: true,
-};
+} satisfies Prisma.ActionClassSelect;
 
 export const getActionClasses = (environmentId: string, page?: number): Promise<TActionClass[]> =>
   cache(
@@ -38,7 +37,7 @@ export const getActionClasses = (environmentId: string, page?: number): Promise<
           where: {
             environmentId: environmentId,
           },
-          select,
+          select: selectActionClass,
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
           orderBy: {
@@ -70,7 +69,7 @@ export const getActionClassByEnvironmentIdAndName = (
             name,
             environmentId,
           },
-          select,
+          select: selectActionClass,
         });
 
         return actionClass;
@@ -94,7 +93,7 @@ export const getActionClass = (actionClassId: string): Promise<TActionClass | nu
           where: {
             id: actionClassId,
           },
-          select,
+          select: selectActionClass,
         });
 
         return actionClass;
@@ -119,7 +118,7 @@ export const deleteActionClass = async (
       where: {
         id: actionClassId,
       },
-      select,
+      select: selectActionClass,
     });
     if (actionClass === null) throw new ResourceNotFoundError("Action", actionClassId);
 
@@ -143,17 +142,17 @@ export const createActionClass = async (
 ): Promise<TActionClass> => {
   validateInputs([environmentId, ZId], [actionClass, ZActionClassInput]);
 
+  const { environmentId: _, ...actionClassInput } = actionClass;
+
   try {
     const actionClassPrisma = await prisma.actionClass.create({
       data: {
-        name: actionClass.name,
-        description: actionClass.description,
-        type: actionClass.type,
-        key: actionClass.type === "code" ? actionClass.key : undefined,
-        noCodeConfig: actionClass.noCodeConfig ? structuredClone(actionClass.noCodeConfig) : undefined,
+        ...actionClassInput,
         environment: { connect: { id: environmentId } },
+        key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
+        noCodeConfig: actionClassInput.type === "noCode" ? actionClassInput.noCodeConfig || {} : undefined,
       },
-      select,
+      select: selectActionClass,
     });
 
     actionClassCache.revalidate({
@@ -179,27 +178,21 @@ export const updateActionClass = async (
   actionClassId: string,
   inputActionClass: Partial<TActionClassInput>
 ): Promise<TActionClass> => {
-  validateInputs([environmentId, ZId], [actionClassId, ZId], [inputActionClass, ZActionClassInput.partial()]);
+  validateInputs([environmentId, ZId], [actionClassId, ZId], [inputActionClass, ZActionClassInput]);
 
+  const { environmentId: _, ...actionClassInput } = inputActionClass;
   try {
     const result = await prisma.actionClass.update({
       where: {
         id: actionClassId,
       },
       data: {
-        name: inputActionClass.name,
-        description: inputActionClass.description,
-        type: inputActionClass.type,
-
-        ...(inputActionClass.type === "code"
-          ? { key: inputActionClass.key }
-          : {
-              noCodeConfig: inputActionClass.noCodeConfig
-                ? structuredClone(inputActionClass.noCodeConfig)
-                : undefined,
-            }),
+        ...actionClassInput,
+        environment: { connect: { id: environmentId } },
+        key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
+        noCodeConfig: actionClassInput.type === "noCode" ? actionClassInput.noCodeConfig || {} : undefined,
       },
-      select,
+      select: selectActionClass,
     });
 
     // revalidate cache

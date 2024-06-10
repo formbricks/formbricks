@@ -20,19 +20,51 @@ export const ZActionClassPageUrlRule = z.union([
 
 export type TActionClassPageUrlRule = z.infer<typeof ZActionClassPageUrlRule>;
 
-export const ZActionClassNoCodeConfig = z.object({
-  // The "type field has been made optional to allow for multiple selectors in one noCode action from now on
-  // Use the existence check of the fields to determine the types of the noCode action
-  type: z.optional(z.union([z.literal("innerHtml"), z.literal("pageUrl"), z.literal("cssSelector")])),
-  pageUrl: z.optional(
+const ZActionClassNoCodeConfigBase = z.object({
+  type: z.enum(["click", "pageView", "exitIntent", "fiftyPercentScroll"]),
+  urlFilters: z.array(
     z.object({
-      value: z.string(),
+      value: z.string().trim().min(1, { message: "Value must contain atleast 1 character" }),
       rule: ZActionClassPageUrlRule,
     })
   ),
-  innerHtml: z.optional(z.object({ value: z.string() })),
-  cssSelector: z.optional(z.object({ value: z.string() })),
 });
+
+const ZActionClassNoCodeConfigClick = ZActionClassNoCodeConfigBase.extend({
+  type: z.literal("click"),
+  elementSelector: z
+    .object({
+      cssSelector: z.string().trim().optional(),
+      innerHtml: z.string().trim().optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (!data.cssSelector && !data.innerHtml) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Either cssSelector or innerHtml must be provided`,
+        });
+      }
+    }),
+});
+
+const ZActionClassNoCodeConfigPageView = ZActionClassNoCodeConfigBase.extend({
+  type: z.literal("pageView"),
+});
+
+const ZActionClassNoCodeConfigExitIntent = ZActionClassNoCodeConfigBase.extend({
+  type: z.literal("exitIntent"),
+});
+
+const ZActionClassNoCodeConfigfiftyPercentScroll = ZActionClassNoCodeConfigBase.extend({
+  type: z.literal("fiftyPercentScroll"),
+});
+
+export const ZActionClassNoCodeConfig = z.union([
+  ZActionClassNoCodeConfigClick,
+  ZActionClassNoCodeConfigPageView,
+  ZActionClassNoCodeConfigExitIntent,
+  ZActionClassNoCodeConfigfiftyPercentScroll,
+]);
 
 export type TActionClassNoCodeConfig = z.infer<typeof ZActionClassNoCodeConfig>;
 
@@ -42,10 +74,10 @@ export type TActionClassType = z.infer<typeof ZActionClassType>;
 
 export const ZActionClass = z.object({
   id: z.string().cuid2(),
-  name: z.string(),
+  name: z.string().trim().min(1),
   description: z.string().nullable(),
   type: ZActionClassType,
-  key: z.string().nullable(),
+  key: z.string().trim().min(1).nullable(),
   noCodeConfig: ZActionClassNoCodeConfig.nullable(),
   environmentId: z.string(),
   createdAt: z.date(),
@@ -54,45 +86,36 @@ export const ZActionClass = z.object({
 
 export type TActionClass = z.infer<typeof ZActionClass>;
 
-export const ZActionClassInput = z.object({
-  id: z.string().optional(),
+const ZActionClassInputBase = z.object({
+  name: z
+    .string({ message: "Name is required" })
+    .trim()
+    .min(1, { message: "Name must be at least 1 character long" }),
+  description: z.string().nullable(),
   environmentId: z.string(),
-  name: z.string(),
-  description: z.string().optional().nullable(),
-  key: z.string().optional().nullable(),
-  noCodeConfig: ZActionClassNoCodeConfig.nullish(),
-  type: z.enum(["code", "noCode", "automatic"]),
+  type: ZActionClassType,
 });
 
-export const ZActionClassAutomaticInput = z.object({
-  name: z.string(),
-  description: z.string().optional(),
-  type: z.enum(["automatic"]),
+export const ZActionClassInputCode = ZActionClassInputBase.extend({
+  type: z.literal("code"),
+  key: z.string().trim().min(1).nullable(),
 });
 
-export type TActionClassAutomaticInput = z.infer<typeof ZActionClassAutomaticInput>;
+export type TActionClassInputCode = z.infer<typeof ZActionClassInputCode>;
+
+const ZActionClassInputNoCode = ZActionClassInputBase.extend({
+  type: z.literal("noCode"),
+  noCodeConfig: ZActionClassNoCodeConfig.nullable(),
+});
+
+const ZActionClassInputAutomatic = ZActionClassInputBase.extend({
+  type: z.literal("automatic"),
+});
+
+export const ZActionClassInput = z.union([
+  ZActionClassInputCode,
+  ZActionClassInputNoCode,
+  ZActionClassInputAutomatic,
+]);
 
 export type TActionClassInput = z.infer<typeof ZActionClassInput>;
-
-// Define NoCodeConfig schema
-export const ZNoCodeConfig = z.object({
-  type: z.union([z.literal("innerHtml"), z.literal("pageUrl"), z.literal("cssSelector")]),
-  pageUrl: z.optional(
-    z.object({
-      value: z.string(),
-      rule: ZActionClassMatchType, // Assuming MatchType is a Zod schema, otherwise you'll need to convert it too.
-    })
-  ),
-  innerHtml: z.optional(
-    z.object({
-      value: z.string(),
-    })
-  ),
-  cssSelector: z.optional(
-    z.object({
-      value: z.string(),
-    })
-  ),
-});
-
-export type TNoCodeConfig = z.infer<typeof ZNoCodeConfig>;
