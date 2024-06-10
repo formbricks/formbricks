@@ -4,6 +4,7 @@ import axios from "axios";
 
 import { cache, revalidateTag } from "@formbricks/lib/cache";
 import { E2E_TESTING, ENTERPRISE_LICENSE_KEY, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { env } from "@formbricks/lib/env";
 import { hashString } from "@formbricks/lib/hashString";
 import { TOrganization } from "@formbricks/types/organizations";
 
@@ -144,6 +145,7 @@ export const getLicenseFeatures = async (): Promise<TEnterpriseLicenseFeatures |
 export const fetchLicense = async () => {
   const licenseResult: TEnterpriseLicenseDetails | null = await cache(
     async () => {
+      if (!env.ENTERPRISE_LICENSE_KEY) return null;
       try {
         const now = new Date();
         const startOfYear = new Date(now.getFullYear(), 0, 1); // January 1st of the current year
@@ -159,7 +161,7 @@ export const fetchLicense = async () => {
         });
 
         const response = await axios.post("https://ee.formbricks.com/api/licenses/check", {
-          licenseKey: process.env.ENTERPRISE_LICENSE_KEY,
+          licenseKey: env.ENTERPRISE_LICENSE_KEY,
           usage: { responseCount: responseCount },
         });
         if (response.status === 200) {
