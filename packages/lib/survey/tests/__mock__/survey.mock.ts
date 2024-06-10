@@ -1,5 +1,4 @@
 import { Prisma } from "@prisma/client";
-
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -9,11 +8,10 @@ import {
   TSurveyInput,
   TSurveyLanguage,
   TSurveyQuestion,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
-
 import { selectPerson } from "../../../person/service";
 import { selectSurvey } from "../../service";
 
@@ -147,7 +145,7 @@ export const mockAttributeClass: TAttributeClass = {
 
 const mockQuestion: TSurveyQuestion = {
   id: mockId,
-  type: TSurveyQuestionType.OpenText,
+  type: TSurveyQuestionTypeEnum.OpenText,
   headline: { default: "Question Text", de: "Fragetext" },
   required: false,
   inputType: "text",

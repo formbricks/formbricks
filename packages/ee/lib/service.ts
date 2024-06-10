@@ -1,14 +1,12 @@
 import "server-only";
-
-import axios from "axios";
-
+import { HttpsProxyAgent } from "https-proxy-agent";
+import fetch from "node-fetch";
+import { prisma } from "@formbricks/database";
 import { cache, revalidateTag } from "@formbricks/lib/cache";
 import { E2E_TESTING, ENTERPRISE_LICENSE_KEY, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { hashString } from "@formbricks/lib/hashString";
 import { TOrganization } from "@formbricks/types/organizations";
-
-import { prisma } from "../../database/src";
 import { TEnterpriseLicenseDetails, TEnterpriseLicenseFeatures } from "./types";
 
 const hashedKey = ENTERPRISE_LICENSE_KEY ? hashString(ENTERPRISE_LICENSE_KEY) : undefined;
@@ -160,13 +158,24 @@ export const fetchLicense = async () => {
           },
         });
 
-        const response = await axios.post("https://ee.formbricks.com/api/licenses/check", {
-          licenseKey: env.ENTERPRISE_LICENSE_KEY,
-          usage: { responseCount: responseCount },
+        const proxyUrl = env.HTTPS_PROXY || env.HTTP_PROXY;
+        const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
+
+        const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
+          body: JSON.stringify({
+            licenseKey: ENTERPRISE_LICENSE_KEY,
+            usage: { responseCount: responseCount },
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+          agent,
         });
-        if (response.status === 200) {
-          const responseJson = response.data;
-          return { status: responseJson.data.status, features: responseJson.data.features };
+
+        if (res.ok) {
+          const responseJson = (await res.json()) as {
+            data: TEnterpriseLicenseDetails;
+          };
+          return responseJson.data;
         }
 
         return null;
@@ -184,31 +193,31 @@ export const fetchLicense = async () => {
 export const getRemoveInAppBrandingPermission = (organization: TOrganization): boolean => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.features.inAppSurvey.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return true;
-  else return false;
+  return false;
 };
 
 export const getRemoveLinkBrandingPermission = (organization: TOrganization): boolean => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.features.linkSurvey.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return true;
-  else return false;
+  return false;
 };
 
 export const getRoleManagementPermission = async (organization: TOrganization): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.features.inAppSurvey.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
-  else return false;
+  return false;
 };
 
 export const getAdvancedTargetingPermission = async (organization: TOrganization): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.features.userTargeting.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
-  else return false;
+  return false;
 };
 
 export const getMultiLanguagePermission = async (organization: TOrganization): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.features.inAppSurvey.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
-  else return false;
+  return false;
 };
 
 export const getIsMultiOrgEnabled = async (): Promise<boolean> => {

@@ -1,11 +1,10 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { StripePriceLookupKeys } from "@formbricks/ee/billing/lib/constants";
-import { createCustomerPortalSession } from "@formbricks/ee/billing/lib/createCustomerPortalSession";
-import { createSubscription } from "@formbricks/ee/billing/lib/createSubscription";
-import { removeSubscription } from "@formbricks/ee/billing/lib/removeSubscription";
+import { createCustomerPortalSession } from "@formbricks/ee/billing/lib/create-customer-portal-session";
+import { createSubscription } from "@formbricks/ee/billing/lib/create-subscription";
+import { removeSubscription } from "@formbricks/ee/billing/lib/remove-subscription";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
