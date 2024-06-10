@@ -4,15 +4,21 @@ import { Organization } from "@prisma/client";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { updateUser } from "@formbricks/lib/user/service";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
 
 export const createOrganizationAction = async (organizationName: string): Promise<Organization> => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
+
+  const isFreshInstance = await getIsFreshInstance();
+  if (!isFreshInstance) {
+    throw new OperationNotAllowedError("This action can only be performed on a fresh instance.");
+  }
 
   const newOrganization = await createOrganization({
     name: organizationName,
