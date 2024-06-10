@@ -2,6 +2,7 @@
 
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
+import { TTemplateChannel, TTemplateIndustry, TTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { TemplateList } from "@formbricks/ui/TemplateList";
 
@@ -10,9 +11,16 @@ interface SurveyStarterProps {
   environment: TEnvironment;
   product: TProduct;
   user: TUser;
+  prefilledFilters: (TTemplateChannel | TTemplateIndustry | TTemplateRole | null)[];
 }
 
-export const SurveyStarter = ({ environmentId, environment, product, user }: SurveyStarterProps) => {
+export const SurveyStarter = ({
+  environmentId,
+  environment,
+  product,
+  user,
+  prefilledFilters,
+}: SurveyStarterProps) => {
   return (
     <>
       <h1 className="px-6 text-3xl font-extrabold text-slate-700">
@@ -21,12 +29,11 @@ export const SurveyStarter = ({ environmentId, environment, product, user }: Sur
 
       <TemplateList
         environmentId={environmentId}
-        /* onTemplateClick={(template) => {
-              newSurveyFromTemplate(template);
-            }} */
+        onTemplateClick={() => {}}
         environment={environment}
         product={product}
         user={user}
+        prefilledFilters={prefilledFilters}
       />
     </>
   );

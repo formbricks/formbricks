@@ -2,7 +2,6 @@ import { SurveyStarter } from "@/app/(app)/environments/[environmentId]/surveys/
 import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
@@ -11,6 +10,7 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveyCount } from "@formbricks/lib/survey/service";
+import { TTemplateChannel, TTemplateIndustry, TTemplateRole } from "@formbricks/types/templates";
 import { Button } from "@formbricks/ui/Button";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
@@ -20,10 +20,26 @@ export const metadata: Metadata = {
   title: "Your Surveys",
 };
 
-const Page = async ({ params }) => {
+interface SurveyTemplateProps {
+  params: {
+    environmentId: string;
+  };
+  searchParams: {
+    channel?: TTemplateChannel;
+    industry?: TTemplateIndustry;
+    role?: TTemplateRole;
+  };
+}
+
+const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const session = await getServerSession(authOptions);
   const product = await getProductByEnvironmentId(params.environmentId);
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
+  const prefilledFilters = [
+    searchParams.channel ?? null,
+    searchParams.industry ?? null,
+    searchParams.role ?? null,
+  ];
   if (!session) {
     throw new Error("Session not found");
   }
@@ -79,6 +95,7 @@ const Page = async ({ params }) => {
           environment={environment}
           product={product}
           user={session.user}
+          prefilledFilters={prefilledFilters}
         />
       )}
     </PageContentWrapper>

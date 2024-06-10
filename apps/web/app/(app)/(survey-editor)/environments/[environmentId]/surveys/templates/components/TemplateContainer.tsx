@@ -2,16 +2,19 @@
 
 import { MenuBar } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/templates/components/MenuBar";
 import { useState } from "react";
-
 import { customSurvey } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
-import type { TTemplate } from "@formbricks/types/templates";
+import type {
+  TTemplate,
+  TTemplateChannel,
+  TTemplateIndustry,
+  TTemplateRole,
+} from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { PreviewSurvey } from "@formbricks/ui/PreviewSurvey";
 import { SearchBox } from "@formbricks/ui/SearchBox";
 import { TemplateList } from "@formbricks/ui/TemplateList";
-
 import { minimalSurvey } from "../../lib/minimalSurvey";
 
 type TemplateContainerWithPreviewProps = {
@@ -19,6 +22,7 @@ type TemplateContainerWithPreviewProps = {
   product: TProduct;
   environment: TEnvironment;
   user: TUser;
+  prefilledFilters: (TTemplateChannel | TTemplateIndustry | TTemplateRole | null)[];
 };
 
 export const TemplateContainerWithPreview = ({
@@ -26,6 +30,7 @@ export const TemplateContainerWithPreview = ({
   product,
   environment,
   user,
+  prefilledFilters,
 }: TemplateContainerWithPreviewProps) => {
   const initialTemplate = customSurvey;
   const [activeTemplate, setActiveTemplate] = useState<TTemplate>(initialTemplate);
@@ -62,6 +67,7 @@ export const TemplateContainerWithPreview = ({
               setActiveQuestionId(template.preset.questions[0].id);
               setActiveTemplate(template);
             }}
+            prefilledFilters={prefilledFilters}
           />
         </div>
         <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 md:flex md:flex-col">

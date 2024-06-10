@@ -1,14 +1,29 @@
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-
+import { TTemplateChannel, TTemplateIndustry, TTemplateRole } from "@formbricks/types/templates";
 import { TemplateContainerWithPreview } from "./components/TemplateContainer";
 
-const Page = async ({ params }) => {
+interface SurveyTemplateProps {
+  params: {
+    environmentId: string;
+  };
+  searchParams: {
+    channel?: TTemplateChannel;
+    industry?: TTemplateIndustry;
+    role?: TTemplateRole;
+  };
+}
+
+const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const session = await getServerSession(authOptions);
   const environmentId = params.environmentId;
+  const prefilledFilters = [
+    searchParams.channel ?? null,
+    searchParams.industry ?? null,
+    searchParams.role ?? null,
+  ];
 
   const [environment, product] = await Promise.all([
     getEnvironment(environmentId),
@@ -33,6 +48,7 @@ const Page = async ({ params }) => {
       user={session.user}
       environment={environment}
       product={product}
+      prefilledFilters={prefilledFilters}
     />
   );
 };
