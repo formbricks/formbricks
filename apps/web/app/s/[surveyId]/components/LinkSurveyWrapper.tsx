@@ -1,6 +1,5 @@
 import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
 import React from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
@@ -42,7 +41,7 @@ export const LinkSurveyWrapper = ({
       <div
         className={cn(
           "h-full w-full overflow-clip",
-          styling.cardArrangement?.linkSurveys === "straight" && "pt-5",
+          styling.cardArrangement?.linkSurveys === "straight" && "pt-6",
           styling.cardArrangement?.linkSurveys === "casual" && "px-6 py-10"
         )}>
         {children}
