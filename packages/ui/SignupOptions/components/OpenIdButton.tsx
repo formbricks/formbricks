@@ -1,11 +1,10 @@
 import { signIn } from "next-auth/react";
 import { useCallback, useEffect } from "react";
 
-import { Button } from "@formbricks/ui/Button";
-import { MicrosoftIcon } from "@formbricks/ui/icons";
+import { Button } from "../../Button";
 
-export const AzureButton = ({
-  text = "Continue with Azure",
+export const OpenIdButton = ({
+  text = "Continue with OpenId Connect",
   inviteUrl,
   directRedirect = false,
 }: {
@@ -14,7 +13,7 @@ export const AzureButton = ({
   directRedirect?: boolean;
 }) => {
   const handleLogin = useCallback(async () => {
-    await signIn("azure-ad", {
+    await signIn("openid", {
       redirect: true,
       callbackUrl: inviteUrl ? inviteUrl : "/",
     });
@@ -29,7 +28,6 @@ export const AzureButton = ({
   return (
     <Button
       type="button"
-      EndIcon={MicrosoftIcon}
       startIconClassName="ml-2"
       onClick={handleLogin}
       variant="secondary"

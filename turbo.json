@@ -1,10 +1,6 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "tasks": {
-    "@formbricks/database#build": {
-      "cache": false,
-      "dependsOn": ["post-install"]
-    },
     "@formbricks/web#go": {
       "cache": false,
       "persistent": true,
@@ -84,6 +80,8 @@
         "NOTION_OAUTH_CLIENT_ID",
         "NOTION_OAUTH_CLIENT_SECRET",
         "HEROKU_APP_NAME",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
         "IMPRINT_URL",
         "INSTANCE_ID",
         "INTERNAL_SECRET",
@@ -153,12 +151,6 @@
     "build:dev": {
       "dependsOn": ["^build:dev"],
       "outputs": ["dist/**", ".next/**"]
-    },
-    "post-install": {
-      "cache": false,
-      "dependsOn": [],
-      "outputs": [],
-      "inputs": ["./schema.prisma"]
     },
     "db:setup": {
       "cache": false,

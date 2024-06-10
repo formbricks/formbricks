@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import type { TActionClass } from "@formbricks/types/actionClasses";
@@ -24,7 +23,6 @@ import { LoadSegmentModal } from "@formbricks/ui/LoadSegmentModal";
 import { SaveAsNewSegmentModal } from "@formbricks/ui/SaveAsNewSegmentModal";
 import { SegmentTitle } from "@formbricks/ui/SegmentTitle";
 import { TargetingIndicator } from "@formbricks/ui/TargetingIndicator";
-
 import {
   cloneSegmentAction,
   createSegmentAction,

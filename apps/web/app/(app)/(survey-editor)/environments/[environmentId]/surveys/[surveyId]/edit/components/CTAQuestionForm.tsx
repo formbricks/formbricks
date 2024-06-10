@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-
 import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys";

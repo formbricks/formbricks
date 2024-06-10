@@ -1,9 +1,7 @@
 "use client";
 
 import { HexColorInput } from "react-colorful";
-
 import { cn } from "@formbricks/lib/cn";
-
 import { PopoverPicker } from "./components/PopoverPicker";
 
 interface ColorPickerProps {

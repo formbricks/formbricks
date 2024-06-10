@@ -1,7 +1,6 @@
 import { PeopleSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PeopleSecondaryNavigation";
 import { BasicCreateSegmentModal } from "@/app/(app)/environments/[environmentId]/(people)/segments/components/BasicCreateSegmentModal";
 import { SegmentTable } from "@/app/(app)/environments/[environmentId]/(people)/segments/components/SegmentTable";
-
 import { CreateSegmentModal } from "@formbricks/ee/advanced-targeting/components/create-segment-modal";
 import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advanced-targeting/lib/constants";
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";

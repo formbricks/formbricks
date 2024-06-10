@@ -1,9 +1,7 @@
 import Stripe from "stripe";
-
 import { STRIPE_API_VERSION, WEBAPP_URL } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getOrganization } from "@formbricks/lib/organization/service";
-
 import type { StripePriceLookupKeys } from "./constants";
 
 export const getFirstOfNextMonthTimestamp = (): number => {
