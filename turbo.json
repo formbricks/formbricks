@@ -80,6 +80,8 @@
         "NOTION_OAUTH_CLIENT_ID",
         "NOTION_OAUTH_CLIENT_SECRET",
         "HEROKU_APP_NAME",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
         "IMPRINT_URL",
         "INSTANCE_ID",
         "INTERNAL_SECRET",
