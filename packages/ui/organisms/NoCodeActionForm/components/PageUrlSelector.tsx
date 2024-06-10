@@ -3,11 +3,9 @@ import { useState } from "react";
 import { Control, FieldArrayWithId, UseFieldArrayRemove, useFieldArray } from "react-hook-form";
 import { UseFormReturn } from "react-hook-form";
 import toast from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
 import { TActionClassInput, TActionClassPageUrlRule } from "@formbricks/types/actionClasses";
-
 import { Alert, AlertDescription, AlertTitle } from "../../../Alert";
 import { Button } from "../../../Button";
 import { FormControl, FormField, FormItem } from "../../../Form";
@@ -154,6 +152,7 @@ const UrlInput = ({
     <div className="flex w-full flex-col gap-2">
       {fields.map((field, index) => (
         <div key={field.id} className="flex items-center space-x-2">
+          {index !== 0 && <p className="ml-1 text-sm font-bold text-slate-700">or</p>}
           <FormField
             name={`noCodeConfig.urlFilters.${index}.rule`}
             control={control}

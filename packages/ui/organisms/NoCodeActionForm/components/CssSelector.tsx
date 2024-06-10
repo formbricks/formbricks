@@ -1,7 +1,5 @@
 import { UseFormReturn } from "react-hook-form";
-
 import { TActionClassInput } from "@formbricks/types/actionClasses";
-
 import { AdvancedOptionToggle } from "../../../AdvancedOptionToggle";
 import { FormControl, FormField, FormItem } from "../../../Form";
 import { Input } from "../../../Input";
@@ -21,9 +19,9 @@ export const CssSelector = ({ form }: CssSelectorProps) => {
           <FormControl>
             <AdvancedOptionToggle
               htmlId="CssSelector"
-              isChecked={!!watch("noCodeConfig.elementSelector.cssSelector")}
+              isChecked={watch("noCodeConfig.elementSelector.cssSelector") !== undefined}
               onToggle={(checked) => {
-                field.onChange(checked ? ".css-class" : undefined);
+                field.onChange(checked ? "" : undefined);
               }}
               title="CSS Selector"
               description="If a user clicks a button with a specific CSS class or id"

@@ -1,7 +1,5 @@
 import { UseFormReturn } from "react-hook-form";
-
 import { TActionClassInput } from "@formbricks/types/actionClasses";
-
 import { AdvancedOptionToggle } from "../../../AdvancedOptionToggle";
 import { FormControl, FormField, FormItem } from "../../../Form";
 import { Input } from "../../../Input";
@@ -21,9 +19,9 @@ export const InnerHtmlSelector = ({ form }: InnerHtmlSelectorProps) => {
           <FormControl>
             <AdvancedOptionToggle
               htmlId="InnerText"
-              isChecked={!!watch("noCodeConfig.elementSelector.innerHtml")}
+              isChecked={watch("noCodeConfig.elementSelector.innerHtml") !== undefined}
               onToggle={(checked) => {
-                field.onChange(checked ? "Download Report" : undefined);
+                field.onChange(checked ? "" : undefined);
               }}
               title="Inner Text"
               description="If a user clicks a button with a specific text"

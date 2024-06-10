@@ -50,8 +50,8 @@ export const CreateNewActionTab = ({
       noCodeConfig: {
         type: "click",
         elementSelector: {
-          cssSelector: "",
-          innerHtml: "",
+          cssSelector: undefined,
+          innerHtml: undefined,
         },
         urlFilters: [],
       },
