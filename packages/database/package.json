@@ -33,7 +33,8 @@
     "data-migration:userId": "ts-node ./data-migrations/20240408123456_userid_migration/data-migration.ts",
     "data-migration:refactor-actions": "ts-node ./data-migrations/20240501111944_refactors_actions_and_removes_inline_triggers/data-migration.ts",
     "data-migration:mls-welcomeCard-fix": "ts-node ./data-migrations/20240318050527_add_languages_and_survey_languages/data-migration-welcomeCard-fix.ts",
-    "data-migration:v2.0": "pnpm data-migration:mls && pnpm data-migration:styling && pnpm data-migration:styling-fix && pnpm data-migration:website-surveys && pnpm data-migration:userId && pnpm data-migration:mls-welcomeCard-fix && pnpm data-migration:refactor-actions"
+    "data-migration:v2.0": "pnpm data-migration:mls && pnpm data-migration:styling && pnpm data-migration:styling-fix && pnpm data-migration:website-surveys && pnpm data-migration:userId && pnpm data-migration:mls-welcomeCard-fix && pnpm data-migration:refactor-actions",
+    "data-migration:adds_app_and_website_status_indicator": "ts-node ./data-migrations/20240610055828_adds_app_and_website_status_indicators/data-migration.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
