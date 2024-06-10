@@ -149,6 +149,7 @@ export const createOrganization = async (
 
     organizationCache.revalidate({
       id: organization.id,
+      count: true,
     });
 
     return organization;
@@ -247,6 +248,7 @@ export const deleteOrganization = async (organizationId: string): Promise<TOrgan
 
     organizationCache.revalidate({
       id: organization.id,
+      count: true,
     });
 
     return organization;

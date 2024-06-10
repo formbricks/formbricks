@@ -1,4 +1,4 @@
-import { hashPassword } from "@formbricks/lib/auth/utils";
+import { hashPassword } from "../auth/utils";
 
 export const createUser = async (
   name: string,

@@ -1,0 +1,40 @@
+import { RemovedFromOrganization } from "@/app/setup/organization/create/components/RemovedFromOrganization";
+import { Metadata } from "next";
+import { getServerSession } from "next-auth";
+import { notFound } from "next/navigation";
+
+import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { gethasNoOrganizations } from "@formbricks/lib/instance/service";
+import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
+import { AuthenticationError } from "@formbricks/types/errors";
+
+import { CreateFirstOrganization } from "./components/CreateFirstOrganiztion";
+
+export const metadata: Metadata = {
+  title: "Create Organization",
+  description: "Open-source Experience Management. Free & open source.",
+};
+
+const Page = async () => {
+  const session = await getServerSession(authOptions);
+
+  if (!session) throw new AuthenticationError("Not Authenticated");
+
+  const hasNoOrganizations = await gethasNoOrganizations();
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  const userOrganizations = await getOrganizationsByUserId(session.user.id);
+
+  if (!hasNoOrganizations && userOrganizations.length === 0 && !isMultiOrgEnabled) {
+    return <RemovedFromOrganization session={session} IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD} />;
+  }
+
+  if (userOrganizations.length !== 0 || (!hasNoOrganizations && !isMultiOrgEnabled)) {
+    return notFound();
+  }
+
+  return <CreateFirstOrganization />;
+};
+
+export default Page;
