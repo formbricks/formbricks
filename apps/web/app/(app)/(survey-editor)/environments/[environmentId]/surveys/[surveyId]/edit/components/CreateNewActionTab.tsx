@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-
 import {
   TActionClass,
   TActionClassInput,
@@ -18,7 +17,6 @@ import { Input } from "@formbricks/ui/Input";
 import { TabToggle } from "@formbricks/ui/TabToggle";
 import { CodeActionForm } from "@formbricks/ui/organisms/CodeActionForm";
 import { NoCodeActionForm } from "@formbricks/ui/organisms/NoCodeActionForm";
-
 import { createActionClassAction } from "../actions";
 
 interface CreateNewActionTabProps {
@@ -136,7 +134,10 @@ export const CreateNewActionTab = ({
         };
       }
 
-      const newActionClass: TActionClass = await createActionClassAction(updatedAction as TActionClassInput);
+      const newActionClass: TActionClass = await createActionClassAction(
+        environmentId,
+        updatedAction as TActionClassInput
+      );
       if (setActionClasses) {
         setActionClasses((prevActionClasses: TActionClass[]) => [...prevActionClasses, newActionClass]);
       }
