@@ -3,6 +3,7 @@ import { MdxImage } from "@/components/MdxImage";
 import StepEight from "./images/StepEight.webp";
 import StepFive from "./images/StepFive.webp";
 import StepFour from "./images/StepFour.webp";
+import StepNine from "./images/StepNine.webp";
 import StepOne from "./images/StepOne.webp";
 import StepSeven from "./images/StepSeven.webp";
 import StepSix from "./images/StepSix.webp";
@@ -19,7 +20,15 @@ export const metadata = {
 
 With Formbricks, enhance your surveys with Conditional Logic to create a dynamic and responsive survey experience. This feature allows you to guide respondents through different paths based on their answers, ensuring each survey is tailored to the user’s responses. This feature is applicable for all kinds of surveys!
 
-### Setting Up Conditional Logic
+In Formbricks, there are two different modes of logic that can be applied to determine the flow of questions:
+
+1. [JumpTo logic](#conditional-logic)
+2. [Requirements logic](#requirements-logic)
+
+
+
+
+### Setting Up "JumpTo" Conditional Logic
 
 Conditional Logic can be applied to any question within your survey to direct the flow based on specific responses.
 
@@ -134,3 +143,79 @@ Suppose you’re conducting a survey about technology usage:
 This setup allows for a tailored survey experience that adapts to the respondent's input, making your data collection more targeted and efficient.
 
 That’s it! Now go and configure your surveys to bring down your survey fatigue to 0% and ask respondents through customized paths. Enhance their relevance and engagement with your survey, leading to higher quality responses and better data.
+
+
+---
+
+## **Requirements Logic**
+
+With the new Requirements Logic feature, you can control the visibility of each question based on whether specific conditions are met. This allows for even more dynamic and customized survey experiences. For each question, you can select one or more requirements that must all be satisfied for the question to be visible.
+
+### Setting Up Requirements Logic
+
+Requirements Logic can be applied to any question to control its visibility based on answers to previous questions.
+
+1. **Create or Edit a Question**: Start by adding a new question or editing an existing one within your survey.
+
+<MdxImage
+  src={StepOne}
+  alt="Choose a link survey template"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+2. **Access Advanced Settings**: Click on **Advanced Settings** beneath the question setup area to access additional configuration options.
+
+<MdxImage
+  src={StepTwo}
+  alt="Choose a link survey template"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+3. **Configure Requirements Logic**: Choose **Requirements Logic** to set up conditions that dictate the visibility of the question based on responses to other questions.
+
+<MdxImage
+  src={StepNine}
+  alt="Configure requirements logic"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+### Configuring Requirements Logic Conditions
+
+Enhance survey interactivity by setting up triggers that control the visibility of questions based on respondent answers. You can specify different requirements for each type of response:
+
+**General Requirements (Available in All Question Types):**
+
+- **Answer Submitted/Skipped**: Make a question visible only if a previous question is answered or skipped.
+
+**Choice-Based Requirements:**
+
+- **One of Multiple Choice Values**: Make a question visible if the answer to a previous question is among selected options. (Single select and Multi select)
+- **Equals: Exactly the Selected Values**: Make a question visible if the response to a previous question matches exactly the selected values provided in the options. (Single select and Multi select)
+- **Includes All Selected Values**: Make a question visible if all selected values of a previous question match those chosen by the survey creator. (Multi select only)
+
+**Numeric Requirements (Rating & NPS Questions Only)**
+
+- **Value Comparisons**: Make a question visible based on numerical criteria—equals, does not equal, less than, less than or equal to, greater than, or greater than equal to.
+
+**Matrix-Specific Requirements**
+
+- **Submission Completeness**: Make a question visible based on whether the response to a previous matrix question is completely or partially submitted.
+
+### Example Scenario for Requirements Logic
+
+Suppose you’re conducting a survey about technology usage:
+
+1. **Question (Single Select)**: What devices do you use daily?
+2. **Answers**: Smartphone, Laptop, Tablet, None
+
+**Requirements Logic Setup**:
+
+- If the respondent selects **Smartphone**, make a subsequent question about smartphone usage visible.
+- If the respondent selects **None**, do not show the questions about specific devices.
+
+This setup ensures that only relevant questions are shown to the respondent, enhancing the relevance and engagement of the survey.
+
+That’s it! Now go and configure your surveys to bring down your survey fatigue to 0% and guide respondents through customized paths. Enhance their relevance and engagement with your survey, leading to higher quality responses and better data.

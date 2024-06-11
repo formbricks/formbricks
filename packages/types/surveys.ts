@@ -150,6 +150,12 @@ export const ZSurveyLogicCondition = z.enum([
 
 export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
 
+export const ZSurveyReuirementsLogicBase = z.object({
+  condition: ZSurveyLogicCondition.optional(),
+  value: z.union([z.string(), z.array(z.string())]).optional(),
+  source: z.string().optional(),
+});
+
 export const ZSurveyLogicBase = z.object({
   condition: ZSurveyLogicCondition.optional(),
   value: z.union([z.string(), z.array(z.string())]).optional(),
@@ -249,6 +255,7 @@ export const ZSurveyLogic = z.union([
 ]);
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
+export type TSurveyRequirementsLogic = z.infer<typeof ZSurveyReuirementsLogicBase>;
 
 export const ZSurveyQuestionBase = z.object({
   id: z.string(),
@@ -263,6 +270,7 @@ export const ZSurveyQuestionBase = z.object({
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   logic: z.array(ZSurveyLogic).optional(),
+  requirementsLogic: z.array(ZSurveyReuirementsLogicBase).optional(),
   isDraft: z.boolean().optional(),
 });
 

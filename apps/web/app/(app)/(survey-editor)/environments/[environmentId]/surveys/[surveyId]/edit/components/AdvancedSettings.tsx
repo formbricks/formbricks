@@ -2,6 +2,7 @@ import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
 import { LogicEditor } from "./LogicEditor";
+import { RequirementsLogicEditor } from "./RequirementsLogicEditor";
 import { UpdateQuestionId } from "./UpdateQuestionId";
 
 interface AdvancedSettingsProps {
@@ -23,6 +24,16 @@ export const AdvancedSettings = ({
     <div>
       <div className="mb-4">
         <LogicEditor
+          question={question}
+          updateQuestion={updateQuestion}
+          localSurvey={localSurvey}
+          questionIdx={questionIdx}
+          attributeClasses={attributeClasses}
+        />
+      </div>
+
+      <div className="mb-4">
+        <RequirementsLogicEditor
           question={question}
           updateQuestion={updateQuestion}
           localSurvey={localSurvey}
