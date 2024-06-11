@@ -1,6 +1,5 @@
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
-
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys";
@@ -54,6 +53,7 @@ export const DateQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
+        label={"Question*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -69,6 +69,7 @@ export const DateQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
+                label={"Description"}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}

@@ -1,7 +1,6 @@
 import { LucideIcon } from "lucide-react";
 import Link, { LinkProps } from "next/link";
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, forwardRef } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 
 type SVGComponent = React.FunctionComponent<React.SVGProps<SVGSVGElement>> | LucideIcon;
@@ -11,7 +10,9 @@ export type ButtonBaseProps = {
   size?: "base" | "sm" | "lg" | "fab" | "icon";
   loading?: boolean;
   disabled?: boolean;
-  onClick?: (event: React.MouseEvent<HTMLElement, MouseEvent>) => void;
+  onClick?: (
+    event: React.MouseEvent<HTMLElement, MouseEvent> & React.MouseEvent<HTMLAnchorElement, MouseEvent>
+  ) => void;
   StartIcon?: SVGComponent | React.ComponentType<React.ComponentProps<"svg">>;
   startIconClassName?: string;
   EndIcon?: SVGComponent | React.ComponentType<React.ComponentProps<"svg">>;

@@ -1,5 +1,4 @@
 import { ChevronDownIcon } from "lucide-react";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,10 +50,11 @@ export const DropdownSelector = ({
           {!disabled && (
             <DropdownMenuPortal>
               <DropdownMenuContent
-                className="z-50 max-h-64 min-w-[220px] overflow-auto rounded-md bg-white text-sm text-slate-800 shadow-md"
+                className="z-50 max-h-64 min-w-[220px] max-w-[90%] overflow-auto rounded-md bg-white text-sm text-slate-800 shadow-md"
                 align="start">
-                {items &&
-                  items.map((item) => (
+                {items
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((item) => (
                     <DropdownMenuItem
                       key={item.id}
                       className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"

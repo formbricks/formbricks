@@ -2,7 +2,6 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -112,7 +111,7 @@ export const EditThankYouCard = ({
           <form>
             <QuestionFormInput
               id="headline"
-              label="Headline"
+              label="Note*"
               value={localSurvey?.thankYouCard?.headline}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
@@ -126,6 +125,7 @@ export const EditThankYouCard = ({
             <QuestionFormInput
               id="subheader"
               value={localSurvey.thankYouCard.subheader}
+              label={"Description"}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
               isInvalid={isInvalid}

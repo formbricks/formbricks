@@ -5,7 +5,6 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -14,13 +13,12 @@ import {
   TShuffleOption,
   TSurvey,
   TSurveyMultipleChoiceQuestion,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-
 import { SelectQuestionChoice } from "./SelectQuestionChoice";
 
 interface OpenQuestionFormProps {
@@ -187,6 +185,7 @@ export const MultipleChoiceQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
+        label={"Question*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -203,6 +202,7 @@ export const MultipleChoiceQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
+                label={"Description"}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -242,7 +242,7 @@ export const MultipleChoiceQuestionForm = ({
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="choices">Options</Label>
+        <Label htmlFor="choices">Options*</Label>
         <div className="mt-2" id="choices">
           <DndContext
             onDragEnd={(event) => {
@@ -307,13 +307,13 @@ export const MultipleChoiceQuestionForm = ({
               onClick={() => {
                 updateQuestion(questionIdx, {
                   type:
-                    question.type === TSurveyQuestionType.MultipleChoiceMulti
-                      ? TSurveyQuestionType.MultipleChoiceSingle
-                      : TSurveyQuestionType.MultipleChoiceMulti,
+                    question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
+                      ? TSurveyQuestionTypeEnum.MultipleChoiceSingle
+                      : TSurveyQuestionTypeEnum.MultipleChoiceMulti,
                 });
               }}>
-              Convert to {question.type === TSurveyQuestionType.MultipleChoiceSingle ? "Multiple" : "Single"}{" "}
-              Select
+              Convert to{" "}
+              {question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? "Multiple" : "Single"} Select
             </Button>
 
             <div className="flex flex-1 items-center justify-end gap-2">

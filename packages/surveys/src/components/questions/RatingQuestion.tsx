@@ -6,11 +6,9 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
-
 import {
   ConfusedFace,
   FrowningFace,
@@ -159,7 +157,7 @@ export const RatingQuestion = ({
                         className={cn(
                           number <= hoveredNumber || number <= (value as number)
                             ? "text-amber-400"
-                            : "text-input-bg-selected",
+                            : "text-[#8696AC]",
                           hoveredNumber === number ? "text-amber-400 " : "",
                           "relative flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none"
                         )}

@@ -1,13 +1,11 @@
 import { HashIcon, PlusIcon, SmileIcon, StarIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
-
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-
 import { Dropdown } from "./RatingTypeDropdown";
 
 interface RatingQuestionFormProps {
@@ -40,6 +38,7 @@ export const RatingQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
+        label={"Question*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -56,6 +55,7 @@ export const RatingQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
+                label={"Description"}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -134,6 +134,7 @@ export const RatingQuestionForm = ({
             id="lowerLabel"
             placeholder="Not good"
             value={question.lowerLabel}
+            label={"Lower Label"}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             isInvalid={isInvalid}
@@ -148,6 +149,7 @@ export const RatingQuestionForm = ({
             id="upperLabel"
             placeholder="Very satisfied"
             value={question.upperLabel}
+            label={"Upper Label"}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             isInvalid={isInvalid}
@@ -165,6 +167,7 @@ export const RatingQuestionForm = ({
             <QuestionFormInput
               id="buttonLabel"
               value={question.buttonLabel}
+              label={`"Next" Button Label`}
               localSurvey={localSurvey}
               questionIdx={questionIdx}
               placeholder={"skip"}

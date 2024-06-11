@@ -2,7 +2,6 @@
 
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
-
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys";
@@ -39,6 +38,7 @@ export const NPSQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
+        label={"Question*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -55,6 +55,7 @@ export const NPSQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
+                label={"Description"}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -98,6 +99,7 @@ export const NPSQuestionForm = ({
           <QuestionFormInput
             id="lowerLabel"
             value={question.lowerLabel}
+            label={"Lower Label"}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             isInvalid={isInvalid}
@@ -111,6 +113,7 @@ export const NPSQuestionForm = ({
           <QuestionFormInput
             id="upperLabel"
             value={question.upperLabel}
+            label={"Upper Label"}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             isInvalid={isInvalid}
@@ -127,6 +130,7 @@ export const NPSQuestionForm = ({
           <QuestionFormInput
             id="buttonLabel"
             value={question.buttonLabel}
+            label={`"Next" Button Label`}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             maxLength={48}

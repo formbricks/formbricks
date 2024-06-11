@@ -1,7 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
-// @ts-expect-error
 import { JSXInternal } from "preact/src/jsx";
-
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { TUploadFileConfig } from "@formbricks/types/storage";
@@ -101,6 +99,7 @@ export const FileInput = ({
   const handleDragOver = (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    // @ts-expect-error
     e.dataTransfer.dropEffect = "copy";
   };
 
@@ -108,6 +107,7 @@ export const FileInput = ({
     e.preventDefault();
     e.stopPropagation();
 
+    // @ts-expect-error
     handleFileSelection(e.dataTransfer.files);
   };
 

@@ -11,7 +11,6 @@ import { getNextQuestionIdByLogicJump, hasRequirementsSatisfied } from "@/lib/lo
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";
 import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
@@ -35,9 +34,9 @@ export const Survey = ({
   onFileUpload,
   responseCount,
   startAtQuestionId,
-  hiddenFieldsRecord,
   clickOutside,
   shouldResetQuestionId,
+  fullSizeCards = false,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
 
@@ -50,7 +49,6 @@ export const Survey = ({
       return survey?.questions[0]?.id;
     }
   });
-  // );
   const [showError, setShowError] = useState(false);
   // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
@@ -59,7 +57,7 @@ export const Survey = ({
 
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
-  const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
+  const [responseData, setResponseData] = useState<TResponseData>({});
   const [ttc, setTtc] = useState<TResponseTtc>({});
   const cardArrangement = useMemo(() => {
     if (survey.type === "link") {
@@ -272,7 +270,7 @@ export const Survey = ({
     };
 
     return (
-      <AutoCloseWrapper survey={survey} onClose={onClose}>
+      <AutoCloseWrapper survey={survey} onClose={onClose} offset={offset}>
         {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
         <div
           className={cn(
@@ -280,7 +278,9 @@ export const Survey = ({
             cardArrangement === "simple" ? "fb-survey-shadow" : "",
             offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
-          <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
+          <div
+            ref={contentRef}
+            className={cn(loadingElement ? "animate-pulse opacity-60" : "", fullSizeCards ? "" : "my-auto")}>
             {content()}
           </div>
           <div className="mx-6 mb-10 mt-2 space-y-3 md:mb-6 md:mt-6">
@@ -301,6 +301,7 @@ export const Survey = ({
       styling={styling}
       setQuestionId={setQuestionId}
       shouldResetQuestionId={shouldResetQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   );
 };

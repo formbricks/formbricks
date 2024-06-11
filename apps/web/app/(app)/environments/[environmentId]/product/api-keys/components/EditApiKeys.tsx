@@ -3,13 +3,11 @@
 import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-
-import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 import { timeSince } from "@formbricks/lib/time";
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TApiKey } from "@formbricks/types/apiKeys";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./AddApiKeyModal";
 

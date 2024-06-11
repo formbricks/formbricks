@@ -2,7 +2,6 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import toast from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -13,7 +12,6 @@ import {
   TSurveyMultipleChoiceQuestion,
 } from "@formbricks/types/surveys";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface ChoiceProps {
@@ -84,6 +82,7 @@ export const SelectQuestionChoice = ({
           key={choice.id}
           id={`choice-${choiceIdx}`}
           placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
+          label={""}
           localSurvey={localSurvey}
           questionIdx={questionIdx}
           value={choice.label}
@@ -110,6 +109,7 @@ export const SelectQuestionChoice = ({
             id="otherOptionPlaceholder"
             localSurvey={localSurvey}
             placeholder={"Please specify"}
+            label={""}
             questionIdx={questionIdx}
             value={
               question.otherOptionPlaceholder

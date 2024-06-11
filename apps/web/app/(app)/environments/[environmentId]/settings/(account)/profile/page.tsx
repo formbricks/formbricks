@@ -1,18 +1,16 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getUser } from "@formbricks/lib/user/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 import { SettingsId } from "@formbricks/ui/SettingsId";
-
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteAccount } from "./components/DeleteAccount";
-import { EditAvatar } from "./components/EditAvatar";
-import { EditName } from "./components/EditName";
+import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
+import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
 
 const Page = async ({ params }: { params: { environmentId: string } }) => {
   const { environmentId } = params;
@@ -30,12 +28,12 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       {user && (
         <div>
           <SettingsCard title="Personal information" description="Update your personal information.">
-            <EditName user={user} />
+            <EditProfileDetailsForm user={user} />
           </SettingsCard>
           <SettingsCard
             title="Avatar"
             description="Assist your organization in identifying you on Formbricks.">
-            <EditAvatar session={session} environmentId={environmentId} />
+            <EditProfileAvatarForm session={session} environmentId={environmentId} />
           </SettingsCard>
           {user.identityProvider === "email" && (
             <SettingsCard title="Security" description="Manage your password and other security settings.">

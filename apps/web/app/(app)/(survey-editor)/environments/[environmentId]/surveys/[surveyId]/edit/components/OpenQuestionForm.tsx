@@ -10,7 +10,6 @@ import {
   TrashIcon,
 } from "lucide-react";
 import { useState } from "react";
-
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
@@ -77,6 +76,7 @@ export const OpenQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        label={"Question*"}
       />
 
       <div>
@@ -93,6 +93,7 @@ export const OpenQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                label={"Description"}
               />
             </div>
 
@@ -137,6 +138,7 @@ export const OpenQuestionForm = ({
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
           attributeClasses={attributeClasses}
+          label={"Placeholder"}
         />
       </div>
 

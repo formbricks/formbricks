@@ -1,38 +1,19 @@
 "use client";
 
-import { getTSurveyQuestionTypeName } from "@/app/lib/questions";
+import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@/app/lib/questions";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import {
-  ArrowUpFromLineIcon,
-  CalendarDaysIcon,
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  Grid3X3Icon,
-  GripIcon,
-  HomeIcon,
-  ImageIcon,
-  ListIcon,
-  MessageSquareTextIcon,
-  MousePointerClickIcon,
-  PhoneIcon,
-  PresentationIcon,
-  Rows3Icon,
-  StarIcon,
-} from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
-import { TI18nString, TSurvey, TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TI18nString, TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
-
 import { AddressQuestionForm } from "./AddressQuestionForm";
 import { AdvancedSettings } from "./AdvancedSettings";
 import { CTAQuestionForm } from "./CTAQuestionForm";
@@ -45,7 +26,7 @@ import { MultipleChoiceQuestionForm } from "./MultipleChoiceQuestionForm";
 import { NPSQuestionForm } from "./NPSQuestionForm";
 import { OpenQuestionForm } from "./OpenQuestionForm";
 import { PictureSelectionForm } from "./PictureSelectionForm";
-import { QuestionDropdown } from "./QuestionMenu";
+import { QuestionMenu } from "./QuestionMenu";
 import { RatingQuestionForm } from "./RatingQuestionForm";
 
 interface QuestionCardProps {
@@ -64,6 +45,7 @@ interface QuestionCardProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  addQuestion: (question: any, index?: number) => void;
 }
 
 export const QuestionCard = ({
@@ -82,6 +64,7 @@ export const QuestionCard = ({
   setSelectedLanguageCode,
   isInvalid,
   attributeClasses,
+  addQuestion,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
@@ -154,7 +137,8 @@ export const QuestionCard = ({
         "flex flex-row rounded-lg bg-white transition-all duration-300 ease-in-out"
       )}
       ref={setNodeRef}
-      style={style}>
+      style={style}
+      id={question.id}>
       <div
         {...listeners}
         {...attributes}
@@ -186,33 +170,7 @@ export const QuestionCard = ({
           <div>
             <div className="inline-flex">
               <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
-                {question.type === TSurveyQuestionType.FileUpload ? (
-                  <ArrowUpFromLineIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.OpenText ? (
-                  <MessageSquareTextIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
-                  <Rows3Icon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
-                  <ListIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.NPS ? (
-                  <PresentationIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.CTA ? (
-                  <MousePointerClickIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Rating ? (
-                  <StarIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Consent ? (
-                  <CheckIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.PictureSelection ? (
-                  <ImageIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Date ? (
-                  <CalendarDaysIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Cal ? (
-                  <PhoneIcon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Matrix ? (
-                  <Grid3X3Icon className="h-5 w-5" />
-                ) : question.type === TSurveyQuestionType.Address ? (
-                  <HomeIcon className="h-5 w-5" />
-                ) : null}
+                {QUESTIONS_ICON_MAP[question.type]}
               </div>
               <div>
                 <p className="text-sm font-semibold">
@@ -232,7 +190,7 @@ export const QuestionCard = ({
                           attributeClasses
                         )[selectedLanguageCode] ?? ""
                       )
-                    : getTSurveyQuestionTypeName(question.type)}
+                    : getTSurveyQuestionTypeEnumName(question.type)}
                 </p>
                 {!open && question?.required && (
                   <p className="mt-1 truncate text-xs text-slate-500">{question?.required && "Required"}</p>
@@ -241,18 +199,22 @@ export const QuestionCard = ({
             </div>
 
             <div className="flex items-center space-x-2">
-              <QuestionDropdown
+              <QuestionMenu
                 questionIdx={questionIdx}
                 lastQuestion={lastQuestion}
                 duplicateQuestion={duplicateQuestion}
                 deleteQuestion={deleteQuestion}
                 moveQuestion={moveQuestion}
+                question={question}
+                product={product}
+                updateQuestion={updateQuestion}
+                addQuestion={addQuestion}
               />
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-4">
-          {question.type === TSurveyQuestionType.OpenText ? (
+          {question.type === TSurveyQuestionTypeEnum.OpenText ? (
             <OpenQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -264,7 +226,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
+          ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
             <MultipleChoiceQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -276,7 +238,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
+          ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
             <MultipleChoiceQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -288,7 +250,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.NPS ? (
+          ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
             <NPSQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -300,7 +262,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.CTA ? (
+          ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
             <CTAQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -312,7 +274,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.Rating ? (
+          ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
             <RatingQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -324,7 +286,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.Consent ? (
+          ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
             <ConsentQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -335,7 +297,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.Date ? (
+          ) : question.type === TSurveyQuestionTypeEnum.Date ? (
             <DateQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -347,7 +309,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.PictureSelection ? (
+          ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
             <PictureSelectionForm
               localSurvey={localSurvey}
               question={question}
@@ -359,7 +321,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.FileUpload ? (
+          ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
             <FileUploadQuestionForm
               localSurvey={localSurvey}
               product={product}
@@ -372,7 +334,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.Cal ? (
+          ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
             <CalQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -384,7 +346,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.Matrix ? (
+          ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
             <MatrixQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -396,7 +358,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.Address ? (
+          ) : question.type === TSurveyQuestionTypeEnum.Address ? (
             <AddressQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -421,14 +383,15 @@ export const QuestionCard = ({
               </Collapsible.CollapsibleTrigger>
 
               <Collapsible.CollapsibleContent className="space-y-4">
-                {question.type !== TSurveyQuestionType.NPS &&
-                question.type !== TSurveyQuestionType.Rating &&
-                question.type !== TSurveyQuestionType.CTA ? (
+                {question.type !== TSurveyQuestionTypeEnum.NPS &&
+                question.type !== TSurveyQuestionTypeEnum.Rating &&
+                question.type !== TSurveyQuestionTypeEnum.CTA ? (
                   <div className="mt-2 flex space-x-2">
                     <div className="w-full">
                       <QuestionFormInput
                         id="buttonLabel"
                         value={question.buttonLabel}
+                        label={`"Next" Button Label`}
                         localSurvey={localSurvey}
                         questionIdx={questionIdx}
                         maxLength={48}
@@ -454,6 +417,7 @@ export const QuestionCard = ({
                       <QuestionFormInput
                         id="backButtonLabel"
                         value={question.backButtonLabel}
+                        label={`"Back" Button Label`}
                         localSurvey={localSurvey}
                         questionIdx={questionIdx}
                         maxLength={48}
@@ -467,13 +431,14 @@ export const QuestionCard = ({
                     )}
                   </div>
                 ) : null}
-                {(question.type === TSurveyQuestionType.Rating ||
-                  question.type === TSurveyQuestionType.NPS) &&
+                {(question.type === TSurveyQuestionTypeEnum.Rating ||
+                  question.type === TSurveyQuestionTypeEnum.NPS) &&
                   questionIdx !== 0 && (
                     <div className="mt-4">
                       <QuestionFormInput
                         id="backButtonLabel"
                         value={question.backButtonLabel}
+                        label={`"Back" Button Label`}
                         localSurvey={localSurvey}
                         questionIdx={questionIdx}
                         maxLength={48}

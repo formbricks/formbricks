@@ -1,10 +1,10 @@
 import z from "zod";
-
 import { ZLegacySurvey } from "./LegacySurvey";
 import { ZActionClass } from "./actionClasses";
 import { ZAttributes } from "./attributes";
 import { ZPerson } from "./people";
 import { ZProduct } from "./product";
+import { ZResponseHiddenFieldValue } from "./responses";
 import { ZSurvey } from "./surveys";
 
 export const ZJsPerson = z.object({
@@ -252,3 +252,9 @@ export type TSettings = z.infer<typeof ZJsSettings>;
 export const ZJsPackageType = z.union([z.literal("app"), z.literal("website")]);
 
 export type TJsPackageType = z.infer<typeof ZJsPackageType>;
+
+export const ZJsTrackProperties = z.object({
+  hiddenFields: ZResponseHiddenFieldValue.optional(),
+});
+
+export type TJsTrackProperties = z.infer<typeof ZJsTrackProperties>;

@@ -2,7 +2,6 @@
 
 import { Variants, motion } from "framer-motion";
 import { useRef, useState } from "react";
-
 import type { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
@@ -137,7 +136,7 @@ export const ThemeStylingPreviewSurvey = ({
               : "expanded_with_fixed_positioning"
             : "shrink"
         }
-        className="relative flex h-[95] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+        className="relative flex h-[95%] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
         <div className="flex h-full w-5/6 flex-1 flex-col">
           <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
             <div className="ml-6 flex space-x-2">
@@ -184,7 +183,7 @@ export const ThemeStylingPreviewSurvey = ({
                 </div>
               )}
               <div
-                className={`${product.logo?.url && !product.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0  w-full max-w-md rounded-lg p-4`}>
+                className={`${product.logo?.url && !product.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0 w-full max-w-md rounded-lg p-4`}>
                 <SurveyInline
                   survey={{ ...survey, type: "link" }}
                   isBrandingEnabled={product.linkSurveyBranding}

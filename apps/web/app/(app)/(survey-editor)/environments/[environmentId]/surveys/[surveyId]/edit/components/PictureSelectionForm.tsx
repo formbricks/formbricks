@@ -1,7 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -42,6 +41,7 @@ export const PictureSelectionForm = ({
     <form>
       <QuestionFormInput
         id="headline"
+        label={"Question*"}
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -58,6 +58,7 @@ export const PictureSelectionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
+                label={"Description"}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}

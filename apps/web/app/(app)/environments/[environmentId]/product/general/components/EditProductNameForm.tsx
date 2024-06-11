@@ -4,12 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-
 import { TProduct, ZProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage, FormProvider } from "@formbricks/ui/Form";
+import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
-
 import { updateProductAction } from "../actions";
 
 type EditProductNameProps = {
@@ -85,7 +83,7 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
                   isInvalid={!!nameError}
                 />
               </FormControl>
-              <FormMessage />
+              <FormError />
             </FormItem>
           )}
         />

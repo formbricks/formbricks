@@ -11,7 +11,6 @@ import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
@@ -22,7 +21,7 @@ import {
   TIntegrationNotionConfigData,
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { DropdownSelector } from "@formbricks/ui/DropdownSelector";
 import { Label } from "@formbricks/ui/Label";
@@ -123,7 +122,7 @@ export const AddIntegrationModal = ({
       ? selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
           id: fId,
           name: fId,
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
         })) || []
       : [];
     return [...questions, ...hiddenFields];
@@ -263,11 +262,14 @@ export const AddIntegrationModal = ({
               </>
             );
           case ERRORS.MAPPING:
+            const question = questionTypes.find((qt) => qt.id === ques.type);
+            if (!question) return null;
             return (
               <>
-                - <i>&quot;{ques.name}&quot;</i> of type{" "}
-                <b>{questionTypes.find((qt) => qt.id === ques.type)?.label}</b> can&apos;t be mapped to the
-                column <i>&quot;{col.name}&quot;</i> of type <b>{col.type}</b>
+                - <i>&quot;{ques.name}&quot;</i> of type <b>{question.label}</b> can&apos;t be mapped to the
+                column <i>&quot;{col.name}&quot;</i> of type <b>{col.type}</b>. Instead use column of type{" "}
+                {""}
+                <b>{TYPE_MAPPING[question.id].join(" ,")}.</b>
               </>
             );
           default:

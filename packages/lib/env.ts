@@ -31,6 +31,8 @@ export const env = createEnv({
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
+    HTTP_PROXY: z.string().url().optional(),
+    HTTPS_PROXY: z.string().url().optional(),
     IMPRINT_URL: z
       .string()
       .url()
@@ -137,6 +139,8 @@ export const env = createEnv({
     GOOGLE_SHEETS_CLIENT_ID: process.env.GOOGLE_SHEETS_CLIENT_ID,
     GOOGLE_SHEETS_CLIENT_SECRET: process.env.GOOGLE_SHEETS_CLIENT_SECRET,
     GOOGLE_SHEETS_REDIRECT_URL: process.env.GOOGLE_SHEETS_REDIRECT_URL,
+    HTTP_PROXY: process.env.HTTP_PROXY,
+    HTTPS_PROXY: process.env.HTTPS_PROXY,
     IMPRINT_URL: process.env.IMPRINT_URL,
     INVITE_DISABLED: process.env.INVITE_DISABLED,
     IS_FORMBRICKS_CLOUD: process.env.IS_FORMBRICKS_CLOUD,
