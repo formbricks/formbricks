@@ -2,11 +2,10 @@
 
 import { Organization } from "@prisma/client";
 import { getServerSession } from "next-auth";
-
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { hasUserEnvironmentAccess, verifyUserRoleAccess } from "@formbricks/lib/environment/auth";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
@@ -82,6 +81,9 @@ export const createProductAction = async (environmentId: string, productName: st
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
   if (!organization) throw new ResourceNotFoundError("Organization from environment", environmentId);
+
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
+  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   const product = await createProduct(organization.id, {
     name: productName,

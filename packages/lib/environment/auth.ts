@@ -1,9 +1,10 @@
 import { Prisma } from "@prisma/client";
-
+import { getMembershipByUserIdOrganizationId } from "membership/service";
+import { getAccessFlags } from "membership/utils";
+import { getOrganizationByEnvironmentId } from "organization/service";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
-
 import { cache } from "../cache";
 import { organizationCache } from "../organization/cache";
 import { validateInputs } from "../utils/validate";
@@ -50,3 +51,34 @@ export const hasUserEnvironmentAccess = async (userId: string, environmentId: st
       tags: [organizationCache.tag.byEnvironmentId(environmentId), organizationCache.tag.byUserId(userId)],
     }
   )();
+
+export const verifyUserRoleAccess = async (
+  environmentId: string,
+  userId: string
+): Promise<{
+  hasCreateOrUpdateAccess: boolean;
+  hasDeleteAccess: boolean;
+}> => {
+  try {
+    const accessObject = {
+      hasCreateOrUpdateAccess: true,
+      hasDeleteAccess: true,
+    };
+
+    const organization = await getOrganizationByEnvironmentId(environmentId);
+    if (!organization) {
+      throw new Error("Organization not found");
+    }
+
+    const currentUserMembership = await getMembershipByUserIdOrganizationId(userId, organization.id);
+    const { isViewer } = getAccessFlags(currentUserMembership?.role);
+
+    if (isViewer) {
+      accessObject.hasCreateOrUpdateAccess = false;
+      accessObject.hasDeleteAccess = false;
+    }
+    return accessObject;
+  } catch (error) {
+    throw error;
+  }
+};

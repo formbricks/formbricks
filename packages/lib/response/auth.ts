@@ -1,7 +1,8 @@
 import "server-only";
-
+import { getMembershipByUserIdOrganizationId } from "membership/service";
+import { getAccessFlags } from "membership/utils";
+import { getOrganizationByEnvironmentId } from "organization/service";
 import { ZId } from "@formbricks/types/environment";
-
 import { cache } from "../cache";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getSurvey } from "../survey/service";
@@ -36,3 +37,30 @@ export const canUserAccessResponse = (userId: string, responseId: string): Promi
       tags: [responseCache.tag.byId(responseId)],
     }
   )();
+
+export const verifyUserRoleAccess = async (
+  environmentId: string,
+  userId: string
+): Promise<{
+  hasCreateOrUpdateAccess: boolean;
+  hasDeleteAccess: boolean;
+}> => {
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+  if (!organization) {
+    throw new Error("Organization not found");
+  }
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(userId, organization.id);
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+
+  if (isViewer) {
+    return {
+      hasCreateOrUpdateAccess: false,
+      hasDeleteAccess: false,
+    };
+  }
+
+  return {
+    hasCreateOrUpdateAccess: true,
+    hasDeleteAccess: true,
+  };
+};

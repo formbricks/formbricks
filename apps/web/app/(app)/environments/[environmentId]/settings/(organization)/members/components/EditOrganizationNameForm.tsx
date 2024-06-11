@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization, ZOrganization } from "@formbricks/types/organizations";
@@ -22,7 +21,11 @@ interface EditOrganizationNameProps {
 const ZEditOrganizationNameFormSchema = ZOrganization.pick({ name: true });
 type EditOrganizationNameForm = z.infer<typeof ZEditOrganizationNameFormSchema>;
 
-export const EditOrganizationNameForm = ({ organization, membershipRole }: EditOrganizationNameProps) => {
+export const EditOrganizationNameForm = ({
+  environmentId,
+  organization,
+  membershipRole,
+}: EditOrganizationNameProps) => {
   const form = useForm<EditOrganizationNameForm>({
     defaultValues: {
       name: organization.name,
@@ -38,7 +41,7 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
   const handleUpdateOrganizationName: SubmitHandler<EditOrganizationNameForm> = async (data) => {
     try {
       const name = data.name.trim();
-      const updatedOrg = await updateOrganizationNameAction(organization.id, name);
+      const updatedOrg = await updateOrganizationNameAction(environmentId, organization.id, name);
 
       toast.success("Organization name updated successfully.");
       form.reset({ name: updatedOrg.name });

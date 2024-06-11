@@ -5,7 +5,6 @@ import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 
 interface DeletePersonButtonProps {
@@ -23,7 +22,7 @@ export const DeletePersonButton = ({ environmentId, personId, isViewer }: Delete
   const handleDeletePerson = async () => {
     try {
       setIsDeletingPerson(true);
-      await deletePersonAction(personId);
+      await deletePersonAction(environmentId, personId);
       router.refresh();
       router.push(`/environments/${environmentId}/people`);
       toast.success("Person deleted successfully.");

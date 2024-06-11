@@ -2,7 +2,6 @@
 
 import { Prisma as prismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
-
 import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
@@ -59,6 +58,9 @@ export const copyToOtherEnvironmentAction = async (
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
+  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   const existingSurvey = await prisma.survey.findFirst({
     where: {
