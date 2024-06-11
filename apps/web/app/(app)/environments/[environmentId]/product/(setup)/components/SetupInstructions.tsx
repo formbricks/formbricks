@@ -45,10 +45,9 @@ export const SetupInstructions = ({
             <p className="pt-4 text-lg font-semibold text-slate-800">Step 2: Initialize widget</p>
             <p>Import Formbricks and initialize the widget in your Component (e.g. App.tsx):</p>
             <CodeBlock language="js">{`import formbricks from "@formbricks/js/${type}";
-
 if (typeof window !== "undefined") {
   formbricks.init({
-    environmentId: "${environmentId}",
+    environmentId: "${environmentId}", ${type === "app" ? `\n    userId: "<user-id>",` : ""}
     apiHost: "${webAppUrl}",
   });
 }`}</CodeBlock>
