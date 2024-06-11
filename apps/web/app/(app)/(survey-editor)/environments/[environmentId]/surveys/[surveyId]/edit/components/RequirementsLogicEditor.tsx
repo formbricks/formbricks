@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
@@ -17,7 +16,7 @@ import {
   TSurvey,
   TSurveyLogicCondition,
   TSurveyQuestion,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
   TSurveyRequirementsLogic,
 } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -95,7 +94,7 @@ export const RequirementsLogicItem = (props: RequirementsLogicItemProps) => {
       return Array.from({ length: sourceQuestion.range ? sourceQuestion.range : 0 }, (_, i) =>
         (i + 1).toString()
       );
-    } else if (sourceQuestion.type === TSurveyQuestionType.NPS) {
+    } else if (sourceQuestion.type === TSurveyQuestionTypeEnum.NPS) {
       return Array.from({ length: 11 }, (_, i) => (i + 0).toString());
     }
     return [];
