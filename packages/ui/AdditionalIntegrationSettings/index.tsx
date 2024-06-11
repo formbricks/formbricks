@@ -30,7 +30,7 @@ export const AdditionalIntegrationSettings = ({
                 setIncludeHiddenFields(!includeHiddenFields);
               }}
             />
-            <span className="ml-2 w-[30rem] truncate">Include hidden fields</span>
+            <span className="ml-2 w-[30rem] truncate">Include Hidden Fields</span>
           </label>
         </div>
         <div className="my-1 flex items-center space-x-2">
@@ -45,7 +45,7 @@ export const AdditionalIntegrationSettings = ({
                 setIncludeMetadata(!includeMetadata);
               }}
             />
-            <span className="ml-2 w-[30rem] truncate">Include Metadata</span>
+            <span className="ml-2 w-[30rem] truncate">Include Metadata (Browser, Country, etc.)</span>
           </label>
         </div>
       </div>

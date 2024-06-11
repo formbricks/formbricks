@@ -56,7 +56,6 @@ export const writeData = async (
       }),
     });
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };
