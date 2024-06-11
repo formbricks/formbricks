@@ -37,6 +37,7 @@ export const Survey = ({
   startAtQuestionId,
   clickOutside,
   shouldResetQuestionId,
+  fullSizeCards = false,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
 
@@ -312,7 +313,9 @@ export const Survey = ({
             cardArrangement === "simple" ? "fb-survey-shadow" : "",
             offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
-          <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
+          <div
+            ref={contentRef}
+            className={cn(loadingElement ? "animate-pulse opacity-60" : "", fullSizeCards ? "" : "my-auto")}>
             {content()}
           </div>
           <div className="mx-6 mb-10 mt-2 space-y-3 md:mb-6 md:mt-6">
@@ -333,6 +336,7 @@ export const Survey = ({
       styling={styling}
       setQuestionId={setQuestionId}
       shouldResetQuestionId={shouldResetQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   );
 };

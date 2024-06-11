@@ -4,7 +4,6 @@ import { ChevronDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import type { TMembershipRole } from "@formbricks/types/memberships";
 import { Badge } from "@formbricks/ui/Badge";
@@ -16,7 +15,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-
 import { transferOwnershipAction, updateInviteAction, updateMembershipAction } from "../lib/actions";
 import { TransferOwnershipModal } from "./transfer-ownership-modal";
 

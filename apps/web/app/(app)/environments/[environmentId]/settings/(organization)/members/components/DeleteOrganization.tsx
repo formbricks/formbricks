@@ -2,7 +2,7 @@
 
 import { deleteOrganizationAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/members/actions";
 import { useRouter } from "next/navigation";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { TOrganization } from "@formbricks/types/organizations";
@@ -14,6 +14,7 @@ type DeleteOrganizationProps = {
   organization: TOrganization;
   isDeleteDisabled?: boolean;
   isUserOwner?: boolean;
+  isMultiOrgEnabled: boolean;
 };
 
 export const DeleteOrganization = ({
@@ -41,6 +42,13 @@ export const DeleteOrganization = ({
     setIsDeleting(false);
   };
 
+  const deleteDisabledWarning = useMemo(() => {
+    if (isUserOwner)
+      return "This is your only organization, it cannot be deleted. Create a new organization first.";
+
+    return "Only Owner can delete the organization.";
+  }, [isUserOwner]);
+
   return (
     <div>
       {!isDeleteDisabled && (
@@ -58,13 +66,7 @@ export const DeleteOrganization = ({
           </Button>
         </div>
       )}
-      {isDeleteDisabled && (
-        <p className="text-sm text-red-700">
-          {!isUserOwner
-            ? "Only Owner can delete the organization."
-            : "This is your only organization, it cannot be deleted. Create a new organization first."}
-        </p>
-      )}
+      {isDeleteDisabled && <p className="text-sm text-red-700">{deleteDisabledWarning}</p>}
       <DeleteOrganizationModal
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}

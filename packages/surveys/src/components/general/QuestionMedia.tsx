@@ -1,6 +1,5 @@
 import { LoadingSpinner } from "@/components/general/LoadingSpinner";
 import { useState } from "preact/hooks";
-
 import {
   checkForLoomUrl,
   checkForVimeoUrl,

@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import type { TActionClass } from "@formbricks/types/actionClasses";
@@ -24,7 +23,6 @@ import { LoadSegmentModal } from "@formbricks/ui/LoadSegmentModal";
 import { SaveAsNewSegmentModal } from "@formbricks/ui/SaveAsNewSegmentModal";
 import { SegmentTitle } from "@formbricks/ui/SegmentTitle";
 import { TargetingIndicator } from "@formbricks/ui/TargetingIndicator";
-
 import {
   cloneSegmentAction,
   createSegmentAction,
@@ -32,7 +30,6 @@ import {
   resetSegmentFiltersAction,
   updateSegmentAction,
 } from "../lib/actions";
-import { ACTIONS_TO_EXCLUDE } from "../lib/constants";
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentEditor } from "./segment-editor";
 
@@ -50,7 +47,7 @@ export function AdvancedTargetingCard({
   localSurvey,
   setLocalSurvey,
   environmentId,
-  actionClasses: actionClassesProps,
+  actionClasses,
   attributeClasses,
   segments,
   initialSegment,
@@ -65,18 +62,6 @@ export function AdvancedTargetingCard({
   const [loadSegmentModalOpen, setLoadSegmentModalOpen] = useState(false);
   const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(Boolean(localSurvey.segment?.isPrivate));
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(true);
-
-  const actionClasses = actionClassesProps.filter((actionClass) => {
-    if (actionClass.type === "automatic") {
-      if (ACTIONS_TO_EXCLUDE.includes(actionClass.name)) {
-        return false;
-      }
-
-      return true;
-    }
-
-    return true;
-  });
 
   useEffect(() => {
     setLocalSurvey((localSurveyOld) => ({

@@ -2,6 +2,7 @@
 
 import { getServerSession } from "next-auth";
 
+import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { sendInviteMemberEmail } from "@formbricks/email";
 import { hasOrganizationAuthority } from "@formbricks/lib/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -15,7 +16,12 @@ import {
 } from "@formbricks/lib/membership/service";
 import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
 import { deleteOrganization, updateOrganization } from "@formbricks/lib/organization/service";
-import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  OperationNotAllowedError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
 
 export const updateOrganizationNameAction = async (organizationId: string, organizationName: string) => {
@@ -171,7 +177,6 @@ export const inviteUserAction = async (
 
   const invite = await inviteUser({
     organizationId,
-    currentUser: { id: session.user.id, name: session.user.name },
     invitee: {
       email,
       name,
@@ -187,6 +192,8 @@ export const inviteUserAction = async (
 };
 
 export const deleteOrganizationAction = async (organizationId: string) => {
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  if (!isMultiOrgEnabled) throw new OperationNotAllowedError("Organization deletion disabled");
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new AuthenticationError("Not authenticated");

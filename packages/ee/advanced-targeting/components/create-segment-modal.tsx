@@ -4,7 +4,6 @@ import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import type { TActionClass } from "@formbricks/types/actionClasses";
 import type { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -13,7 +12,6 @@ import { ZSegmentFilters } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
-
 import { createSegmentAction } from "../lib/actions";
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentEditor } from "./segment-editor";

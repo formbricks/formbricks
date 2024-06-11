@@ -21,8 +21,7 @@
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
-    "post-install": "pnpm generate",
-    "predev": "pnpm generate",
+    "build": "pnpm generate",
     "data-migration:v1.6": "ts-node ./data-migrations/20240207041922_advanced_targeting/data-migration.ts",
     "data-migration:styling": "ts-node ./data-migrations/20240320090315_add_form_styling/data-migration.ts",
     "data-migration:styling-fix": "ts-node ./data-migrations/20240320090315_add_form_styling/data-migration-fix.ts",
@@ -33,7 +32,8 @@
     "data-migration:userId": "ts-node ./data-migrations/20240408123456_userid_migration/data-migration.ts",
     "data-migration:refactor-actions": "ts-node ./data-migrations/20240501111944_refactors_actions_and_removes_inline_triggers/data-migration.ts",
     "data-migration:mls-welcomeCard-fix": "ts-node ./data-migrations/20240318050527_add_languages_and_survey_languages/data-migration-welcomeCard-fix.ts",
-    "data-migration:v2.0": "pnpm data-migration:mls && pnpm data-migration:styling && pnpm data-migration:styling-fix && pnpm data-migration:website-surveys && pnpm data-migration:userId && pnpm data-migration:mls-welcomeCard-fix && pnpm data-migration:refactor-actions"
+    "data-migration:v2.0": "pnpm data-migration:mls && pnpm data-migration:styling && pnpm data-migration:styling-fix && pnpm data-migration:website-surveys && pnpm data-migration:userId && pnpm data-migration:mls-welcomeCard-fix && pnpm data-migration:refactor-actions",
+    "data-migration:extended-noCodeActions": "ts-node ./data-migrations/20240524053239_extends_no_code_action_schema/data-migration.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
