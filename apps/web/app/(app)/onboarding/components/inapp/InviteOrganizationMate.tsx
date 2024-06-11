@@ -4,11 +4,10 @@ import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTit
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-
+import { isValidEmail } from "@formbricks/lib/utils/email";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-
 import { finishOnboardingAction, inviteOrganizationMemberAction } from "../../actions";
 
 interface InviteOrganizationMemberProps {
@@ -20,11 +19,6 @@ interface InviteOrganizationMemberProps {
 const DEFAULT_INVITE_MESSAGE =
   "I'm looking into Formbricks to run targeted surveys. Can you help me set it up? 🙏";
 const INITIAL_FORM_STATE = { email: "", inviteMessage: DEFAULT_INVITE_MESSAGE };
-
-const isValidEmail = (email) => {
-  const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-  return regex.test(email);
-};
 
 const InviteMessageInput = ({ value, onChange }) => {
   return (

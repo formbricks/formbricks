@@ -1,23 +1,21 @@
 import {
-  addExitIntentListener,
-  addScrollDepthListener,
-  removeExitIntentListener,
-  removeScrollDepthListener,
-} from "../../shared/automaticActions";
-import {
   addClickEventListener,
+  addExitIntentListener,
   addPageUrlEventListeners,
+  addScrollDepthListener,
   removeClickEventListener,
+  removeExitIntentListener,
   removePageUrlEventListeners,
-} from "./noCodeActions";
+  removeScrollDepthListener,
+} from "../../shared/noCodeActions";
 import { addExpiryCheckListener, removeExpiryCheckListener } from "./sync";
 
 let areRemoveEventListenersAdded = false;
 
 export const addEventListeners = (): void => {
   addExpiryCheckListener();
-  addPageUrlEventListeners();
-  addClickEventListener();
+  addPageUrlEventListeners("website");
+  addClickEventListener("website");
   addExitIntentListener("website");
   addScrollDepthListener("website");
 };
@@ -26,8 +24,8 @@ export const addCleanupEventListeners = (): void => {
   if (areRemoveEventListenersAdded) return;
   window.addEventListener("beforeunload", () => {
     removeExpiryCheckListener();
-    removePageUrlEventListeners();
-    removeClickEventListener();
+    removePageUrlEventListeners("website");
+    removeClickEventListener("website");
     removeExitIntentListener("website");
     removeScrollDepthListener("website");
   });
@@ -38,8 +36,8 @@ export const removeCleanupEventListeners = (): void => {
   if (!areRemoveEventListenersAdded) return;
   window.removeEventListener("beforeunload", () => {
     removeExpiryCheckListener();
-    removePageUrlEventListeners();
-    removeClickEventListener();
+    removePageUrlEventListeners("website");
+    removeClickEventListener("website");
     removeExitIntentListener("website");
     removeScrollDepthListener("website");
   });
@@ -48,8 +46,8 @@ export const removeCleanupEventListeners = (): void => {
 
 export const removeAllEventListeners = (): void => {
   removeExpiryCheckListener();
-  removePageUrlEventListeners();
-  removeClickEventListener();
+  removePageUrlEventListeners("website");
+  removeClickEventListener("website");
   removeExitIntentListener("website");
   removeScrollDepthListener("website");
   removeCleanupEventListeners();

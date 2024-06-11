@@ -1,16 +1,14 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import {
   getActionCountInLast7Days,
   getActionCountInLast24Hours,
   getActionCountInLastHour,
 } from "@formbricks/lib/action/service";
 import { canUserUpdateActionClass, verifyUserRoleAccess } from "@formbricks/lib/actionClass/auth";
-import { createActionClass, deleteActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
+import { deleteActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getSurveysByActionClassId } from "@formbricks/lib/survey/service";
 import { TActionClassInput } from "@formbricks/types/actionClasses";
@@ -56,16 +54,6 @@ export const updateActionClassAction = async (
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await updateActionClass(environmentId, actionClassId, updatedAction);
-};
-
-export const createActionClassAction = async (action: TActionClassInput) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, action.environmentId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  return await createActionClass(action.environmentId, action);
 };
 
 export const getActionCountInLastHourAction = async (actionClassId: string, environmentId: string) => {

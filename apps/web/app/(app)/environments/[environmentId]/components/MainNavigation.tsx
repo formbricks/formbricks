@@ -26,7 +26,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter, truncate } from "@formbricks/lib/utils/strings";
@@ -50,7 +49,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-
 import { AddProductModal } from "./AddProductModal";
 
 interface NavigationProps {
@@ -61,6 +59,7 @@ interface NavigationProps {
   products: TProduct[];
   isFormbricksCloud: boolean;
   membershipRole?: TMembershipRole;
+  isMultiOrgEnabled: boolean;
 }
 
 export const MainNavigation = ({
@@ -71,6 +70,7 @@ export const MainNavigation = ({
   products,
   isFormbricksCloud,
   membershipRole,
+  isMultiOrgEnabled,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -414,42 +414,46 @@ export const MainNavigation = ({
 
                   {/* Organization Switch */}
 
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="rounded-lg">
-                      <div>
-                        <p>{currentOrganizationName}</p>
-                        <p className="block text-xs text-slate-500">Switch organization</p>
-                      </div>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent
-                        className="rounded-xl border border-slate-200 shadow-sm"
-                        sideOffset={10}
-                        alignOffset={5}>
-                        <DropdownMenuRadioGroup
-                          value={currentOrganizationId}
-                          onValueChange={(organizationId) =>
-                            handleEnvironmentChangeByOrganization(organizationId)
-                          }>
-                          {sortedOrganizations.map((organization) => (
-                            <DropdownMenuRadioItem
-                              value={organization.id}
-                              className="cursor-pointer rounded-lg"
-                              key={organization.id}>
-                              {organization.name}
-                            </DropdownMenuRadioItem>
-                          ))}
-                        </DropdownMenuRadioGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => setShowCreateOrganizationModal(true)}
-                          className="rounded-lg">
-                          <PlusIcon className="mr-2 h-4 w-4" />
-                          <span>Create new organization</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
+                  {(isMultiOrgEnabled || organizations.length > 1) && (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="rounded-lg">
+                        <div>
+                          <p>{currentOrganizationName}</p>
+                          <p className="block text-xs text-slate-500">Switch organization</p>
+                        </div>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent
+                          className="rounded-xl border border-slate-200 shadow-sm"
+                          sideOffset={10}
+                          alignOffset={5}>
+                          <DropdownMenuRadioGroup
+                            value={currentOrganizationId}
+                            onValueChange={(organizationId) =>
+                              handleEnvironmentChangeByOrganization(organizationId)
+                            }>
+                            {sortedOrganizations.map((organization) => (
+                              <DropdownMenuRadioItem
+                                value={organization.id}
+                                className="cursor-pointer rounded-lg"
+                                key={organization.id}>
+                                {organization.name}
+                              </DropdownMenuRadioItem>
+                            ))}
+                          </DropdownMenuRadioGroup>
+                          <DropdownMenuSeparator />
+                          {isMultiOrgEnabled && (
+                            <DropdownMenuItem
+                              onClick={() => setShowCreateOrganizationModal(true)}
+                              className="rounded-lg">
+                              <PlusIcon className="mr-2 h-4 w-4" />
+                              <span>Create new organization</span>
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

@@ -2,7 +2,7 @@ import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
 import { Testimonial } from "@/app/(auth)/auth/components/Testimonial";
 import { SigninForm } from "@/app/(auth)/auth/login/components/SigninForm";
 import { Metadata } from "next";
-
+import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,
@@ -19,7 +19,8 @@ export const metadata: Metadata = {
   description: "Open-source Experience Management. Free & open source.",
 };
 
-const Page = () => {
+const Page = async () => {
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">
@@ -36,6 +37,7 @@ const Page = () => {
             azureOAuthEnabled={AZURE_OAUTH_ENABLED}
             oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
             oidcDisplayName={OIDC_DISPLAY_NAME}
+            isMultiOrgEnabled={isMultiOrgEnabled}
           />
         </FormWrapper>
       </div>

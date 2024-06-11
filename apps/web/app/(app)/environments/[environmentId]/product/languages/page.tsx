@@ -1,7 +1,6 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { notFound } from "next/navigation";
-
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { EditLanguage } from "@formbricks/ee/multi-language/components/edit-language";
 import { getOrganization } from "@formbricks/lib/organization/service";

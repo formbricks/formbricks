@@ -6,7 +6,6 @@ import Link from "next/link";
 import type { FC } from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { extractLanguageCodes, translateSurvey } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
@@ -17,7 +16,6 @@ import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
-
 import { DefaultLanguageSelect } from "./default-language-select";
 import { SecondaryLanguageSelect } from "./secondary-language-select";
 
