@@ -61,13 +61,14 @@ export const deleteTagOnResponseAction = async (responseId: string, tagId: strin
   return await deleteTagOnResponse(responseId, tagId);
 };
 
-export const deleteResponseAction = async (environmentId: string, responseId: string) => {
+export const deleteResponseAction = async (responseId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
+
   const isAuthorized = await canUserAccessResponse(session.user!.id, responseId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const { hasDeleteAccess } = await verifyUserRoleAccessToResponse(environmentId, session.user.id);
+  const { hasDeleteAccess } = await verifyUserRoleAccessToResponse(responseId, session.user.id);
   if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
 
   return await deleteResponse(responseId);

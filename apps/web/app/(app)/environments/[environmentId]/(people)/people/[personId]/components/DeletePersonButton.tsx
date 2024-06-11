@@ -22,7 +22,7 @@ export const DeletePersonButton = ({ environmentId, personId, isViewer }: Delete
   const handleDeletePerson = async () => {
     try {
       setIsDeletingPerson(true);
-      await deletePersonAction(environmentId, personId);
+      await deletePersonAction(personId);
       router.refresh();
       router.push(`/environments/${environmentId}/people`);
       toast.success("Person deleted successfully.");

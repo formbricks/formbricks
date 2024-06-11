@@ -6,14 +6,14 @@ import { canUserAccessPerson, verifyUserRoleAccess } from "@formbricks/lib/perso
 import { deletePerson } from "@formbricks/lib/person/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 
-export const deletePersonAction = async (environmentId: string, personId: string) => {
+export const deletePersonAction = async (personId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessPerson(session.user.id, personId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const { hasDeleteAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
+  const { hasDeleteAccess } = await verifyUserRoleAccess(personId, session.user.id);
   if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
 
   await deletePerson(personId);

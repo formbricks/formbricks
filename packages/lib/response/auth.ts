@@ -39,16 +39,27 @@ export const canUserAccessResponse = (userId: string, responseId: string): Promi
   )();
 
 export const verifyUserRoleAccess = async (
-  environmentId: string,
+  responseId: string,
   userId: string
 ): Promise<{
   hasCreateOrUpdateAccess: boolean;
   hasDeleteAccess: boolean;
 }> => {
-  const organization = await getOrganizationByEnvironmentId(environmentId);
+  const response = await getResponse(responseId);
+  if (!response) {
+    throw new Error("Response not found");
+  }
+
+  const survey = await getSurvey(response.surveyId);
+  if (!survey) {
+    throw new Error("Survey not found");
+  }
+
+  const organization = await getOrganizationByEnvironmentId(survey.environmentId);
   if (!organization) {
     throw new Error("Organization not found");
   }
+
   const currentUserMembership = await getMembershipByUserIdOrganizationId(userId, organization.id);
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
 

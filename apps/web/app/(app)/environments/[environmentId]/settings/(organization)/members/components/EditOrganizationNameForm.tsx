@@ -21,11 +21,7 @@ interface EditOrganizationNameProps {
 const ZEditOrganizationNameFormSchema = ZOrganization.pick({ name: true });
 type EditOrganizationNameForm = z.infer<typeof ZEditOrganizationNameFormSchema>;
 
-export const EditOrganizationNameForm = ({
-  environmentId,
-  organization,
-  membershipRole,
-}: EditOrganizationNameProps) => {
+export const EditOrganizationNameForm = ({ organization, membershipRole }: EditOrganizationNameProps) => {
   const form = useForm<EditOrganizationNameForm>({
     defaultValues: {
       name: organization.name,
@@ -41,7 +37,7 @@ export const EditOrganizationNameForm = ({
   const handleUpdateOrganizationName: SubmitHandler<EditOrganizationNameForm> = async (data) => {
     try {
       const name = data.name.trim();
-      const updatedOrg = await updateOrganizationNameAction(environmentId, organization.id, name);
+      const updatedOrg = await updateOrganizationNameAction(organization.id, name);
 
       toast.success("Organization name updated successfully.");
       form.reset({ name: updatedOrg.name });

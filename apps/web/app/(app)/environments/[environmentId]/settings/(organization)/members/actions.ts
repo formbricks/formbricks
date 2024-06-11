@@ -23,11 +23,7 @@ import {
 } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
 
-export const updateOrganizationNameAction = async (
-  environmentId: string,
-  organizationId: string,
-  organizationName: string
-) => {
+export const updateOrganizationNameAction = async (organizationId: string, organizationName: string) => {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new AuthenticationError("Not authenticated");
@@ -38,7 +34,7 @@ export const updateOrganizationNameAction = async (
     throw new AuthenticationError("Not authorized");
   }
 
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(organizationId, session.user.id);
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await updateOrganization(organizationId, { name: organizationName });

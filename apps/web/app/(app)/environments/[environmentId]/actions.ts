@@ -82,7 +82,7 @@ export const createProductAction = async (environmentId: string, productName: st
   const organization = await getOrganizationByEnvironmentId(environmentId);
   if (!organization) throw new ResourceNotFoundError("Organization from environment", environmentId);
 
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(organization.id, session.user.id);
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   const product = await createProduct(organization.id, {

@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { getMembershipByUserIdOrganizationId } from "membership/service";
 import { getAccessFlags } from "membership/utils";
-import { getOrganizationByEnvironmentId } from "organization/service";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -53,7 +52,7 @@ export const hasUserEnvironmentAccess = async (userId: string, environmentId: st
   )();
 
 export const verifyUserRoleAccess = async (
-  environmentId: string,
+  organizationId: string,
   userId: string
 ): Promise<{
   hasCreateOrUpdateAccess: boolean;
@@ -65,12 +64,7 @@ export const verifyUserRoleAccess = async (
       hasDeleteAccess: true,
     };
 
-    const organization = await getOrganizationByEnvironmentId(environmentId);
-    if (!organization) {
-      throw new Error("Organization not found");
-    }
-
-    const currentUserMembership = await getMembershipByUserIdOrganizationId(userId, organization.id);
+    const currentUserMembership = await getMembershipByUserIdOrganizationId(userId, organizationId);
     const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
     if (isViewer) {
