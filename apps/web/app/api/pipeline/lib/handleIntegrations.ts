@@ -33,7 +33,7 @@ const processDataForIntegration = async (
   includeMetadata: boolean,
   includeHiddenFields: boolean,
   questionIds: string[]
-) => {
+): Promise<string[][]> => {
   const ids =
     includeHiddenFields && survey.hiddenFields.fieldIds
       ? [...questionIds, ...survey.hiddenFields.fieldIds]
