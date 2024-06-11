@@ -2,7 +2,7 @@
 
 import { Organization } from "@prisma/client";
 import { getServerSession } from "next-auth";
-
+import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
@@ -11,7 +11,12 @@ import { createOrganization, getOrganizationByEnvironmentId } from "@formbricks/
 import { createProduct } from "@formbricks/lib/product/service";
 import { createShortUrl } from "@formbricks/lib/shortUrl/service";
 import { updateUser } from "@formbricks/lib/user/service";
-import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 
 export const createShortUrlAction = async (url: string) => {
   const session = await getServerSession(authOptions);
@@ -28,6 +33,11 @@ export const createShortUrlAction = async (url: string) => {
 };
 
 export const createOrganizationAction = async (organizationName: string): Promise<Organization> => {
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  if (!isMultiOrgEnabled)
+    throw new OperationNotAllowedError(
+      "Creating Multiple organization is restricted on your instance of Formbricks"
+    );
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 

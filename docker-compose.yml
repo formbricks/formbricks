@@ -9,6 +9,7 @@ x-redis-url: &redis_url
   # @see: https://next-auth.js.org/configuration/options#nextauth_secret
   # You can use: `openssl rand -hex 32` to generate one
 
+
 x-nextauth-secret: &nextauth_secret
   # Set this to your public-facing URL, e.g., https://example.com
   # You do not need the NEXTAUTH_URL environment variable in Vercel.
@@ -39,7 +40,7 @@ x-email-verification-disabled: &email_verification_disabled 1
 x-password-reset-disabled: &password_reset_disabled 1
 
 # Signup. Disable the ability for new users to create an account.
-x-signup-disabled: &signup_disabled 0
+x-signup-disabled: &signup_disabled 1
 
 # Email login. Disable the ability for users to login with email.
 x-auth-disabled: &email_auth_disabled 0

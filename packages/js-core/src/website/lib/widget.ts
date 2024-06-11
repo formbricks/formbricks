@@ -5,7 +5,6 @@ import { getStyling } from "@formbricks/lib/utils/styling";
 import { TJSWebsiteStateDisplay, TJsTrackProperties } from "@formbricks/types/js";
 import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
-
 import { Logger } from "../../shared/logger";
 import { getDefaultLanguageCode, getLanguageCode, handleHiddenFields } from "../../shared/utils";
 import { WebsiteConfig } from "./config";
@@ -25,7 +24,7 @@ export const setIsSurveyRunning = (value: boolean) => {
 };
 
 const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
-  const randomNum = Math.floor(Math.random() * 100) + 1;
+  const randomNum = Math.floor(Math.random() * 10000) / 100;
   return randomNum <= displayPercentage;
 };
 

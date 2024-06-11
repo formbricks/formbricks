@@ -1,6 +1,6 @@
 import { render } from "@react-email/render";
 import nodemailer from "nodemailer";
-
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import {
   DEBUG,
   MAIL_FROM,
@@ -13,27 +13,25 @@ import {
 } from "@formbricks/lib/constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
-import { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
+import type { TResponse } from "@formbricks/types/responses";
+import type { TSurvey } from "@formbricks/types/surveys";
+import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
+import { ForgotPasswordEmail } from "./components/auth/forgot-password-email";
+import { PasswordResetNotifyEmail } from "./components/auth/password-reset-notify-email";
+import { VerificationEmail } from "./components/auth/verification-email";
+import { EmailTemplate } from "./components/general/email-template";
+import { InviteAcceptedEmail } from "./components/invite/invite-accepted-email";
+import { InviteEmail } from "./components/invite/invite-email";
+import { OnboardingInviteEmail } from "./components/invite/onboarding-invite-email";
+import { EmbedSurveyPreviewEmail } from "./components/survey/embed-survey-preview-email";
+import { LinkSurveyEmail } from "./components/survey/link-survey-email";
+import { ResponseFinishedEmail } from "./components/survey/response-finished-email";
+import { NoLiveSurveyNotificationEmail } from "./components/weekly-summary/no-live-survey-notification-email";
+import { WeeklySummaryNotificationEmail } from "./components/weekly-summary/weekly-summary-notification-email";
 
-import { ForgotPasswordEmail } from "./components/auth/ForgotPasswordEmail";
-import { PasswordResetNotifyEmail } from "./components/auth/PasswordResetNotifyEmail";
-import { VerificationEmail } from "./components/auth/VerificationEmail";
-import { EmailTemplate } from "./components/general/EmailTemplate";
-import { InviteAcceptedEmail } from "./components/invite/InviteAcceptedEmail";
-import { InviteEmail } from "./components/invite/InviteEmail";
-import { OnboardingInviteEmail } from "./components/invite/OnboardingInviteEmail";
-import { EmbedSurveyPreviewEmail } from "./components/survey/EmbedSurveyPreviewEmail";
-import { LinkSurveyEmail } from "./components/survey/LinkSurveyEmail";
-import { ResponseFinishedEmail } from "./components/survey/ResponseFinishedEmail";
-import { NoLiveSurveyNotificationEmail } from "./components/weekly-summary/NoLiveSurveyNotificationEmail";
-import { WeeklySummaryNotificationEmail } from "./components/weekly-summary/WeeklySummaryNotificationEmail";
+export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
 
-export const IS_SMTP_CONFIGURED: boolean =
-  SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASSWORD ? true : false;
-
-interface sendEmailData {
+interface SendEmailDataProps {
   to: string;
   replyTo?: string;
   subject: string;
@@ -65,29 +63,26 @@ const getEmailSubject = (productName: string): string => {
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-export const sendEmail = async (emailData: sendEmailData) => {
-  try {
-    if (IS_SMTP_CONFIGURED) {
-      let transporter = nodemailer.createTransport({
-        host: SMTP_HOST,
-        port: SMTP_PORT,
-        secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
-        auth: {
-          user: SMTP_USER,
-          pass: SMTP_PASSWORD,
-        },
-        logger: DEBUG,
-        debug: DEBUG,
-      });
-      const emailDefaults = {
-        from: `Formbricks <${MAIL_FROM || "noreply@formbricks.com"}>`,
-      };
-      await transporter.sendMail({ ...emailDefaults, ...emailData });
-    } else {
-      console.error(`Could not Email :: SMTP not configured :: ${emailData.subject}`);
-    }
-  } catch (error) {
-    throw error;
+export const sendEmail = async (emailData: SendEmailDataProps) => {
+  if (IS_SMTP_CONFIGURED) {
+    const transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASSWORD,
+      },
+      logger: DEBUG,
+      debug: DEBUG,
+    } as SMTPTransport.Options);
+    const emailDefaults = {
+      from: `Formbricks <${MAIL_FROM || "noreply@formbricks.com"}>`,
+    };
+    await transporter.sendMail({ ...emailDefaults, ...emailData });
+  } else {
+    // eslint-disable-next-line no-console -- necessary for logging email configuration errors
+    console.error(`Could not Email :: SMTP not configured :: ${emailData.subject}`);
   }
 };
 
@@ -203,8 +198,8 @@ export const sendEmbedSurveyPreviewEmail = async (
   environmentId: string
 ) => {
   await sendEmail({
-    to: to,
-    subject: subject,
+    to,
+    subject,
     html: render(EmailTemplate({ content: EmbedSurveyPreviewEmail({ html, environmentId }) })),
   });
 };
@@ -213,7 +208,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) =
   const surveyId = data.surveyId;
   const email = data.email;
   const surveyData = data.surveyData;
-  const singleUseId = data.suId ?? null;
+  const singleUseId = data.suId;
   const token = createTokenForLinkSurvey(surveyId, email);
   const getSurveyLink = () => {
     if (singleUseId) {

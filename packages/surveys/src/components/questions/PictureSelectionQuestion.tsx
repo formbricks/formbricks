@@ -7,7 +7,6 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
@@ -132,7 +131,6 @@ export const PictureSelectionQuestion = ({
                         : "",
                       "focus:border-brand group/image rounded-custom relative inline-block h-28 w-full cursor-pointer overflow-hidden border focus:border-4 focus:outline-none"
                     )}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={choice.imageUrl}
                       id={choice.id}

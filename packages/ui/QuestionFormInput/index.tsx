@@ -4,7 +4,6 @@ import { PencilIcon } from "lucide-react";
 import { ImagePlusIcon } from "lucide-react";
 import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { extractLanguageCodes, getEnabledLanguages, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useSyncScroll } from "@formbricks/lib/utils/hooks/useSyncScroll";
@@ -26,8 +25,7 @@ import {
   TSurveyQuestion,
   TSurveyRecallItem,
 } from "@formbricks/types/surveys";
-
-import { LanguageIndicator } from "../../ee/multiLanguage/components/LanguageIndicator";
+import { LanguageIndicator } from "../../ee/multi-language/components/language-indicator";
 import { createI18nString } from "../../lib/i18n/utils";
 import { FileInput } from "../FileInput";
 import { Input } from "../Input";

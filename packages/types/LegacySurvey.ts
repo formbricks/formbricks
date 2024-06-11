@@ -1,8 +1,7 @@
 import { z } from "zod";
-
 import { ZAllowedFileExtension } from "./common";
 import {
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
   ZSurvey,
   ZSurveyCTALogic,
   ZSurveyCalLogic,
@@ -26,7 +25,7 @@ const ZLegacySurveyQuestionBase = ZSurveyQuestionBase.extend({
 });
 
 export const ZLegacySurveyOpenTextQuestion = ZLegacySurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.OpenText),
+  type: z.literal(TSurveyQuestionTypeEnum.OpenText),
   placeholder: z.string().optional(),
   longAnswer: z.boolean().optional(),
   logic: z.array(ZSurveyOpenTextLogic).optional(),
@@ -36,7 +35,7 @@ export const ZLegacySurveyOpenTextQuestion = ZLegacySurveyQuestionBase.extend({
 export type TLegacySurveyOpenTextQuestion = z.infer<typeof ZLegacySurveyOpenTextQuestion>;
 
 export const ZLegacySurveyConsentQuestion = ZLegacySurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.Consent),
+  type: z.literal(TSurveyQuestionTypeEnum.Consent),
   html: z.string().optional(),
   label: z.string(),
   placeholder: z.string().optional(),
@@ -53,7 +52,7 @@ export const ZLegacySurveyChoice = z.object({
 export type TLegacySurveyChoice = z.infer<typeof ZLegacySurveyChoice>;
 
 export const ZLegacySurveyMultipleChoiceSingleQuestion = ZLegacySurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.MultipleChoiceSingle),
+  type: z.literal(TSurveyQuestionTypeEnum.MultipleChoiceSingle),
   choices: z.array(ZLegacySurveyChoice),
   logic: z.array(ZSurveyMultipleChoiceLogic).optional(),
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
@@ -65,7 +64,7 @@ export type TLegacySurveyMultipleChoiceSingleQuestion = z.infer<
 >;
 
 export const ZLegacySurveyMultipleChoiceMultiQuestion = ZLegacySurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.MultipleChoiceMulti),
+  type: z.literal(TSurveyQuestionTypeEnum.MultipleChoiceMulti),
   choices: z.array(ZLegacySurveyChoice),
   logic: z.array(ZSurveyMultipleChoiceLogic).optional(),
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
@@ -77,7 +76,7 @@ export type TLegacySurveyMultipleChoiceMultiQuestion = z.infer<
 >;
 
 export const ZLegacySurveyNPSQuestion = ZLegacySurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.NPS),
+  type: z.literal(TSurveyQuestionTypeEnum.NPS),
   lowerLabel: z.string(),
   upperLabel: z.string(),
   logic: z.array(ZSurveyNPSLogic).optional(),
@@ -86,7 +85,7 @@ export const ZLegacySurveyNPSQuestion = ZLegacySurveyQuestionBase.extend({
 export type TLegacySurveyNPSQuestion = z.infer<typeof ZLegacySurveyNPSQuestion>;
 
 export const ZLegacySurveyCTAQuestion = ZLegacySurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.CTA),
+  type: z.literal(TSurveyQuestionTypeEnum.CTA),
   html: z.string().optional(),
   buttonUrl: z.string().optional(),
   buttonExternal: z.boolean(),
@@ -97,7 +96,7 @@ export const ZLegacySurveyCTAQuestion = ZLegacySurveyQuestionBase.extend({
 export type TLegacySurveyCTAQuestion = z.infer<typeof ZLegacySurveyCTAQuestion>;
 
 export const ZLegacySurveyRatingQuestion = ZLegacySurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.Rating),
+  type: z.literal(TSurveyQuestionTypeEnum.Rating),
   scale: z.enum(["number", "smiley", "star"]),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]),
   lowerLabel: z.string(),
@@ -106,7 +105,7 @@ export const ZLegacySurveyRatingQuestion = ZLegacySurveyQuestionBase.extend({
 });
 
 export const ZLegacySurveyDateQuestion = ZLegacySurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.Date),
+  type: z.literal(TSurveyQuestionTypeEnum.Date),
   html: z.string().optional(),
   format: z.enum(["M-d-y", "d-M-y", "y-M-d"]),
 });
@@ -116,7 +115,7 @@ export type TLegacySurveyDateQuestion = z.infer<typeof ZLegacySurveyDateQuestion
 export type TLegacySurveyRatingQuestion = z.infer<typeof ZLegacySurveyRatingQuestion>;
 
 export const ZLegacySurveyPictureSelectionQuestion = ZLegacySurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.PictureSelection),
+  type: z.literal(TSurveyQuestionTypeEnum.PictureSelection),
   allowMulti: z.boolean().optional().default(false),
   choices: z.array(ZSurveyPictureChoice),
   logic: z.array(ZSurveyPictureSelectionLogic).optional(),
@@ -125,7 +124,7 @@ export const ZLegacySurveyPictureSelectionQuestion = ZLegacySurveyQuestionBase.e
 export type TLegacySurveyPictureSelectionQuestion = z.infer<typeof ZLegacySurveyPictureSelectionQuestion>;
 
 export const ZLegacySurveyFileUploadQuestion = ZLegacySurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.FileUpload),
+  type: z.literal(TSurveyQuestionTypeEnum.FileUpload),
   allowMultipleFiles: z.boolean(),
   maxSizeInMB: z.number().optional(),
   allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
@@ -135,7 +134,7 @@ export const ZLegacySurveyFileUploadQuestion = ZLegacySurveyQuestionBase.extend(
 export type TLegacySurveyFileUploadQuestion = z.infer<typeof ZLegacySurveyFileUploadQuestion>;
 
 export const ZLegacySurveyCalQuestion = ZLegacySurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.Cal),
+  type: z.literal(TSurveyQuestionTypeEnum.Cal),
   calUserName: z.string(),
   logic: z.array(ZSurveyCalLogic).optional(),
 });

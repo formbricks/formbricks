@@ -1,10 +1,9 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/ee/billing/lib/constants";
-import { createCustomerPortalSession } from "@formbricks/ee/billing/lib/createCustomerPortalSession";
-import { createSubscription } from "@formbricks/ee/billing/lib/createSubscription";
+import { createCustomerPortalSession } from "@formbricks/ee/billing/lib/create-customer-portal-session";
+import { createSubscription } from "@formbricks/ee/billing/lib/create-subscription";
 import { isSubscriptionCancelled } from "@formbricks/ee/billing/lib/isSubscriptionCancelled";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";

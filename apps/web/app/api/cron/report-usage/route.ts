@@ -1,8 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
-
 import { PRODUCT_FEATURE_KEYS } from "@formbricks/ee/billing/lib/constants";
-import { reportUsageToStripe } from "@formbricks/ee/billing/lib/reportUsage";
+import { reportUsageToStripe } from "@formbricks/ee/billing/lib/report-usage";
 import { CRON_SECRET, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import {
   getMonthlyActiveOrganizationPeopleCount,

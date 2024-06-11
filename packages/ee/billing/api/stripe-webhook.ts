@@ -1,11 +1,9 @@
 import Stripe from "stripe";
-
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
-
-import { handleCheckoutSessionCompleted } from "../handlers/checkoutSessionCompleted";
-import { handleSubscriptionCreatedOrUpdated } from "../handlers/subscriptionCreatedOrUpdated";
-import { handleSubscriptionDeleted } from "../handlers/subscriptionDeleted";
+import { handleCheckoutSessionCompleted } from "../handlers/checkout-session-completed";
+import { handleSubscriptionCreatedOrUpdated } from "../handlers/subscription-created-or-updated";
+import { handleSubscriptionDeleted } from "../handlers/subscription-deleted";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   apiVersion: STRIPE_API_VERSION,
