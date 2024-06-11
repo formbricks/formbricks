@@ -12,7 +12,7 @@ interface DeleteAccountModalProps {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   session: Session;
-  IS_FORMBRICKS_CLOUD: boolean;
+  isFormbricksCloud: boolean;
   formbricksLogout: () => void;
 }
 
@@ -20,7 +20,7 @@ export const DeleteAccountModal = ({
   setOpen,
   open,
   session,
-  IS_FORMBRICKS_CLOUD,
+  isFormbricksCloud,
   formbricksLogout,
 }: DeleteAccountModalProps) => {
   const [deleting, setDeleting] = useState(false);
@@ -35,7 +35,7 @@ export const DeleteAccountModal = ({
       await deleteUserAction();
       await formbricksLogout();
       // redirect to account deletion survey in Formbricks Cloud
-      if (IS_FORMBRICKS_CLOUD) {
+      if (isFormbricksCloud) {
         await signOut({ redirect: true });
         window.location.replace("https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2");
       } else {

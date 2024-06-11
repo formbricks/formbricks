@@ -25,7 +25,8 @@ const Page = async () => {
   }
 
   const userOrganizations = await getOrganizationsByUserId(session.user.id);
-  if (!userOrganizations || userOrganizations.length === 0) {
+
+  if (userOrganizations.length === 0) {
     return redirect("/setup/organization/create");
   }
 

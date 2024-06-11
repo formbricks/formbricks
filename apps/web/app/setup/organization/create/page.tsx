@@ -8,7 +8,7 @@ import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { gethasNoOrganizations } from "@formbricks/lib/instance/service";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { AuthenticationError } from "@formbricks/types/errors";
-import { CreateFirstOrganization } from "./components/CreateFirstOrganiztion";
+import { CreateOrganization } from "./components/CreateOrganization";
 
 export const metadata: Metadata = {
   title: "Create Organization",
@@ -24,15 +24,15 @@ const Page = async () => {
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   const userOrganizations = await getOrganizationsByUserId(session.user.id);
 
+  if (hasNoOrganizations || isMultiOrgEnabled) {
+    return <CreateOrganization />;
+  }
+
   if (!hasNoOrganizations && userOrganizations.length === 0 && !isMultiOrgEnabled) {
-    return <RemovedFromOrganization session={session} IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD} />;
+    return <RemovedFromOrganization session={session} isFormbricksCloud={IS_FORMBRICKS_CLOUD} />;
   }
 
-  if (userOrganizations.length !== 0 || (!hasNoOrganizations && !isMultiOrgEnabled)) {
-    return notFound();
-  }
-
-  return <CreateFirstOrganization />;
+  return notFound();
 };
 
 export default Page;

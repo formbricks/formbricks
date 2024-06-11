@@ -12,24 +12,24 @@ import { Button } from "@formbricks/ui/Button";
 import { FormControl, FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
 
-const ZCreateFirstOrganizationFormSchema = ZOrganization.pick({ name: true });
-type TCreateFirstOrganizationForm = z.infer<typeof ZCreateFirstOrganizationFormSchema>;
+const ZCreateOrganizationFormSchema = ZOrganization.pick({ name: true });
+type TCreateOrganizationForm = z.infer<typeof ZCreateOrganizationFormSchema>;
 
-export const CreateFirstOrganization = () => {
+export const CreateOrganization = () => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<TCreateFirstOrganizationForm>({
+  const form = useForm<TCreateOrganizationForm>({
     defaultValues: {
       name: "",
     },
     mode: "onChange",
-    resolver: zodResolver(ZCreateFirstOrganizationFormSchema),
+    resolver: zodResolver(ZCreateOrganizationFormSchema),
   });
 
   const organizationName = form.watch("name");
 
-  const onSubmit: SubmitHandler<TCreateFirstOrganizationForm> = async (data) => {
+  const onSubmit: SubmitHandler<TCreateOrganizationForm> = async (data) => {
     try {
       setIsSubmitting(true);
       const organizationName = data.name.trim();
