@@ -3,7 +3,6 @@
 import { formbricksLogout } from "@/app/lib/formbricks";
 import { Session } from "next-auth";
 import { useState } from "react";
-
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteAccountModal } from "@formbricks/ui/DeleteAccountModal";
@@ -39,7 +38,7 @@ export const DeleteAccount = ({
         open={isModalOpen}
         setOpen={setModalOpen}
         session={session}
-        IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         formbricksLogout={formbricksLogout}
       />
       <p className="text-sm text-slate-700">
