@@ -13,7 +13,7 @@ import { TPipelineInput } from "@formbricks/types/pipelines";
 import { TResponseMeta } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
 
-const convertMetaObjectToString = (metadata: TResponseMeta) => {
+const convertMetaObjectToString = (metadata: TResponseMeta): string => {
   let result: string[] = [];
   if (metadata.source) result.push(`Source: ${metadata.source}`);
   if (metadata.url) result.push(`URL: ${metadata.url}`);
@@ -25,6 +25,25 @@ const convertMetaObjectToString = (metadata: TResponseMeta) => {
 
   // Join all the elements in the result array with a newline for formatting
   return result.join("\n");
+};
+
+const processDataForIntegration = async (
+  data: TPipelineInput,
+  survey: TSurvey,
+  includeMetadata: boolean,
+  includeHiddenFields: boolean,
+  questionIds: string[]
+) => {
+  const ids =
+    includeHiddenFields && survey.hiddenFields.fieldIds
+      ? [...questionIds, ...survey.hiddenFields.fieldIds]
+      : questionIds;
+  const values = await extractResponses(data, ids, survey);
+  if (includeMetadata) {
+    values[0].push(convertMetaObjectToString(data.response.meta));
+    values[1].push("Metadata");
+  }
+  return values;
 };
 
 export const handleIntegrations = async (
@@ -58,8 +77,14 @@ const handleAirtableIntegration = async (
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds as string[], survey);
-
+        const values = await processDataForIntegration(
+          data,
+          survey,
+          !!element.includeMetadata,
+          !!element.includeHiddenFields,
+          element.questionIds
+        );
+        await airtableWriteData(integration.config.key, element, values);
         await airtableWriteData(integration.config.key, element, values);
       }
     }
@@ -74,19 +99,18 @@ const handleGoogleSheetsIntegration = async (
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const ids =
-          element.includesHiddenFields && survey.hiddenFields.fieldIds
-            ? [...element.questionIds, ...survey.hiddenFields.fieldIds]
-            : element.questionIds;
-        const values = await extractResponses(data, ids, survey);
-        if (element.includesMetadata) {
-          values[0].push(convertMetaObjectToString(data.response.meta));
-          values[1].push("Metadata");
-        }
+        const values = await processDataForIntegration(
+          data,
+          survey,
+          !!element.includeMetadata,
+          !!element.includeHiddenFields,
+          element.questionIds
+        );
         const integrationData = structuredClone(integration);
         integrationData.config.data.forEach((data) => {
           data.createdAt = new Date(data.createdAt);
         });
+
         await writeData(integrationData, element.spreadsheetId, values);
       }
     }
@@ -101,7 +125,13 @@ const handleSlackIntegration = async (
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds as string[], survey);
+        const values = await processDataForIntegration(
+          data,
+          survey,
+          !!element.includeMetadata,
+          !!element.includeHiddenFields,
+          element.questionIds
+        );
         await writeDataToSlack(integration.config.key, element.channelId, values, survey?.name);
       }
     }
@@ -191,11 +221,16 @@ const buildNotionPayloadProperties = (
   });
 
   mapping.forEach((map) => {
-    const value = responses[map.question.id];
-
-    properties[map.column.name] = {
-      [map.column.type]: getValue(map.column.type, processResponseData(value)),
-    };
+    if (map.question.id === "metadata") {
+      properties[map.column.name] = {
+        [map.column.type]: getValue(map.column.type, convertMetaObjectToString(data.response.meta)),
+      };
+    } else {
+      const value = responses[map.question.id];
+      properties[map.column.name] = {
+        [map.column.type]: getValue(map.column.type, processResponseData(value)),
+      };
+    }
   });
 
   return properties;

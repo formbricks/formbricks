@@ -3,7 +3,6 @@ import {
   TIntegrationNotionConfig,
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
-
 import { ENCRYPTION_KEY } from "../constants";
 import { symmetricDecrypt } from "../crypto";
 import { getIntegrationByType } from "../integration/service";
@@ -57,6 +56,7 @@ export const writeData = async (
       }),
     });
   } catch (error) {
+    console.log(error);
     throw error;
   }
 };

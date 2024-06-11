@@ -19,6 +19,7 @@ import {
   TIntegrationGoogleSheetsInput,
 } from "@formbricks/types/integration/googleSheet";
 import { TSurvey } from "@formbricks/types/surveys";
+import { AdditionalIntegrationSettings } from "@formbricks/ui/AdditionalIntegrationSettings";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { DropdownSelector } from "@formbricks/ui/DropdownSelector";
@@ -88,8 +89,8 @@ export const AddIntegrationModal = ({
         })!
       );
       setSelectedQuestions(selectedIntegration.questionIds);
-      setIncludeHiddenFields(!!selectedIntegration.includesHiddenFields);
-      setIncludeMetadata(!!selectedIntegration.includesMetadata);
+      setIncludeHiddenFields(!!selectedIntegration.includeHiddenFields);
+      setIncludeMetadata(!!selectedIntegration.includeMetadata);
       return;
     } else {
       setSpreadsheetUrl("");
@@ -109,13 +110,11 @@ export const AddIntegrationModal = ({
         throw new Error("Please select at least one question");
       }
       const spreadsheetId = extractSpreadsheetIdFromUrl(spreadsheetUrl);
-      console.log(typeof googleSheetIntegration.config.data[0].createdAt);
       const spreadsheetName = await getSpreadsheetNameByIdAction(
         googleSheetIntegration,
         environmentId,
         spreadsheetId
       );
-      console.log("here2");
 
       setIsLinkingSheet(true);
       integrationData.spreadsheetId = spreadsheetId;
@@ -128,17 +127,15 @@ export const AddIntegrationModal = ({
           ? "All questions"
           : "Selected questions";
       integrationData.createdAt = new Date();
-      integrationData.includesHiddenFields = includeHiddenFields;
-      integrationData.includesMetadata = includeMetadata;
+      integrationData.includeHiddenFields = includeHiddenFields;
+      integrationData.includeMetadata = includeMetadata;
       if (selectedIntegration) {
         // update action
-        console.log("updating");
         googleSheetIntegrationData.config!.data[selectedIntegration.index] = integrationData;
       } else {
         // create action
         googleSheetIntegrationData.config!.data.push(integrationData);
       }
-      console.log(typeof googleSheetIntegrationData.config.data[0].createdAt);
       await createOrUpdateIntegrationAction(environmentId, googleSheetIntegrationData);
       toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`);
       resetForm();
@@ -229,7 +226,7 @@ export const AddIntegrationModal = ({
                 </div>
               </div>
               {selectedSurvey && (
-                <div>
+                <div className="space-y-4">
                   <div>
                     <Label htmlFor="Surveys">Questions</Label>
                     <div className="mt-1 rounded-lg border border-slate-200">
@@ -258,41 +255,12 @@ export const AddIntegrationModal = ({
                       </div>
                     </div>
                   </div>
-                  <div className="mt-4">
-                    <Label htmlFor="Surveys">Additional Setings</Label>
-                    <div className="text-sm">
-                      <div key={"includeHiddenFields"} className="my-1 flex items-center space-x-2">
-                        <label htmlFor={"includeHiddenFields"} className="flex cursor-pointer items-center">
-                          <Checkbox
-                            type="button"
-                            id={"includeHiddenFields"}
-                            value={"includeHiddenFields"}
-                            className="bg-white"
-                            checked={includeHiddenFields}
-                            onCheckedChange={() => {
-                              setIncludeHiddenFields(!includeHiddenFields);
-                            }}
-                          />
-                          <span className="ml-2 w-[30rem] truncate">Include hidden fields</span>
-                        </label>
-                      </div>
-                      <div key={"includeMetadata"} className="my-1 flex items-center space-x-2">
-                        <label htmlFor={"includeMetadata"} className="flex cursor-pointer items-center">
-                          <Checkbox
-                            type="button"
-                            id={"includeMetadata"}
-                            value={"includeMetadata"}
-                            className="bg-white"
-                            checked={includeMetadata}
-                            onCheckedChange={() => {
-                              setIncludeMetadata(!includeMetadata);
-                            }}
-                          />
-                          <span className="ml-2 w-[30rem] truncate">Include Metadata</span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
+                  <AdditionalIntegrationSettings
+                    includeHiddenFields={includeHiddenFields}
+                    includeMetadata={includeMetadata}
+                    setIncludeHiddenFields={setIncludeHiddenFields}
+                    setIncludeMetadata={setIncludeMetadata}
+                  />
                 </div>
               )}
             </div>
