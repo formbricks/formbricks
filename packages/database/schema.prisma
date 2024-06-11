@@ -135,6 +135,7 @@ model Response {
 
   @@unique([surveyId, singleUseId])
   @@index([surveyId, createdAt]) // to determine monthly response count
+  @@index([personId, createdAt]) // to determine monthly identified users (persons)
   @@index([surveyId])
 }
 

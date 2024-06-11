@@ -319,11 +319,22 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
             AND: [
               { environmentId: { in: environmentIds } },
               {
-                actions: {
-                  some: {
-                    createdAt: { gte: firstDayOfMonth },
+                OR: [
+                  {
+                    actions: {
+                      some: {
+                        createdAt: { gte: firstDayOfMonth },
+                      },
+                    },
                   },
-                },
+                  {
+                    responses: {
+                      some: {
+                        createdAt: { gte: firstDayOfMonth },
+                      },
+                    },
+                  },
+                ],
               },
             ],
           },
