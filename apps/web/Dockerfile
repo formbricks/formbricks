@@ -50,7 +50,7 @@ RUN touch apps/web/.env
 ARG NPM_AUTH_TOKEN
 RUN echo "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}" > .npmrc
 RUN pnpm install
-RUN ls -lap node_modules/.bin/
+RUN ls -lap node_modules
 # Build the project
 # RUN pnpm post-install --filter=@formbricks/web...
 RUN pnpm build --filter=@formbricks/web...
