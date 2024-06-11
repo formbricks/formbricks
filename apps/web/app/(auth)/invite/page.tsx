@@ -1,5 +1,4 @@
 import { getServerSession } from "next-auth";
-
 import { sendInviteAcceptedEmail } from "@formbricks/email";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
@@ -8,7 +7,6 @@ import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { updateUser } from "@formbricks/lib/user/service";
 import { Button } from "@formbricks/ui/Button";
-
 import { ContentLayout } from "./components/ContentLayout";
 
 const Page = async ({ searchParams }) => {
@@ -52,12 +50,15 @@ const Page = async ({ searchParams }) => {
       );
     } else if (!session) {
       const redirectUrl = WEBAPP_URL + "/invite?token=" + searchParams.token;
+      const encodedEmail = encodeURIComponent(email);
       return (
         <ContentLayout headline="Happy to have you 🤗" description="Please create an account or login.">
-          <Button variant="secondary" href={`/auth/signup?inviteToken=${searchParams.token}&email=${email}`}>
+          <Button
+            variant="secondary"
+            href={`/auth/signup?inviteToken=${searchParams.token}&email=${encodedEmail}`}>
             Create account
           </Button>
-          <Button variant="darkCTA" href={`/auth/login?callbackUrl=${redirectUrl}&email=${email}`}>
+          <Button variant="darkCTA" href={`/auth/login?callbackUrl=${redirectUrl}&email=${encodedEmail}`}>
             Login
           </Button>
         </ContentLayout>
