@@ -48,7 +48,7 @@ COPY . .
 RUN touch apps/web/.env
 
 ARG NPM_AUTH_TOKEN
-RUN echo "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}" >> .npmrc
+# RUN echo "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}" >> .npmrc
 # ENV PNPM_HOME=/pnpm-bin
 # ENV PATH=$PATH:$PNPM_HOME
 RUN pnpm install
