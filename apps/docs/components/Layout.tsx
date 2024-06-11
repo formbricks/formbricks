@@ -6,7 +6,6 @@ import SideNavigation from "@/components/SideNavigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
 import { Footer } from "./Footer";
 import { Header } from "./Header";
 import { type Section, SectionProvider } from "./SectionProvider";
@@ -18,7 +17,7 @@ export const Layout = ({
   children: React.ReactNode;
   allSections: Record<string, Array<Section>>;
 }) => {
-  let pathname = usePathname();
+  const pathname = usePathname();
 
   return (
     <SectionProvider sections={allSections[pathname || ""] ?? []}>

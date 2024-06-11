@@ -9,7 +9,7 @@ type Heading = {
 
 const SideNavigation = ({ pathname }) => {
   const [headings, setHeadings] = useState<Heading[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     const getHeadings = () => {
@@ -41,9 +41,9 @@ const SideNavigation = ({ pathname }) => {
               className={`mb-4 ml-4 text-slate-900 dark:text-white  ml-${heading.level === 2 ? 0 : heading.level === 3 ? 4 : 6}`}>
               <Link
                 href={`#${heading.id}`}
-                onClick={() => setActiveId(heading.id)}
+                onClick={() => setSelectedId(heading.id)}
                 className={`${
-                  heading.id === activeId
+                  heading.id === selectedId
                     ? "font-semibold text-blue-800 dark:text-amber-300"
                     : "font-normal text-slate-900 dark:text-white"
                 }`}>
@@ -60,7 +60,7 @@ const SideNavigation = ({ pathname }) => {
 
   if (headings.length) {
     return (
-      <aside className="fixed right-0 top-0 hidden h-[calc(100%-2.5rem)] w-80 overflow-hidden overflow-y-auto pt-16 lg:mt-10 lg:block">
+      <aside className="fixed right-0 top-0 hidden h-[calc(100%-2.5rem)] w-80 overflow-hidden overflow-y-auto pt-16 [scrollbar-width:none] lg:mt-10 lg:block">
         <div className="border-l-2 border-gray-700">
           <h3 className="ml-2 mt-1">On this page</h3>
           {renderHeading(headings, 2)}
