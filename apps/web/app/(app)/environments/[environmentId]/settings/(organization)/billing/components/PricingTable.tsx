@@ -5,10 +5,10 @@ import {
   manageSubscriptionAction,
   upgradePlanAction,
 } from "@/app/(app)/environments/[environmentId]/settings/(organization)/billing/actions";
+import { revalidateTag } from "next/cache";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-
 import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/ee/billing/lib/constants";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Badge } from "@formbricks/ui/Badge";
@@ -60,19 +60,20 @@ export const PricingTable = ({
         environmentId,
         priceLookupKey
       );
+
       setUpgradingPlan(false);
       if (status != 200) {
         throw new Error("Something went wrong");
       }
       if (!newPlan) {
         toast.success("Plan upgraded successfully");
-        router.refresh();
       } else if (newPlan && url) {
         router.push(url);
       } else {
         throw new Error("Something went wrong");
       }
     } catch (err) {
+      console.log({ err });
       toast.error("Unable to upgrade plan");
     } finally {
       setUpgradingPlan(false);
@@ -129,7 +130,7 @@ export const PricingTable = ({
           <LoadingSpinner />
         </div>
       )}
-      <div className="mx-16 justify-between gap-4 rounded-lg capitalize">
+      <div className="justify-between gap-4 rounded-lg capitalize">
         <div className="flex w-full">
           <h2 className="mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
             Current Plan: {organization.billing.plan}
@@ -194,7 +195,6 @@ export const PricingTable = ({
             actionText={"Starting at"}
             organization={organization}
             paidFeatures={startupFeatures}
-            loading={upgradingPlan}
             onUpgrade={() => upgradePlan(STRIPE_PRICE_LOOKUP_KEYS.STARTUP_MONTHLY)}
           />
           <PricingCard
@@ -205,8 +205,9 @@ export const PricingTable = ({
             actionText={"Starting at"}
             organization={organization}
             paidFeatures={scaleFeatures}
-            loading={upgradingPlan}
-            onUpgrade={() => upgradePlan(STRIPE_PRICE_LOOKUP_KEYS.SCALE_MONTHLY)}
+            onUpgrade={async () => {
+              await upgradePlan(STRIPE_PRICE_LOOKUP_KEYS.SCALE_MONTHLY);
+            }}
           />
           <PricingCard
             title={"Formbricks Enterprise"}
@@ -214,7 +215,6 @@ export const PricingTable = ({
             plan="enterprise"
             organization={organization}
             paidFeatures={enterpriseFeatures}
-            loading={upgradingPlan}
             onUpgrade={() => (window.location.href = "mailto:hola@formbricks.com")}
           />
         </div>
@@ -224,7 +224,6 @@ export const PricingTable = ({
           plan="free"
           organization={organization}
           paidFeatures={freeFeatures}
-          loading={upgradingPlan}
           onUpgrade={() => toast.error("Everybody has the free plan by default!")}
         />
       </div>

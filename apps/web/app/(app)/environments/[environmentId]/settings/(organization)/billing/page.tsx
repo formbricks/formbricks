@@ -1,12 +1,7 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
-import {
-  IS_FORMBRICKS_CLOUD,
-  PRICING_APPSURVEYS_FREE_RESPONSES,
-  PRICING_USERTARGETING_FREE_MTU,
-} from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import {
   getMonthlyActiveOrganizationPeopleCount,
@@ -15,7 +10,6 @@ import {
 } from "@formbricks/lib/organization/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
-
 import { PricingTable } from "./components/PricingTable";
 
 const Page = async ({ params }) => {
@@ -51,8 +45,6 @@ const Page = async ({ params }) => {
         environmentId={params.environmentId}
         peopleCount={peopleCount}
         responseCount={responseCount}
-        userTargetingFreeMtu={PRICING_USERTARGETING_FREE_MTU}
-        inAppSurveyFreeResponses={PRICING_APPSURVEYS_FREE_RESPONSES}
       />
     </PageContentWrapper>
   );

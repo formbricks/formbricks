@@ -181,7 +181,7 @@ export const updateOrganization = async (
 
     // revalidate cache for environments
     updatedOrganization?.products.forEach((product) => {
-      product.environments.forEach((environment) => {
+      product.environments.forEach(async (environment) => {
         organizationCache.revalidate({
           environmentId: environment.id,
         });
@@ -366,7 +366,6 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
           where: {
             AND: [
               { survey: { environmentId: { in: environmentIds } } },
-              { survey: { type: { in: ["app", "website"] } } },
               { createdAt: { gte: firstDayOfMonth } },
             ],
           },

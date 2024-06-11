@@ -1,4 +1,4 @@
-import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/app/sync/lib/posthog";
+import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/app/api/v1/client/[environmentId]/app/sync/lib/posthog";
 import {
   replaceAttributeRecall,
   replaceAttributeRecallInLegacySurveys,
@@ -84,28 +84,29 @@ export const GET = async (
 
     // check if MAU limit is reached
     let isMauLimitReached = false;
-    let isInAppSurveyLimitReached = false;
-    if (IS_FORMBRICKS_CLOUD) {
-      const [hasUserTargetingSubscription, currentMau] = await Promise.all([
-        getAdvancedTargetingPermission(organization),
-        getMonthlyActiveOrganizationPeopleCount(organization.id),
-      ]);
+    let isMonthlyResponsesLimitReached = false;
 
-      isMauLimitReached =
-        !hasUserTargetingSubscription && currentMau >= organization.billing.limits.monthly.miu;
+    if (IS_FORMBRICKS_CLOUD) {
+      const currentMau = await getMonthlyActiveOrganizationPeopleCount(organization.id);
+      isMauLimitReached = currentMau >= organization.billing.limits.monthly.miu;
+
       const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
-      isInAppSurveyLimitReached = currentResponseCount >= organization.billing.limits.monthly.responses;
+      isMonthlyResponsesLimitReached = currentResponseCount >= organization.billing.limits.monthly.responses;
     }
 
     let person = await getPersonByUserId(environmentId, userId);
-    if (!isMauLimitReached) {
-      // MAU limit not reached: create person if not exists
-      if (!person) {
-        person = await createPerson(environmentId, userId);
-      }
-    } else {
+
+    if (isMauLimitReached) {
       // MAU limit reached: check if person has been active this month; only continue if person has been active
-      await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "userTargeting");
+      await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
+        plan: organization.billing.plan,
+        limits: {
+          monthly: {
+            miu: organization.billing.limits.monthly.miu,
+            responses: organization.billing.limits.monthly.responses,
+          },
+        },
+      });
       const errorMessage = `Monthly Active Users limit in the current plan is reached in ${environmentId}`;
       if (!person) {
         // if it's a new person and MAU limit is reached, throw an error
@@ -114,21 +115,34 @@ export const GET = async (
           true,
           "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
         );
-      } else {
-        // check if person has been active this month
-        const isPersonMonthlyActive = await getIsPersonMonthlyActive(person.id);
-        if (!isPersonMonthlyActive) {
-          return responses.tooManyRequestsResponse(
-            errorMessage,
-            true,
-            "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
-          );
-        }
+      }
+
+      // check if person has been active this month
+      const isPersonMonthlyActive = await getIsPersonMonthlyActive(person.id);
+      if (!isPersonMonthlyActive) {
+        return responses.tooManyRequestsResponse(
+          errorMessage,
+          true,
+          "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
+        );
+      }
+    } else {
+      // MAU limit not reached: create person if not exists
+      if (!person) {
+        person = await createPerson(environmentId, userId);
       }
     }
 
-    if (isInAppSurveyLimitReached) {
-      await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
+    if (isMonthlyResponsesLimitReached) {
+      await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
+        plan: organization.billing.plan,
+        limits: {
+          monthly: {
+            miu: organization.billing.limits.monthly.miu,
+            responses: organization.billing.limits.monthly.responses,
+          },
+        },
+      });
     }
 
     const [surveys, actionClasses, product] = await Promise.all([
@@ -160,7 +174,7 @@ export const GET = async (
 
     // creating state object
     let state: TJsAppStateSync | TJsAppLegacyStateSync = {
-      surveys: !isInAppSurveyLimitReached
+      surveys: !isMonthlyResponsesLimitReached
         ? transformedSurveys.map((survey) => replaceAttributeRecall(survey, attributes))
         : [],
       actionClasses,
@@ -181,7 +195,7 @@ export const GET = async (
       );
 
       state = {
-        surveys: !isInAppSurveyLimitReached
+        surveys: !isMonthlyResponsesLimitReached
           ? transformedSurveys.map((survey) => replaceAttributeRecallInLegacySurveys(survey, attributes))
           : [],
         person,

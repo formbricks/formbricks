@@ -3,6 +3,7 @@ import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { PRODUCT_FEATURE_KEYS, STRIPE_PRODUCT_NAMES } from "../lib/constants";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
@@ -35,7 +36,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
       stripeSubscriptionObject.items.data[0].price.product.toString()
     );
 
-  let updatedBilling = organization.billing;
+  let updatedBillingPlan: TOrganizationBillingPlan = organization.billing.plan;
   let responses = parseInt(product.metadata.responses);
   let miu = parseInt(product.metadata.miu);
 
@@ -45,27 +46,30 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
     miu = parseInt(stripeSubscriptionObject.metadata.miu);
   }
 
-  updatedBilling.limits.monthly = { responses, miu };
-
   switch (product.name) {
     case STRIPE_PRODUCT_NAMES.STARTUP:
-      updatedBilling.plan = PRODUCT_FEATURE_KEYS.STARTUP;
+      updatedBillingPlan = PRODUCT_FEATURE_KEYS.STARTUP;
       break;
 
     case STRIPE_PRODUCT_NAMES.SCALE:
-      updatedBilling.plan = PRODUCT_FEATURE_KEYS.SCALE;
+      updatedBillingPlan = PRODUCT_FEATURE_KEYS.SCALE;
       break;
 
     case STRIPE_PRODUCT_NAMES.ENTERPRISE:
-      updatedBilling.plan = PRODUCT_FEATURE_KEYS.ENTERPRISE;
+      updatedBillingPlan = PRODUCT_FEATURE_KEYS.ENTERPRISE;
       break;
   }
 
   await updateOrganization(organizationId, {
     billing: {
       stripeCustomerId: stripeSubscriptionObject.customer as string,
-      plan: updatedBilling.plan,
-      limits: updatedBilling.limits,
+      plan: updatedBillingPlan,
+      limits: {
+        monthly: {
+          responses,
+          miu,
+        },
+      },
     },
   });
 

@@ -1,8 +1,7 @@
-import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/app/sync/lib/posthog";
+import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/app/api/v1/client/[environmentId]/app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
-
 import { getActionClassByEnvironmentIdAndName, getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
@@ -50,6 +49,7 @@ export const GET = async (
 
     const environment = await getEnvironment(environmentId);
     const organization = await getOrganizationByEnvironmentId(environmentId);
+
     if (!organization) {
       throw new Error("Organization does not exist");
     }
@@ -61,14 +61,16 @@ export const GET = async (
     // check if MAU limit is reached
     let isWebsiteSurveyResponseLimitReached = false;
     if (IS_FORMBRICKS_CLOUD) {
-      // check organization subscriptons
-
-      // check inAppSurvey subscription
+      // check for response limit
       const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
       isWebsiteSurveyResponseLimitReached =
         currentResponseCount >= organization.billing.limits.monthly.responses;
+
       if (isWebsiteSurveyResponseLimitReached) {
-        await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "websiteSurvey");
+        await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
+          plan: organization.billing.plan,
+          limits: { monthly: { responses: organization.billing.limits.monthly.responses } },
+        });
       }
     }
 

@@ -1,5 +1,4 @@
 import React from "react";
-
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 
@@ -12,6 +11,7 @@ type ConfirmationModalProps = {
   buttonText: string;
   isButtonDisabled?: boolean;
   buttonVariant?: "warn" | "darkCTA";
+  buttonLoading?: boolean;
 };
 
 export const ConfirmationModal = ({
@@ -23,6 +23,7 @@ export const ConfirmationModal = ({
   buttonText,
   isButtonDisabled = false,
   buttonVariant = "warn",
+  buttonLoading = false,
 }: ConfirmationModalProps) => {
   const handleButtonAction = async () => {
     if (isButtonDisabled) return;
@@ -39,7 +40,11 @@ export const ConfirmationModal = ({
         <Button variant="minimal" onClick={() => setOpen(false)}>
           Cancel
         </Button>
-        <Button disabled={isButtonDisabled} variant={buttonVariant} onClick={handleButtonAction}>
+        <Button
+          loading={buttonLoading}
+          disabled={isButtonDisabled}
+          variant={buttonVariant}
+          onClick={handleButtonAction}>
           {buttonText}
         </Button>
       </div>
