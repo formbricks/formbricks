@@ -3,7 +3,7 @@ import { Page, expect, test } from "@playwright/test";
 
 import { finishOnboarding, login, signUpAndLogin } from "./utils/helper";
 
-const createNoCodeActionByCSSSelector = async (
+const createNoCodeClickAction = async (
   page: Page,
   username: string,
   email: string,
@@ -34,14 +34,14 @@ const createNoCodeActionByCSSSelector = async (
   await page.locator("#CssSelector").click();
 
   // User fills the CSS Selector to track
-  await expect(page.locator("[name='noCodeConfig.cssSelector.value']")).toBeVisible();
-  await page.locator("[name='noCodeConfig.cssSelector.value']").fill(selector);
+  await expect(page.locator("[name='noCodeConfig.elementSelector.cssSelector']")).toBeVisible();
+  await page.locator("[name='noCodeConfig.elementSelector.cssSelector']").fill(selector);
   await page.getByRole("button", { name: "Create action", exact: true }).click();
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(500);
 };
 
-const createNoCodeActionByPageURL = async (
+const createNoCodePageViewAction = async (
   page: Page,
   username: string,
   email: string,
@@ -52,7 +52,8 @@ const createNoCodeActionByPageURL = async (
     label: string;
     value: string;
   },
-  testURL: string
+  testURL: string,
+  noCodeType: string
 ) => {
   await signUpAndLogin(page, username, email, password);
   await finishOnboarding(page);
@@ -70,20 +71,21 @@ const createNoCodeActionByPageURL = async (
   await expect(page.getByLabel("Description")).toBeVisible();
   await page.getByLabel("Description").fill(description);
 
-  // User toggles the Page URL action type
+  await expect(page.getByText(noCodeType)).toBeVisible();
+  await page.getByText(noCodeType).click();
 
-  await expect(page.locator("#PageURL")).toBeVisible();
-  await page.locator("#PageURL").click();
+  // User toggles the url Filters to specific pages
+  await page.getByText("Limit to specific pages").click();
 
   // User opens the dropdown and selects the URL match type
-  await expect(page.locator("[name='noCodeConfig.pageUrl.rule']")).toBeVisible();
-  await page.locator("[name='noCodeConfig.pageUrl.rule']").selectOption({ label: matcher.label });
+  await expect(page.locator("[name='noCodeConfig.urlFilters.0.rule']")).toBeVisible();
+  await page.locator("[name='noCodeConfig.urlFilters.0.rule']").selectOption({ label: matcher.label });
 
   // User fills the Page URL to track
-  await page.locator("[name='noCodeConfig.pageUrl.value']").fill(matcher.value);
+  await page.locator("[name='noCodeConfig.urlFilters.0.value']").fill(matcher.value);
 
   // User fills the Test URL to track
-  await page.locator("[name='noCodeConfig.pageUrl.testUrl']").fill(testURL);
+  await page.locator("[name='noCodeConfig.urlFilters.testUrl']").fill(testURL);
 
   // User clicks the Test Match button
   await page.getByRole("button", { name: "Test Match", exact: true }).click();
@@ -94,14 +96,14 @@ const createNoCodeActionByPageURL = async (
   await page.waitForTimeout(500);
 };
 
-const createNoCodeActionByInnerText = async (
+const createNoCodeAction = async (
   page: Page,
   username: string,
   email: string,
   password: string,
   actionName: string,
   description: string,
-  innerText: string
+  noCodeType: string
 ) => {
   await signUpAndLogin(page, username, email, password);
   await finishOnboarding(page);
@@ -119,14 +121,10 @@ const createNoCodeActionByInnerText = async (
   await expect(page.getByLabel("Description")).toBeVisible();
   await page.getByLabel("Description").fill(description);
 
-  // User toggles the Inner Text action type
+  await expect(page.getByText(noCodeType)).toBeVisible();
+  await page.getByText(noCodeType).click();
 
-  await expect(page.locator("#InnerText")).toBeVisible();
-  await page.locator("#InnerText").click();
-
-  // User fills the Inner Text to track
-  await expect(page.locator("[name='noCodeConfig.innerHtml.value']")).toBeVisible();
-  await page.locator("[name='noCodeConfig.innerHtml.value']").fill(innerText);
+  // User clicks the Create Action button
   await page.getByRole("button", { name: "Create action", exact: true }).click();
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(500);
@@ -136,133 +134,164 @@ const getActionButtonLocator = (page: Page, actionName: string) => {
   return page.getByTitle(actionName);
 };
 
-test.describe("Create and Edit No Code Action by CSS Selector", async () => {
+test.describe("Create and Edit No Code Click Action", async () => {
   test.describe.configure({ mode: "serial" });
+  const { email, password, name: username } = users.action[0];
 
-  test("Create No Code Action by CSS Selector and Edit", async ({ page }) => {
-    const { email, password, name: username } = users.action[0];
-    await createNoCodeActionByCSSSelector(
+  test("Create No Code Click Action by CSS Selector", async ({ page }) => {
+    await createNoCodeClickAction(
       page,
       username,
       email,
       password,
-      actions.create.noCode.cssSelector.name,
-      actions.create.noCode.cssSelector.description,
-      actions.create.noCode.cssSelector.selector
+      actions.create.noCode.click.name,
+      actions.create.noCode.click.description,
+      actions.create.noCode.click.selector
     );
   });
 
-  test("Edit No Code Action by CSS Selector", async ({ page }) => {
-    const { email, password } = users.action[0];
+  test("Edit No Code Click Action", async ({ page }) => {
     await login(page, email, password);
     await page.getByRole("link", { name: "Actions" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/actions/);
 
-    const actionButton = getActionButtonLocator(page, actions.create.noCode.cssSelector.name);
+    const actionButton = getActionButtonLocator(page, actions.create.noCode.click.name);
     await expect(actionButton).toBeVisible();
     await actionButton.click();
 
     await page.getByRole("button", { name: "Settings", exact: true }).click();
 
     await expect(page.getByLabel("What did your user do?")).toBeVisible();
-    await page.getByLabel("What did your user do?").fill(actions.edit.noCode.cssSelector.name);
+    await page.getByLabel("What did your user do?").fill(actions.edit.noCode.click.name);
 
     await expect(page.getByLabel("Description")).toBeVisible();
-    await page.getByLabel("Description").fill(actions.edit.noCode.cssSelector.description);
+    await page.getByLabel("Description").fill(actions.edit.noCode.click.description);
 
-    await expect(page.locator("[name='noCodeConfig.cssSelector.value']")).toBeVisible();
+    await expect(page.locator("[name='noCodeConfig.elementSelector.cssSelector']")).toBeVisible();
     await page
-      .locator("[name='noCodeConfig.cssSelector.value']")
-      .fill(actions.edit.noCode.cssSelector.selector);
+      .locator("[name='noCodeConfig.elementSelector.cssSelector']")
+      .fill(actions.edit.noCode.click.selector);
 
     await page.getByRole("button", { name: "Save changes", exact: true }).click();
   });
 });
 
-test.describe("Create and Edit No Code Action by Page URL", async () => {
+test.describe("Create and Edit No Code Page view Action", async () => {
   test.describe.configure({ mode: "serial" });
+  const { email, password, name: username } = users.action[1];
 
-  test("Create No Code Action by Page URL", async ({ page }) => {
-    const { email, password, name: username } = users.action[1];
-    await createNoCodeActionByPageURL(
+  test("Create No Code Page view Action", async ({ page }) => {
+    await createNoCodePageViewAction(
       page,
       username,
       email,
       password,
-      actions.create.noCode.pageURL.name,
-      actions.create.noCode.pageURL.description,
-      actions.create.noCode.pageURL.matcher,
-      actions.create.noCode.pageURL.testURL
+      actions.create.noCode.pageView.name,
+      actions.create.noCode.pageView.description,
+      actions.create.noCode.pageView.matcher,
+      actions.create.noCode.pageView.testURL,
+      "Page View"
     );
   });
 
-  test("Edit No Code Action by Page URL", async ({ page }) => {
-    const { email, password } = users.action[1];
+  test("Edit No Code Page view Action", async ({ page }) => {
     await login(page, email, password);
 
     await page.getByRole("link", { name: "Actions" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/actions/);
 
-    const actionButton = getActionButtonLocator(page, actions.create.noCode.pageURL.name);
+    const actionButton = getActionButtonLocator(page, actions.create.noCode.pageView.name);
     await expect(actionButton).toBeVisible();
     await actionButton.click();
 
     await page.getByRole("button", { name: "Settings", exact: true }).click();
 
     await expect(page.getByLabel("What did your user do?")).toBeVisible();
-    await page.getByLabel("What did your user do?").fill(actions.edit.noCode.pageURL.name);
+    await page.getByLabel("What did your user do?").fill(actions.edit.noCode.pageView.name);
 
     await expect(page.getByLabel("Description")).toBeVisible();
-    await page.getByLabel("Description").fill(actions.edit.noCode.pageURL.description);
+    await page.getByLabel("Description").fill(actions.edit.noCode.pageView.description);
 
-    await expect(page.locator("[name='noCodeConfig.pageUrl.rule']")).toBeVisible();
+    await expect(page.locator("[name='noCodeConfig.urlFilters.0.rule']")).toBeVisible();
     await page
-      .locator("[name='noCodeConfig.pageUrl.rule']")
-      .selectOption({ label: actions.edit.noCode.pageURL.matcher.label });
+      .locator("[name='noCodeConfig.urlFilters.0.rule']")
+      .selectOption({ label: actions.edit.noCode.pageView.matcher.label });
 
-    await page.locator("[name='noCodeConfig.pageUrl.value']").fill(actions.edit.noCode.pageURL.matcher.value);
+    await page
+      .locator("[name='noCodeConfig.urlFilters.0.value']")
+      .fill(actions.edit.noCode.pageView.matcher.value);
 
-    await page.locator("[name='noCodeConfig.pageUrl.testUrl']").fill(actions.edit.noCode.pageURL.testURL);
+    await page.locator("[name='noCodeConfig.urlFilters.testUrl']").fill(actions.edit.noCode.pageView.testURL);
     await page.getByRole("button", { name: "Test Match", exact: true }).click();
     await page.getByRole("button", { name: "Save changes", exact: true }).click();
   });
 });
 
-test.describe("Create and Edit No Code Action by Inner Text", async () => {
-  test("Create No Code Action by Inner Text", async ({ page }) => {
-    const { email, password, name: username } = users.action[2];
-    await createNoCodeActionByInnerText(
+test.describe("Create and Edit No Code Exit Intent Action", async () => {
+  const { email, password, name: username } = users.action[2];
+  test("Create No Code Exit Intent Action", async ({ page }) => {
+    await createNoCodeAction(
       page,
       username,
       email,
       password,
-      actions.create.noCode.innerText.name,
-      actions.create.noCode.innerText.description,
-      actions.create.noCode.innerText.innerText
+      actions.create.noCode.exitIntent.name,
+      actions.create.noCode.exitIntent.description,
+      "Exit Intent"
     );
   });
 
-  test("Edit No Code Action by Inner Text", async ({ page }) => {
-    const { email, password } = users.action[2];
-
+  test("Edit No Code Exit Intent Action", async ({ page }) => {
     await login(page, email, password);
     await page.getByRole("link", { name: "Actions" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/actions/);
 
-    const actionButton = getActionButtonLocator(page, actions.create.noCode.innerText.name);
+    const actionButton = getActionButtonLocator(page, actions.create.noCode.exitIntent.name);
     await expect(actionButton).toBeVisible();
     await actionButton.click();
 
     await page.getByRole("button", { name: "Settings", exact: true }).click();
 
     await expect(page.getByLabel("What did your user do?")).toBeVisible();
-    await page.getByLabel("What did your user do?").fill(actions.edit.noCode.innerText.name);
+    await page.getByLabel("What did your user do?").fill(actions.edit.noCode.exitIntent.name);
 
     await expect(page.getByLabel("Description")).toBeVisible();
-    await page.getByLabel("Description").fill(actions.edit.noCode.innerText.description);
+    await page.getByLabel("Description").fill(actions.edit.noCode.exitIntent.description);
 
-    await expect(page.locator("[name='noCodeConfig.innerHtml.value']")).toBeVisible();
-    await page.locator("[name='noCodeConfig.innerHtml.value']").fill(actions.edit.noCode.innerText.innerText);
+    await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  });
+});
+
+test.describe("Create and Edit No Code 50% scroll Action", async () => {
+  const { email, password, name: username } = users.action[3];
+  test("Create No Code 50% scroll Action", async ({ page }) => {
+    await createNoCodeAction(
+      page,
+      username,
+      email,
+      password,
+      actions.create.noCode["fiftyPercentScroll"].name,
+      actions.create.noCode["fiftyPercentScroll"].description,
+      "50% Scroll"
+    );
+  });
+
+  test("Edit No Code 50% scroll Action", async ({ page }) => {
+    await login(page, email, password);
+    await page.getByRole("link", { name: "Actions" }).click();
+    await page.waitForURL(/\/environments\/[^/]+\/actions/);
+
+    const actionButton = getActionButtonLocator(page, actions.create.noCode["fiftyPercentScroll"].name);
+    await expect(actionButton).toBeVisible();
+    await actionButton.click();
+
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
+
+    await expect(page.getByLabel("What did your user do?")).toBeVisible();
+    await page.getByLabel("What did your user do?").fill(actions.edit.noCode["fiftyPercentScroll"].name);
+
+    await expect(page.getByLabel("Description")).toBeVisible();
+    await page.getByLabel("Description").fill(actions.edit.noCode["fiftyPercentScroll"].description);
 
     await page.getByRole("button", { name: "Save changes", exact: true }).click();
   });
@@ -270,7 +299,7 @@ test.describe("Create and Edit No Code Action by Inner Text", async () => {
 
 test.describe("Create and Edit Code Action", async () => {
   test.describe.configure({ mode: "serial" });
-  const { email, password, name: username } = users.action[3];
+  const { email, password, name: username } = users.action[4];
 
   test("Create Code Action", async ({ page }) => {
     await signUpAndLogin(page, username, email, password);
@@ -282,14 +311,14 @@ test.describe("Create and Edit Code Action", async () => {
     // Add Action button
     await page.getByRole("button", { name: "Add Action" }).click();
 
-    // User selects the Code tab
-    await page.getByRole("button", { name: "Code", exact: true }).click();
-
     await expect(page.getByLabel("What did your user do?")).toBeVisible();
     await page.getByLabel("What did your user do?").fill(actions.create.code.name);
 
     await expect(page.getByLabel("Description")).toBeVisible();
     await page.getByLabel("Description").fill(actions.create.code.description);
+
+    // User selects the Code tab
+    await page.getByText("Code", { exact: true }).click();
 
     await expect(page.getByLabel("Key")).toBeVisible();
     await page.getByLabel("Key").fill(actions.create.code.key);
@@ -319,10 +348,10 @@ test.describe("Create and Edit Code Action", async () => {
 
 test.describe("Create and Delete Action", async () => {
   test.describe.configure({ mode: "serial" });
-  const { email, password, name: username } = users.action[4];
+  const { email, password, name: username } = users.action[5];
 
   test("Create Action", async ({ page }) => {
-    await createNoCodeActionByCSSSelector(
+    await createNoCodeClickAction(
       page,
       username,
       email,
@@ -334,7 +363,6 @@ test.describe("Create and Delete Action", async () => {
   });
 
   test("Delete Action", async ({ page }) => {
-    const { email, password } = users.action[4];
     await login(page, email, password);
 
     await page.getByRole("link", { name: "Actions" }).click();

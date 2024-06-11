@@ -1,7 +1,6 @@
 "use client";
 
 import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
-import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
 import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import { useCallback, useEffect, useState } from "react";
@@ -11,7 +10,6 @@ import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
-import { MediaBackground } from "@formbricks/ui/MediaBackground";
 import { OTPInput } from "@formbricks/ui/OTPInput";
 
 interface PinScreenProps {
@@ -28,6 +26,7 @@ interface PinScreenProps {
   verifiedEmail?: string;
   languageCode: string;
   attributeClasses: TAttributeClass[];
+  isEmbed: boolean;
 }
 
 export const PinScreen = (props: PinScreenProps) => {
@@ -45,6 +44,7 @@ export const PinScreen = (props: PinScreenProps) => {
     verifiedEmail,
     languageCode,
     attributeClasses,
+    isEmbed,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -113,27 +113,21 @@ export const PinScreen = (props: PinScreenProps) => {
   }
 
   return (
-    <div>
-      <MediaBackground survey={survey} product={product}>
-        <LinkSurvey
-          survey={survey}
-          product={product}
-          userId={userId}
-          emailVerificationStatus={emailVerificationStatus}
-          singleUseId={singleUseId}
-          singleUseResponse={singleUseResponse}
-          webAppUrl={webAppUrl}
-          verifiedEmail={verifiedEmail}
-          languageCode={languageCode}
-          attributeClasses={attributeClasses}
-        />
-      </MediaBackground>
-      <LegalFooter
-        IMPRINT_URL={IMPRINT_URL}
-        PRIVACY_URL={PRIVACY_URL}
-        IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-        surveyUrl={webAppUrl + "/s/" + survey.id}
-      />
-    </div>
+    <LinkSurvey
+      survey={survey}
+      product={product}
+      userId={userId}
+      emailVerificationStatus={emailVerificationStatus}
+      singleUseId={singleUseId}
+      singleUseResponse={singleUseResponse}
+      webAppUrl={webAppUrl}
+      verifiedEmail={verifiedEmail}
+      languageCode={languageCode}
+      attributeClasses={attributeClasses}
+      isEmbed={isEmbed}
+      IMPRINT_URL={IMPRINT_URL}
+      PRIVACY_URL={PRIVACY_URL}
+      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+    />
   );
 };

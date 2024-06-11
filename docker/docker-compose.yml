@@ -23,6 +23,10 @@ x-environment: &environment
     # You can use: $(openssl rand -hex 32) to generate one
     ENCRYPTION_KEY:
 
+    # Set the below to use it intead of API Key for the API & use as an auth for cronjobs
+    # You can use: $(openssl rand -hex 32) to generate a secure one
+    # CRON_SECRET:
+
     ############################################# OPTIONAL (ENTERPRISE EDITION) #############################################
 
     # Enterprise License Key (More info at: https://formbricks.com/docs/self-hosting/license)
@@ -52,17 +56,11 @@ x-environment: &environment
     # Set the below to 0 to enable Password Reset (will required Email Configuration)
     PASSWORD_RESET_DISABLED: 1
 
-    # Set the below to 1 to disable signups
-    # SIGNUP_DISABLED:
-
     # Set the below to 1 to disable logins with email
     # EMAIL_AUTH_DISABLED:
 
     # Set the below to 1 to disable invites
     # INVITE_DISABLED:
-
-    # Set the below to use it intead of API Key for the API & use as an auth for cronjobs
-    # CRON_SECRET:
 
     # Set the below if you want to ship JS & CSS files from a complete URL instead of the current domain
     # ASSET_PREFIX_URL:

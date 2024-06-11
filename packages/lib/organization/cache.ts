@@ -4,6 +4,7 @@ interface RevalidateProps {
   id?: string;
   userId?: string;
   environmentId?: string;
+  count?: boolean;
 }
 
 export const organizationCache = {
@@ -17,8 +18,11 @@ export const organizationCache = {
     byEnvironmentId(environmentId: string) {
       return `environments-${environmentId}-organizations`;
     },
+    byCount() {
+      return "organizations-count";
+    },
   },
-  revalidate({ id, userId, environmentId }: RevalidateProps): void {
+  revalidate({ id, userId, environmentId, count }: RevalidateProps): void {
     if (id) {
       revalidateTag(this.tag.byId(id));
     }
@@ -29,6 +33,10 @@ export const organizationCache = {
 
     if (environmentId) {
       revalidateTag(this.tag.byEnvironmentId(environmentId));
+    }
+
+    if (count) {
+      revalidateTag(this.tag.byCount());
     }
   },
 };

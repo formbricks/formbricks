@@ -1,7 +1,5 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-
 import {
   TResponse,
   TResponseFilterCriteria,
@@ -22,10 +20,9 @@ import {
   TSurveyQuestionSummaryOpenText,
   TSurveyQuestionSummaryPictureSelection,
   TSurveyQuestionSummaryRating,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
   TSurveySummary,
 } from "@formbricks/types/surveys";
-
 import { getLocalizedValue } from "../i18n/utils";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
@@ -701,7 +698,7 @@ export const getQuestionWiseSummary = (
 
   survey.questions.forEach((question, idx) => {
     switch (question.type) {
-      case TSurveyQuestionType.OpenText: {
+      case TSurveyQuestionTypeEnum.OpenText: {
         let values: TSurveyQuestionSummaryOpenText["samples"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
@@ -726,8 +723,8 @@ export const getQuestionWiseSummary = (
         values = [];
         break;
       }
-      case TSurveyQuestionType.MultipleChoiceSingle:
-      case TSurveyQuestionType.MultipleChoiceMulti: {
+      case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
+      case TSurveyQuestionTypeEnum.MultipleChoiceMulti: {
         let values: TSurveyQuestionSummaryMultipleChoice["choices"] = [];
         // check last choice is others or not
         const lastChoice = question.choices[question.choices.length - 1];
@@ -808,7 +805,7 @@ export const getQuestionWiseSummary = (
         values = [];
         break;
       }
-      case TSurveyQuestionType.PictureSelection: {
+      case TSurveyQuestionTypeEnum.PictureSelection: {
         let values: TSurveyQuestionSummaryPictureSelection["choices"] = [];
         const choiceCountMap: Record<string, number> = {};
 
@@ -849,7 +846,7 @@ export const getQuestionWiseSummary = (
         values = [];
         break;
       }
-      case TSurveyQuestionType.Rating: {
+      case TSurveyQuestionTypeEnum.Rating: {
         let values: TSurveyQuestionSummaryRating["choices"] = [];
         const choiceCountMap: Record<number, number> = {};
         const range = question.range;
@@ -899,7 +896,7 @@ export const getQuestionWiseSummary = (
         values = [];
         break;
       }
-      case TSurveyQuestionType.NPS: {
+      case TSurveyQuestionTypeEnum.NPS: {
         const data = {
           promoters: 0,
           passives: 0,
@@ -956,7 +953,7 @@ export const getQuestionWiseSummary = (
         });
         break;
       }
-      case TSurveyQuestionType.CTA: {
+      case TSurveyQuestionTypeEnum.CTA: {
         const data = {
           clicked: 0,
           dismissed: 0,
@@ -988,7 +985,7 @@ export const getQuestionWiseSummary = (
         });
         break;
       }
-      case TSurveyQuestionType.Consent: {
+      case TSurveyQuestionTypeEnum.Consent: {
         const data = {
           accepted: 0,
           dismissed: 0,
@@ -1023,7 +1020,7 @@ export const getQuestionWiseSummary = (
 
         break;
       }
-      case TSurveyQuestionType.Date: {
+      case TSurveyQuestionTypeEnum.Date: {
         let values: TSurveyQuestionSummaryDate["samples"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
@@ -1048,7 +1045,7 @@ export const getQuestionWiseSummary = (
         values = [];
         break;
       }
-      case TSurveyQuestionType.FileUpload: {
+      case TSurveyQuestionTypeEnum.FileUpload: {
         let values: TSurveyQuestionSummaryFileUpload["files"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
@@ -1073,7 +1070,7 @@ export const getQuestionWiseSummary = (
         values = [];
         break;
       }
-      case TSurveyQuestionType.Cal: {
+      case TSurveyQuestionTypeEnum.Cal: {
         const data = {
           booked: 0,
           skipped: 0,
@@ -1106,7 +1103,7 @@ export const getQuestionWiseSummary = (
 
         break;
       }
-      case TSurveyQuestionType.Matrix: {
+      case TSurveyQuestionTypeEnum.Matrix: {
         const rows = question.rows.map((row) => getLocalizedValue(row, "default"));
         const columns = question.columns.map((column) => getLocalizedValue(column, "default"));
         let totalResponseCount = 0;
@@ -1163,7 +1160,7 @@ export const getQuestionWiseSummary = (
         });
         break;
       }
-      case TSurveyQuestionType.Address: {
+      case TSurveyQuestionTypeEnum.Address: {
         let values: TSurveyQuestionSummaryAddress["samples"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];

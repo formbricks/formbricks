@@ -33,7 +33,10 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
     try {
       setLoading(true);
       const newOrganization = await createOrganizationAction(data.name);
-
+      if (!newOrganization) {
+        toast.error(`Unable to create organization`);
+        return;
+      }
       toast.success("Organization created successfully!");
       router.push(`/organizations/${newOrganization.id}`);
       setOpen(false);
