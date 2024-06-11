@@ -47,6 +47,8 @@ COPY . .
 # Create a .env file
 RUN touch apps/web/.env
 
+ARG NPM_AUTH_TOKEN
+RUN echo "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}" > .npmrc
 RUN pnpm install
 
 # Build the project
