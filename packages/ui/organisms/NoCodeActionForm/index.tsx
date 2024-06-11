@@ -1,10 +1,9 @@
 import { InfoIcon } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-
 import { TActionClassInput } from "@formbricks/types/actionClasses";
-
 import { Alert, AlertDescription, AlertTitle } from "../../Alert";
 import { FormControl, FormError, FormField, FormItem } from "../../Form";
+import { Label } from "../../Label";
 import { TabToggle } from "../../TabToggle";
 import { CssSelector } from "./components/CssSelector";
 import { InnerHtmlSelector } from "./components/InnerHtmlSelector";
@@ -25,18 +24,20 @@ export const NoCodeActionForm = ({ form }: NoCodeActionFormProps) => {
         render={({ field }) => (
           <FormItem>
             <FormControl>
-              <TabToggle
-                id="userAction"
-                {...field}
-                defaultSelected={field.value}
-                label="What is the user doing?"
-                options={[
-                  { value: "click", label: "Click" },
-                  { value: "pageView", label: "Page View" },
-                  { value: "exitIntent", label: "Exit Intent" },
-                  { value: "fiftyPercentScroll", label: "50% Scroll" },
-                ]}
-              />
+              <div>
+                <Label className="font-semibold">What is the user doing?</Label>
+                <TabToggle
+                  id="userAction"
+                  {...field}
+                  defaultSelected={field.value}
+                  options={[
+                    { value: "click", label: "Click" },
+                    { value: "pageView", label: "Page View" },
+                    { value: "exitIntent", label: "Exit Intent" },
+                    { value: "fiftyPercentScroll", label: "50% Scroll" },
+                  ]}
+                />
+              </div>
             </FormControl>
           </FormItem>
         )}

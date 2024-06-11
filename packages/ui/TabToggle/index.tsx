@@ -1,8 +1,5 @@
 import React, { useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
-
-import { Label } from "../Label";
 
 interface Option<T> {
   value: T;
@@ -14,8 +11,6 @@ interface TabToggleProps<T> {
   options: Option<T>[];
   defaultSelected?: T;
   onChange: (value: T) => void;
-  label: string;
-  subLabel?: string;
 }
 
 export const TabToggle = <T extends string | number>({
@@ -23,8 +18,6 @@ export const TabToggle = <T extends string | number>({
   options,
   defaultSelected,
   onChange,
-  label,
-  subLabel,
 }: TabToggleProps<T>) => {
   const [selectedOption, setSelectedOption] = useState<T | undefined>(defaultSelected);
 
@@ -36,9 +29,7 @@ export const TabToggle = <T extends string | number>({
 
   return (
     <div role="radiogroup" aria-labelledby={`${id}-toggle-label`} className="flex flex-col">
-      <Label className="font-semibold">{label}</Label>
-      {subLabel && <p className="text-sm font-normal text-slate-500">{subLabel}</p>}
-      <div className="mt-2 flex overflow-hidden rounded-md bg-slate-100 p-1">
+      <div className="mt-1 flex overflow-hidden rounded-md bg-slate-100 p-1">
         {options.map((option) => (
           <label
             key={option.value}
