@@ -2,7 +2,7 @@
 
 import { Organization } from "@prisma/client";
 import { getServerSession } from "next-auth";
-
+import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { gethasNoOrganizations } from "@formbricks/lib/instance/service";
 import { createMembership } from "@formbricks/lib/membership/service";
@@ -16,7 +16,9 @@ export const createOrganizationAction = async (organizationName: string): Promis
   if (!session) throw new AuthorizationError("Not authorized");
 
   const hasNoOrganizations = await gethasNoOrganizations();
-  if (!hasNoOrganizations) {
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+
+  if (!hasNoOrganizations && !isMultiOrgEnabled) {
     throw new OperationNotAllowedError("This action can only be performed on a fresh instance.");
   }
 

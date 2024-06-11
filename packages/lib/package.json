@@ -36,7 +36,7 @@
     "tailwind-merge": "^2.3.0"
   },
   "devDependencies": {
-    "@formbricks/config-typescript": "*",
+    "@formbricks/config-typescript": "workspace:*",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/mime-types": "^2.1.4",
     "@types/ungap__structured-clone": "^1.2.0",

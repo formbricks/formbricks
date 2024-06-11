@@ -1,7 +1,6 @@
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { ONBOARDING_DISABLED } from "@formbricks/lib/constants";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
@@ -26,7 +25,8 @@ const Page = async () => {
   }
 
   const userOrganizations = await getOrganizationsByUserId(session.user.id);
-  if (!userOrganizations || userOrganizations.length === 0) {
+
+  if (userOrganizations.length === 0) {
     return redirect("/setup/organization/create");
   }
 
