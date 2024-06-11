@@ -24,6 +24,7 @@
     "@formbricks/lib": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
     "@radix-ui/react-collapsible": "^1.0.3",
+    "https-proxy-agent": "^7.0.4",
     "lucide-react": "^0.390.0",
     "next": "^14.2.3",
     "next-auth": "^4.24.7",
