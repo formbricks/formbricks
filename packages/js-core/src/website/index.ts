@@ -1,14 +1,13 @@
 import { TJsTrackProperties, TJsWebsiteConfigInput } from "@formbricks/types/js";
-
 // Shared imports
 import { CommandQueue } from "../shared/commandQueue";
 import { ErrorHandler } from "../shared/errors";
 import { Logger } from "../shared/logger";
-import { checkPageUrl } from "../shared/noCodeActions";
 // Website package specific imports
 import { trackCodeAction } from "./lib/actions";
 import { resetConfig } from "./lib/common";
 import { initialize } from "./lib/initialize";
+import { checkPageUrl } from "./lib/noCodeActions";
 
 const logger = Logger.getInstance();
 
