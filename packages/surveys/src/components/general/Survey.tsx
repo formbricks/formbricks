@@ -11,7 +11,6 @@ import { evaluateCondition } from "@/lib/logicEvaluator";
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";
 import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
@@ -35,8 +34,10 @@ export const Survey = ({
   onFileUpload,
   responseCount,
   startAtQuestionId,
+  hiddenFieldsRecord,
   clickOutside,
   shouldResetQuestionId,
+  fullSizeCards = false,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
 
@@ -57,7 +58,7 @@ export const Survey = ({
 
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
-  const [responseData, setResponseData] = useState<TResponseData>({});
+  const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
   const [ttc, setTtc] = useState<TResponseTtc>({});
   const cardArrangement = useMemo(() => {
     if (survey.type === "link") {
@@ -312,7 +313,9 @@ export const Survey = ({
             cardArrangement === "simple" ? "fb-survey-shadow" : "",
             offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
-          <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
+          <div
+            ref={contentRef}
+            className={cn(loadingElement ? "animate-pulse opacity-60" : "", fullSizeCards ? "" : "my-auto")}>
             {content()}
           </div>
           <div className="mx-6 mb-10 mt-2 space-y-3 md:mb-6 md:mt-6">
@@ -333,6 +336,7 @@ export const Survey = ({
       styling={styling}
       setQuestionId={setQuestionId}
       shouldResetQuestionId={shouldResetQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   );
 };

@@ -7,8 +7,8 @@ import { TSurvey } from "@formbricks/types/surveys";
 interface AutoCloseProps {
   survey: TSurvey;
   onClose: () => void;
-  children: React.ReactNode;
   offset: number;
+  children: React.ReactNode;
 }
 
 export const AutoCloseWrapper = ({ survey, onClose, children, offset }: AutoCloseProps) => {

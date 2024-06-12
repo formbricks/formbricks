@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronDownIcon } from "lucide-react";
-
 import type { TSurveyLanguage } from "@formbricks/types/surveys";
 import {
   DropdownMenu,
@@ -9,7 +8,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-
 import { getLanguageLabel } from "../lib/iso-languages";
 
 interface LanguageSwitchProps {

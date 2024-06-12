@@ -4,7 +4,6 @@ import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
 import { createSegmentAction } from "@formbricks/ee/advanced-targeting/lib/actions";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";

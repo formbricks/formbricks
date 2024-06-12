@@ -1,15 +1,13 @@
 import {
-  addExitIntentListener,
-  addScrollDepthListener,
-  removeExitIntentListener,
-  removeScrollDepthListener,
-} from "../../shared/automaticActions";
-import {
   addClickEventListener,
+  addExitIntentListener,
   addPageUrlEventListeners,
+  addScrollDepthListener,
   removeClickEventListener,
+  removeExitIntentListener,
   removePageUrlEventListeners,
-} from "./noCodeActions";
+  removeScrollDepthListener,
+} from "../lib/noCodeActions";
 import { addExpiryCheckListener, removeExpiryCheckListener } from "./sync";
 
 let areRemoveEventListenersAdded = false;
@@ -18,8 +16,8 @@ export const addEventListeners = (): void => {
   addExpiryCheckListener();
   addPageUrlEventListeners();
   addClickEventListener();
-  addExitIntentListener("website");
-  addScrollDepthListener("website");
+  addExitIntentListener();
+  addScrollDepthListener();
 };
 
 export const addCleanupEventListeners = (): void => {
@@ -28,8 +26,8 @@ export const addCleanupEventListeners = (): void => {
     removeExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
-    removeExitIntentListener("website");
-    removeScrollDepthListener("website");
+    removeExitIntentListener();
+    removeScrollDepthListener();
   });
   areRemoveEventListenersAdded = true;
 };
@@ -40,8 +38,8 @@ export const removeCleanupEventListeners = (): void => {
     removeExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
-    removeExitIntentListener("website");
-    removeScrollDepthListener("website");
+    removeExitIntentListener();
+    removeScrollDepthListener();
   });
   areRemoveEventListenersAdded = false;
 };
@@ -50,7 +48,7 @@ export const removeAllEventListeners = (): void => {
   removeExpiryCheckListener();
   removePageUrlEventListeners();
   removeClickEventListener();
-  removeExitIntentListener("website");
-  removeScrollDepthListener("website");
+  removeExitIntentListener();
+  removeScrollDepthListener();
   removeCleanupEventListeners();
 };

@@ -4,7 +4,6 @@ import { PencilIcon } from "lucide-react";
 import { ImagePlusIcon } from "lucide-react";
 import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { extractLanguageCodes, getEnabledLanguages, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useSyncScroll } from "@formbricks/lib/utils/hooks/useSyncScroll";
@@ -26,7 +25,6 @@ import {
   TSurveyQuestion,
   TSurveyRecallItem,
 } from "@formbricks/types/surveys";
-
 import { LanguageIndicator } from "../../ee/multi-language/components/language-indicator";
 import { createI18nString } from "../../lib/i18n/utils";
 import { FileInput } from "../FileInput";
@@ -221,7 +219,7 @@ export const QuestionFormInput = ({
           }
           parts.push(
             <span
-              className="z-30 flex cursor-pointer items-center justify-center whitespace-pre rounded-md bg-slate-100 text-sm text-transparent"
+              className="z-30 flex h-fit cursor-pointer justify-center whitespace-pre rounded-md bg-slate-100 text-sm text-transparent"
               key={parts.length}>
               {"@" + label}
             </span>

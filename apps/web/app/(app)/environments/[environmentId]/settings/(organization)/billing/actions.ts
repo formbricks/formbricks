@@ -1,7 +1,6 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { StripePriceLookupKeys } from "@formbricks/ee/billing/lib/constants";
 import { createCustomerPortalSession } from "@formbricks/ee/billing/lib/create-customer-portal-session";
 import { createSubscription } from "@formbricks/ee/billing/lib/create-subscription";

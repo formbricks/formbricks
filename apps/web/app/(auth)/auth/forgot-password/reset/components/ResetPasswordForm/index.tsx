@@ -1,14 +1,14 @@
 "use client";
 
-import { IsPasswordValid } from "@/app/(auth)/auth/components/IsPasswordValid";
-import { resetPassword } from "@/app/lib/users/users";
 import { XCircleIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 
+import { resetPassword } from "@formbricks/lib/utils/users";
 import { Button } from "@formbricks/ui/Button";
 import { PasswordInput } from "@formbricks/ui/PasswordInput";
+import { IsPasswordValid } from "@formbricks/ui/SignupOptions/components/IsPasswordValid";
 
 export const ResetPasswordForm = () => {
   const searchParams = useSearchParams();

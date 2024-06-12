@@ -1,20 +1,25 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
+import { getServerSession } from "next-auth";
 
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import {
-  TCurrentUser,
+  AuthenticationError,
+  DatabaseError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
+import {
   TInvite,
   TInviteUpdateInput,
   TInvitee,
-  ZCurrentUser,
   ZInviteUpdateInput,
   ZInvitee,
 } from "@formbricks/types/invites";
 
+import { authOptions } from "../authOptions";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { getMembershipByUserIdOrganizationId } from "../membership/service";
@@ -204,15 +209,17 @@ export const resendInvite = async (inviteId: string): Promise<TInvite> => {
 };
 
 export const inviteUser = async ({
-  currentUser,
   invitee,
   organizationId,
 }: {
   organizationId: string;
   invitee: TInvitee;
-  currentUser: TCurrentUser;
 }): Promise<TInvite> => {
-  validateInputs([organizationId, ZString], [invitee, ZInvitee], [currentUser, ZCurrentUser]);
+  validateInputs([organizationId, ZString], [invitee, ZInvitee]);
+  const session = await getServerSession(authOptions);
+
+  if (!session) throw new AuthenticationError("Not Authenticated");
+  const currentUser = session.user;
 
   try {
     const { name, email, role } = invitee;

@@ -136,6 +136,7 @@ const deleteUserById = async (id: string): Promise<TUser> => {
     userCache.revalidate({
       email: user.email,
       id,
+      count: true,
     });
 
     return user;
@@ -160,6 +161,7 @@ export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
     userCache.revalidate({
       email: user.email,
       id: user.id,
+      count: true,
     });
 
     // send new user customer.io to customer.io

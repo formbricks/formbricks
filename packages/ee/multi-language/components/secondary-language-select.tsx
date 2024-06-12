@@ -1,6 +1,5 @@
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import type { TSurvey } from "@formbricks/types/surveys";
-
 import { LanguageToggle } from "./language-toggle";
 
 interface SecondaryLanguageSelectProps {
