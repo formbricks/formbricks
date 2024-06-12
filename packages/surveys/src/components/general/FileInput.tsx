@@ -1,6 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
 import { JSXInternal } from "preact/src/jsx";
-
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { TUploadFileConfig } from "@formbricks/types/storage";

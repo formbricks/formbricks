@@ -2,7 +2,6 @@
 
 import * as LabelPrimitive from "@radix-ui/react-label";
 import * as React from "react";
-
 import { cn } from "@formbricks/lib/cn";
 
 type LabelType = React.ForwardRefExoticComponent<

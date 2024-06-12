@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-
 import { createUser } from "@formbricks/lib/utils/users";
-
 import { Button } from "../Button";
 import { PasswordInput } from "../PasswordInput";
 import { AzureButton } from "./components/AzureButton";

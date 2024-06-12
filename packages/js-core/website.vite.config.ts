@@ -1,7 +1,6 @@
 import { resolve } from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
-
 import webPackageJson from "../../apps/web/package.json";
 
 const config = () => {

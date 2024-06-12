@@ -13,9 +13,7 @@ import { randomUUID } from "crypto";
 import { access, mkdir, readFile, rmdir, unlink, writeFile } from "fs/promises";
 import { lookup } from "mime-types";
 import path, { join } from "path";
-
 import { TAccessType } from "@formbricks/types/storage";
-
 import {
   MAX_SIZES,
   S3_ACCESS_KEY,

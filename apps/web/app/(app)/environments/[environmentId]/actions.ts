@@ -2,7 +2,6 @@
 
 import { Organization } from "@prisma/client";
 import { getServerSession } from "next-auth";
-
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";

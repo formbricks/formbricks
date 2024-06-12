@@ -2,7 +2,6 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { OrganizationActions } from "@/app/(app)/environments/[environmentId]/settings/(organization)/members/components/EditMemberships/OrganizationActions";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
-
 import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -15,7 +14,6 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 import { SettingsId } from "@formbricks/ui/SettingsId";
-
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditMemberships } from "./components/EditMemberships";

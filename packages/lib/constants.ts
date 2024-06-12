@@ -1,5 +1,4 @@
 import "server-only";
-
 import { env } from "./env";
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";

@@ -1,5 +1,4 @@
 import { PostHog } from "posthog-node";
-
 import { env } from "./env";
 
 const enabled =

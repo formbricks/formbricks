@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-
 import { Button } from "@formbricks/ui/Button";
 
 export const metadata: Metadata = {

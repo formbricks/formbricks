@@ -1,6 +1,5 @@
 import { actions, users } from "@/playwright/utils/mock";
 import { Page, expect, test } from "@playwright/test";
-
 import { finishOnboarding, login, signUpAndLogin } from "./utils/helper";
 
 const createNoCodeClickAction = async (

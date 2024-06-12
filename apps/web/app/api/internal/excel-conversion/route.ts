@@ -2,7 +2,6 @@ import { responses } from "@/app/lib/api/response";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import * as xlsx from "xlsx";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 
 export const POST = async (request: NextRequest) => {

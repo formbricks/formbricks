@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-
 import { COLOR_DEFAULTS, PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
 import { TProduct, TProductStyling, ZProductStyling } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys";
@@ -25,7 +24,6 @@ import {
   FormProvider,
 } from "@formbricks/ui/Form";
 import { Switch } from "@formbricks/ui/Switch";
-
 import { updateProductAction } from "../actions";
 
 type ThemeStylingProps = {

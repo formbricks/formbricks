@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
-
 import { StripePriceLookupKeys } from "@formbricks/ee/billing/lib/constants";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-
 import { upgradePlanAction } from "../actions";
 
 const Page = async ({ params }) => {

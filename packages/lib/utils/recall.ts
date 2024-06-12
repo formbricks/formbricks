@@ -8,7 +8,6 @@ import {
   TSurveyQuestionsObject,
   TSurveyRecallItem,
 } from "@formbricks/types/surveys";
-
 import { getLocalizedValue } from "../i18n/utils";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "./datetime";

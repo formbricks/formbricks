@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-
 import { TEnvironment } from "@formbricks/types/environment";
-
 import { Skeleton } from "../Skeleton";
 
 type EmptySpaceFillerProps = {

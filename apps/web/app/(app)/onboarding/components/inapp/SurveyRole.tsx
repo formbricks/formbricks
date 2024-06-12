@@ -7,7 +7,6 @@ import { createResponse, formbricksEnabled } from "@/app/lib/formbricks";
 import { Session } from "next-auth";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { env } from "@formbricks/lib/env";
 import { Button } from "@formbricks/ui/Button";
