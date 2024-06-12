@@ -37,7 +37,7 @@ export const LanguageSwitch = ({
   useClickOutside(languageDropdownRef, () => setShowLanguageDropdown(false));
 
   return (
-    <div class="z-[1001] flex w-fit items-center pl-1">
+    <div class="z-[1001] flex w-fit items-center even:pr-1">
       <button
         title="Language switch"
         type="button"
