@@ -1,7 +1,6 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { sendInviteMemberEmail } from "@formbricks/email";
 import { hasOrganizationAuthority } from "@formbricks/lib/auth";
@@ -34,6 +33,9 @@ export const updateOrganizationNameAction = async (organizationId: string, organ
   if (!isUserAuthorized) {
     throw new AuthenticationError("Not authorized");
   }
+
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(organizationId, session.user.id);
+  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await updateOrganization(organizationId, { name: organizationName });
 };

@@ -1,10 +1,12 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { canUserAccessResponse } from "@formbricks/lib/response/auth";
+import {
+  canUserAccessResponse,
+  verifyUserRoleAccess as verifyUserRoleAccessToResponse,
+} from "@formbricks/lib/response/auth";
 import { deleteResponse, getResponse } from "@formbricks/lib/response/service";
 import { canUserModifyResponseNote, canUserResolveResponseNote } from "@formbricks/lib/responseNote/auth";
 import {
@@ -62,8 +64,12 @@ export const deleteTagOnResponseAction = async (responseId: string, tagId: strin
 export const deleteResponseAction = async (responseId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
+
   const isAuthorized = await canUserAccessResponse(session.user!.id, responseId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const { hasDeleteAccess } = await verifyUserRoleAccessToResponse(responseId, session.user.id);
+  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
 
   return await deleteResponse(responseId);
 };
