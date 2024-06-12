@@ -37,7 +37,9 @@ async function main() {
         },
       });
 
-      console.log("Found orgs with billing to process. teams: ", orgsWithoutBilling.length);
+      console.log(
+        `Found ${orgsWithoutBilling.length} organizations without billing information. Moving them to free plan...`
+      );
 
       for (const organization of orgsWithoutBilling) {
         await tx.organization.update({
@@ -57,93 +59,103 @@ async function main() {
             },
           },
         });
+      }
 
-        const orgsWithBilling = await tx.organization.findMany({
-          where: {
-            billing: {
-              path: ["stripeCustomerId"],
-              not: Prisma.AnyNull,
-            },
+      console.log("Moved all organizations without billing to free plan");
+
+      const orgsWithBilling = await tx.organization.findMany({
+        where: {
+          billing: {
+            path: ["stripeCustomerId"],
+            not: Prisma.AnyNull,
           },
-        });
+        },
+      });
 
-        for (const org of orgsWithBilling) {
-          const billing = org.billing as TOrganizationBillingLegacy;
+      console.log(`Found ${orgsWithBilling.length} organizations with billing information`);
 
-          if (
-            billing.features.linkSurvey.unlimited ||
-            billing.features.inAppSurvey.unlimited ||
-            billing.features.userTargeting.unlimited ||
-            billing.features.multiLanguage.unlimited
-          ) {
-            await tx.organization.update({
-              where: {
-                id: org.id,
-              },
-              data: {
-                billing: {
-                  plan: "enterprise",
-                  limits: {
-                    monthly: {
-                      responses: null,
-                      miu: null,
-                    },
+      for (const org of orgsWithBilling) {
+        const billing = org.billing as TOrganizationBillingLegacy;
+
+        // @ts-expect-error
+        if (billing.plan && typeof billing.plan === "string") {
+          // no migration needed, already following the latest schema
+          continue;
+        }
+
+        if (
+          billing.features.linkSurvey.unlimited ||
+          billing.features.inAppSurvey.unlimited ||
+          billing.features.userTargeting.unlimited ||
+          billing.features.multiLanguage.unlimited
+        ) {
+          await tx.organization.update({
+            where: {
+              id: org.id,
+            },
+            data: {
+              billing: {
+                plan: "enterprise",
+                limits: {
+                  monthly: {
+                    responses: null,
+                    miu: null,
                   },
                 },
               },
-            });
+            },
+          });
 
-            console.log("Updated org to enterprise plan", org.id);
-            continue;
-          }
+          console.log("Updated org with unlimited to enterprise plan: ", org.id);
+          continue;
+        }
 
-          if (
-            billing.features.inAppSurvey.status === "active" ||
-            billing.features.userTargeting.status === "active" ||
-            billing.features.multiLanguage.status === "active"
-          ) {
-            await tx.organization.update({
-              where: {
-                id: org.id,
-              },
-              data: {
-                billing: {
-                  plan: "free",
-                  limits: {
-                    monthly: {
-                      responses: 500,
-                      miu: 1000,
-                    },
+        if (billing.features.linkSurvey.status === "active") {
+          await tx.organization.update({
+            where: {
+              id: org.id,
+            },
+            data: {
+              billing: {
+                plan: "startup",
+                limits: {
+                  monthly: {
+                    responses: 2000,
+                    miu: 2500,
                   },
                 },
               },
-            });
+            },
+          });
 
-            console.log("Updated org to free plan", org.id);
-            continue;
-          }
+          console.log("Updated org with an active link survey plan to the new startup plan: ", org.id);
+          continue;
+        }
 
-          if (billing.features.linkSurvey.status === "active") {
-            await tx.organization.update({
-              where: {
-                id: org.id,
-              },
-              data: {
-                billing: {
-                  plan: "startup",
-                  limits: {
-                    monthly: {
-                      responses: 2000,
-                      miu: 2500,
-                    },
+        if (
+          billing.features.inAppSurvey.status === "active" ||
+          billing.features.userTargeting.status === "active" ||
+          billing.features.multiLanguage.status === "active"
+        ) {
+          await tx.organization.update({
+            where: {
+              id: org.id,
+            },
+            data: {
+              billing: {
+                plan: "free",
+                limits: {
+                  monthly: {
+                    responses: 500,
+                    miu: 1000,
                   },
                 },
               },
-            });
+            },
+          });
 
-            console.log("Updated org to startup plan", org.id);
-            continue;
-          }
+          console.log("Updated org to free plan: ", org.id);
+          continue;
         }
       }
     },

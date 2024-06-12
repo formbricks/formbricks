@@ -15,7 +15,10 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
   const organizationId = stripeSubscriptionObject.metadata.organizationId;
 
-  if (stripeSubscriptionObject.status !== "active" || stripeSubscriptionObject.cancel_at_period_end) {
+  if (
+    !["active", "trialing"].includes(stripeSubscriptionObject.status) ||
+    stripeSubscriptionObject.cancel_at_period_end
+  ) {
     return;
   }
 

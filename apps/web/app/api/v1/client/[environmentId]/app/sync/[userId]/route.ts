@@ -87,10 +87,15 @@ export const GET = async (
 
     if (IS_FORMBRICKS_CLOUD) {
       const currentMau = await getMonthlyActiveOrganizationPeopleCount(organization.id);
-      isMauLimitReached = currentMau >= organization.billing.limits.monthly.miu;
+      if (organization.billing.limits.monthly.miu) {
+        isMauLimitReached = currentMau >= organization.billing.limits.monthly.miu;
+      }
 
       const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
-      isMonthlyResponsesLimitReached = currentResponseCount >= organization.billing.limits.monthly.responses;
+      if (organization.billing.limits.monthly.responses) {
+        isMonthlyResponsesLimitReached =
+          currentResponseCount >= organization.billing.limits.monthly.responses;
+      }
     }
 
     let person = await getPersonByUserId(environmentId, userId);
@@ -101,8 +106,8 @@ export const GET = async (
         plan: organization.billing.plan,
         limits: {
           monthly: {
-            miu: organization.billing.limits.monthly.miu,
-            responses: organization.billing.limits.monthly.responses,
+            miu: organization.billing.limits.monthly.miu ?? undefined,
+            responses: organization.billing.limits.monthly.responses ?? undefined,
           },
         },
       });
@@ -137,8 +142,8 @@ export const GET = async (
         plan: organization.billing.plan,
         limits: {
           monthly: {
-            miu: organization.billing.limits.monthly.miu,
-            responses: organization.billing.limits.monthly.responses,
+            miu: organization.billing.limits.monthly.miu ?? undefined,
+            responses: organization.billing.limits.monthly.responses ?? undefined,
           },
         },
       });
