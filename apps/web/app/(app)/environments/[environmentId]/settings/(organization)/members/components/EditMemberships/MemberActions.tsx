@@ -11,7 +11,6 @@ import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
 import { TInvite } from "@formbricks/types/invites";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";

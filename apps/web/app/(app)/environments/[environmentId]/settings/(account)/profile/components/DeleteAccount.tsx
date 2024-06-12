@@ -38,7 +38,7 @@ export const DeleteAccount = ({
         open={isModalOpen}
         setOpen={setModalOpen}
         session={session}
-        IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         formbricksLogout={formbricksLogout}
       />
       <p className="text-sm text-slate-700">

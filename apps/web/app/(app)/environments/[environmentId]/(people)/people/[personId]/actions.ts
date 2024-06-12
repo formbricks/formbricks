@@ -1,7 +1,6 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { canUserAccessPerson } from "@formbricks/lib/person/auth";
 import { deletePerson } from "@formbricks/lib/person/service";

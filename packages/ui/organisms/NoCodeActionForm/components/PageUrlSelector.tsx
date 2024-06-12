@@ -63,19 +63,23 @@ export const PageUrlSelector = ({ form }: PageUrlSelectorProps) => {
           control={form.control}
           name="noCodeConfig.urlFilters"
           render={() => (
-            <TabToggle
-              id="filter"
-              label="Filter"
-              subLabel="Limit the pages on which this action gets captured"
-              onChange={(value) => {
-                setFilterType(value);
-              }}
-              options={[
-                { value: "all", label: "On all pages" },
-                { value: "specific", label: "Limit to specific pages" },
-              ]}
-              defaultSelected={filterType}
-            />
+            <div>
+              <Label className="font-semibold">Filter</Label>
+              <p className="text-sm font-normal text-slate-500">
+                Limit the pages on which this action gets captured
+              </p>
+              <TabToggle
+                id="filter"
+                onChange={(value) => {
+                  setFilterType(value);
+                }}
+                options={[
+                  { value: "all", label: "On all pages" },
+                  { value: "specific", label: "Limit to specific pages" },
+                ]}
+                defaultSelected={filterType}
+              />
+            </div>
           )}
         />
       </div>

@@ -3,7 +3,6 @@ import { AttributesSection } from "@/app/(app)/environments/[environmentId]/(peo
 import { DeletePersonButton } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/DeletePersonButton";
 import { ResponseSection } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseSection";
 import { getServerSession } from "next-auth";
-
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";

@@ -2,7 +2,6 @@
 
 import { EyeIcon, EyeOff } from "lucide-react";
 import { forwardRef, useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 
 export interface PasswordInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {

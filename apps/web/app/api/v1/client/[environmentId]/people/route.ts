@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { NextRequest } from "next/server";
-
 import { createPerson } from "@formbricks/lib/person/service";
 
 interface Context {

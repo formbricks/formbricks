@@ -183,7 +183,8 @@ const renderWidget = async (
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
-          language: languageCode === "default" ? getDefaultLanguageCode(survey) : languageCode,
+          language:
+            responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
           meta: {
             url: window.location.href,
             action,

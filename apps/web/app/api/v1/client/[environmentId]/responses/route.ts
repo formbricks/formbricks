@@ -3,7 +3,6 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getPerson } from "@formbricks/lib/person/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/response/service";
@@ -32,11 +31,6 @@ export const POST = async (request: Request, context: Context): Promise<Response
       transformErrorToDetails(environmentIdValidation.error),
       true
     );
-  }
-
-  const organization = await getOrganizationByEnvironmentId(environmentId);
-  if (!organization) {
-    return responses.notFoundResponse("Organization", environmentId, true);
   }
 
   const responseInput = await request.json();

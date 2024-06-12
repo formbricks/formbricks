@@ -4,10 +4,8 @@ import { UsersIcon } from "lucide-react";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-
 import { TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
-
 import { Button } from "../Button";
 import { Input } from "../Input";
 import { Modal } from "../Modal";

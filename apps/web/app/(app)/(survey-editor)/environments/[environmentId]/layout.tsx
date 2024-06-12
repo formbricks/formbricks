@@ -3,7 +3,6 @@ import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/compon
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getEnvironment } from "@formbricks/lib/environment/service";

@@ -2,7 +2,6 @@
 
 import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-
 import { cn } from "@formbricks/lib/cn";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";

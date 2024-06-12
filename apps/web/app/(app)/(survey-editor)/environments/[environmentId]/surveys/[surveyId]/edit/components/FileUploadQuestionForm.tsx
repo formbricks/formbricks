@@ -1,9 +1,8 @@
 "use client";
 
-import { PlusIcon, TrashIcon, XCircleIcon } from "lucide-react";
+import { PlusIcon, XCircleIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { useGetBillingInfo } from "@formbricks/lib/organization/hooks/useGetBillingInfo";
@@ -40,7 +39,6 @@ export const FileUploadQuestionForm = ({
   setSelectedLanguageCode,
   attributeClasses,
 }: FileUploadFormProps): JSX.Element => {
-  const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [extension, setExtension] = useState("");
   const {
     billingInfo,
@@ -128,7 +126,7 @@ export const FileUploadQuestionForm = ({
         attributeClasses={attributeClasses}
       />
       <div>
-        {showSubheader && (
+        {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
@@ -144,17 +142,9 @@ export const FileUploadQuestionForm = ({
                 attributeClasses={attributeClasses}
               />
             </div>
-
-            <TrashIcon
-              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => {
-                setShowSubheader(false);
-                updateQuestion(questionIdx, { subheader: undefined });
-              }}
-            />
           </div>
         )}
-        {!showSubheader && (
+        {question.subheader === undefined && (
           <Button
             size="sm"
             className="mt-3"
@@ -164,9 +154,7 @@ export const FileUploadQuestionForm = ({
               updateQuestion(questionIdx, {
                 subheader: createI18nString("", surveyLanguageCodes),
               });
-              setShowSubheader(true);
             }}>
-            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>

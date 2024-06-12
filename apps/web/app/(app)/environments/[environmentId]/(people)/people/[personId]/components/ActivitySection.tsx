@@ -1,5 +1,4 @@
 import { ActivityTimeline } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ActivityTimeline";
-
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionsByPersonId } from "@formbricks/lib/action/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";

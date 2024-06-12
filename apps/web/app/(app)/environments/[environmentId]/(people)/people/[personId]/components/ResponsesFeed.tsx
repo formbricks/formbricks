@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";

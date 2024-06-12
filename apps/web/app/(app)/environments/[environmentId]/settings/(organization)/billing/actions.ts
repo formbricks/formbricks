@@ -67,5 +67,16 @@ export const manageSubscriptionAction = async (organizationId: string, environme
 };
 
 export const isSubscriptionCancelledAction = async (organizationId: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await canUserAccessOrganization(session.user.id, organizationId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organizationId);
+  if (membership?.role !== "owner") {
+    throw new AuthorizationError("Only organization owner can upgrade plan");
+  }
+
   return await isSubscriptionCancelled(organizationId);
 };

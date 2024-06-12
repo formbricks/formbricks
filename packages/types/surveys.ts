@@ -519,6 +519,7 @@ export const ZSurvey = z.object({
   resultShareKey: z.string().nullable(),
   displayPercentage: z.number().min(0.01).max(100).nullable(),
   languages: z.array(ZSurveyLanguage),
+  showLanguageSwitch: z.boolean().nullable(),
 });
 
 export const ZSurveyInput = z.object({

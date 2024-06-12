@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { createAction } from "@formbricks/lib/action/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
