@@ -6,7 +6,6 @@ import { VerifyEmail } from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
@@ -290,6 +289,7 @@ export const LinkSurvey = ({
         }}
         startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
         fullSizeCards={isEmbed ? true : false}
+        hiddenFieldsRecord={hiddenFieldsRecord}
       />
     </LinkSurveyWrapper>
   );
