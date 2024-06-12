@@ -1,4 +1,3 @@
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/app/api/v1/client/[environmentId]/app/sync/lib/posthog";
 import {
   replaceAttributeRecall,
   replaceAttributeRecallInLegacySurveys,
@@ -16,6 +15,7 @@ import {
   getOrganizationByEnvironmentId,
 } from "@formbricks/lib/organization/service";
 import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@formbricks/lib/person/service";
+import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";

@@ -1,5 +1,7 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { getMonthlyOrganizationResponseCount, getOrganizationByEnvironmentId } from "organization/service";
+import { sendPlanLimitsReachedEventToPosthogWeekly } from "posthogServer";
 import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -21,7 +23,7 @@ import { TSurveySummary } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
-import { ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
+import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { displayCache } from "../display/cache";
 import { deleteDisplayByResponseId, getDisplayCountBySurveyId } from "../display/service";
 import { createPerson, getPerson, getPersonByUserId } from "../person/service";
@@ -205,6 +207,11 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     let person: TPerson | null = null;
     let attributes: TAttributes | null = null;
 
+    const organization = await getOrganizationByEnvironmentId(environmentId);
+    if (!organization) {
+      throw new ResourceNotFoundError("Organization", environmentId);
+    }
+
     if (userId) {
       person = await getPersonByUserId(environmentId, userId);
       if (!person) {
@@ -262,6 +269,22 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     responseNoteCache.revalidate({
       responseId: response.id,
     });
+
+    if (IS_FORMBRICKS_CLOUD) {
+      const responsesCount = await getMonthlyOrganizationResponseCount(organization.id);
+      const responsesLimit = organization.billing.limits.monthly.responses;
+
+      if (responsesLimit && responsesCount >= responsesLimit) {
+        await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
+          plan: organization.billing.plan,
+          limits: {
+            monthly: {
+              responses: responsesLimit,
+            },
+          },
+        });
+      }
+    }
 
     return response;
   } catch (error) {
@@ -338,6 +361,7 @@ export const createResponseLegacy = async (responseInput: TResponseLegacyInput):
     responseNoteCache.revalidate({
       responseId: response.id,
     });
+
     return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

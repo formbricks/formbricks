@@ -3,11 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import {
-  getMonthlyOrganizationResponseCount,
-  getOrganizationByEnvironmentId,
-} from "@formbricks/lib/organization/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getPerson } from "@formbricks/lib/person/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/response/service";
@@ -15,7 +11,6 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "../app/sync/lib/posthog";
 
 interface Context {
   params: {
@@ -126,22 +121,6 @@ export const POST = async (request: Request, context: Context): Promise<Response
       surveyId: response.surveyId,
       response: response,
     });
-  }
-
-  if (IS_FORMBRICKS_CLOUD) {
-    const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
-    const monthlyResponseLimit = organization.billing.limits.monthly.responses;
-
-    if (monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit) {
-      await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-        plan: organization.billing.plan,
-        limits: {
-          monthly: {
-            responses: monthlyResponseLimit,
-          },
-        },
-      });
-    }
   }
 
   await capturePosthogEnvironmentEvent(survey.environmentId, "response created", {
