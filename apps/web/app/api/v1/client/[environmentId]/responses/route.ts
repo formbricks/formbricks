@@ -130,12 +130,14 @@ export const POST = async (request: Request, context: Context): Promise<Response
 
   if (IS_FORMBRICKS_CLOUD) {
     const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
-    if (currentResponseCount >= organization.billing.limits.monthly.responses) {
+    const monthlyResponseLimit = organization.billing.limits.monthly.responses;
+
+    if (monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit) {
       await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
         plan: organization.billing.plan,
         limits: {
           monthly: {
-            responses: organization.billing.limits.monthly.responses,
+            responses: monthlyResponseLimit,
           },
         },
       });

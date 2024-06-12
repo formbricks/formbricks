@@ -63,13 +63,15 @@ export const GET = async (
     if (IS_FORMBRICKS_CLOUD) {
       // check for response limit
       const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
+      const monthlyResponseLimit = organization.billing.limits.monthly.responses;
+
       isWebsiteSurveyResponseLimitReached =
-        currentResponseCount >= organization.billing.limits.monthly.responses;
+        monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit;
 
       if (isWebsiteSurveyResponseLimitReached) {
         await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
           plan: organization.billing.plan,
-          limits: { monthly: { responses: organization.billing.limits.monthly.responses } },
+          limits: { monthly: { responses: monthlyResponseLimit ?? undefined } },
         });
       }
     }

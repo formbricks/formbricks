@@ -87,15 +87,14 @@ export const GET = async (
 
     if (IS_FORMBRICKS_CLOUD) {
       const currentMau = await getMonthlyActiveOrganizationPeopleCount(organization.id);
-      if (organization.billing.limits.monthly.miu) {
-        isMauLimitReached = currentMau >= organization.billing.limits.monthly.miu;
-      }
+      const monthlyResponseLimit = organization.billing.limits.monthly.responses;
+      const monthlyMiuLimit = organization.billing.limits.monthly.miu;
+
+      isMauLimitReached = monthlyMiuLimit !== null && currentMau >= monthlyMiuLimit;
 
       const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
-      if (organization.billing.limits.monthly.responses) {
-        isMonthlyResponsesLimitReached =
-          currentResponseCount >= organization.billing.limits.monthly.responses;
-      }
+      isMonthlyResponsesLimitReached =
+        monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit;
     }
 
     let person = await getPersonByUserId(environmentId, userId);

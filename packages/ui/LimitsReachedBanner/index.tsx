@@ -14,8 +14,8 @@ export const LimitsReachedBanner = ({
   const orgBillingPeopleLimit = organization.billing?.limits?.monthly?.miu;
   const orgBillingResponseLimit = organization.billing?.limits?.monthly?.responses;
 
-  const isPeopleLimitReached = peopleCount >= orgBillingPeopleLimit;
-  const isResponseLimitReached = responseCount >= orgBillingResponseLimit;
+  const isPeopleLimitReached = orgBillingPeopleLimit !== null && peopleCount >= orgBillingPeopleLimit;
+  const isResponseLimitReached = orgBillingResponseLimit !== null && responseCount >= orgBillingResponseLimit;
 
   if (isPeopleLimitReached && isResponseLimitReached) {
     return (
