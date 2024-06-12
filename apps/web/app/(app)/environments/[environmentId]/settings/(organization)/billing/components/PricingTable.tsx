@@ -5,7 +5,6 @@ import {
   manageSubscriptionAction,
   upgradePlanAction,
 } from "@/app/(app)/environments/[environmentId]/settings/(organization)/billing/actions";
-import { revalidateTag } from "next/cache";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -32,7 +31,6 @@ export const PricingTable = ({
 }: PricingTableProps) => {
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
-  const [upgradingPlan, setUpgradingPlan] = useState(false);
   const [cancellingOn, setCancellingOn] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -54,14 +52,12 @@ export const PricingTable = ({
 
   const upgradePlan = async (priceLookupKey: STRIPE_PRICE_LOOKUP_KEYS) => {
     try {
-      setUpgradingPlan(true);
       const { status, newPlan, url } = await upgradePlanAction(
         organization.id,
         environmentId,
         priceLookupKey
       );
 
-      setUpgradingPlan(false);
       if (status != 200) {
         throw new Error("Something went wrong");
       }
@@ -75,8 +71,6 @@ export const PricingTable = ({
     } catch (err) {
       console.log({ err });
       toast.error("Unable to upgrade plan");
-    } finally {
-      setUpgradingPlan(false);
     }
   };
 

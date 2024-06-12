@@ -7,9 +7,10 @@ import { createSubscription } from "@formbricks/ee/billing/lib/create-subscripti
 import { isSubscriptionCancelled } from "@formbricks/ee/billing/lib/isSubscriptionCancelled";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
 import { getOrganization } from "@formbricks/lib/organization/service";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const upgradePlanAction = async (
   organizationId: string,
@@ -21,6 +22,20 @@ export const upgradePlanAction = async (
 
   const isAuthorized = await canUserAccessOrganization(session.user.id, organizationId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const organization = await getOrganization(organizationId);
+  if (!organization) {
+    throw new ResourceNotFoundError("organization", organizationId);
+  }
+
+  if (!organization.billing.stripeCustomerId) {
+    throw new AuthorizationError("You do not have an associated Stripe CustomerId");
+  }
+
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organizationId);
+  if (membership?.role !== "owner") {
+    throw new AuthorizationError("Only organization owner can upgrade plan");
+  }
 
   const subscriptionSession = await createSubscription(organizationId, environmentId, priceLookupKey);
 
@@ -35,8 +50,18 @@ export const manageSubscriptionAction = async (organizationId: string, environme
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   const organization = await getOrganization(organizationId);
-  if (!organization || !organization.billing.stripeCustomerId)
+  if (!organization) {
+    throw new ResourceNotFoundError("organization", organizationId);
+  }
+
+  if (!organization.billing.stripeCustomerId) {
     throw new AuthorizationError("You do not have an associated Stripe CustomerId");
+  }
+
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organizationId);
+  if (membership?.role !== "owner") {
+    throw new AuthorizationError("Only organization owner can upgrade plan");
+  }
 
   const sessionUrl = await createCustomerPortalSession(
     organization.billing.stripeCustomerId,
