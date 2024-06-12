@@ -11,6 +11,7 @@ import { extractLanguageCodes, translateSurvey } from "@formbricks/lib/i18n/util
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import type { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys";
 import { ZSurvey } from "@formbricks/types/surveys";
+import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
 import { Label } from "@formbricks/ui/Label";
@@ -168,6 +169,10 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
     }
   };
 
+  const handleLanguageSwitchToggle = () => {
+    setLocalSurvey({ ...localSurvey, ...{ showLanguageSwitch: !localSurvey.showLanguageSwitch } });
+  };
+
   return (
     <div
       className={cn(
@@ -272,6 +277,16 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                     Manage Languages <ArrowUpRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
+                {isMultiLanguageActivated && (
+                  <AdvancedOptionToggle
+                    customContainerClass="px-0 pt-2"
+                    htmlId="languageSwitch"
+                    isChecked={!!localSurvey.showLanguageSwitch}
+                    onToggle={handleLanguageSwitchToggle}
+                    title="Show language switch"
+                    description="Enable participants to switch the survey language at any point during the survey."
+                    childBorder={true}></AdvancedOptionToggle>
+                )}
               </>
             )}
 

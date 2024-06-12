@@ -1,6 +1,5 @@
 import Link from "next/link";
 import React from "react";
-
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { TPerson } from "@formbricks/types/people";

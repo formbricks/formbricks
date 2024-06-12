@@ -1,7 +1,7 @@
+import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import { DefaultTag } from "@formbricks/ui/DefaultTag";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { getLanguageLabel } from "../lib/iso-languages";
 import type { ConfirmationModalProps } from "./multi-language-card";
 
 interface DefaultLanguageSelectProps {

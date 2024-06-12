@@ -1,9 +1,7 @@
 import { ChevronDownIcon, Equal, Grid2X2, Search, X } from "lucide-react";
 import { useState } from "react";
 import { useDebounce } from "react-use";
-
 import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys";
-
 import { initialFilters } from "..";
 import { Button } from "../../Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../../DropdownMenu";

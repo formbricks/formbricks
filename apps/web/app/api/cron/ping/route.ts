@@ -1,7 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import packageJson from "@/package.json";
 import { headers } from "next/headers";
-
 import { prisma } from "@formbricks/database";
 import { CRON_SECRET } from "@formbricks/lib/constants";
 import { captureTelemetry } from "@formbricks/lib/telemetry";

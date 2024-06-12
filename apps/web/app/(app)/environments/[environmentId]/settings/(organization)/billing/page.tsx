@@ -1,6 +1,5 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import {
   IS_FORMBRICKS_CLOUD,
@@ -15,7 +14,6 @@ import {
 } from "@formbricks/lib/organization/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
-
 import { PricingTable } from "./components/PricingTable";
 
 const Page = async ({ params }) => {

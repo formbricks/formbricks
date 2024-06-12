@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import toast from "react-hot-toast";
-
 import { resendVerificationEmail } from "@formbricks/lib/utils/users";
 import { Button } from "@formbricks/ui/Button";
 

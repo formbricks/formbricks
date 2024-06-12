@@ -272,6 +272,7 @@ export const updateSurveyInput: TSurvey = {
   resultShareKey: null,
   segment: null,
   languages: [],
+  showLanguageSwitch: null,
   ...commonMockProperties,
   ...baseSurveyProperties,
 };

@@ -2,7 +2,6 @@
 
 import { CopyIcon } from "lucide-react";
 import toast from "react-hot-toast";
-
 import { Button } from "@formbricks/ui/Button";
 import { CodeBlock } from "@formbricks/ui/CodeBlock";
 

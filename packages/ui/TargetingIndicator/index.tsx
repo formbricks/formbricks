@@ -1,5 +1,4 @@
 import { FilterIcon, UsersIcon } from "lucide-react";
-
 import { TSegment } from "@formbricks/types/segment";
 
 export const TargetingIndicator = ({ segment }: { segment: TSegment | null }) => {

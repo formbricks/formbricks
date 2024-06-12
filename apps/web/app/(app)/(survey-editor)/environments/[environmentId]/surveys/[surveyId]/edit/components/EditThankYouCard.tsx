@@ -2,7 +2,6 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";

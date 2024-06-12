@@ -3,7 +3,6 @@ import { getSurveysBySegmentId } from "@formbricks/lib/survey/service";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSegment } from "@formbricks/types/segment";
-
 import { SegmentTableDataRow } from "./SegmentTableDataRow";
 
 type TSegmentTableDataRowProps = {
