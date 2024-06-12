@@ -74,7 +74,7 @@ export const AddIntegrationModal = ({
   };
 
   useEffect(() => {
-    if (selectedSurvey) {
+    if (selectedSurvey && !selectedIntegration) {
       const questionIds = selectedSurvey.questions.map((question) => question.id);
       setSelectedQuestions(questionIds);
     }

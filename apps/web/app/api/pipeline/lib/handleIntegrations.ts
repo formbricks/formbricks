@@ -85,7 +85,6 @@ const handleAirtableIntegration = async (
           element.questionIds
         );
         await airtableWriteData(integration.config.key, element, values);
-        await airtableWriteData(integration.config.key, element, values);
       }
     }
   }
