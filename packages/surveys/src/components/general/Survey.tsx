@@ -319,15 +319,12 @@ export const Survey = ({
             cardArrangement === "simple" ? "fb-survey-shadow" : "",
             offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
-          <div className="mt-2 flex h-6 w-full items-center justify-end space-x-2 px-2">
+          <div className="flex justify-end pr-2 pt-2">
             {getShowLanguageSwitch(offset) && (
               <LanguageSwitch
                 surveyLanguages={survey.languages}
                 setSelectedLanguageCode={setselectedLanguage}
               />
-            )}
-            {getShowSurveyCloseButton(offset) && getShowLanguageSwitch(offset) && (
-              <p className="text-heading font-thin opacity-30">|</p>
             )}
             {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
           </div>

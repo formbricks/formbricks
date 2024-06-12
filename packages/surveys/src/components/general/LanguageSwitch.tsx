@@ -37,20 +37,20 @@ export const LanguageSwitch = ({
   useClickOutside(languageDropdownRef, () => setShowLanguageDropdown(false));
 
   return (
-    <div className="relative z-[1100] flex w-full cursor-pointer justify-end">
+    <div class="z-[1001] flex w-fit items-center pl-1">
       <button
         title="Language switch"
         type="button"
-        className="flex items-center justify-center rounded-md text-xs hover:opacity-90"
+        class="text-heading relative h-5 w-5 rounded-md hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-offset-2"
         onClick={toggleDropdown}
         tabIndex={-1}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}>
-        <GlobeIcon className="text-heading h-6 w-6" />
+        <GlobeIcon className="text-heading h-5 w-5 p-0.5" />
       </button>
       {showLanguageDropdown && (
         <div
-          className="bg-brand text-on-brand  absolute right-0 top-8 space-y-2 rounded-md p-2 text-xs "
+          className="bg-brand text-on-brand absolute right-8 top-10 space-y-2 rounded-md p-2 text-xs"
           ref={languageDropdownRef}>
           {surveyLanguages.map((surveyLanguage) => {
             if (!surveyLanguage.enabled) return;
@@ -58,7 +58,7 @@ export const LanguageSwitch = ({
               <button
                 key={surveyLanguage.language.id}
                 type="button"
-                className="block w-full rounded-sm p-1 text-left hover:opacity-90"
+                className="block w-full p-1.5 text-left hover:opacity-80"
                 onClick={() => changeLanguage(surveyLanguage.language.code)}>
                 {getLanguageLabel(surveyLanguage.language.code)}
               </button>
