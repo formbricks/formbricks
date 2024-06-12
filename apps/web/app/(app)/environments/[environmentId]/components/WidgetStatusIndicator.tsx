@@ -14,13 +14,13 @@ export const WidgetStatusIndicator = ({ environment, size, type }: WidgetStatusI
   const stati = {
     notImplemented: {
       icon: AlertTriangleIcon,
-      title: `Connect Formbricks to your ${type}.`,
-      subtitle: `Your ${type} is not yet connected with Formbricks. To run ${type === "app" ? "in-app" : "website"} surveys follow the setup guide.`,
-      shortText: `Connect Formbricks to your ${type}`,
+      title: `Your ${type} is not yet connected.`,
+      subtitle: `Connect your ${type} with Formbricks to get started. To run ${type === "app" ? "in-app" : "website"} surveys follow the setup guide.`,
+      shortText: `Connect your ${type} with Formbricks`,
     },
     running: {
       icon: CheckIcon,
-      title: "Receiving data.",
+      title: "Receiving data 💃🕺",
       subtitle: `Your ${type} is connected with Formbricks.`,
       shortText: `${type === "app" ? "App" : "Website"} Connected`,
     },
@@ -41,15 +41,15 @@ export const WidgetStatusIndicator = ({ environment, size, type }: WidgetStatusI
     return (
       <div
         className={clsx(
-          "flex flex-col items-center justify-center space-y-2 rounded-lg py-6 text-center",
-          status === "notImplemented" && "bg-slate-100",
-          status === "running" && "bg-green-100"
+          "flex flex-col items-center justify-center space-y-2 rounded-lg border py-6 text-center",
+          status === "notImplemented" && "border-slate-200 bg-slate-100",
+          status === "running" && "border-emerald-200 bg-emerald-100"
         )}>
         <div
           className={clsx(
-            "flex h-12 w-12 items-center justify-center rounded-full bg-white p-2",
-            status === "notImplemented" && "text-slate-700",
-            status === "running" && "text-green-700"
+            "flex h-12 w-12 items-center justify-center rounded-full border bg-white p-2",
+            status === "notImplemented" && "border-slate-200 text-slate-700",
+            status === "running" && "border-emerald-200 text-emerald-700"
           )}>
           <currentStatus.icon />
         </div>
@@ -66,8 +66,8 @@ export const WidgetStatusIndicator = ({ environment, size, type }: WidgetStatusI
             <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
               {status === "running" ? (
                 <span className="relative flex h-3 w-3">
-                  <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
+                  <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
                 </span>
               ) : (
                 <AlertTriangleIcon className="h-[14px] w-[14px] text-amber-600" />

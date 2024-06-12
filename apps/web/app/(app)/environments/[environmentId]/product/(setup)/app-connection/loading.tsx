@@ -38,7 +38,7 @@ const Loading = () => {
     },
     {
       title: "Your EnvironmentId",
-      description: "This Id uniquely identifies this Formbricks environment.",
+      description: "This id uniquely identifies this Formbricks environment.",
       skeletonLines: [{ classes: "h-6 w-4/6 rounded-full" }],
     },
     {
