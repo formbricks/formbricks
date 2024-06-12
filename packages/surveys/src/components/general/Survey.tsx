@@ -11,7 +11,6 @@ import { evaluateCondition } from "@/lib/logicEvaluator";
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";
 import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
@@ -35,6 +34,7 @@ export const Survey = ({
   onFileUpload,
   responseCount,
   startAtQuestionId,
+  hiddenFieldsRecord,
   clickOutside,
   shouldResetQuestionId,
   fullSizeCards = false,
@@ -58,7 +58,7 @@ export const Survey = ({
 
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
-  const [responseData, setResponseData] = useState<TResponseData>({});
+  const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
   const [ttc, setTtc] = useState<TResponseTtc>({});
   const cardArrangement = useMemo(() => {
     if (survey.type === "link") {
