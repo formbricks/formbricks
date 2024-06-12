@@ -203,7 +203,7 @@ export const QuestionFormInput = ({
           }
           parts.push(
             <span
-              className="z-30 flex cursor-pointer items-center justify-center whitespace-pre rounded-md bg-slate-100 text-sm text-transparent"
+              className="z-30 flex h-fit cursor-pointer justify-center whitespace-pre rounded-md bg-slate-100 text-sm text-transparent"
               key={parts.length}>
               {"@" + label}
             </span>
