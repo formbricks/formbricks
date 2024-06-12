@@ -1,5 +1,4 @@
 import { Repeat2 } from "lucide-react";
-
 import { Button } from "../Button";
 
 interface ResetProgressButtonProps {

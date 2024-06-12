@@ -1,7 +1,5 @@
 import { MoreVerticalIcon, Trash2Icon } from "lucide-react";
-
 import { cn } from "@formbricks/lib/cn";
-
 import { Button } from "../../Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
 

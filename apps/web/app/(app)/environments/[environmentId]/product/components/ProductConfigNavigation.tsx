@@ -2,7 +2,6 @@
 
 import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-
 import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
 
 interface ProductConfigNavigationProps {

@@ -1,7 +1,6 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { canUserAccessIntegration } from "@formbricks/lib/integration/auth";
 import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";

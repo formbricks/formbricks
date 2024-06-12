@@ -1,5 +1,4 @@
 import { getServerSession } from "next-auth";
-
 import { getAdvancedTargetingPermission, getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
@@ -14,7 +13,6 @@ import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-
 import { SurveyEditor } from "./components/SurveyEditor";
 
 export const generateMetadata = async ({ params }) => {

@@ -1,8 +1,6 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
-
 import { prisma } from "@formbricks/database";
 import type {
   TEnvironment,
@@ -16,7 +14,6 @@ import {
   ZId,
 } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
-
 import { cache } from "../cache";
 import { getOrganizationsByUserId } from "../organization/service";
 import { getProducts } from "../product/service";

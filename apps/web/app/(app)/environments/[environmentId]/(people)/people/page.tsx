@@ -1,6 +1,5 @@
 import { PeopleSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PeopleSecondaryNavigation";
 import { CircleHelpIcon } from "lucide-react";
-
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";
@@ -10,7 +9,6 @@ import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 import { Pagination } from "@formbricks/ui/Pagination";
-
 import { PersonCard } from "./components/PersonCard";
 
 const Page = async ({

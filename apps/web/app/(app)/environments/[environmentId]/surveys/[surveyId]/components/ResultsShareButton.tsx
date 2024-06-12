@@ -8,7 +8,6 @@ import {
 import { CopyIcon, DownloadIcon, GlobeIcon, LinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
 import {
@@ -17,7 +16,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-
 import { ShareEmbedSurvey } from "../(analysis)/summary/components/ShareEmbedSurvey";
 import { ShareSurveyResults } from "../(analysis)/summary/components/ShareSurveyResults";
 

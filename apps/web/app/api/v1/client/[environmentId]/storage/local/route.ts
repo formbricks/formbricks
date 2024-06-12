@@ -4,7 +4,6 @@
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
-
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";

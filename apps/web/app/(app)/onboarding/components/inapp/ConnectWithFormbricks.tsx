@@ -8,10 +8,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useEffect, useState } from "react";
-
 import { TEnvironment } from "@formbricks/types/environment";
 import { Button } from "@formbricks/ui/Button";
-
 import { fetchEnvironment, finishOnboardingAction } from "../../actions";
 import { SetupInstructionsOnboarding } from "./SetupInstructions";
 

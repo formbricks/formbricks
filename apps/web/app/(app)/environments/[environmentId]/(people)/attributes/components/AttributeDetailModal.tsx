@@ -1,8 +1,6 @@
 import { TagIcon } from "lucide-react";
-
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
-
 import { AttributeActivityTab } from "./AttributeActivityTab";
 import { AttributeSettingsTab } from "./AttributeSettingsTab";
 
