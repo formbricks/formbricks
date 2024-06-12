@@ -25,6 +25,7 @@ export class SurveyState {
    * @param id - The survey ID
    */
   setSurveyId(id: string) {
+    window.parent.postMessage({ type: "SurveyState.setSurveyId", data: { id } }, "*");
     this.surveyId = id;
     this.clear(); // Reset the state when setting a new surveyId
   }
@@ -48,6 +49,7 @@ export class SurveyState {
    * @param id - The response ID
    */
   updateResponseId(id: string) {
+    window.parent.postMessage({ type: "SurveyState.updateResponseId", data: { id } }, "*");
     this.responseId = id;
   }
 
@@ -56,6 +58,7 @@ export class SurveyState {
    * @param id - The response ID
    */
   updateDisplayId(id: string) {
+    window.parent.postMessage({ type: "SurveyState.updateDisplayId", data: { id } }, "*");
     this.displayId = id;
   }
 
@@ -64,6 +67,7 @@ export class SurveyState {
    * @param id - The user ID
    */
   updateUserId(id: string) {
+    window.parent.postMessage({ type: "SurveyState.updateUserId", data: { id } }, "*");
     this.userId = id;
   }
 
@@ -77,6 +81,14 @@ export class SurveyState {
       ttc: responseUpdate.ttc,
       data: { ...this.responseAcc.data, ...responseUpdate.data },
     };
+
+    window.parent.postMessage(
+      {
+        type: "SurveyState.accumulateResponse",
+        data: { responseId: this.responseId, response: this.responseAcc },
+      },
+      "*"
+    );
   }
 
   /**
@@ -90,6 +102,7 @@ export class SurveyState {
    * Clear the current state
    */
   clear() {
+    window.parent.postMessage({ type: "SurveyState.clear" }, "*");
     this.responseId = null;
     this.responseAcc = { finished: false, data: {}, ttc: {} };
   }
