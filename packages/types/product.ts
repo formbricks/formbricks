@@ -2,7 +2,6 @@ import { z } from "zod";
 import { ZColor, ZPlacement } from "./common";
 import { ZEnvironment } from "./environment";
 import { ZBaseStyling } from "./styling";
-import { ZSurveyType } from "./surveys";
 
 export const ZProductStyling = ZBaseStyling.extend({
   allowStyleOverwrite: z.boolean(),
@@ -11,7 +10,7 @@ export const ZProductStyling = ZBaseStyling.extend({
 export type TProductStyling = z.infer<typeof ZProductStyling>;
 
 export const ZProductConfig = z.object({
-  channel: ZSurveyType.nullable(),
+  channel: z.enum(["link", "app", "website"]).nullable(),
   industry: z.enum(["eCommerce", "saas"]).nullable(),
 });
 
