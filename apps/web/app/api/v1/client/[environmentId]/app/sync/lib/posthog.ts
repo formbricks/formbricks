@@ -1,6 +1,6 @@
 import { cache } from "@formbricks/lib/cache";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
-import { TOrganizationBillingPlan, TOrganizationBillingPlanLimits } from "@formbricks/types/organizations";
+import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 
 export const sendFreeLimitReachedEventToPosthogBiWeekly = (
   environmentId: string,

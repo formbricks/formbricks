@@ -12,6 +12,8 @@ type ConfirmationModalProps = {
   isButtonDisabled?: boolean;
   buttonVariant?: "warn" | "darkCTA";
   buttonLoading?: boolean;
+  closeOnOutsideClick?: boolean;
+  hideCloseButton?: boolean;
 };
 
 export const ConfirmationModal = ({
@@ -24,6 +26,8 @@ export const ConfirmationModal = ({
   isButtonDisabled = false,
   buttonVariant = "warn",
   buttonLoading = false,
+  closeOnOutsideClick = true,
+  hideCloseButton,
 }: ConfirmationModalProps) => {
   const handleButtonAction = async () => {
     if (isButtonDisabled) return;
@@ -31,7 +35,12 @@ export const ConfirmationModal = ({
   };
 
   return (
-    <Modal open={open} setOpen={setOpen} title={title}>
+    <Modal
+      open={open}
+      setOpen={setOpen}
+      title={title}
+      hideCloseButton={hideCloseButton}
+      closeOnOutsideClick={closeOnOutsideClick}>
       <div className="text-slate-900">
         <p className="mt-2 whitespace-pre-wrap">{text}</p>
       </div>

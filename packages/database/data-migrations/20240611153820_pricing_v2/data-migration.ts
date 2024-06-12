@@ -2,6 +2,25 @@ import { Prisma, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+type TSubscriptionStatusLegacy = "active" | "cancelled" | "inactive";
+
+interface TSubscriptionLegacy {
+  status: TSubscriptionStatusLegacy;
+  unlimited: boolean;
+}
+
+interface TFeatures {
+  inAppSurvey: TSubscriptionLegacy;
+  linkSurvey: TSubscriptionLegacy;
+  userTargeting: TSubscriptionLegacy;
+  multiLanguage: TSubscriptionLegacy;
+}
+
+interface TOrganizationBillingLegacy {
+  stripeCustomerId: string | null;
+  features: TFeatures;
+}
+
 async function main() {
   await prisma.$transaction(
     async (tx) => {
@@ -9,7 +28,7 @@ async function main() {
       console.log("Starting data migration for pricing v2...");
 
       // Free tier
-      const orgsWithBilling = await tx.organization.findMany({
+      const orgsWithoutBilling = await tx.organization.findMany({
         where: {
           billing: {
             path: ["stripeCustomerId"],
@@ -18,9 +37,9 @@ async function main() {
         },
       });
 
-      console.log("Found orgs with billing to process. teams: ", orgsWithBilling.length);
+      console.log("Found orgs with billing to process. teams: ", orgsWithoutBilling.length);
 
-      for (const organization of orgsWithBilling) {
+      for (const organization of orgsWithoutBilling) {
         await tx.organization.update({
           where: {
             id: organization.id,
@@ -38,6 +57,19 @@ async function main() {
             },
           },
         });
+
+        const orgsWithBilling = await tx.organization.findMany({
+          where: {
+            billing: {
+              path: ["stripeCustomerId"],
+              not: Prisma.AnyNull,
+            },
+          },
+        });
+
+        for (const element of orgsWithBilling) {
+          const billing = element.billing as TOrganizationBillingLegacy;
+        }
       }
     },
     { timeout: 50000 }

@@ -28,10 +28,6 @@ export const upgradePlanAction = async (
     throw new ResourceNotFoundError("organization", organizationId);
   }
 
-  if (!organization.billing.stripeCustomerId) {
-    throw new AuthorizationError("You do not have an associated Stripe CustomerId");
-  }
-
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organizationId);
   if (membership?.role !== "owner") {
     throw new AuthorizationError("Only organization owner can upgrade plan");

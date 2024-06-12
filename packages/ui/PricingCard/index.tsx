@@ -124,7 +124,7 @@ export const PricingCard = ({
 
       <ConfirmationModal
         title="Switch Plan"
-        buttonText="Switch Plan"
+        buttonText="Confirm"
         onConfirm={async () => {
           setLoading(true);
           await onUpgrade();
@@ -133,9 +133,11 @@ export const PricingCard = ({
         }}
         open={upgradeModalOpen}
         setOpen={setUpgradeModalOpen}
-        text="Are you sure you want to switch your plan?"
+        text={`Are you sure you want to switch to the ${title} plan? You will be charged €${monthlyPrice} per month.`}
         buttonVariant="darkCTA"
         buttonLoading={loading}
+        closeOnOutsideClick={false}
+        hideCloseButton
       />
     </>
   );
