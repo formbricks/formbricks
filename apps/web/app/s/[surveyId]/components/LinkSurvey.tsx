@@ -291,6 +291,7 @@ export const LinkSurvey = ({
         }}
         startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
         fullSizeCards={isEmbed ? true : false}
+        hiddenFieldsRecord={hiddenFieldsRecord}
       />
     </LinkSurveyWrapper>
   );

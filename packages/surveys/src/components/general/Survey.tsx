@@ -35,6 +35,7 @@ export const Survey = ({
   onFileUpload,
   responseCount,
   startAtQuestionId,
+  hiddenFieldsRecord,
   clickOutside,
   shouldResetQuestionId,
   fullSizeCards = false,
@@ -58,7 +59,7 @@ export const Survey = ({
   const [selectedLanguage, setselectedLanguage] = useState(languageCode);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
-  const [responseData, setResponseData] = useState<TResponseData>({});
+  const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
   const [ttc, setTtc] = useState<TResponseTtc>({});
   const cardArrangement = useMemo(() => {
     if (survey.type === "link") {

@@ -132,7 +132,7 @@ export const RecallItemSelect = ({
   const getQuestionIcon = (recallItem: TSurveyRecallItem) => {
     switch (recallItem.type) {
       case "question":
-        const question = localSurvey.questions.find((question) => question.id === questionId);
+        const question = localSurvey.questions.find((question) => question.id === recallItem.id);
         if (question) {
           return questionIconMapping[question?.type as keyof typeof questionIconMapping];
         }
