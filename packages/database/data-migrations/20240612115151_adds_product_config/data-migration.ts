@@ -2,6 +2,8 @@ import { PrismaClient, SurveyType } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+type channelType = Exclude<SurveyType, "web"> | null;
+
 const main = async () => {
   await prisma.$transaction(
     async (tx) => {
@@ -29,7 +31,6 @@ const main = async () => {
         [SurveyType.app]: 0,
         [SurveyType.link]: 0,
         [SurveyType.website]: 0,
-        [SurveyType.web]: 0,
         null: 0,
       };
 
@@ -43,12 +44,17 @@ const main = async () => {
           }
         }
 
-        let channel: SurveyType | null = null;
+        let channel: channelType = null;
 
         if (surveyTypes.size === 0 || surveyTypes.size === 3) {
           channel = null;
         } else if (surveyTypes.size === 1) {
-          channel = Array.from(surveyTypes)[0];
+          const type = Array.from(surveyTypes)[0];
+          if (type === SurveyType.web) {
+            channel = null;
+          } else {
+            channel = type;
+          }
         } else if (surveyTypes.has(SurveyType.link) && surveyTypes.has(SurveyType.app)) {
           channel = SurveyType.app;
         } else if (surveyTypes.has(SurveyType.link) && surveyTypes.has(SurveyType.website)) {
