@@ -9,8 +9,11 @@ export const ZProductStyling = ZBaseStyling.extend({
 
 export type TProductStyling = z.infer<typeof ZProductStyling>;
 
+export const ZProductConfigChannel = z.enum(["link", "app", "website"]).nullable();
+export type TProductConfigChannel = z.infer<typeof ZProductConfigChannel>;
+
 export const ZProductConfig = z.object({
-  channel: z.enum(["link", "app", "website"]).nullable(),
+  channel: ZProductConfigChannel,
   industry: z.enum(["eCommerce", "saas"]).nullable(),
 });
 

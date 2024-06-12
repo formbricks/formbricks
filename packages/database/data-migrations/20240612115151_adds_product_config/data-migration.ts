@@ -1,8 +1,7 @@
 import { PrismaClient, SurveyType } from "@prisma/client";
+import { TProductConfigChannel } from "@formbricks/types/product";
 
 const prisma = new PrismaClient();
-
-type channelType = Exclude<SurveyType, "web"> | null;
 
 const main = async () => {
   await prisma.$transaction(
@@ -34,7 +33,7 @@ const main = async () => {
         null: 0,
       };
 
-      for (const product of products) {
+      const updatePromises = products.map((product) => {
         const surveyTypes = new Set<SurveyType>();
 
         // Collect all unique survey types for the product
@@ -44,27 +43,35 @@ const main = async () => {
           }
         }
 
-        let channel: channelType = null;
+        // Determine the channel based on the survey types, default to null
+        let channel: TProductConfigChannel = null;
 
         if (surveyTypes.size === 0 || surveyTypes.size === 3) {
+          // if there are no surveys or all 3 types of surveys (website, app, and link) are present, set channel to null
           channel = null;
         } else if (surveyTypes.size === 1) {
+          // if there is only one type of survey, set channel to that type
           const type = Array.from(surveyTypes)[0];
           if (type === SurveyType.web) {
+            // if the survey type is web, set channel to null, since web is a legacy type and will be removed
             channel = null;
           } else {
+            // if the survey type is not web, set channel to that type
             channel = type;
           }
         } else if (surveyTypes.has(SurveyType.link) && surveyTypes.has(SurveyType.app)) {
+          // if both link and app surveys are present, set channel to app
           channel = SurveyType.app;
         } else if (surveyTypes.has(SurveyType.link) && surveyTypes.has(SurveyType.website)) {
+          // if both link and website surveys are present, set channel to website
           channel = SurveyType.website;
         }
 
+        // Increment the count for the determined channel
         channelStatusCounts[channel ?? "null"]++;
 
         // Update the product with the determined channel and set industry to null
-        await tx.product.update({
+        return tx.product.update({
           where: { id: product.id },
           data: {
             config: {
@@ -73,7 +80,9 @@ const main = async () => {
             },
           },
         });
-      }
+      });
+
+      await Promise.all(updatePromises);
 
       console.log(
         `Channel status counts: ${Object.entries(channelStatusCounts).map(
