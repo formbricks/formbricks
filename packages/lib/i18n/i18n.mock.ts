@@ -306,6 +306,7 @@ export const mockSurvey: TSurvey = {
   triggers: [],
   languages: mockSurveyLanguages,
   segment: mockSegment,
+  showLanguageSwitch: null,
 } as unknown as TSurvey;
 
 export const mockTranslatedWelcomeCard = {

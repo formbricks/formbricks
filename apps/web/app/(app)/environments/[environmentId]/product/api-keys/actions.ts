@@ -1,7 +1,6 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { canUserAccessApiKey } from "@formbricks/lib/apiKey/auth";
 import { createApiKey, deleteApiKey } from "@formbricks/lib/apiKey/service";
 import { authOptions } from "@formbricks/lib/authOptions";

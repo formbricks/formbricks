@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";

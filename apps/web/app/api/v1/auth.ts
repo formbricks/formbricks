@@ -1,5 +1,4 @@
 import { responses } from "@/app/lib/api/response";
-
 import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";

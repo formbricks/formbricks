@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { AttributeType } from "@prisma/client";
-
 import { translateSurvey } from "./lib/i18n";
 
 const prisma = new PrismaClient();

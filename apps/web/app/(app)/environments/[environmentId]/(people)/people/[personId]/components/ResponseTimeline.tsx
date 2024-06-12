@@ -3,7 +3,6 @@
 import { ResponseFeed } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponsesFeed";
 import { ArrowDownUpIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";

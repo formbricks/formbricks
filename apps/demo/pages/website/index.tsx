@@ -1,9 +1,7 @@
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-
 import formbricks from "@formbricks/js/website";
-
 import { SurveySwitch } from "../../components/SurveySwitch";
 import fbsetup from "../../public/fb-setup.png";
 
@@ -36,7 +34,7 @@ const AppPage = ({}) => {
 
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
       const defaultAttributes = {
-        language: "de",
+        language: "en",
       };
 
       formbricks.init({

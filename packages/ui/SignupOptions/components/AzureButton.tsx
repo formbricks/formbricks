@@ -1,6 +1,5 @@
 import { signIn } from "next-auth/react";
 import { useCallback, useEffect } from "react";
-
 import { Button } from "../../Button";
 import { MicrosoftIcon } from "../../icons";
 

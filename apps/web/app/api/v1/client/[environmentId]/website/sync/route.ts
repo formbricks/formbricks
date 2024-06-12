@@ -2,7 +2,6 @@ import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
-
 import { getActionClassByEnvironmentIdAndName, getActionClasses } from "@formbricks/lib/actionClass/service";
 import {
   IS_FORMBRICKS_CLOUD,
