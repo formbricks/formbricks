@@ -1,6 +1,5 @@
 import { formatDistance } from "date-fns";
 import { CodeIcon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
-
 import { TAction } from "@formbricks/types/actions";
 import { Label } from "@formbricks/ui/Label";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";

@@ -1,5 +1,4 @@
 import { ChevronDownIcon } from "lucide-react";
-
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
 
 interface IAddVariablesDropdown {

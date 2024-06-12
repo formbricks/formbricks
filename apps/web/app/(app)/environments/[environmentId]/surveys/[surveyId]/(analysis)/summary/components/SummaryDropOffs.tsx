@@ -1,5 +1,4 @@
 import { TimerIcon } from "lucide-react";
-
 import { TSurveySummary } from "@formbricks/types/surveys";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 

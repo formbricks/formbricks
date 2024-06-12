@@ -1,5 +1,4 @@
 import { z } from "zod";
-
 import { ZIntegrationBase, ZIntegrationBaseSurveyData } from "./sharedTypes";
 
 export const ZGoogleCredential = z.object({

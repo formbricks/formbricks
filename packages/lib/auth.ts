@@ -1,5 +1,4 @@
 import { compare, hash } from "bcryptjs";
-
 import { prisma } from "@formbricks/database";
 import { AuthenticationError } from "@formbricks/types/errors";
 

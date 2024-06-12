@@ -1,7 +1,6 @@
 import { getUpdatedState } from "@/app/api/v1/(legacy)/js/sync/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-
 import { updateAttributes } from "@formbricks/lib/attribute/service";
 import { personCache } from "@formbricks/lib/person/cache";
 import { getPerson } from "@formbricks/lib/person/service";

@@ -3,7 +3,6 @@ import { ActionClassDataRow } from "@/app/(app)/environments/[environmentId]/act
 import { ActionTableHeading } from "@/app/(app)/environments/[environmentId]/actions/components/ActionTableHeading";
 import { AddActionModal } from "@/app/(app)/environments/[environmentId]/actions/components/AddActionModal";
 import { Metadata } from "next";
-
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";

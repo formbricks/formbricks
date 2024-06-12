@@ -1,5 +1,4 @@
 import { z } from "zod";
-
 import { ZColor, ZPlacement } from "./common";
 import { ZEnvironment } from "./environment";
 import { ZBaseStyling } from "./styling";

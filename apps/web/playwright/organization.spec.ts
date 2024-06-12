@@ -1,5 +1,4 @@
 import { expect, test } from "playwright/test";
-
 import { finishOnboarding, login, signUpAndLogin, signupUsingInviteToken } from "./utils/helper";
 import { invites, users } from "./utils/mock";
 

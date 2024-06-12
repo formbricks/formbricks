@@ -6,10 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TSurvey } from "@formbricks/types/surveys";
-
 import { DeleteDialog } from "../../DeleteDialog";
 import {
   DropdownMenu,

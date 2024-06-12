@@ -1,5 +1,4 @@
 import { TUser } from "@formbricks/types/user";
-
 import { CUSTOMER_IO_API_KEY, CUSTOMER_IO_SITE_ID } from "./constants";
 
 export const createCustomerIoCustomer = async (user: TUser) => {
