@@ -83,11 +83,12 @@ async function main() {
           continue;
         }
 
+        console.log({ billing });
+
         if (
-          billing.features.linkSurvey.unlimited ||
-          billing.features.inAppSurvey.unlimited ||
-          billing.features.userTargeting.unlimited ||
-          billing.features.multiLanguage.unlimited
+          (billing.features.linkSurvey?.status === "active" && billing.features.inAppSurvey?.unlimited) ||
+          (billing.features.inAppSurvey?.status === "active" && billing.features.linkSurvey?.unlimited) ||
+          (billing.features.userTargeting?.status === "active" && billing.features.userTargeting?.unlimited)
         ) {
           await tx.organization.update({
             where: {
