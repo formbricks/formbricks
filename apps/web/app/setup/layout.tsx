@@ -1,5 +1,4 @@
 import { Toaster } from "react-hot-toast";
-
 import { FormbricksLogo } from "@formbricks/ui/FormbricksLogo";
 
 const SetupLayout = ({ children }: { children: React.ReactNode }) => {

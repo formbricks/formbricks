@@ -4,7 +4,6 @@ import { FilterIcon, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -15,7 +14,6 @@ import { Button } from "@formbricks/ui/Button";
 import { ConfirmDeleteSegmentModal } from "@formbricks/ui/ConfirmDeleteSegmentModal";
 import { Input } from "@formbricks/ui/Input";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
-
 import { deleteBasicSegmentAction, updateBasicSegmentAction } from "../actions";
 
 type TBasicSegmentSettingsTabProps = {

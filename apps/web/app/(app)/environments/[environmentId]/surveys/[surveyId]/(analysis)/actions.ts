@@ -2,7 +2,6 @@
 
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getResponseCountBySurveyId, getResponses, getSurveySummary } from "@formbricks/lib/response/service";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";

@@ -132,4 +132,5 @@ export const PREVIEW_SURVEY = {
   resultShareKey: null,
   languages: [],
   triggers: [],
+  showLanguageSwitch: false,
 } as TSurvey;

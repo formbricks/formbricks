@@ -1,5 +1,4 @@
 import { Prisma } from "@prisma/client";
-
 import { selectDisplay } from "../../service";
 
 export const mockEnvironmentId = "clqkr5961000108jyfnjmbjhi";

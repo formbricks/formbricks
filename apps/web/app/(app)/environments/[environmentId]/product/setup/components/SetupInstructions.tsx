@@ -4,7 +4,6 @@ import packageJson from "@/package.json";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
-
 import { CodeBlock } from "@formbricks/ui/CodeBlock";
 import { TabBar } from "@formbricks/ui/TabBar";
 import { Html5Icon, NpmIcon } from "@formbricks/ui/icons";

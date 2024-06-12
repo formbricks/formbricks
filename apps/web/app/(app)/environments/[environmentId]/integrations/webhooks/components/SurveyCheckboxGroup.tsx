@@ -1,5 +1,4 @@
 import React from "react";
-
 import { TSurvey } from "@formbricks/types/surveys";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 

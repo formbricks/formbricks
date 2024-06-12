@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { updateAttributes } from "@formbricks/lib/attribute/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";

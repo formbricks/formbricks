@@ -2,7 +2,6 @@
 
 import { Variants, motion } from "framer-motion";
 import { useRef, useState } from "react";
-
 import type { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";

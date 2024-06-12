@@ -6,7 +6,6 @@ import { VerifyEmail } from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
@@ -264,7 +263,9 @@ export const LinkSurvey = ({
               ttc: responseUpdate.ttc,
               finished: responseUpdate.finished,
               language:
-                languageCode === "default" && defaultLanguageCode ? defaultLanguageCode : languageCode,
+                responseUpdate.language === "default" && defaultLanguageCode
+                  ? defaultLanguageCode
+                  : responseUpdate.language,
               meta: {
                 url: window.location.href,
                 source: sourceParam || "",
@@ -290,6 +291,7 @@ export const LinkSurvey = ({
         }}
         startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
         fullSizeCards={isEmbed ? true : false}
+        hiddenFieldsRecord={hiddenFieldsRecord}
       />
     </LinkSurveyWrapper>
   );

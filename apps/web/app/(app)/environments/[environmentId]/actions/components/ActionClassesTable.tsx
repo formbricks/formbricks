@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-
 import { ActionDetailModal } from "./ActionDetailModal";
 
 interface ActionClassesTableProps {

@@ -3,7 +3,6 @@
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 import toast from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
 import { CodeBlock } from "@formbricks/ui/CodeBlock";

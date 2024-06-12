@@ -1,9 +1,7 @@
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
-
 import { QuestionCard } from "./QuestionCard";
 
 interface QuestionsDraggableProps {

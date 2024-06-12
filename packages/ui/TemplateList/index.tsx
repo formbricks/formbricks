@@ -3,7 +3,6 @@
 import { PlusCircleIcon, SparklesIcon, SplitIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { customSurvey, templates, testTemplate } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
@@ -11,7 +10,6 @@ import type { TProduct } from "@formbricks/types/product";
 import { TSurveyInput } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
-
 import { Button } from "../Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
 import { createSurveyAction } from "./actions";
