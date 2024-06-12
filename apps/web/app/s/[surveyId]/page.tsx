@@ -5,7 +5,6 @@ import { SurveyInactive } from "@/app/s/[surveyId]/components/SurveyInactive";
 import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -16,7 +15,6 @@ import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbrick
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
-
 import { getEmailVerificationDetails } from "./lib/helpers";
 
 interface LinkSurveyPageProps {

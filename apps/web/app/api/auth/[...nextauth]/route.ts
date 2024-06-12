@@ -1,5 +1,4 @@
 import NextAuth from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 
 const handler = NextAuth(authOptions);

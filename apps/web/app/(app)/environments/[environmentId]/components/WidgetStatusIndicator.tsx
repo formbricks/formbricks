@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { AlertTriangleIcon, CheckIcon } from "lucide-react";
 import Link from "next/link";
-
 import { TEnvironment } from "@formbricks/types/environment";
 import { Label } from "@formbricks/ui/Label";
 

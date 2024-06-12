@@ -2,7 +2,6 @@
 
 import { MenuBar } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/templates/components/MenuBar";
 import { useState } from "react";
-
 import { customSurvey } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
@@ -11,7 +10,6 @@ import { TUser } from "@formbricks/types/user";
 import { PreviewSurvey } from "@formbricks/ui/PreviewSurvey";
 import { SearchBox } from "@formbricks/ui/SearchBox";
 import { TemplateList } from "@formbricks/ui/TemplateList";
-
 import { minimalSurvey } from "../../lib/minimalSurvey";
 
 type TemplateContainerWithPreviewProps = {

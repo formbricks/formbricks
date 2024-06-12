@@ -1,5 +1,4 @@
 import { TJsTrackProperties } from "@formbricks/types/js";
-
 import { InvalidCodeError, NetworkError, Result, err, okVoid } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import { WebsiteConfig } from "./config";

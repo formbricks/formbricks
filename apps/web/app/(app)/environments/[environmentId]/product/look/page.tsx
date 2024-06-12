@@ -1,7 +1,6 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { EditLogo } from "@/app/(app)/environments/[environmentId]/product/look/components/EditLogo";
 import { getServerSession } from "next-auth";
-
 import {
   getMultiLanguagePermission,
   getRemoveInAppBrandingPermission,
@@ -16,7 +15,6 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
-
 import { SettingsCard } from "../../settings/components/SettingsCard";
 import { EditFormbricksBranding } from "./components/EditBranding";
 import { EditPlacementForm } from "./components/EditPlacementForm";

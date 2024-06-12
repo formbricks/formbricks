@@ -1,7 +1,5 @@
 import { CheckIcon } from "lucide-react";
-
 import { TOrganization } from "@formbricks/types/organizations";
-
 import { Badge } from "../Badge";
 import { BillingSlider } from "../BillingSlider";
 import { Button } from "../Button";

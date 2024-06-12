@@ -1,6 +1,5 @@
 import { wrapThrowsAsync } from "@formbricks/types/errorHandlers";
 import { TJsPackageType } from "@formbricks/types/js";
-
 import { checkInitialized as checkInitializedInApp } from "../app/lib/initialize";
 import { checkInitialized as checkInitializedWebsite } from "../website/lib/initialize";
 import { ErrorHandler, Result } from "./errors";

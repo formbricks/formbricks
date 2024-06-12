@@ -1,6 +1,6 @@
 "use client";
 
-import { PencilIcon } from "lucide-react";
+import { PencilIcon, TrashIcon } from "lucide-react";
 import { ImagePlusIcon } from "lucide-react";
 import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -511,6 +511,16 @@ export const QuestionFormInput = ({
                 aria-label="Toggle image uploader"
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => setShowImageUploader((prev) => !prev)}
+              />
+            )}
+            {id === "subheader" && question && question.subheader !== undefined && (
+              <TrashIcon
+                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                onClick={() => {
+                  if (updateQuestion) {
+                    updateQuestion(questionIdx, { subheader: undefined });
+                  }
+                }}
               />
             )}
           </div>

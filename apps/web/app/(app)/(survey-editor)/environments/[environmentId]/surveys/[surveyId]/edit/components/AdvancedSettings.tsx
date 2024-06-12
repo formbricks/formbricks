@@ -1,6 +1,5 @@
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
-
 import { LogicEditor } from "./LogicEditor";
 import { UpdateQuestionId } from "./UpdateQuestionId";
 

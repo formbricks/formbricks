@@ -1,5 +1,4 @@
 import z from "zod";
-
 import { ZMembershipRole } from "./memberships";
 
 export const ZInvite = z.object({

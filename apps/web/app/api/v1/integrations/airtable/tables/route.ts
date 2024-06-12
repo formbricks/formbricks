@@ -2,7 +2,6 @@ import { responses } from "@/app/lib/api/response";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import * as z from "zod";
-
 import { getTables } from "@formbricks/lib/airtable/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
