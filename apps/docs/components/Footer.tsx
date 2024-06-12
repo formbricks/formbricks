@@ -115,7 +115,7 @@ const SmallPrint = () => {
 
 export const Footer = () => {
   return (
-    <footer className="mx-auto max-w-2xl space-y-10 pb-16 lg:w-[calc(100%-20rem)]">
+    <footer className="mb-10 mt-10 flex-auto pb-16">
       <PageNavigation />
       <SmallPrint />
     </footer>

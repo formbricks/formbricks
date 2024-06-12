@@ -1,3 +1,4 @@
+import useTableContentObserver from "@/hooks/useTableContentObserver";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -11,6 +12,8 @@ const SideNavigation = ({ pathname }) => {
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  useTableContentObserver(setSelectedId, pathname);
+
   useEffect(() => {
     const getHeadings = () => {
       const headingElements = document.querySelectorAll("h2[id], h3[id], h4[id]");
@@ -20,7 +23,9 @@ const SideNavigation = ({ pathname }) => {
         level: parseInt(heading.tagName.slice(1)),
       }));
 
-      setHeadings(headings);
+      const hasH2 = headings.some((heading) => heading.level === 2);
+
+      setHeadings(hasH2 ? headings : []);
     };
 
     getHeadings();
@@ -62,7 +67,7 @@ const SideNavigation = ({ pathname }) => {
     return (
       <aside className="fixed right-0 top-0 hidden h-[calc(100%-2.5rem)] w-80 overflow-hidden overflow-y-auto pt-16 [scrollbar-width:none] lg:mt-10 lg:block">
         <div className="border-l-2 border-gray-700">
-          <h3 className="ml-2 mt-1">On this page</h3>
+          <h3 className="ml-2 mt-1 uppercase">on this page</h3>
           {renderHeading(headings, 2)}
         </div>
       </aside>
