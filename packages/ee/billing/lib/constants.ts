@@ -22,4 +22,12 @@ export const LIMITS = {
     RESPONSES: 500,
     MIU: 1000,
   },
+  STARTUP: {
+    RESPONSES: 2000,
+    MIU: 2500,
+  },
+  SCALE: {
+    RESPONSES: 5000,
+    MIU: 20000,
+  },
 };

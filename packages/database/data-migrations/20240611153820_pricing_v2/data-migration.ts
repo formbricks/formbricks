@@ -67,8 +67,83 @@ async function main() {
           },
         });
 
-        for (const element of orgsWithBilling) {
-          const billing = element.billing as TOrganizationBillingLegacy;
+        for (const org of orgsWithBilling) {
+          const billing = org.billing as TOrganizationBillingLegacy;
+
+          if (
+            billing.features.linkSurvey.unlimited ||
+            billing.features.inAppSurvey.unlimited ||
+            billing.features.userTargeting.unlimited ||
+            billing.features.multiLanguage.unlimited
+          ) {
+            await tx.organization.update({
+              where: {
+                id: org.id,
+              },
+              data: {
+                billing: {
+                  plan: "enterprise",
+                  limits: {
+                    monthly: {
+                      responses: null,
+                      miu: null,
+                    },
+                  },
+                },
+              },
+            });
+
+            console.log("Updated org to enterprise plan", org.id);
+            continue;
+          }
+
+          if (
+            billing.features.inAppSurvey.status === "active" ||
+            billing.features.userTargeting.status === "active" ||
+            billing.features.multiLanguage.status === "active"
+          ) {
+            await tx.organization.update({
+              where: {
+                id: org.id,
+              },
+              data: {
+                billing: {
+                  plan: "free",
+                  limits: {
+                    monthly: {
+                      responses: 500,
+                      miu: 1000,
+                    },
+                  },
+                },
+              },
+            });
+
+            console.log("Updated org to free plan", org.id);
+            continue;
+          }
+
+          if (billing.features.linkSurvey.status === "active") {
+            await tx.organization.update({
+              where: {
+                id: org.id,
+              },
+              data: {
+                billing: {
+                  plan: "startup",
+                  limits: {
+                    monthly: {
+                      responses: 2000,
+                      miu: 2500,
+                    },
+                  },
+                },
+              },
+            });
+
+            console.log("Updated org to startup plan", org.id);
+            continue;
+          }
         }
       }
     },
