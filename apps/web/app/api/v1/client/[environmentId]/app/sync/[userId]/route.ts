@@ -101,15 +101,21 @@ export const GET = async (
 
     if (isMauLimitReached) {
       // MAU limit reached: check if person has been active this month; only continue if person has been active
-      await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-        plan: organization.billing.plan,
-        limits: {
-          monthly: {
-            miu: organization.billing.limits.monthly.miu ?? undefined,
-            responses: organization.billing.limits.monthly.responses ?? undefined,
+
+      try {
+        await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
+          plan: organization.billing.plan,
+          limits: {
+            monthly: {
+              miu: organization.billing.limits.monthly.miu ?? undefined,
+              responses: organization.billing.limits.monthly.responses ?? undefined,
+            },
           },
-        },
-      });
+        });
+      } catch (err) {
+        console.error(`Error sending plan limits reached event to Posthog: ${err}`);
+      }
+
       const errorMessage = `Monthly Active Users limit in the current plan is reached in ${environmentId}`;
       if (!person) {
         // if it's a new person and MAU limit is reached, throw an error
@@ -137,15 +143,19 @@ export const GET = async (
     }
 
     if (isMonthlyResponsesLimitReached) {
-      await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-        plan: organization.billing.plan,
-        limits: {
-          monthly: {
-            miu: organization.billing.limits.monthly.miu ?? undefined,
-            responses: organization.billing.limits.monthly.responses ?? undefined,
+      try {
+        await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
+          plan: organization.billing.plan,
+          limits: {
+            monthly: {
+              miu: organization.billing.limits.monthly.miu ?? undefined,
+              responses: organization.billing.limits.monthly.responses ?? undefined,
+            },
           },
-        },
-      });
+        });
+      } catch (err) {
+        console.error(`Error sending plan limits reached event to Posthog: ${err}`);
+      }
     }
 
     const [surveys, actionClasses, product] = await Promise.all([

@@ -69,10 +69,14 @@ export const GET = async (
         monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit;
 
       if (isWebsiteSurveyResponseLimitReached) {
-        await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-          plan: organization.billing.plan,
-          limits: { monthly: { responses: monthlyResponseLimit ?? undefined } },
-        });
+        try {
+          await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
+            plan: organization.billing.plan,
+            limits: { monthly: { responses: monthlyResponseLimit ?? undefined } },
+          });
+        } catch (error) {
+          console.error(`Error sending plan limits reached event to Posthog: ${error}`);
+        }
       }
     }
 

@@ -275,14 +275,19 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       const responsesLimit = organization.billing.limits.monthly.responses;
 
       if (responsesLimit && responsesCount >= responsesLimit) {
-        await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-          plan: organization.billing.plan,
-          limits: {
-            monthly: {
-              responses: responsesLimit,
+        try {
+          await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
+            plan: organization.billing.plan,
+            limits: {
+              monthly: {
+                responses: responsesLimit,
+              },
             },
-          },
-        });
+          });
+        } catch (err) {
+          // Log error but do not throw
+          console.error(`Error sending plan limits reached event to Posthog: ${err}`);
+        }
       }
     }
 
