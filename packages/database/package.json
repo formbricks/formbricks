@@ -34,6 +34,7 @@
     "data-migration:mls-welcomeCard-fix": "ts-node ./data-migrations/20240318050527_add_languages_and_survey_languages/data-migration-welcomeCard-fix.ts",
     "data-migration:v2.0": "pnpm data-migration:mls && pnpm data-migration:styling && pnpm data-migration:styling-fix && pnpm data-migration:website-surveys && pnpm data-migration:userId && pnpm data-migration:mls-welcomeCard-fix && pnpm data-migration:refactor-actions",
     "data-migration:extended-noCodeActions": "ts-node ./data-migrations/20240524053239_extends_no_code_action_schema/data-migration.ts",
+    "data-migration:product-config": "ts-node ./data-migrations/20240612115151_adds_product_config/data-migration.ts",
     "data-migration:v2.1": "pnpm data-migration:extended-noCodeActions"
   },
   "dependencies": {
