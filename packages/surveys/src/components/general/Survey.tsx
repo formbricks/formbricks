@@ -83,6 +83,9 @@ export const Survey = ({
   const getShowSurveyCloseButton = (offset: number) => {
     return offset === 0 && survey.type !== "link" && (clickOutside === undefined ? true : clickOutside);
   };
+  const getShowLanguageSwitch = (offset: number) => {
+    return survey.showLanguageSwitch && survey.languages.length > 0 && offset <= 0;
+  };
 
   useEffect(() => {
     // scroll to top when question changes
@@ -310,20 +313,24 @@ export const Survey = ({
 
     return (
       <AutoCloseWrapper survey={survey} onClose={onClose} offset={offset}>
-        {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
-        {survey.languages.length > 0 && offset <= 0 && (
-          <LanguageSwitch
-            surveyLanguages={survey.languages}
-            setSelectedLanguageCode={setselectedLanguage}
-            selectedLanguageCode={selectedLanguage}
-          />
-        )}
         <div
           className={cn(
             "no-scrollbar md:rounded-custom rounded-t-custom bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",
             cardArrangement === "simple" ? "fb-survey-shadow" : "",
             offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
+          <div className="mt-2 flex h-6 w-full items-center justify-end space-x-2 px-2">
+            {getShowLanguageSwitch(offset) && (
+              <LanguageSwitch
+                surveyLanguages={survey.languages}
+                setSelectedLanguageCode={setselectedLanguage}
+              />
+            )}
+            {getShowSurveyCloseButton(offset) && getShowLanguageSwitch(offset) && (
+              <p className="text-heading font-thin opacity-30">|</p>
+            )}
+            {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
+          </div>
           <div
             ref={contentRef}
             className={cn(loadingElement ? "animate-pulse opacity-60" : "", fullSizeCards ? "" : "my-auto")}>
@@ -340,8 +347,6 @@ export const Survey = ({
 
   return (
     <>
-      {console.log({ languageCode })}
-      {console.log({ selectedLanguage })}
       <StackedCardsContainer
         cardArrangement={cardArrangement}
         currentQuestionId={questionId}

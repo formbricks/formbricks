@@ -1,18 +1,16 @@
+import { GlobeIcon } from "@/components/general/GlobeIcon";
 import { useRef, useState } from "react";
-
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyLanguage } from "@formbricks/types/surveys";
 
 interface LanguageSwitchProps {
-  selectedLanguageCode: string;
   surveyLanguages: TSurveyLanguage[];
   setSelectedLanguageCode: (languageCode: string) => void;
   setFirstRender?: (firstRender: boolean) => void;
 }
 export const LanguageSwitch = ({
   surveyLanguages,
-  selectedLanguageCode,
   setSelectedLanguageCode,
   setFirstRender,
 }: LanguageSwitchProps) => {
@@ -36,37 +34,26 @@ export const LanguageSwitch = ({
     setShowLanguageDropdown(false);
   };
 
-  const languageToBeDisplayed = surveyLanguages.find((language) => {
-    return selectedLanguageCode === "default"
-      ? language.default === true
-      : language.language.code === selectedLanguageCode;
-  });
-
   useClickOutside(languageDropdownRef, () => setShowLanguageDropdown(false));
 
-  const shouldRenderLanguage = (language: TSurveyLanguage) => {
-    if (language.language.code === defaultLanguageCode && selectedLanguageCode === "default") return false;
-    else if (language.language.code !== selectedLanguageCode && language.enabled) return true;
-    return false;
-  };
-
   return (
-    <div className="relative z-[1100] ml-2 mt-2 w-fit cursor-pointer">
+    <div className="relative z-[1100] flex w-full cursor-pointer justify-end">
       <button
+        title="Language switch"
         type="button"
-        className="bg-brand text-on-brand flex items-center justify-center rounded-md p-2 px-2 text-xs hover:opacity-90"
+        className="flex items-center justify-center rounded-md text-xs hover:opacity-90"
         onClick={toggleDropdown}
         tabIndex={-1}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}>
-        {languageToBeDisplayed ? getLanguageLabel(languageToBeDisplayed?.language.code) : ""}
+        <GlobeIcon className="text-heading h-6 w-6" />
       </button>
       {showLanguageDropdown && (
         <div
-          className="bg-brand text-on-brand  absolute left-0 mt-1 space-y-2 rounded-md p-2 text-xs "
+          className="bg-brand text-on-brand  absolute right-0 top-8 space-y-2 rounded-md p-2 text-xs "
           ref={languageDropdownRef}>
           {surveyLanguages.map((surveyLanguage) => {
-            if (!shouldRenderLanguage(surveyLanguage)) return;
+            if (!surveyLanguage.enabled) return;
             return (
               <button
                 key={surveyLanguage.language.id}

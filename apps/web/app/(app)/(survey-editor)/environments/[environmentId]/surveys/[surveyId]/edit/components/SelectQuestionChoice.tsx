@@ -68,7 +68,7 @@ export const SelectQuestionChoice = ({
   };
 
   return (
-    <div className="flex w-full items-center gap-2" ref={setNodeRef} style={style}>
+    <div className="flex w-full gap-2" ref={setNodeRef} style={style}>
       {/* drag handle */}
       <div
         className={cn("flex items-center", choice.id === "other" && "invisible")}
@@ -127,8 +127,7 @@ export const SelectQuestionChoice = ({
           />
         )}
       </div>
-
-      <div className="mt-3 flex items-center gap-2">
+      <div className="mt-6 flex gap-2">
         {question.choices && question.choices.length > 2 && (
           <TrashIcon
             className="h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"

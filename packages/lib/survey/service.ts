@@ -72,6 +72,7 @@ export const selectSurvey = {
   singleUse: true,
   pin: true,
   resultShareKey: true,
+  showLanguageSwitch: true,
   languages: {
     select: {
       default: true,

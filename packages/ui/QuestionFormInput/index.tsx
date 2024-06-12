@@ -1,7 +1,6 @@
 "use client";
 
-import { createId } from "@paralleldrive/cuid2";
-import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { PencilIcon, TrashIcon } from "lucide-react";
 import { ImagePlusIcon } from "lucide-react";
 import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -24,7 +23,6 @@ import {
   TSurvey,
   TSurveyChoice,
   TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
   TSurveyRecallItem,
 } from "@formbricks/types/surveys";
 import { LanguageIndicator } from "../../ee/multi-language/components/language-indicator";
@@ -389,58 +387,6 @@ export const QuestionFormInput = ({
     else return question.videoUrl;
   };
 
-  const addChoice = (choiceIdx?: number) => {
-    console.log("adding");
-    if (
-      question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
-      question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle
-    ) {
-      let newChoices = !question.choices ? [] : question.choices;
-      const otherChoice = newChoices.find((choice) => choice.id === "other");
-      if (otherChoice) {
-        newChoices = newChoices.filter((choice) => choice.id !== "other");
-      }
-      const newChoice = {
-        id: createId(),
-        label: createI18nString("", surveyLanguageCodes),
-      };
-      if (choiceIdx !== undefined) {
-        newChoices.splice(choiceIdx + 1, 0, newChoice);
-      } else {
-        newChoices.push(newChoice);
-      }
-      if (otherChoice) {
-        newChoices.push(otherChoice);
-      }
-      if (updateQuestion) {
-        updateQuestion(questionIdx, { choices: newChoices });
-      }
-    }
-  };
-
-  const deleteChoice = (choiceIdx: number) => {
-    if (
-      question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
-      question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle
-    ) {
-      const newChoices = !question.choices ? [] : question.choices.filter((_, idx) => idx !== choiceIdx);
-      const choiceValue = question.choices[choiceIdx].label[selectedLanguageCode];
-      let newLogic: any[] = [];
-      question.logic?.forEach((logic) => {
-        let newL: string | string[] | undefined = logic.value;
-        if (Array.isArray(logic.value)) {
-          newL = logic.value.filter((value) => value !== choiceValue);
-        } else {
-          newL = logic.value !== choiceValue ? logic.value : undefined;
-        }
-        newLogic.push({ ...logic, value: newL });
-      });
-      if (updateQuestion) {
-        updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
-      }
-    }
-  };
-
   return (
     <div className="w-full">
       <div className="w-full">
@@ -555,7 +501,7 @@ export const QuestionFormInput = ({
                 onClick={() => setShowImageUploader((prev) => !prev)}
               />
             )}
-            {id === "subheader" && question.subheader !== undefined && (
+            {id === "subheader" && question && question.subheader !== undefined && (
               <TrashIcon
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
@@ -565,28 +511,6 @@ export const QuestionFormInput = ({
                 }}
               />
             )}
-            {isChoice &&
-              (question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
-                question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) && (
-                <div className="flex items-center gap-2">
-                  {question.choices && question.choices.length > 2 && (
-                    <TrashIcon
-                      className="h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                      onClick={() => {
-                        if (index !== null) deleteChoice(index);
-                      }}
-                    />
-                  )}
-                  <div className="h-4 w-4">
-                    {index !== null && question.choices[index].id !== "other" && (
-                      <PlusIcon
-                        className="h-full w-full cursor-pointer text-slate-400 hover:text-slate-500"
-                        onClick={() => addChoice(index)}
-                      />
-                    )}
-                  </div>
-                </div>
-              )}
           </div>
         </div>
         {showRecallItemSelect && (
