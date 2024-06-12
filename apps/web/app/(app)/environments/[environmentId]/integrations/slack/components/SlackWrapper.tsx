@@ -6,7 +6,7 @@ import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/inte
 import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/slack/lib/slack";
 import slackLogo from "@/images/slacklogo.png";
 import { useState } from "react";
-
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
@@ -20,6 +20,7 @@ interface SlackWrapperProps {
   channelsArray: TIntegrationItem[];
   slackIntegration?: TIntegrationSlack;
   webAppUrl: string;
+  attributeClasses: TAttributeClass[];
 }
 
 export const SlackWrapper = ({
@@ -29,6 +30,7 @@ export const SlackWrapper = ({
   channelsArray,
   slackIntegration,
   webAppUrl,
+  attributeClasses,
 }: SlackWrapperProps) => {
   const [isConnected, setIsConnected] = useState(slackIntegration ? slackIntegration.config?.key : false);
   const [slackChannels, setSlackChannels] = useState(channelsArray);
@@ -60,6 +62,7 @@ export const SlackWrapper = ({
         channels={slackChannels}
         slackIntegration={slackIntegration}
         selectedIntegration={selectedIntegration}
+        attributeClasses={attributeClasses}
       />
       <ManageIntegration
         environment={environment}

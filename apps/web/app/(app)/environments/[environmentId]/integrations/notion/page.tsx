@@ -1,5 +1,5 @@
 import { NotionWrapper } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
-
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import {
   NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,
@@ -23,10 +23,11 @@ const Page = async ({ params }) => {
     NOTION_AUTH_URL &&
     NOTION_REDIRECT_URI
   );
-  const [surveys, notionIntegration, environment] = await Promise.all([
+  const [surveys, notionIntegration, environment, attributeClasses] = await Promise.all([
     getSurveys(params.environmentId),
     getIntegrationByType(params.environmentId, "notion"),
     getEnvironment(params.environmentId),
+    getAttributeClasses(params.environmentId),
   ]);
 
   if (!environment) {
@@ -49,6 +50,7 @@ const Page = async ({ params }) => {
         notionIntegration={notionIntegration as TIntegrationNotion}
         webAppUrl={WEBAPP_URL}
         databasesArray={databasesArray}
+        attributeClasses={attributeClasses}
       />
     </PageContentWrapper>
   );

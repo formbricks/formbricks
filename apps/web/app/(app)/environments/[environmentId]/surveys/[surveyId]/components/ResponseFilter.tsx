@@ -14,16 +14,14 @@ import { TrashIcon } from "lucide-react";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
-
 import { OptionsType, QuestionOption, QuestionsComboBox } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
-  type: TSurveyQuestionType | "Attributes" | "Tags" | "Languages";
+  type: TSurveyQuestionTypeEnum | "Attributes" | "Tags" | "Languages";
   filterOptions: string[];
   filterComboBoxOptions: string[];
   id: string;
@@ -46,7 +44,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     // Fetch the initial data for the filter and load it into the state
     const handleInitialData = async () => {
       if (isOpen) {
-        const { attributes, meta, environmentTags } = isSharingPage
+        const { attributes, meta, environmentTags, hiddenFields } = isSharingPage
           ? await getSurveyFilterDataBySurveySharingKeyAction(sharingKey, survey.environmentId)
           : await getSurveyFilterDataAction(survey.id, survey.environmentId);
 
@@ -54,7 +52,8 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
           survey,
           environmentTags,
           attributes,
-          meta
+          meta,
+          hiddenFields
         );
         setSelectedOptions({ questionFilterOptions, questionOptions });
       }

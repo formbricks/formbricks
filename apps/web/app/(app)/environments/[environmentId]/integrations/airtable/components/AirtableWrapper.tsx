@@ -4,7 +4,7 @@ import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/inte
 import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
 import airtableLogo from "@/images/airtableLogo.svg";
 import { useState } from "react";
-
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
@@ -19,6 +19,7 @@ interface AirtableWrapperProps {
   environment: TEnvironment;
   isEnabled: boolean;
   webAppUrl: string;
+  attributeClasses: TAttributeClass[];
 }
 
 export const AirtableWrapper = ({
@@ -29,6 +30,7 @@ export const AirtableWrapper = ({
   environment,
   isEnabled,
   webAppUrl,
+  attributeClasses,
 }: AirtableWrapperProps) => {
   const [isConnected, setIsConnected] = useState(
     airtableIntegration ? airtableIntegration.config?.key : false
@@ -50,6 +52,7 @@ export const AirtableWrapper = ({
       airtableIntegration={airtableIntegration}
       setIsConnected={setIsConnected}
       surveys={surveys}
+      attributeClasses={attributeClasses}
     />
   ) : (
     <ConnectIntegration

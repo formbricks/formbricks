@@ -2,7 +2,6 @@ import { SurveyStarter } from "@/app/(app)/environments/[environmentId]/surveys/
 import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
@@ -63,7 +62,7 @@ const Page = async ({ params }) => {
     <PageContentWrapper>
       {surveyCount > 0 ? (
         <>
-          <PageHeader pageTitle="Surveys" cta={CreateSurveyButton} />
+          <PageHeader pageTitle="Surveys" cta={isViewer ? <></> : CreateSurveyButton} />
           <SurveysList
             environment={environment}
             otherEnvironment={otherEnvironment}

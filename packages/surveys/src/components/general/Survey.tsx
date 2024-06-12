@@ -12,7 +12,6 @@ import { evaluateCondition } from "@/lib/logicEvaluator";
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";
 import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
@@ -38,6 +37,7 @@ export const Survey = ({
   startAtQuestionId,
   clickOutside,
   shouldResetQuestionId,
+  fullSizeCards = false,
 }: SurveyBaseProps) => {
   const isInIframe = window.self !== window.top;
 
@@ -50,7 +50,6 @@ export const Survey = ({
       return survey?.questions[0]?.id;
     }
   });
-  // );
   const [showError, setShowError] = useState(false);
   // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
@@ -258,6 +257,7 @@ export const Survey = ({
             languageCode={selectedLanguage}
             responseCount={responseCount}
             isInIframe={isInIframe}
+            replaceRecallInfo={replaceRecallInfo}
           />
         );
       } else if (questionIdx === survey.questions.length) {
@@ -309,7 +309,7 @@ export const Survey = ({
     };
 
     return (
-      <AutoCloseWrapper survey={survey} onClose={onClose}>
+      <AutoCloseWrapper survey={survey} onClose={onClose} offset={offset}>
         {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
         {survey.languages.length > 0 && offset <= 0 && (
           <LanguageSwitch
@@ -324,7 +324,9 @@ export const Survey = ({
             cardArrangement === "simple" ? "fb-survey-shadow" : "",
             offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
-          <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
+          <div
+            ref={contentRef}
+            className={cn(loadingElement ? "animate-pulse opacity-60" : "", fullSizeCards ? "" : "my-auto")}>
             {content()}
           </div>
           <div className="mx-6 mb-10 mt-2 space-y-3 md:mb-6 md:mt-6">
@@ -348,6 +350,7 @@ export const Survey = ({
         styling={styling}
         setQuestionId={setQuestionId}
         shouldResetQuestionId={shouldResetQuestionId}
+        fullSizeCards={fullSizeCards}
       />
     </>
   );

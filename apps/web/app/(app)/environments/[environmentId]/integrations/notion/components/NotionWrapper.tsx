@@ -4,7 +4,7 @@ import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/in
 import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/ManageIntegration";
 import notionLogo from "@/images/notion.png";
 import { useState } from "react";
-
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationNotion,
@@ -13,7 +13,6 @@ import {
 } from "@formbricks/types/integration/notion";
 import { TSurvey } from "@formbricks/types/surveys";
 import { ConnectIntegration } from "@formbricks/ui/ConnectIntegration";
-
 import { authorize } from "../lib/notion";
 
 interface NotionWrapperProps {
@@ -23,6 +22,7 @@ interface NotionWrapperProps {
   webAppUrl: string;
   surveys: TSurvey[];
   databasesArray: TIntegrationNotionDatabase[];
+  attributeClasses: TAttributeClass[];
 }
 
 export const NotionWrapper = ({
@@ -32,6 +32,7 @@ export const NotionWrapper = ({
   webAppUrl,
   surveys,
   databasesArray,
+  attributeClasses,
 }: NotionWrapperProps) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(
@@ -61,6 +62,7 @@ export const NotionWrapper = ({
             notionIntegration={notionIntegration}
             databases={databasesArray}
             selectedIntegration={selectedIntegration}
+            attributeClasses={attributeClasses}
           />
           <ManageIntegration
             environment={environment}

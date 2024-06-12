@@ -3,7 +3,6 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey, TSurveyHiddenFields } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -11,7 +10,6 @@ import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { Tag } from "@formbricks/ui/Tag";
-
 import { validateId } from "../lib/validation";
 
 interface HiddenFieldsCardProps {
@@ -94,18 +92,18 @@ export const HiddenFieldsCard = ({
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <div className="flex gap-2">
             {localSurvey.hiddenFields?.fieldIds && localSurvey.hiddenFields?.fieldIds?.length > 0 ? (
-              localSurvey.hiddenFields?.fieldIds?.map((question) => {
+              localSurvey.hiddenFields?.fieldIds?.map((fieldId) => {
                 return (
                   <Tag
-                    key={question}
+                    key={fieldId}
                     onDelete={() => {
                       updateSurvey({
                         enabled: true,
-                        fieldIds: localSurvey.hiddenFields?.fieldIds?.filter((q) => q !== question),
+                        fieldIds: localSurvey.hiddenFields?.fieldIds?.filter((q) => q !== fieldId),
                       });
                     }}
-                    tagId={question}
-                    tagName={question}
+                    tagId={fieldId}
+                    tagName={fieldId}
                   />
                 );
               })

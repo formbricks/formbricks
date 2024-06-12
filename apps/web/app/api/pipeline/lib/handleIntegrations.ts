@@ -10,7 +10,7 @@ import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSh
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { TPipelineInput } from "@formbricks/types/pipelines";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
 
 export const handleIntegrations = async (
   integrations: TIntegration[],
@@ -103,7 +103,7 @@ const extractResponses = async (
 
     if (responseValue !== undefined) {
       let answer: typeof responseValue;
-      if (question.type === TSurveyQuestionType.PictureSelection) {
+      if (question.type === TSurveyQuestionTypeEnum.PictureSelection) {
         const selectedChoiceIds = responseValue as string[];
         answer = question?.choices
           .filter((choice) => selectedChoiceIds.includes(choice.id))
@@ -147,7 +147,7 @@ const buildNotionPayloadProperties = (
   const responses = data.response.data;
 
   const mappingQIds = mapping
-    .filter((m) => m.question.type === TSurveyQuestionType.PictureSelection)
+    .filter((m) => m.question.type === TSurveyQuestionTypeEnum.PictureSelection)
     .map((m) => m.question.id);
 
   Object.keys(responses).forEach((resp) => {
@@ -165,7 +165,7 @@ const buildNotionPayloadProperties = (
     const value = responses[map.question.id];
 
     properties[map.column.name] = {
-      [map.column.type]: getValue(map.column.type, value),
+      [map.column.type]: getValue(map.column.type, processResponseData(value)),
     };
   });
 

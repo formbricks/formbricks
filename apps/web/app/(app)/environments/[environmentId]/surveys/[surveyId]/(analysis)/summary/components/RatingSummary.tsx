@@ -1,19 +1,39 @@
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
-
-import { TSurveyQuestionSummaryRating } from "@formbricks/types/surveys";
+import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
+import { useMemo } from "react";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TSurvey, TSurveyQuestionSummaryRating } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { RatingResponse } from "@formbricks/ui/RatingResponse";
-
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface RatingSummaryProps {
   questionSummary: TSurveyQuestionSummaryRating;
+  survey: TSurvey;
+  attributeClasses: TAttributeClass[];
 }
 
-export const RatingSummary = ({ questionSummary }: RatingSummaryProps) => {
+export const RatingSummary = ({ questionSummary, survey, attributeClasses }: RatingSummaryProps) => {
+  const getIconBasedOnScale = useMemo(() => {
+    const scale = questionSummary.question.scale;
+    if (scale === "number") return <CircleSlash2 className="h-4 w-4" />;
+    else if (scale === "star") return <StarIcon fill="rgb(250 204 21)" className="h-4 w-4 text-yellow-400" />;
+    else if (scale === "smiley") return <SmileIcon className="h-4 w-4" />;
+  }, [questionSummary]);
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} />
+      <QuestionSummaryHeader
+        questionSummary={questionSummary}
+        survey={survey}
+        attributeClasses={attributeClasses}
+        insights={
+          <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
+            {getIconBasedOnScale}
+            <div>Overall: {questionSummary.average.toFixed(2)}</div>
+          </div>
+        }
+      />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {questionSummary.choices.map((result) => (
           <div key={result.rating}>

@@ -1,13 +1,12 @@
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
 import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
 import { PinScreen } from "@/app/s/[surveyId]/components/PinScreen";
 import { SurveyInactive } from "@/app/s/[surveyId]/components/SurveyInactive";
 import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
@@ -16,8 +15,6 @@ import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbrick
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
-import { MediaBackground } from "@formbricks/ui/MediaBackground";
-
 import { getEmailVerificationDetails } from "./lib/helpers";
 
 interface LinkSurveyPageProps {
@@ -29,6 +26,7 @@ interface LinkSurveyPageProps {
     userId?: string;
     verify?: string;
     lang?: string;
+    embed?: string;
   };
 }
 
@@ -52,6 +50,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   const langParam = searchParams.lang; //can either be language code or alias
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
+  const isEmbed = searchParams.embed === "true" ? true : false;
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
@@ -125,6 +124,8 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
     throw new Error("Product not found");
   }
 
+  const attributeClasses = await getAttributeClasses(survey.environmentId);
+
   const getLanguageCode = (): string => {
     if (!langParam || !isMultiLanguageAllowed) return "default";
     else {
@@ -170,33 +171,30 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
+        attributeClasses={attributeClasses}
+        isEmbed={isEmbed}
       />
     );
   }
 
   return survey ? (
-    <div className="relative">
-      <MediaBackground survey={survey} product={product}>
-        <LinkSurvey
-          survey={survey}
-          product={product}
-          userId={userId}
-          emailVerificationStatus={emailVerificationStatus}
-          singleUseId={isSingleUseSurvey ? singleUseId : undefined}
-          singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
-          webAppUrl={WEBAPP_URL}
-          responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
-          verifiedEmail={verifiedEmail}
-          languageCode={languageCode}
-        />
-        <LegalFooter
-          IMPRINT_URL={IMPRINT_URL}
-          PRIVACY_URL={PRIVACY_URL}
-          IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-          surveyUrl={WEBAPP_URL + "/s/" + survey.id}
-        />
-      </MediaBackground>
-    </div>
+    <LinkSurvey
+      survey={survey}
+      product={product}
+      userId={userId}
+      emailVerificationStatus={emailVerificationStatus}
+      singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+      singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+      webAppUrl={WEBAPP_URL}
+      responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
+      verifiedEmail={verifiedEmail}
+      languageCode={languageCode}
+      attributeClasses={attributeClasses}
+      isEmbed={isEmbed}
+      IMPRINT_URL={IMPRINT_URL}
+      PRIVACY_URL={PRIVACY_URL}
+      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+    />
   ) : null;
 };
 

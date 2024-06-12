@@ -1,5 +1,4 @@
 import { Prisma } from "@prisma/client";
-
 import { prisma } from "@formbricks/database";
 import { ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
@@ -23,7 +22,6 @@ import {
   ZSegmentFilters,
   ZSegmentUpdateInput,
 } from "@formbricks/types/segment";
-
 import {
   getActionCountInLastMonth,
   getActionCountInLastQuarter,
@@ -50,7 +48,7 @@ type PrismaSegment = Prisma.SegmentGetPayload<{
   };
 }>;
 
-export const selectSegment: Prisma.SegmentDefaultArgs["select"] = {
+export const selectSegment = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -62,6 +60,8 @@ export const selectSegment: Prisma.SegmentDefaultArgs["select"] = {
   surveys: {
     select: {
       id: true,
+      name: true,
+      status: true,
     },
   },
 };

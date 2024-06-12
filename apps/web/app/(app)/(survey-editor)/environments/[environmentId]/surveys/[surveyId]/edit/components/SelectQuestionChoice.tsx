@@ -2,9 +2,9 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import toast from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   TI18nString,
   TSurvey,
@@ -12,7 +12,6 @@ import {
   TSurveyMultipleChoiceQuestion,
 } from "@formbricks/types/surveys";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface ChoiceProps {
@@ -35,6 +34,7 @@ interface ChoiceProps {
   question: TSurveyMultipleChoiceQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceQuestion>) => void;
   surveyLanguageCodes: string[];
+  attributeClasses: TAttributeClass[];
 }
 
 export const SelectQuestionChoice = ({
@@ -54,6 +54,7 @@ export const SelectQuestionChoice = ({
   question,
   surveyLanguageCodes,
   updateQuestion,
+  attributeClasses,
 }: ChoiceProps) => {
   const isDragDisabled = choice.id === "other";
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
@@ -81,6 +82,7 @@ export const SelectQuestionChoice = ({
           key={choice.id}
           id={`choice-${choiceIdx}`}
           placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
+          label={""}
           localSurvey={localSurvey}
           questionIdx={questionIdx}
           value={choice.label}
@@ -100,12 +102,14 @@ export const SelectQuestionChoice = ({
             isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
           }
           className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
+          attributeClasses={attributeClasses}
         />
         {choice.id === "other" && (
           <QuestionFormInput
             id="otherOptionPlaceholder"
             localSurvey={localSurvey}
             placeholder={"Please specify"}
+            label={""}
             questionIdx={questionIdx}
             value={
               question.otherOptionPlaceholder
@@ -119,6 +123,7 @@ export const SelectQuestionChoice = ({
               isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
             }
             className="border border-dashed"
+            attributeClasses={attributeClasses}
           />
         )}
       </div>

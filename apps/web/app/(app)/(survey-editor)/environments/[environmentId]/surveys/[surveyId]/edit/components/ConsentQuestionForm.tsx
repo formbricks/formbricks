@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-
-import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
+import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
@@ -15,6 +15,7 @@ interface ConsentQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
+  attributeClasses: TAttributeClass[];
 }
 
 export const ConsentQuestionForm = ({
@@ -25,6 +26,7 @@ export const ConsentQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
+  attributeClasses,
 }: ConsentQuestionFormProps): JSX.Element => {
   const [firstRender, setFirstRender] = useState(true);
 
@@ -32,6 +34,7 @@ export const ConsentQuestionForm = ({
     <form>
       <QuestionFormInput
         id="headline"
+        label="Question*"
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -39,6 +42,7 @@ export const ConsentQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
+        attributeClasses={attributeClasses}
       />
 
       <div className="mt-3">
@@ -61,7 +65,7 @@ export const ConsentQuestionForm = ({
 
       <QuestionFormInput
         id="label"
-        label="Checkbox Label"
+        label="Checkbox Label*"
         placeholder="I agree to the terms and conditions"
         value={question.label}
         localSurvey={localSurvey}
@@ -70,6 +74,7 @@ export const ConsentQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
+        attributeClasses={attributeClasses}
       />
     </form>
   );

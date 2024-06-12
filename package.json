@@ -13,7 +13,6 @@
     "clean": "turbo run clean && rimraf node_modules .turbo coverage out",
     "build": "turbo run build",
     "build:dev": "turbo run build:dev",
-    "post-install": "turbo run post-install",
     "db:migrate:dev": "turbo run db:migrate:dev",
     "db:migrate:deploy": "turbo run db:migrate:deploy",
     "db:migrate:vercel": "turbo run db:migrate:vercel",
@@ -26,24 +25,25 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint",
-    "release": "turbo run build --filter=js... && turbo run build --filter=n8n-node... && changeset publish",
+    "release": "turbo run build --filter=@formbricks/js... && changeset publish",
     "test": "turbo run test --no-cache",
     "test:e2e": "playwright test",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "storybook": "turbo run storybook"
   },
   "devDependencies": {
-    "@playwright/test": "^1.44.0",
-    "eslint-config-formbricks": "workspace:*",
+    "@playwright/test": "^1.44.1",
+    "@formbricks/eslint-config": "workspace:*",
+    "eslint": "^8.57.0",
     "husky": "^9.0.11",
-    "lint-staged": "^15.2.2",
+    "lint-staged": "^15.2.5",
     "rimraf": "^5.0.7",
-    "tsx": "^4.10.4",
-    "turbo": "^1.13.3"
+    "tsx": "^4.11.0",
+    "turbo": "^2.0.1"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
-      "prettier --write",
-      "eslint --fix"
+      "prettier --write"
     ],
     "*.json": [
       "prettier --write"
@@ -55,7 +55,7 @@
   "engines": {
     "node": ">=16.0.0"
   },
-  "packageManager": "pnpm@8.11.0",
+  "packageManager": "pnpm@9.2.0",
   "nextBundleAnalysis": {
     "budget": 358400,
     "budgetPercentIncreaseRed": 20,
@@ -63,7 +63,7 @@
     "showDetails": true
   },
   "dependencies": {
-    "@changesets/cli": "^2.27.2",
-    "playwright": "^1.44.0"
+    "@changesets/cli": "^2.27.3",
+    "playwright": "^1.44.1"
   }
 }

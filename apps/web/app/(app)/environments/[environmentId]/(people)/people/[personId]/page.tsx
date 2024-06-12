@@ -3,8 +3,8 @@ import { AttributesSection } from "@/app/(app)/environments/[environmentId]/(peo
 import { DeletePersonButton } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/DeletePersonButton";
 import { ResponseSection } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseSection";
 import { getServerSession } from "next-auth";
-
 import { getAttributes } from "@formbricks/lib/attribute/service";
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -18,7 +18,7 @@ import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
 const Page = async ({ params }) => {
-  const [environment, environmentTags, product, session, organization, person, attributes] =
+  const [environment, environmentTags, product, session, organization, person, attributes, attributeClasses] =
     await Promise.all([
       getEnvironment(params.environmentId),
       getTagsByEnvironmentId(params.environmentId),
@@ -27,6 +27,7 @@ const Page = async ({ params }) => {
       getOrganizationByEnvironmentId(params.environmentId),
       getPerson(params.personId),
       getAttributes(params.personId),
+      getAttributeClasses(params.environmentId),
     ]);
 
   if (!product) {
@@ -68,6 +69,7 @@ const Page = async ({ params }) => {
             environment={environment}
             personId={params.personId}
             environmentTags={environmentTags}
+            attributeClasses={attributeClasses}
           />
           <ActivitySection environmentId={params.environmentId} personId={params.personId} />
         </div>

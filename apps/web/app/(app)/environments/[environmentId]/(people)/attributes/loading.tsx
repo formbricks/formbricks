@@ -1,6 +1,5 @@
 import { PeopleSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PeopleSecondaryNavigation";
 import { TagIcon } from "lucide-react";
-
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
@@ -8,7 +7,7 @@ const Loading = () => {
   return (
     <>
       <PageContentWrapper>
-        <PageHeader pageTitle="Attributes">
+        <PageHeader pageTitle="People">
           <PeopleSecondaryNavigation activeId="attributes" loading />
         </PageHeader>
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

@@ -4,8 +4,7 @@ import { deleteProductAction } from "@/app/(app)/environments/[environmentId]/pr
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-
-import { truncate } from "@formbricks/lib/strings";
+import { truncate } from "@formbricks/lib/utils/strings";
 import { TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";

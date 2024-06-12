@@ -5,7 +5,6 @@ import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { ImagePlusIcon } from "lucide-react";
 import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { extractLanguageCodes, getEnabledLanguages, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useSyncScroll } from "@formbricks/lib/utils/hooks/useSyncScroll";
@@ -14,35 +13,35 @@ import {
   extractRecallInfo,
   findRecallInfoById,
   getFallbackValues,
-  getRecallQuestions,
+  getRecallItems,
   headlineToRecall,
   recallToHeadline,
   replaceRecallInfoWithUnderline,
 } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   TI18nString,
   TSurvey,
   TSurveyChoice,
   TSurveyQuestion,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
+  TSurveyRecallItem,
 } from "@formbricks/types/surveys";
-
-import { LanguageIndicator } from "../../ee/multiLanguage/components/LanguageIndicator";
+import { LanguageIndicator } from "../../ee/multi-language/components/language-indicator";
 import { createI18nString } from "../../lib/i18n/utils";
 import { FileInput } from "../FileInput";
 import { Input } from "../Input";
 import { Label } from "../Label";
 import { FallbackInput } from "./components/FallbackInput";
-import { RecallQuestionSelect } from "./components/RecallQuestionSelect";
-import { isValueIncomplete } from "./lib/utils";
+import { RecallItemSelect } from "./components/RecallItemSelect";
 import {
   determineImageUploaderVisibility,
   getCardText,
   getChoiceLabel,
   getIndex,
-  getLabelById,
   getMatrixLabel,
   getPlaceHolderById,
+  isValueIncomplete,
 } from "./utils";
 
 interface QuestionFormInputProps {
@@ -57,12 +56,13 @@ interface QuestionFormInputProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  label?: string;
+  label: string;
   maxLength?: number;
   placeholder?: string;
   ref?: RefObject<HTMLInputElement>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
+  attributeClasses: TAttributeClass[];
 }
 
 export const QuestionFormInput = ({
@@ -82,6 +82,7 @@ export const QuestionFormInput = ({
   placeholder,
   onBlur,
   className,
+  attributeClasses,
 }: QuestionFormInputProps) => {
   const question: TSurveyQuestion = localSurvey.questions[questionIdx];
   const isChoice = id.includes("choice");
@@ -133,11 +134,16 @@ export const QuestionFormInput = ({
   const [showImageUploader, setShowImageUploader] = useState<boolean>(
     determineImageUploaderVisibility(questionIdx, localSurvey)
   );
-  const [showQuestionSelect, setShowQuestionSelect] = useState(false);
+  const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
-  const [recallQuestions, setRecallQuestions] = useState<TSurveyQuestion[]>(
+  const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>(
     getLocalizedValue(text, selectedLanguageCode).includes("#recall:")
-      ? getRecallQuestions(getLocalizedValue(text, selectedLanguageCode), localSurvey, selectedLanguageCode)
+      ? getRecallItems(
+          getLocalizedValue(text, selectedLanguageCode),
+          localSurvey,
+          selectedLanguageCode,
+          attributeClasses
+        )
       : []
   );
   const [fallbacks, setFallbacks] = useState<{ [type: string]: string }>(
@@ -150,31 +156,31 @@ export const QuestionFormInput = ({
   const fallbackInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const filteredRecallQuestions = Array.from(new Set(recallQuestions.map((q) => q.id))).map((id) => {
-    return recallQuestions.find((q) => q.id === id);
+  const filteredRecallItems = Array.from(new Set(recallItems.map((q) => q.id))).map((id) => {
+    return recallItems.find((q) => q.id === id);
   });
 
   // Hook to synchronize the horizontal scroll position of highlightContainerRef and inputRef.
   useSyncScroll(highlightContainerRef, inputRef);
 
   useEffect(() => {
-    if (!isWelcomeCard && (id === "headline" || id === "subheader")) {
+    if (id === "headline" || id === "subheader") {
       checkForRecallSymbol();
     }
-    // Generates an array of headlines from recallQuestions, replacing nested recall questions with '___' .
-    const recallQuestionHeadlines = recallQuestions.flatMap((recallQuestion) => {
-      if (!getLocalizedValue(recallQuestion.headline, selectedLanguageCode).includes("#recall:")) {
-        return [(recallQuestion.headline as TI18nString)[selectedLanguageCode]];
+    // Generates an array of headlines from recallItems, replacing nested recall questions with '___' .
+    const recallItemLabels = recallItems.flatMap((recallItem) => {
+      if (!recallItem.label.includes("#recall:")) {
+        return [recallItem.label];
       }
-      const recallQuestionText = (recallQuestion[id as keyof typeof recallQuestion] as string) || "";
-      const recallInfo = extractRecallInfo(recallQuestionText);
+      const recallItemLabel = recallItem.label;
+      const recallInfo = extractRecallInfo(recallItemLabel);
 
       if (recallInfo) {
-        const recallQuestionId = extractId(recallInfo);
-        const recallQuestion = localSurvey.questions.find((question) => question.id === recallQuestionId);
+        const recallItemId = extractId(recallInfo);
+        const recallQuestion = localSurvey.questions.find((question) => question.id === recallItemId);
 
         if (recallQuestion) {
-          return [recallQuestionText.replace(recallInfo, `___`)];
+          return [recallItemLabel.replace(recallInfo, `___`)];
         }
       }
       return [];
@@ -183,12 +189,12 @@ export const QuestionFormInput = ({
     // Constructs an array of JSX elements representing segmented parts of text, interspersed with special formatted spans for recall headlines.
     const processInput = (): JSX.Element[] => {
       const parts: JSX.Element[] = [];
-      let remainingText = recallToHeadline(text, localSurvey, false, selectedLanguageCode)[
+      let remainingText = recallToHeadline(text, localSurvey, false, selectedLanguageCode, attributeClasses)[
         selectedLanguageCode
       ];
-      filterRecallQuestions(remainingText);
-      recallQuestionHeadlines.forEach((headline) => {
-        const index = remainingText.indexOf("@" + headline);
+      filterRecallItems(remainingText);
+      recallItemLabels.forEach((label) => {
+        const index = remainingText.indexOf("@" + label);
         if (index !== -1) {
           if (index > 0) {
             parts.push(
@@ -201,10 +207,10 @@ export const QuestionFormInput = ({
             <span
               className="z-30 flex cursor-pointer items-center justify-center whitespace-pre rounded-md bg-slate-100 text-sm text-transparent"
               key={parts.length}>
-              {"@" + headline}
+              {"@" + label}
             </span>
           );
-          remainingText = remainingText.substring(index + headline.length + 1);
+          remainingText = remainingText.substring(index + label.length + 1);
         }
       });
       if (remainingText?.length) {
@@ -232,73 +238,71 @@ export const QuestionFormInput = ({
   const checkForRecallSymbol = () => {
     const pattern = /(^|\s)@(\s|$)/;
     if (pattern.test(getLocalizedValue(text, selectedLanguageCode))) {
-      setShowQuestionSelect(true);
+      setShowRecallItemSelect(true);
     } else {
-      setShowQuestionSelect(false);
+      setShowRecallItemSelect(false);
     }
   };
 
-  // Adds a new recall question to the recallQuestions array, updates fallbacks, modifies the text with recall details.
-  const addRecallQuestion = (recallQuestion: TSurveyQuestion) => {
-    if ((recallQuestion.headline as TI18nString)[selectedLanguageCode].trim() === "") {
+  // Adds a new recall question to the recallItems array, updates fallbacks, modifies the text with recall details.
+  const addRecallItem = (recallItem: TSurveyRecallItem) => {
+    if (recallItem.label.trim() === "") {
       toast.error("Cannot add question with empty headline as recall");
       return;
     }
-    let recallQuestionTemp = structuredClone(recallQuestion);
-    recallQuestionTemp = replaceRecallInfoWithUnderline(recallQuestionTemp, selectedLanguageCode);
-    setRecallQuestions((prevQuestions) => {
-      const updatedQuestions = [...prevQuestions, recallQuestionTemp];
+    let recallItemTemp = structuredClone(recallItem);
+    recallItemTemp.label = replaceRecallInfoWithUnderline(recallItem.label);
+    setRecallItems((prevQuestions) => {
+      const updatedQuestions = [...prevQuestions, recallItemTemp];
       return updatedQuestions;
     });
-    if (!Object.keys(fallbacks).includes(recallQuestion.id)) {
+    if (!Object.keys(fallbacks).includes(recallItem.id)) {
       setFallbacks((prevFallbacks) => ({
         ...prevFallbacks,
-        [recallQuestion.id]: "",
+        [recallItem.id]: "",
       }));
     }
-    setShowQuestionSelect(false);
+    setShowRecallItemSelect(false);
     let modifiedHeadlineWithId = { ...getElementTextBasedOnType() };
     modifiedHeadlineWithId[selectedLanguageCode] = getLocalizedValue(
       modifiedHeadlineWithId,
       selectedLanguageCode
-    ).replace("@", `#recall:${recallQuestion.id}/fallback:# `);
+    ).replace(/(?<=^|\s)@(?=\s|$)/g, `#recall:${recallItem.id}/fallback:# `);
     handleUpdate(getLocalizedValue(modifiedHeadlineWithId, selectedLanguageCode));
     const modifiedHeadlineWithName = recallToHeadline(
       modifiedHeadlineWithId,
       localSurvey,
       false,
-      selectedLanguageCode
+      selectedLanguageCode,
+      attributeClasses
     );
     setText(modifiedHeadlineWithName);
     setShowFallbackInput(true);
   };
 
   // Filters and updates the list of recall questions based on their presence in the given text, also managing related text and fallback states.
-  const filterRecallQuestions = (remainingText: string) => {
-    let includedQuestions: TSurveyQuestion[] = [];
-    recallQuestions.forEach((recallQuestion) => {
-      if (remainingText.includes(`@${getLocalizedValue(recallQuestion.headline, selectedLanguageCode)}`)) {
-        includedQuestions.push(recallQuestion);
+  const filterRecallItems = (remainingText: string) => {
+    let includedRecallItems: TSurveyRecallItem[] = [];
+    recallItems.forEach((recallItem) => {
+      if (remainingText.includes(`@${recallItem.label}`)) {
+        includedRecallItems.push(recallItem);
       } else {
-        const questionToRemove = getLocalizedValue(recallQuestion.headline, selectedLanguageCode).slice(
-          0,
-          -1
-        );
+        const recallItemToRemove = recallItem.label.slice(0, -1);
         const newText = { ...text };
-        newText[selectedLanguageCode] = text[selectedLanguageCode].replace(`@${questionToRemove}`, "");
+        newText[selectedLanguageCode] = text[selectedLanguageCode].replace(`@${recallItemToRemove}`, "");
         setText(newText);
-        handleUpdate(text[selectedLanguageCode].replace(`@${questionToRemove}`, ""));
+        handleUpdate(text[selectedLanguageCode].replace(`@${recallItemToRemove}`, ""));
         let updatedFallback = { ...fallbacks };
-        delete updatedFallback[recallQuestion.id];
+        delete updatedFallback[recallItem.id];
         setFallbacks(updatedFallback);
       }
     });
-    setRecallQuestions(includedQuestions);
+    setRecallItems(includedRecallItems);
   };
 
   const addFallback = () => {
     let headlineWithFallback = getElementTextBasedOnType();
-    filteredRecallQuestions.forEach((recallQuestion) => {
+    filteredRecallItems.forEach((recallQuestion) => {
       if (recallQuestion) {
         const recallInfo = findRecallInfoById(
           getLocalizedValue(headlineWithFallback, selectedLanguageCode),
@@ -388,8 +392,8 @@ export const QuestionFormInput = ({
   const addChoice = (choiceIdx?: number) => {
     console.log("adding");
     if (
-      question.type === TSurveyQuestionType.MultipleChoiceMulti ||
-      question.type === TSurveyQuestionType.MultipleChoiceSingle
+      question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+      question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle
     ) {
       let newChoices = !question.choices ? [] : question.choices;
       const otherChoice = newChoices.find((choice) => choice.id === "other");
@@ -416,8 +420,8 @@ export const QuestionFormInput = ({
 
   const deleteChoice = (choiceIdx: number) => {
     if (
-      question.type === TSurveyQuestionType.MultipleChoiceMulti ||
-      question.type === TSurveyQuestionType.MultipleChoiceSingle
+      question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+      question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle
     ) {
       const newChoices = !question.choices ? [] : question.choices.filter((_, idx) => idx !== choiceIdx);
       const choiceValue = question.choices[choiceIdx].label[selectedLanguageCode];
@@ -441,7 +445,7 @@ export const QuestionFormInput = ({
     <div className="w-full">
       <div className="w-full">
         <div className="mb-2 mt-3">
-          <Label htmlFor={id}>{label || getLabelById(id)}</Label>
+          <Label htmlFor={id}>{label}</Label>
         </div>
 
         <div className="flex flex-col gap-4 bg-white">
@@ -494,9 +498,13 @@ export const QuestionFormInput = ({
                 placeholder={placeholder ? placeholder : getPlaceHolderById(id)}
                 id={id}
                 name={id}
-                aria-label={label || getLabelById(id)}
-                autoComplete={showQuestionSelect ? "off" : "on"}
-                value={recallToHeadline(text, localSurvey, false, selectedLanguageCode)[selectedLanguageCode]}
+                aria-label={label}
+                autoComplete={showRecallItemSelect ? "off" : "on"}
+                value={
+                  recallToHeadline(text, localSurvey, false, selectedLanguageCode, attributeClasses)[
+                    selectedLanguageCode
+                  ]
+                }
                 ref={inputRef}
                 onBlur={onBlur}
                 onChange={(e) => {
@@ -504,10 +512,16 @@ export const QuestionFormInput = ({
                     ...getElementTextBasedOnType(),
                     [selectedLanguageCode]: e.target.value,
                   };
-                  setText(recallToHeadline(translatedText, localSurvey, false, selectedLanguageCode));
-                  handleUpdate(
-                    headlineToRecall(e.target.value, recallQuestions, fallbacks, selectedLanguageCode)
+                  setText(
+                    recallToHeadline(
+                      translatedText,
+                      localSurvey,
+                      false,
+                      selectedLanguageCode,
+                      attributeClasses
+                    )
                   );
+                  handleUpdate(headlineToRecall(e.target.value, recallItems, fallbacks));
                 }}
                 maxLength={maxLength ?? undefined}
                 isInvalid={
@@ -524,9 +538,9 @@ export const QuestionFormInput = ({
                   setSelectedLanguageCode={setSelectedLanguageCode}
                 />
               )}
-              {!showQuestionSelect && showFallbackInput && recallQuestions.length > 0 && (
+              {!showRecallItemSelect && showFallbackInput && recallItems.length > 0 && (
                 <FallbackInput
-                  filteredRecallQuestions={filteredRecallQuestions}
+                  filteredRecallItems={filteredRecallItems}
                   fallbacks={fallbacks}
                   setFallbacks={setFallbacks}
                   fallbackInputRef={fallbackInputRef}
@@ -552,8 +566,8 @@ export const QuestionFormInput = ({
               />
             )}
             {isChoice &&
-              (question.type === TSurveyQuestionType.MultipleChoiceMulti ||
-                question.type === TSurveyQuestionType.MultipleChoiceSingle) && (
+              (question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+                question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) && (
                 <div className="flex items-center gap-2">
                   {question.choices && question.choices.length > 2 && (
                     <TrashIcon
@@ -575,22 +589,23 @@ export const QuestionFormInput = ({
               )}
           </div>
         </div>
-        {showQuestionSelect && (
-          <RecallQuestionSelect
+        {showRecallItemSelect && (
+          <RecallItemSelect
             localSurvey={localSurvey}
             questionId={questionId}
-            addRecallQuestion={addRecallQuestion}
-            setShowQuestionSelect={setShowQuestionSelect}
-            showQuestionSelect={showQuestionSelect}
-            inputRef={inputRef}
-            recallQuestions={recallQuestions}
+            addRecallItem={addRecallItem}
+            setShowRecallItemSelect={setShowRecallItemSelect}
+            recallItems={recallItems}
             selectedLanguageCode={selectedLanguageCode}
+            hiddenFields={localSurvey.hiddenFields}
+            attributeClasses={attributeClasses}
           />
         )}
       </div>
       {selectedLanguageCode !== "default" && value && typeof value["default"] !== undefined && (
         <div className="mt-1 text-xs text-gray-500">
-          <strong>Translate:</strong> {recallToHeadline(value, localSurvey, false, "default")["default"]}
+          <strong>Translate:</strong>{" "}
+          {recallToHeadline(value, localSurvey, false, "default", attributeClasses)["default"]}
         </div>
       )}
       {selectedLanguageCode === "default" && localSurvey.languages?.length > 1 && isTranslationIncomplete && (

@@ -1,5 +1,5 @@
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
-
 import { LogicEditor } from "./LogicEditor";
 import { UpdateQuestionId } from "./UpdateQuestionId";
 
@@ -8,6 +8,7 @@ interface AdvancedSettingsProps {
   questionIdx: number;
   localSurvey: TSurvey;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  attributeClasses: TAttributeClass[];
 }
 
 export const AdvancedSettings = ({
@@ -15,6 +16,7 @@ export const AdvancedSettings = ({
   questionIdx,
   localSurvey,
   updateQuestion,
+  attributeClasses,
 }: AdvancedSettingsProps) => {
   return (
     <div>
@@ -24,6 +26,7 @@ export const AdvancedSettings = ({
           updateQuestion={updateQuestion}
           localSurvey={localSurvey}
           questionIdx={questionIdx}
+          attributeClasses={attributeClasses}
         />
       </div>
 

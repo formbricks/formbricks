@@ -1,11 +1,9 @@
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { calculateElementIdx } from "@/lib/utils";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys";
-
 import { Headline } from "./Headline";
 import { HtmlBody } from "./HtmlBody";
 
@@ -19,6 +17,7 @@ interface WelcomeCardProps {
   languageCode: string;
   responseCount?: number;
   isInIframe: boolean;
+  replaceRecallInfo: (text: string, responseData: TResponseData) => string;
 }
 
 const TimerIcon = () => {
@@ -68,6 +67,7 @@ export const WelcomeCard = ({
   survey,
   responseCount,
   isInIframe,
+  replaceRecallInfo,
 }: WelcomeCardProps) => {
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
@@ -105,12 +105,17 @@ export const WelcomeCard = ({
       <ScrollableContainer>
         <div>
           {fileUrl && (
-            /* eslint-disable-next-line @next/next/no-img-element */
             <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
           )}
 
-          <Headline headline={getLocalizedValue(headline, languageCode)} questionId="welcomeCard" />
-          <HtmlBody htmlString={getLocalizedValue(html, languageCode)} questionId="welcomeCard" />
+          <Headline
+            headline={replaceRecallInfo(getLocalizedValue(headline, languageCode), {})}
+            questionId="welcomeCard"
+          />
+          <HtmlBody
+            htmlString={replaceRecallInfo(getLocalizedValue(html, languageCode), {})}
+            questionId="welcomeCard"
+          />
         </div>
       </ScrollableContainer>
 

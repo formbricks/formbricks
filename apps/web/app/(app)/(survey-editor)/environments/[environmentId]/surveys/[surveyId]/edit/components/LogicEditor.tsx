@@ -8,16 +8,16 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   TSurvey,
   TSurveyLogic,
   TSurveyLogicCondition,
   TSurveyQuestion,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import {
@@ -36,6 +36,7 @@ interface LogicEditorProps {
   questionIdx: number;
   question: TSurveyQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  attributeClasses: TAttributeClass[];
 }
 
 type LogicConditions = {
@@ -47,18 +48,24 @@ type LogicConditions = {
   };
 };
 
-export const LogicEditor = ({ localSurvey, question, questionIdx, updateQuestion }: LogicEditorProps) => {
+export const LogicEditor = ({
+  localSurvey,
+  question,
+  questionIdx,
+  updateQuestion,
+  attributeClasses,
+}: LogicEditorProps) => {
   const [searchValue, setSearchValue] = useState<string>("");
   localSurvey = useMemo(() => {
-    return checkForRecallInHeadline(localSurvey, "default");
-  }, [localSurvey]);
+    return replaceHeadlineRecall(localSurvey, "default", attributeClasses);
+  }, [localSurvey, attributeClasses]);
 
   const questionValues = useMemo(() => {
     if ("choices" in question) {
       return question.choices.map((choice) => getLocalizedValue(choice.label, "default"));
     } else if ("range" in question) {
       return Array.from({ length: question.range ? question.range : 0 }, (_, i) => (i + 1).toString());
-    } else if (question.type === TSurveyQuestionType.NPS) {
+    } else if (question.type === TSurveyQuestionTypeEnum.NPS) {
       return Array.from({ length: 11 }, (_, i) => (i + 0).toString());
     }
     return [];
@@ -371,8 +378,10 @@ export const LogicEditor = ({ localSurvey, question, questionIdx, updateQuestion
                           key={question.id}
                           value={question.id}
                           title={getLocalizedValue(question.headline, "default")}>
-                          <div className="w-40">
+                          <div className="w-96">
                             <p className="truncate text-left">
+                              {idx + 1}
+                              {". "}
                               {getLocalizedValue(question.headline, "default")}
                             </p>
                           </div>
