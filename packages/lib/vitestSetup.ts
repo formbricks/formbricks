@@ -1,6 +1,5 @@
 // mock these globally used functions
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-
 import { ValidationError } from "@formbricks/types/errors";
 
 vi.mock("next/cache", () => ({

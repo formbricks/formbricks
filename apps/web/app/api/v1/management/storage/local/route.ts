@@ -5,7 +5,6 @@ import { responses } from "@/app/lib/api/response";
 import { getServerSession } from "next-auth";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";

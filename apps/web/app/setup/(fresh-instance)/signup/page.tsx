@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,

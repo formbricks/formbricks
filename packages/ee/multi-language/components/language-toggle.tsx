@@ -1,7 +1,7 @@
+import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import type { TLanguage } from "@formbricks/types/product";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
-import { getLanguageLabel } from "../lib/iso-languages";
 
 interface LanguageToggleProps {
   language: TLanguage;

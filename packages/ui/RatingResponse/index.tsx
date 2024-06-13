@@ -1,5 +1,4 @@
 import { StarIcon } from "lucide-react";
-
 import {
   ConfusedFace,
   FrowningFace,

@@ -4,12 +4,10 @@ import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTit
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { isValidEmail } from "@formbricks/lib/utils/email";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-
 import { finishOnboardingAction, inviteOrganizationMemberAction } from "../../actions";
 
 interface InviteOrganizationMemberProps {

@@ -1,9 +1,7 @@
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-
 import { TemplateContainerWithPreview } from "./components/TemplateContainer";
 
 const Page = async ({ params }) => {

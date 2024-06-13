@@ -1,7 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { PlusIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
-
+import { PlusIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -34,7 +32,6 @@ export const PictureSelectionForm = ({
   isInvalid,
   attributeClasses,
 }: PictureSelectionFormProps): JSX.Element => {
-  const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const environmentId = localSurvey.environmentId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
@@ -53,7 +50,7 @@ export const PictureSelectionForm = ({
         attributeClasses={attributeClasses}
       />
       <div>
-        {showSubheader && (
+        {question.subheader !== undefined && (
           <div className="mt-2 inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
@@ -69,17 +66,9 @@ export const PictureSelectionForm = ({
                 attributeClasses={attributeClasses}
               />
             </div>
-
-            <TrashIcon
-              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => {
-                setShowSubheader(false);
-                updateQuestion(questionIdx, { subheader: undefined });
-              }}
-            />
           </div>
         )}
-        {!showSubheader && (
+        {question.subheader === undefined && (
           <Button
             size="sm"
             variant="minimal"
@@ -89,9 +78,7 @@ export const PictureSelectionForm = ({
               updateQuestion(questionIdx, {
                 subheader: createI18nString("", surveyLanguageCodes),
               });
-              setShowSubheader(true);
             }}>
-            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>

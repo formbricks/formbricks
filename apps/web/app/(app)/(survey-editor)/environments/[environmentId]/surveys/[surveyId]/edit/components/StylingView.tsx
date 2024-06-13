@@ -3,7 +3,6 @@ import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
-
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
@@ -20,7 +19,6 @@ import {
   FormProvider,
 } from "@formbricks/ui/Form";
 import { Switch } from "@formbricks/ui/Switch";
-
 import { BackgroundStylingCard } from "./BackgroundStylingCard";
 import { CardStylingSettings } from "./CardStylingSettings";
 import { FormStylingSettings } from "./FormStylingSettings";

@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import { VNode } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
-
 import { TPlacement } from "@formbricks/types/common";
 
 interface ModalProps {

@@ -10,11 +10,9 @@ import { CreateFirstSurvey } from "@/app/(app)/onboarding/components/link/Create
 import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
-
 import { PathwaySelect } from "./PathwaySelect";
 import { OnboardingHeader } from "./ProgressBar";
 

@@ -5,7 +5,6 @@ import { MailIcon } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isValidEmail } from "@formbricks/lib/utils/email";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";

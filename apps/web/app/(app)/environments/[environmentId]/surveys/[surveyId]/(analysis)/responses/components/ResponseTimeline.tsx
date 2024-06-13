@@ -2,7 +2,6 @@
 
 import { EmptyAppSurveys } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import { useEffect, useRef, useState } from "react";
-
 import { getMembershipByUserIdOrganizationIdAction } from "@formbricks/lib/membership/hooks/actions";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TEnvironment } from "@formbricks/types/environment";

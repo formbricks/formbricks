@@ -1,11 +1,8 @@
 "use server";
 
 import "server-only";
-
 import { getServerSession } from "next-auth";
-
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
-
 import { authOptions } from "../../authOptions";
 import { getOrganization, getOrganizationBillingInfo } from "../service";
 

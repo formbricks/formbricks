@@ -1,9 +1,7 @@
 import { HelpCircleIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-
 import { Button } from "@formbricks/ui/Button";
-
 import footerLogo from "./lib/footerlogo.svg";
 
 const NotFound = () => {

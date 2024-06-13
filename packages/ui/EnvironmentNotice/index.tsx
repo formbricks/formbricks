@@ -1,5 +1,4 @@
 import { LightbulbIcon } from "lucide-react";
-
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 

@@ -1,5 +1,4 @@
 import { AirtableWrapper } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirtableWrapper";
-
 import { getAirtableTables } from "@formbricks/lib/airtable/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
