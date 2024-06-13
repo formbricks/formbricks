@@ -21,6 +21,9 @@ interface TOrganizationBillingLegacy {
   features: TFeatures;
 }
 
+const now = new Date();
+const firstOfMonthUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+
 async function main() {
   await prisma.$transaction(
     async (tx) => {
@@ -109,7 +112,7 @@ async function main() {
                   },
                 },
                 stripeCustomerId: billing.stripeCustomerId,
-                periodStart: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+                periodStart: firstOfMonthUTC,
               },
             },
           });
@@ -133,7 +136,7 @@ async function main() {
                   },
                 },
                 stripeCustomerId: billing.stripeCustomerId,
-                periodStart: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+                periodStart: firstOfMonthUTC,
               },
             },
           });
