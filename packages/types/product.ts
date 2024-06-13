@@ -9,6 +9,16 @@ export const ZProductStyling = ZBaseStyling.extend({
 
 export type TProductStyling = z.infer<typeof ZProductStyling>;
 
+export const ZProductConfigChannel = z.enum(["link", "app", "website"]).nullable();
+export type TProductConfigChannel = z.infer<typeof ZProductConfigChannel>;
+
+export const ZProductConfig = z.object({
+  channel: ZProductConfigChannel,
+  industry: z.enum(["eCommerce", "saas"]).nullable(),
+});
+
+export type TProductConfig = z.infer<typeof ZProductConfig>;
+
 export const ZLanguage = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
@@ -50,6 +60,7 @@ export const ZProduct = z.object({
     .max(365, { message: "Must be less than 365" }),
   inAppSurveyBranding: z.boolean(),
   linkSurveyBranding: z.boolean(),
+  config: ZProductConfig,
   placement: ZPlacement,
   clickOutsideClose: z.boolean(),
   darkOverlay: z.boolean(),
@@ -70,6 +81,7 @@ export const ZProductUpdateInput = z.object({
   recontactDays: z.number().int().optional(),
   inAppSurveyBranding: z.boolean().optional(),
   linkSurveyBranding: z.boolean().optional(),
+  config: ZProductConfig.optional(),
   placement: ZPlacement.optional(),
   clickOutsideClose: z.boolean().optional(),
   darkOverlay: z.boolean().optional(),
