@@ -3,14 +3,15 @@ import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTit
 import { getCustomHeadline } from "@/app/(app)/onboarding/utils";
 import { notFound } from "next/navigation";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 
 interface ProductSettingsPageProps {
   params: {
     environmentId: string;
   };
   searchParams: {
-    channel?: string;
-    industry?: string;
+    channel?: TProductConfigChannel;
+    industry?: TProductConfigIndustry;
   };
 }
 
@@ -27,7 +28,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center">
-      {channel === "link" || industry === "other" ? (
+      {channel === "link" ? (
         <OnboardingTitle
           title="Match your brand, get 2x more responses."
           subtitle="When people recognize your brand, they are much more likely to start and complete responses."

@@ -12,9 +12,12 @@ export type TProductStyling = z.infer<typeof ZProductStyling>;
 export const ZProductConfigChannel = z.enum(["link", "app", "website"]).nullable();
 export type TProductConfigChannel = z.infer<typeof ZProductConfigChannel>;
 
+export const ZProductConfigIndustry = z.enum(["eCommerce", "saas", "other"]).nullable();
+export type TProductConfigIndustry = z.infer<typeof ZProductConfigIndustry>;
+
 export const ZProductConfig = z.object({
-  channel: ZProductConfigChannel,
-  industry: z.enum(["eCommerce", "saas"]).nullable(),
+  channel: ZProductConfigChannel.optional(),
+  industry: ZProductConfigIndustry.optional(),
 });
 
 export type TProductConfig = z.infer<typeof ZProductConfig>;

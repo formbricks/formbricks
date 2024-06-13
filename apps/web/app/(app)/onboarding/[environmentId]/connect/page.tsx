@@ -5,14 +5,15 @@ import { getCustomHeadline } from "@/app/(app)/onboarding/utils";
 import { notFound } from "next/navigation";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 
 interface ConnectPageProps {
   params: {
     environmentId: string;
   };
   searchParams: {
-    channel?: string;
-    industry?: string;
+    channel?: TProductConfigChannel;
+    industry?: TProductConfigIndustry;
   };
 }
 

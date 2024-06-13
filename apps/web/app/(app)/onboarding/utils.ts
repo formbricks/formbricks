@@ -1,4 +1,6 @@
-export const getCustomHeadline = (channel: string, industry: string) => {
+import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
+
+export const getCustomHeadline = (channel: TProductConfigChannel, industry: TProductConfigIndustry) => {
   const combinations = {
     "website+eCommerce": "Web shop",
     "website+saas": "Landing page",

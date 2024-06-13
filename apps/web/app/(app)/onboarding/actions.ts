@@ -15,7 +15,7 @@ import { createSurvey } from "@formbricks/lib/survey/service";
 import { updateUser } from "@formbricks/lib/user/service";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
-import { TProductUpdateInput } from "@formbricks/types/product";
+import { TProductConfig, TProductUpdateInput } from "@formbricks/types/product";
 import { TSurveyInput, TSurveyType } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 import { TUserUpdateInput } from "@formbricks/types/user";
@@ -70,9 +70,11 @@ export const inviteOrganizationMemberAction = async (
   return invite;
 };
 
-export const finishOnboardingAction = async () => {
+export const finishOnboardingAction = async (productId: string, productConfig: TProductConfig) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
+
+  await updateProduct(productId, { config: productConfig });
 
   const updatedProfile = { onboardingCompleted: true };
   return await updateUser(session.user.id, updatedProfile);

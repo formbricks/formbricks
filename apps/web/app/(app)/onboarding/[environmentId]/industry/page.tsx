@@ -3,13 +3,14 @@ import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTit
 import { HeartIcon, MonitorIcon, ShoppingCart } from "lucide-react";
 import { notFound } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { TProductConfigChannel } from "@formbricks/types/product";
 
 interface IndustryPageProps {
   params: {
     environmentId: string;
   };
   searchParams: {
-    channel?: string;
+    channel?: TProductConfigChannel;
   };
 }
 
@@ -39,7 +40,7 @@ const Page = async ({ params, searchParams }: IndustryPageProps) => {
       description: "Universal Formricks experience with features for every industry",
       icon: HeartIcon,
       iconText: "Universal",
-      href: true
+      href: IS_FORMBRICKS_CLOUD
         ? `/onboarding/${params.environmentId}/survey?channel=${channel}&industry=other`
         : `/onboarding/${params.environmentId}/product/settings?channel=${channel}&industry=other`,
     },

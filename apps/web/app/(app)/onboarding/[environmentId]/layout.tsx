@@ -1,8 +1,9 @@
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 
 const OnboardingLayout = async ({ children, params }) => {
@@ -20,6 +21,14 @@ const OnboardingLayout = async ({ children, params }) => {
     throw new Error("Organization not found");
   }
 
+  const product = await getProductByEnvironmentId(params.environmentId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  if (Object.keys(product.config).length !== 0) {
+    return notFound();
+  }
   return <>{children}</>;
 };
 

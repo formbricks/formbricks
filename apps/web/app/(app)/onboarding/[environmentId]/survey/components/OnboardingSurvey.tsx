@@ -4,10 +4,11 @@ import OnboardingSurveyBg from "@/images/onboarding-survey-bg.jpg";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { TProductConfigChannel } from "@formbricks/types/product";
 
 interface OnboardingSurveyProps {
   environmentId: string;
-  channel: string;
+  channel: TProductConfigChannel;
 }
 
 export const OnboardingSurvey = ({ environmentId, channel }: OnboardingSurveyProps) => {

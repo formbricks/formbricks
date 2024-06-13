@@ -30,7 +30,7 @@ export const AddProductModal = ({ environmentId, open, setOpen }: AddProductModa
 
     try {
       setLoading(true);
-      const newEnv = await createProductAction(environmentId, { name: data.name });
+      const newEnv = await createProductAction(environmentId, { name: data.name, config: {} });
 
       toast.success("Product created successfully!");
       router.push(`/onboarding/${newEnv.id}/channel`);

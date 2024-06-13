@@ -8,7 +8,13 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
-import { TProduct, TProductUpdateInput, ZProductUpdateInput } from "@formbricks/types/product";
+import {
+  TProduct,
+  TProductConfigChannel,
+  TProductConfigIndustry,
+  TProductUpdateInput,
+  ZProductUpdateInput,
+} from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { FileInput } from "@formbricks/ui/FileInput";
@@ -27,8 +33,8 @@ import { SurveyInline } from "@formbricks/ui/Survey";
 
 interface ProductSettingsProps {
   environmentId: string;
-  channel: string;
-  industry: string;
+  channel: TProductConfigChannel;
+  industry: TProductConfigIndustry;
   product: TProduct;
 }
 
@@ -46,7 +52,7 @@ export const ProductSettings = ({ environmentId, channel, industry, product }: P
       if (channel !== "link") {
         router.push(`/onboarding/${environmentId}/connect?channel=${channel}&industry=${industry}`);
       } else {
-        await finishOnboardingAction();
+        await finishOnboardingAction(product.id, { channel, industry });
         router.push(`/environments/${environmentId}/surveys?channel=${channel}&industry=${industry}`);
       }
     } catch (error) {}
