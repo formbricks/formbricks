@@ -1,5 +1,6 @@
 import { CheckIcon } from "lucide-react";
 import { useState } from "react";
+import { PRODUCT_FEATURE_KEYS } from "@formbricks/lib/constants";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
@@ -38,7 +39,7 @@ export const PricingCard = ({
           <div className={`flex py-3 ${plan === "free" ? "flex-col md:flex-row" : ""}`}>
             <div className={`${plan === "free" ? "w-1/3" : "w-3/5"}`}>
               <ul className="mt-4 space-y-4">
-                {plan === "free"
+                {plan === PRODUCT_FEATURE_KEYS.FREE
                   ? paidFeatures.slice(0, Math.ceil(paidFeatures.length / 3)).map((feature, index) => (
                       <li key={index} className="flex items-center">
                         <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
@@ -102,17 +103,19 @@ export const PricingCard = ({
                 )}
               </div>
 
-              {organization.billing.plan !== plan && plan !== "enterprise" && plan !== "free" && (
-                <Button
-                  variant="darkCTA"
-                  loading={loading}
-                  onClick={() => {
-                    setUpgradeModalOpen(true);
-                  }}>
-                  Switch Plan
-                </Button>
-              )}
-              {organization.billing.plan !== plan && plan === "enterprise" && (
+              {organization.billing.plan !== plan &&
+                plan !== PRODUCT_FEATURE_KEYS.ENTERPRISE &&
+                plan !== PRODUCT_FEATURE_KEYS.FREE && (
+                  <Button
+                    variant="darkCTA"
+                    loading={loading}
+                    onClick={() => {
+                      setUpgradeModalOpen(true);
+                    }}>
+                    Switch Plan
+                  </Button>
+                )}
+              {organization.billing.plan !== plan && plan === PRODUCT_FEATURE_KEYS.ENTERPRISE && (
                 <Button variant="darkCTA" loading={loading} onClick={() => onUpgrade()}>
                   Contact Us
                 </Button>

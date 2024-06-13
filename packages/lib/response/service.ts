@@ -1,7 +1,5 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
-import { getMonthlyOrganizationResponseCount, getOrganizationByEnvironmentId } from "organization/service";
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "posthogServer";
 import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -26,7 +24,9 @@ import { cache } from "../cache";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { displayCache } from "../display/cache";
 import { deleteDisplayByResponseId, getDisplayCountBySurveyId } from "../display/service";
+import { getMonthlyOrganizationResponseCount, getOrganizationByEnvironmentId } from "../organization/service";
 import { createPerson, getPerson, getPersonByUserId } from "../person/service";
+import { sendPlanLimitsReachedEventToPosthogWeekly } from "../posthogServer";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
 import { putFile } from "../storage/service";
@@ -281,6 +281,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
             limits: {
               monthly: {
                 responses: responsesLimit,
+                miu: null,
               },
             },
           });

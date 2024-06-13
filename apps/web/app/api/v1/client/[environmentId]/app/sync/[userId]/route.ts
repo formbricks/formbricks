@@ -107,8 +107,8 @@ export const GET = async (
           plan: organization.billing.plan,
           limits: {
             monthly: {
-              miu: organization.billing.limits.monthly.miu ?? undefined,
-              responses: organization.billing.limits.monthly.responses ?? undefined,
+              miu: organization.billing.limits.monthly.miu,
+              responses: organization.billing.limits.monthly.responses,
             },
           },
         });
@@ -148,8 +148,8 @@ export const GET = async (
           plan: organization.billing.plan,
           limits: {
             monthly: {
-              miu: organization.billing.limits.monthly.miu ?? undefined,
-              responses: organization.billing.limits.monthly.responses ?? undefined,
+              miu: organization.billing.limits.monthly.miu,
+              responses: organization.billing.limits.monthly.responses,
             },
           },
         });

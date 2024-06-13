@@ -1,5 +1,5 @@
 import { PostHog } from "posthog-node";
-import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
+import { TOrganizationBillingPlan, TOrganizationBillingPlanLimits } from "@formbricks/types/organizations";
 import { cache } from "./cache";
 import { env } from "./env";
 
@@ -38,21 +38,16 @@ export const capturePosthogEnvironmentEvent = async (
 
 export const sendPlanLimitsReachedEventToPosthogWeekly = (
   environmentId: string,
-  meta: {
+  billing: {
     plan: TOrganizationBillingPlan;
-    limits?: {
-      monthly?: {
-        miu?: number;
-        responses?: number;
-      };
-    };
+    limits: TOrganizationBillingPlanLimits;
   }
 ): Promise<string> =>
   cache(
     async () => {
       try {
         await capturePosthogEnvironmentEvent(environmentId, "plan limit reached", {
-          ...meta,
+          ...billing,
         });
         return "success";
       } catch (error) {
@@ -60,7 +55,7 @@ export const sendPlanLimitsReachedEventToPosthogWeekly = (
         throw error;
       }
     },
-    [`sendPlanLimitsReachedEventToPosthogWeekly-${meta.plan}-${environmentId}`],
+    [`sendPlanLimitsReachedEventToPosthogWeekly-${billing.plan}-${environmentId}`],
     {
       revalidate: 60 * 60 * 24 * 7, // 7 days
     }

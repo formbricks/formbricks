@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/ee/billing/lib/constants";
+import { cn } from "@formbricks/lib/cn";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Badge } from "@formbricks/ui/Badge";
 import { BillingSlider } from "@formbricks/ui/BillingSlider";
@@ -117,6 +118,11 @@ export const PricingTable = ({
     "Technical Onboarding",
   ];
 
+  const responsesUnlimitedCheck =
+    organization.billing.plan === "enterprise" && organization.billing.limits.monthly.responses === null;
+  const peopleUnlimitedCheck =
+    organization.billing.plan === "enterprise" && organization.billing.limits.monthly.miu === null;
+
   return (
     <div className="relative">
       {loadingCustomerPortal && (
@@ -152,11 +158,14 @@ export const PricingTable = ({
           )}
         </div>
 
-        <div className="mt-2 rounded-lg border border-slate-300 bg-slate-100 py-4 capitalize shadow-sm dark:bg-slate-800">
-          <div className="mb-2 flex items-center gap-x-4"></div>
-          {
-            <div className="relative mx-8 mb-16 mt-4">
-              <p className="text-md font-semibold text-slate-700">Responses</p>
+        <div className="mt-2 flex flex-col rounded-lg border border-slate-300 bg-slate-100 py-4 capitalize shadow-sm dark:bg-slate-800">
+          <div
+            className={cn(
+              "relative mx-8 mb-8 flex flex-col gap-4",
+              responsesUnlimitedCheck && "mb-0 flex-row"
+            )}>
+            <p className="text-md font-semibold text-slate-700">Responses</p>
+            {organization.billing.limits.monthly.responses && (
               <BillingSlider
                 className="slider-class"
                 value={responseCount}
@@ -164,12 +173,18 @@ export const PricingTable = ({
                 freeTierLimit={organization.billing.limits.monthly.responses}
                 metric={"Responses"}
               />
-            </div>
-          }
-          <div className="mb-2 flex items-center gap-x-4"></div>
-          {
-            <div className="relative mx-8 mb-16 mt-4">
-              <p className="text-md font-semibold text-slate-700">Monthly Identified Users</p>
+            )}
+
+            {responsesUnlimitedCheck && <Badge text="Unlimited Responses" type="success" size="normal" />}
+          </div>
+
+          <div
+            className={cn(
+              "relative mx-8 flex flex-col gap-4 pb-12",
+              peopleUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
+            )}>
+            <p className="text-md font-semibold text-slate-700">Monthly Identified Users</p>
+            {organization.billing.limits.monthly.miu && (
               <BillingSlider
                 className="slider-class"
                 value={peopleCount}
@@ -177,8 +192,10 @@ export const PricingTable = ({
                 freeTierLimit={organization.billing.limits.monthly.miu}
                 metric={"MIU"}
               />
-            </div>
-          }
+            )}
+
+            {peopleUnlimitedCheck && <Badge text="Unlimited MIU" type="success" size="normal" />}
+          </div>
         </div>
         <div className="flex w-full justify-center gap-x-4">
           <PricingCard

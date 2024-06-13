@@ -458,7 +458,7 @@ model Organization {
   products    Product[]
   /// @zod.custom(imports.ZTeamBilling)
   /// [TeamBilling]
-  billing     Json         @default("{\"stripeCustomerId\": null, \"plan\": \"free\", \"limits\": {\"monthly\": {\"responses\": 500, \"miu\": 1000}}}")
+  billing     Json
   invites     Invite[]
 }
 

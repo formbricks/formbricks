@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/ee/billing/lib/constants";
 import { createCustomerPortalSession } from "@formbricks/ee/billing/lib/create-customer-portal-session";
 import { createSubscription } from "@formbricks/ee/billing/lib/create-subscription";
-import { isSubscriptionCancelled } from "@formbricks/ee/billing/lib/isSubscriptionCancelled";
+import { isSubscriptionCancelled } from "@formbricks/ee/billing/lib/is-subscription-cancelled";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";

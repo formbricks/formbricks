@@ -1,7 +1,7 @@
 import Stripe from "stripe";
+import { BILLING_LIMITS, PRODUCT_FEATURE_KEYS } from "@formbricks/lib/constants";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { LIMITS, PRODUCT_FEATURE_KEYS } from "../lib/constants";
 
 export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
@@ -20,8 +20,8 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
       plan: PRODUCT_FEATURE_KEYS.FREE,
       limits: {
         monthly: {
-          responses: LIMITS.FREE.RESPONSES,
-          miu: LIMITS.FREE.MIU,
+          responses: BILLING_LIMITS.FREE.RESPONSES,
+          miu: BILLING_LIMITS.FREE.MIU,
         },
       },
     },

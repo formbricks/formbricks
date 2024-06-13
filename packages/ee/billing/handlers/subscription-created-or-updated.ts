@@ -1,10 +1,9 @@
 import Stripe from "stripe";
-import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
+import { PRODUCT_FEATURE_KEYS, STRIPE_API_VERSION, STRIPE_PRODUCT_NAMES } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { PRODUCT_FEATURE_KEYS, STRIPE_PRODUCT_NAMES } from "../lib/constants";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration

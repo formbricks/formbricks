@@ -1,14 +1,12 @@
 import Stripe from "stripe";
 import { STRIPE_API_VERSION, WEBAPP_URL } from "@formbricks/lib/constants";
+import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getOrganization } from "@formbricks/lib/organization/service";
-import { STRIPE_PRICE_LOOKUP_KEYS } from "./constants";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   apiVersion: STRIPE_API_VERSION,
 });
-
-const baseUrl = process.env.NODE_ENV === "production" ? WEBAPP_URL : "http://localhost:3000";
 
 export const getFirstOfNextMonthTimestamp = (): number => {
   const nextMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
@@ -48,8 +46,8 @@ export const createSubscription = async (
             quantity: 1,
           },
         ],
-        success_url: `${baseUrl}/billing-confirmation?environmentId=${environmentId}`,
-        cancel_url: `${baseUrl}/environments/${environmentId}/settings/billing`,
+        success_url: `${WEBAPP_URL}/billing-confirmation?environmentId=${environmentId}`,
+        cancel_url: `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
         allow_promotion_codes: true,
         subscription_data: {
           billing_cycle_anchor: getFirstOfNextMonthTimestamp(),
@@ -94,7 +92,7 @@ export const createSubscription = async (
     return {
       status: 500,
       newPlan: true,
-      url: `${baseUrl}/environments/${environmentId}/settings/billing`,
+      url: `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
     };
   }
 };

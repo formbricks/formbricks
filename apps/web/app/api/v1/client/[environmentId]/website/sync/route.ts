@@ -58,10 +58,9 @@ export const GET = async (
       throw new Error("Environment does not exist");
     }
 
-    // check if MAU limit is reached
+    // check if response limit is reached
     let isWebsiteSurveyResponseLimitReached = false;
     if (IS_FORMBRICKS_CLOUD) {
-      // check for response limit
       const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
       const monthlyResponseLimit = organization.billing.limits.monthly.responses;
 
@@ -72,7 +71,7 @@ export const GET = async (
         try {
           await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
             plan: organization.billing.plan,
-            limits: { monthly: { responses: monthlyResponseLimit ?? undefined } },
+            limits: { monthly: { responses: monthlyResponseLimit, miu: null } },
           });
         } catch (error) {
           console.error(`Error sending plan limits reached event to Posthog: ${error}`);

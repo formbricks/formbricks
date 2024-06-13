@@ -41,8 +41,8 @@ async function main() {
         `Found ${orgsWithoutBilling.length} organizations without billing information. Moving them to free plan...`
       );
 
-      for (const organization of orgsWithoutBilling) {
-        await tx.organization.update({
+      const freePlanPromises = orgsWithoutBilling.map((organization) =>
+        tx.organization.update({
           where: {
             id: organization.id,
           },
@@ -58,9 +58,10 @@ async function main() {
               },
             },
           },
-        });
-      }
+        })
+      );
 
+      await Promise.all(freePlanPromises);
       console.log("Moved all organizations without billing to free plan");
 
       const orgsWithBilling = await tx.organization.findMany({
@@ -77,13 +78,13 @@ async function main() {
       for (const org of orgsWithBilling) {
         const billing = org.billing as TOrganizationBillingLegacy;
 
+        console.log("Current organization: ", org.id);
+
         // @ts-expect-error
         if (billing.plan && typeof billing.plan === "string") {
           // no migration needed, already following the latest schema
           continue;
         }
-
-        console.log({ billing });
 
         if (
           (billing.features.linkSurvey?.status === "active" && billing.features.linkSurvey?.unlimited) ||
@@ -111,53 +112,24 @@ async function main() {
           continue;
         }
 
-        if (billing.features.linkSurvey.status === "active") {
-          await tx.organization.update({
-            where: {
-              id: org.id,
-            },
-            data: {
-              billing: {
-                plan: "startup",
-                limits: {
-                  monthly: {
-                    responses: 2000,
-                    miu: 2500,
-                  },
+        await tx.organization.update({
+          where: {
+            id: org.id,
+          },
+          data: {
+            billing: {
+              plan: "free",
+              limits: {
+                monthly: {
+                  responses: 500,
+                  miu: 1000,
                 },
               },
             },
-          });
+          },
+        });
 
-          console.log("Updated org with an active link survey plan to the new startup plan: ", org.id);
-          continue;
-        }
-
-        if (
-          billing.features.inAppSurvey.status === "active" ||
-          billing.features.userTargeting.status === "active" ||
-          billing.features.multiLanguage.status === "active"
-        ) {
-          await tx.organization.update({
-            where: {
-              id: org.id,
-            },
-            data: {
-              billing: {
-                plan: "free",
-                limits: {
-                  monthly: {
-                    responses: 500,
-                    miu: 1000,
-                  },
-                },
-              },
-            },
-          });
-
-          console.log("Updated org to free plan: ", org.id);
-          continue;
-        }
+        console.log("Updated org to free plan: ", org.id);
       }
     },
     { timeout: 50000 }
