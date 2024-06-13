@@ -22,7 +22,7 @@ export const WidgetStatusIndicator = ({ environment, size, type }: WidgetStatusI
       icon: CheckIcon,
       title: "Receiving data 💃🕺",
       subtitle: `Your ${type} is connected with Formbricks.`,
-      shortText: `${type === "app" ? "App" : "Website"} Connected`,
+      shortText: `${type === "app" ? "App" : "Website"} connected`,
     },
   };
 

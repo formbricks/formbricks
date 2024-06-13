@@ -40,7 +40,7 @@ const Page = async ({ params }) => {
         <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/product/website-connection" />
         <SettingsCard
           title="Website Connection Status"
-          description="Check if your website is successfully connected with Formbricks.">
+          description="Check if your website is successfully connected with Formbricks. Reload page to recheck.">
           {environment && <WidgetStatusIndicator environment={environment} size="large" type="website" />}
         </SettingsCard>
         <SettingsCard

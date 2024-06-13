@@ -2514,7 +2514,7 @@ export const getExampleWebsiteSurveyTemplate = (webAppUrl: string, trigger: TAct
         html: {
           default: "You're all set up. Create your own survey for website visitors 👇",
         },
-        buttonLabel: { default: "Create survey" },
+        buttonLabel: { default: "Let's do it!" },
         buttonExternal: true,
         imageUrl: `${webAppUrl}/onboarding/website-meme.png`,
       }) as TSurveyCTAQuestion
@@ -2539,7 +2539,7 @@ export const getExampleAppSurveyTemplate = (webAppUrl: string, trigger: TActionC
         html: {
           default: "You're all set up. Create your own survey for your app users 👇",
         },
-        buttonLabel: { default: "Create survey" },
+        buttonLabel: { default: "Let's do it!" },
         buttonExternal: true,
         imageUrl: `${webAppUrl}/onboarding/app-meme.png`,
       }) as TSurveyCTAQuestion
