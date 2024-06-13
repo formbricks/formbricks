@@ -178,23 +178,23 @@ export const PricingTable = ({
       )}
       <div className="justify-between gap-4 rounded-lg">
         {organization.billing.stripeCustomerId ? (
-          <div className="flex w-full justify-end">
+          <div className="flex w-full justify-end space-x-1">
             <Button
-              variant="minimal"
+              variant="secondary"
               className="justify-center py-2 shadow-sm"
               size="sm"
               onClick={openCustomerPortal}>
-              Cancel Subscription
+              Cancel subscription
             </Button>
             <Button
               size="sm"
-              variant="secondary"
+              variant="darkCTA"
               className="justify-center py-2 shadow-sm"
               loading={loadingCustomerPortal}
               onClick={openCustomerPortal}>
               {organization.billing.features.inAppSurvey.unlimited
-                ? "Manage Subscription"
-                : "Manage Card details"}
+                ? "Manage subscription"
+                : "Manage card details"}
             </Button>
           </div>
         ) : (
