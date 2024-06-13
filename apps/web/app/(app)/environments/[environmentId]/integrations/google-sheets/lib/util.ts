@@ -14,7 +14,5 @@ export const constructGoogleSheetsUrl = (spreadsheetId: string): string => {
 };
 
 export const isValidGoogleSheetsUrl = (url: string): boolean => {
-  // Regular expression to match Google Sheets URL format
-  const googleSheetsUrlRegex = /^https:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z0-9-_]+\/?$/;
-  return googleSheetsUrlRegex.test(url);
+  return url.startsWith("https://docs.google.com/spreadsheets/d/");
 };
