@@ -10,13 +10,10 @@ import {
   mockSegmentUpdateInput,
   mockSurveyId,
 } from "./__mocks__/segment.mock";
-
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
-
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-
 import {
   cloneSegment,
   createSegment,

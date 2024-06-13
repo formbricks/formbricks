@@ -10,7 +10,6 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
@@ -18,7 +17,6 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-
 import { AddActionModal } from "./AddActionModal";
 
 interface WhenToSendCardProps {
@@ -208,24 +206,37 @@ export const WhenToSendCard = ({
                             </span>
                           )}
                           {trigger.actionClass.type === "noCode" &&
-                            trigger.actionClass.noCodeConfig?.cssSelector && (
+                            trigger.actionClass.noCodeConfig?.type === "click" &&
+                            trigger.actionClass.noCodeConfig?.elementSelector.cssSelector && (
                               <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                                CSS Selector: <b>{trigger.actionClass.noCodeConfig.cssSelector.value}</b>
+                                CSS Selector:{" "}
+                                <b>{trigger.actionClass.noCodeConfig?.elementSelector.cssSelector}</b>
                               </span>
                             )}
                           {trigger.actionClass.type === "noCode" &&
-                            trigger.actionClass.noCodeConfig?.innerHtml && (
+                            trigger.actionClass.noCodeConfig?.type === "click" &&
+                            trigger.actionClass.noCodeConfig?.elementSelector.innerHtml && (
                               <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                                Inner Text: <b>{trigger.actionClass.noCodeConfig.innerHtml.value}</b>
+                                Inner Text:{" "}
+                                <b>{trigger.actionClass.noCodeConfig?.elementSelector.innerHtml}</b>
                               </span>
                             )}
                           {trigger.actionClass.type === "noCode" &&
-                            trigger.actionClass.noCodeConfig?.pageUrl && (
-                              <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                                URL {trigger.actionClass.noCodeConfig.pageUrl.rule}:{" "}
-                                <b>{trigger.actionClass.noCodeConfig.pageUrl.value}</b>
-                              </span>
-                            )}
+                          trigger.actionClass.noCodeConfig?.urlFilters &&
+                          trigger.actionClass.noCodeConfig.urlFilters.length > 0 ? (
+                            <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
+                              URL Filters:{" "}
+                              {trigger.actionClass.noCodeConfig.urlFilters.map((urlFilter, index) => (
+                                <span key={index}>
+                                  {urlFilter.rule} <b>{urlFilter.value}</b>
+                                  {trigger.actionClass.type === "noCode" &&
+                                    index !==
+                                      (trigger.actionClass.noCodeConfig?.urlFilters?.length || 0) - 1 &&
+                                    ", "}
+                                </span>
+                              ))}
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                     </div>

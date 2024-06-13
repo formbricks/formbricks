@@ -2,7 +2,6 @@
 
 import { BoltIcon, CreditCardIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";

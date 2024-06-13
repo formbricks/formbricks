@@ -1,12 +1,9 @@
 "use server";
 
 import "server-only";
-
 import { getServerSession } from "next-auth";
-
 import { AuthenticationError } from "@formbricks/types/errors";
 import { TUser } from "@formbricks/types/user";
-
 import { authOptions } from "../../authOptions";
 import { getOrganizationByEnvironmentId } from "../../organization/service";
 import { getMembershipByUserIdOrganizationId } from "../service";

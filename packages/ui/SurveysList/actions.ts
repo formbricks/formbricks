@@ -2,7 +2,6 @@
 
 import { Prisma as prismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
-
 import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";

@@ -1,9 +1,7 @@
 import Stripe from "stripe";
-
 import { STRIPE_API_VERSION, WEBAPP_URL } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
-
 import type { StripePriceLookupKeys } from "./constants";
 import { getFirstOfNextMonthTimestamp } from "./create-subscription";
 

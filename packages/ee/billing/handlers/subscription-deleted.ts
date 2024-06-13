@@ -1,9 +1,7 @@
 import Stripe from "stripe";
-
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
-
 import { ProductFeatureKeys, StripeProductNames } from "../lib/constants";
 import { unsubscribeCoreAndAppSurveyFeatures, unsubscribeLinkSurveyProFeatures } from "../lib/downgrade-plan";
 

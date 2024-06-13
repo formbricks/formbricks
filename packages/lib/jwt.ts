@@ -1,7 +1,5 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
-
 import { prisma } from "@formbricks/database";
-
 import { env } from "./env";
 
 export const createToken = (userId: string, userEmail: string, options = {}): string => {

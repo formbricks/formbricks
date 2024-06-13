@@ -1,5 +1,4 @@
 import { GoogleSheetWrapper } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/GoogleSheetWrapper";
-
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import {
   GOOGLE_SHEETS_CLIENT_ID,

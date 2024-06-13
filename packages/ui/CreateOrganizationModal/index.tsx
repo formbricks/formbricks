@@ -3,7 +3,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-
 import { createOrganizationAction } from "../../../apps/web/app/(app)/environments/[environmentId]/actions";
 import { Button } from "../Button";
 import { Input } from "../Input";
@@ -33,7 +32,10 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
     try {
       setLoading(true);
       const newOrganization = await createOrganizationAction(data.name);
-
+      if (!newOrganization) {
+        toast.error(`Unable to create organization`);
+        return;
+      }
       toast.success("Organization created successfully!");
       router.push(`/organizations/${newOrganization.id}`);
       setOpen(false);

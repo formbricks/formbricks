@@ -3,20 +3,18 @@
 import { InfoIcon, PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-
+import { iso639Languages } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
 import { Label } from "@formbricks/ui/Label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-
 import {
   createLanguageAction,
   deleteLanguageAction,
   getSurveysUsingGivenLanguageAction,
   updateLanguageAction,
 } from "../lib/actions";
-import { iso639Languages } from "../lib/iso-languages";
 import { LanguageRow } from "./language-row";
 
 interface EditLanguageProps {

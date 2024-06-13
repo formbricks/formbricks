@@ -3,12 +3,10 @@
 import { Code2Icon, CopyIcon, MailIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
 import { AuthenticationError } from "@formbricks/types/errors";
 import { Button } from "@formbricks/ui/Button";
 import { CodeBlock } from "@formbricks/ui/CodeBlock";
 import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
-
 import { getEmailHtmlAction, sendEmbedSurveyPreviewEmailAction } from "../../actions";
 
 interface EmailTabProps {

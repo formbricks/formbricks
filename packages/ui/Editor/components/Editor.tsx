@@ -12,9 +12,7 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import type { Dispatch, SetStateAction } from "react";
-
 import { cn } from "@formbricks/lib/cn";
-
 import { PlaygroundAutoLinkPlugin as AutoLinkPlugin } from "../components/AutoLinkPlugin";
 import { ToolbarPlugin } from "../components/ToolbarPlugin";
 import { exampleTheme } from "../lib/ExampleTheme";

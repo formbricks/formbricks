@@ -1,7 +1,6 @@
 import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-
 import { getShortUrl } from "@formbricks/lib/shortUrl/service";
 import { TShortUrl, ZShortUrlId } from "@formbricks/types/shortUrl";
 

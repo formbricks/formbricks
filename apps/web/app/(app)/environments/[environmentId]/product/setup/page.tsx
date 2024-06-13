@@ -1,6 +1,5 @@
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
-
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -8,7 +7,6 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { EnvironmentNotice } from "@formbricks/ui/EnvironmentNotice";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
-
 import { SettingsCard } from "../../settings/components/SettingsCard";
 import { EnvironmentIdField } from "./components/EnvironmentIdField";
 import { SetupInstructions } from "./components/SetupInstructions";

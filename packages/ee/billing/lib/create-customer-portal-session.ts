@@ -1,5 +1,4 @@
 import Stripe from "stripe";
-
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 

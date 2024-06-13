@@ -1,6 +1,5 @@
 import { MoreVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import {
@@ -22,7 +21,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentFilter } from "./segment-filter";
 
