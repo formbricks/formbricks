@@ -49,8 +49,8 @@ const SideNavigation = ({ pathname }) => {
                 onClick={() => setSelectedId(heading.id)}
                 className={`${
                   heading.id === selectedId
-                    ? "font-semibold text-blue-800 dark:text-amber-300"
-                    : "font-normal text-slate-900 dark:text-white"
+                    ? "text-brand font-medium"
+                    : "font-normal text-slate-600 hover:text-slate-950 dark:text-white dark:hover:text-slate-50"
                 }`}>
                 {heading.text}
               </Link>
@@ -65,9 +65,9 @@ const SideNavigation = ({ pathname }) => {
 
   if (headings.length) {
     return (
-      <aside className="fixed right-0 top-0 hidden h-[calc(100%-2.5rem)] w-80 overflow-hidden overflow-y-auto pt-16 [scrollbar-width:none] lg:mt-10 lg:block">
-        <div className="border-l-2 border-gray-700">
-          <h3 className="ml-2 mt-1 uppercase">on this page</h3>
+      <aside className="fixed right-0 top-0 hidden h-[calc(100%-2.5rem)] w-80 overflow-hidden overflow-y-auto pr-8 pt-16 text-sm [scrollbar-width:none] lg:mt-10 lg:block">
+        <div className="border-l border-slate-200 dark:border-slate-700">
+          <h3 className="ml-5 mt-1 text-xs font-semibold uppercase text-slate-400">on this page</h3>
           {renderHeading(headings, 2)}
         </div>
       </aside>
