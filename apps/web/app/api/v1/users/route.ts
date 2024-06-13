@@ -103,10 +103,6 @@ export const POST = async (request: Request) => {
         await createMembership(organization.id, user.id, { role: "owner", accepted: true });
         const product = await createProduct(organization.id, {
           name: "My Product",
-          config: {
-            channel: null,
-            industry: null,
-          },
         });
 
         const updatedNotificationSettings = {
