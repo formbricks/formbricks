@@ -82,7 +82,8 @@ export const QuestionFormInput = ({
   className,
   attributeClasses,
 }: QuestionFormInputProps) => {
-  const defaultLanguageCode = localSurvey.languages.filter((lang) => lang.default)[0].language.code;
+  const defaultLanguageCode =
+    localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
   const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
 
   const question: TSurveyQuestion = localSurvey.questions[questionIdx];
