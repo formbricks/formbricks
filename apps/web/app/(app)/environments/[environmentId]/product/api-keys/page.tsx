@@ -1,6 +1,5 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { getServerSession } from "next-auth";
-
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -11,7 +10,6 @@ import { EnvironmentNotice } from "@formbricks/ui/EnvironmentNotice";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
-
 import { SettingsCard } from "../../settings/components/SettingsCard";
 import { ApiKeyList } from "./components/ApiKeyList";
 

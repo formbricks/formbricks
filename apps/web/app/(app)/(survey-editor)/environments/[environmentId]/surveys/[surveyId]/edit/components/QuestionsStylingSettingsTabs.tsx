@@ -1,6 +1,5 @@
 import { PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
 import { useMemo } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { TSurveyEditorTabs } from "@formbricks/types/surveys";
 

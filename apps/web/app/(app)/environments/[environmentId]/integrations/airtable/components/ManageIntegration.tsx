@@ -7,7 +7,6 @@ import {
 } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AddIntegrationModal";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";

@@ -2,7 +2,6 @@
 
 import React from "react";
 import { Controller, useFormContext } from "react-hook-form";
-
 import { OTPInput } from "@formbricks/ui/OTPInput";
 
 export const TwoFactor = () => {

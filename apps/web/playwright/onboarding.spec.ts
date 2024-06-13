@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-
 import { signUpAndLogin } from "./utils/helper";
 import { organizations, users } from "./utils/mock";
 

@@ -311,11 +311,12 @@ model Survey {
 
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
-  verifyEmail       Json?
-  pin               String?
-  resultShareKey    String?          @unique
-  displayPercentage Decimal?
-  languages         SurveyLanguage[]
+  verifyEmail        Json?
+  pin                String?
+  resultShareKey     String?          @unique
+  displayPercentage  Decimal?
+  languages          SurveyLanguage[]
+  showLanguageSwitch Boolean?
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])

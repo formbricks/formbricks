@@ -9,18 +9,18 @@ import { DeleteAccountModal } from "@formbricks/ui/DeleteAccountModal";
 
 interface RemovedFromOrganizationProps {
   session: Session;
-  IS_FORMBRICKS_CLOUD: boolean;
+  isFormbricksCloud: boolean;
 }
 
-export const RemovedFromOrganization = ({ session, IS_FORMBRICKS_CLOUD }: RemovedFromOrganizationProps) => {
+export const RemovedFromOrganization = ({ session, isFormbricksCloud }: RemovedFromOrganizationProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <div className="space-y-4">
       <Alert variant="warning">
         <AlertTitle>No membership found!</AlertTitle>
         <AlertDescription>
-          Unfortunately, you have been removed from the organization. If you believe this was a mistake,
-          please reach out to the organization owner.
+          You are not a member of any organization at this time. If you believe this is a mistake, please
+          reach out to the organization owner.
         </AlertDescription>
       </Alert>
       <hr className="my-4 border-slate-200" />
@@ -31,7 +31,7 @@ export const RemovedFromOrganization = ({ session, IS_FORMBRICKS_CLOUD }: Remove
         open={isModalOpen}
         setOpen={setIsModalOpen}
         session={session}
-        IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+        isFormbricksCloud={isFormbricksCloud}
         formbricksLogout={formbricksLogout}
       />
       <Button variant="darkCTA" onClick={() => setIsModalOpen(true)}>

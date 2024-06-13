@@ -1,5 +1,4 @@
 import { ArrowUpFromLineIcon } from "lucide-react";
-
 import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 

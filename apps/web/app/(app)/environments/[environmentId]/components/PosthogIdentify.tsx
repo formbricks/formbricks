@@ -3,7 +3,6 @@
 import type { Session } from "next-auth";
 import { usePostHog } from "posthog-js/react";
 import { useEffect } from "react";
-
 import { env } from "@formbricks/lib/env";
 import { TSubscriptionStatus } from "@formbricks/types/organizations";
 

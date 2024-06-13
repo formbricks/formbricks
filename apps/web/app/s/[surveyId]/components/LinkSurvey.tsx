@@ -263,7 +263,9 @@ export const LinkSurvey = ({
               ttc: responseUpdate.ttc,
               finished: responseUpdate.finished,
               language:
-                languageCode === "default" && defaultLanguageCode ? defaultLanguageCode : languageCode,
+                responseUpdate.language === "default" && defaultLanguageCode
+                  ? defaultLanguageCode
+                  : responseUpdate.language,
               meta: {
                 url: window.location.href,
                 source: sourceParam || "",
@@ -289,6 +291,7 @@ export const LinkSurvey = ({
         }}
         startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
         fullSizeCards={isEmbed ? true : false}
+        hiddenFieldsRecord={hiddenFieldsRecord}
       />
     </LinkSurveyWrapper>
   );
