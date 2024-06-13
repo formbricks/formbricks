@@ -320,7 +320,7 @@ export const Survey = ({
             cardArrangement === "simple" ? "fb-survey-shadow" : "",
             offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
-          <div className="flex justify-end pr-2 pt-2">
+          <div className="flex h-6 justify-end pr-2 pt-2">
             {getShowLanguageSwitch(offset) && (
               <LanguageSwitch
                 surveyLanguages={survey.languages}
