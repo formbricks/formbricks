@@ -63,7 +63,7 @@ export const ZProduct = z.object({
 export type TProduct = z.infer<typeof ZProduct>;
 
 export const ZProductUpdateInput = z.object({
-  name: z.string().optional(),
+  name: z.string().trim().min(1, { message: "Product name cannot be empty" }).optional(),
   organizationId: z.string().optional(),
   brandColor: ZColor.optional(),
   highlightBorderColor: ZColor.nullish(),

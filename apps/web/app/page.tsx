@@ -6,6 +6,7 @@ import { ONBOARDING_DISABLED } from "@formbricks/lib/constants";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
 import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
+import { TEnvironment } from "@formbricks/types/environment";
 import { ClientLogout } from "@formbricks/ui/ClientLogout";
 
 const Page = async () => {
@@ -24,17 +25,7 @@ const Page = async () => {
     return <ClientLogout />;
   }
 
-  const userOrganizations = await getOrganizationsByUserId(session.user.id);
-
-  if (userOrganizations.length === 0) {
-    return redirect("/setup/organization/create");
-  }
-
-  if (!ONBOARDING_DISABLED && !session.user.onboardingCompleted) {
-    return redirect(`/onboarding`);
-  }
-
-  let environment;
+  let environment: TEnvironment | null = null;
   try {
     environment = await getFirstEnvironmentByUserId(session?.user.id);
     if (!environment) {
@@ -47,6 +38,15 @@ const Page = async () => {
   if (!environment) {
     console.error("Failed to get first environment of user; signing out");
     return <ClientLogout />;
+  }
+  const userOrganizations = await getOrganizationsByUserId(session.user.id);
+
+  if (userOrganizations.length === 0) {
+    return redirect("/setup/organization/create");
+  }
+
+  if (!ONBOARDING_DISABLED && !session.user.onboardingCompleted) {
+    return redirect(`/onboarding/${environment.id}/channel`);
   }
 
   return redirect(`/environments/${environment.id}`);

@@ -17,6 +17,7 @@ import {
   OperationNotAllowedError,
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
+import { TProductUpdateInput } from "@formbricks/types/product";
 
 export const createShortUrlAction = async (url: string) => {
   const session = await getServerSession(authOptions);
@@ -72,9 +73,9 @@ export const createOrganizationAction = async (organizationName: string): Promis
   return newOrganization;
 };
 
-export const createProductAction = async (environmentId: string, productName: string) => {
+export const createProductAction = async (environmentId: string, productInput: TProductUpdateInput) => {
   const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+  if (!session) throw new AuthorizationError("Not authenticated");
 
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
@@ -82,9 +83,7 @@ export const createProductAction = async (environmentId: string, productName: st
   const organization = await getOrganizationByEnvironmentId(environmentId);
   if (!organization) throw new ResourceNotFoundError("Organization from environment", environmentId);
 
-  const product = await createProduct(organization.id, {
-    name: productName,
-  });
+  const product = await createProduct(organization.id, productInput);
   const updatedNotificationSettings = {
     ...session.user.notificationSettings,
     alert: {

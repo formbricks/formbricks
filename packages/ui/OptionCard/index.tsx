@@ -6,7 +6,7 @@ interface PathwayOptionProps {
   title: string;
   description: string;
   loading?: boolean;
-  onSelect: () => void;
+  onSelect?: () => void;
   cssId?: string;
   children?: React.ReactNode;
 }
