@@ -8,11 +8,6 @@ const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   apiVersion: STRIPE_API_VERSION,
 });
 
-export const getFirstOfNextMonthTimestamp = (): number => {
-  const nextMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
-  return Math.floor(nextMonth.getTime() / 1000);
-};
-
 export const createSubscription = async (
   organizationId: string,
   environmentId: string,

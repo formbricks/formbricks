@@ -13,7 +13,7 @@ import {
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { cache } from "../cache";
-import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "../constants";
+import { ITEMS_PER_PAGE, PRODUCT_FEATURE_KEYS } from "../constants";
 import { BILLING_LIMITS } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { getProducts } from "../product/service";
@@ -139,15 +139,12 @@ export const createOrganization = async (
 ): Promise<TOrganization> => {
   try {
     validateInputs([organizationInput, ZOrganizationCreateInput]);
-    let organizationInputWithBilling = {
-      ...organizationInput,
-    };
 
-    if (IS_FORMBRICKS_CLOUD) {
-      organizationInputWithBilling = {
+    const organization = await prisma.organization.create({
+      data: {
         ...organizationInput,
         billing: {
-          plan: "free",
+          plan: PRODUCT_FEATURE_KEYS.FREE,
           limits: {
             monthly: {
               responses: BILLING_LIMITS.FREE.RESPONSES,
@@ -155,13 +152,8 @@ export const createOrganization = async (
             },
           },
           stripeCustomerId: null,
+          periodStart: new Date(),
         },
-      };
-    }
-
-    const organization = await prisma.organization.create({
-      data: {
-        ...organizationInputWithBilling,
       },
       select,
     });

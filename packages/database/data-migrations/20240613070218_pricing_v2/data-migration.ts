@@ -59,6 +59,7 @@ async function main() {
                     miu: 1000,
                   },
                 },
+                periodStart: new Date(),
               },
             },
           })
@@ -89,32 +90,57 @@ async function main() {
           continue;
         }
 
-        // if (
-        //   (billing.features.linkSurvey?.status === "active" && billing.features.linkSurvey?.unlimited) ||
-        //   (billing.features.inAppSurvey?.status === "active" && billing.features.inAppSurvey?.unlimited) ||
-        //   (billing.features.userTargeting?.status === "active" && billing.features.userTargeting?.unlimited)
-        // ) {
-        //   await tx.organization.update({
-        //     where: {
-        //       id: org.id,
-        //     },
-        //     data: {
-        //       billing: {
-        //         plan: "enterprise",
-        //         limits: {
-        //           monthly: {
-        //             responses: null,
-        //             miu: null,
-        //           },
-        //         },
-        //         stripeCustomerId: billing.stripeCustomerId,
-        //       },
-        //     },
-        //   });
+        if (
+          (billing.features.linkSurvey?.status === "active" && billing.features.linkSurvey?.unlimited) ||
+          (billing.features.inAppSurvey?.status === "active" && billing.features.inAppSurvey?.unlimited) ||
+          (billing.features.userTargeting?.status === "active" && billing.features.userTargeting?.unlimited)
+        ) {
+          await tx.organization.update({
+            where: {
+              id: org.id,
+            },
+            data: {
+              billing: {
+                plan: "enterprise",
+                limits: {
+                  monthly: {
+                    responses: null,
+                    miu: null,
+                  },
+                },
+                stripeCustomerId: billing.stripeCustomerId,
+                periodStart: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+              },
+            },
+          });
 
-        //   console.log("Updated org with unlimited to enterprise plan: ", org.id);
-        //   continue;
-        // }
+          console.log("Updated org with unlimited to enterprise plan: ", org.id);
+          continue;
+        }
+
+        if (billing.features.linkSurvey.status === "active") {
+          await tx.organization.update({
+            where: {
+              id: org.id,
+            },
+            data: {
+              billing: {
+                plan: "startup",
+                limits: {
+                  monthly: {
+                    responses: 2000,
+                    miu: 2500,
+                  },
+                },
+                stripeCustomerId: billing.stripeCustomerId,
+                periodStart: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+              },
+            },
+          });
+
+          console.log("Updated org with linkSurvey to pro plan: ", org.id);
+          continue;
+        }
 
         await tx.organization.update({
           where: {
@@ -130,6 +156,7 @@ async function main() {
                 },
               },
               stripeCustomerId: billing.stripeCustomerId,
+              periodStart: new Date(),
             },
           },
         });

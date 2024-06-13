@@ -22,7 +22,7 @@ export const ZOrganizationBilling = z.object({
       miu: 1000,
     },
   }),
-  periodStart: z.date().optional(),
+  periodStart: z.date(),
 });
 
 export type TOrganizationBilling = z.infer<typeof ZOrganizationBilling>;
@@ -40,7 +40,6 @@ export const ZOrganization = z.object({
 export const ZOrganizationCreateInput = z.object({
   id: z.string().cuid2().optional(),
   name: z.string(),
-  billing: ZOrganizationBilling.optional(),
 });
 
 export type TOrganizationCreateInput = z.infer<typeof ZOrganizationCreateInput>;
