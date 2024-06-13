@@ -1,5 +1,5 @@
 import { CheckIcon } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
@@ -34,10 +34,59 @@ export const PricingCard = ({
   const [loading, setLoading] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
+  const CTAButton = useMemo(() => {
+    if (
+      organization.billing.plan !== plan &&
+      plan !== productFeatureKeys.ENTERPRISE &&
+      plan !== productFeatureKeys.FREE
+    ) {
+      if (organization.billing.plan === productFeatureKeys.FREE) {
+        return (
+          <Button
+            variant="darkCTA"
+            loading={loading}
+            onClick={async () => {
+              setLoading(true);
+              await onUpgrade();
+              setLoading(false);
+            }}>
+            Start Free Trial
+          </Button>
+        );
+      }
+
+      return (
+        <Button
+          variant="darkCTA"
+          loading={loading}
+          onClick={() => {
+            setUpgradeModalOpen(true);
+          }}>
+          Switch Plan
+        </Button>
+      );
+    }
+
+    return <></>;
+  }, [
+    loading,
+    onUpgrade,
+    organization.billing.plan,
+    plan,
+    productFeatureKeys.ENTERPRISE,
+    productFeatureKeys.FREE,
+  ]);
+
   return (
     <>
       <div className="mt-8 rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
         <div className="relative p-8">
+          {organization.billing.plan === productFeatureKeys.FREE &&
+            (plan === productFeatureKeys.SCALE || plan === productFeatureKeys.STARTUP) && (
+              <div>
+                <Badge text="30 Days Free Trial!" type="success" size="normal" />
+              </div>
+            )}
           <h2 className="mr-2 inline-flex text-2xl font-bold text-slate-700">{title}</h2>
           {organization.billing.plan === plan && <Badge text="Subscribed" size="normal" type="success" />}
           <p className=" mt-1 whitespace-pre-wrap text-sm text-slate-600">{subtitle}</p>
@@ -109,18 +158,8 @@ export const PricingCard = ({
                 )}
               </div>
 
-              {organization.billing.plan !== plan &&
-                plan !== productFeatureKeys.ENTERPRISE &&
-                plan !== productFeatureKeys.FREE && (
-                  <Button
-                    variant="darkCTA"
-                    loading={loading}
-                    onClick={() => {
-                      setUpgradeModalOpen(true);
-                    }}>
-                    Switch Plan
-                  </Button>
-                )}
+              {CTAButton}
+
               {organization.billing.plan !== plan && plan === productFeatureKeys.ENTERPRISE && (
                 <Button variant="darkCTA" loading={loading} onClick={() => onUpgrade()}>
                   Contact Us

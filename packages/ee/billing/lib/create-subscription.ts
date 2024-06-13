@@ -31,25 +31,29 @@ export const createSubscription = async (
     const responses = parseInt((priceObject.product as Stripe.Product).metadata.responses);
     const miu = parseInt((priceObject.product as Stripe.Product).metadata.miu);
 
+    const checkoutSessionCreateParams: Stripe.Checkout.SessionCreateParams = {
+      mode: "subscription",
+      line_items: [
+        {
+          price: priceObject.id,
+          quantity: 1,
+        },
+      ],
+      success_url: `${WEBAPP_URL}/billing-confirmation?environmentId=${environmentId}`,
+      cancel_url: `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
+      allow_promotion_codes: true,
+      subscription_data: {
+        metadata: { organizationId },
+        trial_period_days: 30,
+      },
+      metadata: { organizationId, responses, miu },
+      automatic_tax: { enabled: true },
+      payment_method_data: { allow_redisplay: "always" },
+    };
+
     // if the organization has never purchased a plan then we just create a new session and store their stripe customer id
     if (isNewOrganization) {
-      const session = await stripe.checkout.sessions.create({
-        mode: "subscription",
-        line_items: [
-          {
-            price: priceObject.id,
-            quantity: 1,
-          },
-        ],
-        success_url: `${WEBAPP_URL}/billing-confirmation?environmentId=${environmentId}`,
-        cancel_url: `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
-        allow_promotion_codes: true,
-        subscription_data: {
-          metadata: { organizationId },
-        },
-        metadata: { organizationId, responses, miu },
-        automatic_tax: { enabled: true },
-      });
+      const session = await stripe.checkout.sessions.create(checkoutSessionCreateParams);
 
       return { status: 200, data: "Your Plan has been upgraded!", newPlan: true, url: session.url };
     }
@@ -58,7 +62,7 @@ export const createSubscription = async (
       customer: organization.billing.stripeCustomerId as string,
     });
 
-    if (existingSubscription) {
+    if (existingSubscription.data?.length > 0) {
       const existingSubscriptionItem = existingSubscription.data[0].items.data[0];
 
       await stripe.subscriptions.update(existingSubscription.data[0].id, {
@@ -73,6 +77,11 @@ export const createSubscription = async (
         ],
         cancel_at_period_end: false,
       });
+    } else {
+      // Create a new checkout again if there is no active subscription
+      const session = await stripe.checkout.sessions.create(checkoutSessionCreateParams);
+
+      return { status: 200, data: "Your Plan has been upgraded!", newPlan: true, url: session.url };
     }
 
     return {
