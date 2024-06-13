@@ -25,6 +25,7 @@ const selectProduct = {
   recontactDays: true,
   linkSurveyBranding: true,
   inAppSurveyBranding: true,
+  config: true,
   placement: true,
   clickOutsideClose: true,
   darkOverlay: true,

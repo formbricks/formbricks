@@ -17,6 +17,9 @@ export async function getSpreadsheetNameByIdAction(
 
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  return await getSpreadsheetNameById(googleSheetIntegration, spreadsheetId);
+  const integrationData = structuredClone(googleSheetIntegration);
+  integrationData.config.data.forEach((data) => {
+    data.createdAt = new Date(data.createdAt);
+  });
+  return await getSpreadsheetNameById(integrationData, spreadsheetId);
 }
