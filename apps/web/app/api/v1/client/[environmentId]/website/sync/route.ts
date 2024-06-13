@@ -16,7 +16,7 @@ import {
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { createSurvey, getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
-import { getExampleSurveyTemplate } from "@formbricks/lib/templates";
+import { getExampleWebsiteSurveyTemplate } from "@formbricks/lib/templates";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TJsWebsiteLegacyStateSync, TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";
@@ -83,7 +83,7 @@ export const GET = async (
       if (!exampleTrigger) {
         throw new Error("Example trigger not found");
       }
-      const firstSurvey = getExampleSurveyTemplate(WEBAPP_URL, exampleTrigger);
+      const firstSurvey = getExampleWebsiteSurveyTemplate(WEBAPP_URL, exampleTrigger);
       await createSurvey(environmentId, firstSurvey);
       await updateEnvironment(environment.id, { websiteSetupCompleted: true });
     }

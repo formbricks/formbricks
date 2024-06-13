@@ -122,7 +122,7 @@ if (typeof window !== "undefined") {
             </p>
             <CodeBlock language="js">{`<!-- START Formbricks Surveys -->
 <script type="text/javascript">
-!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.6.5/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
+!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="${webAppUrl}/api/packages/${type}";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", ${type === "app" ? `\n    userId: "<user-id>",` : ""} apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
 </script>
 <!-- END Formbricks Surveys -->`}</CodeBlock>
             <h4>Step 2: Debug mode</h4>
@@ -141,7 +141,6 @@ if (typeof window !== "undefined") {
               Your {type} now communicates with Formbricks - sending events, and loading surveys
               automatically!
             </p>
-
             <ul className="list-disc text-sm text-slate-700">
               <li>
                 <span className="font-semibold">Does your widget work? </span>
