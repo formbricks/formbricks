@@ -45,7 +45,7 @@ const Page = async ({ params }) => {
         </SettingsCard>
         <SettingsCard
           title="Your EnvironmentId"
-          description="This Id uniquely identifies this Formbricks environment.">
+          description="This id uniquely identifies this Formbricks environment.">
           <EnvironmentIdField environmentId={params.environmentId} />
         </SettingsCard>
         <SettingsCard
