@@ -121,11 +121,19 @@ export const AddIntegrationModal = ({
     const hiddenFields = selectedSurvey?.hiddenFields.enabled
       ? selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
           id: fId,
-          name: fId,
+          name: `Hidden field : ${fId}`,
           type: TSurveyQuestionTypeEnum.OpenText,
         })) || []
       : [];
-    return [...questions, ...hiddenFields];
+    const Metadata = [
+      {
+        id: "metadata",
+        name: `Metadata`,
+        type: TSurveyQuestionTypeEnum.OpenText,
+      },
+    ];
+
+    return [...questions, ...hiddenFields, ...Metadata];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSurvey?.id]);
 

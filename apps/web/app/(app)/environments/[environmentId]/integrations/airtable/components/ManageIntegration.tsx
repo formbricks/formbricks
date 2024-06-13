@@ -112,6 +112,8 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
                   questions: data.questionIds,
                   survey: data.surveyId,
                   table: data.tableId,
+                  includeHiddenFields: !!data.includeHiddenFields,
+                  includeMetadata: !!data.includeMetadata,
                   index,
                 });
                 setIsModalOpen(true);
