@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { TOrganization } from "@formbricks/types/organizations";
 
 interface LimitsReachedBannerProps {
@@ -21,8 +22,8 @@ export const LimitsReachedBanner = ({
     return (
       <>
         <div className="z-40 flex h-5 items-center justify-center bg-orange-800 text-center text-xs text-white">
-          You have reached your monthly active people limit of {orgBillingPeopleLimit} and response limit of{" "}
-          {orgBillingResponseLimit}. Please upgrade your plan to continue.
+          You have reached your monthly MIU limit of {orgBillingPeopleLimit} and response limit of{" "}
+          {orgBillingResponseLimit}. <Link href="https://formbricks.com/pricing#faq">Learn more</Link>
         </div>
       </>
     );
@@ -33,14 +34,14 @@ export const LimitsReachedBanner = ({
       <div className="z-40 flex h-5 items-center justify-center bg-orange-800 text-center text-xs text-white">
         {isPeopleLimitReached && (
           <div>
-            You have reached your monthly active people limit of {orgBillingPeopleLimit}. Please upgrade your
-            plan to continue.
+            You have reached your monthly MIU limit of {orgBillingPeopleLimit}.{" "}
+            <Link href="https://formbricks.com/pricing#faq">Learn more</Link>
           </div>
         )}
         {isResponseLimitReached && (
           <div>
-            You have reached your monthly response limit of {orgBillingResponseLimit}. Please upgrade your
-            plan to continue.
+            You have reached your monthly response limit of {orgBillingResponseLimit}.{" "}
+            <Link href="https://formbricks.com/pricing#faq">Learn more</Link>
           </div>
         )}
       </div>
