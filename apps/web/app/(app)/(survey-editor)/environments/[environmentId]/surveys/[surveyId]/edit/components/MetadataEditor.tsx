@@ -142,22 +142,29 @@ export const MetadataField: React.FunctionComponent<MetadataFieldProps> = (props
   const { value = {}, onChange, label } = props;
 
   const [showEmptyItem, setShowEmptyItem] = React.useState(false);
+  const [sortingKeys, setSortingKeys] = React.useState<string[]>(Object.keys(value));
 
   const addNewMetadata = React.useCallback(() => {
     setShowEmptyItem(true);
-    // onChange && onChange({ ...value, [NEW_META_KEY]: "" });
+    setSortingKeys((prev) => [...prev, NEW_META_KEY]);
   }, []);
 
   const handleItemChange = React.useCallback(
     (prevValue: MetaItem, newValue: MetaItem) => {
-      // console.log("handleItemChange", prevValue, newValue);
       if (newValue.key === NEW_META_KEY || newValue.key === "") {
-        // console.log("SKip change");
         return;
       }
 
       if (prevValue.key === NEW_META_KEY) {
         setShowEmptyItem(false);
+        setSortingKeys((prev) => {
+          const newSortedKeys = [...prev];
+          const idx = newSortedKeys.findIndex((k) => k === NEW_META_KEY);
+          if (idx !== -1) {
+            newSortedKeys[idx] = newValue.key;
+          }
+          return newSortedKeys;
+        });
       }
       onChange && onChange({ ...omit(value, prevValue.key), [newValue.key]: newValue.value });
     },
@@ -166,7 +173,7 @@ export const MetadataField: React.FunctionComponent<MetadataFieldProps> = (props
 
   const handleDelete = React.useCallback(
     (key: string) => {
-      // console.log("handleDelete", key);
+      setSortingKeys((prev) => prev.filter((k) => k !== key));
       if (key === NEW_META_KEY) {
         setShowEmptyItem(false);
       } else {
@@ -184,12 +191,18 @@ export const MetadataField: React.FunctionComponent<MetadataFieldProps> = (props
     return entries;
   }, [showEmptyItem, value]);
 
+  const sortedEntries = React.useMemo(() => {
+    return entries.sort(([keyA], [keyB]) => {
+      return sortingKeys.indexOf(keyA) - sortingKeys.indexOf(keyB);
+    });
+  }, [entries, sortingKeys]);
+
   return (
     <>
       {label && <Label>{label}</Label>}
 
-      {entries.length > 0 ? (
-        entries.map(([key, value]) => {
+      {sortedEntries.length > 0 ? (
+        sortedEntries.map(([key, value]) => {
           return (
             <MetadataFieldItem
               key={key}
