@@ -23,12 +23,15 @@ export const handleInvoiceFinalized = async (event: Stripe.Event) => {
     throw new Error("Organization not found");
   }
 
+  const periodStartTimestamp = invoice.lines.data[0].period.start;
+  const periodStart = periodStartTimestamp ? new Date(periodStartTimestamp * 1000) : new Date();
+
   await updateOrganization(organizationId, {
     ...organization,
     billing: {
       ...organization.billing,
       stripeCustomerId: invoice.customer as string,
-      periodStart: new Date(invoice.period_start * 1000),
+      periodStart,
     },
   });
 
