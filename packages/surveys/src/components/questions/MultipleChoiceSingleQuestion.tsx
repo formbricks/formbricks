@@ -163,7 +163,7 @@ export const MultipleChoiceSingleQuestion = ({
                           checked={value === getLocalizedValue(choice.label, languageCode)}
                           required={question.required && idx === 0}
                         />
-                        <span id={`${choice.id}-label`} className="ml-3 mr-3 font-medium" dir="auto">
+                        <span id={`${choice.id}-label`} className="ml-3 mr-3 grow font-medium">
                           {getLocalizedValue(choice.label, languageCode)}
                         </span>
                       </span>

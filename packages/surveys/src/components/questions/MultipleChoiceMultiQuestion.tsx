@@ -164,7 +164,6 @@ export const MultipleChoiceMultiQuestion = ({
                   if (!choice || choice.id === "other") return;
                   return (
                     <label
-                      dir="auto"
                       key={choice.id}
                       tabIndex={idx + 1}
                       className={cn(
@@ -182,10 +181,9 @@ export const MultipleChoiceMultiQuestion = ({
                         }
                       }}
                       autoFocus={idx === 0 && !isInIframe}>
-                      <span className="flex items-center text-sm">
+                      <span className="flex items-center text-sm" dir="auto">
                         <input
                           type="checkbox"
-                          dir="auto"
                           id={choice.id}
                           name={question.id}
                           tabIndex={-1}
@@ -209,7 +207,7 @@ export const MultipleChoiceMultiQuestion = ({
                               : question.required
                           }
                         />
-                        <span id={`${choice.id}-label`} className="ml-3 mr-3 grow font-medium" dir="auto">
+                        <span id={`${choice.id}-label`} className="ml-3 mr-3 grow font-medium">
                           {getLocalizedValue(choice.label, languageCode)}
                         </span>
                       </span>
@@ -219,7 +217,6 @@ export const MultipleChoiceMultiQuestion = ({
                 {otherOption && (
                   <label
                     tabIndex={questionChoices.length + 1}
-                    dir="auto"
                     className={cn(
                       value.includes(getLocalizedValue(otherOption.label, languageCode))
                         ? "border-border bg-input-selected-bg z-10"
@@ -234,10 +231,9 @@ export const MultipleChoiceMultiQuestion = ({
                         document.getElementById(otherOption.id)?.focus();
                       }
                     }}>
-                    <span className="flex items-center text-sm">
+                    <span className="flex items-center text-sm" dir="auto">
                       <input
                         type="checkbox"
-                        dir="auto"
                         tabIndex={-1}
                         id={otherOption.id}
                         name={question.id}
@@ -254,7 +250,7 @@ export const MultipleChoiceMultiQuestion = ({
                         }}
                         checked={otherSelected}
                       />
-                      <span id={`${otherOption.id}-label`} className="ml-3 mr-3 grow font-medium" dir="auto">
+                      <span id={`${otherOption.id}-label`} className="ml-3 mr-3 grow font-medium">
                         {getLocalizedValue(otherOption.label, languageCode)}
                       </span>
                     </span>
