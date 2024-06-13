@@ -8,7 +8,6 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/ee/billing/lib/constants";
 import { cn } from "@formbricks/lib/cn";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Badge } from "@formbricks/ui/Badge";
@@ -22,6 +21,18 @@ interface PricingTableProps {
   environmentId: string;
   peopleCount: number;
   responseCount: number;
+  stripePriceLookupKeys: {
+    STARTUP_MONTHLY: string;
+    STARTUP_YEARLY: string;
+    SCALE_MONTHLY: string;
+    SCALE_YEARLY: string;
+  };
+  productFeatureKeys: {
+    FREE: string;
+    STARTUP: string;
+    SCALE: string;
+    ENTERPRISE: string;
+  };
 }
 
 export const PricingTable = ({
@@ -29,6 +40,8 @@ export const PricingTable = ({
   environmentId,
   peopleCount,
   responseCount,
+  stripePriceLookupKeys,
+  productFeatureKeys,
 }: PricingTableProps) => {
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
@@ -51,7 +64,7 @@ export const PricingTable = ({
     setLoadingCustomerPortal(false);
   };
 
-  const upgradePlan = async (priceLookupKey: STRIPE_PRICE_LOOKUP_KEYS) => {
+  const upgradePlan = async (priceLookupKey) => {
     try {
       const { status, newPlan, url } = await upgradePlanAction(
         organization.id,
@@ -206,7 +219,8 @@ export const PricingTable = ({
             actionText={"Starting at"}
             organization={organization}
             paidFeatures={startupFeatures}
-            onUpgrade={() => upgradePlan(STRIPE_PRICE_LOOKUP_KEYS.STARTUP_MONTHLY)}
+            onUpgrade={() => upgradePlan(stripePriceLookupKeys.STARTUP_MONTHLY)}
+            productFeatureKeys={productFeatureKeys}
           />
           <PricingCard
             title={"Formbricks Scale"}
@@ -217,8 +231,9 @@ export const PricingTable = ({
             organization={organization}
             paidFeatures={scaleFeatures}
             onUpgrade={async () => {
-              await upgradePlan(STRIPE_PRICE_LOOKUP_KEYS.SCALE_MONTHLY);
+              await upgradePlan(stripePriceLookupKeys.SCALE_MONTHLY);
             }}
+            productFeatureKeys={productFeatureKeys}
           />
           <PricingCard
             title={"Formbricks Enterprise"}
@@ -227,6 +242,7 @@ export const PricingTable = ({
             organization={organization}
             paidFeatures={enterpriseFeatures}
             onUpgrade={() => (window.location.href = "mailto:hola@formbricks.com")}
+            productFeatureKeys={productFeatureKeys}
           />
         </div>
         <PricingCard
@@ -236,6 +252,7 @@ export const PricingTable = ({
           organization={organization}
           paidFeatures={freeFeatures}
           onUpgrade={() => toast.error("Everybody has the free plan by default!")}
+          productFeatureKeys={productFeatureKeys}
         />
       </div>
     </div>

@@ -2,7 +2,6 @@ import "server-only";
 import { env } from "./env";
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
-export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 9000 : 1000000;
 
 // URLs
 export const WEBAPP_URL =
@@ -105,10 +104,6 @@ export const isS3Configured = () => {
   return !!S3_BUCKET_NAME;
 };
 
-// Pricing
-export const PRICING_USERTARGETING_FREE_MTU = 2500;
-export const PRICING_APPSURVEYS_FREE_RESPONSES = 250;
-
 // Colors for Survey Bg
 export const SURVEY_BG_COLORS = [
   "#FFF2D8",
@@ -193,6 +188,7 @@ export enum STRIPE_PRODUCT_NAMES {
   SCALE = "Formbricks Scale",
   ENTERPRISE = "Formbricks Enterprise",
 }
+
 export enum STRIPE_PRICE_LOOKUP_KEYS {
   STARTUP_MONTHLY = "formbricks_startup_monthly",
   STARTUP_YEARLY = "formbricks_startup_yearly",

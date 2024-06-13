@@ -2,6 +2,7 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { PRODUCT_FEATURE_KEYS, STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import {
   getMonthlyActiveOrganizationPeopleCount,
@@ -45,6 +46,8 @@ const Page = async ({ params }) => {
         environmentId={params.environmentId}
         peopleCount={peopleCount}
         responseCount={responseCount}
+        stripePriceLookupKeys={STRIPE_PRICE_LOOKUP_KEYS}
+        productFeatureKeys={PRODUCT_FEATURE_KEYS}
       />
     </PageContentWrapper>
   );

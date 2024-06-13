@@ -104,6 +104,7 @@ async function main() {
                     miu: null,
                   },
                 },
+                stripeCustomerId: billing.stripeCustomerId,
               },
             },
           });
@@ -125,6 +126,7 @@ async function main() {
                   miu: 1000,
                 },
               },
+              stripeCustomerId: billing.stripeCustomerId,
             },
           },
         });
