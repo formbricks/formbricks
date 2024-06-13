@@ -1,7 +1,7 @@
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
-
 import { LogicEditor } from "./LogicEditor";
+import { MetadataEditor } from "./MetadataEditor";
 import { RequirementsLogicEditor } from "./RequirementsLogicEditor";
 import { UpdateQuestionId } from "./UpdateQuestionId";
 
@@ -34,6 +34,16 @@ export const AdvancedSettings = ({
 
       <div className="mb-4">
         <RequirementsLogicEditor
+          question={question}
+          updateQuestion={updateQuestion}
+          localSurvey={localSurvey}
+          questionIdx={questionIdx}
+          attributeClasses={attributeClasses}
+        />
+      </div>
+
+      <div className="mb-4">
+        <MetadataEditor
           question={question}
           updateQuestion={updateQuestion}
           localSurvey={localSurvey}
