@@ -50,7 +50,6 @@ export const createSubscription = async (
         cancel_url: `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
         allow_promotion_codes: true,
         subscription_data: {
-          billing_cycle_anchor: getFirstOfNextMonthTimestamp(),
           metadata: { organizationId },
         },
         metadata: { organizationId, responses, miu },

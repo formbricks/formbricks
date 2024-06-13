@@ -180,7 +180,7 @@ export const PricingTable = ({
             <p className="text-md font-semibold text-slate-700">Responses</p>
             {organization.billing.limits.monthly.responses && (
               <BillingSlider
-                className="slider-class"
+                className="slider-class mb-8"
                 value={responseCount}
                 max={organization.billing.limits.monthly.responses * 1.5}
                 freeTierLimit={organization.billing.limits.monthly.responses}

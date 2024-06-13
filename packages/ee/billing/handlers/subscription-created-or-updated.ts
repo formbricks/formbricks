@@ -3,7 +3,7 @@ import { PRODUCT_FEATURE_KEYS, STRIPE_API_VERSION, STRIPE_PRODUCT_NAMES } from "
 import { env } from "@formbricks/lib/env";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
+import { TOrganizationBillingPlan, ZOrganizationBillingPlan } from "@formbricks/types/organizations";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
@@ -39,31 +39,51 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
     );
 
   let updatedBillingPlan: TOrganizationBillingPlan = organization.billing.plan;
-  let responses = parseInt(product.metadata.responses);
-  let miu = parseInt(product.metadata.miu);
 
-  if (!responses || !miu) {
-    // Enteprise Plan Payment via Payment Link
-    responses = parseInt(stripeSubscriptionObject.metadata.responses);
-    miu = parseInt(stripeSubscriptionObject.metadata.miu);
+  let responses: number | null = null;
+  let miu: number | null = null;
+
+  if (product.metadata.responses === "unlimited") {
+    responses = null;
+  } else if (parseInt(product.metadata.responses) > 0) {
+    responses = parseInt(product.metadata.responses);
+  } else {
+    console.error("Invalid responses metadata in product: ", product.metadata.responses);
+    throw new Error("Invalid responses metadata in product");
   }
 
-  switch (product.name) {
-    case STRIPE_PRODUCT_NAMES.STARTUP:
+  if (product.metadata.miu === "unlimited") {
+    miu = null;
+  } else if (parseInt(product.metadata.miu) > 0) {
+    miu = parseInt(product.metadata.miu);
+  } else {
+    console.error("Invalid miu metadata in product: ", product.metadata.miu);
+    throw new Error("Invalid miu metadata in product");
+  }
+
+  const plan = ZOrganizationBillingPlan.parse(product.metadata.plan);
+
+  switch (plan) {
+    case PRODUCT_FEATURE_KEYS.FREE:
       updatedBillingPlan = PRODUCT_FEATURE_KEYS.STARTUP;
       break;
 
-    case STRIPE_PRODUCT_NAMES.SCALE:
+    case PRODUCT_FEATURE_KEYS.STARTUP:
+      updatedBillingPlan = PRODUCT_FEATURE_KEYS.STARTUP;
+      break;
+
+    case PRODUCT_FEATURE_KEYS.SCALE:
       updatedBillingPlan = PRODUCT_FEATURE_KEYS.SCALE;
       break;
 
-    case STRIPE_PRODUCT_NAMES.ENTERPRISE:
+    case PRODUCT_FEATURE_KEYS.ENTERPRISE:
       updatedBillingPlan = PRODUCT_FEATURE_KEYS.ENTERPRISE;
       break;
   }
 
   await updateOrganization(organizationId, {
     billing: {
+      ...organization.billing,
       stripeCustomerId: stripeSubscriptionObject.customer as string,
       plan: updatedBillingPlan,
       limits: {

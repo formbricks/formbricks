@@ -22,6 +22,7 @@ export const ZOrganizationBilling = z.object({
       miu: 1000,
     },
   }),
+  periodStart: z.date().optional(),
 });
 
 export type TOrganizationBilling = z.infer<typeof ZOrganizationBilling>;

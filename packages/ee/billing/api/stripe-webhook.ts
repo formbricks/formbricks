@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { handleCheckoutSessionCompleted } from "../handlers/checkout-session-completed";
+import { handleInvoiceFinalized } from "../handlers/invoice-finalized";
 import { handleSubscriptionCreatedOrUpdated } from "../handlers/subscription-created-or-updated";
 import { handleSubscriptionDeleted } from "../handlers/subscription-deleted";
 
@@ -24,6 +25,8 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
 
   if (event.type === "checkout.session.completed") {
     await handleCheckoutSessionCompleted(event);
+  } else if (event.type === "invoice.finalized") {
+    await handleInvoiceFinalized(event);
   } else if (
     event.type === "customer.subscription.created" ||
     event.type === "customer.subscription.updated"

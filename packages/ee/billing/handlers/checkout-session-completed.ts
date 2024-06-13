@@ -33,16 +33,9 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
     },
   });
 
-  await updateOrganization(organization.id, {
-    billing: {
-      ...organization.billing,
-      stripeCustomerId: stripeCustomer.id,
-    },
-  });
-
   await stripe.customers.update(stripeCustomer.id, {
     name: organization.name,
-    metadata: { organization: organization.id },
+    metadata: { organizationId: organization.id },
     invoice_settings: {
       default_payment_method: stripeSubscriptionObject.default_payment_method as string,
     },

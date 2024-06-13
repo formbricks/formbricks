@@ -325,8 +325,13 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
 
       try {
         // Define the start of the month
-        const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        // const now = new Date();
+        // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const organization = await getOrganization(organizationId);
+        if (!organization) {
+          throw new ResourceNotFoundError("Organization", organizationId);
+        }
 
         // Get all environment IDs for the organization
         const products = await getProducts(organizationId);
@@ -345,14 +350,14 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
                   {
                     actions: {
                       some: {
-                        createdAt: { gte: firstDayOfMonth },
+                        createdAt: { gte: organization.billing.periodStart },
                       },
                     },
                   },
                   {
                     responses: {
                       some: {
-                        createdAt: { gte: firstDayOfMonth },
+                        createdAt: { gte: organization.billing.periodStart },
                       },
                     },
                   },
@@ -384,8 +389,13 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
 
       try {
         // Define the start of the month
-        const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        // const now = new Date();
+        // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const organization = await getOrganization(organizationId);
+        if (!organization) {
+          throw new ResourceNotFoundError("Organization", organizationId);
+        }
 
         // Get all environment IDs for the organization
         const products = await getProducts(organizationId);
@@ -399,7 +409,7 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
           where: {
             AND: [
               { survey: { environmentId: { in: environmentIds } } },
-              { createdAt: { gte: firstDayOfMonth } },
+              { createdAt: { gte: organization.billing.periodStart } },
             ],
           },
         });

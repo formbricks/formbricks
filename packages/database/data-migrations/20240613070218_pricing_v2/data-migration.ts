@@ -41,25 +41,28 @@ async function main() {
         `Found ${orgsWithoutBilling.length} organizations without billing information. Moving them to free plan...`
       );
 
-      const freePlanPromises = orgsWithoutBilling.map((organization) =>
-        tx.organization.update({
-          where: {
-            id: organization.id,
-          },
-          data: {
-            billing: {
-              stripeCustomerId: null,
-              plan: "free",
-              limits: {
-                monthly: {
-                  responses: 500,
-                  miu: 1000,
+      const freePlanPromises = orgsWithoutBilling
+        // if the organization has a plan, it means it's already migrated
+        .filter((org) => !(org.billing.plan && typeof org.billing.plan === "string"))
+        .map((organization) =>
+          tx.organization.update({
+            where: {
+              id: organization.id,
+            },
+            data: {
+              billing: {
+                stripeCustomerId: null,
+                plan: "free",
+                limits: {
+                  monthly: {
+                    responses: 500,
+                    miu: 1000,
+                  },
                 },
               },
             },
-          },
-        })
-      );
+          })
+        );
 
       await Promise.all(freePlanPromises);
       console.log("Moved all organizations without billing to free plan");
@@ -86,32 +89,32 @@ async function main() {
           continue;
         }
 
-        if (
-          (billing.features.linkSurvey?.status === "active" && billing.features.linkSurvey?.unlimited) ||
-          (billing.features.inAppSurvey?.status === "active" && billing.features.inAppSurvey?.unlimited) ||
-          (billing.features.userTargeting?.status === "active" && billing.features.userTargeting?.unlimited)
-        ) {
-          await tx.organization.update({
-            where: {
-              id: org.id,
-            },
-            data: {
-              billing: {
-                plan: "enterprise",
-                limits: {
-                  monthly: {
-                    responses: null,
-                    miu: null,
-                  },
-                },
-                stripeCustomerId: billing.stripeCustomerId,
-              },
-            },
-          });
+        // if (
+        //   (billing.features.linkSurvey?.status === "active" && billing.features.linkSurvey?.unlimited) ||
+        //   (billing.features.inAppSurvey?.status === "active" && billing.features.inAppSurvey?.unlimited) ||
+        //   (billing.features.userTargeting?.status === "active" && billing.features.userTargeting?.unlimited)
+        // ) {
+        //   await tx.organization.update({
+        //     where: {
+        //       id: org.id,
+        //     },
+        //     data: {
+        //       billing: {
+        //         plan: "enterprise",
+        //         limits: {
+        //           monthly: {
+        //             responses: null,
+        //             miu: null,
+        //           },
+        //         },
+        //         stripeCustomerId: billing.stripeCustomerId,
+        //       },
+        //     },
+        //   });
 
-          console.log("Updated org with unlimited to enterprise plan: ", org.id);
-          continue;
-        }
+        //   console.log("Updated org with unlimited to enterprise plan: ", org.id);
+        //   continue;
+        // }
 
         await tx.organization.update({
           where: {
