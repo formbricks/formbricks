@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
-import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
+import { getOrganization } from "@formbricks/lib/organization/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {

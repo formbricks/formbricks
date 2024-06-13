@@ -49,6 +49,9 @@ export const createSubscription = async (
       metadata: { organizationId, responses, miu },
       automatic_tax: { enabled: true },
       payment_method_data: { allow_redisplay: "always" },
+      ...(!isNewOrganization && {
+        customer: organization.billing.stripeCustomerId,
+      }),
     };
 
     // if the organization has never purchased a plan then we just create a new session and store their stripe customer id
