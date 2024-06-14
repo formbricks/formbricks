@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { PRODUCT_FEATURE_KEYS, STRIPE_API_VERSION, STRIPE_PRODUCT_NAMES } from "@formbricks/lib/constants";
+import { PRODUCT_FEATURE_KEYS, STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";

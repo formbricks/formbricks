@@ -50,7 +50,7 @@ export const createSubscription = async (
       automatic_tax: { enabled: true },
       payment_method_data: { allow_redisplay: "always" },
       ...(!isNewOrganization && {
-        customer: organization.billing.stripeCustomerId,
+        customer: organization.billing.stripeCustomerId ?? undefined,
       }),
     };
 

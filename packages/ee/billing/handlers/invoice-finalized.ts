@@ -5,7 +5,7 @@ export const handleInvoiceFinalized = async (event: Stripe.Event) => {
   const invoice = event.data.object as Stripe.Invoice;
 
   const stripeSubscriptionDetails = invoice.subscription_details;
-  const organizationId = stripeSubscriptionDetails.metadata.organizationId;
+  const organizationId = stripeSubscriptionDetails?.metadata?.organizationId;
 
   if (!organizationId) {
     throw new Error("No organizationId found in subscription");
