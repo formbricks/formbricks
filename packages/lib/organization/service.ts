@@ -276,17 +276,19 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
     async () => {
       validateInputs([organizationId, ZId]);
 
-      // temporary workaround due to database performance issues
-      return 0;
-
-      /* try {
+      try {
         // Define the start of the month
         // const now = new Date();
         // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
         const organization = await getOrganization(organizationId);
+
         if (!organization) {
           throw new ResourceNotFoundError("Organization", organizationId);
+        }
+
+        if (!organization.billing.periodStart) {
+          throw new Error("Organization billing period start is not set");
         }
 
         // Get all environment IDs for the organization
@@ -299,7 +301,7 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
             id: true,
           },
           where: {
-            AND: [
+            OR: [
               { environmentId: { in: environmentIds } },
               {
                 actions: {
@@ -308,15 +310,13 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
                   },
                 },
               },
-
-              // TODO: @pandeymangg - figure out how to count people based on responses effectively
-              // {
-              //   responses: {
-              //     some: {
-              //       createdAt: { gte: organization.billing.periodStart },
-              //     },
-              //   },
-              // },
+              {
+                responses: {
+                  some: {
+                    createdAt: { gte: organization.billing.periodStart },
+                  },
+                },
+              },
             ],
           },
         });
@@ -328,7 +328,7 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
         }
 
         throw error;
-      } */
+      }
     },
     [`getMonthlyActiveOrganizationPeopleCount-${organizationId}`],
     {
