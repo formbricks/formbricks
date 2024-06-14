@@ -5,6 +5,7 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { ToasterClient } from "@formbricks/ui/ToasterClient";
 
 const OnboardingLayout = async ({ children, params }) => {
   const session = await getServerSession(authOptions);
@@ -26,10 +27,15 @@ const OnboardingLayout = async ({ children, params }) => {
     throw new Error("Product not found");
   }
 
-  if (Object.keys(product.config).length !== 0) {
+  if (product.config.channel !== null || product.config.industry !== null) {
     return notFound();
   }
-  return <>{children}</>;
+  return (
+    <div className="flex-1 bg-slate-50">
+      <ToasterClient />
+      {children}
+    </div>
+  );
 };
 
 export default OnboardingLayout;

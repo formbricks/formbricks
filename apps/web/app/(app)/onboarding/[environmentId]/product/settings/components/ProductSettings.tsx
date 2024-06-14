@@ -1,6 +1,6 @@
 "use client";
 
-import { finishOnboardingAction, updateProductAction } from "@/app/(app)/onboarding/actions";
+import { finishProductOnboardingAction, updateProductAction } from "@/app/(app)/onboarding/actions";
 import { getCustomHeadline } from "@/app/(app)/onboarding/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
@@ -52,7 +52,7 @@ export const ProductSettings = ({ environmentId, channel, industry, product }: P
       if (channel !== "link") {
         router.push(`/onboarding/${environmentId}/connect?channel=${channel}&industry=${industry}`);
       } else {
-        await finishOnboardingAction(product.id, { channel, industry });
+        await finishProductOnboardingAction(product.id, { channel, industry });
         router.push(`/environments/${environmentId}/surveys?channel=${channel}&industry=${industry}`);
       }
     } catch (error) {}
@@ -188,6 +188,7 @@ export const ProductSettings = ({ environmentId, channel, industry, product }: P
             isBrandingEnabled={false}
             languageCode="default"
             onFileUpload={async (file) => file.name}
+            autoFocus={false}
           />
         </div>
       </div>

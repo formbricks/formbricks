@@ -1,27 +1,28 @@
 "use client";
 
-import { finishOnboardingAction } from "@/app/(app)/onboarding/actions";
+import { finishProductOnboardingAction } from "@/app/(app)/onboarding/actions";
 import Dance from "@/images/onboarding-dance.gif";
 import Lost from "@/images/onboarding-lost.gif";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { cn } from "@formbricks/lib/cn";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { OnboardingSetupInstructions } from "./OnboardingSetupInstructions";
 
 interface ConnectWithFormbricksProps {
-  environmentId: string;
+  environment: TEnvironment;
   webAppUrl: string;
-  jsPackageVersion: string;
   widgetSetupCompleted: boolean;
-  channel: string;
-  industry: string;
+  channel: TProductConfigChannel;
+  industry: TProductConfigIndustry;
 }
 
 export const ConnectWithFormbricks = ({
-  environmentId,
+  environment,
   webAppUrl,
-  jsPackageVersion,
   widgetSetupCompleted,
   channel,
   industry,
@@ -30,14 +31,13 @@ export const ConnectWithFormbricks = ({
   const [isLoading, setIsLoading] = useState(false);
   const handleFinishOnboarding = async () => {
     if (!widgetSetupCompleted) {
-      router.push(`/onboarding/${environmentId}/connect/invite?channel=${channel}&industry=${industry}`);
+      router.push(`/onboarding/${environment.id}/connect/invite?channel=${channel}&industry=${industry}`);
       return;
     }
-
     try {
       setIsLoading(true);
-      await finishOnboardingAction();
-      router.push(`/environments/${environmentId}/surveys?channel=${channel}&industry=${industry}`);
+      await finishProductOnboardingAction(environment.productId, { channel, industry });
+      router.push(`/environments/${environment.id}/surveys?channel=${channel}&industry=${industry}`);
     } catch (error) {
       setIsLoading(false);
     }
@@ -47,12 +47,16 @@ export const ConnectWithFormbricks = ({
       <div className="flex w-full space-x-10">
         <div className="flex w-1/2 flex-col space-y-4">
           <OnboardingSetupInstructions
-            environmentId={environmentId}
+            environmentId={environment.id}
             webAppUrl={webAppUrl}
-            jsPackageVersion={jsPackageVersion}
+            channel={channel}
           />
         </div>
-        <div className="flex h-[30rem] w-1/2 flex-col items-center justify-center rounded-lg border bg-slate-200 text-center shadow">
+        <div
+          className={cn(
+            "flex h-[30rem] w-1/2 flex-col items-center justify-center rounded-lg border bg-slate-200 text-center shadow",
+            widgetSetupCompleted ? "border-green-500 bg-green-100" : ""
+          )}>
           {widgetSetupCompleted ? (
             <div>
               <Image src={Dance} alt="lost" height={250} />

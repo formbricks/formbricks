@@ -39,10 +39,6 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
           subtitle="Get 2x more responses matching surveys with your brand and UI"
         />
       )}
-      <div className="space-y-4 text-center">
-        <p className="text-4xl font-medium text-slate-800"></p>
-        <p className="text-sm text-slate-500">:</p>
-      </div>
       <ProductSettings
         environmentId={params.environmentId}
         channel={channel}

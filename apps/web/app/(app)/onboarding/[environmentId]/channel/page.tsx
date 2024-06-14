@@ -1,6 +1,9 @@
+import { CancelProductCreation } from "@/app/(app)/onboarding/[environmentId]/channel/components/CancelProductCreation";
 import { OnboardingOptionsContainer } from "@/app/(app)/onboarding/components/OnboardingOptionsContainer";
 import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTitle";
 import { CircleUserRoundIcon, EarthIcon, SendHorizonalIcon } from "lucide-react";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { getProductByEnvironmentId, getProducts } from "@formbricks/lib/product/service";
 
 interface ChannelPageProps {
   params: {
@@ -34,6 +37,18 @@ const Page = async ({ params }: ChannelPageProps) => {
     },
   ];
 
+  const [organization, product] = await Promise.all([
+    getOrganizationByEnvironmentId(params.environmentId),
+    getProductByEnvironmentId(params.environmentId),
+  ]);
+  if (!organization) {
+    throw new Error("Organization not found");
+  }
+  if (!product) {
+    throw new Error("Product not found");
+  }
+  const products = await getProducts(organization.id);
+
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center">
       <OnboardingTitle
@@ -41,6 +56,9 @@ const Page = async ({ params }: ChannelPageProps) => {
         subtitle="Get started with proven Best Practices 🚀"
       />
       <OnboardingOptionsContainer options={channelOptions} />
+      {products.length > 2 && (
+        <CancelProductCreation environmentId={params.environmentId} productId={product.id} />
+      )}
     </div>
   );
 };

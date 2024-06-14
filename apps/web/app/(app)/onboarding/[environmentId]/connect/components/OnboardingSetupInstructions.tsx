@@ -3,6 +3,7 @@
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { TProductConfigChannel } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { CodeBlock } from "@formbricks/ui/CodeBlock";
 import { TabBar } from "@formbricks/ui/TabBar";
@@ -16,19 +17,72 @@ const tabs = [
 interface OnboardingSetupInstructionsProps {
   environmentId: string;
   webAppUrl: string;
-  jsPackageVersion: string;
+  channel: TProductConfigChannel;
 }
 
 export const OnboardingSetupInstructions = ({
   environmentId,
   webAppUrl,
+  channel,
 }: OnboardingSetupInstructionsProps) => {
   const [activeTab, setActiveTab] = useState(tabs[0].id);
-  const htmlSnippet = `<!-- START Formbricks Surveys -->
-<script type="text/javascript">
-!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.6.5/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
-</script>
-<!-- END Formbricks Surveys -->`;
+  const htmlSnippetForAppSurveys = `<!-- START Formbricks Surveys -->
+  <script type="text/javascript">
+  !function(){
+      var apiHost = "${webAppUrl}";
+      var environmentId = "${environmentId}";
+      var userId = "testUser";
+      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/api/packages/app";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})},500)}();
+  </script>
+  <!-- END Formbricks Surveys -->
+  `;
+
+  const htmlSnippetForWebsiteSurveys = `<!-- START Formbricks Surveys -->
+  <script type="text/javascript">
+  !function(){
+    var apiHost = "${webAppUrl}";
+    var environmentId = "${environmentId}";
+      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/api/packages/website";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost})},500)}();
+  </script>
+  <!-- END Formbricks Surveys -->
+  `;
+
+  const npmSnippetForAppSurveys = `
+  import formbricks from "@formbricks/js/app";
+  
+  if (typeof window !== "undefined") {
+    formbricks.init({
+      environmentId: "${environmentId}",
+      apiHost: "${webAppUrl}",
+      userId: "testUser",
+    });
+  }
+  
+  function App() {
+    // your own app
+  }
+  
+  export default App;
+  `;
+
+  const npmSnippetForWebsiteSurveys = `
+  // other imports
+  import formbricks from "@formbricks/js/website";
+  
+  if (typeof window !== "undefined") {
+    formbricks.init({
+      environmentId: "${environmentId}",
+      apiHost: "${webAppUrl}",
+    });
+  }
+  
+  function App() {
+    // your own app
+  }
+  
+  export default App;
+  
+  `;
 
   return (
     <div>
@@ -54,21 +108,14 @@ export const OnboardingSetupInstructions = ({
             <p className="text-sm text-slate-700">
               Import Formbricks and initialize the widget in your Component (e.g. App.tsx):
             </p>
-            <CodeBlock
-              customEditorClass="!bg-white border border-slate-200"
-              language="js">{`import formbricks from "@formbricks/js/website";
-
-if (typeof window !== "undefined") {
-  formbricks.init({
-    environmentId: "${environmentId}",
-    apiHost: "${webAppUrl}",
-  });
-}`}</CodeBlock>
+            <CodeBlock customEditorClass="!bg-white border border-slate-200" language="js">
+              {channel === "app" ? npmSnippetForAppSurveys : npmSnippetForWebsiteSurveys}
+            </CodeBlock>
             <Button
               id="onboarding-inapp-connect-read-npm-docs"
               className="mt-3"
               variant="secondary"
-              href="https://formbricks.com/docs/getting-started/framework-guides"
+              href={`https://formbricks.com/docs/${channel}-surveys/framework-guides`}
               target="_blank">
               Read docs
             </Button>
@@ -80,7 +127,7 @@ if (typeof window !== "undefined") {
             </p>
             <div>
               <CodeBlock customEditorClass="!bg-white border border-slate-200" language="js">
-                {htmlSnippet}
+                {channel === "app" ? htmlSnippetForAppSurveys : htmlSnippetForWebsiteSurveys}
               </CodeBlock>
             </div>
 
@@ -89,7 +136,9 @@ if (typeof window !== "undefined") {
                 id="onboarding-inapp-connect-copy-code"
                 variant="darkCTA"
                 onClick={() => {
-                  navigator.clipboard.writeText(htmlSnippet);
+                  navigator.clipboard.writeText(
+                    channel === "app" ? htmlSnippetForAppSurveys : htmlSnippetForWebsiteSurveys
+                  );
                   toast.success("Copied to clipboard");
                 }}>
                 Copy code
@@ -97,7 +146,7 @@ if (typeof window !== "undefined") {
               <Button
                 id="onboarding-inapp-connect-step-by-step-manual"
                 variant="secondary"
-                href="https://formbricks.com/docs/getting-started/framework-guides#html"
+                href={`https://formbricks.com/docs/${channel}-surveys/framework-guides#html`}
                 target="_blank">
                 Step by step manual
               </Button>

@@ -7,14 +7,18 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { TOrganization } from "@formbricks/types/organizations";
+import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
-import { finishOnboardingAction, inviteOrganizationMemberAction } from "../../../actions";
+import { finishProductOnboardingAction, inviteOrganizationMemberAction } from "../../../actions";
 
 interface InviteOrganizationMemberProps {
   organization: TOrganization;
   environmentId: string;
+  productId: string;
+  channel: TProductConfigChannel;
+  industry: TProductConfigIndustry;
 }
 
 const ZInviteOrganizationMemberDetails = z.object({
@@ -23,7 +27,13 @@ const ZInviteOrganizationMemberDetails = z.object({
 });
 type TInviteOrganizationMemberDetails = z.infer<typeof ZInviteOrganizationMemberDetails>;
 
-export const InviteOrganizationMember = ({ organization, environmentId }: InviteOrganizationMemberProps) => {
+export const InviteOrganizationMember = ({
+  organization,
+  environmentId,
+  productId,
+  channel,
+  industry,
+}: InviteOrganizationMemberProps) => {
   const [isFinishing, setIsFinishing] = useState(false);
   const router = useRouter();
 
@@ -33,7 +43,6 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
       inviteMessage: "I'm looking into Formbricks to run targeted surveys. Can you help me set it up? 🙏",
     },
     resolver: zodResolver(ZInviteOrganizationMemberDetails),
-    mode: "onChange",
   });
   const { isSubmitting } = form.formState;
 
@@ -50,7 +59,7 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
   const finishOnboarding = async () => {
     setIsFinishing(true);
     try {
-      await finishOnboardingAction();
+      await finishProductOnboardingAction(productId, { channel, industry });
       router.push(`/environments/${environmentId}/surveys`);
     } catch (error) {
       toast.error("An error occurred saving your settings.");
@@ -104,27 +113,22 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
               )}
             />
 
-            <div className="flex w-full justify-between">
-              <Button id="onboarding-inapp-invite-back" variant="minimal" onClick={() => router.back()}>
-                Back
+            <div className="flex w-full justify-end space-x-2">
+              <Button
+                id="onboarding-inapp-invite-have-a-look-first"
+                className="font-normal text-slate-400"
+                variant="minimal"
+                onClick={finishOnboarding}
+                loading={isFinishing}>
+                Skip
               </Button>
-              <div className="space-x-2">
-                <Button
-                  id="onboarding-inapp-invite-have-a-look-first"
-                  className="font-normal text-slate-400"
-                  variant="minimal"
-                  onClick={finishOnboarding}
-                  loading={isFinishing}>
-                  Skip
-                </Button>
-                <Button
-                  id="onboarding-inapp-invite-send-invite"
-                  variant="darkCTA"
-                  type={"submit"}
-                  loading={isSubmitting}>
-                  Invite
-                </Button>
-              </div>
+              <Button
+                id="onboarding-inapp-invite-send-invite"
+                variant="darkCTA"
+                type={"submit"}
+                loading={isSubmitting}>
+                Invite
+              </Button>
             </div>
           </div>
         </form>

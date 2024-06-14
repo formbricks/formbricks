@@ -2,25 +2,36 @@ import { InviteOrganizationMember } from "@/app/(app)/onboarding/[environmentId]
 import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTitle";
 import { notFound } from "next/navigation";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 
 interface InvitePageProps {
   params: {
     environmentId: string;
   };
   searchParams: {
-    channel?: string;
-    industry?: string;
+    channel?: TProductConfigChannel;
+    industry?: TProductConfigIndustry;
   };
 }
 
 const Page = async ({ params, searchParams }: InvitePageProps) => {
   const channel = searchParams.channel;
   const industry = searchParams.industry;
-  const organization = await getOrganizationByEnvironmentId(params.environmentId);
+
   if (!channel || !industry) return notFound();
+
+  const [organization, product] = await Promise.all([
+    getOrganizationByEnvironmentId(params.environmentId),
+    getProductByEnvironmentId(params.environmentId),
+  ]);
 
   if (!organization) {
     throw new Error("Organization not Found");
+  }
+
+  if (!product) {
+    throw new Error("Product not Found");
   }
 
   return (
@@ -33,7 +44,13 @@ const Page = async ({ params, searchParams }: InvitePageProps) => {
         <p className="text-4xl font-medium text-slate-800"></p>
         <p className="text-sm text-slate-500"></p>
       </div>
-      <InviteOrganizationMember organization={organization} environmentId={params.environmentId} />
+      <InviteOrganizationMember
+        organization={organization}
+        environmentId={params.environmentId}
+        productId={product.id}
+        channel={channel}
+        industry={industry}
+      />
     </div>
   );
 };

@@ -1,4 +1,3 @@
-import jsPackageJson from "@/../../packages/js/package.json";
 import { ConnectWithFormbricks } from "@/app/(app)/onboarding/[environmentId]/connect/components/ConnectWithFormbricks";
 import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTitle";
 import { getCustomHeadline } from "@/app/(app)/onboarding/utils";
@@ -26,7 +25,7 @@ const Page = async ({ params, searchParams }: ConnectPageProps) => {
   const customHeadline = getCustomHeadline(channel, industry);
 
   return (
-    <div className="flex min-h-full min-w-full flex-col items-center justify-center">
+    <div className="flex min-h-full flex-col items-center justify-center py-10">
       <OnboardingTitle
         title={`Now lets connect your ${customHeadline} with Formbricks`}
         subtitle="If you don't do it now, chances are low that you will ever do it! :)"
@@ -36,9 +35,8 @@ const Page = async ({ params, searchParams }: ConnectPageProps) => {
         <p className="text-sm text-slate-500"></p>
       </div>
       <ConnectWithFormbricks
-        environmentId={environment.id}
+        environment={environment}
         webAppUrl={WEBAPP_URL}
-        jsPackageVersion={jsPackageJson.version}
         widgetSetupCompleted={environment.widgetSetupCompleted}
         channel={channel}
         industry={industry}

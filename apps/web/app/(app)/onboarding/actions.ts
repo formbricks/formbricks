@@ -6,7 +6,6 @@ import { hasOrganizationAuthority } from "@formbricks/lib/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { getEnvironment } from "@formbricks/lib/environment/service";
 import { inviteUser } from "@formbricks/lib/invite/service";
 import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
 import { canUserAccessProduct } from "@formbricks/lib/product/auth";
@@ -16,9 +15,7 @@ import { updateUser } from "@formbricks/lib/user/service";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProductConfig, TProductUpdateInput } from "@formbricks/types/product";
-import { TSurveyInput, TSurveyType } from "@formbricks/types/surveys";
-import { TTemplate } from "@formbricks/types/templates";
-import { TUserUpdateInput } from "@formbricks/types/user";
+import { TSurveyInput } from "@formbricks/types/surveys";
 
 export const inviteOrganizationMemberAction = async (
   organizationId: string,
@@ -70,7 +67,7 @@ export const inviteOrganizationMemberAction = async (
   return invite;
 };
 
-export const finishOnboardingAction = async (productId: string, productConfig: TProductConfig) => {
+export const finishProductOnboardingAction = async (productId: string, productConfig: TProductConfig) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -88,40 +85,6 @@ export const createSurveyAction = async (environmentId: string, surveyBody: TSur
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   return await createSurvey(environmentId, surveyBody);
-};
-
-export const fetchEnvironment = async (id: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  return await getEnvironment(id);
-};
-
-export const createSurveyFromTemplate = async (template: TTemplate, environmentId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const userHasAccess = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!userHasAccess) throw new AuthorizationError("Not authorized");
-
-  // Set common survey properties
-  const userId = session.user.id;
-  // Construct survey input based on the pathway
-  const surveyInput = {
-    ...template.preset,
-    type: "link" as TSurveyType,
-    autoComplete: undefined,
-    createdBy: userId,
-  };
-  // Create and return the new survey
-  return await createSurvey(environmentId, surveyInput);
-};
-
-export const updateUserAction = async (updatedUser: TUserUpdateInput) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  return await updateUser(session.user.id, updatedUser);
 };
 
 export const updateProductAction = async (
