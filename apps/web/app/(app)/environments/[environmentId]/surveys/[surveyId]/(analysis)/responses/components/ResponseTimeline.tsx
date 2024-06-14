@@ -48,6 +48,8 @@ export const ResponseTimeline = ({
   const [isViewer, setIsViewer] = useState(false);
   const loadingRef = useRef(null);
 
+  const widgetSetupCompleted = environment?.appSetupCompleted || environment?.websiteSetupCompleted;
+
   useEffect(() => {
     const currentLoadingRef = loadingRef.current;
 
@@ -86,7 +88,7 @@ export const ResponseTimeline = ({
     <div className="space-y-4">
       {(survey.type === "app" || survey.type === "website") &&
       responses.length === 0 &&
-      !environment.widgetSetupCompleted ? (
+      !widgetSetupCompleted ? (
         <EmptyAppSurveys environment={environment} surveyType={survey.type} />
       ) : isFetchingFirstPage ? (
         <SkeletonLoader type="response" />

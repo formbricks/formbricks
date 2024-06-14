@@ -22,17 +22,18 @@ export const SuccessMessage = ({ environment, survey, webAppUrl, user }: Summary
   const [confetti, setConfetti] = useState(false);
 
   const isAppSurvey = survey.type === "app" || survey.type === "website";
+  const widgetSetupCompleted = environment?.appSetupCompleted || environment?.websiteSetupCompleted;
 
   useEffect(() => {
     const newSurveyParam = searchParams?.get("success");
     if (newSurveyParam && survey && environment) {
       setConfetti(true);
       toast.success(
-        isAppSurvey && !environment.widgetSetupCompleted
+        isAppSurvey && !widgetSetupCompleted
           ? "Almost there! Install widget to start receiving responses."
           : "Congrats! Your survey is live.",
         {
-          icon: isAppSurvey && !environment.widgetSetupCompleted ? "🤏" : "🎉",
+          icon: isAppSurvey && !widgetSetupCompleted ? "🤏" : "🎉",
           duration: 5000,
           position: "bottom-right",
         }
@@ -45,7 +46,7 @@ export const SuccessMessage = ({ environment, survey, webAppUrl, user }: Summary
       url.searchParams.delete("success");
       window.history.replaceState({}, "", url.toString());
     }
-  }, [environment, isAppSurvey, searchParams, survey]);
+  }, [environment, isAppSurvey, searchParams, survey, widgetSetupCompleted]);
 
   return (
     <>

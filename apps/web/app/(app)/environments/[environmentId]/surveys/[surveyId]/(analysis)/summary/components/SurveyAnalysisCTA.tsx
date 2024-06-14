@@ -31,7 +31,8 @@ export const SurveyAnalysisCTA = ({
       {survey.resultShareKey && (
         <Badge text="Results are public" type="warning" size="normal" className="rounded-lg"></Badge>
       )}
-      {(environment.widgetSetupCompleted || survey.type === "link") && survey.status !== "draft" ? (
+      {(environment.appSetupCompleted || environment.websiteSetupCompleted || survey.type === "link") &&
+      survey.status !== "draft" ? (
         <SurveyStatusDropdown environment={environment} survey={survey} />
       ) : null}
       {survey.type === "link" && (

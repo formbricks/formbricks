@@ -123,6 +123,8 @@ export const ConnectWithFormbricks = ({
 
   useVisibilityChange(environment, setLocalEnvironment);
 
+  const widgetSetupCompleted = localEnvironment.websiteSetupCompleted || localEnvironment.appSetupCompleted;
+
   useEffect(() => {
     const fetchLatestEnvironmentOnFirstLoad = async () => {
       const refetchedEnvironment = await fetchEnvironment(environment.id);
@@ -132,7 +134,7 @@ export const ConnectWithFormbricks = ({
     fetchLatestEnvironmentOnFirstLoad();
   }, [environment.id]);
 
-  return localEnvironment.widgetSetupCompleted ? (
+  return widgetSetupCompleted ? (
     <ConnectedState
       goToProduct={() => {
         goToProduct(router);
