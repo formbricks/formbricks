@@ -91,9 +91,8 @@ export const S3_ENDPOINT_URL = env.S3_ENDPOINT_URL;
 export const S3_BUCKET_NAME = env.S3_BUCKET_NAME;
 export const UPLOADS_DIR = env.UPLOADS_DIR || "./uploads";
 export const MAX_SIZES = {
-  public: 1024 * 1024 * 10, // 10MB
-  free: 1024 * 1024 * 10, // 10MB
-  pro: 1024 * 1024 * 1024, // 1GB
+  standard: 1024 * 1024 * 10, // 10MB
+  big: 1024 * 1024 * 1024, // 1GB
 } as const;
 
 // Function to check if the necessary S3 configuration is set up

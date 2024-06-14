@@ -97,7 +97,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
 
   await stripe.customers.update(stripeSubscriptionObject.customer as string, {
     name: organization.name,
-    metadata: { orgnizationId: organization.id },
+    metadata: { organizationId: organization.id },
     invoice_settings: {
       default_payment_method: stripeSubscriptionObject.default_payment_method as string,
     },

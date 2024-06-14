@@ -108,11 +108,18 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   }
 
   try {
-    const plan = (await getBiggerUploadFileSizePermission(organization)) ? "pro" : "free";
+    const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization);
     const bytes = await file.arrayBuffer();
     const fileBuffer = Buffer.from(bytes);
 
-    await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR, false, plan);
+    await putFileToLocalStorage(
+      fileName,
+      fileBuffer,
+      accessType,
+      environmentId,
+      UPLOADS_DIR,
+      isBiggerFileUploadAllowed
+    );
 
     return responses.successResponse({
       message: "File uploaded successfully",

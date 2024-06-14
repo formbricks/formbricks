@@ -51,7 +51,7 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
     return responses.notFoundResponse("OrganizationByEnvironmentId", environmentId);
   }
 
-  const plan = (await getBiggerUploadFileSizePermission(organization)) ? "pro" : "free";
+  const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization);
 
-  return await uploadPrivateFile(fileName, environmentId, fileType, plan);
+  return await uploadPrivateFile(fileName, environmentId, fileType, isBiggerFileUploadAllowed);
 };
