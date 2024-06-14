@@ -272,6 +272,7 @@ export const ZSurveyQuestionBase = z.object({
   logic: z.array(ZSurveyLogic).optional(),
   requirementsLogic: z.array(ZSurveyReuirementsLogicBase).optional(),
   isDraft: z.boolean().optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
 });
 
 export const ZSurveyOpenTextQuestionInputType = z.enum(["text", "email", "url", "number", "phone"]);
