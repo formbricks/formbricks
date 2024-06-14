@@ -60,7 +60,7 @@ export const InviteOrganizationMember = ({
     setIsFinishing(true);
     try {
       await finishProductOnboardingAction(productId, { channel, industry });
-      router.push(`/environments/${environmentId}/surveys`);
+      router.push(`/environments/${environmentId}/surveys?channel=${channel}&industry=${industry}`);
     } catch (error) {
       toast.error("An error occurred saving your settings.");
       console.error(error);
