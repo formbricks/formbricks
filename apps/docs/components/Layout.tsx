@@ -2,7 +2,7 @@
 
 import { Logo } from "@/components/Logo";
 import { Navigation } from "@/components/Navigation";
-import SideNavigation from "@/components/SideNavigation";
+import { SideNavigation } from "@/components/SideNavigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

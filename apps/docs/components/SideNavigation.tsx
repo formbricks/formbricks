@@ -1,4 +1,4 @@
-import useTableContentObserver from "@/hooks/useTableContentObserver";
+import { useTableContentObserver } from "@/hooks/useTableContentObserver";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -8,7 +8,7 @@ type Heading = {
   level: number;
 };
 
-const SideNavigation = ({ pathname }) => {
+export const SideNavigation = ({ pathname }) => {
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -16,15 +16,19 @@ const SideNavigation = ({ pathname }) => {
 
   useEffect(() => {
     const getHeadings = () => {
+      // Select all heading elements (h2, h3, h4) with an 'id' attribute
       const headingElements = document.querySelectorAll("h2[id], h3[id], h4[id]");
+      // Convert the NodeList of heading elements into an array and map them to an array of 'Heading' objects
       const headings: Heading[] = Array.from(headingElements).map((heading) => ({
         id: heading.id,
         text: heading.textContent,
         level: parseInt(heading.tagName.slice(1)),
       }));
 
+      // Check if there are any h2 headings in the list
       const hasH2 = headings.some((heading) => heading.level === 2);
 
+      // Update the 'headings' state with the retrieved headings, but only if there are h2 headings
       setHeadings(hasH2 ? headings : []);
     };
 
@@ -49,7 +53,7 @@ const SideNavigation = ({ pathname }) => {
                 onClick={() => setSelectedId(heading.id)}
                 className={`${
                   heading.id === selectedId
-                    ? "text-brand font-medium"
+                    ? "text-brand font-medium text-opacity-35"
                     : "font-normal text-slate-600 hover:text-slate-950 dark:text-white dark:hover:text-slate-50"
                 }`}>
                 {heading.text}
@@ -76,5 +80,3 @@ const SideNavigation = ({ pathname }) => {
 
   return null;
 };
-
-export default SideNavigation;
