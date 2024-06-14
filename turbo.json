@@ -1,10 +1,6 @@
 {
   "$schema": "https://turborepo.org/schema.json",
-  "pipeline": {
-    "@formbricks/database#build": {
-      "cache": false,
-      "dependsOn": ["post-install"]
-    },
+  "tasks": {
     "@formbricks/web#go": {
       "cache": false,
       "persistent": true,
@@ -66,6 +62,7 @@
         "CUSTOM_CACHE_DISABLED",
         "CUSTOMER_IO_API_KEY",
         "CUSTOMER_IO_SITE_ID",
+        "DATABASE_URL",
         "DEBUG",
         "E2E_TESTING",
         "EMAIL_AUTH_DISABLED",
@@ -83,6 +80,8 @@
         "NOTION_OAUTH_CLIENT_ID",
         "NOTION_OAUTH_CLIENT_SECRET",
         "HEROKU_APP_NAME",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
         "IMPRINT_URL",
         "INSTANCE_ID",
         "INTERNAL_SECRET",
@@ -144,6 +143,7 @@
         "UPLOADS_DIR",
         "VERCEL",
         "VERCEL_URL",
+        "VERSION",
         "WEBAPP_URL",
         "UNSPLASH_ACCESS_KEY"
       ]
@@ -151,12 +151,6 @@
     "build:dev": {
       "dependsOn": ["^build:dev"],
       "outputs": ["dist/**", ".next/**"]
-    },
-    "post-install": {
-      "cache": false,
-      "dependsOn": [],
-      "outputs": [],
-      "inputs": ["./schema.prisma"]
     },
     "db:setup": {
       "cache": false,
@@ -208,6 +202,10 @@
     "clean": {
       "outputs": [],
       "cache": false
+    },
+    "storybook": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

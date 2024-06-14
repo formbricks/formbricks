@@ -1,5 +1,4 @@
 import { Prisma } from "@prisma/client";
-
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -9,11 +8,10 @@ import {
   TSurveyInput,
   TSurveyLanguage,
   TSurveyQuestion,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
-
 import { selectPerson } from "../../../person/service";
 import { selectSurvey } from "../../service";
 
@@ -66,6 +64,7 @@ export const mockProduct: TProduct = {
   brandColor: "#000000",
   highlightBorderColor: "#000000",
   recontactDays: 0,
+  displayLimit: 0,
   linkSurveyBranding: false,
   inAppSurveyBranding: false,
   placement: "bottomRight",
@@ -146,7 +145,7 @@ export const mockAttributeClass: TAttributeClass = {
 
 const mockQuestion: TSurveyQuestion = {
   id: mockId,
-  type: TSurveyQuestionType.OpenText,
+  type: TSurveyQuestionTypeEnum.OpenText,
   headline: { default: "Question Text", de: "Fragetext" },
   required: false,
   inputType: "text",
@@ -169,6 +168,7 @@ const baseSurveyProperties = {
   closeOnDate: currentDate,
   redirectUrl: "http://github.com/formbricks/formbricks",
   recontactDays: 3,
+  displayLimit: 3,
   welcomeCard: mockWelcomeCard,
   questions: [mockQuestion],
   thankYouCard: { enabled: false },
@@ -272,6 +272,7 @@ export const updateSurveyInput: TSurvey = {
   resultShareKey: null,
   segment: null,
   languages: [],
+  showLanguageSwitch: null,
   ...commonMockProperties,
   ...baseSurveyProperties,
 };

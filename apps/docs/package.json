@@ -65,9 +65,9 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
-    "@formbricks/tsconfig": "workspace:*",
+    "@formbricks/config-typescript": "workspace:*",
     "@types/dompurify": "^3.0.5",
     "@types/react-highlight-words": "^0.16.7",
-    "eslint-config-formbricks": "workspace:*"
+    "@formbricks/eslint-config": "workspace:*"
   }
 }

@@ -2,10 +2,8 @@
 
 import { FingerprintIcon, TagIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter } from "@formbricks/types/segment";
-
 import { Input } from "../Input";
 import { Modal } from "../Modal";
 import { handleAddFilter } from "./lib/utils";

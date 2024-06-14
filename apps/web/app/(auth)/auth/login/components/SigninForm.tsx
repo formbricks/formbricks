@@ -1,9 +1,5 @@
 "use client";
 
-import { AzureButton } from "@/app/(auth)/auth/components/AzureButton";
-import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
-import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
-import { OpenIdButton } from "@/app/(auth)/auth/components/OpenIdButton";
 import { TwoFactor } from "@/app/(auth)/auth/login/components/TwoFactor";
 import { TwoFactorBackup } from "@/app/(auth)/auth/login/components/TwoFactorBackup";
 import { XCircleIcon } from "lucide-react";
@@ -12,17 +8,32 @@ import Link from "next/dist/client/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, FormProvider, SubmitHandler, useForm } from "react-hook-form";
-
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
 import { PasswordInput } from "@formbricks/ui/PasswordInput";
+import { AzureButton } from "@formbricks/ui/SignupOptions/components/AzureButton";
+import { GithubButton } from "@formbricks/ui/SignupOptions/components/GithubButton";
+import { GoogleButton } from "@formbricks/ui/SignupOptions/components/GoogleButton";
+import { OpenIdButton } from "@formbricks/ui/SignupOptions/components/OpenIdButton";
 
-type TSigninFormState = {
+interface TSigninFormState {
   email: string;
   password: string;
   totpCode: string;
   backupCode: string;
-};
+}
+
+interface SignInFormProps {
+  emailAuthEnabled: boolean;
+  publicSignUpEnabled: boolean;
+  passwordResetEnabled: boolean;
+  googleOAuthEnabled: boolean;
+  githubOAuthEnabled: boolean;
+  azureOAuthEnabled: boolean;
+  oidcOAuthEnabled: boolean;
+  oidcDisplayName?: string;
+  isMultiOrgEnabled: boolean;
+}
 
 export const SigninForm = ({
   emailAuthEnabled,
@@ -33,20 +44,11 @@ export const SigninForm = ({
   azureOAuthEnabled,
   oidcOAuthEnabled,
   oidcDisplayName,
-}: {
-  emailAuthEnabled: boolean;
-  publicSignUpEnabled: boolean;
-  passwordResetEnabled: boolean;
-  googleOAuthEnabled: boolean;
-  githubOAuthEnabled: boolean;
-  azureOAuthEnabled: boolean;
-  oidcOAuthEnabled: boolean;
-  oidcDisplayName?: string;
-}) => {
+  isMultiOrgEnabled,
+}: SignInFormProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
-
   const formMethods = useForm<TSigninFormState>();
 
   const onSubmit: SubmitHandler<TSigninFormState> = async (data) => {
@@ -241,7 +243,7 @@ export const SigninForm = ({
           )}
         </div>
 
-        {publicSignUpEnabled && !totpLogin && (
+        {publicSignUpEnabled && !totpLogin && isMultiOrgEnabled && (
           <div className="mt-9 text-center text-xs ">
             <span className="leading-5 text-slate-500">New to Formbricks?</span>
             <br />

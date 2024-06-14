@@ -3,8 +3,7 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-
-import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
+import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey } from "@formbricks/types/surveys";

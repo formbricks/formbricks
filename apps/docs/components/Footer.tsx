@@ -3,7 +3,6 @@
 import { navigation } from "@/lib/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
 import { Button } from "./Button";
 import { DiscordIcon } from "./icons/DiscordIcon";
 import { GithubIcon } from "./icons/GithubIcon";
@@ -116,7 +115,7 @@ const SmallPrint = () => {
 
 export const Footer = () => {
   return (
-    <footer className="mx-auto w-full max-w-2xl space-y-10 pb-16 lg:max-w-5xl">
+    <footer className="mb-10 mt-10 flex-auto pb-16">
       <PageNavigation />
       <SmallPrint />
     </footer>

@@ -1,7 +1,5 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
@@ -14,7 +12,6 @@ import {
   ZOrganizationCreateInput,
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
-
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { environmentCache } from "../environment/cache";
@@ -149,6 +146,7 @@ export const createOrganization = async (
 
     organizationCache.revalidate({
       id: organization.id,
+      count: true,
     });
 
     return organization;
@@ -247,6 +245,7 @@ export const deleteOrganization = async (organizationId: string): Promise<TOrgan
 
     organizationCache.revalidate({
       id: organization.id,
+      count: true,
     });
 
     return organization;

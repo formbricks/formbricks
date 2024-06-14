@@ -1,6 +1,5 @@
 import { TAttributes } from "@formbricks/types/attributes";
 import type { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
-
 import {
   ErrorHandler,
   MissingFieldError,

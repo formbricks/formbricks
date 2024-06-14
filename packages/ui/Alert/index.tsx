@@ -1,10 +1,9 @@
 import { VariantProps, cva } from "class-variance-authority";
 import * as React from "react";
-
 import { cn } from "@formbricks/lib/cn";
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border p-3 [&>svg]:absolute [&>svg]:text-foreground [&>svg]:left-4 [&>svg]:top-4 [&>svg+div]:translate-y-[-3px] [&:has(svg)]:pl-11",
+  "relative w-full rounded-lg border p-3 [&>svg]:absolute [&>svg]:text-foreground [&>svg]:left-3 [&>svg]:top-3 [&>svg+div]:translate-y-[-3px] [&:has(svg)]:pl-9",
   {
     variants: {
       variant: {
@@ -12,6 +11,8 @@ const alertVariants = cva(
         destructive:
           "text-destructive border-destructive/50 dark:border-destructive [&>svg]:text-destructive text-destructive",
         info: "text-slate-800 bg-brand/5",
+        warning: "text-yellow-700 bg-yellow-50",
+        error: "border-error/50 dark:border-error [&>svg]:text-error text-error",
       },
     },
     defaultVariants: {

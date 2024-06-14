@@ -1,38 +1,55 @@
 import { Prisma } from "@prisma/client";
-
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
-
 import { deleteIntegration, getIntegrationByType } from "../integration/service";
 
 export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIntegrationItem[]> => {
-  const response = await fetch("https://slack.com/api/conversations.list", {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${slackIntegration.config.key.access_token}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-  });
+  let channels: TIntegrationItem[] = [];
+  // `nextCursor` is a pagination token returned by the Slack API. It indicates the presence of additional pages of data.
+  // When `nextCursor` is not empty, it should be included in subsequent requests to fetch the next page of data.
+  let nextCursor: string | undefined = undefined;
 
-  if (!response.ok) {
-    throw new Error("Network response was not ok");
-  }
-
-  const data = await response.json();
-
-  if (!data.ok) {
-    if (data.error === "token_expired") {
-      // temporary fix to reset integration if token rotation is enabled
-      await deleteIntegration(slackIntegration.id);
+  do {
+    const url = new URL("https://slack.com/api/conversations.list");
+    url.searchParams.append("limit", "200");
+    if (nextCursor) {
+      url.searchParams.append("cursor", nextCursor);
     }
-    throw new Error(data.error);
-  }
 
-  return data.channels.map((channel: { name: string; id: string }) => ({
-    name: channel.name,
-    id: channel.id,
-  }));
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${slackIntegration.config.key.access_token}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+
+    const data = await response.json();
+
+    if (!data.ok) {
+      if (data.error === "token_expired") {
+        // Temporary fix to reset integration if token rotation is enabled
+        await deleteIntegration(slackIntegration.id);
+      }
+      throw new Error(data.error);
+    }
+
+    channels = channels.concat(
+      data.channels.map((channel: { name: string; id: string }) => ({
+        name: channel.name,
+        id: channel.id,
+      }))
+    );
+
+    nextCursor = data.response_metadata?.next_cursor;
+  } while (nextCursor);
+
+  return channels;
 };
 
 export const getSlackChannels = async (environmentId: string): Promise<TIntegrationItem[]> => {

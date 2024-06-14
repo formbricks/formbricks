@@ -1,6 +1,5 @@
 import { BadgeCheckIcon } from "lucide-react";
 import { Metadata } from "next";
-
 import { prisma } from "@formbricks/database";
 
 export const dynamic = "force-dynamic"; // no caching

@@ -1,9 +1,7 @@
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-
 import formbricks from "@formbricks/js/app";
-
 import { SurveySwitch } from "../../components/SurveySwitch";
 import fbsetup from "../../public/fb-setup.png";
 
@@ -59,7 +57,7 @@ const AppPage = ({}) => {
         router.events.off("routeChangeComplete", handleRouteChange);
       };
     }
-  });
+  }, []);
 
   return (
     <div className="h-screen bg-white px-12 py-6 dark:bg-slate-800">

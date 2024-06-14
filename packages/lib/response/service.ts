@@ -1,7 +1,5 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-
 import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -21,7 +19,6 @@ import {
 } from "@formbricks/types/responses";
 import { TSurveySummary } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
-
 import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
@@ -101,7 +98,7 @@ export const responseSelection = {
   },
 };
 
-export const getResponsesByPersonId = (personId: string, page?: number): Promise<Array<TResponse> | null> =>
+export const getResponsesByPersonId = (personId: string, page?: number): Promise<TResponse[] | null> =>
   cache(
     async () => {
       validateInputs([personId, ZId], [page, ZOptionalNumber]);
@@ -123,7 +120,7 @@ export const getResponsesByPersonId = (personId: string, page?: number): Promise
           throw new ResourceNotFoundError("Response from PersonId", personId);
         }
 
-        let responses: Array<TResponse> = [];
+        let responses: TResponse[] = [];
 
         await Promise.all(
           responsePrisma.map(async (response) => {

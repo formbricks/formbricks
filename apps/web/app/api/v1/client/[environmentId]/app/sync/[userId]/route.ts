@@ -6,7 +6,6 @@ import {
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
-
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import {
@@ -199,11 +198,7 @@ export const GET = async (
       };
     }
 
-    return responses.successResponse(
-      { ...state },
-      true,
-      "public, s-maxage=100, max-age=110, stale-while-revalidate=100, stale-if-error=100"
-    );
+    return responses.successResponse({ ...state }, true);
   } catch (error) {
     console.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);

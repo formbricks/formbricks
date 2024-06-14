@@ -1,7 +1,6 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { notFound } from "next/navigation";
-
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -17,17 +16,16 @@ const Page = async ({ params }) => {
   if (!surveyId) {
     return notFound();
   }
-
-  const [survey, environment, product, tags] = await Promise.all([
-    getSurvey(params.surveyId),
-    getEnvironment(params.environmentId),
-    getProductByEnvironmentId(params.environmentId),
-    getTagsByEnvironmentId(params.environmentId),
-  ]);
-
+  const survey = await getSurvey(surveyId);
   if (!survey) {
     throw new Error("Survey not found");
   }
+  const environmentId = survey.environmentId;
+  const [environment, product, tags] = await Promise.all([
+    getEnvironment(environmentId),
+    getProductByEnvironmentId(environmentId),
+    getTagsByEnvironmentId(environmentId),
+  ]);
 
   if (!environment) {
     throw new Error("Environment not found");
@@ -45,7 +43,7 @@ const Page = async ({ params }) => {
           <SurveyAnalysisNavigation
             surveyId={survey.id}
             environmentId={environment.id}
-            activeId="summary"
+            activeId="responses"
             responseCount={totalResponseCount}
           />
         </PageHeader>
