@@ -56,7 +56,7 @@ const Page = async ({ params }: ChannelPageProps) => {
         subtitle="Get started with proven Best Practices 🚀"
       />
       <OnboardingOptionsContainer options={channelOptions} />
-      {products.length > 2 && (
+      {products.length > 1 && (
         <CancelProductCreation environmentId={params.environmentId} productId={product.id} />
       )}
     </div>
