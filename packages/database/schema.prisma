@@ -135,6 +135,7 @@ model Response {
 
   @@unique([surveyId, singleUseId])
   @@index([surveyId, createdAt]) // to determine monthly response count
+  @@index([personId, createdAt]) // to determine monthly identified users (persons)
   @@index([surveyId])
 }
 
@@ -460,9 +461,9 @@ model Organization {
   name        String
   memberships Membership[]
   products    Product[]
-  /// @zod.custom(imports.ZOrganizationBilling)
-  /// [OrganizationBilling]
-  billing     Json         @default("{\"stripeCustomerId\": null, \"features\": {\"inAppSurvey\": {\"status\": \"inactive\", \"unlimited\": false}, \"linkSurvey\": {\"status\": \"inactive\", \"unlimited\": false}, \"userTargeting\": {\"status\": \"inactive\", \"unlimited\": false}}}")
+  /// @zod.custom(imports.ZTeamBilling)
+  /// [TeamBilling]
+  billing     Json
   invites     Invite[]
 }
 
