@@ -43,7 +43,9 @@ export const PricingTable = ({
   responseCount,
   stripePriceLookupKeys,
 }: PricingTableProps) => {
-  const [planPeriod, setPlanPeriod] = useState<TOrganizationBillingPeriod>("monthly");
+  const [planPeriod, setPlanPeriod] = useState<TOrganizationBillingPeriod>(
+    organization.billing.period ?? "monthly"
+  );
 
   const handleMonthlyToggle = (period: TOrganizationBillingPeriod) => {
     setPlanPeriod(period);
@@ -94,14 +96,16 @@ export const PricingTable = ({
   const onUpgrade = async (planId: string) => {
     if (planId === "scale") {
       await upgradePlan(
-        planPeriod ? stripePriceLookupKeys.SCALE_MONTHLY : stripePriceLookupKeys.SCALE_YEARLY
+        planPeriod === "monthly" ? stripePriceLookupKeys.SCALE_MONTHLY : stripePriceLookupKeys.SCALE_YEARLY
       );
       return;
     }
 
     if (planId === "startup") {
       await upgradePlan(
-        planPeriod ? stripePriceLookupKeys.STARTUP_MONTHLY : stripePriceLookupKeys.STARTUP_YEARLY
+        planPeriod === "monthly"
+          ? stripePriceLookupKeys.STARTUP_MONTHLY
+          : stripePriceLookupKeys.STARTUP_YEARLY
       );
       return;
     }
@@ -139,14 +143,14 @@ export const PricingTable = ({
               )}
             </h2>
 
-            {organization.billing.stripeCustomerId && (
+            {organization.billing.stripeCustomerId && organization.billing.plan === "free" && (
               <div className="flex w-full justify-end">
                 <Button
                   size="sm"
                   variant="secondary"
                   className="justify-center py-2 shadow-sm"
                   onClick={openCustomerPortal}>
-                  {organization.billing.plan !== "free" ? "Manage Subscription" : "Manage Card details"}
+                  Manage Card Details
                 </Button>
               </div>
             )}
