@@ -32,7 +32,6 @@ export const AddProductModal = ({ environmentId, open, setOpen }: AddProductModa
       setLoading(true);
       const newEnv = await createProductAction(environmentId, {
         name: data.name,
-        config: { channel: null, industry: null },
       });
 
       toast.success("Product created successfully!");
