@@ -295,33 +295,43 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
         const products = await getProducts(organizationId);
         const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
 
-        // Aggregate the count of active people across all environments
-        const peopleAggregations = await prisma.person.aggregate({
-          _count: {
-            id: true,
-          },
+        // Get all distinct person IDs that have taken an action in the current billing period
+        const actionPersonIds = await prisma.action.findMany({
           where: {
-            OR: [
-              { environmentId: { in: environmentIds } },
-              {
-                actions: {
-                  some: {
-                    createdAt: { gte: organization.billing.periodStart },
-                  },
-                },
-              },
-              {
-                responses: {
-                  some: {
-                    createdAt: { gte: organization.billing.periodStart },
-                  },
-                },
-              },
+            AND: [
+              { createdAt: { gte: organization.billing.periodStart } },
+              { person: { environmentId: { in: environmentIds } } },
             ],
           },
+          select: {
+            personId: true,
+          },
+          distinct: ["personId"],
         });
 
-        return peopleAggregations._count.id;
+        // Get all distinct person IDs that have created a response in the current billing period
+        const responsePersonIds = await prisma.response.findMany({
+          where: {
+            AND: [
+              { createdAt: { gte: organization.billing.periodStart } },
+              { person: { environmentId: { in: environmentIds } } },
+            ],
+          },
+          select: {
+            personId: true,
+          },
+          distinct: ["personId"],
+        });
+
+        const actionPersonIdsSet = new Set(actionPersonIds.map((item) => item.personId));
+        const responsePersonIdsSet = new Set(responsePersonIds.map((item) => item.personId));
+
+        // Combine the two sets to get unique personIds
+        const allPersonIdsSet = new Set([...actionPersonIdsSet, ...responsePersonIdsSet]);
+
+        const distinctPersonCount = allPersonIdsSet.size;
+
+        return distinctPersonCount;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
