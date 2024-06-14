@@ -10,7 +10,6 @@ import { getAttributes } from "@formbricks/lib/attribute/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import {
-  getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@formbricks/lib/organization/service";
@@ -86,7 +85,8 @@ export const GET = async (
     let isMonthlyResponsesLimitReached = false;
 
     if (IS_FORMBRICKS_CLOUD) {
-      const currentMau = await getMonthlyActiveOrganizationPeopleCount(organization.id);
+      // const currentMau = await getMonthlyActiveOrganizationPeopleCount(organization.id);
+      const currentMau = 0;
       const monthlyResponseLimit = organization.billing.limits.monthly.responses;
       const monthlyMiuLimit = organization.billing.limits.monthly.miu;
 
