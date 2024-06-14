@@ -41,6 +41,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   }
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const currentProductChannel = product?.config.channel ?? null;
 
   return (
     <PageContentWrapper>
@@ -49,6 +50,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           environmentId={params.environmentId}
           activeId="general"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
+          productChannel={currentProductChannel}
         />
       </PageHeader>
 
@@ -59,11 +61,13 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           isProductNameEditDisabled={isProductNameEditDisabled}
         />
       </SettingsCard>
-      <SettingsCard
-        title="Recontact Waiting Time"
-        description="Control how frequently users can be surveyed across all surveys.">
-        <EditWaitingTimeForm environmentId={params.environmentId} product={product} />
-      </SettingsCard>
+      {currentProductChannel !== "link" && (
+        <SettingsCard
+          title="Recontact Waiting Time"
+          description="Control how frequently users can be surveyed across all surveys.">
+          <EditWaitingTimeForm environmentId={params.environmentId} product={product} />
+        </SettingsCard>
+      )}
       <SettingsCard
         title="Delete Product"
         description="Delete product with all surveys, responses, people, actions and attributes. This cannot be undone.">

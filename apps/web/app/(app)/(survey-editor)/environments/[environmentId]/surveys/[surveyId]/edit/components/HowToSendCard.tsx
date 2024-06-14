@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
@@ -16,9 +17,10 @@ interface HowToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
   environment: TEnvironment;
+  product: TProduct;
 }
 
-export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
+export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, product }: HowToSendCardProps) => {
   const [open, setOpen] = useState(false);
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
   const [websiteSetupCompleted, setWebsiteSetupCompleted] = useState(false);
@@ -77,6 +79,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       description: "Run targeted surveys on public websites.",
       comingSoon: false,
       alert: !websiteSetupCompleted,
+      hide: product.config.channel === "app",
     },
     {
       id: "app",
@@ -85,6 +88,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       description: "Embed a survey in your web app to collect responses with user identification.",
       comingSoon: false,
       alert: !appSetupCompleted,
+      hide: product.config.channel === "website",
     },
     {
       id: "link",
@@ -93,6 +97,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       description: "Share a link to a survey page or embed it in a web page or email.",
       comingSoon: false,
       alert: false,
+      hide: false,
     },
     {
       id: "mobile",
@@ -101,6 +106,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       description: "Survey users inside a mobile app (iOS & Android).",
       comingSoon: true,
       alert: false,
+      hide: false,
     },
   ];
 
@@ -137,64 +143,66 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
             value={localSurvey.type}
             onValueChange={setSurveyType}
             className="flex flex-col space-y-3">
-            {options.map((option) => (
-              <Label
-                key={option.id}
-                htmlFor={option.id}
-                className={cn(
-                  "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
-                  option.comingSoon
-                    ? "border-slate-200 bg-slate-50/50"
-                    : option.id === localSurvey.type
-                      ? "border-brand-dark cursor-pointer bg-slate-50"
-                      : "cursor-pointer bg-slate-50"
-                )}
-                id={`howToSendCardOption-${option.id}`}>
-                <RadioGroupItem
-                  value={option.id}
-                  id={option.id}
-                  className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
-                  disabled={option.comingSoon}
-                />
-                <div className=" inline-flex items-center">
-                  <option.icon className="mr-4 h-8 w-8 text-slate-500" />
-                  <div>
-                    <div className="inline-flex items-center">
-                      <p
-                        className={cn(
-                          "font-semibold",
-                          option.comingSoon ? "text-slate-500" : "text-slate-800"
-                        )}>
-                        {option.name}
-                      </p>
-                      {option.comingSoon && (
-                        <Badge text="coming soon" size="normal" type="success" className="ml-2" />
+            {options
+              .filter((option) => !Boolean(option.hide))
+              .map((option) => (
+                <Label
+                  key={option.id}
+                  htmlFor={option.id}
+                  className={cn(
+                    "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
+                    option.comingSoon
+                      ? "border-slate-200 bg-slate-50/50"
+                      : option.id === localSurvey.type
+                        ? "border-brand-dark cursor-pointer bg-slate-50"
+                        : "cursor-pointer bg-slate-50"
+                  )}
+                  id={`howToSendCardOption-${option.id}`}>
+                  <RadioGroupItem
+                    value={option.id}
+                    id={option.id}
+                    className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
+                    disabled={option.comingSoon}
+                  />
+                  <div className=" inline-flex items-center">
+                    <option.icon className="mr-4 h-8 w-8 text-slate-500" />
+                    <div>
+                      <div className="inline-flex items-center">
+                        <p
+                          className={cn(
+                            "font-semibold",
+                            option.comingSoon ? "text-slate-500" : "text-slate-800"
+                          )}>
+                          {option.name}
+                        </p>
+                        {option.comingSoon && (
+                          <Badge text="coming soon" size="normal" type="success" className="ml-2" />
+                        )}
+                      </div>
+                      <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
+                      {option.alert && (
+                        <div className="mt-2 flex items-center space-x-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
+                          <AlertCircleIcon className="h-5 w-5 text-amber-500" />
+                          <div className=" text-amber-800">
+                            <p className="text-xs font-semibold">
+                              Your ${option.id} is not yet connected to Formbricks.
+                            </p>
+                            <p className="text-xs font-normal">
+                              <Link
+                                href={`/environments/${environment.id}/product/${option.id}-connection`}
+                                className="underline hover:text-amber-900"
+                                target="_blank">
+                                Connect Formbricks
+                              </Link>{" "}
+                              and launch surveys in your {option.id}.
+                            </p>
+                          </div>
+                        </div>
                       )}
                     </div>
-                    <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
-                    {option.alert && (
-                      <div className="mt-2 flex items-center space-x-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
-                        <AlertCircleIcon className="h-5 w-5 text-amber-500" />
-                        <div className=" text-amber-800">
-                          <p className="text-xs font-semibold">
-                            Your ${option.id} is not yet connected to Formbricks.
-                          </p>
-                          <p className="text-xs font-normal">
-                            <Link
-                              href={`/environments/${environment.id}/product/${option.id}-connection`}
-                              className="underline hover:text-amber-900"
-                              target="_blank">
-                              Connect Formbricks
-                            </Link>{" "}
-                            and launch surveys in your {option.id}.
-                          </p>
-                        </div>
-                      </div>
-                    )}
                   </div>
-                </div>
-              </Label>
-            ))}
+                </Label>
+              ))}
           </RadioGroup>
         </div>
       </Collapsible.CollapsibleContent>

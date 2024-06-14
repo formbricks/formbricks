@@ -2,18 +2,21 @@
 
 import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { TProductConfigChannel } from "@formbricks/types/product";
 import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
 
 interface ProductConfigNavigationProps {
   environmentId: string;
   activeId: string;
   isMultiLanguageAllowed: boolean;
+  productChannel: TProductConfigChannel;
 }
 
 export const ProductConfigNavigation = ({
   environmentId,
   activeId,
   isMultiLanguageAllowed,
+  productChannel,
 }: ProductConfigNavigationProps) => {
   const pathname = usePathname();
   let navigation = [
@@ -59,6 +62,7 @@ export const ProductConfigNavigation = ({
       icon: <ListChecksIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/product/website-connection`,
       current: pathname?.includes("/website-connection"),
+      hidden: productChannel !== "website",
     },
     {
       id: "app-connection",
@@ -66,6 +70,7 @@ export const ProductConfigNavigation = ({
       icon: <ListChecksIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/product/app-connection`,
       current: pathname?.includes("/app-connection"),
+      hidden: productChannel !== "app",
     },
   ];
 
