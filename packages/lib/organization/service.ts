@@ -6,17 +6,14 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TOrganization,
-  TOrganizationBilling,
   TOrganizationCreateInput,
   TOrganizationUpdateInput,
   ZOrganizationCreateInput,
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { cache } from "../cache";
-import { ITEMS_PER_PAGE, PRODUCT_FEATURE_KEYS } from "../constants";
-import { BILLING_LIMITS } from "../constants";
+import { BILLING_LIMITS, ITEMS_PER_PAGE, PRODUCT_FEATURE_KEYS } from "../constants";
 import { environmentCache } from "../environment/cache";
-import { getProducts } from "../product/service";
 import { getUsersWithOrganization, updateUser } from "../user/service";
 import { validateInputs } from "../utils/validate";
 import { organizationCache } from "./cache";
@@ -273,50 +270,15 @@ export const deleteOrganization = async (organizationId: string): Promise<TOrgan
   }
 };
 
-export const getOrganizationsWithPaidPlan = (): Promise<TOrganization[]> =>
-  cache(
-    async () => {
-      try {
-        const fetchedOrganizations = await prisma.organization.findMany({
-          where: {
-            OR: [
-              {
-                billing: {
-                  path: ["features", "inAppSurvey", "status"],
-                  not: "inactive",
-                },
-              },
-              {
-                billing: {
-                  path: ["features", "userTargeting", "status"],
-                  not: "inactive",
-                },
-              },
-            ],
-          },
-          select,
-        });
-
-        return fetchedOrganizations;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-        throw error;
-      }
-    },
-    ["getOrganizationsWithPaidPlan"],
-    {
-      tags: [],
-    }
-  )();
-
 export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string): Promise<number> =>
   cache(
     async () => {
       validateInputs([organizationId, ZId]);
 
-      try {
+      // temporary workaround due to database performance issues
+      return 0;
+
+      /* try {
         // Define the start of the month
         // const now = new Date();
         // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -365,7 +327,7 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
         }
 
         throw error;
-      }
+      } */
     },
     [`getMonthlyActiveOrganizationPeopleCount-${organizationId}`],
     {
@@ -378,7 +340,10 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
     async () => {
       validateInputs([organizationId, ZId]);
 
-      try {
+      // temporary workaround due to database performance issues
+      return 0;
+
+      /* try {
         // Define the start of the month
         // const now = new Date();
         // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -413,38 +378,11 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
         }
 
         throw error;
-      }
+      } */
     },
     [`getMonthlyOrganizationResponseCount-${organizationId}`],
     {
       revalidate: 60 * 60 * 2, // 2 hours
-    }
-  )();
-
-export const getOrganizationBillingInfo = (organizationId: string): Promise<TOrganizationBilling | null> =>
-  cache(
-    async () => {
-      validateInputs([organizationId, ZId]);
-
-      try {
-        const billingInfo = await prisma.organization.findUnique({
-          where: {
-            id: organizationId,
-          },
-        });
-
-        return billingInfo?.billing ?? null;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
-      }
-    },
-    [`getOrganizationBillingInfo-${organizationId}`],
-    {
-      tags: [organizationCache.tag.byId(organizationId)],
     }
   )();
 
