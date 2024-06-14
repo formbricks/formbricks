@@ -1,35 +1,12 @@
 import omit from "lodash/omit";
-import {
-  ArrowDownIcon,
-  BracesIcon,
-  ChevronDown,
-  CornerDownRightIcon,
-  HelpCircle,
-  TrashIcon,
-} from "lucide-react";
-import React, { useCallback, useMemo, useState } from "react";
-import { toast } from "react-hot-toast";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
+import { BracesIcon, HelpCircle, TrashIcon } from "lucide-react";
+import React, { useMemo } from "react";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import {
-  TSurvey,
-  TSurveyLogicCondition,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
-  TSurveyRequirementsLogic,
-} from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 const NEW_META_KEY = "___NEW_META_KEY___";
