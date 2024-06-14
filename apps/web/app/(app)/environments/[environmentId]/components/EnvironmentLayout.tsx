@@ -6,12 +6,15 @@ import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import {
+  getMonthlyActiveOrganizationPeopleCount,
+  getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
   getOrganizationsByUserId,
 } from "@formbricks/lib/organization/service";
 import { getProducts } from "@formbricks/lib/product/service";
 import { DevEnvironmentBanner } from "@formbricks/ui/DevEnvironmentBanner";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { LimitsReachedBanner } from "@formbricks/ui/LimitsReachedBanner";
 
 interface EnvironmentLayoutProps {
   environmentId: string;
@@ -42,9 +45,23 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
+  const [peopleCount, responseCount] = await Promise.all([
+    getMonthlyActiveOrganizationPeopleCount(organization.id),
+    getMonthlyOrganizationResponseCount(organization.id),
+  ]);
+
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
       <DevEnvironmentBanner environment={environment} />
+
+      {IS_FORMBRICKS_CLOUD && (
+        <LimitsReachedBanner
+          organization={organization}
+          peopleCount={peopleCount}
+          responseCount={responseCount}
+        />
+      )}
+
       <div className="flex h-full">
         <MainNavigation
           environment={environment}

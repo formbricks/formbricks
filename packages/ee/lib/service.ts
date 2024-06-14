@@ -3,7 +3,12 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 import fetch from "node-fetch";
 import { prisma } from "@formbricks/database";
 import { cache, revalidateTag } from "@formbricks/lib/cache";
-import { E2E_TESTING, ENTERPRISE_LICENSE_KEY, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import {
+  E2E_TESTING,
+  ENTERPRISE_LICENSE_KEY,
+  IS_FORMBRICKS_CLOUD,
+  PRODUCT_FEATURE_KEYS,
+} from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { hashString } from "@formbricks/lib/hashString";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -191,31 +196,49 @@ export const fetchLicense = async () => {
 };
 
 export const getRemoveInAppBrandingPermission = (organization: TOrganization): boolean => {
-  if (IS_FORMBRICKS_CLOUD) return organization.billing.features.inAppSurvey.status !== "inactive";
+  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PRODUCT_FEATURE_KEYS.FREE;
   else if (!IS_FORMBRICKS_CLOUD) return true;
   return false;
 };
 
 export const getRemoveLinkBrandingPermission = (organization: TOrganization): boolean => {
-  if (IS_FORMBRICKS_CLOUD) return organization.billing.features.linkSurvey.status !== "inactive";
+  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PRODUCT_FEATURE_KEYS.FREE;
   else if (!IS_FORMBRICKS_CLOUD) return true;
   return false;
 };
 
 export const getRoleManagementPermission = async (organization: TOrganization): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD) return organization.billing.features.inAppSurvey.status !== "inactive";
+  if (IS_FORMBRICKS_CLOUD)
+    return (
+      organization.billing.plan === PRODUCT_FEATURE_KEYS.SCALE ||
+      organization.billing.plan === PRODUCT_FEATURE_KEYS.ENTERPRISE
+    );
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
   return false;
 };
 
 export const getAdvancedTargetingPermission = async (organization: TOrganization): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD) return organization.billing.features.userTargeting.status !== "inactive";
+  if (IS_FORMBRICKS_CLOUD)
+    return (
+      organization.billing.plan === PRODUCT_FEATURE_KEYS.SCALE ||
+      organization.billing.plan === PRODUCT_FEATURE_KEYS.ENTERPRISE
+    );
+  else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
+  else return false;
+};
+
+export const getBiggerUploadFileSizePermission = async (organization: TOrganization): Promise<boolean> => {
+  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PRODUCT_FEATURE_KEYS.FREE;
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
   return false;
 };
 
 export const getMultiLanguagePermission = async (organization: TOrganization): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD) return organization.billing.features.inAppSurvey.status !== "inactive";
+  if (IS_FORMBRICKS_CLOUD)
+    return (
+      organization.billing.plan === PRODUCT_FEATURE_KEYS.SCALE ||
+      organization.billing.plan === PRODUCT_FEATURE_KEYS.ENTERPRISE
+    );
   else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
   return false;
 };
