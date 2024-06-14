@@ -254,6 +254,10 @@ export const createProduct = async (
   try {
     let product = await prisma.product.create({
       data: {
+        config: {
+          channel: null,
+          industry: null,
+        },
         ...data,
         name: productInput.name,
         organizationId,
