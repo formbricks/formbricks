@@ -13,7 +13,8 @@ import {
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { cache } from "../cache";
-import { ITEMS_PER_PAGE } from "../constants";
+import { ITEMS_PER_PAGE, PRODUCT_FEATURE_KEYS } from "../constants";
+import { BILLING_LIMITS } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { getProducts } from "../product/service";
 import { getUsersWithOrganization, updateUser } from "../user/service";
@@ -140,7 +141,21 @@ export const createOrganization = async (
     validateInputs([organizationInput, ZOrganizationCreateInput]);
 
     const organization = await prisma.organization.create({
-      data: organizationInput,
+      data: {
+        ...organizationInput,
+        billing: {
+          plan: PRODUCT_FEATURE_KEYS.FREE,
+          limits: {
+            monthly: {
+              responses: BILLING_LIMITS.FREE.RESPONSES,
+              miu: BILLING_LIMITS.FREE.MIU,
+            },
+          },
+          stripeCustomerId: null,
+          periodStart: new Date(),
+          period: "monthly",
+        },
+      },
       select,
     });
 
@@ -181,7 +196,7 @@ export const updateOrganization = async (
 
     // revalidate cache for environments
     updatedOrganization?.products.forEach((product) => {
-      product.environments.forEach((environment) => {
+      product.environments.forEach(async (environment) => {
         organizationCache.revalidate({
           environmentId: environment.id,
         });
@@ -303,8 +318,13 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
 
       try {
         // Define the start of the month
-        const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        // const now = new Date();
+        // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const organization = await getOrganization(organizationId);
+        if (!organization) {
+          throw new ResourceNotFoundError("Organization", organizationId);
+        }
 
         // Get all environment IDs for the organization
         const products = await getProducts(organizationId);
@@ -319,11 +339,22 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
             AND: [
               { environmentId: { in: environmentIds } },
               {
-                actions: {
-                  some: {
-                    createdAt: { gte: firstDayOfMonth },
+                OR: [
+                  {
+                    actions: {
+                      some: {
+                        createdAt: { gte: organization.billing.periodStart },
+                      },
+                    },
                   },
-                },
+                  {
+                    responses: {
+                      some: {
+                        createdAt: { gte: organization.billing.periodStart },
+                      },
+                    },
+                  },
+                ],
               },
             ],
           },
@@ -351,8 +382,13 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
 
       try {
         // Define the start of the month
-        const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        // const now = new Date();
+        // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const organization = await getOrganization(organizationId);
+        if (!organization) {
+          throw new ResourceNotFoundError("Organization", organizationId);
+        }
 
         // Get all environment IDs for the organization
         const products = await getProducts(organizationId);
@@ -366,8 +402,7 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
           where: {
             AND: [
               { survey: { environmentId: { in: environmentIds } } },
-              { survey: { type: { in: ["app", "website"] } } },
-              { createdAt: { gte: firstDayOfMonth } },
+              { createdAt: { gte: organization.billing.periodStart } },
             ],
           },
         });
