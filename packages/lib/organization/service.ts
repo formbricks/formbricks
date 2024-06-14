@@ -14,6 +14,7 @@ import { TUserNotificationSettings } from "@formbricks/types/user";
 import { cache } from "../cache";
 import { BILLING_LIMITS, ITEMS_PER_PAGE, PRODUCT_FEATURE_KEYS } from "../constants";
 import { environmentCache } from "../environment/cache";
+import { getProducts } from "../product/service";
 import { getUsersWithOrganization, updateUser } from "../user/service";
 import { validateInputs } from "../utils/validate";
 import { organizationCache } from "./cache";
@@ -340,10 +341,7 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
     async () => {
       validateInputs([organizationId, ZId]);
 
-      // temporary workaround due to database performance issues
-      return 0;
-
-      /* try {
+      try {
         // Define the start of the month
         // const now = new Date();
         // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -351,6 +349,10 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
         const organization = await getOrganization(organizationId);
         if (!organization) {
           throw new ResourceNotFoundError("Organization", organizationId);
+        }
+
+        if (!organization.billing.periodStart) {
+          throw new Error("Organization billing period start is not set");
         }
 
         // Get all environment IDs for the organization
@@ -378,7 +380,7 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
         }
 
         throw error;
-      } */
+      }
     },
     [`getMonthlyOrganizationResponseCount-${organizationId}`],
     {
