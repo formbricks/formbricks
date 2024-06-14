@@ -56,6 +56,7 @@ async function main() {
               billing: {
                 stripeCustomerId: null,
                 plan: "free",
+                period: "monthly",
                 limits: {
                   monthly: {
                     responses: 500,
@@ -105,6 +106,7 @@ async function main() {
             data: {
               billing: {
                 plan: "enterprise",
+                period: "monthly",
                 limits: {
                   monthly: {
                     responses: null,
@@ -129,6 +131,7 @@ async function main() {
             data: {
               billing: {
                 plan: "startup",
+                period: "monthly",
                 limits: {
                   monthly: {
                     responses: 2000,
@@ -152,6 +155,7 @@ async function main() {
           data: {
             billing: {
               plan: "free",
+              period: "monthly",
               limits: {
                 monthly: {
                   responses: 500,

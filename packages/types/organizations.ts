@@ -3,6 +3,9 @@ import { z } from "zod";
 export const ZOrganizationBillingPlan = z.enum(["free", "startup", "scale", "enterprise"]);
 export type TOrganizationBillingPlan = z.infer<typeof ZOrganizationBillingPlan>;
 
+export const ZOrganizationBillingPeriod = z.enum(["monthly", "yearly"]);
+export type TOrganizationBillingPeriod = z.infer<typeof ZOrganizationBillingPeriod>;
+
 // responses and miu can be null to support the unlimited plan
 export const ZOrganizationBillingPlanLimits = z.object({
   monthly: z.object({
@@ -16,6 +19,7 @@ export type TOrganizationBillingPlanLimits = z.infer<typeof ZOrganizationBilling
 export const ZOrganizationBilling = z.object({
   stripeCustomerId: z.string().nullable(),
   plan: ZOrganizationBillingPlan.default("free"),
+  period: ZOrganizationBillingPeriod.default("monthly"),
   limits: ZOrganizationBillingPlanLimits.default({
     monthly: {
       responses: 500,

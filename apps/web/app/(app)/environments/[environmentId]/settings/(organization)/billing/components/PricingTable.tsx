@@ -8,12 +8,12 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { CLOUD_PRICING_DATA } from "@formbricks/ee/billing/lib/constants";
 import { cn } from "@formbricks/lib/cn";
-import { TOrganization } from "@formbricks/types/organizations";
+import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 import { Badge } from "@formbricks/ui/Badge";
 import { BillingSlider } from "@formbricks/ui/BillingSlider";
 import { Button } from "@formbricks/ui/Button";
-import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 import { PricingCard } from "@formbricks/ui/PricingCard";
 
 interface PricingTableProps {
@@ -36,13 +36,19 @@ interface PricingTableProps {
 }
 
 export const PricingTable = ({
-  organization,
   environmentId,
+  organization,
   peopleCount,
+  productFeatureKeys,
   responseCount,
   stripePriceLookupKeys,
-  productFeatureKeys,
 }: PricingTableProps) => {
+  const [planPeriod, setPlanPeriod] = useState<TOrganizationBillingPeriod>("monthly");
+
+  const handleMonthlyToggle = (period: TOrganizationBillingPeriod) => {
+    setPlanPeriod(period);
+  };
+
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
   const [cancellingOn, setCancellingOn] = useState<Date | null>(null);
@@ -58,10 +64,8 @@ export const PricingTable = ({
   }, [organization.id]);
 
   const openCustomerPortal = async () => {
-    setLoadingCustomerPortal(true);
     const sessionUrl = await manageSubscriptionAction(organization.id, environmentId);
     router.push(sessionUrl);
-    setLoadingCustomerPortal(false);
   };
 
   const upgradePlan = async (priceLookupKey) => {
@@ -88,48 +92,31 @@ export const PricingTable = ({
     }
   };
 
-  const freeFeatures = [
-    "Unlimited Surveys",
-    "Unlimited Organization Members",
-    "Unlimited Connected Domains / Apps / Websites",
-    "500 Responses / Month",
-    "1,000 Identified Users / Month",
-    "Logic Jumps, Hidden Fields, Recurring Surveys, etc.",
-    "Website Popup Surveys",
-    "In-product Surveys for Web with Attribute Targeting",
-    "Link Surveys (Shareable Page)",
-    "Email Embedded Surveys",
-    "All Integrations",
-    "API & Webhooks",
-  ];
+  const onUpgrade = async (planId: string) => {
+    if (planId === "scale") {
+      await upgradePlan(
+        planPeriod ? stripePriceLookupKeys.SCALE_MONTHLY : stripePriceLookupKeys.SCALE_YEARLY
+      );
+      return;
+    }
 
-  const startupFeatures = [
-    "Everything in Free",
-    "2,000 Responses / Month",
-    "2,500 Identified Users / Month",
-    "Bigger File Uploads in Surveys",
-    "Remove Formbricks Branding",
-  ];
+    if (planId === "startup") {
+      await upgradePlan(
+        planPeriod ? stripePriceLookupKeys.STARTUP_MONTHLY : stripePriceLookupKeys.STARTUP_YEARLY
+      );
+      return;
+    }
 
-  const scaleFeatures = [
-    "Everything in Startup",
-    "5,000 Responses / Month",
-    "20,000 Identified Users / Month",
-    "Email Support",
-    "Multi-Language Surveys",
-    "Advanced Targeting based on User Actions",
-    "Organization Access Control",
-  ];
+    if (planId === "enterprise") {
+      window.location.href = "https://cal.com/johannes/license";
+      return;
+    }
 
-  const enterpriseFeatures = [
-    "Everything in Scale",
-    "Custom Response Limits",
-    "Custom User Identification Limits",
-    "Priority Support with SLA",
-    "99% Uptime SLA",
-    "Customer Success Manager",
-    "Technical Onboarding",
-  ];
+    if (planId === "free") {
+      toast.error("Everybody has the free plan by default!");
+      return;
+    }
+  };
 
   const responsesUnlimitedCheck =
     organization.billing.plan === "enterprise" && organization.billing.limits.monthly.responses === null;
@@ -137,124 +124,115 @@ export const PricingTable = ({
     organization.billing.plan === "enterprise" && organization.billing.limits.monthly.miu === null;
 
   return (
-    <div className="relative">
-      {loadingCustomerPortal && (
-        <div className="absolute h-full w-full rounded-lg bg-slate-900/5">
-          <LoadingSpinner />
-        </div>
-      )}
-      <div className="justify-between gap-4 rounded-lg capitalize">
-        <div className="flex w-full">
-          <h2 className="mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
-            Current Plan: {organization.billing.plan}
-            {cancellingOn && (
-              <Badge
-                className="mx-2"
-                text={`Cancelling: ${cancellingOn ? cancellingOn.toDateString() : ""}`}
-                size="normal"
-                type="warning"
-              />
-            )}
-          </h2>
+    <main>
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-col">
+          <div className="flex w-full">
+            <h2 className="mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
+              Current Plan: {organization.billing.plan}
+              {cancellingOn && (
+                <Badge
+                  className="mx-2"
+                  text={`Cancelling: ${cancellingOn ? cancellingOn.toDateString() : ""}`}
+                  size="normal"
+                  type="warning"
+                />
+              )}
+            </h2>
 
-          {organization.billing.stripeCustomerId && (
-            <div className="flex w-full justify-end">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="justify-center py-2 shadow-sm"
-                loading={loadingCustomerPortal}
-                onClick={openCustomerPortal}>
-                {organization.billing.plan !== "free" ? "Manage Subscription" : "Manage Card details"}
-              </Button>
+            {organization.billing.stripeCustomerId && (
+              <div className="flex w-full justify-end">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="justify-center py-2 shadow-sm"
+                  loading={loadingCustomerPortal}
+                  onClick={openCustomerPortal}>
+                  {organization.billing.plan !== "free" ? "Manage Subscription" : "Manage Card details"}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-2 flex flex-col rounded-lg border border-slate-300 bg-slate-100 py-4 capitalize shadow-sm dark:bg-slate-800">
+            <div
+              className={cn(
+                "relative mx-8 mb-8 flex flex-col gap-4",
+                responsesUnlimitedCheck && "mb-0 flex-row"
+              )}>
+              <p className="text-md font-semibold text-slate-700">Responses</p>
+              {organization.billing.limits.monthly.responses && (
+                <BillingSlider
+                  className="slider-class mb-8"
+                  value={responseCount}
+                  max={organization.billing.limits.monthly.responses * 1.5}
+                  freeTierLimit={organization.billing.limits.monthly.responses}
+                  metric={"Responses"}
+                />
+              )}
+
+              {responsesUnlimitedCheck && <Badge text="Unlimited Responses" type="success" size="normal" />}
             </div>
-          )}
-        </div>
 
-        <div className="mt-2 flex flex-col rounded-lg border border-slate-300 bg-slate-100 py-4 capitalize shadow-sm dark:bg-slate-800">
-          <div
-            className={cn(
-              "relative mx-8 mb-8 flex flex-col gap-4",
-              responsesUnlimitedCheck && "mb-0 flex-row"
-            )}>
-            <p className="text-md font-semibold text-slate-700">Responses</p>
-            {organization.billing.limits.monthly.responses && (
-              <BillingSlider
-                className="slider-class mb-8"
-                value={responseCount}
-                max={organization.billing.limits.monthly.responses * 1.5}
-                freeTierLimit={organization.billing.limits.monthly.responses}
-                metric={"Responses"}
-              />
-            )}
+            <div
+              className={cn(
+                "relative mx-8 flex flex-col gap-4 pb-12",
+                peopleUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
+              )}>
+              <p className="text-md font-semibold text-slate-700">Monthly Identified Users</p>
+              {organization.billing.limits.monthly.miu && (
+                <BillingSlider
+                  className="slider-class"
+                  value={peopleCount}
+                  max={organization.billing.limits.monthly.miu * 1.5}
+                  freeTierLimit={organization.billing.limits.monthly.miu}
+                  metric={"MIU"}
+                />
+              )}
 
-            {responsesUnlimitedCheck && <Badge text="Unlimited Responses" type="success" size="normal" />}
-          </div>
-
-          <div
-            className={cn(
-              "relative mx-8 flex flex-col gap-4 pb-12",
-              peopleUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
-            )}>
-            <p className="text-md font-semibold text-slate-700">Monthly Identified Users</p>
-            {organization.billing.limits.monthly.miu && (
-              <BillingSlider
-                className="slider-class"
-                value={peopleCount}
-                max={organization.billing.limits.monthly.miu * 1.5}
-                freeTierLimit={organization.billing.limits.monthly.miu}
-                metric={"MIU"}
-              />
-            )}
-
-            {peopleUnlimitedCheck && <Badge text="Unlimited MIU" type="success" size="normal" />}
+              {peopleUnlimitedCheck && <Badge text="Unlimited MIU" type="success" size="normal" />}
+            </div>
           </div>
         </div>
-        <div className="flex w-full justify-center gap-x-4">
-          <PricingCard
-            title={"Formbricks Startup"}
-            subtitle={"Ideal for small organizations"}
-            plan="startup"
-            monthlyPrice={49}
-            actionText={"Starting at"}
-            organization={organization}
-            paidFeatures={startupFeatures}
-            onUpgrade={() => upgradePlan(stripePriceLookupKeys.STARTUP_MONTHLY)}
-            productFeatureKeys={productFeatureKeys}
-          />
-          <PricingCard
-            title={"Formbricks Scale"}
-            subtitle={"Ideal for growing organizations"}
-            plan="scale"
-            monthlyPrice={179}
-            actionText={"Starting at"}
-            organization={organization}
-            paidFeatures={scaleFeatures}
-            onUpgrade={async () => {
-              await upgradePlan(stripePriceLookupKeys.SCALE_MONTHLY);
-            }}
-            productFeatureKeys={productFeatureKeys}
-          />
-          <PricingCard
-            title={"Formbricks Enterprise"}
-            subtitle={"Ideal for large organizations"}
-            plan="enterprise"
-            organization={organization}
-            paidFeatures={enterpriseFeatures}
-            onUpgrade={() => (window.location.href = "mailto:hola@formbricks.com")}
-            productFeatureKeys={productFeatureKeys}
-          />
+
+        <div className="mx-auto">
+          <div className="mb-4 flex w-fit max-w-xs cursor-pointer overflow-hidden rounded-lg border border-slate-200 p-1 lg:mb-0">
+            <div
+              className={`flex-1 rounded-md px-4 py-0.5 text-center ${
+                planPeriod === "monthly" ? "bg-slate-200 font-semibold" : "bg-transparent"
+              }`}
+              onClick={() => handleMonthlyToggle("monthly")}>
+              Monthly
+            </div>
+            <div
+              className={`flex-1 rounded-md px-4 py-0.5 text-center ${
+                planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
+              }`}
+              onClick={() => handleMonthlyToggle("yearly")}>
+              Yearly
+            </div>
+          </div>
+          <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-4">
+            <div
+              className="hidden lg:absolute lg:inset-x-px lg:bottom-0 lg:top-4 lg:block lg:rounded-xl lg:rounded-t-2xl lg:border lg:border-slate-200 lg:bg-slate-100 lg:pb-8 lg:ring-1 lg:ring-white/10"
+              aria-hidden="true"
+            />
+            {CLOUD_PRICING_DATA.plans.map((plan) => (
+              <PricingCard
+                planPeriod={planPeriod}
+                key={plan.id}
+                plan={plan}
+                onUpgrade={async () => {
+                  await onUpgrade(plan.id);
+                }}
+                organization={organization}
+                productFeatureKeys={productFeatureKeys}
+                onManageSubscription={openCustomerPortal}
+              />
+            ))}
+          </div>
         </div>
-        <PricingCard
-          title={"Formbricks Free"}
-          subtitle={"Available to Everybody"}
-          plan="free"
-          organization={organization}
-          paidFeatures={freeFeatures}
-          onUpgrade={() => toast.error("Everybody has the free plan by default!")}
-          productFeatureKeys={productFeatureKeys}
-        />
       </div>
-    </div>
+    </main>
   );
 };

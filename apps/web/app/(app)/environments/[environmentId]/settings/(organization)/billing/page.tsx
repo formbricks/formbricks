@@ -41,6 +41,7 @@ const Page = async ({ params }) => {
           activeId="billing"
         />
       </PageHeader>
+
       <PricingTable
         organization={organization}
         environmentId={params.environmentId}

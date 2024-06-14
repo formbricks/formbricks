@@ -3,7 +3,12 @@ import { PRODUCT_FEATURE_KEYS, STRIPE_API_VERSION } from "@formbricks/lib/consta
 import { env } from "@formbricks/lib/env";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { TOrganizationBillingPlan, ZOrganizationBillingPlan } from "@formbricks/types/organizations";
+import {
+  TOrganizationBillingPeriod,
+  TOrganizationBillingPlan,
+  ZOrganizationBillingPeriod,
+  ZOrganizationBillingPlan,
+} from "@formbricks/types/organizations";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
@@ -12,6 +17,7 @@ const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
 
 export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) => {
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
+  console.log("subscription created or updated: ", JSON.stringify(stripeSubscriptionObject, null, 2));
   const organizationId = stripeSubscriptionObject.metadata.organizationId;
 
   if (
@@ -29,14 +35,20 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
   const organization = await getOrganization(organizationId);
   if (!organization) throw new ResourceNotFoundError("Organization not found", organizationId);
 
-  const product = await stripe.products.retrieve(
-    stripeSubscriptionObject.items.data[0].price.product as string
-  );
+  const subscriptionPrice = stripeSubscriptionObject.items.data[0].price;
+  const product = await stripe.products.retrieve(subscriptionPrice.product as string);
+
   if (!product)
     throw new ResourceNotFoundError(
       "Product not found",
       stripeSubscriptionObject.items.data[0].price.product.toString()
     );
+
+  let period: TOrganizationBillingPeriod = "monthly";
+  const periodParsed = ZOrganizationBillingPeriod.safeParse(subscriptionPrice.metadata.period);
+  if (periodParsed.success) {
+    period = periodParsed.data;
+  }
 
   let updatedBillingPlan: TOrganizationBillingPlan = organization.billing.plan;
 
@@ -86,6 +98,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
       ...organization.billing,
       stripeCustomerId: stripeSubscriptionObject.customer as string,
       plan: updatedBillingPlan,
+      period,
       limits: {
         monthly: {
           responses,

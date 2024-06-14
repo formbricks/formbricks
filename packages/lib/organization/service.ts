@@ -153,6 +153,7 @@ export const createOrganization = async (
           },
           stripeCustomerId: null,
           periodStart: new Date(),
+          period: "monthly",
         },
       },
       select,

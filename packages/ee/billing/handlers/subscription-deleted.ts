@@ -24,6 +24,8 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
           miu: BILLING_LIMITS.FREE.MIU,
         },
       },
+      periodStart: new Date(),
+      period: "monthly",
     },
   });
 };

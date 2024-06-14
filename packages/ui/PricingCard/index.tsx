@@ -1,45 +1,74 @@
 import { CheckIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { TOrganization } from "@formbricks/types/organizations";
+import { cn } from "@formbricks/lib/cn";
+import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { ConfirmationModal } from "../ConfirmationModal";
 
-export const PricingCard = ({
-  plan,
-  title,
-  subtitle,
-  monthlyPrice,
-  actionText,
-  organization,
-  paidFeatures,
-  onUpgrade,
-  productFeatureKeys,
-}: {
-  plan: string;
-  title: string;
-  subtitle: string;
-  monthlyPrice?: number;
-  actionText?: string;
+interface PricingCardProps {
+  plan: {
+    id: string;
+    name: string;
+    featured: boolean;
+    price: {
+      monthly: string;
+      yearly: string;
+    };
+    mainFeatures: string[];
+    href: string;
+  };
+  planPeriod: TOrganizationBillingPeriod;
   organization: TOrganization;
-  paidFeatures: string[];
-  onUpgrade: Function;
+  onUpgrade: () => Promise<void>;
+  onManageSubscription: () => Promise<void>;
   productFeatureKeys: {
     FREE: string;
     STARTUP: string;
     SCALE: string;
     ENTERPRISE: string;
   };
-}) => {
+}
+
+export const PricingCard = ({
+  planPeriod,
+  plan,
+  onUpgrade,
+  onManageSubscription,
+  organization,
+  productFeatureKeys,
+}: PricingCardProps) => {
   const [loading, setLoading] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
-  const CTAButton = useMemo(() => {
+  const isCurrentPlan = useMemo(() => {
+    if (organization.billing.plan === productFeatureKeys.FREE && plan.id === productFeatureKeys.FREE) {
+      return true;
+    }
+
     if (
-      organization.billing.plan !== plan &&
-      plan !== productFeatureKeys.ENTERPRISE &&
-      plan !== productFeatureKeys.FREE
+      organization.billing.plan === productFeatureKeys.ENTERPRISE &&
+      plan.id === productFeatureKeys.ENTERPRISE
     ) {
+      return true;
+    }
+
+    return organization.billing.plan === plan.id && organization.billing.period === planPeriod;
+  }, [
+    organization.billing.period,
+    organization.billing.plan,
+    plan.id,
+    planPeriod,
+    productFeatureKeys.ENTERPRISE,
+    productFeatureKeys.FREE,
+  ]);
+
+  const CTAButton = useMemo(() => {
+    if (isCurrentPlan) {
+      return null;
+    }
+
+    if (plan.id !== productFeatureKeys.ENTERPRISE && plan.id !== productFeatureKeys.FREE) {
       if (organization.billing.plan === productFeatureKeys.FREE) {
         return (
           <Button
@@ -49,7 +78,8 @@ export const PricingCard = ({
               setLoading(true);
               await onUpgrade();
               setLoading(false);
-            }}>
+            }}
+            className="flex justify-center">
             Start Free Trial
           </Button>
         );
@@ -61,7 +91,8 @@ export const PricingCard = ({
           loading={loading}
           onClick={() => {
             setUpgradeModalOpen(true);
-          }}>
+          }}
+          className="flex justify-center">
           Switch Plan
         </Button>
       );
@@ -69,104 +100,100 @@ export const PricingCard = ({
 
     return <></>;
   }, [
+    isCurrentPlan,
     loading,
     onUpgrade,
     organization.billing.plan,
-    plan,
+    plan.id,
     productFeatureKeys.ENTERPRISE,
     productFeatureKeys.FREE,
   ]);
 
   return (
-    <>
-      <div className="mt-8 rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
-        <div className="relative p-8">
-          {organization.billing.plan === productFeatureKeys.FREE &&
-            (plan === productFeatureKeys.SCALE || plan === productFeatureKeys.STARTUP) && (
-              <div>
-                <Badge text="30 Days Free Trial!" type="success" size="normal" />
+    <div
+      key={plan.id}
+      className={cn(
+        plan.featured
+          ? "z-10 bg-white shadow-lg ring-1 ring-slate-900/10"
+          : "bg-slate-100 ring-1 ring-white/10 lg:bg-transparent lg:pb-8 lg:ring-0",
+        "relative rounded-xl"
+      )}>
+      <div className="p-8 lg:pt-12 xl:p-10 xl:pt-14">
+        {isCurrentPlan && <Badge text="Current Plan" type="success" size="normal" />}
+
+        <h2
+          id={plan.id}
+          className={cn(
+            plan.featured ? "text-slate-900" : "text-slate-800",
+            "text-sm font-semibold leading-6"
+          )}>
+          {plan.name}
+        </h2>
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between lg:flex-col lg:items-stretch">
+          <div className="mt-2 flex items-center gap-x-4">
+            <p
+              className={cn(
+                plan.featured ? "text-slate-900" : "text-slate-800",
+                "text-4xl font-bold tracking-tight"
+              )}>
+              {planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly}
+            </p>
+            {plan.name !== "Enterprise" && (
+              <div className="text-sm leading-5">
+                <p className={plan.featured ? "text-slate-900" : "text-slate-800"}>/ Month</p>
+                <p className={plan.featured ? "text-slate-500" : "text-slate-400"}>{`Billed ${
+                  planPeriod === "monthly" ? "monthly" : "yearly"
+                }`}</p>
               </div>
             )}
-          <h2 className="mr-2 inline-flex text-2xl font-bold text-slate-700">{title}</h2>
-          {organization.billing.plan === plan && <Badge text="Subscribed" size="normal" type="success" />}
-          <p className=" mt-1 whitespace-pre-wrap text-sm text-slate-600">{subtitle}</p>
-
-          <div className={`flex py-3 ${plan === "free" ? "flex-col md:flex-row" : ""}`}>
-            <div className={`${plan === "free" ? "w-1/3" : "w-3/5"}`}>
-              <ul className="mt-4 space-y-4">
-                {plan === productFeatureKeys.FREE
-                  ? paidFeatures.slice(0, Math.ceil(paidFeatures.length / 3)).map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
-                          <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
-                        </div>
-                        <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature}</span>
-                      </li>
-                    ))
-                  : paidFeatures.map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
-                          <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
-                        </div>
-                        <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature}</span>
-                      </li>
-                    ))}
-              </ul>
-            </div>
-            {plan === "free" && (
-              <>
-                <div className="w-1/3">
-                  <ul className="mt-4 space-y-4">
-                    {paidFeatures
-                      .slice(Math.ceil(paidFeatures.length / 3), 2 * Math.ceil(paidFeatures.length / 3))
-                      .map((feature, index) => (
-                        <li key={index} className="flex items-center">
-                          <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
-                            <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
-                          </div>
-                          <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature}</span>
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-                <div className="w-1/3">
-                  <ul className="mt-4 space-y-4">
-                    {paidFeatures.slice(2 * Math.ceil(paidFeatures.length / 3)).map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
-                          <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
-                        </div>
-                        <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </>
-            )}
-
-            <div className="ml-6 flex w-2/5 flex-col items-end space-y-2">
-              <div className="my-2">
-                {monthlyPrice && actionText && (
-                  <div>
-                    <span className="text-sm font-medium text-slate-400">{actionText}</span>
-                    <br />
-
-                    <span className="text-3xl font-bold text-slate-800">€{monthlyPrice}</span>
-
-                    <span className="text-base font-medium text-slate-400">/ month</span>
-                  </div>
-                )}
-              </div>
-
-              {CTAButton}
-
-              {organization.billing.plan !== plan && plan === productFeatureKeys.ENTERPRISE && (
-                <Button variant="darkCTA" loading={loading} onClick={() => onUpgrade()}>
-                  Contact Us
-                </Button>
-              )}
-            </div>
           </div>
+
+          {CTAButton}
+
+          {plan.id !== productFeatureKeys.FREE && isCurrentPlan && (
+            <Button
+              variant="secondary"
+              loading={loading}
+              onClick={async () => {
+                setLoading(true);
+                await onManageSubscription();
+                setLoading(false);
+              }}
+              className="flex justify-center">
+              Manage Subscription
+            </Button>
+          )}
+
+          {organization.billing.plan !== plan.id && plan.id === productFeatureKeys.ENTERPRISE && (
+            <Button
+              variant="darkCTA"
+              loading={loading}
+              onClick={() => onUpgrade()}
+              className="flex justify-center">
+              Contact Us
+            </Button>
+          )}
+        </div>
+        <div className="mt-8 flow-root sm:mt-10">
+          <ul
+            role="list"
+            className={cn(
+              plan.featured
+                ? "divide-slate-900/5 border-slate-900/5 text-slate-600"
+                : "divide-white/5 border-white/5 text-slate-800",
+              "-my-2 divide-y border-t text-sm leading-6 lg:border-t-0"
+            )}>
+            {plan.mainFeatures.map((mainFeature) => (
+              <li key={mainFeature} className="flex gap-x-3 py-2">
+                <CheckIcon
+                  className={cn(plan.featured ? "text-brand-dark" : "text-slate-500", "h-6 w-5 flex-none")}
+                  aria-hidden="true"
+                />
+
+                {mainFeature}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
@@ -181,12 +208,14 @@ export const PricingCard = ({
         }}
         open={upgradeModalOpen}
         setOpen={setUpgradeModalOpen}
-        text={`Are you sure you want to switch to the ${title} plan? You will be charged €${monthlyPrice} per month.`}
+        text={`Are you sure you want to switch to the ${plan.name} plan? You will be charged ${
+          planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly
+        } per month.`}
         buttonVariant="darkCTA"
         buttonLoading={loading}
         closeOnOutsideClick={false}
         hideCloseButton
       />
-    </>
+    </div>
   );
 };
