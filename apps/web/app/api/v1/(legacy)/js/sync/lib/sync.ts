@@ -3,7 +3,7 @@ import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { reverseTranslateSurvey } from "@formbricks/lib/i18n/reverseTranslation";
 import {
-  getMonthlyActiveOrganizationPeopleCount,
+  // getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@formbricks/lib/organization/service";
@@ -47,7 +47,8 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
 
   // check if Monthly Active Users limit is reached
   if (IS_FORMBRICKS_CLOUD) {
-    const currentMau = await getMonthlyActiveOrganizationPeopleCount(organization.id);
+    // const currentMau = await getMonthlyActiveOrganizationPeopleCount(organization.id);
+    const currentMau = 0;
     const monthlyMiuLimit = organization.billing.limits.monthly.miu;
 
     const isMauLimitReached = monthlyMiuLimit !== null && currentMau >= monthlyMiuLimit;

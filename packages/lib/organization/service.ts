@@ -339,23 +339,21 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
             AND: [
               { environmentId: { in: environmentIds } },
               {
-                OR: [
-                  {
-                    actions: {
-                      some: {
-                        createdAt: { gte: organization.billing.periodStart },
-                      },
-                    },
+                actions: {
+                  some: {
+                    createdAt: { gte: organization.billing.periodStart },
                   },
-                  {
-                    responses: {
-                      some: {
-                        createdAt: { gte: organization.billing.periodStart },
-                      },
-                    },
-                  },
-                ],
+                },
               },
+
+              // TODO: @pandeymangg - figure out how to count people based on responses effectively
+              // {
+              //   responses: {
+              //     some: {
+              //       createdAt: { gte: organization.billing.periodStart },
+              //     },
+              //   },
+              // },
             ],
           },
         });
