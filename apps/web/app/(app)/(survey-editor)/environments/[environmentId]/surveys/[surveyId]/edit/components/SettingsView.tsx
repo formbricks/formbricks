@@ -5,7 +5,6 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
-
 import { HowToSendCard } from "./HowToSendCard";
 import { RecontactOptionsCard } from "./RecontactOptionsCard";
 import { ResponseOptionsCard } from "./ResponseOptionsCard";

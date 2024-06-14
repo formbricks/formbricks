@@ -12,7 +12,6 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 import { FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/Form";

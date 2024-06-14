@@ -1,9 +1,7 @@
 import { LucideIcon } from "lucide-react";
 import Link, { LinkProps } from "next/link";
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, forwardRef } from "react";
-
 import { cn } from "@formbricks/lib/cn";
-
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
 
 type SVGComponent = React.FunctionComponent<React.SVGProps<SVGSVGElement>> | LucideIcon;

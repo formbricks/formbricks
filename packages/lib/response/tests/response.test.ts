@@ -17,11 +17,9 @@ import {
   mockTags,
   mockUserId,
 } from "./__mocks__/data.mock";
-
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
-
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TResponse,
@@ -30,7 +28,6 @@ import {
   TResponseLegacyInput,
 } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
-
 import { selectPerson } from "../../person/service";
 import { mockAttributeClass, mockSurveyOutput } from "../../survey/tests/__mock__/survey.mock";
 import {

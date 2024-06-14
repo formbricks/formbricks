@@ -1,7 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SLACK_AUTH_URL, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";

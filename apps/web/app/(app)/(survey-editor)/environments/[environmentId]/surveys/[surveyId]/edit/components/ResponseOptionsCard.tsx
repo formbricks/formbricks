@@ -5,7 +5,6 @@ import { ArrowUpRight, CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";

@@ -8,7 +8,6 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-
 import { ProductFeatureKeys, StripePriceLookupKeys } from "@formbricks/ee/billing/lib/constants";
 import { TOrganization } from "@formbricks/types/organizations";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";

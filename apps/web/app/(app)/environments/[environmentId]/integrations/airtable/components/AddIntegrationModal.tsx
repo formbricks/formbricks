@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -21,6 +20,7 @@ import {
   TIntegrationAirtableTables,
 } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys";
+import { AdditionalIntegrationSettings } from "@formbricks/ui/AdditionalIntegrationSettings";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
@@ -47,6 +47,8 @@ export type IntegrationModalInputs = {
   table: string;
   survey: string;
   questions: string[];
+  includeHiddenFields: boolean;
+  includeMetadata: boolean;
 };
 
 const NoBaseFoundError = () => {
@@ -73,12 +75,24 @@ export const AddIntegrationModal = ({
   const [tables, setTables] = useState<TIntegrationAirtableTables["tables"]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { handleSubmit, control, watch, setValue, reset } = useForm<IntegrationModalInputs>();
+  const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
+  const [includeMetadata, setIncludeMetadata] = useState(false);
+  const airtableIntegrationData: TIntegrationAirtableInput = {
+    type: "airtable",
+    config: {
+      key: airtableIntegration?.config?.key,
+      data: airtableIntegration.config.data ?? [],
+      email: airtableIntegration?.config?.email,
+    },
+  };
 
   useEffect(() => {
     if (isEditMode) {
       const { index: _index, ...rest } = defaultData;
       reset(rest);
       fetchTable(defaultData.base);
+      setIncludeHiddenFields(defaultData.includeHiddenFields);
+      setIncludeMetadata(defaultData.includeMetadata);
     } else {
       reset();
     }
@@ -105,15 +119,6 @@ export const AddIntegrationModal = ({
         throw new Error("Please select at least one question");
       }
 
-      const airtableIntegrationData: TIntegrationAirtableInput = {
-        type: "airtable",
-        config: {
-          key: airtableIntegration?.config?.key,
-          data: airtableIntegration.config.data ?? [],
-          email: airtableIntegration?.config?.email,
-        },
-      };
-
       const currentTable = tables.find((item) => item.id === data.table);
       const integrationData: TIntegrationAirtableConfigData = {
         surveyId: selectedSurvey.id,
@@ -125,6 +130,8 @@ export const AddIntegrationModal = ({
         baseId: data.base,
         tableId: data.table,
         tableName: currentTable?.name ?? "",
+        includeHiddenFields,
+        includeMetadata,
       };
 
       if (isEditMode) {
@@ -166,10 +173,10 @@ export const AddIntegrationModal = ({
 
   const handleDelete = async (index: number) => {
     try {
-      const integrationCopy = { ...airtableIntegration };
-      integrationCopy.config.data.splice(index, 1);
+      const integrationData = structuredClone(airtableIntegrationData);
+      integrationData.config.data.splice(index, 1);
 
-      await createOrUpdateIntegrationAction(environmentId, integrationCopy);
+      await createOrUpdateIntegrationAction(environmentId, integrationData);
       handleClose();
       router.refresh();
 
@@ -281,42 +288,52 @@ export const AddIntegrationModal = ({
             ) : null}
 
             {survey && selectedSurvey && (
-              <div>
-                <Label htmlFor="Surveys">Questions</Label>
-                <div className="mt-1 rounded-lg border border-slate-200">
-                  <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                    {replaceHeadlineRecall(selectedSurvey, "default", attributeClasses)?.questions.map(
-                      (question) => (
-                        <Controller
-                          key={question.id}
-                          control={control}
-                          name={"questions"}
-                          render={({ field }) => (
-                            <div className="my-1 flex items-center space-x-2">
-                              <label htmlFor={question.id} className="flex cursor-pointer items-center">
-                                <Checkbox
-                                  type="button"
-                                  id={question.id}
-                                  value={question.id}
-                                  className="bg-white"
-                                  checked={field.value?.includes(question.id)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([...field.value, question.id])
-                                      : field.onChange(field.value?.filter((value) => value !== question.id));
-                                  }}
-                                />
-                                <span className="ml-2">
-                                  {getLocalizedValue(question.headline, "default")}
-                                </span>
-                              </label>
-                            </div>
-                          )}
-                        />
-                      )
-                    )}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="Surveys">Questions</Label>
+                  <div className="mt-1 rounded-lg border border-slate-200">
+                    <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
+                      {replaceHeadlineRecall(selectedSurvey, "default", attributeClasses)?.questions.map(
+                        (question) => (
+                          <Controller
+                            key={question.id}
+                            control={control}
+                            name={"questions"}
+                            render={({ field }) => (
+                              <div className="my-1 flex items-center space-x-2">
+                                <label htmlFor={question.id} className="flex cursor-pointer items-center">
+                                  <Checkbox
+                                    type="button"
+                                    id={question.id}
+                                    value={question.id}
+                                    className="bg-white"
+                                    checked={field.value?.includes(question.id)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, question.id])
+                                        : field.onChange(
+                                            field.value?.filter((value) => value !== question.id)
+                                          );
+                                    }}
+                                  />
+                                  <span className="ml-2">
+                                    {getLocalizedValue(question.headline, "default")}
+                                  </span>
+                                </label>
+                              </div>
+                            )}
+                          />
+                        )
+                      )}
+                    </div>
                   </div>
                 </div>
+                <AdditionalIntegrationSettings
+                  includeHiddenFields={includeHiddenFields}
+                  includeMetadata={includeMetadata}
+                  setIncludeHiddenFields={setIncludeHiddenFields}
+                  setIncludeMetadata={setIncludeMetadata}
+                />
               </div>
             )}
 

@@ -2,7 +2,6 @@ import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentI
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";

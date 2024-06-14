@@ -1,6 +1,5 @@
 import { PeopleSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PeopleSecondaryNavigation";
 import { TagIcon } from "lucide-react";
-
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 

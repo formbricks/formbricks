@@ -1,5 +1,4 @@
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
-
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TActionClass } from "@formbricks/types/actionClasses";
 

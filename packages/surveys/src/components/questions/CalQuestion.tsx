@@ -7,7 +7,6 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";

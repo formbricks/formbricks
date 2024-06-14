@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { useState } from "react";
-
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
@@ -8,7 +7,6 @@ import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyQuestionSummaryDate } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
-
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface DateQuestionSummary {

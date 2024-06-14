@@ -311,11 +311,12 @@ model Survey {
 
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
-  verifyEmail       Json?
-  pin               String?
-  resultShareKey    String?          @unique
-  displayPercentage Decimal?
-  languages         SurveyLanguage[]
+  verifyEmail        Json?
+  pin                String?
+  resultShareKey     String?          @unique
+  displayPercentage  Decimal?
+  languages          SurveyLanguage[]
+  showLanguageSwitch Boolean?
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
@@ -432,6 +433,9 @@ model Product {
   /// @zod.custom(imports.ZProductStyling)
   /// [Styling]
   styling              Json            @default("{\"allowStyleOverwrite\":true}")
+  /// @zod.custom(imports.ZProductConfig)
+  /// [ProductConfig]
+  config               Json            @default("{}")
   recontactDays        Int             @default(7)
   linkSurveyBranding   Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
   inAppSurveyBranding  Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys

@@ -1,7 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
-
 import { getAttributesByUserId, updateAttributes } from "@formbricks/lib/attribute/service";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { ZJsPeopleUpdateAttributeInput } from "@formbricks/types/js";

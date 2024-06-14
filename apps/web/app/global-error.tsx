@@ -3,7 +3,6 @@
 import * as Sentry from "@sentry/nextjs";
 import Error from "next/error";
 import { useEffect } from "react";
-
 import { Button } from "@formbricks/ui/Button";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 

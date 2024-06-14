@@ -1,5 +1,4 @@
 import z from "zod";
-
 import { ZLegacySurvey } from "./LegacySurvey";
 import { ZActionClass } from "./actionClasses";
 import { ZAttributes } from "./attributes";

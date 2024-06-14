@@ -3,7 +3,6 @@
 import { navigation } from "@/lib/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
 import { Button } from "./Button";
 import { DiscordIcon } from "./icons/DiscordIcon";
 import { GithubIcon } from "./icons/GithubIcon";

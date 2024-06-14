@@ -1,7 +1,6 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { hasOrganizationAccess, hasOrganizationAuthority, isOwner } from "@formbricks/lib/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { updateInvite } from "@formbricks/lib/invite/service";
