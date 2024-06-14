@@ -50,7 +50,6 @@ export const PricingTable = ({
   };
 
   const router = useRouter();
-  const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
   const [cancellingOn, setCancellingOn] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -146,7 +145,6 @@ export const PricingTable = ({
                   size="sm"
                   variant="secondary"
                   className="justify-center py-2 shadow-sm"
-                  loading={loadingCustomerPortal}
                   onClick={openCustomerPortal}>
                   {organization.billing.plan !== "free" ? "Manage Subscription" : "Manage Card details"}
                 </Button>
