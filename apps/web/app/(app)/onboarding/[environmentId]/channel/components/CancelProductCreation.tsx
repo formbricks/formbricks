@@ -1,8 +1,9 @@
 "use client";
 
 import { deleteProductAction } from "@/app/(app)/environments/[environmentId]/product/general/actions";
+import { XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@formbricks/ui/Button";
 
 interface CancelProductCreationProps {
@@ -22,8 +23,12 @@ export const CancelProductCreation = ({ environmentId, productId }: CancelProduc
     }
   };
   return (
-    <Button className="mt-6" variant="secondary" onClick={cancelProductCreation} loading={isDeleting}>
-      Cancel Product Creation
+    <Button
+      className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
+      variant="minimal"
+      onClick={cancelProductCreation}
+      loading={isDeleting}>
+      <XIcon className="h-7 w-7" strokeWidth={1.5} />
     </Button>
   );
 };

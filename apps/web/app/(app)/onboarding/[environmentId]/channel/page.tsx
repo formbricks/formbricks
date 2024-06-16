@@ -14,15 +14,15 @@ interface ChannelPageProps {
 const Page = async ({ params }: ChannelPageProps) => {
   const channelOptions = [
     {
-      title: "Public Website",
-      description: "Display surveys on any website event, target with anonymus attributes.",
+      title: "Public website",
+      description: "Display surveys on public websites, well timed and targeted.",
       icon: EarthIcon,
       iconText: "Built for scale",
       href: `/onboarding/${params.environmentId}/industry?channel=website`,
     },
     {
-      title: "App with Sign Up",
-      description: "Run highly targeted micro-surveys with any user cohort",
+      title: "App with sign up",
+      description: "Run highly targeted surveys with any user cohort.",
       icon: CircleUserRoundIcon,
       iconText: "Enrich user profiles",
       href: `/onboarding/${params.environmentId}/industry?channel=app`,
@@ -30,7 +30,7 @@ const Page = async ({ params }: ChannelPageProps) => {
     {
       channel: "link",
       title: "Anywhere online",
-      description: "Create link and email surveys, reach your people anywhere",
+      description: "Create link and email surveys, reach your people anywhere.",
       icon: SendHorizonalIcon,
       iconText: "100% custom branding",
       href: `/onboarding/${params.environmentId}/industry?channel=link`,
@@ -50,10 +50,10 @@ const Page = async ({ params }: ChannelPageProps) => {
   const products = await getProducts(organization.id);
 
   return (
-    <div className="flex min-h-full min-w-full flex-col items-center justify-center">
+    <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       <OnboardingTitle
         title="Where do you want to survey people?"
-        subtitle="Get started with proven Best Practices 🚀"
+        subtitle="Get started with proven best practices 🚀"
       />
       <OnboardingOptionsContainer options={channelOptions} />
       {products.length > 1 && (

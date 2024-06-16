@@ -18,12 +18,14 @@ interface OnboardingSetupInstructionsProps {
   environmentId: string;
   webAppUrl: string;
   channel: TProductConfigChannel;
+  widgetSetupCompleted: boolean;
 }
 
 export const OnboardingSetupInstructions = ({
   environmentId,
   webAppUrl,
   channel,
+  widgetSetupCompleted,
 }: OnboardingSetupInstructionsProps) => {
   const [activeTab, setActiveTab] = useState(tabs[0].id);
   const htmlSnippetForAppSurveys = `<!-- START Formbricks Surveys -->
@@ -134,7 +136,7 @@ export const OnboardingSetupInstructions = ({
             <div className="mt-4 flex justify-between space-x-2">
               <Button
                 id="onboarding-inapp-connect-copy-code"
-                variant="darkCTA"
+                variant={widgetSetupCompleted ? "secondary" : "darkCTA"}
                 onClick={() => {
                   navigator.clipboard.writeText(
                     channel === "app" ? htmlSnippetForAppSurveys : htmlSnippetForWebsiteSurveys

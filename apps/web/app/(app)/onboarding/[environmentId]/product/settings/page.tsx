@@ -27,7 +27,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
   }
 
   return (
-    <div className="flex min-h-full min-w-full flex-col items-center justify-center">
+    <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       {channel === "link" ? (
         <OnboardingTitle
           title="Match your brand, get 2x more responses."

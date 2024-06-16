@@ -27,8 +27,8 @@ const Page = async ({ params, searchParams }: ConnectPageProps) => {
   return (
     <div className="flex min-h-full flex-col items-center justify-center py-10">
       <OnboardingTitle
-        title={`Now lets connect your ${customHeadline} with Formbricks`}
-        subtitle="If you don't do it now, chances are low that you will ever do it! :)"
+        title={`Let's connect your ${customHeadline} with Formbricks`}
+        subtitle="If you don't do it now, chances are low that you will ever do it!"
       />
       <div className="space-y-4 text-center">
         <p className="text-4xl font-medium text-slate-800"></p>
