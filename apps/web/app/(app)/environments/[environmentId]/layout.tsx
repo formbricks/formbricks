@@ -25,6 +25,10 @@ const EnvLayout = async ({ children, params }) => {
     throw new Error("Organization not found");
   }
 
+  if (!session.user.onboardingCompleted) {
+    return redirect(`/onboarding/${params.environmentId}/channel`);
+  }
+
   return (
     <>
       <ResponseFilterProvider>

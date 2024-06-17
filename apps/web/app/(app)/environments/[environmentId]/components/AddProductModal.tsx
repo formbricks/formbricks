@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
@@ -30,12 +31,18 @@ export const AddProductModal = ({ environmentId, open, setOpen }: AddProductModa
 
     try {
       setLoading(true);
-      const newEnv = await createProductAction(environmentId, {
+      const product = await createProductAction(environmentId, {
         name: data.name,
       });
 
+      // get production environment
+      const productionEnvironment = product.environments.find(
+        (environment) => environment.type === "production"
+      );
+      if (!productionEnvironment) throw new ResourceNotFoundError("Production environment", environmentId);
+
       toast.success("Product created successfully!");
-      router.push(`/onboarding/${newEnv.id}/channel`);
+      router.push(`/onboarding/${productionEnvironment.id}/channel`);
       setOpen(false);
     } catch (error) {
       console.error(error);

@@ -2,7 +2,6 @@ import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { ONBOARDING_DISABLED } from "@formbricks/lib/constants";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
 import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
@@ -43,10 +42,6 @@ const Page = async () => {
 
   if (userOrganizations.length === 0) {
     return redirect("/setup/organization/create");
-  }
-
-  if (!ONBOARDING_DISABLED && !session.user.onboardingCompleted) {
-    return redirect(`/onboarding/${environment.id}/channel`);
   }
 
   return redirect(`/environments/${environment.id}`);

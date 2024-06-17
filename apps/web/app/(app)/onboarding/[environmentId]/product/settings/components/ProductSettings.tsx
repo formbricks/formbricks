@@ -34,10 +34,16 @@ interface ProductSettingsProps {
   channel: TProductConfigChannel;
   industry: TProductConfigIndustry;
   product: TProduct;
+  defaultBrandColor: string;
 }
 
-const defautBrandColor = "#64748b";
-export const ProductSettings = ({ environmentId, channel, industry, product }: ProductSettingsProps) => {
+export const ProductSettings = ({
+  environmentId,
+  channel,
+  industry,
+  product,
+  defaultBrandColor,
+}: ProductSettingsProps) => {
   const router = useRouter();
 
   const updateProduct = async (data: TProductUpdateInput) => {
@@ -53,13 +59,15 @@ export const ProductSettings = ({ environmentId, channel, industry, product }: P
         await finishProductOnboardingAction(product.id, { channel, industry });
         router.push(`/environments/${environmentId}/surveys?channel=${channel}&industry=${industry}`);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const form = useForm<TProductUpdateInput>({
     defaultValues: {
       name: product.name,
-      brandColor: defautBrandColor,
+      brandColor: defaultBrandColor,
       logo: {
         url: "",
         bgColor: undefined,
@@ -68,7 +76,7 @@ export const ProductSettings = ({ environmentId, channel, industry, product }: P
     resolver: zodResolver(ZProductUpdateInput),
   });
   const logoUrl = form.watch("logo.url");
-  const brandColor = form.watch("brandColor") ?? defautBrandColor;
+  const brandColor = form.watch("brandColor") ?? defaultBrandColor;
   const { isSubmitting } = form.formState;
 
   return (
@@ -88,7 +96,7 @@ export const ProductSettings = ({ environmentId, channel, industry, product }: P
                   <FormControl>
                     <div>
                       <ColorPicker
-                        color={field.value || defautBrandColor}
+                        color={field.value || defaultBrandColor}
                         onChange={(color) => field.onChange(color)}
                       />
                       {error?.message && <FormError className="text-left">{error.message}</FormError>}
@@ -115,7 +123,7 @@ export const ProductSettings = ({ environmentId, channel, industry, product }: P
                         value={field.value}
                         onChange={(name) => field.onChange(name)}
                         placeholder="Formbricks Merch Store"
-                        className=" bg-white"
+                        className="bg-white"
                       />
                       {error?.message && <FormError className="text-left">{error.message}</FormError>}
                     </div>

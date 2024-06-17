@@ -2,7 +2,9 @@ import { ProductSettings } from "@/app/(app)/onboarding/[environmentId]/product/
 import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTitle";
 import { getCustomHeadline } from "@/app/(app)/onboarding/utils";
 import { notFound } from "next/navigation";
+import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { startsWithVowel } from "@formbricks/lib/utils/strings";
 import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 
 interface ProductSettingsPageProps {
@@ -35,7 +37,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
         />
       ) : (
         <OnboardingTitle
-          title={`You run ${customHeadline === "app" ? "an app" : "a " + customHeadline}, how exciting!`}
+          title={`You run ${startsWithVowel(customHeadline) ? "an " + customHeadline : "a " + customHeadline}, how exciting!`}
           subtitle="Get 2x more responses matching surveys with your brand and UI"
         />
       )}
@@ -44,6 +46,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
         channel={channel}
         industry={industry}
         product={product}
+        defaultBrandColor={DEFAULT_BRAND_COLOR}
       />
     </div>
   );

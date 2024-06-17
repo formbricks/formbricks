@@ -16,6 +16,7 @@ const Page = async ({ params, searchParams }: OnboardingSurveyPageProps) => {
   const channel = searchParams.channel;
   const industry = searchParams.industry;
   if (!channel || !industry) return notFound();
+
   return <OnboardingSurvey environmentId={params.environmentId} channel={channel} />;
 };
 
