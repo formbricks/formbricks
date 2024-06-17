@@ -1,8 +1,8 @@
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { TProduct } from "@formbricks/types/product";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
-import { TTemplate } from "@formbricks/types/templates";
+import { TProduct, TProductIndustry } from "@formbricks/types/product";
+import { TSurveyQuestion, TSurveyType } from "@formbricks/types/surveys";
+import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 
 export const replaceQuestionPresetPlaceholders = (
   question: TSurveyQuestion,
@@ -35,3 +35,24 @@ export const replacePresetPlaceholders = (template: TTemplate, product: any) => 
   });
   return { ...template, preset };
 };
+
+export const channelMapping: { value: TSurveyType; label: string }[] = [
+  { value: "website", label: "Website Survey" },
+  { value: "app", label: "App Survey" },
+  { value: "email", label: "Email Survey" },
+  { value: "link", label: "Link Survey" },
+];
+
+export const industryMapping: { value: TProductIndustry; label: string }[] = [
+  { value: "eCommerce", label: "E-Commerce" },
+  { value: "saas", label: "SaaS" },
+  { value: "other", label: "Other" },
+];
+
+export const roleMapping: { value: TTemplateRole; label: string }[] = [
+  { value: "productManager", label: "Product Manager" },
+  { value: "customerSuccess", label: "Customer Success" },
+  { value: "marketing", label: "Marketing" },
+  { value: "sales", label: "Sales" },
+  { value: "other", label: "Other" },
+];

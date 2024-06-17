@@ -1,12 +1,11 @@
 import { SplitIcon } from "lucide-react";
-import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TProduct, TProductIndustry } from "@formbricks/types/product";
-import { TSurveyType } from "@formbricks/types/surveys";
-import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
+import { TProduct } from "@formbricks/types/product";
+import { TTemplate } from "@formbricks/types/templates";
 import { Button } from "../../Button";
 import { TooltipRenderer } from "../../Tooltip";
 import { replacePresetPlaceholders } from "../lib/utils";
+import { TemplateTags } from "./TemplateTags";
 
 interface TemplateProps {
   template: TTemplate;
@@ -16,9 +15,6 @@ interface TemplateProps {
   product: TProduct;
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
-  channelMapping: { value: TSurveyType; label: string }[];
-  industryMapping: { value: TProductIndustry; label: string }[];
-  roleMapping: { value: TTemplateRole; label: string }[];
 }
 
 export const Template = ({
@@ -30,20 +26,6 @@ export const Template = ({
   createSurvey,
   loading,
 }: TemplateProps) => {
-  const roleBasedStyling = useMemo(() => {
-    switch (template.role) {
-      case "productManager":
-        return "border-blue-300 bg-blue-50 text-blue-500";
-      case "marketing":
-        return "border-orange-300 bg-orange-50 text-orange-500";
-      case "sales":
-        return "border-emerald-300 bg-emerald-50 text-emerald-500";
-      case "customerSuccess":
-        return "border-violet-300 bg-violet-50 text-violet-500";
-      default:
-        return "border-slate-300 bg-slate-50 text-slate-500";
-    }
-  }, [template.role]);
   return (
     <div
       onClick={() => {
@@ -57,7 +39,7 @@ export const Template = ({
         "duration-120 group relative cursor-pointer rounded-lg bg-white p-6 shadow transition-all duration-150 hover:ring-2 hover:ring-slate-300"
       )}>
       <div className="flex">
-        <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{template.role}</div>
+        <TemplateTags role={template.role} channels={template.channels} industries={template.industries} />
         {template.preset.questions.some((question) => question.logic && question.logic.length > 0) && (
           <TooltipRenderer tooltipContent="This survey uses branching logic." shouldRender={true}>
             <SplitIcon className="ml-1.5 h-5 w-5 rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />

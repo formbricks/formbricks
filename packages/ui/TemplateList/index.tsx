@@ -12,25 +12,7 @@ import { createSurveyAction } from "./actions";
 import { StartFromScratchTemplate } from "./components/StartFromScratchTemplate";
 import { Template } from "./components/Template";
 import { TemplateFilters } from "./components/TemplateFilters";
-
-const channels: { value: TSurveyType; label: string }[] = [
-  { value: "website", label: "Website Survey" },
-  { value: "app", label: "App Survey" },
-  { value: "email", label: "Email Survey" },
-  { value: "link", label: "Link Survey" },
-];
-const industries: { value: TProductIndustry; label: string }[] = [
-  { value: "eCommerce", label: "E-Commerce" },
-  { value: "saas", label: "SaaS" },
-  { value: "other", label: "Other" },
-];
-const roles: { value: TTemplateRole; label: string }[] = [
-  { value: "productManager", label: "Product Manager" },
-  { value: "customerSuccess", label: "Customer Success" },
-  { value: "marketing", label: "Marketing" },
-  { value: "sales", label: "Sales" },
-  { value: "other", label: "Other" },
-];
+import { channelMapping, industryMapping, roleMapping } from "./lib/utils";
 
 interface TemplateListProps {
   environmentId: string;
@@ -106,7 +88,7 @@ export const TemplateList = ({
           setSelectedFilter={setSelectedFilter}
           templateSearch={templateSearch}
           prefilledFilters={prefilledFilters}
-          allFilters={[channels, industries, roles]}
+          allFilters={[channelMapping, industryMapping, roleMapping]}
         />
       )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -131,9 +113,6 @@ export const TemplateList = ({
               product={product}
               createSurvey={createSurvey}
               loading={loading}
-              channelMapping={channels}
-              industryMapping={industries}
-              roleMapping={roles}
             />
           );
         })}
