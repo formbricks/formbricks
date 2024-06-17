@@ -1,8 +1,9 @@
 "use client";
 
 import type { TEnvironment } from "@formbricks/types/environment";
-import type { TProduct } from "@formbricks/types/product";
-import { TTemplateChannel, TTemplateIndustry, TTemplateRole } from "@formbricks/types/templates";
+import type { TProduct, TProductIndustry } from "@formbricks/types/product";
+import { TSurveyType } from "@formbricks/types/surveys";
+import { TTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { TemplateList } from "@formbricks/ui/TemplateList";
 
@@ -11,7 +12,7 @@ interface SurveyStarterProps {
   environment: TEnvironment;
   product: TProduct;
   user: TUser;
-  prefilledFilters: (TTemplateChannel | TTemplateIndustry | TTemplateRole | null)[];
+  prefilledFilters: (TSurveyType | TProductIndustry | TTemplateRole | null)[];
 }
 
 export const SurveyStarter = ({

@@ -2,7 +2,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { TTemplateChannel, TTemplateIndustry, TTemplateRole } from "@formbricks/types/templates";
+import { TProductIndustry } from "@formbricks/types/product";
+import { TSurveyType } from "@formbricks/types/surveys";
+import { TTemplateRole } from "@formbricks/types/templates";
 import { TemplateContainerWithPreview } from "./components/TemplateContainer";
 
 interface SurveyTemplateProps {
@@ -10,8 +12,8 @@ interface SurveyTemplateProps {
     environmentId: string;
   };
   searchParams: {
-    channel?: TTemplateChannel;
-    industry?: TTemplateIndustry;
+    channel?: TSurveyType;
+    industry?: TProductIndustry;
     role?: TTemplateRole;
   };
 }

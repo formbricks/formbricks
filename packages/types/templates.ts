@@ -1,22 +1,16 @@
 import { z } from "zod";
 import { ZLegacySurveyQuestions, ZLegacySurveyThankYouCard, ZLegacySurveyWelcomeCard } from "./LegacySurvey";
-import { ZSurveyHiddenFields, ZSurveyQuestions, ZSurveyThankYouCard, ZSurveyWelcomeCard } from "./surveys";
+import { ZProductIndustry } from "./product";
+import {
+  ZSurveyHiddenFields,
+  ZSurveyQuestions,
+  ZSurveyThankYouCard,
+  ZSurveyType,
+  ZSurveyWelcomeCard,
+} from "./surveys";
 import { ZUserObjective } from "./user";
 
-export const ZTemplateChannel = z.enum(["Website Survey", "App Survey", "Email Survey", "Link Survey"]);
-export type TTemplateChannel = z.infer<typeof ZTemplateChannel>;
-
-export const ZTemplateIndustry = z.enum([
-  "E-Commerce",
-  "SaaS",
-  "Healthcare",
-  "Education",
-  "Government",
-  "Other",
-]);
-export type TTemplateIndustry = z.infer<typeof ZTemplateIndustry>;
-
-export const ZTemplateRole = z.enum(["Product Manager", "Customer Success", "Marketing", "Sales", "Other"]);
+export const ZTemplateRole = z.enum(["productManager", "customerSuccess", "marketing", "sales", "other"]);
 export type TTemplateRole = z.infer<typeof ZTemplateRole>;
 
 export const ZTemplate = z.object({
@@ -24,8 +18,8 @@ export const ZTemplate = z.object({
   description: z.string(),
   icon: z.any().optional(),
   role: ZTemplateRole.optional(),
-  channels: z.array(ZTemplateChannel).optional(),
-  industries: z.array(ZTemplateIndustry).optional(),
+  channels: z.array(ZSurveyType).optional(),
+  industries: z.array(ZProductIndustry).optional(),
   objectives: z.array(ZUserObjective).optional(),
   preset: z.object({
     name: z.string(),

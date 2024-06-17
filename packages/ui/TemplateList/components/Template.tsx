@@ -1,8 +1,9 @@
 import { SplitIcon } from "lucide-react";
 import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TProduct } from "@formbricks/types/product";
-import { TTemplate } from "@formbricks/types/templates";
+import { TProduct, TProductIndustry } from "@formbricks/types/product";
+import { TSurveyType } from "@formbricks/types/surveys";
+import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 import { Button } from "../../Button";
 import { TooltipRenderer } from "../../Tooltip";
 import { replacePresetPlaceholders } from "../lib/utils";
@@ -15,6 +16,9 @@ interface TemplateProps {
   product: TProduct;
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
+  channelMapping: { value: TSurveyType; label: string }[];
+  industryMapping: { value: TProductIndustry; label: string }[];
+  roleMapping: { value: TTemplateRole; label: string }[];
 }
 
 export const Template = ({
@@ -28,13 +32,13 @@ export const Template = ({
 }: TemplateProps) => {
   const roleBasedStyling = useMemo(() => {
     switch (template.role) {
-      case "Product Manager":
+      case "productManager":
         return "border-blue-300 bg-blue-50 text-blue-500";
-      case "Marketing":
+      case "marketing":
         return "border-orange-300 bg-orange-50 text-orange-500";
-      case "Sales":
+      case "sales":
         return "border-emerald-300 bg-emerald-50 text-emerald-500";
-      case "Customer Success":
+      case "customerSuccess":
         return "border-violet-300 bg-violet-50 text-violet-500";
       default:
         return "border-slate-300 bg-slate-50 text-slate-500";

@@ -244,6 +244,7 @@ enum SurveyType {
   web
   website
   app
+  email
 }
 
 enum displayOptions {

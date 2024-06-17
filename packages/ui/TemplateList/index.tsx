@@ -4,22 +4,33 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { templates, testTemplate } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
-import type { TProduct } from "@formbricks/types/product";
-import { TSurveyInput } from "@formbricks/types/surveys";
-import {
-  TTemplate,
-  TTemplateChannel,
-  TTemplateIndustry,
-  TTemplateRole,
-  ZTemplateChannel,
-  ZTemplateIndustry,
-  ZTemplateRole,
-} from "@formbricks/types/templates";
+import { type TProduct, type TProductIndustry, ZProductIndustry } from "@formbricks/types/product";
+import { TSurveyInput, TSurveyType, ZSurveyType } from "@formbricks/types/surveys";
+import { TTemplate, TTemplateRole, ZTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { createSurveyAction } from "./actions";
 import { StartFromScratchTemplate } from "./components/StartFromScratchTemplate";
 import { Template } from "./components/Template";
 import { TemplateFilters } from "./components/TemplateFilters";
+
+const channels: { value: TSurveyType; label: string }[] = [
+  { value: "website", label: "Website Survey" },
+  { value: "app", label: "App Survey" },
+  { value: "email", label: "Email Survey" },
+  { value: "link", label: "Link Survey" },
+];
+const industries: { value: TProductIndustry; label: string }[] = [
+  { value: "eCommerce", label: "E-Commerce" },
+  { value: "saas", label: "SaaS" },
+  { value: "other", label: "Other" },
+];
+const roles: { value: TTemplateRole; label: string }[] = [
+  { value: "productManager", label: "Product Manager" },
+  { value: "customerSuccess", label: "Customer Success" },
+  { value: "marketing", label: "Marketing" },
+  { value: "sales", label: "Sales" },
+  { value: "other", label: "Other" },
+];
 
 interface TemplateListProps {
   environmentId: string;
@@ -27,7 +38,7 @@ interface TemplateListProps {
   environment: TEnvironment;
   product: TProduct;
   templateSearch?: string;
-  prefilledFilters: (TTemplateChannel | TTemplateIndustry | TTemplateRole | null)[];
+  prefilledFilters: (TSurveyType | TProductIndustry | TTemplateRole | null)[];
   onTemplateClick: (template: TTemplate) => void;
 }
 
@@ -44,7 +55,7 @@ export const TemplateList = ({
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] =
-    useState<(TTemplateChannel | TTemplateIndustry | TTemplateRole | null)[]>(prefilledFilters);
+    useState<(TSurveyType | TProductIndustry | TTemplateRole | null)[]>(prefilledFilters);
   const createSurvey = async (activeTemplate: TTemplate) => {
     setLoading(true);
     const surveyType = environment?.widgetSetupCompleted ? "app" : "link";
@@ -63,8 +74,8 @@ export const TemplateList = ({
         return template.name.toLowerCase().startsWith(templateSearch.toLowerCase());
       }
       // Parse and validate the filters
-      const channelParseResult = ZTemplateChannel.nullable().safeParse(selectedFilter[0]);
-      const industryParseResult = ZTemplateIndustry.nullable().safeParse(selectedFilter[1]);
+      const channelParseResult = ZSurveyType.nullable().safeParse(selectedFilter[0]);
+      const industryParseResult = ZProductIndustry.nullable().safeParse(selectedFilter[1]);
       const roleParseResult = ZTemplateRole.nullable().safeParse(selectedFilter[2]);
 
       // Ensure all validations are successful
@@ -95,6 +106,7 @@ export const TemplateList = ({
           setSelectedFilter={setSelectedFilter}
           templateSearch={templateSearch}
           prefilledFilters={prefilledFilters}
+          allFilters={[channels, industries, roles]}
         />
       )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -119,6 +131,9 @@ export const TemplateList = ({
               product={product}
               createSurvey={createSurvey}
               loading={loading}
+              channelMapping={channels}
+              industryMapping={industries}
+              roleMapping={roles}
             />
           );
         })}

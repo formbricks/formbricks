@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SubmitHandler, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
-
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";

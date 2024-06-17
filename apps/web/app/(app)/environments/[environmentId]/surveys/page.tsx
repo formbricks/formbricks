@@ -10,7 +10,9 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveyCount } from "@formbricks/lib/survey/service";
-import { TTemplateChannel, TTemplateIndustry, TTemplateRole } from "@formbricks/types/templates";
+import { TProductIndustry } from "@formbricks/types/product";
+import { TSurveyType } from "@formbricks/types/surveys";
+import { TTemplateRole } from "@formbricks/types/templates";
 import { Button } from "@formbricks/ui/Button";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
@@ -25,8 +27,8 @@ interface SurveyTemplateProps {
     environmentId: string;
   };
   searchParams: {
-    channel?: TTemplateChannel;
-    industry?: TTemplateIndustry;
+    channel?: TSurveyType;
+    industry?: TProductIndustry;
     role?: TTemplateRole;
   };
 }
