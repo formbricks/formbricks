@@ -6,15 +6,13 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TOrganization,
-  TOrganizationBilling,
   TOrganizationCreateInput,
   TOrganizationUpdateInput,
   ZOrganizationCreateInput,
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { cache } from "../cache";
-import { ITEMS_PER_PAGE, PRODUCT_FEATURE_KEYS } from "../constants";
-import { BILLING_LIMITS } from "../constants";
+import { BILLING_LIMITS, ITEMS_PER_PAGE, PRODUCT_FEATURE_KEYS } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { getProducts } from "../product/service";
 import { getUsersWithOrganization, updateUser } from "../user/service";
@@ -273,44 +271,6 @@ export const deleteOrganization = async (organizationId: string): Promise<TOrgan
   }
 };
 
-export const getOrganizationsWithPaidPlan = (): Promise<TOrganization[]> =>
-  cache(
-    async () => {
-      try {
-        const fetchedOrganizations = await prisma.organization.findMany({
-          where: {
-            OR: [
-              {
-                billing: {
-                  path: ["features", "inAppSurvey", "status"],
-                  not: "inactive",
-                },
-              },
-              {
-                billing: {
-                  path: ["features", "userTargeting", "status"],
-                  not: "inactive",
-                },
-              },
-            ],
-          },
-          select,
-        });
-
-        return fetchedOrganizations;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-        throw error;
-      }
-    },
-    ["getOrganizationsWithPaidPlan"],
-    {
-      tags: [],
-    }
-  )();
-
 export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string): Promise<number> =>
   cache(
     async () => {
@@ -322,43 +282,56 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
         // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
         const organization = await getOrganization(organizationId);
+
         if (!organization) {
           throw new ResourceNotFoundError("Organization", organizationId);
+        }
+
+        if (!organization.billing.periodStart) {
+          throw new Error("Organization billing period start is not set");
         }
 
         // Get all environment IDs for the organization
         const products = await getProducts(organizationId);
         const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
 
-        // Aggregate the count of active people across all environments
-        const peopleAggregations = await prisma.person.aggregate({
-          _count: {
-            id: true,
-          },
+        // Get all distinct person IDs that have taken an action in the current billing period
+        const actionPersonIds = await prisma.action.findMany({
           where: {
             AND: [
-              { environmentId: { in: environmentIds } },
-              {
-                actions: {
-                  some: {
-                    createdAt: { gte: organization.billing.periodStart },
-                  },
-                },
-              },
-
-              // TODO: @pandeymangg - figure out how to count people based on responses effectively
-              // {
-              //   responses: {
-              //     some: {
-              //       createdAt: { gte: organization.billing.periodStart },
-              //     },
-              //   },
-              // },
+              { createdAt: { gte: organization.billing.periodStart } },
+              { person: { environmentId: { in: environmentIds } } },
             ],
           },
+          select: {
+            personId: true,
+          },
+          distinct: ["personId"],
         });
 
-        return peopleAggregations._count.id;
+        // Get all distinct person IDs that have created a response in the current billing period
+        const responsePersonIds = await prisma.response.findMany({
+          where: {
+            AND: [
+              { createdAt: { gte: organization.billing.periodStart } },
+              { person: { environmentId: { in: environmentIds } } },
+            ],
+          },
+          select: {
+            personId: true,
+          },
+          distinct: ["personId"],
+        });
+
+        const actionPersonIdsSet = new Set(actionPersonIds.map((item) => item.personId));
+        const responsePersonIdsSet = new Set(responsePersonIds.map((item) => item.personId));
+
+        // Combine the two sets to get unique personIds
+        const allPersonIdsSet = new Set([...actionPersonIdsSet, ...responsePersonIdsSet]);
+
+        const distinctPersonCount = allPersonIdsSet.size;
+
+        return distinctPersonCount;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -386,6 +359,10 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
         const organization = await getOrganization(organizationId);
         if (!organization) {
           throw new ResourceNotFoundError("Organization", organizationId);
+        }
+
+        if (!organization.billing.periodStart) {
+          throw new Error("Organization billing period start is not set");
         }
 
         // Get all environment IDs for the organization
@@ -418,33 +395,6 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
     [`getMonthlyOrganizationResponseCount-${organizationId}`],
     {
       revalidate: 60 * 60 * 2, // 2 hours
-    }
-  )();
-
-export const getOrganizationBillingInfo = (organizationId: string): Promise<TOrganizationBilling | null> =>
-  cache(
-    async () => {
-      validateInputs([organizationId, ZId]);
-
-      try {
-        const billingInfo = await prisma.organization.findUnique({
-          where: {
-            id: organizationId,
-          },
-        });
-
-        return billingInfo?.billing ?? null;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
-      }
-    },
-    [`getOrganizationBillingInfo-${organizationId}`],
-    {
-      tags: [organizationCache.tag.byId(organizationId)],
     }
   )();
 
