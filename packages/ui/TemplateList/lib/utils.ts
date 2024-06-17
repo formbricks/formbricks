@@ -54,5 +54,4 @@ export const roleMapping: { value: TTemplateRole; label: string }[] = [
   { value: "customerSuccess", label: "Customer Success" },
   { value: "marketing", label: "Marketing" },
   { value: "sales", label: "Sales" },
-  { value: "other", label: "Other" },
 ];

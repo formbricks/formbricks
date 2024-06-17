@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { templates, testTemplate } from "@formbricks/lib/templates";
+import { templates } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { type TProduct, type TProductIndustry, ZProductIndustry } from "@formbricks/types/product";
 import { TSurveyInput, TSurveyType, ZSurveyType } from "@formbricks/types/surveys";
@@ -102,23 +102,22 @@ export const TemplateList = ({
           createSurvey={createSurvey}
           loading={loading}
         />
-        {(process.env.NODE_ENV === "development"
-          ? [...filteredTemplates, testTemplate]
-          : filteredTemplates
-        ).map((template: TTemplate) => {
-          return (
-            <Template
-              template={template}
-              activeTemplate={activeTemplate}
-              setActiveTemplate={setActiveTemplate}
-              onTemplateClick={onTemplateClick}
-              product={product}
-              createSurvey={createSurvey}
-              loading={loading}
-              selectedFilter={selectedFilter}
-            />
-          );
-        })}
+        {(process.env.NODE_ENV === "development" ? [...filteredTemplates] : filteredTemplates).map(
+          (template: TTemplate) => {
+            return (
+              <Template
+                template={template}
+                activeTemplate={activeTemplate}
+                setActiveTemplate={setActiveTemplate}
+                onTemplateClick={onTemplateClick}
+                product={product}
+                createSurvey={createSurvey}
+                loading={loading}
+                selectedFilter={selectedFilter}
+              />
+            );
+          }
+        )}
       </div>
     </main>
   );

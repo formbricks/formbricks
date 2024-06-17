@@ -43,9 +43,9 @@ const surveyDefault: TTemplate["preset"] = {
   questions: [],
 };
 
-export const testTemplate: TTemplate = {
+/* export const testTemplate: TTemplate = {
   name: "Test template",
-  role: "other",
+  role: "productManager",
   industries: ["other"],
   description: "Test template consisting of all questions",
   preset: {
@@ -348,7 +348,7 @@ export const testTemplate: TTemplate = {
       },
     ],
   },
-};
+}; */
 
 export const templates: TTemplate[] = [
   {
