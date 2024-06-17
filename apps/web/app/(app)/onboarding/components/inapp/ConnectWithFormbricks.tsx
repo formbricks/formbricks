@@ -76,10 +76,7 @@ const ConnectedState = ({ goToProduct }) => {
 const NotConnectedState = ({ environment, webAppUrl, jsPackageVersion, goToOrganizationInvitePage }) => {
   return (
     <div className="mb-8 w-full max-w-xl space-y-8">
-      <OnboardingTitle
-        title="Connect your app or website"
-        subtitle="It takes just a few minutes to set it up."
-      />
+      <OnboardingTitle title="Connect your website" subtitle="It takes just a few minutes to set it up." />
 
       <div className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-12 py-3 text-slate-700">
         Waiting for your signal...
@@ -123,7 +120,7 @@ export const ConnectWithFormbricks = ({
 
   useVisibilityChange(environment, setLocalEnvironment);
 
-  const widgetSetupCompleted = localEnvironment.websiteSetupCompleted || localEnvironment.appSetupCompleted;
+  const widgetSetupCompleted = localEnvironment.websiteSetupCompleted;
 
   useEffect(() => {
     const fetchLatestEnvironmentOnFirstLoad = async () => {

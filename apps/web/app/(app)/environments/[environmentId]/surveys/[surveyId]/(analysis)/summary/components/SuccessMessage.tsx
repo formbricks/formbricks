@@ -22,7 +22,8 @@ export const SuccessMessage = ({ environment, survey, webAppUrl, user }: Summary
   const [confetti, setConfetti] = useState(false);
 
   const isAppSurvey = survey.type === "app" || survey.type === "website";
-  const widgetSetupCompleted = environment?.appSetupCompleted || environment?.websiteSetupCompleted;
+  const widgetSetupCompleted =
+    survey.type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
 
   useEffect(() => {
     const newSurveyParam = searchParams?.get("success");
