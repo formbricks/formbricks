@@ -1,23 +1,75 @@
-export enum ProductFeatureKeys {
-  inAppSurvey = "inAppSurvey",
-  linkSurvey = "linkSurvey",
-  userTargeting = "userTargeting",
-}
-
-export enum StripeProductNames {
-  inAppSurvey = "Formbricks In App Survey",
-  linkSurvey = "Formbricks Link Survey",
-  userTargeting = "Formbricks User Identification",
-}
-export enum StripePriceLookupKeys {
-  inAppSurvey = "inAppSurvey",
-  linkSurvey = "linkSurvey",
-  userTargeting = "userTargeting",
-  inAppSurveyUnlimitedPlan90 = "survey-unlimited-03112023",
-  linkSurveyUnlimitedPlan19 = "linkSurvey-unlimited-03112023",
-  userTargetingUnlimitedPlan90 = "userTargeting-unlimited-03112023",
-
-  inAppSurveyUnlimitedPlan33 = "survey-unlimited-33-27022024",
-  linkSurveyUnlimitedPlan33 = "linkSurvey-unlimited-33-27022024",
-  userTargetingUnlimitedPlan33 = "userTargeting-unlimited-33-27022024",
-}
+export const CLOUD_PRICING_DATA = {
+  plans: [
+    {
+      name: "Free",
+      id: "free",
+      featured: false,
+      description: "Unlimited Surveys, Team Members, and more.",
+      price: { monthly: "€0", yearly: "€0" },
+      mainFeatures: [
+        "Unlimited Surveys",
+        "Unlimited Team Members",
+        "500 Monthly Responses",
+        "1.000 Monthly Identified Users",
+        "Website Surveys",
+        "App Surveys",
+        "Unlimited Apps & Websites",
+        "Link Surveys (Shareable)",
+        "Email Embedded Surveys",
+        "Logic Jumps, Hidden Fields, Recurring Surveys, etc.",
+        "API & Webhooks",
+        "All Integrations",
+        "All surveying features",
+      ],
+      href: "https://app.formbricks.com/auth/signup?plan=free",
+    },
+    {
+      name: "Startup",
+      id: "startup",
+      featured: false,
+      description: "Everything in Free with additional features.",
+      price: { monthly: "€59", yearly: "€49" },
+      mainFeatures: [
+        "Everything in Free",
+        "Remove Branding",
+        "2.000 Monthly Responses",
+        "2.500 Monthly Identified Users",
+        "Email Support",
+      ],
+      href: "https://app.formbricks.com/auth/signup?plan=startup",
+    },
+    {
+      name: "Scale",
+      id: "scale",
+      featured: true,
+      description: "Advanced features for scaling your business.",
+      price: { monthly: "€199", yearly: "€179" },
+      mainFeatures: [
+        "Everything in Startup",
+        "Team Access Roles",
+        "Multi-Language Surveys",
+        "Advanced Targeting",
+        "Priority Support",
+        "5.000 Monthly Responses",
+        "20.000 Monthly Identified Users",
+      ],
+      href: "https://app.formbricks.com/auth/signup?plan=scale",
+    },
+    {
+      name: "Enterprise",
+      id: "enterprise",
+      featured: false,
+      description: "Premium support and custom limits.",
+      price: { monthly: "Say Hi!", yearly: "Say Hi!" },
+      mainFeatures: [
+        "Everything in Scale",
+        "Custom MIU limit",
+        "Premium support with SLAs",
+        "Uptime SLA (99%)",
+        "Customer Success Manager",
+        "Technical Onboarding",
+      ],
+      href: "https://cal.com/johannes/enterprise-cloud",
+    },
+  ],
+};
