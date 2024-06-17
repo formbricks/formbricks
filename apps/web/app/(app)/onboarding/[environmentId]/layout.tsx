@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { AuthorizationError } from "@formbricks/types/errors";
@@ -25,6 +26,12 @@ const OnboardingLayout = async ({ children, params }) => {
   const product = await getProductByEnvironmentId(params.environmentId);
   if (!product) {
     throw new Error("Product not found");
+  }
+
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
+  if (!membership) return notFound();
+  if (membership.role === "viewer" && !product.config.isOnboardingCompleted) {
+    redirect(`/onboarding/onboarding-pending`);
   }
 
   if (product.config.channel !== null || product.config.industry !== null) {

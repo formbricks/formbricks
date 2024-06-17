@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { ToasterClient } from "@formbricks/ui/ToasterClient";
 import { FormbricksClient } from "../../components/FormbricksClient";
@@ -24,8 +25,11 @@ const EnvLayout = async ({ children, params }) => {
   if (!organization) {
     throw new Error("Organization not found");
   }
-
-  if (!session.user.onboardingCompleted) {
+  const product = await getProductByEnvironmentId(params.environmentId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+  if (!product.config.isOnboardingCompleted) {
     return redirect(`/onboarding/${params.environmentId}/channel`);
   }
 
