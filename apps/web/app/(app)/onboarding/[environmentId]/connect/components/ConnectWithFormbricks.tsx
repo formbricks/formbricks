@@ -6,7 +6,7 @@ import Lost from "@/images/onboarding-lost.gif";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
@@ -43,6 +43,20 @@ export const ConnectWithFormbricks = ({
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible") {
+        router.refresh();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   return (
     <div className="mt-6 flex w-5/6 flex-col items-center space-y-10 lg:w-2/3 2xl:w-1/2">
       <div className="flex w-full space-x-10">

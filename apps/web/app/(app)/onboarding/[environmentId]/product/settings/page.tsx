@@ -35,7 +35,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
         />
       ) : (
         <OnboardingTitle
-          title={`You run a ${customHeadline}, how exciting!`}
+          title={`You run ${customHeadline === "app" ? "an app" : "a " + customHeadline}, how exciting!`}
           subtitle="Get 2x more responses matching surveys with your brand and UI"
         />
       )}
