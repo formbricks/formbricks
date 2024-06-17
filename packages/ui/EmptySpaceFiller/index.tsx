@@ -9,6 +9,7 @@ type EmptySpaceFillerProps = {
   environment: TEnvironment;
   noWidgetRequired?: boolean;
   emptyMessage?: string;
+  widgetSetupCompleted?: boolean;
 };
 
 export const EmptySpaceFiller = ({
@@ -16,9 +17,8 @@ export const EmptySpaceFiller = ({
   environment,
   noWidgetRequired,
   emptyMessage,
+  widgetSetupCompleted = false,
 }: EmptySpaceFillerProps) => {
-  const widgetSetupCompleted = environment.appSetupCompleted || environment.websiteSetupCompleted;
-
   if (type === "table") {
     return (
       <div className="shadow-xs group rounded-xl border border-slate-100 bg-white p-4 ">

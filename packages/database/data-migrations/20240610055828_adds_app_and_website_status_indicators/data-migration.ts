@@ -32,6 +32,9 @@ const main = async () => {
             environmentId: {
               in: environmentIds,
             },
+            displays: {
+              some: {},
+            },
             type: {
               in: ["app", "website"],
             },

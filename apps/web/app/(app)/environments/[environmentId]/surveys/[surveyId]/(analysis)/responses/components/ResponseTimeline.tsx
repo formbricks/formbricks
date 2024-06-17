@@ -48,7 +48,8 @@ export const ResponseTimeline = ({
   const [isViewer, setIsViewer] = useState(false);
   const loadingRef = useRef(null);
 
-  const widgetSetupCompleted = environment?.appSetupCompleted || environment?.websiteSetupCompleted;
+  const widgetSetupCompleted =
+    survey.type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
 
   useEffect(() => {
     const currentLoadingRef = loadingRef.current;
@@ -98,6 +99,7 @@ export const ResponseTimeline = ({
           environment={environment}
           noWidgetRequired={survey.type === "link"}
           emptyMessage={totalResponseCount === 0 ? undefined : "No response matches your filter"}
+          widgetSetupCompleted={widgetSetupCompleted}
         />
       ) : (
         <div>

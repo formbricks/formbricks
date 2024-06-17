@@ -39,7 +39,8 @@ export const SummaryList = ({
   totalResponseCount,
   attributeClasses,
 }: SummaryListProps) => {
-  const widgetSetupCompleted = environment?.appSetupCompleted || environment?.websiteSetupCompleted;
+  const widgetSetupCompleted =
+    survey.type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
 
   return (
     <div className="mt-10 space-y-8">
@@ -55,6 +56,7 @@ export const SummaryList = ({
           environment={environment}
           noWidgetRequired={survey.type === "link"}
           emptyMessage={totalResponseCount === 0 ? undefined : "No response matches your filter"}
+          widgetSetupCompleted={widgetSetupCompleted}
         />
       ) : (
         summary.map((questionSummary) => {
