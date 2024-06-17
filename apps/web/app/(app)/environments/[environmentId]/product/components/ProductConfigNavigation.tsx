@@ -62,7 +62,7 @@ export const ProductConfigNavigation = ({
       icon: <ListChecksIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/product/website-connection`,
       current: pathname?.includes("/website-connection"),
-      hidden: productChannel === "app" || productChannel === "link",
+      hidden: !!(productChannel && productChannel !== "website"),
     },
     {
       id: "app-connection",
@@ -70,7 +70,7 @@ export const ProductConfigNavigation = ({
       icon: <ListChecksIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/product/app-connection`,
       current: pathname?.includes("/app-connection"),
-      hidden: productChannel === "website" || productChannel === "link",
+      hidden: !!(productChannel && productChannel !== "app"),
     },
   ];
 

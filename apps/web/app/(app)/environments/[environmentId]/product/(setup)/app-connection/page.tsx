@@ -31,7 +31,7 @@ const Page = async ({ params }) => {
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const currentProductChannel = product?.config.channel ?? null;
 
-  if (currentProductChannel !== "app") {
+  if (currentProductChannel && currentProductChannel !== "app") {
     return notFound();
   }
 
