@@ -80,6 +80,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
       comingSoon: false,
       alert: !websiteSetupCompleted,
       hide: product.config.channel === "app",
+      disabled: product.config.channel === "link",
     },
     {
       id: "app",
@@ -89,6 +90,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
       comingSoon: false,
       alert: !appSetupCompleted,
       hide: product.config.channel === "website",
+      disabled: product.config.channel === "link",
     },
     {
       id: "link",
@@ -98,6 +100,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
       comingSoon: false,
       alert: false,
       hide: false,
+      disabled: false,
     },
     {
       id: "mobile",
@@ -107,8 +110,16 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
       comingSoon: true,
       alert: false,
       hide: false,
+      disabled: false,
     },
   ];
+
+  const getSurveyTypeText = () => {
+    if (product.config.channel === "app") return "Choose between app or link survey.";
+    if (product.config.channel === "website") return "Choose between website or link survey.";
+    if (product.config.channel === "link") return "Choose link survey.";
+    return "Choose between website, app or link survey.";
+  };
 
   return (
     <Collapsible.Root
@@ -131,7 +142,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
           </div>
           <div>
             <p className="font-semibold text-slate-800">Survey Type</p>
-            <p className="mt-1 text-sm text-slate-500">Choose between website, in-app or link survey.</p>
+            <p className="mt-1 text-sm text-slate-500">{getSurveyTypeText()}</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -151,7 +162,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
                   htmlFor={option.id}
                   className={cn(
                     "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
-                    option.comingSoon
+                    option.comingSoon || option.disabled
                       ? "border-slate-200 bg-slate-50/50"
                       : option.id === localSurvey.type
                         ? "border-brand-dark cursor-pointer bg-slate-50"
@@ -162,7 +173,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
                     value={option.id}
                     id={option.id}
                     className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
-                    disabled={option.comingSoon}
+                    disabled={option.comingSoon || option.disabled}
                   />
                   <div className=" inline-flex items-center">
                     <option.icon className="mr-4 h-8 w-8 text-slate-500" />
@@ -171,7 +182,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
                         <p
                           className={cn(
                             "font-semibold",
-                            option.comingSoon ? "text-slate-500" : "text-slate-800"
+                            option.comingSoon || option.disabled ? "text-slate-500" : "text-slate-800"
                           )}>
                           {option.name}
                         </p>
@@ -180,12 +191,12 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
                         )}
                       </div>
                       <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
-                      {option.alert && (
+                      {option.alert && !option.disabled && (
                         <div className="mt-2 flex items-center space-x-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
                           <AlertCircleIcon className="h-5 w-5 text-amber-500" />
                           <div className=" text-amber-800">
                             <p className="text-xs font-semibold">
-                              Your ${option.id} is not yet connected to Formbricks.
+                              Your {option.id} is not yet connected to Formbricks.
                             </p>
                             <p className="text-xs font-normal">
                               <Link
@@ -195,6 +206,16 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
                                 Connect Formbricks
                               </Link>{" "}
                               and launch surveys in your {option.id}.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {option.disabled && (
+                        <div className="mt-2 flex items-center space-x-3 rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2">
+                          <AlertCircleIcon className="h-5 w-5 text-slate-500" />
+                          <div className=" text-slate-500">
+                            <p className="text-xs font-semibold">
+                              {option.name} is not available for this product.
                             </p>
                           </div>
                         </div>

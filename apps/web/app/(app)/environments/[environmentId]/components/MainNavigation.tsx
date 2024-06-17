@@ -150,7 +150,7 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
         isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
-        isHidden: !product?.config.channel || product?.config.channel === "link",
+        isHidden: product?.config.channel === "link",
       },
       {
         name: "Integrations",

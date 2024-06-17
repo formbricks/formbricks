@@ -28,7 +28,7 @@ const Page = async ({ params }) => {
   }
 
   const currentProductChannel = product?.config.channel ?? null;
-  if (!currentProductChannel || currentProductChannel === "link") {
+  if (currentProductChannel === "link") {
     return notFound();
   }
 
