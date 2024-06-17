@@ -277,10 +277,6 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
       validateInputs([organizationId, ZId]);
 
       try {
-        // Define the start of the month
-        // const now = new Date();
-        // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
         const organization = await getOrganization(organizationId);
 
         if (!organization) {
@@ -306,8 +302,8 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
 
         const personIdsArray = personIds.map((person) => person.id);
 
-        // Next, get the distinct person IDs from the Action table
-        const actionPersonIds = await prisma.action.findMany({
+        // get distinct persons that have viewed at least one survey
+        const displayPersonIds = await prisma.display.findMany({
           where: {
             AND: [
               { personId: { in: personIdsArray } },
@@ -320,26 +316,9 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
           distinct: ["personId"],
         });
 
-        const responsePersonIds = await prisma.response.findMany({
-          where: {
-            AND: [
-              { personId: { in: personIdsArray } },
-              { createdAt: { gte: organization.billing.periodStart } },
-            ],
-          },
-          select: {
-            personId: true,
-          },
-          distinct: ["personId"],
-        });
+        const displayPersonIdsSet = new Set(displayPersonIds.map((item) => item.personId));
 
-        const actionPersonIdsSet = new Set(actionPersonIds.map((item) => item.personId));
-        const responsePersonIdsSet = new Set(responsePersonIds.map((item) => item.personId));
-
-        // Combine the two sets to get unique personIds
-        const allPersonIdsSet = new Set([...actionPersonIdsSet, ...responsePersonIdsSet]);
-
-        const distinctPersonCount = allPersonIdsSet.size;
+        const distinctPersonCount = displayPersonIdsSet.size;
 
         return distinctPersonCount;
       } catch (error) {
