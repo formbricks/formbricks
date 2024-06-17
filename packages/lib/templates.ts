@@ -354,8 +354,8 @@ export const templates: TTemplate[] = [
   {
     name: "Product Market Fit (Superhuman)",
     role: "productManager",
-    industries: ["eCommerce", "saas"],
-    channels: ["app", "link"],
+    industries: ["saas"],
+    channels: ["app", "link", "email"],
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
     preset: {
       ...surveyDefault,
@@ -558,7 +558,7 @@ export const templates: TTemplate[] = [
   {
     name: "Churn Survey",
     role: "sales",
-    industries: ["saas", "eCommerce"],
+    industries: ["saas", "eCommerce", "other"],
     channels: ["website", "link"],
     description: "Find out why people cancel their subscriptions. These insights are pure gold!",
     preset: {
@@ -639,8 +639,8 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Earned Advocacy Score (EAS)",
-    role: "marketing",
-    industries: ["other", "eCommerce"],
+    role: "customerSuccess",
+    industries: ["saas", "eCommerce", "other"],
     channels: ["app", "email"],
     description:
       "The EAS is a riff off the NPS but asking for actual past behaviour instead of lofty intentions.",
@@ -808,10 +808,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Review Prompt",
-
     role: "marketing",
-    industries: ["other"],
-    channels: ["link", "app"],
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link", "app", "email"],
     description: "Invite users who love your product to review it publicly.",
     preset: {
       ...surveyDefault,
@@ -855,8 +854,8 @@ export const templates: TTemplate[] = [
   {
     name: "Interview Prompt",
     role: "productManager",
-    industries: ["other"],
-    channels: ["link"],
+    industries: ["saas"],
+    channels: ["app"],
     description: "Invite a specific subset of your users to schedule an interview with your product team.",
     preset: {
       ...surveyDefault,
@@ -876,7 +875,7 @@ export const templates: TTemplate[] = [
     },
   },
   {
-    name: "Reduce Onboarding Drop-Off",
+    name: "Improve Activation Rate",
     role: "productManager",
     industries: ["saas"],
     channels: ["email"],
@@ -974,9 +973,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Uncover Strengths & Weaknesses",
-    role: "marketing",
-    industries: ["other"],
-    channels: ["email"],
+    role: "productManager",
+    industries: ["saas", "other"],
+    channels: ["app", "email"],
     description: "Find out what users like and don't like about your product or offering.",
     preset: {
       ...surveyDefault,
@@ -1024,6 +1023,8 @@ export const templates: TTemplate[] = [
   {
     name: "Product Market Fit Survey (Short)",
     role: "productManager",
+    industries: ["saas"],
+    channels: ["app", "link", "email"],
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
     preset: {
       ...surveyDefault,
@@ -1064,10 +1065,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Marketing Attribution",
-
     role: "marketing",
-    industries: ["eCommerce"],
-    channels: ["link", "email"],
+    industries: ["saas", "eCommerce"],
+    channels: ["website", "app", "email"],
     description: "How did you first hear about us?",
     preset: {
       ...surveyDefault,
@@ -1108,10 +1108,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Changing Subscription Experience",
-
-    role: "sales",
+    role: "productManager",
     industries: ["saas"],
-    channels: ["app", "link", "email", "website"],
+    channels: ["app"],
     description: "Find out what goes through peoples minds when changing their subscriptions.",
     preset: {
       ...surveyDefault,
@@ -1173,10 +1172,9 @@ export const templates: TTemplate[] = [
 
   {
     name: "Identify Customer Goals",
-
     role: "productManager",
-    industries: ["eCommerce", "saas"],
-    channels: ["app", "link"],
+    industries: ["eCommerce", "saas", "other"],
+    channels: ["app", "website"],
     description:
       "Better understand if your messaging creates the right expectations of the value your product provides.",
     preset: {
@@ -1211,11 +1209,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Feature Chaser",
     role: "productManager",
     industries: ["saas"],
-    channels: ["app", "link"],
+    channels: ["app"],
     description: "Follow up with users who just used a specific feature.",
     preset: {
       ...surveyDefault,
@@ -1247,11 +1246,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Fake Door Follow-Up",
     role: "productManager",
-    industries: ["other"],
-    channels: ["email"],
+    industries: ["saas", "eCommerce"],
+    channels: ["app", "website"],
     description: "Follow up with users who ran into one of your Fake Door experiments.",
     preset: {
       ...surveyDefault,
@@ -1295,10 +1295,11 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Feedback Box",
     role: "productManager",
-    industries: ["other"],
+    industries: ["saas"],
     channels: ["app"],
     description: "Give your users the chance to seamlessly share what's on their minds.",
     preset: {
@@ -1360,11 +1361,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Integration Setup Survey",
     role: "productManager",
     industries: ["saas"],
-    channels: ["website"],
+    channels: ["app"],
     description: "Evaluate how easily users can add integrations to your product. Find blind spots.",
     preset: {
       ...surveyDefault,
@@ -1400,11 +1402,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "New Integration Survey",
     role: "productManager",
-    industries: ["eCommerce"],
-    channels: ["app", "link"],
+    industries: ["saas"],
+    channels: ["app"],
     description: "Find out which integrations your users would like to see next.",
     preset: {
       ...surveyDefault,
@@ -1442,6 +1445,7 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Docs Feedback",
     role: "productManager",
@@ -1486,12 +1490,13 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Net Promoter Score (NPS)",
 
     role: "customerSuccess",
-    industries: ["saas", "eCommerce"],
-    channels: ["app", "link"],
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["app", "email", "link"],
     description: "Measure the Net Promoter Score of your product or service.",
     preset: {
       ...surveyDefault,
@@ -1515,11 +1520,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Customer Satisfaction Score (CSAT)",
     role: "customerSuccess",
-    industries: ["eCommerce", "other"],
-    channels: ["email", "app"],
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["app", "email", "link"],
     description: "Measure the Customer Satisfaction Score of your product.",
     preset: {
       ...surveyDefault,
@@ -1556,11 +1562,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Collect Feedback",
     role: "productManager",
-    industries: ["other"],
-    channels: ["app", "link"],
+    industries: ["other", "eCommerce"],
+    channels: ["website", "email", "link"],
     description: "Gather comprehensive feedback on your product or service.",
     preset: {
       ...surveyDefault,
@@ -1643,10 +1650,11 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Identify Upsell Opportunities",
     role: "sales",
-    industries: ["eCommerce"],
+    industries: ["eCommerce", "saas"],
     channels: ["app", "link", "email"],
     description: "Find out how much time your product saves your user. Use it to upsell.",
     preset: {
@@ -1686,7 +1694,7 @@ export const templates: TTemplate[] = [
     name: "Prioritize Features",
     role: "productManager",
     industries: ["saas"],
-    channels: ["app", "link", "website"],
+    channels: ["app"],
     description: "Identify features your users need most and least.",
     preset: {
       ...surveyDefault,
@@ -1730,11 +1738,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Gauge Feature Satisfaction",
     role: "productManager",
-    industries: ["eCommerce"],
-    channels: ["app", "link"],
+    industries: ["saas"],
+    channels: ["app"],
     description: "Evaluate the satisfaction of specific features of your product.",
     preset: {
       ...surveyDefault,
@@ -1762,10 +1771,11 @@ export const templates: TTemplate[] = [
       hiddenFields: hiddenFieldsDefault,
     },
   },
+
   {
     name: "Marketing Site Clarity",
     role: "marketing",
-    industries: ["other"],
+    industries: ["saas", "eCommerce", "other"],
     channels: ["website"],
     description: "Identify users dropping off your marketing site. Improve your messaging.",
     preset: {
@@ -1812,11 +1822,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Customer Effort Score (CES)",
     role: "productManager",
-    industries: ["eCommerce"],
-    channels: ["app", "link"],
+    industries: ["saas"],
+    channels: ["app"],
     description: "Determine how easy it is to use a feature.",
     preset: {
       ...surveyDefault,
@@ -1846,10 +1857,9 @@ export const templates: TTemplate[] = [
 
   {
     name: "Rate Checkout Experience",
-
-    role: "sales",
-    industries: ["eCommerce"],
-    channels: ["app", "link"],
+    role: "productManager",
+    industries: ["eCommerce", "saas"],
+    channels: ["website", "app"],
     description: "Let customers rate the checkout experience to tweak conversion.",
     preset: {
       ...surveyDefault,
@@ -1886,11 +1896,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Measure Search Experience",
     role: "productManager",
-    industries: ["saas"],
-    channels: ["website"],
+    industries: ["saas", "eCommerce"],
+    channels: ["app", "website"],
     description: "Measure how relevant your search results are.",
     preset: {
       ...surveyDefault,
@@ -1927,6 +1938,7 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Evaluate Content Quality",
     role: "marketing",
@@ -1968,11 +1980,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Measure Task Accomplishment",
-    role: "customerSuccess",
+    role: "productManager",
     industries: ["eCommerce", "saas"],
-    channels: ["app", "link"],
+    channels: ["app", "website"],
     description: "See if people get their 'Job To Be Done' done. Successful people are better customers.",
     preset: {
       ...surveyDefault,
@@ -2042,11 +2055,11 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Identify Sign Up Barriers",
-
     role: "marketing",
-    industries: ["saas"],
+    industries: ["saas", "eCommerce", "other"],
     channels: ["website"],
     description: "Offer a discount to gather insights about sign up barriers.",
     preset: {
@@ -2168,11 +2181,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Build Product Roadmap",
     role: "productManager",
-    industries: ["eCommerce", "other"],
-    channels: ["app", "link"],
+    industries: ["saas"],
+    channels: ["app", "link", "email"],
     description: "Identify the ONE thing your users want the most and build it.",
     preset: {
       ...surveyDefault,
@@ -2203,11 +2217,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Understand Purchase Intention",
     role: "sales",
     industries: ["eCommerce"],
-    channels: ["app", "link"],
+    channels: ["website"],
     description: "Find out how close your visitors are to buy or subscribe.",
     preset: {
       ...surveyDefault,
@@ -2252,10 +2267,11 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Improve Newsletter Content",
     role: "marketing",
-    industries: ["other"],
+    industries: ["eCommerce", "other"],
     channels: ["email"],
     description: "Find out how your subscribers like your newsletter content.",
     preset: {
@@ -2305,11 +2321,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Evaluate a Product Idea",
     role: "productManager",
-    industries: ["other"],
-    channels: ["link"],
+    industries: ["saas", "other"],
+    channels: ["link", "email", "app"],
     description: "Survey users about product or feature ideas. Get feedback rapidly.",
     preset: {
       ...surveyDefault,
@@ -2408,6 +2425,7 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Understand Low Engagement",
     role: "productManager",
