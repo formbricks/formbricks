@@ -1,6 +1,7 @@
 import { cn } from "@formbricks/lib/cn";
-import { TProduct } from "@formbricks/types/product";
-import { TTemplate } from "@formbricks/types/templates";
+import { TProduct, TProductIndustry } from "@formbricks/types/product";
+import { TSurveyType } from "@formbricks/types/surveys";
+import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 import { Button } from "../../Button";
 import { replacePresetPlaceholders } from "../lib/utils";
 import { TemplateTags } from "./TemplateTags";
@@ -13,6 +14,7 @@ interface TemplateProps {
   product: TProduct;
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
+  selectedFilter: (TSurveyType | TProductIndustry | TTemplateRole | null)[];
 }
 
 export const Template = ({
@@ -23,6 +25,7 @@ export const Template = ({
   product,
   createSurvey,
   loading,
+  selectedFilter,
 }: TemplateProps) => {
   return (
     <div
@@ -36,7 +39,7 @@ export const Template = ({
         activeTemplate?.name === template.name && "ring-2 ring-slate-400",
         "duration-120 group relative cursor-pointer rounded-lg bg-white p-6 shadow transition-all duration-150 hover:ring-2 hover:ring-slate-300"
       )}>
-      <TemplateTags template={template} />
+      <TemplateTags template={template} selectedFilter={selectedFilter} />
       <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{template.name}</h3>
       <p className="text-left text-xs text-slate-600">{template.description}</p>
       {activeTemplate?.name === template.name && (

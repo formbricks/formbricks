@@ -115,6 +115,7 @@ export const TemplateList = ({
               product={product}
               createSurvey={createSurvey}
               loading={loading}
+              selectedFilter={selectedFilter}
             />
           );
         })}

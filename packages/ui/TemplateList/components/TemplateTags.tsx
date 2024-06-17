@@ -9,6 +9,7 @@ import { channelMapping, industryMapping, roleMapping } from "../lib/utils";
 
 interface TemplateTagsProps {
   template: TTemplate;
+  selectedFilter: (TSurveyType | TProductIndustry | TTemplateRole | null)[];
 }
 
 const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
@@ -52,14 +53,7 @@ const getChannelTag = (channels: TSurveyType[] | undefined): string | undefined 
   }
 };
 
-const getIndustryTag = (industries: TProductIndustry[] | undefined): string | undefined => {
-  if (!industries || industries.length === 0) return undefined;
-  return industries.length > 1
-    ? "Multiple Industries"
-    : industryMapping.find((industry) => industry.value === industries[0])?.label;
-};
-
-export const TemplateTags = ({ template }: TemplateTagsProps) => {
+export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) => {
   const roleBasedStyling = useMemo(() => getRoleBasedStyling(template.role), [template.role]);
 
   const roleTag = useMemo(
@@ -69,7 +63,20 @@ export const TemplateTags = ({ template }: TemplateTagsProps) => {
 
   const channelTag = useMemo(() => getChannelTag(template.channels), [template.channels]);
 
-  const industryTag = useMemo(() => getIndustryTag(template.industries), [template.industries]);
+  const getIndustryTag = (industries: TProductIndustry[] | undefined): string | undefined => {
+    // if user selects an industry e.g. eCommerce than the tag should not say "Multiple industries" anymore but "E-Commerce".
+    if (selectedFilter[1] !== null)
+      return industryMapping.find((industry) => industry.value === selectedFilter[1])?.label;
+    if (!industries || industries.length === 0) return undefined;
+    return industries.length > 1
+      ? "Multiple Industries"
+      : industryMapping.find((industry) => industry.value === industries[0])?.label;
+  };
+
+  const industryTag = useMemo(
+    () => getIndustryTag(template.industries),
+    [template.industries, selectedFilter]
+  );
 
   return (
     <div className="flex flex-wrap gap-1.5">
