@@ -149,7 +149,7 @@ export const getUploadSignedUrl = async (
   environmentId: string,
   fileType: string,
   accessType: TAccessType,
-  plan: "free" | "pro" = "free"
+  isBiggerFileUploadAllowed: boolean = false
 ): Promise<TGetSignedUrlResponse> => {
   // add a unique id to the file name
 
@@ -191,8 +191,7 @@ export const getUploadSignedUrl = async (
       fileType,
       accessType,
       environmentId,
-      accessType === "public",
-      plan
+      isBiggerFileUploadAllowed
     );
 
     return {
@@ -210,10 +209,9 @@ export const getS3UploadSignedUrl = async (
   contentType: string,
   accessType: string,
   environmentId: string,
-  isPublic: boolean,
-  plan: "free" | "pro" = "free"
+  isBiggerFileUploadAllowed: boolean = false
 ) => {
-  const maxSize = isPublic ? MAX_SIZES.public : MAX_SIZES[plan];
+  const maxSize = isBiggerFileUploadAllowed ? MAX_SIZES.big : MAX_SIZES.standard;
   const postConditions: PresignedPostOptions["Conditions"] = [["content-length-range", 0, maxSize]];
 
   try {
@@ -243,8 +241,7 @@ export const putFileToLocalStorage = async (
   accessType: string,
   environmentId: string,
   rootDir: string,
-  isPublic: boolean = false,
-  plan: "free" | "pro" = "free"
+  isBiggerFileUploadAllowed: boolean = false
 ) => {
   try {
     await ensureDirectoryExists(`${rootDir}/${environmentId}/${accessType}`);
@@ -254,7 +251,7 @@ export const putFileToLocalStorage = async (
     const buffer = Buffer.from(fileBuffer);
     const bufferBytes = buffer.byteLength;
 
-    const maxSize = isPublic ? MAX_SIZES.public : MAX_SIZES[plan];
+    const maxSize = isBiggerFileUploadAllowed ? MAX_SIZES.big : MAX_SIZES.standard;
 
     if (bufferBytes > maxSize) {
       const err = new Error(`File size exceeds the ${maxSize / (1024 * 1024)} MB limit`);

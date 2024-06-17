@@ -1,4 +1,5 @@
 import { ActivityTimeline } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ActivityTimeline";
+import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionsByPersonId } from "@formbricks/lib/action/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -19,7 +20,7 @@ export const ActivitySection = async ({
 
   // On Formbricks Cloud only render the timeline if the user targeting feature is booked
   const isUserTargetingEnabled = IS_FORMBRICKS_CLOUD
-    ? organization.billing.features.userTargeting.status === "active"
+    ? await getAdvancedTargetingPermission(organization)
     : true;
 
   const [environment, actions] = await Promise.all([

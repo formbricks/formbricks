@@ -1,4 +1,6 @@
 import { PostHog } from "posthog-node";
+import { TOrganizationBillingPlan, TOrganizationBillingPlanLimits } from "@formbricks/types/organizations";
+import { cache } from "./cache";
 import { env } from "./env";
 
 const enabled =
@@ -33,3 +35,28 @@ export const capturePosthogEnvironmentEvent = async (
     console.error("error sending posthog event:", error);
   }
 };
+
+export const sendPlanLimitsReachedEventToPosthogWeekly = (
+  environmentId: string,
+  billing: {
+    plan: TOrganizationBillingPlan;
+    limits: TOrganizationBillingPlanLimits;
+  }
+): Promise<string> =>
+  cache(
+    async () => {
+      try {
+        await capturePosthogEnvironmentEvent(environmentId, "plan limit reached", {
+          ...billing,
+        });
+        return "success";
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    },
+    [`sendPlanLimitsReachedEventToPosthogWeekly-${billing.plan}-${environmentId}`],
+    {
+      revalidate: 60 * 60 * 24 * 7, // 7 days
+    }
+  )();

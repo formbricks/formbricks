@@ -107,7 +107,7 @@ export const FileUploadQuestionForm = ({
       return 10;
     }
 
-    if (billingInfo.features.linkSurvey.status === "active") {
+    if (billingInfo.plan !== "free") {
       // 1GB in MB
       return 1024;
     }
