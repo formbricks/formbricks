@@ -28,15 +28,25 @@ const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
 
 const getChannelTag = (channels: TSurveyType[] | undefined): string | undefined => {
   if (!channels) return undefined;
+  const getLabel = (channelValue: TSurveyType) =>
+    channelMapping.find((channel) => channel.value === channelValue)?.label;
+  const labels = channels.map((channel) => getLabel(channel)).sort();
+
   switch (channels.length) {
     case 1:
-      return channelMapping.find((channel) => channel.value === channels[0])?.label;
+      return labels[0];
+
     case 2:
-      return "Two Channels";
+      // Return labels for two channels concatenated with "or"
+      return `${labels[0]} or ${labels[1]}`;
+
     case 3:
-      return "Three Channels";
+      // Return labels for three channels, formatted with commas and "or"
+      return `${labels[0]}, ${labels[1]} or ${labels[2]}`;
+
     case 4:
       return "All Channels";
+
     default:
       return undefined;
   }
