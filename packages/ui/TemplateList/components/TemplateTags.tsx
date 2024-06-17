@@ -1,14 +1,14 @@
+import { SplitIcon } from "lucide-react";
 import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProductIndustry } from "@formbricks/types/product";
 import { TSurveyType } from "@formbricks/types/surveys";
-import { TTemplateRole } from "@formbricks/types/templates";
+import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
+import { TooltipRenderer } from "../../Tooltip";
 import { channelMapping, industryMapping, roleMapping } from "../lib/utils";
 
 interface TemplateTagsProps {
-  channels?: TSurveyType[];
-  industries?: TProductIndustry[];
-  role?: TTemplateRole;
+  template: TTemplate;
 }
 
 const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
@@ -49,21 +49,26 @@ const getIndustryTag = (industries: TProductIndustry[] | undefined): string | un
     : industryMapping.find((industry) => industry.value === industries[0])?.label;
 };
 
-export const TemplateTags = ({ channels, industries, role }: TemplateTagsProps) => {
-  const roleBasedStyling = useMemo(() => getRoleBasedStyling(role), [role]);
+export const TemplateTags = ({ template }: TemplateTagsProps) => {
+  const roleBasedStyling = useMemo(() => getRoleBasedStyling(template.role), [template.role]);
 
-  const roleTag = useMemo(() => roleMapping.find((roleMap) => roleMap.value === role)?.label, [role]);
+  const roleTag = useMemo(
+    () => roleMapping.find((roleMap) => roleMap.value === template.role)?.label,
+    [template.role]
+  );
 
-  const channelTag = useMemo(() => getChannelTag(channels), [channels]);
+  const channelTag = useMemo(() => getChannelTag(template.channels), [template.channels]);
 
-  const industryTag = useMemo(() => getIndustryTag(industries), [industries]);
+  const industryTag = useMemo(() => getIndustryTag(template.industries), [template.industries]);
 
   return (
-    <div className="flex space-x-2">
+    <div className="flex flex-wrap gap-1.5">
       <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{roleTag}</div>
       {channelTag && (
         <div
-          className={cn("rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500")}>
+          className={cn(
+            "flex-nowrap rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500"
+          )}>
           {channelTag}
         </div>
       )}
@@ -72,6 +77,11 @@ export const TemplateTags = ({ channels, industries, role }: TemplateTagsProps) 
           className={cn("rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500")}>
           {industryTag}
         </div>
+      )}
+      {template.preset.questions.some((question) => question.logic && question.logic.length > 0) && (
+        <TooltipRenderer tooltipContent="This survey uses branching logic." shouldRender={true}>
+          <SplitIcon className="h-5 w-5 rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
+        </TooltipRenderer>
       )}
     </div>
   );
