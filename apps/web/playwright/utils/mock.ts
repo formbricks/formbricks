@@ -17,6 +17,11 @@ export const users = {
       email: "onboarding2@formbricks.com",
       password: "231Xh7D&dM8u75EjIYV",
     },
+    {
+      name: "Onboarding User 3",
+      email: "onboarding3@formbricks.com",
+      password: "231Xh7D&dM8u75EjIYV",
+    },
   ],
   survey: [
     {

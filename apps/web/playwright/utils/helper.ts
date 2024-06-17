@@ -54,42 +54,15 @@ export const login = async (page: Page, email: string, password: string): Promis
   await page.getByRole("button", { name: "Login with Email" }).click();
 };
 
-export const finishOnboarding = async (page: Page, deleteExampleSurvey: boolean = true): Promise<void> => {
-  await page.waitForURL("/onboarding");
-  await expect(page).toHaveURL("/onboarding");
+export const finishOnboarding = async (page: Page): Promise<void> => {
+  await page.waitForURL(/\/onboarding\/[^/]+\/channel/);
 
-  const hiddenSkipButton = page.locator("#FB__INTERNAL__SKIP_ONBOARDING");
-  hiddenSkipButton.evaluate((el: HTMLElement) => el.click());
+  await page.getByRole("button", { name: "100% custom branding Anywhere" }).click();
+  await page.getByRole("button", { name: "B2B and B2C E-Commerce" }).click();
+  await page.locator("form").filter({ hasText: "Brand colorChange the brand" }).getByRole("button").click();
 
-  await expect(page.getByText("My Product")).toBeVisible();
-
-  let currentDir = process.cwd();
-  let htmlFilePath = currentDir + "/packages/js/index.html";
-
-  const environmentId =
-    /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
-    (() => {
-      throw new Error("Unable to parse environmentId from URL");
-    })();
-
-  let htmlFile = replaceEnvironmentIdInHtml(htmlFilePath, environmentId);
-  await page.goto(htmlFile);
-
-  // Formbricks Website Sync has happened
-  const syncApi = await page.waitForResponse((response) => response.url().includes("/website/sync"));
-  expect(syncApi.status()).toBe(200);
-
-  await page.goto("/");
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-
-  if (deleteExampleSurvey) {
-    await page.click("#example-survey-survey-actions");
-    await page.getByRole("menuitem", { name: "Delete" }).click();
-    await page.getByRole("button", { name: "Delete" }).click();
-    await expect(page.getByText("Survey deleted successfully.")).toBeVisible();
-    await page.reload();
-    await expect(page.getByText("Start from scratchCreate a")).toBeVisible();
-  }
+  await expect(page.getByText("My Product")).toBeVisible();
 };
 
 export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: string): string => {
