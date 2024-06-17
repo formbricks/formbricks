@@ -28,11 +28,11 @@ export const TemplateFilters = ({
   };
   const allFilters = [channelMapping, industryMapping, roleMapping];
   return (
-    <div className="mb-6 space-y-2">
+    <div>
       {allFilters.map((filters, index) => {
         if (prefilledFilters[index] !== null) return;
         return (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1 last:mb-6">
             <button
               key={index}
               type="button"
@@ -44,7 +44,7 @@ export const TemplateFilters = ({
                   : " bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
                 "mt-2 rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
               )}>
-              {index === 0 ? "All channels" : index === 1 ? "All Industries" : "All Roles"}
+              {index === 0 ? "All channels" : index === 1 ? "All industries" : "All roles"}
             </button>
             {filters.map((filter) => (
               <button

@@ -80,7 +80,7 @@ export const TemplateList = ({
   }, [templates, selectedFilter, templateSearch]);
 
   return (
-    <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 pt-3 focus:outline-none">
+    <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 focus:outline-none">
       {!templateSearch && (
         <TemplateFilters
           selectedFilter={selectedFilter}
