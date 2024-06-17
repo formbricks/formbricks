@@ -95,7 +95,7 @@ export const ConsentQuestion = ({
                 aria-labelledby={`${question.id}-label`}
                 required={question.required}
               />
-              <span id={`${question.id}-label`} className="ml-3 mr-3 font-medium" dir="auto">
+              <span id={`${question.id}-label`} className="ml-3 mr-3 font-medium">
                 {getLocalizedValue(question.label, languageCode)}
               </span>
             </label>
