@@ -12,7 +12,6 @@ import { createSurveyAction } from "./actions";
 import { StartFromScratchTemplate } from "./components/StartFromScratchTemplate";
 import { Template } from "./components/Template";
 import { TemplateFilters } from "./components/TemplateFilters";
-import { channelMapping, industryMapping, roleMapping } from "./lib/utils";
 
 interface TemplateListProps {
   environmentId: string;
@@ -88,7 +87,6 @@ export const TemplateList = ({
           setSelectedFilter={setSelectedFilter}
           templateSearch={templateSearch}
           prefilledFilters={prefilledFilters}
-          allFilters={[channelMapping, industryMapping, roleMapping]}
         />
       )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
