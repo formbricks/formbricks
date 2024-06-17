@@ -161,7 +161,8 @@ export const createEnvironment = async (
       data: {
         type: environmentInput.type || "development",
         product: { connect: { id: productId } },
-        widgetSetupCompleted: environmentInput.widgetSetupCompleted || false,
+        appSetupCompleted: environmentInput.appSetupCompleted || false,
+        websiteSetupCompleted: environmentInput.websiteSetupCompleted || false,
         actionClasses: {
           create: [
             {

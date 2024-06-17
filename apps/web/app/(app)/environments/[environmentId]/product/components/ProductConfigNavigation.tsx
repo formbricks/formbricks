@@ -54,11 +54,18 @@ export const ProductConfigNavigation = ({
       current: pathname?.includes("/api-keys"),
     },
     {
-      id: "setup",
-      label: "Setup Guide",
+      id: "website-connection",
+      label: "Website Connection",
       icon: <ListChecksIcon className="h-5 w-5" />,
-      href: `/environments/${environmentId}/product/setup`,
-      current: pathname?.includes("/setup"),
+      href: `/environments/${environmentId}/product/website-connection`,
+      current: pathname?.includes("/website-connection"),
+    },
+    {
+      id: "app-connection",
+      label: "App Connection",
+      icon: <ListChecksIcon className="h-5 w-5" />,
+      href: `/environments/${environmentId}/product/app-connection`,
+      current: pathname?.includes("/app-connection"),
     },
   ];
 

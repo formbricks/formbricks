@@ -295,12 +295,23 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
         const products = await getProducts(organizationId);
         const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
 
-        // Get all distinct person IDs that have taken an action in the current billing period
+        const personIds = await prisma.person.findMany({
+          where: {
+            environmentId: { in: environmentIds },
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        const personIdsArray = personIds.map((person) => person.id);
+
+        // Next, get the distinct person IDs from the Action table
         const actionPersonIds = await prisma.action.findMany({
           where: {
             AND: [
+              { personId: { in: personIdsArray } },
               { createdAt: { gte: organization.billing.periodStart } },
-              { person: { environmentId: { in: environmentIds } } },
             ],
           },
           select: {
@@ -309,12 +320,11 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
           distinct: ["personId"],
         });
 
-        // Get all distinct person IDs that have created a response in the current billing period
         const responsePersonIds = await prisma.response.findMany({
           where: {
             AND: [
+              { personId: { in: personIdsArray } },
               { createdAt: { gte: organization.billing.periodStart } },
-              { person: { environmentId: { in: environmentIds } } },
             ],
           },
           select: {

@@ -36,6 +36,7 @@
     "data-migration:pricing-v2": "dotenv -e ../../.env -- ts-node ./data-migrations/20240613070218_pricing_v2/data-migration.ts",
     "data-migration:extended-noCodeActions": "ts-node ./data-migrations/20240524053239_extends_no_code_action_schema/data-migration.ts",
     "data-migration:v2.1": "pnpm data-migration:extended-noCodeActions",
+    "data-migration:adds_app_and_website_status_indicator": "ts-node ./data-migrations/20240610055828_adds_app_and_website_status_indicators/data-migration.ts",
     "data-migration:product-config": "ts-node ./data-migrations/20240612115151_adds_product_config/data-migration.ts"
   },
   "dependencies": {

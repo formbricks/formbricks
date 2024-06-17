@@ -394,22 +394,24 @@ model Integration {
 }
 
 model Environment {
-  id                   String           @id @default(cuid())
-  createdAt            DateTime         @default(now()) @map(name: "created_at")
-  updatedAt            DateTime         @updatedAt @map(name: "updated_at")
-  type                 EnvironmentType
-  product              Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId            String
-  widgetSetupCompleted Boolean          @default(false)
-  surveys              Survey[]
-  people               Person[]
-  actionClasses        ActionClass[]
-  attributeClasses     AttributeClass[]
-  apiKeys              ApiKey[]
-  webhooks             Webhook[]
-  tags                 Tag[]
-  segments             Segment[]
-  integration          Integration[]
+  id                    String           @id @default(cuid())
+  createdAt             DateTime         @default(now()) @map(name: "created_at")
+  updatedAt             DateTime         @updatedAt @map(name: "updated_at")
+  type                  EnvironmentType
+  product               Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId             String
+  widgetSetupCompleted  Boolean          @default(false)
+  appSetupCompleted     Boolean          @default(false)
+  websiteSetupCompleted Boolean          @default(false)
+  surveys               Survey[]
+  people                Person[]
+  actionClasses         ActionClass[]
+  attributeClasses      AttributeClass[]
+  apiKeys               ApiKey[]
+  webhooks              Webhook[]
+  tags                  Tag[]
+  segments              Segment[]
+  integration           Integration[]
 
   @@index([productId])
 }

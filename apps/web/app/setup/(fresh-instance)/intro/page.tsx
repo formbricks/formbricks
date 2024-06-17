@@ -10,19 +10,25 @@ const Page = () => {
   return (
     <div className="flex flex-col items-center">
       <h2 className="mb-6 text-xl font-medium">Welcome to Formbricks!</h2>
-      <div className="space-y-4 text-sm text-slate-800">
+      <div className="mx-auto max-w-sm space-y-4 text-sm leading-6 text-slate-600">
         <p>
-          Formbricks is a versatile open source platform with an Experience Management Suite built on top of
-          it.
+          Formbricks is an Experience Management Suite built of the{" "}
+          <b>fastest growing open source survey platform</b> worldwide.
         </p>
-        <p>Survey customers, users or employees at any points with a perfectly timed and targeted survey.</p>
-        <p>Keep full control over your data</p>
+        <p>
+          Run targeted surveys on websites, in apps or anywhere online. Gather valuable insights to{" "}
+          <b>craft irresistible experiences</b> for customers, users and employees.
+        </p>
+        <p>
+          We&apos;re commited to highest degree of data privacy. Self-host to keep{" "}
+          <b>full control over your data.</b> Always.
+        </p>
       </div>
       <Button variant="darkCTA" href="/setup/signup" className="mt-6">
         Get started
       </Button>
 
-      <p className="pt-6 text-xs text-slate-500">Made with 🤍 in Kiel, Germany</p>
+      <p className="pt-6 text-xs text-slate-400">Made with 🤍 in Kiel, Germany</p>
     </div>
   );
 };
