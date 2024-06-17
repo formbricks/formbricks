@@ -12,11 +12,11 @@ test.describe("JS Package Test", async () => {
     await finishOnboarding(page);
 
     await page
-      .getByText("Product ExperienceProduct Market Fit (Superhuman)Measure PMF by assessing how")
-      .isVisible();
-    await page
-      .getByText("Product ExperienceProduct Market Fit (Superhuman)Measure PMF by assessing how")
+      .getByText("Product ManagerSaaSApp Survey, Email Survey or Link SurveyProduct Market Fit (")
       .click();
+    await page
+      .getByText("Product ManagerSaaSApp Survey, Email Survey or Link SurveyProduct Market Fit (")
+      .isVisible();
 
     await page.getByRole("button", { name: "Use this template" }).isVisible();
     await page.getByRole("button", { name: "Use this template" }).click();
