@@ -33,9 +33,7 @@ const EnvLayout = async ({ children, params }) => {
           environmentId={params.environmentId}
           organizationId={organization.id}
           organizationName={organization.name}
-          inAppSurveyBillingStatus={organization.billing.features.inAppSurvey.status}
-          linkSurveyBillingStatus={organization.billing.features.linkSurvey.status}
-          userTargetingBillingStatus={organization.billing.features.userTargeting.status}
+          organizationBilling={organization.billing}
         />
         <FormbricksClient session={session} />
         <ToasterClient />

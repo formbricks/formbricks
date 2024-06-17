@@ -88,7 +88,7 @@ export const POST = async (req: NextRequest): Promise<Response> => {
     const bytes = await file.arrayBuffer();
     const fileBuffer = Buffer.from(bytes);
 
-    await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR, true);
+    await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
 
     return responses.successResponse({
       message: "File uploaded successfully",
