@@ -33,17 +33,24 @@ const getChannelTag = (channels: TSurveyType[] | undefined): string | undefined 
     channelMapping.find((channel) => channel.value === channelValue)?.label;
   const labels = channels.map((channel) => getLabel(channel)).sort();
 
+  const removeSurveySuffix = (label: string | undefined) => label?.replace(" Survey", "");
+
   switch (channels.length) {
     case 1:
       return labels[0];
 
     case 2:
-      // Return labels for two channels concatenated with "or"
-      return `${labels[0]} or ${labels[1]}`;
+      // Return labels for two channels concatenated with "or", removing "Survey"
+      return labels.map(removeSurveySuffix).join(" or ") + " Survey";
 
     case 3:
-      // Return labels for three channels, formatted with commas and "or"
-      return `${labels[0]}, ${labels[1]} or ${labels[2]}`;
+      // Return labels for three channels, formatted with commas and "or", removing "Survey"
+      return (
+        labels
+          .map(removeSurveySuffix)
+          .join(", ")
+          .replace(/, ([^,]*)$/, " or $1") + " Survey"
+      );
 
     case 4:
       return "All Channels";
