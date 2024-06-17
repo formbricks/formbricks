@@ -210,15 +210,13 @@ export const FileUploadQuestionForm = ({
             </p>
             {isMaxSizeError && (
               <p className="text-xs text-red-500">
-                Max file size limit is {maxSizeInMBLimit} MB. If you need more, please upgrade your plan. You
-                can upgrade your plan in the{" "}
+                Max file size limit is {maxSizeInMBLimit} MB. If you need more, please{" "}
                 <Link
                   className="underline"
                   target="_blank"
                   href={`/environments/${localSurvey.environmentId}/settings/billing`}>
-                  Billing & Plan
-                </Link>{" "}
-                section.
+                  upgrade your plan.
+                </Link>
               </p>
             )}
           </label>
