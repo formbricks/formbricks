@@ -37,7 +37,9 @@ const Page = async ({ params, searchParams }: ConnectPageProps) => {
       <ConnectWithFormbricks
         environment={environment}
         webAppUrl={WEBAPP_URL}
-        widgetSetupCompleted={environment.widgetSetupCompleted}
+        widgetSetupCompleted={
+          channel === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted
+        }
         channel={channel}
         industry={industry}
       />
