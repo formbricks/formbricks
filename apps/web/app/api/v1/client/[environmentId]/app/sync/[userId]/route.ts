@@ -22,7 +22,6 @@ import { createSurvey, getSyncSurveys, transformToLegacySurvey } from "@formbric
 import { getExampleAppSurveyTemplate } from "@formbricks/lib/templates";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TJsAppLegacyStateSync, TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -63,12 +62,19 @@ export const GET = async (
 
     const { environmentId, userId } = inputValidation.data;
 
-    let environment: TEnvironment | null;
-
-    // check if environment exists
-    environment = await getEnvironment(environmentId);
+    const environment = await getEnvironment(environmentId);
     if (!environment) {
       throw new Error("Environment does not exist");
+    }
+
+    const product = await getProductByEnvironmentId(environmentId);
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    if (product.config.channel && product.config.channel !== "app") {
+      return responses.forbiddenResponse("Product channel is not app", true);
     }
 
     if (!environment.appSetupCompleted) {
@@ -165,12 +171,11 @@ export const GET = async (
       }
     }
 
-    const [surveys, actionClasses, product] = await Promise.all([
+    const [surveys, actionClasses] = await Promise.all([
       getSyncSurveys(environmentId, person.id, device.type === "mobile" ? "phone" : "desktop", {
         version: version ?? undefined,
       }),
       getActionClasses(environmentId),
-      getProductByEnvironmentId(environmentId),
     ]);
 
     if (!product) {
