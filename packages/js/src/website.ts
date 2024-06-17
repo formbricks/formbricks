@@ -1,6 +1,5 @@
 import { TFormbricksApp } from "@formbricks/js-core/app";
 import { TFormbricksWebsite } from "@formbricks/js-core/website";
-
 import { loadFormbricksToProxy } from "./shared/loadFormbricks";
 
 declare global {

@@ -10,7 +10,41 @@ import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSh
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { TPipelineInput } from "@formbricks/types/pipelines";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TResponseMeta } from "@formbricks/types/responses";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
+
+const convertMetaObjectToString = (metadata: TResponseMeta): string => {
+  let result: string[] = [];
+  if (metadata.source) result.push(`Source: ${metadata.source}`);
+  if (metadata.url) result.push(`URL: ${metadata.url}`);
+  if (metadata.userAgent?.browser) result.push(`Browser: ${metadata.userAgent.browser}`);
+  if (metadata.userAgent?.os) result.push(`OS: ${metadata.userAgent.os}`);
+  if (metadata.userAgent?.device) result.push(`Device: ${metadata.userAgent.device}`);
+  if (metadata.country) result.push(`Country: ${metadata.country}`);
+  if (metadata.action) result.push(`Action: ${metadata.action}`);
+
+  // Join all the elements in the result array with a newline for formatting
+  return result.join("\n");
+};
+
+const processDataForIntegration = async (
+  data: TPipelineInput,
+  survey: TSurvey,
+  includeMetadata: boolean,
+  includeHiddenFields: boolean,
+  questionIds: string[]
+): Promise<string[][]> => {
+  const ids =
+    includeHiddenFields && survey.hiddenFields.fieldIds
+      ? [...questionIds, ...survey.hiddenFields.fieldIds]
+      : questionIds;
+  const values = await extractResponses(data, ids, survey);
+  if (includeMetadata) {
+    values[0].push(convertMetaObjectToString(data.response.meta));
+    values[1].push("Metadata");
+  }
+  return values;
+};
 
 export const handleIntegrations = async (
   integrations: TIntegration[],
@@ -43,8 +77,13 @@ const handleAirtableIntegration = async (
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds as string[], survey);
-
+        const values = await processDataForIntegration(
+          data,
+          survey,
+          !!element.includeMetadata,
+          !!element.includeHiddenFields,
+          element.questionIds
+        );
         await airtableWriteData(integration.config.key, element, values);
       }
     }
@@ -59,11 +98,18 @@ const handleGoogleSheetsIntegration = async (
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds, survey);
+        const values = await processDataForIntegration(
+          data,
+          survey,
+          !!element.includeMetadata,
+          !!element.includeHiddenFields,
+          element.questionIds
+        );
         const integrationData = structuredClone(integration);
         integrationData.config.data.forEach((data) => {
           data.createdAt = new Date(data.createdAt);
         });
+
         await writeData(integrationData, element.spreadsheetId, values);
       }
     }
@@ -78,7 +124,13 @@ const handleSlackIntegration = async (
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds as string[], survey);
+        const values = await processDataForIntegration(
+          data,
+          survey,
+          !!element.includeMetadata,
+          !!element.includeHiddenFields,
+          element.questionIds
+        );
         await writeDataToSlack(integration.config.key, element.channelId, values, survey?.name);
       }
     }
@@ -86,7 +138,7 @@ const handleSlackIntegration = async (
 };
 
 const extractResponses = async (
-  data: TPipelineInput,
+  pipelineData: TPipelineInput,
   questionIds: string[],
   survey: TSurvey
 ): Promise<string[][]> => {
@@ -94,16 +146,22 @@ const extractResponses = async (
   const questions: string[] = [];
 
   for (const questionId of questionIds) {
+    //check for hidden field Ids
+    if (survey.hiddenFields.fieldIds?.includes(questionId)) {
+      responses.push(processResponseData(pipelineData.response.data[questionId]));
+      questions.push(questionId);
+      continue;
+    }
     const question = survey?.questions.find((q) => q.id === questionId);
     if (!question) {
       continue;
     }
 
-    const responseValue = data.response.data[questionId];
+    const responseValue = pipelineData.response.data[questionId];
 
     if (responseValue !== undefined) {
       let answer: typeof responseValue;
-      if (question.type === TSurveyQuestionType.PictureSelection) {
+      if (question.type === TSurveyQuestionTypeEnum.PictureSelection) {
         const selectedChoiceIds = responseValue as string[];
         answer = question?.choices
           .filter((choice) => selectedChoiceIds.includes(choice.id))
@@ -147,7 +205,7 @@ const buildNotionPayloadProperties = (
   const responses = data.response.data;
 
   const mappingQIds = mapping
-    .filter((m) => m.question.type === TSurveyQuestionType.PictureSelection)
+    .filter((m) => m.question.type === TSurveyQuestionTypeEnum.PictureSelection)
     .map((m) => m.question.id);
 
   Object.keys(responses).forEach((resp) => {
@@ -162,11 +220,16 @@ const buildNotionPayloadProperties = (
   });
 
   mapping.forEach((map) => {
-    const value = responses[map.question.id];
-
-    properties[map.column.name] = {
-      [map.column.type]: getValue(map.column.type, processResponseData(value)),
-    };
+    if (map.question.id === "metadata") {
+      properties[map.column.name] = {
+        [map.column.type]: getValue(map.column.type, convertMetaObjectToString(data.response.meta)),
+      };
+    } else {
+      const value = responses[map.question.id];
+      properties[map.column.name] = {
+        [map.column.type]: getValue(map.column.type, processResponseData(value)),
+      };
+    }
   });
 
   return properties;

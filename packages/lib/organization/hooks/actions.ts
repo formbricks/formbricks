@@ -1,13 +1,10 @@
 "use server";
 
 import "server-only";
-
 import { getServerSession } from "next-auth";
-
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
-
 import { authOptions } from "../../authOptions";
-import { getOrganization, getOrganizationBillingInfo } from "../service";
+import { getOrganization } from "../service";
 
 export const getOrganizationBillingInfoAction = async (organizationId: string) => {
   const session = await getServerSession(authOptions);
@@ -21,5 +18,5 @@ export const getOrganizationBillingInfoAction = async (organizationId: string) =
     throw new ResourceNotFoundError("Organization", organizationId);
   }
 
-  return await getOrganizationBillingInfo(organizationId);
+  return organization.billing;
 };

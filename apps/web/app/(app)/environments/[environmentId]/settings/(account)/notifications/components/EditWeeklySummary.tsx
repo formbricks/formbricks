@@ -1,8 +1,6 @@
 import { UsersIcon } from "lucide-react";
 import Link from "next/link";
-
 import { TUser } from "@formbricks/types/user";
-
 import { Membership } from "../types";
 import { NotificationSwitch } from "./NotificationSwitch";
 

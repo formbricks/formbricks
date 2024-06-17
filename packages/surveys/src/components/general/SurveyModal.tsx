@@ -1,8 +1,6 @@
 import { Modal } from "@/components/wrappers/Modal";
 import { useState } from "preact/hooks";
-
 import { SurveyModalProps } from "@formbricks/types/formbricksSurveys";
-
 import { Survey } from "./Survey";
 
 export const SurveyModal = ({

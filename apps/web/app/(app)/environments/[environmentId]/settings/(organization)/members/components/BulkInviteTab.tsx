@@ -5,11 +5,9 @@ import Link from "next/link";
 import Papa, { type ParseResult } from "papaparse";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
-
 import { ZInvitees } from "@formbricks/types/invites";
 import { Alert, AlertDescription } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
-
 import { MembershipRole } from "./AddMemberModal";
 
 interface BulkInviteTabProps {
@@ -86,9 +84,9 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
       </div>
       <div>
         {!canDoRoleManagement && (
-          <Alert variant="destructive" className="mt-1.5 flex items-start bg-slate-50">
+          <Alert variant="error" className="mt-1.5 flex items-start bg-slate-50">
             <AlertDescription className="ml-2">
-              <p className="text-sm text-slate-700 ">
+              <p className="text-sm">
                 <strong>Warning: </strong> Please note that on the Free Plan, all organization members are
                 automatically assigned the &quot;Admin&quot; role regardless of the role specified in the CSV
                 file.

@@ -8,7 +8,6 @@ import {
   TSegmentFilter,
   TSegmentPersonFilter,
 } from "@formbricks/types/segment";
-
 import { AttributeSegmentFilter } from "./AttributeSegmentFilter";
 import { PersonSegmentFilter } from "./PersonSegmentFilter";
 

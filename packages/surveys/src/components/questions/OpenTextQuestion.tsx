@@ -7,7 +7,6 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 import { useCallback } from "react";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
@@ -77,7 +76,7 @@ export const OpenTextQuestion = ({
         e.preventDefault();
         const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedttc);
-        onSubmit({ [question.id]: value, inputType: question.inputType }, updatedttc);
+        onSubmit({ [question.id]: value }, updatedttc);
       }}
       className="w-full">
       <ScrollableContainer>

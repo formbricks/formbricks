@@ -5,7 +5,6 @@ import { Navigation } from "@/components/Navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
 import { Footer } from "./Footer";
 import { Header } from "./Header";
 import { type Section, SectionProvider } from "./SectionProvider";

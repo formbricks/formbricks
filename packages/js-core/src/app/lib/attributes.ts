@@ -1,6 +1,5 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { TAttributes } from "@formbricks/types/attributes";
-
 import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import { AppConfig } from "./config";

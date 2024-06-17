@@ -1,6 +1,10 @@
-export type MatchType = "exactMatch" | "contains" | "startsWith" | "endsWith" | "notMatch" | "notContains";
+import { TActionClassPageUrlRule } from "@formbricks/types/actionClasses";
 
-export const testURLmatch = (testUrl: string, pageUrlValue: string, pageUrlRule: MatchType): string => {
+export const testURLmatch = (
+  testUrl: string,
+  pageUrlValue: string,
+  pageUrlRule: TActionClassPageUrlRule
+): string => {
   switch (pageUrlRule) {
     case "exactMatch":
       return testUrl === pageUrlValue ? "yes" : "no";

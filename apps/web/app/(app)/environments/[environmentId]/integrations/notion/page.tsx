@@ -1,5 +1,4 @@
 import { NotionWrapper } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
-
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import {
   NOTION_AUTH_URL,
