@@ -10,7 +10,7 @@ import {
 } from "./surveys";
 import { ZUserObjective } from "./user";
 
-export const ZTemplateRole = z.enum(["productManager", "customerSuccess", "marketing", "sales", "other"]);
+export const ZTemplateRole = z.enum(["productManager", "customerSuccess", "marketing", "sales"]);
 export type TTemplateRole = z.infer<typeof ZTemplateRole>;
 
 export const ZTemplate = z.object({

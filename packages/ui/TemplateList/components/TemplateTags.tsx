@@ -64,18 +64,18 @@ export const TemplateTags = ({ template }: TemplateTagsProps) => {
   return (
     <div className="flex flex-wrap gap-1.5">
       <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{roleTag}</div>
+      {industryTag && (
+        <div
+          className={cn("rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500")}>
+          {industryTag}
+        </div>
+      )}
       {channelTag && (
         <div
           className={cn(
             "flex-nowrap rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500"
           )}>
           {channelTag}
-        </div>
-      )}
-      {industryTag && (
-        <div
-          className={cn("rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500")}>
-          {industryTag}
         </div>
       )}
       {template.preset.questions.some((question) => question.logic && question.logic.length > 0) && (
