@@ -352,6 +352,272 @@ const surveyDefault: TTemplate["preset"] = {
 
 export const templates: TTemplate[] = [
   {
+    name: "Cart Abandonment Survey",
+    role: "productManager",
+    industries: ["eCommerce"],
+    channels: ["app", "website", "email"],
+    description: "Understand the reasons behind cart abandonment in your web shop.",
+    preset: {
+      ...surveyDefault,
+      name: "Cart Abandonment Survey",
+      questions: [
+        {
+          id: createId(),
+          html: {
+            default:
+              '<p class="fb-editor-paragraph" dir="ltr"><span>We noticed you left some items in your cart. We would love to understand why.</span></p>',
+          },
+          type: TSurveyQuestionTypeEnum.CTA,
+          logic: [{ condition: "skipped", destination: "end" }],
+          headline: { default: "Do you have 2 minutes to help us improve?" },
+          required: false,
+          buttonLabel: { default: "Sure!" },
+          buttonExternal: false,
+          dismissButtonLabel: { default: "No, thanks." },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "What was the primary reason you didn't complete your purchase?" },
+          subheader: { default: "Please select one of the following options:" },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: "High shipping costs" },
+            },
+            {
+              id: createId(),
+              label: { default: "Found a better price elsewhere" },
+            },
+            {
+              id: createId(),
+              label: { default: "Just browsing" },
+            },
+            {
+              id: createId(),
+              label: { default: "Decided not to buy" },
+            },
+            {
+              id: createId(),
+              label: { default: "Payment issues" },
+            },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: "Please elaborate on your reason for not completing the purchase:",
+          },
+          required: false,
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: { default: "How would you rate your overall shopping experience?" },
+          required: true,
+          scale: "number",
+          range: 5,
+          lowerLabel: { default: "Very dissatisfied" },
+          upperLabel: { default: "Very satisfied" },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          headline: {
+            default: "What factors would encourage you to complete your purchase in the future?",
+          },
+          subheader: { default: "Please select all that apply:" },
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: { default: "Lower shipping costs" },
+            },
+            {
+              id: createId(),
+              label: { default: "Discounts or promotions" },
+            },
+            {
+              id: createId(),
+              label: { default: "More payment options" },
+            },
+            {
+              id: createId(),
+              label: { default: "Better product descriptions" },
+            },
+            {
+              id: createId(),
+              label: { default: "Improved website navigation" },
+            },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+        {
+          id: createId(),
+          logic: [{ condition: "skipped", destination: "bxvvhol84ir34q2vsvr5kwl9" }],
+          type: TSurveyQuestionTypeEnum.Consent,
+          headline: { default: "Would you like to receive a discount code via email?" },
+          required: false,
+          label: { default: "Yes, please reach out." },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Please share your email address:" },
+          required: true,
+          inputType: "email",
+          longAnswer: false,
+          placeholder: { default: "example@email.com" },
+        },
+        {
+          id: "bxvvhol84ir34q2vsvr5kwl9",
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Any additional comments or suggestions?" },
+          required: false,
+          inputType: "text",
+        },
+      ],
+    },
+  },
+  {
+    name: "Site Abandonment Survey",
+    role: "productManager",
+    industries: ["eCommerce"],
+    channels: ["app", "website"],
+    description: "Understand the reasons behind site abandonment in your web shop.",
+    preset: {
+      ...surveyDefault,
+      name: "Site Abandonment Survey",
+      questions: [
+        {
+          id: createId(),
+          html: {
+            default:
+              "<p class='fb-editor-paragraph' dir='ltr'><span>We noticed you're  leaving our site without making a purchase. We would love to understand why.</span></p>",
+          },
+          type: TSurveyQuestionTypeEnum.CTA,
+          logic: [{ condition: "skipped", destination: "end" }],
+          headline: { default: "Do you have a minute?" },
+          required: false,
+          buttonLabel: { default: "Sure!" },
+          buttonExternal: false,
+          dismissButtonLabel: { default: "No, thanks." },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "What's the primary reason you're leaving our site?" },
+          subheader: { default: "Please select one of the following options:" },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: "Can't find what I am looking for" },
+            },
+            {
+              id: createId(),
+              label: { default: "Site is too slow" },
+            },
+            {
+              id: createId(),
+              label: { default: "Technical issues" },
+            },
+            {
+              id: createId(),
+              label: { default: "Just browsing" },
+            },
+            {
+              id: createId(),
+              label: { default: "Found a better site" },
+            },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: "Please elaborate on your reason for leaving the site:",
+          },
+          required: false,
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: { default: "How would you rate your overall experience on our site?" },
+          required: true,
+          scale: "number",
+          range: 5,
+          lowerLabel: { default: "Very dissatisfied" },
+          upperLabel: { default: "Very satisfied" },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          headline: {
+            default: "What improvements would encourage you to stay longer on our site?",
+          },
+          subheader: { default: "Please select all that apply:" },
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: { default: "Faster loading times" },
+            },
+            {
+              id: createId(),
+              label: { default: "Better product search functionality" },
+            },
+            {
+              id: createId(),
+              label: { default: "More product variety" },
+            },
+            {
+              id: createId(),
+              label: { default: "Improved site design" },
+            },
+            {
+              id: createId(),
+              label: { default: "More customer reviews" },
+            },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+        {
+          id: createId(),
+          logic: [{ condition: "skipped", destination: "bxvvhol84ir34q2vsvr5kwl9" }],
+          type: TSurveyQuestionTypeEnum.Consent,
+          headline: { default: "Would you like to receive updates about new products and promotions?" },
+          required: false,
+          label: { default: "Yes, please reach out." },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Please share your email address:" },
+          required: true,
+          inputType: "email",
+          longAnswer: false,
+          placeholder: { default: "example@email.com" },
+        },
+        {
+          id: "bxvvhol84ir34q2vsvr5kwl9",
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Any additional comments or suggestions?" },
+          required: false,
+          inputType: "text",
+        },
+      ],
+    },
+  },
+  {
     name: "Product Market Fit (Superhuman)",
     role: "productManager",
     industries: ["saas"],
@@ -455,7 +721,7 @@ export const templates: TTemplate[] = [
   {
     name: "Onboarding Segmentation",
     role: "productManager",
-    industries: ["saas", "eCommerce"],
+    industries: ["saas"],
     channels: ["app", "email"],
     description: "Learn more about who signed up to your product and why.",
     preset: {
@@ -1173,7 +1439,7 @@ export const templates: TTemplate[] = [
   {
     name: "Identify Customer Goals",
     role: "productManager",
-    industries: ["eCommerce", "saas", "other"],
+    industries: ["saas", "other"],
     channels: ["app", "website"],
     description:
       "Better understand if your messaging creates the right expectations of the value your product provides.",
@@ -1654,7 +1920,7 @@ export const templates: TTemplate[] = [
   {
     name: "Identify Upsell Opportunities",
     role: "sales",
-    industries: ["eCommerce", "saas"],
+    industries: ["saas"],
     channels: ["app", "link", "email"],
     description: "Find out how much time your product saves your user. Use it to upsell.",
     preset: {
@@ -1858,7 +2124,7 @@ export const templates: TTemplate[] = [
   {
     name: "Rate Checkout Experience",
     role: "productManager",
-    industries: ["eCommerce", "saas"],
+    industries: ["eCommerce"],
     channels: ["website", "app"],
     description: "Let customers rate the checkout experience to tweak conversion.",
     preset: {
@@ -1984,7 +2250,7 @@ export const templates: TTemplate[] = [
   {
     name: "Measure Task Accomplishment",
     role: "productManager",
-    industries: ["eCommerce", "saas"],
+    industries: ["saas"],
     channels: ["app", "website"],
     description: "See if people get their 'Job To Be Done' done. Successful people are better customers.",
     preset: {
@@ -2239,7 +2505,7 @@ export const templates: TTemplate[] = [
           ],
           range: 5,
           scale: "number",
-          headline: { default: "How likely are you to subscribe to {{productName}} today?" },
+          headline: { default: "How likely are you to shop from us today?" },
           required: true,
           lowerLabel: { default: "Not at all likely" },
           upperLabel: { default: "Extremely likely" },
@@ -2271,7 +2537,7 @@ export const templates: TTemplate[] = [
   {
     name: "Improve Newsletter Content",
     role: "marketing",
-    industries: ["eCommerce", "other"],
+    industries: ["eCommerce", "saas", "other"],
     channels: ["email"],
     description: "Find out how your subscribers like your newsletter content.",
     preset: {
