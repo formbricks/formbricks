@@ -5,7 +5,6 @@ import { getCustomHeadline } from "@/app/(app)/onboarding/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
 import {
@@ -28,7 +27,6 @@ import {
   FormProvider,
 } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 interface ProductSettingsProps {
@@ -74,7 +72,7 @@ export const ProductSettings = ({ environmentId, channel, industry, product }: P
   const { isSubmitting } = form.formState;
 
   return (
-    <div className="mt-6 flex w-5/6 space-x-10 xl:w-2/3">
+    <div className="mt-6 flex w-5/6 space-x-10 lg:w-2/3 2xl:w-1/2">
       <div className="flex w-1/2 flex-col space-y-4">
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(updateProduct)} className="w-full space-y-4">
@@ -180,7 +178,7 @@ export const ProductSettings = ({ environmentId, channel, industry, product }: P
             className="absolute left-2 top-2 -mb-6 h-20 w-auto max-w-64 rounded-lg border object-contain p-1"
           />
         )}
-        <Label>Preview</Label>
+        <p className="text-sm text-slate-400">Preview</p>
         <div className="h-3/4 w-3/4">
           <SurveyInline
             survey={PREVIEW_SURVEY}

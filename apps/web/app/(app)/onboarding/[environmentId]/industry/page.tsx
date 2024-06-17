@@ -23,23 +23,23 @@ const Page = async ({ params, searchParams }: IndustryPageProps) => {
   const industryOptions = [
     {
       title: "E-Commerce",
-      description: "Implement proven best practices to understand WHY people buy.",
+      description: "Implement proven best practices to understand why people buy.",
       icon: ShoppingCart,
       iconText: "B2B and B2C",
       href: `/onboarding/${params.environmentId}/product/settings?channel=${channel}&industry=eCommerce`,
     },
     {
       title: "SaaS",
-      description: "Leverage every touchpoint to gather feedback for better product-market fit",
+      description: "Gather contextualized feedback to improve product-market fit.",
       icon: MonitorIcon,
-      iconText: "Keep 'em happy",
+      iconText: "Proven methods",
       href: `/onboarding/${params.environmentId}/product/settings?channel=${channel}&industry=saas`,
     },
     {
       title: "Other",
-      description: "Universal Formricks experience with features for every industry",
+      description: "Universal Formricks experience with features for every industry.",
       icon: HeartIcon,
-      iconText: "Universal",
+      iconText: "Customer insights",
       href: IS_FORMBRICKS_CLOUD
         ? `/onboarding/${params.environmentId}/survey?channel=${channel}&industry=other`
         : `/onboarding/${params.environmentId}/product/settings?channel=${channel}&industry=other`,
@@ -47,10 +47,10 @@ const Page = async ({ params, searchParams }: IndustryPageProps) => {
   ];
 
   return (
-    <div className="flex min-h-full min-w-full flex-col items-center justify-center">
+    <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       <OnboardingTitle
         title="Which industry do you work for?"
-        subtitle="Get started with proven Best Practices 🚀"
+        subtitle="Get started with proven best practices 🚀"
       />
       <OnboardingOptionsContainer options={industryOptions} />
     </div>
