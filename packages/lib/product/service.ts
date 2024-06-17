@@ -25,6 +25,7 @@ const selectProduct = {
   recontactDays: true,
   linkSurveyBranding: true,
   inAppSurveyBranding: true,
+  config: true,
   placement: true,
   clickOutsideClose: true,
   darkOverlay: true,
@@ -253,6 +254,10 @@ export const createProduct = async (
   try {
     let product = await prisma.product.create({
       data: {
+        config: {
+          channel: null,
+          industry: null,
+        },
         ...data,
         name: productInput.name,
         organizationId,

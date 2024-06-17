@@ -101,7 +101,9 @@ export const POST = async (request: Request) => {
       if (isMultiOrgEnabled) {
         const organization = await createOrganization({ name: user.name + "'s Organization" });
         await createMembership(organization.id, user.id, { role: "owner", accepted: true });
-        const product = await createProduct(organization.id, { name: "My Product" });
+        const product = await createProduct(organization.id, {
+          name: "My Product",
+        });
 
         const updatedNotificationSettings = {
           ...user.notificationSettings,

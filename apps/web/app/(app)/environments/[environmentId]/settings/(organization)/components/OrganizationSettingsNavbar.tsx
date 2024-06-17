@@ -35,7 +35,7 @@ export const OrganizationSettingsNavbar = ({
       label: "Billing & Plan",
       href: `/environments/${environmentId}/settings/billing`,
       icon: <CreditCardIcon className="h-5 w-5" />,
-      hidden: !isFormbricksCloud || isPricingDisabled,
+      hidden: !isFormbricksCloud || !isOwner,
       current: pathname?.includes("/billing"),
     },
     {
