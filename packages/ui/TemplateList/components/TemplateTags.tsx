@@ -3,13 +3,13 @@ import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProductConfigIndustry } from "@formbricks/types/product";
 import { TSurveyType } from "@formbricks/types/surveys";
-import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
+import { TTemplate, TTemplateFilter, TTemplateRole } from "@formbricks/types/templates";
 import { TooltipRenderer } from "../../Tooltip";
 import { channelMapping, industryMapping, roleMapping } from "../lib/utils";
 
 interface TemplateTagsProps {
   template: TTemplate;
-  selectedFilter: (TSurveyType | TProductConfigIndustry | TTemplateRole | null)[];
+  selectedFilter: TTemplateFilter[];
 }
 
 const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {

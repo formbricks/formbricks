@@ -1,7 +1,6 @@
 import { cn } from "@formbricks/lib/cn";
-import { TProduct, TProductConfigIndustry } from "@formbricks/types/product";
-import { TSurveyType } from "@formbricks/types/surveys";
-import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
+import { TProduct } from "@formbricks/types/product";
+import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
 import { Button } from "../../Button";
 import { replacePresetPlaceholders } from "../lib/utils";
 import { TemplateTags } from "./TemplateTags";
@@ -14,7 +13,7 @@ interface TemplateProps {
   product: TProduct;
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
-  selectedFilter: (TSurveyType | TProductConfigIndustry | TTemplateRole | null)[];
+  selectedFilter: TTemplateFilter[];
 }
 
 export const Template = ({

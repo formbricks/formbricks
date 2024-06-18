@@ -4,13 +4,9 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { templates } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
-import {
-  type TProduct,
-  type TProductConfigIndustry,
-  ZProductConfigIndustry,
-} from "@formbricks/types/product";
-import { TSurveyInput, TSurveyType, ZSurveyType } from "@formbricks/types/surveys";
-import { TTemplate, TTemplateRole, ZTemplateRole } from "@formbricks/types/templates";
+import { type TProduct, ZProductConfigIndustry } from "@formbricks/types/product";
+import { TSurveyInput, ZSurveyType } from "@formbricks/types/surveys";
+import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { createSurveyAction } from "./actions";
 import { StartFromScratchTemplate } from "./components/StartFromScratchTemplate";
@@ -22,7 +18,7 @@ interface TemplateListProps {
   environment: TEnvironment;
   product: TProduct;
   templateSearch?: string;
-  prefilledFilters: (TSurveyType | TProductConfigIndustry | TTemplateRole | null)[];
+  prefilledFilters: TTemplateFilter[];
   onTemplateClick?: (template: TTemplate) => void;
 }
 
@@ -37,8 +33,7 @@ export const TemplateList = ({
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedFilter, setSelectedFilter] =
-    useState<(TSurveyType | TProductConfigIndustry | TTemplateRole | null)[]>(prefilledFilters);
+  const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>(prefilledFilters);
 
   const createSurvey = async (activeTemplate: TTemplate) => {
     setLoading(true);

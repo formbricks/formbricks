@@ -2,8 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { TProductConfigIndustry } from "@formbricks/types/product";
-import { TSurveyType } from "@formbricks/types/surveys";
+import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 import { TTemplateRole } from "@formbricks/types/templates";
 import { TemplateContainerWithPreview } from "./components/TemplateContainer";
 
@@ -12,7 +11,7 @@ interface SurveyTemplateProps {
     environmentId: string;
   };
   searchParams: {
-    channel?: TSurveyType;
+    channel?: TProductConfigChannel;
     industry?: TProductConfigIndustry;
     role?: TTemplateRole;
   };
@@ -21,11 +20,6 @@ interface SurveyTemplateProps {
 const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const session = await getServerSession(authOptions);
   const environmentId = params.environmentId;
-  const prefilledFilters = [
-    searchParams.channel ?? null,
-    searchParams.industry ?? null,
-    searchParams.role ?? null,
-  ];
 
   const [environment, product] = await Promise.all([
     getEnvironment(environmentId),
@@ -43,6 +37,8 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   if (!environment) {
     throw new Error("Environment not found");
   }
+
+  const prefilledFilters = [product.config.channel, product.config.industry, searchParams.role ?? null];
 
   return (
     <TemplateContainerWithPreview

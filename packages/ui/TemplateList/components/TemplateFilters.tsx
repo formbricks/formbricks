@@ -1,14 +1,12 @@
 import { cn } from "@formbricks/lib/cn";
-import { TProductConfigIndustry } from "@formbricks/types/product";
-import { TSurveyType } from "@formbricks/types/surveys";
-import { TTemplateRole } from "@formbricks/types/templates";
+import { TTemplateFilter } from "@formbricks/types/templates";
 import { channelMapping, industryMapping, roleMapping } from "../lib/utils";
 
 interface TemplateFiltersProps {
-  selectedFilter: (TSurveyType | TProductConfigIndustry | TTemplateRole | null)[];
-  setSelectedFilter: (filter: (TSurveyType | TProductConfigIndustry | TTemplateRole | null)[]) => void;
+  selectedFilter: TTemplateFilter[];
+  setSelectedFilter: (filter: TTemplateFilter[]) => void;
   templateSearch?: string;
-  prefilledFilters: (TSurveyType | TProductConfigIndustry | TTemplateRole | null)[];
+  prefilledFilters: TTemplateFilter[];
 }
 
 export const TemplateFilters = ({
@@ -17,10 +15,7 @@ export const TemplateFilters = ({
   templateSearch,
   prefilledFilters,
 }: TemplateFiltersProps) => {
-  const handleFilterSelect = (
-    filterValue: TSurveyType | TProductConfigIndustry | TTemplateRole | null,
-    index: number
-  ) => {
+  const handleFilterSelect = (filterValue: TTemplateFilter, index: number) => {
     // If the filter value at a particular index is null, it indicates that no filter has been chosen, therefore all results are displayed
     const newFilter = [...selectedFilter];
     newFilter[index] = filterValue;
