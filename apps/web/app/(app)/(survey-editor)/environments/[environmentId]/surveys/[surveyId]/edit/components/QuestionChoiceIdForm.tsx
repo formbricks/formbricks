@@ -44,7 +44,7 @@ export const QuestionChoiceIdForm: React.FC<QuestionChoiceIdFormProps> = ({
                 name="id"
                 rules={{
                   required: true,
-                  validate: (value, formValues) => {
+                  validate: (value) => {
                     if (otherChoiceIds?.includes(value)) {
                       return "Choice ID already used";
                     }
