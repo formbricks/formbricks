@@ -32,6 +32,7 @@ export const OnboardingSurvey = ({ environmentId, channel }: OnboardingSurveyPro
         window.removeEventListener("message", handleMessageEvent, false);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isIFrameVisible]);
 
   return (
