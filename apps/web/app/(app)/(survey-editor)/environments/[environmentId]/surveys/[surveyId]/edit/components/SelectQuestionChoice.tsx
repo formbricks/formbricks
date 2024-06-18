@@ -1,3 +1,4 @@
+import { QuestionChoiceIdButtonModal } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionChoiceIdButtonModal";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
@@ -22,6 +23,7 @@ interface ChoiceProps {
   choiceIdx: number;
   questionIdx: number;
   updateChoice: (choiceIdx: number, updatedAttributes: { label: TI18nString }) => void;
+  updateChoiceId: (choiceIdx: number, updatedAttributes: { id: string }) => void;
   deleteChoice: (choiceIdx: number) => void;
   addChoice: (choiceIdx: number) => void;
   setisInvalidValue: (value: string | null) => void;
@@ -50,6 +52,7 @@ export const SelectQuestionChoice = ({
   setisInvalidValue,
   surveyLanguages,
   updateChoice,
+  updateChoiceId,
   findDuplicateLabel,
   question,
   surveyLanguageCodes,
@@ -77,6 +80,14 @@ export const SelectQuestionChoice = ({
         <GripVerticalIcon className="mt-3 h-4 w-4 cursor-move text-slate-400" />
       </div>
 
+      <div className="mt-3 flex space-x-2">
+        <QuestionChoiceIdButtonModal
+          choice={choice}
+          choiceIdx={choiceIdx}
+          question={question}
+          updateChoiceId={updateChoiceId}
+        />
+      </div>
       <div className="flex w-full space-x-2">
         <QuestionFormInput
           key={choice.id}
