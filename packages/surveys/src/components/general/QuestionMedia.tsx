@@ -28,31 +28,44 @@ interface QuestionMediaProps {
 }
 
 export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionMediaProps) => {
-  const [isVideoLoading, setIsVideoLoading] = useState(true);
   const videoUrlWithParams = videoUrl ? getVideoUrlWithParams(videoUrl) : undefined;
+  const [isLoading, setIsLoading] = useState(true);
 
   return (
     <div className="group/image relative mb-4 block rounded-md">
-      {imgUrl && <img src={imgUrl} alt={altText} className="rounded-custom" />}
-      {videoUrlWithParams && (
-        <div className="relative">
-          {isVideoLoading && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <LoadingSpinner />
-            </div>
-          )}
-          <div className="rounded-custom bg-black">
-            <iframe
-              src={videoUrlWithParams}
-              title="Question Video"
-              frameborder="0"
-              className="rounded-custom aspect-video w-full"
-              onLoad={() => setIsVideoLoading(false)}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-              referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      <div className="relative">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <LoadingSpinner />
           </div>
-        </div>
-      )}
+        )}
+        {imgUrl && (
+          <img
+            key={imgUrl}
+            src={imgUrl}
+            alt={altText}
+            className="rounded-custom relative z-10"
+            onLoad={() => {
+              console.log("running");
+              setIsLoading(false);
+            }}
+          />
+        )}
+        {videoUrlWithParams && (
+          <div className="relative">
+            <div className="rounded-custom bg-black">
+              <iframe
+                src={videoUrlWithParams}
+                title="Question Video"
+                frameborder="0"
+                className="rounded-custom aspect-video w-full"
+                onLoad={() => setIsLoading(false)}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin"></iframe>
+            </div>
+          </div>
+        )}
+      </div>
       <a
         href={!!imgUrl ? imgUrl : parseVideoUrl(videoUrl ?? "")}
         target="_blank"
