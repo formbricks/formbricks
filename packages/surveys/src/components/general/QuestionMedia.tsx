@@ -46,7 +46,6 @@ export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionM
             alt={altText}
             className="rounded-custom relative z-10"
             onLoad={() => {
-              console.log("running");
               setIsLoading(false);
             }}
           />
