@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZLegacySurveyQuestions, ZLegacySurveyThankYouCard, ZLegacySurveyWelcomeCard } from "./LegacySurvey";
-import { ZProductIndustry } from "./product";
+import { ZProductConfigIndustry } from "./product";
 import {
   ZSurveyHiddenFields,
   ZSurveyQuestions,
@@ -19,7 +19,7 @@ export const ZTemplate = z.object({
   icon: z.any().optional(),
   role: ZTemplateRole.optional(),
   channels: z.array(ZSurveyType).optional(),
-  industries: z.array(ZProductIndustry).optional(),
+  industries: z.array(ZProductConfigIndustry).optional(),
   objectives: z.array(ZUserObjective).optional(),
   preset: z.object({
     name: z.string(),

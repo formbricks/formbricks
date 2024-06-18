@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { templates } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
-import { type TProduct, type TProductIndustry, ZProductIndustry } from "@formbricks/types/product";
+import { type TProduct, type TProductIndustry, ZProductConfigIndustry } from "@formbricks/types/product";
 import { TSurveyInput, TSurveyType, ZSurveyType } from "@formbricks/types/surveys";
 import { TTemplate, TTemplateRole, ZTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
@@ -14,29 +14,28 @@ import { Template } from "./components/Template";
 import { TemplateFilters } from "./components/TemplateFilters";
 
 interface TemplateListProps {
-  environmentId: string;
   user: TUser;
   environment: TEnvironment;
   product: TProduct;
   templateSearch?: string;
   prefilledFilters: (TSurveyType | TProductIndustry | TTemplateRole | null)[];
-  onTemplateClick: (template: TTemplate) => void;
+  onTemplateClick?: (template: TTemplate) => void;
 }
 
 export const TemplateList = ({
-  environmentId,
   user,
   product,
   environment,
   templateSearch,
   prefilledFilters,
-  onTemplateClick,
+  onTemplateClick = () => {},
 }: TemplateListProps) => {
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] =
     useState<(TSurveyType | TProductIndustry | TTemplateRole | null)[]>(prefilledFilters);
+
   const createSurvey = async (activeTemplate: TTemplate) => {
     setLoading(true);
     const surveyType = environment?.appSetupCompleted
@@ -49,8 +48,8 @@ export const TemplateList = ({
       type: surveyType,
       createdBy: user.id,
     };
-    const survey = await createSurveyAction(environmentId, augmentedTemplate);
-    router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
+    const survey = await createSurveyAction(environment.id, augmentedTemplate);
+    router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
   };
 
   const filteredTemplates = useMemo(() => {
@@ -60,7 +59,7 @@ export const TemplateList = ({
       }
       // Parse and validate the filters
       const channelParseResult = ZSurveyType.nullable().safeParse(selectedFilter[0]);
-      const industryParseResult = ZProductIndustry.nullable().safeParse(selectedFilter[1]);
+      const industryParseResult = ZProductConfigIndustry.nullable().safeParse(selectedFilter[1]);
       const roleParseResult = ZTemplateRole.nullable().safeParse(selectedFilter[2]);
 
       // Ensure all validations are successful
@@ -81,7 +80,7 @@ export const TemplateList = ({
 
       return channelMatch && industryMatch && roleMatch;
     });
-  }, [templates, selectedFilter, templateSearch]);
+  }, [selectedFilter, templateSearch]);
 
   return (
     <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 focus:outline-none">

@@ -825,7 +825,7 @@ export const templates: TTemplate[] = [
     name: "Churn Survey",
     role: "sales",
     industries: ["saas", "eCommerce", "other"],
-    channels: ["website", "link"],
+    channels: ["app", "link"],
     description: "Find out why people cancel their subscriptions. These insights are pure gold!",
     preset: {
       ...surveyDefault,
@@ -970,7 +970,7 @@ export const templates: TTemplate[] = [
     name: "Improve Trial Conversion",
     role: "sales",
     industries: ["saas"],
-    channels: ["link"],
+    channels: ["link", "app"],
     description: "Find out why people stopped their trial. These insights help you improve your funnel.",
     preset: {
       ...surveyDefault,
@@ -1762,7 +1762,7 @@ export const templates: TTemplate[] = [
 
     role: "customerSuccess",
     industries: ["saas", "eCommerce", "other"],
-    channels: ["app", "link"],
+    channels: ["app", "link", "website"],
     description: "Measure the Net Promoter Score of your product or service.",
     preset: {
       ...surveyDefault,
@@ -1791,8 +1791,8 @@ export const templates: TTemplate[] = [
     name: "Customer Satisfaction Score (CSAT)",
     role: "customerSuccess",
     industries: ["saas", "eCommerce", "other"],
-    channels: ["app", "link"],
-    description: "Measure the Customer Satisfaction Score of your product.",
+    channels: ["app", "link", "website"],
+    description: "Measure the Customer Satisfaction Score of your product or service.",
     preset: {
       ...surveyDefault,
       name: "{{productName}} CSAT",
@@ -2488,7 +2488,7 @@ export const templates: TTemplate[] = [
     name: "Understand Purchase Intention",
     role: "sales",
     industries: ["eCommerce"],
-    channels: ["website"],
+    channels: ["website", "link", "app"],
     description: "Find out how close your visitors are to buy or subscribe.",
     preset: {
       ...surveyDefault,

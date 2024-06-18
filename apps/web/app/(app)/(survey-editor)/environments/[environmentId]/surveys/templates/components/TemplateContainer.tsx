@@ -22,7 +22,6 @@ type TemplateContainerWithPreviewProps = {
 };
 
 export const TemplateContainerWithPreview = ({
-  environmentId,
   product,
   environment,
   user,
@@ -54,7 +53,6 @@ export const TemplateContainerWithPreview = ({
           </div>
 
           <TemplateList
-            environmentId={environmentId}
             environment={environment}
             product={product}
             user={user}
