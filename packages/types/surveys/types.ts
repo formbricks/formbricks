@@ -553,6 +553,7 @@ export const ZSurvey = z
     closeOnDate: z.date().nullable(),
     productOverwrites: ZSurveyProductOverwrites.nullable(),
     styling: ZSurveyStyling.nullable(),
+    showLanguageSwitch: z.boolean().nullable(),
     surveyClosedMessage: ZSurveyClosedMessage.nullable(),
     segment: ZSegment.nullable(),
     singleUse: ZSurveySingleUse.nullable(),

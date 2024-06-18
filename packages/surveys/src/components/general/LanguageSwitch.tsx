@@ -2,7 +2,7 @@ import { GlobeIcon } from "@/components/general/GlobeIcon";
 import { useRef, useState } from "react";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import { TSurveyLanguage } from "@formbricks/types/surveys";
+import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 
 interface LanguageSwitchProps {
   surveyLanguages: TSurveyLanguage[];
