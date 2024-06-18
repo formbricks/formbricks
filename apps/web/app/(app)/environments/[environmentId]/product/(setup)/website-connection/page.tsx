@@ -1,4 +1,6 @@
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
+import { EnvironmentIdField } from "@/app/(app)/environments/[environmentId]/product/(setup)/components/EnvironmentIdField";
+import { SetupInstructions } from "@/app/(app)/environments/[environmentId]/product/(setup)/components/SetupInstructions";
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -7,9 +9,7 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { EnvironmentNotice } from "@formbricks/ui/EnvironmentNotice";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
-import { SettingsCard } from "../../settings/components/SettingsCard";
-import { EnvironmentIdField } from "./components/EnvironmentIdField";
-import { SetupInstructions } from "./components/SetupInstructions";
+import { SettingsCard } from "../../../settings/components/SettingsCard";
 
 const Page = async ({ params }) => {
   const [environment, organization] = await Promise.all([
@@ -32,30 +32,31 @@ const Page = async ({ params }) => {
       <PageHeader pageTitle="Configuration">
         <ProductConfigNavigation
           environmentId={params.environmentId}
-          activeId="setup"
+          activeId="website-connection"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
         />
       </PageHeader>
       <div className="space-y-4">
-        <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/product/setup" />
+        <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/product/website-connection" />
         <SettingsCard
-          title="Widget Status"
-          description="Check if the Formbricks widget is alive and kicking.">
-          {environment && <WidgetStatusIndicator environment={environment} type="large" />}
+          title="Website Connection Status"
+          description="Check if your website is successfully connected with Formbricks. Reload page to recheck.">
+          {environment && <WidgetStatusIndicator environment={environment} size="large" type="website" />}
         </SettingsCard>
         <SettingsCard
           title="Your EnvironmentId"
-          description="This Id uniquely identifies this Formbricks environment.">
+          description="This id uniquely identifies this Formbricks environment.">
           <EnvironmentIdField environmentId={params.environmentId} />
         </SettingsCard>
         <SettingsCard
           title="How to setup"
-          description="Follow these steps to setup the Formbricks widget within your app"
+          description="Follow these steps to setup the Formbricks widget within your website"
           noPadding>
           <SetupInstructions
             environmentId={params.environmentId}
             webAppUrl={WEBAPP_URL}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+            type="website"
           />
         </SettingsCard>
       </div>

@@ -365,6 +365,7 @@ export const QuestionsView = ({
           internalQuestionIdMap={internalQuestionIdMap}
           attributeClasses={attributeClasses}
           addQuestion={addQuestion}
+          isFormbricksCloud={isFormbricksCloud}
         />
       </DndContext>
 
