@@ -11,12 +11,8 @@ test.describe("JS Package Test", async () => {
     await signUpAndLogin(page, name, email, password);
     await finishOnboarding(page);
 
-    await page
-      .getByText("Product ManagerSaaSApp Survey, Email Survey or Link SurveyProduct Market Fit (")
-      .click();
-    await page
-      .getByText("Product ManagerSaaSApp Survey, Email Survey or Link SurveyProduct Market Fit (")
-      .isVisible();
+    await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).isVisible();
+    await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).click();
 
     await page.getByRole("button", { name: "Use this template" }).isVisible();
     await page.getByRole("button", { name: "Use this template" }).click();
