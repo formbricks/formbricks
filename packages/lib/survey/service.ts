@@ -662,14 +662,14 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
       }),
     };
 
-    if (createdBy) {
-      await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy);
-    }
-
     surveyCache.revalidate({
       id: survey.id,
       environmentId: survey.environmentId,
     });
+
+    if (createdBy) {
+      await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy);
+    }
 
     return transformedSurvey;
   } catch (error) {
