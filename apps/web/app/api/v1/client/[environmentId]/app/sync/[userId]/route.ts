@@ -5,10 +5,10 @@ import {
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
-import { getActionClassByEnvironmentIdAndName, getActionClasses } from "@formbricks/lib/actionClass/service";
+import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributes } from "@formbricks/lib/attribute/service";
-import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import {
   getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
@@ -18,8 +18,7 @@ import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@form
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { createSurvey, getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
-import { getExampleAppSurveyTemplate } from "@formbricks/lib/templates";
+import { getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -71,7 +70,8 @@ export const GET = async (
       throw new Error("Environment does not exist");
     }
 
-    if (!environment.appSetupCompleted) {
+    // temporary remove the example survey creation to avoid caching issue with multiple example surveys
+    /* if (!environment.appSetupCompleted) {
       const exampleTrigger = await getActionClassByEnvironmentIdAndName(environmentId, "New Session");
       if (!exampleTrigger) {
         throw new Error("Example trigger not found");
@@ -79,7 +79,7 @@ export const GET = async (
       const firstSurvey = getExampleAppSurveyTemplate(WEBAPP_URL, exampleTrigger);
       await createSurvey(environmentId, firstSurvey);
       await updateEnvironment(environment.id, { appSetupCompleted: true });
-    }
+    } */
 
     // check organization subscriptions
     const organization = await getOrganizationByEnvironmentId(environmentId);
