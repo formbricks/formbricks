@@ -662,7 +662,9 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
       }),
     };
 
-    await subscribeOrganizationMembersToSurveyResponses(environmentId, survey.id);
+    if (createdBy) {
+      await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy);
+    }
 
     surveyCache.revalidate({
       id: survey.id,
