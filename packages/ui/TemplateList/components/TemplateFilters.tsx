@@ -23,11 +23,11 @@ export const TemplateFilters = ({
   };
   const allFilters = [channelMapping, industryMapping, roleMapping];
   return (
-    <div className="mb-6 gap-3 2xl:flex">
+    <div className="mb-6 gap-3">
       {allFilters.map((filters, index) => {
         if (prefilledFilters[index] !== null) return;
         return (
-          <div className="mt-2 flex flex-wrap gap-1 last:border-r-0 2xl:border-r 2xl:border-slate-300 2xl:pr-3">
+          <div className="mt-2 flex flex-wrap gap-1 last:border-r-0">
             <button
               key={index}
               type="button"
