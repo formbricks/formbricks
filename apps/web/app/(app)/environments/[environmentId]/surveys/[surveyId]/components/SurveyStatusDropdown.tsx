@@ -60,7 +60,9 @@ export const SurveyStatusDropdown = ({
                 <SelectTrigger className="w-[170px] bg-white py-6 md:w-[200px]">
                   <SelectValue>
                     <div className="flex items-center">
-                      {(survey.type === "link" || environment.widgetSetupCompleted) && (
+                      {(survey.type === "link" ||
+                        environment.appSetupCompleted ||
+                        environment.websiteSetupCompleted) && (
                         <SurveyStatusIndicator status={survey.status} />
                       )}
                       <span className="ml-2 text-sm text-slate-700">

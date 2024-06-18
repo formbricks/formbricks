@@ -72,10 +72,16 @@ const Loading = () => {
       current: pathname?.includes("/api-keys"),
     },
     {
-      id: "setup",
-      label: "Setup Guide",
+      id: "website-connection",
+      label: "Website Connection",
       icon: <ListChecksIcon className="h-5 w-5" />,
-      current: pathname?.includes("/setup"),
+      current: pathname?.includes("/website-connection"),
+    },
+    {
+      id: "app-connection",
+      label: "App Connection",
+      icon: <ListChecksIcon className="h-5 w-5" />,
+      current: pathname?.includes("/app-connection"),
     },
   ];
 
