@@ -1,9 +1,10 @@
 import { EnvironmentLayout } from "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { AuthorizationError } from "@formbricks/types/errors";
@@ -29,8 +30,16 @@ const EnvLayout = async ({ children, params }) => {
   if (!product) {
     throw new Error("Product not found");
   }
+
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
+  if (!membership) return notFound();
+
   if (product.config.isOnboardingCompleted !== undefined && !product.config.isOnboardingCompleted) {
-    return redirect(`/onboarding/${params.environmentId}/channel`);
+    if (membership.role === "viewer") {
+      return redirect(`/organizations/product-onboarding-pending?productId=${product.id}`);
+    } else {
+      return redirect(`/organizations/${organization.id}/products/new/channel`);
+    }
   }
 
   return (

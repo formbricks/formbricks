@@ -34,14 +34,15 @@ const Page = async () => {
     console.error(`error getting environment: ${error}`);
   }
 
-  if (!environment) {
-    console.error("Failed to get first environment of user; signing out");
-    return <ClientLogout />;
-  }
   const userOrganizations = await getOrganizationsByUserId(session.user.id);
 
   if (userOrganizations.length === 0) {
     return redirect("/setup/organization/create");
+  }
+
+  if (!environment) {
+    console.error("Failed to get first environment of user; signing out");
+    return redirect(`/organizations/${userOrganizations[0].id}/products/new/channel`);
   }
 
   return redirect(`/environments/${environment.id}`);

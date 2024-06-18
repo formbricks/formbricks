@@ -6,16 +6,11 @@ import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { createMembership, getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { createOrganization, getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { createOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { createShortUrl } from "@formbricks/lib/shortUrl/service";
 import { updateUser } from "@formbricks/lib/user/service";
-import {
-  AuthenticationError,
-  AuthorizationError,
-  OperationNotAllowedError,
-  ResourceNotFoundError,
-} from "@formbricks/types/errors";
+import { AuthenticationError, AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 
 export const createShortUrlAction = async (url: string) => {
@@ -73,21 +68,18 @@ export const createOrganizationAction = async (organizationName: string): Promis
 };
 
 export const createProductAction = async (
-  environmentId: string,
+  organizationId: string,
   productInput: TProductUpdateInput
 ): Promise<TProduct> => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authenticated");
 
-  const organization = await getOrganizationByEnvironmentId(environmentId);
-  if (!organization) throw new ResourceNotFoundError("Organization from environment", environmentId);
-
-  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organizationId);
   if (!membership || membership.role === "viewer") {
     throw new AuthorizationError("Product creation not allowed");
   }
 
-  const product = await createProduct(organization.id, productInput);
+  const product = await createProduct(organizationId, productInput);
   const updatedNotificationSettings = {
     ...session.user.notificationSettings,
     alert: {
