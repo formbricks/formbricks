@@ -1,4 +1,3 @@
-import { LoadingSpinner } from "@/components/general/LoadingSpinner";
 import { useState } from "preact/hooks";
 import {
   checkForLoomUrl,
@@ -32,39 +31,35 @@ export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionM
   const [isLoading, setIsLoading] = useState(true);
 
   return (
-    <div className="group/image relative mb-4 block rounded-md">
-      <div className="relative">
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <LoadingSpinner />
+    <div className="group/image relative mb-4 block min-h-40 rounded-md">
+      {isLoading && (
+        <div className="absolute inset-auto flex h-full w-full animate-pulse items-center justify-center rounded-md bg-slate-200"></div>
+      )}
+      {imgUrl && (
+        <img
+          key={imgUrl}
+          src={imgUrl}
+          alt={altText}
+          className="rounded-custom "
+          onLoad={() => {
+            setIsLoading(false);
+          }}
+        />
+      )}
+      {videoUrlWithParams && (
+        <div className="relative">
+          <div className="rounded-custom bg-black">
+            <iframe
+              src={videoUrlWithParams}
+              title="Question Video"
+              frameborder="0"
+              className="rounded-custom aspect-video w-full"
+              onLoad={() => setIsLoading(false)}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"></iframe>
           </div>
-        )}
-        {imgUrl && (
-          <img
-            key={imgUrl}
-            src={imgUrl}
-            alt={altText}
-            className="rounded-custom relative z-10"
-            onLoad={() => {
-              setIsLoading(false);
-            }}
-          />
-        )}
-        {videoUrlWithParams && (
-          <div className="relative">
-            <div className="rounded-custom bg-black">
-              <iframe
-                src={videoUrlWithParams}
-                title="Question Video"
-                frameborder="0"
-                className="rounded-custom aspect-video w-full"
-                onLoad={() => setIsLoading(false)}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                referrerpolicy="strict-origin-when-cross-origin"></iframe>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
       <a
         href={!!imgUrl ? imgUrl : parseVideoUrl(videoUrl ?? "")}
         target="_blank"
