@@ -375,7 +375,9 @@ export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.PictureSelection),
   allowMulti: z.boolean().optional().default(false),
-  choices: z.array(ZSurveyPictureChoice),
+  choices: z
+    .array(ZSurveyPictureChoice)
+    .min(2, { message: "Picture Selection question must have atleast 2 choices" }),
   logic: z.array(ZSurveyPictureSelectionLogic).optional(),
 });
 
@@ -684,7 +686,7 @@ export const ZSurvey = z
       if (question.type === TSurveyQuestionTypeEnum.Consent) {
         if (!isLabelValidForAllLanguages((question as TSurveyConsentQuestion).label, languages)) {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Label for question ${questionIndex + 1} is not valid for all languages.`,
             path: ["questions", questionIndex, "label"],
           });
