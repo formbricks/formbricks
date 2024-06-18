@@ -1,6 +1,6 @@
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { TProduct, TProductIndustry } from "@formbricks/types/product";
+import { TProduct, TProductConfigIndustry } from "@formbricks/types/product";
 import { TSurveyQuestion, TSurveyType } from "@formbricks/types/surveys";
 import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 
@@ -42,7 +42,7 @@ export const channelMapping: { value: TSurveyType; label: string }[] = [
   { value: "link", label: "Link Survey" },
 ];
 
-export const industryMapping: { value: TProductIndustry; label: string }[] = [
+export const industryMapping: { value: TProductConfigIndustry; label: string }[] = [
   { value: "eCommerce", label: "E-Commerce" },
   { value: "saas", label: "SaaS" },
   { value: "other", label: "Other" },

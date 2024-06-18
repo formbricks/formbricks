@@ -4,7 +4,7 @@ import { MenuBar } from "@/app/(app)/(survey-editor)/environments/[environmentId
 import { useState } from "react";
 import { customSurvey } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
-import type { TProduct, TProductIndustry } from "@formbricks/types/product";
+import type { TProduct, TProductConfigIndustry } from "@formbricks/types/product";
 import { TSurveyType } from "@formbricks/types/surveys";
 import type { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
@@ -18,7 +18,7 @@ type TemplateContainerWithPreviewProps = {
   product: TProduct;
   environment: TEnvironment;
   user: TUser;
-  prefilledFilters: (TSurveyType | TProductIndustry | TTemplateRole | null)[];
+  prefilledFilters: (TSurveyType | TProductConfigIndustry | TTemplateRole | null)[];
 };
 
 export const TemplateContainerWithPreview = ({
