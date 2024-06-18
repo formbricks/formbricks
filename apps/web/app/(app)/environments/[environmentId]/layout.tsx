@@ -29,7 +29,7 @@ const EnvLayout = async ({ children, params }) => {
   if (!product) {
     throw new Error("Product not found");
   }
-  if (!product.config.isOnboardingCompleted) {
+  if (product.config.isOnboardingCompleted !== undefined && !product.config.isOnboardingCompleted) {
     return redirect(`/onboarding/${params.environmentId}/channel`);
   }
 

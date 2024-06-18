@@ -3,6 +3,7 @@
 import { PlusCircleIcon, SparklesIcon, SplitIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { customSurvey, templates, testTemplate } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
@@ -64,19 +65,25 @@ export const TemplateList = ({
   }, [user, templateSearch]);
 
   const addSurvey = async (activeTemplate: TTemplate) => {
-    setLoading(true);
-    const surveyType = environment?.appSetupCompleted
-      ? "app"
-      : environment?.websiteSetupCompleted
-        ? "website"
-        : "link";
-    const augmentedTemplate: TSurveyInput = {
-      ...activeTemplate.preset,
-      type: surveyType,
-      createdBy: user.id,
-    };
-    const survey = await createSurveyAction(environmentId, augmentedTemplate);
-    router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
+    try {
+      setLoading(true);
+      const surveyType = environment?.appSetupCompleted
+        ? "app"
+        : environment?.websiteSetupCompleted
+          ? "website"
+          : "link";
+      const augmentedTemplate: TSurveyInput = {
+        ...activeTemplate.preset,
+        type: surveyType,
+        createdBy: user.id,
+      };
+      const survey = await createSurveyAction(environmentId, augmentedTemplate);
+      router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
+    } catch (error) {
+      toast.error("Survey creation failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredTemplates = templates.filter((template) => {

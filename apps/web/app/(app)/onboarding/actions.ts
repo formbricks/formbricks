@@ -5,12 +5,10 @@ import { sendInviteMemberEmail } from "@formbricks/email";
 import { hasOrganizationAuthority } from "@formbricks/lib/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { inviteUser } from "@formbricks/lib/invite/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
 import { getProduct, updateProduct } from "@formbricks/lib/product/service";
-import { createSurvey } from "@formbricks/lib/survey/service";
 import { updateUser } from "@formbricks/lib/user/service";
 import {
   AuthenticationError,
@@ -20,7 +18,6 @@ import {
 } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProductConfig, TProductUpdateInput } from "@formbricks/types/product";
-import { TSurveyInput } from "@formbricks/types/surveys";
 
 export const inviteOrganizationMemberAction = async (
   organizationId: string,
@@ -80,16 +77,6 @@ export const finishProductOnboardingAction = async (productId: string, productCo
 
   const updatedProfile = { onboardingCompleted: true };
   return await updateUser(session.user.id, updatedProfile);
-};
-
-export const createSurveyAction = async (environmentId: string, surveyBody: TSurveyInput) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  return await createSurvey(environmentId, surveyBody);
 };
 
 export const updateProductAction = async (

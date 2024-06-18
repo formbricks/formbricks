@@ -31,7 +31,7 @@ const OnboardingLayout = async ({ children, params }) => {
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
   if (!membership) return notFound();
   if (membership.role === "viewer" && !product.config.isOnboardingCompleted) {
-    redirect(`/onboarding/onboarding-pending`);
+    redirect(`/onboarding/pending?productId=${product.id}`);
   }
 
   if (product.config.channel !== null || product.config.industry !== null) {

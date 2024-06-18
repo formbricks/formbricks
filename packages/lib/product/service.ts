@@ -257,6 +257,7 @@ export const createProduct = async (
         config: {
           channel: null,
           industry: null,
+          isOnboardingCompleted: false,
         },
         ...data,
         name: productInput.name,
