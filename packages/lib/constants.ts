@@ -210,8 +210,4 @@ export const BILLING_LIMITS = {
     RESPONSES: 5000,
     MIU: 20000,
   },
-  UNLIMITED: {
-    RESPONSES: null,
-    MIU: null,
-  },
 } as const;
