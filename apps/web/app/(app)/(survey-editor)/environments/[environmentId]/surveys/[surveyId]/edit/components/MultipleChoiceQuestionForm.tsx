@@ -108,6 +108,17 @@ export const MultipleChoiceQuestionForm = ({
     });
     updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
   };
+  const updateChoiceId = (choiceIdx: number, updatedAttributes: { id: string }) => {
+    let newChoices: any[] = [];
+
+    if (question.choices) {
+      newChoices = question.choices.map((choice, idx) => {
+        if (idx !== choiceIdx) return choice;
+        return { ...choice, ...updatedAttributes };
+      });
+    }
+    updateQuestion(questionIdx, { choices: newChoices });
+  };
 
   const addChoice = (choiceIdx?: number) => {
     setIsNew(false); // This question is no longer new.
@@ -276,6 +287,7 @@ export const MultipleChoiceQuestionForm = ({
                       choiceIdx={choiceIdx}
                       questionIdx={questionIdx}
                       updateChoice={updateChoice}
+                      updateChoiceId={updateChoiceId}
                       deleteChoice={deleteChoice}
                       addChoice={addChoice}
                       setisInvalidValue={setisInvalidValue}
