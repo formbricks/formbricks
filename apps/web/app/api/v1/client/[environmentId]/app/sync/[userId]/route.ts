@@ -8,7 +8,7 @@ import { NextRequest, userAgent } from "next/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import {
   getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
@@ -70,9 +70,16 @@ export const GET = async (
       throw new Error("Environment does not exist");
     }
 
-    if (!environment.widgetSetupCompleted) {
-      await updateEnvironment(environment.id, { widgetSetupCompleted: true });
-    }
+    // temporary remove the example survey creation to avoid caching issue with multiple example surveys
+    /* if (!environment.appSetupCompleted) {
+      const exampleTrigger = await getActionClassByEnvironmentIdAndName(environmentId, "New Session");
+      if (!exampleTrigger) {
+        throw new Error("Example trigger not found");
+      }
+      const firstSurvey = getExampleAppSurveyTemplate(WEBAPP_URL, exampleTrigger);
+      await createSurvey(environmentId, firstSurvey);
+      await updateEnvironment(environment.id, { appSetupCompleted: true });
+    } */
 
     // check organization subscriptions
     const organization = await getOrganizationByEnvironmentId(environmentId);
