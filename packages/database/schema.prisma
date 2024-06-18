@@ -586,7 +586,6 @@ model User {
   twoFactorEnabled          Boolean          @default(false)
   backupCodes               String?
   password                  String?
-  onboardingCompleted       Boolean          @default(false)
   identityProvider          IdentityProvider @default(email)
   identityProviderAccountId String?
   memberships               Membership[]

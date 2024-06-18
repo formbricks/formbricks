@@ -8,7 +8,6 @@ import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
 import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
 import { updateProduct } from "@formbricks/lib/product/service";
-import { updateUser } from "@formbricks/lib/user/service";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProductConfig } from "@formbricks/types/product";
@@ -68,7 +67,4 @@ export const finishProductOnboardingAction = async (productId: string, productCo
   if (!session) throw new AuthorizationError("Not authorized");
 
   await updateProduct(productId, { config: { ...productConfig, ...{ isOnboardingCompleted: true } } });
-
-  const updatedProfile = { onboardingCompleted: true };
-  return await updateUser(session.user.id, updatedProfile);
 };
