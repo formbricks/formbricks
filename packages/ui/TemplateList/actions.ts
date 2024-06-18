@@ -20,7 +20,7 @@ export const createSurveyAction = async (environmentId: string, surveyBody: TSur
   if (!organization) throw new Error("Organization not found");
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
-  if (!membership || membership.role) {
+  if (!membership || membership.role === "viewer") {
     throw OperationNotAllowedError;
   }
 
