@@ -177,7 +177,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                         <AlertCircleIcon className="h-5 w-5 text-amber-500" />
                         <div className=" text-amber-800">
                           <p className="text-xs font-semibold">
-                            Your ${option.id} is not yet connected to Formbricks.
+                            Your {option.id} is not yet connected to Formbricks.
                           </p>
                           <p className="text-xs font-normal">
                             <Link
