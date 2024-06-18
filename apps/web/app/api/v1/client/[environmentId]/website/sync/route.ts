@@ -1,9 +1,9 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
-import { getActionClassByEnvironmentIdAndName, getActionClasses } from "@formbricks/lib/actionClass/service";
-import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
+import { getActionClasses } from "@formbricks/lib/actionClass/service";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
@@ -11,8 +11,7 @@ import {
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { createSurvey, getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
-import { getExampleWebsiteSurveyTemplate } from "@formbricks/lib/templates";
+import { getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TJsWebsiteLegacyStateSync, TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";
@@ -79,7 +78,8 @@ export const GET = async (
       }
     }
 
-    if (!environment?.websiteSetupCompleted) {
+    // temporary remove the example survey creation to avoid caching issue with multiple example surveys
+    /* if (!environment?.websiteSetupCompleted) {
       const exampleTrigger = await getActionClassByEnvironmentIdAndName(environmentId, "New Session");
       if (!exampleTrigger) {
         throw new Error("Example trigger not found");
@@ -87,7 +87,7 @@ export const GET = async (
       const firstSurvey = getExampleWebsiteSurveyTemplate(WEBAPP_URL, exampleTrigger);
       await createSurvey(environmentId, firstSurvey);
       await updateEnvironment(environment.id, { websiteSetupCompleted: true });
-    }
+    } */
 
     const [surveys, actionClasses, product] = await Promise.all([
       getSurveys(environmentId),
