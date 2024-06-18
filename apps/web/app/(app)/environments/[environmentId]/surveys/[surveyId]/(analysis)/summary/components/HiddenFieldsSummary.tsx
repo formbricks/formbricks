@@ -1,6 +1,5 @@
 import { InboxIcon, Link, MessageSquareTextIcon } from "lucide-react";
 import { useState } from "react";
-
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";

@@ -4,14 +4,12 @@ import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-
 import { DeleteDialog } from "../DeleteDialog";
 import { deleteResponseAction, getResponseAction } from "./actions";
 import { ResponseNotes } from "./components/ResponseNote";

@@ -1,7 +1,6 @@
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyQuestionSummaryMatrix } from "@formbricks/types/surveys/types";
 import { TooltipRenderer } from "@formbricks/ui/Tooltip";
-
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface MatrixQuestionSummaryProps {

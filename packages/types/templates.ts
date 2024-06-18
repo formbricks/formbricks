@@ -1,5 +1,4 @@
 import { z } from "zod";
-
 import { ZLegacySurveyQuestions, ZLegacySurveyThankYouCard, ZLegacySurveyWelcomeCard } from "./LegacySurvey";
 import {
   ZSurveyHiddenFields,

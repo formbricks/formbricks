@@ -7,7 +7,6 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TI18nString, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";

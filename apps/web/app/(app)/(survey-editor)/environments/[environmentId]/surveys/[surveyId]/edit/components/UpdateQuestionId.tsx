@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-
 import { validateId } from "../lib/validation";
 
 interface UpdateQuestionIdProps {

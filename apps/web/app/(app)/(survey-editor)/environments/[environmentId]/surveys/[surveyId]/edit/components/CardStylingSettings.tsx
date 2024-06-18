@@ -4,7 +4,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
-
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
@@ -12,7 +11,6 @@ import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { Badge } from "@formbricks/ui/Badge";
 import { CardArrangementTabs } from "@formbricks/ui/CardArrangementTabs";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
-import { ColorSelector } from "@formbricks/ui/ColorSelector";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Slider } from "@formbricks/ui/Slider";
 import { Switch } from "@formbricks/ui/Switch";
@@ -122,9 +120,10 @@ export const CardStylingSettings = ({
                 </div>
 
                 <FormControl>
-                  <ColorSelector
+                  <ColorPicker
                     color={field.value || COLOR_DEFAULTS.cardBackgroundColor}
-                    setColor={(color) => field.onChange(color)}
+                    onChange={(color) => field.onChange(color)}
+                    containerClass="max-w-xs"
                   />
                 </FormControl>
               </FormItem>
@@ -142,9 +141,10 @@ export const CardStylingSettings = ({
                 </div>
 
                 <FormControl>
-                  <ColorSelector
+                  <ColorPicker
                     color={field.value || COLOR_DEFAULTS.cardBorderColor}
-                    setColor={(color) => field.onChange(color)}
+                    onChange={(color) => field.onChange(color)}
+                    containerClass="max-w-xs"
                   />
                 </FormControl>
               </FormItem>
@@ -162,9 +162,10 @@ export const CardStylingSettings = ({
                 </div>
 
                 <FormControl>
-                  <ColorSelector
+                  <ColorPicker
                     color={field.value || COLOR_DEFAULTS.cardShadowColor}
-                    setColor={(color) => field.onChange(color)}
+                    onChange={(color) => field.onChange(color)}
+                    containerClass="max-w-xs"
                   />
                 </FormControl>
               </FormItem>

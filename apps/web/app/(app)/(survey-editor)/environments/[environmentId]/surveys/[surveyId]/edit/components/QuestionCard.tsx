@@ -1,21 +1,24 @@
 "use client";
 
-import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeName } from "@/app/lib/questions";
+import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@/app/lib/questions";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
-import { TI18nString, TSurvey, TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys/types";
+import {
+  TI18nString,
+  TSurvey,
+  TSurveyQuestion,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
-
 import { AddressQuestionForm } from "./AddressQuestionForm";
 import { AdvancedSettings } from "./AdvancedSettings";
 import { CTAQuestionForm } from "./CTAQuestionForm";
@@ -48,6 +51,7 @@ interface QuestionCardProps {
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
   addQuestion: (question: any, index?: number) => void;
+  isFormbricksCloud: boolean;
 }
 
 export const QuestionCard = ({
@@ -67,6 +71,7 @@ export const QuestionCard = ({
   isInvalid,
   attributeClasses,
   addQuestion,
+  isFormbricksCloud,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
@@ -192,7 +197,7 @@ export const QuestionCard = ({
                           attributeClasses
                         )[selectedLanguageCode] ?? ""
                       )
-                    : getTSurveyQuestionTypeName(question.type)}
+                    : getTSurveyQuestionTypeEnumName(question.type)}
                 </p>
                 {!open && question?.required && (
                   <p className="mt-1 truncate text-xs text-slate-500">{question?.required && "Required"}</p>
@@ -216,7 +221,7 @@ export const QuestionCard = ({
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-4">
-          {question.type === TSurveyQuestionType.OpenText ? (
+          {question.type === TSurveyQuestionTypeEnum.OpenText ? (
             <OpenQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -228,7 +233,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
+          ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
             <MultipleChoiceQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -240,7 +245,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
+          ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
             <MultipleChoiceQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -252,7 +257,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.NPS ? (
+          ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
             <NPSQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -264,7 +269,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.CTA ? (
+          ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
             <CTAQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -276,7 +281,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.Rating ? (
+          ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
             <RatingQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -288,7 +293,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.Consent ? (
+          ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
             <ConsentQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -299,7 +304,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.Date ? (
+          ) : question.type === TSurveyQuestionTypeEnum.Date ? (
             <DateQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -311,7 +316,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.PictureSelection ? (
+          ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
             <PictureSelectionForm
               localSurvey={localSurvey}
               question={question}
@@ -323,7 +328,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.FileUpload ? (
+          ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
             <FileUploadQuestionForm
               localSurvey={localSurvey}
               product={product}
@@ -335,8 +340,9 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              isFormbricksCloud={isFormbricksCloud}
             />
-          ) : question.type === TSurveyQuestionType.Cal ? (
+          ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
             <CalQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -348,7 +354,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.Matrix ? (
+          ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
             <MatrixQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -360,7 +366,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
-          ) : question.type === TSurveyQuestionType.Address ? (
+          ) : question.type === TSurveyQuestionTypeEnum.Address ? (
             <AddressQuestionForm
               localSurvey={localSurvey}
               question={question}
@@ -385,9 +391,9 @@ export const QuestionCard = ({
               </Collapsible.CollapsibleTrigger>
 
               <Collapsible.CollapsibleContent className="space-y-4">
-                {question.type !== TSurveyQuestionType.NPS &&
-                question.type !== TSurveyQuestionType.Rating &&
-                question.type !== TSurveyQuestionType.CTA ? (
+                {question.type !== TSurveyQuestionTypeEnum.NPS &&
+                question.type !== TSurveyQuestionTypeEnum.Rating &&
+                question.type !== TSurveyQuestionTypeEnum.CTA ? (
                   <div className="mt-2 flex space-x-2">
                     <div className="w-full">
                       <QuestionFormInput
@@ -433,8 +439,8 @@ export const QuestionCard = ({
                     )}
                   </div>
                 ) : null}
-                {(question.type === TSurveyQuestionType.Rating ||
-                  question.type === TSurveyQuestionType.NPS) &&
+                {(question.type === TSurveyQuestionTypeEnum.Rating ||
+                  question.type === TSurveyQuestionTypeEnum.NPS) &&
                   questionIdx !== 0 && (
                     <div className="mt-4">
                       <QuestionFormInput

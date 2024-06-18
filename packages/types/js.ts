@@ -1,5 +1,4 @@
 import z from "zod";
-
 import { ZLegacySurvey } from "./LegacySurvey";
 import { ZActionClass } from "./actionClasses";
 import { ZAttributes } from "./attributes";
@@ -99,15 +98,6 @@ export const ZJsWebsiteSyncInput = z.object({
 });
 
 export type TJsWebsiteSyncInput = z.infer<typeof ZJsWebsiteSyncInput>;
-
-export const ZJsSyncLegacyInput = z.object({
-  environmentId: z.string().cuid(),
-  personId: z.string().cuid().optional().or(z.literal("legacy")),
-  sessionId: z.string().cuid().optional(),
-  jsVersion: z.string().optional(),
-});
-
-export type TJsSyncLegacyInput = z.infer<typeof ZJsSyncLegacyInput>;
 
 export const ZJsWebsiteConfig = z.object({
   environmentId: z.string().cuid(),

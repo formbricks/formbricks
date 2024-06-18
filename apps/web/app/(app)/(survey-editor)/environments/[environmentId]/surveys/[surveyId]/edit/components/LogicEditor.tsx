@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
@@ -18,7 +17,7 @@ import {
   TSurveyLogic,
   TSurveyLogicCondition,
   TSurveyQuestion,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import {
@@ -66,7 +65,7 @@ export const LogicEditor = ({
       return question.choices.map((choice) => getLocalizedValue(choice.label, "default"));
     } else if ("range" in question) {
       return Array.from({ length: question.range ? question.range : 0 }, (_, i) => (i + 1).toString());
-    } else if (question.type === TSurveyQuestionType.NPS) {
+    } else if (question.type === TSurveyQuestionTypeEnum.NPS) {
       return Array.from({ length: 11 }, (_, i) => (i + 0).toString());
     }
     return [];
@@ -379,8 +378,10 @@ export const LogicEditor = ({
                           key={question.id}
                           value={question.id}
                           title={getLocalizedValue(question.headline, "default")}>
-                          <div className="w-40">
+                          <div className="w-96">
                             <p className="truncate text-left">
+                              {idx + 1}
+                              {". "}
                               {getLocalizedValue(question.headline, "default")}
                             </p>
                           </div>

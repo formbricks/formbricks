@@ -2,13 +2,11 @@ import { EnvironmentLayout } from "@/app/(app)/environments/[environmentId]/comp
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { ToasterClient } from "@formbricks/ui/ToasterClient";
-
 import { FormbricksClient } from "../../components/FormbricksClient";
 import { PosthogIdentify } from "./components/PosthogIdentify";
 
@@ -35,9 +33,7 @@ const EnvLayout = async ({ children, params }) => {
           environmentId={params.environmentId}
           organizationId={organization.id}
           organizationName={organization.name}
-          inAppSurveyBillingStatus={organization.billing.features.inAppSurvey.status}
-          linkSurveyBillingStatus={organization.billing.features.linkSurvey.status}
-          userTargetingBillingStatus={organization.billing.features.userTargeting.status}
+          organizationBilling={organization.billing}
         />
         <FormbricksClient session={session} />
         <ToasterClient />

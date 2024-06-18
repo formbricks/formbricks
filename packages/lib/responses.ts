@@ -1,6 +1,5 @@
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys/types";
-
 import { getLocalizedValue } from "./i18n/utils";
 import { parseRecallInfo } from "./utils/recall";
 

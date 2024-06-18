@@ -9,14 +9,13 @@ import {
   QuestionOptions,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
-
 import {
   TResponseFilterCriteria,
   TResponseHiddenFieldsFilter,
   TSurveyMetaFieldFilter,
   TSurveyPersonAttributes,
 } from "@formbricks/types/responses";
-import { TSurveyQuestionType } from "@formbricks/types/surveys/types";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 
@@ -75,8 +74,8 @@ export const generateQuestionAndFilterOptions = (
   survey.questions.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
       if (
-        q.type === TSurveyQuestionType.MultipleChoiceMulti ||
-        q.type === TSurveyQuestionType.MultipleChoiceSingle
+        q.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+        q.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle
       ) {
         questionFilterOptions.push({
           type: q.type,
@@ -86,14 +85,14 @@ export const generateQuestionAndFilterOptions = (
             : [""],
           id: q.id,
         });
-      } else if (q.type === TSurveyQuestionType.PictureSelection) {
+      } else if (q.type === TSurveyQuestionTypeEnum.PictureSelection) {
         questionFilterOptions.push({
           type: q.type,
           filterOptions: conditionOptions[q.type],
           filterComboBoxOptions: q?.choices ? q?.choices?.map((_, idx) => `Picture ${idx + 1}`) : [""],
           id: q.id,
         });
-      } else if (q.type === TSurveyQuestionType.Matrix) {
+      } else if (q.type === TSurveyQuestionTypeEnum.Matrix) {
         questionFilterOptions.push({
           type: q.type,
           filterOptions: q.rows.flatMap((row) => Object.values(row)),
@@ -268,8 +267,8 @@ export const getFormattedFilters = (
     questions.forEach(({ filterType, questionType }) => {
       if (!filters.data) filters.data = {};
       switch (questionType.questionType) {
-        case TSurveyQuestionType.OpenText:
-        case TSurveyQuestionType.Address: {
+        case TSurveyQuestionTypeEnum.OpenText:
+        case TSurveyQuestionTypeEnum.Address: {
           if (filterType.filterComboBoxValue === "Filled out") {
             filters.data[questionType.id ?? ""] = {
               op: "submitted",
@@ -280,8 +279,8 @@ export const getFormattedFilters = (
             };
           }
         }
-        case TSurveyQuestionType.MultipleChoiceSingle:
-        case TSurveyQuestionType.MultipleChoiceMulti: {
+        case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
+        case TSurveyQuestionTypeEnum.MultipleChoiceMulti: {
           if (filterType.filterValue === "Includes either") {
             filters.data[questionType.id ?? ""] = {
               op: "includesOne",
@@ -294,8 +293,8 @@ export const getFormattedFilters = (
             };
           }
         }
-        case TSurveyQuestionType.NPS:
-        case TSurveyQuestionType.Rating: {
+        case TSurveyQuestionTypeEnum.NPS:
+        case TSurveyQuestionTypeEnum.Rating: {
           if (filterType.filterValue === "Is equal to") {
             filters.data[questionType.id ?? ""] = {
               op: "equals",
@@ -321,7 +320,7 @@ export const getFormattedFilters = (
             };
           }
         }
-        case TSurveyQuestionType.CTA: {
+        case TSurveyQuestionTypeEnum.CTA: {
           if (filterType.filterComboBoxValue === "Clicked") {
             filters.data[questionType.id ?? ""] = {
               op: "clicked",
@@ -332,7 +331,7 @@ export const getFormattedFilters = (
             };
           }
         }
-        case TSurveyQuestionType.Consent: {
+        case TSurveyQuestionTypeEnum.Consent: {
           if (filterType.filterComboBoxValue === "Accepted") {
             filters.data[questionType.id ?? ""] = {
               op: "accepted",
@@ -343,12 +342,12 @@ export const getFormattedFilters = (
             };
           }
         }
-        case TSurveyQuestionType.PictureSelection: {
+        case TSurveyQuestionTypeEnum.PictureSelection: {
           const questionId = questionType.id ?? "";
           const question = survey.questions.find((q) => q.id === questionId);
 
           if (
-            question?.type !== TSurveyQuestionType.PictureSelection ||
+            question?.type !== TSurveyQuestionTypeEnum.PictureSelection ||
             !Array.isArray(filterType.filterComboBoxValue)
           ) {
             return;
@@ -371,7 +370,7 @@ export const getFormattedFilters = (
             };
           }
         }
-        case TSurveyQuestionType.Matrix: {
+        case TSurveyQuestionTypeEnum.Matrix: {
           if (
             filterType.filterValue &&
             filterType.filterComboBoxValue &&

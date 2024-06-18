@@ -8,7 +8,7 @@
     "clean": "rimraf node_modules .turbo"
   },
   "devDependencies": {
-    "@formbricks/tsconfig": "workspace:*"
+    "@formbricks/config-typescript": "workspace:*"
   },
   "dependencies": {
     "zod": "^3.23.8"

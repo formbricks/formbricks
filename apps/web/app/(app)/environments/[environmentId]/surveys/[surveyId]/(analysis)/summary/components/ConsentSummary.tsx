@@ -1,7 +1,6 @@
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyQuestionSummaryConsent } from "@formbricks/types/surveys/types";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
-
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 

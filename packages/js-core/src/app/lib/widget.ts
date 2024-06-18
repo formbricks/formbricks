@@ -5,7 +5,6 @@ import { getStyling } from "@formbricks/lib/utils/styling";
 import { TJsTrackProperties } from "@formbricks/types/js";
 import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-
 import { ErrorHandler } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import { getDefaultLanguageCode, getLanguageCode, handleHiddenFields } from "../../shared/utils";
@@ -154,7 +153,8 @@ const renderWidget = async (
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
-          language: languageCode === "default" ? getDefaultLanguageCode(survey) : languageCode,
+          language:
+            responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
           meta: {
             url: window.location.href,
             action,

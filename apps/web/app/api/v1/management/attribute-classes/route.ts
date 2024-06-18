@@ -1,7 +1,6 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-
 import { createAttributeClass, getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { TAttributeClass, ZAttributeClassInput } from "@formbricks/types/attributeClasses";
 import { DatabaseError } from "@formbricks/types/errors";

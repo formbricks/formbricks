@@ -1,8 +1,6 @@
 import { RefObject } from "react";
 import { toast } from "react-hot-toast";
-
 import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
-
 import { Button } from "../../Button";
 import { Input } from "../../Input";
 

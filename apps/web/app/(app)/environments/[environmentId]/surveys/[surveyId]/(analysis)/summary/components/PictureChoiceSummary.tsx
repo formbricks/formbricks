@@ -1,9 +1,7 @@
 import Image from "next/image";
-
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyQuestionSummaryPictureSelection } from "@formbricks/types/surveys/types";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
-
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 

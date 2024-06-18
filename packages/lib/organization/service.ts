@@ -1,22 +1,18 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TOrganization,
-  TOrganizationBilling,
   TOrganizationCreateInput,
   TOrganizationUpdateInput,
   ZOrganizationCreateInput,
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
-
 import { cache } from "../cache";
-import { ITEMS_PER_PAGE } from "../constants";
+import { BILLING_LIMITS, ITEMS_PER_PAGE, PRODUCT_FEATURE_KEYS } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { getProducts } from "../product/service";
 import { getUsersWithOrganization, updateUser } from "../user/service";
@@ -143,12 +139,27 @@ export const createOrganization = async (
     validateInputs([organizationInput, ZOrganizationCreateInput]);
 
     const organization = await prisma.organization.create({
-      data: organizationInput,
+      data: {
+        ...organizationInput,
+        billing: {
+          plan: PRODUCT_FEATURE_KEYS.FREE,
+          limits: {
+            monthly: {
+              responses: BILLING_LIMITS.FREE.RESPONSES,
+              miu: BILLING_LIMITS.FREE.MIU,
+            },
+          },
+          stripeCustomerId: null,
+          periodStart: new Date(),
+          period: "monthly",
+        },
+      },
       select,
     });
 
     organizationCache.revalidate({
       id: organization.id,
+      count: true,
     });
 
     return organization;
@@ -183,7 +194,7 @@ export const updateOrganization = async (
 
     // revalidate cache for environments
     updatedOrganization?.products.forEach((product) => {
-      product.environments.forEach((environment) => {
+      product.environments.forEach(async (environment) => {
         organizationCache.revalidate({
           environmentId: environment.id,
         });
@@ -247,6 +258,7 @@ export const deleteOrganization = async (organizationId: string): Promise<TOrgan
 
     organizationCache.revalidate({
       id: organization.id,
+      count: true,
     });
 
     return organization;
@@ -259,78 +271,14 @@ export const deleteOrganization = async (organizationId: string): Promise<TOrgan
   }
 };
 
-export const getOrganizationsWithPaidPlan = (): Promise<TOrganization[]> =>
-  cache(
-    async () => {
-      try {
-        const fetchedOrganizations = await prisma.organization.findMany({
-          where: {
-            OR: [
-              {
-                billing: {
-                  path: ["features", "inAppSurvey", "status"],
-                  not: "inactive",
-                },
-              },
-              {
-                billing: {
-                  path: ["features", "userTargeting", "status"],
-                  not: "inactive",
-                },
-              },
-            ],
-          },
-          select,
-        });
-
-        return fetchedOrganizations;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-        throw error;
-      }
-    },
-    ["getOrganizationsWithPaidPlan"],
-    {
-      tags: [],
-    }
-  )();
-
 export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string): Promise<number> =>
   cache(
     async () => {
       validateInputs([organizationId, ZId]);
 
       try {
-        // Define the start of the month
-        const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-        // Get all environment IDs for the organization
-        const products = await getProducts(organizationId);
-        const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
-
-        // Aggregate the count of active people across all environments
-        const peopleAggregations = await prisma.person.aggregate({
-          _count: {
-            id: true,
-          },
-          where: {
-            AND: [
-              { environmentId: { in: environmentIds } },
-              {
-                actions: {
-                  some: {
-                    createdAt: { gte: firstDayOfMonth },
-                  },
-                },
-              },
-            ],
-          },
-        });
-
-        return peopleAggregations._count.id;
+        // temporary solution until we have a better way to track active users
+        return 0;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -352,8 +300,17 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
 
       try {
         // Define the start of the month
-        const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        // const now = new Date();
+        // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const organization = await getOrganization(organizationId);
+        if (!organization) {
+          throw new ResourceNotFoundError("Organization", organizationId);
+        }
+
+        if (!organization.billing.periodStart) {
+          throw new Error("Organization billing period start is not set");
+        }
 
         // Get all environment IDs for the organization
         const products = await getProducts(organizationId);
@@ -367,8 +324,7 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
           where: {
             AND: [
               { survey: { environmentId: { in: environmentIds } } },
-              { survey: { type: { in: ["app", "website"] } } },
-              { createdAt: { gte: firstDayOfMonth } },
+              { createdAt: { gte: organization.billing.periodStart } },
             ],
           },
         });
@@ -386,33 +342,6 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
     [`getMonthlyOrganizationResponseCount-${organizationId}`],
     {
       revalidate: 60 * 60 * 2, // 2 hours
-    }
-  )();
-
-export const getOrganizationBillingInfo = (organizationId: string): Promise<TOrganizationBilling | null> =>
-  cache(
-    async () => {
-      validateInputs([organizationId, ZId]);
-
-      try {
-        const billingInfo = await prisma.organization.findUnique({
-          where: {
-            id: organizationId,
-          },
-        });
-
-        return billingInfo?.billing ?? null;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
-      }
-    },
-    [`getOrganizationBillingInfo-${organizationId}`],
-    {
-      tags: [organizationCache.tag.byId(organizationId)],
     }
   )();
 

@@ -1,11 +1,10 @@
 import Stripe from "stripe";
-
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
-
-import { handleCheckoutSessionCompleted } from "../handlers/checkoutSessionCompleted";
-import { handleSubscriptionUpdatedOrCreated } from "../handlers/subscriptionCreatedOrUpdated";
-import { handleSubscriptionDeleted } from "../handlers/subscriptionDeleted";
+import { handleCheckoutSessionCompleted } from "../handlers/checkout-session-completed";
+import { handleInvoiceFinalized } from "../handlers/invoice-finalized";
+import { handleSubscriptionCreatedOrUpdated } from "../handlers/subscription-created-or-updated";
+import { handleSubscriptionDeleted } from "../handlers/subscription-deleted";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   apiVersion: STRIPE_API_VERSION,
@@ -26,11 +25,13 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
 
   if (event.type === "checkout.session.completed") {
     await handleCheckoutSessionCompleted(event);
+  } else if (event.type === "invoice.finalized") {
+    await handleInvoiceFinalized(event);
   } else if (
-    event.type === "customer.subscription.updated" ||
-    event.type === "customer.subscription.created"
+    event.type === "customer.subscription.created" ||
+    event.type === "customer.subscription.updated"
   ) {
-    await handleSubscriptionUpdatedOrCreated(event);
+    await handleSubscriptionCreatedOrUpdated(event);
   } else if (event.type === "customer.subscription.deleted") {
     await handleSubscriptionDeleted(event);
   }

@@ -1,6 +1,5 @@
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyType } from "@formbricks/types/surveys/types";
-
 import { Tabs } from "../Tabs";
 import { CasualCardArrangementIcon } from "../icons/CasualCardArrangementIcon";
 import { SimpleCardsArrangementIcon } from "../icons/SimpleCardArrangementIcon";

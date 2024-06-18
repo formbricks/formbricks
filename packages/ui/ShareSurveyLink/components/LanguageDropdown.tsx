@@ -1,11 +1,9 @@
 import { Languages } from "lucide-react";
 import { useRef, useState } from "react";
-
 import { getEnabledLanguages } from "@formbricks/lib/i18n/utils";
+import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurvey } from "@formbricks/types/surveys/types";
-
-import { getLanguageLabel } from "../../../ee/multiLanguage/lib/isoLanguages";
 import { Button } from "../../Button";
 
 interface LanguageDropdownProps {

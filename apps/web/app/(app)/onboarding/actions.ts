@@ -1,7 +1,6 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { sendInviteMemberEmail } from "@formbricks/email";
 import { hasOrganizationAuthority } from "@formbricks/lib/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -50,7 +49,6 @@ export const inviteOrganizationMemberAction = async (
 
   const invite = await inviteUser({
     organizationId,
-    currentUser: { id: session.user.id, name: session.user.name },
     invitee: {
       email,
       name: "",

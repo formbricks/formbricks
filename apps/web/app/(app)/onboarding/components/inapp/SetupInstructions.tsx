@@ -3,7 +3,6 @@
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 import toast from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
 import { CodeBlock } from "@formbricks/ui/CodeBlock";
@@ -27,7 +26,7 @@ export const SetupInstructionsOnboarding = ({
   const [activeTab, setActiveId] = useState(tabs[0].id);
   const htmlSnippet = `<!-- START Formbricks Surveys -->
 <script type="text/javascript">
-!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.6.5/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
+!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="${webAppUrl}/api/packages/website";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
 </script>
 <!-- END Formbricks Surveys -->`;
 

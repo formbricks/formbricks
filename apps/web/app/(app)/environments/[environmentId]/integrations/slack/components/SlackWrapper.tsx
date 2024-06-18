@@ -6,7 +6,6 @@ import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/inte
 import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/slack/lib/slack";
 import slackLogo from "@/images/slacklogo.png";
 import { useState } from "react";
-
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";

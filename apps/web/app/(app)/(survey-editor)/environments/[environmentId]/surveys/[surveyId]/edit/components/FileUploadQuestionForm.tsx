@@ -1,9 +1,9 @@
 "use client";
 
-import { PlusIcon, TrashIcon, XCircleIcon } from "lucide-react";
+import { PlusIcon, XCircleIcon } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { useGetBillingInfo } from "@formbricks/lib/organization/hooks/useGetBillingInfo";
@@ -27,6 +27,7 @@ interface FileUploadFormProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  isFormbricksCloud: boolean;
 }
 
 export const FileUploadQuestionForm = ({
@@ -39,9 +40,10 @@ export const FileUploadQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  isFormbricksCloud,
 }: FileUploadFormProps): JSX.Element => {
-  const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [extension, setExtension] = useState("");
+  const [isMaxSizeError, setMaxSizeError] = useState(false);
   const {
     billingInfo,
     error: billingInfoError,
@@ -105,7 +107,7 @@ export const FileUploadQuestionForm = ({
       return 10;
     }
 
-    if (billingInfo.features.linkSurvey.status === "active") {
+    if (billingInfo.plan !== "free") {
       // 1GB in MB
       return 1024;
     }
@@ -128,7 +130,7 @@ export const FileUploadQuestionForm = ({
         attributeClasses={attributeClasses}
       />
       <div>
-        {showSubheader && (
+        {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
@@ -144,17 +146,9 @@ export const FileUploadQuestionForm = ({
                 attributeClasses={attributeClasses}
               />
             </div>
-
-            <TrashIcon
-              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => {
-                setShowSubheader(false);
-                updateQuestion(questionIdx, { subheader: undefined });
-              }}
-            />
           </div>
         )}
-        {!showSubheader && (
+        {question.subheader === undefined && (
           <Button
             size="sm"
             className="mt-3"
@@ -164,9 +158,7 @@ export const FileUploadQuestionForm = ({
               updateQuestion(questionIdx, {
                 subheader: createI18nString("", surveyLanguageCodes),
               });
-              setShowSubheader(true);
             }}>
-            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>
@@ -203,6 +195,9 @@ export const FileUploadQuestionForm = ({
 
                   if (parsedValue > maxSizeInMBLimit) {
                     toast.error(`Max file size limit is ${maxSizeInMBLimit} MB`);
+                    if (isFormbricksCloud) {
+                      setMaxSizeError(true);
+                    }
                     updateQuestion(questionIdx, { maxSizeInMB: maxSizeInMBLimit });
                     return;
                   }
@@ -213,6 +208,17 @@ export const FileUploadQuestionForm = ({
               />
               MB
             </p>
+            {isMaxSizeError && (
+              <p className="text-xs text-red-500">
+                Max file size limit is {maxSizeInMBLimit} MB. If you need more, please{" "}
+                <Link
+                  className="underline"
+                  target="_blank"
+                  href={`/environments/${localSurvey.environmentId}/settings/billing`}>
+                  upgrade your plan.
+                </Link>
+              </p>
+            )}
           </label>
         </AdvancedOptionToggle>
 

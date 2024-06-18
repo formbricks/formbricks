@@ -1,8 +1,6 @@
 import "server-only";
-
 import { TLegacySurvey, ZLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
-
 import { structuredClone } from "../pollyfills/structuredClone";
 import { isI18nObject } from "./utils";
 

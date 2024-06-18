@@ -14,9 +14,8 @@ import {
   Rows3Icon,
   StarIcon,
 } from "lucide-react";
-
 import {
-  TSurveyQuestionType as QuestionId,
+  TSurveyQuestionTypeEnum as QuestionId,
   TSurveyAddressQuestion,
   TSurveyCTAQuestion,
   TSurveyCalQuestion,
@@ -28,10 +27,9 @@ import {
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
   TSurveyRatingQuestion,
 } from "@formbricks/types/surveys/types";
-
 import { replaceQuestionPresetPlaceholders } from "./templates";
 
 export type TQuestion = {
@@ -232,7 +230,7 @@ export const QUESTIONS_NAME_MAP = questionTypes.reduce(
     [curr.id]: curr.label,
   }),
   {}
-) as Record<TSurveyQuestionType, string>;
+) as Record<TSurveyQuestionTypeEnum, string>;
 
 export const universalQuestionPresets = {
   required: true,
@@ -243,7 +241,7 @@ export const getQuestionDefaults = (id: string, product: any) => {
   return replaceQuestionPresetPlaceholders(questionType?.preset, product);
 };
 
-export const getTSurveyQuestionTypeName = (id: string) => {
+export const getTSurveyQuestionTypeEnumName = (id: string) => {
   const questionType = questionTypes.find((questionType) => questionType.id === id);
   return questionType?.label;
 };

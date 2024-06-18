@@ -1,19 +1,23 @@
 import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
-import { Terminal } from "lucide-react";
-import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMemo } from "react";
+import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-
-import { MatchType, testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
-import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+import { z } from "zod";
+import {
+  TActionClass,
+  TActionClassInput,
+  TActionClassInputCode,
+  ZActionClassInput,
+} from "@formbricks/types/actionClasses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
-import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { TabBar } from "@formbricks/ui/TabBar";
-
+import { TabToggle } from "@formbricks/ui/TabToggle";
+import { CodeActionForm } from "@formbricks/ui/organisms/CodeActionForm";
+import { NoCodeActionForm } from "@formbricks/ui/organisms/NoCodeActionForm";
 import { createActionClassAction } from "../actions";
 
 interface CreateNewActionTabProps {
@@ -33,123 +37,108 @@ export const CreateNewActionTab = ({
   setLocalSurvey,
   environmentId,
 }: CreateNewActionTabProps) => {
-  const { register, control, handleSubmit, watch, reset } = useForm<TActionClass>({
-    defaultValues: {
-      name: "",
-      description: "",
-      type: "noCode",
-      key: "",
-      noCodeConfig: {
-        pageUrl: {
-          rule: "contains",
-          value: "",
-        },
-        cssSelector: {
-          value: "",
-        },
-        innerHtml: {
-          value: "",
-        },
-      },
-    },
-  });
-
-  const [type, setType] = useState("noCode");
-
-  const [isPageUrl, setIsPageUrl] = useState(false);
-  const [isCssSelector, setIsCssSelector] = useState(false);
-  const [isInnerHtml, setIsInnerText] = useState(false);
-  const [isCreatingAction, setIsCreatingAction] = useState(false);
-  const [testUrl, setTestUrl] = useState("");
-  const [isMatch, setIsMatch] = useState("");
   const actionClassNames = useMemo(
     () => actionClasses.map((actionClass) => actionClass.name),
     [actionClasses]
   );
 
-  const actionClassKeys = useMemo(
-    () =>
-      actionClasses
-        .filter((actionClass) => actionClass.type === "code")
-        .map((actionClass) => actionClass.key),
-    [actionClasses]
-  );
+  const form = useForm<TActionClassInput>({
+    defaultValues: {
+      name: "",
+      description: "",
+      environmentId,
+      type: "noCode",
+      noCodeConfig: {
+        type: "click",
+        elementSelector: {
+          cssSelector: undefined,
+          innerHtml: undefined,
+        },
+        urlFilters: [],
+      },
+    },
+    resolver: zodResolver(
+      ZActionClassInput.superRefine((data, ctx) => {
+        if (data.name && actionClassNames.includes(data.name)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["name"],
+            message: `Action with name ${data.name} already exists`,
+          });
+        }
+      })
+    ),
+    mode: "onChange",
+  });
 
-  const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
-    const { pageUrl, innerHtml, cssSelector } = noCodeConfig;
-    const filteredNoCodeConfig: TActionClassNoCodeConfig = {};
+  const { control, handleSubmit, watch, reset } = form;
+  const { isSubmitting } = form.formState;
 
-    if (isPageUrl && pageUrl?.rule && pageUrl?.value) {
-      filteredNoCodeConfig.pageUrl = { rule: pageUrl.rule, value: pageUrl.value };
-    }
-    if (isInnerHtml && innerHtml?.value) {
-      filteredNoCodeConfig.innerHtml = { value: innerHtml.value };
-    }
-    if (isCssSelector && cssSelector?.value) {
-      filteredNoCodeConfig.cssSelector = { value: cssSelector.value };
-    }
+  const actionClassKeys = useMemo(() => {
+    const codeActionClasses: TActionClassInputCode[] = actionClasses.filter(
+      (actionClass) => actionClass.type === "code"
+    ) as TActionClassInputCode[];
 
-    return filteredNoCodeConfig;
-  };
+    return codeActionClasses.map((actionClass) => actionClass.key);
+  }, [actionClasses]);
 
-  const handleMatchClick = () => {
-    const match = testURLmatch(
-      testUrl,
-      watch("noCodeConfig.pageUrl.value"),
-      watch("noCodeConfig.pageUrl.rule") as MatchType
-    );
-
-    setIsMatch(match);
-    if (match === "yes") toast.success("Your survey would be shown on this URL.");
-    if (match === "no") toast.error("Your survey would not be shown.");
-  };
-
-  const submitHandler = async (data: Partial<TActionClass>) => {
-    const { noCodeConfig } = data;
+  const submitHandler = async (data: TActionClassInput) => {
+    const { type } = data;
     try {
       if (isViewer) {
         throw new Error("You are not authorised to perform this action.");
       }
-      setIsCreatingAction(true);
 
-      if (!data.name || data.name?.trim() === "") {
-        throw new Error("Please give your action a name");
-      }
       if (data.name && actionClassNames.includes(data.name)) {
         throw new Error(`Action with name ${data.name} already exist`);
       }
-      if (type === "noCode") {
-        if (!isPageUrl && !isCssSelector && !isInnerHtml)
-          throw new Error("Please select at least one selector");
 
-        if (isCssSelector && !isValidCssSelector(noCodeConfig?.cssSelector?.value))
-          throw new Error("Please enter a valid CSS Selector");
-
-        if (isPageUrl && noCodeConfig?.pageUrl?.rule === undefined)
-          throw new Error("Please select a rule for page URL");
-      }
-      if (type === "code" && !data.key) {
-        throw new Error("Please enter a code key");
-      }
-      if (data.key && actionClassKeys.includes(data.key)) {
+      if (type === "code" && data.key && actionClassKeys.includes(data.key)) {
         throw new Error(`Action with key ${data.key} already exist`);
       }
 
-      const updatedAction: TActionClassInput = {
-        name: data.name.trim(),
-        description: data.description,
-        environmentId,
-        type: type as TActionClass["type"],
-      };
-
-      if (type === "noCode") {
-        const filteredNoCodeConfig = filterNoCodeConfig(noCodeConfig as TActionClassNoCodeConfig);
-        updatedAction.noCodeConfig = filteredNoCodeConfig;
-      } else {
-        updatedAction.key = data.key;
+      if (
+        data.type === "noCode" &&
+        data.noCodeConfig?.type === "click" &&
+        data.noCodeConfig.elementSelector.cssSelector &&
+        !isValidCssSelector(data.noCodeConfig.elementSelector.cssSelector)
+      ) {
+        throw new Error("Invalid CSS Selector");
       }
 
-      const newActionClass: TActionClass = await createActionClassAction(updatedAction);
+      let updatedAction = {};
+
+      if (type === "noCode") {
+        updatedAction = {
+          name: data.name.trim(),
+          description: data.description,
+          environmentId,
+          type: "noCode",
+          noCodeConfig: {
+            ...data.noCodeConfig,
+            ...(data.type === "noCode" &&
+              data.noCodeConfig?.type === "click" && {
+                elementSelector: {
+                  cssSelector: data.noCodeConfig.elementSelector.cssSelector,
+                  innerHtml: data.noCodeConfig.elementSelector.innerHtml,
+                },
+              }),
+          },
+        };
+      } else if (type === "code") {
+        updatedAction = {
+          name: data.name.trim(),
+          description: data.description,
+          environmentId,
+          type: "code",
+          key: data.key,
+        };
+      }
+
+      const newActionClass: TActionClass = await createActionClassAction(
+        environmentId,
+        updatedAction as TActionClassInput
+      );
       if (setActionClasses) {
         setActionClasses((prevActionClasses: TActionClass[]) => [...prevActionClasses, newActionClass]);
       }
@@ -165,133 +154,107 @@ export const CreateNewActionTab = ({
       resetAllStates();
     } catch (e: any) {
       toast.error(e.message);
-    } finally {
-      setIsCreatingAction(false);
     }
   };
 
   const resetAllStates = () => {
-    setType("noCode");
-    setIsCssSelector(false);
-    setIsPageUrl(false);
-    setIsInnerText(false);
-    setTestUrl("");
-    setIsMatch("");
     reset();
     setOpen(false);
   };
 
   return (
     <div>
-      <form onSubmit={handleSubmit(submitHandler)}>
-        <div className="w-full space-y-4">
-          <div className="grid w-full grid-cols-2 gap-x-4">
-            <div className="col-span-1">
-              <Label htmlFor="actionNameInput">What did your user do?</Label>
-              <Input id="actionNameInput" placeholder="E.g. Clicked Download" {...register("name")} />
-            </div>
-            <div className="col-span-1">
-              <Label htmlFor="actionDescriptionInput">Description</Label>
-              <Input
-                id="actionDescriptionInput"
-                placeholder="User clicked Download Button "
-                {...register("description")}
-              />
-            </div>
-          </div>
-
-          <div onClick={(e) => e.stopPropagation()}>
-            <Label>Type</Label>
+      <FormProvider {...form}>
+        <form onSubmit={handleSubmit(submitHandler)}>
+          <div className="max-h-[400px] w-full space-y-4 overflow-y-auto">
             <div className="w-3/5">
-              <TabBar
-                tabs={[
-                  {
-                    id: "noCode",
-                    label: "No code",
-                  },
-                  {
-                    id: "code",
-                    label: "Code",
-                  },
-                ]}
-                activeId={type}
-                setActiveId={setType}
-                tabStyle="button"
-                className="rounded-md bg-white"
-                activeTabClassName="bg-slate-100"
+              <FormField
+                name={`type`}
+                control={control}
+                render={({ field }) => (
+                  <div>
+                    <Label className="font-semibold">Type</Label>
+                    <TabToggle
+                      id="type"
+                      options={[
+                        { value: "noCode", label: "No code" },
+                        { value: "code", label: "Code" },
+                      ]}
+                      {...field}
+                      defaultSelected={field.value}
+                    />
+                  </div>
+                )}
               />
             </div>
-          </div>
 
-          <div className="max-h-60 overflow-y-auto">
-            {type === "code" ? (
-              <>
-                <div className="col-span-1">
-                  <Label htmlFor="codeActionKeyInput">Key</Label>
-                  <Input
-                    id="codeActionKeyInput"
-                    placeholder="e.g. download_cta_click_on_home"
-                    {...register("key")}
-                    className="mb-2 w-1/2"
-                  />
-                </div>
-                <Alert className="bg-slate-100">
-                  <Terminal className="h-4 w-4" />
-                  <AlertTitle>How do Code Actions work?</AlertTitle>
-                  <AlertDescription>
-                    You can track code action anywhere in your app using{" "}
-                    <span className="rounded bg-white px-2 py-1 text-xs">
-                      formbricks.track(&quot;{watch("key")}&quot;)
-                    </span>{" "}
-                    in your code. Read more in our{" "}
-                    <a href="https://formbricks.com/docs/actions/code" target="_blank" className="underline">
-                      docs
-                    </a>
-                    .
-                  </AlertDescription>
-                </Alert>
-              </>
-            ) : (
-              <>
-                <div>
-                  <Label>Select By</Label>
-                </div>
-                <CssSelector
-                  isCssSelector={isCssSelector}
-                  setIsCssSelector={setIsCssSelector}
-                  register={register}
-                />
-                <PageUrlSelector
-                  isPageUrl={isPageUrl}
-                  setIsPageUrl={setIsPageUrl}
-                  register={register}
+            <div className="grid w-full grid-cols-2 gap-x-4">
+              <div className="col-span-1">
+                <FormField
                   control={control}
-                  testUrl={testUrl}
-                  setTestUrl={setTestUrl}
-                  isMatch={isMatch}
-                  setIsMatch={setIsMatch}
-                  handleMatchClick={handleMatchClick}
+                  name="name"
+                  render={({ field, fieldState: { error } }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="actionNameInput">What did your user do?</FormLabel>
+
+                      <FormControl>
+                        <Input
+                          type="text"
+                          id="actionNameInput"
+                          {...field}
+                          placeholder="E.g. Clicked Download"
+                          isInvalid={!!error?.message}
+                        />
+                      </FormControl>
+
+                      <FormError />
+                    </FormItem>
+                  )}
                 />
-                <InnerHtmlSelector
-                  isInnerHtml={isInnerHtml}
-                  setIsInnerHtml={setIsInnerText}
-                  register={register}
+              </div>
+              <div className="col-span-1">
+                <FormField
+                  control={control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="actionDescriptionInput">Description</FormLabel>
+
+                      <FormControl>
+                        <Input
+                          type="text"
+                          id="actionDescriptionInput"
+                          {...field}
+                          placeholder="User clicked Download Button"
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
                 />
-              </>
+              </div>
+            </div>
+
+            <hr className="border-slate-200" />
+
+            {watch("type") === "code" ? (
+              <CodeActionForm form={form} isEdit={false} />
+            ) : (
+              <NoCodeActionForm form={form} />
             )}
           </div>
-        </div>
-        <div className="flex justify-end pt-6">
-          <div className="flex space-x-2">
-            <Button type="button" variant="minimal" onClick={resetAllStates}>
-              Cancel
-            </Button>
-            <Button variant="darkCTA" type="submit" loading={isCreatingAction}>
-              Create action
-            </Button>
+          <div className="flex justify-end pt-6">
+            <div className="flex space-x-2">
+              <Button type="button" variant="minimal" onClick={resetAllStates}>
+                Cancel
+              </Button>
+              <Button variant="darkCTA" type="submit" loading={isSubmitting}>
+                Create action
+              </Button>
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
+      </FormProvider>
     </div>
   );
 };

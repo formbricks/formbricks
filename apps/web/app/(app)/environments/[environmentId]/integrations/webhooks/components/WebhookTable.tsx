@@ -2,7 +2,6 @@
 
 import { WebhookModal } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookDetailModal";
 import { useState } from "react";
-
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhook } from "@formbricks/types/webhooks";

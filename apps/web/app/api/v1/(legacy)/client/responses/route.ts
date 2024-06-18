@@ -3,7 +3,6 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
-
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { createResponseLegacy } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";

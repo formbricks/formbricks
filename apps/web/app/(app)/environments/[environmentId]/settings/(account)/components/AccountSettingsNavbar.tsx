@@ -2,7 +2,6 @@
 
 import { BellRingIcon, UserCircleIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-
 import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
 
 export const AccountSettingsNavbar = ({

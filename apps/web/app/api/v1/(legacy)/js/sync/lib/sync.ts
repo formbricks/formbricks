@@ -1,10 +1,5 @@
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import {
-  IS_FORMBRICKS_CLOUD,
-  MAU_LIMIT,
-  PRICING_APPSURVEYS_FREE_RESPONSES,
-  PRICING_USERTARGETING_FREE_MTU,
-} from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { reverseTranslateSurvey } from "@formbricks/lib/i18n/reverseTranslation";
 import {
@@ -52,13 +47,13 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
 
   // check if Monthly Active Users limit is reached
   if (IS_FORMBRICKS_CLOUD) {
-    const hasUserTargetingSubscription =
-      organization?.billing?.features.userTargeting.status &&
-      ["active", "canceled"].includes(organization?.billing?.features.userTargeting.status);
     const currentMau = await getMonthlyActiveOrganizationPeopleCount(organization.id);
-    const isMauLimitReached = !hasUserTargetingSubscription && currentMau >= PRICING_USERTARGETING_FREE_MTU;
+    const monthlyMiuLimit = organization.billing.limits.monthly.miu;
+
+    const isMauLimitReached = monthlyMiuLimit !== null && currentMau >= monthlyMiuLimit;
+
     if (isMauLimitReached) {
-      const errorMessage = `Monthly Active Users limit reached in ${environmentId} (${currentMau}/${MAU_LIMIT})`;
+      const errorMessage = `Monthly Active Users limit reached in ${environmentId}`;
       if (!personId) {
         // don't allow new people or sessions
         throw new Error(errorMessage);
@@ -78,24 +73,20 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
       person = { id: "legacy" };
     }
   }
-  // check if App Survey limit is reached
-  let isAppSurveyLimitReached = false;
+
+  // check if responses limit is reached
+  let isResponsesLimitReached = false;
   if (IS_FORMBRICKS_CLOUD) {
-    const hasAppSurveySubscription =
-      organization?.billing?.features.inAppSurvey.status &&
-      ["active", "canceled"].includes(organization?.billing?.features.inAppSurvey.status);
     const monthlyResponsesCount = await getMonthlyOrganizationResponseCount(organization.id);
-    isAppSurveyLimitReached =
-      IS_FORMBRICKS_CLOUD &&
-      !hasAppSurveySubscription &&
-      monthlyResponsesCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
+    const monthlyResponseLimit = organization.billing.limits.monthly.responses;
+    isResponsesLimitReached = monthlyResponseLimit !== null && monthlyResponsesCount >= monthlyResponseLimit;
   }
 
   const isPerson = Object.keys(person).length > 0;
 
   let surveys;
 
-  if (isAppSurveyLimitReached) {
+  if (isResponsesLimitReached) {
     surveys = [];
   } else if (isPerson) {
     surveys = await getSyncSurveys(environmentId, (person as TPerson).id);

@@ -1,11 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { isAfter, isBefore, isSameDay } from "date-fns";
-
 import { TDisplay } from "@formbricks/types/displays";
 import { TResponse, TResponseFilterCriteria, TResponseUpdateInput } from "@formbricks/types/responses";
-import { TSurveyQuestionType } from "@formbricks/types/surveys/types";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-
 import { responseNoteSelect } from "../../../responseNote/service";
 import { responseSelection } from "../../service";
 import { constantsForTests } from "../constants";
@@ -381,7 +379,7 @@ export const mockSurveySummaryOutput = {
         id: "ars2tjk8hsi8oqk1uac00mo8",
         inputType: "text",
         required: false,
-        type: TSurveyQuestionType.OpenText,
+        type: TSurveyQuestionTypeEnum.OpenText,
       },
       responseCount: 0,
       samples: [],

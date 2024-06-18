@@ -9,7 +9,6 @@ import { XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-
 import { TInvitee } from "@formbricks/types/invites";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Button } from "@formbricks/ui/Button";
@@ -25,6 +24,7 @@ type OrganizationActionsProps = {
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
+  isMultiOrgEnabled: boolean;
 };
 
 export const OrganizationActions = ({
@@ -36,6 +36,7 @@ export const OrganizationActions = ({
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
+  isMultiOrgEnabled,
 }: OrganizationActionsProps) => {
   const router = useRouter();
   const [isLeaveOrganizationModalOpen, setLeaveOrganizationModalOpen] = useState(false);
@@ -74,7 +75,7 @@ export const OrganizationActions = ({
   return (
     <>
       <div className="mb-4 flex justify-end space-x-2 text-right">
-        {role !== "owner" && (
+        {role !== "owner" && isMultiOrgEnabled && (
           <Button
             EndIcon={XIcon}
             variant="secondary"
@@ -83,14 +84,16 @@ export const OrganizationActions = ({
             Leave organization
           </Button>
         )}
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            setCreateOrganizationModalOpen(true);
-          }}>
-          Create new organization
-        </Button>
+        {isMultiOrgEnabled && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setCreateOrganizationModalOpen(true);
+            }}>
+            Create new organization
+          </Button>
+        )}
         {!isInviteDisabled && isAdminOrOwner && (
           <Button
             size="sm"

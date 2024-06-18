@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
@@ -13,7 +12,6 @@ import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { PreviewSurvey } from "@formbricks/ui/PreviewSurvey";
-
 import { refetchProductAction } from "../actions";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { QuestionsAudienceTabs } from "./QuestionsStylingSettingsTabs";

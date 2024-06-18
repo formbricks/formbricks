@@ -4,14 +4,12 @@ import { ArrowLeftIcon, BellRing, BlocksIcon, Code2Icon, LinkIcon, MailIcon } fr
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
 import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
 import { ShareSurveyLink } from "@formbricks/ui/ShareSurveyLink";
-
 import { EmailTab } from "./shareEmbedTabs/EmailTab";
 import { LinkTab } from "./shareEmbedTabs/LinkTab";
 import { WebpageTab } from "./shareEmbedTabs/WebpageTab";

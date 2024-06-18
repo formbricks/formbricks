@@ -2,7 +2,6 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import toast from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -13,7 +12,6 @@ import {
   TSurveyMultipleChoiceQuestion,
 } from "@formbricks/types/surveys/types";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface ChoiceProps {
@@ -70,7 +68,7 @@ export const SelectQuestionChoice = ({
   };
 
   return (
-    <div className="flex w-full items-center gap-2" ref={setNodeRef} style={style}>
+    <div className="flex w-full gap-2" ref={setNodeRef} style={style}>
       {/* drag handle */}
       <div
         className={cn("flex items-center", choice.id === "other" && "invisible")}
@@ -129,8 +127,7 @@ export const SelectQuestionChoice = ({
           />
         )}
       </div>
-
-      <div className="mt-3 flex items-center gap-2">
+      <div className="mt-6 flex gap-2">
         {question.choices && question.choices.length > 2 && (
           <TrashIcon
             className="h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"

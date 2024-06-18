@@ -12,7 +12,6 @@ import {
   TagIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
@@ -21,7 +20,6 @@ import {
   TSurveyQuestion,
   TSurveyRecallItem,
 } from "@formbricks/types/surveys/types";
-
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../../DropdownMenu";
 import { Input } from "../../Input";
 
@@ -139,7 +137,7 @@ export const RecallItemSelect = ({
   const getQuestionIcon = (recallItem: TSurveyRecallItem) => {
     switch (recallItem.type) {
       case "question":
-        const question = localSurvey.questions.find((question) => question.id === questionId);
+        const question = localSurvey.questions.find((question) => question.id === recallItem.id);
         if (question) {
           return questionIconMapping[question?.type as keyof typeof questionIconMapping];
         }

@@ -1,11 +1,12 @@
-"use client";
-
+import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-
 import { TProductStyling } from "@formbricks/types/product";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 
+// offset = 0 -> Current question card
+// offset < 0 -> Question cards that are already answered
+// offset > 0 -> Question that aren't answered yet
 interface StackedCardsContainerProps {
   cardArrangement: TCardArrangementOptions;
   currentQuestionId: string;
@@ -14,6 +15,7 @@ interface StackedCardsContainerProps {
   styling: TProductStyling | TSurveyStyling;
   setQuestionId: (questionId: string) => void;
   shouldResetQuestionId?: boolean;
+  fullSizeCards: boolean;
 }
 
 export const StackedCardsContainer = ({
@@ -24,6 +26,7 @@ export const StackedCardsContainer = ({
   styling,
   setQuestionId,
   shouldResetQuestionId = true,
+  fullSizeCards = false,
 }: StackedCardsContainerProps) => {
   const [hovered, setHovered] = useState(false);
   const highlightBorderColor =
@@ -32,6 +35,7 @@ export const StackedCardsContainer = ({
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const resizeObserver = useRef<ResizeObserver | null>(null);
   const [cardHeight, setCardHeight] = useState("auto");
+  const [cardWidth, setCardWidth] = useState<number>(0);
 
   const questionIdxTemp = useMemo(() => {
     if (currentQuestionId === "start") return survey.welcomeCard.enabled ? -1 : 0;
@@ -84,17 +88,20 @@ export const StackedCardsContainer = ({
   }, [survey.type, cardBorderColor, highlightBorderColor]);
 
   const calculateCardTransform = useMemo(() => {
+    const rotationCoefficient = cardWidth >= 1000 ? 1.5 : cardWidth > 650 ? 2 : 3;
     return (offset: number) => {
       switch (cardArrangement) {
         case "casual":
-          return offset < 0 ? `translateX(33%)` : `translateX(0) rotate(-${(hovered ? 3.5 : 3) * offset}deg)`;
+          return offset < 0
+            ? `translateX(33%)`
+            : `translateX(0) rotate(-${(hovered ? rotationCoefficient : rotationCoefficient - 0.5) * offset}deg)`;
         case "straight":
           return offset < 0 ? `translateY(25%)` : `translateY(-${(hovered ? 12 : 10) * offset}px)`;
         default:
           return offset < 0 ? `translateX(0)` : `translateX(0)`;
       }
     };
-  }, [cardArrangement, hovered]);
+  }, [cardArrangement, hovered, cardWidth]);
 
   const straightCardArrangementStyles = (offset: number) => {
     if (cardArrangement === "straight") {
@@ -112,7 +119,10 @@ export const StackedCardsContainer = ({
     if (currentElement) {
       if (resizeObserver.current) resizeObserver.current.disconnect();
       resizeObserver.current = new ResizeObserver((entries) => {
-        for (const entry of entries) setCardHeight(entry.contentRect.height + "px");
+        for (const entry of entries) {
+          setCardHeight(entry.contentRect.height + "px");
+          setCardWidth(entry.contentRect.width);
+        }
       });
       resizeObserver.current.observe(currentElement);
     }
@@ -145,7 +155,7 @@ export const StackedCardsContainer = ({
 
   return (
     <div
-      className="relative flex items-end justify-center md:items-center"
+      className="relative flex h-full items-end justify-center md:items-center"
       onMouseEnter={() => {
         setHovered(true);
       }}
@@ -153,7 +163,7 @@ export const StackedCardsContainer = ({
       <div style={{ height: cardHeight }}></div>
       {cardArrangement === "simple" ? (
         <div
-          className="w-full"
+          className={cn("w-full", fullSizeCards ? "h-full" : "")}
           style={{
             ...borderStyles,
           }}>
@@ -180,7 +190,7 @@ export const StackedCardsContainer = ({
                   zIndex: 1000 - questionIdxTemp,
                   transform: `${calculateCardTransform(offset)}`,
                   opacity: isHidden ? 0 : (100 - 0 * offset) / 100,
-                  height: getCardHeight(offset),
+                  height: fullSizeCards ? "100%" : getCardHeight(offset),
                   transitionDuration: "600ms",
                   pointerEvents: offset === 0 ? "auto" : "none",
                   ...borderStyles,
@@ -197,7 +207,3 @@ export const StackedCardsContainer = ({
     </div>
   );
 };
-
-// offset = 0 -> Current question card
-// offset < 0 -> Question cards that are already answered
-// offset > 0 -> Question that aren't answered yet

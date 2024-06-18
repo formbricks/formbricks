@@ -2,7 +2,6 @@ import { OnboardingTitle } from "@/app/(app)/onboarding/components/OnboardingTit
 import InappMockup from "@/images/onboarding-in-app-survey.png";
 import LinkMockup from "@/images/onboarding-link-survey.webp";
 import Image from "next/image";
-
 import { OptionCard } from "@formbricks/ui/OptionCard";
 
 interface PathwaySelectProps {

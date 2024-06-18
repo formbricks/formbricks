@@ -1,8 +1,6 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
-
 import { prisma } from "@formbricks/database";
 import type {
   TEnvironment,
@@ -16,7 +14,6 @@ import {
   ZId,
 } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
-
 import { cache } from "../cache";
 import { getOrganizationsByUserId } from "../organization/service";
 import { getProducts } from "../product/service";
@@ -164,22 +161,13 @@ export const createEnvironment = async (
       data: {
         type: environmentInput.type || "development",
         product: { connect: { id: productId } },
-        widgetSetupCompleted: environmentInput.widgetSetupCompleted || false,
+        appSetupCompleted: environmentInput.appSetupCompleted || false,
+        websiteSetupCompleted: environmentInput.websiteSetupCompleted || false,
         actionClasses: {
           create: [
             {
               name: "New Session",
               description: "Gets fired when a new session is created",
-              type: "automatic",
-            },
-            {
-              name: "Exit Intent (Desktop)",
-              description: "A user on Desktop leaves the website with the cursor.",
-              type: "automatic",
-            },
-            {
-              name: "50% Scroll",
-              description: "A user scrolled 50% of the current page",
               type: "automatic",
             },
           ],

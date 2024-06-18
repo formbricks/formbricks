@@ -11,10 +11,9 @@ import { NPSQuestion } from "@/components/questions/NPSQuestion";
 import { OpenTextQuestion } from "@/components/questions/OpenTextQuestion";
 import { PictureSelectionQuestion } from "@/components/questions/PictureSelectionQuestion";
 import { RatingQuestion } from "@/components/questions/RatingQuestion";
-
 import { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys/types";
+import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -61,7 +60,7 @@ export const QuestionConditional = ({
     }
   }
 
-  return question.type === TSurveyQuestionType.OpenText ? (
+  return question.type === TSurveyQuestionTypeEnum.OpenText ? (
     <OpenTextQuestion
       key={question.id}
       question={question}
@@ -77,7 +76,7 @@ export const QuestionConditional = ({
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
+  ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
       key={question.id}
       question={question}
@@ -93,7 +92,7 @@ export const QuestionConditional = ({
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
+  ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
       key={question.id}
       question={question}
@@ -109,7 +108,7 @@ export const QuestionConditional = ({
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.NPS ? (
+  ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
     <NPSQuestion
       key={question.id}
       question={question}
@@ -125,7 +124,7 @@ export const QuestionConditional = ({
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.CTA ? (
+  ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
     <CTAQuestion
       key={question.id}
       question={question}
@@ -141,7 +140,7 @@ export const QuestionConditional = ({
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.Rating ? (
+  ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
     <RatingQuestion
       key={question.id}
       question={question}
@@ -157,7 +156,7 @@ export const QuestionConditional = ({
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.Consent ? (
+  ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
     <ConsentQuestion
       key={question.id}
       question={question}
@@ -173,7 +172,7 @@ export const QuestionConditional = ({
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.Date ? (
+  ) : question.type === TSurveyQuestionTypeEnum.Date ? (
     <DateQuestion
       key={question.id}
       question={question}
@@ -189,7 +188,7 @@ export const QuestionConditional = ({
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.PictureSelection ? (
+  ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
     <PictureSelectionQuestion
       key={question.id}
       question={question}
@@ -205,7 +204,7 @@ export const QuestionConditional = ({
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.FileUpload ? (
+  ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
     <FileUploadQuestion
       key={question.id}
       surveyId={surveyId}
@@ -223,7 +222,7 @@ export const QuestionConditional = ({
       isInIframe={isInIframe}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.Cal ? (
+  ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
     <CalQuestion
       key={question.id}
       question={question}
@@ -239,7 +238,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.Matrix ? (
+  ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
     <MatrixQuestion
       question={question}
       value={typeof value === "object" && !Array.isArray(value) ? value : {}}
@@ -253,7 +252,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.Address ? (
+  ) : question.type === TSurveyQuestionTypeEnum.Address ? (
     <AddressQuestion
       question={question}
       value={Array.isArray(value) ? value : undefined}

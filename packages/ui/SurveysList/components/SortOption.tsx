@@ -1,5 +1,4 @@
 import { TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
-
 import { DropdownMenuItem } from "../../DropdownMenu";
 
 interface SortOptionProps {

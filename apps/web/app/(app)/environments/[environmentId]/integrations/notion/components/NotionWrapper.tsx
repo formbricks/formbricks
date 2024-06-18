@@ -4,7 +4,6 @@ import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/in
 import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/ManageIntegration";
 import notionLogo from "@/images/notion.png";
 import { useState } from "react";
-
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import {
@@ -14,7 +13,6 @@ import {
 } from "@formbricks/types/integration/notion";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ConnectIntegration } from "@formbricks/ui/ConnectIntegration";
-
 import { authorize } from "../lib/notion";
 
 interface NotionWrapperProps {

@@ -1,7 +1,6 @@
 import { WebhookOverviewTab } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookOverviewTab";
 import { WebhookSettingsTab } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookSettingsTab";
 import { Webhook } from "lucide-react";
-
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhook } from "@formbricks/types/webhooks";
 import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";

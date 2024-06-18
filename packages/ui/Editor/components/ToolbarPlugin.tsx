@@ -27,9 +27,7 @@ import { COMMAND_PRIORITY_CRITICAL, PASTE_COMMAND } from "lexical";
 import { Bold, ChevronDownIcon, Italic, Link } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-
 import { cn } from "@formbricks/lib/cn";
-
 import { Button } from "../../Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
 import { Input } from "../../Input";

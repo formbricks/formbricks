@@ -22,10 +22,9 @@ import {
   User,
 } from "lucide-react";
 import * as React from "react";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import { TSurveyQuestionType } from "@formbricks/types/surveys/types";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import {
   Command,
   CommandEmpty,
@@ -47,7 +46,7 @@ export enum OptionsType {
 
 export type QuestionOption = {
   label: string;
-  questionType?: TSurveyQuestionType;
+  questionType?: TSurveyQuestionTypeEnum;
   type: OptionsType;
   id: string;
 };
@@ -67,25 +66,25 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
     switch (type) {
       case OptionsType.QUESTIONS:
         switch (questionType) {
-          case TSurveyQuestionType.OpenText:
+          case TSurveyQuestionTypeEnum.OpenText:
             return <MessageSquareTextIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionType.Rating:
+          case TSurveyQuestionTypeEnum.Rating:
             return <StarIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionType.CTA:
+          case TSurveyQuestionTypeEnum.CTA:
             return <MousePointerClickIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionType.OpenText:
+          case TSurveyQuestionTypeEnum.OpenText:
             return <HelpCircleIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionType.MultipleChoiceMulti:
+          case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
             return <ListIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionType.MultipleChoiceSingle:
+          case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
             return <Rows3Icon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionType.NPS:
+          case TSurveyQuestionTypeEnum.NPS:
             return <NetPromoterScoreIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionType.Consent:
+          case TSurveyQuestionTypeEnum.Consent:
             return <CheckIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionType.PictureSelection:
+          case TSurveyQuestionTypeEnum.PictureSelection:
             return <ImageIcon width={18} className="text-white" />;
-          case TSurveyQuestionType.Matrix:
+          case TSurveyQuestionTypeEnum.Matrix:
             return <GridIcon width={18} className="text-white" />;
         }
       case OptionsType.ATTRIBUTES:

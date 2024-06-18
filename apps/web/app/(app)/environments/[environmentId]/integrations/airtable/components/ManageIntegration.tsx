@@ -7,7 +7,6 @@ import {
 } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AddIntegrationModal";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -113,6 +112,8 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
                   questions: data.questionIds,
                   survey: data.surveyId,
                   table: data.tableId,
+                  includeHiddenFields: !!data.includeHiddenFields,
+                  includeMetadata: !!data.includeMetadata,
                   index,
                 });
                 setIsModalOpen(true);

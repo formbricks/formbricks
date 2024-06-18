@@ -1,5 +1,4 @@
 import { createId } from "@paralleldrive/cuid2";
-
 import { TBaseFilter, TSegmentAttributeFilter, TSegmentPersonFilter } from "@formbricks/types/segment";
 
 export const handleAddFilter = ({

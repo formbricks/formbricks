@@ -4,10 +4,9 @@ import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[s
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import * as React from "react";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import { TSurveyQuestionType } from "@formbricks/types/surveys/types";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@formbricks/ui/Command";
 import {
   DropdownMenu,
@@ -23,7 +22,7 @@ type QuestionFilterComboBoxProps = {
   filterComboBoxValue: string | string[] | undefined;
   onChangeFilterValue: (o: string) => void;
   onChangeFilterComboBoxValue: (o: string | string[]) => void;
-  type?: TSurveyQuestionType | Omit<OptionsType, OptionsType.QUESTIONS>;
+  type?: TSurveyQuestionTypeEnum | Omit<OptionsType, OptionsType.QUESTIONS>;
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
 };
@@ -47,9 +46,9 @@ export const QuestionFilterComboBox = ({
 
   // multiple when question type is multi selection
   const isMultiple =
-    type === TSurveyQuestionType.MultipleChoiceMulti ||
-    type === TSurveyQuestionType.MultipleChoiceSingle ||
-    type === TSurveyQuestionType.PictureSelection;
+    type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+    type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
+    type === TSurveyQuestionTypeEnum.PictureSelection;
 
   // when question type is multi selection so we remove the option from the options which has been already selected
   const options = isMultiple
@@ -63,7 +62,7 @@ export const QuestionFilterComboBox = ({
 
   // disable the combo box for selection of value when question type is nps or rating and selected value is submitted or skipped
   const isDisabledComboBox =
-    (type === TSurveyQuestionType.NPS || type === TSurveyQuestionType.Rating) &&
+    (type === TSurveyQuestionTypeEnum.NPS || type === TSurveyQuestionTypeEnum.Rating) &&
     (filterValue === "Submitted" || filterValue === "Skipped");
 
   return (
