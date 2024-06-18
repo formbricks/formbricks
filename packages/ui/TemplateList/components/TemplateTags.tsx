@@ -44,15 +44,6 @@ const getChannelTag = (channels: TSurveyType[] | undefined): string | undefined 
       return labels.map(removeSurveySuffix).join(" or ") + " Survey";
 
     case 3:
-      // Return labels for three channels, formatted with commas and "or", removing "Survey"
-      return (
-        labels
-          .map(removeSurveySuffix)
-          .join(", ")
-          .replace(/, ([^,]*)$/, " or $1") + " Survey"
-      );
-
-    case 4:
       return "All Channels";
 
     default:

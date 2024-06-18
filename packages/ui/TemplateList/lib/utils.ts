@@ -39,7 +39,6 @@ export const replacePresetPlaceholders = (template: TTemplate, product: any) => 
 export const channelMapping: { value: TSurveyType; label: string }[] = [
   { value: "website", label: "Website Survey" },
   { value: "app", label: "App Survey" },
-  { value: "email", label: "Email Survey" },
   { value: "link", label: "Link Survey" },
 ];
 
