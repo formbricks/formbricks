@@ -277,50 +277,8 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
       validateInputs([organizationId, ZId]);
 
       try {
-        const organization = await getOrganization(organizationId);
-
-        if (!organization) {
-          throw new ResourceNotFoundError("Organization", organizationId);
-        }
-
-        if (!organization.billing.periodStart) {
-          throw new Error("Organization billing period start is not set");
-        }
-
-        // Get all environment IDs for the organization
-        const products = await getProducts(organizationId);
-        const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
-
-        const personIds = await prisma.person.findMany({
-          where: {
-            environmentId: { in: environmentIds },
-          },
-          select: {
-            id: true,
-          },
-        });
-
-        const personIdsArray = personIds.map((person) => person.id);
-
-        // get distinct persons that have viewed at least one survey
-        const displayPersonIds = await prisma.display.findMany({
-          where: {
-            AND: [
-              { personId: { in: personIdsArray } },
-              { createdAt: { gte: organization.billing.periodStart } },
-            ],
-          },
-          select: {
-            personId: true,
-          },
-          distinct: ["personId"],
-        });
-
-        const displayPersonIdsSet = new Set(displayPersonIds.map((item) => item.personId));
-
-        const distinctPersonCount = displayPersonIdsSet.size;
-
-        return distinctPersonCount;
+        // temporary solution until we have a better way to track active users
+        return 0;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
