@@ -54,7 +54,6 @@ export const POST = async (request: Request) => {
     user = {
       ...user,
       ...{ email: user.email.toLowerCase() },
-      onboardingCompleted: isInviteValid,
     };
 
     // create the user

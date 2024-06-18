@@ -251,7 +251,6 @@ export const authOptions: NextAuthOptions = {
           name: user.name || user.email.split("@")[0],
           email: user.email,
           emailVerified: new Date(Date.now()),
-          onboardingCompleted: false,
           identityProvider: provider,
           identityProviderAccountId: account.providerAccountId,
         });
