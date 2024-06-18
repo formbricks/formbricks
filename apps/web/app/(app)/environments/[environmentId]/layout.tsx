@@ -38,7 +38,10 @@ const EnvLayout = async ({ children, params }) => {
     if (membership.role === "viewer") {
       return redirect(`/organizations/product-onboarding-pending?productId=${product.id}`);
     } else {
-      return redirect(`/organizations/${organization.id}/products/new/channel`);
+      const productionEnvironment = product.environments.find((env) => env.type === "production");
+      return redirect(
+        `/environments/${productionEnvironment!.id}/connect?channel=${product.config.channel}&industry=${product.config.industry}`
+      );
     }
   }
 
