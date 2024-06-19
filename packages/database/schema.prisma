@@ -431,8 +431,8 @@ model Product {
   organization         Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId       String
   environments         Environment[]
-  brandColor           String?
-  highlightBorderColor String?
+  brandColor           String? // deprecated; use styling.brandColor instead
+  highlightBorderColor String? // deprecated
   /// @zod.custom(imports.ZProductStyling)
   /// [Styling]
   styling              Json            @default("{\"allowStyleOverwrite\":true}")
@@ -586,7 +586,6 @@ model User {
   twoFactorEnabled          Boolean          @default(false)
   backupCodes               String?
   password                  String?
-  onboardingCompleted       Boolean          @default(false)
   identityProvider          IdentityProvider @default(email)
   identityProviderAccountId String?
   memberships               Membership[]

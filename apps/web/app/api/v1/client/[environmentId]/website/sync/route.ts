@@ -3,7 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
@@ -15,7 +15,7 @@ import { getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/serv
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TJsWebsiteLegacyStateSync, TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";
-import { TProduct } from "@formbricks/types/product";
+import { TProductLegacy } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -100,6 +100,10 @@ export const GET = async (
       await updateEnvironment(environment.id, { websiteSetupCompleted: true });
     } */
 
+    if (!environment?.websiteSetupCompleted) {
+      await updateEnvironment(environment.id, { websiteSetupCompleted: true });
+    }
+
     const [surveys, actionClasses] = await Promise.all([
       getSurveys(environmentId),
       getActionClasses(environmentId),
@@ -112,7 +116,7 @@ export const GET = async (
       // && (!survey.segment || survey.segment.filters.length === 0)
     );
 
-    const updatedProduct: TProduct = {
+    const updatedProduct: TProductLegacy = {
       ...product,
       brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
       ...(product.styling.highlightBorderColor?.light && {

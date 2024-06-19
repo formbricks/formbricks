@@ -86,7 +86,6 @@ const Page = async ({ searchParams }) => {
         invite.creator.email
       );
       await updateUser(session.user.id, {
-        onboardingCompleted: true,
         notificationSettings: {
           ...session.user.notificationSettings,
           unsubscribedOrganizationIds: Array.from(

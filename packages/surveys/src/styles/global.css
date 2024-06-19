@@ -39,7 +39,6 @@
 
 /* without this, it wont override the color */
 p.fb-editor-paragraph {
-  color: var(--fb-subheading-color) !important;
   overflow-wrap: break-word;
 }
 
