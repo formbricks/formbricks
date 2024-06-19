@@ -47,7 +47,8 @@ const Page = async ({ params }) => {
       <ActionClassesTable
         environmentId={params.environmentId}
         actionClasses={actionClasses}
-        isUserTargetingEnabled={isUserTargetingEnabled}>
+        isUserTargetingEnabled={isUserTargetingEnabled}
+        currentProductChannel={currentProductChannel}>
         <ActionTableHeading />
         {actionClasses.map((actionClass) => (
           <ActionClassDataRow key={actionClass.id} actionClass={actionClass} />
