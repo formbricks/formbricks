@@ -81,7 +81,6 @@ export const TEXT_RESPONSES_PER_PAGE = 5;
 
 export const DEFAULT_ORGANIZATION_ID = env.DEFAULT_ORGANIZATION_ID;
 export const DEFAULT_ORGANIZATION_ROLE = env.DEFAULT_ORGANIZATION_ROLE;
-export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED === "1";
 
 // Storage constants
 export const S3_ACCESS_KEY = env.S3_ACCESS_KEY;
@@ -193,6 +192,8 @@ export enum STRIPE_PRICE_LOOKUP_KEYS {
   STARTUP_YEARLY = "formbricks_startup_yearly",
   SCALE_MONTHLY = "formbricks_scale_monthly",
   SCALE_YEARLY = "formbricks_scale_yearly",
+  UNLIMITED_99 = "formbricks_unlimited_99",
+  UNLIMITED_199 = "formbricks_unlimited_199",
 }
 
 export const BILLING_LIMITS = {
@@ -208,4 +209,4 @@ export const BILLING_LIMITS = {
     RESPONSES: 5000,
     MIU: 20000,
   },
-};
+} as const;

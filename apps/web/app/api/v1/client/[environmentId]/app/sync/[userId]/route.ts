@@ -23,7 +23,7 @@ import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsAppLegacyStateSync, TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
-import { TProduct } from "@formbricks/types/product";
+import { TProductLegacy } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -70,8 +70,19 @@ export const GET = async (
       throw new Error("Environment does not exist");
     }
 
-    if (!environment.widgetSetupCompleted) {
-      await updateEnvironment(environment.id, { widgetSetupCompleted: true });
+    // temporary remove the example survey creation to avoid caching issue with multiple example surveys
+    /* if (!environment.appSetupCompleted) {
+      const exampleTrigger = await getActionClassByEnvironmentIdAndName(environmentId, "New Session");
+      if (!exampleTrigger) {
+        throw new Error("Example trigger not found");
+      }
+      const firstSurvey = getExampleAppSurveyTemplate(WEBAPP_URL, exampleTrigger);
+      await createSurvey(environmentId, firstSurvey);
+      await updateEnvironment(environment.id, { appSetupCompleted: true });
+    } */
+
+    if (!environment.appSetupCompleted) {
+      await updateEnvironment(environment.id, { appSetupCompleted: true });
     }
 
     // check organization subscriptions
@@ -170,7 +181,7 @@ export const GET = async (
       throw new Error("Product not found");
     }
 
-    const updatedProduct: TProduct = {
+    const updatedProduct: TProductLegacy = {
       ...product,
       brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
       ...(product.styling.highlightBorderColor?.light && {

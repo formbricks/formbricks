@@ -667,7 +667,7 @@ const checkForI18n = (response: TResponse, id: string, survey: TSurvey, language
     (typeof response.data[id] === "string"
       ? ([response.data[id]] as string[])
       : (response.data[id] as string[])
-    ).forEach((data) => {
+    )?.forEach((data) => {
       choiceValues.push(
         getLocalizedValue(
           question.choices.find((choice) => choice.label[languageCode] === data)?.label,

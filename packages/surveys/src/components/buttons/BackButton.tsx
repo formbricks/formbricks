@@ -9,6 +9,7 @@ interface BackButtonProps {
 export const BackButton = ({ onClick, backButtonLabel, tabIndex = 2 }: BackButtonProps) => {
   return (
     <button
+      dir="auto"
       tabIndex={tabIndex}
       type={"button"}
       className={cn(

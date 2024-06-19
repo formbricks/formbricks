@@ -20,3 +20,7 @@ export const sanitizeString = (str: string, delimiter: string = "_", length: num
 };
 
 export const isCapitalized = (str: string) => str.charAt(0) === str.charAt(0).toUpperCase();
+
+export const startsWithVowel = (str: string): boolean => {
+  return /^[aeiouAEIOU]/.test(str);
+};

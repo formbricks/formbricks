@@ -64,19 +64,28 @@ const Page = async ({ params }) => {
   const isN8nIntegrationConnected = isIntegrationConnected("n8n");
   const isSlackIntegrationConnected = isIntegrationConnected("slack");
 
+  const widgetSetupCompleted = environment?.appSetupCompleted || environment?.websiteSetupCompleted;
+  const bothSetupCompleted = environment?.appSetupCompleted && environment?.websiteSetupCompleted;
+
   const integrationCards = [
     {
       docsHref: "https://formbricks.com/docs/getting-started/framework-guides#next-js",
       docsText: "Docs",
       docsNewTab: true,
-      connectHref: `/environments/${environmentId}/product/setup`,
+      connectHref: `/environments/${environmentId}/product/app-connection`,
       connectText: "Connect",
       connectNewTab: false,
       label: "Javascript Widget",
       description: "Integrate Formbricks into your Webapp",
       icon: <Image src={JsLogo} alt="Javascript Logo" />,
-      connected: environment?.widgetSetupCompleted,
-      statusText: environment?.widgetSetupCompleted ? "Connected" : "Not Connected",
+      connected: widgetSetupCompleted,
+      statusText: bothSetupCompleted
+        ? "app & website connected"
+        : environment?.appSetupCompleted
+          ? "app Connected"
+          : environment?.websiteSetupCompleted
+            ? "website connected"
+            : "Not Connected",
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/zapier",

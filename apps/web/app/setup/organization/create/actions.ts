@@ -7,8 +7,6 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { gethasNoOrganizations } from "@formbricks/lib/instance/service";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization } from "@formbricks/lib/organization/service";
-import { createProduct } from "@formbricks/lib/product/service";
-import { updateUser } from "@formbricks/lib/user/service";
 import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
 
 export const createOrganizationAction = async (organizationName: string): Promise<Organization> => {
@@ -29,25 +27,6 @@ export const createOrganizationAction = async (organizationName: string): Promis
   await createMembership(newOrganization.id, session.user.id, {
     role: "owner",
     accepted: true,
-  });
-
-  const product = await createProduct(newOrganization.id, {
-    name: "My Product",
-  });
-
-  const updatedNotificationSettings = {
-    ...session.user.notificationSettings,
-    alert: {
-      ...session.user.notificationSettings?.alert,
-    },
-    weeklySummary: {
-      ...session.user.notificationSettings?.weeklySummary,
-      [product.id]: true,
-    },
-  };
-
-  await updateUser(session.user.id, {
-    notificationSettings: updatedNotificationSettings,
   });
 
   return newOrganization;

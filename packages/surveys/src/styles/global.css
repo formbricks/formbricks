@@ -36,9 +36,9 @@
   /* need to use !important because in packages/ui/components/editor/stylesEditorFrontend.css the color is defined for some classes */
   color: var(--fb-subheading-color) !important;
 }
+
 /* without this, it wont override the color */
 p.fb-editor-paragraph {
-  color: var(--fb-subheading-color) !important;
   overflow-wrap: break-word;
 }
 
@@ -106,8 +106,8 @@ p.fb-editor-paragraph {
 }
 
 .no-scrollbar {
-  -ms-overflow-style: none !important;  /* Internet Explorer 10+ */
-  scrollbar-width: thin !important;     /* Firefox */
+  -ms-overflow-style: none !important; /* Internet Explorer 10+ */
+  scrollbar-width: thin !important; /* Firefox */
   scrollbar-color: transparent transparent !important; /* Firefox */
 
   /* Chrome, Edge, and Safari */

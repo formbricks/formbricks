@@ -243,7 +243,7 @@ export const BasicSegmentSettings = ({
                   handleUpdateSegment();
                 }}
                 disabled={isSaveDisabled}>
-                Save Changes
+                Save changes
               </Button>
             </div>
 

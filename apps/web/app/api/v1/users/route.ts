@@ -14,7 +14,6 @@ import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
-import { createProduct } from "@formbricks/lib/product/service";
 import { createUser, updateUser } from "@formbricks/lib/user/service";
 
 export const POST = async (request: Request) => {
@@ -54,7 +53,6 @@ export const POST = async (request: Request) => {
     user = {
       ...user,
       ...{ email: user.email.toLowerCase() },
-      onboardingCompleted: isInviteValid,
     };
 
     // create the user
@@ -66,6 +64,14 @@ export const POST = async (request: Request) => {
       await createMembership(invite.organizationId, user.id, {
         accepted: true,
         role: invite.role,
+      });
+
+      await updateUser(user.id, {
+        notificationSettings: {
+          alert: {},
+          weeklySummary: {},
+          unsubscribedOrganizationIds: [invite.organizationId],
+        },
       });
 
       if (!EMAIL_VERIFICATION_DISABLED) {
@@ -94,6 +100,16 @@ export const POST = async (request: Request) => {
       }
       const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "admin";
       await createMembership(organization.id, user.id, { role, accepted: true });
+      const updatedNotificationSettings = {
+        ...user.notificationSettings,
+        unsubscribedOrganizationIds: Array.from(
+          new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
+        ),
+      };
+
+      await updateUser(user.id, {
+        notificationSettings: updatedNotificationSettings,
+      });
     }
     // Without default organization assignment
     else {
@@ -101,9 +117,6 @@ export const POST = async (request: Request) => {
       if (isMultiOrgEnabled) {
         const organization = await createOrganization({ name: user.name + "'s Organization" });
         await createMembership(organization.id, user.id, { role: "owner", accepted: true });
-        const product = await createProduct(organization.id, {
-          name: "My Product",
-        });
 
         const updatedNotificationSettings = {
           ...user.notificationSettings,
@@ -112,8 +125,10 @@ export const POST = async (request: Request) => {
           },
           weeklySummary: {
             ...user.notificationSettings?.weeklySummary,
-            [product.id]: true,
           },
+          unsubscribedOrganizationIds: Array.from(
+            new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
+          ),
         };
 
         await updateUser(user.id, {

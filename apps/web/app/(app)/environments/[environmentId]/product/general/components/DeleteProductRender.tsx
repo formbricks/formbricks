@@ -14,7 +14,6 @@ type DeleteProductRenderProps = {
   isDeleteDisabled: boolean;
   isUserAdminOrOwner: boolean;
   product: TProduct;
-  userId: string;
 };
 
 export const DeleteProductRender = ({
@@ -22,7 +21,6 @@ export const DeleteProductRender = ({
   isDeleteDisabled,
   isUserAdminOrOwner,
   product,
-  userId,
 }: DeleteProductRenderProps) => {
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -31,7 +29,7 @@ export const DeleteProductRender = ({
   const handleDeleteProduct = async () => {
     try {
       setIsDeleting(true);
-      const deletedProduct = await deleteProductAction(environmentId, userId, product.id);
+      const deletedProduct = await deleteProductAction(environmentId, product.id);
       if (!!deletedProduct?.id) {
         toast.success("Product deleted successfully.");
         router.push("/");

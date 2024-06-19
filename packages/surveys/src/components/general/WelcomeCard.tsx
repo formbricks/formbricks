@@ -16,7 +16,7 @@ interface WelcomeCardProps {
   survey: TSurvey;
   languageCode: string;
   responseCount?: number;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   replaceRecallInfo: (text: string, responseData: TResponseData) => string;
 }
 
@@ -66,7 +66,7 @@ export const WelcomeCard = ({
   languageCode,
   survey,
   responseCount,
-  isInIframe,
+  autoFocusEnabled,
   replaceRecallInfo,
 }: WelcomeCardProps) => {
   const calculateTimeToComplete = () => {
@@ -123,7 +123,7 @@ export const WelcomeCard = ({
         <SubmitButton
           buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
           isLastQuestion={false}
-          focus={!isInIframe}
+          focus={autoFocusEnabled}
           onClick={() => {
             onSubmit({ ["welcomeCard"]: "clicked" }, {});
           }}

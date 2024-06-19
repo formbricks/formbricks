@@ -22,7 +22,7 @@ interface MultipleChoiceSingleProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -37,7 +37,7 @@ export const MultipleChoiceSingleQuestion = ({
   languageCode,
   ttc,
   setTtc,
-  isInIframe,
+  autoFocusEnabled,
   currentQuestionId,
 }: MultipleChoiceSingleProps) => {
   const [startTime, setStartTime] = useState(performance.now());
@@ -128,6 +128,7 @@ export const MultipleChoiceSingleQuestion = ({
                   if (!choice || choice.id === "other") return;
                   return (
                     <label
+                      dir="auto"
                       tabIndex={idx + 1}
                       key={choice.id}
                       className={cn(
@@ -144,7 +145,7 @@ export const MultipleChoiceSingleQuestion = ({
                           document.getElementById(choice.id)?.focus();
                         }
                       }}
-                      autoFocus={idx === 0 && !isInIframe}>
+                      autoFocus={idx === 0 && autoFocusEnabled}>
                       <span className="flex items-center text-sm">
                         <input
                           tabIndex={-1}
@@ -152,6 +153,7 @@ export const MultipleChoiceSingleQuestion = ({
                           id={choice.id}
                           name={question.id}
                           value={getLocalizedValue(choice.label, languageCode)}
+                          dir="auto"
                           className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
                           aria-labelledby={`${choice.id}-label`}
                           onChange={() => {
@@ -161,7 +163,7 @@ export const MultipleChoiceSingleQuestion = ({
                           checked={value === getLocalizedValue(choice.label, languageCode)}
                           required={question.required && idx === 0}
                         />
-                        <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                        <span id={`${choice.id}-label`} className="ml-3 mr-3 grow font-medium">
                           {getLocalizedValue(choice.label, languageCode)}
                         </span>
                       </span>
@@ -170,6 +172,7 @@ export const MultipleChoiceSingleQuestion = ({
                 })}
                 {otherOption && (
                   <label
+                    dir="auto"
                     tabIndex={questionChoices.length + 1}
                     className={cn(
                       value === getLocalizedValue(otherOption.label, languageCode)
@@ -187,6 +190,7 @@ export const MultipleChoiceSingleQuestion = ({
                     }}>
                     <span className="flex items-center text-sm">
                       <input
+                        dir="auto"
                         type="radio"
                         id={otherOption.id}
                         tabIndex={-1}
@@ -200,7 +204,7 @@ export const MultipleChoiceSingleQuestion = ({
                         }}
                         checked={otherSelected}
                       />
-                      <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
+                      <span id={`${otherOption.id}-label`} className="ml-3 mr-3 grow font-medium" dir="auto">
                         {getLocalizedValue(otherOption.label, languageCode)}
                       </span>
                     </span>
@@ -209,6 +213,7 @@ export const MultipleChoiceSingleQuestion = ({
                         ref={otherSpecify}
                         tabIndex={questionChoices.length + 1}
                         id={`${otherOption.id}-label`}
+                        dir="auto"
                         name={question.id}
                         value={value}
                         onChange={(e) => {

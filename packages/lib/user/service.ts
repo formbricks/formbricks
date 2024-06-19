@@ -22,7 +22,6 @@ const responseSelection = {
   createdAt: true,
   updatedAt: true,
   role: true,
-  onboardingCompleted: true,
   twoFactorEnabled: true,
   identityProvider: true,
   objective: true,

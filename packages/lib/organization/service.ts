@@ -15,7 +15,7 @@ import { cache } from "../cache";
 import { BILLING_LIMITS, ITEMS_PER_PAGE, PRODUCT_FEATURE_KEYS } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { getProducts } from "../product/service";
-import { getUsersWithOrganization, updateUser } from "../user/service";
+import { updateUser } from "../user/service";
 import { validateInputs } from "../utils/validate";
 import { organizationCache } from "./cache";
 
@@ -277,61 +277,8 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
       validateInputs([organizationId, ZId]);
 
       try {
-        // Define the start of the month
-        // const now = new Date();
-        // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-        const organization = await getOrganization(organizationId);
-
-        if (!organization) {
-          throw new ResourceNotFoundError("Organization", organizationId);
-        }
-
-        if (!organization.billing.periodStart) {
-          throw new Error("Organization billing period start is not set");
-        }
-
-        // Get all environment IDs for the organization
-        const products = await getProducts(organizationId);
-        const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
-
-        // Get all distinct person IDs that have taken an action in the current billing period
-        const actionPersonIds = await prisma.action.findMany({
-          where: {
-            AND: [
-              { createdAt: { gte: organization.billing.periodStart } },
-              { person: { environmentId: { in: environmentIds } } },
-            ],
-          },
-          select: {
-            personId: true,
-          },
-          distinct: ["personId"],
-        });
-
-        // Get all distinct person IDs that have created a response in the current billing period
-        const responsePersonIds = await prisma.response.findMany({
-          where: {
-            AND: [
-              { createdAt: { gte: organization.billing.periodStart } },
-              { person: { environmentId: { in: environmentIds } } },
-            ],
-          },
-          select: {
-            personId: true,
-          },
-          distinct: ["personId"],
-        });
-
-        const actionPersonIdsSet = new Set(actionPersonIds.map((item) => item.personId));
-        const responsePersonIdsSet = new Set(responsePersonIds.map((item) => item.personId));
-
-        // Combine the two sets to get unique personIds
-        const allPersonIdsSet = new Set([...actionPersonIdsSet, ...responsePersonIdsSet]);
-
-        const distinctPersonCount = allPersonIdsSet.size;
-
-        return distinctPersonCount;
+        // temporary solution until we have a better way to track active users
+        return 0;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -399,35 +346,31 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
   )();
 
 export const subscribeOrganizationMembersToSurveyResponses = async (
-  environmentId: string,
-  surveyId: string
+  surveyId: string,
+  createdBy: string
 ): Promise<void> => {
   try {
-    const organization = await getOrganizationByEnvironmentId(environmentId);
-    if (!organization) {
-      throw new ResourceNotFoundError("Organization", environmentId);
+    const surveyCreator = await prisma.user.findUnique({
+      where: {
+        id: createdBy,
+      },
+    });
+
+    if (!surveyCreator) {
+      throw new ResourceNotFoundError("User", createdBy);
     }
 
-    const users = await getUsersWithOrganization(organization.id);
-    await Promise.all(
-      users.map((user) => {
-        if (!user.notificationSettings?.unsubscribedOrganizationIds?.includes(organization?.id as string)) {
-          const defaultSettings = { alert: {}, weeklySummary: {} };
-          const updatedNotificationSettings: TUserNotificationSettings = {
-            ...defaultSettings,
-            ...user.notificationSettings,
-          };
+    const defaultSettings = { alert: {}, weeklySummary: {} };
+    const updatedNotificationSettings: TUserNotificationSettings = {
+      ...defaultSettings,
+      ...surveyCreator.notificationSettings,
+    };
 
-          updatedNotificationSettings.alert[surveyId] = true;
+    updatedNotificationSettings.alert[surveyId] = true;
 
-          return updateUser(user.id, {
-            notificationSettings: updatedNotificationSettings,
-          });
-        }
-
-        return Promise.resolve();
-      })
-    );
+    await updateUser(surveyCreator.id, {
+      notificationSettings: updatedNotificationSettings,
+    });
   } catch (error) {
     throw error;
   }
