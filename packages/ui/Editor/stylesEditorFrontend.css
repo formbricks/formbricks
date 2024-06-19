@@ -53,3 +53,11 @@
 .fb-editor-nested-listitem {
   list-style-type: none !important;
 }
+
+.fb-editor-rtl {
+  text-align: right !important;
+}
+
+.fb-editor-ltr {
+  text-align: left !important;
+}

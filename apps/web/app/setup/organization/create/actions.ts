@@ -44,6 +44,9 @@ export const createOrganizationAction = async (organizationName: string): Promis
       ...session.user.notificationSettings?.weeklySummary,
       [product.id]: true,
     },
+    unsubscribedOrganizationIds: Array.from(
+      new Set([...(session.user.notificationSettings?.unsubscribedOrganizationIds || []), newOrganization.id])
+    ),
   };
 
   await updateUser(session.user.id, {
