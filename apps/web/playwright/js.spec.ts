@@ -29,7 +29,6 @@ test.describe("JS Package Test", async () => {
     await expect(page.locator("#howToSendCardOption-website")).toBeVisible();
     await page.locator("#howToSendCardOption-website").click();
     await page.locator("#howToSendCardOption-website").click();
-
     await page.locator("#whenToSendCardTrigger").click();
     await page.getByRole("button", { name: "Add action" }).click();
     await page.getByText("New SessionGets fired when a").click();

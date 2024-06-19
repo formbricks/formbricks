@@ -231,7 +231,7 @@ export function SegmentSettings({
               }}
               type="submit"
               variant="darkCTA">
-              Save Changes
+              Save changes
             </Button>
 
             {isDeleteSegmentModalOpen ? (

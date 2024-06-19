@@ -15,7 +15,7 @@ import { cache } from "../cache";
 import { BILLING_LIMITS, ITEMS_PER_PAGE, PRODUCT_FEATURE_KEYS } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { getProducts } from "../product/service";
-import { getUsersWithOrganization, updateUser } from "../user/service";
+import { updateUser } from "../user/service";
 import { validateInputs } from "../utils/validate";
 import { organizationCache } from "./cache";
 
@@ -346,35 +346,31 @@ export const getMonthlyOrganizationResponseCount = (organizationId: string): Pro
   )();
 
 export const subscribeOrganizationMembersToSurveyResponses = async (
-  environmentId: string,
-  surveyId: string
+  surveyId: string,
+  createdBy: string
 ): Promise<void> => {
   try {
-    const organization = await getOrganizationByEnvironmentId(environmentId);
-    if (!organization) {
-      throw new ResourceNotFoundError("Organization", environmentId);
+    const surveyCreator = await prisma.user.findUnique({
+      where: {
+        id: createdBy,
+      },
+    });
+
+    if (!surveyCreator) {
+      throw new ResourceNotFoundError("User", createdBy);
     }
 
-    const users = await getUsersWithOrganization(organization.id);
-    await Promise.all(
-      users.map((user) => {
-        if (!user.notificationSettings?.unsubscribedOrganizationIds?.includes(organization?.id as string)) {
-          const defaultSettings = { alert: {}, weeklySummary: {} };
-          const updatedNotificationSettings: TUserNotificationSettings = {
-            ...defaultSettings,
-            ...user.notificationSettings,
-          };
+    const defaultSettings = { alert: {}, weeklySummary: {} };
+    const updatedNotificationSettings: TUserNotificationSettings = {
+      ...defaultSettings,
+      ...surveyCreator.notificationSettings,
+    };
 
-          updatedNotificationSettings.alert[surveyId] = true;
+    updatedNotificationSettings.alert[surveyId] = true;
 
-          return updateUser(user.id, {
-            notificationSettings: updatedNotificationSettings,
-          });
-        }
-
-        return Promise.resolve();
-      })
-    );
+    await updateUser(surveyCreator.id, {
+      notificationSettings: updatedNotificationSettings,
+    });
   } catch (error) {
     throw error;
   }
