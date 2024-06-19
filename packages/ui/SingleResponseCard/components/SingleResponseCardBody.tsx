@@ -157,7 +157,7 @@ export const SingleResponseCardBody = ({
                       )
                     )}
                   </p>
-                  {renderResponse(question.type, response.data[question.id], question)}
+                  <div dir="auto">{renderResponse(question.type, response.data[question.id], question)}</div>
                 </div>
               ) : (
                 <QuestionSkip

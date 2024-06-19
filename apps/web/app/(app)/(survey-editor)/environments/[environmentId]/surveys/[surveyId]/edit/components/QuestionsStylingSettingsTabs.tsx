@@ -46,7 +46,7 @@ export const QuestionsAudienceTabs = ({
   }, [isStylingTabVisible]);
 
   return (
-    <div className="fixed z-20 flex h-14 w-full items-center justify-center border bg-white md:w-1/2">
+    <div className="fixed z-30 flex h-14 w-full items-center justify-center border bg-white md:w-1/2">
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
         {tabsComputed.map((tab) => (
           <button

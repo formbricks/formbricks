@@ -70,11 +70,8 @@ export const SelectQuestionChoice = ({
   return (
     <div className="flex w-full gap-2" ref={setNodeRef} style={style}>
       {/* drag handle */}
-      <div
-        className={cn("flex items-center", choice.id === "other" && "invisible")}
-        {...listeners}
-        {...attributes}>
-        <GripVerticalIcon className="mt-3 h-4 w-4 cursor-move text-slate-400" />
+      <div className={cn("mt-6", choice.id === "other" && "invisible")} {...listeners} {...attributes}>
+        <GripVerticalIcon className="h-4 w-4 cursor-move text-slate-400" />
       </div>
 
       <div className="flex w-full space-x-2">

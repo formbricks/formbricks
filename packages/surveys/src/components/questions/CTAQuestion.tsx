@@ -72,6 +72,7 @@ export const CTAQuestion = ({
         <div className="flex w-full justify-end">
           {!question.required && (
             <button
+              dir="auto"
               tabIndex={0}
               type="button"
               onClick={() => {

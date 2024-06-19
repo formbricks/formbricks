@@ -1,7 +1,8 @@
+import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 interface HtmlBodyProps {
-  htmlString: string | undefined;
+  htmlString?: string;
   questionId: string;
 }
 
@@ -22,7 +23,9 @@ export const HtmlBody = ({ htmlString, questionId }: HtmlBodyProps) => {
   return (
     <label
       htmlFor={questionId}
-      className="fb-htmlbody break-words" // styles are in global.css
-      dangerouslySetInnerHTML={{ __html: safeHtml }}></label>
+      className={cn("fb-htmlbody break-words")} // styles are in global.css
+      dangerouslySetInnerHTML={{ __html: safeHtml }}
+      dir="auto"
+    />
   );
 };

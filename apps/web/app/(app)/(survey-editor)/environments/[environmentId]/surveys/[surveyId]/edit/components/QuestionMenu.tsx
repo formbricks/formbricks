@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 
-interface QuestionDropdownProps {
+interface QuestionMenuProps {
   questionIdx: number;
   lastQuestion: boolean;
   duplicateQuestion: (questionIdx: number) => void;
@@ -39,7 +39,7 @@ export const QuestionMenu = ({
   question,
   updateQuestion,
   addQuestion,
-}: QuestionDropdownProps) => {
+}: QuestionMenuProps) => {
   const [logicWarningModal, setLogicWarningModal] = useState(false);
   const [changeToType, setChangeToType] = useState(question.type);
 
