@@ -121,6 +121,7 @@ export const ProductSettings = ({
                         onChange={(name) => field.onChange(name)}
                         placeholder="Formbricks Merch Store"
                         className="bg-white"
+                        autoFocus={true}
                       />
                       {error?.message && <FormError className="text-left">{error.message}</FormError>}
                     </div>

@@ -5,6 +5,7 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
+import { updateUser } from "@formbricks/lib/user/service";
 import { Button } from "@formbricks/ui/Button";
 import { ContentLayout } from "./components/ContentLayout";
 
@@ -84,6 +85,17 @@ const Page = async ({ searchParams }) => {
         session.user?.name ?? "",
         invite.creator.email
       );
+      await updateUser(session.user.id, {
+        notificationSettings: {
+          ...session.user.notificationSettings,
+          unsubscribedOrganizationIds: Array.from(
+            new Set([
+              ...(session.user.notificationSettings?.unsubscribedOrganizationIds || []),
+              invite.organizationId,
+            ])
+          ),
+        },
+      });
       return (
         <ContentLayout headline="You’re in 🎉" description="Welcome to the organization.">
           <Button variant="darkCTA" href="/">
