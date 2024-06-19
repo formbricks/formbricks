@@ -1,7 +1,7 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { AlertCircleIcon, CheckIcon, EarthIcon, LinkIcon, MonitorIcon, SmartphoneIcon } from "lucide-react";
+import { AlertCircleIcon, BlocksIcon, CheckIcon, EarthIcon, LinkIcon, MonitorIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -79,8 +79,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
       description: "Run targeted surveys on public websites.",
       comingSoon: false,
       alert: !websiteSetupCompleted,
-      hide: product.config.channel === "app",
-      disabled: product.config.channel === "link",
+      hide: product.config.channel !== "website",
     },
     {
       id: "app",
@@ -89,8 +88,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
       description: "Embed a survey in your web app to collect responses with user identification.",
       comingSoon: false,
       alert: !appSetupCompleted,
-      hide: product.config.channel === "website",
-      disabled: product.config.channel === "link",
+      hide: product.config.channel !== "app",
     },
     {
       id: "link",
@@ -100,26 +98,26 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
       comingSoon: false,
       alert: false,
       hide: false,
-      disabled: false,
     },
     {
-      id: "mobile",
-      name: "Mobile App Survey",
-      icon: SmartphoneIcon,
-      description: "Survey users inside a mobile app (iOS & Android).",
+      id: "headless",
+      name: "Headless Survey",
+      icon: BlocksIcon,
+      description: "Use Formbricks API only and create your own frontend experience.",
       comingSoon: true,
       alert: false,
       hide: false,
-      disabled: false,
     },
   ];
 
-  const getSurveyTypeText = () => {
-    if (product.config.channel === "app") return "Choose between app or link survey.";
-    if (product.config.channel === "website") return "Choose between website or link survey.";
-    if (product.config.channel === "link") return "Choose link survey.";
-    return "Choose between website, app or link survey.";
-  };
+  const promotedFeaturesString =
+    product.config.channel === "website"
+      ? "app"
+      : product.config.channel === "app"
+        ? "website"
+        : product.config.channel === "link"
+          ? "app or website"
+          : "";
 
   return (
     <Collapsible.Root
@@ -142,7 +140,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
           </div>
           <div>
             <p className="font-semibold text-slate-800">Survey Type</p>
-            <p className="mt-1 text-sm text-slate-500">{getSurveyTypeText()}</p>
+            <p className="mt-1 text-sm text-slate-500">Choose where to run the survey.</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -162,7 +160,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
                   htmlFor={option.id}
                   className={cn(
                     "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
-                    option.comingSoon || option.disabled
+                    option.comingSoon
                       ? "border-slate-200 bg-slate-50/50"
                       : option.id === localSurvey.type
                         ? "border-brand-dark cursor-pointer bg-slate-50"
@@ -173,7 +171,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
                     value={option.id}
                     id={option.id}
                     className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
-                    disabled={option.comingSoon || option.disabled}
+                    disabled={option.comingSoon}
                   />
                   <div className=" inline-flex items-center">
                     <option.icon className="mr-4 h-8 w-8 text-slate-500" />
@@ -182,7 +180,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
                         <p
                           className={cn(
                             "font-semibold",
-                            option.comingSoon || option.disabled ? "text-slate-500" : "text-slate-800"
+                            option.comingSoon ? "text-slate-500" : "text-slate-800"
                           )}>
                           {option.name}
                         </p>
@@ -191,7 +189,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
                         )}
                       </div>
                       <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
-                      {option.alert && !option.disabled && (
+                      {option.alert && (
                         <div className="mt-2 flex items-center space-x-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
                           <AlertCircleIcon className="h-5 w-5 text-amber-500" />
                           <div className=" text-amber-800">
@@ -210,22 +208,23 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
                           </div>
                         </div>
                       )}
-                      {option.disabled && (
-                        <div className="mt-2 flex items-center space-x-3 rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2">
-                          <AlertCircleIcon className="h-5 w-5 text-slate-500" />
-                          <div className=" text-slate-500">
-                            <p className="text-xs font-semibold">
-                              {option.name} is not available for this product.
-                            </p>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </Label>
               ))}
           </RadioGroup>
         </div>
+        {promotedFeaturesString && (
+          <div className="mt-2 flex items-center space-x-3 rounded-b-lg border border-slate-200 bg-slate-50/50 px-4 py-2">
+            <AlertCircleIcon className="h-5 w-5 text-slate-500" />
+            <div className=" text-slate-500">
+              <p className="text-xs">
+                You can also use Formbricks to run {promotedFeaturesString} surveys. Create a new product for
+                your {promotedFeaturesString} to use this feature.
+              </p>
+            </div>
+          </div>
+        )}
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
