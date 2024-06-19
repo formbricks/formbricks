@@ -14,7 +14,7 @@ import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
-import { createUser } from "@formbricks/lib/user/service";
+import { createUser, updateUser } from "@formbricks/lib/user/service";
 
 export const POST = async (request: Request) => {
   let { inviteToken, ...user } = await request.json();
@@ -66,6 +66,14 @@ export const POST = async (request: Request) => {
         role: invite.role,
       });
 
+      await updateUser(user.id, {
+        notificationSettings: {
+          alert: {},
+          weeklySummary: {},
+          unsubscribedOrganizationIds: [invite.organizationId],
+        },
+      });
+
       if (!EMAIL_VERIFICATION_DISABLED) {
         await sendVerificationEmail(user);
       }
@@ -92,6 +100,16 @@ export const POST = async (request: Request) => {
       }
       const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "admin";
       await createMembership(organization.id, user.id, { role, accepted: true });
+      const updatedNotificationSettings = {
+        ...user.notificationSettings,
+        unsubscribedOrganizationIds: Array.from(
+          new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
+        ),
+      };
+
+      await updateUser(user.id, {
+        notificationSettings: updatedNotificationSettings,
+      });
     }
     // Without default organization assignment
     else {
@@ -99,6 +117,20 @@ export const POST = async (request: Request) => {
       if (isMultiOrgEnabled) {
         const organization = await createOrganization({ name: user.name + "'s Organization" });
         await createMembership(organization.id, user.id, { role: "owner", accepted: true });
+
+        const updatedNotificationSettings = {
+          ...user.notificationSettings,
+          alert: {
+            ...user.notificationSettings?.alert,
+          },
+          unsubscribedOrganizationIds: Array.from(
+            new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
+          ),
+        };
+
+        await updateUser(user.id, {
+          notificationSettings: updatedNotificationSettings,
+        });
       }
     }
     // send verification email amd return user

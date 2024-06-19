@@ -4,8 +4,8 @@ import { MenuBar } from "@/app/(app)/(survey-editor)/environments/[environmentId
 import { useState } from "react";
 import { customSurvey } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
-import type { TProduct } from "@formbricks/types/product";
-import type { TTemplate } from "@formbricks/types/templates";
+import type { TProduct, TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
+import type { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { PreviewSurvey } from "@formbricks/ui/PreviewSurvey";
 import { SearchBox } from "@formbricks/ui/SearchBox";
@@ -17,13 +17,14 @@ type TemplateContainerWithPreviewProps = {
   product: TProduct;
   environment: TEnvironment;
   user: TUser;
+  prefilledFilters: (TProductConfigChannel | TProductConfigIndustry | TTemplateRole | null)[];
 };
 
 export const TemplateContainerWithPreview = ({
-  environmentId,
   product,
   environment,
   user,
+  prefilledFilters,
 }: TemplateContainerWithPreviewProps) => {
   const initialTemplate = customSurvey;
   const [activeTemplate, setActiveTemplate] = useState<TTemplate>(initialTemplate);
@@ -35,7 +36,7 @@ export const TemplateContainerWithPreview = ({
       <MenuBar />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <div className="flex-1 flex-col overflow-auto bg-slate-50">
-          <div className="ml-6 mt-6 flex flex-col items-center justify-between md:flex-row md:items-start">
+          <div className="mb-3 ml-6 mt-6 flex flex-col items-center justify-between md:flex-row md:items-end">
             <h1 className="text-2xl font-bold text-slate-800">Create a new survey</h1>
             <div className="px-6">
               <SearchBox
@@ -51,7 +52,6 @@ export const TemplateContainerWithPreview = ({
           </div>
 
           <TemplateList
-            environmentId={environmentId}
             environment={environment}
             product={product}
             user={user}
@@ -60,6 +60,7 @@ export const TemplateContainerWithPreview = ({
               setActiveQuestionId(template.preset.questions[0].id);
               setActiveTemplate(template);
             }}
+            prefilledFilters={prefilledFilters}
           />
         </div>
         <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 md:flex md:flex-col">
