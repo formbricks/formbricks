@@ -14,7 +14,7 @@ import { getSurveys, getSyncSurveys } from "@formbricks/lib/survey/service";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsLegacyState, TSurveyWithTriggers } from "@formbricks/types/js";
 import { TPerson } from "@formbricks/types/people";
-import { TProduct } from "@formbricks/types/product";
+import { TProductLegacy } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export const transformLegacySurveys = (surveys: TSurvey[]): TSurveyWithTriggers[] => {
@@ -109,7 +109,7 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
     throw new Error("Product not found");
   }
 
-  const updatedProduct: TProduct = {
+  const updatedProduct: TProductLegacy = {
     ...product,
     brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
     ...(product.styling.highlightBorderColor?.light && {

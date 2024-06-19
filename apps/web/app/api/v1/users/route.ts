@@ -14,7 +14,6 @@ import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
-import { createProduct } from "@formbricks/lib/product/service";
 import { createUser, updateUser } from "@formbricks/lib/user/service";
 
 export const POST = async (request: Request) => {
@@ -54,7 +53,6 @@ export const POST = async (request: Request) => {
     user = {
       ...user,
       ...{ email: user.email.toLowerCase() },
-      onboardingCompleted: isInviteValid,
     };
 
     // create the user
@@ -119,9 +117,6 @@ export const POST = async (request: Request) => {
       if (isMultiOrgEnabled) {
         const organization = await createOrganization({ name: user.name + "'s Organization" });
         await createMembership(organization.id, user.id, { role: "owner", accepted: true });
-        const product = await createProduct(organization.id, {
-          name: "My Product",
-        });
 
         const updatedNotificationSettings = {
           ...user.notificationSettings,
@@ -130,7 +125,6 @@ export const POST = async (request: Request) => {
           },
           weeklySummary: {
             ...user.notificationSettings?.weeklySummary,
-            [product.id]: true,
           },
           unsubscribedOrganizationIds: Array.from(
             new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])

@@ -5,18 +5,13 @@ import { getServerSession } from "next-auth";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization, getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { createMembership, getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { createOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { createShortUrl } from "@formbricks/lib/shortUrl/service";
 import { updateUser } from "@formbricks/lib/user/service";
-import {
-  AuthenticationError,
-  AuthorizationError,
-  OperationNotAllowedError,
-  ResourceNotFoundError,
-} from "@formbricks/types/errors";
+import { AuthenticationError, AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
 export const createShortUrlAction = async (url: string) => {
@@ -76,19 +71,19 @@ export const createOrganizationAction = async (organizationName: string): Promis
   return newOrganization;
 };
 
-export const createProductAction = async (environmentId: string, productName: string) => {
+export const createProductAction = async (
+  organizationId: string,
+  productInput: TProductUpdateInput
+): Promise<TProduct> => {
   const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+  if (!session) throw new AuthorizationError("Not authenticated");
 
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organizationId);
+  if (!membership || membership.role === "viewer") {
+    throw new AuthorizationError("Product creation not allowed");
+  }
 
-  const organization = await getOrganizationByEnvironmentId(environmentId);
-  if (!organization) throw new ResourceNotFoundError("Organization from environment", environmentId);
-
-  const product = await createProduct(organization.id, {
-    name: productName,
-  });
+  const product = await createProduct(organizationId, productInput);
   const updatedNotificationSettings = {
     ...session.user.notificationSettings,
     alert: {
@@ -104,9 +99,5 @@ export const createProductAction = async (environmentId: string, productName: st
     notificationSettings: updatedNotificationSettings,
   });
 
-  // get production environment
-  const productionEnvironment = product.environments.find((environment) => environment.type === "production");
-  if (!productionEnvironment) throw new ResourceNotFoundError("Production environment", environmentId);
-
-  return productionEnvironment;
+  return product;
 };
