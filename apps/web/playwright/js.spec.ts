@@ -11,12 +11,8 @@ test.describe("JS Package Test", async () => {
     await signUpAndLogin(page, name, email, password);
     await finishOnboarding(page);
 
-    await page
-      .getByText("Product ExperienceProduct Market Fit (Superhuman)Measure PMF by assessing how")
-      .isVisible();
-    await page
-      .getByText("Product ExperienceProduct Market Fit (Superhuman)Measure PMF by assessing how")
-      .click();
+    await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).isVisible();
+    await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).click();
 
     await page.getByRole("button", { name: "Use this template" }).isVisible();
     await page.getByRole("button", { name: "Use this template" }).click();
@@ -29,7 +25,6 @@ test.describe("JS Package Test", async () => {
     await expect(page.locator("#howToSendCardOption-website")).toBeVisible();
     await page.locator("#howToSendCardOption-website").click();
     await page.locator("#howToSendCardOption-website").click();
-
     await page.locator("#whenToSendCardTrigger").click();
     await page.getByRole("button", { name: "Add action" }).click();
     await page.getByText("New SessionGets fired when a").click();
