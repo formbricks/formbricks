@@ -3,7 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
@@ -88,6 +88,10 @@ export const GET = async (
       await createSurvey(environmentId, firstSurvey);
       await updateEnvironment(environment.id, { websiteSetupCompleted: true });
     } */
+
+    if (!environment?.websiteSetupCompleted) {
+      await updateEnvironment(environment.id, { websiteSetupCompleted: true });
+    }
 
     const [surveys, actionClasses, product] = await Promise.all([
       getSurveys(environmentId),

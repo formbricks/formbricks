@@ -8,7 +8,7 @@ import { NextRequest, userAgent } from "next/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import {
   getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
@@ -80,6 +80,10 @@ export const GET = async (
       await createSurvey(environmentId, firstSurvey);
       await updateEnvironment(environment.id, { appSetupCompleted: true });
     } */
+
+    if (!environment.appSetupCompleted) {
+      await updateEnvironment(environment.id, { appSetupCompleted: true });
+    }
 
     // check organization subscriptions
     const organization = await getOrganizationByEnvironmentId(environmentId);

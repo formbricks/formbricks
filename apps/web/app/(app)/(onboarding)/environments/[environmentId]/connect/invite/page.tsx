@@ -1,37 +1,30 @@
 import { InviteOrganizationMember } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/InviteOrganizationMember";
-import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { notFound, redirect } from "next/navigation";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 import { Header } from "@formbricks/ui/Header";
 
 interface InvitePageProps {
   params: {
     environmentId: string;
   };
-  searchParams: {
-    channel?: TProductConfigChannel;
-    industry?: TProductConfigIndustry;
-  };
 }
 
-const Page = async ({ params, searchParams }: InvitePageProps) => {
-  const channel = searchParams.channel;
-  const industry = searchParams.industry;
-
-  if (!channel || !industry) return notFound();
-
-  const [organization, product] = await Promise.all([
-    getOrganizationByEnvironmentId(params.environmentId),
-    getProductByEnvironmentId(params.environmentId),
-  ]);
-
+const Page = async ({ params }: InvitePageProps) => {
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user) {
+    return redirect(`/auth/login`);
+  }
+  const organization = await getOrganizationByEnvironmentId(params.environmentId);
   if (!organization) {
     throw new Error("Organization not Found");
   }
 
-  if (!product) {
-    throw new Error("Product not Found");
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
+  if (!membership || (membership.role !== "owner" && membership.role !== "admin")) {
+    return notFound();
   }
 
   return (
@@ -44,13 +37,7 @@ const Page = async ({ params, searchParams }: InvitePageProps) => {
         <p className="text-4xl font-medium text-slate-800"></p>
         <p className="text-sm text-slate-500"></p>
       </div>
-      <InviteOrganizationMember
-        organization={organization}
-        environmentId={params.environmentId}
-        productId={product.id}
-        channel={channel}
-        industry={industry}
-      />
+      <InviteOrganizationMember organization={organization} environmentId={params.environmentId} />
     </div>
   );
 };

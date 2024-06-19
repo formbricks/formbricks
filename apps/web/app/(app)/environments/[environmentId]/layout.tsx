@@ -34,14 +34,6 @@ const EnvLayout = async ({ children, params }) => {
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
   if (!membership) return notFound();
 
-  if (product.config.isOnboardingCompleted !== undefined && !product.config.isOnboardingCompleted) {
-    if (membership.role === "viewer") {
-      return redirect(`/organizations/product-onboarding-pending?productId=${product.id}`);
-    } else {
-      return redirect(`/organizations/${organization.id}/products/new/channel`);
-    }
-  }
-
   return (
     <>
       <ResponseFilterProvider>

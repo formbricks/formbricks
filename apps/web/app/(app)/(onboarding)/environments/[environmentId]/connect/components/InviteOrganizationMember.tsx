@@ -1,17 +1,12 @@
 "use client";
 
-import {
-  finishProductOnboardingAction,
-  inviteOrganizationMemberAction,
-} from "@/app/(app)/organizations/actions";
+import { inviteOrganizationMemberAction } from "@/app/(app)/organizations/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { TOrganization } from "@formbricks/types/organizations";
-import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
@@ -19,9 +14,6 @@ import { Input } from "@formbricks/ui/Input";
 interface InviteOrganizationMemberProps {
   organization: TOrganization;
   environmentId: string;
-  productId: string;
-  channel: TProductConfigChannel;
-  industry: TProductConfigIndustry;
 }
 
 const ZInviteOrganizationMemberDetails = z.object({
@@ -30,14 +22,7 @@ const ZInviteOrganizationMemberDetails = z.object({
 });
 type TInviteOrganizationMemberDetails = z.infer<typeof ZInviteOrganizationMemberDetails>;
 
-export const InviteOrganizationMember = ({
-  organization,
-  environmentId,
-  productId,
-  channel,
-  industry,
-}: InviteOrganizationMemberProps) => {
-  const [isFinishing, setIsFinishing] = useState(false);
+export const InviteOrganizationMember = ({ organization, environmentId }: InviteOrganizationMemberProps) => {
   const router = useRouter();
 
   const form = useForm<TInviteOrganizationMemberDetails>({
@@ -60,14 +45,7 @@ export const InviteOrganizationMember = ({
   };
 
   const finishOnboarding = async () => {
-    setIsFinishing(true);
-    try {
-      await finishProductOnboardingAction(productId, { channel, industry });
-      router.push(`/environments/${environmentId}/surveys?channel=${channel}&industry=${industry}`);
-    } catch (error) {
-      toast.error("An error occurred saving your settings.");
-      console.error(error);
-    }
+    router.push(`/environments/${environmentId}/surveys`);
   };
 
   return (
@@ -121,8 +99,10 @@ export const InviteOrganizationMember = ({
                 id="onboarding-inapp-invite-have-a-look-first"
                 className="font-normal text-slate-400"
                 variant="minimal"
-                onClick={finishOnboarding}
-                loading={isFinishing}>
+                onClick={(e) => {
+                  e.preventDefault();
+                  finishOnboarding();
+                }}>
                 Skip
               </Button>
               <Button

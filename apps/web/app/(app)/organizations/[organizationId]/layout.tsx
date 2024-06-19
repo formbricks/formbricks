@@ -6,7 +6,7 @@ import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { ToasterClient } from "@formbricks/ui/ToasterClient";
 
-const OnboardingLayout = async ({ children, params }) => {
+const ProductOnboardingLayout = async ({ children, params }) => {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);
@@ -28,4 +28,4 @@ const OnboardingLayout = async ({ children, params }) => {
   );
 };
 
-export default OnboardingLayout;
+export default ProductOnboardingLayout;

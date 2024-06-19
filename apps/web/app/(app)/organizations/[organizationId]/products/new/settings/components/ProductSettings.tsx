@@ -1,7 +1,6 @@
 "use client";
 
 import { createProductAction } from "@/app/(app)/environments/[environmentId]/actions";
-import { finishProductOnboardingAction } from "@/app/(app)/organizations/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -49,20 +48,16 @@ export const ProductSettings = ({
       const product = await createProductAction(organizationId, {
         name: data.name,
         brandColor: data.brandColor,
+        config: { channel, industry },
       });
       // get production environment
       const productionEnvironment = product.environments.find(
         (environment) => environment.type === "production"
       );
       if (channel !== "link") {
-        router.push(
-          `/environments/${productionEnvironment?.id}/connect?channel=${channel}&industry=${industry}`
-        );
+        router.push(`/environments/${productionEnvironment?.id}/connect`);
       } else {
-        await finishProductOnboardingAction(product.id, { channel, industry });
-        router.push(
-          `/environments/${productionEnvironment?.id}/surveys?channel=${channel}&industry=${industry}`
-        );
+        router.push(`/environments/${productionEnvironment?.id}/surveys`);
       }
     } catch (error) {
       toast.error("Product creation failed");

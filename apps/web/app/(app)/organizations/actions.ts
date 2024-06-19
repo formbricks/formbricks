@@ -7,10 +7,8 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
 import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
-import { updateProduct } from "@formbricks/lib/product/service";
-import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
+import { AuthenticationError } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
-import { TProductConfig } from "@formbricks/types/product";
 
 export const inviteOrganizationMemberAction = async (
   organizationId: string,
@@ -60,11 +58,4 @@ export const inviteOrganizationMemberAction = async (
   }
 
   return invite;
-};
-
-export const finishProductOnboardingAction = async (productId: string, productConfig: TProductConfig) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  await updateProduct(productId, { config: { ...productConfig, ...{ isOnboardingCompleted: true } } });
 };

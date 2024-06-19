@@ -18,7 +18,6 @@ export type TProductConfigIndustry = z.infer<typeof ZProductConfigIndustry>;
 export const ZProductConfig = z.object({
   channel: ZProductConfigChannel.optional(),
   industry: ZProductConfigIndustry.optional(),
-  isOnboardingCompleted: z.boolean().optional(),
 });
 
 export type TProductConfig = z.infer<typeof ZProductConfig>;

@@ -1,15 +1,14 @@
 "use client";
 
-import { finishProductOnboardingAction } from "@/app/(app)/organizations/actions";
 import Dance from "@/images/onboarding-dance.gif";
 import Lost from "@/images/onboarding-lost.gif";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
+import { TProductConfigChannel } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { OnboardingSetupInstructions } from "./OnboardingSetupInstructions";
 
@@ -18,7 +17,6 @@ interface ConnectWithFormbricksProps {
   webAppUrl: string;
   widgetSetupCompleted: boolean;
   channel: TProductConfigChannel;
-  industry: TProductConfigIndustry;
 }
 
 export const ConnectWithFormbricks = ({
@@ -26,22 +24,15 @@ export const ConnectWithFormbricks = ({
   webAppUrl,
   widgetSetupCompleted,
   channel,
-  industry,
 }: ConnectWithFormbricksProps) => {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+
   const handleFinishOnboarding = async () => {
     if (!widgetSetupCompleted) {
-      router.push(`/environments/${environment.id}/connect/invite?channel=${channel}&industry=${industry}`);
+      router.push(`/environments/${environment.id}/connect/invite`);
       return;
     }
-    try {
-      setIsLoading(true);
-      await finishProductOnboardingAction(environment.productId, { channel, industry });
-      router.push(`/environments/${environment.id}/surveys?channel=${channel}&industry=${industry}`);
-    } catch (error) {
-      setIsLoading(false);
-    }
+    router.push(`/environments/${environment.id}/surveys`);
   };
 
   useEffect(() => {
@@ -91,7 +82,6 @@ export const ConnectWithFormbricks = ({
         id="finishOnboarding"
         variant={widgetSetupCompleted ? "darkCTA" : "minimal"}
         onClick={handleFinishOnboarding}
-        loading={isLoading}
         EndIcon={ArrowRight}>
         {widgetSetupCompleted ? "Finish Onboarding" : "Skip"}
       </Button>

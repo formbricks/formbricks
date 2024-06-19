@@ -2,26 +2,34 @@ import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[en
 import { notFound } from "next/navigation";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getCustomHeadline } from "@formbricks/lib/utils/strings";
-import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 import { Header } from "@formbricks/ui/Header";
 
 interface ConnectPageProps {
   params: {
     environmentId: string;
   };
-  searchParams: {
-    channel?: TProductConfigChannel;
-    industry?: TProductConfigIndustry;
-  };
 }
 
-const Page = async ({ params, searchParams }: ConnectPageProps) => {
-  const channel = searchParams.channel;
-  const industry = searchParams.industry;
+const Page = async ({ params }: ConnectPageProps) => {
   const environment = await getEnvironment(params.environmentId);
 
-  if (!channel || !industry || !environment) return notFound();
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
+
+  const product = await getProductByEnvironmentId(environment.id);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  const channel = product.config.channel;
+  const industry = product.config.industry;
+
+  if (!channel || !industry) {
+    return notFound();
+  }
   const customHeadline = getCustomHeadline(channel, industry);
 
   return (
@@ -41,7 +49,6 @@ const Page = async ({ params, searchParams }: ConnectPageProps) => {
           channel === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted
         }
         channel={channel}
-        industry={industry}
       />
     </div>
   );
