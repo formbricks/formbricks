@@ -63,6 +63,7 @@ const editorConfig = {
 
 export const Editor = (props: TextEditorProps) => {
   const editable = props.editable ?? true;
+
   return (
     <div className="editor cursor-text rounded-md">
       <LexicalComposer initialConfig={{ ...editorConfig, editable }}>

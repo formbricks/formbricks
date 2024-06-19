@@ -144,8 +144,8 @@ export function EditLanguage({ product, environmentId }: EditLanguageProps) {
 
   const AddLanguageButton: React.FC<{ onClick: () => void }> = ({ onClick }) =>
     isEditing && languages.length === product.languages.length ? (
-      <Button onClick={onClick} size="sm" variant="secondary">
-        <PlusIcon /> Add Language
+      <Button onClick={onClick} size="sm" variant="secondary" StartIcon={PlusIcon}>
+        Add language
       </Button>
     ) : null;
 
@@ -236,7 +236,7 @@ const EditSaveButtons: React.FC<{
   isEditing ? (
     <div className="flex gap-4">
       <Button onClick={onSave} size="sm" variant="darkCTA">
-        Save Changes
+        Save changes
       </Button>
       <Button onClick={onCancel} size="sm" variant="minimal">
         Cancel
@@ -244,6 +244,6 @@ const EditSaveButtons: React.FC<{
     </div>
   ) : (
     <Button className="w-fit" onClick={onEdit} size="sm" variant="darkCTA">
-      Edit Languages
+      Edit languages
     </Button>
   );
