@@ -85,7 +85,18 @@ const Page = async ({ searchParams }) => {
         session.user?.name ?? "",
         invite.creator.email
       );
-      await updateUser(session.user.id, { onboardingCompleted: true });
+      await updateUser(session.user.id, {
+        onboardingCompleted: true,
+        notificationSettings: {
+          ...session.user.notificationSettings,
+          unsubscribedOrganizationIds: Array.from(
+            new Set([
+              ...(session.user.notificationSettings?.unsubscribedOrganizationIds || []),
+              invite.organizationId,
+            ])
+          ),
+        },
+      });
       return (
         <ContentLayout headline="You’re in 🎉" description="Welcome to the organization.">
           <Button variant="darkCTA" href="/">

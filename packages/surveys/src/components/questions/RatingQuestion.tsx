@@ -206,8 +206,12 @@ export const RatingQuestion = ({
                 ))}
               </div>
               <div className="text-subheading mt-4 flex justify-between px-1.5 text-xs leading-6">
-                <p className="w-1/2 text-left">{getLocalizedValue(question.lowerLabel, languageCode)}</p>
-                <p className="w-1/2 text-right">{getLocalizedValue(question.upperLabel, languageCode)}</p>
+                <p className="w-1/2 text-left" dir="auto">
+                  {getLocalizedValue(question.lowerLabel, languageCode)}
+                </p>
+                <p className="w-1/2 text-right" dir="auto">
+                  {getLocalizedValue(question.upperLabel, languageCode)}
+                </p>
               </div>
             </fieldset>
           </div>

@@ -29,13 +29,14 @@ export const upgradePlanAction = async (
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organizationId);
-  if (membership?.role !== "owner") {
-    throw new AuthorizationError("Only organization owner can upgrade plan");
+
+  if (membership?.role === "owner" || membership?.role === "admin") {
+    const subscriptionSession = await createSubscription(organizationId, environmentId, priceLookupKey);
+
+    return subscriptionSession;
+  } else {
+    throw new AuthorizationError("Only organization owner or admin can upgrade plan");
   }
-
-  const subscriptionSession = await createSubscription(organizationId, environmentId, priceLookupKey);
-
-  return subscriptionSession;
 };
 
 export const manageSubscriptionAction = async (organizationId: string, environmentId: string) => {
@@ -55,15 +56,16 @@ export const manageSubscriptionAction = async (organizationId: string, environme
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organizationId);
-  if (membership?.role !== "owner") {
-    throw new AuthorizationError("Only organization owner can upgrade plan");
-  }
 
-  const sessionUrl = await createCustomerPortalSession(
-    organization.billing.stripeCustomerId,
-    `${WEBAPP_URL}/environments/${environmentId}/settings/billing`
-  );
-  return sessionUrl;
+  if (membership?.role === "owner" || membership?.role === "admin") {
+    const sessionUrl = await createCustomerPortalSession(
+      organization.billing.stripeCustomerId,
+      `${WEBAPP_URL}/environments/${environmentId}/settings/billing`
+    );
+    return sessionUrl;
+  } else {
+    throw new AuthorizationError("Only organization owner or admin can upgrade plan");
+  }
 };
 
 export const isSubscriptionCancelledAction = async (organizationId: string) => {
@@ -74,9 +76,9 @@ export const isSubscriptionCancelledAction = async (organizationId: string) => {
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organizationId);
-  if (membership?.role !== "owner") {
-    throw new AuthorizationError("Only organization owner can upgrade plan");
+  if (membership?.role === "owner" || membership?.role === "admin") {
+    return await isSubscriptionCancelled(organizationId);
+  } else {
+    throw new AuthorizationError("Only organization owner or admin can upgrade plan");
   }
-
-  return await isSubscriptionCancelled(organizationId);
 };

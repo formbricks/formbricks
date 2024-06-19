@@ -68,6 +68,14 @@ export const POST = async (request: Request) => {
         role: invite.role,
       });
 
+      await updateUser(user.id, {
+        notificationSettings: {
+          alert: {},
+          weeklySummary: {},
+          unsubscribedOrganizationIds: [invite.organizationId],
+        },
+      });
+
       if (!EMAIL_VERIFICATION_DISABLED) {
         await sendVerificationEmail(user);
       }
@@ -94,6 +102,16 @@ export const POST = async (request: Request) => {
       }
       const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "admin";
       await createMembership(organization.id, user.id, { role, accepted: true });
+      const updatedNotificationSettings = {
+        ...user.notificationSettings,
+        unsubscribedOrganizationIds: Array.from(
+          new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
+        ),
+      };
+
+      await updateUser(user.id, {
+        notificationSettings: updatedNotificationSettings,
+      });
     }
     // Without default organization assignment
     else {
@@ -114,6 +132,9 @@ export const POST = async (request: Request) => {
             ...user.notificationSettings?.weeklySummary,
             [product.id]: true,
           },
+          unsubscribedOrganizationIds: Array.from(
+            new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
+          ),
         };
 
         await updateUser(user.id, {
