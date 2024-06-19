@@ -277,61 +277,8 @@ export const getMonthlyActiveOrganizationPeopleCount = (organizationId: string):
       validateInputs([organizationId, ZId]);
 
       try {
-        // Define the start of the month
-        // const now = new Date();
-        // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-        const organization = await getOrganization(organizationId);
-
-        if (!organization) {
-          throw new ResourceNotFoundError("Organization", organizationId);
-        }
-
-        if (!organization.billing.periodStart) {
-          throw new Error("Organization billing period start is not set");
-        }
-
-        // Get all environment IDs for the organization
-        const products = await getProducts(organizationId);
-        const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
-
-        // Get all distinct person IDs that have taken an action in the current billing period
-        const actionPersonIds = await prisma.action.findMany({
-          where: {
-            AND: [
-              { createdAt: { gte: organization.billing.periodStart } },
-              { person: { environmentId: { in: environmentIds } } },
-            ],
-          },
-          select: {
-            personId: true,
-          },
-          distinct: ["personId"],
-        });
-
-        // Get all distinct person IDs that have created a response in the current billing period
-        const responsePersonIds = await prisma.response.findMany({
-          where: {
-            AND: [
-              { createdAt: { gte: organization.billing.periodStart } },
-              { person: { environmentId: { in: environmentIds } } },
-            ],
-          },
-          select: {
-            personId: true,
-          },
-          distinct: ["personId"],
-        });
-
-        const actionPersonIdsSet = new Set(actionPersonIds.map((item) => item.personId));
-        const responsePersonIdsSet = new Set(responsePersonIds.map((item) => item.personId));
-
-        // Combine the two sets to get unique personIds
-        const allPersonIdsSet = new Set([...actionPersonIdsSet, ...responsePersonIdsSet]);
-
-        const distinctPersonCount = allPersonIdsSet.size;
-
-        return distinctPersonCount;
+        // temporary solution until we have a better way to track active users
+        return 0;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);

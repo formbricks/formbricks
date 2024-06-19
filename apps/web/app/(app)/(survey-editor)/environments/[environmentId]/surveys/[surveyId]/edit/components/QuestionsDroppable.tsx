@@ -19,6 +19,7 @@ interface QuestionsDraggableProps {
   internalQuestionIdMap: Record<string, string>;
   attributeClasses: TAttributeClass[];
   addQuestion: (question: any, index?: number) => void;
+  isFormbricksCloud: boolean;
 }
 
 export const QuestionsDroppable = ({
@@ -36,6 +37,7 @@ export const QuestionsDroppable = ({
   internalQuestionIdMap,
   attributeClasses,
   addQuestion,
+  isFormbricksCloud,
 }: QuestionsDraggableProps) => {
   return (
     <div className="group mb-5 grid w-full gap-5">
@@ -59,6 +61,7 @@ export const QuestionsDroppable = ({
             isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
             attributeClasses={attributeClasses}
             addQuestion={addQuestion}
+            isFormbricksCloud={isFormbricksCloud}
           />
         ))}
       </SortableContext>

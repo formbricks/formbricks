@@ -2503,24 +2503,49 @@ export const customSurvey = {
   },
 };
 
-export const getExampleSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
+export const getExampleWebsiteSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
   ...customSurvey.preset,
   questions: customSurvey.preset.questions.map(
     (question) =>
       ({
         ...question,
         type: TSurveyQuestionTypeEnum.CTA,
-        headline: { default: "You did it 🎉" },
+        headline: { default: "Website successfully connected 🎉" },
         html: {
-          default: "You're all set up. Create your own survey to gather exactly the feedback you need :)",
+          default: "You're all set up. Create your own survey for website visitors 👇",
         },
-        buttonLabel: { default: "Create survey" },
+        buttonLabel: { default: "Let's do it!" },
         buttonExternal: true,
         imageUrl: `${webAppUrl}/onboarding/meme.png`,
       }) as TSurveyCTAQuestion
   ),
-  name: "Example survey",
+  name: "Example website survey",
   type: "website" as TSurveyType,
+  autoComplete: 2,
+  triggers: [{ actionClass: trigger }],
+  status: "inProgress" as TSurveyStatus,
+  displayOption: "respondMultiple" as TSurveyDisplayOption,
+  recontactDays: 0,
+});
+
+export const getExampleAppSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
+  ...customSurvey.preset,
+  questions: customSurvey.preset.questions.map(
+    (question) =>
+      ({
+        ...question,
+        type: TSurveyQuestionTypeEnum.CTA,
+        headline: { default: "App successfully connected 🥳" },
+        html: {
+          default: "You're all set up. Create your own survey for your app users 👇",
+        },
+        buttonLabel: { default: "Let's do it!" },
+        buttonExternal: true,
+        imageUrl: `${webAppUrl}/onboarding/meme.png`,
+      }) as TSurveyCTAQuestion
+  ),
+  name: "Example app survey",
+  type: "app" as TSurveyType,
   autoComplete: 2,
   triggers: [{ actionClass: trigger }],
   status: "inProgress" as TSurveyStatus,
