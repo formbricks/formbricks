@@ -123,6 +123,9 @@ export const POST = async (request: Request) => {
           alert: {
             ...user.notificationSettings?.alert,
           },
+          weeklySummary: {
+            ...user.notificationSettings?.weeklySummary,
+          },
           unsubscribedOrganizationIds: Array.from(
             new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
           ),
