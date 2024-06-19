@@ -23,7 +23,7 @@ import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsAppLegacyStateSync, TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
-import { TProduct } from "@formbricks/types/product";
+import { TProductLegacy } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -181,7 +181,7 @@ export const GET = async (
       throw new Error("Product not found");
     }
 
-    const updatedProduct: TProduct = {
+    const updatedProduct: TProductLegacy = {
       ...product,
       brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
       ...(product.styling.highlightBorderColor?.light && {

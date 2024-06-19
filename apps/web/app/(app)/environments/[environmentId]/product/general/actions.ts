@@ -53,7 +53,7 @@ export const updateProductAction = async (
   }
 
   if (membership.role === "developer") {
-    if (!!data.name || !!data.brandColor || !!data.organizationId || !!data.environments) {
+    if (!!data.name || !!data.organizationId || !!data.environments) {
       throw new AuthorizationError("Not authorized");
     }
   }

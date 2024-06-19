@@ -43,11 +43,10 @@ export const ProductSettings = ({
 }: ProductSettingsProps) => {
   const router = useRouter();
 
-  const updateProduct = async (data: TProductUpdateInput) => {
+  const addProduct = async (data: TProductUpdateInput) => {
     try {
       const product = await createProductAction(organizationId, {
-        name: data.name,
-        styling: { allowStyleOverwrite: true, brandColor: { light: data.brandColor || defaultBrandColor } },
+        ...data,
         config: { channel, industry },
       });
       // get production environment
@@ -68,22 +67,22 @@ export const ProductSettings = ({
   const form = useForm<TProductUpdateInput>({
     defaultValues: {
       name: "",
-      brandColor: defaultBrandColor,
+      styling: { allowStyleOverwrite: true, brandColor: { light: defaultBrandColor } },
     },
     resolver: zodResolver(ZProductUpdateInput),
   });
   const logoUrl = form.watch("logo.url");
-  const brandColor = form.watch("brandColor") ?? defaultBrandColor;
+  const brandColor = form.watch("styling.brandColor.light") ?? defaultBrandColor;
   const { isSubmitting } = form.formState;
 
   return (
     <div className="mt-6 flex w-5/6 space-x-10 lg:w-2/3 2xl:w-1/2">
       <div className="flex w-1/2 flex-col space-y-4">
         <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(updateProduct)} className="w-full space-y-4">
+          <form onSubmit={form.handleSubmit(addProduct)} className="w-full space-y-4">
             <FormField
               control={form.control}
-              name="brandColor"
+              name="styling.brandColor.light"
               render={({ field, fieldState: { error } }) => (
                 <FormItem className="w-full space-y-4">
                   <div>

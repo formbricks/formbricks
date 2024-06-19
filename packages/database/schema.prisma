@@ -432,7 +432,7 @@ model Product {
   organizationId       String
   environments         Environment[]
   brandColor           String? // deprecated; use styling.brandColor instead
-  highlightBorderColor String?
+  highlightBorderColor String? // deprecated
   /// @zod.custom(imports.ZProductStyling)
   /// [Styling]
   styling              Json            @default("{\"allowStyleOverwrite\":true}")
