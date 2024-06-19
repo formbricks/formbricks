@@ -16,7 +16,7 @@ interface ThankYouCardProps {
   imageUrl?: string;
   videoUrl?: string;
   isResponseSendingFinished: boolean;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
 }
 
 export const ThankYouCard = ({
@@ -29,7 +29,7 @@ export const ThankYouCard = ({
   imageUrl,
   videoUrl,
   isResponseSendingFinished,
-  isInIframe,
+  autoFocusEnabled,
 }: ThankYouCardProps) => {
   const media = imageUrl || videoUrl ? <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} /> : null;
   const checkmark = (
@@ -65,7 +65,7 @@ export const ThankYouCard = ({
                 <SubmitButton
                   buttonLabel={buttonLabel}
                   isLastQuestion={false}
-                  focus={!isInIframe}
+                  focus={autoFocusEnabled}
                   onClick={() => {
                     if (!buttonLink) return;
                     window.location.replace(buttonLink);

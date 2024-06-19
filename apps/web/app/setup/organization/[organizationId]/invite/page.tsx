@@ -22,7 +22,7 @@ const Page = async ({ params }) => {
     session.user.id
   );
 
-  if (!hasCreateOrUpdateMembersAccess || session.user.onboardingCompleted) return notFound();
+  if (!hasCreateOrUpdateMembersAccess) return notFound();
 
   return <InviteMembers IS_SMTP_CONFIGURED={IS_SMTP_CONFIGURED} organizationId={params.organizationId} />;
 };
