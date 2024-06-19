@@ -22,7 +22,7 @@ interface MultipleChoiceMultiProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -37,7 +37,7 @@ export const MultipleChoiceMultiQuestion = ({
   languageCode,
   ttc,
   setTtc,
-  isInIframe,
+  autoFocusEnabled,
   currentQuestionId,
 }: MultipleChoiceMultiProps) => {
   const [startTime, setStartTime] = useState(performance.now());
@@ -180,7 +180,7 @@ export const MultipleChoiceMultiQuestion = ({
                           document.getElementById(choice.id)?.focus();
                         }
                       }}
-                      autoFocus={idx === 0 && !isInIframe}>
+                      autoFocus={idx === 0 && autoFocusEnabled}>
                       <span className="flex items-center text-sm" dir="auto">
                         <input
                           type="checkbox"
