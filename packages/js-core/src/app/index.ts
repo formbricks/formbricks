@@ -1,5 +1,4 @@
 import { TJsAppConfigInput, TJsTrackProperties } from "@formbricks/types/js";
-
 import { CommandQueue } from "../shared/commandQueue";
 import { ErrorHandler } from "../shared/errors";
 import { Logger } from "../shared/logger";

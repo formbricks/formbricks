@@ -7,7 +7,6 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
@@ -123,8 +122,8 @@ export const NPSQuestion = ({
                 })}
               </div>
               <div className="text-subheading mt-2 flex justify-between px-1.5 text-xs leading-6">
-                <p>{getLocalizedValue(question.lowerLabel, languageCode)}</p>
-                <p>{getLocalizedValue(question.upperLabel, languageCode)}</p>
+                <p dir="auto">{getLocalizedValue(question.lowerLabel, languageCode)}</p>
+                <p dir="auto">{getLocalizedValue(question.upperLabel, languageCode)}</p>
               </div>
             </fieldset>
           </div>

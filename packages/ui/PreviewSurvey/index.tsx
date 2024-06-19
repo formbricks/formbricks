@@ -3,13 +3,11 @@
 import { Variants, motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
-
 import { ClientLogo } from "../ClientLogo";
 import { MediaBackground } from "../MediaBackground";
 import { ResetProgressButton } from "../ResetProgressButton";
@@ -71,7 +69,10 @@ export const PreviewSurvey = ({
 }: PreviewSurveyProps) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
-  const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
+
+  const [appSetupCompleted, setAppSetupCompleted] = useState(false);
+  const [websiteSetupCompleted, setWebsiteSetupCompleted] = useState(false);
+
   const [previewMode, setPreviewMode] = useState("desktop");
   const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
@@ -119,6 +120,8 @@ export const PreviewSurvey = ({
   const placement = surveyPlacement || product.placement;
   const darkOverlay = surveyDarkOverlay ?? product.darkOverlay;
   const clickOutsideClose = surveyClickOutsideClose ?? product.clickOutsideClose;
+
+  const widgetSetupCompleted = appSetupCompleted || websiteSetupCompleted;
 
   const styling: TSurveyStyling | TProductStyling = useMemo(() => {
     // allow style overwrite is disabled from the product
@@ -186,10 +189,9 @@ export const PreviewSurvey = ({
   };
 
   useEffect(() => {
-    if (environment && environment.widgetSetupCompleted) {
-      setWidgetSetupCompleted(true);
-    } else {
-      setWidgetSetupCompleted(false);
+    if (environment) {
+      setAppSetupCompleted(environment.appSetupCompleted);
+      setWebsiteSetupCompleted(environment.websiteSetupCompleted);
     }
   }, [environment]);
 

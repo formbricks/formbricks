@@ -3,7 +3,6 @@ import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/compon
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -41,9 +40,7 @@ const EnvLayout = async ({ children, params }) => {
           environmentId={params.environmentId}
           organizationId={organization.id}
           organizationName={organization.name}
-          inAppSurveyBillingStatus={organization.billing.features.inAppSurvey.status}
-          linkSurveyBillingStatus={organization.billing.features.linkSurvey.status}
-          userTargetingBillingStatus={organization.billing.features.userTargeting.status}
+          organizationBilling={organization.billing}
         />
         <FormbricksClient session={session} />
         <ToasterClient />

@@ -38,9 +38,8 @@ To display the Trial Conversion Survey in your app you want to proceed as follow
 3. Print that 💸
 
 <Note>
-  ## Formbricks Widget running?
-  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide
-  (takes 15mins max.)](/app-surveys/quickstart)
+  ## Formbricks Widget running? 
+  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide (takes 15mins max.)](/app-surveys/quickstart)
 </Note>
 
 ### 1. Create new Trial Conversion Survey
@@ -84,7 +83,7 @@ Pre-segmentation isn't relevant for this survey because you likely want to solve
 
 How you trigger your survey depends on your product. There are two options:
 
-1. **Trigger by pageURL:** Let’s say you have a page under “/trial-cancelled” where you forward users once they cancelled the trial subscription. You can then create an user Action with the type `pageURL` with the following settings:
+1. **Trigger by Page view:** Let’s say you have a page under “/trial-cancelled” where you forward users once they cancelled the trial subscription. You can then create an user Action with the type `Page View` and add select `Limit to specific pages` to add url filters, with the following settings:
 
 <MdxImage
   src={ActionPageurl}
@@ -95,7 +94,7 @@ How you trigger your survey depends on your product. There are two options:
 
 Whenever a user visits this page, the survey will be displayed ✅
 
-2. **Trigger by Button Click:** In a different case, you have a “Cancel Trial button in your app. You can setup a user Action with the according `innerText` like so:
+2. **Trigger by Button Click:** In a different case, you have a “Cancel Trial" button in your app. You can setup a user Action with the according `Inner Text` like so:
 
 <MdxImage
   src={ActionText}
@@ -104,7 +103,7 @@ Whenever a user visits this page, the survey will be displayed ✅
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-Please have a look at our complete [Actions manual](/actions/why) if you have questions.
+Please have a look at our complete [Actions manual](/app-surveys/actions/) if you have questions.
 
 ### 5. Select Action in the “When to ask” card
 

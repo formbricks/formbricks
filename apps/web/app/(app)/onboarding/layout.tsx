@@ -1,7 +1,6 @@
 import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { ToasterClient } from "@formbricks/ui/ToasterClient";
 

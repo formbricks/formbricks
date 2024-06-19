@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-
 import { validateId } from "../lib/validation";
 
 interface UpdateQuestionIdProps {
@@ -63,6 +61,7 @@ export const UpdateQuestionId = ({
           onChange={(e) => {
             setCurrentValue(e.target.value);
           }}
+          dir="auto"
           disabled={localSurvey.status !== "draft" && !question.isDraft}
           className={`h-10 ${isInputInvalid ? "border-red-300 focus:border-red-300" : ""}`}
         />

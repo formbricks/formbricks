@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
-
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 
 interface PopoverPickerProps {

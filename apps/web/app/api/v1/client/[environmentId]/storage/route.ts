@@ -1,9 +1,8 @@
 import { responses } from "@/app/lib/api/response";
 import { NextRequest } from "next/server";
-
+import { getBiggerUploadFileSizePermission } from "@formbricks/ee/lib/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-
 import { uploadPrivateFile } from "./lib/uploadPrivateFile";
 
 interface Context {
@@ -52,9 +51,7 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
     return responses.notFoundResponse("OrganizationByEnvironmentId", environmentId);
   }
 
-  const plan = ["active", "canceled"].includes(organization.billing.features.linkSurvey.status)
-    ? "pro"
-    : "free";
+  const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization);
 
-  return await uploadPrivateFile(fileName, environmentId, fileType, plan);
+  return await uploadPrivateFile(fileName, environmentId, fileType, isBiggerFileUploadAllowed);
 };

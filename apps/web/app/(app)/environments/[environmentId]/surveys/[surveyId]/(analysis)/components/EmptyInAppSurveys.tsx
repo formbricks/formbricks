@@ -1,6 +1,5 @@
 import { Unplug } from "lucide-react";
 import Link from "next/link";
-
 import { TEnvironment } from "@formbricks/types/environment";
 import { Button } from "@formbricks/ui/Button";
 
@@ -23,7 +22,7 @@ export const EmptyAppSurveys = ({ environment, surveyType = "app" }: TEmptyAppSu
           Connect your {surveyType} with Formbricks to run {surveyType} surveys.
         </p>
 
-        <Link className="mt-2" href={`/environments/${environment.id}/product/setup`}>
+        <Link className="mt-2" href={`/environments/${environment.id}/product/${surveyType}-connection`}>
           <Button variant="darkCTA" size="sm" className="flex w-[120px] justify-center">
             Connect
           </Button>

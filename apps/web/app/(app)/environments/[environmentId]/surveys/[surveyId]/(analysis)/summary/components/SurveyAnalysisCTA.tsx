@@ -5,7 +5,6 @@ import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { ShareIcon, SquarePenIcon } from "lucide-react";
 import { useState } from "react";
-
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
@@ -26,13 +25,15 @@ export const SurveyAnalysisCTA = ({
   user: TUser;
 }) => {
   const [showShareSurveyModal, setShowShareSurveyModal] = useState(false);
+  const widgetSetupCompleted =
+    survey.type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
 
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
       {survey.resultShareKey && (
         <Badge text="Results are public" type="warning" size="normal" className="rounded-lg"></Badge>
       )}
-      {(environment.widgetSetupCompleted || survey.type === "link") && survey.status !== "draft" ? (
+      {(widgetSetupCompleted || survey.type === "link") && survey.status !== "draft" ? (
         <SurveyStatusDropdown environment={environment} survey={survey} />
       ) : null}
       {survey.type === "link" && (

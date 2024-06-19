@@ -6,7 +6,6 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "react";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
@@ -73,6 +72,7 @@ export const CTAQuestion = ({
         <div className="flex w-full justify-end">
           {!question.required && (
             <button
+              dir="auto"
               tabIndex={0}
               type="button"
               onClick={() => {

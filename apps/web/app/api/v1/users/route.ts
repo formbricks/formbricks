@@ -1,4 +1,5 @@
 import { prisma } from "@formbricks/database";
+import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/email";
 import {
   DEFAULT_ORGANIZATION_ID,
@@ -8,6 +9,7 @@ import {
   INVITE_DISABLED,
   SIGNUP_ENABLED,
 } from "@formbricks/lib/constants";
+import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
@@ -17,7 +19,12 @@ import { createUser, updateUser } from "@formbricks/lib/user/service";
 
 export const POST = async (request: Request) => {
   let { inviteToken, ...user } = await request.json();
-  if (!EMAIL_AUTH_ENABLED || inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED) {
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  const isFreshInstance = await getIsFreshInstance();
+  if (
+    !isFreshInstance &&
+    (!EMAIL_AUTH_ENABLED || inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED || !isMultiOrgEnabled)
+  ) {
     return Response.json({ error: "Signup disabled" }, { status: 403 });
   }
 
@@ -61,6 +68,14 @@ export const POST = async (request: Request) => {
         role: invite.role,
       });
 
+      await updateUser(user.id, {
+        notificationSettings: {
+          alert: {},
+          weeklySummary: {},
+          unsubscribedOrganizationIds: [invite.organizationId],
+        },
+      });
+
       if (!EMAIL_VERIFICATION_DISABLED) {
         await sendVerificationEmail(user);
       }
@@ -87,27 +102,45 @@ export const POST = async (request: Request) => {
       }
       const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "admin";
       await createMembership(organization.id, user.id, { role, accepted: true });
-    }
-    // Without default organization assignment
-    else {
-      const organization = await createOrganization({ name: user.name + "'s Organization" });
-      await createMembership(organization.id, user.id, { role: "owner", accepted: true });
-      const product = await createProduct(organization.id, { name: "My Product" });
-
       const updatedNotificationSettings = {
         ...user.notificationSettings,
-        alert: {
-          ...user.notificationSettings?.alert,
-        },
-        weeklySummary: {
-          ...user.notificationSettings?.weeklySummary,
-          [product.id]: true,
-        },
+        unsubscribedOrganizationIds: Array.from(
+          new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
+        ),
       };
 
       await updateUser(user.id, {
         notificationSettings: updatedNotificationSettings,
       });
+    }
+    // Without default organization assignment
+    else {
+      const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+      if (isMultiOrgEnabled) {
+        const organization = await createOrganization({ name: user.name + "'s Organization" });
+        await createMembership(organization.id, user.id, { role: "owner", accepted: true });
+        const product = await createProduct(organization.id, {
+          name: "My Product",
+        });
+
+        const updatedNotificationSettings = {
+          ...user.notificationSettings,
+          alert: {
+            ...user.notificationSettings?.alert,
+          },
+          weeklySummary: {
+            ...user.notificationSettings?.weeklySummary,
+            [product.id]: true,
+          },
+          unsubscribedOrganizationIds: Array.from(
+            new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
+          ),
+        };
+
+        await updateUser(user.id, {
+          notificationSettings: updatedNotificationSettings,
+        });
+      }
     }
     // send verification email amd return user
     if (!EMAIL_VERIFICATION_DISABLED) {

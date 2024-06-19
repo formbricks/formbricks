@@ -4,7 +4,6 @@ import { handleFileUpload } from "@/app/lib/fileUpload";
 import Image from "next/image";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
-
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
@@ -12,7 +11,6 @@ import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { FileInput } from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
-
 import { updateProductAction } from "../actions";
 
 interface EditLogoProps {

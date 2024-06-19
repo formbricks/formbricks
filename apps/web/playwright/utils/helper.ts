@@ -54,7 +54,7 @@ export const login = async (page: Page, email: string, password: string): Promis
   await page.getByRole("button", { name: "Login with Email" }).click();
 };
 
-export const finishOnboarding = async (page: Page, deleteExampleSurvey: boolean = true): Promise<void> => {
+export const finishOnboarding = async (page: Page, deleteExampleSurvey: boolean = false): Promise<void> => {
   await page.waitForURL("/onboarding");
   await expect(page).toHaveURL("/onboarding");
 
@@ -83,7 +83,7 @@ export const finishOnboarding = async (page: Page, deleteExampleSurvey: boolean 
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
   if (deleteExampleSurvey) {
-    await page.click("#example-survey-survey-actions");
+    await page.click("#example-website-survey-survey-actions");
     await page.getByRole("menuitem", { name: "Delete" }).click();
     await page.getByRole("button", { name: "Delete" }).click();
     await expect(page.getByText("Survey deleted successfully.")).toBeVisible();

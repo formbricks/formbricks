@@ -6,7 +6,6 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyAddressQuestion } from "@formbricks/types/surveys";
@@ -148,6 +147,7 @@ export const AddressQuestion = ({
             {inputConfig.map(({ name, placeholder, required }, index) => (
               <input
                 ref={index === 0 ? addressTextRef : null}
+                dir="auto"
                 key={index}
                 name={name}
                 autoComplete={name}

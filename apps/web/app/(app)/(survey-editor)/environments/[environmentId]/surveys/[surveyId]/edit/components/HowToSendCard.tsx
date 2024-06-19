@@ -4,7 +4,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircleIcon, CheckIcon, EarthIcon, LinkIcon, MonitorIcon, SmartphoneIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSegment } from "@formbricks/types/segment";
@@ -21,13 +20,13 @@ interface HowToSendCardProps {
 
 export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
   const [open, setOpen] = useState(false);
-  const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
+  const [appSetupCompleted, setAppSetupCompleted] = useState(false);
+  const [websiteSetupCompleted, setWebsiteSetupCompleted] = useState(false);
 
   useEffect(() => {
-    if (environment && environment.widgetSetupCompleted) {
-      setWidgetSetupCompleted(true);
-    } else {
-      setWidgetSetupCompleted(false);
+    if (environment) {
+      setAppSetupCompleted(environment.appSetupCompleted);
+      setWebsiteSetupCompleted(environment.websiteSetupCompleted);
     }
   }, [environment]);
 
@@ -77,7 +76,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       icon: EarthIcon,
       description: "Run targeted surveys on public websites.",
       comingSoon: false,
-      alert: !widgetSetupCompleted,
+      alert: !websiteSetupCompleted,
     },
     {
       id: "app",
@@ -85,7 +84,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       icon: MonitorIcon,
       description: "Embed a survey in your web app to collect responses with user identification.",
       comingSoon: false,
-      alert: !widgetSetupCompleted,
+      alert: !appSetupCompleted,
     },
     {
       id: "link",
@@ -178,16 +177,16 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                         <AlertCircleIcon className="h-5 w-5 text-amber-500" />
                         <div className=" text-amber-800">
                           <p className="text-xs font-semibold">
-                            Your app is not yet connected to Formbricks.
+                            Your {option.id} is not yet connected to Formbricks.
                           </p>
                           <p className="text-xs font-normal">
                             <Link
-                              href={`/environments/${environment.id}/product/setup`}
+                              href={`/environments/${environment.id}/product/${option.id}-connection`}
                               className="underline hover:text-amber-900"
                               target="_blank">
                               Connect Formbricks
                             </Link>{" "}
-                            and launch surveys in your app or website.
+                            and launch surveys in your {option.id}.
                           </p>
                         </div>
                       </div>

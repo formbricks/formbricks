@@ -4,7 +4,6 @@ import {
 } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ActivityItemComponents";
 import { ArrowDownUpIcon } from "lucide-react";
 import { TrashIcon } from "lucide-react";
-
 import { TAction } from "@formbricks/types/actions";
 import { BackIcon } from "@formbricks/ui/icons";
 

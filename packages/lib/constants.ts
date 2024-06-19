@@ -1,9 +1,7 @@
 import "server-only";
-
 import { env } from "./env";
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
-export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 9000 : 1000000;
 
 // URLs
 export const WEBAPP_URL =
@@ -93,9 +91,8 @@ export const S3_ENDPOINT_URL = env.S3_ENDPOINT_URL;
 export const S3_BUCKET_NAME = env.S3_BUCKET_NAME;
 export const UPLOADS_DIR = env.UPLOADS_DIR || "./uploads";
 export const MAX_SIZES = {
-  public: 1024 * 1024 * 10, // 10MB
-  free: 1024 * 1024 * 10, // 10MB
-  pro: 1024 * 1024 * 1024, // 1GB
+  standard: 1024 * 1024 * 10, // 10MB
+  big: 1024 * 1024 * 1024, // 1GB
 } as const;
 
 // Function to check if the necessary S3 configuration is set up
@@ -105,10 +102,6 @@ export const isS3Configured = () => {
   // so we do not need to explicitly check for AWS credentials like access key, secret key, or region.
   return !!S3_BUCKET_NAME;
 };
-
-// Pricing
-export const PRICING_USERTARGETING_FREE_MTU = 2500;
-export const PRICING_APPSURVEYS_FREE_RESPONSES = 250;
 
 // Colors for Survey Bg
 export const SURVEY_BG_COLORS = [
@@ -179,3 +172,42 @@ export const STRIPE_API_VERSION = "2024-04-10";
 
 // Maximum number of attribute classes allowed:
 export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150 as const;
+
+// Billing constants
+
+export enum PRODUCT_FEATURE_KEYS {
+  FREE = "free",
+  STARTUP = "startup",
+  SCALE = "scale",
+  ENTERPRISE = "enterprise",
+}
+
+export enum STRIPE_PRODUCT_NAMES {
+  STARTUP = "Formbricks Startup",
+  SCALE = "Formbricks Scale",
+  ENTERPRISE = "Formbricks Enterprise",
+}
+
+export enum STRIPE_PRICE_LOOKUP_KEYS {
+  STARTUP_MONTHLY = "formbricks_startup_monthly",
+  STARTUP_YEARLY = "formbricks_startup_yearly",
+  SCALE_MONTHLY = "formbricks_scale_monthly",
+  SCALE_YEARLY = "formbricks_scale_yearly",
+  UNLIMITED_99 = "formbricks_unlimited_99",
+  UNLIMITED_199 = "formbricks_unlimited_199",
+}
+
+export const BILLING_LIMITS = {
+  FREE: {
+    RESPONSES: 500,
+    MIU: 1000,
+  },
+  STARTUP: {
+    RESPONSES: 2000,
+    MIU: 2500,
+  },
+  SCALE: {
+    RESPONSES: 5000,
+    MIU: 20000,
+  },
+} as const;

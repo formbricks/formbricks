@@ -1,15 +1,13 @@
 import { LanguagesIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
-
+import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
-
-import { getLanguageLabel } from "../../../ee/multi-language/lib/iso-languages";
 import { PersonAvatar } from "../../Avatars";
 import { SurveyStatusIndicator } from "../../SurveyStatusIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
@@ -151,9 +149,9 @@ export const SingleResponseCardHeader = ({
 
           {pageType === "people" && (
             <div className="flex items-center justify-center space-x-2 rounded-full bg-slate-100 p-1 px-2 text-sm text-slate-600">
-              {(survey.type === "link" || environment.widgetSetupCompleted) && (
-                <SurveyStatusIndicator status={survey.status} />
-              )}
+              {(survey.type === "link" ||
+                environment.appSetupCompleted ||
+                environment.websiteSetupCompleted) && <SurveyStatusIndicator status={survey.status} />}
               <Link
                 className="hover:underline"
                 href={`/environments/${environmentId}/surveys/${survey.id}/summary`}>

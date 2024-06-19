@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { useState } from "react";
-
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyQuestionSummaryMultipleChoice, TSurveyType } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
-
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -84,7 +82,7 @@ export const MultipleChoiceSummary = ({
                   .filter((otherValue) => otherValue.value !== "")
                   .slice(0, visibleOtherResponses)
                   .map((otherValue, idx) => (
-                    <div key={idx}>
+                    <div key={idx} dir="auto">
                       {surveyType === "link" && (
                         <div
                           key={idx}

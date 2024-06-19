@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
-
-import { StripePriceLookupKeys } from "@formbricks/ee/billing/lib/constants";
+import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-
 import { upgradePlanAction } from "../actions";
 
 const Page = async ({ params }) => {
@@ -11,11 +9,12 @@ const Page = async ({ params }) => {
     throw new Error("Organization not found");
   }
 
-  const { status, newPlan, url } = await upgradePlanAction(organization.id, params.environmentId, [
-    StripePriceLookupKeys.inAppSurveyUnlimitedPlan90,
-    StripePriceLookupKeys.linkSurveyUnlimitedPlan19,
-    StripePriceLookupKeys.userTargetingUnlimitedPlan90,
-  ]);
+  const { status, newPlan, url } = await upgradePlanAction(
+    organization.id,
+    params.environmentId,
+    STRIPE_PRICE_LOOKUP_KEYS.UNLIMITED_99
+  );
+
   if (status != 200) {
     throw new Error("Something went wrong");
   }

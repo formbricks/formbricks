@@ -7,7 +7,6 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TI18nString, TSurveyMatrixQuestion } from "@formbricks/types/surveys";
@@ -85,7 +84,7 @@ export const MatrixQuestion = ({
   const columnsHeaders = useMemo(
     () =>
       question.columns.map((column, index) => (
-        <th key={index} className="text-heading max-w-40 break-words px-4 py-2 font-normal">
+        <th key={index} className="text-heading max-w-40 break-words px-4 py-2 font-normal" dir="auto">
           {getLocalizedValue(column, languageCode)}
         </th>
       )),
@@ -118,7 +117,7 @@ export const MatrixQuestion = ({
                 {question.rows.map((row, rowIndex) => (
                   // Table rows
                   <tr className={`${rowIndex % 2 === 0 ? "bg-input-bg" : ""}`}>
-                    <td className="text-heading rounded-l-custom max-w-40 break-words px-4 py-2">
+                    <td className="text-heading rounded-l-custom max-w-40 break-words px-4 py-2" dir="auto">
                       {getLocalizedValue(row, languageCode)}
                     </td>
                     {question.columns.map((column, columnIndex) => (
@@ -140,10 +139,12 @@ export const MatrixQuestion = ({
                               getLocalizedValue(row, languageCode)
                             );
                           }
-                        }}>
+                        }}
+                        dir="auto">
                         <div className="flex items-center justify-center p-2">
                           {/* radio input  */}
                           <input
+                            dir="auto"
                             type="radio"
                             tabIndex={-1}
                             id={`${row}-${column}`}

@@ -1,7 +1,6 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { canUserAccessAttributeClass } from "@formbricks/lib/attributeClass/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getSegmentsByAttributeClassName } from "@formbricks/lib/segment/service";
