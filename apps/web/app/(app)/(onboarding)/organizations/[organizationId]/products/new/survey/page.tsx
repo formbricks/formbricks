@@ -1,4 +1,4 @@
-import { OnboardingSurvey } from "@/app/(app)/organizations/[organizationId]/products/new/survey/components/OnboardingSurvey";
+import { OnboardingSurvey } from "@/app/(app)/(onboarding)/organizations/[organizationId]/products/new/survey/components/OnboardingSurvey";
 import { notFound } from "next/navigation";
 import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 

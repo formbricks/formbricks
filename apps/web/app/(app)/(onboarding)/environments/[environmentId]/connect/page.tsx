@@ -1,9 +1,11 @@
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
+import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
+import { XIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getCustomHeadline } from "@formbricks/lib/utils/strings";
+import { Button } from "@formbricks/ui/Button";
 import { Header } from "@formbricks/ui/Header";
 
 interface ConnectPageProps {
@@ -50,6 +52,12 @@ const Page = async ({ params }: ConnectPageProps) => {
         }
         channel={channel}
       />
+      <Button
+        className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
+        variant="minimal"
+        href={`/environments/${environment.id}/`}>
+        <XIcon className="h-7 w-7" strokeWidth={1.5} />
+      </Button>
     </div>
   );
 };

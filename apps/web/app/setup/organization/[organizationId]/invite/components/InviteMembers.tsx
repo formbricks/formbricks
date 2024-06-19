@@ -48,11 +48,11 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
       }
     }
 
-    router.push("/onboarding");
+    router.push("/");
   };
 
   const handleSkip = () => {
-    router.push("/onboarding");
+    router.push("/");
   };
 
   return (

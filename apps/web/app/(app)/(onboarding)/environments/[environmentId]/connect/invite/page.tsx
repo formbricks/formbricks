@@ -1,9 +1,11 @@
 import { InviteOrganizationMember } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/InviteOrganizationMember";
+import { XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { Button } from "@formbricks/ui/Button";
 import { Header } from "@formbricks/ui/Header";
 
 interface InvitePageProps {
@@ -38,6 +40,12 @@ const Page = async ({ params }: InvitePageProps) => {
         <p className="text-sm text-slate-500"></p>
       </div>
       <InviteOrganizationMember organization={organization} environmentId={params.environmentId} />
+      <Button
+        className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
+        variant="minimal"
+        href={`/environments/${params.environmentId}/`}>
+        <XIcon className="h-7 w-7" strokeWidth={1.5} />
+      </Button>
     </div>
   );
 };

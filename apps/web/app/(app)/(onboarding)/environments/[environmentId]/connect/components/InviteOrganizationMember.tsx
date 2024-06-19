@@ -1,6 +1,6 @@
 "use client";
 
-import { inviteOrganizationMemberAction } from "@/app/(app)/organizations/actions";
+import { inviteOrganizationMemberAction } from "@/app/(app)/(onboarding)/organizations/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { FormProvider, useForm } from "react-hook-form";
