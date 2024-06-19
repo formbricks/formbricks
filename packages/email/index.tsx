@@ -61,8 +61,6 @@ const getEmailSubject = (productName: string): string => {
   return `${productName} User Insights - Last Week by Formbricks`;
 };
 
-const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
 export const sendEmail = async (emailData: SendEmailDataProps) => {
   if (IS_SMTP_CONFIGURED) {
     const transporter = nodemailer.createTransport({
@@ -77,7 +75,7 @@ export const sendEmail = async (emailData: SendEmailDataProps) => {
       debug: DEBUG,
     } as SMTPTransport.Options);
     const emailDefaults = {
-      from: `Formbricks <${MAIL_FROM || "noreply@formbricks.com"}>`,
+      from: `Formbricks <${MAIL_FROM ?? "noreply@formbricks.com"}>`,
     };
     await transporter.sendMail({ ...emailDefaults, ...emailData });
   } else {
@@ -170,12 +168,16 @@ export const sendResponseFinishedEmail = async (
   const personEmail = response.personAttributes?.email;
   const organization = await getOrganizationByEnvironmentId(environmentId);
 
+  if (!organization) {
+    throw new Error("Organization not found");
+  }
+
   await sendEmail({
     to: email,
     subject: personEmail
       ? `${personEmail} just completed your ${survey.name} survey ✅`
       : `A response for ${survey.name} was completed ✅`,
-    replyTo: personEmail?.toString() || MAIL_FROM,
+    replyTo: personEmail?.toString() ?? MAIL_FROM,
     html: render(
       EmailTemplate({
         content: ResponseFinishedEmail({
@@ -227,12 +229,14 @@ export const sendWeeklySummaryNotificationEmail = async (
   email: string,
   notificationData: TWeeklySummaryNotificationResponse
 ) => {
-  const startDate = `${notificationData.lastWeekDate.getDate()} ${
-    monthNames[notificationData.lastWeekDate.getMonth()]
-  }`;
-  const endDate = `${notificationData.currentDate.getDate()} ${
-    monthNames[notificationData.currentDate.getMonth()]
-  }`;
+  const startDate = `${notificationData.lastWeekDate.getDate().toString()} ${notificationData.lastWeekDate.toLocaleString(
+    "default",
+    { month: "short" }
+  )}`;
+  const endDate = `${notificationData.currentDate.getDate().toString()} ${notificationData.currentDate.toLocaleString(
+    "default",
+    { month: "short" }
+  )}`;
   const startYear = notificationData.lastWeekDate.getFullYear();
   const endYear = notificationData.currentDate.getFullYear();
   await sendEmail({
@@ -256,12 +260,14 @@ export const sendNoLiveSurveyNotificationEmail = async (
   email: string,
   notificationData: TWeeklySummaryNotificationResponse
 ) => {
-  const startDate = `${notificationData.lastWeekDate.getDate()} ${
-    monthNames[notificationData.lastWeekDate.getMonth()]
-  }`;
-  const endDate = `${notificationData.currentDate.getDate()} ${
-    monthNames[notificationData.currentDate.getMonth()]
-  }`;
+  const startDate = `${notificationData.lastWeekDate.getDate().toString()} ${notificationData.lastWeekDate.toLocaleString(
+    "default",
+    { month: "short" }
+  )}`;
+  const endDate = `${notificationData.currentDate.getDate().toString()} ${notificationData.currentDate.toLocaleString(
+    "default",
+    { month: "short" }
+  )}`;
   const startYear = notificationData.lastWeekDate.getFullYear();
   const endYear = notificationData.currentDate.getFullYear();
   await sendEmail({
