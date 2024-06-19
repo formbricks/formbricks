@@ -175,18 +175,10 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      // if (
-      //   !isSurveyValid(
-      //     localSurvey,
-      //     faultyQuestions,
-      //     setInvalidQuestions,
-      //     selectedLanguageCode,
-      //     setSelectedLanguageCode
-      //   )
-      // ) {
-      //   setIsSurveySaving(false);
-      //   return;
-      // }
+      if (!isSurveyValid(localSurvey, selectedLanguageCode)) {
+        setIsSurveySaving(false);
+        return;
+      }
 
       localSurvey.questions = localSurvey.questions.map((question) => {
         const { isDraft, ...rest } = question;
@@ -216,15 +208,7 @@ export const SurveyMenuBar = ({
   const handleSurveyPublish = async () => {
     setIsSurveyPublishing(true);
     try {
-      if (
-        !isSurveyValid(
-          localSurvey,
-          faultyQuestions,
-          setInvalidQuestions,
-          selectedLanguageCode,
-          setSelectedLanguageCode
-        )
-      ) {
+      if (!isSurveyValid(localSurvey, selectedLanguageCode)) {
         setIsSurveyPublishing(false);
         return;
       }
