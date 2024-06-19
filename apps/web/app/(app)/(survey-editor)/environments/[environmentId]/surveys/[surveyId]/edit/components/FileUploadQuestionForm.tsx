@@ -201,9 +201,7 @@ export const FileUploadQuestionForm = ({
 
                   if (isFormbricksCloud && parsedValue > maxSizeInMBLimit) {
                     toast.error(`Max file size limit is ${maxSizeInMBLimit} MB`);
-                    if (isFormbricksCloud) {
-                      setMaxSizeError(true);
-                    }
+                    setMaxSizeError(true);
                     updateQuestion(questionIdx, { maxSizeInMB: maxSizeInMBLimit });
                     return;
                   }

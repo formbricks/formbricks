@@ -60,10 +60,10 @@ export const FileInput = ({
         onFileUpload(file, { allowedFileExtensions, surveyId })
       );
 
-      const uploadedfiles = await Promise.allSettled(uploadPromises);
+      const uploadedFiles = await Promise.allSettled(uploadPromises);
 
-      const rejectedFiles = uploadedfiles.filter(isRejected);
-      const uploadedFilesUrl = uploadedfiles.filter(isFulfilled).map((url) => url.value);
+      const rejectedFiles = uploadedFiles.filter(isRejected);
+      const uploadedFilesUrl = uploadedFiles.filter(isFulfilled).map((url) => url.value);
 
       setSelectedFiles((prevFiles) => [...prevFiles, ...filteredFiles]);
       onUploadCallback(fileUrls ? [...fileUrls, ...uploadedFilesUrl] : uploadedFilesUrl);
