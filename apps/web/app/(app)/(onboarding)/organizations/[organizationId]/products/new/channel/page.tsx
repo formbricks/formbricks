@@ -1,4 +1,4 @@
-import { OnboardingOptionsContainer } from "@/app/(app)/organizations/components/OnboardingOptionsContainer";
+import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
 import { CircleUserRoundIcon, EarthIcon, SendHorizonalIcon, XIcon } from "lucide-react";
 import { getProducts } from "@formbricks/lib/product/service";
 import { Button } from "@formbricks/ui/Button";

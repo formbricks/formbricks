@@ -1,4 +1,4 @@
-import { OnboardingOptionsContainer } from "@/app/(app)/organizations/components/OnboardingOptionsContainer";
+import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
 import { HeartIcon, MonitorIcon, ShoppingCart, XIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";

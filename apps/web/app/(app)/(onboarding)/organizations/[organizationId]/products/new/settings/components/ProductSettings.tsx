@@ -1,5 +1,6 @@
 "use client";
 
+import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { createProductAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
@@ -7,7 +8,6 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
-import { getCustomHeadline } from "@formbricks/lib/utils/strings";
 import {
   TProductConfigChannel,
   TProductConfigIndustry,

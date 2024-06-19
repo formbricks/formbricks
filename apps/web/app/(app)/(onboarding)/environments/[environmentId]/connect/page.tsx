@@ -1,10 +1,10 @@
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
+import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { XIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getCustomHeadline } from "@formbricks/lib/utils/strings";
 import { Button } from "@formbricks/ui/Button";
 import { Header } from "@formbricks/ui/Header";
 

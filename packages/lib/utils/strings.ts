@@ -1,5 +1,3 @@
-import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
-
 export const capitalizeFirstLetter = (string: string | null = "") => {
   if (string === null) {
     return "";
@@ -25,14 +23,4 @@ export const isCapitalized = (str: string) => str.charAt(0) === str.charAt(0).to
 
 export const startsWithVowel = (str: string): boolean => {
   return /^[aeiouAEIOU]/.test(str);
-};
-
-export const getCustomHeadline = (channel: TProductConfigChannel, industry: TProductConfigIndustry) => {
-  const combinations = {
-    "website+eCommerce": "web shop",
-    "website+saas": "landing page",
-    "app+eCommerce": "shopping app",
-    "app+saas": "SaaS app",
-  };
-  return combinations[`${channel}+${industry}`] || "app";
 };

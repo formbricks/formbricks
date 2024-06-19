@@ -1,9 +1,9 @@
-import { ProductSettings } from "@/app/(app)/organizations/[organizationId]/products/new/settings/components/ProductSettings";
+import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
+import { ProductSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/products/new/settings/components/ProductSettings";
 import { XIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 import { getProducts } from "@formbricks/lib/product/service";
-import { getCustomHeadline } from "@formbricks/lib/utils/strings";
 import { startsWithVowel } from "@formbricks/lib/utils/strings";
 import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
