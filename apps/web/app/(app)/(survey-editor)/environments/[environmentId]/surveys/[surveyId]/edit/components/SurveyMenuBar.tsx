@@ -7,10 +7,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { createSegmentAction } from "@formbricks/ee/advanced-targeting/lib/actions";
+import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyEditorTabs, ZSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyEditorTabs, TSurveyQuestion, ZSurvey } from "@formbricks/types/surveys/types";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -146,6 +147,31 @@ export const SurveyMenuBar = ({
     const localSurveyValidation = ZSurvey.safeParse(localSurvey);
     if (!localSurveyValidation.success) {
       console.log(localSurveyValidation.error.errors);
+
+      const currentError = localSurveyValidation.error.errors[0];
+
+      if (currentError.path[0] === "questions") {
+        const questionIdx = currentError.path[1];
+        const question: TSurveyQuestion = localSurvey.questions[questionIdx];
+        if (question) {
+          setInvalidQuestions([question.id]);
+        }
+      }
+
+      if (currentError.code === "custom") {
+        const params = currentError.params ?? ({} as { invalidLanguageCodes: string[] });
+        if (params.invalidLanguageCodes && params.invalidLanguageCodes.length) {
+          const invalidLanguageLabels = params.invalidLanguageCodes.map(
+            (invalidLanguage: string) => getLanguageLabel(invalidLanguage) ?? invalidLanguage
+          );
+
+          toast.error(`${currentError.message} ${invalidLanguageLabels.join(", ")}`);
+        } else {
+          toast.error(currentError.message);
+        }
+      } else {
+        toast.error(currentError.message);
+      }
     }
 
     try {

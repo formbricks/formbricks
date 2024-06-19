@@ -1,12 +1,5 @@
-import {
-  TI18nString,
-  TSurveyLanguage,
-  TSurveyMatrixQuestion,
-  TSurveyMultipleChoiceQuestion,
-  TSurveyQuestion,
-  TSurveyThankYouCard,
-  TSurveyWelcomeCard,
-} from "./types";
+import { z } from "zod";
+import { TI18nString, TSurveyLanguage, TSurveyQuestion } from "./types";
 
 export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string[] => {
   if (!surveyLanguages) return [];
@@ -15,33 +8,65 @@ export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string
   );
 };
 
-export const isLabelValidForAllLanguages = (label: TI18nString, surveyLanguages: TSurveyLanguage[]) => {
+export const validateLabelForAllLanguages = (
+  label: TI18nString,
+  surveyLanguages: TSurveyLanguage[]
+): string[] => {
   const enabledLanguages = surveyLanguages.filter((lang) => lang.enabled);
   const languageCodes = extractLanguageCodes(enabledLanguages);
 
   const languages = !languageCodes.length ? ["default"] : languageCodes;
-  return languages.every((language) => label && label[language] && label[language].trim() !== "");
+  const invalidLanguageCodes = languages.filter(
+    (language) => !label || !label[language] || label[language].trim() === ""
+  );
+
+  return invalidLanguageCodes.map((invalidLanguageCode) => {
+    if (invalidLanguageCode === "default") {
+      return surveyLanguages.find((lang) => lang.default)?.language.code || "default";
+    }
+
+    return invalidLanguageCode;
+  });
 };
 
-export const isCardValid = (
-  card: TSurveyWelcomeCard | TSurveyThankYouCard,
-  cardType: "start" | "end",
-  surveyLanguages: TSurveyLanguage[]
-): boolean => {
-  const defaultLanguageCode = "default";
-  const isContentValid = (content: Record<string, string> | undefined) => {
-    return (
-      !content || content[defaultLanguageCode] === "" || isLabelValidForAllLanguages(content, surveyLanguages)
-    );
-  };
+export const validateQuestionLabels = (
+  field: string,
+  fieldLabel: TI18nString,
+  languages: TSurveyLanguage[],
+  questionIndex: number
+): z.IssueData | null => {
+  const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
+  if (invalidLanguageCodes.length) {
+    const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
+    return {
+      code: z.ZodIssueCode.custom,
+      message: `${field} in question ${questionIndex + 1} is ${isDefaultOnly ? "invalid" : "not valid for the following languages: "}`,
+      path: ["questions", questionIndex, field],
+      params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+    };
+  }
 
-  return (
-    (card.headline ? isLabelValidForAllLanguages(card.headline, surveyLanguages) : true) &&
-    isContentValid(
-      cardType === "start" ? (card as TSurveyWelcomeCard).html : (card as TSurveyThankYouCard).subheader
-    ) &&
-    isContentValid(card.buttonLabel)
-  );
+  return null;
+};
+
+export const validateCardFieldsForAllLanguages = (
+  field: string,
+  fieldLabel: TI18nString,
+  languages: TSurveyLanguage[],
+  cardType: "welcome" | "thankYou"
+): z.IssueData | null => {
+  const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
+  if (invalidLanguageCodes.length) {
+    const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
+    return {
+      code: z.ZodIssueCode.custom,
+      message: `${field} in ${cardType === "welcome" ? "Welcome" : "Thank You"} Card is ${isDefaultOnly ? "invalid" : "not valid for the following languages: "}`,
+      path: [cardType === "welcome" ? "welcomeCard" : "thankYouCard", field],
+      params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+    };
+  }
+
+  return null;
 };
 
 export const hasDuplicates = (labels: TI18nString[]) => {
@@ -57,20 +82,6 @@ export const hasDuplicates = (labels: TI18nString[]) => {
     .flat();
   const uniqueLabels = new Set(flattenedLabels);
   return uniqueLabels.size !== flattenedLabels.length;
-};
-
-// Validation logic for multiple choice questions
-export const handleI18nCheckForMultipleChoice = (
-  question: TSurveyMultipleChoiceQuestion,
-  languages: TSurveyLanguage[]
-): boolean => question.choices.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
-
-export const handleI18nCheckForMatrixLabels = (
-  question: TSurveyMatrixQuestion,
-  languages: TSurveyLanguage[]
-): boolean => {
-  const rowsAndColumns = [...question.rows, ...question.columns];
-  return rowsAndColumns.every((label) => isLabelValidForAllLanguages(label, languages));
 };
 
 export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): string[] => {
