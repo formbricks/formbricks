@@ -17,6 +17,7 @@ import {
   OperationNotAllowedError,
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
+import { TUserNotificationSettings } from "@formbricks/types/user";
 
 export const createShortUrlAction = async (url: string) => {
   const session = await getServerSession(authOptions);
@@ -54,7 +55,7 @@ export const createOrganizationAction = async (organizationName: string): Promis
     name: "My Product",
   });
 
-  const updatedNotificationSettings = {
+  const updatedNotificationSettings: TUserNotificationSettings = {
     ...session.user.notificationSettings,
     alert: {
       ...session.user.notificationSettings?.alert,
@@ -63,6 +64,9 @@ export const createOrganizationAction = async (organizationName: string): Promis
       ...session.user.notificationSettings?.weeklySummary,
       [product.id]: true,
     },
+    unsubscribedOrganizationIds: Array.from(
+      new Set([...(session.user.notificationSettings?.unsubscribedOrganizationIds || []), newOrganization.id])
+    ),
   };
 
   await updateUser(session.user.id, {
