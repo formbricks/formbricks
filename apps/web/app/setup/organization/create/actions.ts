@@ -7,8 +7,6 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { gethasNoOrganizations } from "@formbricks/lib/instance/service";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization } from "@formbricks/lib/organization/service";
-import { createProduct } from "@formbricks/lib/product/service";
-import { updateUser } from "@formbricks/lib/user/service";
 import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
 
 export const createOrganizationAction = async (organizationName: string): Promise<Organization> => {
