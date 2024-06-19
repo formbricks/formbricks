@@ -31,24 +31,5 @@ export const createOrganizationAction = async (organizationName: string): Promis
     accepted: true,
   });
 
-  const product = await createProduct(newOrganization.id, {
-    name: "My Product",
-  });
-
-  const updatedNotificationSettings = {
-    ...session.user.notificationSettings,
-    alert: {
-      ...session.user.notificationSettings?.alert,
-    },
-    weeklySummary: {
-      ...session.user.notificationSettings?.weeklySummary,
-      [product.id]: true,
-    },
-  };
-
-  await updateUser(session.user.id, {
-    notificationSettings: updatedNotificationSettings,
-  });
-
   return newOrganization;
 };
