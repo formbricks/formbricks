@@ -39,8 +39,9 @@ export const Survey = ({
   clickOutside,
   shouldResetQuestionId,
   fullSizeCards = false,
+  autoFocus,
 }: SurveyBaseProps) => {
-  const isInIframe = window.self !== window.top;
+  const autoFocusEnabled = autoFocus !== undefined ? autoFocus : window.self === window.top;
 
   const [questionId, setQuestionId] = useState(() => {
     if (startAtQuestionId) {
@@ -260,7 +261,7 @@ export const Survey = ({
             survey={survey}
             languageCode={selectedLanguage}
             responseCount={responseCount}
-            isInIframe={isInIframe}
+            autoFocusEnabled={autoFocusEnabled}
             replaceRecallInfo={replaceRecallInfo}
           />
         );
@@ -282,7 +283,7 @@ export const Survey = ({
             videoUrl={survey.thankYouCard.videoUrl}
             redirectUrl={survey.redirectUrl}
             isRedirectDisabled={isRedirectDisabled}
-            isInIframe={isInIframe}
+            autoFocusEnabled={autoFocusEnabled}
           />
         );
       } else {
@@ -304,7 +305,7 @@ export const Survey = ({
               prefilledQuestionValue={getQuestionPrefillData(question.id, offset)}
               isLastQuestion={question.id === survey.questions[survey.questions.length - 1].id}
               languageCode={selectedLanguage}
-              isInIframe={isInIframe}
+              autoFocusEnabled={autoFocusEnabled}
               currentQuestionId={questionId}
             />
           )
