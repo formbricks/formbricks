@@ -30,6 +30,7 @@ export const SubmitButton = ({
 
   return (
     <button
+      dir="auto"
       ref={buttonRef}
       type={type}
       tabIndex={tabIndex}
