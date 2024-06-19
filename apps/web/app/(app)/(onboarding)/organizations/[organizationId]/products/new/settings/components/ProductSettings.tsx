@@ -47,7 +47,7 @@ export const ProductSettings = ({
     try {
       const product = await createProductAction(organizationId, {
         name: data.name,
-        brandColor: data.brandColor,
+        styling: { allowStyleOverwrite: true, brandColor: { light: data.brandColor || defaultBrandColor } },
         config: { channel, industry },
       });
       // get production environment
