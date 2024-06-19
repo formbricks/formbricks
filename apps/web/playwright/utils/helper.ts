@@ -57,7 +57,7 @@ export const login = async (page: Page, email: string, password: string): Promis
 export const finishOnboarding = async (page: Page): Promise<void> => {
   await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/channel/);
 
-  await page.getByRole("button", { name: "100% custom branding Anywhere" }).click();
+  await page.getByRole("button", { name: "Built for scale Public website" }).click();
   await page.getByRole("button", { name: "Proven methods SaaS" }).click();
   await page.getByPlaceholder("Formbricks Merch Store").click();
   await page.getByPlaceholder("Formbricks Merch Store").fill("My Product");
