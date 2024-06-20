@@ -93,7 +93,6 @@ export const ThankYouCard = ({
                   focus={autoFocusEnabled}
                   onClick={handleSubmit}
                 />
-                <p className="text-subheading hidden text-xs md:flex">Press Enter ↵</p>
               </div>
             )}
           </>
