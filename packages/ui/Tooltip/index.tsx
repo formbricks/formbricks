@@ -5,7 +5,13 @@ import * as React from "react";
 import { ReactNode } from "react";
 import { cn } from "@formbricks/lib/cn";
 
-const TooltipProvider: React.ComponentType<TooltipPrimitive.TooltipProviderProps> = TooltipPrimitive.Provider;
+interface TooltipProviderProps {
+  children: React.ReactNode;
+  delayDuration?: number;
+  skipDelayDuration?: number;
+  disableHoverableContent?: boolean;
+}
+const TooltipProvider: React.FC<TooltipProviderProps> = TooltipPrimitive.Provider;
 
 const Tooltip: React.ComponentType<TooltipPrimitive.TooltipProps> = ({ ...props }) => (
   <TooltipPrimitive.Root {...props} />
@@ -30,7 +36,7 @@ const TooltipContent: React.ComponentType<TooltipPrimitive.TooltipContentProps> 
 ));
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent };
 
 interface TooltipRendererProps {
   shouldRender: boolean;
@@ -42,12 +48,12 @@ export const TooltipRenderer = (props: TooltipRendererProps) => {
   const { children, shouldRender, tooltipContent, className } = props;
   if (shouldRender) {
     return (
-      <TooltipProvider delayDuration={0}>
+      <TooltipPrimitive.Provider delayDuration={0}>
         <Tooltip>
           <TooltipTrigger>{children}</TooltipTrigger>
           <TooltipContent className={className}>{tooltipContent}</TooltipContent>
         </Tooltip>
-      </TooltipProvider>
+      </TooltipPrimitive.Provider>
     );
   }
 
