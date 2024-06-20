@@ -276,6 +276,10 @@ export const getBiggerUploadFileSizePermission = async (organization: TOrganizat
 };
 
 export const getMultiLanguagePermission = async (organization: TOrganization): Promise<boolean> => {
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult && previousResult.active !== null ? previousResult.active : false;
+  }
   if (IS_FORMBRICKS_CLOUD)
     return (
       organization.billing.plan === PRODUCT_FEATURE_KEYS.SCALE ||

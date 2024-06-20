@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { TActionClass } from "@formbricks/types/actionClasses";
+import { TProductConfigChannel } from "@formbricks/types/product";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { ActionDetailModal } from "./ActionDetailModal";
 
@@ -11,6 +12,7 @@ interface ActionClassesTableProps {
   actionClasses: TActionClass[];
   children: [JSX.Element, JSX.Element[]];
   isUserTargetingEnabled: boolean;
+  currentProductChannel: TProductConfigChannel;
 }
 
 export const ActionClassesTable = ({
@@ -18,6 +20,7 @@ export const ActionClassesTable = ({
   actionClasses,
   children: [TableHeading, actionRows],
   isUserTargetingEnabled,
+  currentProductChannel,
 }: ActionClassesTableProps) => {
   const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
   const { membershipRole, error } = useMembershipRole(environmentId);
@@ -60,6 +63,7 @@ export const ActionClassesTable = ({
           actionClass={activeActionClass}
           membershipRole={membershipRole}
           isUserTargetingEnabled={isUserTargetingEnabled}
+          currentProductChannel={currentProductChannel}
         />
       )}
     </>

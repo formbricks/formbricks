@@ -15,6 +15,7 @@ interface PricingCardProps {
       monthly: string;
       yearly: string;
     };
+    offer?: boolean;
     mainFeatures: string[];
     href: string;
   };
@@ -119,21 +120,22 @@ export const PricingCard = ({
         "relative rounded-xl"
       )}>
       <div className="p-8 lg:pt-12 xl:p-10 xl:pt-14">
-        {isCurrentPlan && <Badge text="Current Plan" type="success" size="normal" />}
-
-        <h2
-          id={plan.id}
-          className={cn(
-            plan.featured ? "text-slate-900" : "text-slate-800",
-            "text-sm font-semibold leading-6"
-          )}>
-          {plan.name}
-        </h2>
+        <div className="flex gap-x-2">
+          <h2
+            id={plan.id}
+            className={cn(
+              plan.featured ? "text-slate-900" : "text-slate-800",
+              "text-sm font-semibold leading-6"
+            )}>
+            {plan.name}
+          </h2>
+          {isCurrentPlan && <Badge text="Current Plan" type="success" size="normal" />}
+        </div>
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between lg:flex-col lg:items-stretch">
           <div className="mt-2 flex items-center gap-x-4">
             <p
               className={cn(
-                plan.featured ? "text-slate-900" : "text-slate-800",
+                plan.offer ? "text-orange-600" : plan.featured ? "text-slate-900" : "text-slate-800",
                 "text-4xl font-bold tracking-tight"
               )}>
               {planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly}

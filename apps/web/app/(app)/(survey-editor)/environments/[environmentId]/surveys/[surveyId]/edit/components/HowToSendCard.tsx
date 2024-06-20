@@ -1,11 +1,12 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { AlertCircleIcon, CheckIcon, EarthIcon, LinkIcon, MonitorIcon, SmartphoneIcon } from "lucide-react";
+import { AlertCircleIcon, BlocksIcon, CheckIcon, EarthIcon, LinkIcon, MonitorIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
@@ -16,9 +17,10 @@ interface HowToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
   environment: TEnvironment;
+  product: TProduct;
 }
 
-export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
+export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, product }: HowToSendCardProps) => {
   const [open, setOpen] = useState(false);
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
   const [websiteSetupCompleted, setWebsiteSetupCompleted] = useState(false);
@@ -77,6 +79,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       description: "Run targeted surveys on public websites.",
       comingSoon: false,
       alert: !websiteSetupCompleted,
+      hide: product.config.channel !== "website",
     },
     {
       id: "app",
@@ -85,6 +88,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       description: "Embed a survey in your web app to collect responses with user identification.",
       comingSoon: false,
       alert: !appSetupCompleted,
+      hide: product.config.channel !== "app",
     },
     {
       id: "link",
@@ -93,16 +97,27 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       description: "Share a link to a survey page or embed it in a web page or email.",
       comingSoon: false,
       alert: false,
+      hide: false,
     },
     {
-      id: "mobile",
-      name: "Mobile App Survey",
-      icon: SmartphoneIcon,
-      description: "Survey users inside a mobile app (iOS & Android).",
+      id: "headless",
+      name: "Headless Survey",
+      icon: BlocksIcon,
+      description: "Use Formbricks API only and create your own frontend experience.",
       comingSoon: true,
       alert: false,
+      hide: false,
     },
   ];
+
+  const promotedFeaturesString =
+    product.config.channel === "website"
+      ? "app"
+      : product.config.channel === "app"
+        ? "website"
+        : product.config.channel === "link"
+          ? "app or website"
+          : "";
 
   return (
     <Collapsible.Root
@@ -125,7 +140,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
           </div>
           <div>
             <p className="font-semibold text-slate-800">Survey Type</p>
-            <p className="mt-1 text-sm text-slate-500">Choose between website, in-app or link survey.</p>
+            <p className="mt-1 text-sm text-slate-500">Choose where to run the survey.</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -137,66 +152,79 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
             value={localSurvey.type}
             onValueChange={setSurveyType}
             className="flex flex-col space-y-3">
-            {options.map((option) => (
-              <Label
-                key={option.id}
-                htmlFor={option.id}
-                className={cn(
-                  "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
-                  option.comingSoon
-                    ? "border-slate-200 bg-slate-50/50"
-                    : option.id === localSurvey.type
-                      ? "border-brand-dark cursor-pointer bg-slate-50"
-                      : "cursor-pointer bg-slate-50"
-                )}
-                id={`howToSendCardOption-${option.id}`}>
-                <RadioGroupItem
-                  value={option.id}
-                  id={option.id}
-                  className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
-                  disabled={option.comingSoon}
-                />
-                <div className=" inline-flex items-center">
-                  <option.icon className="mr-4 h-8 w-8 text-slate-500" />
-                  <div>
-                    <div className="inline-flex items-center">
-                      <p
-                        className={cn(
-                          "font-semibold",
-                          option.comingSoon ? "text-slate-500" : "text-slate-800"
-                        )}>
-                        {option.name}
-                      </p>
-                      {option.comingSoon && (
-                        <Badge text="coming soon" size="normal" type="success" className="ml-2" />
+            {options
+              .filter((option) => !Boolean(option.hide))
+              .map((option) => (
+                <Label
+                  key={option.id}
+                  htmlFor={option.id}
+                  className={cn(
+                    "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
+                    option.comingSoon
+                      ? "border-slate-200 bg-slate-50/50"
+                      : option.id === localSurvey.type
+                        ? "border-brand-dark cursor-pointer bg-slate-50"
+                        : "cursor-pointer bg-slate-50"
+                  )}
+                  id={`howToSendCardOption-${option.id}`}>
+                  <RadioGroupItem
+                    value={option.id}
+                    id={option.id}
+                    className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
+                    disabled={option.comingSoon}
+                  />
+                  <div className=" inline-flex items-center">
+                    <option.icon className="mr-4 h-8 w-8 text-slate-500" />
+                    <div>
+                      <div className="inline-flex items-center">
+                        <p
+                          className={cn(
+                            "font-semibold",
+                            option.comingSoon ? "text-slate-500" : "text-slate-800"
+                          )}>
+                          {option.name}
+                        </p>
+                        {option.comingSoon && (
+                          <Badge text="coming soon" size="normal" type="success" className="ml-2" />
+                        )}
+                      </div>
+                      <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
+                      {option.alert && (
+                        <div className="mt-2 flex items-center space-x-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
+                          <AlertCircleIcon className="h-5 w-5 text-amber-500" />
+                          <div className=" text-amber-800">
+                            <p className="text-xs font-semibold">
+                              Your {option.id} is not yet connected to Formbricks.
+                            </p>
+                            <p className="text-xs font-normal">
+                              <Link
+                                href={`/environments/${environment.id}/product/${option.id}-connection`}
+                                className="underline hover:text-amber-900"
+                                target="_blank">
+                                Connect Formbricks
+                              </Link>{" "}
+                              and launch surveys in your {option.id}.
+                            </p>
+                          </div>
+                        </div>
                       )}
                     </div>
-                    <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
-                    {option.alert && (
-                      <div className="mt-2 flex items-center space-x-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
-                        <AlertCircleIcon className="h-5 w-5 text-amber-500" />
-                        <div className=" text-amber-800">
-                          <p className="text-xs font-semibold">
-                            Your {option.id} is not yet connected to Formbricks.
-                          </p>
-                          <p className="text-xs font-normal">
-                            <Link
-                              href={`/environments/${environment.id}/product/${option.id}-connection`}
-                              className="underline hover:text-amber-900"
-                              target="_blank">
-                              Connect Formbricks
-                            </Link>{" "}
-                            and launch surveys in your {option.id}.
-                          </p>
-                        </div>
-                      </div>
-                    )}
                   </div>
-                </div>
-              </Label>
-            ))}
+                </Label>
+              ))}
           </RadioGroup>
         </div>
+        {promotedFeaturesString && (
+          <div className="mt-2 flex items-center space-x-3 rounded-b-lg border border-slate-200 bg-slate-50/50 px-4 py-2">
+            <AlertCircleIcon className="h-5 w-5 text-slate-500" />
+            <div className=" text-slate-500">
+              <p className="text-xs">
+                You can also use Formbricks to run {promotedFeaturesString} surveys. Create a new product for
+                your {promotedFeaturesString} to use this feature.
+              </p>
+            </div>
+          </div>
+        )}
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );

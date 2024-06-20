@@ -60,12 +60,14 @@ const Loading = () => {
       label: "Website Connection",
       icon: <ListChecksIcon className="h-5 w-5" />,
       current: pathname?.includes("/website-connection"),
+      hidden: true,
     },
     {
       id: "app-connection",
       label: "App Connection",
       icon: <ListChecksIcon className="h-5 w-5" />,
       current: pathname?.includes("/app-connection"),
+      hidden: true,
     },
   ];
 

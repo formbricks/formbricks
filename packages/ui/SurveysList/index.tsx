@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
+import { TProductConfigChannel } from "@formbricks/types/product";
 import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys";
 import { Button } from "../v2/Button";
 import { getSurveysAction } from "./actions";
@@ -16,6 +17,7 @@ interface SurveysListProps {
   WEBAPP_URL: string;
   userId: string;
   surveysPerPage: number;
+  currentProductChannel: TProductConfigChannel;
 }
 
 export const initialFilters: TSurveyFilters = {
@@ -33,6 +35,7 @@ export const SurveysList = ({
   WEBAPP_URL,
   userId,
   surveysPerPage: surveysLimit,
+  currentProductChannel,
 }: SurveysListProps) => {
   const [surveys, setSurveys] = useState<TSurvey[]>([]);
   const [isFetching, setIsFetching] = useState(true);
@@ -100,6 +103,7 @@ export const SurveysList = ({
         setOrientation={setOrientation}
         surveyFilters={surveyFilters}
         setSurveyFilters={setSurveyFilters}
+        currentProductChannel={currentProductChannel}
       />
       {surveys.length > 0 ? (
         <div>

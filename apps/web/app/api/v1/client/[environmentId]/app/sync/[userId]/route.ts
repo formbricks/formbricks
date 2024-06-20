@@ -21,7 +21,6 @@ import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TJsAppLegacyStateSync, TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { TProductLegacy } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -62,24 +61,20 @@ export const GET = async (
 
     const { environmentId, userId } = inputValidation.data;
 
-    let environment: TEnvironment | null;
-
-    // check if environment exists
-    environment = await getEnvironment(environmentId);
+    const environment = await getEnvironment(environmentId);
     if (!environment) {
       throw new Error("Environment does not exist");
     }
 
-    // temporary remove the example survey creation to avoid caching issue with multiple example surveys
-    /* if (!environment.appSetupCompleted) {
-      const exampleTrigger = await getActionClassByEnvironmentIdAndName(environmentId, "New Session");
-      if (!exampleTrigger) {
-        throw new Error("Example trigger not found");
-      }
-      const firstSurvey = getExampleAppSurveyTemplate(WEBAPP_URL, exampleTrigger);
-      await createSurvey(environmentId, firstSurvey);
-      await updateEnvironment(environment.id, { appSetupCompleted: true });
-    } */
+    const product = await getProductByEnvironmentId(environmentId);
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    if (product.config.channel && product.config.channel !== "app") {
+      return responses.forbiddenResponse("Product channel is not app", true);
+    }
 
     if (!environment.appSetupCompleted) {
       await updateEnvironment(environment.id, { appSetupCompleted: true });
@@ -169,12 +164,11 @@ export const GET = async (
       }
     }
 
-    const [surveys, actionClasses, product] = await Promise.all([
+    const [surveys, actionClasses] = await Promise.all([
       getSyncSurveys(environmentId, person.id, device.type === "mobile" ? "phone" : "desktop", {
         version: version ?? undefined,
       }),
       getActionClasses(environmentId),
-      getProductByEnvironmentId(environmentId),
     ]);
 
     if (!product) {
