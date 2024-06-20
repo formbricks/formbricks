@@ -46,8 +46,11 @@ export const GET = async (
 
     const { environmentId } = syncInputValidation.data;
 
-    const environment = await getEnvironment(environmentId);
-    const organization = await getOrganizationByEnvironmentId(environmentId);
+    const [environment, organization, product] = await Promise.all([
+      getEnvironment(environmentId),
+      getOrganizationByEnvironmentId(environmentId),
+      getProductByEnvironmentId(environmentId),
+    ]);
 
     if (!organization) {
       throw new Error("Organization does not exist");
@@ -55,6 +58,14 @@ export const GET = async (
 
     if (!environment) {
       throw new Error("Environment does not exist");
+    }
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    if (product.config.channel && product.config.channel !== "website") {
+      return responses.forbiddenResponse("Product channel is not website", true);
     }
 
     // check if response limit is reached
@@ -93,15 +104,10 @@ export const GET = async (
       await updateEnvironment(environment.id, { websiteSetupCompleted: true });
     }
 
-    const [surveys, actionClasses, product] = await Promise.all([
+    const [surveys, actionClasses] = await Promise.all([
       getSurveys(environmentId),
       getActionClasses(environmentId),
-      getProductByEnvironmentId(environmentId),
     ]);
-
-    if (!product) {
-      throw new Error("Product not found");
-    }
 
     // Common filter condition for selecting surveys that are in progress, are of type 'website' and have no active segment filtering.
     const filteredSurveys = surveys.filter(
