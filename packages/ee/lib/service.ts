@@ -19,11 +19,12 @@ const PREVIOUS_RESULTS_CACHE_TAG_KEY = `getPreviousResult-${hashedKey}` as const
 
 // This function is used to get the previous result of the license check from the cache
 // This might seem confusing at first since we only return the default value from this function,
-// but since we are using a cache and the cache key is the same, the cache will return the previous result - so this functions as a cache getter
+// but since we are using a cache and the cache key is the same, the cache will return the previous result - so this function acts as a cache getter
 const getPreviousResult = (): Promise<{
   active: boolean | null;
   lastChecked: Date;
   features: TEnterpriseLicenseFeatures | null;
+  message?: string;
 }> =>
   cache(
     async () => ({
@@ -43,15 +44,17 @@ const setPreviousResult = async (previousResult: {
   active: boolean | null;
   lastChecked: Date;
   features: TEnterpriseLicenseFeatures | null;
+  message?: string;
 }) => {
   revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
-  const { lastChecked, active, features } = previousResult;
+  const { lastChecked, active, features, message } = previousResult;
 
   await cache(
     async () => ({
       active,
       lastChecked,
       features,
+      message,
     }),
     [PREVIOUS_RESULTS_CACHE_TAG_KEY],
     {
@@ -103,9 +106,14 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
   // if the server errors, we return null
   // null signifies an error
   const license = await fetchLicense();
+  console.log({ license });
   const isValid = license ? license.status === "active" : null;
+  const threeDaysInMillis = 3 * 24 * 60 * 60 * 1000;
+  const currentTime = new Date();
+  let message = "";
 
   const previousResult = await getPreviousResult();
+  console.log({ previousResult });
   if (previousResult.active === null) {
     if (isValid === null) {
       await setPreviousResult({
@@ -123,13 +131,31 @@ export const getIsEnterpriseEdition = async (): Promise<boolean> => {
   } else {
     // if result is undefined -> error
     // if the last check was less than 72 hours, return the previous value:
-    if (new Date().getTime() - previousResult.lastChecked.getTime() <= 3 * 24 * 60 * 60 * 1000) {
-      return previousResult.active !== null ? previousResult.active : false;
+
+    const elapsedTime = currentTime.getTime() - previousResult.lastChecked.getTime();
+    if (elapsedTime <= threeDaysInMillis) {
+      message = `We were unable to verify your license because the license server is unreachable. You will be downgraded to the Community Edition on ${new Date(previousResult.lastChecked.getTime() + threeDaysInMillis).toISOString()}.`;
+    } else {
+      message =
+        "We have been unable to verify your license because the license server has been unreachable for more than 3 days in a row. You have been downgraded to Community Edition.";
     }
 
-    // if the last check was more than 72 hours, return false and log the error
-    console.error("Error while checking license: The license check failed");
-    return false;
+    const newActive = elapsedTime <= threeDaysInMillis ? previousResult.active : false;
+    if (previousResult.active !== newActive || previousResult.message !== message) {
+      const newResult = {
+        ...previousResult,
+        active: newActive,
+        message,
+      };
+      await setPreviousResult(newResult);
+    }
+
+    // Log error only after 72 hours
+    if (elapsedTime > threeDaysInMillis) {
+      console.error("Error while checking license: The license check failed");
+    }
+
+    return newActive;
   }
 };
 
@@ -139,14 +165,32 @@ export const getLicenseFeatures = async (): Promise<TEnterpriseLicenseFeatures |
     return previousResult.features;
   } else {
     const license = await fetchLicense();
-    if (!license) return null;
-    const features = await license.features;
-    return features;
+    if (!license || !license.features) return null;
+    return license.features;
   }
 };
 
-export const fetchLicense = async () => {
-  const licenseResult: TEnterpriseLicenseDetails | null = await cache(
+export const getEnterpriseLicense = async (): Promise<{
+  active: boolean;
+  features?: TEnterpriseLicenseFeatures;
+  message?: string;
+}> => {
+  const previousResult = await getPreviousResult();
+  if (previousResult) {
+    return previousResult;
+  } else {
+    const license = await fetchLicense();
+
+    return {
+      active: license ? license.status === "active" : false,
+      features: license ? license.features : undefined,
+      message: "",
+    };
+  }
+};
+
+export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> =>
+  await cache(
     async () => {
       if (!env.ENTERPRISE_LICENSE_KEY) return null;
       try {
@@ -166,7 +210,7 @@ export const fetchLicense = async () => {
         const proxyUrl = env.HTTPS_PROXY || env.HTTP_PROXY;
         const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
 
-        const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
+        const res = await fetch("https://ee.formbricxks.com/api/licenses/check", {
           body: JSON.stringify({
             licenseKey: ENTERPRISE_LICENSE_KEY,
             usage: { responseCount: responseCount },
@@ -192,8 +236,6 @@ export const fetchLicense = async () => {
     [`fetchLicense-${hashedKey}`],
     { revalidate: 60 * 60 * 24 }
   )();
-  return licenseResult;
-};
 
 export const getRemoveInAppBrandingPermission = (organization: TOrganization): boolean => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PRODUCT_FEATURE_KEYS.FREE;

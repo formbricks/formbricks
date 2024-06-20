@@ -1,7 +1,7 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import type { Session } from "next-auth";
-import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
+import { getEnterpriseLicense, getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -43,7 +43,12 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  // const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  // const isMultiOrgEnabled = true;
+  const { features, message: licenseErrorMessage } = await getEnterpriseLicense();
+  console.log({ features, licenseErrorMessage });
+
+  const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
 
   const [peopleCount, responseCount] = await Promise.all([
     getMonthlyActiveOrganizationPeopleCount(organization.id),
@@ -61,6 +66,8 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           responseCount={responseCount}
         />
       )}
+
+      {licenseErrorMessage && <div className="bg-red-500 p-4 text-white">{licenseErrorMessage}</div>}
 
       <div className="flex h-full">
         <MainNavigation
