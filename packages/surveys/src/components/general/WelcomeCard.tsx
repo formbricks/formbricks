@@ -129,7 +129,6 @@ export const WelcomeCard = ({
           }}
           type="button"
         />
-        <div className="text-subheading hidden items-center text-xs md:flex">Press Enter ↵</div>
       </div>
 
       {timeToFinish && !showResponseCount ? (
