@@ -45,6 +45,9 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
+  const currentProductChannel =
+    products.find((product) => product.id === environment.productId)?.config.channel ?? null;
+
   const [peopleCount, responseCount] = await Promise.all([
     getMonthlyActiveOrganizationPeopleCount(organization.id),
     getMonthlyOrganizationResponseCount(organization.id),
@@ -74,7 +77,11 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           isMultiOrgEnabled={isMultiOrgEnabled}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
-          <TopControlBar environment={environment} environments={environments} />
+          <TopControlBar
+            environment={environment}
+            environments={environments}
+            currentProductChannel={currentProductChannel}
+          />
           <div className="mt-14">{children}</div>
         </div>
       </div>
