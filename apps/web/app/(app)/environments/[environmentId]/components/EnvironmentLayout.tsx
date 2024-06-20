@@ -48,10 +48,15 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   const currentProductChannel =
     products.find((product) => product.id === environment.productId)?.config.channel ?? null;
 
-  const [peopleCount, responseCount] = await Promise.all([
-    getMonthlyActiveOrganizationPeopleCount(organization.id),
-    getMonthlyOrganizationResponseCount(organization.id),
-  ]);
+  let peopleCount = 0;
+  let responseCount = 0;
+
+  if (IS_FORMBRICKS_CLOUD) {
+    [peopleCount, responseCount] = await Promise.all([
+      getMonthlyActiveOrganizationPeopleCount(organization.id),
+      getMonthlyOrganizationResponseCount(organization.id),
+    ]);
+  }
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
