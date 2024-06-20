@@ -48,12 +48,12 @@ export const TooltipRenderer = (props: TooltipRendererProps) => {
   const { children, shouldRender, tooltipContent, className } = props;
   if (shouldRender) {
     return (
-      <TooltipPrimitive.Provider delayDuration={0}>
+      <TooltipProvider delayDuration={0}>
         <Tooltip>
           <TooltipTrigger>{children}</TooltipTrigger>
           <TooltipContent className={className}>{tooltipContent}</TooltipContent>
         </Tooltip>
-      </TooltipPrimitive.Provider>
+      </TooltipProvider>
     );
   }
 
