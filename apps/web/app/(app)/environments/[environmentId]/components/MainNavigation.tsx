@@ -49,7 +49,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { AddProductModal } from "./AddProductModal";
 
 interface NavigationProps {
   environment: TEnvironment;
@@ -77,7 +76,6 @@ export const MainNavigation = ({
 
   const [currentOrganizationName, setCurrentOrganizationName] = useState("");
   const [currentOrganizationId, setCurrentOrganizationId] = useState("");
-  const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
@@ -125,6 +123,10 @@ export const MainNavigation = ({
 
   const handleEnvironmentChangeByOrganization = (organizationId: string) => {
     router.push(`/organizations/${organizationId}/`);
+  };
+
+  const handleAddProduct = (organizationId: string) => {
+    router.push(`/organizations/${organizationId}/products/new/channel`);
   };
 
   const mainNavigation = useMemo(
@@ -328,7 +330,7 @@ export const MainNavigation = ({
                 </DropdownMenuRadioGroup>
                 <DropdownMenuSeparator />
                 {!isViewer && (
-                  <DropdownMenuItem onClick={() => setShowAddProductModal(true)} className="rounded-lg">
+                  <DropdownMenuItem onClick={() => handleAddProduct(organization.id)} className="rounded-lg">
                     <PlusIcon className="mr-2 h-4 w-4" />
                     <span>Add product</span>
                   </DropdownMenuItem>
@@ -463,11 +465,6 @@ export const MainNavigation = ({
       <CreateOrganizationModal
         open={showCreateOrganizationModal}
         setOpen={(val) => setShowCreateOrganizationModal(val)}
-      />
-      <AddProductModal
-        open={showAddProductModal}
-        setOpen={(val) => setShowAddProductModal(val)}
-        environmentId={environment.id}
       />
     </>
   );

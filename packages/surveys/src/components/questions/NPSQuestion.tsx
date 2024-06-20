@@ -22,7 +22,7 @@ interface NPSQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 

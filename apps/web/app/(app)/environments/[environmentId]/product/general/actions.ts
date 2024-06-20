@@ -53,7 +53,7 @@ export const updateProductAction = async (
   }
 
   if (membership.role === "developer") {
-    if (!!data.name || !!data.brandColor || !!data.organizationId || !!data.environments) {
+    if (!!data.name || !!data.organizationId || !!data.environments) {
       throw new AuthorizationError("Not authorized");
     }
   }
@@ -62,13 +62,13 @@ export const updateProductAction = async (
   return updatedProduct;
 };
 
-export const deleteProductAction = async (environmentId: string, userId: string, productId: string) => {
+export const deleteProductAction = async (environmentId: string, productId: string) => {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     throw new AuthenticationError("Not authenticated");
   }
-
+  const userId = session.user.id;
   // get the environment from service and check if the user is allowed to update the product
   let environment: TEnvironment | null = null;
 

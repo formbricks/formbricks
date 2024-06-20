@@ -37,7 +37,6 @@ export const DeleteProduct = async ({ environmentId, product }: DeleteProductPro
       isUserAdminOrOwner={isUserAdminOrOwner}
       product={product}
       environmentId={environmentId}
-      userId={session?.user.id ?? ""}
     />
   );
 };

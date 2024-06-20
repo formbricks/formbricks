@@ -2,6 +2,7 @@
 
 import { Logo } from "@/components/Logo";
 import { Navigation } from "@/components/Navigation";
+import { SideNavigation } from "@/components/SideNavigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -16,7 +17,7 @@ export const Layout = ({
   children: React.ReactNode;
   allSections: Record<string, Array<Section>>;
 }) => {
-  let pathname = usePathname();
+  const pathname = usePathname();
 
   return (
     <SectionProvider sections={allSections[pathname || ""] ?? []}>
@@ -34,9 +35,12 @@ export const Layout = ({
             <Navigation className="hidden lg:mt-10 lg:block" isMobile={false} />
           </div>
         </motion.header>
-        <div className="relative flex h-full flex-col px-4 pt-14 sm:px-6 lg:px-8">
-          <main className="flex-auto">{children}</main>
-          <Footer />
+        <div className="flex h-screen flex-col">
+          <div className="flex flex-col px-4 pt-14 sm:px-6 lg:w-[calc(100%-20rem)] lg:px-8">
+            <main className="overflow-y-auto overflow-x-hidden">{children}</main>
+            <Footer />
+          </div>
+          <SideNavigation pathname={pathname} />
         </div>
       </div>
     </SectionProvider>

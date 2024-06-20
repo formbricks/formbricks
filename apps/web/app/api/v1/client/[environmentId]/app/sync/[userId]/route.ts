@@ -8,7 +8,7 @@ import { NextRequest, userAgent } from "next/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import {
   getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
@@ -23,7 +23,7 @@ import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsAppLegacyStateSync, TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
-import { TProduct } from "@formbricks/types/product";
+import { TProductLegacy } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -80,6 +80,10 @@ export const GET = async (
       await createSurvey(environmentId, firstSurvey);
       await updateEnvironment(environment.id, { appSetupCompleted: true });
     } */
+
+    if (!environment.appSetupCompleted) {
+      await updateEnvironment(environment.id, { appSetupCompleted: true });
+    }
 
     // check organization subscriptions
     const organization = await getOrganizationByEnvironmentId(environmentId);
@@ -177,7 +181,7 @@ export const GET = async (
       throw new Error("Product not found");
     }
 
-    const updatedProduct: TProduct = {
+    const updatedProduct: TProductLegacy = {
       ...product,
       brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
       ...(product.styling.highlightBorderColor?.light && {
