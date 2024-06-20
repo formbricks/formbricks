@@ -79,7 +79,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
       description: "Run targeted surveys on public websites.",
       comingSoon: false,
       alert: !websiteSetupCompleted,
-      hide: product.config.channel !== "website",
+      hide: product.config.channel && product.config.channel !== "website",
     },
     {
       id: "app",
@@ -88,7 +88,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
       description: "Embed a survey in your web app to collect responses with user identification.",
       comingSoon: false,
       alert: !appSetupCompleted,
-      hide: product.config.channel !== "app",
+      hide: product.config.channel && product.config.channel !== "app",
     },
     {
       id: "link",
@@ -125,7 +125,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
       onOpenChange={setOpen}
       className={cn(
         open ? "" : "hover:bg-slate-50",
-        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
+        "w-full space-y-2 rounded-lg border border-slate-300 bg-white"
       )}>
       <Collapsible.CollapsibleTrigger
         asChild
@@ -159,7 +159,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
                   key={option.id}
                   htmlFor={option.id}
                   className={cn(
-                    "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
+                    "flex w-full items-center rounded-lg border bg-slate-50 p-4",
                     option.comingSoon
                       ? "border-slate-200 bg-slate-50/50"
                       : option.id === localSurvey.type
@@ -170,10 +170,10 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
                   <RadioGroupItem
                     value={option.id}
                     id={option.id}
-                    className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
+                    className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
                     disabled={option.comingSoon}
                   />
-                  <div className=" inline-flex items-center">
+                  <div className="inline-flex items-center">
                     <option.icon className="mr-4 h-8 w-8 text-slate-500" />
                     <div>
                       <div className="inline-flex items-center">
@@ -192,7 +192,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
                       {option.alert && (
                         <div className="mt-2 flex items-center space-x-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
                           <AlertCircleIcon className="h-5 w-5 text-amber-500" />
-                          <div className=" text-amber-800">
+                          <div className="text-amber-800">
                             <p className="text-xs font-semibold">
                               Your {option.id} is not yet connected to Formbricks.
                             </p>
@@ -217,7 +217,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
         {promotedFeaturesString && (
           <div className="mt-2 flex items-center space-x-3 rounded-b-lg border border-slate-200 bg-slate-50/50 px-4 py-2">
             <AlertCircleIcon className="h-5 w-5 text-slate-500" />
-            <div className=" text-slate-500">
+            <div className="text-slate-500">
               <p className="text-xs">
                 You can also use Formbricks to run {promotedFeaturesString} surveys. Create a new product for
                 your {promotedFeaturesString} to use this feature.
