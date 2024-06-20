@@ -135,8 +135,7 @@ export const PricingCard = ({
           <div className="mt-2 flex items-center gap-x-4">
             <p
               className={cn(
-                plan.featured ? "text-slate-900" : "text-slate-800",
-                plan.offer ? "text-orange-600" : "",
+                plan.offer ? "text-orange-600" : plan.featured ? "text-slate-900" : "text-slate-800",
                 "text-4xl font-bold tracking-tight"
               )}>
               {planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly}
