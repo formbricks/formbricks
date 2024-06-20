@@ -1,6 +1,7 @@
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { calculateElementIdx } from "@/lib/utils";
+import { useEffect } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys";
@@ -18,6 +19,7 @@ interface WelcomeCardProps {
   responseCount?: number;
   autoFocusEnabled: boolean;
   replaceRecallInfo: (text: string, responseData: TResponseData) => string;
+  isCurrent: boolean;
 }
 
 const TimerIcon = () => {
@@ -68,6 +70,7 @@ export const WelcomeCard = ({
   responseCount,
   autoFocusEnabled,
   replaceRecallInfo,
+  isCurrent,
 }: WelcomeCardProps) => {
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
@@ -100,6 +103,28 @@ export const WelcomeCard = ({
   const timeToFinish = survey.welcomeCard.timeToFinish;
   const showResponseCount = survey.welcomeCard.showResponseCount;
 
+  const handleSubmit = () => {
+    onSubmit({ ["welcomeCard"]: "clicked" }, {});
+  };
+
+  useEffect(() => {
+    const handleEnter = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        handleSubmit();
+      }
+    };
+
+    if (isCurrent) {
+      document.addEventListener("keydown", handleEnter);
+    } else {
+      document.removeEventListener("keydown", handleEnter);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEnter);
+    };
+  }, [isCurrent]);
+
   return (
     <div>
       <ScrollableContainer>
@@ -124,9 +149,7 @@ export const WelcomeCard = ({
           buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
           isLastQuestion={false}
           focus={autoFocusEnabled}
-          onClick={() => {
-            onSubmit({ ["welcomeCard"]: "clicked" }, {});
-          }}
+          onClick={handleSubmit}
           type="button"
         />
         <div className="text-subheading hidden items-center text-xs md:flex">Press Enter ↵</div>

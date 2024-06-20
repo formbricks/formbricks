@@ -5,6 +5,7 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { RedirectCountDown } from "@/components/general/RedirectCountdown";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
+import { useEffect } from "preact/hooks";
 
 interface ThankYouCardProps {
   headline?: string;
@@ -17,6 +18,7 @@ interface ThankYouCardProps {
   videoUrl?: string;
   isResponseSendingFinished: boolean;
   autoFocusEnabled: boolean;
+  isCurrent: boolean;
 }
 
 export const ThankYouCard = ({
@@ -30,6 +32,7 @@ export const ThankYouCard = ({
   videoUrl,
   isResponseSendingFinished,
   autoFocusEnabled,
+  isCurrent,
 }: ThankYouCardProps) => {
   const media = imageUrl || videoUrl ? <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} /> : null;
   const checkmark = (
@@ -51,6 +54,28 @@ export const ThankYouCard = ({
     </div>
   );
 
+  const handleSubmit = () => {
+    if (buttonLink) window.location.replace(buttonLink);
+  };
+
+  useEffect(() => {
+    const handleEnter = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        handleSubmit();
+      }
+    };
+
+    if (isCurrent) {
+      document.addEventListener("keydown", handleEnter);
+    } else {
+      document.removeEventListener("keydown", handleEnter);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEnter);
+    };
+  }, [isCurrent]);
+
   return (
     <ScrollableContainer>
       <div className="text-center">
@@ -66,10 +91,7 @@ export const ThankYouCard = ({
                   buttonLabel={buttonLabel}
                   isLastQuestion={false}
                   focus={autoFocusEnabled}
-                  onClick={() => {
-                    if (!buttonLink) return;
-                    window.location.replace(buttonLink);
-                  }}
+                  onClick={handleSubmit}
                 />
                 <p className="text-subheading hidden text-xs md:flex">Press Enter ↵</p>
               </div>
