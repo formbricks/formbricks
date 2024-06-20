@@ -186,7 +186,7 @@ test.describe("Multi Language Survey Create", async () => {
   const { name, email, password } = users.survey[3];
   test("Create Survey", async ({ page }) => {
     await signUpAndLogin(page, name, email, password);
-    await finishOnboarding(page);
+    await finishOnboarding(page, "app");
 
     //add a new language
     await page.getByRole("link", { name: "Configuration" }).click();
@@ -417,6 +417,8 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your description here. Recall")
       .fill(surveys.germanCreate.thankYouCard.description);
+
+    await page.locator("#showButton").check();
 
     await page.getByPlaceholder("Create your own Survey").click();
     await page.getByPlaceholder("Create your own Survey").fill(surveys.germanCreate.thankYouCard.buttonLabel);

@@ -2,6 +2,7 @@ import { CreateSurveyParams } from "@/playwright/utils/mock";
 import { expect } from "@playwright/test";
 import { readFileSync, writeFileSync } from "fs";
 import { Page } from "playwright";
+import { TProductConfigChannel } from "@formbricks/types/product";
 
 export const signUpAndLogin = async (
   page: Page,
@@ -54,14 +55,30 @@ export const login = async (page: Page, email: string, password: string): Promis
   await page.getByRole("button", { name: "Login with Email" }).click();
 };
 
-export const finishOnboarding = async (page: Page): Promise<void> => {
+export const finishOnboarding = async (
+  page: Page,
+  ProductChannel: TProductConfigChannel = "website"
+): Promise<void> => {
   await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/channel/);
 
-  await page.getByRole("button", { name: "Built for scale Public website" }).click();
+  if (ProductChannel === "website") {
+    await page.getByRole("button", { name: "Built for scale Public website" }).click();
+  } else if (ProductChannel === "app") {
+    await page.getByRole("button", { name: "Enrich user profiles App with" }).click();
+  } else {
+    await page.getByRole("button", { name: "100% custom branding Anywhere" }).click();
+  }
+
   await page.getByRole("button", { name: "Proven methods SaaS" }).click();
   await page.getByPlaceholder("Formbricks Merch Store").click();
   await page.getByPlaceholder("Formbricks Merch Store").fill("My Product");
   await page.locator("form").filter({ hasText: "Brand colorChange the brand" }).getByRole("button").click();
+
+  if (ProductChannel !== "link") {
+    await page.getByRole("button", { name: "Skip" }).click();
+    await page.waitForTimeout(500);
+    await page.getByRole("button", { name: "Skip" }).click();
+  }
 
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
   await expect(page.getByText("My Product")).toBeVisible();
