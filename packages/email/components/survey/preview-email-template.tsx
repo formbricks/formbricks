@@ -112,9 +112,9 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
                     className="border-input-border-color relative m-0 inline-flex h-10 w-10 items-center justify-center border p-0 text-slate-800"
                     href={`${urlWithPrefilling}${firstQuestion.id}=${i.toString()}`}
                     key={i}>
-                    {firstQuestion.addColorCoding && (
+                    {firstQuestion.addColorCoding ? (
                       <Section className={`absolute left-0 top-0 h-[6px] w-full ${getNPSOptionColor(i)}`} />
-                    )}
+                    ) : null}
                     {i}
                   </EmailButton>
                 ))}
@@ -209,11 +209,11 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
                       )}
                       {firstQuestion.scale === "number" && (
                         <>
-                          {firstQuestion.addColorCoding && (
+                          {firstQuestion.addColorCoding ? (
                             <Section
                               className={`absolute left-0 top-0 h-[6px] w-full ${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`}
                             />
-                          )}
+                          ) : null}
                           <Text className="m-0 flex h-10 items-center">{i + 1}</Text>
                         </>
                       )}
