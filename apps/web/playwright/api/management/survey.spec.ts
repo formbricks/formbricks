@@ -1,6 +1,7 @@
 import { finishOnboarding, signUpAndLogin } from "@/playwright/utils/helper";
 import { users } from "@/playwright/utils/mock";
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "../../lib/fixtures";
 
 const { name, email, password } = users.survey[2];
 
