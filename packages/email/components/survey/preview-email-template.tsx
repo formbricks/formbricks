@@ -19,6 +19,7 @@ import { isLight, mixColor } from "@formbricks/lib/utils/colors";
 import type { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
 import { RatingSmiley } from "@formbricks/ui/RatingSmiley";
+import { getNPSOptionColor, getRatingNumberOptionColor } from "../../utils";
 
 interface PreviewEmailTemplateProps {
   survey: TSurvey;
@@ -108,9 +109,12 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
               <Section className="border-input-border-color rounded-custom block overflow-hidden border">
                 {Array.from({ length: 11 }, (_, i) => (
                   <EmailButton
-                    className="border-input-border-color m-0 inline-flex h-10 w-10 items-center justify-center border p-0 text-slate-800"
+                    className="border-input-border-color relative m-0 inline-flex h-10 w-10 items-center justify-center border p-0 text-slate-800"
                     href={`${urlWithPrefilling}${firstQuestion.id}=${i.toString()}`}
                     key={i}>
+                    {firstQuestion.addColorCoding && (
+                      <Section className={`absolute left-0 top-0 h-[6px] w-full ${getNPSOptionColor(i)}`} />
+                    )}
                     {i}
                   </EmailButton>
                 ))}
@@ -188,7 +192,7 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
                   {Array.from({ length: firstQuestion.range }, (_, i) => (
                     <EmailButton
                       className={cn(
-                        "m-0 h-10 w-full p-0 text-center align-middle leading-10 text-slate-800",
+                        "relative m-0 h-10 w-full overflow-hidden p-0 text-center align-middle leading-10 text-slate-800",
                         {
                           "border border-solid border-gray-200": firstQuestion.scale === "number",
                         }
@@ -196,10 +200,22 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
                       href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
                       key={i}>
                       {firstQuestion.scale === "smiley" && (
-                        <RatingSmiley active={false} idx={i} range={firstQuestion.range} />
+                        <RatingSmiley
+                          active={false}
+                          idx={i}
+                          range={firstQuestion.range}
+                          addColors={firstQuestion.addColorCoding}
+                        />
                       )}
                       {firstQuestion.scale === "number" && (
-                        <Text className="m-0 flex h-10 items-center">{i + 1}</Text>
+                        <>
+                          {firstQuestion.addColorCoding && (
+                            <Section
+                              className={`absolute left-0 top-0 h-[6px] w-full ${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`}
+                            />
+                          )}
+                          <Text className="m-0 flex h-10 items-center">{i + 1}</Text>
+                        </>
                       )}
                       {firstQuestion.scale === "star" && <Text className="text-3xl">⭐</Text>}
                     </EmailButton>

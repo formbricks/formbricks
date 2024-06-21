@@ -88,8 +88,12 @@ export const RatingQuestion = ({
     setHoveredNumber(0);
   }, [question.id, setHoveredNumber]);
 
-  const getBgColor = (idx: number) => {
-    return idx > 8 ? "bg-emerald-100" : idx > 6 ? "bg-orange-100" : "bg-rose-100";
+  const getRatingNumberOptionColor = (range: number, idx: number) => {
+    if (range > 5) {
+      return range - idx < 2 ? "bg-emerald-100" : range - idx < 3 ? "bg-orange-100" : "bg-rose-100";
+    } else {
+      return range - idx < 1 ? "bg-emerald-100" : range - idx < 2 ? "bg-orange-100" : "bg-rose-100";
+    }
   };
 
   return (
@@ -145,7 +149,9 @@ export const RatingQuestion = ({
                           "text-heading focus:border-brand relative flex min-h-[41px] w-full cursor-pointer items-center justify-center overflow-hidden border-b border-l border-t focus:border-2 focus:outline-none"
                         )}>
                         {question.addColorCoding && (
-                          <div className={`absolute left-0 top-0 h-[6px] w-full ${getBgColor(i)}`} />
+                          <div
+                            className={`absolute left-0 top-0 h-[6px] w-full ${getRatingNumberOptionColor(question.range, number)}`}
+                          />
                         )}
                         <HiddenRadioInput number={number} id={number.toString()} />
                         {number}
@@ -256,25 +262,37 @@ interface RatingSmileyProps {
   range: number;
   addColors?: boolean;
 }
-const getFillColor = (idx: number) => {
-  return idx > 8 ? "fill-emerald-100" : idx > 6 ? "fill-orange-100" : "fill-rose-100";
-};
+
+const colors = [
+  "fill-[#FF0000]",
+  "fill-[#FF3300]",
+  "fill-[#FF6600]",
+  "fill-[#FF9900]",
+  "fill-[#FFCC00]",
+  "fill-[#FFFF00]",
+  "fill-[#CCFF00]",
+  "fill-[#99FF00]",
+  "fill-[#66FF00]",
+  "fill-[#33FF00]",
+];
 
 const RatingSmiley = ({ active, idx, range, addColors }: RatingSmileyProps): JSX.Element => {
   const activeColor = "fill-rating-fill";
-  const inactiveColor = addColors ? getFillColor(idx) : "fill-none";
+  const getInactiveColor = (idx: number) => {
+    return addColors ? colors[idx] : "fill-none";
+  };
 
   let icons = [
-    <TiredFace className={active ? activeColor : inactiveColor} />,
-    <WearyFace className={active ? activeColor : inactiveColor} />,
-    <PerseveringFace className={active ? activeColor : inactiveColor} />,
-    <FrowningFace className={active ? activeColor : inactiveColor} />,
-    <ConfusedFace className={active ? activeColor : inactiveColor} />,
-    <NeutralFace className={active ? activeColor : inactiveColor} />,
-    <SlightlySmilingFace className={active ? activeColor : inactiveColor} />,
-    <SmilingFaceWithSmilingEyes className={active ? activeColor : inactiveColor} />,
-    <GrinningFaceWithSmilingEyes className={active ? activeColor : inactiveColor} />,
-    <GrinningSquintingFace className={active ? activeColor : inactiveColor} />,
+    <TiredFace className={active ? activeColor : getInactiveColor(0)} />,
+    <WearyFace className={active ? activeColor : getInactiveColor(1)} />,
+    <PerseveringFace className={active ? activeColor : getInactiveColor(2)} />,
+    <FrowningFace className={active ? activeColor : getInactiveColor(3)} />,
+    <ConfusedFace className={active ? activeColor : getInactiveColor(4)} />,
+    <NeutralFace className={active ? activeColor : getInactiveColor(5)} />,
+    <SlightlySmilingFace className={active ? activeColor : getInactiveColor(6)} />,
+    <SmilingFaceWithSmilingEyes className={active ? activeColor : getInactiveColor(7)} />,
+    <GrinningFaceWithSmilingEyes className={active ? activeColor : getInactiveColor(8)} />,
+    <GrinningSquintingFace className={active ? activeColor : getInactiveColor(9)} />,
   ];
 
   if (range == 7) icons = [icons[1], icons[3], icons[4], icons[5], icons[6], icons[8], icons[9]];

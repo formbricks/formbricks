@@ -59,7 +59,7 @@ export const NPSQuestion = ({
     }, 250);
   };
 
-  const getLabelColor = (idx: number) => {
+  const getNPSOptionColor = (idx: number) => {
     return idx > 8 ? "bg-emerald-100" : idx > 6 ? "bg-orange-100" : "bg-rose-100";
   };
 
@@ -111,7 +111,7 @@ export const NPSQuestion = ({
                         hoveredNumber === number ? "bg-accent-bg" : ""
                       )}>
                       {question.addColorCoding && (
-                        <div className={`absolute left-0 top-0 h-[6px] w-full ${getLabelColor(idx)}`} />
+                        <div className={`absolute left-0 top-0 h-[6px] w-full ${getNPSOptionColor(idx)}`} />
                       )}
                       <input
                         type="radio"
