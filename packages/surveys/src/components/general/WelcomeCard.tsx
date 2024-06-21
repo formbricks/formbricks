@@ -114,7 +114,7 @@ export const WelcomeCard = ({
       }
     };
 
-    if (isCurrent) {
+    if (isCurrent && survey.type === "link") {
       document.addEventListener("keydown", handleEnter);
     } else {
       document.removeEventListener("keydown", handleEnter);
@@ -123,6 +123,8 @@ export const WelcomeCard = ({
     return () => {
       document.removeEventListener("keydown", handleEnter);
     };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCurrent]);
 
   return (

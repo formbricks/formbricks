@@ -6,6 +6,7 @@ import { RedirectCountDown } from "@/components/general/RedirectCountdown";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { useEffect } from "preact/hooks";
+import { TSurvey } from "@formbricks/types/surveys";
 
 interface ThankYouCardProps {
   headline?: string;
@@ -19,6 +20,7 @@ interface ThankYouCardProps {
   isResponseSendingFinished: boolean;
   autoFocusEnabled: boolean;
   isCurrent: boolean;
+  survey: TSurvey;
 }
 
 export const ThankYouCard = ({
@@ -33,6 +35,7 @@ export const ThankYouCard = ({
   isResponseSendingFinished,
   autoFocusEnabled,
   isCurrent,
+  survey,
 }: ThankYouCardProps) => {
   const media = imageUrl || videoUrl ? <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} /> : null;
   const checkmark = (
@@ -65,7 +68,7 @@ export const ThankYouCard = ({
       }
     };
 
-    if (isCurrent) {
+    if (isCurrent && survey.type === "link") {
       document.addEventListener("keydown", handleEnter);
     } else {
       document.removeEventListener("keydown", handleEnter);
@@ -74,6 +77,8 @@ export const ThankYouCard = ({
     return () => {
       document.removeEventListener("keydown", handleEnter);
     };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCurrent]);
 
   return (

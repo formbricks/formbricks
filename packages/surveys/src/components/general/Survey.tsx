@@ -282,6 +282,7 @@ export const Survey = ({
             isResponseSendingFinished={isResponseSendingFinished}
             buttonLabel={getLocalizedValue(survey.thankYouCard.buttonLabel, selectedLanguage)}
             buttonLink={survey.thankYouCard.buttonLink}
+            survey={survey}
             imageUrl={survey.thankYouCard.imageUrl}
             videoUrl={survey.thankYouCard.videoUrl}
             redirectUrl={survey.redirectUrl}
