@@ -1,17 +1,20 @@
 import Link from "next/link";
+import {
+  getMonthlyActiveOrganizationPeopleCount,
+  getMonthlyOrganizationResponseCount,
+} from "@formbricks/lib/organization/service";
 import { TOrganization } from "@formbricks/types/organizations";
 
 interface LimitsReachedBannerProps {
   organization: TOrganization;
-  peopleCount: number;
-  responseCount: number;
 }
 
-export const LimitsReachedBanner = ({
-  organization,
-  peopleCount,
-  responseCount,
-}: LimitsReachedBannerProps) => {
+export const LimitsReachedBanner = async ({ organization }: LimitsReachedBannerProps) => {
+  const [peopleCount, responseCount] = await Promise.all([
+    getMonthlyActiveOrganizationPeopleCount(organization.id),
+    getMonthlyOrganizationResponseCount(organization.id),
+  ]);
+
   const orgBillingPeopleLimit = organization.billing?.limits?.monthly?.miu;
   const orgBillingResponseLimit = organization.billing?.limits?.monthly?.responses;
 
