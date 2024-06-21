@@ -16,7 +16,7 @@ export const AdditionalIntegrationSettings = ({
 }: AdditionalIntegrationSettingsProps) => {
   return (
     <div className="mt-4">
-      <Label htmlFor="Surveys">Additional Setings</Label>
+      <Label htmlFor="Surveys">Additional Settings</Label>
       <div className="text-sm">
         <div className="my-1 flex items-center space-x-2">
           <label htmlFor={"includeHiddenFields"} className="flex cursor-pointer items-center">

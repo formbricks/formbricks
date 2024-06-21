@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TActionClass } from "@formbricks/types/actionClasses";
+import { TProductConfigChannel } from "@formbricks/types/product";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { Label } from "@formbricks/ui/Label";
 import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
@@ -19,12 +20,14 @@ interface ActivityTabProps {
   actionClass: TActionClass;
   environmentId: string;
   isUserTargetingEnabled: boolean;
+  currentProductChannel: TProductConfigChannel;
 }
 
 export const EventActivityTab = ({
   actionClass,
   environmentId,
   isUserTargetingEnabled,
+  currentProductChannel,
 }: ActivityTabProps) => {
   // const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, actionClass.id);
 
@@ -35,6 +38,8 @@ export const EventActivityTab = ({
   const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  const shouldShowActivity = isUserTargetingEnabled && currentProductChannel !== "website";
 
   useEffect(() => {
     setLoading(true);
@@ -48,9 +53,9 @@ export const EventActivityTab = ({
           numEventsLast7DaysData,
           activeInactiveSurveys,
         ] = await Promise.all([
-          isUserTargetingEnabled ? getActionCountInLastHourAction(actionClass.id, environmentId) : 0,
-          isUserTargetingEnabled ? getActionCountInLast24HoursAction(actionClass.id, environmentId) : 0,
-          isUserTargetingEnabled ? getActionCountInLast7DaysAction(actionClass.id, environmentId) : 0,
+          shouldShowActivity ? getActionCountInLastHourAction(actionClass.id, environmentId) : 0,
+          shouldShowActivity ? getActionCountInLast24HoursAction(actionClass.id, environmentId) : 0,
+          shouldShowActivity ? getActionCountInLast7DaysAction(actionClass.id, environmentId) : 0,
           getActiveInactiveSurveysAction(actionClass.id, environmentId),
         ]);
         setNumEventsLastHour(numEventsLastHourData);
@@ -66,7 +71,7 @@ export const EventActivityTab = ({
     };
 
     updateState();
-  }, [actionClass.id, environmentId, isUserTargetingEnabled]);
+  }, [actionClass.id, environmentId, shouldShowActivity]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorComponent />;
@@ -74,9 +79,9 @@ export const EventActivityTab = ({
   return (
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">
-        {isUserTargetingEnabled && (
+        {shouldShowActivity && (
           <div>
-            <Label className="text-slate-500">Ocurrances</Label>
+            <Label className="text-slate-500">Occurrences</Label>
             <div className="mt-1 grid w-fit grid-cols-3 rounded-lg border-slate-100 bg-slate-50">
               <div className="border-r border-slate-200 px-4 py-2 text-center">
                 <p className="font-bold text-slate-800">{numEventsLastHour}</p>

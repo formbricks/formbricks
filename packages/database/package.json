@@ -38,8 +38,8 @@
     "data-migration:v2.1": "pnpm data-migration:extended-noCodeActions",
     "data-migration:adds_app_and_website_status_indicator": "ts-node ./data-migrations/20240610055828_adds_app_and_website_status_indicators/data-migration.ts",
     "data-migration:product-config": "ts-node ./data-migrations/20240612115151_adds_product_config/data-migration.ts",
-    "data-migration:v2.2": "pnpm data-migration:adds_app_and_website_status_indicator && pnpm data-migration:product-config",
-    "data-migration:zh": "ts-node ./data-migrations/20240318050527_add_languages_and_survey_languages/data-migration-zh.ts"
+    "data-migration:zh-to-zh-Hans": "ts-node ./data-migrations/20240318050527_add_languages_and_survey_languages/data-migration-zh-to-zh-Hans.ts",
+    "data-migration:v2.2": "pnpm data-migration:adds_app_and_website_status_indicator && pnpm data-migration:product-config && pnpm data-migration:pricing-v2"
   },
   "dependencies": {
     "@prisma/client": "^5.15.1",

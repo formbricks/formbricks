@@ -48,6 +48,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   }
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const currentProductChannel = product?.config.channel ?? null;
 
   return (
     <PageContentWrapper>
@@ -56,6 +57,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           environmentId={params.environmentId}
           activeId="look"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
+          productChannel={currentProductChannel}
         />
       </PageHeader>
       <SettingsCard
@@ -72,27 +74,31 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">
         <EditLogo product={product} environmentId={params.environmentId} isViewer={isViewer} />
       </SettingsCard>
-      <SettingsCard
-        title="In-app Survey Placement"
-        description="Change where surveys will be shown in your web app.">
-        <EditPlacementForm product={product} environmentId={params.environmentId} />
-      </SettingsCard>
-      <SettingsCard
-        title="Formbricks Branding"
-        description="We love your support but understand if you toggle it off.">
-        <EditFormbricksBranding
-          type="linkSurvey"
-          product={product}
-          canRemoveBranding={canRemoveLinkBranding}
-          environmentId={params.environmentId}
-        />
-        <EditFormbricksBranding
-          type="inAppSurvey"
-          product={product}
-          canRemoveBranding={canRemoveInAppBranding}
-          environmentId={params.environmentId}
-        />
-      </SettingsCard>
+      {currentProductChannel !== "link" && (
+        <SettingsCard
+          title="In-app Survey Placement"
+          description="Change where surveys will be shown in your web app.">
+          <EditPlacementForm product={product} environmentId={params.environmentId} />
+        </SettingsCard>
+      )}
+      {currentProductChannel !== "link" && (
+        <SettingsCard
+          title="Formbricks Branding"
+          description="We love your support but understand if you toggle it off.">
+          <EditFormbricksBranding
+            type="linkSurvey"
+            product={product}
+            canRemoveBranding={canRemoveLinkBranding}
+            environmentId={params.environmentId}
+          />
+          <EditFormbricksBranding
+            type="inAppSurvey"
+            product={product}
+            canRemoveBranding={canRemoveInAppBranding}
+            environmentId={params.environmentId}
+          />
+        </SettingsCard>
+      )}
     </PageContentWrapper>
   );
 };

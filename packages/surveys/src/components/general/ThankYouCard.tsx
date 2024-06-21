@@ -71,7 +71,6 @@ export const ThankYouCard = ({
                     window.location.replace(buttonLink);
                   }}
                 />
-                <p className="text-subheading hidden text-xs md:flex">Press Enter ↵</p>
               </div>
             )}
           </>
