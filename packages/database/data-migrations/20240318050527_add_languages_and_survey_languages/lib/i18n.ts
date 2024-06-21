@@ -315,15 +315,18 @@ export const updateLanguageCodeForWelcomeCard = (
   newCode: string
 ) => {
   const clonedWelcomeCard = structuredClone(welcomeCard);
-  if (welcomeCard.headline !== undefined && Object.keys(welcomeCard.headline).includes(oldCode)) {
+  if (typeof welcomeCard.headline !== "undefined" && Object.keys(welcomeCard.headline).includes(oldCode)) {
     clonedWelcomeCard.headline = updateLanguageCode(welcomeCard.headline, oldCode, newCode);
   }
 
-  if (welcomeCard.html !== undefined && Object.keys(welcomeCard.html).includes(oldCode)) {
+  if (typeof welcomeCard.html !== "undefined" && Object.keys(welcomeCard.html).includes(oldCode)) {
     clonedWelcomeCard.html = updateLanguageCode(welcomeCard.html, oldCode, newCode);
   }
 
-  if (welcomeCard.buttonLabel !== undefined && Object.keys(welcomeCard.buttonLabel).includes(oldCode)) {
+  if (
+    typeof welcomeCard.buttonLabel !== "undefined" &&
+    Object.keys(welcomeCard.buttonLabel).includes(oldCode)
+  ) {
     clonedWelcomeCard.buttonLabel = updateLanguageCode(welcomeCard.buttonLabel, oldCode, newCode);
   }
 
@@ -336,15 +339,21 @@ export const updateLanguageCodeForThankYouCard = (
   newCode: string
 ) => {
   const clonedThankYouCard = structuredClone(thankYouCard);
-  if (thankYouCard.headline !== undefined && Object.keys(thankYouCard.headline).includes(oldCode)) {
+  if (typeof thankYouCard.headline !== "undefined" && Object.keys(thankYouCard.headline).includes(oldCode)) {
     clonedThankYouCard.headline = updateLanguageCode(thankYouCard.headline, oldCode, newCode);
   }
 
-  if (thankYouCard.subheader !== undefined && Object.keys(thankYouCard.subheader).includes(oldCode)) {
+  if (
+    typeof thankYouCard.subheader !== "undefined" &&
+    Object.keys(thankYouCard.subheader).includes(oldCode)
+  ) {
     clonedThankYouCard.subheader = updateLanguageCode(thankYouCard.subheader, oldCode, newCode);
   }
 
-  if (thankYouCard.buttonLabel !== undefined && Object.keys(thankYouCard.buttonLabel).includes(oldCode)) {
+  if (
+    typeof thankYouCard.buttonLabel !== "undefined" &&
+    Object.keys(thankYouCard.buttonLabel).includes(oldCode)
+  ) {
     clonedThankYouCard.buttonLabel = updateLanguageCode(thankYouCard.buttonLabel, oldCode, newCode);
   }
   return ZSurveyThankYouCard.parse(clonedThankYouCard);
@@ -463,7 +472,7 @@ export const updateLanguageCodeForQuestion = (
         );
       }
 
-      if (typeof question.upperLabel !== "undefined") {
+      if (typeof question.upperLabel !== "undefined" && Object.keys(question.upperLabel).includes(oldCode)) {
         (clonedQuestion as TSurveyRatingQuestion).upperLabel = updateLanguageCode(
           question.upperLabel,
           oldCode,
@@ -474,13 +483,13 @@ export const updateLanguageCodeForQuestion = (
 
     case "matrix":
       (clonedQuestion as TSurveyMatrixQuestion).rows = question.rows.map((row) => {
-        if (Object.keys(row).includes(oldCode)) {
+        if (typeof row !== "undefined" && Object.keys(row).includes(oldCode)) {
           return updateLanguageCode(row, oldCode, newCode);
         } else return row;
       });
 
       (clonedQuestion as TSurveyMatrixQuestion).columns = question.columns.map((column) => {
-        if (Object.keys(column).includes(oldCode)) {
+        if (typeof column !== "undefined" && Object.keys(column).includes(oldCode)) {
           return updateLanguageCode(column, oldCode, newCode);
         } else return column;
       });

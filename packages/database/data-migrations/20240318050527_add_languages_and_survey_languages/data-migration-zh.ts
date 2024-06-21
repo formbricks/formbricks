@@ -1,3 +1,4 @@
+// migration script for converting zh code for chinese language to zh-Hans
 import { PrismaClient } from "@prisma/client";
 import {
   TSurveyLanguage,
@@ -55,6 +56,8 @@ const main = async () => {
         console.log("No Surveys found");
         return;
       }
+
+      console.log(`Total surveys found:${surveys.length}`);
       let transformedSurveyCount = 0;
 
       for (const survey of surveys) {
