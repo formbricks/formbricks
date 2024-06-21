@@ -135,9 +135,9 @@ export const NPSQuestionForm = ({
       )}
 
       <AdvancedOptionToggle
-        isChecked={question.addColorCoding}
-        onToggle={() => updateQuestion(questionIdx, { addColorCoding: !question.addColorCoding })}
-        htmlId="addColorCoding"
+        isChecked={question.isColorCodingEnabled}
+        onToggle={() => updateQuestion(questionIdx, { isColorCodingEnabled: !question.isColorCodingEnabled })}
+        htmlId="isColorCodingEnabled"
         title="Add color coding"
         description="Add red, orange and green color codes to the options."
         childBorder

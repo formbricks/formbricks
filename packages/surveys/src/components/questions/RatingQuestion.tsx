@@ -148,7 +148,7 @@ export const RatingQuestion = ({
                           hoveredNumber === number ? "bg-accent-bg" : "",
                           "text-heading focus:border-brand relative flex min-h-[41px] w-full cursor-pointer items-center justify-center overflow-hidden border-b border-l border-t focus:border-2 focus:outline-none"
                         )}>
-                        {question.addColorCoding && (
+                        {question.isColorCodingEnabled && (
                           <div
                             className={`absolute left-0 top-0 h-[6px] w-full ${getRatingNumberOptionColor(question.range, number)}`}
                           />
@@ -211,7 +211,7 @@ export const RatingQuestion = ({
                             active={value === number || hoveredNumber === number}
                             idx={i}
                             range={question.range}
-                            addColors={question.addColorCoding}
+                            addColors={question.isColorCodingEnabled}
                           />
                         </div>
                       </label>

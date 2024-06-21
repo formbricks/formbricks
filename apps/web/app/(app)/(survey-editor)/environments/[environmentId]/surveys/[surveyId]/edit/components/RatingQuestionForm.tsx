@@ -96,7 +96,7 @@ export const RatingQuestionForm = ({
               defaultValue={question.scale || "number"}
               onSelect={(option) => {
                 if (option.value === "star") {
-                  updateQuestion(questionIdx, { scale: option.value, addColorCoding: false });
+                  updateQuestion(questionIdx, { scale: option.value, isColorCodingEnabled: false });
                   return;
                 }
                 updateQuestion(questionIdx, { scale: option.value });
@@ -178,9 +178,11 @@ export const RatingQuestionForm = ({
 
       {question.scale !== "star" && (
         <AdvancedOptionToggle
-          isChecked={question.addColorCoding}
-          onToggle={() => updateQuestion(questionIdx, { addColorCoding: !question.addColorCoding })}
-          htmlId="addColorCoding"
+          isChecked={question.isColorCodingEnabled}
+          onToggle={() =>
+            updateQuestion(questionIdx, { isColorCodingEnabled: !question.isColorCodingEnabled })
+          }
+          htmlId="isColorCodingEnabled"
           title="Add color coding"
           description="Add red, orange and green color codes to the options."
           childBorder

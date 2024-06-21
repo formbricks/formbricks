@@ -110,7 +110,7 @@ export const NPSQuestion = ({
                         "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative h-10 flex-1 cursor-pointer overflow-hidden border-b border-l border-t text-center text-sm leading-10 last:border-r focus:border-2 focus:outline-none",
                         hoveredNumber === number ? "bg-accent-bg" : ""
                       )}>
-                      {question.addColorCoding && (
+                      {question.isColorCodingEnabled && (
                         <div className={`absolute left-0 top-0 h-[6px] w-full ${getNPSOptionColor(idx)}`} />
                       )}
                       <input
