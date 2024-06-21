@@ -7,8 +7,8 @@ import {
 } from "@formbricks/types/surveys";
 import {
   updateLanguageCodeForQuestion,
+  updateLanguageCodeForThankYouCard,
   updateLanguageCodeForWelcomeCard,
-  updateLanguageCodeThankYouCard,
 } from "./lib/i18n";
 
 const prisma = new PrismaClient();
@@ -71,7 +71,7 @@ const main = async () => {
         updatedSurvey.welcomeCard = updateLanguageCodeForWelcomeCard(survey.welcomeCard, "zh", "zh-Hans");
 
         // check Thank you card
-        updatedSurvey.thankYouCard = updateLanguageCodeThankYouCard(survey.thankYouCard, "zh", "zh-Hans");
+        updatedSurvey.thankYouCard = updateLanguageCodeForThankYouCard(survey.thankYouCard, "zh", "zh-Hans");
 
         // check questions
         if (updatedSurvey.questions.length > 0) {
@@ -92,7 +92,7 @@ const main = async () => {
 
       console.log(transformedSurveyCount, " surveys transformed");
 
-      console.log("updating survey languages");
+      console.log("updating languages");
       await tx.language.updateMany({
         where: {
           code: "zh",

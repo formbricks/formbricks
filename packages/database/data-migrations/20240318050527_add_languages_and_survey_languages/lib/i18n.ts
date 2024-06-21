@@ -330,7 +330,7 @@ export const updateLanguageCodeForWelcomeCard = (
   return ZSurveyWelcomeCard.parse(clonedWelcomeCard);
 };
 
-export const updateLanguageCodeThankYouCard = (
+export const updateLanguageCodeForThankYouCard = (
   thankYouCard: TSurveyThankYouCard,
   oldCode: string,
   newCode: string
