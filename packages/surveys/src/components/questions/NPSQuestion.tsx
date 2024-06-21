@@ -59,6 +59,10 @@ export const NPSQuestion = ({
     }, 250);
   };
 
+  const getLabelColor = (idx: number) => {
+    return idx > 8 ? "bg-emerald-100" : idx > 6 ? "bg-orange-100" : "bg-rose-100";
+  };
+
   return (
     <form
       key={question.id}
@@ -103,9 +107,12 @@ export const NPSQuestion = ({
                         value === number
                           ? "border-border-highlight bg-accent-selected-bg z-10 border"
                           : "border-border",
-                        "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative h-10 flex-1 cursor-pointer border-b border-l border-t text-center text-sm leading-10 last:border-r focus:border-2 focus:outline-none",
+                        "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative h-10 flex-1 cursor-pointer overflow-hidden border-b border-l border-t text-center text-sm leading-10 last:border-r focus:border-2 focus:outline-none",
                         hoveredNumber === number ? "bg-accent-bg" : ""
                       )}>
+                      {question.addColorCoding && (
+                        <div className={`absolute left-0 top-0 h-[6px] w-full ${getLabelColor(idx)}`} />
+                      )}
                       <input
                         type="radio"
                         id={number.toString()}

@@ -88,6 +88,10 @@ export const RatingQuestion = ({
     setHoveredNumber(0);
   }, [question.id, setHoveredNumber]);
 
+  const getBgColor = (idx: number) => {
+    return idx > 8 ? "bg-emerald-100" : idx > 6 ? "bg-orange-100" : "bg-rose-100";
+  };
+
   return (
     <form
       key={question.id}
@@ -137,9 +141,12 @@ export const RatingQuestion = ({
                             : "border-border",
                           a.length === number ? "rounded-r-custom border-r" : "",
                           number === 1 ? "rounded-l-custom" : "",
-                          hoveredNumber === number ? "bg-accent-bg " : "",
-                          "text-heading focus:border-brand relative flex min-h-[41px] w-full cursor-pointer items-center justify-center border-b border-l border-t focus:border-2 focus:outline-none"
+                          hoveredNumber === number ? "bg-accent-bg" : "",
+                          "text-heading focus:border-brand relative flex min-h-[41px] w-full cursor-pointer items-center justify-center overflow-hidden border-b border-l border-t focus:border-2 focus:outline-none"
                         )}>
+                        {question.addColorCoding && (
+                          <div className={`absolute left-0 top-0 h-[6px] w-full ${getBgColor(i)}`} />
+                        )}
                         <HiddenRadioInput number={number} id={number.toString()} />
                         {number}
                       </label>
@@ -158,7 +165,7 @@ export const RatingQuestion = ({
                           number <= hoveredNumber || number <= (value as number)
                             ? "text-amber-400"
                             : "text-[#8696AC]",
-                          hoveredNumber === number ? "text-amber-400 " : "",
+                          hoveredNumber === number ? "text-amber-400" : "",
                           "relative flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none"
                         )}
                         onFocus={() => setHoveredNumber(number)}
@@ -198,6 +205,7 @@ export const RatingQuestion = ({
                             active={value === number || hoveredNumber === number}
                             idx={i}
                             range={question.range}
+                            addColors={question.addColorCoding}
                           />
                         </div>
                       </label>
@@ -246,11 +254,16 @@ interface RatingSmileyProps {
   active: boolean;
   idx: number;
   range: number;
+  addColors?: boolean;
 }
+const getFillColor = (idx: number) => {
+  return idx > 8 ? "fill-emerald-100" : idx > 6 ? "fill-orange-100" : "fill-rose-100";
+};
 
-const RatingSmiley = ({ active, idx, range }: RatingSmileyProps): JSX.Element => {
+const RatingSmiley = ({ active, idx, range, addColors }: RatingSmileyProps): JSX.Element => {
   const activeColor = "fill-rating-fill";
-  const inactiveColor = "fill-none";
+  const inactiveColor = addColors ? getFillColor(idx) : "fill-none";
+
   let icons = [
     <TiredFace className={active ? activeColor : inactiveColor} />,
     <WearyFace className={active ? activeColor : inactiveColor} />,

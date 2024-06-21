@@ -2,6 +2,7 @@ import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
+import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
@@ -93,7 +94,13 @@ export const RatingQuestionForm = ({
                 { label: "Smiley", value: "smiley", icon: SmileIcon },
               ]}
               defaultValue={question.scale || "number"}
-              onSelect={(option) => updateQuestion(questionIdx, { scale: option.value })}
+              onSelect={(option) => {
+                if (option.value === "star") {
+                  updateQuestion(questionIdx, { scale: option.value, addColorCoding: false });
+                  return;
+                }
+                updateQuestion(questionIdx, { scale: option.value });
+              }}
             />
           </div>
         </div>
@@ -168,6 +175,18 @@ export const RatingQuestionForm = ({
           </div>
         )}
       </div>
+
+      {question.scale !== "star" && (
+        <AdvancedOptionToggle
+          isChecked={question.addColorCoding}
+          onToggle={() => updateQuestion(questionIdx, { addColorCoding: !question.addColorCoding })}
+          htmlId="addColorCoding"
+          title="Add color coding"
+          description="Add red, orange and green color codes to the options."
+          childBorder
+          customContainerClass="p-0 mt-4"
+        />
+      )}
     </form>
   );
 };
