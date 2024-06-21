@@ -1,5 +1,6 @@
 import { surveys, users } from "@/playwright/utils/mock";
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "./lib/fixtures";
 import { createSurvey, finishOnboarding, signUpAndLogin } from "./utils/helper";
 
 test.describe("Survey Create & Submit Response", async () => {
