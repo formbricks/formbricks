@@ -2,18 +2,21 @@ import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/
 import { EnvironmentIdField } from "@/app/(app)/environments/[environmentId]/product/(setup)/components/EnvironmentIdField";
 import { SetupInstructions } from "@/app/(app)/environments/[environmentId]/product/(setup)/components/SetupInstructions";
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
+import { notFound } from "next/navigation";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { EnvironmentNotice } from "@formbricks/ui/EnvironmentNotice";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 import { SettingsCard } from "../../../settings/components/SettingsCard";
 
 const Page = async ({ params }) => {
-  const [environment, organization] = await Promise.all([
+  const [environment, product, organization] = await Promise.all([
     getEnvironment(params.environmentId),
+    getProductByEnvironmentId(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
   ]);
 
@@ -26,6 +29,11 @@ const Page = async ({ params }) => {
   }
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const currentProductChannel = product?.config.channel ?? null;
+
+  if (currentProductChannel && currentProductChannel !== "website") {
+    return notFound();
+  }
 
   return (
     <PageContentWrapper>
@@ -34,6 +42,7 @@ const Page = async ({ params }) => {
           environmentId={params.environmentId}
           activeId="website-connection"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
+          productChannel={currentProductChannel}
         />
       </PageHeader>
       <div className="space-y-4">

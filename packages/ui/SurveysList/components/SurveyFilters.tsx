@@ -1,6 +1,7 @@
 import { ChevronDownIcon, Equal, Grid2X2, Search, X } from "lucide-react";
 import { useState } from "react";
 import { useDebounce } from "react-use";
+import { TProductConfigChannel } from "@formbricks/types/product";
 import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys";
 import { initialFilters } from "..";
 import { Button } from "../../Button";
@@ -14,6 +15,7 @@ interface SurveyFilterProps {
   setOrientation: (orientation: string) => void;
   surveyFilters: TSurveyFilters;
   setSurveyFilters: React.Dispatch<React.SetStateAction<TSurveyFilters>>;
+  currentProductChannel: TProductConfigChannel;
 }
 
 const creatorOptions: TFilterOption[] = [
@@ -27,11 +29,6 @@ const statusOptions: TFilterOption[] = [
   { label: "Paused", value: "paused" },
   { label: "Completed", value: "completed" },
   { label: "Draft", value: "draft" },
-];
-const typeOptions: TFilterOption[] = [
-  { label: "Link", value: "link" },
-  { label: "App", value: "app" },
-  { label: "Website", value: "website" },
 ];
 
 const sortOptions: TSortOption[] = [
@@ -59,6 +56,7 @@ export const SurveyFilters = ({
   setOrientation,
   surveyFilters,
   setSurveyFilters,
+  currentProductChannel,
 }: SurveyFilterProps) => {
   const { createdBy, sortBy, status, type } = surveyFilters;
   const [name, setName] = useState("");
@@ -66,6 +64,20 @@ export const SurveyFilters = ({
   useDebounce(() => setSurveyFilters((prev) => ({ ...prev, name: name })), 800, [name]);
 
   const [dropdownOpenStates, setDropdownOpenStates] = useState(new Map());
+
+  const typeOptions: TFilterOption[] = [
+    { label: "Link", value: "link" },
+    { label: "App", value: "app" },
+    { label: "Website", value: "website" },
+  ].filter((option) => {
+    if (currentProductChannel === "website") {
+      return option.value !== "app";
+    } else if (currentProductChannel === "app") {
+      return option.value !== "website";
+    } else {
+      return option;
+    }
+  });
 
   const toggleDropdown = (id: string) => {
     setDropdownOpenStates(new Map(dropdownOpenStates).set(id, !dropdownOpenStates.get(id)));
@@ -152,17 +164,19 @@ export const SurveyFilters = ({
             toggleDropdown={toggleDropdown}
           />
         </div>
-        <div>
-          <SurveyFilterDropdown
-            title="Type"
-            id="type"
-            options={typeOptions}
-            selectedOptions={type}
-            setSelectedOptions={handleTypeChange}
-            isOpen={dropdownOpenStates.get("type")}
-            toggleDropdown={toggleDropdown}
-          />
-        </div>
+        {currentProductChannel !== "link" && (
+          <div>
+            <SurveyFilterDropdown
+              title="Type"
+              id="type"
+              options={typeOptions}
+              selectedOptions={type}
+              setSelectedOptions={handleTypeChange}
+              isOpen={dropdownOpenStates.get("type")}
+              toggleDropdown={toggleDropdown}
+            />
+          </div>
+        )}
 
         {(createdBy.length > 0 || status.length > 0 || type.length > 0) && (
           <Button
