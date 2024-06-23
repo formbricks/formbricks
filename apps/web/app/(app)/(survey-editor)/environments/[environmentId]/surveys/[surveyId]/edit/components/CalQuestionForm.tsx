@@ -90,6 +90,15 @@ export const CalQuestionForm = ({
               onChange={(e) => updateQuestion(questionIdx, { calUserName: e.target.value })}
             />
           </div>
+          <Label htmlFor="calHost">Your self-hosted Cal.com instance</Label>
+          <div className="mt-2">
+            <Input
+              id="calHost"
+              name="calHost"
+              value={question.calHost}
+              onChange={(e) => updateQuestion(questionIdx, { calHost: e.target.value })}
+            />
+          </div>
         </div>
       </div>
     </form>
