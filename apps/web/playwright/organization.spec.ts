@@ -1,82 +1,74 @@
 import { expect } from "playwright/test";
 import { test } from "./lib/fixtures";
-import { finishOnboarding, login, signUpAndLogin, signupUsingInviteToken } from "./utils/helper";
-import { invites, users } from "./utils/mock";
+import { login, signupUsingInviteToken } from "./utils/helper";
+import { invites, mockUsers } from "./utils/mock";
 
 test.describe("Invite, accept and remove organization member", async () => {
   test.describe.configure({ mode: "serial" });
-  const { email, password, name } = users.organization[0];
+
+  const { email, name } = mockUsers.organization[0];
   let inviteLink: string;
 
-  test("Invite organization member", async ({ page }) => {
-    await signUpAndLogin(page, name, email, password);
-    await finishOnboarding(page);
-
-    const dropdownTrigger = page.locator("#userDropdownTrigger");
-    await expect(dropdownTrigger).toBeVisible();
-    await dropdownTrigger.click();
-
-    const dropdownInnerContentWrapper = page.locator("#userDropdownInnerContentWrapper");
-    await expect(dropdownInnerContentWrapper).toBeVisible();
-
-    await page.getByRole("link", { name: "Organization" }).click();
-    await page.waitForURL(/\/environments\/[^/]+\/settings\/members/);
-
-    // Add member button
-    await expect(page.getByRole("button", { name: "Add Member" })).toBeVisible();
-    await page.getByRole("button", { name: "Add Member" }).click();
-
-    // Fill the member name and email form
-    await expect(page.getByLabel("Email")).toBeVisible();
-    await page.getByLabel("Full Name").fill(invites.addMember.name);
-
-    await expect(page.getByLabel("Email Address")).toBeVisible();
-    await page.getByLabel("Email Address").fill(invites.addMember.email);
-
-    await page.getByRole("button", { name: "Send Invitation", exact: true }).click();
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(500);
-  });
-
-  test("Copy invite Link", async ({ page }) => {
-    await login(page, email, password);
+  test("Invite organization member", async ({ page, users }) => {
+    const user = await users.create({ name, email });
+    await user.login();
+    await page.goto("/");
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-    await expect(page.getByText("My Product")).toBeVisible();
 
-    const dropdownTrigger = page.locator("#userDropdownTrigger");
-    await expect(dropdownTrigger).toBeVisible();
-    await dropdownTrigger.click();
+    await test.step("Invite User", async () => {
+      const dropdownTrigger = page.locator("#userDropdownTrigger");
+      await expect(dropdownTrigger).toBeVisible();
+      await dropdownTrigger.click();
 
-    const dropdownInnerContentWrapper = page.locator("#userDropdownInnerContentWrapper");
-    await expect(dropdownInnerContentWrapper).toBeVisible();
+      const dropdownInnerContentWrapper = page.locator("#userDropdownInnerContentWrapper");
+      await expect(dropdownInnerContentWrapper).toBeVisible();
 
-    await page.getByRole("link", { name: "Organization" }).click();
+      await page.getByRole("link", { name: "Organization" }).click();
+      await page.waitForURL(/\/environments\/[^/]+\/settings\/members/);
 
-    await expect(page.locator("#membersInfoWrapper")).toBeVisible();
+      // Add member button
+      await expect(page.getByRole("button", { name: "Add Member" })).toBeVisible();
+      await page.getByRole("button", { name: "Add Member" }).click();
 
-    const lastMemberInfo = page.locator("#membersInfoWrapper > .singleMemberInfo:last-child");
-    await expect(lastMemberInfo).toBeVisible();
+      // Fill the member name and email form
+      await expect(page.getByLabel("Email")).toBeVisible();
+      await page.getByLabel("Full Name").fill(invites.addMember.name);
 
-    const pendingSpan = lastMemberInfo.locator("span").filter({ hasText: "Pending" });
-    await expect(pendingSpan).toBeVisible();
+      await expect(page.getByLabel("Email Address")).toBeVisible();
+      await page.getByLabel("Email Address").fill(invites.addMember.email);
 
-    const shareInviteButton = page.locator(".shareInviteButton").last();
-    await expect(shareInviteButton).toBeVisible();
+      await page.getByRole("button", { name: "Send Invitation", exact: true }).click();
+      await page.waitForLoadState("networkidle");
+      // await page.waitForTimeout(500);
+    });
 
-    await shareInviteButton.click();
+    await test.step("Copy invite Link", async () => {
+      await expect(page.locator("#membersInfoWrapper")).toBeVisible();
 
-    const inviteLinkText = page.locator("#inviteLinkText");
-    await expect(inviteLinkText).toBeVisible();
+      const lastMemberInfo = page.locator("#membersInfoWrapper > .singleMemberInfo:last-child");
+      await expect(lastMemberInfo).toBeVisible();
 
-    // invite link text is a paragraph, and we need the text inside it
-    const inviteLinkTextContent = await inviteLinkText.textContent();
-    if (inviteLinkTextContent) {
-      inviteLink = inviteLinkTextContent;
-    }
+      const pendingSpan = lastMemberInfo.locator("span").filter({ hasText: "Pending" });
+      await expect(pendingSpan).toBeVisible();
+
+      const shareInviteButton = page.locator(".shareInviteButton").last();
+      await expect(shareInviteButton).toBeVisible();
+
+      await shareInviteButton.click();
+
+      const inviteLinkText = page.locator("#inviteLinkText");
+      await expect(inviteLinkText).toBeVisible();
+
+      // invite link text is a paragraph, and we need the text inside it
+      const inviteLinkTextContent = await inviteLinkText.textContent();
+      if (inviteLinkTextContent) {
+        inviteLink = inviteLinkTextContent;
+      }
+    });
   });
 
   test("Accept invite", async ({ page }) => {
-    const { email, name, password } = users.organization[1];
+    const { email, name } = mockUsers.organization[1];
     page.goto(inviteLink);
 
     await page.waitForURL(/\/invite\?token=[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+/);
@@ -85,12 +77,12 @@ test.describe("Invite, accept and remove organization member", async () => {
     await expect(page.getByRole("link", { name: "Create account" })).toBeVisible();
     await page.getByRole("link", { name: "Create account" }).click();
 
-    await signupUsingInviteToken(page, name, email, password);
+    await signupUsingInviteToken(page, name, email, name);
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
   });
 
   test("Remove member", async ({ page }) => {
-    await login(page, email, password);
+    await login(page, email, name);
 
     const dropdownTrigger = page.locator("#userDropdownTrigger");
     await expect(dropdownTrigger).toBeVisible();

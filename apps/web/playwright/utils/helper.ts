@@ -115,15 +115,15 @@ export const signupUsingInviteToken = async (page: Page, name: string, email: st
 
 export const createSurvey = async (
   page: Page,
-  name: string,
-  email: string,
-  password: string,
+  // name: string,
+  // email: string,
+  // password: string,
   params: CreateSurveyParams
 ) => {
   const addQuestion = "Add QuestionAdd a new question to your survey";
 
-  await signUpAndLogin(page, name, email, password);
-  await finishOnboarding(page);
+  // await signUpAndLogin(page, name, email, password);
+  // await finishOnboarding(page);
 
   await page.getByRole("button", { name: "Start from scratch Create a" }).click();
   await page.getByRole("button", { name: "Create survey", exact: true }).click();

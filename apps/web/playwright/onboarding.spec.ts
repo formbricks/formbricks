@@ -1,13 +1,13 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
 import { signUpAndLogin } from "./utils/helper";
-import { organizations, users } from "./utils/mock";
+import { mockUsers, organizations } from "./utils/mock";
 
 const { productName } = organizations.onboarding[0];
 
 test.describe("Onboarding Flow Test", async () => {
   test("link survey", async ({ page }) => {
-    const { name, email, password } = users.onboarding[0];
+    const { name, email, password } = mockUsers.onboarding[0];
     await signUpAndLogin(page, name, email, password);
     await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/channel/);
 
@@ -22,7 +22,7 @@ test.describe("Onboarding Flow Test", async () => {
   });
 
   test("website survey", async ({ page }) => {
-    const { name, email, password } = users.onboarding[1];
+    const { name, email, password } = mockUsers.onboarding[1];
     await signUpAndLogin(page, name, email, password);
     await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/channel/);
 

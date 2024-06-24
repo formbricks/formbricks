@@ -6,8 +6,8 @@ export interface Fixtures {
 }
 
 export const test = base.extend<Fixtures>({
-  users: async ({ page }, use) => {
-    const usersFixture = createUsersFixture(page);
+  users: async ({ page }, use, workerInfo) => {
+    const usersFixture = createUsersFixture(page, workerInfo);
     await use(usersFixture);
   },
 });

@@ -1,26 +1,27 @@
 import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { Page } from "playwright";
-import { expect } from "playwright/test";
+import { TestInfo } from "playwright/test";
 import { prisma } from "@formbricks/database";
 
 export const login = async (user: Prisma.UserGetPayload<{ include: { memberships: true } }>, page: Page) => {
-  console.log("logging in", user);
-  await page.goto("/auth/login");
+  const csrfToken = await page
+    .context()
+    .request.get("/api/auth/csrf")
+    .then((response) => response.json())
+    .then((json) => json.csrfToken);
+  const data = {
+    email: user.email,
+    password: user.name,
+    callbackURL: "http://localhost:3000/",
+    redirect: "true",
+    json: "true",
+    csrfToken,
+  };
 
-  await expect(page.getByRole("button", { name: "Login with Email" })).toBeVisible();
-
-  await page.getByRole("button", { name: "Login with Email" }).click();
-
-  await expect(page.getByPlaceholder("work@email.com")).toBeVisible();
-
-  await page.getByPlaceholder("work@email.com").fill(user.email);
-
-  await expect(page.getByPlaceholder("*******")).toBeVisible();
-
-  await page.getByPlaceholder("*******").click();
-  await page.getByPlaceholder("*******").fill(user.name);
-  await page.getByRole("button", { name: "Login with Email" }).click();
+  return page.context().request.post("/api/auth/callback/credentials", {
+    data,
+  });
 };
 
 export const createUserFixture = (
@@ -34,26 +35,34 @@ export const createUserFixture = (
   };
 };
 
-export const createUsersFixture = (page: Page) => {
+export type UserFixture = ReturnType<typeof createUserFixture>;
+
+export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
+  const store: { users: UserFixture[] } = {
+    users: [],
+  };
+
   return {
-    create: async (params: {
-      name: string;
-      email: string;
-      organizationName: string;
+    create: async (params?: {
+      name?: string;
+      email?: string;
+      organizationName?: string;
       productName?: string;
     }) => {
-      const hashedPassword = await bcrypt.hash(params.name, 10);
+      const uname = params?.name ?? `user-${workerInfo.workerIndex}-${Date.now()}`;
+      const userEmail = params?.email ?? `${uname}@example.com`;
+      const hashedPassword = await bcrypt.hash(uname, 10);
 
       const user = await prisma.user.create({
         data: {
-          name: params.name,
-          email: params.email,
+          name: uname,
+          email: userEmail,
           password: hashedPassword,
           memberships: {
             create: {
               organization: {
                 create: {
-                  name: params.organizationName,
+                  name: params?.organizationName ?? "My Organization",
                   billing: {
                     plan: "free",
                     limits: { monthly: { responses: 500, miu: 1000 } },
@@ -63,9 +72,34 @@ export const createUsersFixture = (page: Page) => {
                   },
                   products: {
                     create: {
-                      name: params.productName ?? "My Product",
+                      name: params?.productName ?? "My Product",
                       environments: {
-                        create: [{ type: "development" }, { type: "production" }],
+                        create: [
+                          {
+                            type: "development",
+                            actionClasses: {
+                              create: [
+                                {
+                                  name: "New Session",
+                                  description: "Gets fired when a new session is created",
+                                  type: "automatic",
+                                },
+                              ],
+                            },
+                          },
+                          {
+                            type: "production",
+                            actionClasses: {
+                              create: [
+                                {
+                                  name: "New Session",
+                                  description: "Gets fired when a new session is created",
+                                  type: "automatic",
+                                },
+                              ],
+                            },
+                          },
+                        ],
                       },
                     },
                   },
@@ -81,7 +115,11 @@ export const createUsersFixture = (page: Page) => {
       console.log("created user", user);
 
       const userFixture = createUserFixture(user, page);
+
+      store.users.push(userFixture);
+
       return userFixture;
     },
+    get: () => store.users,
   };
 };
