@@ -2,7 +2,7 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { CheckIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
+import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -37,7 +37,7 @@ const Page = async ({ params }) => {
     notFound();
   }
 
-  const { active: isEnterpriseEdition } = await getEnterpriseLicense();
+  const isEnterpriseEdition = await getIsEnterpriseEdition();
 
   const paidFeatures = [
     {

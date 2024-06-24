@@ -19,7 +19,7 @@ const PREVIOUS_RESULTS_CACHE_TAG_KEY = `getPreviousResult-${hashedKey}` as const
 
 // This function is used to get the previous result of the license check from the cache
 // This might seem confusing at first since we only return the default value from this function,
-// but since we are using a cache and the cache key is the same, the cache will return the previous result - so this function acts as a cache getter
+// but since we are using a cache and the cache key is the same, the cache will return the previous result - so this functions as a cache getter
 const getPreviousResult = (): Promise<{
   active: boolean | null;
   lastChecked: Date;
@@ -89,86 +89,47 @@ const fetchLicenseForE2ETesting = async (): Promise<{
   }
 };
 
-export const getEnterpriseLicense = async (): Promise<{
-  active: boolean;
-  features: TEnterpriseLicenseFeatures | null;
-  lastChecked: Date;
-  isPendingDowngrade?: boolean;
-}> => {
+export const getIsEnterpriseEdition = async (): Promise<boolean> => {
   if (!ENTERPRISE_LICENSE_KEY || ENTERPRISE_LICENSE_KEY.length === 0) {
-    return {
-      active: false,
-      features: null,
-      lastChecked: new Date(),
-    };
+    return false;
   }
 
   if (E2E_TESTING) {
     const previousResult = await fetchLicenseForE2ETesting();
-    // return previousResult && previousResult.active !== null ? previousResult.active : false;
-    return {
-      active: previousResult ? previousResult.active : false,
-      features: previousResult ? previousResult.features : null,
-      lastChecked: previousResult ? previousResult.lastChecked : new Date(),
-    };
+    return previousResult && previousResult.active !== null ? previousResult.active : false;
   }
 
   // if the server responds with a boolean, we return it
   // if the server errors, we return null
   // null signifies an error
   const license = await fetchLicense();
-
   const isValid = license ? license.status === "active" : null;
-  const threeDaysInMillis = 3 * 24 * 60 * 60 * 1000;
-  const currentTime = new Date();
 
   const previousResult = await getPreviousResult();
-
   if (previousResult.active === null) {
     if (isValid === null) {
-      const newResult = {
+      await setPreviousResult({
         active: false,
         features: { isMultiOrgEnabled: false },
         lastChecked: new Date(),
-      };
-
-      await setPreviousResult(newResult);
-      return newResult;
+      });
+      return false;
     }
   }
 
   if (isValid !== null && license) {
-    const newResult = {
-      active: isValid,
-      features: license.features,
-      lastChecked: new Date(),
-    };
-
-    await setPreviousResult(newResult);
-    return newResult;
+    await setPreviousResult({ active: isValid, features: license.features, lastChecked: new Date() });
+    return isValid;
   } else {
     // if result is undefined -> error
     // if the last check was less than 72 hours, return the previous value:
-
-    const elapsedTime = currentTime.getTime() - previousResult.lastChecked.getTime();
-    if (elapsedTime < threeDaysInMillis) {
-      return {
-        active: previousResult.active !== null ? previousResult.active : false,
-        features: previousResult.features,
-        lastChecked: previousResult.lastChecked,
-        isPendingDowngrade: true,
-      };
+    if (new Date().getTime() - previousResult.lastChecked.getTime() <= 3 * 24 * 60 * 60 * 1000) {
+      return previousResult.active !== null ? previousResult.active : false;
     }
 
-    // Log error only after 72 hours
+    // if the last check was more than 72 hours, return false and log the error
     console.error("Error while checking license: The license check failed");
-
-    return {
-      active: false,
-      features: null,
-      lastChecked: previousResult.lastChecked,
-      isPendingDowngrade: true,
-    };
+    return false;
   }
 };
 
@@ -178,13 +139,14 @@ export const getLicenseFeatures = async (): Promise<TEnterpriseLicenseFeatures |
     return previousResult.features;
   } else {
     const license = await fetchLicense();
-    if (!license || !license.features) return null;
-    return license.features;
+    if (!license) return null;
+    const features = await license.features;
+    return features;
   }
 };
 
-export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> =>
-  await cache(
+export const fetchLicense = async () => {
+  const licenseResult: TEnterpriseLicenseDetails | null = await cache(
     async () => {
       if (!env.ENTERPRISE_LICENSE_KEY) return null;
       try {
@@ -230,6 +192,8 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
     [`fetchLicense-${hashedKey}`],
     { revalidate: 60 * 60 * 24 }
   )();
+  return licenseResult;
+};
 
 export const getRemoveInAppBrandingPermission = (organization: TOrganization): boolean => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PRODUCT_FEATURE_KEYS.FREE;
@@ -249,7 +213,7 @@ export const getRoleManagementPermission = async (organization: TOrganization): 
       organization.billing.plan === PRODUCT_FEATURE_KEYS.SCALE ||
       organization.billing.plan === PRODUCT_FEATURE_KEYS.ENTERPRISE
     );
-  else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
+  else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
   return false;
 };
 
@@ -259,13 +223,13 @@ export const getAdvancedTargetingPermission = async (organization: TOrganization
       organization.billing.plan === PRODUCT_FEATURE_KEYS.SCALE ||
       organization.billing.plan === PRODUCT_FEATURE_KEYS.ENTERPRISE
     );
-  else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
+  else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
   else return false;
 };
 
 export const getBiggerUploadFileSizePermission = async (organization: TOrganization): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PRODUCT_FEATURE_KEYS.FREE;
-  else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
+  else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
   return false;
 };
 
@@ -279,7 +243,7 @@ export const getMultiLanguagePermission = async (organization: TOrganization): P
       organization.billing.plan === PRODUCT_FEATURE_KEYS.SCALE ||
       organization.billing.plan === PRODUCT_FEATURE_KEYS.ENTERPRISE
     );
-  else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
+  else if (!IS_FORMBRICKS_CLOUD) return await getIsEnterpriseEdition();
   return false;
 };
 
