@@ -11,7 +11,7 @@ const queue = new CommandQueue();
 
 export const init = async (initConfig: TJsAppConfigInput) => {
   ErrorHandler.init(initConfig.errorHandler);
-  queue.add(false, "mobile", initialize, initConfig);
+  queue.add(false, "app", initialize, initConfig);
   await queue.wait();
 };
 
