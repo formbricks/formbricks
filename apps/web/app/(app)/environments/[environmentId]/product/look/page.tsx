@@ -84,21 +84,22 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       <SettingsCard
         title="Formbricks Branding"
         description="We love your support but understand if you toggle it off.">
-        {currentProductChannel === "link" ? (
+        <div className="space-y-4">
           <EditFormbricksBranding
             type="linkSurvey"
             product={product}
             canRemoveBranding={canRemoveLinkBranding}
             environmentId={params.environmentId}
           />
-        ) : (
-          <EditFormbricksBranding
-            type="inAppSurvey"
-            product={product}
-            canRemoveBranding={canRemoveInAppBranding}
-            environmentId={params.environmentId}
-          />
-        )}
+          {currentProductChannel !== "link" && (
+            <EditFormbricksBranding
+              type="inAppSurvey"
+              product={product}
+              canRemoveBranding={canRemoveInAppBranding}
+              environmentId={params.environmentId}
+            />
+          )}
+        </div>
       </SettingsCard>
     </PageContentWrapper>
   );
