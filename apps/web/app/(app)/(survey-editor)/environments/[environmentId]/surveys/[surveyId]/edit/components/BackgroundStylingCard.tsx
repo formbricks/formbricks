@@ -2,64 +2,36 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
-
+import { UseFormReturn } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
 import { TProductStyling } from "@formbricks/types/product";
-import { TSurveyBackgroundBgType, TSurveyStyling } from "@formbricks/types/surveys";
+import { TSurveyStyling } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Slider } from "@formbricks/ui/Slider";
-
-import SurveyBgSelectorTab from "./SurveyBgSelectorTab";
+import { SurveyBgSelectorTab } from "./SurveyBgSelectorTab";
 
 interface BackgroundStylingCardProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  styling: TSurveyStyling | TProductStyling | null;
-  setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | TProductStyling>>;
   colors: string[];
   isSettingsPage?: boolean;
   disabled?: boolean;
   environmentId: string;
   isUnsplashConfigured: boolean;
+  form: UseFormReturn<TProductStyling | TSurveyStyling>;
 }
 
 export const BackgroundStylingCard = ({
   open,
   setOpen,
-  styling,
-  setStyling,
   colors,
   isSettingsPage = false,
   disabled,
   environmentId,
   isUnsplashConfigured,
+  form,
 }: BackgroundStylingCardProps) => {
-  const { bgType, brightness } = styling?.background ?? {};
-
-  const handleBgChange = (color: string, type: TSurveyBackgroundBgType) => {
-    const { background } = styling ?? {};
-
-    setStyling({
-      ...styling,
-      background: {
-        ...background,
-        bg: color,
-        bgType: type,
-        brightness: 100,
-      },
-    });
-  };
-
-  const handleBrightnessChange = (percent: number) => {
-    setStyling((prev) => ({
-      ...prev,
-      background: {
-        ...prev.background,
-        brightness: percent,
-      },
-    }));
-  };
-
   return (
     <Collapsible.Root
       open={open}
@@ -69,13 +41,13 @@ export const BackgroundStylingCard = ({
       }}
       className={cn(
         open ? "" : "hover:bg-slate-50",
-        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
+        "w-full space-y-2 rounded-lg border border-slate-300 bg-white"
       )}>
       <Collapsible.CollapsibleTrigger
         asChild
         disabled={disabled}
         className={cn(
-          "h-full w-full cursor-pointer rounded-lg hover:bg-slate-50",
+          "w-full cursor-pointer rounded-lg hover:bg-slate-50",
           disabled && "cursor-not-allowed opacity-60 hover:bg-white"
         )}>
         <div className="inline-flex px-4 py-4">
@@ -101,48 +73,66 @@ export const BackgroundStylingCard = ({
         </div>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent>
-        <hr className="py-1 text-slate-600" />
-        <div className="flex flex-col gap-3 p-3">
-          {/* Background */}
-          <div className="p-3">
-            <div className="ml-2">
-              <h3 className="text-sm font-semibold text-slate-700">Change background</h3>
-              <p className="text-xs font-normal text-slate-500">
-                Pick a background from our library or upload your own.
-              </p>
-            </div>
-            <SurveyBgSelectorTab
-              styling={styling}
-              handleBgChange={handleBgChange}
-              colors={colors}
-              bgType={bgType}
-              environmentId={environmentId}
-              isUnsplashConfigured={isUnsplashConfigured}
-            />
-          </div>
-
-          {/* Overlay */}
-          <div className="flex flex-col gap-4 p-3">
-            <div className="ml-2">
-              <h3 className="text-sm font-semibold text-slate-700">Background overlay</h3>
-              <p className="text-xs font-normal text-slate-500">
-                Darken or lighten background of your choice.
-              </p>
-            </div>
-
-            <div>
-              <div className="ml-2 flex flex-col justify-center">
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
-                    <Slider
-                      value={[brightness ?? 100]}
-                      max={200}
-                      onValueChange={(value) => {
-                        handleBrightnessChange(value[0]);
-                      }}
-                    />
-                  </div>
+        <hr className="pt-1 text-slate-600" />
+        <div className="flex flex-col gap-6 p-6 pt-2">
+          <FormField
+            control={form.control}
+            name="background"
+            render={({ field }) => (
+              <FormItem>
+                <div>
+                  <FormLabel>Change background</FormLabel>
+                  <FormDescription>Pick a background from our library or upload your own.</FormDescription>
                 </div>
+
+                <FormControl>
+                  <SurveyBgSelectorTab
+                    bg={field.value?.bg ?? ""}
+                    handleBgChange={(bg: string, bgType: string) => {
+                      field.onChange({
+                        ...field.value,
+                        bg,
+                        bgType,
+                        brightness: 100,
+                      });
+                    }}
+                    colors={colors}
+                    bgType={field.value?.bgType ?? "color"}
+                    environmentId={environmentId}
+                    isUnsplashConfigured={isUnsplashConfigured}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <div className="flex flex-col justify-center">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col justify-center">
+                <FormField
+                  control={form.control}
+                  name="background.brightness"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div>
+                        <FormLabel>Brightness</FormLabel>
+                        <FormDescription>Darken or lighten background of your choice.</FormDescription>
+                      </div>
+
+                      <FormControl>
+                        <div className="rounded-lg border bg-slate-50 p-6">
+                          <Slider
+                            value={[field.value ?? 100]}
+                            max={200}
+                            onValueChange={(value) => {
+                              field.onChange(value[0]);
+                            }}
+                          />
+                        </div>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
           </div>

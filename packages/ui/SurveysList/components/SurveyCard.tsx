@@ -1,12 +1,10 @@
 import { Code, Globe2Icon, Link2Icon, SmartphoneIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { convertDateString, timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
-
 import { SurveyStatusIndicator } from "../../SurveyStatusIndicator";
 import { generateSingleUseIdAction } from "../actions";
 import { SurveyDropDownMenu } from "./SurveyDropdownMenu";
@@ -133,10 +131,9 @@ export const SurveyCard = ({
       <Link
         href={linkHref}
         key={survey.id}
-        className="relative grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4
-    shadow-sm transition-all ease-in-out hover:scale-[101%]">
-        <div className="col-span-2 flex max-w-full items-center justify-self-start truncate whitespace-nowrap text-sm font-medium text-slate-900">
-          {survey.name}
+        className="relative grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all ease-in-out hover:scale-[101%]">
+        <div className="col-span-2 flex max-w-full items-center justify-self-start text-sm font-medium text-slate-900">
+          <div className="w-full truncate">{survey.name}</div>
         </div>
         <div
           className={cn(

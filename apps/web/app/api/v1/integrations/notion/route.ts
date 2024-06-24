@@ -1,7 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import {
   NOTION_AUTH_URL,
@@ -11,7 +10,7 @@ import {
 } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   const environmentId = req.headers.get("environmentId");
   const session = await getServerSession(authOptions);
 
@@ -38,4 +37,4 @@ export async function GET(req: NextRequest) {
   if (!auth_url) return responses.internalServerErrorResponse("Notion auth url is missing");
 
   return responses.successResponse({ authUrl: `${auth_url}&state=${environmentId}` });
-}
+};

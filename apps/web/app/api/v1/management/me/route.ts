@@ -1,9 +1,8 @@
 import { getSessionUser, hashApiKey } from "@/app/lib/api/apiHelper";
 import { headers } from "next/headers";
-
 import { prisma } from "@formbricks/database";
 
-export async function GET() {
+export const GET = async () => {
   const headersList = headers();
   const apiKey = headersList.get("x-api-key");
   if (apiKey) {
@@ -24,7 +23,8 @@ export async function GET() {
                 name: true,
               },
             },
-            widgetSetupCompleted: true,
+            appSetupCompleted: true,
+            websiteSetupCompleted: true,
           },
         },
       },
@@ -51,4 +51,4 @@ export async function GET() {
 
     return Response.json(user);
   }
-}
+};

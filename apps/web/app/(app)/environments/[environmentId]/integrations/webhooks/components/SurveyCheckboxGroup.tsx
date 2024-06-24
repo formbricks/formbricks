@@ -1,5 +1,4 @@
 import React from "react";
-
 import { TSurvey } from "@formbricks/types/surveys";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 
@@ -69,5 +68,3 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
     </div>
   );
 };
-
-export default SurveyCheckboxGroup;

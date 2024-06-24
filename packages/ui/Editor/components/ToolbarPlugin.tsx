@@ -27,9 +27,7 @@ import { COMMAND_PRIORITY_CRITICAL, PASTE_COMMAND } from "lexical";
 import { Bold, ChevronDownIcon, Italic, Link } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-
 import { cn } from "@formbricks/lib/cn";
-
 import { Button } from "../../Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
 import { Input } from "../../Input";
@@ -52,7 +50,7 @@ const blockTypeToBlockName: BlockType = {
   h2: "Small Heading",
 };
 
-function positionEditorElement(editor: HTMLInputElement, rect: DOMRect | null) {
+const positionEditorElement = (editor: HTMLInputElement, rect: DOMRect | null) => {
   if (rect === null) {
     editor.style.opacity = "0";
     editor.style.top = "-1000px";
@@ -62,9 +60,9 @@ function positionEditorElement(editor: HTMLInputElement, rect: DOMRect | null) {
     editor.style.top = `${rect.top + rect.height + window.pageYOffset + 10}px`;
     editor.style.left = `${rect.left + window.pageXOffset - editor.offsetWidth / 2 + rect.width / 2}px`;
   }
-}
+};
 
-function FloatingLinkEditor({ editor }: { editor: LexicalEditor }) {
+const FloatingLinkEditor = ({ editor }: { editor: LexicalEditor }) => {
   const editorRef = useRef<HTMLInputElement>(null);
   const mouseDownRef = useRef(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -198,9 +196,9 @@ function FloatingLinkEditor({ editor }: { editor: LexicalEditor }) {
       )}
     </div>
   );
-}
+};
 
-function getSelectedNode(selection: RangeSelection) {
+const getSelectedNode = (selection: RangeSelection) => {
   const anchor = selection.anchor;
   const focus = selection.focus;
   const anchorNode = selection.anchor.getNode();
@@ -214,9 +212,9 @@ function getSelectedNode(selection: RangeSelection) {
   } else {
     return $isAtNodeEnd(anchor) ? focusNode : anchorNode;
   }
-}
+};
 
-export default function ToolbarPlugin(props: TextEditorProps) {
+export const ToolbarPlugin = (props: TextEditorProps) => {
   const [editor] = useLexicalComposerContext();
 
   const toolbarRef = useRef(null);
@@ -537,4 +535,4 @@ export default function ToolbarPlugin(props: TextEditorProps) {
       </>
     </div>
   );
-}
+};

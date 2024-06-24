@@ -1,7 +1,7 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
-import SummaryPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
+import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { notFound } from "next/navigation";
-
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -10,7 +10,7 @@ import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/s
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
 
   if (!surveyId) {
@@ -18,17 +18,20 @@ export default async function Page({ params }) {
   }
 
   const survey = await getSurvey(surveyId);
-
   if (!survey) {
     throw new Error("Survey not found");
   }
-  const environment = await getEnvironment(survey.environmentId);
+  const environmentId = survey.environmentId;
+  const [environment, attributeClasses, product] = await Promise.all([
+    getEnvironment(environmentId),
+    getAttributeClasses(environmentId),
+    getProductByEnvironmentId(environmentId),
+  ]);
 
   if (!environment) {
     throw new Error("Environment not found");
   }
 
-  const product = await getProductByEnvironmentId(environment.id);
   if (!product) {
     throw new Error("Product not found");
   }
@@ -52,8 +55,11 @@ export default async function Page({ params }) {
           surveyId={survey.id}
           webAppUrl={WEBAPP_URL}
           totalResponseCount={totalResponseCount}
+          attributeClasses={attributeClasses}
         />
       </PageContentWrapper>
     </div>
   );
-}
+};
+
+export default Page;

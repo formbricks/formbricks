@@ -5,9 +5,10 @@ import { MailIcon } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { isValidEmail } from "@formbricks/lib/utils/email";
+import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -20,6 +21,7 @@ interface VerifyEmailProps {
   singleUseId?: string;
   languageCode: string;
   styling: TProductStyling;
+  attributeClasses: TAttributeClass[];
 }
 
 export const VerifyEmail = ({
@@ -28,21 +30,20 @@ export const VerifyEmail = ({
   singleUseId,
   languageCode,
   styling,
+  attributeClasses,
 }: VerifyEmailProps) => {
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey, "default");
-  }, [survey]);
+    return replaceHeadlineRecall(survey, "default", attributeClasses);
+  }, [survey, attributeClasses]);
 
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const validateEmail = (inputEmail) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inputEmail);
-
   const submitEmail = async (email) => {
     setIsLoading(true);
-    if (!validateEmail(email)) {
+    if (!isValidEmail(email)) {
       toast.error("Please enter a valid email");
       setIsLoading(false);
       return;

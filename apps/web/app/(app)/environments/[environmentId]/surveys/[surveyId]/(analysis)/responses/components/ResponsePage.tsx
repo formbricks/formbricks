@@ -5,18 +5,16 @@ import {
   getResponseCountAction,
   getResponsesAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
+import { ResponseTimeline } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import {
   getResponseCountBySurveySharingKeyAction,
   getResponsesBySurveySharingKeyAction,
-} from "@/app/share/[sharingKey]/action";
+} from "@/app/share/[sharingKey]/actions";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-
-import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -34,7 +32,7 @@ interface ResponsePageProps {
   totalResponseCount: number;
 }
 
-const ResponsePage = ({
+export const ResponsePage = ({
   environment,
   survey,
   surveyId,
@@ -65,10 +63,6 @@ const ResponsePage = ({
 
   const searchParams = useSearchParams();
 
-  survey = useMemo(() => {
-    return checkForRecallInHeadline(survey, "default");
-  }, [survey]);
-
   const fetchNextPage = useCallback(async () => {
     const newPage = page + 1;
 
@@ -77,12 +71,17 @@ const ResponsePage = ({
     if (isSharingPage) {
       newResponses = await getResponsesBySurveySharingKeyAction(
         sharingKey,
-        newPage,
         responsesPerPage,
+        (newPage - 1) * responsesPerPage,
         filters
       );
     } else {
-      newResponses = await getResponsesAction(surveyId, newPage, responsesPerPage, filters);
+      newResponses = await getResponsesAction(
+        surveyId,
+        responsesPerPage,
+        (newPage - 1) * responsesPerPage,
+        filters
+      );
     }
 
     if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
@@ -132,9 +131,9 @@ const ResponsePage = ({
         let responses: TResponse[] = [];
 
         if (isSharingPage) {
-          responses = await getResponsesBySurveySharingKeyAction(sharingKey, 1, responsesPerPage, filters);
+          responses = await getResponsesBySurveySharingKeyAction(sharingKey, responsesPerPage, 0, filters);
         } else {
-          responses = await getResponsesAction(surveyId, 1, responsesPerPage, filters);
+          responses = await getResponsesAction(surveyId, responsesPerPage, 0, filters);
         }
 
         if (responses.length < responsesPerPage) {
@@ -179,5 +178,3 @@ const ResponsePage = ({
     </>
   );
 };
-
-export default ResponsePage;

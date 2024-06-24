@@ -3,7 +3,6 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
-
 import { getPerson } from "@formbricks/lib/person/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/response/service";
@@ -18,11 +17,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(request: Request, context: Context): Promise<Response> {
+export const POST = async (request: Request, context: Context): Promise<Response> => {
   const { environmentId } = context.params;
   const environmentIdValidation = ZId.safeParse(environmentId);
 
@@ -82,7 +81,7 @@ export async function POST(request: Request, context: Context): Promise<Response
       url: responseInput?.meta?.url,
       userAgent: {
         browser: agent?.browser.name,
-        device: agent?.device.type,
+        device: agent?.device.type || "desktop",
         os: agent?.os.name,
       },
       country: country,
@@ -124,4 +123,4 @@ export async function POST(request: Request, context: Context): Promise<Response
   });
 
   return responses.successResponse({ id: response.id }, true);
-}
+};

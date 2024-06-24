@@ -1,5 +1,4 @@
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-
 import { TSurveySummary } from "@formbricks/types/surveys";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
@@ -30,7 +29,7 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
   </TooltipProvider>
 );
 
-function formatTime(ttc) {
+const formatTime = (ttc) => {
   const seconds = ttc / 1000;
   let formattedValue;
 
@@ -43,7 +42,7 @@ function formatTime(ttc) {
   }
 
   return formattedValue;
-}
+};
 
 export const SummaryMetadata = ({ setShowDropOffs, showDropOffs, surveySummary }: SummaryMetadataProps) => {
   const {
@@ -73,7 +72,7 @@ export const SummaryMetadata = ({ setShowDropOffs, showDropOffs, surveySummary }
           tooltipText="Number of times the survey has been started."
         />
         <StatCard
-          label="Responses"
+          label="Completed"
           percentage={`${Math.round(completedPercentage)}%`}
           value={completedResponses === 0 ? <span>-</span> : completedResponses}
           tooltipText="Number of times the survey has been completed."

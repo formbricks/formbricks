@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-
 import { Button } from "@formbricks/ui/Button";
 import { Modal } from "@formbricks/ui/Modal";
 import { OTPInput } from "@formbricks/ui/OTPInput";
@@ -282,7 +281,7 @@ const DisplayBackupCodes = ({ backupCodes, setOpen }: TDisplayBackupCodesProps) 
   );
 };
 
-const EnableTwoFactorModal = ({ open, setOpen }: TEnableTwoFactorModalProps) => {
+export const EnableTwoFactorModal = ({ open, setOpen }: TEnableTwoFactorModalProps) => {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<TStep>("confirmPassword");
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
@@ -325,5 +324,3 @@ const EnableTwoFactorModal = ({ open, setOpen }: TEnableTwoFactorModalProps) => 
     </Modal>
   );
 };
-
-export default EnableTwoFactorModal;

@@ -1,11 +1,9 @@
 import { Prisma } from "@prisma/client";
-
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
-
 import { cache } from "../cache";
-import { teamCache } from "../team/cache";
+import { organizationCache } from "../organization/cache";
 import { validateInputs } from "../utils/validate";
 
 export const hasUserEnvironmentAccess = async (userId: string, environmentId: string) =>
@@ -21,7 +19,7 @@ export const hasUserEnvironmentAccess = async (userId: string, environmentId: st
           select: {
             product: {
               select: {
-                team: {
+                organization: {
                   select: {
                     memberships: {
                       select: {
@@ -35,7 +33,8 @@ export const hasUserEnvironmentAccess = async (userId: string, environmentId: st
           },
         });
 
-        const environmentUsers = environment?.product.team.memberships.map((member) => member.userId) || [];
+        const environmentUsers =
+          environment?.product.organization.memberships.map((member) => member.userId) || [];
         return environmentUsers.includes(userId);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -46,6 +45,6 @@ export const hasUserEnvironmentAccess = async (userId: string, environmentId: st
     },
     [`hasUserEnvironmentAccess-${userId}-${environmentId}`],
     {
-      tags: [teamCache.tag.byEnvironmentId(environmentId), teamCache.tag.byUserId(userId)],
+      tags: [organizationCache.tag.byEnvironmentId(environmentId), organizationCache.tag.byUserId(userId)],
     }
   )();

@@ -3,7 +3,6 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { z } from "zod";
-
 import { getAttributesByUserId, updateAttributes } from "@formbricks/lib/attribute/service";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { ZAttributes } from "@formbricks/types/attributes";
@@ -15,14 +14,21 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(req: Request, context: Context): Promise<Response> {
+export const POST = async (req: Request, context: Context): Promise<Response> => {
   try {
     const { userId, environmentId } = context.params;
     const jsonInput = await req.json();
+
+    // transform all attributes to string if attributes are present
+    if (jsonInput.attributes) {
+      for (const key in jsonInput.attributes) {
+        jsonInput.attributes[key] = String(jsonInput.attributes[key]);
+      }
+    }
 
     // validate using zod
     const inputValidation = z.object({ attributes: ZAttributes }).safeParse(jsonInput);
@@ -79,4 +85,4 @@ export async function POST(req: Request, context: Context): Promise<Response> {
     console.error(error);
     return responses.internalServerErrorResponse(`Unable to complete request: ${error.message}`, true);
   }
-}
+};

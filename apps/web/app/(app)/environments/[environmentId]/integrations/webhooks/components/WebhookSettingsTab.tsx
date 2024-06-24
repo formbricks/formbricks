@@ -1,8 +1,8 @@
 "use client";
 
 import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/HardcodedTriggers";
-import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
-import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
+import { SurveyCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
+import { TriggerCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
 import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/testEndpoint";
 import clsx from "clsx";
 import { TrashIcon } from "lucide-react";
@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-
 import { TPipelineTrigger } from "@formbricks/types/pipelines";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TWebhook, TWebhookInput } from "@formbricks/types/webhooks";
@@ -18,7 +17,6 @@ import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-
 import { deleteWebhookAction, updateWebhookAction } from "../actions";
 
 interface ActionSettingsTabProps {
@@ -28,12 +26,7 @@ interface ActionSettingsTabProps {
   setOpen: (v: boolean) => void;
 }
 
-export default function WebhookSettingsTab({
-  environmentId,
-  webhook,
-  surveys,
-  setOpen,
-}: ActionSettingsTabProps) {
+export const WebhookSettingsTab = ({ environmentId, webhook, surveys, setOpen }: ActionSettingsTabProps) => {
   const router = useRouter();
   const { register, handleSubmit } = useForm({
     defaultValues: {
@@ -247,4 +240,4 @@ export default function WebhookSettingsTab({
       />
     </div>
   );
-}
+};

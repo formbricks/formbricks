@@ -4,7 +4,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
 import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Input } from "@formbricks/ui/Input";
@@ -12,7 +11,7 @@ import { Label } from "@formbricks/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 
 interface DisplayOption {
-  id: "displayOnce" | "displayMultiple" | "respondMultiple";
+  id: "displayOnce" | "displayMultiple" | "respondMultiple" | "displaySome";
   name: string;
   description: string;
 }
@@ -22,6 +21,11 @@ const displayOptions: DisplayOption[] = [
     id: "displayOnce",
     name: "Show only once",
     description: "The survey will be shown once, even if person doesn't respond.",
+  },
+  {
+    id: "displaySome",
+    name: "Show multiple times",
+    description: "The survey will be shown multiple times until they respond",
   },
   {
     id: "displayMultiple",
@@ -41,16 +45,17 @@ interface RecontactOptionsCardProps {
   environmentId: string;
 }
 
-export default function RecontactOptionsCard({
+export const RecontactOptionsCard = ({
   localSurvey,
   setLocalSurvey,
   environmentId,
-}: RecontactOptionsCardProps) {
+}: RecontactOptionsCardProps) => {
   const [open, setOpen] = useState(false);
   const ignoreWaiting = localSurvey.recontactDays !== null;
   const [inputDays, setInputDays] = useState(
     localSurvey.recontactDays !== null ? localSurvey.recontactDays : 1
   );
+  const [displayLimit, setDisplayLimit] = useState(localSurvey.displayLimit ?? 1);
 
   const handleCheckMark = () => {
     if (ignoreWaiting) {
@@ -67,6 +72,14 @@ export default function RecontactOptionsCard({
     setInputDays(value);
 
     const updatedSurvey = { ...localSurvey, recontactDays: value };
+    setLocalSurvey(updatedSurvey);
+  };
+
+  const handleRecontactSessionDaysChange = (event) => {
+    const value = Number(event.target.value);
+    setDisplayLimit(value);
+
+    const updatedSurvey = { ...localSurvey, displayLimit: value } satisfies TSurvey;
     setLocalSurvey(updatedSurvey);
   };
 
@@ -91,7 +104,8 @@ export default function RecontactOptionsCard({
       className="w-full rounded-lg border border-slate-300 bg-white">
       <Collapsible.CollapsibleTrigger
         asChild
-        className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
+        className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50"
+        id="recontactOptionsCardTrigger">
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
             <CheckIcon
@@ -115,24 +129,49 @@ export default function RecontactOptionsCard({
               if (v === "displayOnce" || v === "displayMultiple" || v === "respondMultiple") {
                 const updatedSurvey: TSurvey = { ...localSurvey, displayOption: v };
                 setLocalSurvey(updatedSurvey);
+              } else if (v === "displaySome") {
+                const updatedSurvey: TSurvey = {
+                  ...localSurvey,
+                  displayOption: v,
+                  displayLimit,
+                };
+                setLocalSurvey(updatedSurvey);
               }
             }}>
             {displayOptions.map((option) => (
-              <Label
-                key={option.name}
-                htmlFor={option.name}
-                className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
-                <RadioGroupItem
-                  value={option.id}
-                  id={option.name}
-                  className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
-                />
-                <div>
-                  <p className="font-semibold text-slate-700">{option.name}</p>
+              <>
+                <Label
+                  key={option.name}
+                  htmlFor={option.name}
+                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
+                  <RadioGroupItem
+                    value={option.id}
+                    id={option.name}
+                    className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
+                  />
+                  <div>
+                    <p className="font-semibold text-slate-700">{option.name}</p>
 
-                  <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
-                </div>
-              </Label>
+                    <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
+                  </div>
+                </Label>
+                {option.id === "displaySome" && localSurvey.displayOption === "displaySome" && (
+                  <label htmlFor="displayLimit" className="cursor-pointer p-4">
+                    <p className="text-sm font-semibold text-slate-700">
+                      Show survey maximum of
+                      <Input
+                        type="number"
+                        min="1"
+                        id="displayLimit"
+                        value={displayLimit.toString()}
+                        onChange={(e) => handleRecontactSessionDaysChange(e)}
+                        className="mx-2 inline w-16 bg-white text-center text-sm"
+                      />
+                      times.
+                    </p>
+                  </label>
+                )}
+              </>
             ))}
           </RadioGroup>
         </div>
@@ -213,4 +252,4 @@ export default function RecontactOptionsCard({
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
-}
+};

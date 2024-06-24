@@ -1,13 +1,12 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { deleteProduct, getProducts, updateProduct } from "@formbricks/lib/product/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TEnvironment } from "@formbricks/types/environment";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
@@ -40,8 +39,10 @@ export const updateProductAction = async (
     throw new AuthorizationError("Not authorized");
   }
 
-  const team = await getTeamByEnvironmentId(environmentId);
-  const membership = team ? await getMembershipByUserIdTeamId(session.user.id, team.id) : null;
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+  const membership = organization
+    ? await getMembershipByUserIdOrganizationId(session.user.id, organization.id)
+    : null;
 
   if (!membership) {
     throw new AuthorizationError("Not authorized");
@@ -52,7 +53,7 @@ export const updateProductAction = async (
   }
 
   if (membership.role === "developer") {
-    if (!!data.name || !!data.brandColor || !!data.teamId || !!data.environments) {
+    if (!!data.name || !!data.organizationId || !!data.environments) {
       throw new AuthorizationError("Not authorized");
     }
   }
@@ -61,13 +62,13 @@ export const updateProductAction = async (
   return updatedProduct;
 };
 
-export const deleteProductAction = async (environmentId: string, userId: string, productId: string) => {
+export const deleteProductAction = async (environmentId: string, productId: string) => {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     throw new AuthenticationError("Not authenticated");
   }
-
+  const userId = session.user.id;
   // get the environment from service and check if the user is allowed to update the product
   let environment: TEnvironment | null = null;
 
@@ -85,14 +86,14 @@ export const deleteProductAction = async (environmentId: string, userId: string,
     throw new AuthorizationError("Not authorized");
   }
 
-  const team = await getTeamByEnvironmentId(environmentId);
-  const membership = team ? await getMembershipByUserIdTeamId(userId, team.id) : null;
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+  const membership = organization ? await getMembershipByUserIdOrganizationId(userId, organization.id) : null;
 
   if (membership?.role !== "admin" && membership?.role !== "owner") {
     throw new AuthorizationError("You are not allowed to delete products.");
   }
 
-  const availableProducts = team ? await getProducts(team.id) : null;
+  const availableProducts = organization ? await getProducts(organization.id) : null;
 
   if (!!availableProducts && availableProducts?.length <= 1) {
     throw new Error("You can't delete the last product in the environment.");

@@ -1,6 +1,6 @@
 import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/HardcodedTriggers";
-import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
-import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
+import { SurveyCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
+import { TriggerCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
 import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/testEndpoint";
 import clsx from "clsx";
 import { Webhook } from "lucide-react";
@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-
 import { TPipelineTrigger } from "@formbricks/types/pipelines";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TWebhookInput } from "@formbricks/types/webhooks";
@@ -16,7 +15,6 @@ import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
-
 import { createWebhookAction } from "../actions";
 
 interface AddWebhookModalProps {
@@ -26,7 +24,7 @@ interface AddWebhookModalProps {
   setOpen: (v: boolean) => void;
 }
 
-export default function AddWebhookModal({ environmentId, surveys, open, setOpen }: AddWebhookModalProps) {
+export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWebhookModalProps) => {
   const router = useRouter();
   const {
     handleSubmit,
@@ -236,4 +234,4 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
       </div>
     </Modal>
   );
-}
+};

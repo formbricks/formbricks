@@ -1,7 +1,7 @@
 import { Button } from "@formbricks/ui/Button";
 import { GoBackButton } from "@formbricks/ui/GoBackButton";
 
-export default function Loading() {
+const Loading = () => {
   return (
     <div className="mt-6 p-6">
       <GoBackButton />
@@ -15,9 +15,9 @@ export default function Loading() {
 
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-12 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-4 text-center ">Survey</div>
+          <div className="col-span-4 text-center">Survey</div>
           <div className="col-span-4 text-center">Google Sheet Name</div>
-          <div className="col-span-2 text-center ">Questions</div>
+          <div className="col-span-2 text-center">Questions</div>
           <div className="col-span-2 text-center">Updated At</div>
         </div>
         <div className="grid-cols-7">
@@ -57,4 +57,6 @@ export default function Loading() {
       </div>
     </div>
   );
-}
+};
+
+export default Loading;

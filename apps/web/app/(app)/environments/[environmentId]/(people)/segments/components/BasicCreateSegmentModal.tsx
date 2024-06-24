@@ -4,16 +4,15 @@ import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
-import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
+import { createSegmentAction } from "@formbricks/ee/advanced-targeting/lib/actions";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segment";
+import { BasicAddFilterModal } from "@formbricks/ui/BasicAddFilterModal";
+import { BasicSegmentEditor } from "@formbricks/ui/BasicSegmentEditor";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
-import BasicAddFilterModal from "@formbricks/ui/Targeting/BasicAddFilterModal";
-import BasicSegmentEditor from "@formbricks/ui/Targeting/BasicSegmentEditor";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 type TCreateSegmentModalProps = {
@@ -21,7 +20,8 @@ type TCreateSegmentModalProps = {
   attributeClasses: TAttributeClass[];
   isFormbricksCloud: boolean;
 };
-const BasicCreateSegmentModal = ({
+
+export const BasicCreateSegmentModal = ({
   environmentId,
   attributeClasses,
   isFormbricksCloud,
@@ -217,14 +217,14 @@ const BasicCreateSegmentModal = ({
             {isFormbricksCloud ? (
               <UpgradePlanNotice
                 message="For advanced targeting, please"
-                textForUrl="upgrade to the User Identification plan."
+                textForUrl="upgrade your plan."
                 url={`/environments/${environmentId}/settings/billing`}
               />
             ) : (
               <UpgradePlanNotice
                 message="For advanced targeting, please"
-                textForUrl="request an Enterprise license."
-                url="https://formbricks.com/docs/self-hosting/enterprise"
+                textForUrl="request an Enterprise License."
+                url={`/environments/${environmentId}/settings/enterprise`}
               />
             )}
 
@@ -256,5 +256,3 @@ const BasicCreateSegmentModal = ({
     </>
   );
 };
-
-export default BasicCreateSegmentModal;

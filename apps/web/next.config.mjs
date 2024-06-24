@@ -11,17 +11,16 @@ jiti("@formbricks/lib/env");
 
 /** @type {import('next').NextConfig} */
 
-function getHostname(url) {
+const getHostname = (url) => {
   const urlObj = new URL(url);
   return urlObj.hostname;
-}
+};
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
+  serverExternalPackages: ["@aws-sdk"],
   experimental: {
-    serverComponentsExternalPackages: ["@aws-sdk"],
-    instrumentationHook: true,
     outputFileTracingIncludes: {
       "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
     },

@@ -4,8 +4,7 @@ import { deleteProductAction } from "@/app/(app)/environments/[environmentId]/pr
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-
-import { truncate } from "@formbricks/lib/strings";
+import { truncate } from "@formbricks/lib/utils/strings";
 import { TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
@@ -15,16 +14,14 @@ type DeleteProductRenderProps = {
   isDeleteDisabled: boolean;
   isUserAdminOrOwner: boolean;
   product: TProduct;
-  userId: string;
 };
 
-const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
+export const DeleteProductRender = ({
   environmentId,
   isDeleteDisabled,
   isUserAdminOrOwner,
   product,
-  userId,
-}) => {
+}: DeleteProductRenderProps) => {
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -32,7 +29,7 @@ const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
   const handleDeleteProduct = async () => {
     try {
       setIsDeleting(true);
-      const deletedProduct = await deleteProductAction(environmentId, userId, product.id);
+      const deletedProduct = await deleteProductAction(environmentId, product.id);
       if (!!deletedProduct?.id) {
         toast.success("Product deleted successfully.");
         router.push("/");
@@ -86,5 +83,3 @@ const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
     </div>
   );
 };
-
-export default DeleteProductRender;

@@ -1,11 +1,10 @@
 // migration script to translate surveys where thankYouCard buttonLabel is a string or question subheaders are strings
 import { PrismaClient } from "@prisma/client";
-
 import { hasStringSubheaders, translateSurvey } from "./lib/i18n";
 
 const prisma = new PrismaClient();
 
-async function main() {
+const main = async () => {
   await prisma.$transaction(
     async (tx) => {
       // Translate Surveys
@@ -39,7 +38,7 @@ async function main() {
       timeout: 50000,
     }
   );
-}
+};
 
 main()
   .catch(async (e) => {

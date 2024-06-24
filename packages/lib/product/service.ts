@@ -1,15 +1,12 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
-
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
-
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE, isS3Configured } from "../constants";
 import { environmentCache } from "../environment/cache";
@@ -23,11 +20,12 @@ const selectProduct = {
   createdAt: true,
   updatedAt: true,
   name: true,
-  teamId: true,
+  organizationId: true,
   languages: true,
   recontactDays: true,
   linkSurveyBranding: true,
   inAppSurveyBranding: true,
+  config: true,
   placement: true,
   clickOutsideClose: true,
   darkOverlay: true,
@@ -36,15 +34,15 @@ const selectProduct = {
   logo: true,
 };
 
-export const getProducts = (teamId: string, page?: number): Promise<TProduct[]> =>
+export const getProducts = (organizationId: string, page?: number): Promise<TProduct[]> =>
   cache(
     async () => {
-      validateInputs([teamId, ZId], [page, ZOptionalNumber]);
+      validateInputs([organizationId, ZId], [page, ZOptionalNumber]);
 
       try {
         const products = await prisma.product.findMany({
           where: {
-            teamId,
+            organizationId,
           },
           select: selectProduct,
           take: page ? ITEMS_PER_PAGE : undefined,
@@ -59,9 +57,9 @@ export const getProducts = (teamId: string, page?: number): Promise<TProduct[]> 
         throw error;
       }
     },
-    [`getProducts-${teamId}-${page}`],
+    [`getProducts-${organizationId}-${page}`],
     {
-      tags: [productCache.tag.byTeamId(teamId)],
+      tags: [productCache.tag.byOrganizationId(organizationId)],
     }
   )();
 
@@ -131,7 +129,7 @@ export const updateProduct = async (
 
     productCache.revalidate({
       id: product.id,
-      teamId: product.teamId,
+      organizationId: product.organizationId,
     });
 
     product.environments.forEach((environment) => {
@@ -214,7 +212,7 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
 
       productCache.revalidate({
         id: product.id,
-        teamId: product.teamId,
+        organizationId: product.organizationId,
       });
 
       environmentCache.revalidate({
@@ -242,10 +240,10 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
 };
 
 export const createProduct = async (
-  teamId: string,
+  organizationId: string,
   productInput: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
-  validateInputs([teamId, ZString], [productInput, ZProductUpdateInput.partial()]);
+  validateInputs([organizationId, ZString], [productInput, ZProductUpdateInput.partial()]);
 
   if (!productInput.name) {
     throw new ValidationError("Product Name is required");
@@ -256,16 +254,20 @@ export const createProduct = async (
   try {
     let product = await prisma.product.create({
       data: {
+        config: {
+          channel: null,
+          industry: null,
+        },
         ...data,
         name: productInput.name,
-        teamId,
+        organizationId,
       },
       select: selectProduct,
     });
 
     productCache.revalidate({
       id: product.id,
-      teamId: product.teamId,
+      organizationId: product.organizationId,
     });
 
     const devEnvironment = await createEnvironment(product.id, {

@@ -1,5 +1,4 @@
 import { LightbulbIcon } from "lucide-react";
-
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 
@@ -8,7 +7,7 @@ interface EnvironmentNoticeProps {
   subPageUrl: string;
 }
 
-export default async function EnvironmentNotice({ environmentId, subPageUrl }: EnvironmentNoticeProps) {
+export const EnvironmentNotice = async ({ environmentId, subPageUrl }: EnvironmentNoticeProps) => {
   const environment = await getEnvironment(environmentId);
   if (!environment) {
     throw new Error("Environment not found");
@@ -30,4 +29,4 @@ export default async function EnvironmentNotice({ environmentId, subPageUrl }: E
       </p>
     </div>
   );
-}
+};

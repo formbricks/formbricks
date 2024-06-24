@@ -1,23 +1,23 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
-import SummaryPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
+import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Unauthorized");
@@ -29,15 +29,16 @@ export default async function Page({ params }) {
     return notFound();
   }
 
-  const survey = await getSurvey(surveyId);
-
-  if (!survey) {
-    throw new Error("Survey not found");
-  }
-  const environment = await getEnvironment(survey.environmentId);
-
+  const [survey, environment, attributeClasses] = await Promise.all([
+    getSurvey(params.surveyId),
+    getEnvironment(params.environmentId),
+    getAttributeClasses(params.environmentId),
+  ]);
   if (!environment) {
     throw new Error("Environment not found");
+  }
+  if (!survey) {
+    throw new Error("Survey not found");
   }
 
   const product = await getProductByEnvironmentId(environment.id);
@@ -50,12 +51,12 @@ export default async function Page({ params }) {
     throw new Error("User not found");
   }
 
-  const team = await getTeamByEnvironmentId(params.environmentId);
+  const organization = await getOrganizationByEnvironmentId(params.environmentId);
 
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
-  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
@@ -87,7 +88,10 @@ export default async function Page({ params }) {
         webAppUrl={WEBAPP_URL}
         user={user}
         totalResponseCount={totalResponseCount}
+        attributeClasses={attributeClasses}
       />
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

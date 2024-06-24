@@ -1,12 +1,11 @@
 import z from "zod";
-
 import { ZMembershipRole } from "./memberships";
 
 export const ZInvite = z.object({
   id: z.string(),
   email: z.string().email(),
   name: z.string().nullish(),
-  teamId: z.string(),
+  organizationId: z.string(),
   creatorId: z.string(),
   acceptorId: z.string().nullish(),
   accepted: z.boolean(),
@@ -35,3 +34,9 @@ export const ZInviteUpdateInput = z.object({
   role: ZMembershipRole,
 });
 export type TInviteUpdateInput = z.infer<typeof ZInviteUpdateInput>;
+
+export const ZInviteMembersFormSchema = z.record(
+  z.string().email("Invalid email address").optional().or(z.literal(""))
+);
+
+export type TInviteMembersFormSchema = z.infer<typeof ZInviteMembersFormSchema>;

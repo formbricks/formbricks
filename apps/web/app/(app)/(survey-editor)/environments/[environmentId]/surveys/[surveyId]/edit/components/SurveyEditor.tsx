@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
@@ -13,7 +12,6 @@ import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys";
 import { PreviewSurvey } from "@formbricks/ui/PreviewSurvey";
-
 import { refetchProductAction } from "../actions";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { QuestionsAudienceTabs } from "./QuestionsStylingSettingsTabs";
@@ -38,7 +36,7 @@ interface SurveyEditorProps {
   isUnsplashConfigured: boolean;
 }
 
-export default function SurveyEditor({
+export const SurveyEditor = ({
   survey,
   product,
   environment,
@@ -52,7 +50,7 @@ export default function SurveyEditor({
   isUserTargetingAllowed = false,
   isFormbricksCloud,
   isUnsplashConfigured,
-}: SurveyEditorProps): JSX.Element {
+}: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
@@ -163,6 +161,7 @@ export default function SurveyEditor({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 isMultiLanguageAllowed={isMultiLanguageAllowed}
                 isFormbricksCloud={isFormbricksCloud}
+                attributeClasses={attributeClasses}
               />
             )}
 
@@ -193,6 +192,7 @@ export default function SurveyEditor({
                 membershipRole={membershipRole}
                 isUserTargetingAllowed={isUserTargetingAllowed}
                 isFormbricksCloud={isFormbricksCloud}
+                product={localProduct}
               />
             )}
           </main>
@@ -214,4 +214,4 @@ export default function SurveyEditor({
       </div>
     </>
   );
-}
+};

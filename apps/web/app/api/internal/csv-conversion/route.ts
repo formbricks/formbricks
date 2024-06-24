@@ -2,10 +2,9 @@ import { responses } from "@/app/lib/api/response";
 import { AsyncParser } from "@json2csv/node";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 
-export async function POST(request: NextRequest) {
+export const POST = async (request: NextRequest) => {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -48,4 +47,4 @@ export async function POST(request: NextRequest) {
       headers,
     }
   );
-}
+};

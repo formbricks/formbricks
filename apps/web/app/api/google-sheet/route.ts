@@ -2,7 +2,6 @@ import { responses } from "@/app/lib/api/response";
 import { google } from "googleapis";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
@@ -13,11 +12,10 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
 const scopes = [
   "https://www.googleapis.com/auth/spreadsheets",
-  "https://www.googleapis.com/auth/drive",
   "https://www.googleapis.com/auth/userinfo.email",
 ];
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   const environmentId = req.headers.get("environmentId");
   const session = await getServerSession(authOptions);
 
@@ -50,4 +48,4 @@ export async function GET(req: NextRequest) {
   });
 
   return responses.successResponse({ authUrl });
-}
+};

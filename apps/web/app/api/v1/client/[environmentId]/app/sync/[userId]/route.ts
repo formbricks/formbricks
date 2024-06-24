@@ -1,37 +1,35 @@
-import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/app/sync/lib/posthog";
+import {
+  replaceAttributeRecall,
+  replaceAttributeRecallInLegacySurveys,
+} from "@/app/api/v1/client/[environmentId]/app/sync/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
-
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { getAttribute } from "@formbricks/lib/attribute/service";
-import {
-  IS_FORMBRICKS_CLOUD,
-  PRICING_APPSURVEYS_FREE_RESPONSES,
-  PRICING_USERTARGETING_FREE_MTU,
-} from "@formbricks/lib/constants";
+import { getAttributes } from "@formbricks/lib/attribute/service";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
+import {
+  getMonthlyActiveOrganizationPeopleCount,
+  getMonthlyOrganizationResponseCount,
+  getOrganizationByEnvironmentId,
+} from "@formbricks/lib/organization/service";
 import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@formbricks/lib/person/service";
+import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
-import {
-  getMonthlyActiveTeamPeopleCount,
-  getMonthlyTeamResponseCount,
-  getTeamByEnvironmentId,
-} from "@formbricks/lib/team/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TJsAppLegacyStateSync, TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
-import { TProduct } from "@formbricks/types/product";
+import { TProductLegacy } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function GET(
+export const GET = async (
   request: NextRequest,
   {
     params,
@@ -41,7 +39,7 @@ export async function GET(
       userId: string;
     };
   }
-): Promise<Response> {
+): Promise<Response> => {
   try {
     const { device } = userAgent(request);
     const version = request.nextUrl.searchParams.get("version");
@@ -63,53 +61,67 @@ export async function GET(
 
     const { environmentId, userId } = inputValidation.data;
 
-    let environment: TEnvironment | null;
-
-    // check if environment exists
-    environment = await getEnvironment(environmentId);
+    const environment = await getEnvironment(environmentId);
     if (!environment) {
       throw new Error("Environment does not exist");
     }
 
-    if (!environment.widgetSetupCompleted) {
-      await updateEnvironment(environment.id, { widgetSetupCompleted: true });
+    const product = await getProductByEnvironmentId(environmentId);
+
+    if (!product) {
+      throw new Error("Product not found");
     }
 
-    // check team subscriptions
-    const team = await getTeamByEnvironmentId(environmentId);
+    if (product.config.channel && product.config.channel !== "app") {
+      return responses.forbiddenResponse("Product channel is not app", true);
+    }
 
-    if (!team) {
-      throw new Error("Team does not exist");
+    if (!environment.appSetupCompleted) {
+      await updateEnvironment(environment.id, { appSetupCompleted: true });
+    }
+
+    // check organization subscriptions
+    const organization = await getOrganizationByEnvironmentId(environmentId);
+
+    if (!organization) {
+      throw new Error("Organization does not exist");
     }
 
     // check if MAU limit is reached
     let isMauLimitReached = false;
-    let isInAppSurveyLimitReached = false;
+    let isMonthlyResponsesLimitReached = false;
+
     if (IS_FORMBRICKS_CLOUD) {
-      // check userTargeting subscription
-      const hasUserTargetingSubscription =
-        team.billing.features.userTargeting.status &&
-        ["active", "canceled"].includes(team.billing.features.userTargeting.status);
-      const currentMau = await getMonthlyActiveTeamPeopleCount(team.id);
-      isMauLimitReached = !hasUserTargetingSubscription && currentMau >= PRICING_USERTARGETING_FREE_MTU;
-      // check inAppSurvey subscription
-      const hasInAppSurveySubscription =
-        team.billing.features.inAppSurvey.status &&
-        ["active", "canceled"].includes(team.billing.features.inAppSurvey.status);
-      const currentResponseCount = await getMonthlyTeamResponseCount(team.id);
-      isInAppSurveyLimitReached =
-        !hasInAppSurveySubscription && currentResponseCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
+      const currentMau = await getMonthlyActiveOrganizationPeopleCount(organization.id);
+      const monthlyResponseLimit = organization.billing.limits.monthly.responses;
+      const monthlyMiuLimit = organization.billing.limits.monthly.miu;
+
+      isMauLimitReached = monthlyMiuLimit !== null && currentMau >= monthlyMiuLimit;
+
+      const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
+      isMonthlyResponsesLimitReached =
+        monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit;
     }
 
     let person = await getPersonByUserId(environmentId, userId);
-    if (!isMauLimitReached) {
-      // MAU limit not reached: create person if not exists
-      if (!person) {
-        person = await createPerson(environmentId, userId);
-      }
-    } else {
+
+    if (isMauLimitReached) {
       // MAU limit reached: check if person has been active this month; only continue if person has been active
-      await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "userTargeting");
+
+      try {
+        await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
+          plan: organization.billing.plan,
+          limits: {
+            monthly: {
+              miu: organization.billing.limits.monthly.miu,
+              responses: organization.billing.limits.monthly.responses,
+            },
+          },
+        });
+      } catch (err) {
+        console.error(`Error sending plan limits reached event to Posthog: ${err}`);
+      }
+
       const errorMessage = `Monthly Active Users limit in the current plan is reached in ${environmentId}`;
       if (!person) {
         // if it's a new person and MAU limit is reached, throw an error
@@ -118,44 +130,60 @@ export async function GET(
           true,
           "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
         );
-      } else {
-        // check if person has been active this month
-        const isPersonMonthlyActive = await getIsPersonMonthlyActive(person.id);
-        if (!isPersonMonthlyActive) {
-          return responses.tooManyRequestsResponse(
-            errorMessage,
-            true,
-            "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
-          );
-        }
+      }
+
+      // check if person has been active this month
+      const isPersonMonthlyActive = await getIsPersonMonthlyActive(person.id);
+      if (!isPersonMonthlyActive) {
+        return responses.tooManyRequestsResponse(
+          errorMessage,
+          true,
+          "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
+        );
+      }
+    } else {
+      // MAU limit not reached: create person if not exists
+      if (!person) {
+        person = await createPerson(environmentId, userId);
       }
     }
 
-    if (isInAppSurveyLimitReached) {
-      await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
+    if (isMonthlyResponsesLimitReached) {
+      try {
+        await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
+          plan: organization.billing.plan,
+          limits: {
+            monthly: {
+              miu: organization.billing.limits.monthly.miu,
+              responses: organization.billing.limits.monthly.responses,
+            },
+          },
+        });
+      } catch (err) {
+        console.error(`Error sending plan limits reached event to Posthog: ${err}`);
+      }
     }
 
-    const [surveys, actionClasses, product] = await Promise.all([
+    const [surveys, actionClasses] = await Promise.all([
       getSyncSurveys(environmentId, person.id, device.type === "mobile" ? "phone" : "desktop", {
         version: version ?? undefined,
       }),
       getActionClasses(environmentId),
-      getProductByEnvironmentId(environmentId),
     ]);
 
     if (!product) {
       throw new Error("Product not found");
     }
 
-    const updatedProduct: TProduct = {
+    const updatedProduct: TProductLegacy = {
       ...product,
       brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
       ...(product.styling.highlightBorderColor?.light && {
         highlightBorderColor: product.styling.highlightBorderColor.light,
       }),
     };
-
-    const language = await getAttribute("language", person.id);
+    const attributes = await getAttributes(person.id);
+    const language = attributes["language"];
     const noCodeActionClasses = actionClasses.filter((actionClass) => actionClass.type === "noCode");
 
     // Scenario 1: Multi language and updated trigger action classes supported.
@@ -164,7 +192,9 @@ export async function GET(
 
     // creating state object
     let state: TJsAppStateSync | TJsAppLegacyStateSync = {
-      surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
+      surveys: !isMonthlyResponsesLimitReached
+        ? transformedSurveys.map((survey) => replaceAttributeRecall(survey, attributes))
+        : [],
       actionClasses,
       language,
       product: updatedProduct,
@@ -183,7 +213,9 @@ export async function GET(
       );
 
       state = {
-        surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
+        surveys: !isMonthlyResponsesLimitReached
+          ? transformedSurveys.map((survey) => replaceAttributeRecallInLegacySurveys(survey, attributes))
+          : [],
         person,
         noCodeActionClasses,
         language,
@@ -191,13 +223,9 @@ export async function GET(
       };
     }
 
-    return responses.successResponse(
-      { ...state },
-      true,
-      "public, s-maxage=100, max-age=110, stale-while-revalidate=100, stale-if-error=100"
-    );
+    return responses.successResponse({ ...state }, true);
   } catch (error) {
     console.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
-}
+};

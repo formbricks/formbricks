@@ -1,7 +1,5 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
@@ -12,21 +10,20 @@ import {
   ZMembership,
   ZMembershipUpdateInput,
 } from "@formbricks/types/memberships";
-
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
-import { teamCache } from "../team/cache";
+import { organizationCache } from "../organization/cache";
 import { validateInputs } from "../utils/validate";
 import { membershipCache } from "./cache";
 
-export const getMembersByTeamId = async (teamId: string, page?: number): Promise<TMember[]> =>
+export const getMembersByOrganizationId = async (organizationId: string, page?: number): Promise<TMember[]> =>
   cache(
     async () => {
-      validateInputs([teamId, ZString], [page, ZOptionalNumber]);
+      validateInputs([organizationId, ZString], [page, ZOptionalNumber]);
 
       try {
         const membersData = await prisma.membership.findMany({
-          where: { teamId },
+          where: { organizationId },
           select: {
             user: {
               select: {
@@ -62,26 +59,26 @@ export const getMembersByTeamId = async (teamId: string, page?: number): Promise
         throw new UnknownError("Error while fetching members");
       }
     },
-    [`getMembersByTeamId-${teamId}-${page}`],
+    [`getMembersByOrganizationId-${organizationId}-${page}`],
     {
-      tags: [membershipCache.tag.byTeamId(teamId)],
+      tags: [membershipCache.tag.byOrganizationId(organizationId)],
     }
   )();
 
-export const getMembershipByUserIdTeamId = async (
+export const getMembershipByUserIdOrganizationId = async (
   userId: string,
-  teamId: string
+  organizationId: string
 ): Promise<TMembership | null> =>
   cache(
     async () => {
-      validateInputs([userId, ZString], [teamId, ZString]);
+      validateInputs([userId, ZString], [organizationId, ZString]);
 
       try {
         const membership = await prisma.membership.findUnique({
           where: {
-            userId_teamId: {
+            userId_organizationId: {
               userId,
-              teamId,
+              organizationId,
             },
           },
         });
@@ -98,9 +95,9 @@ export const getMembershipByUserIdTeamId = async (
         throw new UnknownError("Error while fetching membership");
       }
     },
-    [`getMembershipByUserIdTeamId-${userId}-${teamId}`],
+    [`getMembershipByUserIdOrganizationId-${userId}-${organizationId}`],
     {
-      tags: [membershipCache.tag.byUserId(userId), membershipCache.tag.byTeamId(teamId)],
+      tags: [membershipCache.tag.byUserId(userId), membershipCache.tag.byOrganizationId(organizationId)],
     }
   )();
 
@@ -134,28 +131,28 @@ export const getMembershipsByUserId = async (userId: string, page?: number): Pro
   )();
 
 export const createMembership = async (
-  teamId: string,
+  organizationId: string,
   userId: string,
   data: Partial<TMembership>
 ): Promise<TMembership> => {
-  validateInputs([teamId, ZString], [userId, ZString], [data, ZMembership.partial()]);
+  validateInputs([organizationId, ZString], [userId, ZString], [data, ZMembership.partial()]);
 
   try {
     const membership = await prisma.membership.create({
       data: {
         userId,
-        teamId,
+        organizationId,
         accepted: data.accepted,
         role: data.role as TMembership["role"],
       },
     });
-    teamCache.revalidate({
+    organizationCache.revalidate({
       userId,
     });
 
     membershipCache.revalidate({
       userId,
-      teamId,
+      organizationId,
     });
 
     return membership;
@@ -170,61 +167,61 @@ export const createMembership = async (
 
 export const updateMembership = async (
   userId: string,
-  teamId: string,
+  organizationId: string,
   data: TMembershipUpdateInput
 ): Promise<TMembership> => {
-  validateInputs([userId, ZString], [teamId, ZString], [data, ZMembershipUpdateInput]);
+  validateInputs([userId, ZString], [organizationId, ZString], [data, ZMembershipUpdateInput]);
 
   try {
     const membership = await prisma.membership.update({
       where: {
-        userId_teamId: {
+        userId_organizationId: {
           userId,
-          teamId,
+          organizationId,
         },
       },
       data,
     });
 
-    teamCache.revalidate({
+    organizationCache.revalidate({
       userId,
     });
 
     membershipCache.revalidate({
       userId,
-      teamId,
+      organizationId,
     });
 
     return membership;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
-      throw new ResourceNotFoundError("Membership", `userId: ${userId}, teamId: ${teamId}`);
+      throw new ResourceNotFoundError("Membership", `userId: ${userId}, organizationId: ${organizationId}`);
     }
 
     throw error;
   }
 };
 
-export const deleteMembership = async (userId: string, teamId: string): Promise<TMembership> => {
-  validateInputs([userId, ZString], [teamId, ZString]);
+export const deleteMembership = async (userId: string, organizationId: string): Promise<TMembership> => {
+  validateInputs([userId, ZString], [organizationId, ZString]);
 
   try {
     const deletedMembership = await prisma.membership.delete({
       where: {
-        userId_teamId: {
-          teamId,
+        userId_organizationId: {
+          organizationId,
           userId,
         },
       },
     });
 
-    teamCache.revalidate({
+    organizationCache.revalidate({
       userId,
     });
 
     membershipCache.revalidate({
       userId,
-      teamId,
+      organizationId,
     });
 
     return deletedMembership;
@@ -240,16 +237,16 @@ export const deleteMembership = async (userId: string, teamId: string): Promise<
 export const transferOwnership = async (
   currentOwnerId: string,
   newOwnerId: string,
-  teamId: string
+  organizationId: string
 ): Promise<TMembership[]> => {
-  validateInputs([currentOwnerId, ZString], [newOwnerId, ZString], [teamId, ZString]);
+  validateInputs([currentOwnerId, ZString], [newOwnerId, ZString], [organizationId, ZString]);
 
   try {
     const memberships = await prisma.$transaction([
       prisma.membership.update({
         where: {
-          userId_teamId: {
-            teamId,
+          userId_organizationId: {
+            organizationId,
             userId: currentOwnerId,
           },
         },
@@ -259,8 +256,8 @@ export const transferOwnership = async (
       }),
       prisma.membership.update({
         where: {
-          userId_teamId: {
-            teamId,
+          userId_organizationId: {
+            organizationId,
             userId: newOwnerId,
           },
         },
@@ -271,13 +268,13 @@ export const transferOwnership = async (
     ]);
 
     memberships.forEach((membership) => {
-      teamCache.revalidate({
+      organizationCache.revalidate({
         userId: membership.userId,
       });
 
       membershipCache.revalidate({
         userId: membership.userId,
-        teamId: membership.teamId,
+        organizationId: membership.organizationId,
       });
     });
 

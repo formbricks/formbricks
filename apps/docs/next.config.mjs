@@ -3,7 +3,7 @@ import nextMDX from "@next/mdx";
 import { recmaPlugins } from "./mdx/recma.mjs";
 import { rehypePlugins } from "./mdx/rehype.mjs";
 import { remarkPlugins } from "./mdx/remark.mjs";
-import withSearch from "./mdx/search.mjs";
+import { Search as withSearch } from "./mdx/search.mjs";
 
 const withMDX = nextMDX({
   options: {
@@ -109,6 +109,11 @@ const nextConfig = {
       {
         source: "/integrations/:path",
         destination: "/developer-docs/integrations/:path",
+        permanent: true,
+      },
+      {
+        source: "/global/custom-styling",
+        destination: "/global/overwrite-styling",
         permanent: true,
       },
     ];

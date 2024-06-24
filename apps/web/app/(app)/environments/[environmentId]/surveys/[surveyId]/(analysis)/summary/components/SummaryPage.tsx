@@ -12,15 +12,14 @@ import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import {
   getResponseCountBySurveySharingKeyAction,
   getSummaryBySurveySharingKeyAction,
-} from "@/app/share/[sharingKey]/action";
+} from "@/app/share/[sharingKey]/actions";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-
-import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
-
 import { SummaryList } from "./SummaryList";
 import { SummaryMetadata } from "./SummaryMetadata";
 
@@ -46,15 +45,17 @@ interface SummaryPageProps {
   webAppUrl: string;
   user?: TUser;
   totalResponseCount: number;
+  attributeClasses: TAttributeClass[];
 }
 
-const SummaryPage = ({
+export const SummaryPage = ({
   environment,
   survey,
   surveyId,
   webAppUrl,
   user,
   totalResponseCount,
+  attributeClasses,
 }: SummaryPageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -104,9 +105,9 @@ const SummaryPage = ({
 
   const searchParams = useSearchParams();
 
-  survey = useMemo(() => {
-    return checkForRecallInHeadline(survey, "default");
-  }, [survey]);
+  const surveyMemoized = useMemo(() => {
+    return replaceHeadlineRecall(survey, "default", attributeClasses);
+  }, [survey, attributeClasses]);
 
   useEffect(() => {
     if (!searchParams?.get("referer")) {
@@ -123,19 +124,18 @@ const SummaryPage = ({
       />
       {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
       <div className="flex gap-1.5">
-        <CustomFilter survey={survey} />
-        {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />}
+        <CustomFilter survey={surveyMemoized} />
+        {!isSharingPage && <ResultsShareButton survey={surveyMemoized} webAppUrl={webAppUrl} user={user} />}
       </div>
       <SummaryList
         summary={surveySummary.summary}
         responseCount={responseCount}
-        survey={survey}
+        survey={surveyMemoized}
         environment={environment}
         fetchingSummary={isFetchingSummary}
         totalResponseCount={totalResponseCount}
+        attributeClasses={attributeClasses}
       />
     </>
   );
 };
-
-export default SummaryPage;

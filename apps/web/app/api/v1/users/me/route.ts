@@ -1,7 +1,6 @@
 import { getSessionUser } from "@/app/lib/api/apiHelper";
 import { MembershipRole } from "@prisma/client";
 import { NextRequest } from "next/server";
-
 import { prisma } from "@formbricks/database";
 
 interface Membership {
@@ -9,7 +8,7 @@ interface Membership {
   userId: string;
 }
 
-export async function GET() {
+export const GET = async () => {
   const sessionUser = await getSessionUser();
   if (!sessionUser) {
     return new Response("Not authenticated", {
@@ -24,9 +23,9 @@ export async function GET() {
   });
 
   return Response.json(user);
-}
+};
 
-export async function PUT(request: NextRequest) {
+export const PUT = async (request: NextRequest) => {
   const sessionUser = await getSessionUser();
   if (!sessionUser) {
     return new Response("Not authenticated", {
@@ -43,7 +42,7 @@ export async function PUT(request: NextRequest) {
   });
 
   return Response.json(user);
-}
+};
 
 const deleteUser = async (userId: string) => {
   await prisma.user.delete({
@@ -53,12 +52,12 @@ const deleteUser = async (userId: string) => {
   });
 };
 
-const updateUserMembership = async (teamId: string, userId: string, role: MembershipRole) => {
+const updateUserMembership = async (organizationId: string, userId: string, role: MembershipRole) => {
   await prisma.membership.update({
     where: {
-      userId_teamId: {
+      userId_organizationId: {
         userId,
-        teamId,
+        organizationId,
       },
     },
     data: {
@@ -70,15 +69,15 @@ const updateUserMembership = async (teamId: string, userId: string, role: Member
 const getAdminMemberships = (memberships: Membership[]) =>
   memberships.filter((membership) => membership.role === MembershipRole.admin);
 
-const deleteTeam = async (teamId: string) => {
-  await prisma.team.delete({
+const deleteOrganization = async (organizationId: string) => {
+  await prisma.organization.delete({
     where: {
-      id: teamId,
+      id: organizationId,
     },
   });
 };
 
-export async function DELETE() {
+export const DELETE = async () => {
   try {
     const currentUser = await getSessionUser();
 
@@ -93,7 +92,7 @@ export async function DELETE() {
         userId: currentUser.id,
       },
       include: {
-        team: {
+        organization: {
           select: {
             id: true,
             name: true,
@@ -109,22 +108,22 @@ export async function DELETE() {
     });
 
     for (const currentUserMembership of currentUserMemberships) {
-      const teamMemberships = currentUserMembership.team.memberships;
+      const organizationMemberships = currentUserMembership.organization.memberships;
       const role = currentUserMembership.role;
-      const teamId = currentUserMembership.teamId;
+      const organizationId = currentUserMembership.organizationId;
 
-      const teamAdminMemberships = getAdminMemberships(teamMemberships);
-      const teamHasAtLeastOneAdmin = teamAdminMemberships.length > 0;
-      const teamHasOnlyOneMember = teamMemberships.length === 1;
-      const currentUserIsTeamOwner = role === MembershipRole.owner;
+      const organizationAdminMemberships = getAdminMemberships(organizationMemberships);
+      const organizationHasAtLeastOneAdmin = organizationAdminMemberships.length > 0;
+      const organizationHasOnlyOneMember = organizationMemberships.length === 1;
+      const currentUserIsOrganizationOwner = role === MembershipRole.owner;
 
-      if (teamHasOnlyOneMember) {
-        await deleteTeam(teamId);
-      } else if (currentUserIsTeamOwner && teamHasAtLeastOneAdmin) {
-        const firstAdmin = teamAdminMemberships[0];
-        await updateUserMembership(teamId, firstAdmin.userId, MembershipRole.owner);
-      } else if (currentUserIsTeamOwner) {
-        await deleteTeam(teamId);
+      if (organizationHasOnlyOneMember) {
+        await deleteOrganization(organizationId);
+      } else if (currentUserIsOrganizationOwner && organizationHasAtLeastOneAdmin) {
+        const firstAdmin = organizationAdminMemberships[0];
+        await updateUserMembership(organizationId, firstAdmin.userId, MembershipRole.owner);
+      } else if (currentUserIsOrganizationOwner) {
+        await deleteOrganization(organizationId);
       }
     }
 
@@ -134,4 +133,4 @@ export async function DELETE() {
   } catch (error) {
     return Response.json({ message: error.message }, { status: 500 });
   }
-}
+};

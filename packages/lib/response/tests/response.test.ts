@@ -6,12 +6,10 @@ import {
   mockEnvironmentId,
   mockMeta,
   mockPerson,
-  mockPersonAttributesData,
   mockPersonId,
   mockResponse,
   mockResponseData,
   mockResponseNote,
-  mockResponsePersonAttributes,
   mockResponseWithMockPerson,
   mockSingleUseId,
   mockSurveyId,
@@ -19,11 +17,9 @@ import {
   mockTags,
   mockUserId,
 } from "./__mocks__/data.mock";
-
 import { Prisma } from "@prisma/client";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vitest } from "vitest";
 import { testInputValidation } from "vitestSetup";
-
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TResponse,
@@ -32,9 +28,12 @@ import {
   TResponseLegacyInput,
 } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
-
 import { selectPerson } from "../../person/service";
-import { mockSurveyOutput } from "../../survey/tests/__mock__/survey.mock";
+import {
+  mockAttributeClass,
+  mockOrganizationOutput,
+  mockSurveyOutput,
+} from "../../survey/tests/__mock__/survey.mock";
 import {
   createResponse,
   createResponseLegacy,
@@ -43,7 +42,6 @@ import {
   getResponseBySingleUseId,
   getResponseCountBySurveyId,
   getResponseDownloadUrl,
-  getResponsePersonAttributes,
   getResponses,
   getResponsesByEnvironmentId,
   getResponsesByPersonId,
@@ -52,6 +50,13 @@ import {
 } from "../service";
 import { buildWhereClause } from "../utils";
 import { constantsForTests } from "./constants";
+
+// vitest.mock("../../organization/service", async (methods) => {
+//   return {
+//     ...methods,
+//     getOrganizationByEnvironmentId: vitest.fn(),
+//   };
+// });
 
 const expectedResponseWithoutPerson: TResponse = {
   ...mockResponse,
@@ -131,6 +136,12 @@ beforeEach(() => {
   prisma.display.delete.mockResolvedValue({ ...mockDisplay, status: "seen" });
 
   prisma.response.count.mockResolvedValue(1);
+
+  prisma.organization.findFirst.mockResolvedValue(mockOrganizationOutput);
+  prisma.organization.findUnique.mockResolvedValue(mockOrganizationOutput);
+  prisma.product.findMany.mockResolvedValue([]);
+  // @ts-expect-error
+  prisma.response.aggregate.mockResolvedValue({ _count: { id: 1 } });
 });
 
 describe("Tests for getResponsesByPersonId", () => {
@@ -223,6 +234,7 @@ describe("Tests for createResponse service", () => {
       prisma.person.findFirst.mockResolvedValue(null);
       prisma.person.create.mockResolvedValue(mockPerson);
       prisma.attribute.findMany.mockResolvedValue([]);
+
       const response = await createResponse(mockResponseInputWithUserId);
 
       expect(response).toEqual(expectedResponseWithPerson);
@@ -313,46 +325,6 @@ describe("Tests for getResponse service", () => {
       prisma.response.findUnique.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(getResponse(mockResponse.id)).rejects.toThrow(Error);
-    });
-  });
-});
-
-describe("Tests for getAttributesFromResponses service", () => {
-  describe("Happy Path", () => {
-    it("Retrieves all attributes from responses for a given survey ID", async () => {
-      prisma.response.findMany.mockResolvedValue(mockResponsePersonAttributes);
-      const attributes = await getResponsePersonAttributes(mockSurveyId);
-      expect(attributes).toEqual(mockPersonAttributesData);
-    });
-
-    it("Returns an empty Object when no responses with attributes are found for the given survey ID", async () => {
-      prisma.response.findMany.mockResolvedValue([]);
-
-      const responses = await getResponsePersonAttributes(mockSurveyId);
-      expect(responses).toEqual({});
-    });
-  });
-
-  describe("Sad Path", () => {
-    testInputValidation(getResponsePersonAttributes, "123#");
-
-    it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
-      const mockErrorMessage = "Mock error message";
-      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
-        clientVersion: "0.0.1",
-      });
-
-      prisma.response.findMany.mockRejectedValue(errToThrow);
-
-      await expect(getResponsePersonAttributes(mockSurveyId)).rejects.toThrow(DatabaseError);
-    });
-
-    it("Throws a generic Error for unexpected problems", async () => {
-      const mockErrorMessage = "Mock error message";
-      prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
-
-      await expect(getResponsePersonAttributes(mockSurveyId)).rejects.toThrow(Error);
     });
   });
 });
@@ -472,6 +444,7 @@ describe("Tests for getSurveySummary service", () => {
     it("Returns a summary of the survey responses", async () => {
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prisma.response.findMany.mockResolvedValue([mockResponse]);
+      prisma.attributeClass.findMany.mockResolvedValueOnce([mockAttributeClass]);
 
       const summary = await getSurveySummary(mockSurveyId);
       expect(summary).toEqual(mockSurveySummaryOutput);
@@ -490,6 +463,7 @@ describe("Tests for getSurveySummary service", () => {
 
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prisma.response.findMany.mockRejectedValue(errToThrow);
+      prisma.attributeClass.findMany.mockResolvedValueOnce([mockAttributeClass]);
 
       await expect(getSurveySummary(mockSurveyId)).rejects.toThrow(DatabaseError);
     });
@@ -499,6 +473,7 @@ describe("Tests for getSurveySummary service", () => {
 
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
+      prisma.attributeClass.findMany.mockResolvedValueOnce([mockAttributeClass]);
 
       await expect(getSurveySummary(mockSurveyId)).rejects.toThrow(Error);
     });

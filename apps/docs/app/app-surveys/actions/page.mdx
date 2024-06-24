@@ -6,7 +6,7 @@ import I2 from "./images/I2.webp";
 export const metadata = {
   title: "Using Actions in Formbricks | Fine-tuning User Moments",
   description:
-    "Dive deep into how actions in Formbricks help products and teams to engage users at precise moments in their journey. Discover the power of actions, from coding to no-code setups, to refine user targeting and generate richer, more detailed user insights.",
+    "Dive deep into how actions in Formbricks help products and organizations to engage users at precise moments in their journey. Discover the power of actions, from coding to no-code setups, to refine user targeting and generate richer, more detailed user insights.",
 };
 
 #### App Surveys
@@ -57,11 +57,34 @@ To add a No-Code Action:
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-Here are three types of No-Code actions you can set up:
+Here are four types of No-Code actions you can set up:
 
-### **1. Page URL Action**
+### **1. Click Action**
+
+Click Action is triggered when a user clicks on a specific element within your application. You can define the element's inner text or CSS selector to trigger the survey.
+
+- **Inner Text**: Checks if the innerText of a clicked HTML element, like a button label, matches a specific text. This action allows you to display a survey based on text interactions within your application.
+
+- **CSS Selector**: Verifies if a clicked HTML element matches a provided CSS selector, such as a class, ID, or any other CSS selector used in your website. It enables survey triggers based on element interactions.
+
+### **2. Page view Action**
+
+This action is triggered when a user visits a page within your application.
+
+### **3. Exit Intent Action**
+
+This action is triggered when a user is about to leave your application. It helps capture user feedback before they exit, providing valuable insights into user experiences and potential improvements.
+
+### **4. 50% Scroll Action**
+
+This action is triggered when a user scrolls through 50% of a page within your application. It helps capture user feedback at a specific point in their journey, enabling you to gather insights based on user interactions.
 
 This action is triggered when a user visits a specific page within your application. You can define the URL match conditions as follows:
+
+<Note>
+You can combine the url filters with any of the no-code actions to trigger the survey based on the URL match conditions.
+
+### **URL Match Conditions**
 
 - **exactMatch**: Triggers the action when the URL exactly matches the specified string.
 - **contains**: Activates when the URL contains the specified substring.
@@ -70,15 +93,7 @@ This action is triggered when a user visits a specific page within your applicat
 - **notMatch**: Triggers when the URL does not match the specified condition.
 - **notContains**: Activates when the URL does not contain the specified substring.
 
-### **2. innerText Action**
-
-Checks if the innerText of a clicked HTML element, like a button label, matches a specific text. This action allows you to display a survey based on text interactions within your application.
-
-### **3. CSS Selector Action**
-
-This action verifies if a clicked HTML element matches a provided CSS selector, such as a class, ID, or any other CSS selector used in your website. It enables survey triggers based on element interactions.
-
-<Note>You can have an action use combination of the 3 types as you wish</Note>
+</Note>
 
 ## **Setting Up Code Actions**
 

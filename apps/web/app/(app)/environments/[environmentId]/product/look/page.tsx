@@ -1,7 +1,6 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { EditLogo } from "@/app/(app)/environments/[environmentId]/product/look/components/EditLogo";
 import { getServerSession } from "next-auth";
-
 import {
   getMultiLanguagePermission,
   getRemoveInAppBrandingPermission,
@@ -9,23 +8,22 @@ import {
 } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
-
-import SettingsCard from "../../settings/components/SettingsCard";
+import { SettingsCard } from "../../settings/components/SettingsCard";
 import { EditFormbricksBranding } from "./components/EditBranding";
-import { EditPlacement } from "./components/EditPlacement";
+import { EditPlacementForm } from "./components/EditPlacementForm";
 import { ThemeStyling } from "./components/ThemeStyling";
 
-export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
-  const [session, team, product] = await Promise.all([
+const Page = async ({ params }: { params: { environmentId: string } }) => {
+  const [session, organization, product] = await Promise.all([
     getServerSession(authOptions),
-    getTeamByEnvironmentId(params.environmentId),
+    getOrganizationByEnvironmentId(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
   ]);
 
@@ -35,21 +33,22 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   if (!session) {
     throw new Error("Unauthorized");
   }
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
-  const canRemoveInAppBranding = getRemoveInAppBrandingPermission(team);
-  const canRemoveLinkBranding = getRemoveLinkBrandingPermission(team);
+  const canRemoveInAppBranding = getRemoveInAppBrandingPermission(organization);
+  const canRemoveLinkBranding = getRemoveLinkBrandingPermission(organization);
 
-  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
   if (isViewer) {
     return <ErrorComponent />;
   }
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const currentProductChannel = product?.config.channel ?? null;
 
   return (
     <PageContentWrapper>
@@ -58,6 +57,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
           environmentId={params.environmentId}
           activeId="look"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
+          productChannel={currentProductChannel}
         />
       </PageHeader>
       <SettingsCard
@@ -74,27 +74,33 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
       <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">
         <EditLogo product={product} environmentId={params.environmentId} isViewer={isViewer} />
       </SettingsCard>
-      <SettingsCard
-        title="In-app Survey Placement"
-        description="Change where surveys will be shown in your web app.">
-        <EditPlacement product={product} environmentId={params.environmentId} />
-      </SettingsCard>
-      <SettingsCard
-        title="Formbricks Branding"
-        description="We love your support but understand if you toggle it off.">
-        <EditFormbricksBranding
-          type="linkSurvey"
-          product={product}
-          canRemoveBranding={canRemoveLinkBranding}
-          environmentId={params.environmentId}
-        />
-        <EditFormbricksBranding
-          type="inAppSurvey"
-          product={product}
-          canRemoveBranding={canRemoveInAppBranding}
-          environmentId={params.environmentId}
-        />
-      </SettingsCard>
+      {currentProductChannel !== "link" && (
+        <SettingsCard
+          title="In-app Survey Placement"
+          description="Change where surveys will be shown in your web app.">
+          <EditPlacementForm product={product} environmentId={params.environmentId} />
+        </SettingsCard>
+      )}
+      {currentProductChannel !== "link" && (
+        <SettingsCard
+          title="Formbricks Branding"
+          description="We love your support but understand if you toggle it off.">
+          <EditFormbricksBranding
+            type="linkSurvey"
+            product={product}
+            canRemoveBranding={canRemoveLinkBranding}
+            environmentId={params.environmentId}
+          />
+          <EditFormbricksBranding
+            type="inAppSurvey"
+            product={product}
+            canRemoveBranding={canRemoveInAppBranding}
+            environmentId={params.environmentId}
+          />
+        </SettingsCard>
+      )}
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

@@ -10,13 +10,47 @@ import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSh
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { TPipelineInput } from "@formbricks/types/pipelines";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TResponseMeta } from "@formbricks/types/responses";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
 
-export async function handleIntegrations(
+const convertMetaObjectToString = (metadata: TResponseMeta): string => {
+  let result: string[] = [];
+  if (metadata.source) result.push(`Source: ${metadata.source}`);
+  if (metadata.url) result.push(`URL: ${metadata.url}`);
+  if (metadata.userAgent?.browser) result.push(`Browser: ${metadata.userAgent.browser}`);
+  if (metadata.userAgent?.os) result.push(`OS: ${metadata.userAgent.os}`);
+  if (metadata.userAgent?.device) result.push(`Device: ${metadata.userAgent.device}`);
+  if (metadata.country) result.push(`Country: ${metadata.country}`);
+  if (metadata.action) result.push(`Action: ${metadata.action}`);
+
+  // Join all the elements in the result array with a newline for formatting
+  return result.join("\n");
+};
+
+const processDataForIntegration = async (
+  data: TPipelineInput,
+  survey: TSurvey,
+  includeMetadata: boolean,
+  includeHiddenFields: boolean,
+  questionIds: string[]
+): Promise<string[][]> => {
+  const ids =
+    includeHiddenFields && survey.hiddenFields.fieldIds
+      ? [...questionIds, ...survey.hiddenFields.fieldIds]
+      : questionIds;
+  const values = await extractResponses(data, ids, survey);
+  if (includeMetadata) {
+    values[0].push(convertMetaObjectToString(data.response.meta));
+    values[1].push("Metadata");
+  }
+  return values;
+};
+
+export const handleIntegrations = async (
   integrations: TIntegration[],
   data: TPipelineInput,
   survey: TSurvey
-) {
+) => {
   for (const integration of integrations) {
     switch (integration.type) {
       case "googleSheets":
@@ -33,69 +67,101 @@ export async function handleIntegrations(
         break;
     }
   }
-}
+};
 
-async function handleAirtableIntegration(
+const handleAirtableIntegration = async (
   integration: TIntegrationAirtable,
   data: TPipelineInput,
   survey: TSurvey
-) {
+) => {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds as string[], survey);
-
+        const values = await processDataForIntegration(
+          data,
+          survey,
+          !!element.includeMetadata,
+          !!element.includeHiddenFields,
+          element.questionIds
+        );
         await airtableWriteData(integration.config.key, element, values);
       }
     }
   }
-}
+};
 
-async function handleGoogleSheetsIntegration(
+const handleGoogleSheetsIntegration = async (
   integration: TIntegrationGoogleSheets,
   data: TPipelineInput,
   survey: TSurvey
-) {
+) => {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds as string[], survey);
-        await writeData(integration.config.key, element.spreadsheetId, values);
+        const values = await processDataForIntegration(
+          data,
+          survey,
+          !!element.includeMetadata,
+          !!element.includeHiddenFields,
+          element.questionIds
+        );
+        const integrationData = structuredClone(integration);
+        integrationData.config.data.forEach((data) => {
+          data.createdAt = new Date(data.createdAt);
+        });
+
+        await writeData(integrationData, element.spreadsheetId, values);
       }
     }
   }
-}
+};
 
-async function handleSlackIntegration(integration: TIntegrationSlack, data: TPipelineInput, survey: TSurvey) {
+const handleSlackIntegration = async (
+  integration: TIntegrationSlack,
+  data: TPipelineInput,
+  survey: TSurvey
+) => {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds as string[], survey);
+        const values = await processDataForIntegration(
+          data,
+          survey,
+          !!element.includeMetadata,
+          !!element.includeHiddenFields,
+          element.questionIds
+        );
         await writeDataToSlack(integration.config.key, element.channelId, values, survey?.name);
       }
     }
   }
-}
+};
 
-async function extractResponses(
-  data: TPipelineInput,
+const extractResponses = async (
+  pipelineData: TPipelineInput,
   questionIds: string[],
   survey: TSurvey
-): Promise<string[][]> {
+): Promise<string[][]> => {
   const responses: string[] = [];
   const questions: string[] = [];
 
   for (const questionId of questionIds) {
+    //check for hidden field Ids
+    if (survey.hiddenFields.fieldIds?.includes(questionId)) {
+      responses.push(processResponseData(pipelineData.response.data[questionId]));
+      questions.push(questionId);
+      continue;
+    }
     const question = survey?.questions.find((q) => q.id === questionId);
     if (!question) {
       continue;
     }
 
-    const responseValue = data.response.data[questionId];
+    const responseValue = pipelineData.response.data[questionId];
 
     if (responseValue !== undefined) {
       let answer: typeof responseValue;
-      if (question.type === TSurveyQuestionType.PictureSelection) {
+      if (question.type === TSurveyQuestionTypeEnum.PictureSelection) {
         const selectedChoiceIds = responseValue as string[];
         answer = question?.choices
           .filter((choice) => selectedChoiceIds.includes(choice.id))
@@ -113,13 +179,13 @@ async function extractResponses(
   }
 
   return [responses, questions];
-}
+};
 
-async function handleNotionIntegration(
+const handleNotionIntegration = async (
   integration: TIntegrationNotion,
   data: TPipelineInput,
   surveyData: TSurvey
-) {
+) => {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
@@ -128,18 +194,18 @@ async function handleNotionIntegration(
       }
     }
   }
-}
+};
 
-function buildNotionPayloadProperties(
+const buildNotionPayloadProperties = (
   mapping: TIntegrationNotionConfigData["mapping"],
   data: TPipelineInput,
   surveyData: TSurvey
-) {
+) => {
   const properties: any = {};
   const responses = data.response.data;
 
   const mappingQIds = mapping
-    .filter((m) => m.question.type === TSurveyQuestionType.PictureSelection)
+    .filter((m) => m.question.type === TSurveyQuestionTypeEnum.PictureSelection)
     .map((m) => m.question.id);
 
   Object.keys(responses).forEach((resp) => {
@@ -154,19 +220,24 @@ function buildNotionPayloadProperties(
   });
 
   mapping.forEach((map) => {
-    const value = responses[map.question.id];
-
-    properties[map.column.name] = {
-      [map.column.type]: getValue(map.column.type, value),
-    };
+    if (map.question.id === "metadata") {
+      properties[map.column.name] = {
+        [map.column.type]: getValue(map.column.type, convertMetaObjectToString(data.response.meta)),
+      };
+    } else {
+      const value = responses[map.question.id];
+      properties[map.column.name] = {
+        [map.column.type]: getValue(map.column.type, processResponseData(value)),
+      };
+    }
   });
 
   return properties;
-}
+};
 
 // notion requires specific payload for each column type
 // * TYPES NOT SUPPORTED BY NOTION API - rollup, created_by, created_time, last_edited_by, or last_edited_time
-function getValue(colType: string, value: string | string[] | number | Record<string, string>) {
+const getValue = (colType: string, value: string | string[] | number | Record<string, string>) => {
   try {
     switch (colType) {
       case "select":
@@ -213,4 +284,4 @@ function getValue(colType: string, value: string | string[] | number | Record<st
   } catch (error) {
     throw new Error("Payload build failed!");
   }
-}
+};

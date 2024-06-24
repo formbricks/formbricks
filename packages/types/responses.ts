@@ -1,13 +1,19 @@
 import { z } from "zod";
-
 import { ZAttributes } from "./attributes";
 import { ZId } from "./environment";
 import { ZSurvey, ZSurveyLogicCondition } from "./surveys";
 import { ZTag } from "./tags";
 
-export const ZResponseData = z.record(
-  z.union([z.string(), z.number(), z.array(z.string()), z.record(z.string())])
-);
+export const ZResponseDataValue = z.union([
+  z.string(),
+  z.number(),
+  z.array(z.string()),
+  z.record(z.string()),
+]);
+
+export type TResponseDataValue = z.infer<typeof ZResponseDataValue>;
+
+export const ZResponseData = z.record(ZResponseDataValue);
 
 export type TResponseData = z.infer<typeof ZResponseData>;
 
@@ -26,6 +32,10 @@ export type TSurveyPersonAttributes = z.infer<typeof ZSurveyPersonAttributes>;
 export const ZSurveyMetaFieldFilter = z.record(z.array(z.string()));
 
 export type TSurveyMetaFieldFilter = z.infer<typeof ZSurveyMetaFieldFilter>;
+
+export const ZResponseHiddenFieldsFilter = z.record(z.array(z.string()));
+
+export type TResponseHiddenFieldsFilter = z.infer<typeof ZResponseHiddenFieldsFilter>;
 
 const ZResponseFilterCriteriaDataLessThan = z.object({
   op: z.literal(ZSurveyLogicCondition.Values.lessThan),
@@ -231,6 +241,8 @@ export const ZResponse = z.object({
 export type TResponse = z.infer<typeof ZResponse>;
 
 export const ZResponseInput = z.object({
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
   environmentId: z.string().cuid2(),
   surveyId: z.string().cuid2(),
   userId: z.string().nullish(),
@@ -279,6 +291,9 @@ export const ZResponseWithSurvey = ZResponse.extend({
 
 export type TResponseWithSurvey = z.infer<typeof ZResponseWithSurvey>;
 
+export const ZResponseHiddenFieldValue = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
+export type TResponseHiddenFieldValue = z.infer<typeof ZResponseHiddenFieldValue>;
+
 export const ZResponseUpdate = z.object({
   finished: z.boolean(),
   data: ZResponseData,
@@ -291,6 +306,7 @@ export const ZResponseUpdate = z.object({
       action: z.string().optional(),
     })
     .optional(),
+  hiddenFields: ZResponseHiddenFieldValue.optional(),
 });
 
 export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;

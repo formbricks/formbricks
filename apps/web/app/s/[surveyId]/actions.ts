@@ -1,7 +1,6 @@
 "use server";
 
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
-
 import { LinkSurveyEmailData, sendLinkSurveyToVerifiedEmail } from "@formbricks/email";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -12,20 +11,20 @@ interface TSurveyPinValidationResponse {
   survey?: TSurvey;
 }
 
-export async function sendLinkSurveyEmailAction(data: LinkSurveyEmailData) {
+export const sendLinkSurveyEmailAction = async (data: LinkSurveyEmailData) => {
   if (!data.surveyData) {
     throw new Error("No survey data provided");
   }
   return await sendLinkSurveyToVerifiedEmail(data);
-}
-export async function verifyTokenAction(token: string, surveyId: string): Promise<boolean> {
+};
+export const verifyTokenAction = async (token: string, surveyId: string): Promise<boolean> => {
   return await verifyTokenForLinkSurvey(token, surveyId);
-}
+};
 
-export async function validateSurveyPinAction(
+export const validateSurveyPinAction = async (
   surveyId: string,
   pin: string
-): Promise<TSurveyPinValidationResponse> {
+): Promise<TSurveyPinValidationResponse> => {
   try {
     const survey = await getSurvey(surveyId);
     if (!survey) return { error: TSurveyPinValidationResponseError.NOT_FOUND };
@@ -40,4 +39,4 @@ export async function validateSurveyPinAction(
   } catch (error) {
     return { error: TSurveyPinValidationResponseError.INTERNAL_SERVER_ERROR };
   }
-}
+};

@@ -1,8 +1,7 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { TResponseUpdate } from "@formbricks/types/responses";
-
-import SurveyState from "./surveyState";
-import { delay } from "./utils";
+import { SurveyState } from "./surveyState";
+import { delay } from "./utils/promises";
 
 interface QueueConfig {
   apiHost: string;
@@ -87,6 +86,7 @@ export class ResponseQueue {
           surveyId: this.surveyState.surveyId,
           userId: this.surveyState.userId || null,
           singleUseId: this.surveyState.singleUseId || null,
+          data: { ...responseUpdate.data, ...responseUpdate.hiddenFields },
         });
         if (!response.ok) {
           throw new Error("Could not create response");

@@ -4,7 +4,7 @@ interface IntegrationsTipProps {
   environmentId: string;
 }
 
-export default async function IntegrationsTip({ environmentId }: IntegrationsTipProps) {
+export const IntegrationsTip = ({ environmentId }: IntegrationsTipProps) => {
   return (
     <div>
       <div className="flex max-w-4xl items-center space-y-3 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base">
@@ -20,4 +20,4 @@ export default async function IntegrationsTip({ environmentId }: IntegrationsTip
       </div>
     </div>
   );
-}
+};

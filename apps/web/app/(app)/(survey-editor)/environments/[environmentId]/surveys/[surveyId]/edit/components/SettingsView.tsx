@@ -1,17 +1,17 @@
-import { AdvancedTargetingCard } from "@formbricks/ee/advancedTargeting/components/AdvancedTargetingCard";
+import { AdvancedTargetingCard } from "@formbricks/ee/advanced-targeting/components/advanced-targeting-card";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
-
-import HowToSendCard from "./HowToSendCard";
-import RecontactOptionsCard from "./RecontactOptionsCard";
-import ResponseOptionsCard from "./ResponseOptionsCard";
-import SurveyPlacementCard from "./SurveyPlacementCard";
-import TargetingCard from "./TargetingCard";
-import WhenToSendCard from "./WhenToSendCard";
+import { TSurvey } from "@formbricks/types/surveys";
+import { HowToSendCard } from "./HowToSendCard";
+import { RecontactOptionsCard } from "./RecontactOptionsCard";
+import { ResponseOptionsCard } from "./ResponseOptionsCard";
+import { SurveyPlacementCard } from "./SurveyPlacementCard";
+import { TargetingCard } from "./TargetingCard";
+import { WhenToSendCard } from "./WhenToSendCard";
 
 interface SettingsViewProps {
   environment: TEnvironment;
@@ -24,6 +24,7 @@ interface SettingsViewProps {
   membershipRole?: TMembershipRole;
   isUserTargetingAllowed?: boolean;
   isFormbricksCloud: boolean;
+  product: TProduct;
 }
 
 export const SettingsView = ({
@@ -37,12 +38,18 @@ export const SettingsView = ({
   membershipRole,
   isUserTargetingAllowed = false,
   isFormbricksCloud,
+  product,
 }: SettingsViewProps) => {
   const isWebSurvey = localSurvey.type === "website" || localSurvey.type === "app";
-  const allowedTargetingSurveyTypes: TSurveyType[] = ["app", "mobile"];
+
   return (
     <div className="mt-12 space-y-3 p-5">
-      <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
+      <HowToSendCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        environment={environment}
+        product={product}
+      />
 
       {localSurvey.type === "app" ? (
         !isUserTargetingAllowed ? (

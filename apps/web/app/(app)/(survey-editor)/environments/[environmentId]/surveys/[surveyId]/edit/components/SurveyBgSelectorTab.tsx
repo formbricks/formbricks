@@ -1,9 +1,5 @@
 import { useEffect, useState } from "react";
-
-import { TProductStyling } from "@formbricks/types/product";
-import { TSurveyStyling } from "@formbricks/types/surveys";
 import { TabBar } from "@formbricks/ui/TabBar";
-
 import { AnimatedSurveyBg } from "./AnimatedSurveyBg";
 import { ColorSurveyBg } from "./ColorSurveyBg";
 import { UploadImageSurveyBg } from "./ImageSurveyBg";
@@ -14,8 +10,8 @@ interface SurveyBgSelectorTabProps {
   colors: string[];
   bgType: string | null | undefined;
   environmentId: string;
-  styling: TSurveyStyling | TProductStyling | null;
   isUnsplashConfigured: boolean;
+  bg: string;
 }
 
 const tabs = [
@@ -25,30 +21,29 @@ const tabs = [
   { id: "image", label: "Image" },
 ];
 
-export default function SurveyBgSelectorTab({
-  styling,
+export const SurveyBgSelectorTab = ({
   handleBgChange,
   colors,
   bgType,
+  bg,
   environmentId,
   isUnsplashConfigured,
-}: SurveyBgSelectorTabProps) {
+}: SurveyBgSelectorTabProps) => {
   const [activeTab, setActiveTab] = useState(bgType || "color");
-  const bgUrl = styling?.background?.bg || "";
 
-  const [colorBackground, setColorBackground] = useState(bgUrl);
-  const [animationBackground, setAnimationBackground] = useState(bgUrl);
-  const [uploadBackground, setUploadBackground] = useState(bgUrl);
+  const [colorBackground, setColorBackground] = useState(bg);
+  const [animationBackground, setAnimationBackground] = useState(bg);
+  const [uploadBackground, setUploadBackground] = useState(bg);
 
   useEffect(() => {
     if (bgType === "color") {
-      setColorBackground(bgUrl);
+      setColorBackground(bg);
       setAnimationBackground("");
       setUploadBackground("");
     }
 
     if (bgType === "animation") {
-      setAnimationBackground(bgUrl);
+      setAnimationBackground(bg);
       setColorBackground("");
       setUploadBackground("");
     }
@@ -60,11 +55,11 @@ export default function SurveyBgSelectorTab({
     }
 
     if (bgType === "upload") {
-      setUploadBackground(bgUrl);
+      setUploadBackground(bg);
       setColorBackground("");
       setAnimationBackground("");
     }
-  }, [bgUrl, bgType, isUnsplashConfigured]);
+  }, [bg, bgType, isUnsplashConfigured]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -90,7 +85,7 @@ export default function SurveyBgSelectorTab({
   };
 
   return (
-    <div className="mt-4 flex flex-col items-center justify-center rounded-lg ">
+    <div className="mt-4 flex flex-col items-center justify-center rounded-lg">
       <TabBar
         tabs={tabs.filter((tab) => tab.id !== "image" || isUnsplashConfigured)}
         activeId={activeTab}
@@ -103,4 +98,4 @@ export default function SurveyBgSelectorTab({
       </div>
     </div>
   );
-}
+};

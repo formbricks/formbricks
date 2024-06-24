@@ -1,20 +1,23 @@
 "use client";
 
-import EnvironmentSwitch from "@/app/(app)/environments/[environmentId]/components/EnvironmentSwitch";
+import { EnvironmentSwitch } from "@/app/(app)/environments/[environmentId]/components/EnvironmentSwitch";
 import { CircleUserIcon, MessageCircleQuestionIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-
 import formbricks from "@formbricks/js/app";
 import { TEnvironment } from "@formbricks/types/environment";
 import { Button } from "@formbricks/ui/Button";
 
-interface TopControlsProps {
+interface TopControlButtonsProps {
   environment: TEnvironment;
   environments: TEnvironment[];
   isFormbricksCloud: boolean;
 }
 
-export default function TopControls({ environment, environments, isFormbricksCloud }: TopControlsProps) {
+export const TopControlButtons = ({
+  environment,
+  environments,
+  isFormbricksCloud,
+}: TopControlButtonsProps) => {
   const router = useRouter();
   return (
     <div className="z-50 flex items-center space-x-2">
@@ -53,4 +56,4 @@ export default function TopControls({ environment, environments, isFormbricksClo
       </Button>
     </div>
   );
-}
+};

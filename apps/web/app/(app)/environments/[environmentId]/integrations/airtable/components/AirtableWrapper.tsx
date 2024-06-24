@@ -1,14 +1,15 @@
 "use client";
 
+import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/ManageIntegration";
+import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
+import airtableLogo from "@/images/airtableLogo.svg";
 import { useState } from "react";
-
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys";
-
-import Connect from "./Connect";
-import Home from "./Home";
+import { ConnectIntegration } from "@formbricks/ui/ConnectIntegration";
 
 interface AirtableWrapperProps {
   environmentId: string;
@@ -16,37 +17,49 @@ interface AirtableWrapperProps {
   airtableIntegration?: TIntegrationAirtable;
   surveys: TSurvey[];
   environment: TEnvironment;
-  enabled: boolean;
+  isEnabled: boolean;
   webAppUrl: string;
+  attributeClasses: TAttributeClass[];
 }
 
-export default function AirtableWrapper({
+export const AirtableWrapper = ({
   environmentId,
   airtableArray,
   airtableIntegration,
   surveys,
   environment,
-  enabled,
+  isEnabled,
   webAppUrl,
-}: AirtableWrapperProps) {
-  const [isConnected, setIsConnected_] = useState(
+  attributeClasses,
+}: AirtableWrapperProps) => {
+  const [isConnected, setIsConnected] = useState(
     airtableIntegration ? airtableIntegration.config?.key : false
   );
 
-  const setIsConnected = (data: boolean) => {
-    setIsConnected_(data);
+  const handleAirtableAuthorization = async () => {
+    authorize(environmentId, webAppUrl).then((url: string) => {
+      if (url) {
+        window.location.replace(url);
+      }
+    });
   };
 
   return isConnected && airtableIntegration ? (
-    <Home
+    <ManageIntegration
       airtableArray={airtableArray}
       environmentId={environmentId}
       environment={environment}
       airtableIntegration={airtableIntegration}
       setIsConnected={setIsConnected}
       surveys={surveys}
+      attributeClasses={attributeClasses}
     />
   ) : (
-    <Connect enabled={enabled} environmentId={environment.id} webAppUrl={webAppUrl} />
+    <ConnectIntegration
+      isEnabled={isEnabled}
+      integrationType={"airtable"}
+      handleAuthorization={handleAirtableAuthorization}
+      integrationLogoSrc={airtableLogo}
+    />
   );
-}
+};

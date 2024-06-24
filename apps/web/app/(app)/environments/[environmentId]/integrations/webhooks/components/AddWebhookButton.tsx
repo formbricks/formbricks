@@ -2,12 +2,10 @@
 
 import { Webhook } from "lucide-react";
 import { useState } from "react";
-
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-
-import AddWebhookModal from "./AddWebhookModal";
+import { AddWebhookModal } from "./AddWebhookModal";
 
 interface AddWebhookButtonProps {
   environment: TEnvironment;

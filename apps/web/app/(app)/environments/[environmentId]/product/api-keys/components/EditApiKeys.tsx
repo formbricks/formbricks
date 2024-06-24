@@ -3,17 +3,15 @@
 import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-
-import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 import { timeSince } from "@formbricks/lib/time";
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TApiKey } from "@formbricks/types/apiKeys";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
-import AddAPIKeyModal from "./AddApiKeyModal";
+import { AddApiKeyModal } from "./AddApiKeyModal";
 
-export default function EditAPIKeys({
+export const EditAPIKeys = ({
   environmentTypeId,
   environmentType,
   apiKeys,
@@ -23,7 +21,7 @@ export default function EditAPIKeys({
   environmentType: string;
   apiKeys: TApiKey[];
   environmentId: string;
-}) {
+}) => {
   const [isAddAPIKeyModalOpen, setOpenAddAPIKeyModal] = useState(false);
   const [isDeleteKeyModalOpen, setOpenDeleteKeyModal] = useState(false);
   const [apiKeysLocal, setApiKeysLocal] = useState<TApiKey[]>(apiKeys);
@@ -92,7 +90,7 @@ export default function EditAPIKeys({
         </div>
         <div className="grid-cols-9">
           {apiKeysLocal && apiKeysLocal.length === 0 ? (
-            <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm font-medium text-slate-400 ">
+            <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm font-medium text-slate-400">
               You don&apos;t have any API keys yet
             </div>
           ) : (
@@ -129,7 +127,7 @@ export default function EditAPIKeys({
         </Button>
       </div>
 
-      <AddAPIKeyModal
+      <AddApiKeyModal
         open={isAddAPIKeyModalOpen}
         setOpen={setOpenAddAPIKeyModal}
         onSubmit={handleAddAPIKey}
@@ -142,4 +140,4 @@ export default function EditAPIKeys({
       />
     </div>
   );
-}
+};

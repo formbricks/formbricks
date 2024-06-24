@@ -3,10 +3,10 @@ import Peer from "@/images/peer.webp";
 import { CheckCircle2Icon } from "lucide-react";
 import Image from "next/image";
 
-export default function Testimonial() {
+export const Testimonial = () => {
   return (
     <div className="flex flex-col items-center justify-center bg-gradient-to-tr from-slate-100 to-slate-300">
-      <div className="3xl:w-2/3 mb-10 space-y-8 px-12 xl:px-20 ">
+      <div className="3xl:w-2/3 mb-10 space-y-8 px-12 xl:px-20">
         <div>
           <h2 className="text-3xl font-bold text-slate-800">
             Turn customer insights into irresistible experiences.
@@ -40,7 +40,7 @@ export default function Testimonial() {
             <Image
               src={Peer}
               alt="Cal.com Co-Founder Peer Richelsen"
-              className="-mb-12 h-28 w-28 rounded-full border border-slate-200 shadow-sm"
+              className="h-28 w-28 rounded-full border border-slate-200 shadow-sm"
             />
             <div>
               <p className="mb-1.5 text-sm text-slate-500">Peer Richelsen, Co-Founder Cal.com</p>
@@ -51,4 +51,4 @@ export default function Testimonial() {
       </div>
     </div>
   );
-}
+};

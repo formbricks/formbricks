@@ -16,7 +16,7 @@
     "@formbricks/types": "workspace:*",
     "@types/react": "^18.2.46",
     "@types/react-native": "^0.73.0",
-    "@formbricks/tsconfig": "workspace:*",
+    "@formbricks/config-typescript": "workspace:*",
     "tsup": "^8.0.1"
   },
   "dependencies": {

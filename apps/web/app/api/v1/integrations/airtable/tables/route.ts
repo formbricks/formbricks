@@ -2,14 +2,13 @@ import { responses } from "@/app/lib/api/response";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import * as z from "zod";
-
 import { getTables } from "@formbricks/lib/airtable/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   const url = req.url;
   const environmentId = req.headers.get("environmentId");
   const queryParams = new URLSearchParams(url.split("?")[1]);
@@ -41,4 +40,4 @@ export async function GET(req: NextRequest) {
 
   const tables = await getTables(integration.config.key, baseId.data);
   return responses.successResponse(tables);
-}
+};

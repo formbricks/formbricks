@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
@@ -14,15 +13,14 @@ import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
+import { BasicAddFilterModal } from "@formbricks/ui/BasicAddFilterModal";
+import { BasicSegmentEditor } from "@formbricks/ui/BasicSegmentEditor";
 import { Button } from "@formbricks/ui/Button";
-import BasicAddFilterModal from "@formbricks/ui/Targeting/BasicAddFilterModal";
-import BasicSegmentEditor from "@formbricks/ui/Targeting/BasicSegmentEditor";
-import LoadSegmentModal from "@formbricks/ui/Targeting/LoadSegmentModal";
-import SaveAsNewSegmentModal from "@formbricks/ui/Targeting/SaveAsNewSegmentModal";
-import SegmentTitle from "@formbricks/ui/Targeting/SegmentTitle";
-import TargetingIndicator from "@formbricks/ui/Targeting/TargetingIndicator";
+import { LoadSegmentModal } from "@formbricks/ui/LoadSegmentModal";
+import { SaveAsNewSegmentModal } from "@formbricks/ui/SaveAsNewSegmentModal";
+import { SegmentTitle } from "@formbricks/ui/SegmentTitle";
+import { TargetingIndicator } from "@formbricks/ui/TargetingIndicator";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
-
 import {
   cloneBasicSegmentAction,
   createBasicSegmentAction,
@@ -41,7 +39,7 @@ interface TargetingCardProps {
   isFormbricksCloud: boolean;
 }
 
-export default function TargetingCard({
+export const TargetingCard = ({
   localSurvey,
   setLocalSurvey,
   environmentId,
@@ -49,7 +47,7 @@ export default function TargetingCard({
   segments,
   initialSegment,
   isFormbricksCloud,
-}: TargetingCardProps) {
+}: TargetingCardProps) => {
   const router = useRouter();
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
   const [open, setOpen] = useState(false);
@@ -370,7 +368,7 @@ export default function TargetingCard({
               <UpgradePlanNotice
                 message="For advanced targeting, please"
                 textForUrl="request an Enterprise license."
-                url="https://formbricks.com/docs/self-hosting/enterprise"
+                url={`/environments/${environmentId}/settings/enterprise`}
               />
             )}
           </div>
@@ -434,4 +432,4 @@ export default function TargetingCard({
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
-}
+};

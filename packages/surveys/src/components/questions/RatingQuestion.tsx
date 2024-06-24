@@ -1,16 +1,14 @@
 import { BackButton } from "@/components/buttons/BackButton";
-import SubmitButton from "@/components/buttons/SubmitButton";
-import Headline from "@/components/general/Headline";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { Headline } from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
-
 import {
   ConfusedFace,
   FrowningFace,
@@ -23,7 +21,7 @@ import {
   TiredFace,
   WearyFace,
 } from "../general/Smileys";
-import Subheader from "../general/Subheader";
+import { Subheader } from "../general/Subheader";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
@@ -36,7 +34,7 @@ interface RatingQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -139,7 +137,7 @@ export const RatingQuestion = ({
                             : "border-border",
                           a.length === number ? "rounded-r-custom border-r" : "",
                           number === 1 ? "rounded-l-custom" : "",
-                          hoveredNumber === number ? "bg-accent-bg " : "",
+                          hoveredNumber === number ? "bg-accent-bg" : "",
                           "text-heading focus:border-brand relative flex min-h-[41px] w-full cursor-pointer items-center justify-center border-b border-l border-t focus:border-2 focus:outline-none"
                         )}>
                         <HiddenRadioInput number={number} id={number.toString()} />
@@ -159,8 +157,8 @@ export const RatingQuestion = ({
                         className={cn(
                           number <= hoveredNumber || number <= (value as number)
                             ? "text-amber-400"
-                            : "text-input-bg-selected",
-                          hoveredNumber === number ? "text-amber-400 " : "",
+                            : "text-[#8696AC]",
+                          hoveredNumber === number ? "text-amber-400" : "",
                           "relative flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none"
                         )}
                         onFocus={() => setHoveredNumber(number)}
@@ -208,8 +206,12 @@ export const RatingQuestion = ({
                 ))}
               </div>
               <div className="text-subheading mt-4 flex justify-between px-1.5 text-xs leading-6">
-                <p className="w-1/2 text-left">{getLocalizedValue(question.lowerLabel, "default")}</p>
-                <p className="w-1/2 text-right">{getLocalizedValue(question.upperLabel, "default")}</p>
+                <p className="w-1/2 text-left" dir="auto">
+                  {getLocalizedValue(question.lowerLabel, languageCode)}
+                </p>
+                <p className="w-1/2 text-right" dir="auto">
+                  {getLocalizedValue(question.upperLabel, languageCode)}
+                </p>
               </div>
             </fieldset>
           </div>

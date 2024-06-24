@@ -4,7 +4,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
 import { useEffect } from "react";
-
 import { env } from "@formbricks/lib/env";
 
 const posthogEnabled = env.NEXT_PUBLIC_POSTHOG_API_KEY && env.NEXT_PUBLIC_POSTHOG_API_HOST;
@@ -17,7 +16,7 @@ if (typeof window !== "undefined") {
   }
 }
 
-export function PostHogPageview(): JSX.Element {
+export const PostHogPageview = (): JSX.Element => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -34,8 +33,8 @@ export function PostHogPageview(): JSX.Element {
   }, [pathname, searchParams]);
 
   return <></>;
-}
+};
 
-export function PHProvider({ children }: { children: React.ReactNode }) {
+export const PHProvider = ({ children }: { children: React.ReactNode }) => {
   return posthogEnabled ? <PostHogProvider client={posthog}>{children}</PostHogProvider> : children;
-}
+};

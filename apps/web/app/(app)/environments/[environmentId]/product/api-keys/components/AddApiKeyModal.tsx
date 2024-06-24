@@ -2,7 +2,6 @@
 
 import { AlertTriangleIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
-
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
@@ -14,7 +13,7 @@ interface MemberModalProps {
   onSubmit: (data: { label: string; environment: string }) => void;
 }
 
-export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalProps) {
+export const AddApiKeyModal = ({ open, setOpen, onSubmit }: MemberModalProps) => {
   const { register, getValues, handleSubmit, reset } = useForm<{ label: string; environment: string }>();
 
   const submitAPIKey = async () => {
@@ -73,4 +72,4 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
       </div>
     </Modal>
   );
-}
+};

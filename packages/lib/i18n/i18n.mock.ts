@@ -1,7 +1,5 @@
 import { mockSegment } from "segment/tests/__mocks__/segment.mock";
-
 import { mockSurveyLanguages } from "survey/tests/__mock__/survey.mock";
-
 import {
   TSurvey,
   TSurveyCTAQuestion,
@@ -9,12 +7,11 @@ import {
   TSurveyConsentQuestion,
   TSurveyDateQuestion,
   TSurveyFileUploadQuestion,
-  TSurveyMultipleChoiceMultiQuestion,
-  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyMultipleChoiceQuestion,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
   TSurveyRatingQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
@@ -35,7 +32,7 @@ export const mockWelcomeCard: TSurveyWelcomeCard = {
 
 export const mockOpenTextQuestion: TSurveyOpenTextQuestion = {
   id: "lqht9sj5s6andjkmr9k1n54q",
-  type: TSurveyQuestionType.OpenText,
+  type: TSurveyQuestionTypeEnum.OpenText,
   headline: {
     default: "What would you like to know?",
   },
@@ -50,9 +47,9 @@ export const mockOpenTextQuestion: TSurveyOpenTextQuestion = {
   },
 };
 
-export const mockSingleSelectQuestion: TSurveyMultipleChoiceSingleQuestion = {
+export const mockSingleSelectQuestion: TSurveyMultipleChoiceQuestion = {
   id: "mvqx8t90np6isb6oel9eamzc",
-  type: TSurveyQuestionType.MultipleChoiceSingle,
+  type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
   choices: [
     {
       id: "r52sul8ag19upaicit0fyqzo",
@@ -78,7 +75,7 @@ export const mockSingleSelectQuestion: TSurveyMultipleChoiceSingleQuestion = {
   shuffleOption: "none",
 };
 
-export const mockMultiSelectQuestion: TSurveyMultipleChoiceMultiQuestion = {
+export const mockMultiSelectQuestion: TSurveyMultipleChoiceQuestion = {
   required: true,
   headline: {
     default: "What's important on vacay?",
@@ -105,7 +102,7 @@ export const mockMultiSelectQuestion: TSurveyMultipleChoiceMultiQuestion = {
   ],
   shuffleOption: "none",
   id: "cpydxgsmjg8q9iwfa8wj4ida",
-  type: TSurveyQuestionType.MultipleChoiceMulti,
+  type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
   isDraft: true,
 };
 
@@ -129,7 +126,7 @@ export const mockPictureSelectQuestion: TSurveyPictureSelectionQuestion = {
     },
   ],
   id: "a8monbe8hq0mivh3irfhd3i5",
-  type: TSurveyQuestionType.PictureSelection,
+  type: TSurveyQuestionTypeEnum.PictureSelection,
   isDraft: true,
 };
 
@@ -150,7 +147,7 @@ export const mockRatingQuestion: TSurveyRatingQuestion = {
     default: "Very good",
   },
   id: "waldsboahjtgqhg5p18d1awz",
-  type: TSurveyQuestionType.Rating,
+  type: TSurveyQuestionTypeEnum.Rating,
   isDraft: true,
 };
 
@@ -166,7 +163,7 @@ export const mockNpsQuestion: TSurveyNPSQuestion = {
     default: "Extremely likely",
   },
   id: "m9pemgdih2p4exvkmeeqq6jf",
-  type: TSurveyQuestionType.NPS,
+  type: TSurveyQuestionTypeEnum.NPS,
   isDraft: true,
 };
 
@@ -183,7 +180,7 @@ export const mockCtaQuestion: TSurveyCTAQuestion = {
     default: "Skip",
   },
   id: "gwn15urom4ffnhfimwbz3vgc",
-  type: TSurveyQuestionType.CTA,
+  type: TSurveyQuestionTypeEnum.CTA,
   isDraft: true,
 };
 
@@ -196,7 +193,7 @@ export const mockConsentQuestion: TSurveyConsentQuestion = {
     default: "I agree to the terms and conditions",
   },
   id: "av561aoif3i2hjlsl6krnsfm",
-  type: TSurveyQuestionType.Consent,
+  type: TSurveyQuestionTypeEnum.Consent,
   isDraft: true,
 };
 
@@ -207,7 +204,7 @@ export const mockDateQuestion: TSurveyDateQuestion = {
   },
   format: "M-d-y",
   id: "ts2f6v2oo9jfmfli9kk6lki9",
-  type: TSurveyQuestionType.Date,
+  type: TSurveyQuestionTypeEnum.Date,
   isDraft: true,
 };
 
@@ -218,7 +215,7 @@ export const mockFileUploadQuestion: TSurveyFileUploadQuestion = {
   },
   allowMultipleFiles: false,
   id: "ozzxo2jj1s6mj56c79q8pbef",
-  type: TSurveyQuestionType.FileUpload,
+  type: TSurveyQuestionTypeEnum.FileUpload,
   isDraft: true,
 };
 
@@ -232,7 +229,7 @@ export const mockCalQuestion: TSurveyCalQuestion = {
   },
   calUserName: "rick/get-rick-rolled",
   id: "o3bnux6p42u9ew9d02l14r26",
-  type: TSurveyQuestionType.Cal,
+  type: TSurveyQuestionTypeEnum.Cal,
   isDraft: true,
 };
 
@@ -288,6 +285,7 @@ export const mockSurvey: TSurvey = {
   },
   displayOption: "displayOnce",
   recontactDays: null,
+  displayLimit: null,
   autoClose: null,
   runOnDate: null,
   closeOnDate: null,
@@ -308,6 +306,7 @@ export const mockSurvey: TSurvey = {
   triggers: [],
   languages: mockSurveyLanguages,
   segment: mockSegment,
+  showLanguageSwitch: null,
 } as unknown as TSurvey;
 
 export const mockTranslatedWelcomeCard = {

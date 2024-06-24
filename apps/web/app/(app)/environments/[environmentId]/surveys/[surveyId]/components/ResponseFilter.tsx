@@ -5,25 +5,23 @@ import {
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import QuestionFilterComboBox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
+import { QuestionFilterComboBox } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
 import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
-import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/action";
+import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
 import clsx from "clsx";
 import { isEqual } from "lodash";
 import { TrashIcon } from "lucide-react";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
-
-import QuestionsComboBox, { OptionsType, QuestionOption } from "./QuestionsComboBox";
+import { OptionsType, QuestionOption, QuestionsComboBox } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
-  type: TSurveyQuestionType | "Attributes" | "Tags" | "Languages";
+  type: TSurveyQuestionTypeEnum | "Attributes" | "Tags" | "Languages";
   filterOptions: string[];
   filterComboBoxOptions: string[];
   id: string;
@@ -33,7 +31,7 @@ interface ResponseFilterProps {
   survey: TSurvey;
 }
 
-const ResponseFilter = ({ survey }: ResponseFilterProps) => {
+export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
   const isSharingPage = !!sharingKey;
@@ -46,7 +44,7 @@ const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     // Fetch the initial data for the filter and load it into the state
     const handleInitialData = async () => {
       if (isOpen) {
-        const { attributes, meta, environmentTags } = isSharingPage
+        const { attributes, meta, environmentTags, hiddenFields } = isSharingPage
           ? await getSurveyFilterDataBySurveySharingKeyAction(sharingKey, survey.environmentId)
           : await getSurveyFilterDataAction(survey.id, survey.environmentId);
 
@@ -54,7 +52,8 @@ const ResponseFilter = ({ survey }: ResponseFilterProps) => {
           survey,
           environmentTags,
           attributes,
-          meta
+          meta,
+          hiddenFields
         );
         setSelectedOptions({ questionFilterOptions, questionOptions });
       }
@@ -202,10 +201,10 @@ const ResponseFilter = ({ survey }: ResponseFilterProps) => {
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[300px] border-slate-200  bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px] ">
+        className="w-[300px] border-slate-200 bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px]">
         <div className="mb-8 flex flex-wrap items-start justify-between">
           <p className="hidden text-lg font-bold text-black sm:block">Show all responses that match</p>
-          <p className="block text-base  text-slate-500 sm:hidden">Show all responses where...</p>
+          <p className="block text-base text-slate-500 sm:hidden">Show all responses where...</p>
           <div className="flex items-center space-x-2">
             <label className="text-sm font-normal text-slate-600">Only completed</label>
             <Checkbox
@@ -292,5 +291,3 @@ const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     </Popover>
   );
 };
-
-export default ResponseFilter;

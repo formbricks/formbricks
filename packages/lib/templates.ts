@@ -1,5 +1,4 @@
 import { createId } from "@paralleldrive/cuid2";
-
 import { TActionClass } from "@formbricks/types/actionClasses";
 import {
   TSurveyCTAQuestion,
@@ -7,7 +6,7 @@ import {
   TSurveyHiddenFields,
   TSurveyInput,
   TSurveyOpenTextQuestion,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
   TSurveyStatus,
   TSurveyThankYouCard,
   TSurveyType,
@@ -44,9 +43,10 @@ const surveyDefault: TTemplate["preset"] = {
   questions: [],
 };
 
-export const testTemplate: TTemplate = {
+/* export const testTemplate: TTemplate = {
   name: "Test template",
-  category: "Product Experience",
+  role: "productManager",
+  industries: ["other"],
   description: "Test template consisting of all questions",
   preset: {
     ...surveyDefault,
@@ -54,7 +54,7 @@ export const testTemplate: TTemplate = {
     questions: [
       {
         id: createId(),
-        type: TSurveyQuestionType.OpenText,
+        type: TSurveyQuestionTypeEnum.OpenText,
         headline: { default: "This is an open text question" },
         subheader: { default: "Please enter some text:" },
         required: true,
@@ -63,7 +63,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.OpenText,
+        type: TSurveyQuestionTypeEnum.OpenText,
         headline: { default: "This is an open text question" },
         subheader: { default: "Please enter some text:" },
         required: false,
@@ -73,7 +73,7 @@ export const testTemplate: TTemplate = {
 
       {
         id: createId(),
-        type: TSurveyQuestionType.OpenText,
+        type: TSurveyQuestionTypeEnum.OpenText,
         headline: { default: "This is an open text question" },
         subheader: { default: "Please enter an email" },
         required: true,
@@ -82,7 +82,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.OpenText,
+        type: TSurveyQuestionTypeEnum.OpenText,
         headline: { default: "This is an open text question" },
         subheader: { default: "Please enter an email" },
         required: false,
@@ -91,7 +91,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.OpenText,
+        type: TSurveyQuestionTypeEnum.OpenText,
         headline: { default: "This is an open text question" },
         subheader: { default: "Please enter a number" },
         required: true,
@@ -100,7 +100,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.OpenText,
+        type: TSurveyQuestionTypeEnum.OpenText,
         headline: { default: "This is an open text question" },
         subheader: { default: "Please enter a number" },
         required: false,
@@ -109,7 +109,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.OpenText,
+        type: TSurveyQuestionTypeEnum.OpenText,
         headline: { default: "This is an open text question" },
         subheader: { default: "Please enter a phone number" },
         required: true,
@@ -118,7 +118,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.OpenText,
+        type: TSurveyQuestionTypeEnum.OpenText,
         headline: { default: "This is an open text question" },
         subheader: { default: "Please enter a phone number" },
         required: false,
@@ -127,7 +127,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.OpenText,
+        type: TSurveyQuestionTypeEnum.OpenText,
         headline: { default: "This is an open text question" },
         subheader: { default: "Please enter a url" },
         required: true,
@@ -136,7 +136,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.OpenText,
+        type: TSurveyQuestionTypeEnum.OpenText,
         headline: { default: "This is an open text question" },
         subheader: { default: "Please enter a url" },
         required: false,
@@ -145,7 +145,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.MultipleChoiceSingle,
+        type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
         headline: { default: "This ia a Multiple choice Single question" },
         subheader: { default: "Please select one of the following" },
         required: true,
@@ -163,7 +163,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.MultipleChoiceSingle,
+        type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
         headline: { default: "This ia a Multiple choice Single question" },
         subheader: { default: "Please select one of the following" },
         required: false,
@@ -181,7 +181,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.MultipleChoiceMulti,
+        type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
         headline: { default: "This ia a Multiple choice Multiple question" },
         subheader: { default: "Please select some from the following" },
         required: true,
@@ -199,7 +199,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.MultipleChoiceMulti,
+        type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
         headline: { default: "This ia a Multiple choice Multiple question" },
         subheader: { default: "Please select some from the following" },
         required: false,
@@ -217,7 +217,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.Rating,
+        type: TSurveyQuestionTypeEnum.Rating,
         headline: { default: "This is a rating question" },
         required: true,
         lowerLabel: { default: "Low" },
@@ -227,7 +227,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.Rating,
+        type: TSurveyQuestionTypeEnum.Rating,
         headline: { default: "This is a rating question" },
         required: false,
         lowerLabel: { default: "Low" },
@@ -237,7 +237,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.Rating,
+        type: TSurveyQuestionTypeEnum.Rating,
         headline: { default: "This is a rating question" },
         required: true,
         lowerLabel: { default: "Low" },
@@ -247,7 +247,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.Rating,
+        type: TSurveyQuestionTypeEnum.Rating,
         headline: { default: "This is a rating question" },
         required: false,
         lowerLabel: { default: "Low" },
@@ -257,7 +257,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.Rating,
+        type: TSurveyQuestionTypeEnum.Rating,
         headline: { default: "This is a rating question" },
         required: true,
         lowerLabel: { default: "Low" },
@@ -267,7 +267,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.Rating,
+        type: TSurveyQuestionTypeEnum.Rating,
         headline: { default: "This is a rating question" },
         required: false,
         lowerLabel: { default: "Low" },
@@ -278,7 +278,7 @@ export const testTemplate: TTemplate = {
 
       {
         id: createId(),
-        type: TSurveyQuestionType.CTA,
+        type: TSurveyQuestionTypeEnum.CTA,
         headline: { default: "This is a CTA question" },
         html: { default: "This is a test CTA" },
         buttonLabel: { default: "Click" },
@@ -289,7 +289,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.CTA,
+        type: TSurveyQuestionTypeEnum.CTA,
         headline: { default: "This is a CTA question" },
         html: { default: "This is a test CTA" },
         buttonLabel: { default: "Click" },
@@ -300,7 +300,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.PictureSelection,
+        type: TSurveyQuestionTypeEnum.PictureSelection,
         headline: { default: "This is a Picture select" },
         allowMulti: true,
         required: true,
@@ -317,7 +317,7 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.PictureSelection,
+        type: TSurveyQuestionTypeEnum.PictureSelection,
         headline: { default: "This is a Picture select" },
         allowMulti: true,
         required: false,
@@ -334,27 +334,294 @@ export const testTemplate: TTemplate = {
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.Consent,
+        type: TSurveyQuestionTypeEnum.Consent,
         headline: { default: "This is a Consent question" },
         required: true,
         label: { default: "I agree to the terms and conditions" },
       },
       {
         id: createId(),
-        type: TSurveyQuestionType.Consent,
+        type: TSurveyQuestionTypeEnum.Consent,
         headline: { default: "This is a Consent question" },
         required: false,
         label: { default: "I agree to the terms and conditions" },
       },
     ],
   },
-};
+}; */
 
 export const templates: TTemplate[] = [
   {
+    name: "Cart Abandonment Survey",
+    role: "productManager",
+    industries: ["eCommerce"],
+    channels: ["app", "website", "link"],
+    description: "Understand the reasons behind cart abandonment in your web shop.",
+    preset: {
+      ...surveyDefault,
+      name: "Cart Abandonment Survey",
+      questions: [
+        {
+          id: createId(),
+          html: {
+            default:
+              '<p class="fb-editor-paragraph" dir="ltr"><span>We noticed you left some items in your cart. We would love to understand why.</span></p>',
+          },
+          type: TSurveyQuestionTypeEnum.CTA,
+          logic: [{ condition: "skipped", destination: "end" }],
+          headline: { default: "Do you have 2 minutes to help us improve?" },
+          required: false,
+          buttonLabel: { default: "Sure!" },
+          buttonExternal: false,
+          dismissButtonLabel: { default: "No, thanks." },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "What was the primary reason you didn't complete your purchase?" },
+          subheader: { default: "Please select one of the following options:" },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: "High shipping costs" },
+            },
+            {
+              id: createId(),
+              label: { default: "Found a better price elsewhere" },
+            },
+            {
+              id: createId(),
+              label: { default: "Just browsing" },
+            },
+            {
+              id: createId(),
+              label: { default: "Decided not to buy" },
+            },
+            {
+              id: createId(),
+              label: { default: "Payment issues" },
+            },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: "Please elaborate on your reason for not completing the purchase:",
+          },
+          required: false,
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: { default: "How would you rate your overall shopping experience?" },
+          required: true,
+          scale: "number",
+          range: 5,
+          lowerLabel: { default: "Very dissatisfied" },
+          upperLabel: { default: "Very satisfied" },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          headline: {
+            default: "What factors would encourage you to complete your purchase in the future?",
+          },
+          subheader: { default: "Please select all that apply:" },
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: { default: "Lower shipping costs" },
+            },
+            {
+              id: createId(),
+              label: { default: "Discounts or promotions" },
+            },
+            {
+              id: createId(),
+              label: { default: "More payment options" },
+            },
+            {
+              id: createId(),
+              label: { default: "Better product descriptions" },
+            },
+            {
+              id: createId(),
+              label: { default: "Improved website navigation" },
+            },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+        {
+          id: createId(),
+          logic: [{ condition: "skipped", destination: "bxvvhol84ir34q2vsvr5kwl9" }],
+          type: TSurveyQuestionTypeEnum.Consent,
+          headline: { default: "Would you like to receive a discount code via email?" },
+          required: false,
+          label: { default: "Yes, please reach out." },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Please share your email address:" },
+          required: true,
+          inputType: "email",
+          longAnswer: false,
+          placeholder: { default: "example@email.com" },
+        },
+        {
+          id: "bxvvhol84ir34q2vsvr5kwl9",
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Any additional comments or suggestions?" },
+          required: false,
+          inputType: "text",
+        },
+      ],
+    },
+  },
+  {
+    name: "Site Abandonment Survey",
+    role: "productManager",
+    industries: ["eCommerce"],
+    channels: ["app", "website"],
+    description: "Understand the reasons behind site abandonment in your web shop.",
+    preset: {
+      ...surveyDefault,
+      name: "Site Abandonment Survey",
+      questions: [
+        {
+          id: createId(),
+          html: {
+            default:
+              "<p class='fb-editor-paragraph' dir='ltr'><span>We noticed you're  leaving our site without making a purchase. We would love to understand why.</span></p>",
+          },
+          type: TSurveyQuestionTypeEnum.CTA,
+          logic: [{ condition: "skipped", destination: "end" }],
+          headline: { default: "Do you have a minute?" },
+          required: false,
+          buttonLabel: { default: "Sure!" },
+          buttonExternal: false,
+          dismissButtonLabel: { default: "No, thanks." },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "What's the primary reason you're leaving our site?" },
+          subheader: { default: "Please select one of the following options:" },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: "Can't find what I am looking for" },
+            },
+            {
+              id: createId(),
+              label: { default: "Site is too slow" },
+            },
+            {
+              id: createId(),
+              label: { default: "Technical issues" },
+            },
+            {
+              id: createId(),
+              label: { default: "Just browsing" },
+            },
+            {
+              id: createId(),
+              label: { default: "Found a better site" },
+            },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: "Please elaborate on your reason for leaving the site:",
+          },
+          required: false,
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: { default: "How would you rate your overall experience on our site?" },
+          required: true,
+          scale: "number",
+          range: 5,
+          lowerLabel: { default: "Very dissatisfied" },
+          upperLabel: { default: "Very satisfied" },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          headline: {
+            default: "What improvements would encourage you to stay longer on our site?",
+          },
+          subheader: { default: "Please select all that apply:" },
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: { default: "Faster loading times" },
+            },
+            {
+              id: createId(),
+              label: { default: "Better product search functionality" },
+            },
+            {
+              id: createId(),
+              label: { default: "More product variety" },
+            },
+            {
+              id: createId(),
+              label: { default: "Improved site design" },
+            },
+            {
+              id: createId(),
+              label: { default: "More customer reviews" },
+            },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+        {
+          id: createId(),
+          logic: [{ condition: "skipped", destination: "bxvvhol84ir34q2vsvr5kwl9" }],
+          type: TSurveyQuestionTypeEnum.Consent,
+          headline: { default: "Would you like to receive updates about new products and promotions?" },
+          required: false,
+          label: { default: "Yes, please reach out." },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Please share your email address:" },
+          required: true,
+          inputType: "email",
+          longAnswer: false,
+          placeholder: { default: "example@email.com" },
+        },
+        {
+          id: "bxvvhol84ir34q2vsvr5kwl9",
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Any additional comments or suggestions?" },
+          required: false,
+          inputType: "text",
+        },
+      ],
+    },
+  },
+  {
     name: "Product Market Fit (Superhuman)",
-    category: "Product Experience",
-
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app", "link"],
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
     preset: {
       ...surveyDefault,
@@ -366,7 +633,7 @@ export const templates: TTemplate[] = [
             default:
               '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot.</span></p>',
           },
-          type: TSurveyQuestionType.CTA,
+          type: TSurveyQuestionTypeEnum.CTA,
           logic: [{ condition: "skipped", destination: "end" }],
           headline: { default: "You are one of our power users! Do you have 5 minutes?" },
           required: false,
@@ -376,7 +643,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "How disappointed would you be if you could no longer use {{productName}}?" },
           subheader: { default: "Please select one of the following options:" },
           required: true,
@@ -398,7 +665,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "What is your role?" },
           subheader: { default: "Please select one of the following options:" },
           required: true,
@@ -414,7 +681,7 @@ export const templates: TTemplate[] = [
             },
             {
               id: createId(),
-              label: { default: "Product Manager" },
+              label: { default: "productManager" },
             },
             {
               id: createId(),
@@ -428,21 +695,21 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "What type of people do you think would most benefit from {{productName}}?" },
           required: true,
           inputType: "text",
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "What is the main benefit you receive from {{productName}}?" },
           required: true,
           inputType: "text",
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "How can we improve {{productName}} for you?" },
           subheader: { default: "Please be as specific as possible." },
           required: true,
@@ -453,8 +720,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Onboarding Segmentation",
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app", "link"],
     description: "Learn more about who signed up to your product and why.",
     preset: {
       ...surveyDefault,
@@ -462,7 +730,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "What is your role?" },
           subheader: { default: "Please select one of the following options:" },
           required: true,
@@ -478,7 +746,7 @@ export const templates: TTemplate[] = [
             },
             {
               id: createId(),
-              label: { default: "Product Manager" },
+              label: { default: "productManager" },
             },
             {
               id: createId(),
@@ -492,7 +760,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "What's your company size?" },
           subheader: { default: "Please select one of the following options:" },
           required: true,
@@ -522,7 +790,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "How did you hear about us first?" },
           subheader: { default: "Please select one of the following options:" },
           required: true,
@@ -555,8 +823,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Churn Survey",
-    category: "Increase Revenue",
-    objectives: ["sharpen_marketing_messaging", "improve_user_retention"],
+    role: "sales",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["app", "link"],
     description: "Find out why people cancel their subscriptions. These insights are pure gold!",
     preset: {
       ...surveyDefault,
@@ -564,7 +833,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
             { value: "Difficult to use", condition: "equals", destination: "sxwpskjgzzpmkgfxzi15inif" },
@@ -586,7 +855,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "sxwpskjgzzpmkgfxzi15inif",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: { default: "What would have made {{productName}} easier to use?" },
           required: true,
@@ -599,7 +868,7 @@ export const templates: TTemplate[] = [
             default:
               '<p class="fb-editor-paragraph" dir="ltr"><span>We\'d love to keep you as a customer. Happy to offer a 30% discount for the next year.</span></p>',
           },
-          type: TSurveyQuestionType.CTA,
+          type: TSurveyQuestionTypeEnum.CTA,
           logic: [{ condition: "clicked", destination: "end" }],
           headline: { default: "Get 30% off for the next year!" },
           required: true,
@@ -610,7 +879,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "l054desub14syoie7n202vq4",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: { default: "What features are you missing?" },
           required: true,
@@ -622,7 +891,7 @@ export const templates: TTemplate[] = [
             default:
               '<p class="fb-editor-paragraph" dir="ltr"><span>We aim to provide the best possible customer service. Please email our CEO and she will personally handle your issue.</span></p>',
           },
-          type: TSurveyQuestionType.CTA,
+          type: TSurveyQuestionTypeEnum.CTA,
           logic: [{ condition: "clicked", destination: "end" }],
           headline: { default: "So sorry to hear 😔 Talk to our CEO directly!" },
           required: true,
@@ -636,8 +905,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Earned Advocacy Score (EAS)",
-    category: "Growth",
-    objectives: ["support_sales", "sharpen_marketing_messaging"],
+    role: "customerSuccess",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["app", "link"],
     description:
       "The EAS is a riff off the NPS but asking for actual past behaviour instead of lofty intentions.",
     preset: {
@@ -646,7 +916,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           logic: [{ value: "No", condition: "equals", destination: "duz2qp8eftix9wty1l221x1h" }],
           shuffleOption: "none",
           choices: [
@@ -658,7 +928,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "yhfew1j3ng6luy7t7qynwj79" }],
           headline: { default: "Great to hear! Why did you recommend us?" },
           required: true,
@@ -667,7 +937,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "duz2qp8eftix9wty1l221x1h",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "So sad. Why not?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -675,7 +945,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "yhfew1j3ng6luy7t7qynwj79",
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           logic: [{ value: "No", condition: "equals", destination: "end" }],
           shuffleOption: "none",
           choices: [
@@ -687,7 +957,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "What made you discourage them?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -698,8 +968,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Improve Trial Conversion",
-    category: "Increase Revenue",
-    objectives: ["increase_user_adoption", "increase_conversion", "improve_user_retention"],
+    role: "sales",
+    industries: ["saas"],
+    channels: ["link", "app"],
     description: "Find out why people stopped their trial. These insights help you improve your funnel.",
     preset: {
       ...surveyDefault,
@@ -707,7 +978,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
             {
@@ -745,7 +1016,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "aew2ymg51mffnt9db7duz9t3",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "bqiyml1ym74ggx6htwdo7rlu" }],
           headline: { default: "Sorry to hear. What was the biggest problem using {{productName}}?" },
           required: true,
@@ -754,7 +1025,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "rnrfydttavtsf2t2nfx1df7m",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "bqiyml1ym74ggx6htwdo7rlu" }],
           headline: { default: "What did you expect {{productName}} would do for you?" },
           required: true,
@@ -767,7 +1038,7 @@ export const templates: TTemplate[] = [
             default:
               '<p class="fb-editor-paragraph" dir="ltr"><span>We\'re happy to offer you a 20% discount on a yearly plan.</span></p>',
           },
-          type: TSurveyQuestionType.CTA,
+          type: TSurveyQuestionTypeEnum.CTA,
           logic: [{ condition: "clicked", destination: "end" }],
           headline: { default: "Sorry to hear! Get 20% off the first year." },
           required: true,
@@ -778,7 +1049,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "rbhww1pix03r6sl4xc511wqg",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "bqiyml1ym74ggx6htwdo7rlu" }],
           headline: { default: "Which features are you missing?" },
           required: true,
@@ -788,7 +1059,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "bqiyml1ym74ggx6htwdo7rlu",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [
             { condition: "submitted", destination: "end" },
             { condition: "skipped", destination: "end" },
@@ -803,9 +1074,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Review Prompt",
-
-    category: "Growth",
-    objectives: ["support_sales"],
+    role: "marketing",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link", "app"],
     description: "Invite users who love your product to review it publicly.",
     preset: {
       ...surveyDefault,
@@ -813,7 +1084,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           logic: [{ value: 3, condition: "lessEqual", destination: "tk9wpw2gxgb8fa6pbpp3qq5l" }],
           range: 5,
           scale: "star",
@@ -825,7 +1096,7 @@ export const templates: TTemplate[] = [
         {
           id: createId(),
           html: { default: '<p class="fb-editor-paragraph" dir="ltr"><span>This helps us a lot.</span></p>' },
-          type: TSurveyQuestionType.CTA,
+          type: TSurveyQuestionTypeEnum.CTA,
           logic: [{ condition: "clicked", destination: "end" }],
           headline: { default: "Happy to hear 🙏 Please write a review for us!" },
           required: true,
@@ -835,7 +1106,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "tk9wpw2gxgb8fa6pbpp3qq5l",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Sorry to hear! What is ONE thing we can do better?" },
           required: true,
           subheader: { default: "Help us improve your experience." },
@@ -848,9 +1119,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Interview Prompt",
-
-    category: "Exploration",
-    objectives: ["improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Invite a specific subset of your users to schedule an interview with your product team.",
     preset: {
       ...surveyDefault,
@@ -858,7 +1129,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.CTA,
+          type: TSurveyQuestionTypeEnum.CTA,
           headline: { default: "Do you have 15 min to talk to us? 🙏" },
           html: { default: "You're one of our power users. We would love to interview you briefly!" },
           buttonLabel: { default: "Book slot" },
@@ -870,9 +1141,10 @@ export const templates: TTemplate[] = [
     },
   },
   {
-    name: "Reduce Onboarding Drop-Off",
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "increase_conversion"],
+    name: "Improve Activation Rate",
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["link"],
     description: "Identify weaknesses in your onboarding flow to increase user activation.",
     preset: {
       ...surveyDefault,
@@ -880,7 +1152,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
             {
@@ -918,7 +1190,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: { default: "What made you think {{productName}} wouldn't be useful?" },
           required: true,
@@ -927,7 +1199,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "r0zvi3vburf4hm7qewimzjux",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: { default: "What was difficult about setting up or using {{productName}}?" },
           required: true,
@@ -936,7 +1208,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "rbwz3y6y9avzqcfj30nu0qj4",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: { default: "What features or functionality were missing?" },
           required: true,
@@ -945,7 +1217,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "gn6298zogd2ipdz7js17qy5i",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: { default: "How could we make it easier for you to get started?" },
           required: true,
@@ -954,7 +1226,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "c0exdyri3erugrv0ezkyseh6",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [],
           headline: { default: "What was it? Please explain:" },
           required: false,
@@ -967,8 +1239,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Uncover Strengths & Weaknesses",
-    category: "Growth",
-    objectives: ["sharpen_marketing_messaging", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas", "other"],
+    channels: ["app", "link"],
     description: "Find out what users like and don't like about your product or offering.",
     preset: {
       ...surveyDefault,
@@ -976,7 +1249,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
             { id: createId(), label: { default: "Ease of use" } },
@@ -990,7 +1263,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
             { id: createId(), label: { default: "Documentation" } },
@@ -1004,7 +1277,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Would you like to add something?" },
           required: false,
           subheader: { default: "Feel free to speak your mind, we do too." },
@@ -1015,7 +1288,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Product Market Fit Survey (Short)",
-    category: "Product Experience",
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app", "link"],
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
     preset: {
       ...surveyDefault,
@@ -1023,7 +1298,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "How disappointed would you be if you could no longer use {{productName}}?" },
           subheader: { default: "Please select one of the following options:" },
           required: true,
@@ -1045,7 +1320,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "How can we improve {{productName}} for you?" },
           subheader: { default: "Please be as specific as possible." },
           required: true,
@@ -1056,9 +1331,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Marketing Attribution",
-
-    category: "Growth",
-    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
+    role: "marketing",
+    industries: ["saas", "eCommerce"],
+    channels: ["website", "app", "link"],
     description: "How did you first hear about us?",
     preset: {
       ...surveyDefault,
@@ -1066,7 +1341,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "How did you hear about us first?" },
           subheader: { default: "Please select one of the following options:" },
           required: true,
@@ -1099,9 +1374,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Changing Subscription Experience",
-
-    category: "Increase Revenue",
-    objectives: ["increase_conversion", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Find out what goes through peoples minds when changing their subscriptions.",
     preset: {
       ...surveyDefault,
@@ -1109,7 +1384,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "How easy was it to change your plan?" },
           required: true,
           shuffleOption: "none",
@@ -1138,7 +1413,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "Is the pricing information easy to understand?" },
           required: true,
           shuffleOption: "none",
@@ -1163,9 +1438,9 @@ export const templates: TTemplate[] = [
 
   {
     name: "Identify Customer Goals",
-
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "sharpen_marketing_messaging", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas", "other"],
+    channels: ["app", "website"],
     description:
       "Better understand if your messaging creates the right expectations of the value your product provides.",
     preset: {
@@ -1174,7 +1449,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "What's your primary goal for using {{productName}}?" },
           required: true,
           shuffleOption: "none",
@@ -1200,11 +1475,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Feature Chaser",
-
-    category: "Product Experience",
-    objectives: ["improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Follow up with users who just used a specific feature.",
     preset: {
       ...surveyDefault,
@@ -1212,7 +1488,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           range: 5,
           scale: "number",
           headline: { default: "How important is [ADD FEATURE] for you?" },
@@ -1222,7 +1498,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
             { id: createId(), label: { default: "Aspect 1" } },
@@ -1236,11 +1512,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Fake Door Follow-Up",
-
-    category: "Exploration",
-    objectives: ["increase_user_adoption"],
+    role: "productManager",
+    industries: ["saas", "eCommerce"],
+    channels: ["app", "website"],
     description: "Follow up with users who ran into one of your Fake Door experiments.",
     preset: {
       ...surveyDefault,
@@ -1248,7 +1525,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           headline: { default: "How important is this feature for you?" },
           required: true,
           lowerLabel: { default: "Not important" },
@@ -1258,7 +1535,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceMulti,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
           headline: { default: "What should be definitely include building this?" },
           required: false,
           shuffleOption: "none",
@@ -1284,11 +1561,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Feedback Box",
-
-    category: "Product Experience",
-    objectives: ["improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Give your users the chance to seamlessly share what's on their minds.",
     preset: {
       ...surveyDefault,
@@ -1296,7 +1574,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
             { value: "Bug report 🐞", condition: "equals", destination: "dnbiuq4l33l7jypcf2cg6vhh" },
@@ -1312,7 +1590,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "dnbiuq4l33l7jypcf2cg6vhh",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "a6c76m5oocw6xp9agf3d2tam" }],
           headline: { default: "What's broken?" },
           required: true,
@@ -1325,7 +1603,7 @@ export const templates: TTemplate[] = [
             default:
               '<p class="fb-editor-paragraph" dir="ltr"><span>We will fix this as soon as possible. Do you want to be notified when we did?</span></p>',
           },
-          type: TSurveyQuestionType.CTA,
+          type: TSurveyQuestionTypeEnum.CTA,
           logic: [
             { condition: "clicked", destination: "end" },
             { condition: "skipped", destination: "end" },
@@ -1338,7 +1616,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "en9nuuevbf7g9oa9rzcs1l50",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Lovely, tell us more!" },
           required: true,
           subheader: { default: "What problem do you want us to solve?" },
@@ -1349,11 +1627,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Integration Setup Survey",
-
-    category: "Product Experience",
-    objectives: ["increase_user_adoption"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Evaluate how easily users can add integrations to your product. Find blind spots.",
     preset: {
       ...surveyDefault,
@@ -1361,7 +1640,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: "s6ss6znzxdwjod1hv16fow4w",
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "ef0qo3l8iisd517ikp078u1p" }],
           range: 5,
           scale: "number",
@@ -1372,7 +1651,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "mko13ptjj6tpi5u2pl7a5drz",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Why was it hard?" },
           required: false,
           placeholder: { default: "Type your answer here..." },
@@ -1380,7 +1659,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "ef0qo3l8iisd517ikp078u1p",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "What other tools would you like to use with {{productName}}?" },
           required: false,
           subheader: { default: "We keep building integrations, yours can be next:" },
@@ -1389,11 +1668,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "New Integration Survey",
-
-    category: "Exploration",
-    objectives: ["increase_user_adoption", "increase_conversion"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Find out which integrations your users would like to see next.",
     preset: {
       ...surveyDefault,
@@ -1401,7 +1681,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "Which other tools are you using?" },
           required: true,
           shuffleOption: "none",
@@ -1431,11 +1711,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Docs Feedback",
-
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app", "website", "link"],
     description: "Measure how clear each page of your developer documentation is.",
     preset: {
       ...surveyDefault,
@@ -1443,7 +1724,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "Was this page helpful?" },
           required: true,
           shuffleOption: "none",
@@ -1460,14 +1741,14 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Please elaborate:" },
           required: false,
           inputType: "text",
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Page URL" },
           required: false,
           inputType: "text",
@@ -1475,11 +1756,13 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Net Promoter Score (NPS)",
 
-    category: "Customer Success",
-    objectives: ["support_sales"],
+    role: "customerSuccess",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["app", "link", "website"],
     description: "Measure the Net Promoter Score of your product or service.",
     preset: {
       ...surveyDefault,
@@ -1487,7 +1770,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.NPS,
+          type: TSurveyQuestionTypeEnum.NPS,
           headline: { default: "How likely are you to recommend {{productName}} to a friend or colleague?" },
           required: false,
           lowerLabel: { default: "Not likely" },
@@ -1495,7 +1778,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "What made you give that rating?" },
           required: false,
           inputType: "text",
@@ -1503,18 +1786,20 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Customer Satisfaction Score (CSAT)",
-    category: "Customer Success",
-    objectives: ["support_sales"],
-    description: "Measure the Customer Satisfaction Score of your product.",
+    role: "customerSuccess",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["app", "link", "website"],
+    description: "Measure the Customer Satisfaction Score of your product or service.",
     preset: {
       ...surveyDefault,
       name: "{{productName}} CSAT",
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           logic: [{ value: 3, condition: "lessEqual", destination: "vyo4mkw4ln95ts4ya7qp2tth" }],
           range: 5,
           scale: "smiley",
@@ -1525,7 +1810,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: { default: "Lovely! Is there anything we can do to improve your experience?" },
           required: false,
@@ -1534,7 +1819,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "vyo4mkw4ln95ts4ya7qp2tth",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Ugh, sorry! Is there anything we can do to improve your experience?" },
           required: false,
           placeholder: { default: "Type your answer here..." },
@@ -1543,10 +1828,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Collect Feedback",
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
+    role: "productManager",
+    industries: ["other", "eCommerce"],
+    channels: ["website", "link"],
     description: "Gather comprehensive feedback on your product or service.",
     preset: {
       ...surveyDefault,
@@ -1554,7 +1841,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           logic: [{ value: "3", condition: "lessEqual", destination: "dlpa0371pe7rphmggy2sgbap" }],
           range: 5,
           scale: "star",
@@ -1566,7 +1853,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "gwo0fq5kug13e83fcour4n1w" }],
           headline: { default: "Lovely! What did you like about it?" },
           required: true,
@@ -1576,7 +1863,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "dlpa0371pe7rphmggy2sgbap",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Thanks for sharing! What did you not like?" },
           required: true,
           longAnswer: true,
@@ -1585,7 +1872,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "gwo0fq5kug13e83fcour4n1w",
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           range: 5,
           scale: "smiley",
           headline: { default: "How do you rate our communication?" },
@@ -1595,7 +1882,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Anything else you'd like to share with our team?" },
           required: false,
           longAnswer: true,
@@ -1604,7 +1891,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "sjbaghd1bi59pkjun2c97kw9",
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           logic: [],
           choices: [
             { id: createId(), label: { default: "Google" } },
@@ -1619,7 +1906,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Lastly, we'd love to respond to your feedback. Please share your email:" },
           required: false,
           inputType: "email",
@@ -1629,11 +1916,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Identify Upsell Opportunities",
-
-    category: "Increase Revenue",
-    objectives: ["support_sales", "sharpen_marketing_messaging"],
+    role: "sales",
+    industries: ["saas"],
+    channels: ["app", "link"],
     description: "Find out how much time your product saves your user. Use it to upsell.",
     preset: {
       ...surveyDefault,
@@ -1641,7 +1929,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "How many hours does your team save per week by using {{productName}}?" },
           required: true,
           shuffleOption: "none",
@@ -1670,9 +1958,9 @@ export const templates: TTemplate[] = [
 
   {
     name: "Prioritize Features",
-
-    category: "Exploration",
-    objectives: ["increase_user_adoption"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Identify features your users need most and least.",
     preset: {
       ...surveyDefault,
@@ -1680,7 +1968,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           logic: [],
           shuffleOption: "none",
           choices: [
@@ -1694,7 +1982,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           logic: [],
           shuffleOption: "none",
           choices: [
@@ -1707,7 +1995,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "How else could we improve you experience with {{productName}}?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -1716,11 +2004,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Gauge Feature Satisfaction",
-
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Evaluate the satisfaction of specific features of your product.",
     preset: {
       ...surveyDefault,
@@ -1728,7 +2017,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           headline: { default: "How easy was it to achieve ... ?" },
           required: true,
           lowerLabel: { default: "Not easy" },
@@ -1738,7 +2027,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "What is one thing we could do better?" },
           required: false,
           inputType: "text",
@@ -1748,11 +2037,12 @@ export const templates: TTemplate[] = [
       hiddenFields: hiddenFieldsDefault,
     },
   },
+
   {
     name: "Marketing Site Clarity",
-
-    category: "Growth",
-    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
+    role: "marketing",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["website"],
     description: "Identify users dropping off your marketing site. Improve your messaging.",
     preset: {
       ...surveyDefault,
@@ -1760,7 +2050,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "Do you have all the info you need to give {{productName}} a try?" },
           required: true,
           shuffleOption: "none",
@@ -1781,14 +2071,14 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "What’s missing or unclear to you about {{productName}}?" },
           required: false,
           inputType: "text",
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.CTA,
+          type: TSurveyQuestionTypeEnum.CTA,
           headline: { default: "Thanks for your answer! Get 25% off your first 6 months:" },
           required: false,
           buttonLabel: { default: "Get discount" },
@@ -1798,11 +2088,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Customer Effort Score (CES)",
-
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Determine how easy it is to use a feature.",
     preset: {
       ...surveyDefault,
@@ -1810,7 +2101,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           range: 5,
           scale: "number",
           headline: { default: "{{productName}} makes it easy for me to [ADD GOAL]" },
@@ -1820,7 +2111,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Thanks! How could we make it easier for you to [ADD GOAL]?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -1832,9 +2123,9 @@ export const templates: TTemplate[] = [
 
   {
     name: "Rate Checkout Experience",
-
-    category: "Increase Revenue",
-    objectives: ["increase_conversion"],
+    role: "productManager",
+    industries: ["eCommerce"],
+    channels: ["website", "app"],
     description: "Let customers rate the checkout experience to tweak conversion.",
     preset: {
       ...surveyDefault,
@@ -1842,7 +2133,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "lpof3d9t9hmnqvyjlpksmxd7" }],
           range: 5,
           scale: "number",
@@ -1853,7 +2144,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: { default: "Sorry about that! What would have made it easier for you?" },
           required: true,
@@ -1862,7 +2153,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "lpof3d9t9hmnqvyjlpksmxd7",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Lovely! Is there anything we can do to improve your experience?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -1871,11 +2162,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Measure Search Experience",
-
-    category: "Product Experience",
-    objectives: ["improve_user_retention"],
+    role: "productManager",
+    industries: ["saas", "eCommerce"],
+    channels: ["app", "website"],
     description: "Measure how relevant your search results are.",
     preset: {
       ...surveyDefault,
@@ -1883,7 +2175,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "adcs3d9t9hmnqvyjlpksmxd7" }],
           range: 5,
           scale: "number",
@@ -1894,7 +2186,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: { default: "Ugh! What makes the results irrelevant for you?" },
           required: true,
@@ -1903,7 +2195,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "adcs3d9t9hmnqvyjlpksmxd7",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Lovely! Is there anything we can do to improve your experience?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -1912,11 +2204,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Evaluate Content Quality",
-
-    category: "Growth",
-    objectives: ["increase_conversion"],
+    role: "marketing",
+    industries: ["other"],
+    channels: ["website"],
     description: "Measure if your content marketing pieces hit right.",
     preset: {
       ...surveyDefault,
@@ -1924,7 +2217,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "adcs3d9t9hmnqvyjlpkswi38" }],
           range: 5,
           scale: "number",
@@ -1935,7 +2228,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: { default: "Hmpft! What were you hoping for?" },
           required: true,
@@ -1944,7 +2237,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "adcs3d9t9hmnqvyjlpkswi38",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Lovely! Is there anything else you would like us to cover?" },
           required: true,
           placeholder: { default: "Topics, trends, tutorials..." },
@@ -1953,11 +2246,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Measure Task Accomplishment",
-
-    category: "Customer Success",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app", "website"],
     description: "See if people get their 'Job To Be Done' done. Successful people are better customers.",
     preset: {
       ...surveyDefault,
@@ -1965,7 +2259,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
             { value: "Working on it, boss", condition: "equals", destination: "nq88udm0jjtylr16ax87xlyc" },
@@ -1982,7 +2276,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "rjeac33gd13h3nnbrbid1fb2",
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "nq88udm0jjtylr16ax87xlyc" }],
           range: 5,
           scale: "number",
@@ -1993,7 +2287,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "s0999bhpaz8vgf7ps264piek",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [
             { condition: "submitted", destination: "end" },
             { condition: "skipped", destination: "end" },
@@ -2005,7 +2299,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "nq88udm0jjtylr16ax87xlyc",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [
             { condition: "skipped", destination: "end" },
             { condition: "submitted", destination: "end" },
@@ -2017,7 +2311,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "u83zhr66knyfozccoqojx7bc",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "What stopped you?" },
           required: true,
           buttonLabel: { default: "Send" },
@@ -2027,11 +2321,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Identify Sign Up Barriers",
-
-    category: "Growth",
-    objectives: ["increase_conversion"],
+    role: "marketing",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["website"],
     description: "Offer a discount to gather insights about sign up barriers.",
     preset: {
       ...surveyDefault,
@@ -2043,7 +2338,7 @@ export const templates: TTemplate[] = [
             default:
               '<p class="fb-editor-paragraph" dir="ltr"><span>You seem to be considering signing up. Answer four questions and get 10% on any plan.</span></p>',
           },
-          type: TSurveyQuestionType.CTA,
+          type: TSurveyQuestionTypeEnum.CTA,
           logic: [{ condition: "skipped", destination: "end" }],
           headline: { default: "Answer this short survey, get 10% off!" },
           required: false,
@@ -2053,7 +2348,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           logic: [{ value: "5", condition: "equals", destination: "end" }],
           range: 5,
           scale: "number",
@@ -2064,7 +2359,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
             {
@@ -2093,7 +2388,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "atiw0j1oykb77zr0b7q4tixu",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "k3q0vt1ko0bzbsq076p7lnys" }],
           headline: { default: "What do you need but {{productName}} does not offer?" },
           required: true,
@@ -2102,7 +2397,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "j7jkpolm5xl7u0zt3g0e4z7d",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "k3q0vt1ko0bzbsq076p7lnys" }],
           headline: { default: "What options are you looking at?" },
           required: true,
@@ -2111,7 +2406,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "t5gvag2d7kq311szz5iyiy79",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "k3q0vt1ko0bzbsq076p7lnys" }],
           headline: { default: "What seems complicated to you?" },
           required: true,
@@ -2120,7 +2415,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "or0yhhrof753sq9ug4mdavgz",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "k3q0vt1ko0bzbsq076p7lnys" }],
           headline: { default: "What are you concerned about regarding pricing?" },
           required: true,
@@ -2129,7 +2424,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "v0pq1qcnm6ohiry5ywcd91qq",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Please explain:" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -2141,7 +2436,7 @@ export const templates: TTemplate[] = [
             default:
               '<p class="fb-editor-paragraph" dir="ltr"><span>Thanks a lot for taking the time to share feedback 🙏</span></p>',
           },
-          type: TSurveyQuestionType.CTA,
+          type: TSurveyQuestionTypeEnum.CTA,
           headline: { default: "Thanks! Here is your code: SIGNUPNOW10" },
           required: false,
           buttonUrl: "https://app.formbricks.com/auth/signup",
@@ -2152,11 +2447,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Build Product Roadmap",
-
-    category: "Exploration",
-    objectives: ["increase_user_adoption"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app", "link"],
     description: "Identify the ONE thing your users want the most and build it.",
     preset: {
       ...surveyDefault,
@@ -2164,7 +2460,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           range: 5,
           scale: "number",
           headline: {
@@ -2176,7 +2472,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: {
             default: "What's ONE change we could make to improve your {{productName}} experience most?",
           },
@@ -2187,11 +2483,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Understand Purchase Intention",
-
-    category: "Increase Revenue",
-    objectives: ["increase_conversion", "increase_user_adoption"],
+    role: "sales",
+    industries: ["eCommerce"],
+    channels: ["website", "link", "app"],
     description: "Find out how close your visitors are to buy or subscribe.",
     preset: {
       ...surveyDefault,
@@ -2199,7 +2496,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           logic: [
             { value: "2", condition: "lessEqual", destination: "y19mwcmstlc7pi7s4izxk1ll" },
             { value: "3", condition: "equals", destination: "zm1hs8qkeuidh3qm0hx8pnw7" },
@@ -2208,14 +2505,14 @@ export const templates: TTemplate[] = [
           ],
           range: 5,
           scale: "number",
-          headline: { default: "How likely are you to subscribe to {{productName}} today?" },
+          headline: { default: "How likely are you to shop from us today?" },
           required: true,
           lowerLabel: { default: "Not at all likely" },
           upperLabel: { default: "Extremely likely" },
         },
         {
           id: "y19mwcmstlc7pi7s4izxk1ll",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [
             { condition: "submitted", destination: "end" },
             { condition: "skipped", destination: "end" },
@@ -2227,7 +2524,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "zm1hs8qkeuidh3qm0hx8pnw7",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "What, if anything, is holding you back from making a purchase today?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -2236,10 +2533,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Improve Newsletter Content",
-    category: "Growth",
-    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
+    role: "marketing",
+    industries: ["eCommerce", "saas", "other"],
+    channels: ["link"],
     description: "Find out how your subscribers like your newsletter content.",
     preset: {
       ...surveyDefault,
@@ -2247,7 +2546,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           logic: [
             { value: "5", condition: "equals", destination: "l2q1chqssong8n0xwaagyl8g" },
             { value: "5", condition: "lessThan", destination: "k3s6gm5ivkc5crpycdbpzkpa" },
@@ -2261,7 +2560,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "k3s6gm5ivkc5crpycdbpzkpa",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [
             { condition: "submitted", destination: "end" },
             { condition: "skipped", destination: "end" },
@@ -2277,7 +2576,7 @@ export const templates: TTemplate[] = [
             default:
               '<p class="fb-editor-paragraph" dir="ltr"><span>Who thinks like you? You\'d do us a huge favor if you\'d share this weeks episode with your brain friend!</span></p>',
           },
-          type: TSurveyQuestionType.CTA,
+          type: TSurveyQuestionTypeEnum.CTA,
           headline: { default: "Thanks! ❤️ Spread the love with ONE friend." },
           required: false,
           buttonUrl: "https://formbricks.com",
@@ -2288,11 +2587,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Evaluate a Product Idea",
-
-    category: "Exploration",
-    objectives: ["improve_user_retention", "increase_user_adoption"],
+    role: "productManager",
+    industries: ["saas", "other"],
+    channels: ["link", "app"],
     description: "Survey users about product or feature ideas. Get feedback rapidly.",
     preset: {
       ...surveyDefault,
@@ -2304,7 +2604,7 @@ export const templates: TTemplate[] = [
             default:
               '<p class="fb-editor-paragraph" dir="ltr"><span>We respect your time and kept it short 🤸</span></p>',
           },
-          type: TSurveyQuestionType.CTA,
+          type: TSurveyQuestionTypeEnum.CTA,
           headline: {
             default:
               "We love how you use {{productName}}! We'd love to pick your brain on a feature idea. Got a minute?",
@@ -2316,7 +2616,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           logic: [
             { value: "3", condition: "lessEqual", destination: "ndacjg9lqf5jcpq9w8ote666" },
             { value: "4", condition: "greaterEqual", destination: "jmzgbo73cfjswlvhoynn7o0q" },
@@ -2330,7 +2630,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "ndacjg9lqf5jcpq9w8ote666",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "What's most difficult for you when it comes to [PROBLEM AREA]?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -2342,7 +2642,7 @@ export const templates: TTemplate[] = [
             default:
               '<p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><b><strong class="fb-editor-text-bold">Read the text below, then answer 2 questions:</strong></b></p><p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><span>Insert concept brief here. Add neccessary details but keep it concise and easy to understand.</span></p>',
           },
-          type: TSurveyQuestionType.CTA,
+          type: TSurveyQuestionTypeEnum.CTA,
           headline: { default: "We're working on an idea to help with [PROBLEM AREA]." },
           required: true,
           buttonLabel: { default: "Next" },
@@ -2351,7 +2651,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: createId(),
-          type: TSurveyQuestionType.Rating,
+          type: TSurveyQuestionTypeEnum.Rating,
           logic: [
             { value: "3", condition: "lessEqual", destination: "mmiuun3z4e7gk4ufuwh8lq8q" },
             { value: "4", condition: "greaterEqual", destination: "gvzevzw4hkqd6dmlkcly6kd1" },
@@ -2365,7 +2665,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "mmiuun3z4e7gk4ufuwh8lq8q",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "bqmnpyku9etsgbtb322luzb2" }],
           headline: { default: "Got it. Why wouldn't this feature be valuable to you?" },
           required: true,
@@ -2374,7 +2674,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "gvzevzw4hkqd6dmlkcly6kd1",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Got it. What would be most valuable to you in this feature?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -2382,7 +2682,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "bqmnpyku9etsgbtb322luzb2",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "Anything else we should keep in mind?" },
           required: false,
           placeholder: { default: "Type your answer here..." },
@@ -2391,11 +2691,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Understand Low Engagement",
-
-    category: "Product Experience",
-    objectives: ["improve_user_retention", "increase_user_adoption"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["link"],
     description: "Identify reasons for low engagement to improve user adoption.",
     preset: {
       ...surveyDefault,
@@ -2403,7 +2704,7 @@ export const templates: TTemplate[] = [
       questions: [
         {
           id: "aq9dafe9nxe0kpm67b1os2z9",
-          type: TSurveyQuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
             { value: "Difficult to use", condition: "equals", destination: "r0zvi3vburf4hm7qewimzjux" },
@@ -2436,7 +2737,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "r0zvi3vburf4hm7qewimzjux",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: { default: "What's difficult about using {{productName}}?" },
           required: true,
@@ -2445,7 +2746,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "g92s5wetp51ps6afmc6y7609",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: { default: "Got it. Which alternative are you using instead?" },
           required: true,
@@ -2454,7 +2755,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "gn6298zogd2ipdz7js17qy5i",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: { default: "Got it. How could we make it easier for you to get started?" },
           required: true,
@@ -2463,7 +2764,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "rbwz3y6y9avzqcfj30nu0qj4",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: { default: "Got it. What features or functionality were missing?" },
           required: true,
@@ -2472,7 +2773,7 @@ export const templates: TTemplate[] = [
         },
         {
           id: "c0exdyri3erugrv0ezkyseh6",
-          type: TSurveyQuestionType.OpenText,
+          type: TSurveyQuestionTypeEnum.OpenText,
           logic: [],
           headline: { default: "Please add more details:" },
           required: false,
@@ -2493,7 +2794,7 @@ export const customSurvey = {
     questions: [
       {
         id: createId(),
-        type: TSurveyQuestionType.OpenText,
+        type: TSurveyQuestionTypeEnum.OpenText,
         headline: { default: "What would you like to know?" },
         subheader: { default: "This is an example survey." },
         placeholder: { default: "Type your answer here..." },
@@ -2504,24 +2805,49 @@ export const customSurvey = {
   },
 };
 
-export const getExampleSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
+export const getExampleWebsiteSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
   ...customSurvey.preset,
   questions: customSurvey.preset.questions.map(
     (question) =>
       ({
         ...question,
-        type: TSurveyQuestionType.CTA,
-        headline: { default: "You did it 🎉" },
+        type: TSurveyQuestionTypeEnum.CTA,
+        headline: { default: "Website successfully connected 🎉" },
         html: {
-          default: "You're all set up. Create your own survey to gather exactly the feedback you need :)",
+          default: "You're all set up. Create your own survey for website visitors 👇",
         },
-        buttonLabel: { default: "Create survey" },
+        buttonLabel: { default: "Let's do it!" },
         buttonExternal: true,
         imageUrl: `${webAppUrl}/onboarding/meme.png`,
       }) as TSurveyCTAQuestion
   ),
-  name: "Example survey",
+  name: "Example website survey",
   type: "website" as TSurveyType,
+  autoComplete: 2,
+  triggers: [{ actionClass: trigger }],
+  status: "inProgress" as TSurveyStatus,
+  displayOption: "respondMultiple" as TSurveyDisplayOption,
+  recontactDays: 0,
+});
+
+export const getExampleAppSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
+  ...customSurvey.preset,
+  questions: customSurvey.preset.questions.map(
+    (question) =>
+      ({
+        ...question,
+        type: TSurveyQuestionTypeEnum.CTA,
+        headline: { default: "App successfully connected 🥳" },
+        html: {
+          default: "You're all set up. Create your own survey for your app users 👇",
+        },
+        buttonLabel: { default: "Let's do it!" },
+        buttonExternal: true,
+        imageUrl: `${webAppUrl}/onboarding/meme.png`,
+      }) as TSurveyCTAQuestion
+  ),
+  name: "Example app survey",
+  type: "app" as TSurveyType,
   autoComplete: 2,
   triggers: [{ actionClass: trigger }],
   status: "inProgress" as TSurveyStatus,

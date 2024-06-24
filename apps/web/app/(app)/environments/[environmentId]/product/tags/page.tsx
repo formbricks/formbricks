@@ -1,47 +1,51 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
-import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getServerSession } from "next-auth";
-
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTagsOnResponsesCount } from "@formbricks/lib/tagOnResponse/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
+import { EditTagsWrapper } from "./components/EditTagsWrapper";
 
-import EditTagsWrapper from "./components/EditTagsWrapper";
-
-export default async function MembersSettingsPage({ params }) {
+const Page = async ({ params }) => {
   const environment = await getEnvironment(params.environmentId);
   if (!environment) {
     throw new Error("Environment not found");
   }
-  const tags = await getTagsByEnvironmentId(params.environmentId);
-  const environmentTagsCount = await getTagsOnResponsesCount(params.environmentId);
-  const team = await getTeamByEnvironmentId(params.environmentId);
-  const session = await getServerSession(authOptions);
+
+  const [tags, environmentTagsCount, product, organization, session] = await Promise.all([
+    getTagsByEnvironmentId(params.environmentId),
+    getTagsOnResponsesCount(params.environmentId),
+    getProductByEnvironmentId(params.environmentId),
+    getOrganizationByEnvironmentId(params.environmentId),
+    getServerSession(authOptions),
+  ]);
 
   if (!environment) {
     throw new Error("Environment not found");
   }
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
   if (!session) {
     throw new Error("Unauthenticated");
   }
 
-  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
   const isTagSettingDisabled = isViewer;
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const currentProductChannel = product?.config.channel ?? null;
 
   return !isTagSettingDisabled ? (
     <PageContentWrapper>
@@ -50,6 +54,7 @@ export default async function MembersSettingsPage({ params }) {
           environmentId={params.environmentId}
           activeId="tags"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
+          productChannel={currentProductChannel}
         />
       </PageHeader>
       <SettingsCard title="Manage Tags" description="Add, merge and remove response tags.">
@@ -63,4 +68,6 @@ export default async function MembersSettingsPage({ params }) {
   ) : (
     <ErrorComponent />
   );
-}
+};
+
+export default Page;

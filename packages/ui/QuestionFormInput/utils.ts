@@ -1,10 +1,10 @@
 import { createI18nString } from "@formbricks/lib/i18n/utils";
+import { isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
 import {
   TI18nString,
   TSurvey,
   TSurveyMatrixQuestion,
-  TSurveyMultipleChoiceMultiQuestion,
-  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyMultipleChoiceQuestion,
   TSurveyQuestion,
 } from "@formbricks/types/surveys";
 
@@ -24,7 +24,7 @@ export const getChoiceLabel = (
   choiceIdx: number,
   surveyLanguageCodes: string[]
 ): TI18nString => {
-  const choiceQuestion = question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion;
+  const choiceQuestion = question as TSurveyMultipleChoiceQuestion;
   return choiceQuestion.choices[choiceIdx]?.label || createI18nString("", surveyLanguageCodes);
 };
 
@@ -62,27 +62,6 @@ export const determineImageUploaderVisibility = (questionIdx: number, localSurve
   }
 };
 
-export const getLabelById = (id: string) => {
-  switch (id) {
-    case "headline":
-      return "Question";
-    case "subheader":
-      return "Description";
-    case "placeholder":
-      return "Placeholder";
-    case "buttonLabel":
-      return `"Next" Button Label`;
-    case "backButtonLabel":
-      return `"Back" Button Label`;
-    case "lowerLabel":
-      return "Lower Label";
-    case "upperLabel":
-      return "Upper Label";
-    default:
-      return "";
-  }
-};
-
 export const getPlaceHolderById = (id: string) => {
   switch (id) {
     case "headline":
@@ -92,4 +71,37 @@ export const getPlaceHolderById = (id: string) => {
     default:
       return "";
   }
+};
+
+export const isValueIncomplete = (
+  id: string,
+  isInvalid: boolean,
+  surveyLanguageCodes: string[],
+  value?: TI18nString
+) => {
+  // Define a list of IDs for which a default value needs to be checked.
+  const labelIds = [
+    "label",
+    "headline",
+    "subheader",
+    "lowerLabel",
+    "upperLabel",
+    "buttonLabel",
+    "placeholder",
+    "backButtonLabel",
+    "dismissButtonLabel",
+  ];
+
+  // If value is not provided, immediately return false as it cannot be incomplete.
+  if (value === undefined) return false;
+
+  // Check if the default value is incomplete. This applies only to specific label IDs.
+  // For these IDs, the default value should not be an empty string.
+  const isDefaultIncomplete = labelIds.includes(id) ? value["default"]?.trim() !== "" : false;
+
+  // Return true if all the following conditions are met:
+  // 1. The field is marked as invalid.
+  // 2. The label is not valid for all provided language codes in the survey.
+  // 4. For specific label IDs, the default value is incomplete as defined above.
+  return isInvalid && !isLabelValidForAllLanguages(value, surveyLanguageCodes) && isDefaultIncomplete;
 };

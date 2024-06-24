@@ -1,17 +1,19 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
-
 import { getAttributesByUserId, updateAttributes } from "@formbricks/lib/attribute/service";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { ZJsPeopleUpdateAttributeInput } from "@formbricks/types/js";
 
-export async function OPTIONS() {
+export const OPTIONS = async () => {
   // cors headers
   return responses.successResponse({}, true);
-}
+};
 
-export async function PUT(req: NextRequest, context: { params: { environmentId: string; userId: string } }) {
+export const PUT = async (
+  req: NextRequest,
+  context: { params: { environmentId: string; userId: string } }
+) => {
   try {
     const environmentId = context.params.environmentId;
     if (!environmentId) {
@@ -74,6 +76,10 @@ export async function PUT(req: NextRequest, context: { params: { environmentId: 
       true
     );
   } catch (err) {
+    if (err.statusCode === 403) {
+      return responses.forbiddenResponse(err.message || "Forbidden", true, { ignore: true });
+    }
+
     return responses.internalServerErrorResponse("Something went wrong", true);
   }
-}
+};

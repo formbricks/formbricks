@@ -1,14 +1,12 @@
 {
-  "extends": "@formbricks/tsconfig/js-library.json",
-  "include": ["src", "package.json", "../lib/config.ts"],
+  "extends": "@formbricks/config-typescript/js-library.json",
+  "include": ["src", "package.json"],
   "compilerOptions": {
     "strict": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
     "declaration": true,
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
-  },
+    "noEmit": true
+  }
 }

@@ -1,15 +1,13 @@
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-
 import formbricks from "@formbricks/js/website";
-
 import { SurveySwitch } from "../../components/SurveySwitch";
 import fbsetup from "../../public/fb-setup.png";
 
 declare const window: any;
 
-export default function AppPage({}) {
+const AppPage = ({}) => {
   const [darkMode, setDarkMode] = useState(false);
   const router = useRouter();
 
@@ -36,7 +34,7 @@ export default function AppPage({}) {
 
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
       const defaultAttributes = {
-        language: "de",
+        language: "en",
       };
 
       formbricks.init({
@@ -139,4 +137,6 @@ export default function AppPage({}) {
       </div>
     </div>
   );
-}
+};
+
+export default AppPage;

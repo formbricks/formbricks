@@ -3,19 +3,17 @@
 import { Variants, motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
-
 import { ClientLogo } from "../ClientLogo";
 import { MediaBackground } from "../MediaBackground";
 import { ResetProgressButton } from "../ResetProgressButton";
 import { SurveyInline } from "../Survey";
-import Modal from "./components/Modal";
-import TabOption from "./components/TabOption";
+import { Modal } from "./components/Modal";
+import { TabOption } from "./components/TabOption";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 
@@ -71,7 +69,10 @@ export const PreviewSurvey = ({
 }: PreviewSurveyProps) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
-  const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
+
+  const [appSetupCompleted, setAppSetupCompleted] = useState(false);
+  const [websiteSetupCompleted, setWebsiteSetupCompleted] = useState(false);
+
   const [previewMode, setPreviewMode] = useState("desktop");
   const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
@@ -119,6 +120,8 @@ export const PreviewSurvey = ({
   const placement = surveyPlacement || product.placement;
   const darkOverlay = surveyDarkOverlay ?? product.darkOverlay;
   const clickOutsideClose = surveyClickOutsideClose ?? product.clickOutsideClose;
+
+  const widgetSetupCompleted = appSetupCompleted || websiteSetupCompleted;
 
   const styling: TSurveyStyling | TProductStyling = useMemo(() => {
     // allow style overwrite is disabled from the product
@@ -186,10 +189,9 @@ export const PreviewSurvey = ({
   };
 
   useEffect(() => {
-    if (environment && environment.widgetSetupCompleted) {
-      setWidgetSetupCompleted(true);
-    } else {
-      setWidgetSetupCompleted(false);
+    if (environment) {
+      setAppSetupCompleted(environment.appSetupCompleted);
+      setWebsiteSetupCompleted(environment.websiteSetupCompleted);
     }
   }, [environment]);
 
@@ -226,7 +228,7 @@ export const PreviewSurvey = ({
               : "expanded_with_fixed_positioning"
             : "shrink"
         }
-        className="relative flex h-[95] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+        className="relative flex h-[95%] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
         {previewMode === "mobile" && (
           <>
             <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
@@ -267,7 +269,7 @@ export const PreviewSurvey = ({
                       <ClientLogo environmentId={environment.id} product={product} previewSurvey />
                     )}
                   </div>
-                  <div className=" z-10 w-full max-w-md rounded-lg border border-transparent">
+                  <div className="z-10 w-full max-w-md rounded-lg border border-transparent">
                     <SurveyInline
                       survey={{ ...survey, type: "link" }}
                       isBrandingEnabled={product.linkSurveyBranding}

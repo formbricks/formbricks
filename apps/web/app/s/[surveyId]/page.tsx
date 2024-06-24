@@ -1,23 +1,20 @@
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
-import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
-import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
-import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
+import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
+import { PinScreen } from "@/app/s/[surveyId]/components/PinScreen";
+import { SurveyInactive } from "@/app/s/[surveyId]/components/SurveyInactive";
 import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ZId } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
-import { MediaBackground } from "@formbricks/ui/MediaBackground";
-
 import { getEmailVerificationDetails } from "./lib/helpers";
 
 interface LinkSurveyPageProps {
@@ -29,19 +26,20 @@ interface LinkSurveyPageProps {
     userId?: string;
     verify?: string;
     lang?: string;
+    embed?: string;
   };
 }
 
-export async function generateMetadata({ params }: LinkSurveyPageProps): Promise<Metadata> {
+export const generateMetadata = async ({ params }: LinkSurveyPageProps): Promise<Metadata> => {
   const validId = ZId.safeParse(params.surveyId);
   if (!validId.success) {
     notFound();
   }
 
   return getMetadataForLinkSurvey(params.surveyId);
-}
+};
 
-export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
+const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   const validId = ZId.safeParse(params.surveyId);
   if (!validId.success) {
     notFound();
@@ -52,16 +50,17 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   const langParam = searchParams.lang; //can either be language code or alias
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
+  const isEmbed = searchParams.embed === "true" ? true : false;
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
   }
 
-  const team = await getTeamByEnvironmentId(survey?.environmentId);
-  if (!team) {
-    throw new Error("Team not found");
+  const organization = await getOrganizationByEnvironmentId(survey?.environmentId);
+  if (!organization) {
+    throw new Error("Organization not found");
   }
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
   if (survey && survey.status !== "inProgress") {
     return (
@@ -125,11 +124,16 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     throw new Error("Product not found");
   }
 
+  const attributeClasses = await getAttributeClasses(survey.environmentId);
+
   const getLanguageCode = (): string => {
     if (!langParam || !isMultiLanguageAllowed) return "default";
     else {
       const selectedLanguage = survey.languages.find((surveyLanguage) => {
-        return surveyLanguage.language.code === langParam || surveyLanguage.language.alias === langParam;
+        return (
+          surveyLanguage.language.code === langParam.toLowerCase() ||
+          surveyLanguage.language.alias?.toLowerCase() === langParam.toLowerCase()
+        );
       });
       if (selectedLanguage?.default || !selectedLanguage?.enabled) {
         return "default";
@@ -167,32 +171,31 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
+        attributeClasses={attributeClasses}
+        isEmbed={isEmbed}
       />
     );
   }
 
   return survey ? (
-    <div className="relative">
-      <MediaBackground survey={survey} product={product}>
-        <LinkSurvey
-          survey={survey}
-          product={product}
-          userId={userId}
-          emailVerificationStatus={emailVerificationStatus}
-          singleUseId={isSingleUseSurvey ? singleUseId : undefined}
-          singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
-          webAppUrl={WEBAPP_URL}
-          responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
-          verifiedEmail={verifiedEmail}
-          languageCode={languageCode}
-        />
-        <LegalFooter
-          IMPRINT_URL={IMPRINT_URL}
-          PRIVACY_URL={PRIVACY_URL}
-          IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-          surveyUrl={WEBAPP_URL + "/s/" + survey.id}
-        />
-      </MediaBackground>
-    </div>
+    <LinkSurvey
+      survey={survey}
+      product={product}
+      userId={userId}
+      emailVerificationStatus={emailVerificationStatus}
+      singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+      singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+      webAppUrl={WEBAPP_URL}
+      responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
+      verifiedEmail={verifiedEmail}
+      languageCode={languageCode}
+      attributeClasses={attributeClasses}
+      isEmbed={isEmbed}
+      IMPRINT_URL={IMPRINT_URL}
+      PRIVACY_URL={PRIVACY_URL}
+      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+    />
   ) : null;
-}
+};
+
+export default Page;

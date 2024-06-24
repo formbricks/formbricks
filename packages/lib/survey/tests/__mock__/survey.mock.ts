@@ -1,19 +1,17 @@
 import { Prisma } from "@prisma/client";
-
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import {
   TSurvey,
   TSurveyInput,
   TSurveyLanguage,
   TSurveyQuestion,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
-import { TTeam } from "@formbricks/types/teams";
 import { TUser } from "@formbricks/types/user";
-
 import { selectPerson } from "../../../person/service";
 import { selectSurvey } from "../../service";
 
@@ -62,10 +60,11 @@ export const mockProduct: TProduct = {
   createdAt: currentDate,
   updatedAt: currentDate,
   name: "mock Product",
-  teamId: mockId,
+  organizationId: mockId,
   brandColor: "#000000",
   highlightBorderColor: "#000000",
   recontactDays: 0,
+  displayLimit: 0,
   linkSurveyBranding: false,
   inAppSurveyBranding: false,
   placement: "bottomRight",
@@ -96,14 +95,13 @@ export const mockUser: TUser = {
   imageUrl: "https://www.google.com",
   createdAt: currentDate,
   updatedAt: currentDate,
-  onboardingCompleted: true,
   twoFactorEnabled: false,
   identityProvider: "google",
   objective: "improve_user_retention",
   notificationSettings: {
     alert: {},
     weeklySummary: {},
-    unsubscribedTeamIds: [],
+    unsubscribedOrganizationIds: [],
   },
   role: "other",
 };
@@ -146,7 +144,7 @@ export const mockAttributeClass: TAttributeClass = {
 
 const mockQuestion: TSurveyQuestion = {
   id: mockId,
-  type: TSurveyQuestionType.OpenText,
+  type: TSurveyQuestionTypeEnum.OpenText,
   headline: { default: "Question Text", de: "Fragetext" },
   required: false,
   inputType: "text",
@@ -169,6 +167,7 @@ const baseSurveyProperties = {
   closeOnDate: currentDate,
   redirectUrl: "http://github.com/formbricks/formbricks",
   recontactDays: 3,
+  displayLimit: 3,
   welcomeCard: mockWelcomeCard,
   questions: [mockQuestion],
   thankYouCard: { enabled: false },
@@ -184,31 +183,22 @@ const baseSurveyProperties = {
   ...commonMockProperties,
 };
 
-export const mockTeamOutput: TTeam = {
+export const mockOrganizationOutput: TOrganization = {
   id: mockId,
-  name: "mock Team",
+  name: "mock Organization",
   createdAt: currentDate,
   updatedAt: currentDate,
   billing: {
     stripeCustomerId: null,
-    features: {
-      inAppSurvey: {
-        status: "inactive",
-        unlimited: false,
-      },
-      linkSurvey: {
-        status: "inactive",
-        unlimited: false,
-      },
-      userTargeting: {
-        status: "inactive",
-        unlimited: false,
-      },
-      multiLanguage: {
-        status: "inactive",
-        unlimited: false,
+    plan: "free",
+    period: "monthly",
+    limits: {
+      monthly: {
+        responses: 500,
+        miu: 1000,
       },
     },
+    periodStart: currentDate,
   },
 };
 
@@ -272,6 +262,7 @@ export const updateSurveyInput: TSurvey = {
   resultShareKey: null,
   segment: null,
   languages: [],
+  showLanguageSwitch: null,
   ...commonMockProperties,
   ...baseSurveyProperties,
 };

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-
 import { Button } from "../Button";
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from "../Command";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
@@ -22,7 +21,7 @@ type Tag = {
   value: string;
 };
 
-const TagsCombobox: React.FC<ITagsComboboxProps> = ({
+export const TagsCombobox = ({
   tags,
   currentTags,
   addTag,
@@ -31,7 +30,7 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
   setSearchValue,
   open,
   setOpen,
-}) => {
+}: ITagsComboboxProps) => {
   const tagsToSearch = useMemo(
     () =>
       tags.filter((tag) => {
@@ -126,5 +125,3 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
     </Popover>
   );
 };
-
-export default TagsCombobox;

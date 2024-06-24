@@ -1,6 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
 import { PrismaClient } from "@prisma/client";
-
 import {
   TBaseFilter,
   TBaseFilters,
@@ -10,7 +9,7 @@ import {
 
 const prisma = new PrismaClient();
 
-async function main() {
+const main = async () => {
   await prisma.$transaction(async (tx) => {
     const allSurveysWithAttributeFilters = await prisma.survey.findMany({
       where: {
@@ -101,7 +100,7 @@ async function main() {
     // delete all attribute filters
     await tx.surveyAttributeFilter.deleteMany({});
   });
-}
+};
 
 main()
   .catch(async (e) => {

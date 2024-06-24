@@ -1,32 +1,32 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
-import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { notFound } from "next/navigation";
-
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
-import EditLanguage from "@formbricks/ee/multiLanguage/components/EditLanguage";
+import { EditLanguage } from "@formbricks/ee/multi-language/components/edit-language";
+import { getOrganization } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getTeam } from "@formbricks/lib/team/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function LanguageSettingsPage({ params }: { params: { environmentId: string } }) {
+const Page = async ({ params }: { params: { environmentId: string } }) => {
   const product = await getProductByEnvironmentId(params.environmentId);
 
   if (!product) {
     throw new Error("Product not found");
   }
 
-  const team = await getTeam(product?.teamId);
+  const organization = await getOrganization(product?.organizationId);
 
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
   if (!isMultiLanguageAllowed) {
     notFound();
   }
+  const currentProductChannel = product?.config.channel ?? null;
 
   return (
     <PageContentWrapper>
@@ -35,6 +35,7 @@ export default async function LanguageSettingsPage({ params }: { params: { envir
           environmentId={params.environmentId}
           activeId="languages"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
+          productChannel={currentProductChannel}
         />
       </PageHeader>
       <SettingsCard
@@ -44,4 +45,6 @@ export default async function LanguageSettingsPage({ params }: { params: { envir
       </SettingsCard>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

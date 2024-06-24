@@ -1,7 +1,6 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
-import ResponsePage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
+import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { notFound } from "next/navigation";
-
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -11,30 +10,30 @@ import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
-export default async function Page({ params }) {
+const Page = async ({ params }) => {
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
 
   if (!surveyId) {
     return notFound();
   }
-
   const survey = await getSurvey(surveyId);
-
   if (!survey) {
     throw new Error("Survey not found");
   }
-
-  const environment = await getEnvironment(survey.environmentId);
+  const environmentId = survey.environmentId;
+  const [environment, product, tags] = await Promise.all([
+    getEnvironment(environmentId),
+    getProductByEnvironmentId(environmentId),
+    getTagsByEnvironmentId(environmentId),
+  ]);
 
   if (!environment) {
     throw new Error("Environment not found");
   }
-  const product = await getProductByEnvironmentId(environment.id);
   if (!product) {
     throw new Error("Product not found");
   }
 
-  const tags = await getTagsByEnvironmentId(environment.id);
   const totalResponseCount = await getResponseCountBySurveyId(surveyId);
 
   return (
@@ -44,7 +43,7 @@ export default async function Page({ params }) {
           <SurveyAnalysisNavigation
             surveyId={survey.id}
             environmentId={environment.id}
-            activeId="summary"
+            activeId="responses"
             responseCount={totalResponseCount}
           />
         </PageHeader>
@@ -60,4 +59,6 @@ export default async function Page({ params }) {
       </PageContentWrapper>
     </div>
   );
-}
+};
+
+export default Page;

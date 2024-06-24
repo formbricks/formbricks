@@ -5,7 +5,7 @@ export const ZMembershipRole = z.enum(["owner", "admin", "editor", "developer", 
 export type TMembershipRole = z.infer<typeof ZMembershipRole>;
 
 export const ZMembership = z.object({
-  teamId: z.string(),
+  organizationId: z.string(),
   userId: z.string(),
   accepted: z.boolean(),
   role: ZMembershipRole,

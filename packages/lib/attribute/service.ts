@@ -1,17 +1,19 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-
 import { prisma } from "@formbricks/database";
 import { TAttributes, ZAttributes } from "@formbricks/types/attributes";
 import { ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError } from "@formbricks/types/errors";
-
+import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { attributeCache } from "../attribute/cache";
 import { attributeClassCache } from "../attributeClass/cache";
-import { getAttributeClassByName, getAttributeClasses } from "../attributeClass/service";
+import {
+  getAttributeClassByName,
+  getAttributeClasses,
+  getAttributeClassesCount,
+} from "../attributeClass/service";
 import { cache } from "../cache";
+import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "../constants";
 import { getPerson, getPersonByUserId } from "../person/service";
 import { validateInputs } from "../utils/validate";
 
@@ -155,6 +157,8 @@ export const updateAttributes = async (personId: string, attributes: TAttributes
 
   const attributeClassMap = new Map(attributeClasses.map((ac) => [ac.name, ac.id]));
   const upsertOperations: Promise<any>[] = [];
+  const createOperations: Promise<any>[] = [];
+  const newAttributes: { name: string; value: string }[] = [];
 
   for (const [name, value] of Object.entries(attributes)) {
     const attributeClassId = attributeClassMap.get(name);
@@ -187,37 +191,65 @@ export const updateAttributes = async (personId: string, attributes: TAttributes
           })
       );
     } else {
-      // Class does not exist, create new class and attribute
-      upsertOperations.push(
-        prisma.attributeClass
-          .create({
-            select: { id: true },
-            data: {
-              name,
-              type: "code",
-              environment: {
-                connect: {
-                  id: environmentId,
-                },
-              },
-              attributes: {
-                create: {
-                  personId,
-                  value,
-                },
-              },
-            },
-          })
-          .then(({ id }) => {
-            attributeClassCache.revalidate({ id, environmentId, name });
-            attributeCache.revalidate({ environmentId, personId, userId, name });
-          })
-      );
+      // Collect new attributes to be created later
+      newAttributes.push({ name, value });
     }
   }
 
   // Execute all upsert operations concurrently
   await Promise.all(upsertOperations);
+
+  if (newAttributes.length === 0) {
+    // short-circuit if no new attributes to create
+    return true;
+  }
+
+  // Check if new attribute classes will exceed the limit
+  const attributeClassCount = await getAttributeClassesCount(environmentId);
+
+  const totalAttributeClassesLength = attributeClassCount + newAttributes.length;
+
+  if (totalAttributeClassesLength > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
+    throw new OperationNotAllowedError(
+      `Updating these attributes would exceed the maximum number of attribute classes (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) for environment ${environmentId}. Existing attributes have been updated.`
+    );
+  }
+
+  for (const { name, value } of newAttributes) {
+    createOperations.push(
+      prisma.attributeClass
+        .create({
+          select: { id: true },
+          data: {
+            name,
+            type: "code",
+            environment: {
+              connect: {
+                id: environmentId,
+              },
+            },
+            attributes: {
+              create: {
+                personId,
+                value,
+              },
+            },
+          },
+        })
+        .then(({ id }) => {
+          attributeClassCache.revalidate({ id, environmentId, name });
+          attributeCache.revalidate({ environmentId, personId, userId, name });
+        })
+    );
+  }
+
+  // Execute all create operations for new attribute classes
+  await Promise.all(createOperations);
+
+  // Revalidate the count cache
+  attributeClassCache.revalidate({
+    environmentId,
+  });
 
   return true;
 };

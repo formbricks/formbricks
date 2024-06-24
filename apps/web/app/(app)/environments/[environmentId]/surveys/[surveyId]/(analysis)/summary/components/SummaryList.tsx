@@ -11,14 +11,13 @@ import { NPSSummary } from "@/app/(app)/environments/[environmentId]/surveys/[su
 import { OpenTextSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/OpenTextSummary";
 import { PictureChoiceSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary";
 import { RatingSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/RatingSummary";
-
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveySummary } from "@formbricks/types/surveys";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { SkeletonLoader } from "@formbricks/ui/SkeletonLoader";
-
 import { AddressSummary } from "./AddressSummary";
 
 interface SummaryListProps {
@@ -28,6 +27,7 @@ interface SummaryListProps {
   survey: TSurvey;
   fetchingSummary: boolean;
   totalResponseCount: number;
+  attributeClasses: TAttributeClass[];
 }
 
 export const SummaryList = ({
@@ -37,12 +37,16 @@ export const SummaryList = ({
   survey,
   fetchingSummary,
   totalResponseCount,
+  attributeClasses,
 }: SummaryListProps) => {
+  const widgetSetupCompleted =
+    survey.type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
+
   return (
     <div className="mt-10 space-y-8">
       {(survey.type === "app" || survey.type === "website") &&
       responseCount === 0 &&
-      !environment.widgetSetupCompleted ? (
+      !widgetSetupCompleted ? (
         <EmptyAppSurveys environment={environment} surveyType={survey.type} />
       ) : fetchingSummary ? (
         <SkeletonLoader type="summary" />
@@ -52,21 +56,24 @@ export const SummaryList = ({
           environment={environment}
           noWidgetRequired={survey.type === "link"}
           emptyMessage={totalResponseCount === 0 ? undefined : "No response matches your filter"}
+          widgetSetupCompleted={widgetSetupCompleted}
         />
       ) : (
         summary.map((questionSummary) => {
-          if (questionSummary.type === TSurveyQuestionType.OpenText) {
+          if (questionSummary.type === TSurveyQuestionTypeEnum.OpenText) {
             return (
               <OpenTextSummary
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
+                attributeClasses={attributeClasses}
               />
             );
           }
           if (
-            questionSummary.type === TSurveyQuestionType.MultipleChoiceSingle ||
-            questionSummary.type === TSurveyQuestionType.MultipleChoiceMulti
+            questionSummary.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
+            questionSummary.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
           ) {
             return (
               <MultipleChoiceSummary
@@ -74,64 +81,112 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 surveyType={survey.type}
+                survey={survey}
+                attributeClasses={attributeClasses}
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionType.NPS) {
-            return <NPSSummary key={questionSummary.question.id} questionSummary={questionSummary} />;
-          }
-          if (questionSummary.type === TSurveyQuestionType.CTA) {
-            return <CTASummary key={questionSummary.question.id} questionSummary={questionSummary} />;
-          }
-          if (questionSummary.type === TSurveyQuestionType.Rating) {
-            return <RatingSummary key={questionSummary.question.id} questionSummary={questionSummary} />;
-          }
-          if (questionSummary.type === TSurveyQuestionType.Consent) {
-            return <ConsentSummary key={questionSummary.question.id} questionSummary={questionSummary} />;
-          }
-          if (questionSummary.type === TSurveyQuestionType.PictureSelection) {
+          if (questionSummary.type === TSurveyQuestionTypeEnum.NPS) {
             return (
-              <PictureChoiceSummary key={questionSummary.question.id} questionSummary={questionSummary} />
+              <NPSSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+                attributeClasses={attributeClasses}
+              />
             );
           }
-          if (questionSummary.type === TSurveyQuestionType.Date) {
+          if (questionSummary.type === TSurveyQuestionTypeEnum.CTA) {
+            return (
+              <CTASummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+                attributeClasses={attributeClasses}
+              />
+            );
+          }
+          if (questionSummary.type === TSurveyQuestionTypeEnum.Rating) {
+            return (
+              <RatingSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+                attributeClasses={attributeClasses}
+              />
+            );
+          }
+          if (questionSummary.type === TSurveyQuestionTypeEnum.Consent) {
+            return (
+              <ConsentSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+                attributeClasses={attributeClasses}
+              />
+            );
+          }
+          if (questionSummary.type === TSurveyQuestionTypeEnum.PictureSelection) {
+            return (
+              <PictureChoiceSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+                attributeClasses={attributeClasses}
+              />
+            );
+          }
+          if (questionSummary.type === TSurveyQuestionTypeEnum.Date) {
             return (
               <DateQuestionSummary
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
+                attributeClasses={attributeClasses}
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionType.FileUpload) {
+          if (questionSummary.type === TSurveyQuestionTypeEnum.FileUpload) {
             return (
               <FileUploadSummary
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
+                attributeClasses={attributeClasses}
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionType.Cal) {
+          if (questionSummary.type === TSurveyQuestionTypeEnum.Cal) {
             return (
               <CalSummary
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
+                attributeClasses={attributeClasses}
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionType.Matrix) {
+          if (questionSummary.type === TSurveyQuestionTypeEnum.Matrix) {
             return (
-              <MatrixQuestionSummary key={questionSummary.question.id} questionSummary={questionSummary} />
+              <MatrixQuestionSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                survey={survey}
+                attributeClasses={attributeClasses}
+              />
             );
           }
-          if (questionSummary.type === TSurveyQuestionType.Address) {
+          if (questionSummary.type === TSurveyQuestionTypeEnum.Address) {
             return (
               <AddressSummary
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
+                attributeClasses={attributeClasses}
               />
             );
           }

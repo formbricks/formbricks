@@ -28,7 +28,6 @@ These variables are present inside your machine’s docker-compose file. Restart
 | PRIVACY_URL                 | URL for privacy policy.                                                                    | optional                                                |                           |
 | TERMS_URL                   | URL for terms of service.                                                                  | optional                                                |                           |
 | IMPRINT_URL                 | URL for imprint.                                                                           | optional                                                |                           |
-| SIGNUP_DISABLED             | Disables the ability for new users to create an account if set to 1.                       | optional                                                |                           |
 | EMAIL_AUTH_DISABLED         | Disables the ability for users to signup or login via email and password if set to 1.      | optional                                                |                           |
 | PASSWORD_RESET_DISABLED     | Disables password reset functionality if set to 1.                                         | optional                                                |                           |
 | EMAIL_VERIFICATION_DISABLED | Disables email verification if set to 1.                                                   | optional                                                |                           |
@@ -51,9 +50,8 @@ These variables are present inside your machine’s docker-compose file. Restart
 | INSTANCE_ID                 | Instance ID for Formbricks Cloud to be sent to Telemetry.                                  | optional                                                |                           |
 | INTERNAL_SECRET             | Internal Secret (Currently we overwrite the value with a random value).                    | optional                                                |                           |
 | DEFAULT_BRAND_COLOR         | Default brand color for your app (Can be overwritten from the UI as well).                 | optional                                                | #64748b                   |
-| DEFAULT_TEAM_ID             | Automatically assign new users to a specific team when joining                             | optional                                                |                           |
-| DEFAULT_TEAM_ROLE           | Role of the user in the default team.                                                      | optional                                                | admin                     |
-| ONBOARDING_DISABLED         | Disables onboarding for new users if set to 1                                              | optional                                                |                           |
+| DEFAULT_ORGANIZATION_ID     | Automatically assign new users to a specific organization when joining                     | optional                                                |                           |
+| DEFAULT_ORGANIZATION_ROLE   | Role of the user in the default organization.                                              | optional                                                | admin                     |
 | OIDC_DISPLAY_NAME           | Display name for Custom OpenID Connect Provider                                            | optional                                                |                           |
 | OIDC_CLIENT_ID              | Client ID for Custom OpenID Connect Provider                                               | optional (required if OIDC auth is enabled)             |                           |
 | OIDC_CLIENT_SECRET          | Secret for Custom OpenID Connect Provider                                                  | optional (required if OIDC auth is enabled)             |                           |
@@ -176,10 +174,10 @@ An example configuration for a FusionAuth OpenID Connect in Formbricks would loo
 
 <Col>
   <CodeGroup title="Formbricks Env for FusionAuth OIDC">
-   ```yml {{ title: ".env" }}
+    ```yml {{ title: ".env" }}
     OIDC_CLIENT_ID=59cada54-56d4-4aa8-a5e7-5823bbe0e5b7 OIDC_CLIENT_SECRET=4f4dwP0ZoOAqMW8fM9290A7uIS3E8Xg29xe1umhlB_s
-    OIDC_ISSUER=http://localhost:9011 OIDC_DISPLAY_NAME=FusionAuth OIDC_SIGNING_ALGORITHM=HS256
-   ```
+    OIDC_ISSUER=http://localhost:9011 OIDC_DISPLAY_NAME=FusionAuth OIDC_SIGNING_ALGORITHM=HS256 
+    ```
   </CodeGroup>
 </Col>
 

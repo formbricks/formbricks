@@ -1,5 +1,4 @@
 import { XCircleIcon } from "lucide-react";
-
 import { cn } from "@formbricks/lib/cn";
 
 interface Tag {
@@ -17,7 +16,7 @@ interface ResponseTagsWrapperProps {
   allowDelete?: boolean;
 }
 
-export function Tag({
+export const Tag = ({
   tagId,
   tagName,
   onDelete,
@@ -25,7 +24,7 @@ export function Tag({
   setTagsState,
   highlight,
   allowDelete = true,
-}: ResponseTagsWrapperProps) {
+}: ResponseTagsWrapperProps) => {
   return (
     <div
       key={tagId}
@@ -49,4 +48,4 @@ export function Tag({
       )}
     </div>
   );
-}
+};

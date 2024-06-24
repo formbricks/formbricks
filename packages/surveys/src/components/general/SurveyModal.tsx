@@ -1,11 +1,9 @@
-import Modal from "@/components/wrappers/Modal";
+import { Modal } from "@/components/wrappers/Modal";
 import { useState } from "preact/hooks";
-
 import { SurveyModalProps } from "@formbricks/types/formbricksSurveys";
-
 import { Survey } from "./Survey";
 
-export function SurveyModal({
+export const SurveyModal = ({
   survey,
   isBrandingEnabled,
   getSetIsError,
@@ -23,7 +21,7 @@ export function SurveyModal({
   languageCode,
   responseCount,
   styling,
-}: SurveyModalProps) {
+}: SurveyModalProps) => {
   const [isOpen, setIsOpen] = useState(true);
 
   const close = () => {
@@ -74,4 +72,4 @@ export function SurveyModal({
       </Modal>
     </div>
   );
-}
+};

@@ -10,7 +10,6 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
@@ -18,7 +17,6 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-
 import { AddActionModal } from "./AddActionModal";
 
 interface WhenToSendCardProps {
@@ -29,13 +27,13 @@ interface WhenToSendCardProps {
   membershipRole?: TMembershipRole;
 }
 
-export default function WhenToSendCard({
+export const WhenToSendCard = ({
   environmentId,
   localSurvey,
   setLocalSurvey,
   propActionClasses,
   membershipRole,
-}: WhenToSendCardProps) {
+}: WhenToSendCardProps) => {
   const [open, setOpen] = useState(
     localSurvey.type === "app" || localSurvey.type === "website" ? true : false
   );
@@ -101,7 +99,23 @@ export default function WhenToSendCard({
   };
 
   const handleRandomizerInput = (e) => {
-    const updatedSurvey = { ...localSurvey, displayPercentage: parseInt(e.target.value) };
+    let value: number | null = null;
+
+    if (e.target.value !== "") {
+      value = parseFloat(e.target.value);
+
+      if (Number.isNaN(value)) {
+        value = 1;
+      }
+
+      if (value < 0.01) value = 0.01;
+      if (value > 100) value = 100;
+
+      // Round value to two decimal places. eg: 10.555(and higher like 10.556) -> 10.56 and 10.554(and lower like 10.553) ->10.55
+      value = Math.round(value * 100) / 100;
+    }
+
+    const updatedSurvey = { ...localSurvey, displayPercentage: value };
     setLocalSurvey(updatedSurvey);
   };
 
@@ -192,24 +206,37 @@ export default function WhenToSendCard({
                             </span>
                           )}
                           {trigger.actionClass.type === "noCode" &&
-                            trigger.actionClass.noCodeConfig?.cssSelector && (
+                            trigger.actionClass.noCodeConfig?.type === "click" &&
+                            trigger.actionClass.noCodeConfig?.elementSelector.cssSelector && (
                               <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                                CSS Selector: <b>{trigger.actionClass.noCodeConfig.cssSelector.value}</b>
+                                CSS Selector:{" "}
+                                <b>{trigger.actionClass.noCodeConfig?.elementSelector.cssSelector}</b>
                               </span>
                             )}
                           {trigger.actionClass.type === "noCode" &&
-                            trigger.actionClass.noCodeConfig?.innerHtml && (
+                            trigger.actionClass.noCodeConfig?.type === "click" &&
+                            trigger.actionClass.noCodeConfig?.elementSelector.innerHtml && (
                               <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                                Inner Text: <b>{trigger.actionClass.noCodeConfig.innerHtml.value}</b>
+                                Inner Text:{" "}
+                                <b>{trigger.actionClass.noCodeConfig?.elementSelector.innerHtml}</b>
                               </span>
                             )}
                           {trigger.actionClass.type === "noCode" &&
-                            trigger.actionClass.noCodeConfig?.pageUrl && (
-                              <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                                URL {trigger.actionClass.noCodeConfig.pageUrl.rule}:{" "}
-                                <b>{trigger.actionClass.noCodeConfig.pageUrl.value}</b>
-                              </span>
-                            )}
+                          trigger.actionClass.noCodeConfig?.urlFilters &&
+                          trigger.actionClass.noCodeConfig.urlFilters.length > 0 ? (
+                            <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
+                              URL Filters:{" "}
+                              {trigger.actionClass.noCodeConfig.urlFilters.map((urlFilter, index) => (
+                                <span key={index}>
+                                  {urlFilter.rule} <b>{urlFilter.value}</b>
+                                  {trigger.actionClass.type === "noCode" &&
+                                    index !==
+                                      (trigger.actionClass.noCodeConfig?.urlFilters?.length || 0) - 1 &&
+                                    ", "}
+                                </span>
+                              ))}
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -248,7 +275,7 @@ export default function WhenToSendCard({
               childBorder={true}>
               <label
                 htmlFor="triggerDelay"
-                className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+                className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-700">
                     Wait
@@ -294,22 +321,21 @@ export default function WhenToSendCard({
               title="Show survey to % of users"
               description="Only display the survey to a subset of the users"
               childBorder={true}>
-              <div className="w-full">
-                <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
-                  <h3 className="mb-4 text-sm font-semibold text-slate-700">
-                    Show to {localSurvey.displayPercentage}% of targeted users
-                  </h3>
-                  <input
+              <label htmlFor="small-range" className="cursor-pointer p-4">
+                <p className="text-sm font-semibold text-slate-700">
+                  Show to {localSurvey.displayPercentage}% of targeted users
+                  <Input
                     id="small-range"
-                    type="range"
-                    min="1"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
                     max="100"
-                    value={localSurvey.displayPercentage ?? 50}
+                    value={localSurvey.displayPercentage ?? ""}
                     onChange={handleRandomizerInput}
-                    className="range-sm mb-6 h-1 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 dark:bg-slate-700"
+                    className="mx-2 inline w-20 bg-white text-center text-sm"
                   />
-                </div>
-              </div>
+                </p>
+              </label>
             </AdvancedOptionToggle>
           </div>
         </Collapsible.CollapsibleContent>
@@ -326,4 +352,4 @@ export default function WhenToSendCard({
       />
     </>
   );
-}
+};

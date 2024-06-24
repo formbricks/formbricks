@@ -3,8 +3,7 @@ import { getSurveysBySegmentId } from "@formbricks/lib/survey/service";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSegment } from "@formbricks/types/segment";
-
-import SegmentTableDataRow from "./SegmentTableDataRow";
+import { SegmentTableDataRow } from "./SegmentTableDataRow";
 
 type TSegmentTableDataRowProps = {
   currentSegment: TSegment;
@@ -14,7 +13,7 @@ type TSegmentTableDataRowProps = {
   isAdvancedTargetingAllowed: boolean;
 };
 
-const SegmentTableDataRowContainer = async ({
+export const SegmentTableDataRowContainer = async ({
   currentSegment,
   segments,
   actionClasses,
@@ -46,5 +45,3 @@ const SegmentTableDataRowContainer = async ({
     />
   );
 };
-
-export default SegmentTableDataRowContainer;

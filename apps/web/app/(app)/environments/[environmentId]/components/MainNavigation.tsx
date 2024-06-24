@@ -1,6 +1,6 @@
 "use client";
 
-import NavigationLink from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
+import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import {
@@ -9,6 +9,7 @@ import {
   ChevronRightIcon,
   Cog,
   CreditCardIcon,
+  KeyIcon,
   LogOutIcon,
   MessageCircle,
   MousePointerClick,
@@ -25,17 +26,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { capitalizeFirstLetter, truncate } from "@formbricks/lib/strings";
+import { capitalizeFirstLetter, truncate } from "@formbricks/lib/utils/strings";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
-import { TTeam } from "@formbricks/types/teams";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
-import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
+import { CreateOrganizationModal } from "@formbricks/ui/CreateOrganizationModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,35 +50,34 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 
-import AddProductModal from "./AddProductModal";
-
 interface NavigationProps {
   environment: TEnvironment;
-  teams: TTeam[];
+  organizations: TOrganization[];
   session: Session;
-  team: TTeam;
+  organization: TOrganization;
   products: TProduct[];
   isFormbricksCloud: boolean;
   membershipRole?: TMembershipRole;
+  isMultiOrgEnabled: boolean;
 }
 
 export const MainNavigation = ({
   environment,
-  teams,
-  team,
+  organizations,
+  organization,
   session,
   products,
   isFormbricksCloud,
   membershipRole,
+  isMultiOrgEnabled,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [currentTeamName, setCurrentTeamName] = useState("");
-  const [currentTeamId, setCurrentTeamId] = useState("");
-  const [showAddProductModal, setShowAddProductModal] = useState(false);
-  const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(localStorage.getItem("isMainNavCollapsed") === "true");
+  const [currentOrganizationName, setCurrentOrganizationName] = useState("");
+  const [currentOrganizationId, setCurrentOrganizationId] = useState("");
+  const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
 
   const product = products.find((product) => product.id === environment.productId);
@@ -91,6 +90,11 @@ export const MainNavigation = ({
   };
 
   useEffect(() => {
+    const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
+    setIsCollapsed(isCollapsedValueFromLocalStorage);
+  }, []);
+
+  useEffect(() => {
     const toggleTextOpacity = () => {
       setIsTextVisible(isCollapsed ? true : false);
     };
@@ -99,15 +103,15 @@ export const MainNavigation = ({
   }, [isCollapsed]);
 
   useEffect(() => {
-    if (team && team.name !== "") {
-      setCurrentTeamName(team.name);
-      setCurrentTeamId(team.id);
+    if (organization && organization.name !== "") {
+      setCurrentOrganizationName(organization.name);
+      setCurrentOrganizationId(organization.id);
     }
-  }, [team]);
+  }, [organization]);
 
-  const sortedTeams = useMemo(() => {
-    return [...teams].sort((a, b) => a.name.localeCompare(b.name));
-  }, [teams]);
+  const sortedOrganizations = useMemo(() => {
+    return [...organizations].sort((a, b) => a.name.localeCompare(b.name));
+  }, [organizations]);
 
   const sortedProducts = useMemo(() => {
     return [...products].sort((a, b) => a.name.localeCompare(b.name));
@@ -117,8 +121,12 @@ export const MainNavigation = ({
     router.push(`/products/${productId}/`);
   };
 
-  const handleEnvironmentChangeByTeam = (teamId: string) => {
-    router.push(`/teams/${teamId}/`);
+  const handleEnvironmentChangeByOrganization = (organizationId: string) => {
+    router.push(`/organizations/${organizationId}/`);
+  };
+
+  const handleAddProduct = (organizationId: string) => {
+    router.push(`/organizations/${organizationId}/products/new/channel`);
   };
 
   const mainNavigation = useMemo(
@@ -144,7 +152,7 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
         isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
-        isHidden: false,
+        isHidden: product?.config.channel === "link",
       },
       {
         name: "Integrations",
@@ -158,7 +166,7 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/product/general`,
         icon: Cog,
         isActive: pathname?.includes("/product"),
-        isHidden: false,
+        isHidden: isViewer,
       },
     ],
     [environment.id, pathname, isViewer]
@@ -171,7 +179,7 @@ export const MainNavigation = ({
       icon: UserCircleIcon,
     },
     {
-      label: "Team",
+      label: "Organization",
       href: `/environments/${environment.id}/settings/members`,
       icon: UsersIcon,
     },
@@ -180,6 +188,12 @@ export const MainNavigation = ({
       href: `/environments/${environment.id}/settings/billing`,
       hidden: !isFormbricksCloud || isPricingDisabled,
       icon: CreditCardIcon,
+    },
+    {
+      label: "License",
+      href: `/environments/${environment.id}/settings/enterprise`,
+      hidden: isFormbricksCloud || isPricingDisabled,
+      icon: KeyIcon,
     },
     {
       label: "Documentation",
@@ -200,7 +214,7 @@ export const MainNavigation = ({
       {product && (
         <aside
           className={cn(
-            "z-20 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
+            "z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
             !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded",
             environment.type === "development" ? `h-[calc(100vh-1.25rem)]` : "h-screen"
           )}>
@@ -272,7 +286,7 @@ export const MainNavigation = ({
                       <div>
                         <p
                           className={cn(
-                            "ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700 transition-opacity duration-200 ",
+                            "ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700 transition-opacity duration-200",
                             isTextVisible ? "opacity-0" : "opacity-100"
                           )}>
                           {product.name}
@@ -316,7 +330,7 @@ export const MainNavigation = ({
                 </DropdownMenuRadioGroup>
                 <DropdownMenuSeparator />
                 {!isViewer && (
-                  <DropdownMenuItem onClick={() => setShowAddProductModal(true)} className="rounded-lg">
+                  <DropdownMenuItem onClick={() => handleAddProduct(organization.id)} className="rounded-lg">
                     <PlusIcon className="mr-2 h-4 w-4" />
                     <span>Add product</span>
                   </DropdownMenuItem>
@@ -351,7 +365,9 @@ export const MainNavigation = ({
                               <span>{truncate(session?.user?.email, 30)}</span>
                             )}
                           </p>
-                          <p className={cn("text-sm text-slate-500")}>{capitalizeFirstLetter(team?.name)}</p>
+                          <p className={cn("text-sm text-slate-500")}>
+                            {capitalizeFirstLetter(organization?.name)}
+                          </p>
                         </div>
                         <ChevronRightIcon className={cn("h-5 w-5 text-slate-700 hover:text-slate-500")} />
                       </>
@@ -398,51 +414,57 @@ export const MainNavigation = ({
                     Logout
                   </DropdownMenuItem>
 
-                  {/* Team Switch */}
+                  {/* Organization Switch */}
 
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="rounded-lg">
-                      <div>
-                        <p>{currentTeamName}</p>
-                        <p className="block text-xs text-slate-500">Switch team</p>
-                      </div>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent
-                        className="rounded-xl border border-slate-200 shadow-sm"
-                        sideOffset={10}
-                        alignOffset={5}>
-                        <DropdownMenuRadioGroup
-                          value={currentTeamId}
-                          onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
-                          {sortedTeams.map((team) => (
-                            <DropdownMenuRadioItem
-                              value={team.id}
-                              className="cursor-pointer rounded-lg"
-                              key={team.id}>
-                              {team.name}
-                            </DropdownMenuRadioItem>
-                          ))}
-                        </DropdownMenuRadioGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setShowCreateTeamModal(true)} className="rounded-lg">
-                          <PlusIcon className="mr-2 h-4 w-4" />
-                          <span>Create new team</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
+                  {(isMultiOrgEnabled || organizations.length > 1) && (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="rounded-lg">
+                        <div>
+                          <p>{currentOrganizationName}</p>
+                          <p className="block text-xs text-slate-500">Switch organization</p>
+                        </div>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent
+                          className="rounded-xl border border-slate-200 shadow-sm"
+                          sideOffset={10}
+                          alignOffset={5}>
+                          <DropdownMenuRadioGroup
+                            value={currentOrganizationId}
+                            onValueChange={(organizationId) =>
+                              handleEnvironmentChangeByOrganization(organizationId)
+                            }>
+                            {sortedOrganizations.map((organization) => (
+                              <DropdownMenuRadioItem
+                                value={organization.id}
+                                className="cursor-pointer rounded-lg"
+                                key={organization.id}>
+                                {organization.name}
+                              </DropdownMenuRadioItem>
+                            ))}
+                          </DropdownMenuRadioGroup>
+                          <DropdownMenuSeparator />
+                          {isMultiOrgEnabled && (
+                            <DropdownMenuItem
+                              onClick={() => setShowCreateOrganizationModal(true)}
+                              className="rounded-lg">
+                              <PlusIcon className="mr-2 h-4 w-4" />
+                              <span>Create new organization</span>
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
         </aside>
       )}
-      <CreateTeamModal open={showCreateTeamModal} setOpen={(val) => setShowCreateTeamModal(val)} />
-      <AddProductModal
-        open={showAddProductModal}
-        setOpen={(val) => setShowAddProductModal(val)}
-        environmentId={environment.id}
+      <CreateOrganizationModal
+        open={showCreateOrganizationModal}
+        setOpen={(val) => setShowCreateOrganizationModal(val)}
       />
     </>
   );

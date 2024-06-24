@@ -3,12 +3,10 @@
 import { Code2Icon, CopyIcon, MailIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
 import { AuthenticationError } from "@formbricks/types/errors";
 import { Button } from "@formbricks/ui/Button";
-import CodeBlock from "@formbricks/ui/CodeBlock";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
-
+import { CodeBlock } from "@formbricks/ui/CodeBlock";
+import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 import { getEmailHtmlAction, sendEmbedSurveyPreviewEmailAction } from "../../actions";
 
 interface EmailTabProps {
@@ -16,7 +14,7 @@ interface EmailTabProps {
   email: string;
 }
 
-export default function EmailTab({ surveyId, email }: EmailTabProps) {
+export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   const [showEmbed, setShowEmbed] = useState(false);
   const [emailHtmlPreview, setEmailHtmlPreview] = useState<string>("");
 
@@ -29,12 +27,12 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
   }, [emailHtmlPreview]);
 
   useEffect(() => {
-    getData();
-
-    async function getData() {
+    const getData = async () => {
       const emailHtml = await getEmailHtmlAction(surveyId);
       setEmailHtmlPreview(emailHtml);
-    }
+    };
+
+    getData();
   }, [surveyId]);
 
   const sendPreviewEmail = async () => {
@@ -51,7 +49,7 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
   };
 
   return (
-    <div className="flex flex-col gap-5 ">
+    <div className="flex flex-col gap-5">
       <div className="flex items-center justify-end gap-4">
         {showEmbed ? (
           <Button
@@ -124,4 +122,4 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
       )}
     </div>
   );
-}
+};

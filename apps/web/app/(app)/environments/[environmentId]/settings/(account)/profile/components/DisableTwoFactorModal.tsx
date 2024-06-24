@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
@@ -23,7 +22,7 @@ type TDisableTwoFactorModalProps = {
   setOpen: (open: boolean) => void;
 };
 
-const DisableTwoFactorModal = ({ open, setOpen }: TDisableTwoFactorModalProps) => {
+export const DisableTwoFactorModal = ({ open, setOpen }: TDisableTwoFactorModalProps) => {
   const router = useRouter();
   const { handleSubmit, control, setValue } = useForm<TDisableTwoFactorFormState>();
   const [backupCodeInputVisible, setBackupCodeInputVisible] = useState(false);
@@ -157,5 +156,3 @@ const DisableTwoFactorModal = ({ open, setOpen }: TDisableTwoFactorModalProps) =
     </Modal>
   );
 };
-
-export default DisableTwoFactorModal;

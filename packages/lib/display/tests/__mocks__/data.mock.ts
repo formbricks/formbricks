@@ -1,5 +1,4 @@
 import { Prisma } from "@prisma/client";
-
 import { selectDisplay } from "../../service";
 
 export const mockEnvironmentId = "clqkr5961000108jyfnjmbjhi";
@@ -11,7 +10,7 @@ export const mockId = "ars2tjk8hsi8oqk1uac00mo8";
 export const mockPersonId = "clqnj99r9000008lebgf8734j";
 export const mockResponseId = "clqnfg59i000208i426pb4wcv";
 
-function createMockDisplay(overrides = {}) {
+const createMockDisplay = (overrides = {}) => {
   return {
     id: mockDisplayId,
     createdAt: new Date(),
@@ -22,7 +21,7 @@ function createMockDisplay(overrides = {}) {
     status: null,
     ...overrides,
   };
-}
+};
 
 export const mockDisplay = createMockDisplay();
 

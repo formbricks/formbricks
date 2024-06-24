@@ -3,12 +3,10 @@
 import { format, formatDistanceToNow } from "date-fns";
 import { UsersIcon } from "lucide-react";
 import { useState } from "react";
-
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
-
-import EditSegmentModal from "./EditSegmentModal";
+import { EditSegmentModal } from "./EditSegmentModal";
 
 type TSegmentTableDataRowProps = {
   currentSegment: TSegmentWithSurveyNames;
@@ -19,7 +17,7 @@ type TSegmentTableDataRowProps = {
   isFormbricksCloud: boolean;
 };
 
-const SegmentTableDataRow = ({
+export const SegmentTableDataRow = ({
   currentSegment,
   actionClasses,
   attributeClasses,
@@ -34,11 +32,11 @@ const SegmentTableDataRow = ({
     <>
       <div
         key={id}
-        className="m-2 grid h-16 cursor-pointer grid-cols-7 content-center rounded-lg hover:bg-slate-100"
+        className="m-2 grid h-16 cursor-pointer grid-cols-7 content-center rounded-lg transition-colors ease-in-out hover:bg-slate-100"
         onClick={() => setIsEditSegmentModalOpen(true)}>
         <div className="col-span-4 flex items-center pl-6 text-sm">
           <div className="flex items-center gap-4">
-            <div className="ph-no-capture h-8 w-8 flex-shrink-0 text-slate-700">
+            <div className="ph-no-capture w-8 flex-shrink-0 text-slate-500">
               <UsersIcon className="h-5 w-5" />
             </div>
             <div className="flex flex-col">
@@ -76,5 +74,3 @@ const SegmentTableDataRow = ({
     </>
   );
 };
-
-export default SegmentTableDataRow;

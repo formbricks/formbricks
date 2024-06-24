@@ -5,26 +5,22 @@ import {
   updateActionClassAction,
 } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-
+import { z } from "zod";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
-import {
-  TActionClass,
-  TActionClassInput,
-  TActionClassNoCodeConfig,
-  TNoCodeConfig,
-} from "@formbricks/types/actionClasses";
+import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
-import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
+import { CodeActionForm } from "@formbricks/ui/organisms/CodeActionForm";
+import { NoCodeActionForm } from "@formbricks/ui/organisms/NoCodeActionForm";
 
 interface ActionSettingsTabProps {
   environmentId: string;
@@ -34,20 +30,17 @@ interface ActionSettingsTabProps {
   membershipRole?: TMembershipRole;
 }
 
-export default function ActionSettingsTab({
+export const ActionSettingsTab = ({
   environmentId,
   actionClass,
   actionClasses,
   setOpen,
   membershipRole,
-}: ActionSettingsTabProps) {
+}: ActionSettingsTabProps) => {
+  const { createdAt, updatedAt, id, ...restActionClass } = actionClass;
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [testUrl, setTestUrl] = useState("");
-  const [isMatch, setIsMatch] = useState("");
-  const [isPageUrl, setIsPageUrl] = useState(actionClass.noCodeConfig?.pageUrl ? true : false);
-  const [isCssSelector, setIsCssSelector] = useState(actionClass.noCodeConfig?.cssSelector ? true : false);
-  const [isInnerHtml, setIsInnerHtml] = useState(actionClass.noCodeConfig?.innerHtml ? true : false);
+
   const [isUpdatingAction, setIsUpdatingAction] = useState(false);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
   const { isViewer } = getAccessFlags(membershipRole);
@@ -57,76 +50,59 @@ export default function ActionSettingsTab({
     [actionClass.id, actionClasses]
   );
 
-  const { register, handleSubmit, control, watch } = useForm<TActionClass>({
+  const form = useForm<TActionClassInput>({
     defaultValues: {
-      name: actionClass.name,
-      description: actionClass.description,
-      key: actionClass.key,
-      noCodeConfig: actionClass.noCodeConfig,
+      ...restActionClass,
     },
+    resolver: zodResolver(
+      ZActionClassInput.superRefine((data, ctx) => {
+        if (data.name && actionClassNames.includes(data.name)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["name"],
+            message: `Action with name ${data.name} already exists`,
+          });
+        }
+      })
+    ),
+
+    mode: "onChange",
   });
 
-  const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
-    const { pageUrl, innerHtml, cssSelector } = noCodeConfig;
-    const filteredNoCodeConfig: TActionClassNoCodeConfig = {};
+  const { handleSubmit, control } = form;
 
-    if (isPageUrl && pageUrl?.rule && pageUrl?.value) {
-      filteredNoCodeConfig.pageUrl = { rule: pageUrl.rule, value: pageUrl.value };
-    }
-    if (isInnerHtml && innerHtml?.value) {
-      filteredNoCodeConfig.innerHtml = { value: innerHtml.value };
-    }
-    if (isCssSelector && cssSelector?.value) {
-      filteredNoCodeConfig.cssSelector = { value: cssSelector.value };
-    }
-
-    return filteredNoCodeConfig;
-  };
-
-  const handleMatchClick = () => {
-    const match = testURLmatch(
-      testUrl,
-      watch("noCodeConfig.pageUrl.value"),
-      watch("noCodeConfig.pageUrl.rule")
-    );
-    setIsMatch(match);
-    if (match === "yes") toast.success("Your survey would be shown on this URL.");
-    if (match === "no") toast.error("Your survey would not be shown.");
-  };
-
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: TActionClassInput) => {
     try {
       if (isViewer) {
         throw new Error("You are not authorised to perform this action.");
       }
       setIsUpdatingAction(true);
-      if (!data.name || data.name?.trim() === "") {
-        throw new Error("Please give your action a name");
-      }
+
       if (data.name && actionClassNames.includes(data.name)) {
         throw new Error(`Action with name ${data.name} already exist`);
       }
 
-      if (actionClass.type === "noCode") {
-        if (!isPageUrl && !isCssSelector && !isInnerHtml)
-          throw new Error("Please select at least one selector");
-
-        if (isCssSelector && !isValidCssSelector(actionClass.noCodeConfig?.cssSelector?.value))
-          throw new Error("Please enter a valid CSS Selector");
-
-        if (isPageUrl && actionClass.noCodeConfig?.pageUrl?.rule === undefined)
-          throw new Error("Please select a rule for page URL");
+      if (
+        data.type === "noCode" &&
+        data.noCodeConfig?.type === "click" &&
+        data.noCodeConfig.elementSelector.cssSelector &&
+        !isValidCssSelector(data.noCodeConfig.elementSelector.cssSelector)
+      ) {
+        throw new Error("Invalid CSS Selector");
       }
 
-      let filteredNoCodeConfig = data.noCodeConfig;
-      const isCodeAction = actionClass.type === "code";
-      if (!isCodeAction) {
-        filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TNoCodeConfig);
-      }
       const updatedData: TActionClassInput = {
         ...data,
-        ...(isCodeAction ? {} : { noCodeConfig: filteredNoCodeConfig }),
-        name: data.name.trim(),
+        ...(data.type === "noCode" &&
+          data.noCodeConfig?.type === "click" && {
+            noCodeConfig: {
+              ...data.noCodeConfig,
+              elementSelector: {
+                cssSelector: data.noCodeConfig.elementSelector.cssSelector,
+                innerHtml: data.noCodeConfig.elementSelector.innerHtml,
+              },
+            },
+          }),
       };
       await updateActionClassAction(environmentId, actionClass.id, updatedData);
       setOpen(false);
@@ -155,109 +131,108 @@ export default function ActionSettingsTab({
 
   return (
     <div>
-      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid w-full grid-cols-2 gap-x-4">
-          <div className="col-span-1">
-            <Label htmlFor="actionNameSettingsInput">
-              {actionClass.type === "noCode" ? "What did your user do?" : "Display name"}
-            </Label>
-            <Input
-              id="actionNameSettingsInput"
-              placeholder="E.g. Clicked Download"
-              {...register("name", {
-                disabled: actionClass.type === "automatic" ? true : false,
-              })}
-            />
-          </div>
-          {!isViewer && (
-            <div className="col-span-1">
-              <Label htmlFor="actionDescriptionSettingsInput">Description</Label>
-              <Input
-                id="actionDescriptionSettingsInput"
-                placeholder="User clicked Download Button "
-                {...register("description", {
-                  disabled: actionClass.type === "automatic" ? true : false,
-                })}
-              />
-            </div>
-          )}
+      <FormProvider {...form}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="max-h-[400px] w-full space-y-4 overflow-y-auto">
+            <div className="grid w-full grid-cols-2 gap-x-4">
+              <div className="col-span-1">
+                <FormField
+                  control={control}
+                  name="name"
+                  render={({ field, fieldState: { error } }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="actionNameSettingsInput">
+                        {actionClass.type === "noCode" ? "What did your user do?" : "Display name"}
+                      </FormLabel>
 
-          {actionClass.type === "code" && (
-            <div className="col-span-1 mt-4">
-              <Label htmlFor="actionKeySettingsInput">Key</Label>
-              <Input
-                id="actionKeySettingsInput"
-                placeholder="E.g. download_button_clicked"
-                {...register("key")}
-                readOnly
-                disabled
-              />
+                      <FormControl>
+                        <Input
+                          type="text"
+                          id="actionNameSettingsInput"
+                          {...field}
+                          placeholder="E.g. Clicked Download"
+                          isInvalid={!!error?.message}
+                          disabled={actionClass.type === "automatic" ? true : false}
+                        />
+                      </FormControl>
+
+                      <FormError />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              {!isViewer && (
+                <div className="col-span-1">
+                  <FormField
+                    control={control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="actionDescriptionSettingsInput">Description</FormLabel>
+
+                        <FormControl>
+                          <Input
+                            type="text"
+                            id="actionDescriptionSettingsInput"
+                            {...field}
+                            placeholder="User clicked Download Button"
+                            value={field.value ?? ""}
+                            disabled={actionClass.type === "automatic" ? true : false}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        {actionClass.type === "code" ? (
-          <p className="text-sm text-slate-600">
-            This is a code action. Please make changes in your code base.
-          </p>
-        ) : actionClass.type === "noCode" ? (
-          <>
-            <div>
-              <Label>Select By</Label>
-            </div>
-            <CssSelector
-              isCssSelector={isCssSelector}
-              setIsCssSelector={setIsCssSelector}
-              register={register}
-            />
-            <PageUrlSelector
-              isPageUrl={isPageUrl}
-              setIsPageUrl={setIsPageUrl}
-              register={register}
-              control={control}
-              testUrl={testUrl}
-              setTestUrl={setTestUrl}
-              isMatch={isMatch}
-              setIsMatch={setIsMatch}
-              handleMatchClick={handleMatchClick}
-            />
-            <InnerHtmlSelector
-              isInnerHtml={isInnerHtml}
-              setIsInnerHtml={setIsInnerHtml}
-              register={register}
-            />
-          </>
-        ) : actionClass.type === "automatic" ? (
-          <p className="text-sm text-slate-600">
-            This action was created automatically. You cannot make changes to it.
-          </p>
-        ) : null}
-        <div className="flex justify-between border-t border-slate-200 py-6">
-          <div>
-            {!isViewer && actionClass.type !== "automatic" && (
-              <Button
-                type="button"
-                variant="warn"
-                onClick={() => setOpenDeleteDialog(true)}
-                StartIcon={TrashIcon}
-                className="mr-3"
-                id="deleteActionModalTrigger">
-                Delete
-              </Button>
+
+            {actionClass.type === "code" ? (
+              <>
+                <CodeActionForm form={form} isEdit={true} />
+                <p className="text-sm text-slate-600">
+                  This is a code action. Please make changes in your code base.
+                </p>
+              </>
+            ) : actionClass.type === "noCode" ? (
+              <NoCodeActionForm form={form} />
+            ) : (
+              <p className="text-sm text-slate-600">
+                This action was created automatically. You cannot make changes to it.
+              </p>
             )}
-
-            <Button variant="secondary" href="https://formbricks.com/docs/actions/no-code" target="_blank">
-              Read Docs
-            </Button>
           </div>
-          {actionClass.type !== "automatic" && (
-            <div className="flex space-x-2">
-              <Button type="submit" variant="darkCTA" loading={isUpdatingAction}>
-                Save changes
+
+          <div className="flex justify-between border-t border-slate-200 py-6">
+            <div>
+              {!isViewer && actionClass.type !== "automatic" && (
+                <Button
+                  type="button"
+                  variant="warn"
+                  onClick={() => setOpenDeleteDialog(true)}
+                  StartIcon={TrashIcon}
+                  className="mr-3"
+                  id="deleteActionModalTrigger">
+                  Delete
+                </Button>
+              )}
+
+              <Button variant="secondary" href="https://formbricks.com/docs/actions/no-code" target="_blank">
+                Read Docs
               </Button>
             </div>
-          )}
-        </div>
-      </form>
+
+            {actionClass.type !== "automatic" && (
+              <div className="flex space-x-2">
+                <Button type="submit" variant="darkCTA" loading={isUpdatingAction}>
+                  Save changes
+                </Button>
+              </div>
+            )}
+          </div>
+        </form>
+      </FormProvider>
+
       <DeleteDialog
         open={openDeleteDialog}
         setOpen={setOpenDeleteDialog}
@@ -268,4 +243,4 @@ export default function ActionSettingsTab({
       />
     </div>
   );
-}
+};

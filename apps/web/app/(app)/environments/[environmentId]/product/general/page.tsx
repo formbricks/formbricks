@@ -1,29 +1,25 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { getServerSession } from "next-auth";
-
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 import { SettingsId } from "@formbricks/ui/SettingsId";
+import { SettingsCard } from "../../settings/components/SettingsCard";
+import { DeleteProduct } from "./components/DeleteProduct";
+import { EditProductNameForm } from "./components/EditProductNameForm";
+import { EditWaitingTimeForm } from "./components/EditWaitingTimeForm";
 
-import SettingsCard from "../../settings/components/SettingsCard";
-import DeleteProduct from "./components/DeleteProduct";
-import EditProductName from "./components/EditProductName";
-import EditWaitingTime from "./components/EditWaitingTime";
-
-export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
-  const [, product, session, team] = await Promise.all([
-    getEnvironment(params.environmentId),
+const Page = async ({ params }: { params: { environmentId: string } }) => {
+  const [product, session, organization] = await Promise.all([
     getProductByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
-    getTeamByEnvironmentId(params.environmentId),
+    getOrganizationByEnvironmentId(params.environmentId),
   ]);
 
   if (!product) {
@@ -32,11 +28,11 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   if (!session) {
     throw new Error("Unauthorized");
   }
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
   }
 
-  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
   const isProductNameEditDisabled = isDeveloper ? true : isViewer;
 
@@ -44,7 +40,8 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
     return <ErrorComponent />;
   }
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const currentProductChannel = product?.config.channel ?? null;
 
   return (
     <PageContentWrapper>
@@ -53,21 +50,24 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
           environmentId={params.environmentId}
           activeId="general"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
+          productChannel={currentProductChannel}
         />
       </PageHeader>
 
       <SettingsCard title="Product Name" description="Change your products name.">
-        <EditProductName
+        <EditProductNameForm
           environmentId={params.environmentId}
           product={product}
           isProductNameEditDisabled={isProductNameEditDisabled}
         />
       </SettingsCard>
-      <SettingsCard
-        title="Recontact Waiting Time"
-        description="Control how frequently users can be surveyed across all surveys.">
-        <EditWaitingTime environmentId={params.environmentId} product={product} />
-      </SettingsCard>
+      {currentProductChannel !== "link" && (
+        <SettingsCard
+          title="Recontact Waiting Time"
+          description="Control how frequently users can be surveyed across all surveys.">
+          <EditWaitingTimeForm environmentId={params.environmentId} product={product} />
+        </SettingsCard>
+      )}
       <SettingsCard
         title="Delete Product"
         description="Delete product with all surveys, responses, people, actions and attributes. This cannot be undone.">
@@ -76,4 +76,6 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
       <SettingsId title="Product" id={product.id}></SettingsId>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

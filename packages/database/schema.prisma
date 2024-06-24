@@ -135,6 +135,7 @@ model Response {
 
   @@unique([surveyId, singleUseId])
   @@index([surveyId, createdAt]) // to determine monthly response count
+  @@index([personId, createdAt]) // to determine monthly identified users (persons)
   @@index([surveyId])
 }
 
@@ -249,6 +250,7 @@ enum SurveyType {
 enum displayOptions {
   displayOnce
   displayMultiple
+  displaySome
   respondMultiple
 }
 
@@ -279,6 +281,7 @@ model Survey {
   responses           Response[]
   displayOption       displayOptions          @default(displayOnce)
   recontactDays       Int?
+  displayLimit        Int?
   triggers            SurveyTrigger[]
   /// @zod.custom(imports.ZSurveyInlineTriggers)
   /// [SurveyInlineTriggers]
@@ -310,11 +313,12 @@ model Survey {
 
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
-  verifyEmail       Json?
-  pin               String?
-  resultShareKey    String?          @unique
-  displayPercentage Int?
-  languages         SurveyLanguage[]
+  verifyEmail        Json?
+  pin                String?
+  resultShareKey     String?          @unique
+  displayPercentage  Decimal?
+  languages          SurveyLanguage[]
+  showLanguageSwitch Boolean?
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
@@ -390,22 +394,24 @@ model Integration {
 }
 
 model Environment {
-  id                   String           @id @default(cuid())
-  createdAt            DateTime         @default(now()) @map(name: "created_at")
-  updatedAt            DateTime         @updatedAt @map(name: "updated_at")
-  type                 EnvironmentType
-  product              Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId            String
-  widgetSetupCompleted Boolean          @default(false)
-  surveys              Survey[]
-  people               Person[]
-  actionClasses        ActionClass[]
-  attributeClasses     AttributeClass[]
-  apiKeys              ApiKey[]
-  webhooks             Webhook[]
-  tags                 Tag[]
-  segments             Segment[]
-  integration          Integration[]
+  id                    String           @id @default(cuid())
+  createdAt             DateTime         @default(now()) @map(name: "created_at")
+  updatedAt             DateTime         @updatedAt @map(name: "updated_at")
+  type                  EnvironmentType
+  product               Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId             String
+  widgetSetupCompleted  Boolean          @default(false)
+  appSetupCompleted     Boolean          @default(false)
+  websiteSetupCompleted Boolean          @default(false)
+  surveys               Survey[]
+  people                Person[]
+  actionClasses         ActionClass[]
+  attributeClasses      AttributeClass[]
+  apiKeys               ApiKey[]
+  webhooks              Webhook[]
+  tags                  Tag[]
+  segments              Segment[]
+  integration           Integration[]
 
   @@index([productId])
 }
@@ -423,14 +429,17 @@ model Product {
   createdAt            DateTime        @default(now()) @map(name: "created_at")
   updatedAt            DateTime        @updatedAt @map(name: "updated_at")
   name                 String
-  team                 Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId               String
+  organization         Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId       String
   environments         Environment[]
-  brandColor           String?
-  highlightBorderColor String?
+  brandColor           String? // deprecated; use styling.brandColor instead
+  highlightBorderColor String? // deprecated
   /// @zod.custom(imports.ZProductStyling)
   /// [Styling]
   styling              Json            @default("{\"allowStyleOverwrite\":true}")
+  /// @zod.custom(imports.ZProductConfig)
+  /// [ProductConfig]
+  config               Json            @default("{}")
   recontactDays        Int             @default(7)
   linkSurveyBranding   Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
   inAppSurveyBranding  Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys
@@ -442,11 +451,11 @@ model Product {
   /// [Logo]
   logo                 Json?
 
-  @@unique([teamId, name])
-  @@index([teamId])
+  @@unique([organizationId, name])
+  @@index([organizationId])
 }
 
-model Team {
+model Organization {
   id          String       @id @default(cuid())
   createdAt   DateTime     @default(now()) @map(name: "created_at")
   updatedAt   DateTime     @updatedAt @map(name: "updated_at")
@@ -455,7 +464,7 @@ model Team {
   products    Product[]
   /// @zod.custom(imports.ZTeamBilling)
   /// [TeamBilling]
-  billing     Json         @default("{\"stripeCustomerId\": null, \"features\": {\"inAppSurvey\": {\"status\": \"inactive\", \"unlimited\": false}, \"linkSurvey\": {\"status\": \"inactive\", \"unlimited\": false}, \"userTargeting\": {\"status\": \"inactive\", \"unlimited\": false}}}")
+  billing     Json
   invites     Invite[]
 }
 
@@ -468,35 +477,35 @@ enum MembershipRole {
 }
 
 model Membership {
-  team     Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId   String
-  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
-  accepted Boolean        @default(false)
-  role     MembershipRole
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  accepted       Boolean        @default(false)
+  role           MembershipRole
 
-  @@id([userId, teamId])
+  @@id([userId, organizationId])
   @@index([userId])
-  @@index([teamId])
+  @@index([organizationId])
 }
 
 model Invite {
-  id         String         @id @default(uuid())
-  email      String
-  name       String?
-  team       Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId     String
-  creator    User           @relation("inviteCreatedBy", fields: [creatorId], references: [id])
-  creatorId  String
-  acceptor   User?          @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
-  acceptorId String?
-  accepted   Boolean        @default(false)
-  createdAt  DateTime       @default(now())
-  expiresAt  DateTime
-  role       MembershipRole @default(admin)
+  id             String         @id @default(uuid())
+  email          String
+  name           String?
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  creator        User           @relation("inviteCreatedBy", fields: [creatorId], references: [id])
+  creatorId      String
+  acceptor       User?          @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
+  acceptorId     String?
+  accepted       Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  expiresAt      DateTime
+  role           MembershipRole @default(admin)
 
-  @@index([email, teamId])
-  @@index([teamId])
+  @@index([email, organizationId])
+  @@index([organizationId])
 }
 
 model ApiKey {
@@ -570,7 +579,7 @@ model User {
   id                        String           @id @default(cuid())
   createdAt                 DateTime         @default(now()) @map(name: "created_at")
   updatedAt                 DateTime         @updatedAt @map(name: "updated_at")
-  name                      String?
+  name                      String
   email                     String           @unique
   emailVerified             DateTime?        @map(name: "email_verified")
   imageUrl                  String?
@@ -578,7 +587,6 @@ model User {
   twoFactorEnabled          Boolean          @default(false)
   backupCodes               String?
   password                  String?
-  onboardingCompleted       Boolean          @default(false)
   identityProvider          IdentityProvider @default(email)
   identityProviderAccountId String?
   memberships               Membership[]

@@ -1,12 +1,10 @@
 import { CheckCircle2Icon, PauseCircleIcon, PlayCircleIcon } from "lucide-react";
 import toast from "react-hot-toast";
-
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-
 import { updateSurveyAction } from "../actions";
 
 interface SurveyStatusDropdownProps {
@@ -62,7 +60,9 @@ export const SurveyStatusDropdown = ({
                 <SelectTrigger className="w-[170px] bg-white py-6 md:w-[200px]">
                   <SelectValue>
                     <div className="flex items-center">
-                      {(survey.type === "link" || environment.widgetSetupCompleted) && (
+                      {(survey.type === "link" ||
+                        environment.appSetupCompleted ||
+                        environment.websiteSetupCompleted) && (
                         <SurveyStatusIndicator status={survey.status} />
                       )}
                       <span className="ml-2 text-sm text-slate-700">
@@ -76,15 +76,15 @@ export const SurveyStatusDropdown = ({
                 </SelectTrigger>
               </TooltipTrigger>
               <SelectContent className="bg-white">
-                <SelectItem className="group  font-normal hover:text-slate-900" value="inProgress">
+                <SelectItem className="group font-normal hover:text-slate-900" value="inProgress">
                   <PlayCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
                   In-progress
                 </SelectItem>
-                <SelectItem className="group  font-normal hover:text-slate-900" value="paused">
+                <SelectItem className="group font-normal hover:text-slate-900" value="paused">
                   <PauseCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
                   Paused
                 </SelectItem>
-                <SelectItem className="group  font-normal hover:text-slate-900" value="completed">
+                <SelectItem className="group font-normal hover:text-slate-900" value="completed">
                   <CheckCircle2Icon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
                   Completed
                 </SelectItem>

@@ -3,14 +3,14 @@ FROM node:20-alpine AS base
 #
 ## step 1: Prune monorepo
 #
-FROM base AS builder
-RUN apk add --no-cache libc6-compat
-RUN apk update
+# FROM base AS builder
+# RUN apk add --no-cache libc6-compat
+# RUN apk update
 # Set working directory
-WORKDIR /app
-RUN yarn global add turbo
-COPY . .
-RUN turbo prune @formbricks/web --docker
+# WORKDIR /app
+# RUN yarn global add turbo
+# COPY . .
+# RUN turbo prune @formbricks/web --docker
 
 #
 ## step 2: Install & build
@@ -18,11 +18,10 @@ RUN turbo prune @formbricks/web --docker
 FROM base AS installer
 
 # Enable corepack and prepare pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable
 
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
-
 
 # Set hardcoded environment variables
 ENV DATABASE_URL="postgresql://placeholder:for@build:5432/gets_overwritten_at_runtime?schema=public"
@@ -36,21 +35,23 @@ ARG SENTRY_AUTH_TOKEN
 WORKDIR /app
 
 # Copy the package information
-COPY .gitignore .gitignore
-COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+# COPY .gitignore .gitignore
+# COPY --from=builder /app/out/json/ .
+# COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
 # Install the dependencies
-RUN pnpm install
+# RUN pnpm install
 
 # Prepare the build
-COPY --from=builder /app/out/full/ .
+COPY . .
 # Create a .env file
-RUN touch /app/apps/web/.env
+RUN touch apps/web/.env
+
+RUN pnpm install
 
 # Build the project
-RUN pnpm post-install --filter=web...
-RUN pnpm turbo run build --filter=web...
+# RUN pnpm post-install --filter=@formbricks/web...
+RUN pnpm build --filter=@formbricks/web...
 
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
@@ -59,7 +60,7 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 ## step 3: setup production runner
 #
 FROM base AS runner
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable
 
 RUN apk add --no-cache curl \
     && apk add --no-cache supercronic \
@@ -92,5 +93,5 @@ RUN mkdir -p /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/uploads/
 
 CMD supercronic -quiet /app/docker/cronjobs & \
-    (cd packages/database && pnpm db:migrate:deploy) && \
+    (cd packages/database && npm run db:migrate:deploy) && \
     exec node apps/web/server.js

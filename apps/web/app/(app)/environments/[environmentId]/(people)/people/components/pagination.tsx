@@ -1,4 +1,4 @@
-function Pagination({ environmentId, currentPage, totalItems, itemsPerPage }) {
+export const Pagination = ({ environmentId, currentPage, totalItems, itemsPerPage }) => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   const previousPageLink =
@@ -52,6 +52,4 @@ function Pagination({ environmentId, currentPage, totalItems, itemsPerPage }) {
       </ul>
     </nav>
   );
-}
-
-export default Pagination;
+};

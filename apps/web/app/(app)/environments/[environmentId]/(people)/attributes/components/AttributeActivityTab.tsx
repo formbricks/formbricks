@@ -2,21 +2,19 @@
 
 import { TagIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-
-import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { Label } from "@formbricks/ui/Label";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
-
+import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 import { getSegmentsByAttributeClassAction } from "../actions";
 
 interface EventActivityTabProps {
   attributeClass: TAttributeClass;
 }
 
-export default function AttributeActivityTab({ attributeClass }: EventActivityTabProps) {
+export const AttributeActivityTab = ({ attributeClass }: EventActivityTabProps) => {
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
   const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
   const [loading, setLoading] = useState(true);
@@ -25,9 +23,7 @@ export default function AttributeActivityTab({ attributeClass }: EventActivityTa
   useEffect(() => {
     setLoading(true);
 
-    getSurveys();
-
-    async function getSurveys() {
+    const getSurveys = async () => {
       try {
         setLoading(true);
         const segmentsWithAttributeClassName = await getSegmentsByAttributeClassAction(
@@ -42,7 +38,9 @@ export default function AttributeActivityTab({ attributeClass }: EventActivityTa
       } finally {
         setLoading(false);
       }
-    }
+    };
+
+    getSurveys();
   }, [attributeClass, attributeClass.environmentId, attributeClass.id, attributeClass.name]);
 
   if (loading) return <LoadingSpinner />;
@@ -73,26 +71,26 @@ export default function AttributeActivityTab({ attributeClass }: EventActivityTa
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">
         <div>
           <Label className="text-xs font-normal text-slate-500">Created on</Label>
-          <p className=" text-xs text-slate-700">
+          <p className="text-xs text-slate-700">
             {convertDateTimeStringShort(attributeClass.createdAt.toString())}
           </p>
         </div>{" "}
         <div>
-          <Label className=" text-xs font-normal text-slate-500">Last updated</Label>
-          <p className=" text-xs text-slate-700">
+          <Label className="text-xs font-normal text-slate-500">Last updated</Label>
+          <p className="text-xs text-slate-700">
             {convertDateTimeStringShort(attributeClass.updatedAt.toString())}
           </p>
         </div>
         <div>
           <Label className="block text-xs font-normal text-slate-500">Type</Label>
           <div className="mt-1 flex items-center">
-            <div className="mr-1.5  h-4 w-4 text-slate-600">
+            <div className="mr-1.5 h-4 w-4 text-slate-600">
               <TagIcon className="h-4 w-4" />
             </div>
-            <p className="text-sm text-slate-700 ">{capitalizeFirstLetter(attributeClass.type)}</p>
+            <p className="text-sm text-slate-700">{capitalizeFirstLetter(attributeClass.type)}</p>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};

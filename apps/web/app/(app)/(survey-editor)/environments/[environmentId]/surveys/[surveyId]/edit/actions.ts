@@ -1,7 +1,6 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
@@ -30,11 +29,11 @@ import { TProduct } from "@formbricks/types/product";
 import { TBaseFilters, TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 
-export async function surveyMutateAction(survey: TSurvey): Promise<TSurvey> {
+export const surveyMutateAction = async (survey: TSurvey): Promise<TSurvey> => {
   return await updateSurvey(survey);
-}
+};
 
-export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
+export const updateSurveyAction = async (survey: TSurvey): Promise<TSurvey> => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -45,7 +44,7 @@ export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await updateSurvey(survey);
-}
+};
 
 export const deleteSurveyAction = async (surveyId: string) => {
   const session = await getServerSession(authOptions);
@@ -190,7 +189,7 @@ export const resetBasicSegmentFiltersAction = async (surveyId: string) => {
   return await resetSegmentInSurvey(surveyId);
 };
 
-export async function getImagesFromUnsplashAction(searchQuery: string, page: number = 1) {
+export const getImagesFromUnsplashAction = async (searchQuery: string, page: number = 1) => {
   if (!UNSPLASH_ACCESS_KEY) {
     throw new Error("Unsplash access key is not set");
   }
@@ -231,9 +230,9 @@ export async function getImagesFromUnsplashAction(searchQuery: string, page: num
   } catch (error) {
     throw new Error("Error getting images from Unsplash");
   }
-}
+};
 
-export async function triggerDownloadUnsplashImageAction(downloadUrl: string) {
+export const triggerDownloadUnsplashImageAction = async (downloadUrl: string) => {
   try {
     const response = await fetch(`${downloadUrl}/?client_id=${UNSPLASH_ACCESS_KEY}`, {
       method: "GET",
@@ -249,14 +248,17 @@ export async function triggerDownloadUnsplashImageAction(downloadUrl: string) {
   } catch (error) {
     throw new Error("Error downloading image from Unsplash");
   }
-}
+};
 
-export async function createActionClassAction(action: TActionClassInput) {
+export const createActionClassAction = async (environmentId: string, action: TActionClassInput) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, action.environmentId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
+  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
+
   return await createActionClass(action.environmentId, action);
-}
+};

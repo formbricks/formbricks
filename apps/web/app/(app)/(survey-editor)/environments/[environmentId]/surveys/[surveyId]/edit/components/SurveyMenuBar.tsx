@@ -6,8 +6,7 @@ import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
-import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
+import { createSegmentAction } from "@formbricks/ee/advanced-targeting/lib/actions";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
@@ -16,7 +15,6 @@ import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-
 import { updateSurveyAction } from "../actions";
 import { isSurveyValid } from "../lib/validation";
 
@@ -233,7 +231,7 @@ export const SurveyMenuBar = ({
               const updatedSurvey = { ...localSurvey, name: e.target.value };
               setLocalSurvey(updatedSurvey);
             }}
-            className="w-72 border-white hover:border-slate-200 "
+            className="w-72 border-white hover:border-slate-200"
           />
         </div>
         {responseCount > 0 && (
@@ -241,16 +239,14 @@ export const SurveyMenuBar = ({
             <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger>
-                  <AlertTriangleIcon className=" h-5 w-5 text-amber-400" />
+                  <AlertTriangleIcon className="h-5 w-5 text-amber-400" />
                 </TooltipTrigger>
                 <TooltipContent side={"top"} className="lg:hidden">
-                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400 ">
-                    {cautionText}
-                  </p>
+                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">{cautionText}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <p className=" hidden pl-1 text-xs md:text-sm lg:block">{cautionText}</p>
+            <p className="hidden pl-1 text-xs md:text-sm lg:block">{cautionText}</p>
           </div>
         )}
         <div className="mt-3 flex sm:ml-4 sm:mt-0">

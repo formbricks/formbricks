@@ -4,17 +4,15 @@ import AzureAD from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-
 import { prisma } from "@formbricks/database";
-
 import { createAccount } from "./account/service";
 import { verifyPassword } from "./auth/utils";
 import {
   AZUREAD_CLIENT_ID,
   AZUREAD_CLIENT_SECRET,
   AZUREAD_TENANT_ID,
-  DEFAULT_TEAM_ID,
-  DEFAULT_TEAM_ROLE,
+  DEFAULT_ORGANIZATION_ID,
+  DEFAULT_ORGANIZATION_ROLE,
   EMAIL_VERIFICATION_DISABLED,
   GITHUB_ID,
   GITHUB_SECRET,
@@ -28,8 +26,7 @@ import {
 } from "./constants";
 import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
-import { createProduct } from "./product/service";
-import { createTeam, getTeam } from "./team/service";
+import { createOrganization, getOrganization } from "./organization/service";
 import { createUser, getUserByEmail, updateUser } from "./user/service";
 
 export const authOptions: NextAuthOptions = {
@@ -254,55 +251,50 @@ export const authOptions: NextAuthOptions = {
           name: user.name || user.email.split("@")[0],
           email: user.email,
           emailVerified: new Date(Date.now()),
-          onboardingCompleted: false,
           identityProvider: provider,
           identityProviderAccountId: account.providerAccountId,
         });
 
-        // Default team assignment if env variable is set
-        if (DEFAULT_TEAM_ID && DEFAULT_TEAM_ID.length > 0) {
-          // check if team exists
-          let team = await getTeam(DEFAULT_TEAM_ID);
-          let isNewTeam = false;
-          if (!team) {
-            // create team with id from env
-            team = await createTeam({ id: DEFAULT_TEAM_ID, name: userProfile.name + "'s Team" });
-            isNewTeam = true;
+        // Default organization assignment if env variable is set
+        if (DEFAULT_ORGANIZATION_ID && DEFAULT_ORGANIZATION_ID.length > 0) {
+          // check if organization exists
+          let organization = await getOrganization(DEFAULT_ORGANIZATION_ID);
+          let isNewOrganization = false;
+          if (!organization) {
+            // create organization with id from env
+            organization = await createOrganization({
+              id: DEFAULT_ORGANIZATION_ID,
+              name: userProfile.name + "'s Organization",
+            });
+            isNewOrganization = true;
           }
-          const role = isNewTeam ? "owner" : DEFAULT_TEAM_ROLE || "admin";
-          await createMembership(team.id, userProfile.id, { role, accepted: true });
+          const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "admin";
+          await createMembership(organization.id, userProfile.id, { role, accepted: true });
           await createAccount({
             ...account,
             userId: userProfile.id,
           });
-          return true;
-        }
-        // Without default team assignment
-        else {
-          const team = await createTeam({ name: userProfile.name + "'s Team" });
-          await createMembership(team.id, userProfile.id, { role: "owner", accepted: true });
-          await createAccount({
-            ...account,
-            userId: userProfile.id,
-          });
-          const product = await createProduct(team.id, { name: "My Product" });
+
           const updatedNotificationSettings = {
             ...userProfile.notificationSettings,
             alert: {
               ...userProfile.notificationSettings?.alert,
             },
-            weeklySummary: {
-              ...userProfile.notificationSettings?.weeklySummary,
-              [product.id]: true,
-            },
+            unsubscribedOrganizationIds: Array.from(
+              new Set([
+                ...(userProfile.notificationSettings?.unsubscribedOrganizationIds || []),
+                organization.id,
+              ])
+            ),
           };
 
           await updateUser(userProfile.id, {
             notificationSettings: updatedNotificationSettings,
           });
-
           return true;
         }
+        // Without default organization assignment
+        return true;
       }
 
       return true;

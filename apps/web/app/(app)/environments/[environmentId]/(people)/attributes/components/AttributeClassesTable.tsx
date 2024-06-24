@@ -1,10 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { Switch } from "@formbricks/ui/Switch";
-
 import { AttributeDetailModal } from "./AttributeDetailModal";
 import { AttributeClassDataRow } from "./AttributeRowData";
 import { AttributeTableHeading } from "./AttributeTableHeading";
@@ -57,7 +55,7 @@ export const AttributeClassesTable = ({ attributeClasses }: AttributeClassesTabl
           {displayedAttributeClasses.map((attributeClass, index) => (
             <button
               onClick={() => handleOpenAttributeDetailModalClick(attributeClass)}
-              className="w-full"
+              className="w-full cursor-default"
               key={attributeClass.id}>
               <AttributeClassDataRow attributeClass={attributeClass} key={index} />
             </button>

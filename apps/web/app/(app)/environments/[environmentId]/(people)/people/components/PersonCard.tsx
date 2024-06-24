@@ -1,6 +1,5 @@
 import Link from "next/link";
 import React from "react";
-
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { TPerson } from "@formbricks/types/people";
@@ -14,7 +13,7 @@ export const PersonCard = async ({ person }: { person: TPerson }) => {
       href={`/environments/${person.environmentId}/people/${person.id}`}
       key={person.id}
       className="w-full">
-      <div className="m-2 grid h-16  grid-cols-7 content-center rounded-lg hover:bg-slate-100">
+      <div className="m-2 grid h-16 grid-cols-7 content-center rounded-lg transition-colors ease-in-out hover:bg-slate-100">
         <div className="col-span-3 flex items-center pl-6 text-sm">
           <div className="flex items-center">
             <div className="ph-no-capture h-10 w-10 flex-shrink-0">

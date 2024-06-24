@@ -1,6 +1,5 @@
 import Link from "next/link";
 import React from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
@@ -13,14 +12,14 @@ interface NavigationLinkProps {
   isTextVisible: boolean;
 }
 
-export default function NavigationLink({
+export const NavigationLink = ({
   href,
   isActive,
   isCollapsed = false,
   children,
   linkText,
   isTextVisible = true,
-}: NavigationLinkProps) {
+}: NavigationLinkProps) => {
   const activeClass = "bg-slate-50 border-r-4 border-brand-dark font-semibold text-slate-900";
   const inactiveClass =
     "hover:bg-slate-50 border-r-4 border-transparent hover:border-slate-300 transition-all duration-150 ease-in-out";
@@ -64,4 +63,4 @@ export default function NavigationLink({
       )}
     </>
   );
-}
+};

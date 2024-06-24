@@ -1,13 +1,17 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-
-import { TResponse, TResponseFilterCriteria, TResponseTtc } from "@formbricks/types/responses";
+import {
+  TResponse,
+  TResponseFilterCriteria,
+  TResponseHiddenFieldsFilter,
+  TResponseTtc,
+  TSurveyMetaFieldFilter,
+  TSurveyPersonAttributes,
+} from "@formbricks/types/responses";
 import {
   TSurvey,
   TSurveyLanguage,
-  TSurveyMultipleChoiceMultiQuestion,
-  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyMultipleChoiceQuestion,
   TSurveyQuestionSummaryAddress,
   TSurveyQuestionSummaryDate,
   TSurveyQuestionSummaryFileUpload,
@@ -16,22 +20,21 @@ import {
   TSurveyQuestionSummaryOpenText,
   TSurveyQuestionSummaryPictureSelection,
   TSurveyQuestionSummaryRating,
-  TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
   TSurveySummary,
 } from "@formbricks/types/surveys";
-
 import { getLocalizedValue } from "../i18n/utils";
 import { processResponseData } from "../responses";
-import { sanitizeString } from "../strings";
 import { getTodaysDateTimeFormatted } from "../time";
 import { evaluateCondition } from "../utils/evaluateLogic";
+import { sanitizeString } from "../utils/strings";
 
-export function calculateTtcTotal(ttc: TResponseTtc) {
+export const calculateTtcTotal = (ttc: TResponseTtc) => {
   const result = { ...ttc };
   result._total = Object.values(result).reduce((acc: number, val: number) => acc + val, 0);
 
   return result;
-}
+};
 
 export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
   const whereClause: Prisma.ResponseWhereInput["AND"] = [];
@@ -664,7 +667,7 @@ const checkForI18n = (response: TResponse, id: string, survey: TSurvey, language
     (typeof response.data[id] === "string"
       ? ([response.data[id]] as string[])
       : (response.data[id] as string[])
-    ).forEach((data) => {
+    )?.forEach((data) => {
       choiceValues.push(
         getLocalizedValue(
           question.choices.find((choice) => choice.label[languageCode] === data)?.label,
@@ -678,9 +681,9 @@ const checkForI18n = (response: TResponse, id: string, survey: TSurvey, language
   }
 
   // Return the localized value of the choice fo multiSelect single question
-  const choice = (
-    question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion
-  )?.choices.find((choice) => choice.label[languageCode] === response.data[id]);
+  const choice = (question as TSurveyMultipleChoiceQuestion)?.choices.find(
+    (choice) => choice.label[languageCode] === response.data[id]
+  );
 
   return getLocalizedValue(choice?.label, "default") || response.data[id];
 };
@@ -695,7 +698,7 @@ export const getQuestionWiseSummary = (
 
   survey.questions.forEach((question, idx) => {
     switch (question.type) {
-      case TSurveyQuestionType.OpenText: {
+      case TSurveyQuestionTypeEnum.OpenText: {
         let values: TSurveyQuestionSummaryOpenText["samples"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
@@ -720,8 +723,8 @@ export const getQuestionWiseSummary = (
         values = [];
         break;
       }
-      case TSurveyQuestionType.MultipleChoiceSingle:
-      case TSurveyQuestionType.MultipleChoiceMulti: {
+      case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
+      case TSurveyQuestionTypeEnum.MultipleChoiceMulti: {
         let values: TSurveyQuestionSummaryMultipleChoice["choices"] = [];
         // check last choice is others or not
         const lastChoice = question.choices[question.choices.length - 1];
@@ -802,7 +805,7 @@ export const getQuestionWiseSummary = (
         values = [];
         break;
       }
-      case TSurveyQuestionType.PictureSelection: {
+      case TSurveyQuestionTypeEnum.PictureSelection: {
         let values: TSurveyQuestionSummaryPictureSelection["choices"] = [];
         const choiceCountMap: Record<string, number> = {};
 
@@ -843,7 +846,7 @@ export const getQuestionWiseSummary = (
         values = [];
         break;
       }
-      case TSurveyQuestionType.Rating: {
+      case TSurveyQuestionTypeEnum.Rating: {
         let values: TSurveyQuestionSummaryRating["choices"] = [];
         const choiceCountMap: Record<number, number> = {};
         const range = question.range;
@@ -893,7 +896,7 @@ export const getQuestionWiseSummary = (
         values = [];
         break;
       }
-      case TSurveyQuestionType.NPS: {
+      case TSurveyQuestionTypeEnum.NPS: {
         const data = {
           promoters: 0,
           passives: 0,
@@ -950,7 +953,7 @@ export const getQuestionWiseSummary = (
         });
         break;
       }
-      case TSurveyQuestionType.CTA: {
+      case TSurveyQuestionTypeEnum.CTA: {
         const data = {
           clicked: 0,
           dismissed: 0,
@@ -982,7 +985,7 @@ export const getQuestionWiseSummary = (
         });
         break;
       }
-      case TSurveyQuestionType.Consent: {
+      case TSurveyQuestionTypeEnum.Consent: {
         const data = {
           accepted: 0,
           dismissed: 0,
@@ -1017,7 +1020,7 @@ export const getQuestionWiseSummary = (
 
         break;
       }
-      case TSurveyQuestionType.Date: {
+      case TSurveyQuestionTypeEnum.Date: {
         let values: TSurveyQuestionSummaryDate["samples"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
@@ -1042,7 +1045,7 @@ export const getQuestionWiseSummary = (
         values = [];
         break;
       }
-      case TSurveyQuestionType.FileUpload: {
+      case TSurveyQuestionTypeEnum.FileUpload: {
         let values: TSurveyQuestionSummaryFileUpload["files"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
@@ -1067,7 +1070,7 @@ export const getQuestionWiseSummary = (
         values = [];
         break;
       }
-      case TSurveyQuestionType.Cal: {
+      case TSurveyQuestionTypeEnum.Cal: {
         const data = {
           booked: 0,
           skipped: 0,
@@ -1100,7 +1103,7 @@ export const getQuestionWiseSummary = (
 
         break;
       }
-      case TSurveyQuestionType.Matrix: {
+      case TSurveyQuestionTypeEnum.Matrix: {
         const rows = question.rows.map((row) => getLocalizedValue(row, "default"));
         const columns = question.columns.map((column) => getLocalizedValue(column, "default"));
         let totalResponseCount = 0;
@@ -1157,7 +1160,7 @@ export const getQuestionWiseSummary = (
         });
         break;
       }
-      case TSurveyQuestionType.Address: {
+      case TSurveyQuestionTypeEnum.Address: {
         let values: TSurveyQuestionSummaryAddress["samples"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
@@ -1210,4 +1213,111 @@ export const getQuestionWiseSummary = (
   });
 
   return summary;
+};
+
+export const getResponsePersonAttributes = (
+  responses: Pick<TResponse, "personAttributes" | "data" | "meta">[]
+): TSurveyPersonAttributes => {
+  try {
+    let attributes: TSurveyPersonAttributes = {};
+
+    responses.forEach((response) => {
+      Object.keys(response.personAttributes ?? {}).forEach((key) => {
+        if (response.personAttributes && attributes[key]) {
+          attributes[key].push(response.personAttributes[key].toString());
+        } else if (response.personAttributes) {
+          attributes[key] = [response.personAttributes[key].toString()];
+        }
+      });
+    });
+
+    Object.keys(attributes).forEach((key) => {
+      attributes[key] = Array.from(new Set(attributes[key]));
+    });
+
+    return attributes;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getResponseMeta = (
+  responses: Pick<TResponse, "personAttributes" | "data" | "meta">[]
+): TSurveyMetaFieldFilter => {
+  try {
+    const meta: { [key: string]: Set<string> } = {};
+
+    responses.forEach((response) => {
+      Object.entries(response.meta).forEach(([key, value]) => {
+        // skip url
+        if (key === "url") return;
+
+        // Handling nested objects (like userAgent)
+        if (typeof value === "object" && value !== null) {
+          Object.entries(value).forEach(([nestedKey, nestedValue]) => {
+            if (typeof nestedValue === "string" && nestedValue) {
+              if (!meta[nestedKey]) {
+                meta[nestedKey] = new Set();
+              }
+              meta[nestedKey].add(nestedValue);
+            }
+          });
+        } else if (typeof value === "string" && value) {
+          if (!meta[key]) {
+            meta[key] = new Set();
+          }
+          meta[key].add(value);
+        }
+      });
+    });
+
+    // Convert Set to Array
+    const result = Object.fromEntries(
+      Object.entries(meta).map(([key, valueSet]) => [key, Array.from(valueSet)])
+    );
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getResponseHiddenFields = (
+  survey: TSurvey,
+  responses: Pick<TResponse, "personAttributes" | "data" | "meta">[]
+): TResponseHiddenFieldsFilter => {
+  try {
+    const hiddenFields: { [key: string]: Set<string> } = {};
+
+    const surveyHiddenFields = survey?.hiddenFields.fieldIds;
+    const hasHiddenFields = surveyHiddenFields && surveyHiddenFields.length > 0;
+
+    if (hasHiddenFields) {
+      // adding hidden fields to meta
+      survey?.hiddenFields.fieldIds?.forEach((fieldId) => {
+        hiddenFields[fieldId] = new Set();
+      });
+
+      responses.forEach((response) => {
+        // Handling data fields(Hidden fields)
+        surveyHiddenFields?.forEach((fieldId) => {
+          const hiddenFieldValue = response.data[fieldId];
+          if (hiddenFieldValue) {
+            if (typeof hiddenFieldValue === "string") {
+              hiddenFields[fieldId].add(hiddenFieldValue);
+            }
+          }
+        });
+      });
+    }
+
+    // Convert Set to Array
+    const result = Object.fromEntries(
+      Object.entries(hiddenFields).map(([key, valueSet]) => [key, Array.from(valueSet)])
+    );
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
 };

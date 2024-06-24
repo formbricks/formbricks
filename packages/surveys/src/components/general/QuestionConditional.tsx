@@ -11,10 +11,9 @@ import { NPSQuestion } from "@/components/questions/NPSQuestion";
 import { OpenTextQuestion } from "@/components/questions/OpenTextQuestion";
 import { PictureSelectionQuestion } from "@/components/questions/PictureSelectionQuestion";
 import { RatingQuestion } from "@/components/questions/RatingQuestion";
-
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
+import { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -26,10 +25,12 @@ interface QuestionConditionalProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   languageCode: string;
+  prefilledQuestionValue?: TResponseDataValue;
+  skipPrefilled?: boolean;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   surveyId: string;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -42,14 +43,24 @@ export const QuestionConditional = ({
   isFirstQuestion,
   isLastQuestion,
   languageCode,
+  prefilledQuestionValue,
+  skipPrefilled,
   ttc,
   setTtc,
   surveyId,
   onFileUpload,
-  isInIframe,
+  autoFocusEnabled,
   currentQuestionId,
 }: QuestionConditionalProps) => {
-  return question.type === TSurveyQuestionType.OpenText ? (
+  if (!value && prefilledQuestionValue) {
+    if (skipPrefilled) {
+      onSubmit({ [question.id]: prefilledQuestionValue }, { [question.id]: 0 });
+    } else {
+      onChange({ [question.id]: prefilledQuestionValue });
+    }
+  }
+
+  return question.type === TSurveyQuestionTypeEnum.OpenText ? (
     <OpenTextQuestion
       key={question.id}
       question={question}
@@ -62,10 +73,10 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
+  ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
       key={question.id}
       question={question}
@@ -78,10 +89,10 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
+  ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
       key={question.id}
       question={question}
@@ -94,10 +105,10 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.NPS ? (
+  ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
     <NPSQuestion
       key={question.id}
       question={question}
@@ -110,10 +121,10 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.CTA ? (
+  ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
     <CTAQuestion
       key={question.id}
       question={question}
@@ -126,10 +137,10 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.Rating ? (
+  ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
     <RatingQuestion
       key={question.id}
       question={question}
@@ -142,10 +153,10 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.Consent ? (
+  ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
     <ConsentQuestion
       key={question.id}
       question={question}
@@ -158,10 +169,10 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.Date ? (
+  ) : question.type === TSurveyQuestionTypeEnum.Date ? (
     <DateQuestion
       key={question.id}
       question={question}
@@ -174,10 +185,10 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.PictureSelection ? (
+  ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
     <PictureSelectionQuestion
       key={question.id}
       question={question}
@@ -190,10 +201,10 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.FileUpload ? (
+  ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
     <FileUploadQuestion
       key={question.id}
       surveyId={surveyId}
@@ -208,10 +219,10 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.Cal ? (
+  ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
     <CalQuestion
       key={question.id}
       question={question}
@@ -223,11 +234,11 @@ export const QuestionConditional = ({
       isLastQuestion={isLastQuestion}
       languageCode={languageCode}
       ttc={ttc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       setTtc={setTtc}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.Matrix ? (
+  ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
     <MatrixQuestion
       question={question}
       value={typeof value === "object" && !Array.isArray(value) ? value : {}}
@@ -241,7 +252,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       currentQuestionId={currentQuestionId}
     />
-  ) : question.type === TSurveyQuestionType.Address ? (
+  ) : question.type === TSurveyQuestionTypeEnum.Address ? (
     <AddressQuestion
       question={question}
       value={Array.isArray(value) ? value : undefined}
@@ -253,7 +264,7 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
   ) : null;

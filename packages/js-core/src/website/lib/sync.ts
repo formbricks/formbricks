@@ -3,7 +3,6 @@ import { Logger } from "@formbricks/lib/logger";
 import { diffInDays } from "@formbricks/lib/utils/datetime";
 import { TJsWebsiteState, TJsWebsiteSyncParams } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys";
-
 import { getIsDebug } from "../../shared/utils";
 import { WebsiteConfig } from "./config";
 
@@ -98,16 +97,36 @@ export const filterPublicSurveys = (state: TJsWebsiteState): TJsWebsiteState => 
     return state;
   }
 
-  // filter surveys that meet the displayOption criteria
-  let filteredSurveys = surveys.filter((survey) => {
-    if (survey.displayOption === "respondMultiple") {
-      return true;
-    } else if (survey.displayOption === "displayOnce") {
-      return displays.filter((display) => display.surveyId === survey.id).length === 0;
-    } else if (survey.displayOption === "displayMultiple") {
-      return displays.filter((display) => display.surveyId === survey.id && display.responded).length === 0;
-    } else {
-      throw Error("Invalid displayOption");
+  // Function to filter surveys based on displayOption criteria
+  let filteredSurveys = surveys.filter((survey: TSurvey) => {
+    switch (survey.displayOption) {
+      case "respondMultiple":
+        return true;
+      case "displayOnce":
+        return displays.filter((display) => display.surveyId === survey.id).length === 0;
+      case "displayMultiple":
+        return (
+          displays.filter((display) => display.surveyId === survey.id).filter((display) => display.responded)
+            .length === 0
+        );
+
+      case "displaySome":
+        if (survey.displayLimit === null) {
+          return true;
+        }
+
+        // Check if any display has responded, if so, stop here
+        if (
+          displays.filter((display) => display.surveyId === survey.id).some((display) => display.responded)
+        ) {
+          return false;
+        }
+
+        // Otherwise, check if displays length is less than displayLimit
+        return displays.filter((display) => display.surveyId === survey.id).length < survey.displayLimit;
+
+      default:
+        throw Error("Invalid displayOption");
     }
   });
 

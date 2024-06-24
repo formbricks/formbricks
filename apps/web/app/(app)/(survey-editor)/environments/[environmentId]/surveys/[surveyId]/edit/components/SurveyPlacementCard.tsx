@@ -4,13 +4,11 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-
 import { TPlacement } from "@formbricks/types/common";
 import { TSurvey, TSurveyProductOverwrites } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
-
-import Placement from "./Placement";
+import { Placement } from "./Placement";
 
 interface SurveyPlacementCardProps {
   localSurvey: TSurvey;
@@ -18,11 +16,11 @@ interface SurveyPlacementCardProps {
   environmentId: string;
 }
 
-export default function SurveyPlacementCard({
+export const SurveyPlacementCard = ({
   localSurvey,
   setLocalSurvey,
   environmentId,
-}: SurveyPlacementCardProps) {
+}: SurveyPlacementCardProps) => {
   const [open, setOpen] = useState(false);
 
   const { productOverwrites } = localSurvey ?? {};
@@ -142,4 +140,4 @@ export default function SurveyPlacementCard({
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
-}
+};

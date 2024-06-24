@@ -5,19 +5,18 @@ import {
   mergeTagsAction,
   updateTagNameAction,
 } from "@/app/(app)/environments/[environmentId]/product/tags/actions";
-import MergeTagsCombobox from "@/app/(app)/environments/[environmentId]/product/tags/components/MergeTagsCombobox";
+import { MergeTagsCombobox } from "@/app/(app)/environments/[environmentId]/product/tags/components/MergeTagsCombobox";
 import { AlertCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TTag, TTagsCount } from "@formbricks/types/tags";
 import { Button } from "@formbricks/ui/Button";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { Input } from "@formbricks/ui/Input";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 
 interface IEditTagsWrapperProps {
   environment: TEnvironment;
@@ -143,7 +142,7 @@ const SingleTag: React.FC<{
   );
 };
 
-const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
+export const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
   const { environment, environmentTags, environmentTagsCount } = props;
   return (
     <div className="">
@@ -169,5 +168,3 @@ const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
     </div>
   );
 };
-
-export default EditTagsWrapper;

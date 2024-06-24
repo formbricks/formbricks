@@ -9,14 +9,14 @@ interface SubmitButtonProps {
   type?: "submit" | "button";
 }
 
-function SubmitButton({
+export const SubmitButton = ({
   buttonLabel,
   isLastQuestion,
   onClick = () => {},
   tabIndex = 1,
   focus = false,
   type = "submit",
-}: SubmitButtonProps) {
+}: SubmitButtonProps) => {
   const buttonRef = useCallback(
     (currentButton: HTMLButtonElement | null) => {
       if (currentButton && focus) {
@@ -30,6 +30,7 @@ function SubmitButton({
 
   return (
     <button
+      dir="auto"
       ref={buttonRef}
       type={type}
       tabIndex={tabIndex}
@@ -39,5 +40,4 @@ function SubmitButton({
       {buttonLabel || (isLastQuestion ? "Finish" : "Next")}
     </button>
   );
-}
-export default SubmitButton;
+};

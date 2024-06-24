@@ -2,21 +2,21 @@ import { revalidateTag } from "next/cache";
 
 interface RevalidateProps {
   userId?: string;
-  teamId?: string;
+  organizationId?: string;
 }
 
 export const membershipCache = {
   tag: {
-    byTeamId(teamId: string) {
-      return `teams-${teamId}-memberships`;
+    byOrganizationId(organizationId: string) {
+      return `organizations-${organizationId}-memberships`;
     },
     byUserId(userId: string) {
       return `users-${userId}-memberships`;
     },
   },
-  revalidate({ teamId, userId }: RevalidateProps): void {
-    if (teamId) {
-      revalidateTag(this.tag.byTeamId(teamId));
+  revalidate({ organizationId, userId }: RevalidateProps): void {
+    if (organizationId) {
+      revalidateTag(this.tag.byOrganizationId(organizationId));
     }
 
     if (userId) {

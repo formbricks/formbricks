@@ -1,19 +1,17 @@
 import { BackButton } from "@/components/buttons/BackButton";
-import SubmitButton from "@/components/buttons/SubmitButton";
-import Headline from "@/components/general/Headline";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { Headline } from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
-import Subheader from "@/components/general/Subheader";
+import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import DatePicker from "react-date-picker";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getMonthName, getOrdinalDate } from "@formbricks/lib/utils/datetime";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion } from "@formbricks/types/surveys";
-
 import "../../styles/date-picker.css";
 
 interface DateQuestionProps {
@@ -28,7 +26,7 @@ interface DateQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -210,9 +208,7 @@ export const DateQuestion = ({
                 monthPlaceholder="MM"
                 yearPlaceholder="YYYY"
                 format={question.format ?? "M-d-y"}
-                className={`dp-input-root rounded-custom wrapper-hide ${!datePickerOpen ? "" : "h-[46dvh] sm:h-[34dvh]"}
-          ${hideInvalid ? "hide-invalid" : ""}
-        `}
+                className={`dp-input-root rounded-custom wrapper-hide ${!datePickerOpen ? "" : "h-[46dvh] sm:h-[34dvh]"} ${hideInvalid ? "hide-invalid" : ""} `}
                 calendarClassName="calendar-root !bg-input-bg border border-border rounded-custom p-3 h-[46dvh] sm:h-[33dvh] overflow-auto"
                 clearIcon={null}
                 onCalendarOpen={() => {

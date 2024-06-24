@@ -1,13 +1,11 @@
 import { CheckCircle2Icon, HelpCircleIcon, PauseCircleIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-
 import { TSurveyClosedMessage } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-
 import footerLogo from "../lib/footerlogo.svg";
 
-const SurveyInactive = ({
+export const SurveyInactive = ({
   status,
   surveyClosedMessage,
 }: {
@@ -53,5 +51,3 @@ const SurveyInactive = ({
     </div>
   );
 };
-
-export default SurveyInactive;

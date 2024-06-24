@@ -6,7 +6,7 @@ import StepTwo from "./images/StepTwo.webp";
 export const metadata = {
   title: "Using Actions in Formbricks | Fine-tuning Session Moments",
   description:
-    "Dive deep into how actions in Formbricks help products and teams to engage active sessions at precise moments in their journey. Discover the power of actions, from coding to no-code setups, to refine public facing websites' targeting and generate richer, more detailed insights.",
+    "Dive deep into how actions in Formbricks help products and organizations to engage active sessions at precise moments in their journey. Discover the power of actions, from coding to no-code setups, to refine public facing websites' targeting and generate richer, more detailed insights.",
 };
 
 #### Website Surveys
@@ -57,26 +57,44 @@ Formbricks provides an intuitive No-Code interface for configuring actions, enab
      quality="100"
      className="max-w-full rounded-lg sm:max-w-3xl "
    />
-   Here are three types of No-Code actions you can set up:
 
-### **1. Page URL Action**
+Here are four types of No-Code actions you can set up:
 
-Triggers a survey when a specific URL page condition is met. Setup options include:
+### **1. Click Action**
 
-- **exactMatch**: Triggers the survey when the URL exactly matches the specified string.
-- **contains**: Triggers the survey when the URL contains a specified substring.
-- **startsWith**: Triggers the survey when the URL starts with a specified string.
-- **endsWith**: Triggers the survey when the URL ends with a specified string.
-- **notMatch**: Triggers the survey when the URL does not match a specified condition.
-- **notContains**: Triggers the survey when the URL does not contain a specified substring.
+Click Action is triggered when a user clicks on a specific element within your application. You can define the element's inner text or CSS selector to trigger the survey.
 
-### **2. innerText Action**
+- **Inner Text**: Checks if the innerText of a clicked HTML element, like a button label, matches a specific text. This action allows you to display a survey based on text interactions within your application.
 
-Activated when the innerText of a clicked HTML element, such as a button or link, matches specified text. This is useful for triggering surveys related to specific content interactions.
+- **CSS Selector**: Verifies if a clicked HTML element matches a provided CSS selector, such as a class, ID, or any other CSS selector used in your website. It enables survey triggers based on element interactions.
 
-### **3. CSS Selector Action**
+### **2. Page view Action**
 
-Triggers a survey when a clicked HTML element matches a specified CSS selector, such as a class, ID, or other CSS selector. This allows for precise control over survey triggers based on site structure and design.
+This action is triggered when a user visits a page within your application.
+
+### **3. Exit Intent Action**
+
+This action is triggered when a user is about to leave your application. It helps capture user feedback before they exit, providing valuable insights into user experiences and potential improvements.
+
+### **4. 50% Scroll Action**
+
+This action is triggered when a user scrolls through 50% of a page within your application. It helps capture user feedback at a specific point in their journey, enabling you to gather insights based on user interactions.
+
+This action is triggered when a user visits a specific page within your application. You can define the URL match conditions as follows:
+
+<Note>
+You can combine the url filters with any of the no-code actions to trigger the survey based on the URL match conditions.
+
+### **URL Match Conditions**
+
+- **exactMatch**: Triggers the action when the URL exactly matches the specified string.
+- **contains**: Activates when the URL contains the specified substring.
+- **startsWith**: Fires when the URL starts with the specified string.
+- **endsWith**: Executes when the URL ends with the specified string.
+- **notMatch**: Triggers when the URL does not match the specified condition.
+- **notContains**: Activates when the URL does not contain the specified substring.
+
+</Note>
 
 ## **Setting Up Code Actions**
 

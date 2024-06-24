@@ -1,20 +1,19 @@
 "use client";
 
-import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
+import { LinkSurveyWrapper } from "@/app/s/[surveyId]/components/LinkSurveyWrapper";
+import { SurveyLinkUsed } from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import { VerifyEmail } from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
-import { TResponse, TResponseUpdate } from "@formbricks/types/responses";
+import { TResponse, TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
-import { ClientLogo } from "@formbricks/ui/ClientLogo";
-import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 declare global {
@@ -38,9 +37,14 @@ interface LinkSurveyProps {
   responseCount?: number;
   verifiedEmail?: string;
   languageCode: string;
+  attributeClasses: TAttributeClass[];
+  isEmbed: boolean;
+  IMPRINT_URL?: string;
+  PRIVACY_URL?: string;
+  IS_FORMBRICKS_CLOUD: boolean;
 }
 
-export default function LinkSurvey({
+export const LinkSurvey = ({
   survey,
   product,
   userId,
@@ -51,10 +55,16 @@ export default function LinkSurvey({
   responseCount,
   verifiedEmail,
   languageCode,
-}: LinkSurveyProps) {
+  attributeClasses,
+  isEmbed,
+  IMPRINT_URL,
+  PRIVACY_URL,
+  IS_FORMBRICKS_CLOUD,
+}: LinkSurveyProps) => {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
+  const skipPrefilled = searchParams?.get("skipPrefilled") === "true";
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
   // const isMobile = searchParams?.get("mobile") === "true";
@@ -126,20 +136,17 @@ export default function LinkSurvey({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hiddenFieldsRecord = useMemo<Record<string, string | number | string[]> | null>(() => {
-    const fieldsRecord: Record<string, string | number | string[]> = {};
-    let fieldsSet = false;
+  const hiddenFieldsRecord = useMemo<TResponseHiddenFieldValue>(() => {
+    const fieldsRecord: TResponseHiddenFieldValue = {};
 
     survey.hiddenFields?.fieldIds?.forEach((field) => {
       const answer = searchParams?.get(field);
       if (answer) {
         fieldsRecord[field] = answer;
-        fieldsSet = true;
       }
     });
 
-    // Only return the record if at least one field was set.
-    return fieldsSet ? fieldsRecord : null;
+    return fieldsRecord;
   }, [searchParams, survey.hiddenFields?.fieldIds]);
 
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
@@ -171,6 +178,7 @@ export default function LinkSurvey({
           isErrorComponent={true}
           languageCode={languageCode}
           styling={product.styling}
+          attributeClasses={attributeClasses}
         />
       );
     }
@@ -181,6 +189,7 @@ export default function LinkSurvey({
         survey={survey}
         languageCode={languageCode}
         styling={product.styling}
+        attributeClasses={attributeClasses}
       />
     );
   }
@@ -206,93 +215,96 @@ export default function LinkSurvey({
   };
 
   return (
-    <div className="flex max-h-dvh min-h-dvh items-end justify-center overflow-clip md:items-center">
-      {!determineStyling().isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
-      <div className="w-full space-y-6 p-0 md:max-w-md ">
-        {isPreview && (
-          <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
-            <div />
-            Survey Preview 👀
-            <ResetProgressButton
-              onClick={() => setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)}
-            />
-          </div>
-        )}
-        <SurveyInline
-          survey={survey}
-          styling={determineStyling()}
-          languageCode={languageCode}
-          isBrandingEnabled={product.linkSurveyBranding}
-          getSetIsError={(f: (value: boolean) => void) => {
-            setIsError = f;
-          }}
-          getSetIsResponseSendingFinished={
-            !isPreview
-              ? (f: (value: boolean) => void) => {
-                  setIsResponseSendingFinished = f;
-                }
-              : undefined
-          }
-          onRetry={() => {
-            setIsError(false);
-            responseQueue.processQueue();
-          }}
-          onDisplay={async () => {
-            if (!isPreview) {
-              const api = new FormbricksAPI({
-                apiHost: webAppUrl,
-                environmentId: survey.environmentId,
-              });
-              const res = await api.client.display.create({
-                surveyId: survey.id,
-                userId,
-              });
-              if (!res.ok) {
-                throw new Error("Could not create display");
+    <LinkSurveyWrapper
+      product={product}
+      survey={survey}
+      isPreview={isPreview}
+      setQuestionId={setQuestionId}
+      determineStyling={determineStyling}
+      isEmbed={isEmbed}
+      webAppUrl={webAppUrl}
+      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+      IMPRINT_URL={IMPRINT_URL}
+      PRIVACY_URL={PRIVACY_URL}>
+      <SurveyInline
+        survey={survey}
+        styling={determineStyling()}
+        languageCode={languageCode}
+        isBrandingEnabled={product.linkSurveyBranding}
+        shouldResetQuestionId={false}
+        getSetIsError={(f: (value: boolean) => void) => {
+          setIsError = f;
+        }}
+        getSetIsResponseSendingFinished={
+          !isPreview
+            ? (f: (value: boolean) => void) => {
+                setIsResponseSendingFinished = f;
               }
-              const { id } = res.data;
-
-              surveyState.updateDisplayId(id);
-              responseQueue.updateSurveyState(surveyState);
-            }
-          }}
-          onResponse={(responseUpdate: TResponseUpdate) => {
-            !isPreview &&
-              responseQueue.add({
-                data: {
-                  ...responseUpdate.data,
-                  ...hiddenFieldsRecord,
-                  ...getVerifiedEmail,
-                },
-                ttc: responseUpdate.ttc,
-                finished: responseUpdate.finished,
-                language:
-                  languageCode === "default" && defaultLanguageCode ? defaultLanguageCode : languageCode,
-                meta: {
-                  url: window.location.href,
-                  source: sourceParam || "",
-                },
-              });
-          }}
-          onFileUpload={async (file: File, params: TUploadFileConfig) => {
+            : undefined
+        }
+        onRetry={() => {
+          setIsError(false);
+          responseQueue.processQueue();
+        }}
+        onDisplay={async () => {
+          if (!isPreview) {
             const api = new FormbricksAPI({
               apiHost: webAppUrl,
               environmentId: survey.environmentId,
             });
+            const res = await api.client.display.create({
+              surveyId: survey.id,
+            });
+            if (!res.ok) {
+              throw new Error("Could not create display");
+            }
+            const { id } = res.data;
 
-            const uploadedUrl = await api.client.storage.uploadFile(file, params);
-            return uploadedUrl;
-          }}
-          autoFocus={autoFocus}
-          prefillResponseData={prefillValue}
-          // onFinished={isMobile ? onFinishedMobile : () => {}}
-          responseCount={responseCount}
-          getSetQuestionId={(f: (value: string) => void) => {
-            setQuestionId = f;
-          }}
-          startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
-        />
-      </div>
-    </div>
+            surveyState.updateDisplayId(id);
+            responseQueue.updateSurveyState(surveyState);
+          }
+        }}
+        onResponse={(responseUpdate: TResponseUpdate) => {
+          !isPreview &&
+            responseQueue.add({
+              data: {
+                ...responseUpdate.data,
+                ...hiddenFieldsRecord,
+                ...getVerifiedEmail,
+              },
+              ttc: responseUpdate.ttc,
+              finished: responseUpdate.finished,
+              language:
+                responseUpdate.language === "default" && defaultLanguageCode
+                  ? defaultLanguageCode
+                  : responseUpdate.language,
+              meta: {
+                url: window.location.href,
+                source: sourceParam || "",
+              },
+              ...(Object.keys(hiddenFieldsRecord).length > 0 && { hiddenFields: hiddenFieldsRecord }),
+            });
+        }}
+        onFileUpload={async (file: File, params: TUploadFileConfig) => {
+          const api = new FormbricksAPI({
+            apiHost: webAppUrl,
+            environmentId: survey.environmentId,
+          });
+
+          const uploadedUrl = await api.client.storage.uploadFile(file, params);
+          return uploadedUrl;
+        }}
+        autoFocus={autoFocus}
+        prefillResponseData={prefillValue}
+        skipPrefilled={skipPrefilled}
+        responseCount={responseCount}
+        getSetQuestionId={(f: (value: string) => void) => {
+          setQuestionId = f;
+        }}
+        startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
+        fullSizeCards={isEmbed ? true : false}
+        hiddenFieldsRecord={hiddenFieldsRecord}
+      />
+    </LinkSurveyWrapper>
   );
-}
+};

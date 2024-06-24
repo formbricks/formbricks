@@ -1,30 +1,28 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
-import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getServerSession } from "next-auth";
-
 import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getUser } from "@formbricks/lib/user/service";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
-
-import EditAlerts from "./components/EditAlerts";
-import EditWeeklySummary from "./components/EditWeeklySummary";
-import IntegrationsTip from "./components/IntegrationsTip";
+import { EditAlerts } from "./components/EditAlerts";
+import { EditWeeklySummary } from "./components/EditWeeklySummary";
+import { IntegrationsTip } from "./components/IntegrationsTip";
 import type { Membership } from "./types";
 
-function setCompleteNotificationSettings(
+const setCompleteNotificationSettings = (
   notificationSettings: TUserNotificationSettings,
   memberships: Membership[]
-): TUserNotificationSettings {
+): TUserNotificationSettings => {
   const newNotificationSettings = {
     alert: {},
     weeklySummary: {},
-    unsubscribedTeamIds: notificationSettings.unsubscribedTeamIds || [],
+    unsubscribedOrganizationIds: notificationSettings.unsubscribedOrganizationIds || [],
   };
   for (const membership of memberships) {
-    for (const product of membership.team.products) {
+    for (const product of membership.organization.products) {
       // set default values for weekly summary
       newNotificationSettings.weeklySummary[product.id] =
         (notificationSettings.weeklySummary && notificationSettings.weeklySummary[product.id]) || false;
@@ -40,15 +38,15 @@ function setCompleteNotificationSettings(
     }
   }
   return newNotificationSettings;
-}
+};
 
-async function getMemberships(userId: string): Promise<Membership[]> {
+const getMemberships = async (userId: string): Promise<Membership[]> => {
   const memberships = await prisma.membership.findMany({
     where: {
       userId,
     },
     select: {
-      team: {
+      organization: {
         select: {
           id: true,
           name: true,
@@ -77,9 +75,9 @@ async function getMemberships(userId: string): Promise<Membership[]> {
     },
   });
   return memberships;
-}
+};
 
-export default async function ProfileSettingsPage({ params, searchParams }) {
+const Page = async ({ params, searchParams }) => {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Unauthorized");
@@ -120,4 +118,6 @@ export default async function ProfileSettingsPage({ params, searchParams }) {
       </SettingsCard>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

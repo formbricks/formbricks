@@ -1,4 +1,4 @@
-export function TagIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+export const TagIcon = (props: React.ComponentPropsWithoutRef<"svg">) => {
   return (
     <svg viewBox="0 0 20 20" aria-hidden="true" {...props}>
       <path
@@ -16,4 +16,4 @@ export function TagIcon(props: React.ComponentPropsWithoutRef<"svg">) {
       <circle cx="7" cy="7" r="1.5" fill="none" />
     </svg>
   );
-}
+};

@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-
 import { createDisplay } from "@formbricks/lib/display/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { ZDisplayCreateInput } from "@formbricks/types/displays";
@@ -12,11 +11,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(request: Request, context: Context): Promise<Response> {
+export const POST = async (request: Request, context: Context): Promise<Response> => {
   const jsonInput = await request.json();
   const inputValidation = ZDisplayCreateInput.safeParse({
     ...jsonInput,
@@ -49,4 +48,4 @@ export async function POST(request: Request, context: Context): Promise<Response
   await capturePosthogEnvironmentEvent(inputValidation.data.environmentId, "display created");
 
   return responses.successResponse(response, true);
-}
+};

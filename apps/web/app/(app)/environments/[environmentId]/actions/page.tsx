@@ -1,12 +1,14 @@
-import ActionClassesTable from "@/app/(app)/environments/[environmentId]/actions/components/ActionClassesTable";
-import ActionClassDataRow from "@/app/(app)/environments/[environmentId]/actions/components/ActionRowData";
-import ActionTableHeading from "@/app/(app)/environments/[environmentId]/actions/components/ActionTableHeading";
+import { ActionClassesTable } from "@/app/(app)/environments/[environmentId]/actions/components/ActionClassesTable";
+import { ActionClassDataRow } from "@/app/(app)/environments/[environmentId]/actions/components/ActionRowData";
+import { ActionTableHeading } from "@/app/(app)/environments/[environmentId]/actions/components/ActionTableHeading";
 import { AddActionModal } from "@/app/(app)/environments/[environmentId]/actions/components/AddActionModal";
 import { Metadata } from "next";
-
+import { notFound } from "next/navigation";
+import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
@@ -14,19 +16,25 @@ export const metadata: Metadata = {
   title: "Actions",
 };
 
-export default async function ActionClassesComponent({ params }) {
-  const [actionClasses, team] = await Promise.all([
+const Page = async ({ params }) => {
+  const [actionClasses, product, organization] = await Promise.all([
     getActionClasses(params.environmentId),
-    getTeamByEnvironmentId(params.environmentId),
+    getProductByEnvironmentId(params.environmentId),
+    getOrganizationByEnvironmentId(params.environmentId),
   ]);
 
-  if (!team) {
-    throw new Error("Team not found");
+  if (!organization) {
+    throw new Error("Organization not found");
+  }
+
+  const currentProductChannel = product?.config.channel ?? null;
+  if (currentProductChannel === "link") {
+    return notFound();
   }
 
   // On Formbricks Cloud only render the timeline if the user targeting feature is booked
   const isUserTargetingEnabled = IS_FORMBRICKS_CLOUD
-    ? team.billing.features.userTargeting.status === "active"
+    ? await getAdvancedTargetingPermission(organization)
     : true;
 
   const renderAddActionButton = () => (
@@ -39,7 +47,8 @@ export default async function ActionClassesComponent({ params }) {
       <ActionClassesTable
         environmentId={params.environmentId}
         actionClasses={actionClasses}
-        isUserTargetingEnabled={isUserTargetingEnabled}>
+        isUserTargetingEnabled={isUserTargetingEnabled}
+        currentProductChannel={currentProductChannel}>
         <ActionTableHeading />
         {actionClasses.map((actionClass) => (
           <ActionClassDataRow key={actionClass.id} actionClass={actionClass} />
@@ -47,4 +56,6 @@ export default async function ActionClassesComponent({ params }) {
       </ActionClassesTable>
     </PageContentWrapper>
   );
-}
+};
+
+export default Page;

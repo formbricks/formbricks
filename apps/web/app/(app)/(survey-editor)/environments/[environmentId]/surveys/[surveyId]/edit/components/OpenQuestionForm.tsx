@@ -1,17 +1,8 @@
 "use client";
 
-import {
-  HashIcon,
-  LinkIcon,
-  MailIcon,
-  MessageSquareTextIcon,
-  PhoneIcon,
-  PlusIcon,
-  TrashIcon,
-} from "lucide-react";
-import { useState } from "react";
-
+import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   TSurvey,
   TSurveyOpenTextQuestion,
@@ -39,6 +30,7 @@ interface OpenQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
+  attributeClasses: TAttributeClass[];
 }
 
 export const OpenQuestionForm = ({
@@ -49,8 +41,8 @@ export const OpenQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
+  attributeClasses,
 }: OpenQuestionFormProps): JSX.Element => {
-  const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
   const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
@@ -73,10 +65,12 @@ export const OpenQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
+        attributeClasses={attributeClasses}
+        label={"Question*"}
       />
 
       <div>
-        {showSubheader && (
+        {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
@@ -88,19 +82,13 @@ export const OpenQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
+                attributeClasses={attributeClasses}
+                label={"Description"}
               />
             </div>
-
-            <TrashIcon
-              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => {
-                setShowSubheader(false);
-                updateQuestion(questionIdx, { subheader: undefined });
-              }}
-            />
           </div>
         )}
-        {!showSubheader && (
+        {question.subheader === undefined && (
           <Button
             size="sm"
             variant="minimal"
@@ -110,7 +98,6 @@ export const OpenQuestionForm = ({
               updateQuestion(questionIdx, {
                 subheader: createI18nString("", surveyLanguageCodes),
               });
-              setShowSubheader(true);
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
@@ -131,6 +118,8 @@ export const OpenQuestionForm = ({
           updateQuestion={updateQuestion}
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
+          attributeClasses={attributeClasses}
+          label={"Placeholder"}
         />
       </div>
 
@@ -149,7 +138,7 @@ export const OpenQuestionForm = ({
   );
 };
 
-function getPlaceholderByInputType(inputType: TSurveyOpenTextQuestionInputType) {
+const getPlaceholderByInputType = (inputType: TSurveyOpenTextQuestionInputType) => {
   switch (inputType) {
     case "email":
       return "example@email.com";
@@ -162,4 +151,4 @@ function getPlaceholderByInputType(inputType: TSurveyOpenTextQuestionInputType) 
     default:
       return "Type your answer here...";
   }
-}
+};

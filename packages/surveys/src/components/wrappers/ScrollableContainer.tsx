@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "preact/hooks";
 
 interface ScrollableContainerProps {
@@ -48,9 +49,9 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
   }, [children]);
 
   return (
-    <div className="relative pt-6">
+    <div className="relative">
       {!isAtTop && (
-        <div className="from-survey-bg absolute left-0 right-2 top-6 z-10 h-4 bg-gradient-to-b to-transparent"></div>
+        <div className="from-survey-bg absolute left-0 right-2 top-0 z-10 h-4 bg-gradient-to-b to-transparent"></div>
       )}
       <div
         ref={containerRef}
@@ -58,10 +59,8 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
           scrollbarGutter: "stable both-edges",
           maxHeight: isSurveyPreview ? "40dvh" : "60dvh",
         }}
-        className={`overflow-${isOverflowHidden ? "hidden" : "auto"} px-4 pb-1`}
+        className={cn("overflow-auto px-4 pb-1", isOverflowHidden ? "no-scrollbar" : "bg-survey-bg")}
         onMouseEnter={() => toggleOverflow(false)}
-        onTouchStart={() => toggleOverflow(false)}
-        onTouchEnd={() => toggleOverflow(true)}
         onMouseLeave={() => toggleOverflow(true)}>
         {children}
       </div>

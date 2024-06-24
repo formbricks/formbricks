@@ -1,31 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
-import SingleResponseCard from "@formbricks/ui/SingleResponseCard";
+import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
+import { SingleResponseCard } from "@formbricks/ui/SingleResponseCard";
 
-export default function ResponseFeed({
+interface ResponseTimelineProps {
+  surveys: TSurvey[];
+  user: TUser;
+  responses: TResponse[];
+  environment: TEnvironment;
+  environmentTags: TTag[];
+  attributeClasses: TAttributeClass[];
+}
+
+export const ResponseFeed = ({
   responses,
   environment,
   surveys,
   user,
   environmentTags,
-}: {
-  responses: TResponse[];
-  environment: TEnvironment;
-  surveys: TSurvey[];
-  user: TUser;
-  environmentTags: TTag[];
-}) {
+  attributeClasses,
+}: ResponseTimelineProps) => {
   const [fetchedResponses, setFetchedResponses] = useState(responses);
 
   useEffect(() => {
@@ -57,12 +61,13 @@ export default function ResponseFeed({
             environment={environment}
             deleteResponse={deleteResponse}
             updateResponse={updateResponse}
+            attributeClasses={attributeClasses}
           />
         ))
       )}
     </>
   );
-}
+};
 
 const ResponseSurveyCard = ({
   response,
@@ -72,6 +77,7 @@ const ResponseSurveyCard = ({
   environment,
   deleteResponse,
   updateResponse,
+  attributeClasses,
 }: {
   response: TResponse;
   surveys: TSurvey[];
@@ -80,6 +86,7 @@ const ResponseSurveyCard = ({
   environment: TEnvironment;
   deleteResponse: (responseId: string) => void;
   updateResponse: (responseId: string, response: TResponse) => void;
+  attributeClasses: TAttributeClass[];
 }) => {
   const survey = surveys.find((survey) => {
     return survey.id === response.surveyId;
@@ -93,7 +100,7 @@ const ResponseSurveyCard = ({
       {survey && (
         <SingleResponseCard
           response={response}
-          survey={checkForRecallInHeadline(survey, "default")}
+          survey={replaceHeadlineRecall(survey, "default", attributeClasses)}
           user={user}
           pageType="people"
           environmentTags={environmentTags}

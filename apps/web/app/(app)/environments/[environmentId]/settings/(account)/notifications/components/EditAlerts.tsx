@@ -1,9 +1,7 @@
 import { HelpCircleIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
-
 import { TUser } from "@formbricks/types/user";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-
 import { Membership } from "../types";
 import { NotificationSwitch } from "./NotificationSwitch";
 
@@ -15,13 +13,13 @@ interface EditAlertsProps {
   autoDisableNotificationElementId: string;
 }
 
-export default function EditAlerts({
+export const EditAlerts = ({
   memberships,
   user,
   environmentId,
   autoDisableNotificationType,
   autoDisableNotificationElementId,
-}: EditAlertsProps) {
+}: EditAlertsProps) => {
   return (
     <>
       {memberships.map((membership) => (
@@ -30,15 +28,15 @@ export default function EditAlerts({
             <div className="col-span-3 flex items-center space-x-3">
               <UsersIcon className="h-6 w-7 text-slate-600" />
 
-              <p className="text-sm font-medium text-slate-800">{membership.team.name}</p>
+              <p className="text-sm font-medium text-slate-800">{membership.organization.name}</p>
             </div>
 
             <div className="col-span-3 flex items-center justify-end pr-2">
               <p className="pr-4 text-sm text-slate-600">Auto-subscribe to new surveys</p>
               <NotificationSwitch
-                surveyOrProductOrTeamId={membership.team.id}
+                surveyOrProductOrOrganizationId={membership.organization.id}
                 notificationSettings={user.notificationSettings!}
-                notificationType={"unsubscribedTeamIds"}
+                notificationType={"unsubscribedOrganizationIds"}
                 autoDisableNotificationType={autoDisableNotificationType}
                 autoDisableNotificationElementId={autoDisableNotificationElementId}
               />
@@ -60,11 +58,11 @@ export default function EditAlerts({
               </TooltipProvider>
             </div>
 
-            {membership.team.products.some((product) =>
+            {membership.organization.products.some((product) =>
               product.environments.some((environment) => environment.surveys.length > 0)
             ) ? (
               <div className="grid-cols-8 space-y-1 p-2">
-                {membership.team.products.map((product) => (
+                {membership.organization.products.map((product) => (
                   <div key={product.id}>
                     {product.environments.map((environment) => (
                       <div key={environment.id}>
@@ -78,7 +76,7 @@ export default function EditAlerts({
                             </div>
                             <div className="col-span-1 text-center">
                               <NotificationSwitch
-                                surveyOrProductOrTeamId={survey.id}
+                                surveyOrProductOrOrganizationId={survey.id}
                                 notificationSettings={user.notificationSettings!}
                                 notificationType={"alert"}
                                 autoDisableNotificationType={autoDisableNotificationType}
@@ -98,7 +96,7 @@ export default function EditAlerts({
               </div>
             )}
             <p className="pb-3 pl-4 text-xs text-slate-400">
-              Want to loop in team mates?{" "}
+              Want to loop in organization mates?{" "}
               <Link className="font-semibold" href={`/environments/${environmentId}/settings/members`}>
                 Invite them.
               </Link>
@@ -108,4 +106,4 @@ export default function EditAlerts({
       ))}
     </>
   );
-}
+};

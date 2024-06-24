@@ -1,26 +1,24 @@
 import { RefObject } from "react";
 import { toast } from "react-hot-toast";
-
-import { TSurveyQuestion } from "@formbricks/types/surveys";
-
+import { TSurveyRecallItem } from "@formbricks/types/surveys";
 import { Button } from "../../Button";
 import { Input } from "../../Input";
 
 interface FallbackInputProps {
-  filteredRecallQuestions: (TSurveyQuestion | undefined)[];
+  filteredRecallItems: (TSurveyRecallItem | undefined)[];
   fallbacks: { [type: string]: string };
   setFallbacks: (fallbacks: { [type: string]: string }) => void;
   fallbackInputRef: RefObject<HTMLInputElement>;
   addFallback: () => void;
 }
 
-export function FallbackInput({
-  filteredRecallQuestions,
+export const FallbackInput = ({
+  filteredRecallItems,
   fallbacks,
   setFallbacks,
   fallbackInputRef,
   addFallback,
-}: FallbackInputProps) {
+}: FallbackInputProps) => {
   const containsEmptyFallback = () => {
     return (
       Object.values(fallbacks)
@@ -31,16 +29,17 @@ export function FallbackInput({
   return (
     <div className="fixed z-30 mt-1 rounded-md border border-slate-300 bg-slate-50 p-3 text-xs">
       <p className="font-medium">Add a placeholder to show if the question gets skipped:</p>
-      {filteredRecallQuestions.map((recallQuestion) => {
-        if (!recallQuestion) return;
+      {filteredRecallItems.map((recallItem) => {
+        if (!recallItem) return;
         return (
-          <div className="mt-2 flex flex-col" key={recallQuestion.id}>
+          <div className="mt-2 flex flex-col" key={recallItem.id}>
             <div className="flex items-center">
               <Input
                 className="placeholder:text-md h-full bg-white"
                 ref={fallbackInputRef}
                 id="fallback"
-                value={fallbacks[recallQuestion.id]?.replaceAll("nbsp", " ")}
+                value={fallbacks[recallItem.id]?.replaceAll("nbsp", " ")}
+                placeholder={"Fallback for " + recallItem.label}
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
                     e.preventDefault();
@@ -53,7 +52,7 @@ export function FallbackInput({
                 }}
                 onChange={(e) => {
                   const newFallbacks = { ...fallbacks };
-                  newFallbacks[recallQuestion.id] = e.target.value;
+                  newFallbacks[recallItem.id] = e.target.value;
                   setFallbacks(newFallbacks);
                 }}
               />
@@ -75,4 +74,4 @@ export function FallbackInput({
       </div>
     </div>
   );
-}
+};

@@ -1,15 +1,13 @@
 "use client";
 
 import { UsersIcon } from "lucide-react";
-
-import SegmentSettings from "@formbricks/ee/advancedTargeting/components/SegmentSettings";
+import { SegmentSettings } from "@formbricks/ee/advanced-targeting/components/segment-settings";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
-
-import BasicSegmentSettings from "./BasicSegmentSettings";
-import SegmentActivityTab from "./SegmentActivityTab";
+import { BasicSegmentSettings } from "./BasicSegmentSettings";
+import { SegmentActivityTab } from "./SegmentActivityTab";
 
 interface EditSegmentModalProps {
   environmentId: string;
@@ -23,7 +21,7 @@ interface EditSegmentModalProps {
   isFormbricksCloud: boolean;
 }
 
-export default function EditSegmentModal({
+export const EditSegmentModal = ({
   environmentId,
   open,
   setOpen,
@@ -33,7 +31,7 @@ export default function EditSegmentModal({
   segments,
   isAdvancedTargetingAllowed,
   isFormbricksCloud,
-}: EditSegmentModalProps) {
+}: EditSegmentModalProps) => {
   const SettingsTab = () => {
     if (isAdvancedTargetingAllowed) {
       return (
@@ -83,4 +81,4 @@ export default function EditSegmentModal({
       />
     </>
   );
-}
+};

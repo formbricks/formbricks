@@ -1,21 +1,20 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
-
 import { getPerson } from "@formbricks/lib/person/service";
 import { updateResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponseUpdateInput } from "@formbricks/types/responses";
 
-export async function OPTIONS(): Promise<Response> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function PUT(
+export const PUT = async (
   request: Request,
   { params }: { params: { responseId: string } }
-): Promise<Response> {
+): Promise<Response> => {
   const { responseId } = params;
 
   if (!responseId) {
@@ -92,4 +91,4 @@ export async function PUT(
     });
   }
   return responses.successResponse({}, true);
-}
+};

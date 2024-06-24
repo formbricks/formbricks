@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import { Button } from "@formbricks/ui/Button";
 import { Confetti } from "@formbricks/ui/Confetti";
 
@@ -9,7 +8,7 @@ interface ConfirmationPageProps {
   environmentId: string;
 }
 
-export default function ConfirmationPage({ environmentId }: ConfirmationPageProps) {
+export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
   const [showConfetti, setShowConfetti] = useState(false);
   useEffect(() => {
     setShowConfetti(true);
@@ -34,4 +33,4 @@ export default function ConfirmationPage({ environmentId }: ConfirmationPageProp
       </div>
     </div>
   );
-}
+};

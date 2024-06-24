@@ -3,9 +3,9 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-
-import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
+import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { cn } from "@formbricks/lib/cn";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { FileInput } from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
@@ -20,9 +20,10 @@ interface EditWelcomeCardProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
+  attributeClasses: TAttributeClass[];
 }
 
-export default function EditWelcomeCard({
+export const EditWelcomeCard = ({
   localSurvey,
   setLocalSurvey,
   setActiveQuestionId,
@@ -30,7 +31,8 @@ export default function EditWelcomeCard({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: EditWelcomeCardProps) {
+  attributeClasses,
+}: EditWelcomeCardProps) => {
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
   const environmentId = path?.split("/environments/")[1]?.split("/")[0];
@@ -59,7 +61,7 @@ export default function EditWelcomeCard({
   return (
     <div
       className={cn(
-        open ? "scale-100 shadow-lg " : "scale-97 shadow-md",
+        open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
         "group flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
       )}>
       <div
@@ -123,13 +125,14 @@ export default function EditWelcomeCard({
               <QuestionFormInput
                 id="headline"
                 value={localSurvey.welcomeCard.headline}
-                label="Headline"
+                label="Note*"
                 localSurvey={localSurvey}
                 questionIdx={-1}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
+                attributeClasses={attributeClasses}
               />
             </div>
             <div className="mt-3">
@@ -164,6 +167,8 @@ export default function EditWelcomeCard({
                     updateSurvey={updateSurvey}
                     selectedLanguageCode={selectedLanguageCode}
                     setSelectedLanguageCode={setSelectedLanguageCode}
+                    attributeClasses={attributeClasses}
+                    label={`"Next" Button Label`}
                   />
                 </div>
               </div>
@@ -211,4 +216,4 @@ export default function EditWelcomeCard({
       </Collapsible.Root>
     </div>
   );
-}
+};

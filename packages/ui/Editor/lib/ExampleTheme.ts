@@ -1,4 +1,6 @@
-const exampleTheme = {
+export const exampleTheme = {
+  rtl: "fb-editor-rtl",
+  ltr: "fb-editor-ltr",
   placeholder: "fb-editor-placeholder",
   paragraph: "fb-editor-paragraph",
   heading: {
@@ -20,5 +22,3 @@ const exampleTheme = {
     italic: "fb-editor-text-italic",
   },
 };
-
-export default exampleTheme;

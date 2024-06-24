@@ -1,27 +1,22 @@
-import Button from "@/components/buttons/SubmitButton";
-import Headline from "@/components/general/Headline";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { Headline } from "@/components/general/Headline";
 import { LoadingSpinner } from "@/components/general/LoadingSpinner";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
-import RedirectCountDown from "@/components/general/RedirectCountdown";
-import Subheader from "@/components/general/Subheader";
+import { RedirectCountDown } from "@/components/general/RedirectCountdown";
+import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TI18nString } from "@formbricks/types/surveys";
-
 interface ThankYouCardProps {
-  headline?: TI18nString;
-  subheader?: TI18nString;
+  headline?: string;
+  subheader?: string;
   redirectUrl: string | null;
   isRedirectDisabled: boolean;
-  languageCode: string;
-  buttonLabel?: TI18nString;
+  buttonLabel?: string;
   buttonLink?: string;
   imageUrl?: string;
   videoUrl?: string;
-  replaceRecallInfo: (text: string) => string;
   isResponseSendingFinished: boolean;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
 }
 
 export const ThankYouCard = ({
@@ -29,14 +24,12 @@ export const ThankYouCard = ({
   subheader,
   redirectUrl,
   isRedirectDisabled,
-  languageCode,
   buttonLabel,
   buttonLink,
   imageUrl,
   videoUrl,
-  replaceRecallInfo,
   isResponseSendingFinished,
-  isInIframe,
+  autoFocusEnabled,
 }: ThankYouCardProps) => {
   const media = imageUrl || videoUrl ? <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} /> : null;
   const checkmark = (
@@ -64,28 +57,20 @@ export const ThankYouCard = ({
         {isResponseSendingFinished ? (
           <>
             {media || checkmark}
-            <Headline
-              alignTextCenter={true}
-              headline={replaceRecallInfo(getLocalizedValue(headline, languageCode))}
-              questionId="thankYouCard"
-            />
-            <Subheader
-              subheader={replaceRecallInfo(getLocalizedValue(subheader, languageCode))}
-              questionId="thankYouCard"
-            />
+            <Headline alignTextCenter={true} headline={headline} questionId="thankYouCard" />
+            <Subheader subheader={subheader} questionId="thankYouCard" />
             <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
             {buttonLabel && (
               <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
-                <Button
-                  buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
+                <SubmitButton
+                  buttonLabel={buttonLabel}
                   isLastQuestion={false}
-                  focus={!isInIframe}
+                  focus={autoFocusEnabled}
                   onClick={() => {
                     if (!buttonLink) return;
                     window.location.replace(buttonLink);
                   }}
                 />
-                <p className="text-subheading hidden text-xs md:flex">Press Enter ↵</p>
               </div>
             )}
           </>

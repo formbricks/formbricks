@@ -7,15 +7,15 @@ import { useInView } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
-function AnchorIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+const AnchorIcon = (props: React.ComponentPropsWithoutRef<"svg">) => {
   return (
     <svg viewBox="0 0 20 20" fill="none" strokeLinecap="round" aria-hidden="true" {...props}>
       <path d="m6.5 11.5-.964-.964a3.535 3.535 0 1 1 5-5l.964.964m2 2 .964.964a3.536 3.536 0 0 1-5 5L8.5 13.5m0-5 3 3" />
     </svg>
   );
-}
+};
 
-function Eyebrow({ tag, label }: { tag?: string; label?: string }) {
+const Eyebrow = ({ tag, label }: { tag?: string; label?: string }) => {
   if (!tag && !label) {
     return null;
   }
@@ -27,9 +27,9 @@ function Eyebrow({ tag, label }: { tag?: string; label?: string }) {
       {label && <span className="font-mono text-xs text-zinc-400">{label}</span>}
     </div>
   );
-}
+};
 
-function Anchor({ id, inView, children }: { id: string; inView: boolean; children: React.ReactNode }) {
+const Anchor = ({ id, inView, children }: { id: string; inView: boolean; children: React.ReactNode }) => {
   return (
     <Link href={`#${id}`} className="group text-inherit no-underline hover:text-inherit">
       {inView && (
@@ -42,9 +42,9 @@ function Anchor({ id, inView, children }: { id: string; inView: boolean; childre
       {children}
     </Link>
   );
-}
+};
 
-export function Heading<Level extends 2 | 3>({
+export const Heading = <Level extends 2 | 3 | 4>({
   children,
   tag,
   label,
@@ -57,13 +57,13 @@ export function Heading<Level extends 2 | 3>({
   label?: string;
   level?: Level;
   anchor?: boolean;
-}) {
+}) => {
   level = level ?? (2 as Level);
-  let Component = `h${level}` as "h2" | "h3";
-  let ref = useRef<HTMLHeadingElement>(null);
-  let registerHeading = useSectionStore((s) => s.registerHeading);
+  const Component: "h2" | "h3" | "h4" = `h${level}`;
+  const ref = useRef<HTMLHeadingElement>(null);
+  const registerHeading = useSectionStore((s) => s.registerHeading);
 
-  let inView = useInView(ref, {
+  const inView = useInView(ref, {
     margin: `${remToPx(-3.5)}px 0px 0px 0px`,
     amount: "all",
   });
@@ -71,8 +71,12 @@ export function Heading<Level extends 2 | 3>({
   useEffect(() => {
     if (level === 2) {
       registerHeading({ id: props.id, ref, offsetRem: tag || label ? 8 : 6 });
+    } else if (level === 3) {
+      registerHeading({ id: props.id, ref, offsetRem: tag || label ? 7 : 5 });
+    } else if (level === 4) {
+      registerHeading({ id: props.id, ref, offsetRem: tag || label ? 6 : 4 });
     }
-  });
+  }, [label, level, props.id, registerHeading, tag]);
 
   return (
     <>
@@ -88,4 +92,4 @@ export function Heading<Level extends 2 | 3>({
       </Component>
     </>
   );
-}
+};

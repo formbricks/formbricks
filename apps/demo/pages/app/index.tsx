@@ -1,15 +1,13 @@
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-
 import formbricks from "@formbricks/js/app";
-
 import { SurveySwitch } from "../../components/SurveySwitch";
 import fbsetup from "../../public/fb-setup.png";
 
 declare const window: any;
 
-export default function AppPage({}) {
+const AppPage = ({}) => {
   const [darkMode, setDarkMode] = useState(false);
   const router = useRouter();
 
@@ -36,7 +34,11 @@ export default function AppPage({}) {
 
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
       const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
-      const userInitAttributes = { language: "de", "Init Attribute 1": "eight", "Init Attribute 2": "two" };
+      const userInitAttributes = {
+        language: "de",
+        "Init Attribute 1": "eight",
+        "Init Attribute 2": "two",
+      };
 
       formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
@@ -55,7 +57,7 @@ export default function AppPage({}) {
         router.events.off("routeChangeComplete", handleRouteChange);
       };
     }
-  });
+  }, []);
 
   return (
     <div className="h-screen bg-white px-12 py-6 dark:bg-slate-800">
@@ -138,7 +140,7 @@ export default function AppPage({}) {
 
           <div className="p-6">
             <div>
-              <button className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
+              <button className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 No-Code Action
               </button>
             </div>
@@ -167,7 +169,7 @@ export default function AppPage({}) {
                 onClick={() => {
                   formbricks.setAttribute("Plan", "Free");
                 }}
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Plan to &apos;Free&apos;
               </button>
             </div>
@@ -190,7 +192,7 @@ export default function AppPage({}) {
                 onClick={() => {
                   formbricks.setAttribute("Plan", "Paid");
                 }}
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Plan to &apos;Paid&apos;
               </button>
             </div>
@@ -213,7 +215,7 @@ export default function AppPage({}) {
                 onClick={() => {
                   formbricks.setEmail("test@web.com");
                 }}
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Email
               </button>
             </div>
@@ -234,4 +236,6 @@ export default function AppPage({}) {
       </div>
     </div>
   );
-}
+};
+
+export default AppPage;

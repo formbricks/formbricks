@@ -1,12 +1,11 @@
 import { responses } from "@/app/lib/api/response";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SLACK_AUTH_URL, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   const environmentId = req.headers.get("environmentId");
   const session = await getServerSession(authOptions);
 
@@ -28,4 +27,4 @@ export async function GET(req: NextRequest) {
   if (!SLACK_AUTH_URL) return responses.internalServerErrorResponse("Slack auth url is missing");
 
   return responses.successResponse({ authUrl: `${SLACK_AUTH_URL}&state=${environmentId}` });
-}
+};

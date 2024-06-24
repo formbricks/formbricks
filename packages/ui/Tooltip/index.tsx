@@ -3,7 +3,6 @@
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as React from "react";
 import { ReactNode } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 
 const TooltipProvider: React.ComponentType<TooltipPrimitive.TooltipProviderProps> = TooltipPrimitive.Provider;
@@ -39,7 +38,7 @@ interface TooltipRendererProps {
   children: ReactNode;
   className?: string;
 }
-export function TooltipRenderer(props: TooltipRendererProps) {
+export const TooltipRenderer = (props: TooltipRendererProps) => {
   const { children, shouldRender, tooltipContent, className } = props;
   if (shouldRender) {
     return (
@@ -53,4 +52,4 @@ export function TooltipRenderer(props: TooltipRendererProps) {
   }
 
   return <>{children}</>;
-}
+};

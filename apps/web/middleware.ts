@@ -7,8 +7,8 @@ import {
 } from "@/app/middleware/bucket";
 import {
   clientSideApiRoute,
+  isAuthProtectedRoute,
   isSyncWithUserIdentificationEndpoint,
-  isWebAppRoute,
   loginRoute,
   shareUrlRoute,
   signupRoute,
@@ -16,13 +16,14 @@ import {
 import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
 import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 
-export async function middleware(request: NextRequest) {
+export const middleware = async (request: NextRequest) => {
+  // issue with next auth types & Next 15; let's review when new fixes are available
+  // @ts-expect-error
   const token = await getToken({ req: request });
 
-  if (isWebAppRoute(request.nextUrl.pathname) && !token) {
+  if (isAuthProtectedRoute(request.nextUrl.pathname) && !token) {
     const loginUrl = `${WEBAPP_URL}/auth/login?callbackUrl=${encodeURIComponent(WEBAPP_URL + request.nextUrl.pathname + request.nextUrl.search)}`;
     return NextResponse.redirect(loginUrl);
   }
@@ -64,7 +65,7 @@ export async function middleware(request: NextRequest) {
     }
   }
   return NextResponse.next();
-}
+};
 
 export const config = {
   matcher: [
@@ -75,6 +76,7 @@ export const config = {
     "/api/v1/client/storage",
     "/share/(.*)/:path",
     "/environments/:path*",
+    "/setup/organization/:path*",
     "/api/auth/signout",
     "/auth/login",
     "/api/packages/:path*",

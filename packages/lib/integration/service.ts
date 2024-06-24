@@ -1,22 +1,19 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationInput, ZIntegrationType } from "@formbricks/types/integration";
-
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { integrationCache } from "./cache";
 
-export async function createOrUpdateIntegration(
+export const createOrUpdateIntegration = async (
   environmentId: string,
   integrationData: TIntegrationInput
-): Promise<TIntegration> {
+): Promise<TIntegration> => {
   validateInputs([environmentId, ZId]);
 
   try {
@@ -49,7 +46,7 @@ export async function createOrUpdateIntegration(
     }
     throw error;
   }
-}
+};
 
 export const getIntegrations = (environmentId: string, page?: number): Promise<TIntegration[]> =>
   cache(

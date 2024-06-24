@@ -3,7 +3,6 @@
 import { CreateNewActionTab } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/CreateNewActionTab";
 import { MousePointerClickIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
-
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
@@ -36,7 +35,7 @@ export const AddActionModal = ({ environmentId, actionClasses }: AddActionModalP
         EndIcon={PlusIcon}>
         Add Action
       </Button>
-      <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false}>
+      <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false} restrictOverflow>
         <div className="flex h-full flex-col rounded-lg">
           <div className="rounded-t-lg bg-slate-100">
             <div className="flex w-full items-center justify-between p-6">

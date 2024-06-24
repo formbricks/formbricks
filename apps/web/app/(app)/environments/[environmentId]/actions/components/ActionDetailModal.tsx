@@ -1,11 +1,10 @@
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
-
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { TProductConfigChannel } from "@formbricks/types/product";
 import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
-
-import EventActivityTab from "./ActionActivityTab";
-import ActionSettingsTab from "./ActionSettingsTab";
+import { EventActivityTab } from "./ActionActivityTab";
+import { ActionSettingsTab } from "./ActionSettingsTab";
 
 interface ActionDetailModalProps {
   environmentId: string;
@@ -15,9 +14,10 @@ interface ActionDetailModalProps {
   actionClasses: TActionClass[];
   membershipRole?: TMembershipRole;
   isUserTargetingEnabled: boolean;
+  currentProductChannel: TProductConfigChannel;
 }
 
-export default function ActionDetailModal({
+export const ActionDetailModal = ({
   environmentId,
   open,
   setOpen,
@@ -25,7 +25,8 @@ export default function ActionDetailModal({
   actionClasses,
   membershipRole,
   isUserTargetingEnabled,
-}: ActionDetailModalProps) {
+  currentProductChannel,
+}: ActionDetailModalProps) => {
   const tabs = [
     {
       title: "Activity",
@@ -34,6 +35,7 @@ export default function ActionDetailModal({
           actionClass={actionClass}
           environmentId={environmentId}
           isUserTargetingEnabled={isUserTargetingEnabled}
+          currentProductChannel={currentProductChannel}
         />
       ),
     },
@@ -71,4 +73,4 @@ export default function ActionDetailModal({
       />
     </>
   );
-}
+};
