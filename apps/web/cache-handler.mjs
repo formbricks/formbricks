@@ -1,7 +1,12 @@
 import { CacheHandler } from "@neshca/cache-handler";
 import createLruHandler from "@neshca/cache-handler/local-lru";
-import createRedisHandler from "@neshca/cache-handler/redis-strings";
+import createRedisHandler from "@neshca/cache-handler/redis-stack";
 import { createClient } from "redis";
+
+// Function to create a timeout promise
+const createTimeoutPromise = (ms, rejectReason) => {
+  return new Promise((_, reject) => setTimeout(() => reject(new Error(rejectReason)), ms));
+};
 
 CacheHandler.onCreation(async () => {
   let client;
@@ -21,10 +26,9 @@ CacheHandler.onCreation(async () => {
 
     if (client) {
       try {
-        // Wait for the client to connect.
-        // Caveat: This will block the server from starting until the client is connected.
-        // And there is no timeout. Make your own timeout if needed.
-        await client.connect();
+        // Wait for the client to connect with a timeout of 5000ms.
+        const timeoutPromise = createTimeoutPromise(5000, "Redis connection timed out"); // 5000ms timeout
+        await Promise.race([connectPromise, timeoutPromise]);
       } catch (error) {
         console.warn("Failed to connect Redis client:", error);
 
@@ -49,10 +53,8 @@ CacheHandler.onCreation(async () => {
     // Create the `redis-stack` Handler if the client is available and connected.
     handler = await createRedisHandler({
       client,
-      keyPrefix: "JSON:",
+      keyPrefix: "formbricks:",
       timeoutMs: 1000,
-      keyExpirationStrategy: "EXAT",
-      sharedTagsKey: "__sharedTags__",
     });
   } else {
     // Fallback to LRU handler if Redis client is not available.
