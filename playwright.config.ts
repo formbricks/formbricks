@@ -1,7 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// import os from "os";
-
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -20,7 +18,6 @@ export default defineConfig({
   /* Timeout for each test */
   timeout: 120000,
   /* Opt out of parallel tests on CI. */
-  // workers: os.cpus().length,
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
@@ -39,7 +36,6 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
-      testMatch: "**/*.spec.ts",
     },
 
     // {
