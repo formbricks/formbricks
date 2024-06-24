@@ -20,7 +20,6 @@ const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
 export const trackAction = async (name: string, alias?: string): Promise<Result<void, NetworkError>> => {
   const aliasName = alias || name;
   const { userId } = appConfig.get();
-
   const input: TJsActionInput = {
     environmentId: appConfig.get().environmentId,
     userId,
@@ -39,6 +38,7 @@ export const trackAction = async (name: string, alias?: string): Promise<Result<
       ...input,
       userId,
     });
+    logger.debug(aliasName);
 
     if (!res.ok) {
       return err({

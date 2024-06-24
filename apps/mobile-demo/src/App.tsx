@@ -8,13 +8,9 @@ LogBox.ignoreAllLogs();
 export default function App() {
   const [text, setText] = useState("Formbricks React Native SDK Demo");
   const config = {
-    environmentId: "clvxmo2hx001iobl5xaqvhi0q",
+    environmentId: "clxslarzk000l3evo1z1iv0s0",
     apiHost: "http://localhost:3000",
-    debug: true,
     userId: "111",
-    attributes: {
-      userId: "111",
-    },
   };
 
   return (

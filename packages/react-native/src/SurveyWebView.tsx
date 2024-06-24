@@ -7,7 +7,7 @@ import { Logger } from "@formbricks/lib/logger";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { RNAppConfig } from "@formbricks/lib/sdk/config";
 import { sync } from "@formbricks/lib/sdk/sync";
-import SurveyState from "@formbricks/lib/surveyState";
+import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
 import { SurveyInlineProps } from "@formbricks/types/formbricksSurveys";
 import { ZRNWebViewOnMessageData } from "@formbricks/types/react-native";
@@ -124,8 +124,8 @@ export const SurveyWebView = ({ survey, ...restProps }: SurveyWebViewProps) => {
   return (
     <Modal
       animationType="slide"
-      transparent={true}
       visible={showSurvey && !isSurveyRunning}
+      style={{ backgroundColor: "green" }}
       onRequestClose={() => {
         setShowSurvey(false);
       }}
@@ -140,7 +140,7 @@ export const SurveyWebView = ({ survey, ...restProps }: SurveyWebViewProps) => {
             languageCode,
           }),
         }}
-        style={{ backgroundColor: "transparent" }}
+        style={{ backgroundColor: "red" }}
         contentMode="mobile"
         onShouldStartLoadWithRequest={(event) => {
           // prevent webview from redirecting if users taps on formbricks link.
@@ -207,7 +207,7 @@ const renderHtml = (options: Partial<SurveyInlineProps>) => {
       <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body scroll="no" style="overflow: hidden">
-        <div  id="formbricks-react-native" />
+        <div  id="formbricks-react-native" style="background: red" />
     </body>
     <script type="text/javascript">
     const consoleLog = (type, log) => window.ReactNativeWebView.postMessage(JSON.stringify({'type': 'Console', 'data': {'type': type, 'log': log}}));

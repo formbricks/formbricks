@@ -16,6 +16,6 @@ export const init = async (initConfig: TJsAppConfigInput) => {
 };
 
 export const track = async (name: string, properties: any = {}): Promise<void> => {
-  queue.add<any>(true, "mobile", trackAction, name, properties);
+  queue.add<any>(true, "app", trackAction, name, properties);
   await queue.wait();
 };
