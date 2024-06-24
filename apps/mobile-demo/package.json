@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@formbricks/react-native": "workspace:*",
+    "@formbricks/js": "workspace:*",
     "expo": "~50.0.3",
     "expo-status-bar": "~1.11.1",
     "react": "18.2.0",

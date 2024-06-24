@@ -1,14 +1,13 @@
 import { z } from "zod";
-
-import { ZJsState } from "./js";
-import { ZPersonAttributes } from "./people";
+import { ZAttributes } from "./attributes";
+import { ZJsAppState } from "./js";
 import { ZResponseUpdate } from "./responses";
 
 export const ZRNConfig = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
-  userId: z.string(),
-  state: ZJsState,
+  userId: z.string().optional(),
+  state: ZJsAppState,
   expiresAt: z.date(),
 });
 
@@ -19,8 +18,8 @@ export const ZRNConfigInput = z.object({
   apiHost: z.string(),
   debug: z.boolean().optional(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
-  userId: z.string(),
-  attributes: ZPersonAttributes.optional(),
+  userId: z.string().optional(),
+  attributes: ZAttributes.optional(),
 });
 
 export type TRNConfigInput = z.infer<typeof ZRNConfigInput>;
@@ -28,8 +27,9 @@ export type TRNConfigInput = z.infer<typeof ZRNConfigInput>;
 export const ZRNConfigUpdateInput = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
-  userId: z.string(),
-  state: ZJsState,
+  userId: z.string().optional(),
+  state: ZJsAppState,
+  expiresAt: z.date(),
 });
 
 export type TRNConfigUpdateInput = z.infer<typeof ZRNConfigUpdateInput>;
@@ -38,7 +38,7 @@ export type TRNConfigUpdateInput = z.infer<typeof ZRNConfigUpdateInput>;
 export const ZRNSyncParams = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
-  userId: z.string(),
+  userId: z.string().optional(),
 });
 
 export type TRNSyncParams = z.infer<typeof ZRNSyncParams>;

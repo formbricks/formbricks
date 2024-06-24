@@ -1,33 +1,23 @@
-import { ErrorHandler, err, okVoid } from "@formbricks/lib/errors";
+import { ErrorHandler, NotInitializedError, err, okVoid } from "@formbricks/lib/errors";
 import type { MissingFieldError, MissingPersonError, NetworkError, Result } from "@formbricks/lib/errors";
 import { isInitialized, setIsInitialize } from "@formbricks/lib/initializationState";
 import { Logger } from "@formbricks/lib/logger";
-import { TPersonAttributes } from "@formbricks/types/people";
-import type { TRNConfig, TRNConfigInput } from "@formbricks/types/react-native";
-
-import { Config } from "./config";
-import { updatePersonAttributes } from "./person";
-import { sync } from "./sync";
+import { updateAttributes } from "@formbricks/lib/sdk/attributes";
+import { RNAppConfig } from "@formbricks/lib/sdk/config";
+import { sync } from "@formbricks/lib/sdk/sync";
+import { TAttributes } from "@formbricks/types/attributes";
+import { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
 
 const logger = Logger.getInstance();
-const config = Config.getInstance();
-
-const setDebugLevel = (c: TRNConfigInput): void => {
-  if (c.debug) {
-    logger.debug(`Setting log level to debug`);
-    logger.configure({ logLevel: "debug" });
-  }
-};
+const appConfig = RNAppConfig.getInstance();
 
 export const initialize = async (
-  c: TRNConfigInput
+  c: TJsAppConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");
     return okVoid();
   }
-
-  setDebugLevel(c);
 
   ErrorHandler.getInstance().printStatus();
 
@@ -52,9 +42,9 @@ export const initialize = async (
 
   // todo: update attributes
   // if userId and attributes are available, set them in backend
-  let updatedAttributes: TPersonAttributes | null = null;
-  if (c.attributes) {
-    const res = await updatePersonAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
+  let updatedAttributes: TAttributes | null = null;
+  if (c.userId && c.attributes) {
+    const res = await updateAttributes(c.apiHost, c.environmentId, c.userId, c.attributes, appConfig);
 
     if (res.ok !== true) {
       return err(res.error);
@@ -62,9 +52,9 @@ export const initialize = async (
     updatedAttributes = res.value;
   }
 
-  let existingConfig: TRNConfig | undefined;
+  let existingConfig: TJSAppConfig | undefined;
   try {
-    existingConfig = config.get();
+    existingConfig = appConfig.get();
   } catch (e) {
     logger.debug("No existing configuration found.");
   }
@@ -87,11 +77,12 @@ export const initialize = async (
           environmentId: c.environmentId,
           userId: c.userId,
         },
-        true
+        true,
+        appConfig
       );
     } else {
       logger.debug("Configuration not expired. Extending expiration.");
-      config.update(existingConfig);
+      appConfig.update(existingConfig);
     }
   } else {
     logger.debug("No valid configuration found or it has been expired. Creating new config.");
@@ -103,7 +94,8 @@ export const initialize = async (
         environmentId: c.environmentId,
         userId: c.userId,
       },
-      true
+      true,
+      appConfig
     );
 
     // and track the new session event
@@ -113,14 +105,15 @@ export const initialize = async (
   // todo: update attributes
   // update attributes in config
   if (updatedAttributes && Object.keys(updatedAttributes).length > 0) {
-    config.update({
-      environmentId: config.get().environmentId,
-      apiHost: config.get().apiHost,
-      userId: config.get().userId,
+    appConfig.update({
+      environmentId: appConfig.get().environmentId,
+      apiHost: appConfig.get().apiHost,
+      userId: appConfig.get().userId,
       state: {
-        ...config.get().state,
-        attributes: { ...config.get().state.attributes, ...c.attributes },
+        ...appConfig.get().state,
+        attributes: { ...appConfig.get().state.attributes, ...c.attributes },
       },
+      expiresAt: appConfig.get().expiresAt,
     });
   }
 
@@ -130,9 +123,21 @@ export const initialize = async (
   return okVoid();
 };
 
+export const checkInitialized = (): Result<void, NotInitializedError> => {
+  logger.debug("Check if initialized");
+  if (!isInitialized || !ErrorHandler.initialized) {
+    return err({
+      code: "not_initialized",
+      message: "Formbricks not initialized. Call initialize() first.",
+    });
+  }
+
+  return okVoid();
+};
+
 export const deinitalize = (): void => {
   logger.debug("Deinitializing");
   // closeSurvey();
-  config.resetConfig();
+  appConfig.resetConfig();
   setIsInitialize(false);
 };

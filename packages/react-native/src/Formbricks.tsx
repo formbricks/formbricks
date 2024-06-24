@@ -1,14 +1,14 @@
 import React, { useCallback, useEffect, useSyncExternalStore } from "react";
-
-import { TRNConfigInput } from "@formbricks/types/react-native";
-
+import { Logger } from "@formbricks/lib/logger";
+import { TJsAppConfigInput } from "@formbricks/types/js";
 import { SurveyWebView } from "./SurveyWebView";
 import { init } from "./lib";
 import { SurveyStore } from "./lib/surveyStore";
 
 type FormbricksProps = {
-  initializationConfig: TRNConfigInput;
+  initializationConfig: TJsAppConfigInput;
 };
+const logger = Logger.getInstance();
 
 const surveyStore = SurveyStore.getInstance();
 
@@ -18,7 +18,6 @@ export const Formbricks = ({ initializationConfig }: FormbricksProps) => {
     init({
       environmentId: initializationConfig.environmentId,
       apiHost: initializationConfig.apiHost,
-      debug: initializationConfig.debug,
       userId: initializationConfig.userId,
       attributes: initializationConfig.attributes,
     });
@@ -31,6 +30,6 @@ export const Formbricks = ({ initializationConfig }: FormbricksProps) => {
 
   const getSnapshot = useCallback(() => surveyStore.getSurvey(), []);
   const survey = useSyncExternalStore(subscribe, getSnapshot);
-
+  logger.debug("survey" + survey);
   return survey ? <SurveyWebView survey={survey} /> : <></>;
 };

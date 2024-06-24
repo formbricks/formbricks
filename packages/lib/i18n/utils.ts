@@ -4,6 +4,7 @@ import {
   TLegacySurveyThankYouCard,
   TLegacySurveyWelcomeCard,
 } from "@formbricks/types/LegacySurvey";
+import { TAttributes } from "@formbricks/types/attributes";
 import { TLanguage } from "@formbricks/types/product";
 import {
   TI18nString,
@@ -1059,4 +1060,32 @@ export const iso639Identifiers = iso639Languages.map((language) => language.alph
 export const getLanguageLabel = (languageCode: string) => {
   const language = iso639Languages.find((lang) => lang.alpha2 === languageCode);
   return `${language?.english}`;
+};
+export const getLanguageCodeForSurvey = (survey: TSurvey, attributes: TAttributes): string | undefined => {
+  const language = attributes.language;
+  const availableLanguageCodes = survey.languages.map((surveyLanguage) => surveyLanguage.language.code);
+  if (!language) return "default";
+  else {
+    const selectedLanguage = survey.languages.find((surveyLanguage) => {
+      return surveyLanguage.language.code === language || surveyLanguage.language.alias === language;
+    });
+    if (selectedLanguage?.default) {
+      return "default";
+    }
+    if (
+      !selectedLanguage ||
+      !selectedLanguage?.enabled ||
+      !availableLanguageCodes.includes(selectedLanguage.language.code)
+    ) {
+      return undefined;
+    }
+    return selectedLanguage.language.code;
+  }
+};
+
+export const getDefaultLanguageCode = (survey: TSurvey) => {
+  const defaultSurveyLanguage = survey.languages?.find((surveyLanguage) => {
+    return surveyLanguage.default === true;
+  });
+  if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
 };

@@ -11,8 +11,6 @@ import { Logger } from "../shared/logger";
 
 const logger = Logger.getInstance();
 
-export const getIsDebug = () => window.location.search.includes("formbricksDebug=true");
-
 export const getLanguageCode = (survey: TSurvey, attributes: TAttributes): string | undefined => {
   const language = attributes.language;
   const availableLanguageCodes = survey.languages.map((surveyLanguage) => surveyLanguage.language.code);
@@ -141,3 +139,4 @@ export const handleHiddenFields = (
 
   return hiddenFieldsObject;
 };
+export const getIsDebug = () => window.location.search.includes("formbricksDebug=true");

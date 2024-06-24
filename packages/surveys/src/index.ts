@@ -5,10 +5,14 @@ import { h, render } from "preact";
 import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
 
 export const renderSurveyInline = (props: SurveyInlineProps) => {
+  console.log("rendering-------------------------");
+  console.log("here2");
   addStylesToDom();
   addCustomThemeToDom({ styling: props.styling });
+  console.log("here");
 
   const element = document.getElementById(props.containerId);
+  console.log(element);
   if (!element) {
     throw new Error(`renderSurvey: Element with id ${props.containerId} not found.`);
   }
