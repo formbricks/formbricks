@@ -61,7 +61,7 @@ const Page = async ({ params }) => {
           title="How to setup"
           description="Follow these steps to setup the Formbricks widget within your app"
           noPadding>
-          <SetupInstructions environmentId={params.environmentId} webAppUrl={WEBAPP_URL} type="app" />
+          <SetupInstructions type="app" environmentId={params.environmentId} webAppUrl={WEBAPP_URL} />
         </SettingsCard>
       </div>
     </PageContentWrapper>
