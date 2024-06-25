@@ -26,6 +26,7 @@ Before you proceed, make sure you have the following:
 
 - A **Linux Ubuntu** Virtual Machine deployed with SSH access.
 - An **A record** set up to connect a custom domain to your instance. Formbricks will **automatically create an SSL certificate** for your domain using Let's Encrypt.
+- **Port 80 and 443** open in your VM's Security Group to allow Traefik to create the SSL certificate.
 
 ## Start
 
@@ -91,7 +92,7 @@ File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N)
 </CodeGroup>
 </Col>
 
-3. **Domain Name**: Enter the domain name that Traefik will use to create the SSL certificate and forward requests to Formbricks.
+3. **Domain Name**: Enter the domain name that Traefik will use to create the SSL certificate and forward requests to Formbricks. Please make sure that port 80 and 443 are open in your VM's Security Group to allow Traefik to create the SSL certificate.
 
 <Col>
 <CodeGroup title="Domain Name for SSL certificate Prompt">

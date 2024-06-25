@@ -40,7 +40,7 @@ export const QuestionsDroppable = ({
   isFormbricksCloud,
 }: QuestionsDraggableProps) => {
   return (
-    <div className="group mb-5 grid w-full gap-5">
+    <div className="group mb-5 flex w-full flex-col gap-5">
       <SortableContext items={localSurvey.questions} strategy={verticalListSortingStrategy}>
         {localSurvey.questions.map((question, questionIdx) => (
           <QuestionCard
