@@ -19,6 +19,7 @@ const checkDatabaseConnection = async () => {
   try {
     await prisma.$queryRaw`SELECT 1`;
   } catch (e) {
+    console.error("Database connection error:", e);
     throw new Error("Database could not be reached");
   }
 };
