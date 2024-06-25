@@ -3,8 +3,10 @@ on:
   workflow_call:
   workflow_dispatch:
 jobs:
-  start-app:
+  build:
+    name: Run E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     services:
       postgres:
         image: postgres:latest
@@ -15,7 +17,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U postgres"
+          --health-cmd="pg_isready -U testuser"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -48,9 +50,8 @@ jobs:
         run: pnpm install
 
       - name: Apply Prisma Migrations
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
-        run: pnpm prisma migrate deploy
+        run: |
+          pnpm prisma migrate deploy
 
       - name: Serve packages for lazy loading
         run: |
@@ -58,8 +59,9 @@ jobs:
 
       - name: Run App
         run: |
-          NODE_ENV=test pnpm start --filter=@formbricks/web > app.log 2>&1 &
-          echo $! > app.pid
+          NODE_ENV=test pnpm start --filter=@formbricks/web &
+          APP_PID=$!
+          sleep 10  # Optional: gives some buffer for the app to start
           for attempt in {1..20}; do
             if [ $(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/health) -eq 200 ]; then
               echo "Application is ready."
@@ -68,35 +70,11 @@ jobs:
             echo "Still waiting for the application to be ready..."
             sleep 10
           done
-          if [ $attempt -eq 20 ]; then
-            echo "Application failed to start in time."
-            cat app.log
-            exit 1
-          fi
-          cat app.log
+          wait $APP_PID
 
-  # wait-for-app:
-  #   runs-on: ubuntu-latest
-  #   needs: start-app
-  #   steps:
-  #     - name: Wait for App
-  #       run: |
-  #         for attempt in {1..20}; do
-  #           if [ $(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/health) -eq 200 ]; then
-  #             echo "Ready"
-  #             break
-  #           fi
-  #           echo "Waiting..."
-  #           sleep 10
-  #         done
-  #         cat app.log  # Optionally print the complete log file again at the end.
-
-  run-tests:
-    runs-on: ubuntu-latest
-    needs: start-app
-    steps:
-      - name: Install dependencies
-        run: pnpm install
+      - name: Test Serve endpoints
+        run: |
+          curl -s http://localhost:3003
 
       - name: Cache Playwright
         uses: actions/cache@v3
@@ -112,7 +90,8 @@ jobs:
       - name: Run E2E Tests
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
-        run: pnpm test:e2e
+        run: |
+          pnpm test:e2e
 
       - uses: actions/upload-artifact@v3
         if: always()
