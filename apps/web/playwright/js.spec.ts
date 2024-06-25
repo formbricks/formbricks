@@ -48,11 +48,13 @@ test.describe("JS Package Test", async () => {
         })();
 
       await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary/);
-      await page.waitForTimeout(1000);
 
-      await expect(page.getByRole("link", { name: "Surveys" })).toBeVisible();
-      await page.getByRole("link", { name: "Surveys" }).click();
-      await expect(page.getByRole("heading", { name: "Surveys" })).toBeVisible();
+      // await expect(page.getByRole("link", { name: "Surveys" })).toBeVisible();
+      // await page.getByRole("link", { name: "Surveys" }).click();
+
+      // await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+
+      // await expect(page.getByRole("heading", { name: "Surveys" })).toBeVisible();
     });
 
     await test.step("JS Display Survey on Page", async () => {

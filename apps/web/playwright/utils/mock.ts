@@ -248,7 +248,6 @@ export const actions = {
           label: "Contains",
           value: "custom-url",
         },
-        testURL: "http://localhost:3000/custom-url",
       },
       exitIntent: {
         name: "Create Exit Intent Action",

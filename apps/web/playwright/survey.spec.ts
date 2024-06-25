@@ -179,7 +179,8 @@ test.describe("Survey Create & Submit Response", async () => {
       await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder).fill("This is my Address");
       await page.getByRole("button", { name: "Finish" }).click();
 
-      await page.waitForTimeout(500);
+      // loading spinner -> wait for it to disappear
+      await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
 
       // Thank You Card
       await expect(page.getByText(surveys.createAndSubmit.thankYouCard.headline)).toBeVisible();

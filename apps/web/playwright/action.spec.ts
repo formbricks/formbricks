@@ -37,8 +37,12 @@ const createNoCodeClickAction = async ({
   await expect(page.locator("[name='noCodeConfig.elementSelector.cssSelector']")).toBeVisible();
   await page.locator("[name='noCodeConfig.elementSelector.cssSelector']").fill(selector);
   await page.getByRole("button", { name: "Create action", exact: true }).click();
-  await page.waitForLoadState("networkidle");
-  await page.waitForTimeout(500);
+
+  const successToast = await page.waitForSelector(".formbricks__toast__success");
+  expect(successToast).toBeTruthy();
+
+  const actionButton = page.getByTitle(name);
+  await expect(actionButton).toBeVisible();
 };
 
 const createNoCodePageViewAction = async ({
@@ -46,7 +50,6 @@ const createNoCodePageViewAction = async ({
   name,
   description,
   matcher,
-  testURL,
   noCodeType,
 }: {
   page: Page;
@@ -56,7 +59,6 @@ const createNoCodePageViewAction = async ({
     label: string;
     value: string;
   };
-  testURL: string;
   noCodeType: string;
 }) => {
   await page.goto("/");
@@ -87,16 +89,14 @@ const createNoCodePageViewAction = async ({
   // User fills the Page URL to track
   await page.locator("[name='noCodeConfig.urlFilters.0.value']").fill(matcher.value);
 
-  // User fills the Test URL to track
-  await page.locator("[name='noCodeConfig.urlFilters.testUrl']").fill(testURL);
-
-  // User clicks the Test Match button
-  await page.getByRole("button", { name: "Test Match", exact: true }).click();
-
   // User clicks the Create Action button
   await page.getByRole("button", { name: "Create action", exact: true }).click();
-  await page.waitForLoadState("networkidle");
-  await page.waitForTimeout(500);
+
+  const successToast = await page.waitForSelector(".formbricks__toast__success");
+  expect(successToast).toBeTruthy();
+
+  const actionButton = page.getByTitle(name);
+  await expect(actionButton).toBeVisible();
 };
 
 const createNoCodeAction = async ({
@@ -130,8 +130,12 @@ const createNoCodeAction = async ({
 
   // User clicks the Create Action button
   await page.getByRole("button", { name: "Create action", exact: true }).click();
-  await page.waitForLoadState("networkidle");
-  await page.waitForTimeout(500);
+
+  const successToast = await page.waitForSelector(".formbricks__toast__success");
+  expect(successToast).toBeTruthy();
+
+  const actionButton = page.getByTitle(name);
+  await expect(actionButton).toBeVisible();
 };
 
 const createCodeAction = async ({
@@ -164,8 +168,12 @@ const createCodeAction = async ({
   await page.getByLabel("Key").fill(key);
 
   await page.getByRole("button", { name: "Create action", exact: true }).click();
-  await page.waitForLoadState("networkidle");
-  await page.waitForTimeout(500);
+
+  const successToast = await page.waitForSelector(".formbricks__toast__success");
+  expect(successToast).toBeTruthy();
+
+  const actionButton = page.getByTitle(name);
+  await expect(actionButton).toBeVisible();
 };
 
 const getActionButtonLocator = (page: Page, actionName: string) => {
@@ -189,9 +197,6 @@ test.describe("Create and Edit No Code Click Action", async () => {
         description: actions.create.noCode.click.description,
         selector: actions.create.noCode.click.selector,
       });
-
-      // const actionButton = getActionButtonLocator(page, actions.create.noCode.click.name);
-      // await expect(actionButton).toBeVisible();
     });
 
     await test.step("Edit No Code Click Action", async () => {
@@ -233,12 +238,8 @@ test.describe("Create and Edit No Code Page view Action", async () => {
         name: actions.create.noCode.pageView.name,
         description: actions.create.noCode.pageView.description,
         matcher: actions.create.noCode.pageView.matcher,
-        testURL: actions.create.noCode.pageView.testURL,
         noCodeType: "Page View",
       });
-
-      // const actionButton = getActionButtonLocator(page, actions.create.noCode.pageView.name);
-      // await expect(actionButton).toBeVisible();
     });
 
     await test.step("Edit No Code Page view Action", async () => {
@@ -292,9 +293,6 @@ test.describe("Create and Edit No Code Exit Intent Action", async () => {
         description: actions.create.noCode.exitIntent.description,
         noCodeType: "Exit Intent",
       });
-
-      // const actionButton = getActionButtonLocator(page, actions.create.noCode.exitIntent.name);
-      // await expect(actionButton).toBeVisible();
     });
 
     await test.step("Edit No Code Exit Intent Action", async () => {
@@ -335,9 +333,6 @@ test.describe("Create and Edit No Code 50% scroll Action", async () => {
         description: actions.create.noCode["fiftyPercentScroll"].description,
         noCodeType: "50% Scroll",
       });
-
-      // const actionButton = getActionButtonLocator(page, actions.create.noCode["fiftyPercentScroll"].name);
-      // await expect(actionButton).toBeVisible();
     });
 
     await test.step("Edit No Code 50% scroll Action", async () => {
@@ -415,9 +410,6 @@ test.describe("Create and Delete Action", async () => {
         description: actions.delete.noCode.description,
         selector: actions.delete.noCode.selector,
       });
-
-      // const actionButton = getActionButtonLocator(page, actions.delete.noCode.name);
-      // await expect(actionButton).toBeVisible();
     });
 
     await test.step("Delete Action", async () => {

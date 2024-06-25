@@ -55,6 +55,26 @@ export const login = async (page: Page, email: string, password: string): Promis
   await page.getByRole("button", { name: "Login with Email" }).click();
 };
 
+export const apiLogin = async (page: Page, email: string, password: string) => {
+  const csrfToken = await page
+    .context()
+    .request.get("/api/auth/csrf")
+    .then((response) => response.json())
+    .then((json) => json.csrfToken);
+  const data = {
+    email,
+    password,
+    callbackURL: "/",
+    redirect: "true",
+    json: "true",
+    csrfToken,
+  };
+
+  return page.context().request.post("/api/auth/callback/credentials", {
+    data,
+  });
+};
+
 export const finishOnboarding = async (
   page: Page,
   ProductChannel: TProductConfigChannel = "website"
@@ -113,20 +133,13 @@ export const signupUsingInviteToken = async (page: Page, name: string, email: st
   await page.getByRole("button", { name: "Login with Email" }).click();
 };
 
-export const createSurvey = async (
-  page: Page,
-  // name: string,
-  // email: string,
-  // password: string,
-  params: CreateSurveyParams
-) => {
+export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   const addQuestion = "Add QuestionAdd a new question to your survey";
-
-  // await signUpAndLogin(page, name, email, password);
-  // await finishOnboarding(page);
 
   await page.getByRole("button", { name: "Start from scratch Create a" }).click();
   await page.getByRole("button", { name: "Create survey", exact: true }).click();
+
+  await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
 
   // Welcome Card
   await expect(page.locator("#welcome-toggle")).toBeVisible();

@@ -13,7 +13,7 @@ export const login = async (user: Prisma.UserGetPayload<{ include: { memberships
   const data = {
     email: user.email,
     password: user.name,
-    callbackURL: "http://localhost:3000/",
+    callbackURL: "/",
     redirect: "true",
     json: "true",
     csrfToken,
@@ -111,8 +111,6 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
         },
         include: { memberships: true },
       });
-
-      console.log("created user", user);
 
       const userFixture = createUserFixture(user, page);
 

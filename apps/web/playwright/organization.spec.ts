@@ -1,6 +1,6 @@
 import { expect } from "playwright/test";
 import { test } from "./lib/fixtures";
-import { login, signupUsingInviteToken } from "./utils/helper";
+import { apiLogin, signupUsingInviteToken } from "./utils/helper";
 import { invites, mockUsers } from "./utils/mock";
 
 test.describe("Invite, accept and remove organization member", async () => {
@@ -38,8 +38,9 @@ test.describe("Invite, accept and remove organization member", async () => {
       await page.getByLabel("Email Address").fill(invites.addMember.email);
 
       await page.getByRole("button", { name: "Send Invitation", exact: true }).click();
-      await page.waitForLoadState("networkidle");
-      // await page.waitForTimeout(500);
+
+      const successToast = await page.waitForSelector(".formbricks__toast__success");
+      expect(successToast).toBeTruthy();
     });
 
     await test.step("Copy invite Link", async () => {
@@ -56,8 +57,8 @@ test.describe("Invite, accept and remove organization member", async () => {
 
       await shareInviteButton.click();
 
-      const inviteLinkText = page.locator("#inviteLinkText");
-      await expect(inviteLinkText).toBeVisible();
+      const inviteLinkText = await page.waitForSelector("#inviteLinkText");
+      expect(inviteLinkText).toBeTruthy();
 
       // invite link text is a paragraph, and we need the text inside it
       const inviteLinkTextContent = await inviteLinkText.textContent();
@@ -82,7 +83,10 @@ test.describe("Invite, accept and remove organization member", async () => {
   });
 
   test("Remove member", async ({ page }) => {
-    await login(page, email, name);
+    await apiLogin(page, email, name);
+
+    await page.goto("/");
+    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
     const dropdownTrigger = page.locator("#userDropdownTrigger");
     await expect(dropdownTrigger).toBeVisible();
