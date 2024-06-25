@@ -9,6 +9,7 @@ import {
   TSurveyPictureSelectionQuestion,
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
+  TSurveyRatingQuestion,
 } from "@formbricks/types/surveys";
 import { AddressResponse } from "../../AddressResponse";
 import { FileUploadResponse } from "../../FileUploadResponse";
@@ -51,7 +52,7 @@ export const SingleResponseCardBody = ({
         return (
           <span
             key={index}
-            className="ml-0.5 mr-0.5 rounded-md border border-slate-200 bg-slate-50 px-1 py-0.5 text-sm first:ml-0 ">
+            className="ml-0.5 mr-0.5 rounded-md border border-slate-200 bg-slate-50 px-1 py-0.5 text-sm first:ml-0">
             @{part}
           </span>
         );
@@ -66,10 +67,18 @@ export const SingleResponseCardBody = ({
     responseData: string | number | string[] | Record<string, string>,
     question: TSurveyQuestion
   ) => {
+    console.log(questionType, responseData, question);
     switch (questionType) {
       case TSurveyQuestionTypeEnum.Rating:
         if (typeof responseData === "number")
-          return <RatingResponse scale={question.scale} answer={responseData} range={question.range} />;
+          return (
+            <RatingResponse
+              scale={question.scale}
+              answer={responseData}
+              range={question.range}
+              addColors={(question as TSurveyRatingQuestion).isColorCodingEnabled}
+            />
+          );
       case TSurveyQuestionTypeEnum.Date:
         if (typeof responseData === "string") {
           const formattedDateString = formatDateWithOrdinal(new Date(responseData));

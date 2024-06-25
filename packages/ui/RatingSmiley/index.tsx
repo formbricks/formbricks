@@ -18,40 +18,43 @@ interface RatingSmileyProps {
   addColors?: boolean;
 }
 
-const colors = [
-  "fill-[#FF0000]",
-  "fill-[#FF3300]",
-  "fill-[#FF6600]",
-  "fill-[#FF9900]",
-  "fill-[#FFCC00]",
-  "fill-[#FFFF00]",
-  "fill-[#CCFF00]",
-  "fill-[#99FF00]",
-  "fill-[#66FF00]",
-  "fill-[#33FF00]",
-];
-export const RatingSmiley = ({ active, idx, range, addColors }: RatingSmileyProps): JSX.Element => {
-  const activeColor = "fill-rating-fill";
-  const getInactiveColor = (idx: number) => {
-    return addColors ? colors[idx] : "fill-none";
-  };
+const getSmileyColor = (range: number, idx: number) => {
+  if (range > 5) {
+    return range - idx < 3 ? "fill-emerald-100" : range - idx < 5 ? "fill-orange-100" : "fill-rose-100";
+  } else if (range < 5) {
+    return range - idx < 2 ? "fill-emerald-100" : range - idx < 3 ? "fill-orange-100" : "fill-rose-100";
+  } else {
+    return range - idx < 3 ? "fill-emerald-100" : range - idx < 4 ? "fill-orange-100" : "fill-rose-100";
+  }
+};
 
-  let icons = [
-    <TiredFace className={active ? activeColor : getInactiveColor(0)} />,
-    <WearyFace className={active ? activeColor : getInactiveColor(1)} />,
-    <PerseveringFace className={active ? activeColor : getInactiveColor(2)} />,
-    <FrowningFace className={active ? activeColor : getInactiveColor(3)} />,
-    <ConfusedFace className={active ? activeColor : getInactiveColor(4)} />,
-    <NeutralFace className={active ? activeColor : getInactiveColor(5)} />,
-    <SlightlySmilingFace className={active ? activeColor : getInactiveColor(6)} />,
-    <SmilingFaceWithSmilingEyes className={active ? activeColor : getInactiveColor(7)} />,
-    <GrinningFaceWithSmilingEyes className={active ? activeColor : getInactiveColor(8)} />,
-    <GrinningSquintingFace className={active ? activeColor : getInactiveColor(9)} />,
+const getSmiley = (iconIdx: number, idx: number, range: number, active: boolean, addColors: boolean) => {
+  const activeColor = "fill-rating-fill";
+  const inactiveColor = addColors ? getSmileyColor(range, idx) : "fill-none";
+
+  const icons = [
+    <TiredFace className={active ? activeColor : inactiveColor} />,
+    <WearyFace className={active ? activeColor : inactiveColor} />,
+    <PerseveringFace className={active ? activeColor : inactiveColor} />,
+    <FrowningFace className={active ? activeColor : inactiveColor} />,
+    <ConfusedFace className={active ? activeColor : inactiveColor} />,
+    <NeutralFace className={active ? activeColor : inactiveColor} />,
+    <SlightlySmilingFace className={active ? activeColor : inactiveColor} />,
+    <SmilingFaceWithSmilingEyes className={active ? activeColor : inactiveColor} />,
+    <GrinningFaceWithSmilingEyes className={active ? activeColor : inactiveColor} />,
+    <GrinningSquintingFace className={active ? activeColor : inactiveColor} />,
   ];
 
-  if (range == 7) icons = [icons[1], icons[3], icons[4], icons[5], icons[6], icons[8], icons[9]];
-  else if (range == 5) icons = [icons[3], icons[4], icons[5], icons[6], icons[7]];
-  else if (range == 4) icons = [icons[4], icons[5], icons[6], icons[7]];
-  else if (range == 3) icons = [icons[4], icons[5], icons[7]];
-  return icons[idx];
+  return icons[iconIdx];
+};
+
+export const RatingSmiley = ({ active, idx, range, addColors = false }: RatingSmileyProps): JSX.Element => {
+  let iconsIdx: number[] = [];
+  if (range === 10) iconsIdx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  else if (range === 7) iconsIdx = [1, 3, 4, 5, 6, 8, 9];
+  else if (range === 5) iconsIdx = [3, 4, 5, 6, 7];
+  else if (range === 4) iconsIdx = [4, 5, 6, 7];
+  else if (range === 3) iconsIdx = [4, 5, 7];
+
+  return getSmiley(iconsIdx[idx], idx, range, active, addColors);
 };
