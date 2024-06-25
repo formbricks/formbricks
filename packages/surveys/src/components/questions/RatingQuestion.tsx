@@ -90,11 +90,17 @@ export const RatingQuestion = ({
 
   const getRatingNumberOptionColor = (range: number, idx: number) => {
     if (range > 5) {
-      return range - idx < 2 ? "bg-emerald-100" : range - idx < 4 ? "bg-orange-100" : "bg-rose-100";
+      if (range - idx < 2) return "bg-emerald-100";
+      if (range - idx < 4) return "bg-orange-100";
+      return "bg-rose-100";
     } else if (range < 5) {
-      return range - idx < 1 ? "bg-emerald-100" : range - idx < 2 ? "bg-orange-100" : "bg-rose-100";
+      if (range - idx < 1) return "bg-emerald-100";
+      if (range - idx < 2) return "bg-orange-100";
+      return "bg-rose-100";
     } else {
-      return range - idx < 2 ? "bg-emerald-100" : range - idx < 3 ? "bg-orange-100" : "bg-rose-100";
+      if (range - idx < 2) return "bg-emerald-100";
+      if (range - idx < 3) return "bg-orange-100";
+      return "bg-rose-100";
     }
   };
 
@@ -209,13 +215,7 @@ export const RatingQuestion = ({
                         onFocus={() => setHoveredNumber(number)}
                         onBlur={() => setHoveredNumber(0)}>
                         <HiddenRadioInput number={number} id={number.toString()} />
-                        <div
-                          className={cn(
-                            "h-full w-full max-w-[74px] object-contain",
-                            question.isColorCodingEnabled && (value === number || hoveredNumber === number)
-                              ? "rounded-full border border-yellow-300"
-                              : ""
-                          )}>
+                        <div className={cn("h-full w-full max-w-[74px] object-contain")}>
                           <RatingSmiley
                             active={value === number || hoveredNumber === number}
                             idx={i}
@@ -274,16 +274,38 @@ interface RatingSmileyProps {
 
 const getSmileyColor = (range: number, idx: number) => {
   if (range > 5) {
-    return range - idx < 3 ? "fill-emerald-100" : range - idx < 5 ? "fill-orange-100" : "fill-rose-100";
+    if (range - idx < 3) return "fill-emerald-100";
+    if (range - idx < 5) return "fill-orange-100";
+    return "fill-rose-100";
   } else if (range < 5) {
-    return range - idx < 2 ? "fill-emerald-100" : range - idx < 3 ? "fill-orange-100" : "fill-rose-100";
+    if (range - idx < 2) return "fill-emerald-100";
+    if (range - idx < 3) return "fill-orange-100";
+    return "fill-rose-100";
   } else {
-    return range - idx < 3 ? "fill-emerald-100" : range - idx < 4 ? "fill-orange-100" : "fill-rose-100";
+    if (range - idx < 3) return "fill-emerald-100";
+    if (range - idx < 4) return "fill-orange-100";
+    return "fill-rose-100";
+  }
+};
+
+const getActiveSmileyColor = (range: number, idx: number) => {
+  if (range > 5) {
+    if (range - idx < 3) return "fill-emerald-300";
+    if (range - idx < 5) return "fill-orange-300";
+    return "fill-rose-300";
+  } else if (range < 5) {
+    if (range - idx < 2) return "fill-emerald-300";
+    if (range - idx < 3) return "fill-orange-300";
+    return "fill-rose-300";
+  } else {
+    if (range - idx < 3) return "fill-emerald-300";
+    if (range - idx < 4) return "fill-orange-300";
+    return "fill-rose-300";
   }
 };
 
 const getSmiley = (iconIdx: number, idx: number, range: number, active: boolean, addColors: boolean) => {
-  const activeColor = "fill-rating-fill";
+  const activeColor = addColors ? getActiveSmileyColor(range, idx) : "fill-rating-fill";
   const inactiveColor = addColors ? getSmileyColor(range, idx) : "fill-none";
 
   const icons = [

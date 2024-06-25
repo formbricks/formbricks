@@ -20,11 +20,17 @@ interface RatingSmileyProps {
 
 const getSmileyColor = (range: number, idx: number) => {
   if (range > 5) {
-    return range - idx < 3 ? "fill-emerald-100" : range - idx < 5 ? "fill-orange-100" : "fill-rose-100";
+    if (range - idx < 3) return "fill-emerald-100";
+    if (range - idx < 5) return "fill-orange-100";
+    return "fill-rose-100";
   } else if (range < 5) {
-    return range - idx < 2 ? "fill-emerald-100" : range - idx < 3 ? "fill-orange-100" : "fill-rose-100";
+    if (range - idx < 2) return "fill-emerald-100";
+    if (range - idx < 3) return "fill-orange-100";
+    return "fill-rose-100";
   } else {
-    return range - idx < 3 ? "fill-emerald-100" : range - idx < 4 ? "fill-orange-100" : "fill-rose-100";
+    if (range - idx < 3) return "fill-emerald-100";
+    if (range - idx < 4) return "fill-orange-100";
+    return "fill-rose-100";
   }
 };
 
