@@ -10,8 +10,6 @@ const logger = Logger.getInstance();
 const appConfig = RNAppConfig.getInstance();
 const surveyStore = SurveyStore.getInstance();
 
-const intentsToNotCreateOnApp = ["Exit Intent (Desktop)", "50% Scroll"];
-
 const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
   const randomNum = Math.floor(Math.random() * 100) + 1;
   return randomNum <= displayPercentage;
@@ -27,7 +25,7 @@ export const trackAction = async (name: string, alias?: string): Promise<Result<
   };
 
   // don't send actions to the backend if the person is not identified
-  if (userId && !intentsToNotCreateOnApp.includes(name)) {
+  if (userId) {
     logger.debug(`Sending action "${aliasName}" to backend`);
 
     const api = new FormbricksAPI({

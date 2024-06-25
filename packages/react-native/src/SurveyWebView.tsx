@@ -10,7 +10,7 @@ import { sync } from "@formbricks/lib/sdk/sync";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
 import { SurveyInlineProps } from "@formbricks/types/formbricksSurveys";
-import { ZRNWebViewOnMessageData } from "@formbricks/types/react-native";
+import { ZJsRNWebViewOnMessageData } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { SurveyStore } from "./lib/surveyStore";
@@ -163,7 +163,7 @@ export const SurveyWebView = ({ survey, ...restProps }: SurveyWebViewProps) => {
             }
           }
 
-          const validatedMessage = ZRNWebViewOnMessageData.safeParse(unvalidatedMessage);
+          const validatedMessage = ZJsRNWebViewOnMessageData.safeParse(unvalidatedMessage);
           if (!validatedMessage.success) {
             logger.error("Error parsing message from WebView.");
             return;

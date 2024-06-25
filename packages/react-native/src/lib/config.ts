@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Result, err, wrapThrows } from "@formbricks/lib/errors";
-import { TJSAppConfig, TJsAppConfigUpdateInput } from "@formbricks/types/js";
+import { TJSAppConfig, TJsAppConfigUpdateInput, ZJSAppConfig } from "@formbricks/types/js";
 
 export const LOCAL_STORAGE_KEY = "formbricks-react-native";
 
@@ -44,10 +44,7 @@ export class RNAppConfig {
         if (!savedConfig) {
           return err(new Error("No or invalid config in local storage"));
         }
-        // TODO: validate config
-        // This is a hack to get around the fact that we don't have a proper
-        // way to validate the config yet.
-        const parsedConfig = JSON.parse(savedConfig) as TJSAppConfig;
+        const parsedConfig = ZJSAppConfig.parse(savedConfig);
 
         if (parsedConfig.expiresAt && new Date(parsedConfig.expiresAt) <= new Date()) {
           return err(new Error("Config in local storage has expired"));

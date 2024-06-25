@@ -7,6 +7,7 @@ import { RNAppConfig } from "@formbricks/lib/sdk/config";
 import { sync } from "@formbricks/lib/sdk/sync";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
+import { trackAction } from "./actions";
 
 const logger = Logger.getInstance();
 const appConfig = RNAppConfig.getInstance();
@@ -40,7 +41,6 @@ export const initialize = async (
     });
   }
 
-  // todo: update attributes
   // if userId and attributes are available, set them in backend
   let updatedAttributes: TAttributes | null = null;
   if (c.userId && c.attributes) {
@@ -99,7 +99,7 @@ export const initialize = async (
     );
 
     // and track the new session event
-    // await trackAction("New Session");
+    await trackAction("New Session");
   }
 
   // todo: update attributes

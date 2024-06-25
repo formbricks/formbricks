@@ -4,7 +4,7 @@ import { ZActionClass } from "./actionClasses";
 import { ZAttributes } from "./attributes";
 import { ZPerson } from "./people";
 import { ZProduct } from "./product";
-import { ZResponseHiddenFieldValue } from "./responses";
+import { ZResponseHiddenFieldValue, ZResponseUpdate } from "./responses";
 import { ZSurvey } from "./surveys";
 
 export const ZJsPerson = z.object({
@@ -249,3 +249,14 @@ export const ZJsTrackProperties = z.object({
 });
 
 export type TJsTrackProperties = z.infer<typeof ZJsTrackProperties>;
+
+export const ZJsRNWebViewOnMessageData = z.object({
+  onFinished: z.boolean().nullish(),
+  onDisplay: z.boolean().nullish(),
+  onResponse: z.boolean().nullish(),
+  responseUpdate: ZResponseUpdate.nullish(),
+  onRetry: z.boolean().nullish(),
+  onClose: z.boolean().nullish(),
+});
+
+export type TJsRNWebViewOnMessageData = z.infer<typeof ZJsRNWebViewOnMessageData>;
