@@ -49,6 +49,12 @@ jobs:
         if: env.PNPM_INSTALLED == 'false'
         run: pnpm install
 
+      - name: Apply Prisma Migrations
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: |
+          pnpm prisma migrate deploy
+
       - name: Serve packages for lazy loading
         run: |
           cd packages/surveys && pnpm serve &
