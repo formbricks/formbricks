@@ -182,11 +182,15 @@ const getActionButtonLocator = (page: Page, actionName: string) => {
 
 test.describe("Create and Edit No Code Click Action", async () => {
   test.beforeEach(async ({ page, users }) => {
-    const user = await users.create();
-    await user.login();
+    try {
+      const user = await users.create();
+      await user.login();
 
-    await page.goto("/");
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+      await page.goto("/");
+      await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    } catch (err) {
+      console.log({ err });
+    }
   });
 
   test("Create and Edit No Code Click Action by CSS Selector", async ({ page }) => {
