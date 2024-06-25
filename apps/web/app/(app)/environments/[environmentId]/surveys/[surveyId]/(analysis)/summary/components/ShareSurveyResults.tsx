@@ -60,12 +60,12 @@ export const ShareSurveyResults = ({
               <Button
                 type="submit"
                 variant="secondary"
-                className=" text-center"
+                className="text-center"
                 onClick={() => handleUnpublish()}>
                 Unpublish
               </Button>
 
-              <Button variant="darkCTA" className=" text-center" href={surveyUrl} target="_blank">
+              <Button variant="darkCTA" className="text-center" href={surveyUrl} target="_blank">
                 View site
               </Button>
             </div>

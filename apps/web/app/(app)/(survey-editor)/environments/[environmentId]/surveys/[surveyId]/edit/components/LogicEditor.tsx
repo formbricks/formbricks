@@ -289,7 +289,7 @@ export const LogicEditor = ({
               <p className="text-slate-800">If this answer</p>
 
               <Select value={logic.condition} onValueChange={(e) => updateLogic(logicIdx, { condition: e })}>
-                <SelectTrigger className=" min-w-fit flex-1">
+                <SelectTrigger className="min-w-fit flex-1">
                   <SelectValue placeholder="Select condition" className="text-xs lg:text-sm" />
                 </SelectTrigger>
                 <SelectContent>
@@ -367,7 +367,7 @@ export const LogicEditor = ({
               <Select
                 value={logic.destination}
                 onValueChange={(e) => updateLogic(logicIdx, { destination: e })}>
-                <SelectTrigger className="w-fit overflow-hidden ">
+                <SelectTrigger className="w-fit overflow-hidden">
                   <SelectValue placeholder="Select question" />
                 </SelectTrigger>
                 <SelectContent>

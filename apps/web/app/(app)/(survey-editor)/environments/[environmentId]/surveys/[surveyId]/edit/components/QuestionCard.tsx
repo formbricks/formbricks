@@ -147,7 +147,7 @@ export const QuestionCard = ({
         className={cn(
           open ? "bg-slate-700" : "bg-slate-400",
           "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:cursor-grab hover:bg-slate-600",
-          isInvalid && "bg-red-400  hover:bg-red-600",
+          isInvalid && "bg-red-400 hover:bg-red-600",
           "flex flex-col items-center justify-between"
         )}>
         <span>{questionIdx + 1}</span>
@@ -168,7 +168,7 @@ export const QuestionCard = ({
         className="flex-1 rounded-r-lg border border-slate-200">
         <Collapsible.CollapsibleTrigger
           asChild
-          className={cn(open ? "" : "  ", "flex cursor-pointer justify-between gap-4 p-4 hover:bg-slate-50")}>
+          className={cn(open ? "" : " ", "flex cursor-pointer justify-between gap-4 p-4 hover:bg-slate-50")}>
           <div>
             <div className="flex grow">
               <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">

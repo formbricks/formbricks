@@ -51,7 +51,7 @@ export const SingleResponseCardBody = ({
         return (
           <span
             key={index}
-            className="ml-0.5 mr-0.5 rounded-md border border-slate-200 bg-slate-50 px-1 py-0.5 text-sm first:ml-0 ">
+            className="ml-0.5 mr-0.5 rounded-md border border-slate-200 bg-slate-50 px-1 py-0.5 text-sm first:ml-0">
             @{part}
           </span>
         );

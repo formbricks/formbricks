@@ -137,7 +137,7 @@ export const RatingQuestion = ({
                             : "border-border",
                           a.length === number ? "rounded-r-custom border-r" : "",
                           number === 1 ? "rounded-l-custom" : "",
-                          hoveredNumber === number ? "bg-accent-bg " : "",
+                          hoveredNumber === number ? "bg-accent-bg" : "",
                           "text-heading focus:border-brand relative flex min-h-[41px] w-full cursor-pointer items-center justify-center border-b border-l border-t focus:border-2 focus:outline-none"
                         )}>
                         <HiddenRadioInput number={number} id={number.toString()} />
@@ -158,7 +158,7 @@ export const RatingQuestion = ({
                           number <= hoveredNumber || number <= (value as number)
                             ? "text-amber-400"
                             : "text-[#8696AC]",
-                          hoveredNumber === number ? "text-amber-400 " : "",
+                          hoveredNumber === number ? "text-amber-400" : "",
                           "relative flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none"
                         )}
                         onFocus={() => setHoveredNumber(number)}

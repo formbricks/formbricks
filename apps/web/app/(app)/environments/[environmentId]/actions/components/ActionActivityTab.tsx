@@ -121,20 +121,20 @@ export const EventActivityTab = ({
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">
         <div>
           <Label className="text-xs font-normal text-slate-500">Created on</Label>
-          <p className=" text-xs text-slate-700">
+          <p className="text-xs text-slate-700">
             {convertDateTimeStringShort(actionClass.createdAt?.toString())}
           </p>
         </div>{" "}
         <div>
-          <Label className=" text-xs font-normal text-slate-500">Last updated</Label>
-          <p className=" text-xs text-slate-700">
+          <Label className="text-xs font-normal text-slate-500">Last updated</Label>
+          <p className="text-xs text-slate-700">
             {convertDateTimeStringShort(actionClass.updatedAt?.toString())}
           </p>
         </div>
         <div>
           <Label className="block text-xs font-normal text-slate-500">Type</Label>
           <div className="mt-1 flex items-center">
-            <div className="mr-1.5  h-4 w-4 text-slate-600">
+            <div className="mr-1.5 h-4 w-4 text-slate-600">
               {actionClass.type === "code" ? (
                 <Code2Icon className="h-5 w-5" />
               ) : actionClass.type === "noCode" ? (
@@ -143,7 +143,7 @@ export const EventActivityTab = ({
                 <SparklesIcon className="h-5 w-5" />
               ) : null}
             </div>
-            <p className="text-sm text-slate-700 ">{capitalizeFirstLetter(actionClass.type)}</p>
+            <p className="text-sm text-slate-700">{capitalizeFirstLetter(actionClass.type)}</p>
           </div>
         </div>
       </div>
