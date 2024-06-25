@@ -38,7 +38,7 @@ jobs:
         run: |
           cd packages/surveys && pnpm serve &
 
-     -  name: Run App
+      - name: Run App
         run: |
           NODE_ENV=test pnpm start --filter=@formbricks/web > app.log 2>&1 &
           for attempt in {1..20}; do
@@ -49,7 +49,7 @@ jobs:
             echo "Waiting..."
             sleep 10
           done
-          cat app.log  
+          cat app.log
 
       - name: Test Serve endpoints
         run: |
