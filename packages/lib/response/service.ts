@@ -598,7 +598,7 @@ export const getResponseDownloadUrl = async (
       "Timestamp",
       "Finished",
       "Survey ID",
-      "Person ID (internal)",
+      "Person ID",
       "User ID",
       "Notes",
       "Tags",

@@ -437,7 +437,7 @@ export const getResponsesJson = (
       Timestamp: response.createdAt.toDateString(),
       Finished: response.finished ? "Yes" : "No",
       "Survey ID": response.surveyId,
-      "Person ID (internal)": response.person?.id || "",
+      "Person ID": response.person?.id || "",
       "User ID": response.person?.userId || "",
       Notes: response.notes.map((note) => `${note.user.name}: ${note.text}`).join("\n"),
       Tags: response.tags.map((tag) => tag.name).join(", "),
