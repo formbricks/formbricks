@@ -112,6 +112,8 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
         include: { memberships: true },
       });
 
+      console.log("USER CREATED: \n\n\n\n", user);
+
       const userFixture = createUserFixture(user, page);
 
       store.users.push(userFixture);

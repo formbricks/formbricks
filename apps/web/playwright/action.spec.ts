@@ -183,6 +183,7 @@ const getActionButtonLocator = (page: Page, actionName: string) => {
 test.describe("Create and Edit No Code Click Action", async () => {
   test.beforeEach(async ({ page, users }) => {
     try {
+      console.log("trying to create user:");
       const user = await users.create();
       await user.login();
 
