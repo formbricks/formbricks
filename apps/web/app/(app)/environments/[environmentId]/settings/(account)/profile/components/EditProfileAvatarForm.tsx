@@ -144,7 +144,7 @@ export const EditProfileAvatarForm = ({ session, environmentId }: EditProfileAva
                         inputRef.current = e;
                       }}
                       className="hidden"
-                      accept="image/*"
+                      accept="image/jpeg, image/png"
                       onChange={(e) => {
                         field.onChange(e.target.files);
                         form.handleSubmit(onSubmit)();
