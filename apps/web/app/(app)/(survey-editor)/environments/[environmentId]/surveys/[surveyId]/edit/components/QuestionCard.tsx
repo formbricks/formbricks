@@ -136,7 +136,7 @@ export const QuestionCard = ({
     <div
       className={cn(
         open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
-        "flex flex-row rounded-lg bg-white transition-all duration-300 ease-in-out"
+        "flex w-full flex-row rounded-lg bg-white transition-all duration-300 ease-in-out"
       )}
       ref={setNodeRef}
       style={style}
@@ -146,13 +146,13 @@ export const QuestionCard = ({
         {...attributes}
         className={cn(
           open ? "bg-slate-700" : "bg-slate-400",
-          "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:cursor-grab hover:bg-slate-600",
-          isInvalid && "bg-red-400  hover:bg-red-600",
+          "top-0 w-[5%] rounded-l-lg p-2 text-center text-sm text-white hover:cursor-grab hover:bg-slate-600",
+          isInvalid && "bg-red-400 hover:bg-red-600",
           "flex flex-col items-center justify-between"
         )}>
         <span>{questionIdx + 1}</span>
 
-        <button className="hidden hover:cursor-move group-hover:block">
+        <button className="opacity-0 hover:cursor-move group-hover:opacity-100">
           <GripIcon className="h-4 w-4" />
         </button>
       </div>
@@ -165,10 +165,10 @@ export const QuestionCard = ({
             setActiveQuestionId(null);
           }
         }}
-        className="flex-1 rounded-r-lg border border-slate-200">
+        className="w-[95%] flex-1 rounded-r-lg border border-slate-200">
         <Collapsible.CollapsibleTrigger
           asChild
-          className={cn(open ? "" : "  ", "flex cursor-pointer justify-between gap-4 p-4 hover:bg-slate-50")}>
+          className={cn(open ? "" : " ", "flex cursor-pointer justify-between gap-4 p-4 hover:bg-slate-50")}>
           <div>
             <div className="flex grow">
               <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
