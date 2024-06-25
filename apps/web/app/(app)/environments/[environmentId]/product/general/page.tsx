@@ -1,7 +1,9 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
+import packageJson from "@/package.json";
 import { getServerSession } from "next-auth";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -73,7 +75,12 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
         description="Delete product with all surveys, responses, people, actions and attributes. This cannot be undone.">
         <DeleteProduct environmentId={params.environmentId} product={product} />
       </SettingsCard>
-      <SettingsId title="Product" id={product.id}></SettingsId>
+      <div>
+        <SettingsId title="Product ID" id={product.id}></SettingsId>
+        {!IS_FORMBRICKS_CLOUD && (
+          <SettingsId title="Formbricks version" id={packageJson.version}></SettingsId>
+        )}
+      </div>
     </PageContentWrapper>
   );
 };
