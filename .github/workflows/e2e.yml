@@ -62,14 +62,17 @@ jobs:
       - name: Run App
         run: |
           NODE_ENV=test pnpm start --filter=@formbricks/web &
+          APP_PID=$!
+          sleep 10  # Optional: gives some buffer for the app to start
           for attempt in {1..20}; do
             if [ $(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/health) -eq 200 ]; then
-              echo "Ready"
+              echo "Application is ready."
               break
             fi
-            echo "Waiting..."
+            echo "Still waiting for the application to be ready..."
             sleep 10
           done
+          wait $APP_PID
 
       - name: Test Serve endpoints
         run: |
