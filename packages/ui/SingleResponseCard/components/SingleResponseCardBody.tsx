@@ -67,7 +67,6 @@ export const SingleResponseCardBody = ({
     responseData: string | number | string[] | Record<string, string>,
     question: TSurveyQuestion
   ) => {
-    console.log(questionType, responseData, question);
     switch (questionType) {
       case TSurveyQuestionTypeEnum.Rating:
         if (typeof responseData === "number")
