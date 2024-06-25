@@ -1,6 +1,5 @@
 "use client";
 
-import packageJson from "@/package.json";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
@@ -20,16 +19,10 @@ const tabs = [
 interface SetupInstructionsProps {
   environmentId: string;
   webAppUrl: string;
-  isFormbricksCloud: boolean;
   type: "app" | "website";
 }
 
-export const SetupInstructions = ({
-  environmentId,
-  webAppUrl,
-  isFormbricksCloud,
-  type,
-}: SetupInstructionsProps) => {
+export const SetupInstructions = ({ environmentId, webAppUrl, type }: SetupInstructionsProps) => {
   const [activeTab, setActiveTab] = useState(tabs[0].id);
 
   return (
@@ -173,14 +166,6 @@ if (typeof window !== "undefined") {
             </ul>
           </div>
         ) : null}
-        {!isFormbricksCloud && (
-          <div>
-            <hr className="my-3" />
-            <p className="flex w-full justify-end text-sm text-slate-700">
-              Formbricks version: {packageJson.version}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
