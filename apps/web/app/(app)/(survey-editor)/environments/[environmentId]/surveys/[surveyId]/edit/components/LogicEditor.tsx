@@ -285,7 +285,9 @@ export const LogicEditor = ({
         <div className="mt-2 space-y-3">
           {question?.logic?.map((logic, logicIdx) => (
             <div key={logicIdx} className="flex items-center space-x-2 space-y-1 text-xs xl:text-sm">
-              <CornerDownRightIcon className="h-4 w-4" />
+              <div>
+                <CornerDownRightIcon className="h-4 w-4" />
+              </div>
               <p className="text-slate-800">If this answer</p>
 
               <Select value={logic.condition} onValueChange={(e) => updateLogic(logicIdx, { condition: e })}>
@@ -391,11 +393,12 @@ export const LogicEditor = ({
                   <SelectItem value="end">End of survey</SelectItem>
                 </SelectContent>
               </Select>
-
-              <TrashIcon
-                className="h-4 w-4 cursor-pointer text-slate-400"
-                onClick={() => deleteLogic(logicIdx)}
-              />
+              <div>
+                <TrashIcon
+                  className="h-4 w-4 cursor-pointer text-slate-400"
+                  onClick={() => deleteLogic(logicIdx)}
+                />
+              </div>
             </div>
           ))}
           <div className="flex flex-wrap items-center space-x-2 py-1 text-sm">
