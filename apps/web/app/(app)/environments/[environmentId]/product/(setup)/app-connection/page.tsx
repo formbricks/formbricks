@@ -4,7 +4,7 @@ import { SetupInstructions } from "@/app/(app)/environments/[environmentId]/prod
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { notFound } from "next/navigation";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
-import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -61,12 +61,7 @@ const Page = async ({ params }) => {
           title="How to setup"
           description="Follow these steps to setup the Formbricks widget within your app"
           noPadding>
-          <SetupInstructions
-            environmentId={params.environmentId}
-            webAppUrl={WEBAPP_URL}
-            isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-            type="app"
-          />
+          <SetupInstructions type="app" environmentId={params.environmentId} webAppUrl={WEBAPP_URL} />
         </SettingsCard>
       </div>
     </PageContentWrapper>
