@@ -31,7 +31,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
   const inviteTeamMembers = async (data: TInviteMembersFormSchema) => {
     const emails = Object.values(data).filter((email) => email && email.trim());
     if (!emails.length) {
-      router.push("/onboarding");
+      router.push("/");
       return;
     }
 
