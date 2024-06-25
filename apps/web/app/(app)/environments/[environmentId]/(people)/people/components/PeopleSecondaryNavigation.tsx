@@ -41,7 +41,7 @@ export const PeopleSecondaryNavigation = async ({
       label: "Attributes",
       href: `/environments/${environmentId}/attributes`,
       // hide attributes tab if it's being used in the loading state or if the product's channel is website or link
-      hidden: !!(!loading && currentProductChannel && currentProductChannel !== "app"),
+      hidden: loading || !!(currentProductChannel && currentProductChannel !== "app"),
     },
   ];
 

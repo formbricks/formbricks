@@ -126,7 +126,7 @@ export const SurveyEditor = ({
 
   return (
     <>
-      <div className="flex h-full flex-col">
+      <div className="flex h-full w-full flex-col">
         <SurveyMenuBar
           setLocalSurvey={setLocalSurvey}
           localSurvey={localSurvey}
@@ -141,7 +141,9 @@ export const SurveyEditor = ({
           setSelectedLanguageCode={setSelectedLanguageCode}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
-          <main className="relative z-0 flex-1      overflow-y-auto focus:outline-none" ref={surveyEditorRef}>
+          <main
+            className="relative z-0 w-1/2 flex-1 overflow-y-auto focus:outline-none"
+            ref={surveyEditorRef}>
             <QuestionsAudienceTabs
               activeId={activeView}
               setActiveId={setActiveView}

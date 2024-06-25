@@ -45,7 +45,7 @@ export const EditFormbricksBranding = ({
 
   return (
     <div className="w-full items-center space-y-4">
-      <div className="mb-4 flex items-center space-x-2">
+      <div className="flex items-center space-x-2">
         <Switch
           id={`branding-${type}`}
           checked={isBrandingEnabled}
