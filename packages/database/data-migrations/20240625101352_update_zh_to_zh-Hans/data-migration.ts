@@ -60,33 +60,32 @@ const main = async () => {
       console.log(`Total surveys found:${surveys.length}`);
       let transformedSurveyCount = 0;
 
-      const updatePromises = surveys.map((survey) => {
-        if (survey.languages.some((surveyLanguage) => surveyLanguage.language.code === "zh")) {
-          transformedSurveyCount++;
-          const updatedSurvey = structuredClone(survey);
+      const surveysWithChineseTranslations = surveys.filter((survey) =>
+        survey.languages.some((surveyLanguage) => surveyLanguage.language.code === "zh")
+      );
 
-          // Update cards and questions
-          updatedSurvey.welcomeCard = updateLanguageCodeForWelcomeCard(survey.welcomeCard, "zh", "zh-Hans");
-          updatedSurvey.thankYouCard = updateLanguageCodeForThankYouCard(
-            survey.thankYouCard,
-            "zh",
-            "zh-Hans"
-          );
-          updatedSurvey.questions = survey.questions.map((question) =>
-            updateLanguageCodeForQuestion(question, "zh", "zh-Hans")
-          );
+      const updatePromises = surveysWithChineseTranslations.map((survey) => {
+        transformedSurveyCount++;
+        const updatedSurvey = structuredClone(survey);
 
-          // Return the update promise
-          return tx.survey.update({
-            where: { id: survey.id },
-            data: {
-              welcomeCard: updatedSurvey.welcomeCard,
-              thankYouCard: updatedSurvey.thankYouCard,
-              questions: updatedSurvey.questions,
-            },
-          });
-        }
+        // Update cards and questions
+        updatedSurvey.welcomeCard = updateLanguageCodeForWelcomeCard(survey.welcomeCard, "zh", "zh-Hans");
+        updatedSurvey.thankYouCard = updateLanguageCodeForThankYouCard(survey.thankYouCard, "zh", "zh-Hans");
+        updatedSurvey.questions = survey.questions.map((question) =>
+          updateLanguageCodeForQuestion(question, "zh", "zh-Hans")
+        );
+
+        // Return the update promise
+        return tx.survey.update({
+          where: { id: survey.id },
+          data: {
+            welcomeCard: updatedSurvey.welcomeCard,
+            thankYouCard: updatedSurvey.thankYouCard,
+            questions: updatedSurvey.questions,
+          },
+        });
       });
+
       await Promise.all(updatePromises);
 
       console.log(transformedSurveyCount, " surveys transformed");

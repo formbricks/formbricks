@@ -39,7 +39,7 @@
     "data-migration:adds_app_and_website_status_indicator": "ts-node ./data-migrations/20240610055828_adds_app_and_website_status_indicators/data-migration.ts",
     "data-migration:product-config": "ts-node ./data-migrations/20240612115151_adds_product_config/data-migration.ts",
     "data-migration:v2.2": "pnpm data-migration:adds_app_and_website_status_indicator && pnpm data-migration:product-config && pnpm data-migration:pricing-v2",
-    "data-migration:zh-to-zh-Hans": "ts-node ./data-migrations/20240625101352_update_zh_to_zh-Hans/data-migration-zh-to-zh-Hans.ts"
+    "data-migration:zh-to-zh-Hans": "ts-node ./data-migrations/20240625101352_update_zh_to_zh-Hans/data-migration.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.15.1",
