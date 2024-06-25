@@ -125,7 +125,13 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
         />
       )}
 
-      <Input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+      <Input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg, image/png"
+        className="hidden"
+        onChange={handleFileChange}
+      />
 
       {isEditing && logoUrl && (
         <>
