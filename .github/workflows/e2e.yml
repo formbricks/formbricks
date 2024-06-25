@@ -16,11 +16,11 @@ jobs:
         with:
           e2e_testing_mode: "1"
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
+      # - name: Install pnpm
+      #   uses: pnpm/action-setup@v2
 
-      - name: Install dependencies
-        run: pnpm install
+      # - name: Install dependencies
+      #   run: pnpm install
 
       - name: Start PostgreSQL
         run: |
