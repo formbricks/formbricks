@@ -598,7 +598,7 @@ export const getResponseDownloadUrl = async (
       "Timestamp",
       "Finished",
       "Survey ID",
-      "Formbricks ID (internal)",
+      "Person ID (internal)",
       "User ID",
       "Notes",
       "Tags",
