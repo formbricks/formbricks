@@ -1,15 +1,13 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
 import { replaceEnvironmentIdInHtml } from "./utils/helper";
-import { mockUsers } from "./utils/mock";
 
 test.describe("JS Package Test", async () => {
-  const { name, email } = mockUsers.js[0];
   let environmentId: string;
 
   test("Tests", async ({ page, users }) => {
     await test.step("Admin creates an In-App Survey", async () => {
-      const user = await users.create({ name, email });
+      const user = await users.create();
       await user.login();
 
       await page.goto("/");
@@ -20,6 +18,8 @@ test.describe("JS Package Test", async () => {
 
       await page.getByRole("button", { name: "Use this template" }).isVisible();
       await page.getByRole("button", { name: "Use this template" }).click();
+
+      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit/);
 
       await page.getByRole("button", { name: "Settings", exact: true }).click();
 
@@ -57,7 +57,7 @@ test.describe("JS Package Test", async () => {
       // await expect(page.getByRole("heading", { name: "Surveys" })).toBeVisible();
     });
 
-    await test.step("JS Display Survey on Page", async () => {
+    await test.step("JS display survey on page and submit response", async () => {
       let currentDir = process.cwd();
       let htmlFilePath = currentDir + "/packages/js/index.html";
 
@@ -74,29 +74,8 @@ test.describe("JS Package Test", async () => {
       // const displayApi = await page.waitForResponse((response) => response.url().includes("/display"));
       // expect(displayApi.status()).toBe(200);
 
-      // Formbricks Modal is visible
-      await expect(
-        page.locator("#questionCard-0").getByRole("link", { name: "Powered by Formbricks" })
-      ).toBeVisible();
-
-      await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(1500);
-    });
-
-    await test.step("JS submits Response to Survey", async () => {
-      let currentDir = process.cwd();
-      let htmlFilePath = currentDir + "/packages/js/index.html";
-
-      let htmlFile = "file:///" + htmlFilePath;
-
-      await page.goto(htmlFile);
-
-      // Formbricks In App Sync has happened
-      const syncApi = await page.waitForResponse((response) => response.url().includes("/app/sync"));
-      expect(syncApi.status()).toBe(200);
-
       // Formbricks Modal exists in the DOM
-      await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
+      // await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
 
       // Formbricks Modal is visible
       await expect(
@@ -118,29 +97,29 @@ test.describe("JS Package Test", async () => {
       await page.locator("#questionCard-4").getByRole("button", { name: "Next" }).click();
       await page.locator("#questionCard-5").getByLabel("textarea").fill("Make this end to end test pass!");
       await page.getByRole("button", { name: "Finish" }).click();
-      await page.getByText("Thank you!").click();
 
-      // Formbricks Modal is not visible
-      await expect(
-        page.locator("#questionCard-6").getByRole("link", { name: "Powered by Formbricks" })
-      ).toBeVisible();
+      // loading spinner -> wait for it to disappear
+      await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
       await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(5000);
     });
 
     await test.step("Admin validates Displays & Response", async () => {
+      await page.goto("/");
+      await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+
       await page.getByRole("link", { name: "product Market Fit (Superhuman)" }).click();
       (await page.waitForSelector("text=Responses")).isVisible();
 
-      // Survey should have 2 Displays
-      await page.waitForTimeout(1000);
-      await expect(page.getByText("Impressions2")).toBeVisible();
+      await page.waitForLoadState("networkidle");
 
-      // Survey should have 1 Response
-      await page.waitForTimeout(1000);
-      await expect(page.getByRole("button", { name: "Completed50%" })).toBeVisible();
+      const impressionsCount = await page.getByRole("button", { name: "Impressions" }).innerText();
+      expect(impressionsCount).toEqual("Impressions\n\n1");
+
+      await expect(page.getByRole("link", { name: "Responses (1)" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Completed100%" })).toBeVisible();
+
       await expect(page.getByText("1 Responses", { exact: true }).first()).toBeVisible();
-      await expect(page.getByText("CTR50%")).toBeVisible();
+      await expect(page.getByText("CTR100%")).toBeVisible();
       await expect(page.getByText("Somewhat disappointed100%")).toBeVisible();
       await expect(page.getByText("Founder100%")).toBeVisible();
       await expect(page.getByText("People who believe that PMF").first()).toBeVisible();

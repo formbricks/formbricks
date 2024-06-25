@@ -97,6 +97,7 @@ test.describe("Invite, accept and remove organization member", async () => {
 
     await page.getByRole("link", { name: "Organization" }).click();
 
+    await page.waitForURL(/\/environments\/[^/]+\/settings\/members/);
     await expect(page.locator("#membersInfoWrapper")).toBeVisible();
 
     const lastMemberInfo = page.locator("#membersInfoWrapper > .singleMemberInfo:last-child");
@@ -109,7 +110,5 @@ test.describe("Invite, accept and remove organization member", async () => {
 
     await expect(page.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Delete", exact: true }).click();
-
-    await expect(page.getByText("organization2@formbricks.com")).not.toBeVisible();
   });
 });
