@@ -3,10 +3,8 @@ on:
   workflow_call:
   workflow_dispatch:
 jobs:
-  build:
-    name: Run E2E Tests
+  start-app:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
     services:
       postgres:
         image: postgres:latest
@@ -17,18 +15,18 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U testuser"
+          --health-cmd="pg_isready -U postgres"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
     steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/dangerous-git-checkout
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Build & Cache Web Binaries
-        uses: ./.github/actions/cache-build-web
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
         with:
-          e2e_testing_mode: "1"
+          node-version: "14"
 
       - name: Check if pnpm is installed
         id: pnpm-check
@@ -52,8 +50,7 @@ jobs:
       - name: Apply Prisma Migrations
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
-        run: |
-          pnpm prisma migrate deploy
+        run: pnpm prisma migrate deploy
 
       - name: Serve packages for lazy loading
         run: |
@@ -61,22 +58,42 @@ jobs:
 
       - name: Run App
         run: |
-          NODE_ENV=test pnpm start --filter=@formbricks/web &
-          APP_PID=$!
-          sleep 10  # Optional: gives some buffer for the app to start
+          NODE_ENV=test pnpm start --filter=@formbricks/web > app.log 2>&1 &
+          echo $! > app.pid
+
+  wait-for-app:
+    runs-on: ubuntu-latest
+    needs: start-app
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Wait for App
+        run: |
           for attempt in {1..20}; do
             if [ $(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/health) -eq 200 ]; then
-              echo "Application is ready."
+              echo "Ready"
               break
             fi
-            echo "Still waiting for the application to be ready..."
+            echo "Waiting..."
             sleep 10
           done
-          wait $APP_PID
+          cat app.log  # Optionally print the complete log file again at the end.
 
-      - name: Test Serve endpoints
-        run: |
-          curl -s http://localhost:3003
+  run-tests:
+    runs-on: ubuntu-latest
+    needs: wait-for-app
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Cache Playwright
         uses: actions/cache@v3
@@ -92,8 +109,7 @@ jobs:
       - name: Run E2E Tests
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
-        run: |
-          pnpm test:e2e
+        run: pnpm test:e2e
 
       - uses: actions/upload-artifact@v3
         if: always()
