@@ -58,7 +58,7 @@ jobs:
           cd packages/surveys && pnpm serve &
 
       - name: Run App
-        run: |
+          run: |
           NODE_ENV=test pnpm start --filter=@formbricks/web &
           sleep 10  # Optional: gives some buffer for the app to start
           for attempt in {1..10}; do
@@ -70,9 +70,9 @@ jobs:
               echo "Application failed to start in time."
               exit 1
             fi
-              echo "Still waiting for the application to be ready..."
-              sleep 10
-            done
+            echo "Still waiting for the application to be ready..."
+            sleep 10
+          done
 
       - name: Test Serve endpoints
         run: |
