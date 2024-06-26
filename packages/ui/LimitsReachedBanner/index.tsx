@@ -42,18 +42,18 @@ export const LimitsReachedBanner = ({
                   <div className="ml-3 w-0 flex-1">
                     <p className="text-base font-medium text-gray-900">Limits Reached</p>
                     <p className="mt-1 text-sm text-gray-500">
-                      {isPeopleLimitReached && isResponseLimitReached && (
+                      {isPeopleLimitReached && isResponseLimitReached ? (
                         <>
-                          You have reached your monthly MIU limit of<span>{orgBillingPeopleLimit}</span> and
+                          You have reached your monthly MIU limit of <span>{orgBillingPeopleLimit}</span> and
                           response limit of {orgBillingResponseLimit}.{" "}
                         </>
-                      )}
-                      {isPeopleLimitReached && !isResponseLimitReached && (
+                      ) : null}
+                      {isPeopleLimitReached && !isResponseLimitReached ? (
                         <>You have reached your monthly MIU limit of {orgBillingPeopleLimit}. </>
-                      )}
-                      {!isPeopleLimitReached && isResponseLimitReached && (
+                      ) : null}
+                      {!isPeopleLimitReached && isResponseLimitReached ? (
                         <>You have reached your monthly response limit of {orgBillingResponseLimit}. </>
-                      )}
+                      ) : null}
                     </p>
                     <Link href={`/environments/${environmentId}/settings/billing`}>
                       <span className="text-sm text-slate-900">Learn more</span>
