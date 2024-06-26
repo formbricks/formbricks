@@ -43,7 +43,7 @@ export const StackedCardsContainer = ({
     return survey.questions.findIndex((question) => question.id === currentQuestionId);
   }, [currentQuestionId, survey.welcomeCard.enabled, survey.thankYouCard.enabled, survey.questions]);
 
-  const [prevQuestionIdx, setPrevQuestionIdx] = useState(questionIdxTemp - 1);
+  const [prevQuestionIdx, setPrevQuestionIdx] = useState(questionIdxTemp);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(questionIdxTemp);
   const [nextQuestionIdx, setNextQuestionIdx] = useState(questionIdxTemp + 1);
   const [visitedQuestions, setVisitedQuestions] = useState<number[]>([]);
@@ -59,7 +59,13 @@ export const StackedCardsContainer = ({
       });
     } else if (questionIdxTemp < currentQuestionIdx) {
       // Back button is clicked
-      setNextQuestionIdx(currentQuestionIdx);
+      // Check if it was logic jump or sequence
+      if (questionIdxTemp + 1 < currentQuestionIdx) {
+        // logic jump
+        setNextQuestionIdx(questionIdxTemp + 1);
+      } else {
+        setNextQuestionIdx(currentQuestionIdx);
+      }
       setCurrentQuestionIdx(questionIdxTemp);
       setPrevQuestionIdx(visitedQuestions[visitedQuestions.length - 2]);
       setVisitedQuestions((prev) => {
@@ -152,6 +158,20 @@ export const StackedCardsContainer = ({
         bottom: 0,
       };
   };
+  // to get logic jump ids
+  const getLogicJumps = (currentId: number) => {
+    let logicIds: number[] = [];
+    if (currentId < survey.questions.length) {
+      survey.questions[currentId].logic?.map((logic: any) => {
+        if (logic.value !== undefined) {
+          logicIds.push(survey.questions.findIndex((question) => question.id === logic.destination));
+        }
+      });
+      // to update the sequence of logic cards
+      logicIds = logicIds.sort();
+    }
+    return logicIds;
+  };
 
   return (
     <div
@@ -171,8 +191,14 @@ export const StackedCardsContainer = ({
         </div>
       ) : (
         questionIdxTemp !== undefined &&
-        [prevQuestionIdx, currentQuestionIdx, nextQuestionIdx, nextQuestionIdx + 1].map(
-          (questionIdxTemp, index) => {
+        [
+          prevQuestionIdx,
+          currentQuestionIdx,
+          nextQuestionIdx,
+          nextQuestionIdx + 1,
+          ...getLogicJumps(currentQuestionIdx),
+        ].map((questionIdxTemp, index) => {
+          if (questionIdxTemp !== undefined) {
             //Check for hiding extra card
             if (survey.thankYouCard.enabled) {
               if (questionIdxTemp > survey.questions.length) return;
@@ -202,7 +228,7 @@ export const StackedCardsContainer = ({
               </div>
             );
           }
-        )
+        })
       )}
     </div>
   );
