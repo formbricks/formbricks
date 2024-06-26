@@ -22,7 +22,14 @@ export const IndividualInviteTab = ({
   isFormbricksCloud,
   environmentId,
 }: IndividualInviteTabProps) => {
-  const { register, getValues, handleSubmit, reset, control } = useForm<{
+  const {
+    register,
+    getValues,
+    handleSubmit,
+    reset,
+    control,
+    formState: { isSubmitting },
+  } = useForm<{
     name: string;
     email: string;
     role: MembershipRole;
@@ -31,7 +38,7 @@ export const IndividualInviteTab = ({
   const submitEventClass = async () => {
     const data = getValues();
     data.role = data.role || MembershipRole.Admin;
-    onSubmit([data]);
+    await onSubmit([data]);
     setOpen(false);
     reset();
   };
@@ -86,7 +93,7 @@ export const IndividualInviteTab = ({
             }}>
             Cancel
           </Button>
-          <Button variant="darkCTA" type="submit" size="sm">
+          <Button variant="darkCTA" type="submit" size="sm" loading={isSubmitting}>
             Send Invitation
           </Button>
         </div>
