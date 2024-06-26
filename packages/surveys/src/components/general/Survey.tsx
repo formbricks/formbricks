@@ -253,6 +253,7 @@ export const Survey = ({
       if (questionIdx === -1) {
         return (
           <WelcomeCard
+            key="start"
             headline={survey.welcomeCard.headline}
             html={survey.welcomeCard.html}
             fileUrl={survey.welcomeCard.fileUrl}
@@ -263,11 +264,13 @@ export const Survey = ({
             responseCount={responseCount}
             autoFocusEnabled={autoFocusEnabled}
             replaceRecallInfo={replaceRecallInfo}
+            isCurrent={offset === 0}
           />
         );
       } else if (questionIdx === survey.questions.length) {
         return (
           <ThankYouCard
+            key="end"
             headline={replaceRecallInfo(
               getLocalizedValue(survey.thankYouCard.headline, selectedLanguage),
               responseData
@@ -279,11 +282,13 @@ export const Survey = ({
             isResponseSendingFinished={isResponseSendingFinished}
             buttonLabel={getLocalizedValue(survey.thankYouCard.buttonLabel, selectedLanguage)}
             buttonLink={survey.thankYouCard.buttonLink}
+            survey={survey}
             imageUrl={survey.thankYouCard.imageUrl}
             videoUrl={survey.thankYouCard.videoUrl}
             redirectUrl={survey.redirectUrl}
             isRedirectDisabled={isRedirectDisabled}
             autoFocusEnabled={autoFocusEnabled}
+            isCurrent={offset === 0}
           />
         );
       } else {
@@ -291,6 +296,7 @@ export const Survey = ({
         return (
           question && (
             <QuestionConditional
+              key={question.id}
               surveyId={survey.id}
               question={parseRecallInformation(question, selectedLanguage, responseData)}
               value={responseData[question.id]}
