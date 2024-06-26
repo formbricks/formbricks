@@ -72,7 +72,6 @@ export const WelcomeCard = ({
   replaceRecallInfo,
   isCurrent,
 }: WelcomeCardProps) => {
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
     if (idx === 0.5) {
@@ -111,7 +110,6 @@ export const WelcomeCard = ({
   useEffect(() => {
     const handleEnter = (e: KeyboardEvent) => {
       if (e.key === "Enter") {
-        setIsButtonDisabled(true);
         handleSubmit();
       }
     };
@@ -155,7 +153,7 @@ export const WelcomeCard = ({
           focus={autoFocusEnabled}
           onClick={handleSubmit}
           type="button"
-          disabled={isButtonDisabled}
+          onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
         />
       </div>
 
