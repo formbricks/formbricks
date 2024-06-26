@@ -1,6 +1,7 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { ErrorHandler } from "@formbricks/lib/errors";
 import { getLanguageCodeForSurvey } from "@formbricks/lib/i18n/utils";
+import { getDefaultLanguageCode, handleHiddenFields } from "@formbricks/lib/js/utils";
 import { Logger } from "@formbricks/lib/logger";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
@@ -8,7 +9,6 @@ import { getStyling } from "@formbricks/lib/utils/styling";
 import { TJsTrackProperties } from "@formbricks/types/js";
 import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
-import { getDefaultLanguageCode, handleHiddenFields } from "../../shared/utils";
 import { AppConfig } from "./config";
 import { putFormbricksInErrorState } from "./initialize";
 import { sync } from "./sync";

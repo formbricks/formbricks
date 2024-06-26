@@ -1,6 +1,6 @@
-import { AppConfig, RNAppConfig } from "sdk/config";
 import { FormbricksAPI } from "@formbricks/api";
 import { TAttributes } from "@formbricks/types/attributes";
+import { AppConfig, RNAppConfig } from "./config";
 import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "./errors";
 import { Logger } from "./logger";
 

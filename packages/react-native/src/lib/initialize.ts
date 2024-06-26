@@ -1,10 +1,10 @@
 import { ErrorHandler, NotInitializedError, err, okVoid } from "@formbricks/lib/errors";
 import type { MissingFieldError, MissingPersonError, NetworkError, Result } from "@formbricks/lib/errors";
 import { isInitialized, setIsInitialize } from "@formbricks/lib/initializationState";
+import { updateAttributes } from "@formbricks/lib/js/attributes";
+import { RNAppConfig } from "@formbricks/lib/js/config";
+import { sync } from "@formbricks/lib/js/sync";
 import { Logger } from "@formbricks/lib/logger";
-import { updateAttributes } from "@formbricks/lib/sdk/attributes";
-import { RNAppConfig } from "@formbricks/lib/sdk/config";
-import { sync } from "@formbricks/lib/sdk/sync";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
 import { trackAction } from "./actions";

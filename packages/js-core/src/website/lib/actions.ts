@@ -1,6 +1,6 @@
+import { InvalidCodeError, NetworkError, Result, err, okVoid } from "@formbricks/lib/js/errors";
+import { Logger } from "@formbricks/lib/js/logger";
 import { TJsTrackProperties } from "@formbricks/types/js";
-import { InvalidCodeError, NetworkError, Result, err, okVoid } from "../../shared/errors";
-import { Logger } from "../../shared/logger";
 import { WebsiteConfig } from "./config";
 import { triggerSurvey } from "./widget";
 

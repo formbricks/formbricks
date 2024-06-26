@@ -1,7 +1,7 @@
+import { ErrorHandler, NetworkError, Result, err, match, okVoid } from "@formbricks/lib/js/errors";
+import { Logger } from "@formbricks/lib/js/logger";
+import { evaluateNoCodeConfigClick, handleUrlFilters } from "@formbricks/lib/js/utils";
 import type { TActionClass } from "@formbricks/types/actionClasses";
-import { ErrorHandler, NetworkError, Result, err, match, okVoid } from "../../shared/errors";
-import { Logger } from "../../shared/logger";
-import { evaluateNoCodeConfigClick, handleUrlFilters } from "../../shared/utils";
 import { trackNoCodeAction } from "./actions";
 import { AppConfig } from "./config";
 

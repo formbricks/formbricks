@@ -842,9 +842,7 @@ export const getSyncSurveys = (
         let surveys: TSurvey[] | TLegacySurvey[] = await getSurveys(environmentId);
 
         // filtered surveys for running and web
-        surveys = surveys.filter(
-          (survey) => survey.status === "inProgress" && (survey.type === "app" || survey.type === "mobile")
-        );
+        surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "app");
 
         // if no surveys are left, return an empty array
         if (surveys.length === 0) {

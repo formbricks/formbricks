@@ -67,7 +67,6 @@ export const LinkSurvey = ({
   const skipPrefilled = searchParams?.get("skipPrefilled") === "true";
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
-  // const isMobile = searchParams?.get("mobile") === "true";
   const defaultLanguageCode = survey.languages?.find((surveyLanguage) => {
     return surveyLanguage.default === true;
   })?.language.code;

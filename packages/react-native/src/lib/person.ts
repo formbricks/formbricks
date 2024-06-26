@@ -1,6 +1,6 @@
 import { NetworkError, Result, err, okVoid } from "@formbricks/lib/errors";
+import { RNAppConfig } from "@formbricks/lib/js/config";
 import { Logger } from "@formbricks/lib/logger";
-import { RNAppConfig } from "@formbricks/lib/sdk/config";
 import { deinitalize, initialize } from "./initialize";
 
 const appConfig = RNAppConfig.getInstance();

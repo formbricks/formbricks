@@ -1,8 +1,8 @@
+import { ErrorHandler } from "@formbricks/lib/js/errors";
+import { Logger } from "@formbricks/lib/js/logger";
 import { TJsTrackProperties, TJsWebsiteConfigInput } from "@formbricks/types/js";
 // Shared imports
 import { CommandQueue } from "../shared/commandQueue";
-import { ErrorHandler } from "../shared/errors";
-import { Logger } from "../shared/logger";
 // Website package specific imports
 import { trackCodeAction } from "./lib/actions";
 import { resetConfig } from "./lib/common";

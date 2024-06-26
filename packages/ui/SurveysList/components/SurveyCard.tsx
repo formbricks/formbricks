@@ -1,4 +1,4 @@
-import { Code, Globe2Icon, Link2Icon, SmartphoneIcon } from "lucide-react";
+import { Code, Globe2Icon, Link2Icon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -75,13 +75,6 @@ export const SurveyCard = ({
         <>
           <Link2Icon className="h-4 w-4" />
           <span> Link</span>
-        </>
-      )}
-
-      {type === "mobile" && (
-        <>
-          <SmartphoneIcon className="h-4 w-4" />
-          <span> Mobile</span>
         </>
       )}
     </div>

@@ -3,10 +3,10 @@ import { Modal, ModalProps } from "react-native";
 import { WebView } from "react-native-webview";
 import { FormbricksAPI } from "@formbricks/api";
 import { getLanguageCodeForSurvey } from "@formbricks/lib/i18n/utils";
+import { RNAppConfig } from "@formbricks/lib/js/config";
+import { sync } from "@formbricks/lib/js/sync";
 import { Logger } from "@formbricks/lib/logger";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
-import { RNAppConfig } from "@formbricks/lib/sdk/config";
-import { sync } from "@formbricks/lib/sdk/sync";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
 import { SurveyInlineProps } from "@formbricks/types/formbricksSurveys";
@@ -171,7 +171,6 @@ export const SurveyWebView = ({ survey, ...restProps }: SurveyWebViewProps) => {
           // display
           const { onDisplay, onResponse, responseUpdate, onClose, onRetry, onFinished } =
             validatedMessage.data;
-          console.log(validatedMessage.data);
           if (onDisplay) {
             const { id } = await createDisplay(survey);
             surveyState.updateDisplayId(id);

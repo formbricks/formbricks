@@ -240,7 +240,7 @@ export const ZJsSettings = z.object({
 
 export type TSettings = z.infer<typeof ZJsSettings>;
 
-export const ZJsPackageType = z.union([z.literal("app"), z.literal("website"), z.literal("mobile")]);
+export const ZJsPackageType = z.union([z.literal("app"), z.literal("website")]);
 
 export type TJsPackageType = z.infer<typeof ZJsPackageType>;
 

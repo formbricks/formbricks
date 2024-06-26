@@ -1,5 +1,5 @@
+import { Result, err, ok, wrapThrows } from "@formbricks/lib/js/errors";
 import { TJsWebsiteConfig, TJsWebsiteConfigUpdateInput } from "@formbricks/types/js";
-import { Result, err, ok, wrapThrows } from "../../shared/errors";
 
 export const WEBSITE_LOCAL_STORAGE_KEY = "formbricks-js-website";
 

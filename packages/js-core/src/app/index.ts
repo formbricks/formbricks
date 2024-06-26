@@ -1,8 +1,8 @@
-import { setAttributeInApp } from "@formbricks/lib/sdk/attributes";
+import { setAttributeInApp } from "@formbricks/lib/js/attributes";
+import { ErrorHandler } from "@formbricks/lib/js/errors";
+import { Logger } from "@formbricks/lib/js/logger";
 import { TJsAppConfigInput, TJsTrackProperties } from "@formbricks/types/js";
 import { CommandQueue } from "../shared/commandQueue";
-import { ErrorHandler } from "../shared/errors";
-import { Logger } from "../shared/logger";
 import { trackCodeAction } from "./lib/actions";
 import { initialize } from "./lib/initialize";
 import { checkPageUrl } from "./lib/noCodeActions";

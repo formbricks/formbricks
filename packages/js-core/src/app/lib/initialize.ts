@@ -1,6 +1,5 @@
-import { updateAttributes } from "@formbricks/lib/sdk/attributes";
-import { TAttributes } from "@formbricks/types/attributes";
-import type { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
+import { updateAttributes } from "@formbricks/lib/js/attributes";
+import { AppConfig, IN_APP_LOCAL_STORAGE_KEY } from "@formbricks/lib/js/config";
 import {
   ErrorHandler,
   MissingFieldError,
@@ -11,11 +10,12 @@ import {
   err,
   okVoid,
   wrapThrows,
-} from "../../shared/errors";
-import { Logger } from "../../shared/logger";
-import { getIsDebug } from "../../shared/utils";
+} from "@formbricks/lib/js/errors";
+import { Logger } from "@formbricks/lib/js/logger";
+import { getIsDebug } from "@formbricks/lib/js/utils";
+import { TAttributes } from "@formbricks/types/attributes";
+import type { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
 import { trackNoCodeAction } from "./actions";
-import { AppConfig, IN_APP_LOCAL_STORAGE_KEY } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { checkPageUrl } from "./noCodeActions";
 import { sync } from "./sync";

@@ -473,7 +473,7 @@ export const ZSurveyDisplayOption = z.enum([
 
 export type TSurveyDisplayOption = z.infer<typeof ZSurveyDisplayOption>;
 
-export const ZSurveyType = z.enum(["link", "app", "website", "mobile"]);
+export const ZSurveyType = z.enum(["link", "app", "website"]);
 
 export type TSurveyType = z.infer<typeof ZSurveyType>;
 

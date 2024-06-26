@@ -1,4 +1,3 @@
-import type { TJSAppConfig, TJsWebsiteConfig, TJsWebsiteConfigInput } from "@formbricks/types/js";
 import {
   ErrorHandler,
   MissingFieldError,
@@ -9,9 +8,10 @@ import {
   err,
   okVoid,
   wrapThrows,
-} from "../../shared/errors";
-import { Logger } from "../../shared/logger";
-import { getIsDebug } from "../../shared/utils";
+} from "@formbricks/lib/js/errors";
+import { Logger } from "@formbricks/lib/js/logger";
+import { getIsDebug } from "@formbricks/lib/js/utils";
+import type { TJSAppConfig, TJsWebsiteConfig, TJsWebsiteConfigInput } from "@formbricks/types/js";
 import { trackNoCodeAction } from "./actions";
 import { WEBSITE_LOCAL_STORAGE_KEY, WebsiteConfig } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";

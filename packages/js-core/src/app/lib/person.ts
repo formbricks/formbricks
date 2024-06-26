@@ -1,5 +1,5 @@
-import { NetworkError, Result, err, okVoid } from "../../shared/errors";
-import { Logger } from "../../shared/logger";
+import { NetworkError, Result, err, okVoid } from "@formbricks/lib/js/errors";
+import { Logger } from "@formbricks/lib/js/logger";
 import { AppConfig } from "./config";
 import { deinitalize, initialize } from "./initialize";
 import { closeSurvey } from "./widget";

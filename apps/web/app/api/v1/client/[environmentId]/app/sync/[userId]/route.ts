@@ -44,15 +44,12 @@ export const GET = async (
   try {
     const { device } = userAgent(request);
     const version = request.nextUrl.searchParams.get("version");
-    console.log("running123");
-    console.log(typeof params.userId);
     // validate using zod
 
     const inputValidation = ZJsPeopleUserIdInput.safeParse({
       environmentId: params.environmentId,
       userId: params.userId,
     });
-    console.log(inputValidation.success);
     if (!inputValidation.success) {
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",
@@ -105,7 +102,6 @@ export const GET = async (
         monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit;
     }
 
-    console.log("getting person");
     let person = await getPersonByUserId(environmentId, userId);
 
     if (isMauLimitReached) {

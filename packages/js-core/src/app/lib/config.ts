@@ -1,5 +1,5 @@
+import { Result, err, ok, wrapThrows } from "@formbricks/lib/js/errors";
 import { TJSAppConfig, TJsAppConfigUpdateInput } from "@formbricks/types/js";
-import { Result, err, ok, wrapThrows } from "../../shared/errors";
 
 export const IN_APP_LOCAL_STORAGE_KEY = "formbricks-js-app";
 
