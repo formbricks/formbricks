@@ -198,7 +198,7 @@ export const SurveyFilters = ({
           tooltipContent={getToolTipContent("List")}
           className="bg-slate-900 text-white">
           <div
-            className={`flex  h-8 w-8  items-center justify-center  rounded-lg border  p-1 ${orientation === "list" ? "bg-slate-900 text-white" : "bg-white"}`}
+            className={`flex h-8 w-8 items-center justify-center rounded-lg border p-1 ${orientation === "list" ? "bg-slate-900 text-white" : "bg-white"}`}
             onClick={() => handleOrientationChange("list")}>
             <Equal className="h-5 w-5" />
           </div>
@@ -209,7 +209,7 @@ export const SurveyFilters = ({
           tooltipContent={getToolTipContent("Grid")}
           className="bg-slate-900 text-white">
           <div
-            className={`flex h-8 w-8  items-center justify-center rounded-lg border  p-1 ${orientation === "grid" ? "bg-slate-900 text-white" : "bg-white"}`}
+            className={`flex h-8 w-8 items-center justify-center rounded-lg border p-1 ${orientation === "grid" ? "bg-slate-900 text-white" : "bg-white"}`}
             onClick={() => handleOrientationChange("grid")}>
             <Grid2X2 className="h-5 w-5" />
           </div>
@@ -221,14 +221,14 @@ export const SurveyFilters = ({
             className="surveyFilterDropdown h-full cursor-pointer border border-slate-700 outline-none hover:bg-slate-900">
             <div className="min-w-auto h-8 rounded-md border sm:flex sm:px-2">
               <div className="hidden w-full items-center justify-between hover:text-white sm:flex">
-                <span className="text-sm ">
+                <span className="text-sm">
                   Sort by: {sortOptions.find((option) => option.value === sortBy)?.label}
                 </span>
                 <ChevronDownIcon className="ml-2 h-4 w-4" />
               </div>
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="bg-slate-900 ">
+          <DropdownMenuContent align="start" className="bg-slate-900">
             {sortOptions.map((option) => (
               <SortOption
                 option={option}

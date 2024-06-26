@@ -91,7 +91,7 @@ export const AttributeSettingsTab = async ({ attributeClass, setOpen }: Attribut
                 ) : (
                   <>
                     {" "}
-                    <ArchiveIcon className="mr-2 h-4  text-slate-600" />
+                    <ArchiveIcon className="mr-2 h-4 text-slate-600" />
                     <span>Archive</span>
                   </>
                 )}

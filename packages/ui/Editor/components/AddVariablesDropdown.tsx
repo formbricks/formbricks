@@ -11,7 +11,7 @@ export const AddVariablesDropdown: React.FC<IAddVariablesDropdown> = (props) => 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="focus:bg-muted pt-[6px]">
-        <div className="items-center ">
+        <div className="items-center">
           {props.isTextEditor ? (
             <>
               <div className="hidden sm:flex">

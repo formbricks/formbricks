@@ -40,7 +40,7 @@ export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionM
           key={imgUrl}
           src={imgUrl}
           alt={altText}
-          className="rounded-custom "
+          className="rounded-custom"
           onLoad={() => {
             setIsLoading(false);
           }}

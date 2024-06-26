@@ -69,11 +69,11 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
   return (
     <div className="space-y-4">
       <div
-        className="relative flex h-52 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-slate-300 bg-slate-50 transition-colors  hover:bg-slate-100"
+        className="relative flex h-52 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-slate-300 bg-slate-50 transition-colors hover:bg-slate-100"
         onClick={() => fileInputRef.current?.click()}>
         {csvFile ? (
           <XIcon
-            className="absolute right-4 top-4 h-6 w-6  cursor-pointer text-neutral-500"
+            className="absolute right-4 top-4 h-6 w-6 cursor-pointer text-neutral-500"
             onClick={removeFile}
           />
         ) : (

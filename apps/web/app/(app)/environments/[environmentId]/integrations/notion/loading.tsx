@@ -15,7 +15,7 @@ const Loading = () => {
 
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-6 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-2 text-center ">Survey</div>
+          <div className="col-span-2 text-center">Survey</div>
           <div className="col-span-2 text-center">Database Name</div>
           <div className="col-span-2 text-center">Updated At</div>
         </div>
