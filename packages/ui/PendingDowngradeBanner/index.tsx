@@ -24,6 +24,7 @@ export const PendingDowngradeBanner = ({
     : false;
 
   const scheduledDowngradeDate = new Date(lastChecked.getTime() + threeDaysInMillis);
+  const formattedDate = `${scheduledDowngradeDate.getMonth() + 1}/${scheduledDowngradeDate.getDate()}/${scheduledDowngradeDate.getFullYear()}`;
 
   const [show, setShow] = useState(true);
 
@@ -45,7 +46,7 @@ export const PendingDowngradeBanner = ({
                     <p className="mt-1 text-sm text-gray-500">
                       We were unable to verify your license because the license server is unreachable.{" "}
                       {isLastCheckedWithin72Hours
-                        ? `You will be downgraded to the Community Edition on ${scheduledDowngradeDate.toLocaleDateString()}.`
+                        ? `You will be downgraded to the Community Edition on ${formattedDate}.`
                         : "You are downgraded to the Community Edition."}
                     </p>
 

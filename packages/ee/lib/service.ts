@@ -124,6 +124,7 @@ export const getEnterpriseLicense = async (): Promise<{
 
   const previousResult = await getPreviousResult();
 
+  // Case: First time checking license and the server errors out
   if (previousResult.active === null) {
     if (isValid === null) {
       const newResult = {
