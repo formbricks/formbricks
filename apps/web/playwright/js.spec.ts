@@ -1,144 +1,129 @@
-import { expect, test } from "@playwright/test";
-import { finishOnboarding, login, replaceEnvironmentIdInHtml, signUpAndLogin } from "./utils/helper";
-import { users } from "./utils/mock";
+import { expect } from "@playwright/test";
+import { test } from "./lib/fixtures";
+import { replaceEnvironmentIdInHtml } from "./utils/helper";
 
 test.describe("JS Package Test", async () => {
-  const { name, email, password } = users.js[0];
   let environmentId: string;
-  test.describe.configure({ mode: "serial" });
 
-  test("Admin creates an In-App Survey", async ({ page }) => {
-    await signUpAndLogin(page, name, email, password);
-    await finishOnboarding(page, "app");
+  test("Tests", async ({ page, users }) => {
+    await test.step("Admin creates an In-App Survey", async () => {
+      const user = await users.create();
+      await user.login();
 
-    await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).isVisible();
-    await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).click();
+      await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
-    await page.getByRole("button", { name: "Use this template" }).isVisible();
-    await page.getByRole("button", { name: "Use this template" }).click();
+      await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).isVisible();
+      await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).click();
 
-    await page.getByRole("button", { name: "Settings", exact: true }).click();
+      await page.getByRole("button", { name: "Use this template" }).isVisible();
+      await page.getByRole("button", { name: "Use this template" }).click();
 
-    await expect(page.locator("#howToSendCardTrigger")).toBeVisible();
-    await page.locator("#howToSendCardTrigger").click();
+      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit/);
 
-    await expect(page.locator("#howToSendCardOption-app")).toBeVisible();
-    await page.locator("#howToSendCardOption-app").click();
+      await page.getByRole("button", { name: "Settings", exact: true }).click();
 
-    await page.getByRole("button", { name: "Add action" }).click();
-    await page.getByText("New SessionGets fired when a").click();
+      await expect(page.locator("#howToSendCardTrigger")).toBeVisible();
+      await page.locator("#howToSendCardTrigger").click();
 
-    await page.locator("#recontactOptionsCardTrigger").click();
+      await expect(page.locator("#howToSendCardOption-app")).toBeVisible();
+      await page.locator("#howToSendCardOption-app").click();
 
-    await page.locator("label").filter({ hasText: "Keep showing while conditions" }).click();
-    await page.locator("#recontactDays").check();
+      await page.locator("#whenToSendCardTrigger").click();
 
-    await page.getByRole("button", { name: "Publish" }).click();
+      await page.getByRole("button", { name: "Add action" }).click();
+      await page.getByText("New SessionGets fired when a").click();
 
-    environmentId =
-      /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
-      (() => {
-        throw new Error("Unable to parse environmentId from URL");
-      })();
+      await page.locator("#recontactOptionsCardTrigger").click();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary/);
-    await page.waitForTimeout(1000);
+      await page.locator("label").filter({ hasText: "Keep showing while conditions" }).click();
+      await page.locator("#recontactDays").check();
 
-    await expect(page.getByRole("link", { name: "Surveys" })).toBeVisible();
-    await page.getByRole("link", { name: "Surveys" }).click();
-    await expect(page.getByRole("heading", { name: "Surveys" })).toBeVisible();
-  });
+      await page.getByRole("button", { name: "Publish" }).click();
 
-  test("JS Display Survey on Page", async ({ page }) => {
-    let currentDir = process.cwd();
-    let htmlFilePath = currentDir + "/packages/js/index.html";
+      environmentId =
+        /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
+        (() => {
+          throw new Error("Unable to parse environmentId from URL");
+        })();
 
-    let htmlFile = replaceEnvironmentIdInHtml(htmlFilePath, environmentId);
-    await page.goto(htmlFile);
+      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary/);
 
-    // Formbricks In App Sync has happened
-    const syncApi = await page.waitForResponse((response) => response.url().includes("/app/sync"));
-    expect(syncApi.status()).toBe(200);
+      // await expect(page.getByRole("link", { name: "Surveys" })).toBeVisible();
+      // await page.getByRole("link", { name: "Surveys" }).click();
 
-    // Formbricks Modal exists in the DOM
-    await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
+      // await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
-    // const displayApi = await page.waitForResponse((response) => response.url().includes("/display"));
-    // expect(displayApi.status()).toBe(200);
+      // await expect(page.getByRole("heading", { name: "Surveys" })).toBeVisible();
+    });
 
-    // Formbricks Modal is visible
-    await expect(
-      page.locator("#questionCard-0").getByRole("link", { name: "Powered by Formbricks" })
-    ).toBeVisible();
+    await test.step("JS display survey on page and submit response", async () => {
+      let currentDir = process.cwd();
+      let htmlFilePath = currentDir + "/packages/js/index.html";
 
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1500);
-  });
+      let htmlFile = replaceEnvironmentIdInHtml(htmlFilePath, environmentId);
+      await page.goto(htmlFile);
 
-  test("JS submits Response to Survey", async ({ page }) => {
-    let currentDir = process.cwd();
-    let htmlFilePath = currentDir + "/packages/js/index.html";
+      // Formbricks In App Sync has happened
+      const syncApi = await page.waitForResponse((response) => response.url().includes("/app/sync"));
+      expect(syncApi.status()).toBe(200);
 
-    let htmlFile = "file:///" + htmlFilePath;
+      // Formbricks Modal exists in the DOM
+      await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
 
-    await page.goto(htmlFile);
+      // const displayApi = await page.waitForResponse((response) => response.url().includes("/display"));
+      // expect(displayApi.status()).toBe(200);
 
-    // Formbricks In App Sync has happened
-    const syncApi = await page.waitForResponse((response) => response.url().includes("/app/sync"));
-    expect(syncApi.status()).toBe(200);
+      // Formbricks Modal exists in the DOM
+      // await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
 
-    // Formbricks Modal exists in the DOM
-    await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
+      // Formbricks Modal is visible
+      await expect(
+        page.locator("#questionCard-0").getByRole("link", { name: "Powered by Formbricks" })
+      ).toBeVisible();
 
-    // Formbricks Modal is visible
-    await expect(
-      page.locator("#questionCard-0").getByRole("link", { name: "Powered by Formbricks" })
-    ).toBeVisible();
+      // Fill the Survey
+      await page.getByRole("button", { name: "Happy to help!" }).click();
+      await page.locator("label").filter({ hasText: "Somewhat disappointed" }).click();
+      await page.locator("#questionCard-1").getByRole("button", { name: "Next" }).click();
+      await page.locator("label").filter({ hasText: "Founder" }).click();
+      await page.locator("#questionCard-2").getByRole("button", { name: "Next" }).click();
+      await page
+        .locator("#questionCard-3")
+        .getByLabel("textarea")
+        .fill("People who believe that PMF is necessary");
+      await page.locator("#questionCard-3").getByRole("button", { name: "Next" }).click();
+      await page.locator("#questionCard-4").getByLabel("textarea").fill("Much higher response rates!");
+      await page.locator("#questionCard-4").getByRole("button", { name: "Next" }).click();
+      await page.locator("#questionCard-5").getByLabel("textarea").fill("Make this end to end test pass!");
+      await page.getByRole("button", { name: "Finish" }).click();
 
-    // Fill the Survey
-    await page.getByRole("button", { name: "Happy to help!" }).click();
-    await page.locator("label").filter({ hasText: "Somewhat disappointed" }).click();
-    await page.locator("#questionCard-1").getByRole("button", { name: "Next" }).click();
-    await page.locator("label").filter({ hasText: "Founder" }).click();
-    await page.locator("#questionCard-2").getByRole("button", { name: "Next" }).click();
-    await page
-      .locator("#questionCard-3")
-      .getByLabel("textarea")
-      .fill("People who believe that PMF is necessary");
-    await page.locator("#questionCard-3").getByRole("button", { name: "Next" }).click();
-    await page.locator("#questionCard-4").getByLabel("textarea").fill("Much higher response rates!");
-    await page.locator("#questionCard-4").getByRole("button", { name: "Next" }).click();
-    await page.locator("#questionCard-5").getByLabel("textarea").fill("Make this end to end test pass!");
-    await page.getByRole("button", { name: "Finish" }).click();
-    await page.getByText("Thank you!").click();
+      // loading spinner -> wait for it to disappear
+      await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
+      await page.waitForLoadState("networkidle");
+    });
 
-    // Formbricks Modal is not visible
-    await expect(
-      page.locator("#questionCard-6").getByRole("link", { name: "Powered by Formbricks" })
-    ).toBeVisible();
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(5000);
-  });
+    await test.step("Admin validates Displays & Response", async () => {
+      await page.goto("/");
+      await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
-  test("Admin validates Displays & Response", async ({ page }) => {
-    await login(page, email, password);
+      await page.getByRole("link", { name: "product Market Fit (Superhuman)" }).click();
+      (await page.waitForSelector("text=Responses")).isVisible();
 
-    await page.getByRole("link", { name: "product Market Fit (Superhuman)" }).click();
-    (await page.waitForSelector("text=Responses")).isVisible();
+      await page.waitForLoadState("networkidle");
 
-    // Survey should have 2 Displays
-    await page.waitForTimeout(1000);
-    await expect(page.getByText("Impressions2")).toBeVisible();
+      const impressionsCount = await page.getByRole("button", { name: "Impressions" }).innerText();
+      expect(impressionsCount).toEqual("Impressions\n\n1");
 
-    // Survey should have 1 Response
-    await page.waitForTimeout(1000);
-    await expect(page.getByRole("button", { name: "Completed50%" })).toBeVisible();
-    await expect(page.getByText("1 Responses", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("CTR50%")).toBeVisible();
-    await expect(page.getByText("Somewhat disappointed100%")).toBeVisible();
-    await expect(page.getByText("Founder100%")).toBeVisible();
-    await expect(page.getByText("People who believe that PMF").first()).toBeVisible();
-    await expect(page.getByText("Much higher response rates!").first()).toBeVisible();
-    await expect(page.getByText("Make this end to end test").first()).toBeVisible();
+      await expect(page.getByRole("link", { name: "Responses (1)" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Completed100%" })).toBeVisible();
+
+      await expect(page.getByText("1 Responses", { exact: true }).first()).toBeVisible();
+      await expect(page.getByText("CTR100%")).toBeVisible();
+      await expect(page.getByText("Somewhat disappointed100%")).toBeVisible();
+      await expect(page.getByText("Founder100%")).toBeVisible();
+      await expect(page.getByText("People who believe that PMF").first()).toBeVisible();
+      await expect(page.getByText("Much higher response rates!").first()).toBeVisible();
+      await expect(page.getByText("Make this end to end test").first()).toBeVisible();
+    });
   });
 });

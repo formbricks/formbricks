@@ -35,8 +35,8 @@ export const TemplateFilters = ({
               disabled={templateSearch && templateSearch.length > 0 ? true : false}
               className={cn(
                 selectedFilter[index] === null
-                  ? " bg-slate-800 font-semibold text-white"
-                  : " bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
+                  ? "bg-slate-800 font-semibold text-white"
+                  : "bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
                 "rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
               )}>
               {index === 0 ? "All channels" : index === 1 ? "All industries" : "All roles"}
@@ -49,8 +49,8 @@ export const TemplateFilters = ({
                 disabled={templateSearch && templateSearch.length > 0 ? true : false}
                 className={cn(
                   selectedFilter[index] === filter.value
-                    ? " bg-slate-800 font-semibold text-white"
-                    : " bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
+                    ? "bg-slate-800 font-semibold text-white"
+                    : "bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
                   "rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
                 )}>
                 {filter.label}

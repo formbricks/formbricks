@@ -1,7 +1,8 @@
-import { expect, test } from "@playwright/test";
-import { users } from "./utils/mock";
+import { expect } from "@playwright/test";
+import { test } from "./lib/fixtures";
+import { mockUsers } from "./utils/mock";
 
-const { name, email, password } = users.signup[0];
+const { name, email, password } = mockUsers.signup[0];
 
 test.describe("Email Signup Flow Test", async () => {
   test.describe.configure({ mode: "serial" });

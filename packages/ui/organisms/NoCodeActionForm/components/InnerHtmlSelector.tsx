@@ -26,7 +26,7 @@ export const InnerHtmlSelector = ({ form }: InnerHtmlSelectorProps) => {
               title="Inner Text"
               description="If a user clicks a button with a specific text"
               childBorder={true}>
-              <div className="w-full rounded-lg border border-slate-100  p-4">
+              <div className="w-full rounded-lg border border-slate-100 p-4">
                 <div className="grid grid-cols-3 gap-x-8">
                   <div className="col-span-3 flex items-end">
                     <Input

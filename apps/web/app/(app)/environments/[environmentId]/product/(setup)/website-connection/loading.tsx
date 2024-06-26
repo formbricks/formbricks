@@ -8,13 +8,13 @@ import { PageHeader } from "@formbricks/ui/PageHeader";
 
 const LoadingCard = ({ title, description, skeletonLines }) => {
   return (
-    <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4  text-left shadow-sm">
-      <div className="grid content-center   border-b border-slate-200 px-4 pb-4 text-left text-slate-900">
+    <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4 text-left shadow-sm">
+      <div className="grid content-center border-b border-slate-200 px-4 pb-4 text-left text-slate-900">
         <h3 className="text-lg font-medium leading-6">{title}</h3>
         <p className="mt-1 text-sm text-slate-500">{description}</p>
       </div>
       <div className="w-full">
-        <div className="rounded-lg px-4 ">
+        <div className="rounded-lg px-4">
           {skeletonLines.map((line, index) => (
             <div key={index} className="mt-4">
               <div
@@ -107,7 +107,7 @@ const Loading = () => {
     <div>
       <PageContentWrapper>
         <PageHeader pageTitle="Configuration">
-          <div className="grid h-10 w-full grid-cols-[auto,1fr] ">
+          <div className="grid h-10 w-full grid-cols-[auto,1fr]">
             <nav className="flex h-full min-w-full items-center space-x-4" aria-label="Tabs">
               {navigation.map((navElem) => (
                 <div
@@ -127,7 +127,7 @@ const Loading = () => {
             <div className="justify-self-end"></div>
           </div>
         </PageHeader>
-        <div className="mt-4 flex max-w-4xl animate-pulse items-center space-y-4 rounded-lg  border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base"></div>
+        <div className="mt-4 flex max-w-4xl animate-pulse items-center space-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base"></div>
         {cards.map((card, index) => (
           <LoadingCard key={index} {...card} />
         ))}
