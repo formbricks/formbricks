@@ -44,7 +44,7 @@ const Anchor = ({ id, inView, children }: { id: string; inView: boolean; childre
   );
 };
 
-export const Heading = <Level extends 2 | 3>({
+export const Heading = <Level extends 2 | 3 | 4>({
   children,
   tag,
   label,
@@ -59,11 +59,11 @@ export const Heading = <Level extends 2 | 3>({
   anchor?: boolean;
 }) => {
   level = level ?? (2 as Level);
-  let Component = `h${level}` as "h2" | "h3";
-  let ref = useRef<HTMLHeadingElement>(null);
-  let registerHeading = useSectionStore((s) => s.registerHeading);
+  const Component: "h2" | "h3" | "h4" = `h${level}`;
+  const ref = useRef<HTMLHeadingElement>(null);
+  const registerHeading = useSectionStore((s) => s.registerHeading);
 
-  let inView = useInView(ref, {
+  const inView = useInView(ref, {
     margin: `${remToPx(-3.5)}px 0px 0px 0px`,
     amount: "all",
   });
@@ -71,8 +71,12 @@ export const Heading = <Level extends 2 | 3>({
   useEffect(() => {
     if (level === 2) {
       registerHeading({ id: props.id, ref, offsetRem: tag || label ? 8 : 6 });
+    } else if (level === 3) {
+      registerHeading({ id: props.id, ref, offsetRem: tag || label ? 7 : 5 });
+    } else if (level === 4) {
+      registerHeading({ id: props.id, ref, offsetRem: tag || label ? 6 : 4 });
     }
-  });
+  }, [label, level, props.id, registerHeading, tag]);
 
   return (
     <>

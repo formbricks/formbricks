@@ -38,7 +38,7 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
   const defaultLanguageCode = "default";
   const firstQuestion = survey.questions[0];
 
-  const brandColor = styling.brandColor?.light || COLOR_DEFAULTS.brandColor;
+  const brandColor = styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
 
   switch (firstQuestion.type) {
     case TSurveyQuestionTypeEnum.OpenText:
@@ -109,7 +109,7 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
                 {Array.from({ length: 11 }, (_, i) => (
                   <EmailButton
                     className="border-input-border-color m-0 inline-flex h-10 w-10 items-center justify-center border p-0 text-slate-800"
-                    href={`${urlWithPrefilling}${firstQuestion.id}=${i}`}
+                    href={`${urlWithPrefilling}${firstQuestion.id}=${i.toString()}`}
                     key={i}>
                     {i}
                   </EmailButton>
@@ -137,7 +137,7 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
     case TSurveyQuestionTypeEnum.CTA:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color  m-0 block text-base font-semibold leading-6">
+          <Text className="text-question-color m-0 block text-base font-semibold leading-6">
             {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
           </Text>
           <Container className="text-question-color ml-0 mt-2 text-sm font-normal leading-6">
@@ -193,7 +193,7 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
                           "border border-solid border-gray-200": firstQuestion.scale === "number",
                         }
                       )}
-                      href={`${urlWithPrefilling}${firstQuestion.id}=${i + 1}`}
+                      href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
                       key={i}>
                       {firstQuestion.scale === "smiley" && (
                         <RatingSmiley active={false} idx={i} range={firstQuestion.range} />
@@ -214,7 +214,7 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
                     </Text>
                   </Column>
                   <Column className="text-right">
-                    <Text className="m-0 inline-block  p-0 text-right">
+                    <Text className="m-0 inline-block p-0 text-right">
                       {getLocalizedValue(firstQuestion.upperLabel, defaultLanguageCode)}
                     </Text>
                   </Column>
@@ -311,7 +311,7 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
             </Text>
             <EmailButton
               className={cn(
-                "bg-brand-color rounded-custom mx-auto block w-max cursor-pointer appearance-none px-6 py-3 text-sm font-medium ",
+                "bg-brand-color rounded-custom mx-auto block w-max cursor-pointer appearance-none px-6 py-3 text-sm font-medium",
                 isLight(brandColor) ? "text-black" : "text-white"
               )}>
               Schedule your meeting

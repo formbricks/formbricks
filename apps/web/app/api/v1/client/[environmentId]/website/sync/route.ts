@@ -1,8 +1,8 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
-import { getActionClassByEnvironmentIdAndName, getActionClasses } from "@formbricks/lib/actionClass/service";
-import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
+import { getActionClasses } from "@formbricks/lib/actionClass/service";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import {
   getMonthlyOrganizationResponseCount,
@@ -11,12 +11,11 @@ import {
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { createSurvey, getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
-import { getExampleWebsiteSurveyTemplate } from "@formbricks/lib/templates";
+import { getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TJsWebsiteLegacyStateSync, TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";
-import { TProduct } from "@formbricks/types/product";
+import { TProductLegacy } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -47,8 +46,11 @@ export const GET = async (
 
     const { environmentId } = syncInputValidation.data;
 
-    const environment = await getEnvironment(environmentId);
-    const organization = await getOrganizationByEnvironmentId(environmentId);
+    const [environment, organization, product] = await Promise.all([
+      getEnvironment(environmentId),
+      getOrganizationByEnvironmentId(environmentId),
+      getProductByEnvironmentId(environmentId),
+    ]);
 
     if (!organization) {
       throw new Error("Organization does not exist");
@@ -56,6 +58,14 @@ export const GET = async (
 
     if (!environment) {
       throw new Error("Environment does not exist");
+    }
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    if (product.config.channel && product.config.channel !== "website") {
+      return responses.forbiddenResponse("Product channel is not website", true);
     }
 
     // check if response limit is reached
@@ -79,7 +89,8 @@ export const GET = async (
       }
     }
 
-    if (!environment?.websiteSetupCompleted) {
+    // temporary remove the example survey creation to avoid caching issue with multiple example surveys
+    /* if (!environment?.websiteSetupCompleted) {
       const exampleTrigger = await getActionClassByEnvironmentIdAndName(environmentId, "New Session");
       if (!exampleTrigger) {
         throw new Error("Example trigger not found");
@@ -87,17 +98,16 @@ export const GET = async (
       const firstSurvey = getExampleWebsiteSurveyTemplate(WEBAPP_URL, exampleTrigger);
       await createSurvey(environmentId, firstSurvey);
       await updateEnvironment(environment.id, { websiteSetupCompleted: true });
+    } */
+
+    if (!environment?.websiteSetupCompleted) {
+      await updateEnvironment(environment.id, { websiteSetupCompleted: true });
     }
 
-    const [surveys, actionClasses, product] = await Promise.all([
+    const [surveys, actionClasses] = await Promise.all([
       getSurveys(environmentId),
       getActionClasses(environmentId),
-      getProductByEnvironmentId(environmentId),
     ]);
-
-    if (!product) {
-      throw new Error("Product not found");
-    }
 
     // Common filter condition for selecting surveys that are in progress, are of type 'website' and have no active segment filtering.
     const filteredSurveys = surveys.filter(
@@ -106,7 +116,7 @@ export const GET = async (
       // && (!survey.segment || survey.segment.filters.length === 0)
     );
 
-    const updatedProduct: TProduct = {
+    const updatedProduct: TProductLegacy = {
       ...product,
       brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
       ...(product.styling.highlightBorderColor?.light && {

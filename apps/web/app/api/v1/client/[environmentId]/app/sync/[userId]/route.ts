@@ -5,9 +5,9 @@ import {
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
-import { getActionClassByEnvironmentIdAndName, getActionClasses } from "@formbricks/lib/actionClass/service";
+import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributes } from "@formbricks/lib/attribute/service";
-import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import {
   getMonthlyActiveOrganizationPeopleCount,
@@ -18,13 +18,11 @@ import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@form
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { createSurvey, getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
-import { getExampleAppSurveyTemplate } from "@formbricks/lib/templates";
+import { getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TJsAppLegacyStateSync, TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
-import { TProduct } from "@formbricks/types/product";
+import { TProductLegacy } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -63,21 +61,22 @@ export const GET = async (
 
     const { environmentId, userId } = inputValidation.data;
 
-    let environment: TEnvironment | null;
-
-    // check if environment exists
-    environment = await getEnvironment(environmentId);
+    const environment = await getEnvironment(environmentId);
     if (!environment) {
       throw new Error("Environment does not exist");
     }
 
+    const product = await getProductByEnvironmentId(environmentId);
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    if (product.config.channel && product.config.channel !== "app") {
+      return responses.forbiddenResponse("Product channel is not app", true);
+    }
+
     if (!environment.appSetupCompleted) {
-      const exampleTrigger = await getActionClassByEnvironmentIdAndName(environmentId, "New Session");
-      if (!exampleTrigger) {
-        throw new Error("Example trigger not found");
-      }
-      const firstSurvey = getExampleAppSurveyTemplate(WEBAPP_URL, exampleTrigger);
-      await createSurvey(environmentId, firstSurvey);
       await updateEnvironment(environment.id, { appSetupCompleted: true });
     }
 
@@ -165,19 +164,18 @@ export const GET = async (
       }
     }
 
-    const [surveys, actionClasses, product] = await Promise.all([
+    const [surveys, actionClasses] = await Promise.all([
       getSyncSurveys(environmentId, person.id, device.type === "mobile" ? "phone" : "desktop", {
         version: version ?? undefined,
       }),
       getActionClasses(environmentId),
-      getProductByEnvironmentId(environmentId),
     ]);
 
     if (!product) {
       throw new Error("Product not found");
     }
 
-    const updatedProduct: TProduct = {
+    const updatedProduct: TProductLegacy = {
       ...product,
       brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
       ...(product.styling.highlightBorderColor?.light && {

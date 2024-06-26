@@ -251,7 +251,6 @@ export const authOptions: NextAuthOptions = {
           name: user.name || user.email.split("@")[0],
           email: user.email,
           emailVerified: new Date(Date.now()),
-          onboardingCompleted: false,
           identityProvider: provider,
           identityProviderAccountId: account.providerAccountId,
         });
@@ -274,6 +273,23 @@ export const authOptions: NextAuthOptions = {
           await createAccount({
             ...account,
             userId: userProfile.id,
+          });
+
+          const updatedNotificationSettings = {
+            ...userProfile.notificationSettings,
+            alert: {
+              ...userProfile.notificationSettings?.alert,
+            },
+            unsubscribedOrganizationIds: Array.from(
+              new Set([
+                ...(userProfile.notificationSettings?.unsubscribedOrganizationIds || []),
+                organization.id,
+              ])
+            ),
+          };
+
+          await updateUser(userProfile.id, {
+            notificationSettings: updatedNotificationSettings,
           });
           return true;
         }

@@ -6,8 +6,6 @@ import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import {
-  getMonthlyActiveOrganizationPeopleCount,
-  getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
   getOrganizationsByUserId,
 } from "@formbricks/lib/organization/service";
@@ -45,22 +43,14 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
-  const [peopleCount, responseCount] = await Promise.all([
-    getMonthlyActiveOrganizationPeopleCount(organization.id),
-    getMonthlyOrganizationResponseCount(organization.id),
-  ]);
+  const currentProductChannel =
+    products.find((product) => product.id === environment.productId)?.config.channel ?? null;
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
       <DevEnvironmentBanner environment={environment} />
 
-      {IS_FORMBRICKS_CLOUD && (
-        <LimitsReachedBanner
-          organization={organization}
-          peopleCount={peopleCount}
-          responseCount={responseCount}
-        />
-      )}
+      {IS_FORMBRICKS_CLOUD && <LimitsReachedBanner organization={organization} />}
 
       <div className="flex h-full">
         <MainNavigation
@@ -74,7 +64,11 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           isMultiOrgEnabled={isMultiOrgEnabled}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
-          <TopControlBar environment={environment} environments={environments} />
+          <TopControlBar
+            environment={environment}
+            environments={environments}
+            currentProductChannel={currentProductChannel}
+          />
           <div className="mt-14">{children}</div>
         </div>
       </div>

@@ -17,7 +17,7 @@ export const shareUrlRoute = (url: string): boolean => {
 
 export const isAuthProtectedRoute = (url: string): boolean => {
   // List of routes that require authentication
-  const protectedRoutes = ["/environments", "/setup/organization"];
+  const protectedRoutes = ["/environments", "/setup/organization", "/organizations"];
 
   return protectedRoutes.some((route) => url.startsWith(route));
 };

@@ -65,9 +65,6 @@ x-environment: &environment
     # Set the below if you want to ship JS & CSS files from a complete URL instead of the current domain
     # ASSET_PREFIX_URL:
 
-    # Set the below to 1 to skip onboarding process for new users
-    # ONBOARDING_DISABLED: 1
-
     # Set the below to your Unsplash API Key for their Survey Backgrounds
     # UNSPLASH_ACCESS_KEY:
 

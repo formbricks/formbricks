@@ -9,14 +9,10 @@ test.describe("JS Package Test", async () => {
 
   test("Admin creates an In-App Survey", async ({ page }) => {
     await signUpAndLogin(page, name, email, password);
-    await finishOnboarding(page);
+    await finishOnboarding(page, "app");
 
-    await page
-      .getByText("Product ExperienceProduct Market Fit (Superhuman)Measure PMF by assessing how")
-      .isVisible();
-    await page
-      .getByText("Product ExperienceProduct Market Fit (Superhuman)Measure PMF by assessing how")
-      .click();
+    await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).isVisible();
+    await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).click();
 
     await page.getByRole("button", { name: "Use this template" }).isVisible();
     await page.getByRole("button", { name: "Use this template" }).click();
@@ -26,12 +22,17 @@ test.describe("JS Package Test", async () => {
     await expect(page.locator("#howToSendCardTrigger")).toBeVisible();
     await page.locator("#howToSendCardTrigger").click();
 
-    await expect(page.locator("#howToSendCardOption-website")).toBeVisible();
-    await page.locator("#howToSendCardOption-website").click();
-    await page.locator("#howToSendCardOption-website").click();
+    await expect(page.locator("#howToSendCardOption-app")).toBeVisible();
+    await page.locator("#howToSendCardOption-app").click();
 
     await page.getByRole("button", { name: "Add action" }).click();
     await page.getByText("New SessionGets fired when a").click();
+
+    await page.locator("#recontactOptionsCardTrigger").click();
+
+    await page.locator("label").filter({ hasText: "Keep showing while conditions" }).click();
+    await page.locator("#recontactDays").check();
+
     await page.getByRole("button", { name: "Publish" }).click();
 
     environmentId =
@@ -41,8 +42,9 @@ test.describe("JS Package Test", async () => {
       })();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary/);
+    await page.waitForTimeout(1000);
 
-    expect(page.getByRole("link", { name: "Surveys" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Surveys" })).toBeVisible();
     await page.getByRole("link", { name: "Surveys" }).click();
     await expect(page.getByRole("heading", { name: "Surveys" })).toBeVisible();
   });
@@ -55,7 +57,7 @@ test.describe("JS Package Test", async () => {
     await page.goto(htmlFile);
 
     // Formbricks In App Sync has happened
-    const syncApi = await page.waitForResponse((response) => response.url().includes("/website/sync"));
+    const syncApi = await page.waitForResponse((response) => response.url().includes("/app/sync"));
     expect(syncApi.status()).toBe(200);
 
     // Formbricks Modal exists in the DOM
@@ -82,7 +84,7 @@ test.describe("JS Package Test", async () => {
     await page.goto(htmlFile);
 
     // Formbricks In App Sync has happened
-    const syncApi = await page.waitForResponse((response) => response.url().includes("/website/sync"));
+    const syncApi = await page.waitForResponse((response) => response.url().includes("/app/sync"));
     expect(syncApi.status()).toBe(200);
 
     // Formbricks Modal exists in the DOM
@@ -121,7 +123,7 @@ test.describe("JS Package Test", async () => {
   test("Admin validates Displays & Response", async ({ page }) => {
     await login(page, email, password);
 
-    await page.getByRole("link", { name: "Website Open options Product" }).click();
+    await page.getByRole("link", { name: "product Market Fit (Superhuman)" }).click();
     (await page.waitForSelector("text=Responses")).isVisible();
 
     // Survey should have 2 Displays

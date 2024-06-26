@@ -21,7 +21,7 @@ interface ConsentQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -66,6 +66,7 @@ export const ConsentQuestion = ({
           />
           <div className="bg-survey-bg sticky -bottom-2 z-10 w-full px-1 py-1">
             <label
+              dir="auto"
               tabIndex={1}
               id={`${question.id}-label`}
               onKeyDown={(e) => {
@@ -94,7 +95,7 @@ export const ConsentQuestion = ({
                 aria-labelledby={`${question.id}-label`}
                 required={question.required}
               />
-              <span id={`${question.id}-label`} className="ml-3 font-medium">
+              <span id={`${question.id}-label`} className="ml-3 mr-3 font-medium">
                 {getLocalizedValue(question.label, languageCode)}
               </span>
             </label>

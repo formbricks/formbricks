@@ -61,6 +61,7 @@ export const UpdateQuestionId = ({
           onChange={(e) => {
             setCurrentValue(e.target.value);
           }}
+          dir="auto"
           disabled={localSurvey.status !== "draft" && !question.isDraft}
           className={`h-10 ${isInputInvalid ? "border-red-300 focus:border-red-300" : ""}`}
         />
