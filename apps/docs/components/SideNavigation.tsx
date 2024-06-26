@@ -47,7 +47,7 @@ export const SideNavigation = ({ pathname }) => {
           return (
             <li
               key={heading.text}
-              className={`mb-4 ml-4 text-slate-900 dark:text-white  ml-${heading.level === 2 ? 0 : heading.level === 3 ? 4 : 6}`}>
+              className={`mb-4 ml-4 text-slate-900 dark:text-white ml-${heading.level === 2 ? 0 : heading.level === 3 ? 4 : 6}`}>
               <Link
                 href={`#${heading.id}`}
                 onClick={() => setSelectedId(heading.id)}

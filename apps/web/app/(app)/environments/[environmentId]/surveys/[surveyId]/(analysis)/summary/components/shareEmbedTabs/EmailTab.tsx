@@ -49,7 +49,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   };
 
   return (
-    <div className="flex flex-col gap-5 ">
+    <div className="flex flex-col gap-5">
       <div className="flex items-center justify-end gap-4">
         {showEmbed ? (
           <Button

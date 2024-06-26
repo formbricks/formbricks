@@ -208,9 +208,7 @@ export const DateQuestion = ({
                 monthPlaceholder="MM"
                 yearPlaceholder="YYYY"
                 format={question.format ?? "M-d-y"}
-                className={`dp-input-root rounded-custom wrapper-hide ${!datePickerOpen ? "" : "h-[46dvh] sm:h-[34dvh]"}
-          ${hideInvalid ? "hide-invalid" : ""}
-        `}
+                className={`dp-input-root rounded-custom wrapper-hide ${!datePickerOpen ? "" : "h-[46dvh] sm:h-[34dvh]"} ${hideInvalid ? "hide-invalid" : ""} `}
                 calendarClassName="calendar-root !bg-input-bg border border-border rounded-custom p-3 h-[46dvh] sm:h-[33dvh] overflow-auto"
                 clearIcon={null}
                 onCalendarOpen={() => {

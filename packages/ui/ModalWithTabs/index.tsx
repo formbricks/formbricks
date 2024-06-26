@@ -61,7 +61,7 @@ export const ModalWithTabs = ({
             </div>
           </div>
         </div>
-        <div className="flex  h-full w-full items-center  justify-center space-x-2 border-b border-slate-200 px-6 ">
+        <div className="flex h-full w-full items-center justify-center space-x-2 border-b border-slate-200 px-6">
           {tabs.map((tab, index) => (
             <button
               key={index}

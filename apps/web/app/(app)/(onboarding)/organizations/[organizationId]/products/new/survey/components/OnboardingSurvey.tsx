@@ -9,9 +9,10 @@ import { TProductConfigChannel } from "@formbricks/types/product";
 interface OnboardingSurveyProps {
   organizationId: string;
   channel: TProductConfigChannel;
+  userId: string;
 }
 
-export const OnboardingSurvey = ({ organizationId, channel }: OnboardingSurveyProps) => {
+export const OnboardingSurvey = ({ organizationId, channel, userId }: OnboardingSurveyProps) => {
   const [isIFrameVisible, setIsIFrameVisible] = useState(false);
   const [fadeout, setFadeout] = useState(false);
   const router = useRouter();
@@ -44,7 +45,7 @@ export const OnboardingSurvey = ({ organizationId, channel }: OnboardingSurveyPr
       <div className="relative h-[60vh] w-[50vh] overflow-auto">
         <iframe
           onLoad={() => setIsIFrameVisible(true)}
-          src="https://app.formbricks.com/s/clxcwr22p0cwlpvgekzdab2x5?embed=true"
+          src={`https://app.formbricks.com/s/clxcwr22p0cwlpvgekzdab2x5?embed=true&userId=${userId}`}
           className="absolute left-0 top-0 h-full w-full overflow-visible border-0"></iframe>
       </div>
     </div>

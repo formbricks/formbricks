@@ -58,6 +58,7 @@ These variables are present inside your machine’s docker-compose file. Restart
 | OIDC_ISSUER                 | Issuer URL for Custom OpenID Connect Provider (should have .well-known configured at this) | optional (required if OIDC auth is enabled)             |                           |
 | OIDC_SIGNING_ALGORITHM      | Signing Algorithm for Custom OpenID Connect Provider                                       | optional                                                | RS256                     |
 | OPENTELEMETRY_LISTENER_URL  | URL for OpenTelemetry listener inside Formbricks.                                          | optional                                                |                           |
+| CUSTOM_CACHE_DISABLED       | Disables custom cache handler if set to 1 (required for deployment on Vercel)              | optional                                                |                           |
 | `<add more>`                |                                                                                            |                                                         |                           |
 |                             |                                                                                            |                                                         |                           |
 
@@ -175,8 +176,10 @@ An example configuration for a FusionAuth OpenID Connect in Formbricks would loo
 <Col>
   <CodeGroup title="Formbricks Env for FusionAuth OIDC">
     ```yml {{ title: ".env" }}
-    OIDC_CLIENT_ID=59cada54-56d4-4aa8-a5e7-5823bbe0e5b7 OIDC_CLIENT_SECRET=4f4dwP0ZoOAqMW8fM9290A7uIS3E8Xg29xe1umhlB_s
-    OIDC_ISSUER=http://localhost:9011 OIDC_DISPLAY_NAME=FusionAuth OIDC_SIGNING_ALGORITHM=HS256 
+    OIDC_CLIENT_ID=59cada54-56d4-4aa8-a5e7-5823bbe0e5b7
+    OIDC_CLIENT_SECRET=4f4dwP0ZoOAqMW8fM9290A7uIS3E8Xg29xe1umhlB_s
+    OIDC_ISSUER=http://localhost:9011
+    OIDC_DISPLAY_NAME=FusionAuth OIDC_SIGNING_ALGORITHM=HS256
     ```
   </CodeGroup>
 </Col>

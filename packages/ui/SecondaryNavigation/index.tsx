@@ -10,7 +10,7 @@ interface SecondaryNavbarProps {
 export const SecondaryNavigation = ({ navigation, activeId, loading, ...props }: SecondaryNavbarProps) => {
   return (
     <div {...props}>
-      <div className="grid h-10 w-full grid-cols-[auto,1fr] ">
+      <div className="grid h-10 w-full grid-cols-[auto,1fr]">
         <nav className="flex h-full min-w-full items-center space-x-4" aria-label="Tabs">
           {loading ? (
             <>
