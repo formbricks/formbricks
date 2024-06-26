@@ -424,6 +424,7 @@ export const templates: TTemplate[] = [
           range: 5,
           lowerLabel: { default: "Very dissatisfied" },
           upperLabel: { default: "Very satisfied" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -557,6 +558,7 @@ export const templates: TTemplate[] = [
           range: 5,
           lowerLabel: { default: "Very dissatisfied" },
           upperLabel: { default: "Very satisfied" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1092,6 +1094,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not good" },
           upperLabel: { default: "Very satisfied" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1495,6 +1498,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not important" },
           upperLabel: { default: "Very important" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1532,6 +1536,7 @@ export const templates: TTemplate[] = [
           upperLabel: { default: "Very important" },
           range: 5,
           scale: "number",
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1648,6 +1653,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not easy" },
           upperLabel: { default: "Very easy" },
+          isColorCodingEnabled: false,
         },
         {
           id: "mko13ptjj6tpi5u2pl7a5drz",
@@ -1775,6 +1781,7 @@ export const templates: TTemplate[] = [
           required: false,
           lowerLabel: { default: "Not likely" },
           upperLabel: { default: "Very likely" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1807,6 +1814,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not satisfied" },
           upperLabel: { default: "Very satisfied" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1850,6 +1858,7 @@ export const templates: TTemplate[] = [
           subheader: { default: "Don't worry, be honest." },
           lowerLabel: { default: "Not good" },
           upperLabel: { default: "Very good" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1879,6 +1888,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not good" },
           upperLabel: { default: "Very good" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -2024,6 +2034,7 @@ export const templates: TTemplate[] = [
           upperLabel: { default: "Very easy" },
           scale: "number",
           range: 5,
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -2108,6 +2119,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Disagree strongly" },
           upperLabel: { default: "Agree strongly" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -2141,6 +2153,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Very difficult" },
           upperLabel: { default: "Very easy" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -2183,6 +2196,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not at all relevant" },
           upperLabel: { default: "Very relevant" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -2225,6 +2239,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not at all well" },
           upperLabel: { default: "Extremely well" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -2284,6 +2299,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Very difficult" },
           upperLabel: { default: "Very easy" },
+          isColorCodingEnabled: false,
         },
         {
           id: "s0999bhpaz8vgf7ps264piek",
@@ -2356,6 +2372,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not at all likely" },
           upperLabel: { default: "Very likely" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -2469,6 +2486,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not at all satisfied" },
           upperLabel: { default: "Extremely satisfied" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -2509,6 +2527,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not at all likely" },
           upperLabel: { default: "Extremely likely" },
+          isColorCodingEnabled: false,
         },
         {
           id: "y19mwcmstlc7pi7s4izxk1ll",
@@ -2557,6 +2576,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Meh" },
           upperLabel: { default: "Great" },
+          isColorCodingEnabled: false,
         },
         {
           id: "k3s6gm5ivkc5crpycdbpzkpa",
@@ -2627,7 +2647,9 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Very difficult" },
           upperLabel: { default: "Very easy" },
+          isColorCodingEnabled: false,
         },
+
         {
           id: "ndacjg9lqf5jcpq9w8ote666",
           type: TSurveyQuestionTypeEnum.OpenText,
@@ -2662,6 +2684,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not valuable" },
           upperLabel: { default: "Very valuable" },
+          isColorCodingEnabled: false,
         },
         {
           id: "mmiuun3z4e7gk4ufuwh8lq8q",
