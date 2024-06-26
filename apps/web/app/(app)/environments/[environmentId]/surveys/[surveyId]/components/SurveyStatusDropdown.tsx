@@ -76,15 +76,15 @@ export const SurveyStatusDropdown = ({
                 </SelectTrigger>
               </TooltipTrigger>
               <SelectContent className="bg-white">
-                <SelectItem className="group  font-normal hover:text-slate-900" value="inProgress">
+                <SelectItem className="group font-normal hover:text-slate-900" value="inProgress">
                   <PlayCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
                   In-progress
                 </SelectItem>
-                <SelectItem className="group  font-normal hover:text-slate-900" value="paused">
+                <SelectItem className="group font-normal hover:text-slate-900" value="paused">
                   <PauseCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
                   Paused
                 </SelectItem>
-                <SelectItem className="group  font-normal hover:text-slate-900" value="completed">
+                <SelectItem className="group font-normal hover:text-slate-900" value="completed">
                   <CheckCircle2Icon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
                   Completed
                 </SelectItem>

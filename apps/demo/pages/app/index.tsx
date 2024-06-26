@@ -140,7 +140,7 @@ const AppPage = ({}) => {
 
           <div className="p-6">
             <div>
-              <button className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
+              <button className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 No-Code Action
               </button>
             </div>
@@ -169,7 +169,7 @@ const AppPage = ({}) => {
                 onClick={() => {
                   formbricks.setAttribute("Plan", "Free");
                 }}
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Plan to &apos;Free&apos;
               </button>
             </div>
@@ -192,7 +192,7 @@ const AppPage = ({}) => {
                 onClick={() => {
                   formbricks.setAttribute("Plan", "Paid");
                 }}
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Plan to &apos;Paid&apos;
               </button>
             </div>
@@ -215,7 +215,7 @@ const AppPage = ({}) => {
                 onClick={() => {
                   formbricks.setEmail("test@web.com");
                 }}
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Email
               </button>
             </div>

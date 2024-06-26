@@ -315,7 +315,7 @@ export const ResponseOptionsCard = ({
       onOpenChange={setOpen}
       className={cn(
         open ? "" : "hover:bg-slate-50",
-        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
+        "w-full space-y-2 rounded-lg border border-slate-300 bg-white"
       )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-4">
@@ -415,7 +415,7 @@ export const ResponseOptionsCard = ({
                 description="Change the message visitors see when the survey is closed."
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
-                  <div className="w-full cursor-pointer items-center  bg-slate-50">
+                  <div className="w-full cursor-pointer items-center bg-slate-50">
                     <Label htmlFor="headline">Heading</Label>
                     <Input
                       autoFocus
@@ -447,7 +447,7 @@ export const ResponseOptionsCard = ({
                 description="Allow only 1 response per survey link."
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
-                  <div className="w-full cursor-pointer items-center  bg-slate-50">
+                  <div className="w-full cursor-pointer items-center bg-slate-50">
                     <div className="row mb-2 flex cursor-default items-center space-x-2">
                       <Label htmlFor="howItWorks">How it works</Label>
                     </div>
@@ -487,7 +487,7 @@ export const ResponseOptionsCard = ({
                     />
                     <Label htmlFor="headline">URL Encryption</Label>
                     <div>
-                      <div className="mt-2 flex items-center space-x-1 ">
+                      <div className="mt-2 flex items-center space-x-1">
                         <Switch
                           id="encryption-switch"
                           checked={singleUseEncryption}
@@ -515,7 +515,7 @@ export const ResponseOptionsCard = ({
                 description="Only let people with a real email respond."
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
-                  <div className="w-full cursor-pointer items-center  bg-slate-50">
+                  <div className="w-full cursor-pointer items-center bg-slate-50">
                     <Label htmlFor="howItWorks">How it works</Label>
                     <p className="mb-4 mt-2 text-sm text-slate-500">
                       Respondants will receive the survey link via email.

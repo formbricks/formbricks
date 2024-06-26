@@ -1,192 +1,199 @@
-import { surveys, users } from "@/playwright/utils/mock";
-import { expect, test } from "@playwright/test";
-import { createSurvey, finishOnboarding, signUpAndLogin } from "./utils/helper";
+import { surveys } from "@/playwright/utils/mock";
+import { expect } from "@playwright/test";
+import { test } from "./lib/fixtures";
+import { createSurvey } from "./utils/helper";
 
 test.describe("Survey Create & Submit Response", async () => {
-  test.describe.configure({ mode: "serial" });
   let url: string | null;
-  const { name, email, password } = users.survey[0];
 
-  test("Create Survey", async ({ page }) => {
-    await createSurvey(page, name, email, password, surveys.createAndSubmit);
+  test("Create survey and submit response", async ({ page, users }) => {
+    const user = await users.create();
+    await user.login();
 
-    // Save & Publish Survey
-    await page.getByRole("button", { name: "Settings", exact: true }).click();
+    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
-    await page.locator("#howToSendCardTrigger").click();
-    await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
-    await page.locator("#howToSendCardOption-link").click();
+    await test.step("Create Survey", async () => {
+      await createSurvey(page, surveys.createAndSubmit);
 
-    await page.getByRole("button", { name: "Publish" }).click();
+      // Save & Publish Survey
+      await page.getByRole("button", { name: "Settings", exact: true }).click();
 
-    // Get URL
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
-    await page.getByLabel("Copy survey link to clipboard").click();
-    url = await page.evaluate("navigator.clipboard.readText()");
-  });
+      await page.locator("#howToSendCardTrigger").click();
+      await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
+      await page.locator("#howToSendCardOption-link").click();
 
-  test("Submit Survey Response", async ({ page }) => {
-    await page.goto(url!);
-    await page.waitForURL(/\/s\/[A-Za-z0-9]+$/);
+      await page.getByRole("button", { name: "Publish" }).click();
 
-    // Welcome Card
-    await expect(page.getByText(surveys.createAndSubmit.welcomeCard.headline)).toBeVisible();
-    await expect(page.getByText(surveys.createAndSubmit.welcomeCard.description)).toBeVisible();
-    await page.locator("#questionCard--1").getByRole("button", { name: "Next" }).click();
+      // Get URL
+      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
+      await page.getByLabel("Copy survey link to clipboard").click();
+      url = await page.evaluate("navigator.clipboard.readText()");
+    });
 
-    // Open Text Question
-    await expect(page.getByText(surveys.createAndSubmit.openTextQuestion.question)).toBeVisible();
-    await expect(page.getByText(surveys.createAndSubmit.openTextQuestion.description)).toBeVisible();
-    await expect(page.getByPlaceholder(surveys.createAndSubmit.openTextQuestion.placeholder)).toBeVisible();
-    await page
-      .getByPlaceholder(surveys.createAndSubmit.openTextQuestion.placeholder)
-      .fill("This is my Open Text answer");
-    await page.locator("#questionCard-0").getByRole("button", { name: "Next" }).click();
+    await test.step("Submit Survey Response", async () => {
+      await page.goto(url!);
+      await page.waitForURL(/\/s\/[A-Za-z0-9]+$/);
 
-    // Single Select Question
-    await expect(page.getByText(surveys.createAndSubmit.singleSelectQuestion.question)).toBeVisible();
-    await expect(page.getByText(surveys.createAndSubmit.singleSelectQuestion.description)).toBeVisible();
-    for (let i = 0; i < surveys.createAndSubmit.singleSelectQuestion.options.length; i++) {
-      await expect(
-        page
-          .locator("#questionCard-1 label")
-          .filter({ hasText: surveys.createAndSubmit.singleSelectQuestion.options[i] })
-      ).toBeVisible();
-    }
-    await expect(page.getByText("Other")).toBeVisible();
-    await expect(page.locator("#questionCard-1").getByRole("button", { name: "Next" })).toBeVisible();
-    await expect(page.locator("#questionCard-1").getByRole("button", { name: "Back" })).toBeVisible();
-    await page
-      .locator("#questionCard-1 label")
-      .filter({ hasText: surveys.createAndSubmit.singleSelectQuestion.options[0] })
-      .click();
-    await page.locator("#questionCard-1").getByRole("button", { name: "Next" }).click();
+      // Welcome Card
+      await expect(page.getByText(surveys.createAndSubmit.welcomeCard.headline)).toBeVisible();
+      await expect(page.getByText(surveys.createAndSubmit.welcomeCard.description)).toBeVisible();
+      await page.locator("#questionCard--1").getByRole("button", { name: "Next" }).click();
 
-    // Multi Select Question
-    await expect(page.getByText(surveys.createAndSubmit.multiSelectQuestion.question)).toBeVisible();
-    await expect(page.getByText(surveys.createAndSubmit.multiSelectQuestion.description)).toBeVisible();
-    for (let i = 0; i < surveys.createAndSubmit.singleSelectQuestion.options.length; i++) {
-      await expect(
-        page
+      // Open Text Question
+      await expect(page.getByText(surveys.createAndSubmit.openTextQuestion.question)).toBeVisible();
+      await expect(page.getByText(surveys.createAndSubmit.openTextQuestion.description)).toBeVisible();
+      await expect(page.getByPlaceholder(surveys.createAndSubmit.openTextQuestion.placeholder)).toBeVisible();
+      await page
+        .getByPlaceholder(surveys.createAndSubmit.openTextQuestion.placeholder)
+        .fill("This is my Open Text answer");
+      await page.locator("#questionCard-0").getByRole("button", { name: "Next" }).click();
+
+      // Single Select Question
+      await expect(page.getByText(surveys.createAndSubmit.singleSelectQuestion.question)).toBeVisible();
+      await expect(page.getByText(surveys.createAndSubmit.singleSelectQuestion.description)).toBeVisible();
+      for (let i = 0; i < surveys.createAndSubmit.singleSelectQuestion.options.length; i++) {
+        await expect(
+          page
+            .locator("#questionCard-1 label")
+            .filter({ hasText: surveys.createAndSubmit.singleSelectQuestion.options[i] })
+        ).toBeVisible();
+      }
+      await expect(page.getByText("Other")).toBeVisible();
+      await expect(page.locator("#questionCard-1").getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(page.locator("#questionCard-1").getByRole("button", { name: "Back" })).toBeVisible();
+      await page
+        .locator("#questionCard-1 label")
+        .filter({ hasText: surveys.createAndSubmit.singleSelectQuestion.options[0] })
+        .click();
+      await page.locator("#questionCard-1").getByRole("button", { name: "Next" }).click();
+
+      // Multi Select Question
+      await expect(page.getByText(surveys.createAndSubmit.multiSelectQuestion.question)).toBeVisible();
+      await expect(page.getByText(surveys.createAndSubmit.multiSelectQuestion.description)).toBeVisible();
+      for (let i = 0; i < surveys.createAndSubmit.singleSelectQuestion.options.length; i++) {
+        await expect(
+          page
+            .locator("#questionCard-2 label")
+            .filter({ hasText: surveys.createAndSubmit.multiSelectQuestion.options[i] })
+        ).toBeVisible();
+      }
+      await expect(page.locator("#questionCard-2").getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(page.locator("#questionCard-2").getByRole("button", { name: "Back" })).toBeVisible();
+      for (let i = 0; i < surveys.createAndSubmit.multiSelectQuestion.options.length; i++) {
+        await page
           .locator("#questionCard-2 label")
           .filter({ hasText: surveys.createAndSubmit.multiSelectQuestion.options[i] })
+          .click();
+      }
+      await page.locator("#questionCard-2").getByRole("button", { name: "Next" }).click();
+
+      // Rating Question
+      await expect(page.getByText(surveys.createAndSubmit.ratingQuestion.question)).toBeVisible();
+      await expect(page.getByText(surveys.createAndSubmit.ratingQuestion.description)).toBeVisible();
+      await expect(
+        page.locator("#questionCard-3").getByText(surveys.createAndSubmit.ratingQuestion.lowLabel)
       ).toBeVisible();
-    }
-    await expect(page.locator("#questionCard-2").getByRole("button", { name: "Next" })).toBeVisible();
-    await expect(page.locator("#questionCard-2").getByRole("button", { name: "Back" })).toBeVisible();
-    for (let i = 0; i < surveys.createAndSubmit.multiSelectQuestion.options.length; i++) {
-      await page
-        .locator("#questionCard-2 label")
-        .filter({ hasText: surveys.createAndSubmit.multiSelectQuestion.options[i] })
-        .click();
-    }
-    await page.locator("#questionCard-2").getByRole("button", { name: "Next" }).click();
+      await expect(
+        page.locator("#questionCard-3").getByText(surveys.createAndSubmit.ratingQuestion.highLabel)
+      ).toBeVisible();
+      expect(await page.getByRole("group", { name: "Choices" }).locator("label").count()).toBe(5);
+      await expect(page.locator("#questionCard-3").getByRole("button", { name: "Next" })).not.toBeVisible();
+      await expect(page.locator("#questionCard-3").getByRole("button", { name: "Back" })).toBeVisible();
+      await page.locator("path").nth(3).click();
 
-    // Rating Question
-    await expect(page.getByText(surveys.createAndSubmit.ratingQuestion.question)).toBeVisible();
-    await expect(page.getByText(surveys.createAndSubmit.ratingQuestion.description)).toBeVisible();
-    await expect(
-      page.locator("#questionCard-3").getByText(surveys.createAndSubmit.ratingQuestion.lowLabel)
-    ).toBeVisible();
-    await expect(
-      page.locator("#questionCard-3").getByText(surveys.createAndSubmit.ratingQuestion.highLabel)
-    ).toBeVisible();
-    expect(await page.getByRole("group", { name: "Choices" }).locator("label").count()).toBe(5);
-    await expect(page.locator("#questionCard-3").getByRole("button", { name: "Next" })).not.toBeVisible();
-    await expect(page.locator("#questionCard-3").getByRole("button", { name: "Back" })).toBeVisible();
-    await page.locator("path").nth(3).click();
+      // NPS Question
+      await expect(page.getByText(surveys.createAndSubmit.npsQuestion.question)).toBeVisible();
+      await expect(
+        page.locator("#questionCard-4").getByText(surveys.createAndSubmit.npsQuestion.lowLabel)
+      ).toBeVisible();
+      await expect(
+        page.locator("#questionCard-4").getByText(surveys.createAndSubmit.npsQuestion.highLabel)
+      ).toBeVisible();
+      await expect(page.locator("#questionCard-4").getByRole("button", { name: "Next" })).not.toBeVisible();
+      await expect(page.locator("#questionCard-4").getByRole("button", { name: "Back" })).toBeVisible();
 
-    // NPS Question
-    await expect(page.getByText(surveys.createAndSubmit.npsQuestion.question)).toBeVisible();
-    await expect(
-      page.locator("#questionCard-4").getByText(surveys.createAndSubmit.npsQuestion.lowLabel)
-    ).toBeVisible();
-    await expect(
-      page.locator("#questionCard-4").getByText(surveys.createAndSubmit.npsQuestion.highLabel)
-    ).toBeVisible();
-    await expect(page.locator("#questionCard-4").getByRole("button", { name: "Next" })).not.toBeVisible();
-    await expect(page.locator("#questionCard-4").getByRole("button", { name: "Back" })).toBeVisible();
+      for (let i = 0; i < 11; i++) {
+        await expect(page.locator("#questionCard-4").getByText(`${i}`, { exact: true })).toBeVisible();
+      }
+      await page.locator("#questionCard-4").getByText("8", { exact: true }).click();
 
-    for (let i = 0; i < 11; i++) {
-      await expect(page.locator("#questionCard-4").getByText(`${i}`, { exact: true })).toBeVisible();
-    }
-    await page.locator("#questionCard-4").getByText("8", { exact: true }).click();
+      // CTA Question
+      await expect(page.getByText(surveys.createAndSubmit.ctaQuestion.question)).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: surveys.createAndSubmit.ctaQuestion.buttonLabel })
+      ).toBeVisible();
+      await page.getByRole("button", { name: surveys.createAndSubmit.ctaQuestion.buttonLabel }).click();
 
-    // CTA Question
-    await expect(page.getByText(surveys.createAndSubmit.ctaQuestion.question)).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: surveys.createAndSubmit.ctaQuestion.buttonLabel })
-    ).toBeVisible();
-    await page.getByRole("button", { name: surveys.createAndSubmit.ctaQuestion.buttonLabel }).click();
+      // Consent Question
+      await expect(page.getByText(surveys.createAndSubmit.consentQuestion.question)).toBeVisible();
+      await expect(page.getByText(surveys.createAndSubmit.consentQuestion.checkboxLabel)).toBeVisible();
+      await expect(page.locator("#questionCard-6").getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(page.locator("#questionCard-6").getByRole("button", { name: "Back" })).toBeVisible();
+      await page.getByText(surveys.createAndSubmit.consentQuestion.checkboxLabel).check();
+      await page.locator("#questionCard-6").getByRole("button", { name: "Next" }).click();
 
-    // Consent Question
-    await expect(page.getByText(surveys.createAndSubmit.consentQuestion.question)).toBeVisible();
-    await expect(page.getByText(surveys.createAndSubmit.consentQuestion.checkboxLabel)).toBeVisible();
-    await expect(page.locator("#questionCard-6").getByRole("button", { name: "Next" })).toBeVisible();
-    await expect(page.locator("#questionCard-6").getByRole("button", { name: "Back" })).toBeVisible();
-    await page.getByText(surveys.createAndSubmit.consentQuestion.checkboxLabel).check();
-    await page.locator("#questionCard-6").getByRole("button", { name: "Next" }).click();
+      // Picture Select Question
+      await expect(page.getByText(surveys.createAndSubmit.pictureSelectQuestion.question)).toBeVisible();
+      await expect(page.getByText(surveys.createAndSubmit.pictureSelectQuestion.description)).toBeVisible();
+      await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
+      await expect(page.getByRole("img", { name: "puppy-1-small.jpg" })).toBeVisible();
+      await expect(page.getByRole("img", { name: "puppy-2-small.jpg" })).toBeVisible();
+      await page.getByRole("img", { name: "puppy-1-small.jpg" }).click();
+      await page.locator("#questionCard-7").getByRole("button", { name: "Next" }).click();
 
-    // Picture Select Question
-    await expect(page.getByText(surveys.createAndSubmit.pictureSelectQuestion.question)).toBeVisible();
-    await expect(page.getByText(surveys.createAndSubmit.pictureSelectQuestion.description)).toBeVisible();
-    await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
-    await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
-    await expect(page.getByRole("img", { name: "puppy-1-small.jpg" })).toBeVisible();
-    await expect(page.getByRole("img", { name: "puppy-2-small.jpg" })).toBeVisible();
-    await page.getByRole("img", { name: "puppy-1-small.jpg" }).click();
-    await page.locator("#questionCard-7").getByRole("button", { name: "Next" }).click();
+      // File Upload Question
+      await expect(page.getByText(surveys.createAndSubmit.fileUploadQuestion.question)).toBeVisible();
+      await expect(page.locator("#questionCard-8").getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(page.locator("#questionCard-8").getByRole("button", { name: "Back" })).toBeVisible();
+      await expect(
+        page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("div").nth(0)
+      ).toBeVisible();
+      await page.locator("input[type=file]").setInputFiles({
+        name: "file.txt",
+        mimeType: "text/plain",
+        buffer: Buffer.from("this is test"),
+      });
+      await page.getByText("Uploading...").waitFor({ state: "hidden" });
+      await page.locator("#questionCard-8").getByRole("button", { name: "Next" }).click();
 
-    // File Upload Question
-    await expect(page.getByText(surveys.createAndSubmit.fileUploadQuestion.question)).toBeVisible();
-    await expect(page.locator("#questionCard-8").getByRole("button", { name: "Next" })).toBeVisible();
-    await expect(page.locator("#questionCard-8").getByRole("button", { name: "Back" })).toBeVisible();
-    await expect(
-      page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("div").nth(0)
-    ).toBeVisible();
-    await page.locator("input[type=file]").setInputFiles({
-      name: "file.txt",
-      mimeType: "text/plain",
-      buffer: Buffer.from("this is test"),
+      // Matrix Question
+      await expect(page.getByText(surveys.createAndSubmit.matrix.question)).toBeVisible();
+      await expect(page.getByText(surveys.createAndSubmit.matrix.description)).toBeVisible();
+      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.rows[0] })).toBeVisible();
+      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.rows[1] })).toBeVisible();
+      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.rows[2] })).toBeVisible();
+      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[0] })).toBeVisible();
+      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[1] })).toBeVisible();
+      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[2] })).toBeVisible();
+      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[3] })).toBeVisible();
+      await expect(page.locator("#questionCard-9").getByRole("button", { name: "Next" })).not.toBeVisible();
+      await expect(page.locator("#questionCard-9").getByRole("button", { name: "Back" })).toBeVisible();
+      await page.getByRole("row", { name: "Rose 🌹" }).getByRole("cell").nth(1).click();
+      await page.locator("#questionCard-9").getByRole("button", { name: "Next" }).click();
+
+      // Address Question
+      await expect(page.getByText(surveys.createAndSubmit.address.question)).toBeVisible();
+      await expect(page.getByPlaceholder(surveys.createAndSubmit.address.placeholder)).toBeVisible();
+      await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder).fill("This is my Address");
+      await page.getByRole("button", { name: "Finish" }).click();
+
+      // loading spinner -> wait for it to disappear
+      await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
+
+      // Thank You Card
+      await expect(page.getByText(surveys.createAndSubmit.thankYouCard.headline)).toBeVisible();
+      await expect(page.getByText(surveys.createAndSubmit.thankYouCard.description)).toBeVisible();
     });
-    await page.getByText("Uploading...").waitFor({ state: "hidden" });
-    await page.locator("#questionCard-8").getByRole("button", { name: "Next" }).click();
-
-    // Matrix Question
-    await expect(page.getByText(surveys.createAndSubmit.matrix.question)).toBeVisible();
-    await expect(page.getByText(surveys.createAndSubmit.matrix.description)).toBeVisible();
-    await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.rows[0] })).toBeVisible();
-    await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.rows[1] })).toBeVisible();
-    await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.rows[2] })).toBeVisible();
-    await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[0] })).toBeVisible();
-    await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[1] })).toBeVisible();
-    await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[2] })).toBeVisible();
-    await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[3] })).toBeVisible();
-    await expect(page.locator("#questionCard-9").getByRole("button", { name: "Next" })).not.toBeVisible();
-    await expect(page.locator("#questionCard-9").getByRole("button", { name: "Back" })).toBeVisible();
-    await page.getByRole("row", { name: "Rose 🌹" }).getByRole("cell").nth(1).click();
-    await page.locator("#questionCard-9").getByRole("button", { name: "Next" }).click();
-
-    // Address Question
-    await expect(page.getByText(surveys.createAndSubmit.address.question)).toBeVisible();
-    await expect(page.getByPlaceholder(surveys.createAndSubmit.address.placeholder)).toBeVisible();
-    await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder).fill("This is my Address");
-    await page.getByRole("button", { name: "Finish" }).click();
-
-    await page.waitForTimeout(500);
-
-    // Thank You Card
-    await expect(page.getByText(surveys.createAndSubmit.thankYouCard.headline)).toBeVisible();
-    await expect(page.getByText(surveys.createAndSubmit.thankYouCard.description)).toBeVisible();
   });
 });
 
 test.describe("Multi Language Survey Create", async () => {
-  test.describe.configure({ mode: "serial" });
-  const { name, email, password } = users.survey[3];
-  test("Create Survey", async ({ page }) => {
-    await signUpAndLogin(page, name, email, password);
-    await finishOnboarding(page, "app");
+  test("Create Survey", async ({ page, users }) => {
+    const user = await users.create();
+    await user.login();
+
+    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
     //add a new language
     await page.getByRole("link", { name: "Configuration" }).click();

@@ -69,7 +69,7 @@ export const FileUploadQuestion = ({
           }
         }
       }}
-      className="w-full ">
+      className="w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}

@@ -63,7 +63,7 @@ const Page = async ({ params }) => {
     <PageContentWrapper>
       <PageHeader pageTitle={getPersonIdentifier(person, attributes)} cta={getDeletePersonButton()} />
       <section className="pb-24 pt-6">
-        <div className="grid grid-cols-1 gap-x-8  md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-8 md:grid-cols-4">
           <AttributesSection personId={params.personId} />
           <ResponseSection
             environment={environment}
