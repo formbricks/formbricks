@@ -1,13 +1,11 @@
-import { HashIcon, PlusIcon, SmileIcon, StarIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
-
+import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
+import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-
 import { Dropdown } from "./RatingTypeDropdown";
 
 interface RatingQuestionFormProps {
@@ -32,7 +30,6 @@ export const RatingQuestionForm = ({
   setSelectedLanguageCode,
   attributeClasses,
 }: RatingQuestionFormProps) => {
-  const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   return (
@@ -51,7 +48,7 @@ export const RatingQuestionForm = ({
       />
 
       <div>
-        {showSubheader && (
+        {question.subheader !== undefined && (
           <div className="mt-2 inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
@@ -67,17 +64,9 @@ export const RatingQuestionForm = ({
                 attributeClasses={attributeClasses}
               />
             </div>
-
-            <TrashIcon
-              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => {
-                setShowSubheader(false);
-                updateQuestion(questionIdx, { subheader: undefined });
-              }}
-            />
           </div>
         )}
-        {!showSubheader && (
+        {question.subheader === undefined && (
           <Button
             size="sm"
             variant="minimal"
@@ -87,9 +76,7 @@ export const RatingQuestionForm = ({
               updateQuestion(questionIdx, {
                 subheader: createI18nString("", surveyLanguageCodes),
               });
-              setShowSubheader(true);
             }}>
-            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>
@@ -107,7 +94,13 @@ export const RatingQuestionForm = ({
                 { label: "Smiley", value: "smiley", icon: SmileIcon },
               ]}
               defaultValue={question.scale || "number"}
-              onSelect={(option) => updateQuestion(questionIdx, { scale: option.value })}
+              onSelect={(option) => {
+                if (option.value === "star") {
+                  updateQuestion(questionIdx, { scale: option.value, isColorCodingEnabled: false });
+                  return;
+                }
+                updateQuestion(questionIdx, { scale: option.value });
+              }}
             />
           </div>
         </div>
@@ -182,6 +175,20 @@ export const RatingQuestionForm = ({
           </div>
         )}
       </div>
+
+      {question.scale !== "star" && (
+        <AdvancedOptionToggle
+          isChecked={question.isColorCodingEnabled}
+          onToggle={() =>
+            updateQuestion(questionIdx, { isColorCodingEnabled: !question.isColorCodingEnabled })
+          }
+          htmlId="isColorCodingEnabled"
+          title="Add color coding"
+          description="Add red, orange and green color codes to the options."
+          childBorder
+          customContainerClass="p-0 mt-4"
+        />
+      )}
     </form>
   );
 };

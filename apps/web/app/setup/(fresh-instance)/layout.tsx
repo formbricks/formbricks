@@ -1,6 +1,5 @@
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 

@@ -1,213 +1,117 @@
 "use client";
 
-import { PlusCircleIcon, SparklesIcon, SplitIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-
-import { cn } from "@formbricks/lib/cn";
-import { customSurvey, templates, testTemplate } from "@formbricks/lib/templates";
+import { useMemo, useState } from "react";
+import { templates } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
-import type { TProduct } from "@formbricks/types/product";
-import { TSurveyInput } from "@formbricks/types/surveys";
-import { TTemplate } from "@formbricks/types/templates";
+import { type TProduct, ZProductConfigIndustry } from "@formbricks/types/product";
+import { TSurveyInput, ZSurveyType } from "@formbricks/types/surveys";
+import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
-
-import { Button } from "../Button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
 import { createSurveyAction } from "./actions";
-import { replacePresetPlaceholders } from "./lib/utils";
+import { StartFromScratchTemplate } from "./components/StartFromScratchTemplate";
+import { Template } from "./components/Template";
+import { TemplateFilters } from "./components/TemplateFilters";
 
-interface TemplateList {
-  environmentId: string;
+interface TemplateListProps {
   user: TUser;
-  onTemplateClick?: (template: TTemplate) => void;
   environment: TEnvironment;
   product: TProduct;
   templateSearch?: string;
+  prefilledFilters: TTemplateFilter[];
+  onTemplateClick?: (template: TTemplate) => void;
 }
 
-const ALL_CATEGORY_NAME = "All";
-const RECOMMENDED_CATEGORY_NAME = "For you";
-
 export const TemplateList = ({
-  environmentId,
   user,
-  onTemplateClick = () => {},
   product,
   environment,
   templateSearch,
-}: TemplateList) => {
+  prefilledFilters,
+  onTemplateClick = () => {},
+}: TemplateListProps) => {
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState(RECOMMENDED_CATEGORY_NAME);
+  const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>(prefilledFilters);
 
-  const [categories, setCategories] = useState<Array<string>>([]);
-
-  useEffect(() => {
-    const defaultCategories = [
-      /* ALL_CATEGORY_NAME, */
-      ...(Array.from(new Set(templates.map((template) => template.category))) as string[]),
-    ];
-
-    const fullCategories =
-      !!user?.objective && user.objective !== "other"
-        ? [RECOMMENDED_CATEGORY_NAME, ALL_CATEGORY_NAME, ...defaultCategories]
-        : [ALL_CATEGORY_NAME, ...defaultCategories];
-
-    setCategories(fullCategories);
-
-    const activeFilter = templateSearch
-      ? ALL_CATEGORY_NAME
-      : !!user?.objective && user.objective !== "other"
-        ? RECOMMENDED_CATEGORY_NAME
-        : ALL_CATEGORY_NAME;
-    setSelectedFilter(activeFilter);
-  }, [user, templateSearch]);
-
-  const addSurvey = async (activeTemplate: TTemplate) => {
+  const createSurvey = async (activeTemplate: TTemplate) => {
     setLoading(true);
-    const surveyType = environment?.widgetSetupCompleted ? "app" : "link";
+    const surveyType = product.config.channel ?? "link";
     const augmentedTemplate: TSurveyInput = {
       ...activeTemplate.preset,
       type: surveyType,
       createdBy: user.id,
     };
-    const survey = await createSurveyAction(environmentId, augmentedTemplate);
-    router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
+    const survey = await createSurveyAction(environment.id, augmentedTemplate);
+    router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
   };
 
-  const filteredTemplates = templates.filter((template) => {
-    const matchesCategory =
-      selectedFilter === ALL_CATEGORY_NAME ||
-      template.category === selectedFilter ||
-      (user.objective &&
-        selectedFilter === RECOMMENDED_CATEGORY_NAME &&
-        template.objectives?.includes(user.objective));
+  const filteredTemplates = useMemo(() => {
+    return templates.filter((template) => {
+      if (templateSearch) {
+        return template.name.toLowerCase().startsWith(templateSearch.toLowerCase());
+      }
+      // Parse and validate the filters
+      const channelParseResult = ZSurveyType.nullable().safeParse(selectedFilter[0]);
+      const industryParseResult = ZProductConfigIndustry.nullable().safeParse(selectedFilter[1]);
+      const roleParseResult = ZTemplateRole.nullable().safeParse(selectedFilter[2]);
 
-    const templateName = template.name?.toLowerCase();
-    const templateDescription = template.description?.toLowerCase();
-    const searchQuery = templateSearch?.toLowerCase() ?? "";
-    const searchWords = searchQuery.split(" ");
+      // Ensure all validations are successful
+      if (!channelParseResult.success || !industryParseResult.success || !roleParseResult.success) {
+        // If any validation fails, skip this template
+        return true;
+      }
 
-    const matchesSearch = searchWords.every(
-      (word) => templateName?.includes(word) || templateDescription?.includes(word)
-    );
+      // Access the validated data from the parse results
+      const validatedChannel = channelParseResult.data;
+      const validatedIndustry = industryParseResult.data;
+      const validatedRole = roleParseResult.data;
 
-    return matchesCategory && matchesSearch;
-  });
+      // Perform the filtering
+      const channelMatch = validatedChannel === null || template.channels?.includes(validatedChannel);
+      const industryMatch = validatedIndustry === null || template.industries?.includes(validatedIndustry);
+      const roleMatch = validatedRole === null || template.role === validatedRole;
+
+      return channelMatch && industryMatch && roleMatch;
+    });
+  }, [selectedFilter, templateSearch]);
 
   return (
-    <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 pt-3 focus:outline-none">
-      <div className="mb-6 flex flex-wrap gap-1">
-        {categories.map((category) => (
-          <button
-            key={category}
-            type="button"
-            onClick={() => setSelectedFilter(category)}
-            disabled={templateSearch && templateSearch.length > 0 ? true : false}
-            className={cn(
-              selectedFilter === category
-                ? " bg-slate-800 font-semibold text-white"
-                : " bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
-              "mt-2 rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
-            )}>
-            {category}
-            {category === RECOMMENDED_CATEGORY_NAME && <SparklesIcon className="ml-1 inline h-5 w-5" />}
-          </button>
-        ))}
-      </div>
+    <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 focus:outline-none">
+      {!templateSearch && (
+        <TemplateFilters
+          selectedFilter={selectedFilter}
+          setSelectedFilter={setSelectedFilter}
+          templateSearch={templateSearch}
+          prefilledFilters={prefilledFilters}
+        />
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => {
-            const newTemplate = replacePresetPlaceholders(customSurvey, product);
-            onTemplateClick(newTemplate);
-            setActiveTemplate(newTemplate);
-          }}
-          className={cn(
-            activeTemplate?.name === customSurvey.name
-              ? "ring-brand border-transparent ring-2"
-              : "hover:border-brand-dark  border-dashed border-slate-300",
-            "duration-120  group relative rounded-lg border-2  bg-transparent p-6 transition-colors duration-150"
-          )}>
-          <PlusCircleIcon className="text-brand-dark h-8 w-8 transition-all duration-150 group-hover:scale-110" />
-          <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700 ">{customSurvey.name}</h3>
-          <p className="text-left text-xs text-slate-600 ">{customSurvey.description}</p>
-          {activeTemplate?.name === customSurvey.name && (
-            <div className="text-left">
-              <Button
-                variant="darkCTA"
-                className="mt-6 px-6 py-3"
-                disabled={activeTemplate === null}
+        <StartFromScratchTemplate
+          activeTemplate={activeTemplate}
+          setActiveTemplate={setActiveTemplate}
+          onTemplateClick={onTemplateClick}
+          product={product}
+          createSurvey={createSurvey}
+          loading={loading}
+        />
+        {(process.env.NODE_ENV === "development" ? [...filteredTemplates] : filteredTemplates).map(
+          (template: TTemplate) => {
+            return (
+              <Template
+                template={template}
+                activeTemplate={activeTemplate}
+                setActiveTemplate={setActiveTemplate}
+                onTemplateClick={onTemplateClick}
+                product={product}
+                createSurvey={createSurvey}
                 loading={loading}
-                onClick={() => addSurvey(activeTemplate)}>
-                Create survey
-              </Button>
-            </div>
-          )}
-        </button>
-        {(process.env.NODE_ENV === "development"
-          ? [...filteredTemplates, testTemplate]
-          : filteredTemplates
-        ).map((template: TTemplate) => (
-          <div
-            onClick={() => {
-              const newTemplate = replacePresetPlaceholders(template, product);
-              onTemplateClick(newTemplate);
-              setActiveTemplate(newTemplate);
-            }}
-            key={template.name}
-            className={cn(
-              activeTemplate?.name === template.name && "ring-2 ring-slate-400",
-              "duration-120 group relative cursor-pointer rounded-lg bg-white p-6 shadow transition-all duration-150 hover:ring-2 hover:ring-slate-300"
-            )}>
-            <div className="flex">
-              <div
-                className={`rounded border px-1.5 py-0.5 text-xs ${
-                  template.category === "Product Experience"
-                    ? "border-blue-300 bg-blue-50 text-blue-500"
-                    : template.category === "Exploration"
-                      ? "border-pink-300 bg-pink-50 text-pink-500"
-                      : template.category === "Growth"
-                        ? "border-orange-300 bg-orange-50 text-orange-500"
-                        : template.category === "Increase Revenue"
-                          ? "border-emerald-300 bg-emerald-50 text-emerald-500"
-                          : template.category === "Customer Success"
-                            ? "border-violet-300 bg-violet-50 text-violet-500"
-                            : "border-slate-300 bg-slate-50 text-slate-500" // default color
-                }`}>
-                {template.category}
-              </div>
-              {template.preset.questions.some((question) => question.logic && question.logic.length > 0) && (
-                <TooltipProvider delayDuration={80}>
-                  <Tooltip>
-                    <TooltipTrigger tabIndex={-1}>
-                      <div>
-                        <SplitIcon className="ml-1.5 h-5 w-5 rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>This survey uses branching logic.</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-            <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{template.name}</h3>
-            <p className="text-left text-xs text-slate-600">{template.description}</p>
-            {activeTemplate?.name === template.name && (
-              <div className="flex justify-start">
-                <Button
-                  variant="darkCTA"
-                  className="mt-6 px-6 py-3"
-                  disabled={activeTemplate === null}
-                  loading={loading}
-                  onClick={() => addSurvey(activeTemplate)}>
-                  Use this template
-                </Button>
-              </div>
-            )}
-          </div>
-        ))}
+                selectedFilter={selectedFilter}
+              />
+            );
+          }
+        )}
       </div>
     </main>
   );

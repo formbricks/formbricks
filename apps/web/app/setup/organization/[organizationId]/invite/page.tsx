@@ -2,7 +2,6 @@ import { InviteMembers } from "@/app/setup/organization/[organizationId]/invite/
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER } from "@formbricks/lib/constants";
 import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
@@ -23,7 +22,7 @@ const Page = async ({ params }) => {
     session.user.id
   );
 
-  if (!hasCreateOrUpdateMembersAccess || session.user.onboardingCompleted) return notFound();
+  if (!hasCreateOrUpdateMembersAccess) return notFound();
 
   return <InviteMembers IS_SMTP_CONFIGURED={IS_SMTP_CONFIGURED} organizationId={params.organizationId} />;
 };

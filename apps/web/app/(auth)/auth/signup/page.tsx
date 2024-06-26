@@ -2,7 +2,6 @@ import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
 import { Testimonial } from "@/app/(auth)/auth/components/Testimonial";
 import { SignupForm } from "@/app/(auth)/auth/signup/components/SignupForm";
 import { notFound } from "next/navigation";
-
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import {
   AZURE_OAUTH_ENABLED,
@@ -19,10 +18,11 @@ import {
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 
-const Page = async () => {
+const Page = async ({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) => {
+  const inviteToken = searchParams["inviteToken"] ?? null;
   const isMultOrgEnabled = await getIsMultiOrgEnabled();
 
-  if (!SIGNUP_ENABLED || !isMultOrgEnabled) {
+  if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
     notFound();
   }
 

@@ -12,7 +12,6 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 import { FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/Form";
@@ -145,7 +144,7 @@ export const EditProfileAvatarForm = ({ session, environmentId }: EditProfileAva
                         inputRef.current = e;
                       }}
                       className="hidden"
-                      accept="image/*"
+                      accept="image/jpeg, image/png"
                       onChange={(e) => {
                         field.onChange(e.target.files);
                         form.handleSubmit(onSubmit)();

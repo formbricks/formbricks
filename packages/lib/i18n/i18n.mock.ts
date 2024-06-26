@@ -306,6 +306,7 @@ export const mockSurvey: TSurvey = {
   triggers: [],
   languages: mockSurveyLanguages,
   segment: mockSegment,
+  showLanguageSwitch: null,
 } as unknown as TSurvey;
 
 export const mockTranslatedWelcomeCard = {
@@ -401,6 +402,7 @@ export const mockTranslatedRatingQuestion = {
   subheader: { default: "Don't worry, be honest.", de: "" },
   lowerLabel: { default: "Not good", de: "" },
   upperLabel: { default: "Very good", de: "" },
+  isColorCodingEnabled: false,
 };
 
 export const mockLegacyRatingQuestion = {
@@ -419,6 +421,7 @@ export const mockTranslatedNpsQuestion = {
   },
   lowerLabel: { default: "Not at all likely", de: "" },
   upperLabel: { default: "Extremely likely", de: "" },
+  isColorCodingEnabled: false,
 };
 
 export const mockLegacyNpsQuestion = {

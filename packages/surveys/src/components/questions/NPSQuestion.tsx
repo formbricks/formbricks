@@ -7,7 +7,6 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
@@ -23,7 +22,7 @@ interface NPSQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -58,6 +57,10 @@ export const NPSQuestion = ({
         updatedTtcObj
       );
     }, 250);
+  };
+
+  const getNPSOptionColor = (idx: number) => {
+    return idx > 8 ? "bg-emerald-100" : idx > 6 ? "bg-orange-100" : "bg-rose-100";
   };
 
   return (
@@ -104,9 +107,12 @@ export const NPSQuestion = ({
                         value === number
                           ? "border-border-highlight bg-accent-selected-bg z-10 border"
                           : "border-border",
-                        "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative h-10 flex-1 cursor-pointer border-b border-l border-t text-center text-sm leading-10 last:border-r focus:border-2 focus:outline-none",
+                        "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative h-10 flex-1 cursor-pointer overflow-hidden border-b border-l border-t text-center text-sm leading-10 last:border-r focus:border-2 focus:outline-none",
                         hoveredNumber === number ? "bg-accent-bg" : ""
                       )}>
+                      {question.isColorCodingEnabled && (
+                        <div className={`absolute left-0 top-0 h-[6px] w-full ${getNPSOptionColor(idx)}`} />
+                      )}
                       <input
                         type="radio"
                         id={number.toString()}
@@ -123,8 +129,8 @@ export const NPSQuestion = ({
                 })}
               </div>
               <div className="text-subheading mt-2 flex justify-between px-1.5 text-xs leading-6">
-                <p>{getLocalizedValue(question.lowerLabel, languageCode)}</p>
-                <p>{getLocalizedValue(question.upperLabel, languageCode)}</p>
+                <p dir="auto">{getLocalizedValue(question.lowerLabel, languageCode)}</p>
+                <p dir="auto">{getLocalizedValue(question.upperLabel, languageCode)}</p>
               </div>
             </fieldset>
           </div>

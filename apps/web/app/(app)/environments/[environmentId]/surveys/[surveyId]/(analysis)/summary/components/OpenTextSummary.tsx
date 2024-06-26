@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { useState } from "react";
-
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
-
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface OpenTextSummaryProps {
@@ -71,7 +69,7 @@ export const OpenTextSummary = ({
                   </div>
                 )}
               </div>
-              <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold">
+              <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold" dir="auto">
                 {response.value}
               </div>
               <div className="px-4 text-slate-500 md:px-6">

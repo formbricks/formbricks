@@ -7,7 +7,6 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceQuestion } from "@formbricks/types/surveys";
@@ -23,7 +22,7 @@ interface MultipleChoiceMultiProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -38,7 +37,7 @@ export const MultipleChoiceMultiQuestion = ({
   languageCode,
   ttc,
   setTtc,
-  isInIframe,
+  autoFocusEnabled,
   currentQuestionId,
 }: MultipleChoiceMultiProps) => {
   const [startTime, setStartTime] = useState(performance.now());
@@ -181,8 +180,8 @@ export const MultipleChoiceMultiQuestion = ({
                           document.getElementById(choice.id)?.focus();
                         }
                       }}
-                      autoFocus={idx === 0 && !isInIframe}>
-                      <span className="flex items-center text-sm">
+                      autoFocus={idx === 0 && autoFocusEnabled}>
+                      <span className="flex items-center text-sm" dir="auto">
                         <input
                           type="checkbox"
                           id={choice.id}
@@ -208,7 +207,7 @@ export const MultipleChoiceMultiQuestion = ({
                               : question.required
                           }
                         />
-                        <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                        <span id={`${choice.id}-label`} className="ml-3 mr-3 grow font-medium">
                           {getLocalizedValue(choice.label, languageCode)}
                         </span>
                       </span>
@@ -232,7 +231,7 @@ export const MultipleChoiceMultiQuestion = ({
                         document.getElementById(otherOption.id)?.focus();
                       }
                     }}>
-                    <span className="flex items-center text-sm">
+                    <span className="flex items-center text-sm" dir="auto">
                       <input
                         type="checkbox"
                         tabIndex={-1}
@@ -251,13 +250,14 @@ export const MultipleChoiceMultiQuestion = ({
                         }}
                         checked={otherSelected}
                       />
-                      <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
+                      <span id={`${otherOption.id}-label`} className="ml-3 mr-3 grow font-medium">
                         {getLocalizedValue(otherOption.label, languageCode)}
                       </span>
                     </span>
                     {otherSelected && (
                       <input
                         ref={otherSpecify}
+                        dir="auto"
                         id={`${otherOption.id}-label`}
                         name={question.id}
                         tabIndex={questionChoices.length + 1}

@@ -43,9 +43,10 @@ const surveyDefault: TTemplate["preset"] = {
   questions: [],
 };
 
-export const testTemplate: TTemplate = {
+/* export const testTemplate: TTemplate = {
   name: "Test template",
-  category: "Product Experience",
+  role: "productManager",
+  industries: ["other"],
   description: "Test template consisting of all questions",
   preset: {
     ...surveyDefault,
@@ -347,13 +348,282 @@ export const testTemplate: TTemplate = {
       },
     ],
   },
-};
+}; */
 
 export const templates: TTemplate[] = [
   {
+    name: "Cart Abandonment Survey",
+    role: "productManager",
+    industries: ["eCommerce"],
+    channels: ["app", "website", "link"],
+    description: "Understand the reasons behind cart abandonment in your web shop.",
+    preset: {
+      ...surveyDefault,
+      name: "Cart Abandonment Survey",
+      questions: [
+        {
+          id: createId(),
+          html: {
+            default:
+              '<p class="fb-editor-paragraph" dir="ltr"><span>We noticed you left some items in your cart. We would love to understand why.</span></p>',
+          },
+          type: TSurveyQuestionTypeEnum.CTA,
+          logic: [{ condition: "skipped", destination: "end" }],
+          headline: { default: "Do you have 2 minutes to help us improve?" },
+          required: false,
+          buttonLabel: { default: "Sure!" },
+          buttonExternal: false,
+          dismissButtonLabel: { default: "No, thanks." },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "What was the primary reason you didn't complete your purchase?" },
+          subheader: { default: "Please select one of the following options:" },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: "High shipping costs" },
+            },
+            {
+              id: createId(),
+              label: { default: "Found a better price elsewhere" },
+            },
+            {
+              id: createId(),
+              label: { default: "Just browsing" },
+            },
+            {
+              id: createId(),
+              label: { default: "Decided not to buy" },
+            },
+            {
+              id: createId(),
+              label: { default: "Payment issues" },
+            },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: "Please elaborate on your reason for not completing the purchase:",
+          },
+          required: false,
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: { default: "How would you rate your overall shopping experience?" },
+          required: true,
+          scale: "number",
+          range: 5,
+          lowerLabel: { default: "Very dissatisfied" },
+          upperLabel: { default: "Very satisfied" },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          headline: {
+            default: "What factors would encourage you to complete your purchase in the future?",
+          },
+          subheader: { default: "Please select all that apply:" },
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: { default: "Lower shipping costs" },
+            },
+            {
+              id: createId(),
+              label: { default: "Discounts or promotions" },
+            },
+            {
+              id: createId(),
+              label: { default: "More payment options" },
+            },
+            {
+              id: createId(),
+              label: { default: "Better product descriptions" },
+            },
+            {
+              id: createId(),
+              label: { default: "Improved website navigation" },
+            },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+        {
+          id: createId(),
+          logic: [{ condition: "skipped", destination: "bxvvhol84ir34q2vsvr5kwl9" }],
+          type: TSurveyQuestionTypeEnum.Consent,
+          headline: { default: "Would you like to receive a discount code via email?" },
+          required: false,
+          label: { default: "Yes, please reach out." },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Please share your email address:" },
+          required: true,
+          inputType: "email",
+          longAnswer: false,
+          placeholder: { default: "example@email.com" },
+        },
+        {
+          id: "bxvvhol84ir34q2vsvr5kwl9",
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Any additional comments or suggestions?" },
+          required: false,
+          inputType: "text",
+        },
+      ],
+    },
+  },
+  {
+    name: "Site Abandonment Survey",
+    role: "productManager",
+    industries: ["eCommerce"],
+    channels: ["app", "website"],
+    description: "Understand the reasons behind site abandonment in your web shop.",
+    preset: {
+      ...surveyDefault,
+      name: "Site Abandonment Survey",
+      questions: [
+        {
+          id: createId(),
+          html: {
+            default:
+              "<p class='fb-editor-paragraph' dir='ltr'><span>We noticed you're  leaving our site without making a purchase. We would love to understand why.</span></p>",
+          },
+          type: TSurveyQuestionTypeEnum.CTA,
+          logic: [{ condition: "skipped", destination: "end" }],
+          headline: { default: "Do you have a minute?" },
+          required: false,
+          buttonLabel: { default: "Sure!" },
+          buttonExternal: false,
+          dismissButtonLabel: { default: "No, thanks." },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "What's the primary reason you're leaving our site?" },
+          subheader: { default: "Please select one of the following options:" },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: "Can't find what I am looking for" },
+            },
+            {
+              id: createId(),
+              label: { default: "Site is too slow" },
+            },
+            {
+              id: createId(),
+              label: { default: "Technical issues" },
+            },
+            {
+              id: createId(),
+              label: { default: "Just browsing" },
+            },
+            {
+              id: createId(),
+              label: { default: "Found a better site" },
+            },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: "Please elaborate on your reason for leaving the site:",
+          },
+          required: false,
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: { default: "How would you rate your overall experience on our site?" },
+          required: true,
+          scale: "number",
+          range: 5,
+          lowerLabel: { default: "Very dissatisfied" },
+          upperLabel: { default: "Very satisfied" },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          headline: {
+            default: "What improvements would encourage you to stay longer on our site?",
+          },
+          subheader: { default: "Please select all that apply:" },
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: { default: "Faster loading times" },
+            },
+            {
+              id: createId(),
+              label: { default: "Better product search functionality" },
+            },
+            {
+              id: createId(),
+              label: { default: "More product variety" },
+            },
+            {
+              id: createId(),
+              label: { default: "Improved site design" },
+            },
+            {
+              id: createId(),
+              label: { default: "More customer reviews" },
+            },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+        {
+          id: createId(),
+          logic: [{ condition: "skipped", destination: "bxvvhol84ir34q2vsvr5kwl9" }],
+          type: TSurveyQuestionTypeEnum.Consent,
+          headline: { default: "Would you like to receive updates about new products and promotions?" },
+          required: false,
+          label: { default: "Yes, please reach out." },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Please share your email address:" },
+          required: true,
+          inputType: "email",
+          longAnswer: false,
+          placeholder: { default: "example@email.com" },
+        },
+        {
+          id: "bxvvhol84ir34q2vsvr5kwl9",
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Any additional comments or suggestions?" },
+          required: false,
+          inputType: "text",
+        },
+      ],
+    },
+  },
+  {
     name: "Product Market Fit (Superhuman)",
-    category: "Product Experience",
-
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app", "link"],
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
     preset: {
       ...surveyDefault,
@@ -413,7 +683,7 @@ export const templates: TTemplate[] = [
             },
             {
               id: createId(),
-              label: { default: "Product Manager" },
+              label: { default: "productManager" },
             },
             {
               id: createId(),
@@ -452,8 +722,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Onboarding Segmentation",
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app", "link"],
     description: "Learn more about who signed up to your product and why.",
     preset: {
       ...surveyDefault,
@@ -477,7 +748,7 @@ export const templates: TTemplate[] = [
             },
             {
               id: createId(),
-              label: { default: "Product Manager" },
+              label: { default: "productManager" },
             },
             {
               id: createId(),
@@ -554,8 +825,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Churn Survey",
-    category: "Increase Revenue",
-    objectives: ["sharpen_marketing_messaging", "improve_user_retention"],
+    role: "sales",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["app", "link"],
     description: "Find out why people cancel their subscriptions. These insights are pure gold!",
     preset: {
       ...surveyDefault,
@@ -635,8 +907,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Earned Advocacy Score (EAS)",
-    category: "Growth",
-    objectives: ["support_sales", "sharpen_marketing_messaging"],
+    role: "customerSuccess",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["app", "link"],
     description:
       "The EAS is a riff off the NPS but asking for actual past behaviour instead of lofty intentions.",
     preset: {
@@ -697,8 +970,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Improve Trial Conversion",
-    category: "Increase Revenue",
-    objectives: ["increase_user_adoption", "increase_conversion", "improve_user_retention"],
+    role: "sales",
+    industries: ["saas"],
+    channels: ["link", "app"],
     description: "Find out why people stopped their trial. These insights help you improve your funnel.",
     preset: {
       ...surveyDefault,
@@ -802,9 +1076,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Review Prompt",
-
-    category: "Growth",
-    objectives: ["support_sales"],
+    role: "marketing",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link", "app"],
     description: "Invite users who love your product to review it publicly.",
     preset: {
       ...surveyDefault,
@@ -820,6 +1094,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not good" },
           upperLabel: { default: "Very satisfied" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -847,9 +1122,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Interview Prompt",
-
-    category: "Exploration",
-    objectives: ["improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Invite a specific subset of your users to schedule an interview with your product team.",
     preset: {
       ...surveyDefault,
@@ -869,9 +1144,10 @@ export const templates: TTemplate[] = [
     },
   },
   {
-    name: "Reduce Onboarding Drop-Off",
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "increase_conversion"],
+    name: "Improve Activation Rate",
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["link"],
     description: "Identify weaknesses in your onboarding flow to increase user activation.",
     preset: {
       ...surveyDefault,
@@ -966,8 +1242,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Uncover Strengths & Weaknesses",
-    category: "Growth",
-    objectives: ["sharpen_marketing_messaging", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas", "other"],
+    channels: ["app", "link"],
     description: "Find out what users like and don't like about your product or offering.",
     preset: {
       ...surveyDefault,
@@ -1014,7 +1291,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Product Market Fit Survey (Short)",
-    category: "Product Experience",
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app", "link"],
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
     preset: {
       ...surveyDefault,
@@ -1055,9 +1334,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Marketing Attribution",
-
-    category: "Growth",
-    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
+    role: "marketing",
+    industries: ["saas", "eCommerce"],
+    channels: ["website", "app", "link"],
     description: "How did you first hear about us?",
     preset: {
       ...surveyDefault,
@@ -1098,9 +1377,9 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Changing Subscription Experience",
-
-    category: "Increase Revenue",
-    objectives: ["increase_conversion", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Find out what goes through peoples minds when changing their subscriptions.",
     preset: {
       ...surveyDefault,
@@ -1162,9 +1441,9 @@ export const templates: TTemplate[] = [
 
   {
     name: "Identify Customer Goals",
-
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "sharpen_marketing_messaging", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas", "other"],
+    channels: ["app", "website"],
     description:
       "Better understand if your messaging creates the right expectations of the value your product provides.",
     preset: {
@@ -1199,11 +1478,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Feature Chaser",
-
-    category: "Product Experience",
-    objectives: ["improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Follow up with users who just used a specific feature.",
     preset: {
       ...surveyDefault,
@@ -1218,6 +1498,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not important" },
           upperLabel: { default: "Very important" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1235,11 +1516,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Fake Door Follow-Up",
-
-    category: "Exploration",
-    objectives: ["increase_user_adoption"],
+    role: "productManager",
+    industries: ["saas", "eCommerce"],
+    channels: ["app", "website"],
     description: "Follow up with users who ran into one of your Fake Door experiments.",
     preset: {
       ...surveyDefault,
@@ -1254,6 +1536,7 @@ export const templates: TTemplate[] = [
           upperLabel: { default: "Very important" },
           range: 5,
           scale: "number",
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1283,11 +1566,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Feedback Box",
-
-    category: "Product Experience",
-    objectives: ["improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Give your users the chance to seamlessly share what's on their minds.",
     preset: {
       ...surveyDefault,
@@ -1348,11 +1632,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Integration Setup Survey",
-
-    category: "Product Experience",
-    objectives: ["increase_user_adoption"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Evaluate how easily users can add integrations to your product. Find blind spots.",
     preset: {
       ...surveyDefault,
@@ -1368,6 +1653,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not easy" },
           upperLabel: { default: "Very easy" },
+          isColorCodingEnabled: false,
         },
         {
           id: "mko13ptjj6tpi5u2pl7a5drz",
@@ -1388,11 +1674,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "New Integration Survey",
-
-    category: "Exploration",
-    objectives: ["increase_user_adoption", "increase_conversion"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Find out which integrations your users would like to see next.",
     preset: {
       ...surveyDefault,
@@ -1430,11 +1717,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Docs Feedback",
-
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app", "website", "link"],
     description: "Measure how clear each page of your developer documentation is.",
     preset: {
       ...surveyDefault,
@@ -1474,11 +1762,13 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Net Promoter Score (NPS)",
 
-    category: "Customer Success",
-    objectives: ["support_sales"],
+    role: "customerSuccess",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["app", "link", "website"],
     description: "Measure the Net Promoter Score of your product or service.",
     preset: {
       ...surveyDefault,
@@ -1491,6 +1781,7 @@ export const templates: TTemplate[] = [
           required: false,
           lowerLabel: { default: "Not likely" },
           upperLabel: { default: "Very likely" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1502,11 +1793,13 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Customer Satisfaction Score (CSAT)",
-    category: "Customer Success",
-    objectives: ["support_sales"],
-    description: "Measure the Customer Satisfaction Score of your product.",
+    role: "customerSuccess",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["app", "link", "website"],
+    description: "Measure the Customer Satisfaction Score of your product or service.",
     preset: {
       ...surveyDefault,
       name: "{{productName}} CSAT",
@@ -1521,6 +1814,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not satisfied" },
           upperLabel: { default: "Very satisfied" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1542,10 +1836,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Collect Feedback",
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
+    role: "productManager",
+    industries: ["other", "eCommerce"],
+    channels: ["website", "link"],
     description: "Gather comprehensive feedback on your product or service.",
     preset: {
       ...surveyDefault,
@@ -1562,6 +1858,7 @@ export const templates: TTemplate[] = [
           subheader: { default: "Don't worry, be honest." },
           lowerLabel: { default: "Not good" },
           upperLabel: { default: "Very good" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1591,6 +1888,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not good" },
           upperLabel: { default: "Very good" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1628,11 +1926,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Identify Upsell Opportunities",
-
-    category: "Increase Revenue",
-    objectives: ["support_sales", "sharpen_marketing_messaging"],
+    role: "sales",
+    industries: ["saas"],
+    channels: ["app", "link"],
     description: "Find out how much time your product saves your user. Use it to upsell.",
     preset: {
       ...surveyDefault,
@@ -1669,9 +1968,9 @@ export const templates: TTemplate[] = [
 
   {
     name: "Prioritize Features",
-
-    category: "Exploration",
-    objectives: ["increase_user_adoption"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Identify features your users need most and least.",
     preset: {
       ...surveyDefault,
@@ -1715,11 +2014,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Gauge Feature Satisfaction",
-
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Evaluate the satisfaction of specific features of your product.",
     preset: {
       ...surveyDefault,
@@ -1734,6 +2034,7 @@ export const templates: TTemplate[] = [
           upperLabel: { default: "Very easy" },
           scale: "number",
           range: 5,
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1747,11 +2048,12 @@ export const templates: TTemplate[] = [
       hiddenFields: hiddenFieldsDefault,
     },
   },
+
   {
     name: "Marketing Site Clarity",
-
-    category: "Growth",
-    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
+    role: "marketing",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["website"],
     description: "Identify users dropping off your marketing site. Improve your messaging.",
     preset: {
       ...surveyDefault,
@@ -1797,11 +2099,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Customer Effort Score (CES)",
-
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app"],
     description: "Determine how easy it is to use a feature.",
     preset: {
       ...surveyDefault,
@@ -1816,6 +2119,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Disagree strongly" },
           upperLabel: { default: "Agree strongly" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1831,9 +2135,9 @@ export const templates: TTemplate[] = [
 
   {
     name: "Rate Checkout Experience",
-
-    category: "Increase Revenue",
-    objectives: ["increase_conversion"],
+    role: "productManager",
+    industries: ["eCommerce"],
+    channels: ["website", "app"],
     description: "Let customers rate the checkout experience to tweak conversion.",
     preset: {
       ...surveyDefault,
@@ -1849,6 +2153,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Very difficult" },
           upperLabel: { default: "Very easy" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1870,11 +2175,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Measure Search Experience",
-
-    category: "Product Experience",
-    objectives: ["improve_user_retention"],
+    role: "productManager",
+    industries: ["saas", "eCommerce"],
+    channels: ["app", "website"],
     description: "Measure how relevant your search results are.",
     preset: {
       ...surveyDefault,
@@ -1890,6 +2196,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not at all relevant" },
           upperLabel: { default: "Very relevant" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1911,11 +2218,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Evaluate Content Quality",
-
-    category: "Growth",
-    objectives: ["increase_conversion"],
+    role: "marketing",
+    industries: ["other"],
+    channels: ["website"],
     description: "Measure if your content marketing pieces hit right.",
     preset: {
       ...surveyDefault,
@@ -1931,6 +2239,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not at all well" },
           upperLabel: { default: "Extremely well" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -1952,11 +2261,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Measure Task Accomplishment",
-
-    category: "Customer Success",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app", "website"],
     description: "See if people get their 'Job To Be Done' done. Successful people are better customers.",
     preset: {
       ...surveyDefault,
@@ -1989,6 +2299,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Very difficult" },
           upperLabel: { default: "Very easy" },
+          isColorCodingEnabled: false,
         },
         {
           id: "s0999bhpaz8vgf7ps264piek",
@@ -2026,11 +2337,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Identify Sign Up Barriers",
-
-    category: "Growth",
-    objectives: ["increase_conversion"],
+    role: "marketing",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["website"],
     description: "Offer a discount to gather insights about sign up barriers.",
     preset: {
       ...surveyDefault,
@@ -2060,6 +2372,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not at all likely" },
           upperLabel: { default: "Very likely" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -2151,11 +2464,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Build Product Roadmap",
-
-    category: "Exploration",
-    objectives: ["increase_user_adoption"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["app", "link"],
     description: "Identify the ONE thing your users want the most and build it.",
     preset: {
       ...surveyDefault,
@@ -2172,6 +2486,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not at all satisfied" },
           upperLabel: { default: "Extremely satisfied" },
+          isColorCodingEnabled: false,
         },
         {
           id: createId(),
@@ -2186,11 +2501,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Understand Purchase Intention",
-
-    category: "Increase Revenue",
-    objectives: ["increase_conversion", "increase_user_adoption"],
+    role: "sales",
+    industries: ["eCommerce"],
+    channels: ["website", "link", "app"],
     description: "Find out how close your visitors are to buy or subscribe.",
     preset: {
       ...surveyDefault,
@@ -2207,10 +2523,11 @@ export const templates: TTemplate[] = [
           ],
           range: 5,
           scale: "number",
-          headline: { default: "How likely are you to subscribe to {{productName}} today?" },
+          headline: { default: "How likely are you to shop from us today?" },
           required: true,
           lowerLabel: { default: "Not at all likely" },
           upperLabel: { default: "Extremely likely" },
+          isColorCodingEnabled: false,
         },
         {
           id: "y19mwcmstlc7pi7s4izxk1ll",
@@ -2235,10 +2552,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Improve Newsletter Content",
-    category: "Growth",
-    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
+    role: "marketing",
+    industries: ["eCommerce", "saas", "other"],
+    channels: ["link"],
     description: "Find out how your subscribers like your newsletter content.",
     preset: {
       ...surveyDefault,
@@ -2257,6 +2576,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Meh" },
           upperLabel: { default: "Great" },
+          isColorCodingEnabled: false,
         },
         {
           id: "k3s6gm5ivkc5crpycdbpzkpa",
@@ -2287,11 +2607,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Evaluate a Product Idea",
-
-    category: "Exploration",
-    objectives: ["improve_user_retention", "increase_user_adoption"],
+    role: "productManager",
+    industries: ["saas", "other"],
+    channels: ["link", "app"],
     description: "Survey users about product or feature ideas. Get feedback rapidly.",
     preset: {
       ...surveyDefault,
@@ -2326,7 +2647,9 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Very difficult" },
           upperLabel: { default: "Very easy" },
+          isColorCodingEnabled: false,
         },
+
         {
           id: "ndacjg9lqf5jcpq9w8ote666",
           type: TSurveyQuestionTypeEnum.OpenText,
@@ -2361,6 +2684,7 @@ export const templates: TTemplate[] = [
           required: true,
           lowerLabel: { default: "Not valuable" },
           upperLabel: { default: "Very valuable" },
+          isColorCodingEnabled: false,
         },
         {
           id: "mmiuun3z4e7gk4ufuwh8lq8q",
@@ -2390,11 +2714,12 @@ export const templates: TTemplate[] = [
       ],
     },
   },
+
   {
     name: "Understand Low Engagement",
-
-    category: "Product Experience",
-    objectives: ["improve_user_retention", "increase_user_adoption"],
+    role: "productManager",
+    industries: ["saas"],
+    channels: ["link"],
     description: "Identify reasons for low engagement to improve user adoption.",
     preset: {
       ...surveyDefault,
@@ -2503,24 +2828,49 @@ export const customSurvey = {
   },
 };
 
-export const getExampleSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
+export const getExampleWebsiteSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
   ...customSurvey.preset,
   questions: customSurvey.preset.questions.map(
     (question) =>
       ({
         ...question,
         type: TSurveyQuestionTypeEnum.CTA,
-        headline: { default: "You did it 🎉" },
+        headline: { default: "Website successfully connected 🎉" },
         html: {
-          default: "You're all set up. Create your own survey to gather exactly the feedback you need :)",
+          default: "You're all set up. Create your own survey for website visitors 👇",
         },
-        buttonLabel: { default: "Create survey" },
+        buttonLabel: { default: "Let's do it!" },
         buttonExternal: true,
         imageUrl: `${webAppUrl}/onboarding/meme.png`,
       }) as TSurveyCTAQuestion
   ),
-  name: "Example survey",
+  name: "Example website survey",
   type: "website" as TSurveyType,
+  autoComplete: 2,
+  triggers: [{ actionClass: trigger }],
+  status: "inProgress" as TSurveyStatus,
+  displayOption: "respondMultiple" as TSurveyDisplayOption,
+  recontactDays: 0,
+});
+
+export const getExampleAppSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
+  ...customSurvey.preset,
+  questions: customSurvey.preset.questions.map(
+    (question) =>
+      ({
+        ...question,
+        type: TSurveyQuestionTypeEnum.CTA,
+        headline: { default: "App successfully connected 🥳" },
+        html: {
+          default: "You're all set up. Create your own survey for your app users 👇",
+        },
+        buttonLabel: { default: "Let's do it!" },
+        buttonExternal: true,
+        imageUrl: `${webAppUrl}/onboarding/meme.png`,
+      }) as TSurveyCTAQuestion
+  ),
+  name: "Example app survey",
+  type: "app" as TSurveyType,
   autoComplete: 2,
   triggers: [{ actionClass: trigger }],
   status: "inProgress" as TSurveyStatus,

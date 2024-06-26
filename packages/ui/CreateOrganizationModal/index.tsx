@@ -3,7 +3,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-
 import { createOrganizationAction } from "../../../apps/web/app/(app)/environments/[environmentId]/actions";
 import { Button } from "../Button";
 import { Input } from "../Input";

@@ -1,7 +1,6 @@
 import { FingerprintIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-
 import { cn } from "@formbricks/lib/cn";
 import {
   convertOperatorToText,
@@ -19,7 +18,6 @@ import {
   TSegmentFilterValue,
   TSegmentPersonFilter,
 } from "@formbricks/types/segment";
-
 import { Input } from "../../Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../Select";
 import { SegmentFilterItemConnector } from "./SegmentFilterItemConnector";

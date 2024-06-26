@@ -5,7 +5,6 @@ import { ArchiveIcon, ArchiveXIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-
 import { updateAttributeClass } from "@formbricks/lib/attributeClass/service";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -92,7 +91,7 @@ export const AttributeSettingsTab = async ({ attributeClass, setOpen }: Attribut
                 ) : (
                   <>
                     {" "}
-                    <ArchiveIcon className="mr-2 h-4  text-slate-600" />
+                    <ArchiveIcon className="mr-2 h-4 text-slate-600" />
                     <span>Archive</span>
                   </>
                 )}

@@ -4,7 +4,6 @@ import { deleteOrganizationAction } from "@/app/(app)/environments/[environmentI
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
 import { TOrganization } from "@formbricks/types/organizations";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";

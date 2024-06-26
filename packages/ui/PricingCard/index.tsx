@@ -1,171 +1,223 @@
 import { CheckIcon } from "lucide-react";
-
-import { TOrganization } from "@formbricks/types/organizations";
-
+import { useMemo, useState } from "react";
+import { cn } from "@formbricks/lib/cn";
+import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 import { Badge } from "../Badge";
-import { BillingSlider } from "../BillingSlider";
 import { Button } from "../Button";
+import { ConfirmationModal } from "../ConfirmationModal";
+
+interface PricingCardProps {
+  plan: {
+    id: string;
+    name: string;
+    featured: boolean;
+    price: {
+      monthly: string;
+      yearly: string;
+    };
+    offer?: boolean;
+    mainFeatures: string[];
+    href: string;
+  };
+  planPeriod: TOrganizationBillingPeriod;
+  organization: TOrganization;
+  onUpgrade: () => Promise<void>;
+  onManageSubscription: () => Promise<void>;
+  productFeatureKeys: {
+    FREE: string;
+    STARTUP: string;
+    SCALE: string;
+    ENTERPRISE: string;
+  };
+}
 
 export const PricingCard = ({
-  title,
-  subtitle,
-  featureName,
-  monthlyPrice,
-  actionText,
-  organization,
-  metric,
-  sliderValue,
-  sliderLimit,
-  freeTierLimit,
-  paidFeatures,
-  perMetricCharge,
-  loading,
+  planPeriod,
+  plan,
   onUpgrade,
-  onUnsubscribe,
-}: {
-  title: string;
-  subtitle: string;
-  featureName: string;
-  monthlyPrice: number;
-  actionText: string;
-  organization: TOrganization;
-  metric?: string;
-  sliderValue?: number;
-  sliderLimit?: number;
-  freeTierLimit?: number;
-  paidFeatures: {
-    title: string;
-    comingSoon?: boolean;
-    unlimited?: boolean;
-  }[];
-  perMetricCharge?: number;
-  loading: boolean;
-  onUpgrade: any;
-  onUnsubscribe: any;
-}) => {
-  const featureNameKey = featureName as keyof typeof organization.billing.features;
+  onManageSubscription,
+  organization,
+  productFeatureKeys,
+}: PricingCardProps) => {
+  const [loading, setLoading] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+
+  const isCurrentPlan = useMemo(() => {
+    if (organization.billing.plan === productFeatureKeys.FREE && plan.id === productFeatureKeys.FREE) {
+      return true;
+    }
+
+    if (
+      organization.billing.plan === productFeatureKeys.ENTERPRISE &&
+      plan.id === productFeatureKeys.ENTERPRISE
+    ) {
+      return true;
+    }
+
+    return organization.billing.plan === plan.id && organization.billing.period === planPeriod;
+  }, [
+    organization.billing.period,
+    organization.billing.plan,
+    plan.id,
+    planPeriod,
+    productFeatureKeys.ENTERPRISE,
+    productFeatureKeys.FREE,
+  ]);
+
+  const CTAButton = useMemo(() => {
+    if (isCurrentPlan) {
+      return null;
+    }
+
+    if (plan.id !== productFeatureKeys.ENTERPRISE && plan.id !== productFeatureKeys.FREE) {
+      if (organization.billing.plan === productFeatureKeys.FREE) {
+        return (
+          <Button
+            variant="darkCTA"
+            loading={loading}
+            onClick={async () => {
+              setLoading(true);
+              await onUpgrade();
+              setLoading(false);
+            }}
+            className="flex justify-center">
+            Start Free Trial
+          </Button>
+        );
+      }
+
+      return (
+        <Button
+          variant="darkCTA"
+          loading={loading}
+          onClick={() => {
+            setUpgradeModalOpen(true);
+          }}
+          className="flex justify-center">
+          Switch Plan
+        </Button>
+      );
+    }
+
+    return <></>;
+  }, [
+    isCurrentPlan,
+    loading,
+    onUpgrade,
+    organization.billing.plan,
+    plan.id,
+    productFeatureKeys.ENTERPRISE,
+    productFeatureKeys.FREE,
+  ]);
+
   return (
-    <div className="mt-8 rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
-      <div className="relative p-8">
-        <h2 className="mr-2 inline-flex text-2xl font-bold text-slate-700">{title}</h2>
-        {organization.billing.features[featureNameKey].status === "active" ? (
-          organization.billing.features[featureNameKey].unlimited ? (
-            <Badge text="Unlimited" size="normal" type="success" />
-          ) : (
-            <>
-              <Badge text="Subscribed" size="normal" type="success" />
-              <Button
-                variant="secondary"
-                onClick={(e) => onUnsubscribe(e)}
-                className="absolute right-12 top-10">
-                Unsubscribe
-              </Button>
-            </>
-          )
-        ) : organization.billing.features[featureNameKey].status === "cancelled" ? (
-          <Badge text="Cancelling at End of this Month" size="normal" type="warning" />
-        ) : null}
+    <div
+      key={plan.id}
+      className={cn(
+        plan.featured
+          ? "z-10 bg-white shadow-lg ring-1 ring-slate-900/10"
+          : "bg-slate-100 ring-1 ring-white/10 lg:bg-transparent lg:pb-8 lg:ring-0",
+        "relative rounded-xl"
+      )}>
+      <div className="p-8 lg:pt-12 xl:p-10 xl:pt-14">
+        <div className="flex gap-x-2">
+          <h2
+            id={plan.id}
+            className={cn(
+              plan.featured ? "text-slate-900" : "text-slate-800",
+              "text-sm font-semibold leading-6"
+            )}>
+            {plan.name}
+          </h2>
+          {isCurrentPlan && <Badge text="Current Plan" type="success" size="normal" />}
+        </div>
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between lg:flex-col lg:items-stretch">
+          <div className="mt-2 flex items-center gap-x-4">
+            <p
+              className={cn(
+                plan.offer ? "text-orange-600" : plan.featured ? "text-slate-900" : "text-slate-800",
+                "text-4xl font-bold tracking-tight"
+              )}>
+              {planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly}
+            </p>
+            {plan.name !== "Enterprise" && (
+              <div className="text-sm leading-5">
+                <p className={plan.featured ? "text-slate-900" : "text-slate-800"}>/ Month</p>
+                <p className={plan.featured ? "text-slate-500" : "text-slate-400"}>{`Billed ${
+                  planPeriod === "monthly" ? "monthly" : "yearly"
+                }`}</p>
+              </div>
+            )}
+          </div>
 
-        <p className=" mt-1 whitespace-pre-wrap text-sm text-slate-600">{subtitle}</p>
+          {CTAButton}
 
-        {metric && perMetricCharge && (
-          <div className="rounded-xl bg-slate-100 py-4 dark:bg-slate-800">
-            <div className="mb-2 flex items-center gap-x-4"></div>
-            {organization.billing.features[featureNameKey].unlimited ? (
-              <p>
-                <span className="text-sm font-medium text-slate-400">
-                  Usage this month: {sliderValue} {metric}
-                </span>
-              </p>
-            ) : (
-              <div className="relative mb-16 mt-4">
-                <BillingSlider
-                  className="slider-class"
-                  value={sliderValue || 0}
-                  max={sliderLimit || 100}
-                  freeTierLimit={freeTierLimit || 0}
-                  metric={metric}
+          {plan.id !== productFeatureKeys.FREE && isCurrentPlan && (
+            <Button
+              variant="secondary"
+              loading={loading}
+              onClick={async () => {
+                setLoading(true);
+                await onManageSubscription();
+                setLoading(false);
+              }}
+              className="flex justify-center">
+              Manage Subscription
+            </Button>
+          )}
+
+          {organization.billing.plan !== plan.id && plan.id === productFeatureKeys.ENTERPRISE && (
+            <Button
+              variant="darkCTA"
+              loading={loading}
+              onClick={() => onUpgrade()}
+              className="flex justify-center">
+              Contact Us
+            </Button>
+          )}
+        </div>
+        <div className="mt-8 flow-root sm:mt-10">
+          <ul
+            role="list"
+            className={cn(
+              plan.featured
+                ? "divide-slate-900/5 border-slate-900/5 text-slate-600"
+                : "divide-white/5 border-white/5 text-slate-800",
+              "-my-2 divide-y border-t text-sm leading-6 lg:border-t-0"
+            )}>
+            {plan.mainFeatures.map((mainFeature) => (
+              <li key={mainFeature} className="flex gap-x-3 py-2">
+                <CheckIcon
+                  className={cn(plan.featured ? "text-brand-dark" : "text-slate-500", "h-6 w-5 flex-none")}
+                  aria-hidden="true"
                 />
-              </div>
-            )}
-            <hr className="mt-6" />
-          </div>
-        )}
 
-        <div className="flex py-3">
-          <div className="w-3/5">
-            {organization.billing.features[featureNameKey].status === "inactive" && (
-              <p className="whitespace-pre-wrap text-sm leading-6 text-slate-600">
-                You&apos;re on the <b>Free plan</b> in {title}.<br />
-                Upgrade now to unlock the following:
-              </p>
-            )}
-
-            <ul className="mt-4 space-y-4">
-              {paidFeatures.map((feature, index) => (
-                <li key={index} className="flex items-center">
-                  <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
-                    <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
-                  </div>
-                  <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature.title}</span>
-                  {feature.comingSoon && (
-                    <span className="mx-2 rounded bg-blue-100 px-3 py-1 text-xs text-blue-700 dark:bg-slate-700 dark:text-teal-500">
-                      coming soon
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="ml-6 flex w-2/5 flex-col items-end space-y-2">
-            {!organization.billing.features[featureNameKey].unlimited && (
-              <div className="my-2">
-                {organization.billing.features[featureNameKey].status !== "inactive" ? (
-                  <div className="mt-8">
-                    {perMetricCharge ? (
-                      <>
-                        <span className="text-sm font-medium text-slate-400">Approximately</span>
-                        <br />
-
-                        <span className="text-3xl font-bold text-slate-800">$</span>
-                        <span className="text-3xl font-bold text-slate-800">
-                          {(sliderValue! > freeTierLimit!
-                            ? (sliderValue! - freeTierLimit!) * perMetricCharge
-                            : 0
-                          ).toFixed(2)}
-                        </span>
-                        <br />
-                        <span className="text-sm font-medium text-slate-400">Month-to-Date</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-3xl font-bold text-slate-800">${monthlyPrice}</span>
-
-                        <span className="text-base font-medium text-slate-400">/ month</span>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div>
-                    <span className="text-sm font-medium text-slate-400">{actionText}</span>
-                    <br />
-
-                    <span className="text-3xl font-bold text-slate-800">${monthlyPrice}</span>
-
-                    <span className="text-base font-medium text-slate-400">/ month</span>
-                  </div>
-                )}
-              </div>
-            )}
-            {organization.billing.features[featureNameKey].status === "inactive" && (
-              <Button variant="darkCTA" loading={loading} onClick={() => onUpgrade()}>
-                Upgrade {title !== "Link Survey Pro" ? "for free" : "now"}
-              </Button>
-            )}
-          </div>
+                {mainFeature}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
+
+      <ConfirmationModal
+        title="Switch Plan"
+        buttonText="Confirm"
+        onConfirm={async () => {
+          setLoading(true);
+          await onUpgrade();
+          setLoading(false);
+          setUpgradeModalOpen(false);
+        }}
+        open={upgradeModalOpen}
+        setOpen={setUpgradeModalOpen}
+        text={`Are you sure you want to switch to the ${plan.name} plan? You will be charged ${
+          planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly
+        } per month.`}
+        buttonVariant="darkCTA"
+        buttonLoading={loading}
+        closeOnOutsideClick={false}
+        hideCloseButton
+      />
     </div>
   );
 };

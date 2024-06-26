@@ -4,7 +4,6 @@ import { XCircleIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-
 import { SignupOptions } from "@formbricks/ui/SignupOptions";
 
 interface SignupFormProps {
@@ -100,7 +99,7 @@ export const SignupForm = ({
           </div>
         )}
 
-        <div className="mt-9 text-center text-xs ">
+        <div className="mt-9 text-center text-xs">
           <span className="leading-5 text-slate-500">Have an account?</span>
           <br />
           <Link

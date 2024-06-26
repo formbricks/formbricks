@@ -1,27 +1,21 @@
-import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
-
-import { getActionClassByEnvironmentIdAndName, getActionClasses } from "@formbricks/lib/actionClass/service";
-import {
-  IS_FORMBRICKS_CLOUD,
-  PRICING_APPSURVEYS_FREE_RESPONSES,
-  WEBAPP_URL,
-} from "@formbricks/lib/constants";
+import { getActionClasses } from "@formbricks/lib/actionClass/service";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@formbricks/lib/organization/service";
+import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { createSurvey, getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
-import { getExampleSurveyTemplate } from "@formbricks/lib/templates";
+import { getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TJsWebsiteLegacyStateSync, TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";
-import { TProduct } from "@formbricks/types/product";
+import { TProductLegacy } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -52,8 +46,12 @@ export const GET = async (
 
     const { environmentId } = syncInputValidation.data;
 
-    const environment = await getEnvironment(environmentId);
-    const organization = await getOrganizationByEnvironmentId(environmentId);
+    const [environment, organization, product] = await Promise.all([
+      getEnvironment(environmentId),
+      getOrganizationByEnvironmentId(environmentId),
+      getProductByEnvironmentId(environmentId),
+    ]);
+
     if (!organization) {
       throw new Error("Organization does not exist");
     }
@@ -62,42 +60,54 @@ export const GET = async (
       throw new Error("Environment does not exist");
     }
 
-    // check if MAU limit is reached
-    let isInAppSurveyLimitReached = false;
-    if (IS_FORMBRICKS_CLOUD) {
-      // check organization subscriptons
+    if (!product) {
+      throw new Error("Product not found");
+    }
 
-      // check inAppSurvey subscription
-      const hasInAppSurveySubscription =
-        organization.billing.features.inAppSurvey.status &&
-        ["active", "canceled"].includes(organization.billing.features.inAppSurvey.status);
+    if (product.config.channel && product.config.channel !== "website") {
+      return responses.forbiddenResponse("Product channel is not website", true);
+    }
+
+    // check if response limit is reached
+    let isWebsiteSurveyResponseLimitReached = false;
+    if (IS_FORMBRICKS_CLOUD) {
       const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
-      isInAppSurveyLimitReached =
-        !hasInAppSurveySubscription && currentResponseCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
-      if (isInAppSurveyLimitReached) {
-        await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
+      const monthlyResponseLimit = organization.billing.limits.monthly.responses;
+
+      isWebsiteSurveyResponseLimitReached =
+        monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit;
+
+      if (isWebsiteSurveyResponseLimitReached) {
+        try {
+          await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
+            plan: organization.billing.plan,
+            limits: { monthly: { responses: monthlyResponseLimit, miu: null } },
+          });
+        } catch (error) {
+          console.error(`Error sending plan limits reached event to Posthog: ${error}`);
+        }
       }
     }
 
-    if (!environment?.widgetSetupCompleted) {
+    // temporary remove the example survey creation to avoid caching issue with multiple example surveys
+    /* if (!environment?.websiteSetupCompleted) {
       const exampleTrigger = await getActionClassByEnvironmentIdAndName(environmentId, "New Session");
       if (!exampleTrigger) {
         throw new Error("Example trigger not found");
       }
-      const firstSurvey = getExampleSurveyTemplate(WEBAPP_URL, exampleTrigger);
+      const firstSurvey = getExampleWebsiteSurveyTemplate(WEBAPP_URL, exampleTrigger);
       await createSurvey(environmentId, firstSurvey);
-      await updateEnvironment(environment.id, { widgetSetupCompleted: true });
+      await updateEnvironment(environment.id, { websiteSetupCompleted: true });
+    } */
+
+    if (!environment?.websiteSetupCompleted) {
+      await updateEnvironment(environment.id, { websiteSetupCompleted: true });
     }
 
-    const [surveys, actionClasses, product] = await Promise.all([
+    const [surveys, actionClasses] = await Promise.all([
       getSurveys(environmentId),
       getActionClasses(environmentId),
-      getProductByEnvironmentId(environmentId),
     ]);
-
-    if (!product) {
-      throw new Error("Product not found");
-    }
 
     // Common filter condition for selecting surveys that are in progress, are of type 'website' and have no active segment filtering.
     const filteredSurveys = surveys.filter(
@@ -106,7 +116,7 @@ export const GET = async (
       // && (!survey.segment || survey.segment.filters.length === 0)
     );
 
-    const updatedProduct: TProduct = {
+    const updatedProduct: TProductLegacy = {
       ...product,
       brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
       ...(product.styling.highlightBorderColor?.light && {
@@ -119,7 +129,7 @@ export const GET = async (
     // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
     let transformedSurveys: TLegacySurvey[] | TSurvey[] = filteredSurveys;
     let state: TJsWebsiteStateSync | TJsWebsiteLegacyStateSync = {
-      surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
+      surveys: !isWebsiteSurveyResponseLimitReached ? transformedSurveys : [],
       actionClasses,
       product: updatedProduct,
     };
@@ -137,7 +147,7 @@ export const GET = async (
       );
 
       state = {
-        surveys: isInAppSurveyLimitReached ? [] : transformedSurveys,
+        surveys: isWebsiteSurveyResponseLimitReached ? [] : transformedSurveys,
         noCodeActionClasses,
         product: updatedProduct,
       };

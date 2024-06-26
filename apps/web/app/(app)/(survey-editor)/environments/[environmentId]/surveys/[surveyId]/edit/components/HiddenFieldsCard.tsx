@@ -3,7 +3,6 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey, TSurveyHiddenFields } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -11,7 +10,6 @@ import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { Tag } from "@formbricks/ui/Tag";
-
 import { validateId } from "../lib/validation";
 
 interface HiddenFieldsCardProps {
@@ -51,7 +49,7 @@ export const HiddenFieldsCard = ({
   return (
     <div
       className={cn(
-        open ? "scale-100 shadow-lg " : "scale-97 shadow-md",
+        open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
         "group z-10 flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
       )}>
       <div

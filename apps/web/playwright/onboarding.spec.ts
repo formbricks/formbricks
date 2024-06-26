@@ -1,40 +1,41 @@
-import { expect, test } from "@playwright/test";
-
-import { signUpAndLogin } from "./utils/helper";
-import { organizations, users } from "./utils/mock";
+import { expect } from "@playwright/test";
+import { test } from "./lib/fixtures";
+import { organizations } from "./utils/mock";
 
 const { productName } = organizations.onboarding[0];
 
 test.describe("Onboarding Flow Test", async () => {
-  test("link survey", async ({ page }) => {
-    const { name, email, password } = users.onboarding[0];
-    await signUpAndLogin(page, name, email, password);
-    await page.waitForURL("/onboarding");
-    await expect(page).toHaveURL("/onboarding");
+  test("link survey", async ({ page, users }) => {
+    const user = await users.create({ withoutProduct: true });
+    await user.login();
 
-    await page.getByRole("button", { name: "Link Surveys Create a new" }).click();
-    await page.getByRole("button", { name: "Collect Feedback Collect" }).click();
-    await page.waitForTimeout(2000);
-    await page.getByRole("button", { name: "Publish" }).click();
+    await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/channel/);
+
+    await page.getByRole("button", { name: "100% custom branding Anywhere" }).click();
+    await page.getByRole("button", { name: "B2B and B2C E-Commerce" }).click();
+    await page.getByPlaceholder("Formbricks Merch Store").click();
+    await page.getByPlaceholder("Formbricks Merch Store").fill(productName);
+    await page.locator("form").filter({ hasText: "Brand colorChange the brand" }).getByRole("button").click();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
     await expect(page.getByText(productName)).toBeVisible();
   });
 
-  test("website survey", async ({ page }) => {
-    const { name, email, password } = users.onboarding[1];
-    await signUpAndLogin(page, name, email, password);
-    await page.waitForURL("/onboarding");
-    await expect(page).toHaveURL("/onboarding");
-    await page.getByRole("button", { name: "Website Surveys Run a survey" }).click();
+  test("website survey", async ({ page, users }) => {
+    const user = await users.create({ withoutProduct: true });
+    await user.login();
 
+    await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/channel/);
+
+    await page.getByRole("button", { name: "Enrich user profiles App with" }).click();
+    await page.getByRole("button", { name: "B2B and B2C E-Commerce" }).click();
+    await page.getByPlaceholder("Formbricks Merch Store").click();
+    await page.getByPlaceholder("Formbricks Merch Store").fill(productName);
+    await page.locator("form").filter({ hasText: "Brand colorChange the brand" }).getByRole("button").click();
     await page.getByRole("button", { name: "Skip" }).click();
+    await page.waitForURL(/\/environments\/[^/]+\/connect\/invite/);
     await page.getByRole("button", { name: "Skip" }).click();
 
-    await page.getByRole("button", { name: "Skip" }).click();
-    await page.locator("input").click();
-    await page.locator("input").fill("test@gmail.com");
-    await page.getByRole("button", { name: "Invite" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
     await expect(page.getByText(productName)).toBeVisible();
   });

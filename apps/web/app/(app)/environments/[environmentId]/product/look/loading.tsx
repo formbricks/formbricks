@@ -3,7 +3,6 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-
 import { cn } from "@formbricks/lib/cn";
 import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
@@ -57,10 +56,18 @@ const Loading = () => {
       current: pathname?.includes("/api-keys"),
     },
     {
-      id: "setup",
-      label: "Setup Guide",
+      id: "website-connection",
+      label: "Website Connection",
       icon: <ListChecksIcon className="h-5 w-5" />,
-      current: pathname?.includes("/setup"),
+      current: pathname?.includes("/website-connection"),
+      hidden: true,
+    },
+    {
+      id: "app-connection",
+      label: "App Connection",
+      icon: <ListChecksIcon className="h-5 w-5" />,
+      current: pathname?.includes("/app-connection"),
+      hidden: true,
     },
   ];
 
@@ -68,7 +75,7 @@ const Loading = () => {
     <div>
       <PageContentWrapper>
         <PageHeader pageTitle="Configuration">
-          <div className="grid h-10 w-full grid-cols-[auto,1fr] ">
+          <div className="grid h-10 w-full grid-cols-[auto,1fr]">
             <nav className="flex h-full min-w-full items-center space-x-4" aria-label="Tabs">
               {navigation.map((navElem) => (
                 <div
@@ -171,7 +178,7 @@ const Loading = () => {
             <div className="flex cursor-not-allowed select-none">
               <RadioGroup>
                 {placements.map((placement) => (
-                  <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap ">
+                  <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap">
                     <RadioGroupItem
                       className="cursor-not-allowed select-none"
                       id={placement.value}

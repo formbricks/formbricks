@@ -56,10 +56,6 @@ x-environment: &environment
     # Set the below to 0 to enable Password Reset (will required Email Configuration)
     PASSWORD_RESET_DISABLED: 1
 
-    # Set the below to 1 to disable signups. The first user will be created in the Onboarding process and all other users must be invited.
-    # Note: Signup cannot be enabled on self-hosting instances.
-    SIGNUP_DISABLED: 1
-
     # Set the below to 1 to disable logins with email
     # EMAIL_AUTH_DISABLED:
 
@@ -68,9 +64,6 @@ x-environment: &environment
 
     # Set the below if you want to ship JS & CSS files from a complete URL instead of the current domain
     # ASSET_PREFIX_URL:
-
-    # Set the below to 1 to skip onboarding process for new users
-    # ONBOARDING_DISABLED: 1
 
     # Set the below to your Unsplash API Key for their Survey Backgrounds
     # UNSPLASH_ACCESS_KEY:

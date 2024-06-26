@@ -1,7 +1,5 @@
 import React, { useMemo } from "react";
-
 import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
-
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 

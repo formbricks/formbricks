@@ -2,7 +2,6 @@ import { TAction } from "@formbricks/types/actions";
 import { TEnvironment } from "@formbricks/types/environment";
 import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
-
 import { ActivityItemContent, ActivityItemIcon, ActivityItemPopover } from "./ActivityItemComponents";
 
 interface IActivityTimelineProps {

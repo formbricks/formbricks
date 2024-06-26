@@ -1,7 +1,7 @@
+import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import { DefaultTag } from "@formbricks/ui/DefaultTag";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { getLanguageLabel } from "../lib/iso-languages";
 import type { ConfirmationModalProps } from "./multi-language-card";
 
 interface DefaultLanguageSelectProps {
@@ -21,7 +21,7 @@ export function DefaultLanguageSelect({
     <div className="space-y-4">
       <p className="text-sm">1. Choose the default language for this survey:</p>
       <div className="flex items-center space-x-4">
-        <div className="w-48 ">
+        <div className="w-48">
           <Select
             defaultValue={`${defaultLanguage?.code}`}
             disabled={Boolean(defaultLanguage)}

@@ -3,14 +3,12 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-
 import { cn } from "@formbricks/lib/cn";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurveyStyling } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Slider } from "@formbricks/ui/Slider";
-
 import { SurveyBgSelectorTab } from "./SurveyBgSelectorTab";
 
 interface BackgroundStylingCardProps {
@@ -43,7 +41,7 @@ export const BackgroundStylingCard = ({
       }}
       className={cn(
         open ? "" : "hover:bg-slate-50",
-        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
+        "w-full space-y-2 rounded-lg border border-slate-300 bg-white"
       )}>
       <Collapsible.CollapsibleTrigger
         asChild
@@ -110,7 +108,7 @@ export const BackgroundStylingCard = ({
 
           <div className="flex flex-col justify-center">
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col justify-center ">
+              <div className="flex flex-col justify-center">
                 <FormField
                   control={form.control}
                   name="background.brightness"

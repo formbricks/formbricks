@@ -1,9 +1,7 @@
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
-
 import { QuestionCard } from "./QuestionCard";
 
 interface QuestionsDraggableProps {
@@ -21,6 +19,7 @@ interface QuestionsDraggableProps {
   internalQuestionIdMap: Record<string, string>;
   attributeClasses: TAttributeClass[];
   addQuestion: (question: any, index?: number) => void;
+  isFormbricksCloud: boolean;
 }
 
 export const QuestionsDroppable = ({
@@ -38,9 +37,10 @@ export const QuestionsDroppable = ({
   internalQuestionIdMap,
   attributeClasses,
   addQuestion,
+  isFormbricksCloud,
 }: QuestionsDraggableProps) => {
   return (
-    <div className="group mb-5 grid w-full gap-5">
+    <div className="group mb-5 flex w-full flex-col gap-5">
       <SortableContext items={localSurvey.questions} strategy={verticalListSortingStrategy}>
         {localSurvey.questions.map((question, questionIdx) => (
           <QuestionCard
@@ -61,6 +61,7 @@ export const QuestionsDroppable = ({
             isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
             attributeClasses={attributeClasses}
             addQuestion={addQuestion}
+            isFormbricksCloud={isFormbricksCloud}
           />
         ))}
       </SortableContext>

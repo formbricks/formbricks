@@ -1,7 +1,5 @@
 import { LinkIcon } from "lucide-react";
-
 import { Modal } from "@formbricks/ui/Modal";
-
 import { UrlShortenerForm } from "./UrlShortenerForm";
 
 type UrlShortenerModalProps = {

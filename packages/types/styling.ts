@@ -1,5 +1,4 @@
 import { z } from "zod";
-
 import { ZColor } from "./common";
 
 export const ZStylingColor = z.object({

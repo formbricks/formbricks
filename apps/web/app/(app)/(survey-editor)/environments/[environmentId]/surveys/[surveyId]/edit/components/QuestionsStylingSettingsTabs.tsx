@@ -1,6 +1,5 @@
 import { PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
 import { useMemo } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { TSurveyEditorTabs } from "@formbricks/types/surveys";
 
@@ -47,7 +46,7 @@ export const QuestionsAudienceTabs = ({
   }, [isStylingTabVisible]);
 
   return (
-    <div className="fixed z-20 flex h-14 w-full items-center justify-center border bg-white md:w-1/2">
+    <div className="fixed z-30 flex h-14 w-full items-center justify-center border bg-white md:w-1/2">
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
         {tabsComputed.map((tab) => (
           <button
@@ -56,7 +55,7 @@ export const QuestionsAudienceTabs = ({
             onClick={() => setActiveId(tab.id)}
             className={cn(
               tab.id === activeId
-                ? " border-brand-dark border-b-2 font-semibold text-slate-900"
+                ? "border-brand-dark border-b-2 font-semibold text-slate-900"
                 : "text-slate-500 hover:text-slate-700",
               "flex h-full items-center px-3 text-sm font-medium"
             )}

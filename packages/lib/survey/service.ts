@@ -1,7 +1,5 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-
 import { prisma } from "@formbricks/database";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TActionClass } from "@formbricks/types/actionClasses";
@@ -11,7 +9,6 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import { TPerson } from "@formbricks/types/people";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyFilterCriteria, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
-
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
 import { attributeCache } from "../attribute/cache";
@@ -75,6 +72,7 @@ export const selectSurvey = {
   singleUse: true,
   pin: true,
   resultShareKey: true,
+  showLanguageSwitch: true,
   languages: {
     select: {
       default: true,
@@ -664,12 +662,14 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
       }),
     };
 
-    await subscribeOrganizationMembersToSurveyResponses(environmentId, survey.id);
-
     surveyCache.revalidate({
       id: survey.id,
       environmentId: survey.environmentId,
     });
+
+    if (createdBy) {
+      await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy);
+    }
 
     return transformedSurvey;
   } catch (error) {

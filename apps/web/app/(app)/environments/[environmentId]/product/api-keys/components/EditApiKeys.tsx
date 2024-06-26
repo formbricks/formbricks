@@ -3,13 +3,11 @@
 import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-
 import { timeSince } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TApiKey } from "@formbricks/types/apiKeys";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./AddApiKeyModal";
 
@@ -92,7 +90,7 @@ export const EditAPIKeys = ({
         </div>
         <div className="grid-cols-9">
           {apiKeysLocal && apiKeysLocal.length === 0 ? (
-            <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm font-medium text-slate-400 ">
+            <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm font-medium text-slate-400">
               You don&apos;t have any API keys yet
             </div>
           ) : (

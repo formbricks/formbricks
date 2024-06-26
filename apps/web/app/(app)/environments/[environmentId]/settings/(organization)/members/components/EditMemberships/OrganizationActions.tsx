@@ -9,7 +9,6 @@ import { XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-
 import { TInvitee } from "@formbricks/types/invites";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Button } from "@formbricks/ui/Button";
@@ -70,7 +69,6 @@ export const OrganizationActions = ({
     } catch (err) {
       toast.error(`Error: ${err.message}`);
     }
-    router.refresh();
   };
 
   return (

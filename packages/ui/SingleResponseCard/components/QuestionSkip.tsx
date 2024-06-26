@@ -1,10 +1,8 @@
 import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
-
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
 
 interface QuestionSkipProps {
@@ -40,7 +38,7 @@ export const QuestionSkip = ({
                   <CheckCircle2Icon className="p-0.25 absolute top-0 w-[1.5rem] min-w-[1.5rem] rounded-full bg-white text-slate-400" />
                 </div>
               }
-              <div className=" ml-6 flex flex-col text-slate-700">Welcome Card</div>
+              <div className="ml-6 flex flex-col text-slate-700">Welcome Card</div>
             </div>
           )}
           {status === "skipped" && (

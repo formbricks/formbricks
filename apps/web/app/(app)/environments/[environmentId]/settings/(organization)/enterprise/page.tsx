@@ -2,7 +2,6 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { CheckIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-
 import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -167,7 +166,7 @@ const Page = async ({ params }) => {
                   </li>
                 ))}
               </ul>
-              <p className="my-6 text-sm  text-slate-700">
+              <p className="my-6 text-sm text-slate-700">
                 No call needed, no strings attached: Request a free 30-day trial license to test all features
                 by filling out this form:
               </p>
@@ -177,7 +176,7 @@ const Page = async ({ params }) => {
                 target="_blank">
                 Request 30-day Trial License
               </Button>
-              <p className="mt-2 text-xs  text-slate-500">No credit card. No sales call. Just test it :)</p>
+              <p className="mt-2 text-xs text-slate-500">No credit card. No sales call. Just test it :)</p>
             </div>
           </div>
         </div>

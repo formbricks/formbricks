@@ -24,7 +24,7 @@ interface OpenTextQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -39,7 +39,7 @@ export const OpenTextQuestion = ({
   languageCode,
   ttc,
   setTtc,
-  isInIframe,
+  autoFocusEnabled,
   currentQuestionId,
 }: OpenTextQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
@@ -62,11 +62,11 @@ export const OpenTextQuestion = ({
 
   const openTextRef = useCallback(
     (currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
-      if (question.id && currentElement && !isInIframe) {
+      if (question.id && currentElement && autoFocusEnabled) {
         currentElement.focus();
       }
     },
-    [question.id, isInIframe]
+    [question.id, autoFocusEnabled]
   );
 
   return (
@@ -99,12 +99,13 @@ export const OpenTextQuestion = ({
                 name={question.id}
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
+                dir="auto"
                 step={"any"}
                 required={question.required}
                 value={value ? (value as string) : ""}
                 type={question.inputType}
                 onInput={(e) => handleInputChange(e.currentTarget.value)}
-                autoFocus={!isInIframe}
+                autoFocus={autoFocusEnabled}
                 className="border-border placeholder:text-placeholder text-subheading focus:border-brand bg-input-bg rounded-custom block w-full border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
                 pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
                 title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
@@ -118,6 +119,7 @@ export const OpenTextQuestion = ({
                 aria-label="textarea"
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
+                dir="auto"
                 required={question.required}
                 value={value as string}
                 type={question.inputType}
@@ -125,8 +127,8 @@ export const OpenTextQuestion = ({
                   handleInputChange(e.currentTarget.value);
                   handleInputResize(e);
                 }}
-                autoFocus={!isInIframe}
-                className="border-border placeholder:text-placeholder bg-input-bg text-subheading focus:border-brand rounded-custom block w-full border p-2 shadow-sm  focus:ring-0 sm:text-sm"
+                autoFocus={autoFocusEnabled}
+                className="border-border placeholder:text-placeholder bg-input-bg text-subheading focus:border-brand rounded-custom block w-full border p-2 shadow-sm focus:ring-0 sm:text-sm"
                 pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
                 title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
               />

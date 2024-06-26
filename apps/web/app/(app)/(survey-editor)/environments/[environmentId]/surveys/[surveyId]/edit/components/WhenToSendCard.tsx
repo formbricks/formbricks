@@ -10,7 +10,6 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
@@ -18,7 +17,6 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-
 import { AddActionModal } from "./AddActionModal";
 
 interface WhenToSendCardProps {
@@ -277,7 +275,7 @@ export const WhenToSendCard = ({
               childBorder={true}>
               <label
                 htmlFor="triggerDelay"
-                className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+                className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-700">
                     Wait

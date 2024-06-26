@@ -6,8 +6,12 @@ import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess, verifyUserRoleAccess } from "@formbricks/lib/environment/auth";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization, getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { createMembership, getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import {
+  createOrganization,
+  getOrganization,
+  getOrganizationByEnvironmentId,
+} from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { createShortUrl } from "@formbricks/lib/shortUrl/service";
 import { updateUser } from "@formbricks/lib/user/service";
@@ -17,6 +21,8 @@ import {
   OperationNotAllowedError,
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
+import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
+import { TUserNotificationSettings } from "@formbricks/types/user";
 
 export const createShortUrlAction = async (url: string) => {
   const session = await getServerSession(authOptions);
@@ -54,7 +60,7 @@ export const createOrganizationAction = async (organizationName: string): Promis
     name: "My Product",
   });
 
-  const updatedNotificationSettings = {
+  const updatedNotificationSettings: TUserNotificationSettings = {
     ...session.user.notificationSettings,
     alert: {
       ...session.user.notificationSettings?.alert,
@@ -63,6 +69,9 @@ export const createOrganizationAction = async (organizationName: string): Promis
       ...session.user.notificationSettings?.weeklySummary,
       [product.id]: true,
     },
+    unsubscribedOrganizationIds: Array.from(
+      new Set([...(session.user.notificationSettings?.unsubscribedOrganizationIds || []), newOrganization.id])
+    ),
   };
 
   await updateUser(session.user.id, {
@@ -72,22 +81,25 @@ export const createOrganizationAction = async (organizationName: string): Promis
   return newOrganization;
 };
 
-export const createProductAction = async (environmentId: string, productName: string) => {
+export const createProductAction = async (
+  organizationId: string,
+  productInput: TProductUpdateInput
+): Promise<TProduct> => {
   const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+  if (!session) throw new AuthorizationError("Not authenticated");
 
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organizationId);
+  if (!membership || membership.role === "viewer") {
+    throw new AuthorizationError("Product creation not allowed");
+  }
 
-  const organization = await getOrganizationByEnvironmentId(environmentId);
-  if (!organization) throw new ResourceNotFoundError("Organization from environment", environmentId);
+  const organization = await getOrganization(organizationId);
+  if (!organization) throw new ResourceNotFoundError("Organization not found", organizationId);
 
   const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(organization.id, session.user.id);
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
-  const product = await createProduct(organization.id, {
-    name: productName,
-  });
+  const product = await createProduct(organization.id, productInput);
   const updatedNotificationSettings = {
     ...session.user.notificationSettings,
     alert: {
@@ -103,9 +115,5 @@ export const createProductAction = async (environmentId: string, productName: st
     notificationSettings: updatedNotificationSettings,
   });
 
-  // get production environment
-  const productionEnvironment = product.environments.find((environment) => environment.type === "production");
-  if (!productionEnvironment) throw new ResourceNotFoundError("Production environment", environmentId);
-
-  return productionEnvironment;
+  return product;
 };

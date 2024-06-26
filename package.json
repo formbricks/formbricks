@@ -36,10 +36,10 @@
     "@formbricks/eslint-config": "workspace:*",
     "eslint": "^8.57.0",
     "husky": "^9.0.11",
-    "lint-staged": "^15.2.5",
+    "lint-staged": "^15.2.7",
     "rimraf": "^5.0.7",
-    "tsx": "^4.11.0",
-    "turbo": "^2.0.1"
+    "tsx": "^4.15.6",
+    "turbo": "^2.0.4"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
@@ -55,7 +55,7 @@
   "engines": {
     "node": ">=16.0.0"
   },
-  "packageManager": "pnpm@9.2.0",
+  "packageManager": "pnpm@9.3.0",
   "nextBundleAnalysis": {
     "budget": 358400,
     "budgetPercentIncreaseRed": 20,
@@ -63,7 +63,7 @@
     "showDetails": true
   },
   "dependencies": {
-    "@changesets/cli": "^2.27.3",
+    "@changesets/cli": "^2.27.5",
     "playwright": "^1.44.1"
   }
 }

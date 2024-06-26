@@ -3,6 +3,7 @@
 import { InfoIcon, PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { iso639Languages } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
@@ -14,7 +15,6 @@ import {
   getSurveysUsingGivenLanguageAction,
   updateLanguageAction,
 } from "../lib/actions";
-import { iso639Languages } from "../lib/iso-languages";
 import { LanguageRow } from "./language-row";
 
 interface EditLanguageProps {
@@ -144,8 +144,8 @@ export function EditLanguage({ product, environmentId }: EditLanguageProps) {
 
   const AddLanguageButton: React.FC<{ onClick: () => void }> = ({ onClick }) =>
     isEditing && languages.length === product.languages.length ? (
-      <Button onClick={onClick} size="sm" variant="secondary">
-        <PlusIcon /> Add Language
+      <Button onClick={onClick} size="sm" variant="secondary" StartIcon={PlusIcon}>
+        Add language
       </Button>
     ) : null;
 
@@ -236,7 +236,7 @@ const EditSaveButtons: React.FC<{
   isEditing ? (
     <div className="flex gap-4">
       <Button onClick={onSave} size="sm" variant="darkCTA">
-        Save Changes
+        Save changes
       </Button>
       <Button onClick={onCancel} size="sm" variant="minimal">
         Cancel
@@ -244,6 +244,6 @@ const EditSaveButtons: React.FC<{
     </div>
   ) : (
     <Button className="w-fit" onClick={onEdit} size="sm" variant="darkCTA">
-      Edit Languages
+      Edit languages
     </Button>
   );

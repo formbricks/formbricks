@@ -36,9 +36,9 @@
   /* need to use !important because in packages/ui/components/editor/stylesEditorFrontend.css the color is defined for some classes */
   color: var(--fb-subheading-color) !important;
 }
+
 /* without this, it wont override the color */
 p.fb-editor-paragraph {
-  color: var(--fb-subheading-color) !important;
   overflow-wrap: break-word;
 }
 
@@ -61,6 +61,7 @@ p.fb-editor-paragraph {
   --slate-900: rgb(15 23 42);
   --gray-100: rgb(243 244 246);
   --gray-200: rgb(229 231 235);
+  --yellow-100: rgb(254 249 195);
   --yellow-300: rgb(253 224 71);
   --yellow-500: rgb(234 179 8);
 
@@ -85,7 +86,7 @@ p.fb-editor-paragraph {
   --fb-input-background-color-selected: var(--slate-200);
   --fb-placeholder-color: var(--slate-400);
   --fb-shadow-color: var(--slate-300);
-  --fb-rating-fill: var(--yellow-300);
+  --fb-rating-fill: var(--yellow-100);
   --fb-rating-hover: var(--yellow-500);
   --fb-back-btn-border: transparent;
   --fb-submit-btn-border: transparent;
@@ -106,8 +107,8 @@ p.fb-editor-paragraph {
 }
 
 .no-scrollbar {
-  -ms-overflow-style: none !important;  /* Internet Explorer 10+ */
-  scrollbar-width: thin !important;     /* Firefox */
+  -ms-overflow-style: none !important; /* Internet Explorer 10+ */
+  scrollbar-width: thin !important; /* Firefox */
   scrollbar-color: transparent transparent !important; /* Firefox */
 
   /* Chrome, Edge, and Safari */

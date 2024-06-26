@@ -26,7 +26,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter, truncate } from "@formbricks/lib/utils/strings";
@@ -50,8 +49,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-
-import { AddProductModal } from "./AddProductModal";
 
 interface NavigationProps {
   environment: TEnvironment;
@@ -79,7 +76,6 @@ export const MainNavigation = ({
 
   const [currentOrganizationName, setCurrentOrganizationName] = useState("");
   const [currentOrganizationId, setCurrentOrganizationId] = useState("");
-  const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
@@ -129,6 +125,10 @@ export const MainNavigation = ({
     router.push(`/organizations/${organizationId}/`);
   };
 
+  const handleAddProduct = (organizationId: string) => {
+    router.push(`/organizations/${organizationId}/products/new/channel`);
+  };
+
   const mainNavigation = useMemo(
     () => [
       {
@@ -152,7 +152,7 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
         isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
-        isHidden: false,
+        isHidden: product?.config.channel === "link",
       },
       {
         name: "Integrations",
@@ -286,7 +286,7 @@ export const MainNavigation = ({
                       <div>
                         <p
                           className={cn(
-                            "ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700 transition-opacity duration-200 ",
+                            "ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700 transition-opacity duration-200",
                             isTextVisible ? "opacity-0" : "opacity-100"
                           )}>
                           {product.name}
@@ -330,7 +330,7 @@ export const MainNavigation = ({
                 </DropdownMenuRadioGroup>
                 <DropdownMenuSeparator />
                 {!isViewer && (
-                  <DropdownMenuItem onClick={() => setShowAddProductModal(true)} className="rounded-lg">
+                  <DropdownMenuItem onClick={() => handleAddProduct(organization.id)} className="rounded-lg">
                     <PlusIcon className="mr-2 h-4 w-4" />
                     <span>Add product</span>
                   </DropdownMenuItem>
@@ -465,11 +465,6 @@ export const MainNavigation = ({
       <CreateOrganizationModal
         open={showCreateOrganizationModal}
         setOpen={(val) => setShowCreateOrganizationModal(val)}
-      />
-      <AddProductModal
-        open={showAddProductModal}
-        setOpen={(val) => setShowAddProductModal(val)}
-        environmentId={environment.id}
       />
     </>
   );

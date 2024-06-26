@@ -43,4 +43,5 @@ export const minimalSurvey: TSurvey = {
   resultShareKey: null,
   segment: null,
   languages: [],
+  showLanguageSwitch: false,
 };

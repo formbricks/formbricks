@@ -1,9 +1,7 @@
 import { LucideIcon } from "lucide-react";
 import Link, { LinkProps } from "next/link";
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, forwardRef } from "react";
-
 import { cn } from "@formbricks/lib/cn";
-
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
 
 type SVGComponent = React.FunctionComponent<React.SVGProps<SVGSVGElement>> | LucideIcon;
@@ -119,11 +117,7 @@ export const Button: React.ForwardRefExoticComponent<
     <>
       {StartIcon && (
         <StartIcon
-          className={cn(
-            "flex",
-            size === "icon" ? "h-4 w-4 " : "-ml-1 mr-1 h-3 w-3",
-            startIconClassName || ""
-          )}
+          className={cn("flex", size === "icon" ? "h-4 w-4" : "-ml-1 mr-1 h-3 w-3", startIconClassName || "")}
         />
       )}
       {props.children}

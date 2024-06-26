@@ -3,7 +3,6 @@ import { AttributesSection } from "@/app/(app)/environments/[environmentId]/(peo
 import { DeletePersonButton } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/DeletePersonButton";
 import { ResponseSection } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseSection";
 import { getServerSession } from "next-auth";
-
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -64,7 +63,7 @@ const Page = async ({ params }) => {
     <PageContentWrapper>
       <PageHeader pageTitle={getPersonIdentifier(person, attributes)} cta={getDeletePersonButton()} />
       <section className="pb-24 pt-6">
-        <div className="grid grid-cols-1 gap-x-8  md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-8 md:grid-cols-4">
           <AttributesSection personId={params.personId} />
           <ResponseSection
             environment={environment}

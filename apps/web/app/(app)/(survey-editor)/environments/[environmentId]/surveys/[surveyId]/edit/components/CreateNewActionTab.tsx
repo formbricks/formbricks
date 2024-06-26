@@ -14,6 +14,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { TabToggle } from "@formbricks/ui/TabToggle";
 import { CodeActionForm } from "@formbricks/ui/organisms/CodeActionForm";
 import { NoCodeActionForm } from "@formbricks/ui/organisms/NoCodeActionForm";
@@ -151,6 +152,7 @@ export const CreateNewActionTab = ({
 
       reset();
       resetAllStates();
+      toast.success("Action created successfully");
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -171,16 +173,18 @@ export const CreateNewActionTab = ({
                 name={`type`}
                 control={control}
                 render={({ field }) => (
-                  <TabToggle
-                    id="type"
-                    label="Type"
-                    options={[
-                      { value: "noCode", label: "No code" },
-                      { value: "code", label: "Code" },
-                    ]}
-                    {...field}
-                    defaultSelected={field.value}
-                  />
+                  <div>
+                    <Label className="font-semibold">Type</Label>
+                    <TabToggle
+                      id="type"
+                      options={[
+                        { value: "noCode", label: "No code" },
+                        { value: "code", label: "Code" },
+                      ]}
+                      {...field}
+                      defaultSelected={field.value}
+                    />
+                  </div>
                 )}
               />
             </div>

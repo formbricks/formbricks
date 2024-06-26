@@ -2,7 +2,6 @@
 
 import { Variants, motion } from "framer-motion";
 import { useRef, useState } from "react";
-
 import type { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
@@ -120,6 +119,8 @@ export const ThemeStylingPreviewSurvey = ({
     }
   };
 
+  const currentProductChannel = product?.config.channel ?? null;
+
   return (
     <div className="flex h-full w-full flex-col items-center justify-items-center overflow-hidden">
       <motion.div
@@ -211,11 +212,13 @@ export const ThemeStylingPreviewSurvey = ({
           Link survey
         </div>
 
-        <div
-          className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
-          onClick={() => setPreviewType("app")}>
-          App / Website survey
-        </div>
+        {currentProductChannel !== "link" && (
+          <div
+            className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
+            onClick={() => setPreviewType("app")}>
+            App / Website survey
+          </div>
+        )}
       </div>
     </div>
   );

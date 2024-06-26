@@ -95,7 +95,6 @@ export const mockUser: TUser = {
   imageUrl: "https://www.google.com",
   createdAt: currentDate,
   updatedAt: currentDate,
-  onboardingCompleted: true,
   twoFactorEnabled: false,
   identityProvider: "google",
   objective: "improve_user_retention",
@@ -191,24 +190,15 @@ export const mockOrganizationOutput: TOrganization = {
   updatedAt: currentDate,
   billing: {
     stripeCustomerId: null,
-    features: {
-      inAppSurvey: {
-        status: "inactive",
-        unlimited: false,
-      },
-      linkSurvey: {
-        status: "inactive",
-        unlimited: false,
-      },
-      userTargeting: {
-        status: "inactive",
-        unlimited: false,
-      },
-      multiLanguage: {
-        status: "inactive",
-        unlimited: false,
+    plan: "free",
+    period: "monthly",
+    limits: {
+      monthly: {
+        responses: 500,
+        miu: 1000,
       },
     },
+    periodStart: currentDate,
   },
 };
 
@@ -272,6 +262,7 @@ export const updateSurveyInput: TSurvey = {
   resultShareKey: null,
   segment: null,
   languages: [],
+  showLanguageSwitch: null,
   ...commonMockProperties,
   ...baseSurveyProperties,
 };

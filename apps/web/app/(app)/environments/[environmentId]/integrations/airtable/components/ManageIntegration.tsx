@@ -7,7 +7,6 @@ import {
 } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AddIntegrationModal";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -73,7 +72,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
       <div className="flex w-full justify-end gap-x-6">
-        <div className=" flex items-center">
+        <div className="flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
           <span
             className="cursor-pointer text-slate-500"
@@ -113,6 +112,8 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
                   questions: data.questionIds,
                   survey: data.surveyId,
                   table: data.tableId,
+                  includeHiddenFields: !!data.includeHiddenFields,
+                  includeMetadata: !!data.includeMetadata,
                   index,
                 });
                 setIsModalOpen(true);

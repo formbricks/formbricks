@@ -1,6 +1,10 @@
-export const LoadingSpinner = () => {
+import { cn } from "@/lib/utils";
+
+export const LoadingSpinner = ({ className }: { className?: string }) => {
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div
+      data-testid="loading-spinner"
+      className={cn("flex h-full w-full items-center justify-center", className ?? "")}>
       <svg
         className="m-2 h-6 w-6 animate-spin text-slate-700"
         xmlns="http://www.w3.org/2000/svg"

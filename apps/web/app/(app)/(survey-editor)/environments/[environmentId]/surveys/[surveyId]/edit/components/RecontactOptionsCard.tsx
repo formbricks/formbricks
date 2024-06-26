@@ -4,7 +4,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
 import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Input } from "@formbricks/ui/Input";
@@ -105,7 +104,8 @@ export const RecontactOptionsCard = ({
       className="w-full rounded-lg border border-slate-300 bg-white">
       <Collapsible.CollapsibleTrigger
         asChild
-        className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
+        className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50"
+        id="recontactOptionsCardTrigger">
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
             <CheckIcon
@@ -147,7 +147,7 @@ export const RecontactOptionsCard = ({
                   <RadioGroupItem
                     value={option.id}
                     id={option.name}
-                    className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
+                    className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
                   />
                   <div>
                     <p className="font-semibold text-slate-700">{option.name}</p>

@@ -1,10 +1,9 @@
 import { InfoIcon } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-
 import { TActionClassInput } from "@formbricks/types/actionClasses";
-
 import { Alert, AlertDescription, AlertTitle } from "../../Alert";
 import { FormControl, FormError, FormField, FormItem } from "../../Form";
+import { Label } from "../../Label";
 import { TabToggle } from "../../TabToggle";
 import { CssSelector } from "./components/CssSelector";
 import { InnerHtmlSelector } from "./components/InnerHtmlSelector";
@@ -25,18 +24,20 @@ export const NoCodeActionForm = ({ form }: NoCodeActionFormProps) => {
         render={({ field }) => (
           <FormItem>
             <FormControl>
-              <TabToggle
-                id="userAction"
-                {...field}
-                defaultSelected={field.value}
-                label="What is the user doing?"
-                options={[
-                  { value: "click", label: "Click" },
-                  { value: "pageView", label: "Page View" },
-                  { value: "exitIntent", label: "Exit Intent" },
-                  { value: "fiftyPercentScroll", label: "50% Scroll" },
-                ]}
-              />
+              <div>
+                <Label className="font-semibold">What is the user doing?</Label>
+                <TabToggle
+                  id="userAction"
+                  {...field}
+                  defaultSelected={field.value}
+                  options={[
+                    { value: "click", label: "Click" },
+                    { value: "pageView", label: "Page View" },
+                    { value: "exitIntent", label: "Exit Intent" },
+                    { value: "fiftyPercentScroll", label: "50% Scroll" },
+                  ]}
+                />
+              </div>
             </FormControl>
           </FormItem>
         )}
@@ -62,14 +63,14 @@ export const NoCodeActionForm = ({ form }: NoCodeActionFormProps) => {
         )}
         {watch("noCodeConfig.type") === "pageView" && (
           <Alert>
-            <InfoIcon className=" h-4 w-4" />
+            <InfoIcon className="h-4 w-4" />
             <AlertTitle>Page View</AlertTitle>
             <AlertDescription>This action will be triggered when the page is loaded.</AlertDescription>
           </Alert>
         )}
         {watch("noCodeConfig.type") === "exitIntent" && (
           <Alert>
-            <InfoIcon className=" h-4 w-4" />
+            <InfoIcon className="h-4 w-4" />
             <AlertTitle>Exit Intent</AlertTitle>
             <AlertDescription>
               This action will be triggered when the user tries to leave the page.
@@ -78,7 +79,7 @@ export const NoCodeActionForm = ({ form }: NoCodeActionFormProps) => {
         )}
         {watch("noCodeConfig.type") === "fiftyPercentScroll" && (
           <Alert>
-            <InfoIcon className=" h-4 w-4" />
+            <InfoIcon className="h-4 w-4" />
             <AlertTitle>50% Scroll</AlertTitle>
             <AlertDescription>
               This action will be triggered when the user scrolls 50% of the page.

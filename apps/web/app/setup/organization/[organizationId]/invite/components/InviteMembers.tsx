@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-
 import { TInviteMembersFormSchema, ZInviteMembersFormSchema } from "@formbricks/types/invites";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
@@ -32,7 +31,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
   const inviteTeamMembers = async (data: TInviteMembersFormSchema) => {
     const emails = Object.values(data).filter((email) => email && email.trim());
     if (!emails.length) {
-      router.push("/onboarding");
+      router.push("/");
       return;
     }
 
@@ -49,11 +48,11 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
       }
     }
 
-    router.push("/onboarding");
+    router.push("/");
   };
 
   const handleSkip = () => {
-    router.push("/onboarding");
+    router.push("/");
   };
 
   return (

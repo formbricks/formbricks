@@ -63,19 +63,23 @@ export const PageUrlSelector = ({ form }: PageUrlSelectorProps) => {
           control={form.control}
           name="noCodeConfig.urlFilters"
           render={() => (
-            <TabToggle
-              id="filter"
-              label="Filter"
-              subLabel="Limit the pages on which this action gets captured"
-              onChange={(value) => {
-                setFilterType(value);
-              }}
-              options={[
-                { value: "all", label: "On all pages" },
-                { value: "specific", label: "Limit to specific pages" },
-              ]}
-              defaultSelected={filterType}
-            />
+            <div>
+              <Label className="font-semibold">Filter</Label>
+              <p className="text-sm font-normal text-slate-500">
+                Limit the pages on which this action gets captured
+              </p>
+              <TabToggle
+                id="filter"
+                onChange={(value) => {
+                  setFilterType(value);
+                }}
+                options={[
+                  { value: "all", label: "On all pages" },
+                  { value: "specific", label: "Limit to specific pages" },
+                ]}
+                defaultSelected={filterType}
+              />
+            </div>
           )}
         />
       </div>
@@ -92,7 +96,7 @@ export const PageUrlSelector = ({ form }: PageUrlSelectorProps) => {
             <div className="text-xs text-slate-400">
               Enter a URL to see if a user visiting it would be tracked.
             </div>
-            <div className=" rounded bg-slate-50">
+            <div className="rounded bg-slate-50">
               <div className="mt-1 flex items-end">
                 <Input
                   type="text"

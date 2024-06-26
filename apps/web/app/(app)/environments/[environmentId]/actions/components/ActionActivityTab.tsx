@@ -2,14 +2,13 @@
 
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TActionClass } from "@formbricks/types/actionClasses";
+import { TProductConfigChannel } from "@formbricks/types/product";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { Label } from "@formbricks/ui/Label";
 import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
-
 import {
   getActionCountInLast7DaysAction,
   getActionCountInLast24HoursAction,
@@ -21,12 +20,14 @@ interface ActivityTabProps {
   actionClass: TActionClass;
   environmentId: string;
   isUserTargetingEnabled: boolean;
+  currentProductChannel: TProductConfigChannel;
 }
 
 export const EventActivityTab = ({
   actionClass,
   environmentId,
   isUserTargetingEnabled,
+  currentProductChannel,
 }: ActivityTabProps) => {
   // const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, actionClass.id);
 
@@ -37,6 +38,8 @@ export const EventActivityTab = ({
   const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  const shouldShowActivity = isUserTargetingEnabled && currentProductChannel !== "website";
 
   useEffect(() => {
     setLoading(true);
@@ -50,9 +53,9 @@ export const EventActivityTab = ({
           numEventsLast7DaysData,
           activeInactiveSurveys,
         ] = await Promise.all([
-          isUserTargetingEnabled ? getActionCountInLastHourAction(actionClass.id, environmentId) : 0,
-          isUserTargetingEnabled ? getActionCountInLast24HoursAction(actionClass.id, environmentId) : 0,
-          isUserTargetingEnabled ? getActionCountInLast7DaysAction(actionClass.id, environmentId) : 0,
+          shouldShowActivity ? getActionCountInLastHourAction(actionClass.id, environmentId) : 0,
+          shouldShowActivity ? getActionCountInLast24HoursAction(actionClass.id, environmentId) : 0,
+          shouldShowActivity ? getActionCountInLast7DaysAction(actionClass.id, environmentId) : 0,
           getActiveInactiveSurveysAction(actionClass.id, environmentId),
         ]);
         setNumEventsLastHour(numEventsLastHourData);
@@ -68,7 +71,7 @@ export const EventActivityTab = ({
     };
 
     updateState();
-  }, [actionClass.id, environmentId, isUserTargetingEnabled]);
+  }, [actionClass.id, environmentId, shouldShowActivity]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorComponent />;
@@ -76,9 +79,9 @@ export const EventActivityTab = ({
   return (
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">
-        {isUserTargetingEnabled && (
+        {shouldShowActivity && (
           <div>
-            <Label className="text-slate-500">Ocurrances</Label>
+            <Label className="text-slate-500">Occurrences</Label>
             <div className="mt-1 grid w-fit grid-cols-3 rounded-lg border-slate-100 bg-slate-50">
               <div className="border-r border-slate-200 px-4 py-2 text-center">
                 <p className="font-bold text-slate-800">{numEventsLastHour}</p>
@@ -118,20 +121,20 @@ export const EventActivityTab = ({
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">
         <div>
           <Label className="text-xs font-normal text-slate-500">Created on</Label>
-          <p className=" text-xs text-slate-700">
+          <p className="text-xs text-slate-700">
             {convertDateTimeStringShort(actionClass.createdAt?.toString())}
           </p>
         </div>{" "}
         <div>
-          <Label className=" text-xs font-normal text-slate-500">Last updated</Label>
-          <p className=" text-xs text-slate-700">
+          <Label className="text-xs font-normal text-slate-500">Last updated</Label>
+          <p className="text-xs text-slate-700">
             {convertDateTimeStringShort(actionClass.updatedAt?.toString())}
           </p>
         </div>
         <div>
           <Label className="block text-xs font-normal text-slate-500">Type</Label>
           <div className="mt-1 flex items-center">
-            <div className="mr-1.5  h-4 w-4 text-slate-600">
+            <div className="mr-1.5 h-4 w-4 text-slate-600">
               {actionClass.type === "code" ? (
                 <Code2Icon className="h-5 w-5" />
               ) : actionClass.type === "noCode" ? (
@@ -140,7 +143,7 @@ export const EventActivityTab = ({
                 <SparklesIcon className="h-5 w-5" />
               ) : null}
             </div>
-            <p className="text-sm text-slate-700 ">{capitalizeFirstLetter(actionClass.type)}</p>
+            <p className="text-sm text-slate-700">{capitalizeFirstLetter(actionClass.type)}</p>
           </div>
         </div>
       </div>
