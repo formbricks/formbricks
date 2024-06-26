@@ -324,6 +324,7 @@ export const deleteFile = async (environmentId: string, accessType: TAccessType,
     await deleteS3File(`${environmentId}/${accessType}/${fileName}`);
     return { success: true, message: "File deleted" };
   } catch (err: any) {
+    console.log(err);
     if (err.name === "NoSuchKey") {
       return { success: false, message: "File not found", code: 404 };
     } else {
