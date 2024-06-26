@@ -71,23 +71,23 @@ export const AttributeActivityTab = ({ attributeClass }: EventActivityTabProps) 
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">
         <div>
           <Label className="text-xs font-normal text-slate-500">Created on</Label>
-          <p className=" text-xs text-slate-700">
+          <p className="text-xs text-slate-700">
             {convertDateTimeStringShort(attributeClass.createdAt.toString())}
           </p>
         </div>{" "}
         <div>
-          <Label className=" text-xs font-normal text-slate-500">Last updated</Label>
-          <p className=" text-xs text-slate-700">
+          <Label className="text-xs font-normal text-slate-500">Last updated</Label>
+          <p className="text-xs text-slate-700">
             {convertDateTimeStringShort(attributeClass.updatedAt.toString())}
           </p>
         </div>
         <div>
           <Label className="block text-xs font-normal text-slate-500">Type</Label>
           <div className="mt-1 flex items-center">
-            <div className="mr-1.5  h-4 w-4 text-slate-600">
+            <div className="mr-1.5 h-4 w-4 text-slate-600">
               <TagIcon className="h-4 w-4" />
             </div>
-            <p className="text-sm text-slate-700 ">{capitalizeFirstLetter(attributeClass.type)}</p>
+            <p className="text-sm text-slate-700">{capitalizeFirstLetter(attributeClass.type)}</p>
           </div>
         </div>
       </div>

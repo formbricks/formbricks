@@ -116,7 +116,7 @@ export const QuestionFilterComboBox = ({
         <div
           onClick={() => !disabled && !isDisabledComboBox && filterValue && setOpen(true)}
           className={clsx(
-            "group flex items-center justify-between rounded-md rounded-l-none bg-white  px-3 py-2 text-sm",
+            "group flex items-center justify-between rounded-md rounded-l-none bg-white px-3 py-2 text-sm",
             disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
           )}>
           {filterComboBoxValue && filterComboBoxValue?.length > 0 ? (

@@ -8,7 +8,7 @@ export const SurveyCloseButton = ({ onClose }: SurveyCloseButtonProps) => {
       <button
         type="button"
         onClick={onClose}
-        class="text-heading relative h-5 w-5 rounded-md hover:bg-black/5 focus:outline-none  focus:ring-2 focus:ring-offset-2">
+        class="text-heading relative h-5 w-5 rounded-md hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-offset-2">
         <svg
           class="h-5 w-5 p-0.5"
           fill="none"

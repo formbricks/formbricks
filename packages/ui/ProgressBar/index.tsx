@@ -33,7 +33,7 @@ export const HalfCircle: React.FC<HalfCircleProps> = ({ value }: { value: number
         <div
           className="bg-brand absolute h-24 w-48 origin-bottom rounded-tl-full rounded-tr-full"
           style={{ rotate: mappedValue }}></div>
-        <div className="absolute h-20 w-40 rounded-tl-full rounded-tr-full bg-white "></div>
+        <div className="absolute h-20 w-40 rounded-tl-full rounded-tr-full bg-white"></div>
       </div>
       <div className="flex justify-between text-sm leading-10 text-slate-600">
         <p>-100</p>

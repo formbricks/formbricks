@@ -1,4 +1,4 @@
-export const users = {
+export const mockUsers = {
   signup: [
     {
       name: "SignUp Flow User 1",
@@ -56,44 +56,36 @@ export const users = {
     {
       name: "Action User 1",
       email: "action1@formbricks.com",
-      password: "XpP%X9UU3efj8vJa",
     },
     {
       name: "Action User 2",
       email: "action2@formbricks.com",
-      password: "XpP%X9UU3efj8vJa",
     },
     {
       name: "Action User 3",
       email: "action3@formbricks.com",
-      password: "XpP%X9UU3efj8vJa",
     },
     {
       name: "Action User 4",
       email: "action4@formbricks.com",
-      password: "XpP%X9UU3efj8vJa",
     },
     {
       name: "Action User 5",
       email: "action5@formbricks.com",
-      password: "XpP%X9UU3efj8vJa",
     },
     {
       name: "Action User 6",
       email: "action6@formbricks.com",
-      password: "XpP%X9UU3efj8vJa",
     },
   ],
   organization: [
     {
       name: "Organization User 1",
       email: "organization1@formbricks.com",
-      password: "Test#1234",
     },
     {
       name: "Organization User 2",
       email: "organization2@formbricks.com",
-      password: "Test#1234",
     },
   ],
 };
@@ -256,7 +248,6 @@ export const actions = {
           label: "Contains",
           value: "custom-url",
         },
-        testURL: "http://localhost:3000/custom-url",
       },
       exitIntent: {
         name: "Create Exit Intent Action",

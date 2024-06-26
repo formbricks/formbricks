@@ -216,7 +216,7 @@ export const SurveyDropDownMenu = ({
               <DropdownMenuItem>
                 <button
                   type="button"
-                  className="flex w-full  items-center"
+                  className="flex w-full items-center"
                   onClick={(e) => {
                     e.preventDefault();
                     setIsDropDownOpen(false);

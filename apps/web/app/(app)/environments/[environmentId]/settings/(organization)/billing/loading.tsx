@@ -9,7 +9,7 @@ const Loading = () => {
         </div>
       </div>
       <div className="mb-6 border-b border-slate-200">
-        <div className="grid h-10 w-full grid-cols-[auto,1fr] ">
+        <div className="grid h-10 w-full grid-cols-[auto,1fr]">
           <nav className="flex h-full min-w-full items-center space-x-4" aria-label="Tabs">
             {pages.map((navElem) => (
               <div
@@ -22,8 +22,8 @@ const Loading = () => {
           <div className="justify-self-end"></div>
         </div>
       </div>
-      <div className=" my-8 h-64 animate-pulse rounded-xl bg-slate-200 "></div>
-      <div className=" my-8 h-96 animate-pulse rounded-md bg-slate-200"></div>
+      <div className="my-8 h-64 animate-pulse rounded-xl bg-slate-200"></div>
+      <div className="my-8 h-96 animate-pulse rounded-md bg-slate-200"></div>
     </div>
   );
 };

@@ -90,7 +90,7 @@ export const EditAPIKeys = ({
         </div>
         <div className="grid-cols-9">
           {apiKeysLocal && apiKeysLocal.length === 0 ? (
-            <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm font-medium text-slate-400 ">
+            <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm font-medium text-slate-400">
               You don&apos;t have any API keys yet
             </div>
           ) : (
