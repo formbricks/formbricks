@@ -1046,8 +1046,12 @@ export const iso639Languages = [
     english: "Zhuang; Chuang",
   },
   {
-    alpha2: "zh",
-    english: "Chinese",
+    alpha2: "zh-Hans",
+    english: "Chinese (Simplified)",
+  },
+  {
+    alpha2: "zh-Hant",
+    english: "Chinese (Traditional)",
   },
   {
     alpha2: "zu",
