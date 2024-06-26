@@ -291,7 +291,7 @@ export const AddIntegrationModal = ({
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="Surveys">Questions</Label>
-                  <div className="mt-1 max-h-[350px] overflow-y-scroll rounded-lg border border-slate-200">
+                  <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
                     <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
                       {replaceHeadlineRecall(selectedSurvey, "default", attributeClasses)?.questions.map(
                         (question) => (

@@ -1,7 +1,7 @@
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { calculateElementIdx } from "@/lib/utils";
-import { useEffect } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys";
@@ -72,6 +72,7 @@ export const WelcomeCard = ({
   replaceRecallInfo,
   isCurrent,
 }: WelcomeCardProps) => {
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
     if (idx === 0.5) {
@@ -110,6 +111,7 @@ export const WelcomeCard = ({
   useEffect(() => {
     const handleEnter = (e: KeyboardEvent) => {
       if (e.key === "Enter") {
+        setIsButtonDisabled(true);
         handleSubmit();
       }
     };
@@ -153,6 +155,7 @@ export const WelcomeCard = ({
           focus={autoFocusEnabled}
           onClick={handleSubmit}
           type="button"
+          disabled={isButtonDisabled}
         />
       </div>
 
