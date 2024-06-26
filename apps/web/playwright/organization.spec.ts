@@ -12,7 +12,6 @@ test.describe("Invite, accept and remove organization member", async () => {
   test("Invite organization member", async ({ page, users }) => {
     const user = await users.create({ name, email });
     await user.login();
-    await page.goto("/");
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
     await test.step("Invite User", async () => {
@@ -25,6 +24,8 @@ test.describe("Invite, accept and remove organization member", async () => {
 
       await page.getByRole("link", { name: "Organization" }).click();
       await page.waitForURL(/\/environments\/[^/]+\/settings\/members/);
+
+      await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
 
       // Add member button
       await expect(page.getByRole("button", { name: "Add Member" })).toBeVisible();
@@ -98,6 +99,9 @@ test.describe("Invite, accept and remove organization member", async () => {
     await page.getByRole("link", { name: "Organization" }).click();
 
     await page.waitForURL(/\/environments\/[^/]+\/settings\/members/);
+
+    await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
+
     await expect(page.locator("#membersInfoWrapper")).toBeVisible();
 
     const lastMemberInfo = page.locator("#membersInfoWrapper > .singleMemberInfo:last-child");

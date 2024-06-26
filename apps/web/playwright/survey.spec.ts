@@ -10,7 +10,6 @@ test.describe("Survey Create & Submit Response", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.goto("/");
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
     await test.step("Create Survey", async () => {
@@ -194,7 +193,6 @@ test.describe("Multi Language Survey Create", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.goto("/");
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
     //add a new language

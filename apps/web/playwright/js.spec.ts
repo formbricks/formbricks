@@ -10,7 +10,6 @@ test.describe("JS Package Test", async () => {
       const user = await users.create();
       await user.login();
 
-      await page.goto("/");
       await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
       await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).isVisible();

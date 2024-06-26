@@ -19,9 +19,11 @@ export const login = async (user: Prisma.UserGetPayload<{ include: { memberships
     csrfToken,
   };
 
-  return page.context().request.post("/api/auth/callback/credentials", {
+  await page.context().request.post("/api/auth/callback/credentials", {
     data,
   });
+
+  await page.goto("/");
 };
 
 export const createUserFixture = (
@@ -48,6 +50,7 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
       email?: string;
       organizationName?: string;
       productName?: string;
+      withoutProduct?: boolean;
     }) => {
       const uname = params?.name ?? `user-${workerInfo.workerIndex}-${Date.now()}`;
       const userEmail = params?.email ?? `${uname}@example.com`;
@@ -70,39 +73,41 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
                     periodStart: new Date(),
                     period: "monthly",
                   },
-                  products: {
-                    create: {
-                      name: params?.productName ?? "My Product",
-                      environments: {
-                        create: [
-                          {
-                            type: "development",
-                            actionClasses: {
-                              create: [
-                                {
-                                  name: "New Session",
-                                  description: "Gets fired when a new session is created",
-                                  type: "automatic",
-                                },
-                              ],
+                  ...(!params?.withoutProduct && {
+                    products: {
+                      create: {
+                        name: params?.productName ?? "My Product",
+                        environments: {
+                          create: [
+                            {
+                              type: "development",
+                              actionClasses: {
+                                create: [
+                                  {
+                                    name: "New Session",
+                                    description: "Gets fired when a new session is created",
+                                    type: "automatic",
+                                  },
+                                ],
+                              },
                             },
-                          },
-                          {
-                            type: "production",
-                            actionClasses: {
-                              create: [
-                                {
-                                  name: "New Session",
-                                  description: "Gets fired when a new session is created",
-                                  type: "automatic",
-                                },
-                              ],
+                            {
+                              type: "production",
+                              actionClasses: {
+                                create: [
+                                  {
+                                    name: "New Session",
+                                    description: "Gets fired when a new session is created",
+                                    type: "automatic",
+                                  },
+                                ],
+                              },
                             },
-                          },
-                        ],
+                          ],
+                        },
                       },
                     },
-                  },
+                  }),
                 },
               },
               role: "owner",

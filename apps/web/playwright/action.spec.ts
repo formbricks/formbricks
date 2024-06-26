@@ -185,7 +185,6 @@ test.describe("Create and Edit No Code Click Action", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.goto("/");
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
   });
 
@@ -227,7 +226,6 @@ test.describe("Create and Edit No Code Page view Action", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.goto("/");
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
   });
 
@@ -281,7 +279,6 @@ test.describe("Create and Edit No Code Exit Intent Action", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.goto("/");
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
   });
 
@@ -321,7 +318,6 @@ test.describe("Create and Edit No Code 50% scroll Action", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.goto("/");
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
   });
 
@@ -361,7 +357,6 @@ test.describe("Create and Edit Code Action", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.goto("/");
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
   });
 
@@ -398,7 +393,6 @@ test.describe("Create and Delete Action", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.goto("/");
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
   });
 

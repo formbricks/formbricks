@@ -1,14 +1,14 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
-import { signUpAndLogin } from "./utils/helper";
-import { mockUsers, organizations } from "./utils/mock";
+import { organizations } from "./utils/mock";
 
 const { productName } = organizations.onboarding[0];
 
 test.describe("Onboarding Flow Test", async () => {
-  test("link survey", async ({ page }) => {
-    const { name, email, password } = mockUsers.onboarding[0];
-    await signUpAndLogin(page, name, email, password);
+  test("link survey", async ({ page, users }) => {
+    const user = await users.create({ withoutProduct: true });
+    await user.login();
+
     await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/channel/);
 
     await page.getByRole("button", { name: "100% custom branding Anywhere" }).click();
@@ -21,9 +21,10 @@ test.describe("Onboarding Flow Test", async () => {
     await expect(page.getByText(productName)).toBeVisible();
   });
 
-  test("website survey", async ({ page }) => {
-    const { name, email, password } = mockUsers.onboarding[1];
-    await signUpAndLogin(page, name, email, password);
+  test("website survey", async ({ page, users }) => {
+    const user = await users.create({ withoutProduct: true });
+    await user.login();
+
     await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/channel/);
 
     await page.getByRole("button", { name: "Enrich user profiles App with" }).click();

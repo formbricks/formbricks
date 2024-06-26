@@ -10,7 +10,6 @@ test.describe("API Tests", () => {
     const user = await users.create();
     await user.login();
 
-    await page.goto("/");
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
     await test.step("Copy API Key", async () => {
