@@ -99,7 +99,7 @@ export const SignupForm = ({
           </div>
         )}
 
-        <div className="mt-9 text-center text-xs ">
+        <div className="mt-9 text-center text-xs">
           <span className="leading-5 text-slate-500">Have an account?</span>
           <br />
           <Link

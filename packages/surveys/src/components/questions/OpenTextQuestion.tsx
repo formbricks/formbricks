@@ -128,7 +128,7 @@ export const OpenTextQuestion = ({
                   handleInputResize(e);
                 }}
                 autoFocus={autoFocusEnabled}
-                className="border-border placeholder:text-placeholder bg-input-bg text-subheading focus:border-brand rounded-custom block w-full border p-2 shadow-sm  focus:ring-0 sm:text-sm"
+                className="border-border placeholder:text-placeholder bg-input-bg text-subheading focus:border-brand rounded-custom block w-full border p-2 shadow-sm focus:ring-0 sm:text-sm"
                 pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
                 title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
               />

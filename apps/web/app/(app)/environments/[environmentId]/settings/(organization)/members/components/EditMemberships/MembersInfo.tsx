@@ -41,7 +41,7 @@ export const MembersInfo = async ({
           <div className="ph-no-capture col-span-5 flex flex-col justify-center break-all">
             <p>{member.name}</p>
           </div>
-          <div className="ph-no-capture col-span-5  flex flex-col justify-center break-all">
+          <div className="ph-no-capture col-span-5 flex flex-col justify-center break-all">
             {member.email}
           </div>
 
