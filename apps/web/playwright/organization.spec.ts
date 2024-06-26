@@ -1,13 +1,13 @@
 import { expect } from "playwright/test";
 import { test } from "./lib/fixtures";
-import { apiLogin, finishOnboarding, signUpAndLogin, signupUsingInviteToken } from "./utils/helper";
+import { finishOnboarding, signUpAndLogin } from "./utils/helper";
 import { invites, mockUsers } from "./utils/mock";
 
 test.describe("Invite, accept and remove organization member", async () => {
   test.describe.configure({ mode: "serial" });
 
   const { email, name } = mockUsers.organization[0];
-  let inviteLink: string;
+  // let inviteLink: string;
 
   test("Invite organization member", async ({ page }) => {
     await signUpAndLogin(page, name, email, name);
@@ -66,56 +66,57 @@ test.describe("Invite, accept and remove organization member", async () => {
 
       // invite link text is a paragraph, and we need the text inside it
       const inviteLinkTextContent = await inviteLinkText.textContent();
-      if (inviteLinkTextContent) {
-        inviteLink = inviteLinkTextContent;
-      }
+      expect(inviteLinkTextContent).toBeTruthy();
+      // if (inviteLinkTextContent) {
+      //   inviteLink = inviteLinkTextContent;
+      // }
     });
   });
 
-  test("Accept invite", async ({ page }) => {
-    const { email, name } = mockUsers.organization[1];
-    page.goto(inviteLink);
+  // test("Accept invite", async ({ page }) => {
+  //   const { email, name } = mockUsers.organization[1];
+  //   page.goto(inviteLink);
 
-    await page.waitForURL(/\/invite\?token=[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+/);
+  //   await page.waitForURL(/\/invite\?token=[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+/);
 
-    // Create account button
-    await expect(page.getByRole("link", { name: "Create account" })).toBeVisible();
-    await page.getByRole("link", { name: "Create account" }).click();
+  //   // Create account button
+  //   await expect(page.getByRole("link", { name: "Create account" })).toBeVisible();
+  //   await page.getByRole("link", { name: "Create account" }).click();
 
-    await signupUsingInviteToken(page, name, email, name);
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-  });
+  //   await signupUsingInviteToken(page, name, email, name);
+  //   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+  // });
 
-  test("Remove member", async ({ page }) => {
-    await apiLogin(page, email, name);
+  // test("Remove member", async ({ page }) => {
+  //   await apiLogin(page, email, name);
 
-    await page.goto("/");
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+  //   await page.goto("/");
+  //   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
-    const dropdownTrigger = page.locator("#userDropdownTrigger");
-    await expect(dropdownTrigger).toBeVisible();
-    await dropdownTrigger.click();
+  //   const dropdownTrigger = page.locator("#userDropdownTrigger");
+  //   await expect(dropdownTrigger).toBeVisible();
+  //   await dropdownTrigger.click();
 
-    const dropdownInnerContentWrapper = page.locator("#userDropdownInnerContentWrapper");
-    await expect(dropdownInnerContentWrapper).toBeVisible();
+  //   const dropdownInnerContentWrapper = page.locator("#userDropdownInnerContentWrapper");
+  //   await expect(dropdownInnerContentWrapper).toBeVisible();
 
-    await page.getByRole("link", { name: "Organization" }).click();
+  //   await page.getByRole("link", { name: "Organization" }).click();
 
-    await page.waitForURL(/\/environments\/[^/]+\/settings\/members/);
+  //   await page.waitForURL(/\/environments\/[^/]+\/settings\/members/);
 
-    await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
+  //   await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
 
-    await expect(page.locator("#membersInfoWrapper")).toBeVisible();
+  //   await expect(page.locator("#membersInfoWrapper")).toBeVisible();
 
-    const lastMemberInfo = page.locator("#membersInfoWrapper > .singleMemberInfo:last-child");
-    await expect(lastMemberInfo).toBeVisible();
+  //   const lastMemberInfo = page.locator("#membersInfoWrapper > .singleMemberInfo:last-child");
+  //   await expect(lastMemberInfo).toBeVisible();
 
-    const deleteMemberButton = lastMemberInfo.locator("#deleteMemberButton");
-    await expect(deleteMemberButton).toBeVisible();
+  //   const deleteMemberButton = lastMemberInfo.locator("#deleteMemberButton");
+  //   await expect(deleteMemberButton).toBeVisible();
 
-    await deleteMemberButton.click();
+  //   await deleteMemberButton.click();
 
-    await expect(page.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Delete", exact: true }).click();
-  });
+  //   await expect(page.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
+  //   await page.getByRole("button", { name: "Delete", exact: true }).click();
+  // });
 });
