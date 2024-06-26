@@ -6,6 +6,8 @@ import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import {
+  getMonthlyActiveOrganizationPeopleCount,
+  getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
   getOrganizationsByUserId,
 } from "@formbricks/lib/organization/service";
@@ -49,16 +51,34 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   const currentProductChannel =
     products.find((product) => product.id === environment.productId)?.config.channel ?? null;
 
+  let peopleCount = 0;
+  let responseCount = 0;
+
+  if (IS_FORMBRICKS_CLOUD) {
+    [peopleCount, responseCount] = await Promise.all([
+      getMonthlyActiveOrganizationPeopleCount(organization.id),
+      getMonthlyOrganizationResponseCount(organization.id),
+    ]);
+  }
+
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
       <DevEnvironmentBanner environment={environment} />
 
-      {IS_FORMBRICKS_CLOUD && <LimitsReachedBanner organization={organization} />}
+      {IS_FORMBRICKS_CLOUD && (
+        <LimitsReachedBanner
+          organization={organization}
+          environmentId={environment.id}
+          peopleCount={peopleCount}
+          responseCount={responseCount}
+        />
+      )}
 
       <PendingDowngradeBanner
         lastChecked={lastChecked}
         isPendingDowngrade={isPendingDowngrade ?? false}
         active={active}
+        environmentId={environment.id}
       />
 
       <div className="flex h-full">
