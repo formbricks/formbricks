@@ -105,9 +105,9 @@ export const getEnterpriseLicense = async (): Promise<{
 
   if (E2E_TESTING) {
     const previousResult = await fetchLicenseForE2ETesting();
-    // return previousResult && previousResult.active !== null ? previousResult.active : false;
+
     return {
-      active: previousResult ? previousResult.active : false,
+      active: previousResult?.active ?? false,
       features: previousResult ? previousResult.features : null,
       lastChecked: previousResult ? previousResult.lastChecked : new Date(),
     };
