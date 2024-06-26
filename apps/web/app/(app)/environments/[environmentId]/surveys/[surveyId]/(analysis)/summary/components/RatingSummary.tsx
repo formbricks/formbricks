@@ -44,6 +44,7 @@ export const RatingSummary = ({ questionSummary, survey, attributeClasses }: Rat
                     scale={questionSummary.question.scale}
                     answer={result.rating}
                     range={questionSummary.question.range}
+                    addColors={questionSummary.question.isColorCodingEnabled}
                   />
                 </div>
                 <div>
