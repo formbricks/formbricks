@@ -1,6 +1,6 @@
 import { expect } from "playwright/test";
 import { test } from "./lib/fixtures";
-import { apiLogin, signupUsingInviteToken } from "./utils/helper";
+import { apiLogin, finishOnboarding, signUpAndLogin, signupUsingInviteToken } from "./utils/helper";
 import { invites, mockUsers } from "./utils/mock";
 
 test.describe("Invite, accept and remove organization member", async () => {
@@ -9,9 +9,10 @@ test.describe("Invite, accept and remove organization member", async () => {
   const { email, name } = mockUsers.organization[0];
   let inviteLink: string;
 
-  test("Invite organization member", async ({ page, users }) => {
-    const user = await users.create({ name, email });
-    await user.login();
+  test("Invite organization member", async ({ page }) => {
+    await signUpAndLogin(page, name, email, name);
+    await finishOnboarding(page, "link");
+
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
     await test.step("Invite User", async () => {
