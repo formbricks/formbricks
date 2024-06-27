@@ -57,7 +57,7 @@ export const getMembershipsForNotification = async (userId: string): Promise<Mem
         throw new UnknownError("Error while fetching members");
       }
     },
-    [`getMembersForNotification-${userId}`],
+    [`getMembershipsForNotification-${userId}`],
     {
       tags: [membershipCache.tag.byUserId(userId)],
     }
