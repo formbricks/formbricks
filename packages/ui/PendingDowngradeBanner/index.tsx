@@ -3,30 +3,32 @@
 import { TriangleAlertIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { TOrganization } from "@formbricks/types/organizations";
 
-interface LimitsReachedBannerProps {
-  organization: TOrganization;
+interface PendingDowngradeBannerProps {
+  lastChecked: Date;
+  active: boolean;
+  isPendingDowngrade: boolean;
   environmentId: string;
-  peopleCount: number;
-  responseCount: number;
 }
 
-export const LimitsReachedBanner = ({
-  organization,
-  peopleCount,
-  responseCount,
+export const PendingDowngradeBanner = ({
+  lastChecked,
+  active,
+  isPendingDowngrade,
   environmentId,
-}: LimitsReachedBannerProps) => {
-  const orgBillingPeopleLimit = organization.billing?.limits?.monthly?.miu;
-  const orgBillingResponseLimit = organization.billing?.limits?.monthly?.responses;
+}: PendingDowngradeBannerProps) => {
+  const threeDaysInMillis = 3 * 24 * 60 * 60 * 1000;
 
-  const isPeopleLimitReached = orgBillingPeopleLimit !== null && peopleCount >= orgBillingPeopleLimit;
-  const isResponseLimitReached = orgBillingResponseLimit !== null && responseCount >= orgBillingResponseLimit;
+  const isLastCheckedWithin72Hours = lastChecked
+    ? new Date().getTime() - lastChecked.getTime() < threeDaysInMillis
+    : false;
+
+  const scheduledDowngradeDate = new Date(lastChecked.getTime() + threeDaysInMillis);
+  const formattedDate = `${scheduledDowngradeDate.getMonth() + 1}/${scheduledDowngradeDate.getDate()}/${scheduledDowngradeDate.getFullYear()}`;
 
   const [show, setShow] = useState(true);
 
-  if (show && (isPeopleLimitReached || isResponseLimitReached)) {
+  if (show && active && isPendingDowngrade) {
     return (
       <div
         aria-live="assertive"
@@ -40,22 +42,15 @@ export const LimitsReachedBanner = ({
                     <TriangleAlertIcon className="text-error h-6 w-6" aria-hidden="true" />
                   </div>
                   <div className="ml-3 w-0 flex-1">
-                    <p className="text-base font-medium text-gray-900">Limits Reached</p>
+                    <p className="text-base font-medium text-gray-900">Pending Downgrade</p>
                     <p className="mt-1 text-sm text-gray-500">
-                      {isPeopleLimitReached && isResponseLimitReached ? (
-                        <>
-                          You have reached your monthly MIU limit of <span>{orgBillingPeopleLimit}</span> and
-                          response limit of {orgBillingResponseLimit}.{" "}
-                        </>
-                      ) : null}
-                      {isPeopleLimitReached && !isResponseLimitReached ? (
-                        <>You have reached your monthly MIU limit of {orgBillingPeopleLimit}. </>
-                      ) : null}
-                      {!isPeopleLimitReached && isResponseLimitReached ? (
-                        <>You have reached your monthly response limit of {orgBillingResponseLimit}. </>
-                      ) : null}
+                      We were unable to verify your license because the license server is unreachable.{" "}
+                      {isLastCheckedWithin72Hours
+                        ? `You will be downgraded to the Community Edition on ${formattedDate}.`
+                        : "You are downgraded to the Community Edition."}
                     </p>
-                    <Link href={`/environments/${environmentId}/settings/billing`}>
+
+                    <Link href={`/environments/${environmentId}/settings/enterprise`}>
                       <span className="text-sm text-slate-900">Learn more</span>
                     </Link>
                   </div>

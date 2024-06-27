@@ -32,14 +32,14 @@
     "storybook": "turbo run storybook"
   },
   "devDependencies": {
-    "@playwright/test": "^1.44.1",
+    "@playwright/test": "^1.45.0",
     "@formbricks/eslint-config": "workspace:*",
     "eslint": "^8.57.0",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.7",
     "rimraf": "^5.0.7",
-    "tsx": "^4.15.6",
-    "turbo": "^2.0.4"
+    "tsx": "^4.15.7",
+    "turbo": "^2.0.5"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
@@ -63,7 +63,7 @@
     "showDetails": true
   },
   "dependencies": {
-    "@changesets/cli": "^2.27.5",
-    "playwright": "^1.44.1"
+    "@changesets/cli": "^2.27.6",
+    "playwright": "^1.45.0"
   }
 }
