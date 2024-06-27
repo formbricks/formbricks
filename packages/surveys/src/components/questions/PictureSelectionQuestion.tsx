@@ -94,7 +94,7 @@ export const PictureSelectionQuestion = ({
         setTtc(updatedTtcObj);
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
-      className="w-full">
+      className="fb-w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -107,10 +107,10 @@ export const PictureSelectionQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="mt-4">
+          <div className="fb-mt-4">
             <fieldset>
-              <legend className="sr-only">Options</legend>
-              <div className="bg-survey-bg relative grid grid-cols-2 gap-x-5 gap-y-4">
+              <legend className="fb-sr-only">Options</legend>
+              <div className="fb-bg-survey-bg fb-relative fb-grid fb-grid-cols-2 fb-gap-x-5 fb-gap-y-4">
                 {questionChoices.map((choice, idx) => (
                   <label
                     key={choice.id}
@@ -135,7 +135,7 @@ export const PictureSelectionQuestion = ({
                       src={choice.imageUrl}
                       id={choice.id}
                       alt={choice.imageUrl.split("/").pop()}
-                      className="h-full w-full object-cover"
+                      className="fb-h-full fb-w-full fb-object-cover"
                     />
                     <a
                       tabIndex={-1}
@@ -144,7 +144,7 @@ export const PictureSelectionQuestion = ({
                       title="Open in new tab"
                       rel="noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute bottom-2 right-2 flex items-center gap-2 whitespace-nowrap rounded-md bg-gray-800 bg-opacity-40 p-1.5 text-white opacity-0 backdrop-blur-lg transition duration-300 ease-in-out hover:bg-opacity-65 group-hover/image:opacity-100">
+                      className="fb-absolute fb-bottom-2 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-whitespace-nowrap fb-rounded-md fb-bg-gray-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-opacity-0 fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="16"
@@ -155,7 +155,7 @@ export const PictureSelectionQuestion = ({
                         strokeWidth="1"
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        class="lucide lucide-expand">
+                        class="fb-lucide fb-lucide-expand">
                         <path d="m21 21-6-6m6 6v-4.8m0 4.8h-4.8" />
                         <path d="M3 16.2V21m0 0h4.8M3 21l6-6" />
                         <path d="M21 7.8V3m0 0h-4.8M21 3l-6 6" />
@@ -196,7 +196,7 @@ export const PictureSelectionQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton
             tabIndex={questionChoices.length + 3}

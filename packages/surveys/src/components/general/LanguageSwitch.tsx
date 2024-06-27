@@ -37,20 +37,20 @@ export const LanguageSwitch = ({
   useClickOutside(languageDropdownRef, () => setShowLanguageDropdown(false));
 
   return (
-    <div class="z-[1001] flex w-fit items-center even:pr-1">
+    <div class="fb-z-[1001] fb-flex fb-w-fit fb-items-center even:fb-pr-1">
       <button
         title="Language switch"
         type="button"
-        class="text-heading relative h-5 w-5 rounded-md hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-offset-2"
+        class="fb-text-heading fb-relative fb-h-5 fb-w-5 fb-rounded-md hover:fb-bg-black/5 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2"
         onClick={toggleDropdown}
         tabIndex={-1}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}>
-        <GlobeIcon className="text-heading h-5 w-5 p-0.5" />
+        <GlobeIcon className="fb-text-heading fb-h-5 fb-w-5 fb-p-0.5" />
       </button>
       {showLanguageDropdown && (
         <div
-          className="bg-brand text-on-brand absolute right-8 top-10 space-y-2 rounded-md p-2 text-xs"
+          className="fb-bg-brand fb-text-on-brand fb-absolute fb-right-8 fb-top-10 fb-space-y-2 fb-rounded-md fb-p-2 fb-text-xs"
           ref={languageDropdownRef}>
           {surveyLanguages.map((surveyLanguage) => {
             if (!surveyLanguage.enabled) return;
@@ -58,7 +58,7 @@ export const LanguageSwitch = ({
               <button
                 key={surveyLanguage.language.id}
                 type="button"
-                className="block w-full p-1.5 text-left hover:opacity-80"
+                className="fb-block fb-w-full fb-p-1.5 fb-text-left hover:fb-opacity-80"
                 onClick={() => changeLanguage(surveyLanguage.language.code)}>
                 {getLanguageLabel(surveyLanguage.language.code)}
               </button>

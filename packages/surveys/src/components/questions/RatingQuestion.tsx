@@ -77,7 +77,7 @@ export const RatingQuestion = ({
       id={id}
       name="rating"
       value={number}
-      className="invisible absolute left-0 h-full w-full cursor-pointer opacity-0"
+      className="fb-invisible fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
       onClick={() => handleSelect(number)}
       required={question.required}
       checked={value === number}
@@ -113,7 +113,7 @@ export const RatingQuestion = ({
         setTtc(updatedTtcObj);
         onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}
-      className="w-full">
+      className="fb-w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -126,16 +126,16 @@ export const RatingQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="mb-4 mt-6 flex items-center justify-center">
-            <fieldset className="w-full">
-              <legend className="sr-only">Choices</legend>
-              <div className="flex w-full">
+          <div className="fb-mb-4 fb-mt-6 fb-flex fb-items-center fb-justify-center">
+            <fieldset className="fb-w-full">
+              <legend className="fb-sr-only">Choices</legend>
+              <div className="fb-flex fb-w-full">
                 {Array.from({ length: question.range }, (_, i) => i + 1).map((number, i, a) => (
                   <span
                     key={number}
                     onMouseOver={() => setHoveredNumber(number)}
                     onMouseLeave={() => setHoveredNumber(0)}
-                    className="bg-survey-bg flex-1 text-center text-sm">
+                    className="fb-bg-survey-bg fb-flex-1 fb-text-center fb-text-sm">
                     {question.scale === "number" ? (
                       <label
                         tabIndex={i + 1}
@@ -186,7 +186,7 @@ export const RatingQuestion = ({
                         onFocus={() => setHoveredNumber(number)}
                         onBlur={() => setHoveredNumber(0)}>
                         <HiddenRadioInput number={number} id={number.toString()} />
-                        <div className="h-full w-full max-w-[74px] object-contain">
+                        <div className="fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain">
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <path
                               fillRule="evenodd"
@@ -215,7 +215,7 @@ export const RatingQuestion = ({
                         onFocus={() => setHoveredNumber(number)}
                         onBlur={() => setHoveredNumber(0)}>
                         <HiddenRadioInput number={number} id={number.toString()} />
-                        <div className={cn("h-full w-full max-w-[74px] object-contain")}>
+                        <div className={cn("fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain")}>
                           <RatingSmiley
                             active={value === number || hoveredNumber === number}
                             idx={i}
@@ -228,11 +228,11 @@ export const RatingQuestion = ({
                   </span>
                 ))}
               </div>
-              <div className="text-subheading mt-4 flex justify-between px-1.5 text-xs leading-6">
-                <p className="w-1/2 text-left" dir="auto">
+              <div className="fb-text-subheading fb-mt-4 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6">
+                <p className="fb-w-1/2 fb-text-left" dir="auto">
                   {getLocalizedValue(question.lowerLabel, languageCode)}
                 </p>
-                <p className="w-1/2 text-right" dir="auto">
+                <p className="fb-w-1/2 fb-text-right" dir="auto">
                   {getLocalizedValue(question.upperLabel, languageCode)}
                 </p>
               </div>
@@ -240,7 +240,7 @@ export const RatingQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton
             tabIndex={!question.required || value ? question.range + 2 : question.range + 1}

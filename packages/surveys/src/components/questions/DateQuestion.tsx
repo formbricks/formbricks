@@ -41,7 +41,7 @@ const CalendarIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    class="lucide lucide-calendar-days">
+    class="fb-lucide fb-lucide-calendar-days">
     <path d="M8 2v4" />
     <path d="M16 2v4" />
     <rect width="18" height="18" x="3" y="4" rx="2" />
@@ -66,7 +66,7 @@ const CalendarCheckIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    class="lucide lucide-calendar-check">
+    class="fb-lucide fb-lucide-calendar-check">
     <path d="M8 2v4" />
     <path d="M16 2v4" />
     <rect width="18" height="18" x="3" y="4" rx="2" />
@@ -139,7 +139,7 @@ export const DateQuestion = ({
         setTtc(updatedTtcObj);
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
-      className="w-full">
+      className="fb-w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -158,7 +158,7 @@ export const DateQuestion = ({
           <div
             className={cn("mt-4 w-full", errorMessage && "rounded-lg border-2 border-red-500")}
             id="date-picker-root">
-            <div className="relative">
+            <div className="fb-relative">
               {!datePickerOpen && (
                 <div
                   onClick={() => setDatePickerOpen(true)}
@@ -166,14 +166,14 @@ export const DateQuestion = ({
                   onKeyDown={(e) => {
                     if (e.key === " ") setDatePickerOpen(true);
                   }}
-                  className="focus:outline-brand bg-input-bg hover:bg-input-bg-selected border-border text-heading rounded-custom relative flex h-[12dvh] w-full cursor-pointer appearance-none items-center justify-center border text-left text-base font-normal">
-                  <div className="flex items-center gap-2">
+                  className="focus:fb-outline-brand fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-text-heading fb-rounded-custom fb-relative fb-flex fb-h-[12dvh] fb-w-full fb-cursor-pointer fb-appearance-none fb-items-center fb-justify-center fb-border fb-text-left fb-text-base fb-font-normal">
+                  <div className="fb-flex fb-items-center fb-gap-2">
                     {selectedDate ? (
-                      <div className="flex items-center gap-2">
+                      <div className="fb-flex fb-items-center fb-gap-2">
                         <CalendarCheckIcon /> <span>{formattedDate}</span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2">
+                      <div className="fb-flex fb-items-center fb-gap-2">
                         <CalendarIcon /> <span>Select a date</span>
                       </div>
                     )}
@@ -253,7 +253,7 @@ export const DateQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         <div>
           {!isFirstQuestion && (
             <BackButton

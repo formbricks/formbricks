@@ -84,10 +84,10 @@ export const NPSQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="my-4">
+          <div className="fb-my-4">
             <fieldset>
-              <legend className="sr-only">Options</legend>
-              <div className="flex">
+              <legend className="fb-sr-only">Options</legend>
+              <div className="fb-flex">
                 {Array.from({ length: 11 }, (_, i) => i).map((number, idx) => {
                   return (
                     <label
@@ -119,7 +119,7 @@ export const NPSQuestion = ({
                         name="nps"
                         value={number}
                         checked={value === number}
-                        className="absolute left-0 h-full w-full cursor-pointer opacity-0"
+                        className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
                         onClick={() => handleClick(number)}
                         required={question.required}
                       />
@@ -128,7 +128,7 @@ export const NPSQuestion = ({
                   );
                 })}
               </div>
-              <div className="text-subheading mt-2 flex justify-between px-1.5 text-xs leading-6">
+              <div className="fb-text-subheading fb-mt-2 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6">
                 <p dir="auto">{getLocalizedValue(question.lowerLabel, languageCode)}</p>
                 <p dir="auto">{getLocalizedValue(question.upperLabel, languageCode)}</p>
               </div>
@@ -136,7 +136,7 @@ export const NPSQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton
             tabIndex={isLastQuestion ? 12 : 13}

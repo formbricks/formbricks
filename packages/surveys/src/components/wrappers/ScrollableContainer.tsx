@@ -49,9 +49,9 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
   }, [children]);
 
   return (
-    <div className="relative">
+    <div className="fb-relative">
       {!isAtTop && (
-        <div className="from-survey-bg absolute left-0 right-2 top-0 z-10 h-4 bg-gradient-to-b to-transparent"></div>
+        <div className="fb-from-survey-bg fb-absolute fb-left-0 fb-right-2 fb-top-0 fb-z-10 fb-h-4 fb-bg-gradient-to-b fb-to-transparent"></div>
       )}
       <div
         ref={containerRef}
@@ -65,7 +65,7 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
         {children}
       </div>
       {!isAtBottom && (
-        <div className="from-survey-bg absolute -bottom-2 left-0 right-2 h-8 bg-gradient-to-t to-transparent"></div>
+        <div className="fb-from-survey-bg fb-absolute fb--bottom-2 fb-left-0 fb-right-2 fb-h-8 fb-bg-gradient-to-t fb-to-transparent"></div>
       )}
     </div>
   );

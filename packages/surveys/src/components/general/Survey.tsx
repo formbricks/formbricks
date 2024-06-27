@@ -327,7 +327,7 @@ export const Survey = ({
             cardArrangement === "simple" ? "fb-survey-shadow" : "",
             offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
-          <div className="flex h-6 justify-end pr-2 pt-2">
+          <div className="fb-flex fb-h-6 fb-justify-end fb-pr-2 fb-pt-2">
             {getShowLanguageSwitch(offset) && (
               <LanguageSwitch
                 surveyLanguages={survey.languages}
@@ -341,7 +341,7 @@ export const Survey = ({
             className={cn(loadingElement ? "animate-pulse opacity-60" : "", fullSizeCards ? "" : "my-auto")}>
             {content()}
           </div>
-          <div className="mx-6 mb-10 mt-2 space-y-3 md:mb-6 md:mt-6">
+          <div className="fb-mx-6 fb-mb-10 fb-mt-2 fb-space-y-3 md:fb-mb-6 md:fb-mt-6">
             {isBrandingEnabled && <FormbricksBranding />}
             {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
           </div>

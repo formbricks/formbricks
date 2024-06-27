@@ -24,13 +24,13 @@ interface WelcomeCardProps {
 
 const TimerIcon = () => {
   return (
-    <div className="mr-1">
+    <div className="fb-mr-1">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="16"
         height="16"
         fill="currentColor"
-        class="bi bi-stopwatch"
+        class="fb-bi fb-bi-stopwatch"
         viewBox="0 0 16 16">
         <path d="M8.5 5.6a.5.5 0 1 0-1 0v2.9h-3a.5.5 0 0 0 0 1H8a.5.5 0 0 0 .5-.5V5.6z" />
         <path d="M6.5 1A.5.5 0 0 1 7 .5h2a.5.5 0 0 1 0 1v.57c1.36.196 2.594.78 3.584 1.64a.715.715 0 0 1 .012-.013l.354-.354-.354-.353a.5.5 0 0 1 .707-.708l1.414 1.415a.5.5 0 1 1-.707.707l-.353-.354-.354.354a.512.512 0 0 1-.013.012A7 7 0 1 1 7 2.071V1.5a.5.5 0 0 1-.5-.5zM8 3a6 6 0 1 0 .001 12A6 6 0 0 0 8 3z" />
@@ -41,14 +41,14 @@ const TimerIcon = () => {
 
 const UsersIcon = () => {
   return (
-    <div className="mr-1">
+    <div className="fb-mr-1">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
         strokeWidth="1.5"
         stroke="currentColor"
-        class="h-4 w-4">
+        class="fb-h-4 fb-w-4">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -132,7 +132,11 @@ export const WelcomeCard = ({
       <ScrollableContainer>
         <div>
           {fileUrl && (
-            <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
+            <img
+              src={fileUrl}
+              className="fb-mb-8 fb-max-h-96 fb-w-1/3 fb-rounded-lg fb-object-contain"
+              alt="Company Logo"
+            />
           )}
 
           <Headline
@@ -146,7 +150,7 @@ export const WelcomeCard = ({
         </div>
       </ScrollableContainer>
 
-      <div className="mx-6 mt-4 flex gap-4 py-4">
+      <div className="fb-mx-6 fb-mt-4 fb-flex fb-gap-4 fb-py-4">
         <SubmitButton
           buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
           isLastQuestion={false}
@@ -158,23 +162,23 @@ export const WelcomeCard = ({
       </div>
 
       {timeToFinish && !showResponseCount ? (
-        <div className="item-center text-subheading my-4 ml-6 flex">
+        <div className="fb-item-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
           <TimerIcon />
-          <p className="pt-1 text-xs">
+          <p className="fb-pt-1 fb-text-xs">
             <span> Takes {calculateTimeToComplete()} </span>
           </p>
         </div>
       ) : showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
-        <div className="item-center text-subheading my-4 ml-6 flex">
+        <div className="fb-item-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
           <UsersIcon />
-          <p className="pt-1 text-xs">
+          <p className="fb-pt-1 fb-text-xs">
             <span>{`${responseCount} people responded`}</span>
           </p>
         </div>
       ) : timeToFinish && showResponseCount ? (
-        <div className="item-center text-subheading my-4 ml-6 flex">
+        <div className="fb-item-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
           <TimerIcon />
-          <p className="pt-1 text-xs">
+          <p className="fb-pt-1 fb-text-xs">
             <span> Takes {calculateTimeToComplete()} </span>
             <span>{responseCount && responseCount > 3 ? `⋅ ${responseCount} people responded` : ""}</span>
           </p>
