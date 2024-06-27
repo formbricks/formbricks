@@ -3,6 +3,9 @@ import { Prisma } from "@prisma/client";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys";
+import { membershipCache } from "../membership/cache";
+import { getMembersByOrganizationId } from "../membership/service";
+import { getOrganizationByEnvironmentId } from "../organization/service";
 
 export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
   let segment: TSegment | null = null;
@@ -88,4 +91,16 @@ export const anySurveyHasFilters = (surveys: TSurvey[] | TLegacySurvey[]): boole
     }
     return false;
   });
+};
+
+export const revalidateMembershipByEnvironmentId = async (environmentId: string) => {
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+  if (organization) {
+    const organizationMembers = await getMembersByOrganizationId(organization.id);
+    organizationMembers.forEach((member) => {
+      membershipCache.revalidate({
+        userId: member.userId,
+      });
+    });
+  }
 };
