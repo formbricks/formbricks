@@ -53,7 +53,7 @@ export const SideNavigation = ({ pathname }) => {
                 onClick={() => setSelectedId(heading.id)}
                 className={`${
                   heading.id === selectedId
-                    ? "text-brand font-medium text-opacity-35"
+                    ? "text-brand font-medium"
                     : "font-normal text-slate-600 hover:text-slate-950 dark:text-white dark:hover:text-slate-50"
                 }`}>
                 {heading.text}
