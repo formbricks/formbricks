@@ -113,11 +113,7 @@ export const Button: React.ForwardRefExoticComponent<
     <>
       {StartIcon && (
         <StartIcon
-          className={cn(
-            "flex",
-            size === "icon" ? "h-4 w-4 " : "-ml-1 mr-1 h-3 w-3",
-            startIconClassName || ""
-          )}
+          className={cn("flex", size === "icon" ? "h-4 w-4" : "-ml-1 mr-1 h-3 w-3", startIconClassName || "")}
         />
       )}
       {props.children}

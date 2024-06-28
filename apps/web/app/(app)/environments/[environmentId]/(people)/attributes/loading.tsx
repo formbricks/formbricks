@@ -11,8 +11,8 @@ const Loading = () => {
           <PeopleSecondaryNavigation activeId="attributes" loading />
         </PageHeader>
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="grid h-12 grid-cols-5  content-center border-b text-left text-sm font-semibold text-slate-900">
-            <div className="col-span-3 pl-6 ">Name</div>
+          <div className="grid h-12 grid-cols-5 content-center border-b text-left text-sm font-semibold text-slate-900">
+            <div className="col-span-3 pl-6">Name</div>
             <div className="text-center">Created</div>
             <div className="text-center">Last Updated</div>
           </div>

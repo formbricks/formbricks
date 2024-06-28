@@ -75,8 +75,8 @@ export const MultipleChoiceSummary = ({
             {result.others && result.others.length > 0 && (
               <div className="mt-4 rounded-lg border border-slate-200">
                 <div className="grid h-12 grid-cols-2 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-                  <div className="col-span-1 pl-6 ">Other values found</div>
-                  <div className="col-span-1 pl-6 ">{surveyType === "app" && "User"}</div>
+                  <div className="col-span-1 pl-6">Other values found</div>
+                  <div className="col-span-1 pl-6">{surveyType === "app" && "User"}</div>
                 </div>
                 {result.others
                   .filter((otherValue) => otherValue.value !== "")

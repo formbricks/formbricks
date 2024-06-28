@@ -65,7 +65,7 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
                         value={field.value}
                         onChange={(email) => field.onChange(email)}
                         placeholder="engineering@acme.com"
-                        className=" bg-white"
+                        className="bg-white"
                       />
                       {error?.message && <FormError className="text-left">{error.message}</FormError>}
                     </div>

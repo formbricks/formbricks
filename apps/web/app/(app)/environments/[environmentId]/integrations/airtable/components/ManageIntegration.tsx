@@ -72,7 +72,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
       <div className="flex w-full justify-end gap-x-6">
-        <div className=" flex items-center">
+        <div className="flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
           <span
             className="cursor-pointer text-slate-500"
