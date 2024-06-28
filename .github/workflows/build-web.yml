@@ -17,6 +17,9 @@ jobs:
         with:
           e2e_testing_mode: "0"
 
+      - name: Display Cache Hit Status
+        run: echo "CACHE-HIT=${{ steps.cache-build-web.outputs.cache-hit }}"
+
       # Following steps are conditional, executed only if cache is not hit
       - name: Setup Node.js 20.x
         uses: actions/setup-node@v3
