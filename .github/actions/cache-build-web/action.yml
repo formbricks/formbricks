@@ -10,8 +10,6 @@ on:
 
 runs:
   using: "composite"
-  outputs:
-    cache-hit: ${{ steps.cache-build.outputs.cache-hit }}
   steps:
     - name: Checkout repo
       uses: actions/checkout@v3
