@@ -7,12 +7,9 @@ on:
         description: "Set E2E Testing Mode"
         required: false
         default: "0"
-outputs:
-  cache-hit: ${{ steps.cache-build.outputs.cache-hit }}
 
 runs:
   using: "composite"
-
   steps:
     - name: Checkout repo
       uses: actions/checkout@v3
@@ -32,6 +29,9 @@ runs:
           **/.turbo/**
           **/dist/**
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ env.key-1 }}-${{ env.key-2 }}
+
+    - name: Set Cache Hit Status
+      run: echo "cache-hit=${{ steps.cache-build.outputs.cache-hit }}" >> $GITHUB_OUTPUT
 
     - name: Setup Node.js 20.x
       uses: actions/setup-node@v3
