@@ -108,6 +108,7 @@ export const NPSQuestion = ({
                           ? "fb-border-border-highlight fb-bg-accent-selected-bg fb-z-10 fb-border"
                           : "fb-border-border",
                         "fb-text-heading first:fb-rounded-l-custom last:fb-rounded-r-custom focus:fb-border-brand fb-relative fb-h-10 fb-flex-1 fb-cursor-pointer fb-overflow-hidden fb-border-b fb-border-l fb-border-t fb-text-center fb-text-sm fb-leading-10 last:fb-border-r focus:fb-border-2 focus:fb-outline-none",
+                        question.isColorCodingEnabled ? "fb-h-[46px]" : "fb-h-10",
                         hoveredNumber === number ? "fb-bg-accent-bg" : ""
                       )}>
                       {question.isColorCodingEnabled && (
