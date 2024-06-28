@@ -7,11 +7,12 @@ on:
         description: "Set E2E Testing Mode"
         required: false
         default: "0"
+outputs:
+  cache-hit: ${{ steps.cache-build.outputs.cache-hit }}
 
 runs:
   using: "composite"
-  outputs:
-    cache-hit: ${{ steps.cache-build.outputs.cache-hit }}
+
   steps:
     - name: Checkout repo
       uses: actions/checkout@v3
