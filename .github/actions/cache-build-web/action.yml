@@ -32,6 +32,7 @@ runs:
 
     - name: Set Cache Hit Status
       run: echo "cache-hit=${{ steps.cache-build.outputs.cache-hit }}" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Setup Node.js 20.x
       uses: actions/setup-node@v3
