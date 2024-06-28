@@ -41,7 +41,7 @@ const CalendarIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    class="fb-lucide fb-lucide-calendar-days">
+    class="lucide lucide-calendar-days">
     <path d="M8 2v4" />
     <path d="M16 2v4" />
     <rect width="18" height="18" x="3" y="4" rx="2" />
@@ -66,7 +66,7 @@ const CalendarCheckIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    class="fb-lucide fb-lucide-calendar-check">
+    class="lucide lucide-calendar-check">
     <path d="M8 2v4" />
     <path d="M16 2v4" />
     <rect width="18" height="18" x="3" y="4" rx="2" />
@@ -152,11 +152,11 @@ export const DateQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className={"text-red-600"}>
+          <div className={"fb-text-red-600"}>
             <span>{errorMessage}</span>
           </div>
           <div
-            className={cn("mt-4 w-full", errorMessage && "rounded-lg border-2 border-red-500")}
+            className={cn("fb-mt-4 fb-w-full", errorMessage && "fb-rounded-lg fb-border-2 fb-border-red-500")}
             id="date-picker-root">
             <div className="fb-relative">
               {!datePickerOpen && (
@@ -208,8 +208,8 @@ export const DateQuestion = ({
                 monthPlaceholder="MM"
                 yearPlaceholder="YYYY"
                 format={question.format ?? "M-d-y"}
-                className={`dp-input-root rounded-custom wrapper-hide ${!datePickerOpen ? "" : "h-[46dvh] sm:h-[34dvh]"} ${hideInvalid ? "hide-invalid" : ""} `}
-                calendarClassName="calendar-root !bg-input-bg border border-border rounded-custom p-3 h-[46dvh] sm:h-[33dvh] overflow-auto"
+                className={`dp-input-root fb-rounded-custom wrapper-hide ${!datePickerOpen ? "" : "fb-h-[46dvh] sm:fb-h-[34dvh]"} ${hideInvalid ? "hide-invalid" : ""} `}
+                calendarClassName="calendar-root !fb-bg-input-bg fb-border fb-border-border fb-rounded-custom fb-p-3 fb-h-[46dvh] sm:fb-h-[33dvh] fb-overflow-auto"
                 clearIcon={null}
                 onCalendarOpen={() => {
                   setDatePickerOpen(true);
@@ -223,14 +223,14 @@ export const DateQuestion = ({
                 calendarIcon={<CalendarIcon />}
                 tileClassName={({ date }: { date: Date }) => {
                   const baseClass =
-                    "hover:bg-input-bg-selected rounded-custom h-9 p-0 mt-1 font-normal text-heading aria-selected:opacity-100 focus:ring-2 focus:bg-slate-200";
+                    "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal fb-text-heading aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
                   // today's date class
                   if (
                     date.getDate() === new Date().getDate() &&
                     date.getMonth() === new Date().getMonth() &&
                     date.getFullYear() === new Date().getFullYear()
                   ) {
-                    return `${baseClass} !bg-brand !border-border-highlight !text-heading focus:ring-2 focus:bg-slate-200`;
+                    return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading focus:fb-ring-2 focus:fb-bg-slate-200`;
                   }
                   // active date class
                   if (
@@ -238,7 +238,7 @@ export const DateQuestion = ({
                     date.getMonth() === selectedDate?.getMonth() &&
                     date.getFullYear() === selectedDate?.getFullYear()
                   ) {
-                    return `${baseClass} !bg-brand !border-border-highlight !text-heading`;
+                    return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading`;
                   }
 
                   return baseClass;

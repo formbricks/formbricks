@@ -136,7 +136,7 @@ export const MultipleChoiceSingleQuestion = ({
                       key={choice.id}
                       className={cn(
                         value === getLocalizedValue(choice.label, languageCode)
-                          ? "fb-border-brand fb-z-10"
+                          ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
                           : "fb-border-border",
                         "fb-text-heading fb-bg-input-bg focus-within:fb-border-brand focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
                       )}
@@ -179,7 +179,7 @@ export const MultipleChoiceSingleQuestion = ({
                     tabIndex={questionChoices.length + 1}
                     className={cn(
                       value === getLocalizedValue(otherOption.label, languageCode)
-                        ? "fb-border-border fb-bg-input-bg-selected fb-z-10"
+                        ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
                         : "fb-border-border",
                       "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
                     )}

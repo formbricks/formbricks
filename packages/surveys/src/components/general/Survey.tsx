@@ -323,9 +323,9 @@ export const Survey = ({
       <AutoCloseWrapper survey={survey} onClose={onClose} offset={offset}>
         <div
           className={cn(
-            "no-scrollbar md:rounded-custom rounded-t-custom bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",
+            "fb-no-scrollbar md:fb-rounded-custom fb-rounded-t-custom fb-bg-survey-bg fb-flex fb-h-full fb-w-full fb-flex-col fb-justify-between fb-overflow-hidden fb-transition-all fb-duration-1000 fb-ease-in-out",
             cardArrangement === "simple" ? "fb-survey-shadow" : "",
-            offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
+            offset === 0 || cardArrangement === "simple" ? "fb-opacity-100" : "fb-opacity-0"
           )}>
           <div className="fb-flex fb-h-6 fb-justify-end fb-pr-2 fb-pt-2">
             {getShowLanguageSwitch(offset) && (
@@ -338,7 +338,10 @@ export const Survey = ({
           </div>
           <div
             ref={contentRef}
-            className={cn(loadingElement ? "animate-pulse opacity-60" : "", fullSizeCards ? "" : "my-auto")}>
+            className={cn(
+              loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
+              fullSizeCards ? "" : "fb-my-auto"
+            )}>
             {content()}
           </div>
           <div className="fb-mx-6 fb-mb-10 fb-mt-2 fb-space-y-3 md:fb-mb-6 md:fb-mt-6">

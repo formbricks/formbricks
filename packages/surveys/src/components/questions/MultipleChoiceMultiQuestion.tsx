@@ -168,9 +168,9 @@ export const MultipleChoiceMultiQuestion = ({
                       tabIndex={idx + 1}
                       className={cn(
                         value.includes(getLocalizedValue(choice.label, languageCode))
-                          ? "border-border bg-input-selected-bg z-10"
-                          : "border-border",
-                        "text-heading bg-input-bg focus-within:border-brand hover:bg-input-bg-selected focus:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                          ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
+                          : "fb-border-border",
+                        "fb-text-heading fb-bg-input-bg focus-within:fb-border-brand hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
                       )}
                       onKeyDown={(e) => {
                         // Accessibility: if spacebar was pressed pass this down to the input
@@ -219,9 +219,9 @@ export const MultipleChoiceMultiQuestion = ({
                     tabIndex={questionChoices.length + 1}
                     className={cn(
                       value.includes(getLocalizedValue(otherOption.label, languageCode))
-                        ? "border-border bg-input-selected-bg z-10"
-                        : "border-border",
-                      "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                        ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
+                        : "fb-border-border",
+                      "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
                     )}
                     onKeyDown={(e) => {
                       // Accessibility: if spacebar was pressed pass this down to the input

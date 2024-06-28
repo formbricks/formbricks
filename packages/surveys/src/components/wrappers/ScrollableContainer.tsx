@@ -59,7 +59,10 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
           scrollbarGutter: "stable both-edges",
           maxHeight: isSurveyPreview ? "40dvh" : "60dvh",
         }}
-        className={cn("overflow-auto px-4 pb-1", isOverflowHidden ? "no-scrollbar" : "bg-survey-bg")}
+        className={cn(
+          "fb-overflow-auto fb-px-4 fb-pb-1",
+          isOverflowHidden ? "fb-no-scrollbar" : "fb-bg-survey-bg"
+        )}
         onMouseEnter={() => toggleOverflow(false)}
         onMouseLeave={() => toggleOverflow(true)}>
         {children}

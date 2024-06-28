@@ -106,7 +106,7 @@ p.fb-editor-paragraph {
   }
 }
 
-.no-scrollbar {
+.fb-no-scrollbar {
   -ms-overflow-style: none !important; /* Internet Explorer 10+ */
   scrollbar-width: thin !important; /* Firefox */
   scrollbar-color: transparent transparent !important; /* Firefox */

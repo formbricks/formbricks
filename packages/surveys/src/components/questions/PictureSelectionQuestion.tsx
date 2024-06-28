@@ -127,9 +127,9 @@ export const PictureSelectionQuestion = ({
                     onClick={() => handleChange(choice.id)}
                     className={cn(
                       Array.isArray(value) && value.includes(choice.id)
-                        ? `border-brand text-brand z-10 border-4 shadow-xl`
+                        ? `fb-border-brand fb-text-brand fb-z-10 fb-border-4 fb-shadow-xl`
                         : "",
-                      "focus:border-brand group/image rounded-custom relative inline-block h-28 w-full cursor-pointer overflow-hidden border focus:border-4 focus:outline-none"
+                      "focus:fb-border-brand fb-rounded-custom fb-relative fb-inline-block fb-h-28 fb-w-full fb-cursor-pointer fb-overflow-hidden fb-border focus:fb-border-4 focus:fb-outline-none"
                     )}>
                     <img
                       src={choice.imageUrl}
@@ -155,7 +155,7 @@ export const PictureSelectionQuestion = ({
                         strokeWidth="1"
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        class="fb-lucide fb-lucide-expand">
+                        class="lucide lucide-expand">
                         <path d="m21 21-6-6m6 6v-4.8m0 4.8h-4.8" />
                         <path d="M3 16.2V21m0 0h4.8M3 21l6-6" />
                         <path d="M21 7.8V3m0 0h-4.8M21 3l-6 6" />
@@ -170,8 +170,8 @@ export const PictureSelectionQuestion = ({
                         tabIndex={-1}
                         checked={value.includes(choice.id)}
                         className={cn(
-                          "border-border rounded-custom pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 border",
-                          value.includes(choice.id) ? "border-brand text-brand" : ""
+                          "fb-border-border fb-rounded-custom fb-pointer-events-none fb-absolute fb-right-2 fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-border",
+                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : ""
                         )}
                         required={question.required && value.length ? false : question.required}
                       />
@@ -183,8 +183,8 @@ export const PictureSelectionQuestion = ({
                         tabIndex={-1}
                         checked={value.includes(choice.id)}
                         className={cn(
-                          "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded-full border",
-                          value.includes(choice.id) ? "border-brand text-brand" : ""
+                          "fb-border-border fb-pointer-events-none fb-absolute fb-right-2 fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-rounded-full fb-border",
+                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : ""
                         )}
                         required={question.required && value.length ? false : question.required}
                       />

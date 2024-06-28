@@ -33,7 +33,7 @@ export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionM
   return (
     <div className="fb-group/image fb-relative fb-mb-4 fb-block fb-min-h-40 fb-rounded-md">
       {isLoading && (
-        <div className="fb-absolute fb-inset-auto fb-flex fb-h-full fb-w-full fb-animate-pulse fb-items-center fb-justify-center fb-rounded-md fb-bg-slate-200"></div>
+        <div className="fb-absolute fb-inset-auto fb-flex fb-h-full fb-w-full fb-animate-pulse fb-items-center fb-justify-center fb-rounded-md fb-bg-slate-200" />
       )}
       {imgUrl && (
         <img
@@ -75,7 +75,7 @@ export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionM
           strokeWidth="1"
           strokeLinecap="round"
           strokeLinejoin="round"
-          class="fb-lucide fb-lucide-expand">
+          class="lucide lucide-expand">
           <path d="m21 21-6-6m6 6v-4.8m0 4.8h-4.8" />
           <path d="M3 16.2V21m0 0h4.8M3 21l6-6" />
           <path d="M21 7.8V3m0 0h-4.8M21 3l-6 6" />

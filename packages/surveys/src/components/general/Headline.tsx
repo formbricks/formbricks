@@ -16,7 +16,7 @@ export const Headline = ({
       htmlFor={questionId}
       className="fb-text-heading fb-mb-1.5 fb-block fb-text-base fb-font-semibold fb-leading-6">
       <div
-        className={`flex items-center ${alignTextCenter ? "justify-center" : "justify-between"}`}
+        className={`fb-flex fb-items-center ${alignTextCenter ? "fb-justify-center" : "fb-justify-between"}`}
         dir="auto">
         {headline}
         {!required && (

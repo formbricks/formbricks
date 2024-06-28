@@ -129,7 +129,7 @@ export const MatrixQuestion = ({
                       <td
                         key={columnIndex}
                         tabIndex={0}
-                        className={`outline-brand px-4 py-2 text-gray-800 ${columnIndex === question.columns.length - 1 ? "rounded-r-custom" : ""}`}
+                        className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-gray-800 ${columnIndex === question.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
                         onClick={() =>
                           handleSelect(
                             getLocalizedValue(column, languageCode),

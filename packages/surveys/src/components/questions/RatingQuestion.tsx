@@ -90,17 +90,17 @@ export const RatingQuestion = ({
 
   const getRatingNumberOptionColor = (range: number, idx: number) => {
     if (range > 5) {
-      if (range - idx < 2) return "bg-emerald-100";
-      if (range - idx < 4) return "bg-orange-100";
-      return "bg-rose-100";
+      if (range - idx < 2) return "fb-bg-emerald-100";
+      if (range - idx < 4) return "fb-bg-orange-100";
+      return "fb-bg-rose-100";
     } else if (range < 5) {
-      if (range - idx < 1) return "bg-emerald-100";
-      if (range - idx < 2) return "bg-orange-100";
-      return "bg-rose-100";
+      if (range - idx < 1) return "fb-bg-emerald-100";
+      if (range - idx < 2) return "fb-bg-orange-100";
+      return "fb-bg-rose-100";
     } else {
-      if (range - idx < 2) return "bg-emerald-100";
-      if (range - idx < 3) return "bg-orange-100";
-      return "bg-rose-100";
+      if (range - idx < 2) return "fb-bg-emerald-100";
+      if (range - idx < 3) return "fb-bg-orange-100";
+      return "fb-bg-rose-100";
     }
   };
 
@@ -149,17 +149,17 @@ export const RatingQuestion = ({
                         }}
                         className={cn(
                           value === number
-                            ? "bg-accent-selected-bg border-border-highlight z-10 border"
-                            : "border-border",
-                          a.length === number ? "rounded-r-custom border-r" : "",
-                          number === 1 ? "rounded-l-custom" : "",
-                          hoveredNumber === number ? "bg-accent-bg" : "",
-                          question.isColorCodingEnabled ? "min-h-[47px]" : "min-h-[41px]",
-                          "text-heading focus:border-brand relative flex w-full cursor-pointer items-center justify-center overflow-hidden border-b border-l border-t focus:border-2 focus:outline-none"
+                            ? "fb-bg-accent-selected-bg fb-border-border-highlight fb-z-10 fb-border"
+                            : "fb-border-border",
+                          a.length === number ? "fb-rounded-r-custom fb-border-r" : "",
+                          number === 1 ? "fb-rounded-l-custom" : "",
+                          hoveredNumber === number ? "fb-bg-accent-bg" : "",
+                          question.isColorCodingEnabled ? "fb-min-h-[47px]" : "fb-min-h-[41px]",
+                          "fb-text-heading focus:fb-border-brand fb-relative fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-justify-center fb-overflow-hidden fb-border-b fb-border-l fb-border-t focus:fb-border-2 focus:fb-outline-none"
                         )}>
                         {question.isColorCodingEnabled && (
                           <div
-                            className={`absolute left-0 top-0 h-[6px] w-full ${getRatingNumberOptionColor(question.range, number)}`}
+                            className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getRatingNumberOptionColor(question.range, number)}`}
                           />
                         )}
                         <HiddenRadioInput number={number} id={number.toString()} />
@@ -178,10 +178,10 @@ export const RatingQuestion = ({
                         }}
                         className={cn(
                           number <= hoveredNumber || number <= (value as number)
-                            ? "text-amber-400"
-                            : "text-[#8696AC]",
-                          hoveredNumber === number ? "text-amber-400" : "",
-                          "relative flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none"
+                            ? "fb-text-amber-400"
+                            : "fb-text-[#8696AC]",
+                          hoveredNumber === number ? "fb-text-amber-400" : "",
+                          "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-cursor-pointer fb-justify-center focus:fb-outline-none"
                         )}
                         onFocus={() => setHoveredNumber(number)}
                         onBlur={() => setHoveredNumber(0)}>
@@ -198,10 +198,10 @@ export const RatingQuestion = ({
                     ) : (
                       <label
                         className={cn(
-                          "relative flex max-h-16 min-h-9 w-full cursor-pointer justify-center",
+                          "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-w-full fb-cursor-pointer fb-justify-center",
                           value === number || hoveredNumber === number
-                            ? "stroke-rating-selected text-rating-selected"
-                            : "stroke-heading text-heading focus:border-accent-bg focus:border-2 focus:outline-none"
+                            ? "fb-stroke-rating-selected fb-text-rating-selected"
+                            : "fb-stroke-heading fb-text-heading focus:fb-border-accent-bg focus:fb-border-2 focus:fb-outline-none"
                         )}
                         tabIndex={i + 1}
                         onKeyDown={(e) => {
@@ -274,39 +274,39 @@ interface RatingSmileyProps {
 
 const getSmileyColor = (range: number, idx: number) => {
   if (range > 5) {
-    if (range - idx < 3) return "fill-emerald-100";
-    if (range - idx < 5) return "fill-orange-100";
-    return "fill-rose-100";
+    if (range - idx < 3) return "fb-fill-emerald-100";
+    if (range - idx < 5) return "fb-fill-orange-100";
+    return "fb-fill-rose-100";
   } else if (range < 5) {
-    if (range - idx < 2) return "fill-emerald-100";
-    if (range - idx < 3) return "fill-orange-100";
-    return "fill-rose-100";
+    if (range - idx < 2) return "fb-fill-emerald-100";
+    if (range - idx < 3) return "fb-fill-orange-100";
+    return "fb-fill-rose-100";
   } else {
-    if (range - idx < 3) return "fill-emerald-100";
-    if (range - idx < 4) return "fill-orange-100";
-    return "fill-rose-100";
+    if (range - idx < 3) return "fb-fill-emerald-100";
+    if (range - idx < 4) return "fb-fill-orange-100";
+    return "fb-fill-rose-100";
   }
 };
 
 const getActiveSmileyColor = (range: number, idx: number) => {
   if (range > 5) {
-    if (range - idx < 3) return "fill-emerald-300";
-    if (range - idx < 5) return "fill-orange-300";
-    return "fill-rose-300";
+    if (range - idx < 3) return "fb-fill-emerald-300";
+    if (range - idx < 5) return "fb-fill-orange-300";
+    return "fb-fill-rose-300";
   } else if (range < 5) {
-    if (range - idx < 2) return "fill-emerald-300";
-    if (range - idx < 3) return "fill-orange-300";
-    return "fill-rose-300";
+    if (range - idx < 2) return "fb-fill-emerald-300";
+    if (range - idx < 3) return "fb-fill-orange-300";
+    return "fb-fill-rose-300";
   } else {
-    if (range - idx < 3) return "fill-emerald-300";
-    if (range - idx < 4) return "fill-orange-300";
-    return "fill-rose-300";
+    if (range - idx < 3) return "fb-fill-emerald-300";
+    if (range - idx < 4) return "fb-fill-orange-300";
+    return "fb-fill-rose-300";
   }
 };
 
 const getSmiley = (iconIdx: number, idx: number, range: number, active: boolean, addColors: boolean) => {
-  const activeColor = addColors ? getActiveSmileyColor(range, idx) : "fill-rating-fill";
-  const inactiveColor = addColors ? getSmileyColor(range, idx) : "fill-none";
+  const activeColor = addColors ? getActiveSmileyColor(range, idx) : "fb-fill-rating-fill";
+  const inactiveColor = addColors ? getSmileyColor(range, idx) : "fb-fill-none";
 
   const icons = [
     <TiredFace className={active ? activeColor : inactiveColor} />,

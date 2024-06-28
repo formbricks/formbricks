@@ -60,7 +60,7 @@ export const NPSQuestion = ({
   };
 
   const getNPSOptionColor = (idx: number) => {
-    return idx > 8 ? "bg-emerald-100" : idx > 6 ? "bg-orange-100" : "bg-rose-100";
+    return idx > 8 ? "fb-bg-emerald-100" : idx > 6 ? "fb-bg-orange-100" : "fb-bg-rose-100";
   };
 
   return (
@@ -105,13 +105,15 @@ export const NPSQuestion = ({
                       }}
                       className={cn(
                         value === number
-                          ? "border-border-highlight bg-accent-selected-bg z-10 border"
-                          : "border-border",
-                        "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative h-10 flex-1 cursor-pointer overflow-hidden border-b border-l border-t text-center text-sm leading-10 last:border-r focus:border-2 focus:outline-none",
-                        hoveredNumber === number ? "bg-accent-bg" : ""
+                          ? "fb-border-border-highlight fb-bg-accent-selected-bg fb-z-10 fb-border"
+                          : "fb-border-border",
+                        "fb-text-heading first:fb-rounded-l-custom last:fb-rounded-r-custom focus:fb-border-brand fb-relative fb-h-10 fb-flex-1 fb-cursor-pointer fb-overflow-hidden fb-border-b fb-border-l fb-border-t fb-text-center fb-text-sm fb-leading-10 last:fb-border-r focus:fb-border-2 focus:fb-outline-none",
+                        hoveredNumber === number ? "fb-bg-accent-bg" : ""
                       )}>
                       {question.isColorCodingEnabled && (
-                        <div className={`absolute left-0 top-0 h-[6px] w-full ${getNPSOptionColor(idx)}`} />
+                        <div
+                          className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getNPSOptionColor(idx)}`}
+                        />
                       )}
                       <input
                         type="radio"
