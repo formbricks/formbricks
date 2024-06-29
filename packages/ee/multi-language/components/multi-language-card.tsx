@@ -176,7 +176,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   return (
     <div
       className={cn(
-        open ? "scale-100 shadow-lg " : "scale-97 shadow-md",
+        open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
         "group z-10 flex flex-row rounded-lg bg-white text-slate-900 transition-transform duration-300 ease-in-out"
       )}>
       <div

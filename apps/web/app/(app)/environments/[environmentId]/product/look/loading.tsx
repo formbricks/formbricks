@@ -75,7 +75,7 @@ const Loading = () => {
     <div>
       <PageContentWrapper>
         <PageHeader pageTitle="Configuration">
-          <div className="grid h-10 w-full grid-cols-[auto,1fr] ">
+          <div className="grid h-10 w-full grid-cols-[auto,1fr]">
             <nav className="flex h-full min-w-full items-center space-x-4" aria-label="Tabs">
               {navigation.map((navElem) => (
                 <div
@@ -178,7 +178,7 @@ const Loading = () => {
             <div className="flex cursor-not-allowed select-none">
               <RadioGroup>
                 {placements.map((placement) => (
-                  <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap ">
+                  <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap">
                     <RadioGroupItem
                       className="cursor-not-allowed select-none"
                       id={placement.value}
