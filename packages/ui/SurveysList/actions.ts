@@ -39,9 +39,11 @@ export const duplicateSurveyAction = async (environmentId: string, surveyId: str
 export const copyToOtherEnvironmentAction = async (
   environmentId: string,
   surveyId: string,
-  targetEnvironmentId: string
+  targetEnvironmentId: string,
+  ProductId: string
 ) => {
   const session = await getServerSession(authOptions);
+
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorizedToAccessSourceEnvironment = await hasUserEnvironmentAccess(
@@ -92,6 +94,16 @@ export const copyToOtherEnvironmentAction = async (
 
   if (!existingSurvey) {
     throw new ResourceNotFoundError("Survey", surveyId);
+  }
+
+  const existingEnvironment = await prisma.environment.findFirst({
+    where: {
+      id: environmentId,
+    },
+  });
+
+  if (!existingSurvey) {
+    throw new ResourceNotFoundError("Environment", environmentId);
   }
 
   let targetEnvironmentTriggers: string[] = [];
@@ -270,7 +282,64 @@ export const copyToOtherEnvironmentAction = async (
     id: newSurvey.id,
     environmentId: targetEnvironmentId,
   });
+
+  const updatedEnvironment = await prisma.environment.update({
+    where: {
+      id: targetEnvironmentId,
+    },
+    data: {
+      productId: ProductId,
+      surveys: {
+        connect: {
+          id: newSurvey.id,
+        },
+      },
+    },
+  });
+
+  // console.log("newEnvironment",updatedEnvironment)
+  // console.log("newSurvey",newSurvey)
   return newSurvey;
+};
+
+export const getProductSurveyAction = async () => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const membership = await prisma.membership.findFirst({
+    where: {
+      userId: session.user.id,
+    },
+  });
+
+  const organization = membership?.organizationId;
+  if (!organization) throw new Error("Organization not found");
+
+  const products = await prisma.product.findMany({
+    where: {
+      organizationId: organization,
+    },
+  });
+
+  // Fetch environments for each product
+  const productsWithEnvironments = await Promise.all(
+    products.map(async (product) => {
+      const environments = await prisma.environment.findMany({
+        where: {
+          productId: product.id,
+        },
+      });
+      return {
+        ...product,
+        environments: environments.map((env) => ({
+          id: env.id,
+          name: env.type,
+        })),
+      };
+    })
+  );
+
+  return productsWithEnvironments;
 };
 
 export const deleteSurveyAction = async (surveyId: string) => {
