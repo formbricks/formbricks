@@ -1,6 +1,7 @@
 import { Loader2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { getProductSurveyAction } from "../actions";
 
 interface Environment {
@@ -35,7 +36,7 @@ const CopySurveyForm: React.FC<CopySurveyFormProps> = ({ onSubmit, onCancel }) =
         const products = await getProductSurveyAction();
         setProducts(products);
       } catch (error) {
-        console.error("Error fetching products:", error);
+        toast.error("Error fetching products");
       } finally {
         setLoading(false); // Set loading to false once products are fetched
       }
@@ -48,7 +49,6 @@ const CopySurveyForm: React.FC<CopySurveyFormProps> = ({ onSubmit, onCancel }) =
     (productId: string, targetenvironmentId: string, environmentType: string, productName: string) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const isChecked = e.target.checked;
-      console.log("isChecked", isChecked);
 
       if (isChecked) {
         setSelectedEnvironments((prevSelected) => {
@@ -57,7 +57,6 @@ const CopySurveyForm: React.FC<CopySurveyFormProps> = ({ onSubmit, onCancel }) =
           );
 
           if (isAlreadySelected) {
-            console.log("selected");
             return prevSelected.filter(
               (env) => !(env.productId === productId && env.targetenvironmentId === targetenvironmentId)
             );
@@ -74,13 +73,12 @@ const CopySurveyForm: React.FC<CopySurveyFormProps> = ({ onSubmit, onCancel }) =
       }
     };
   const handleFormSubmit = () => {
-    console.log("selected", selectedEnvironments);
     onSubmit(selectedEnvironments);
   };
   if (loading) {
     return (
       <div className="relative mb-96 flex h-full w-full items-center justify-center bg-white pb-12">
-        <Loader2 className="animate-spin" /> {/* Replace LoadingSpinner with your actual loading component */}
+        <Loader2 className="animate-spin" />
       </div>
     );
   }

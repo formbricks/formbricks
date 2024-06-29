@@ -40,7 +40,7 @@ export const copyToOtherEnvironmentAction = async (
   environmentId: string,
   surveyId: string,
   targetEnvironmentId: string,
-  ProductId: string
+  ProductId: string //productId of the selected product
 ) => {
   const session = await getServerSession(authOptions);
 
@@ -95,12 +95,6 @@ export const copyToOtherEnvironmentAction = async (
   if (!existingSurvey) {
     throw new ResourceNotFoundError("Survey", surveyId);
   }
-
-  const existingEnvironment = await prisma.environment.findFirst({
-    where: {
-      id: environmentId,
-    },
-  });
 
   if (!existingSurvey) {
     throw new ResourceNotFoundError("Environment", environmentId);
@@ -282,8 +276,8 @@ export const copyToOtherEnvironmentAction = async (
     id: newSurvey.id,
     environmentId: targetEnvironmentId,
   });
-
-  const updatedEnvironment = await prisma.environment.update({
+  // update the environment with the productId in which the survey has been copied.
+  await prisma.environment.update({
     where: {
       id: targetEnvironmentId,
     },
@@ -297,8 +291,6 @@ export const copyToOtherEnvironmentAction = async (
     },
   });
 
-  // console.log("newEnvironment",updatedEnvironment)
-  // console.log("newSurvey",newSurvey)
   return newSurvey;
 };
 

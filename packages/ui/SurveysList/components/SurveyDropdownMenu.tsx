@@ -12,7 +12,7 @@ import {
 import { MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TSurvey } from "@formbricks/types/surveys";
@@ -25,7 +25,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../DropdownMenu";
-import { LoadingSpinner } from "../../LoadingSpinner";
 import {
   copyToOtherEnvironmentAction,
   deleteSurveyAction,
@@ -49,8 +48,6 @@ interface SurveyDropDownMenuProps {
 export const SurveyDropDownMenu = ({
   environmentId,
   survey,
-  environment,
-  otherEnvironment,
   webAppUrl,
   singleUseId,
   isSurveyCreationDeletionDisabled,
@@ -93,7 +90,7 @@ export const SurveyDropDownMenu = ({
     setLoading(false);
   };
 
-  const handleFormSubmit = async (
+  const copyToOtherEnvironment = async (
     formData: {
       productId: string;
       targetenvironmentId: string;
@@ -102,8 +99,6 @@ export const SurveyDropDownMenu = ({
     }[]
   ) => {
     setLoading(true);
-    console.log("formData", formData);
-
     try {
       await Promise.all(
         formData.map(async (data) => {
@@ -115,25 +110,14 @@ export const SurveyDropDownMenu = ({
           );
         })
       );
-      //  toast.success("Survey copied successfully.");
-      //  router.replace(`/environments/${formData[0].targetenvironmentId}`);
-      //  console.log("baad me")
-
       formData.forEach((data) => {
         setIsCopyFormOpen(false);
-
-        console.log("hereeer");
-
-        setTimeout(() => {
-          toast.success(`Survey copied to ${data.environmentType} env of ${data.productName}`);
-        }, 500);
+        toast.success(`Survey copied to ${data.environmentType} env of ${data.productName}`);
       });
     } catch (error) {
-      formData.forEach((data) => {
-        toast.error(`Failed to copy to ${data.environmentType}`);
-      });
+      toast.error(`Failed to copy to survey`);
     }
-    console.log("sabse baad me");
+
     setLoading(false);
   };
 
@@ -182,10 +166,10 @@ export const SurveyDropDownMenu = ({
                   <button
                     type="button"
                     className="flex w-full items-center"
+                    disabled={loading}
                     onClick={(e) => {
                       e.preventDefault();
                       setIsDropDownOpen(false);
-                      //copyToOtherEnvironment(survey.id);
                       setIsCopyFormOpen(true);
                     }}>
                     <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
@@ -275,7 +259,7 @@ export const SurveyDropDownMenu = ({
                 </div>
               </div>
 
-              <CopySurveyForm onSubmit={handleFormSubmit} onCancel={() => setIsCopyFormOpen(false)} />
+              <CopySurveyForm onSubmit={copyToOtherEnvironment} onCancel={() => setIsCopyFormOpen(false)} />
             </DialogContent>
           </Dialog>
         </div>
