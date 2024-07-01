@@ -1,7 +1,7 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
+import { getMembershipsForNotification } from "@/app/(app)/environments/[environmentId]/settings/(account)/notifications/lib/utils";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getServerSession } from "next-auth";
-import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getUser } from "@formbricks/lib/user/service";
 import { TUserNotificationSettings } from "@formbricks/types/user";
@@ -40,43 +40,6 @@ const setCompleteNotificationSettings = (
   return newNotificationSettings;
 };
 
-const getMemberships = async (userId: string): Promise<Membership[]> => {
-  const memberships = await prisma.membership.findMany({
-    where: {
-      userId,
-    },
-    select: {
-      organization: {
-        select: {
-          id: true,
-          name: true,
-          products: {
-            select: {
-              id: true,
-              name: true,
-              environments: {
-                where: {
-                  type: "production",
-                },
-                select: {
-                  id: true,
-                  surveys: {
-                    select: {
-                      id: true,
-                      name: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-  return memberships;
-};
-
 const Page = async ({ params, searchParams }) => {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -84,8 +47,10 @@ const Page = async ({ params, searchParams }) => {
   }
   const autoDisableNotificationType = searchParams["type"];
   const autoDisableNotificationElementId = searchParams["elementId"];
-
-  const [user, memberships] = await Promise.all([getUser(session.user.id), getMemberships(session.user.id)]);
+  const [user, memberships] = await Promise.all([
+    getUser(session.user.id),
+    getMembershipsForNotification(session.user.id),
+  ]);
   if (!user) {
     throw new Error("User not found");
   }
