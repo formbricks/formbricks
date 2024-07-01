@@ -1,10 +1,10 @@
 import { Prisma } from "@prisma/client";
-import { getMembershipByUserIdOrganizationId } from "membership/service";
-import { getAccessFlags } from "membership/utils";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { cache } from "../cache";
+import { getMembershipByUserIdOrganizationId } from "../membership/service";
+import { getAccessFlags } from "../membership/utils";
 import { organizationCache } from "../organization/cache";
 import { validateInputs } from "../utils/validate";
 

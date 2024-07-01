@@ -1,6 +1,14 @@
 "use server";
 
+import { getRoleBasedSchema } from "@/app/lib/ruleEngine";
+import {
+  authenticatedActionClient,
+  formatErrors,
+  getMembershipRole,
+  getOrganizationIdFromProductId,
+} from "@/app/lib/utils";
 import { getServerSession } from "next-auth";
+import { returnValidationErrors } from "next-safe-action";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -9,12 +17,12 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { deleteProduct, getProducts, updateProduct } from "@formbricks/lib/product/service";
 import { TEnvironment } from "@formbricks/types/environment";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
+import { TProduct, TProductUpdateInput, ZProductUpdateInput } from "@formbricks/types/product";
 
 export const updateProductAction = async (
   environmentId: string,
   productId: string,
-  data: Partial<TProductUpdateInput>
+  data: TProductUpdateInput
 ): Promise<TProduct> => {
   const session = await getServerSession(authOptions);
 
@@ -101,4 +109,30 @@ export const deleteProductAction = async (environmentId: string, productId: stri
 
   const deletedProduct = await deleteProduct(productId);
   return deletedProduct;
+};
+
+export const protectedUpdateProductAction = async (productId: string, data: TProductUpdateInput) => {
+  const actionResult = authenticatedActionClient
+    .schema(ZProductUpdateInput)
+    .metadata({ rules: ["product", "update"] })
+    .use(async ({ ctx, next }) => {
+      const organizationId = await getOrganizationIdFromProductId(productId);
+      return next({ ctx: { ...ctx, organizationId } });
+    })
+    .use(async ({ ctx, next, metadata }) => {
+      const role = await getMembershipRole(ctx.user.id, ctx.organizationId);
+      const schema = getRoleBasedSchema(ZProductUpdateInput, role, ...metadata.rules);
+      return next({ ctx: { ...ctx, schema } });
+    })
+    .action(async ({ parsedInput, ctx }) => {
+      const { schema } = ctx;
+      const parsedResult = schema.safeParse(parsedInput);
+      if (!parsedResult.success) {
+        console.log(parsedResult.error.errors, parsedResult.error.issues);
+        return returnValidationErrors(schema, formatErrors(parsedResult.error.issues));
+      }
+      return await updateProduct(productId, parsedInput);
+    })(data);
+
+  return actionResult;
 };

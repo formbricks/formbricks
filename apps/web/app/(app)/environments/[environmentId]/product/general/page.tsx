@@ -57,11 +57,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       </PageHeader>
 
       <SettingsCard title="Product Name" description="Change your products name.">
-        <EditProductNameForm
-          environmentId={params.environmentId}
-          product={product}
-          isProductNameEditDisabled={isProductNameEditDisabled}
-        />
+        <EditProductNameForm product={product} isProductNameEditDisabled={isProductNameEditDisabled} />
       </SettingsCard>
       {currentProductChannel !== "link" && (
         <SettingsCard

@@ -8,11 +8,10 @@ import { TProduct, ZProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
-import { updateProductAction } from "../actions";
+import { protectedUpdateProductAction } from "../actions";
 
 type EditProductNameProps = {
   product: TProduct;
-  environmentId: string;
   isProductNameEditDisabled: boolean;
 };
 
@@ -22,7 +21,6 @@ type TEditProductName = z.infer<typeof ZProductNameInput>;
 
 export const EditProductNameForm: React.FC<EditProductNameProps> = ({
   product,
-  environmentId,
   isProductNameEditDisabled,
 }) => {
   const form = useForm<TEditProductName>({
@@ -46,16 +44,16 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
         return;
       }
 
-      const updatedProduct = await updateProductAction(environmentId, product.id, { name });
+      const updatedProductResponse = await protectedUpdateProductAction(product.id, {
+        name,
+        inAppSurveyBranding: false,
+      });
 
-      if (isProductNameEditDisabled) {
-        toast.error("Only Owners, Admins and Editors can perform this action.");
-        return;
-      }
+      console.log(updatedProductResponse);
 
-      if (!!updatedProduct?.id) {
+      if (updatedProductResponse?.data) {
         toast.success("Product name updated successfully.");
-        form.resetField("name", { defaultValue: updatedProduct.name });
+        form.resetField("name", { defaultValue: updatedProductResponse.data.name });
       }
     } catch (err) {
       console.error(err);
@@ -63,7 +61,7 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
     }
   };
 
-  return !isProductNameEditDisabled ? (
+  return !isProductNameEditDisabled || true ? (
     <FormProvider {...form}>
       <form className="w-full max-w-sm items-center space-y-2" onSubmit={form.handleSubmit(updateProduct)}>
         <FormField
