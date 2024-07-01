@@ -107,7 +107,8 @@ export const NPSQuestion = ({
                         value === number
                           ? "border-border-highlight bg-accent-selected-bg z-10 border"
                           : "border-border",
-                        "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative h-10 flex-1 cursor-pointer overflow-hidden border-b border-l border-t text-center text-sm leading-10 last:border-r focus:border-2 focus:outline-none",
+                        "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative flex flex-1 cursor-pointer items-center justify-center overflow-hidden border-b border-l border-t text-center text-sm leading-10 last:border-r focus:border-2 focus:outline-none",
+                        question.isColorCodingEnabled ? "h-[46px]" : "h-10",
                         hoveredNumber === number ? "bg-accent-bg" : ""
                       )}>
                       {question.isColorCodingEnabled && (
