@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Modal } from "react-native";
 import { WebView } from "react-native-webview";
 import { FormbricksAPI } from "@formbricks/api";
-import { getLanguageCodeForSurvey } from "@formbricks/lib/i18n/utils";
+import { getDefaultLanguageCode, getLanguageCodeForSurvey } from "@formbricks/lib/i18n/utils";
 import { RNAppConfig } from "@formbricks/lib/js/config";
 import { sync } from "@formbricks/lib/js/sync";
 import { Logger } from "@formbricks/lib/logger";
@@ -85,6 +85,8 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
       data: responseUpdate.data,
       ttc: responseUpdate.ttc,
       finished: responseUpdate.finished,
+      language:
+        responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
     });
   };
 

@@ -7,9 +7,12 @@ LogBox.ignoreAllLogs();
 
 export default function App() {
   const config = {
-    environmentId: "clxslarzk000l3evo1z1iv0s0",
+    environmentId: "cly2j4y86000eem12ayct7yzz",
     apiHost: "http://localhost:3000",
     userId: "111",
+    attributes: {
+      language: "en",
+    },
   };
 
   return (
@@ -23,7 +26,7 @@ export default function App() {
         }}
       />
       <StatusBar style="auto" />
-      <Formbricks initializationConfig={config} />
+      <Formbricks initConfig={config} />
     </View>
   );
 }
