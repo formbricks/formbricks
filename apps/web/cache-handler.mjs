@@ -1,6 +1,6 @@
 import { CacheHandler } from "@neshca/cache-handler";
 import createLruHandler from "@neshca/cache-handler/local-lru";
-import createRedisHandler from "@neshca/cache-handler/redis-stack";
+import createRedisHandler from "@neshca/cache-handler/redis-strings";
 import { createClient } from "redis";
 
 // Function to create a timeout promise
@@ -27,6 +27,7 @@ CacheHandler.onCreation(async () => {
     if (client) {
       try {
         // Wait for the client to connect with a timeout of 5000ms.
+        const connectPromise = client.connect();
         const timeoutPromise = createTimeoutPromise(5000, "Redis connection timed out"); // 5000ms timeout
         await Promise.race([connectPromise, timeoutPromise]);
       } catch (error) {
@@ -53,7 +54,7 @@ CacheHandler.onCreation(async () => {
     // Create the `redis-stack` Handler if the client is available and connected.
     handler = await createRedisHandler({
       client,
-      keyPrefix: "formbricks:",
+      keyPrefix: "fb:",
       timeoutMs: 1000,
     });
   } else {
