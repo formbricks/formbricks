@@ -216,9 +216,6 @@ export const PricingTable = ({
                 Yearly
               </div>
             </div>
-            <div className="mb-4 flex w-fit items-center overflow-hidden rounded-lg border border-orange-200 bg-orange-50 px-3 py-1 text-orange-950 lg:mb-0">
-              50% off for 6 months with PH50 - 24h only 🔥
-            </div>
           </div>
           <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-4">
             <div
