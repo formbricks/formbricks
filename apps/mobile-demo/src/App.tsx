@@ -6,7 +6,6 @@ import Formbricks, { track } from "@formbricks/react-native";
 LogBox.ignoreAllLogs();
 
 export default function App() {
-  const [text, setText] = useState("Formbricks React Native SDK Demo");
   const config = {
     environmentId: "clxslarzk000l3evo1z1iv0s0",
     apiHost: "http://localhost:3000",
@@ -15,7 +14,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text>{text}</Text>
+      <Text>Formbricks React Native SDK Demo</Text>
 
       <Button
         title="Trigger Code Action"

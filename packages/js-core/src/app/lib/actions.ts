@@ -1,8 +1,10 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { InvalidCodeError, NetworkError, Result, err, okVoid } from "@formbricks/lib/js/errors";
 import { Logger } from "@formbricks/lib/js/logger";
+import { getIsDebug } from "@formbricks/lib/js/utils";
 import { TJsActionInput, TJsTrackProperties } from "@formbricks/types/js";
 import { AppConfig } from "./config";
+import { sync } from "./sync";
 import { triggerSurvey } from "./widget";
 
 const logger = Logger.getInstance();
@@ -43,6 +45,20 @@ export const trackAction = async (
         url: `${inAppConfig.get().apiHost}/api/v1/client/${inAppConfig.get().environmentId}/actions`,
         responseMessage: res.error.message,
       });
+    }
+    // we skip the resync on a new action since this leads to too many requests if the user has a lot of actions
+    // also this always leads to a second sync call on the `New Session` action
+    // when debug: sync after every action for testing purposes
+    if (getIsDebug()) {
+      await sync(
+        {
+          environmentId: inAppConfig.get().environmentId,
+          apiHost: inAppConfig.get().apiHost,
+          userId,
+          attributes: inAppConfig.get().state.attributes,
+        },
+        true
+      );
     }
   }
 

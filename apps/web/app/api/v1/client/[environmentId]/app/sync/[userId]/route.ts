@@ -37,15 +37,14 @@ export const GET = async (
     params: {
       environmentId: string;
       userId: string;
-      type: string;
     };
   }
 ): Promise<Response> => {
   try {
     const { device } = userAgent(request);
     const version = request.nextUrl.searchParams.get("version");
-    // validate using zod
 
+    // validate using zod
     const inputValidation = ZJsPeopleUserIdInput.safeParse({
       environmentId: params.environmentId,
       userId: params.userId,

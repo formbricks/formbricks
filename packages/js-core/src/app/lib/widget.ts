@@ -1,7 +1,7 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { ErrorHandler } from "@formbricks/lib/errors";
-import { getLanguageCodeForSurvey } from "@formbricks/lib/i18n/utils";
-import { getDefaultLanguageCode, handleHiddenFields } from "@formbricks/lib/js/utils";
+import { getDefaultLanguageCode, getLanguageCodeForSurvey } from "@formbricks/lib/i18n/utils";
+import { handleHiddenFields } from "@formbricks/lib/js/utils";
 import { Logger } from "@formbricks/lib/logger";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";

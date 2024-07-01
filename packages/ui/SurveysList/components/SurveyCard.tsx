@@ -1,4 +1,4 @@
-import { Code, Globe2Icon, Link2Icon } from "lucide-react";
+import { Code, EarthIcon, Link2Icon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -66,7 +66,7 @@ export const SurveyCard = ({
 
       {type === "website" && (
         <>
-          <Globe2Icon className="h-4 w-4" />
+          <EarthIcon className="h-4 w-4" />
           <span> Website</span>
         </>
       )}

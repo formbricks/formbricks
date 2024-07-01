@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Modal, ModalProps } from "react-native";
+import { Modal } from "react-native";
 import { WebView } from "react-native-webview";
 import { FormbricksAPI } from "@formbricks/api";
 import { getLanguageCodeForSurvey } from "@formbricks/lib/i18n/utils";
@@ -24,11 +24,11 @@ export const setIsSurveyRunning = (value: boolean) => {
   isSurveyRunning = value;
 };
 
-type SurveyWebViewProps = {
+interface SurveyWebViewProps {
   survey: TSurvey;
-} & ModalProps;
+}
 
-export const SurveyWebView = ({ survey, ...restProps }: SurveyWebViewProps) => {
+export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
   const [showSurvey, setShowSurvey] = useState(false);
 
   const product = appConfig.get().state.product;
@@ -59,9 +59,7 @@ export const SurveyWebView = ({ survey, ...restProps }: SurveyWebViewProps) => {
           apiHost: appConfig.get().apiHost,
           environmentId: appConfig.get().environmentId,
           retryAttempts: 2,
-          onResponseSendingFailed: () => {
-            // setIsError(true);
-          },
+          onResponseSendingFailed: () => {},
           setSurveyState,
         },
         surveyState
@@ -128,8 +126,7 @@ export const SurveyWebView = ({ survey, ...restProps }: SurveyWebViewProps) => {
       transparent={true}
       onRequestClose={() => {
         setShowSurvey(false);
-      }}
-      {...restProps}>
+      }}>
       <WebView
         originWhitelist={["*"]}
         source={{
@@ -195,7 +192,6 @@ export const SurveyWebView = ({ survey, ...restProps }: SurveyWebViewProps) => {
   );
 };
 
-// todo: update ip to use from env.
 const renderHtml = (options: Partial<SurveyInlineProps>) => {
   return `
   <!doctype html>

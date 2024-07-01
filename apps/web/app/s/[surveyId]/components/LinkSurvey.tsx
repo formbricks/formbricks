@@ -16,12 +16,6 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
-declare global {
-  interface Window {
-    ReactNativeWebView: Window;
-  }
-}
-
 let setIsError = (_: boolean) => {};
 let setIsResponseSendingFinished = (_: boolean) => {};
 let setQuestionId = (_: string) => {};
@@ -155,11 +149,6 @@ export const LinkSurvey = ({
       return null;
     }
   }, [survey.verifyEmail, verifiedEmail]);
-
-  // tell react native app to close the survey.
-  // const onFinishedMobile = () => {
-  //   window.ReactNativeWebView.postMessage(JSON.stringify({ closeModal: true }));
-  // };
 
   useEffect(() => {
     responseQueue.updateSurveyState(surveyState);

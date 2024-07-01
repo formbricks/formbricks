@@ -1,6 +1,5 @@
 import { ErrorHandler, NotInitializedError, err, okVoid } from "@formbricks/lib/errors";
 import type { MissingFieldError, MissingPersonError, NetworkError, Result } from "@formbricks/lib/errors";
-import { isInitialized, setIsInitialize } from "@formbricks/lib/initializationState";
 import { updateAttributes } from "@formbricks/lib/js/attributes";
 import { RNAppConfig } from "@formbricks/lib/js/config";
 import { sync } from "@formbricks/lib/js/sync";
@@ -11,6 +10,11 @@ import { trackAction } from "./actions";
 
 const logger = Logger.getInstance();
 const appConfig = RNAppConfig.getInstance();
+let isInitialized = false;
+
+export const setIsInitialize = (state: boolean) => {
+  isInitialized = state;
+};
 
 export const initialize = async (
   c: TJsAppConfigInput

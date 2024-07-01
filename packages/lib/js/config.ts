@@ -1,9 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { TJSAppConfig, TJsAppConfigUpdateInput } from "@formbricks/types/js";
+import { TJSAppConfig, TJsAppConfigUpdateInput, ZJSAppConfig } from "@formbricks/types/js";
 import { Result, err, ok, wrapThrows } from "./errors";
 
 export const IN_APP_LOCAL_STORAGE_KEY = "formbricks-js-app";
-
 export const LOCAL_STORAGE_KEY = "formbricks-react-native";
 
 export class AppConfig {
@@ -48,10 +47,7 @@ export class AppConfig {
     if (typeof window !== "undefined") {
       const savedConfig = localStorage.getItem(IN_APP_LOCAL_STORAGE_KEY);
       if (savedConfig) {
-        // TODO: validate config
-        // This is a hack to get around the fact that we don't have a proper
-        // way to validate the config yet.
-        const parsedConfig = JSON.parse(savedConfig) as TJSAppConfig;
+        const parsedConfig = ZJSAppConfig.parse(savedConfig);
 
         // check if the config has expired
         if (parsedConfig.expiresAt && new Date(parsedConfig.expiresAt) <= new Date()) {
@@ -118,11 +114,7 @@ export class RNAppConfig {
         if (!savedConfig) {
           return err(new Error("No or invalid config in local storage"));
         }
-        // TODO: validate config
-        // This is a hack to get around the fact that we don't have a proper
-        // way to validate the config yet.
-        const parsedConfig = JSON.parse(savedConfig) as TJSAppConfig;
-
+        const parsedConfig = ZJSAppConfig.parse(savedConfig);
         if (parsedConfig.expiresAt && new Date(parsedConfig.expiresAt) <= new Date()) {
           return err(new Error("Config in local storage has expired"));
         }
