@@ -4,7 +4,7 @@ import AddModule from "./add-module.webp";
 import CreateNewScenario from "./create-new-scenario.webp";
 import CreateWebhook from "./create-webhook.webp";
 import DuplicateSurvey from "./duplicate-survey.webp";
-import EnterApiKey from "./enter-api-key.webp";
+import EnterApiKeyAndHost from "./enter-api-key-and-host.webp";
 import Result from "./result.webp";
 import SearchFormbricks from "./search-formbricks.webp";
 import SelectAction from "./select-action.webp";
@@ -27,8 +27,8 @@ export const metadata = {
 Make is a powerful tool to send information between Formbricks and thousands of apps. Here's how to set it up.
 
 <Note>
-Nailed down your survey?? Any changes in the survey cause additional work in the _Scenario_. It
-  makes sense to first settle on the survey you want to run and then get to setting up Make.
+  Nailed down your survey?? Any changes in the survey cause additional work in the _Scenario_. It makes sense
+  to first settle on the survey you want to run and then get to setting up Make.
 </Note>
 
 ## Step 1: Setup your survey incl. `questionId` for every question
@@ -95,10 +95,10 @@ Click "Create a webhook":
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-Enter the Formbricks API key. Learn how to get one from the [API Key tutorial](/additional-features/api#how-to-generate-an-api-key).
+Enter the Formbricks API Host and API Key. API Host is by default set to https://app.formbricks.com but can be modified for self hosting instances. Learn how to get an API Key from the [API Key tutorial](/additional-features/api#how-to-generate-an-api-key).
 
 <MdxImage
-  src={EnterApiKey}
+  src={EnterApiKeyAndHost}
   alt="Enter API Key"
   quality="100"
   className="max-w-full rounded-lg sm:max-w-3xl"
