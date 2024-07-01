@@ -1,8 +1,10 @@
+import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
+import { getOrganization } from "@formbricks/lib/organization/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { ToasterClient } from "@formbricks/ui/ToasterClient";
 
@@ -20,8 +22,19 @@ const ProductOnboardingLayout = async ({ children, params }) => {
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, params.organizationId);
   if (!membership || membership.role === "viewer") return notFound();
 
+  const organization = await getOrganization(params.organizationId);
+  if (!organization) {
+    throw new Error("Organization not found");
+  }
+
   return (
     <div className="flex-1 bg-slate-50">
+      <PosthogIdentify
+        session={session}
+        organizationId={organization.id}
+        organizationName={organization.name}
+        organizationBilling={organization.billing}
+      />
       <ToasterClient />
       {children}
     </div>
