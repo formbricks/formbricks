@@ -524,6 +524,13 @@ export const ZSurvey = z.object({
   showLanguageSwitch: z.boolean().nullable(),
 });
 
+export const ZSurveyUpdateInput = ZSurvey.omit({ createdAt: true, updatedAt: true }).and(
+  z.object({
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
+  })
+);
+
 export const ZSurveyInput = z.object({
   name: z.string(),
   type: ZSurveyType.optional(),
