@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { segmentCache } from "@formbricks/lib/segment/cache";
 import { createSegment } from "@formbricks/lib/segment/service";
@@ -39,9 +40,11 @@ export const duplicateSurveyAction = async (environmentId: string, surveyId: str
 export const copyToOtherEnvironmentAction = async (
   environmentId: string,
   surveyId: string,
-  targetEnvironmentId: string
+  targetEnvironmentId: string,
+  ProductId: string //productId of the selected product
 ) => {
   const session = await getServerSession(authOptions);
+
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorizedToAccessSourceEnvironment = await hasUserEnvironmentAccess(
@@ -92,6 +95,10 @@ export const copyToOtherEnvironmentAction = async (
 
   if (!existingSurvey) {
     throw new ResourceNotFoundError("Survey", surveyId);
+  }
+
+  if (!existingSurvey) {
+    throw new ResourceNotFoundError("Environment", environmentId);
   }
 
   let targetEnvironmentTriggers: string[] = [];
@@ -270,7 +277,81 @@ export const copyToOtherEnvironmentAction = async (
     id: newSurvey.id,
     environmentId: targetEnvironmentId,
   });
+  // update the environment with the productId in which the survey has been copied.
+  await prisma.environment.update({
+    where: {
+      id: targetEnvironmentId,
+    },
+    data: {
+      productId: ProductId,
+      surveys: {
+        connect: {
+          id: newSurvey.id,
+        },
+      },
+    },
+  });
+
   return newSurvey;
+};
+
+export const getProductSurveyAction = async (environmentId: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+  console.log("Organization:", organization);
+
+  if (!organization) {
+    throw new Error("No organization found");
+  }
+
+  const products = await prisma.product.findMany({
+    where: {
+      organizationId: organization.id,
+    },
+  });
+
+  // Fetch environments for each product
+  const productsWithEnvironments = await Promise.all(
+    products.map(async (product) => {
+      const environments = await prisma.environment.findMany({
+        where: {
+          productId: product.id,
+        },
+      });
+      return {
+        ...product,
+        environments: environments.map((env) => ({
+          id: env.id,
+          name: env.type,
+        })),
+      };
+    })
+  );
+
+  console.log(productsWithEnvironments);
+
+  return productsWithEnvironments;
+};
+
+export const getSurveytype = async (surveyId: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const findsurvey = await prisma.survey.findFirst({
+    where: {
+      id: surveyId,
+    },
+  });
+
+  if (!findsurvey) {
+    throw new ResourceNotFoundError("Survey", surveyId);
+  }
+
+  const surveytype = findsurvey?.type;
+
+  return surveytype;
 };
 
 export const deleteSurveyAction = async (surveyId: string) => {

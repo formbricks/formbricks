@@ -1,6 +1,14 @@
 "use client";
 
-import { ArrowUpFromLineIcon, CopyIcon, EyeIcon, LinkIcon, SquarePenIcon, TrashIcon } from "lucide-react";
+import {
+  ArrowUpFromLineIcon,
+  CopyIcon,
+  EyeIcon,
+  LinkIcon,
+  MousePointerClick,
+  SquarePenIcon,
+  TrashIcon,
+} from "lucide-react";
 import { MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,6 +17,7 @@ import toast from "react-hot-toast";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TSurvey } from "@formbricks/types/surveys";
 import { DeleteDialog } from "../../DeleteDialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../../Dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,13 +25,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../DropdownMenu";
-import { LoadingSpinner } from "../../LoadingSpinner";
 import {
   copyToOtherEnvironmentAction,
   deleteSurveyAction,
   duplicateSurveyAction,
   getSurveyAction,
 } from "../actions";
+import CopySurveyForm from "./SurveyCopyOptions";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
@@ -39,8 +48,6 @@ interface SurveyDropDownMenuProps {
 export const SurveyDropDownMenu = ({
   environmentId,
   survey,
-  environment,
-  otherEnvironment,
   webAppUrl,
   singleUseId,
   isSurveyCreationDeletionDisabled,
@@ -50,6 +57,7 @@ export const SurveyDropDownMenu = ({
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
+  const [isCopyFormOpen, setIsCopyFormOpen] = useState(false);
   const router = useRouter();
 
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey.id, webAppUrl]);
@@ -82,28 +90,37 @@ export const SurveyDropDownMenu = ({
     setLoading(false);
   };
 
-  const copyToOtherEnvironment = async (surveyId: string) => {
+  const copyToOtherEnvironment = async (
+    formData: {
+      productId: string;
+      targetenvironmentId: string;
+      environmentType: string;
+      productName: string;
+    }[]
+  ) => {
     setLoading(true);
     try {
-      await copyToOtherEnvironmentAction(environmentId, surveyId, otherEnvironment.id);
-      if (otherEnvironment.type === "production") {
-        toast.success("Survey copied to production env.");
-      } else if (otherEnvironment.type === "development") {
-        toast.success("Survey copied to development env.");
-      }
-      router.replace(`/environments/${otherEnvironment.id}`);
+      await Promise.all(
+        formData.map(async (data) => {
+          await copyToOtherEnvironmentAction(
+            environmentId,
+            survey.id,
+            data.targetenvironmentId,
+            data.productId
+          );
+        })
+      );
+      formData.forEach((data) => {
+        setIsCopyFormOpen(false);
+        toast.success(`Survey copied to ${data.environmentType} env of ${data.productName}`);
+      });
     } catch (error) {
-      toast.error(`Failed to copy to ${otherEnvironment.type}`);
+      toast.error(`Failed to copy to survey`);
     }
+
     setLoading(false);
   };
-  if (loading) {
-    return (
-      <div className="opacity-0.2 absolute left-0 top-0 h-full w-full bg-slate-100">
-        <LoadingSpinner />
-      </div>
-    );
-  }
+
   return (
     <div
       id={`${survey.name.toLowerCase().split(" ").join("-")}-survey-actions`}
@@ -145,35 +162,20 @@ export const SurveyDropDownMenu = ({
             )}
             {!isSurveyCreationDeletionDisabled && (
               <>
-                {environment.type === "development" ? (
-                  <DropdownMenuItem>
-                    <button
-                      type="button"
-                      className="flex w-full items-center"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setIsDropDownOpen(false);
-                        copyToOtherEnvironment(survey.id);
-                      }}>
-                      <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
-                      Copy to Prod
-                    </button>
-                  </DropdownMenuItem>
-                ) : environment.type === "production" ? (
-                  <DropdownMenuItem>
-                    <button
-                      type="button"
-                      className="flex w-full items-center"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setIsDropDownOpen(false);
-                        copyToOtherEnvironment(survey.id);
-                      }}>
-                      <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
-                      Copy to Dev
-                    </button>
-                  </DropdownMenuItem>
-                ) : null}
+                <DropdownMenuItem>
+                  <button
+                    type="button"
+                    className="flex w-full items-center"
+                    disabled={loading}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
+                      setIsCopyFormOpen(true);
+                    }}>
+                    <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
+                    Copy...
+                  </button>
+                </DropdownMenuItem>
               </>
             )}
             {survey.type === "link" && survey.status !== "draft" && (
@@ -239,6 +241,33 @@ export const SurveyDropDownMenu = ({
           onDelete={() => handleDeleteSurvey(survey)}
           text="Are you sure you want to delete this survey and all of its responses? This action cannot be undone."
         />
+      )}
+
+      {isCopyFormOpen && (
+        <div className="bg-red min-h-full min-w-full">
+          <Dialog open={isCopyFormOpen} onOpenChange={setIsCopyFormOpen}>
+            <DialogContent className="m-0 h-4/6 w-2/5 gap-0 overflow-hidden p-0 shadow-lg shadow-slate-500">
+              <div className="m-0 flex max-h-24 min-h-24 items-center gap-0 bg-slate-100 p-0">
+                <div>
+                  <MousePointerClick className="ml-3 text-slate-500" />
+                </div>
+                <div>
+                  <DialogTitle className="mb-0 pb-1 pl-6 text-xl text-slate-600"> Copy Survey</DialogTitle>
+                  <DialogDescription className="mt-0 gap-0 pb-3 pl-6 text-slate-400">
+                    Copy this survey to another environment or product.
+                  </DialogDescription>
+                </div>
+              </div>
+
+              <CopySurveyForm
+                environmentId={environmentId}
+                surveyId={survey.id}
+                onSubmit={copyToOtherEnvironment}
+                onCancel={() => setIsCopyFormOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       )}
     </div>
   );
