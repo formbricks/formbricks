@@ -63,7 +63,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
         <SettingsCard
           title="Recontact Waiting Time"
           description="Control how frequently users can be surveyed across all surveys.">
-          <EditWaitingTimeForm environmentId={params.environmentId} product={product} />
+          <EditWaitingTimeForm product={product} />
         </SettingsCard>
       )}
       <SettingsCard

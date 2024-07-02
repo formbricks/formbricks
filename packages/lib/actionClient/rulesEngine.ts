@@ -1,6 +1,3 @@
-import z from "zod";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { TMembershipRole } from "@formbricks/types/memberships";
 import { ZProductUpdateInput } from "@formbricks/types/product";
 
 export const Roles = {
@@ -47,18 +44,4 @@ export const Roles = {
       delete: false,
     },
   },
-};
-
-export const getRoleBasedSchema = <T extends z.ZodRawShape>(
-  schema: z.ZodObject<T>,
-  role: TMembershipRole,
-  entity: string,
-  action: "create" | "read" | "update" | "delete"
-): z.ZodObject<T> => {
-  const data = Roles[role][entity][action];
-
-  if (typeof data === "boolean" && !data) {
-    throw new AuthorizationError("Not authorized");
-  }
-  return typeof data === "boolean" && data === true ? schema : data;
 };

@@ -8,7 +8,7 @@ import { TProduct, ZProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
-import { protectedUpdateProductAction } from "../actions";
+import { updateProductAction } from "../actions";
 
 type EditProductNameProps = {
   product: TProduct;
@@ -44,12 +44,12 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
         return;
       }
 
-      const updatedProductResponse = await protectedUpdateProductAction(product.id, {
-        name,
-        inAppSurveyBranding: false,
+      const updatedProductResponse = await updateProductAction({
+        productId: product.id,
+        data: {
+          name,
+        },
       });
-
-      console.log(updatedProductResponse);
 
       if (updatedProductResponse?.data) {
         toast.success("Product name updated successfully.");
@@ -61,7 +61,7 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
     }
   };
 
-  return !isProductNameEditDisabled || true ? (
+  return !isProductNameEditDisabled ? (
     <FormProvider {...form}>
       <form className="w-full max-w-sm items-center space-y-2" onSubmit={form.handleSubmit(updateProduct)}>
         <FormField

@@ -5,13 +5,9 @@ import { getServerSession } from "next-auth";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess, verifyUserRoleAccess } from "@formbricks/lib/environment/auth";
+import { verifyUserRoleAccess } from "@formbricks/lib/environment/auth";
 import { createMembership, getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import {
-  createOrganization,
-  getOrganization,
-  getOrganizationByEnvironmentId,
-} from "@formbricks/lib/organization/service";
+import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { createShortUrl } from "@formbricks/lib/shortUrl/service";
 import { updateUser } from "@formbricks/lib/user/service";

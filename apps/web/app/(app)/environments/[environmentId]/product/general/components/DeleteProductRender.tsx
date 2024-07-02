@@ -17,7 +17,6 @@ type DeleteProductRenderProps = {
 };
 
 export const DeleteProductRender = ({
-  environmentId,
   isDeleteDisabled,
   isUserAdminOrOwner,
   product,
@@ -29,8 +28,8 @@ export const DeleteProductRender = ({
   const handleDeleteProduct = async () => {
     try {
       setIsDeleting(true);
-      const deletedProduct = await deleteProductAction(environmentId, product.id);
-      if (!!deletedProduct?.id) {
+      const deletedProductActionResult = await deleteProductAction({ productId: product.id });
+      if (deletedProductActionResult?.data) {
         toast.success("Product deleted successfully.");
         router.push("/");
       }

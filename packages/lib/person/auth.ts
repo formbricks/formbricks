@@ -1,10 +1,10 @@
 import "server-only";
-import { getMembershipByUserIdOrganizationId } from "membership/service";
-import { getAccessFlags } from "membership/utils";
-import { getOrganizationByEnvironmentId } from "organization/service";
 import { ZId } from "@formbricks/types/environment";
 import { cache } from "../cache";
 import { hasUserEnvironmentAccess } from "../environment/auth";
+import { getMembershipByUserIdOrganizationId } from "../membership/service";
+import { getAccessFlags } from "../membership/utils";
+import { getOrganizationByEnvironmentId } from "../organization/service";
 import { validateInputs } from "../utils/validate";
 import { personCache } from "./cache";
 import { getPerson } from "./service";
