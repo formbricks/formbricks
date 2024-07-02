@@ -68,7 +68,7 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
         {children}
       </div>
       {!isAtBottom && (
-        <div className="fb-from-survey-bg fb-absolute fb--bottom-2 fb-left-0 fb-right-2 fb-h-8 fb-bg-gradient-to-t fb-to-transparent"></div>
+        <div className="fb-from-survey-bg fb-absolute -fb-bottom-2 fb-left-0 fb-right-2 fb-h-8 fb-bg-gradient-to-t fb-to-transparent"></div>
       )}
     </div>
   );

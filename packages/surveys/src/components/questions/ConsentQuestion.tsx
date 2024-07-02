@@ -64,7 +64,7 @@ export const ConsentQuestion = ({
             htmlString={getLocalizedValue(question.html, languageCode) || ""}
             questionId={question.id}
           />
-          <div className="fb-bg-survey-bg fb-sticky fb--bottom-2 fb-z-10 fb-w-full fb-px-1 fb-py-1">
+          <div className="fb-bg-survey-bg fb-sticky -fb-bottom-2 fb-z-10 fb-w-full fb-px-1 fb-py-1">
             <label
               dir="auto"
               tabIndex={1}
