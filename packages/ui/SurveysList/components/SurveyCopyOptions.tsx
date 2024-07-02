@@ -14,17 +14,21 @@ interface Product {
   id: string;
   name: string;
   environments: Environment[];
+  config: {
+    channel: string | null;
+  };
 }
 
 interface CopySurveyFormProps {
   surveyId: string;
+  environmentId: string;
   onSubmit: (
     data: { productId: string; targetenvironmentId: string; environmentType: string; productName: string }[]
   ) => void;
   onCancel: () => void;
 }
 
-const CopySurveyForm: React.FC<CopySurveyFormProps> = ({ surveyId, onSubmit, onCancel }) => {
+const CopySurveyForm: React.FC<CopySurveyFormProps> = ({ environmentId, surveyId, onSubmit, onCancel }) => {
   const { register, handleSubmit } = useForm();
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedEnvironments, setSelectedEnvironments] = useState<
@@ -36,7 +40,7 @@ const CopySurveyForm: React.FC<CopySurveyFormProps> = ({ surveyId, onSubmit, onC
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const products = await getProductSurveyAction();
+        const products = await getProductSurveyAction(environmentId);
         setProducts(products);
       } catch (error) {
         toast.error("Error fetching products");
@@ -100,7 +104,7 @@ const CopySurveyForm: React.FC<CopySurveyFormProps> = ({ surveyId, onSubmit, onC
       onSubmit={handleSubmit(handleFormSubmit)}
       className="relative mb-36 h-full w-full overflow-y-auto bg-white p-4">
       {products.map((product) => {
-        const isDisabled = !surveyType!.includes(product.config.channel);
+        const isDisabled = !surveyType!.includes(product.config.channel!);
         return (
           <div key={product.id} className="mb-11 ml-8">
             <TooltipRenderer

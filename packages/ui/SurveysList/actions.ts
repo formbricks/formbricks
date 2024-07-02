@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { segmentCache } from "@formbricks/lib/segment/cache";
 import { createSegment } from "@formbricks/lib/segment/service";
@@ -294,22 +295,20 @@ export const copyToOtherEnvironmentAction = async (
   return newSurvey;
 };
 
-export const getProductSurveyAction = async () => {
+export const getProductSurveyAction = async (environmentId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const membership = await prisma.membership.findFirst({
-    where: {
-      userId: session.user.id,
-    },
-  });
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+  console.log("Organization:", organization);
 
-  const organization = membership?.organizationId;
-  if (!organization) throw new Error("Organization not found");
+  if (!organization) {
+    throw new Error("No organization found");
+  }
 
   const products = await prisma.product.findMany({
     where: {
-      organizationId: organization,
+      organizationId: organization.id,
     },
   });
 
