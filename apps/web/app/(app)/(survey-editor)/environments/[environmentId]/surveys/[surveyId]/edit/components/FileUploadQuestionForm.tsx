@@ -10,7 +10,7 @@ import { useGetBillingInfo } from "@formbricks/lib/organization/hooks/useGetBill
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { TProduct } from "@formbricks/types/product";
-import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";

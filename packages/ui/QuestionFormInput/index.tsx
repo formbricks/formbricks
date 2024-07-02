@@ -24,7 +24,7 @@ import {
   TSurveyChoice,
   TSurveyQuestion,
   TSurveyRecallItem,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { LanguageIndicator } from "../../ee/multi-language/components/language-indicator";
 import { createI18nString } from "../../lib/i18n/utils";
 import { FileInput } from "../FileInput";

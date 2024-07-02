@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { templates } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { type TProduct, ZProductConfigIndustry } from "@formbricks/types/product";
-import { TSurveyInput, ZSurveyType } from "@formbricks/types/surveys";
+import { TSurveyInput, ZSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { createSurveyAction } from "./actions";

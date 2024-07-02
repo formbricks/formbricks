@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { isAfter, isBefore, isSameDay } from "date-fns";
 import { TDisplay } from "@formbricks/types/displays";
 import { TResponse, TResponseFilterCriteria, TResponseUpdateInput } from "@formbricks/types/responses";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { responseNoteSelect } from "../../../responseNote/service";
 import { responseSelection } from "../../service";

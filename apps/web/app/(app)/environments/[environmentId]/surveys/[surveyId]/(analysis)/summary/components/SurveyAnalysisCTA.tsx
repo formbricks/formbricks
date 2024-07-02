@@ -6,7 +6,7 @@ import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/s
 import { ShareIcon, SquarePenIcon } from "lucide-react";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";

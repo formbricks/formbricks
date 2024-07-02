@@ -15,7 +15,8 @@ import {
   ZSurveyPictureSelectionLogic,
   ZSurveyQuestionBase,
   ZSurveyRatingLogic,
-} from "./surveys";
+} from "./surveys/types";
+import { mergeWithEffect } from "./zod-utils";
 
 const ZLegacySurveyQuestionBase = ZSurveyQuestionBase.extend({
   headline: z.string(),
@@ -182,11 +183,14 @@ export type TLegacySurveyQuestion = z.infer<typeof ZLegacySurveyQuestion>;
 
 export const ZLegacySurveyQuestions = z.array(ZLegacySurveyQuestion);
 
-export const ZLegacySurvey = ZSurvey.extend({
-  questions: ZLegacySurveyQuestions,
-  thankYouCard: ZLegacySurveyThankYouCard,
-  welcomeCard: ZLegacySurveyWelcomeCard,
-  triggers: z.array(z.string()),
-});
+export const ZLegacySurvey: any = mergeWithEffect(
+  ZSurvey,
+  z.object({
+    questions: ZLegacySurveyQuestions,
+    thankYouCard: ZLegacySurveyThankYouCard,
+    welcomeCard: ZLegacySurveyWelcomeCard,
+    triggers: z.array(z.string()),
+  })
+);
 
 export type TLegacySurvey = z.infer<typeof ZLegacySurvey>;

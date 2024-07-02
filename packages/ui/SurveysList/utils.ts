@@ -1,4 +1,4 @@
-import { TSurveyFilterCriteria, TSurveyFilters } from "@formbricks/types/surveys";
+import { TSurveyFilterCriteria, TSurveyFilters } from "@formbricks/types/surveys/types";
 
 export const getFormattedFilters = (surveyFilters: TSurveyFilters, userId: string): TSurveyFilterCriteria => {
   const filters: TSurveyFilterCriteria = {};

@@ -11,7 +11,7 @@ import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/ty
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { TPipelineInput } from "@formbricks/types/pipelines";
 import { TResponseMeta } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 const convertMetaObjectToString = (metadata: TResponseMeta): string => {
   let result: string[] = [];

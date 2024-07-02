@@ -16,7 +16,7 @@ import type {
   TSegmentCreateInput,
   TSegmentUpdateInput,
 } from "@formbricks/types/segment";
-import type { TSurvey } from "@formbricks/types/surveys";
+import type { TSurvey } from "@formbricks/types/surveys/types";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { LoadSegmentModal } from "@formbricks/ui/LoadSegmentModal";

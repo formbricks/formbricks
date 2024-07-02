@@ -22,7 +22,7 @@ export {
   ZSurveyVerifyEmail,
   ZSurveySingleUse,
   ZSurveyInlineTriggers,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 
 export { ZSegmentFilters } from "@formbricks/types/segment";
 export { ZOrganizationBilling } from "@formbricks/types/organizations";

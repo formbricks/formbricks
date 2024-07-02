@@ -4,7 +4,7 @@ import calendarCss from "react-calendar/dist/Calendar.css?inline";
 import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
 import { TProductStyling } from "@formbricks/types/product";
-import { TSurveyStyling } from "@formbricks/types/surveys";
+import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import editorCss from "../../../ui/Editor/stylesEditorFrontend.css?inline";
 import datePickerCustomCss from "../styles/date-picker.css?inline";
 

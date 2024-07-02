@@ -10,7 +10,7 @@ import {
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyRatingQuestion,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { AddressResponse } from "../../AddressResponse";
 import { FileUploadResponse } from "../../FileUploadResponse";
 import { PictureSelectionResponse } from "../../PictureSelectionResponse";

@@ -10,7 +10,7 @@ import { isValidEmail } from "@formbricks/lib/utils/email";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProductStyling } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { StackedCardsContainer } from "@formbricks/ui/StackedCardsContainer";

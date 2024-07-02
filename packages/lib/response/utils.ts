@@ -22,7 +22,7 @@ import {
   TSurveyQuestionSummaryRating,
   TSurveyQuestionTypeEnum,
   TSurveySummary,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";

@@ -17,7 +17,7 @@ import {
   ZResponseLegacyInput,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
-import { TSurveySummary } from "@formbricks/types/surveys";
+import { TSurveySummary } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";

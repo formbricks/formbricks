@@ -31,7 +31,7 @@ import {
   ZSurveyRatingQuestion,
   ZSurveyThankYouCard,
   ZSurveyWelcomeCard,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 
 // Helper function to create an i18nString from a regular string.
 export const createI18nString = (text: string | TI18nString, languages: string[]): TI18nString => {

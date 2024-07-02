@@ -1,4 +1,4 @@
-import { TSurveyLogic } from "@formbricks/types/surveys";
+import { TSurveyLogic } from "@formbricks/types/surveys/types";
 
 export const evaluateCondition = (
   logic: TSurveyLogic,

@@ -13,7 +13,7 @@ import { PictureSelectionQuestion } from "@/components/questions/PictureSelectio
 import { RatingQuestion } from "@/components/questions/RatingQuestion";
 import { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
+import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;

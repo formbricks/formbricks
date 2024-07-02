@@ -14,7 +14,7 @@ import {
   TSurvey,
   TSurveyMultipleChoiceQuestion,
   TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";

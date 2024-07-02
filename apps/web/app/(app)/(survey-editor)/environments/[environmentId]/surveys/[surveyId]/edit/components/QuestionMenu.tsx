@@ -5,7 +5,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import React, { useState } from "react";
 import { TProduct } from "@formbricks/types/product";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
+import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
 import {
   DropdownMenu,
