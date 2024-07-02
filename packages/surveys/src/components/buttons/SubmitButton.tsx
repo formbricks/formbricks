@@ -36,7 +36,7 @@ export const SubmitButton = ({
       type={type}
       tabIndex={tabIndex}
       autoFocus={focus}
-      className="bg-brand border-submit-button-border text-on-brand focus:ring-focus rounded-custom flex items-center border px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
+      className="fb-bg-brand fb-border-submit-button-border fb-text-on-brand focus:fb-ring-focus fb-rounded-custom fb-flex fb-items-center fb-border fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2"
       onClick={onClick}
       disabled={disabled}>
       {buttonLabel || (isLastQuestion ? "Finish" : "Next")}
