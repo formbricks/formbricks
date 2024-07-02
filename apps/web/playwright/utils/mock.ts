@@ -158,7 +158,7 @@ export const surveys = {
     },
     address: {
       question: "Where do you live?",
-      placeholder: "Address Line 1",
+      placeholder: "Indirizzo (riga 1)",
     },
     thankYouCard: {
       headline: "This is my Thank You Card Headline!",
