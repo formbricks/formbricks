@@ -331,7 +331,28 @@ export const getProductSurveyAction = async () => {
     })
   );
 
+  console.log(productsWithEnvironments);
+
   return productsWithEnvironments;
+};
+
+export const getSurveytype = async (surveyId: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const findsurvey = await prisma.survey.findFirst({
+    where: {
+      id: surveyId,
+    },
+  });
+
+  if (!findsurvey) {
+    throw new ResourceNotFoundError("Survey", surveyId);
+  }
+
+  const surveytype = findsurvey?.type;
+
+  return surveytype;
 };
 
 export const deleteSurveyAction = async (surveyId: string) => {

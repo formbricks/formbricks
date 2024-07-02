@@ -259,7 +259,11 @@ export const SurveyDropDownMenu = ({
                 </div>
               </div>
 
-              <CopySurveyForm onSubmit={copyToOtherEnvironment} onCancel={() => setIsCopyFormOpen(false)} />
+              <CopySurveyForm
+                surveyId={survey.id}
+                onSubmit={copyToOtherEnvironment}
+                onCancel={() => setIsCopyFormOpen(false)}
+              />
             </DialogContent>
           </Dialog>
         </div>
