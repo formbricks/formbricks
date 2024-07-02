@@ -3,13 +3,17 @@ import { TellaVideo } from "@/components/TellaVideo";
 
 import EmailContentWithSurvey from "./images/email-content-with-survey.webp";
 import EmailContentWithoutSurvey from "./images/email-content-without-survey.webp";
+import EmbedModeDisabled from "./images/embed-mode-disabled.webp";
+import EmbedModeEnabled from "./images/embed-mode-enabled.webp";
+import EmbedModeToggle from "./images/embed-mode-toggle.webp";
 import JoSignature from "./images/jo-signature.webp";
 import PluginAddSurvey from "./images/plugin-add-survey.webp";
 import PluginSourceTab from "./images/plugin-source-tab.webp";
 
 export const metadata = {
   title: "Embed Surveys in Your Web Page & Email",
-  description: "Embed Formbricks surveys seamlessly into your website using an iframe & Email using code snippets.",
+  description:
+    "Embed Formbricks surveys seamlessly into your website using an iframe & Email using code snippets.",
 };
 
 #### Embed Surveys
@@ -87,6 +91,43 @@ window.addEventListener("message", (event) => {
 </CodeGroup>
 </Col>
 
+## Emebd Mode
+
+Embed your survey with a minimalist design, disregarding padding and background.
+
+### How to enable it?
+
+It can be enabled by simply appending **?embed=true** to your survey link or from UI
+
+1. Open Embed survey tab in survey share modal
+
+2. Toggle **Embed mode**
+
+<MdxImage
+  src={EmbedModeToggle}
+  alt="Toggle embed mode"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+### With Embed mode enabled
+
+<MdxImage
+  src={EmbedModeEnabled}
+  alt="Toggle embed mode"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+### With Embed mode disabled
+
+<MdxImage
+  src={EmbedModeDisabled}
+  alt="Toggle embed mode"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
 ## Embedding Surveys in Emails
 
 Embedding Formbricks surveys directly into your emails allows you to collect valuable feedback from your users at every touchpoint. Seamlessly integrate interactive surveys into your email campaigns to gather insights and improve user experience.
@@ -127,7 +168,7 @@ Gmail does not support HTML embedding natively. It's a WYSIWYG (What You See Is 
   src={EmailContentWithoutSurvey}
   alt="Choose a link survey template"
   quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 - Right next to the Send button you will see a new button called **HTML Editor**. Click on it.
@@ -139,7 +180,7 @@ Gmail does not support HTML embedding natively. It's a WYSIWYG (What You See Is 
   src={PluginSourceTab}
   alt="Choose a link survey template"
   quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 - Now paste the copied HTML code from Formbricks into this window. On the right, you will see a preview of how the email will look.
@@ -150,7 +191,7 @@ Gmail does not support HTML embedding natively. It's a WYSIWYG (What You See Is 
   src={PluginAddSurvey}
   alt="Choose a link survey template"
   quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 - Click on the **Close Editor** button to save the changes & close the editor.
@@ -161,7 +202,7 @@ Gmail does not support HTML embedding natively. It's a WYSIWYG (What You See Is 
   src={EmailContentWithSurvey}
   alt="Choose a link survey template"
   quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 - Voila! You have successfully embedded the survey in your email.
@@ -199,7 +240,7 @@ Embed a survey link in your email signature to collect feedback subtly yet effec
   src={JoSignature}
   alt="Choose a link survey template"
   quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 1. Create a Survey: Adjust an existing survey or create a new one.
