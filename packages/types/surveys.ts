@@ -326,6 +326,7 @@ export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.NPS),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
+  isColorCodingEnabled: z.boolean().optional().default(false),
   logic: z.array(ZSurveyNPSLogic).optional(),
 });
 
@@ -348,6 +349,7 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
+  isColorCodingEnabled: z.boolean().optional().default(false),
   logic: z.array(ZSurveyRatingLogic).optional(),
 });
 
@@ -521,6 +523,13 @@ export const ZSurvey = z.object({
   languages: z.array(ZSurveyLanguage),
   showLanguageSwitch: z.boolean().nullable(),
 });
+
+export const ZSurveyUpdateInput = ZSurvey.omit({ createdAt: true, updatedAt: true }).and(
+  z.object({
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
+  })
+);
 
 export const ZSurveyInput = z.object({
   name: z.string(),

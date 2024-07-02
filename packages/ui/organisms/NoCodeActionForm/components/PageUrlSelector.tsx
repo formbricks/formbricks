@@ -96,7 +96,7 @@ export const PageUrlSelector = ({ form }: PageUrlSelectorProps) => {
             <div className="text-xs text-slate-400">
               Enter a URL to see if a user visiting it would be tracked.
             </div>
-            <div className=" rounded bg-slate-50">
+            <div className="rounded bg-slate-50">
               <div className="mt-1 flex items-end">
                 <Input
                   type="text"

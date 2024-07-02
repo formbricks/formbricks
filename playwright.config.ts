@@ -1,10 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// import os from "os";
+
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-// require('dotenv').config();
+require("dotenv").config({ path: ".env" });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -18,7 +20,7 @@ export default defineConfig({
   /* Timeout for each test */
   timeout: 120000,
   /* Opt out of parallel tests on CI. */
-  workers: 1,
+  // workers: os.cpus().length,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -36,6 +38,7 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testMatch: "**/*.spec.ts",
     },
 
     // {

@@ -2,7 +2,7 @@ import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { deleteSurvey, getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
-import { TSurvey, ZSurvey } from "@formbricks/types/surveys";
+import { TSurvey, ZSurveyUpdateInput } from "@formbricks/types/surveys";
 
 const fetchAndAuthorizeSurvey = async (authentication: any, surveyId: string): Promise<TSurvey | null> => {
   const survey = await getSurvey(surveyId);
@@ -68,7 +68,7 @@ export const PUT = async (
       console.error(`Error parsing JSON input: ${error}`);
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
-    const inputValidation = ZSurvey.safeParse({
+    const inputValidation = ZSurveyUpdateInput.safeParse({
       ...survey,
       ...surveyUpdate,
     });

@@ -50,7 +50,7 @@ export const DropdownSelector = ({
           {!disabled && (
             <DropdownMenuPortal>
               <DropdownMenuContent
-                className="z-50 max-h-64 min-w-[220px] max-w-[90%] overflow-auto rounded-md bg-white text-sm text-slate-800 shadow-md"
+                className="z-50 max-h-64 min-w-[220px] max-w-96 overflow-auto rounded-md bg-white text-sm text-slate-800 shadow-md"
                 align="start">
                 {items
                   .sort((a, b) => a.name?.localeCompare(b.name))

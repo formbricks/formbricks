@@ -4,6 +4,7 @@ import { PlusIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys";
+import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 
@@ -132,6 +133,16 @@ export const NPSQuestionForm = ({
           />
         </div>
       )}
+
+      <AdvancedOptionToggle
+        isChecked={question.isColorCodingEnabled}
+        onToggle={() => updateQuestion(questionIdx, { isColorCodingEnabled: !question.isColorCodingEnabled })}
+        htmlId="isColorCodingEnabled"
+        title="Add color coding"
+        description="Add red, orange and green color codes to the options."
+        childBorder
+        customContainerClass="p-0 mt-4"
+      />
     </form>
   );
 };
