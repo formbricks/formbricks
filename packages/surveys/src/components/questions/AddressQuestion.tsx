@@ -77,7 +77,7 @@ export const AddressQuestion = ({
   const inputConfig = [
     {
       name: "address-line1",
-      placeholder: "Address Line 1",
+      placeholder: "Indirizzo (riga 1)",
       required: question.required
         ? hasFilled
           ? question.isAddressLine1Required
@@ -88,7 +88,7 @@ export const AddressQuestion = ({
     },
     {
       name: "address-line2",
-      placeholder: "Address Line 2",
+      placeholder: "Indirizzo (riga 2)",
       required: question.required
         ? question.isAddressLine2Required
         : hasFilled
@@ -97,22 +97,22 @@ export const AddressQuestion = ({
     },
     {
       name: "address-level2",
-      placeholder: "City / Town",
+      placeholder: "Città / Paese",
       required: question.required ? question.isCityRequired : hasFilled ? question.isCityRequired : false,
     },
     {
       name: "address-level1",
-      placeholder: "State / Region",
+      placeholder: "Stato / Regione",
       required: question.required ? question.isStateRequired : hasFilled ? question.isStateRequired : false,
     },
     {
       name: "postal-code",
-      placeholder: "ZIP / Post Code",
+      placeholder: "CAP / Codice Postale",
       required: question.required ? question.isZipRequired : hasFilled ? question.isZipRequired : false,
     },
     {
       name: "country-name",
-      placeholder: "Country",
+      placeholder: "Nazione",
       required: question.required
         ? question.isCountryRequired
         : hasFilled
