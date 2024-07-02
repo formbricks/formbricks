@@ -34,7 +34,7 @@ interface RatingQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -88,6 +88,22 @@ export const RatingQuestion = ({
     setHoveredNumber(0);
   }, [question.id, setHoveredNumber]);
 
+  const getRatingNumberOptionColor = (range: number, idx: number) => {
+    if (range > 5) {
+      if (range - idx < 2) return "bg-emerald-100";
+      if (range - idx < 4) return "bg-orange-100";
+      return "bg-rose-100";
+    } else if (range < 5) {
+      if (range - idx < 1) return "bg-emerald-100";
+      if (range - idx < 2) return "bg-orange-100";
+      return "bg-rose-100";
+    } else {
+      if (range - idx < 2) return "bg-emerald-100";
+      if (range - idx < 3) return "bg-orange-100";
+      return "bg-rose-100";
+    }
+  };
+
   return (
     <form
       key={question.id}
@@ -137,9 +153,15 @@ export const RatingQuestion = ({
                             : "border-border",
                           a.length === number ? "rounded-r-custom border-r" : "",
                           number === 1 ? "rounded-l-custom" : "",
-                          hoveredNumber === number ? "bg-accent-bg " : "",
-                          "text-heading focus:border-brand relative flex min-h-[41px] w-full cursor-pointer items-center justify-center border-b border-l border-t focus:border-2 focus:outline-none"
+                          hoveredNumber === number ? "bg-accent-bg" : "",
+                          question.isColorCodingEnabled ? "min-h-[47px]" : "min-h-[41px]",
+                          "text-heading focus:border-brand relative flex w-full cursor-pointer items-center justify-center overflow-hidden border-b border-l border-t focus:border-2 focus:outline-none"
                         )}>
+                        {question.isColorCodingEnabled && (
+                          <div
+                            className={`absolute left-0 top-0 h-[6px] w-full ${getRatingNumberOptionColor(question.range, number)}`}
+                          />
+                        )}
                         <HiddenRadioInput number={number} id={number.toString()} />
                         {number}
                       </label>
@@ -158,7 +180,7 @@ export const RatingQuestion = ({
                           number <= hoveredNumber || number <= (value as number)
                             ? "text-amber-400"
                             : "text-[#8696AC]",
-                          hoveredNumber === number ? "text-amber-400 " : "",
+                          hoveredNumber === number ? "text-amber-400" : "",
                           "relative flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none"
                         )}
                         onFocus={() => setHoveredNumber(number)}
@@ -193,11 +215,12 @@ export const RatingQuestion = ({
                         onFocus={() => setHoveredNumber(number)}
                         onBlur={() => setHoveredNumber(0)}>
                         <HiddenRadioInput number={number} id={number.toString()} />
-                        <div className="h-full w-full max-w-[74px] object-contain">
+                        <div className={cn("h-full w-full max-w-[74px] object-contain")}>
                           <RatingSmiley
                             active={value === number || hoveredNumber === number}
                             idx={i}
                             range={question.range}
+                            addColors={question.isColorCodingEnabled}
                           />
                         </div>
                       </label>
@@ -246,12 +269,46 @@ interface RatingSmileyProps {
   active: boolean;
   idx: number;
   range: number;
+  addColors?: boolean;
 }
 
-const RatingSmiley = ({ active, idx, range }: RatingSmileyProps): JSX.Element => {
-  const activeColor = "fill-rating-fill";
-  const inactiveColor = "fill-none";
-  let icons = [
+const getSmileyColor = (range: number, idx: number) => {
+  if (range > 5) {
+    if (range - idx < 3) return "fill-emerald-100";
+    if (range - idx < 5) return "fill-orange-100";
+    return "fill-rose-100";
+  } else if (range < 5) {
+    if (range - idx < 2) return "fill-emerald-100";
+    if (range - idx < 3) return "fill-orange-100";
+    return "fill-rose-100";
+  } else {
+    if (range - idx < 3) return "fill-emerald-100";
+    if (range - idx < 4) return "fill-orange-100";
+    return "fill-rose-100";
+  }
+};
+
+const getActiveSmileyColor = (range: number, idx: number) => {
+  if (range > 5) {
+    if (range - idx < 3) return "fill-emerald-300";
+    if (range - idx < 5) return "fill-orange-300";
+    return "fill-rose-300";
+  } else if (range < 5) {
+    if (range - idx < 2) return "fill-emerald-300";
+    if (range - idx < 3) return "fill-orange-300";
+    return "fill-rose-300";
+  } else {
+    if (range - idx < 3) return "fill-emerald-300";
+    if (range - idx < 4) return "fill-orange-300";
+    return "fill-rose-300";
+  }
+};
+
+const getSmiley = (iconIdx: number, idx: number, range: number, active: boolean, addColors: boolean) => {
+  const activeColor = addColors ? getActiveSmileyColor(range, idx) : "fill-rating-fill";
+  const inactiveColor = addColors ? getSmileyColor(range, idx) : "fill-none";
+
+  const icons = [
     <TiredFace className={active ? activeColor : inactiveColor} />,
     <WearyFace className={active ? activeColor : inactiveColor} />,
     <PerseveringFace className={active ? activeColor : inactiveColor} />,
@@ -264,9 +321,16 @@ const RatingSmiley = ({ active, idx, range }: RatingSmileyProps): JSX.Element =>
     <GrinningSquintingFace className={active ? activeColor : inactiveColor} />,
   ];
 
-  if (range == 7) icons = [icons[1], icons[3], icons[4], icons[5], icons[6], icons[8], icons[9]];
-  else if (range == 5) icons = [icons[3], icons[4], icons[5], icons[6], icons[7]];
-  else if (range == 4) icons = [icons[4], icons[5], icons[6], icons[7]];
-  else if (range == 3) icons = [icons[4], icons[5], icons[7]];
-  return icons[idx];
+  return icons[iconIdx];
+};
+
+export const RatingSmiley = ({ active, idx, range, addColors = false }: RatingSmileyProps): JSX.Element => {
+  let iconsIdx: number[] = [];
+  if (range === 10) iconsIdx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  else if (range === 7) iconsIdx = [1, 3, 4, 5, 6, 8, 9];
+  else if (range === 5) iconsIdx = [3, 4, 5, 6, 7];
+  else if (range === 4) iconsIdx = [4, 5, 6, 7];
+  else if (range === 3) iconsIdx = [4, 5, 7];
+
+  return getSmiley(iconsIdx[idx], idx, range, active, addColors);
 };

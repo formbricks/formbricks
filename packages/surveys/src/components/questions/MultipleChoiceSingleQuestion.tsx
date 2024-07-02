@@ -22,7 +22,7 @@ interface MultipleChoiceSingleProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -37,7 +37,7 @@ export const MultipleChoiceSingleQuestion = ({
   languageCode,
   ttc,
   setTtc,
-  isInIframe,
+  autoFocusEnabled,
   currentQuestionId,
 }: MultipleChoiceSingleProps) => {
   const [startTime, setStartTime] = useState(performance.now());
@@ -145,7 +145,7 @@ export const MultipleChoiceSingleQuestion = ({
                           document.getElementById(choice.id)?.focus();
                         }
                       }}
-                      autoFocus={idx === 0 && !isInIframe}>
+                      autoFocus={idx === 0 && autoFocusEnabled}>
                       <span className="flex items-center text-sm">
                         <input
                           tabIndex={-1}

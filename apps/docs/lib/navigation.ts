@@ -140,7 +140,15 @@ export const navigation: Array<NavGroup> = [
       { title: "SDK: Formbricks API", href: "/developer-docs/api-sdk" },
       { title: "REST API", href: "/developer-docs/rest-api" },
       { title: "Webhooks", href: "/developer-docs/webhooks" },
-      { title: "Contributing", href: "/developer-docs/contributing" },
+      {
+        title: "Contributing",
+        children: [
+          { title: "Get started", href: "/developer-docs/contributing/get-started" },
+          { title: "Codespaces", href: "/developer-docs/contributing/codespaces" },
+          { title: "Gitpod", href: "/developer-docs/contributing/gitpod" },
+          { title: "Troubleshooting", href: "/developer-docs/contributing/troubleshooting" },
+        ],
+      },
     ],
   },
 ];

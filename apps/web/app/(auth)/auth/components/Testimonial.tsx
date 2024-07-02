@@ -6,7 +6,7 @@ import Image from "next/image";
 export const Testimonial = () => {
   return (
     <div className="flex flex-col items-center justify-center bg-gradient-to-tr from-slate-100 to-slate-300">
-      <div className="3xl:w-2/3 mb-10 space-y-8 px-12 xl:px-20 ">
+      <div className="3xl:w-2/3 mb-10 space-y-8 px-12 xl:px-20">
         <div>
           <h2 className="text-3xl font-bold text-slate-800">
             Turn customer insights into irresistible experiences.

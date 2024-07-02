@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { CLOUD_PRICING_DATA } from "@formbricks/ee/billing/lib/constants";
 import { cn } from "@formbricks/lib/cn";
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 import { Badge } from "@formbricks/ui/Badge";
 import { BillingSlider } from "@formbricks/ui/BillingSlider";
@@ -131,8 +132,8 @@ export const PricingTable = ({
       <div className="flex flex-col gap-8">
         <div className="flex flex-col">
           <div className="flex w-full">
-            <h2 className="mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
-              Current Plan: {organization.billing.plan}
+            <h2 className="mb-3 mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
+              Current Plan: {capitalizeFirstLetter(organization.billing.plan)}
               {cancellingOn && (
                 <Badge
                   className="mx-2"
@@ -156,7 +157,7 @@ export const PricingTable = ({
             )}
           </div>
 
-          <div className="mt-2 flex flex-col rounded-lg border border-slate-300 bg-slate-100 py-4 capitalize shadow-sm dark:bg-slate-800">
+          <div className="mt-2 flex flex-col rounded-xl border border-slate-200 bg-white py-4 capitalize shadow-sm dark:bg-slate-800">
             <div
               className={cn(
                 "relative mx-8 mb-8 flex flex-col gap-4",
@@ -197,21 +198,23 @@ export const PricingTable = ({
           </div>
         </div>
 
-        <div className="mx-auto">
-          <div className="mb-4 flex w-fit max-w-xs cursor-pointer overflow-hidden rounded-lg border border-slate-200 p-1 lg:mb-0">
-            <div
-              className={`flex-1 rounded-md px-4 py-0.5 text-center ${
-                planPeriod === "monthly" ? "bg-slate-200 font-semibold" : "bg-transparent"
-              }`}
-              onClick={() => handleMonthlyToggle("monthly")}>
-              Monthly
-            </div>
-            <div
-              className={`flex-1 rounded-md px-4 py-0.5 text-center ${
-                planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
-              }`}
-              onClick={() => handleMonthlyToggle("yearly")}>
-              Yearly
+        <div className="mx-auto mb-12">
+          <div className="flex gap-x-2">
+            <div className="mb-4 flex w-fit max-w-xs cursor-pointer overflow-hidden rounded-lg border border-slate-200 p-1 lg:mb-0">
+              <div
+                className={`flex-1 rounded-md px-4 py-0.5 text-center ${
+                  planPeriod === "monthly" ? "bg-slate-200 font-semibold" : "bg-transparent"
+                }`}
+                onClick={() => handleMonthlyToggle("monthly")}>
+                Monthly
+              </div>
+              <div
+                className={`flex-1 rounded-md px-4 py-0.5 text-center ${
+                  planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
+                }`}
+                onClick={() => handleMonthlyToggle("yearly")}>
+                Yearly
+              </div>
             </div>
           </div>
           <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-4">

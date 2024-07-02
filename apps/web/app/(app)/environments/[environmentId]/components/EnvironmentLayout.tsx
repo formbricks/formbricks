@@ -1,7 +1,7 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import type { Session } from "next-auth";
-import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
+import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -15,6 +15,7 @@ import { getProducts } from "@formbricks/lib/product/service";
 import { DevEnvironmentBanner } from "@formbricks/ui/DevEnvironmentBanner";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { LimitsReachedBanner } from "@formbricks/ui/LimitsReachedBanner";
+import { PendingDowngradeBanner } from "@formbricks/ui/PendingDowngradeBanner";
 
 interface EnvironmentLayoutProps {
   environmentId: string;
@@ -43,12 +44,22 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
 
-  const [peopleCount, responseCount] = await Promise.all([
-    getMonthlyActiveOrganizationPeopleCount(organization.id),
-    getMonthlyOrganizationResponseCount(organization.id),
-  ]);
+  const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
+
+  const currentProductChannel =
+    products.find((product) => product.id === environment.productId)?.config.channel ?? null;
+
+  let peopleCount = 0;
+  let responseCount = 0;
+
+  if (IS_FORMBRICKS_CLOUD) {
+    [peopleCount, responseCount] = await Promise.all([
+      getMonthlyActiveOrganizationPeopleCount(organization.id),
+      getMonthlyOrganizationResponseCount(organization.id),
+    ]);
+  }
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
@@ -57,10 +68,18 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
       {IS_FORMBRICKS_CLOUD && (
         <LimitsReachedBanner
           organization={organization}
+          environmentId={environment.id}
           peopleCount={peopleCount}
           responseCount={responseCount}
         />
       )}
+
+      <PendingDowngradeBanner
+        lastChecked={lastChecked}
+        isPendingDowngrade={isPendingDowngrade ?? false}
+        active={active}
+        environmentId={environment.id}
+      />
 
       <div className="flex h-full">
         <MainNavigation
@@ -74,7 +93,11 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           isMultiOrgEnabled={isMultiOrgEnabled}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
-          <TopControlBar environment={environment} environments={environments} />
+          <TopControlBar
+            environment={environment}
+            environments={environments}
+            currentProductChannel={currentProductChannel}
+          />
           <div className="mt-14">{children}</div>
         </div>
       </div>

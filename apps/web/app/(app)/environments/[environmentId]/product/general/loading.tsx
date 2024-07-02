@@ -9,12 +9,12 @@ import { PageHeader } from "@formbricks/ui/PageHeader";
 const LoadingCard = ({ title, description, skeletonLines }) => {
   return (
     <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4 shadow-sm">
-      <div className="grid content-center   border-b border-slate-200 px-4 pb-4 text-left text-slate-900">
+      <div className="grid content-center border-b border-slate-200 px-4 pb-4 text-left text-slate-900">
         <h3 className="text-lg font-medium leading-6">{title}</h3>
         <p className="mt-1 text-sm text-slate-500">{description}</p>
       </div>
       <div className="w-full">
-        <div className="rounded-lg px-4 py-4 pb-0 pt-2 ">
+        <div className="rounded-lg px-4 py-4 pb-0 pt-2">
           {skeletonLines.map((line, index) => (
             <div key={index} className="mt-4">
               <div className={`animate-pulse rounded-full bg-slate-200 ${line.classes}`}></div>
@@ -85,12 +85,14 @@ const Loading = () => {
       label: "Website Connection",
       icon: <ListChecksIcon className="h-5 w-5" />,
       current: pathname?.includes("/website-connection"),
+      hidden: true,
     },
     {
       id: "app-connection",
       label: "App Connection",
       icon: <ListChecksIcon className="h-5 w-5" />,
       current: pathname?.includes("/app-connection"),
+      hidden: true,
     },
   ];
 
@@ -98,7 +100,7 @@ const Loading = () => {
     <div>
       <PageContentWrapper>
         <PageHeader pageTitle="Configuration">
-          <div className="grid h-10 w-full grid-cols-[auto,1fr] ">
+          <div className="grid h-10 w-full grid-cols-[auto,1fr]">
             <nav className="flex h-full min-w-full items-center space-x-4" aria-label="Tabs">
               {navigation.map((navElem) => (
                 <div

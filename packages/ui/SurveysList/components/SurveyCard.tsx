@@ -124,8 +124,7 @@ export const SurveyCard = ({
       <Link
         href={linkHref}
         key={survey.id}
-        className="relative grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4
-    shadow-sm transition-all ease-in-out hover:scale-[101%]">
+        className="relative grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all ease-in-out hover:scale-[101%]">
         <div className="col-span-2 flex max-w-full items-center justify-self-start text-sm font-medium text-slate-900">
           <div className="w-full truncate">{survey.name}</div>
         </div>

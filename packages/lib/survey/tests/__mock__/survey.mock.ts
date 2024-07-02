@@ -95,7 +95,6 @@ export const mockUser: TUser = {
   imageUrl: "https://www.google.com",
   createdAt: currentDate,
   updatedAt: currentDate,
-  onboardingCompleted: true,
   twoFactorEnabled: false,
   identityProvider: "google",
   objective: "improve_user_retention",

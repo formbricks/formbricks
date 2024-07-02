@@ -15,6 +15,7 @@ import { lookup } from "mime-types";
 import path, { join } from "path";
 import { TAccessType } from "@formbricks/types/storage";
 import {
+  IS_FORMBRICKS_CLOUD,
   MAX_SIZES,
   S3_ACCESS_KEY,
   S3_BUCKET_NAME,
@@ -211,8 +212,15 @@ export const getS3UploadSignedUrl = async (
   environmentId: string,
   isBiggerFileUploadAllowed: boolean = false
 ) => {
-  const maxSize = isBiggerFileUploadAllowed ? MAX_SIZES.big : MAX_SIZES.standard;
-  const postConditions: PresignedPostOptions["Conditions"] = [["content-length-range", 0, maxSize]];
+  const maxSize = IS_FORMBRICKS_CLOUD
+    ? isBiggerFileUploadAllowed
+      ? MAX_SIZES.big
+      : MAX_SIZES.standard
+    : Infinity;
+
+  const postConditions: PresignedPostOptions["Conditions"] = IS_FORMBRICKS_CLOUD
+    ? [["content-length-range", 0, maxSize]]
+    : undefined;
 
   try {
     const s3Client = getS3Client();
@@ -251,7 +259,11 @@ export const putFileToLocalStorage = async (
     const buffer = Buffer.from(fileBuffer);
     const bufferBytes = buffer.byteLength;
 
-    const maxSize = isBiggerFileUploadAllowed ? MAX_SIZES.big : MAX_SIZES.standard;
+    const maxSize = IS_FORMBRICKS_CLOUD
+      ? isBiggerFileUploadAllowed
+        ? MAX_SIZES.big
+        : MAX_SIZES.standard
+      : Infinity;
 
     if (bufferBytes > maxSize) {
       const err = new Error(`File size exceeds the ${maxSize / (1024 * 1024)} MB limit`);

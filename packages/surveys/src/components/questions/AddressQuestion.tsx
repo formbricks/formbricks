@@ -22,7 +22,7 @@ interface AddressQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -37,7 +37,7 @@ export const AddressQuestion = ({
   languageCode,
   ttc,
   setTtc,
-  isInIframe,
+  autoFocusEnabled,
   currentQuestionId,
 }: AddressQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
@@ -122,11 +122,11 @@ export const AddressQuestion = ({
 
   const addressTextRef = useCallback(
     (currentElement: HTMLInputElement | null) => {
-      if (question.id && currentElement && !isInIframe) {
+      if (question.id && currentElement && autoFocusEnabled) {
         currentElement.focus();
       }
     },
-    [question.id, isInIframe]
+    [question.id, autoFocusEnabled]
   );
 
   return (
@@ -157,7 +157,7 @@ export const AddressQuestion = ({
                 required={required}
                 value={safeValue[index] || ""}
                 onInput={(e) => handleInputChange(e.currentTarget.value, index)}
-                autoFocus={!isInIframe && index === 0}
+                autoFocus={autoFocusEnabled && index === 0}
                 className="border-border focus:border-brand placeholder:text-placeholder text-subheading bg-input-bg rounded-custom block w-full border p-2 shadow-sm sm:text-sm"
               />
             ))}

@@ -3,6 +3,7 @@ import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { HowToSendCard } from "./HowToSendCard";
@@ -23,6 +24,7 @@ interface SettingsViewProps {
   membershipRole?: TMembershipRole;
   isUserTargetingAllowed?: boolean;
   isFormbricksCloud: boolean;
+  product: TProduct;
 }
 
 export const SettingsView = ({
@@ -36,12 +38,18 @@ export const SettingsView = ({
   membershipRole,
   isUserTargetingAllowed = false,
   isFormbricksCloud,
+  product,
 }: SettingsViewProps) => {
   const isWebSurvey = localSurvey.type === "website" || localSurvey.type === "app";
 
   return (
     <div className="mt-12 space-y-3 p-5">
-      <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
+      <HowToSendCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        environment={environment}
+        product={product}
+      />
 
       {localSurvey.type === "app" ? (
         !isUserTargetingAllowed ? (

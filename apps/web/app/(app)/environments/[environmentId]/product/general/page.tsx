@@ -1,7 +1,9 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
+import packageJson from "@/package.json";
 import { getServerSession } from "next-auth";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -41,6 +43,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   }
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const currentProductChannel = product?.config.channel ?? null;
 
   return (
     <PageContentWrapper>
@@ -49,6 +52,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           environmentId={params.environmentId}
           activeId="general"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
+          productChannel={currentProductChannel}
         />
       </PageHeader>
 
@@ -59,17 +63,24 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           isProductNameEditDisabled={isProductNameEditDisabled}
         />
       </SettingsCard>
-      <SettingsCard
-        title="Recontact Waiting Time"
-        description="Control how frequently users can be surveyed across all surveys.">
-        <EditWaitingTimeForm environmentId={params.environmentId} product={product} />
-      </SettingsCard>
+      {currentProductChannel !== "link" && (
+        <SettingsCard
+          title="Recontact Waiting Time"
+          description="Control how frequently users can be surveyed across all surveys.">
+          <EditWaitingTimeForm environmentId={params.environmentId} product={product} />
+        </SettingsCard>
+      )}
       <SettingsCard
         title="Delete Product"
         description="Delete product with all surveys, responses, people, actions and attributes. This cannot be undone.">
         <DeleteProduct environmentId={params.environmentId} product={product} />
       </SettingsCard>
-      <SettingsId title="Product" id={product.id}></SettingsId>
+      <div>
+        <SettingsId title="Product ID" id={product.id}></SettingsId>
+        {!IS_FORMBRICKS_CLOUD && (
+          <SettingsId title="Formbricks version" id={packageJson.version}></SettingsId>
+        )}
+      </div>
     </PageContentWrapper>
   );
 };

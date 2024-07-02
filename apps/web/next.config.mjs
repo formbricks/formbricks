@@ -20,6 +20,7 @@ const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   serverExternalPackages: ["@aws-sdk"],
+  poweredByHeader: false,
   experimental: {
     outputFileTracingIncludes: {
       "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],

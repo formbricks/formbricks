@@ -437,6 +437,7 @@ export const getResponsesJson = (
       Timestamp: response.createdAt.toDateString(),
       Finished: response.finished ? "Yes" : "No",
       "Survey ID": response.surveyId,
+      "Formbricks ID (internal)": response.person?.id || "",
       "User ID": response.person?.userId || "",
       Notes: response.notes.map((note) => `${note.user.name}: ${note.text}`).join("\n"),
       Tags: response.tags.map((tag) => tag.name).join(", "),

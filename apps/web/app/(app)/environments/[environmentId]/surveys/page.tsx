@@ -61,6 +61,8 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const environments = await getEnvironments(product.id);
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
+  const currentProductChannel = product.config.channel ?? null;
+
   const CreateSurveyButton = (
     <Button
       size="sm"
@@ -83,6 +85,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
             WEBAPP_URL={WEBAPP_URL}
             userId={session.user.id}
             surveysPerPage={SURVEYS_PER_PAGE}
+            currentProductChannel={currentProductChannel}
           />
         </>
       ) : (

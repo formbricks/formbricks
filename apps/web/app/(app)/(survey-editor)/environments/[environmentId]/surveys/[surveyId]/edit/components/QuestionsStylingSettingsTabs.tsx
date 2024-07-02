@@ -55,7 +55,7 @@ export const QuestionsAudienceTabs = ({
             onClick={() => setActiveId(tab.id)}
             className={cn(
               tab.id === activeId
-                ? " border-brand-dark border-b-2 font-semibold text-slate-900"
+                ? "border-brand-dark border-b-2 font-semibold text-slate-900"
                 : "text-slate-500 hover:text-slate-700",
               "flex h-full items-center px-3 text-sm font-medium"
             )}

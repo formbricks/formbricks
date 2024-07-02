@@ -32,9 +32,9 @@ export const CLOUD_PRICING_DATA = {
       mainFeatures: [
         "Everything in Free",
         "Remove Branding",
+        "Email Support",
         "2.000 Monthly Responses",
         "2.500 Monthly Identified Users",
-        "Email Support",
       ],
       href: "https://app.formbricks.com/auth/signup?plan=startup",
     },

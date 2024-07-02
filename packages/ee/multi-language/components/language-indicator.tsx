@@ -55,7 +55,7 @@ export function LanguageIndicator({
       </button>
       {showLanguageDropdown ? (
         <div
-          className="absolute right-0 z-30 mt-1 space-y-2 rounded-md bg-slate-900 p-1 text-xs text-white "
+          className="absolute right-0 z-30 mt-1 space-y-2 rounded-md bg-slate-900 p-1 text-xs text-white"
           ref={languageDropdownRef}>
           {surveyLanguages.map(
             (language) =>

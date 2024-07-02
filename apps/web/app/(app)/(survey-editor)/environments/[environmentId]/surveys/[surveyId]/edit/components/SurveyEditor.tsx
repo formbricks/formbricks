@@ -125,89 +125,95 @@ export const SurveyEditor = ({
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <SurveyMenuBar
-        setLocalSurvey={setLocalSurvey}
-        localSurvey={localSurvey}
-        survey={survey}
-        environment={environment}
-        activeId={activeView}
-        setActiveId={setActiveView}
-        setInvalidQuestions={setInvalidQuestions}
-        product={localProduct}
-        responseCount={responseCount}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-      />
+    <>
+      <div className="flex h-full w-full flex-col">
+        <SurveyMenuBar
+          setLocalSurvey={setLocalSurvey}
+          localSurvey={localSurvey}
+          survey={survey}
+          environment={environment}
+          activeId={activeView}
+          setActiveId={setActiveView}
+          setInvalidQuestions={setInvalidQuestions}
+          product={localProduct}
+          responseCount={responseCount}
+          selectedLanguageCode={selectedLanguageCode}
+          setSelectedLanguageCode={setSelectedLanguageCode}
+        />
+        <div className="relative z-0 flex flex-1 overflow-hidden">
+          <main
+            className="relative z-0 w-1/2 flex-1 overflow-y-auto focus:outline-none"
+            ref={surveyEditorRef}>
+            <QuestionsAudienceTabs
+              activeId={activeView}
+              setActiveId={setActiveView}
+              isStylingTabVisible={!!product.styling.allowStyleOverwrite}
+            />
 
-      <div className="relative z-0 flex flex-1 overflow-hidden">
-        <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none" ref={surveyEditorRef}>
-          <QuestionsAudienceTabs
-            activeId={activeView}
-            setActiveId={setActiveView}
-            isStylingTabVisible={!!product.styling.allowStyleOverwrite}
-          />
+            {activeView === "questions" && (
+              <QuestionsView
+                localSurvey={localSurvey}
+                setLocalSurvey={setLocalSurvey}
+                activeQuestionId={activeQuestionId}
+                setActiveQuestionId={setActiveQuestionId}
+                product={localProduct}
+                invalidQuestions={invalidQuestions}
+                setInvalidQuestions={setInvalidQuestions}
+                selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
+                setSelectedLanguageCode={setSelectedLanguageCode}
+                isMultiLanguageAllowed={isMultiLanguageAllowed}
+                isFormbricksCloud={isFormbricksCloud}
+                attributeClasses={attributeClasses}
+              />
+            )}
 
-          {activeView === "questions" && (
-            <QuestionsView
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
-              activeQuestionId={activeQuestionId}
-              setActiveQuestionId={setActiveQuestionId}
+            {activeView === "styling" && product.styling.allowStyleOverwrite && (
+              <StylingView
+                colors={colors}
+                environment={environment}
+                localSurvey={localSurvey}
+                setLocalSurvey={setLocalSurvey}
+                product={localProduct}
+                styling={styling ?? null}
+                setStyling={setStyling}
+                localStylingChanges={localStylingChanges}
+                setLocalStylingChanges={setLocalStylingChanges}
+                isUnsplashConfigured={isUnsplashConfigured}
+              />
+            )}
+
+            {activeView === "settings" && (
+              <SettingsView
+                environment={environment}
+                localSurvey={localSurvey}
+                setLocalSurvey={setLocalSurvey}
+                actionClasses={actionClasses}
+                attributeClasses={attributeClasses}
+                segments={segments}
+                responseCount={responseCount}
+                membershipRole={membershipRole}
+                isUserTargetingAllowed={isUserTargetingAllowed}
+                isFormbricksCloud={isFormbricksCloud}
+                product={localProduct}
+              />
+            )}
+          </main>
+
+          <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6 md:flex md:flex-col">
+            <PreviewSurvey
+              survey={localSurvey}
+              questionId={activeQuestionId}
               product={localProduct}
-              invalidQuestions={invalidQuestions}
-              setInvalidQuestions={setInvalidQuestions}
-              selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
-              setSelectedLanguageCode={setSelectedLanguageCode}
-              isMultiLanguageAllowed={isMultiLanguageAllowed}
-              isFormbricksCloud={isFormbricksCloud}
-              attributeClasses={attributeClasses}
-            />
-          )}
-
-          {activeView === "styling" && product.styling.allowStyleOverwrite && (
-            <StylingView
-              colors={colors}
               environment={environment}
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
-              product={localProduct}
-              styling={styling ?? null}
-              setStyling={setStyling}
-              localStylingChanges={localStylingChanges}
-              setLocalStylingChanges={setLocalStylingChanges}
-              isUnsplashConfigured={isUnsplashConfigured}
+              previewType={
+                localSurvey.type === "app" || localSurvey.type === "website" ? "modal" : "fullwidth"
+              }
+              languageCode={selectedLanguageCode}
+              onFileUpload={async (file) => file.name}
             />
-          )}
-
-          {activeView === "settings" && (
-            <SettingsView
-              environment={environment}
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
-              actionClasses={actionClasses}
-              attributeClasses={attributeClasses}
-              segments={segments}
-              responseCount={responseCount}
-              membershipRole={membershipRole}
-              isUserTargetingAllowed={isUserTargetingAllowed}
-              isFormbricksCloud={isFormbricksCloud}
-            />
-          )}
-        </main>
-
-        <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6 md:flex md:flex-col">
-          <PreviewSurvey
-            survey={localSurvey}
-            questionId={activeQuestionId}
-            product={localProduct}
-            environment={environment}
-            previewType={localSurvey.type === "app" || localSurvey.type === "website" ? "modal" : "fullwidth"}
-            languageCode={selectedLanguageCode}
-            onFileUpload={async (file) => file.name}
-          />
-        </aside>
+          </aside>
+        </div>
       </div>
-    </div>
+    </>
   );
 };

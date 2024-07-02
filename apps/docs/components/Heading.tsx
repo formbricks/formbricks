@@ -33,7 +33,7 @@ const Anchor = ({ id, inView, children }: { id: string; inView: boolean; childre
   return (
     <Link href={`#${id}`} className="group text-inherit no-underline hover:text-inherit">
       {inView && (
-        <div className="absolute ml-[calc(-1*var(--width))] mt-1 hidden w-[var(--width)] opacity-0 transition [--width:calc(2.625rem+0.5px+50%-min(50%,calc(theme(maxWidth.lg)+theme(spacing.8))))] group-hover:opacity-100 group-focus:opacity-100 md:block lg:z-50 2xl:[--width:theme(spacing.10)]">
+        <div className="absolute ml-[calc(-1*var(--width))] mt-1 hidden w-[var(--width)] opacity-0 transition [--width:calc(1.35rem+0.85px+38%-min(38%,calc(theme(maxWidth.lg)+theme(spacing.2))))] group-hover:opacity-100 group-focus:opacity-100 md:block lg:z-50 2xl:[--width:theme(spacing.10)]">
           <div className="group/anchor block h-5 w-5 rounded-lg bg-zinc-50 ring-1 ring-inset ring-zinc-300 transition hover:ring-zinc-500 dark:bg-zinc-800 dark:ring-zinc-700 dark:hover:bg-zinc-700 dark:hover:ring-zinc-600">
             <AnchorIcon className="h-5 w-5 stroke-zinc-500 transition dark:stroke-zinc-400 dark:group-hover/anchor:stroke-white" />
           </div>
@@ -44,7 +44,7 @@ const Anchor = ({ id, inView, children }: { id: string; inView: boolean; childre
   );
 };
 
-export const Heading = <Level extends 2 | 3>({
+export const Heading = <Level extends 2 | 3 | 4>({
   children,
   tag,
   label,
@@ -59,11 +59,11 @@ export const Heading = <Level extends 2 | 3>({
   anchor?: boolean;
 }) => {
   level = level ?? (2 as Level);
-  let Component = `h${level}` as "h2" | "h3";
-  let ref = useRef<HTMLHeadingElement>(null);
-  let registerHeading = useSectionStore((s) => s.registerHeading);
+  const Component: "h2" | "h3" | "h4" = `h${level}`;
+  const ref = useRef<HTMLHeadingElement>(null);
+  const registerHeading = useSectionStore((s) => s.registerHeading);
 
-  let inView = useInView(ref, {
+  const inView = useInView(ref, {
     margin: `${remToPx(-3.5)}px 0px 0px 0px`,
     amount: "all",
   });
@@ -71,8 +71,12 @@ export const Heading = <Level extends 2 | 3>({
   useEffect(() => {
     if (level === 2) {
       registerHeading({ id: props.id, ref, offsetRem: tag || label ? 8 : 6 });
+    } else if (level === 3) {
+      registerHeading({ id: props.id, ref, offsetRem: tag || label ? 7 : 5 });
+    } else if (level === 4) {
+      registerHeading({ id: props.id, ref, offsetRem: tag || label ? 6 : 4 });
     }
-  });
+  }, [label, level, props.id, registerHeading, tag]);
 
   return (
     <>

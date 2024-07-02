@@ -30,7 +30,7 @@ interface QuestionConditionalProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   surveyId: string;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -49,7 +49,7 @@ export const QuestionConditional = ({
   setTtc,
   surveyId,
   onFileUpload,
-  isInIframe,
+  autoFocusEnabled,
   currentQuestionId,
 }: QuestionConditionalProps) => {
   if (!value && prefilledQuestionValue) {
@@ -73,7 +73,7 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
   ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
@@ -89,7 +89,7 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
   ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
@@ -105,7 +105,7 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
   ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
@@ -121,7 +121,7 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
   ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
@@ -137,7 +137,7 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
@@ -153,7 +153,7 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
@@ -169,7 +169,7 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Date ? (
@@ -185,7 +185,7 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
   ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
@@ -201,7 +201,7 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
   ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
@@ -219,7 +219,7 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
@@ -234,7 +234,7 @@ export const QuestionConditional = ({
       isLastQuestion={isLastQuestion}
       languageCode={languageCode}
       ttc={ttc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       setTtc={setTtc}
       currentQuestionId={currentQuestionId}
     />
@@ -264,7 +264,7 @@ export const QuestionConditional = ({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
+      autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
   ) : null;

@@ -275,7 +275,7 @@ export const WhenToSendCard = ({
               childBorder={true}>
               <label
                 htmlFor="triggerDelay"
-                className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+                className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-700">
                     Wait

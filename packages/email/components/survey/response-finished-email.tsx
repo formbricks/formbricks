@@ -53,7 +53,7 @@ interface ResponseFinishedEmailProps {
   response: TResponse;
   WEBAPP_URL: string;
   environmentId: string;
-  organization: TOrganization | null;
+  organization: TOrganization;
 }
 
 export function ResponseFinishedEmail({
@@ -91,7 +91,7 @@ export function ResponseFinishedEmail({
             href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
             label={
               responseCount > 1
-                ? `View ${responseCount - 1} more ${responseCount === 2 ? "response" : "responses"}`
+                ? `View ${String(responseCount - 1).toString()} more ${responseCount === 2 ? "response" : "responses"}`
                 : `View survey summary`
             }
           />
@@ -110,7 +110,7 @@ export function ResponseFinishedEmail({
               Turn off notifications for{" "}
               <Link
                 className="text-black underline"
-                href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization?.id}`}>
+                href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization.id}`}>
                 all newly created forms{" "}
               </Link>
             </Text>

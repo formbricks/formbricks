@@ -41,7 +41,7 @@ export const BackgroundStylingCard = ({
       }}
       className={cn(
         open ? "" : "hover:bg-slate-50",
-        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
+        "w-full space-y-2 rounded-lg border border-slate-300 bg-white"
       )}>
       <Collapsible.CollapsibleTrigger
         asChild
@@ -108,7 +108,7 @@ export const BackgroundStylingCard = ({
 
           <div className="flex flex-col justify-center">
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col justify-center ">
+              <div className="flex flex-col justify-center">
                 <FormField
                   control={form.control}
                   name="background.brightness"

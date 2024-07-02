@@ -18,6 +18,7 @@ import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
 import { TSurvey, TSurveyQuestionTypeEnum, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { RatingSmiley } from "@formbricks/ui/RatingSmiley";
+import { getNPSOptionColor, getRatingNumberOptionColor } from "../../utils";
 
 interface PreviewEmailTemplateProps {
   survey: TSurvey;
@@ -37,7 +38,7 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
   const defaultLanguageCode = "default";
   const firstQuestion = survey.questions[0];
 
-  const brandColor = styling.brandColor?.light || COLOR_DEFAULTS.brandColor;
+  const brandColor = styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
 
   switch (firstQuestion.type) {
     case TSurveyQuestionTypeEnum.OpenText:
@@ -107,9 +108,15 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
               <Section className="border-input-border-color rounded-custom block overflow-hidden border">
                 {Array.from({ length: 11 }, (_, i) => (
                   <EmailButton
-                    className="border-input-border-color m-0 inline-flex h-10 w-10 items-center justify-center border p-0 text-slate-800"
-                    href={`${urlWithPrefilling}${firstQuestion.id}=${i}`}
-                    key={i}>
+                    href={`${urlWithPrefilling}${firstQuestion.id}=${i.toString()}`}
+                    key={i}
+                    className={cn(
+                      firstQuestion.isColorCodingEnabled ? "h-[46px]" : "h-10",
+                      "border-input-border-color relative m-0 inline-flex w-10 items-center justify-center border p-0 text-slate-800"
+                    )}>
+                    {firstQuestion.isColorCodingEnabled ? (
+                      <Section className={`absolute left-0 top-0 h-[6px] w-full ${getNPSOptionColor(i)}`} />
+                    ) : null}
                     {i}
                   </EmailButton>
                 ))}
@@ -136,7 +143,7 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
     case TSurveyQuestionTypeEnum.CTA:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color  m-0 block text-base font-semibold leading-6">
+          <Text className="text-question-color m-0 block text-base font-semibold leading-6">
             {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
           </Text>
           <Container className="text-question-color ml-0 mt-2 text-sm font-normal leading-6">
@@ -187,18 +194,33 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
                   {Array.from({ length: firstQuestion.range }, (_, i) => (
                     <EmailButton
                       className={cn(
-                        "m-0 h-10 w-full p-0 text-center align-middle leading-10 text-slate-800",
+                        "relative m-0 w-full overflow-hidden p-0 text-center align-middle leading-10 text-slate-800",
                         {
                           "border border-solid border-gray-200": firstQuestion.scale === "number",
-                        }
+                        },
+                        firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
+                          ? "h-[46px]"
+                          : "h-10"
                       )}
-                      href={`${urlWithPrefilling}${firstQuestion.id}=${i + 1}`}
+                      href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
                       key={i}>
                       {firstQuestion.scale === "smiley" && (
-                        <RatingSmiley active={false} idx={i} range={firstQuestion.range} />
+                        <RatingSmiley
+                          active={false}
+                          idx={i}
+                          range={firstQuestion.range}
+                          addColors={firstQuestion.isColorCodingEnabled}
+                        />
                       )}
                       {firstQuestion.scale === "number" && (
-                        <Text className="m-0 flex h-10 items-center">{i + 1}</Text>
+                        <>
+                          {firstQuestion.isColorCodingEnabled ? (
+                            <Section
+                              className={`absolute left-0 top-0 h-[6px] w-full ${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`}
+                            />
+                          ) : null}
+                          <Text className="m-0 flex h-10 items-center">{i + 1}</Text>
+                        </>
                       )}
                       {firstQuestion.scale === "star" && <Text className="text-3xl">⭐</Text>}
                     </EmailButton>
@@ -213,7 +235,7 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
                     </Text>
                   </Column>
                   <Column className="text-right">
-                    <Text className="m-0 inline-block  p-0 text-right">
+                    <Text className="m-0 inline-block p-0 text-right">
                       {getLocalizedValue(firstQuestion.upperLabel, defaultLanguageCode)}
                     </Text>
                   </Column>
@@ -310,7 +332,7 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
             </Text>
             <EmailButton
               className={cn(
-                "bg-brand-color rounded-custom mx-auto block w-max cursor-pointer appearance-none px-6 py-3 text-sm font-medium ",
+                "bg-brand-color rounded-custom mx-auto block w-max cursor-pointer appearance-none px-6 py-3 text-sm font-medium",
                 isLight(brandColor) ? "text-black" : "text-white"
               )}>
               Schedule your meeting

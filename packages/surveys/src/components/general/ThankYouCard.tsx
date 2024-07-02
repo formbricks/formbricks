@@ -5,6 +5,8 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { RedirectCountDown } from "@/components/general/RedirectCountdown";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
+import { useEffect } from "preact/hooks";
+import { TSurvey } from "@formbricks/types/surveys";
 
 interface ThankYouCardProps {
   headline?: string;
@@ -16,7 +18,9 @@ interface ThankYouCardProps {
   imageUrl?: string;
   videoUrl?: string;
   isResponseSendingFinished: boolean;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
+  isCurrent: boolean;
+  survey: TSurvey;
 }
 
 export const ThankYouCard = ({
@@ -29,7 +33,9 @@ export const ThankYouCard = ({
   imageUrl,
   videoUrl,
   isResponseSendingFinished,
-  isInIframe,
+  autoFocusEnabled,
+  isCurrent,
+  survey,
 }: ThankYouCardProps) => {
   const media = imageUrl || videoUrl ? <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} /> : null;
   const checkmark = (
@@ -51,6 +57,30 @@ export const ThankYouCard = ({
     </div>
   );
 
+  const handleSubmit = () => {
+    if (buttonLink) window.location.replace(buttonLink);
+  };
+
+  useEffect(() => {
+    const handleEnter = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        handleSubmit();
+      }
+    };
+
+    if (isCurrent && survey.type === "link") {
+      document.addEventListener("keydown", handleEnter);
+    } else {
+      document.removeEventListener("keydown", handleEnter);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEnter);
+    };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCurrent]);
+
   return (
     <ScrollableContainer>
       <div className="text-center">
@@ -65,13 +95,9 @@ export const ThankYouCard = ({
                 <SubmitButton
                   buttonLabel={buttonLabel}
                   isLastQuestion={false}
-                  focus={!isInIframe}
-                  onClick={() => {
-                    if (!buttonLink) return;
-                    window.location.replace(buttonLink);
-                  }}
+                  focus={autoFocusEnabled}
+                  onClick={handleSubmit}
                 />
-                <p className="text-subheading hidden text-xs md:flex">Press Enter ↵</p>
               </div>
             )}
           </>

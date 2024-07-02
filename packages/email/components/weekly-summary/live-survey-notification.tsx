@@ -13,7 +13,7 @@ const getButtonLabel = (count: number): string => {
   if (count === 1) {
     return "View Response";
   }
-  return `View ${count > 2 ? count - 1 : "1"} more Response${count > 2 ? "s" : ""}`;
+  return `View ${count > 2 ? (count - 1).toString() : "1"} more Response${count > 2 ? "s" : ""}`;
 };
 
 const convertSurveyStatus = (status: TSurveyStatus): string => {
@@ -51,7 +51,7 @@ export const LiveSurveyNotification = ({ environmentId, surveys }: LiveSurveyNot
       }
 
       surveyFields.push(
-        <Container className="mt-4" key={`${index}-${surveyResponse.headline}`}>
+        <Container className="mt-4" key={`${index.toString()}-${surveyResponse.headline}`}>
           <Text className="m-0">{surveyResponse.headline}</Text>
           {renderEmailResponseValue(surveyResponse.responseValue, surveyResponse.questionType)}
         </Container>
@@ -59,7 +59,7 @@ export const LiveSurveyNotification = ({ environmentId, surveys }: LiveSurveyNot
 
       // Add <hr/> only when there are 2 or more responses to display, and it's not the last response
       if (responseCount >= 2 && index < responseCount - 1) {
-        surveyFields.push(<Hr key={`hr-${index}`} />);
+        surveyFields.push(<Hr key={`hr-${index.toString()}`} />);
       }
     });
 

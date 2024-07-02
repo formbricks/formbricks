@@ -69,7 +69,6 @@ export const OrganizationActions = ({
     } catch (err) {
       toast.error(`Error: ${err.message}`);
     }
-    router.refresh();
   };
 
   return (

@@ -51,7 +51,7 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
   return (
     <div className="relative">
       {!isAtTop && (
-        <div className="from-survey-bg absolute left-0 right-2 top-6 z-10 h-4 bg-gradient-to-b to-transparent"></div>
+        <div className="from-survey-bg absolute left-0 right-2 top-0 z-10 h-4 bg-gradient-to-b to-transparent"></div>
       )}
       <div
         ref={containerRef}

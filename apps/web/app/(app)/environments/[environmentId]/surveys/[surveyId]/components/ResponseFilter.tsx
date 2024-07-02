@@ -201,10 +201,10 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[300px] border-slate-200  bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px] ">
+        className="w-[300px] border-slate-200 bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px]">
         <div className="mb-8 flex flex-wrap items-start justify-between">
           <p className="hidden text-lg font-bold text-black sm:block">Show all responses that match</p>
-          <p className="block text-base  text-slate-500 sm:hidden">Show all responses where...</p>
+          <p className="block text-base text-slate-500 sm:hidden">Show all responses where...</p>
           <div className="flex items-center space-x-2">
             <label className="text-sm font-normal text-slate-600">Only completed</label>
             <Checkbox

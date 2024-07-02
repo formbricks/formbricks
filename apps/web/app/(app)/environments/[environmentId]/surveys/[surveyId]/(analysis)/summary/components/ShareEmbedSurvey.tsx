@@ -70,19 +70,19 @@ export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: Sha
                 <button
                   type="button"
                   onClick={handleInitialPageButton}
-                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm  text-slate-500 hover:border-slate-200 md:p-8">
+                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
                   <Code2Icon className="h-6 w-6 text-slate-700" />
                   Embed survey
                 </button>
                 <Link
                   href={`/environments/${environmentId}//settings/notifications`}
-                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100  bg-white p-4  text-sm text-slate-500 hover:border-slate-200 md:p-8">
+                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
                   <BellRing className="h-6 w-6 text-slate-700" />
                   Configure alerts
                 </Link>
                 <Link
                   href={`/environments/${environmentId}/integrations`}
-                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100  bg-white  p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
+                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
                   <BlocksIcon className="h-6 w-6 text-slate-700" />
                   Setup integrations
                 </Link>

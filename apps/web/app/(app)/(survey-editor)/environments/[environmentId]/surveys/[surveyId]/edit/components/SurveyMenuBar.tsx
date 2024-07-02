@@ -247,7 +247,7 @@ export const SurveyMenuBar = ({
               const updatedSurvey = { ...localSurvey, name: e.target.value };
               setLocalSurvey(updatedSurvey);
             }}
-            className="w-72 border-white hover:border-slate-200 "
+            className="w-72 border-white hover:border-slate-200"
           />
         </div>
         {responseCount > 0 && (
@@ -255,16 +255,14 @@ export const SurveyMenuBar = ({
             <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger>
-                  <AlertTriangleIcon className=" h-5 w-5 text-amber-400" />
+                  <AlertTriangleIcon className="h-5 w-5 text-amber-400" />
                 </TooltipTrigger>
                 <TooltipContent side={"top"} className="lg:hidden">
-                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400 ">
-                    {cautionText}
-                  </p>
+                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">{cautionText}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <p className=" hidden pl-1 text-xs md:text-sm lg:block">{cautionText}</p>
+            <p className="hidden pl-1 text-xs md:text-sm lg:block">{cautionText}</p>
           </div>
         )}
         <div className="mt-3 flex sm:ml-4 sm:mt-0">

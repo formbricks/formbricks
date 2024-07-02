@@ -436,8 +436,8 @@ export const QuestionFormInput = ({
             />
           )}
           <div className="flex items-center space-x-2">
-            <div className="group relative w-full ">
-              <div className="h-10 w-full "></div>
+            <div className="group relative w-full">
+              <div className="h-10 w-full"></div>
               <div
                 id="wrapper"
                 ref={highlightContainerRef}

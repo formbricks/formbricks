@@ -244,7 +244,7 @@ export const SigninForm = ({
         </div>
 
         {publicSignUpEnabled && !totpLogin && isMultiOrgEnabled && (
-          <div className="mt-9 text-center text-xs ">
+          <div className="mt-9 text-center text-xs">
             <span className="leading-5 text-slate-500">New to Formbricks?</span>
             <br />
             <Link
