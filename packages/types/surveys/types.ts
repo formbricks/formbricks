@@ -842,12 +842,18 @@ export const ZSurvey = z
     }
   });
 
-export const ZSurveyUpdateInput = ZSurvey.omit({ createdAt: true, updatedAt: true }).and(
-  z.object({
-    createdAt: z.coerce.date(),
-    updatedAt: z.coerce.date(),
-  })
-);
+export const ZSurveyUpdateInput = ZSurvey.innerType()
+  .omit({ createdAt: true, updatedAt: true })
+  .and(
+    z.object({
+      createdAt: z.coerce.date(),
+      updatedAt: z.coerce.date(),
+    })
+  )
+  .superRefine(
+    // @ts-expect-error
+    ZSurvey._def.effect.refinement
+  );
 
 export const ZSurveyInput = z.object({
   name: z.string(),

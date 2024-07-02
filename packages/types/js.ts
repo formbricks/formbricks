@@ -6,7 +6,6 @@ import { ZPerson } from "./people";
 import { ZProduct } from "./product";
 import { ZResponseHiddenFieldValue } from "./responses";
 import { ZSurvey } from "./surveys/types";
-import { mergeWithEffect } from "./zod-utils";
 
 export const ZJsPerson = z.object({
   id: z.string().cuid2().optional(),
@@ -15,12 +14,12 @@ export const ZJsPerson = z.object({
 
 export type TJsPerson = z.infer<typeof ZJsPerson>;
 
-const ZSurveyWithTriggers = mergeWithEffect(
-  ZSurvey,
-  z.object({
+const ZSurveyWithTriggers = ZSurvey.innerType()
+  .extend({
     triggers: z.array(ZActionClass).or(z.array(z.string())),
   })
-);
+  // @ts-expect-error
+  .superRefine(ZSurvey._def.effect.refinement);
 
 export type TSurveyWithTriggers = z.infer<typeof ZSurveyWithTriggers>;
 

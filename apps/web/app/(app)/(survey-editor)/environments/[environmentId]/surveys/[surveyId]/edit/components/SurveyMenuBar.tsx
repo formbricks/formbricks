@@ -146,16 +146,21 @@ export const SurveyMenuBar = ({
 
     const localSurveyValidation = ZSurvey.safeParse(localSurvey);
     if (!localSurveyValidation.success) {
-      console.log(localSurveyValidation.error.errors);
-
       const currentError = localSurveyValidation.error.errors[0];
+      console.log({ currentError });
 
       if (currentError.path[0] === "questions") {
         const questionIdx = currentError.path[1];
         const question: TSurveyQuestion = localSurvey.questions[questionIdx];
         if (question) {
-          setInvalidQuestions([question.id]);
+          setInvalidQuestions((prevInvalidQuestions) =>
+            prevInvalidQuestions ? [...prevInvalidQuestions, question.id] : [question.id]
+          );
         }
+      } else if (currentError.path[0] === "welcomeCard") {
+        setInvalidQuestions((prevInvalidQuestions) =>
+          prevInvalidQuestions ? [...prevInvalidQuestions, "start"] : ["start"]
+        );
       }
 
       if (currentError.code === "custom") {
@@ -168,9 +173,13 @@ export const SurveyMenuBar = ({
           toast.error(`${currentError.message} ${invalidLanguageLabels.join(", ")}`);
         } else {
           toast.error(currentError.message);
+          setIsSurveySaving(false);
+          return;
         }
       } else {
         toast.error(currentError.message);
+        setIsSurveySaving(false);
+        return;
       }
     }
 

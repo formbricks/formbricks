@@ -16,7 +16,6 @@ import {
   ZSurveyQuestionBase,
   ZSurveyRatingLogic,
 } from "./surveys/types";
-import { mergeWithEffect } from "./zod-utils";
 
 const ZLegacySurveyQuestionBase = ZSurveyQuestionBase.extend({
   headline: z.string(),
@@ -183,14 +182,14 @@ export type TLegacySurveyQuestion = z.infer<typeof ZLegacySurveyQuestion>;
 
 export const ZLegacySurveyQuestions = z.array(ZLegacySurveyQuestion);
 
-export const ZLegacySurvey: any = mergeWithEffect(
-  ZSurvey,
-  z.object({
+export const ZLegacySurvey = ZSurvey.innerType()
+  .extend({
     questions: ZLegacySurveyQuestions,
     thankYouCard: ZLegacySurveyThankYouCard,
     welcomeCard: ZLegacySurveyWelcomeCard,
     triggers: z.array(z.string()),
   })
-);
+  // @ts-expect-error
+  .superRefine(ZSurvey._def.effect.refinement);
 
 export type TLegacySurvey = z.infer<typeof ZLegacySurvey>;
