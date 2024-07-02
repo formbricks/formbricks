@@ -35,7 +35,7 @@ export const RedirectCountDown = ({ redirectUrl, isRedirectDisabled }: RedirectC
 
   return (
     <div>
-      <div className="bg-accent-bg text-subheading mt-10 rounded-md p-2 text-sm">
+      <div className="fb-bg-accent-bg fb-text-subheading fb-mt-10 fb-rounded-md fb-p-2 fb-text-sm">
         <span>You&apos;re redirected in </span>
         <span>{timeRemaining}</span>
       </div>
