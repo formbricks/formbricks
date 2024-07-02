@@ -44,7 +44,10 @@ export const CalEmbed = ({ question, onSuccessfulBooking }: CalEmbedProps) => {
   useEffect(() => {
     // remove any existing cal-inline elements
     document.querySelectorAll("cal-inline").forEach((el) => el.remove());
-    cal("inline", { elementOrSelector: "#fb-cal-embed", calLink: question.calUserName });
+    cal("inline", {
+      elementOrSelector: "#fb-cal-embed",
+      calLink: `https://${question.calHost}/${question.calUserName}`,
+    });
   }, [cal, question.calUserName]);
 
   return (

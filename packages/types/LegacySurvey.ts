@@ -136,6 +136,7 @@ export type TLegacySurveyFileUploadQuestion = z.infer<typeof ZLegacySurveyFileUp
 export const ZLegacySurveyCalQuestion = ZLegacySurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Cal),
   calUserName: z.string(),
+  calHost: z.string().optional(),
   logic: z.array(ZSurveyCalLogic).optional(),
 });
 
