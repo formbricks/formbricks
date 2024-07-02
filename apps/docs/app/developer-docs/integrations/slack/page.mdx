@@ -112,7 +112,7 @@ Enabling the Slack Integration in a self-hosted environment requires a setup usi
       "go": next dev --experimental-https -p 3000
     ```
 
-- You also need to update the .env file in the `apps/web` directory to include the `NEXTAUTH_URL` and `WEBAPP_URL` as `https://localhost:3000` instead of `http://localhost:3000`.
+- You also need to update the .env file in the `apps/web` directory to include the `WEBAPP_URL` as `https://localhost:3000` instead of `http://localhost:3000`.
 
 - You also need to run the terminal in admin mode to run the `go` script(to acquire the SSL certificate). You can do this by running the terminal as an administrator or using the `sudo` command in Unix-based systems.
 
