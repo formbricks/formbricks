@@ -12,7 +12,6 @@ import { updateProductAction } from "../actions";
 
 type EditProductNameProps = {
   product: TProduct;
-  environmentId: string;
   isProductNameEditDisabled: boolean;
 };
 
@@ -22,7 +21,6 @@ type TEditProductName = z.infer<typeof ZProductNameInput>;
 
 export const EditProductNameForm: React.FC<EditProductNameProps> = ({
   product,
-  environmentId,
   isProductNameEditDisabled,
 }) => {
   const form = useForm<TEditProductName>({
@@ -46,16 +44,29 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
         return;
       }
 
-      const updatedProduct = await updateProductAction(environmentId, product.id, { name });
+      const updatedProductResponse = await updateProductAction({
+        productId: product.id,
+        data: {
+          name,
+        },
+      });
 
-      if (isProductNameEditDisabled) {
-        toast.error("Only Owners, Admins and Editors can perform this action.");
-        return;
+      if (updatedProductResponse?.serverError || updatedProductResponse?.validationErrors) {
+        if (updatedProductResponse.serverError) {
+          toast.error(updatedProductResponse.serverError);
+        } else {
+          const errors = updatedProductResponse.validationErrors;
+          const errorMessage = Object.keys(errors?.data || {})
+            .map((key) => `${key ? `${key}:` : ""}${errors?.data?.[key].join(", ")}`)
+            .join("\n");
+
+          toast.error(errorMessage);
+        }
       }
 
-      if (!!updatedProduct?.id) {
+      if (updatedProductResponse?.data) {
         toast.success("Product name updated successfully.");
-        form.resetField("name", { defaultValue: updatedProduct.name });
+        form.resetField("name", { defaultValue: updatedProductResponse.data.name });
       }
     } catch (err) {
       console.error(err);

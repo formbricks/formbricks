@@ -11,7 +11,6 @@ import { Input } from "@formbricks/ui/Input";
 import { updateProductAction } from "../actions";
 
 type EditWaitingTimeProps = {
-  environmentId: string;
   product: TProduct;
 };
 
@@ -19,7 +18,7 @@ const ZProductRecontactDaysInput = ZProduct.pick({ recontactDays: true });
 
 type EditWaitingTimeFormValues = z.infer<typeof ZProductRecontactDaysInput>;
 
-export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product, environmentId }) => {
+export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product }) => {
   const form = useForm<EditWaitingTimeFormValues>({
     defaultValues: {
       recontactDays: product.recontactDays,
@@ -32,10 +31,10 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product, e
 
   const updateWaitingTime: SubmitHandler<EditWaitingTimeFormValues> = async (data) => {
     try {
-      const updatedProduct = await updateProductAction(environmentId, product.id, data);
-      if (!!updatedProduct?.id) {
+      const updatedProductResponse = await updateProductAction({ productId: product.id, data });
+      if (updatedProductResponse?.data) {
         toast.success("Waiting period updated successfully.");
-        form.resetField("recontactDays", { defaultValue: updatedProduct.recontactDays });
+        form.resetField("recontactDays", { defaultValue: updatedProductResponse.data.recontactDays });
       }
     } catch (err) {
       toast.error(`Error: ${err.message}`);

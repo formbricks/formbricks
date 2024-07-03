@@ -50,11 +50,15 @@ export const EditOrganizationName = ({ organization, membershipRole }: EditOrgan
     try {
       data.name = data.name.trim();
       setIsUpdatingOrganization(true);
-      await updateOrganizationNameAction(organization.id, data.name);
+      const updatedOrganizationResponse = await updateOrganizationNameAction({
+        organizationId: organization.id,
+        data: { name: data.name },
+      });
 
-      setIsUpdatingOrganization(false);
-      toast.success("Organization name updated successfully.");
-
+      if (updatedOrganizationResponse?.data) {
+        setIsUpdatingOrganization(false);
+        toast.success("Organization name updated successfully.");
+      }
       router.refresh();
     } catch (err) {
       setIsUpdatingOrganization(false);

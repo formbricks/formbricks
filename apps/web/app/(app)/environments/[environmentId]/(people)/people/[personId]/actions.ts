@@ -1,17 +1,30 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { canUserAccessPerson } from "@formbricks/lib/person/auth";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { getOrganizationIdFromPersonId } from "@formbricks/lib/organization/utils";
 import { deletePerson } from "@formbricks/lib/person/service";
-import { AuthorizationError } from "@formbricks/types/errors";
 
-export const deletePersonAction = async (personId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZPersonDeleteAction = z.object({
+  personId: z.string(),
+});
 
-  const isAuthorized = await canUserAccessPerson(session.user.id, personId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  await deletePerson(personId);
-};
+export const deletePersonAction = async (props: z.infer<typeof ZPersonDeleteAction>) =>
+  authenticatedActionClient
+    .schema(ZPersonDeleteAction)
+    .metadata({ rules: ["person", "delete"] })
+    // get organizationId from personId
+    .use(async ({ ctx, next }) => {
+      const organizationId = await getOrganizationIdFromPersonId(props.personId);
+      return next({ ctx: { ...ctx, organizationId } });
+    })
+    .use(async ({ ctx, next, metadata }) => {
+      await checkAuthorization({
+        userId: ctx.user.id,
+        organizationId: ctx.organizationId,
+        rules: metadata.rules,
+      });
+      return next({ ctx });
+    })
+    .action(async () => await deletePerson(props.personId))(props);

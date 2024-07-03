@@ -37,10 +37,15 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
   const handleUpdateOrganizationName: SubmitHandler<EditOrganizationNameForm> = async (data) => {
     try {
       const name = data.name.trim();
-      const updatedOrg = await updateOrganizationNameAction(organization.id, name);
+      const updatedOrganizationResponse = await updateOrganizationNameAction({
+        organizationId: organization.id,
+        data: { name },
+      });
 
-      toast.success("Organization name updated successfully.");
-      form.reset({ name: updatedOrg.name });
+      if (updatedOrganizationResponse?.data) {
+        toast.success("Organization name updated successfully.");
+        form.reset({ name: updatedOrganizationResponse.data.name });
+      }
     } catch (err) {
       toast.error(`Error: ${err.message}`);
     }

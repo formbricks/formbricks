@@ -1,8 +1,11 @@
 "use server";
 
 import { getServerSession } from "next-auth";
+import { z } from "zod";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { sendInviteMemberEmail } from "@formbricks/email";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { hasOrganizationAuthority } from "@formbricks/lib/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
@@ -22,20 +25,34 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { ZOrganizationUpdateInput } from "@formbricks/types/organizations";
 
-export const updateOrganizationNameAction = async (organizationId: string, organizationName: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
+const ZUpdateOrganizationNameAction = z.object({
+  organizationId: z.string(),
+  data: ZOrganizationUpdateInput.pick({ name: true }),
+});
 
-  const isUserAuthorized = await hasOrganizationAuthority(session.user.id, organizationId);
-  if (!isUserAuthorized) {
-    throw new AuthenticationError("Not authorized");
-  }
-
-  return await updateOrganization(organizationId, { name: organizationName });
-};
+export const updateOrganizationNameAction = async (props: z.infer<typeof ZUpdateOrganizationNameAction>) =>
+  authenticatedActionClient
+    .schema(ZUpdateOrganizationNameAction)
+    .metadata({ rules: ["organization", "update"] })
+    .use(async ({ ctx, next }) => {
+      const organizationId = props.organizationId;
+      return next({ ctx: { ...ctx, organizationId } });
+    })
+    .use(async ({ ctx, next, metadata }) => {
+      await checkAuthorization({
+        schema: ZOrganizationUpdateInput.pick({ name: true }),
+        data: props.data,
+        userId: ctx.user.id,
+        organizationId: ctx.organizationId,
+        rules: metadata.rules,
+      });
+      return next({ ctx });
+    })
+    .action(
+      async ({ parsedInput }) => await updateOrganization(parsedInput.organizationId, parsedInput.data)
+    )(props);
 
 export const deleteInviteAction = async (inviteId: string, organizationId: string) => {
   const session = await getServerSession(authOptions);

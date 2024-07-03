@@ -10,14 +10,12 @@ import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 
 type DeleteProductRenderProps = {
-  environmentId: string;
   isDeleteDisabled: boolean;
   isUserAdminOrOwner: boolean;
   product: TProduct;
 };
 
 export const DeleteProductRender = ({
-  environmentId,
   isDeleteDisabled,
   isUserAdminOrOwner,
   product,
@@ -25,12 +23,11 @@ export const DeleteProductRender = ({
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
   const handleDeleteProduct = async () => {
     try {
       setIsDeleting(true);
-      const deletedProduct = await deleteProductAction(environmentId, product.id);
-      if (!!deletedProduct?.id) {
+      const deletedProductActionResult = await deleteProductAction({ productId: product.id });
+      if (deletedProductActionResult?.data) {
         toast.success("Product deleted successfully.");
         router.push("/");
       }
