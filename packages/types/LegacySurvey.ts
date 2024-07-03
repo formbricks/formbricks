@@ -189,7 +189,6 @@ export const ZLegacySurvey = ZSurvey.innerType()
     welcomeCard: ZLegacySurveyWelcomeCard,
     triggers: z.array(z.string()),
   })
-  // @ts-expect-error
-  .superRefine(ZSurvey._def.effect.refinement);
+  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => {});
 
 export type TLegacySurvey = z.infer<typeof ZLegacySurvey>;

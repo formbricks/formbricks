@@ -850,10 +850,7 @@ export const ZSurveyUpdateInput = ZSurvey.innerType()
       updatedAt: z.coerce.date(),
     })
   )
-  .superRefine(
-    // @ts-expect-error
-    ZSurvey._def.effect.refinement
-  );
+  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => {});
 
 export const ZSurveyInput = z.object({
   name: z.string(),
