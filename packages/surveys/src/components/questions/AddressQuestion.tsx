@@ -130,7 +130,7 @@ export const AddressQuestion = ({
   );
 
   return (
-    <form key={question.id} onSubmit={handleSubmit} className="w-full" ref={formRef}>
+    <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
       <ScrollableContainer>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -143,7 +143,7 @@ export const AddressQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="mt-4 space-y-2">
+          <div className="fb-mt-4 fb-space-y-2">
             {inputConfig.map(({ name, placeholder, required }, index) => (
               <input
                 ref={index === 0 ? addressTextRef : null}
@@ -158,13 +158,13 @@ export const AddressQuestion = ({
                 value={safeValue[index] || ""}
                 onInput={(e) => handleInputChange(e.currentTarget.value, index)}
                 autoFocus={autoFocusEnabled && index === 0}
-                className="border-border focus:border-brand placeholder:text-placeholder text-subheading bg-input-bg rounded-custom block w-full border p-2 shadow-sm sm:text-sm"
+                className="fb-border-border focus:fb-border-brand placeholder:fb-text-placeholder fb-text-subheading fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm sm:fb-text-sm"
               />
             ))}
           </div>
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton
             tabIndex={8}
