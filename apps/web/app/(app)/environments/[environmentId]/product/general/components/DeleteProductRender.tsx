@@ -10,7 +10,6 @@ import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 
 type DeleteProductRenderProps = {
-  environmentId: string;
   isDeleteDisabled: boolean;
   isUserAdminOrOwner: boolean;
   product: TProduct;

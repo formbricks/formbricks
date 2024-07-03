@@ -21,7 +21,7 @@ import {
   StarIcon,
   User,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import * as React from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
@@ -137,9 +137,9 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
 };
 
 export const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBoxProps) => {
-  const [open, setOpen] = useState(false);
-  const commandRef = useRef(null);
-  const [inputValue, setInputValue] = useState("");
+  const [open, setOpen] = React.useState(false);
+  const commandRef = React.useRef(null);
+  const [inputValue, setInputValue] = React.useState("");
   useClickOutside(commandRef, () => setOpen(false));
 
   return (

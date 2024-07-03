@@ -27,14 +27,14 @@ import {
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { ZOrganizationUpdateInput } from "@formbricks/types/organizations";
 
-const ZUpdateOrganizationAction = z.object({
+const ZUpdateOrganizationNameAction = z.object({
   organizationId: z.string(),
   data: ZOrganizationUpdateInput.pick({ name: true }),
 });
 
-export const updateOrganizationNameAction = async (props: z.infer<typeof ZUpdateOrganizationAction>) =>
+export const updateOrganizationNameAction = async (props: z.infer<typeof ZUpdateOrganizationNameAction>) =>
   authenticatedActionClient
-    .schema(ZUpdateOrganizationAction)
+    .schema(ZUpdateOrganizationNameAction)
     .metadata({ rules: ["organization", "update"] })
     .use(async ({ ctx, next }) => {
       const organizationId = props.organizationId;
