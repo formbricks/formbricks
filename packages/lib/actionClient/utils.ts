@@ -1,9 +1,9 @@
-import { getMembershipRole } from "membership/utils";
 import { returnValidationErrors } from "next-safe-action";
 import { ZodIssue, z } from "zod";
 import { TOperation, TResource } from "@formbricks/types/actionClient";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { getMembershipByUserIdOrganizationId } from "../membership/service";
 import { Permissions } from "./permissions";
 
 export const getOperationPermissions = (role: TMembershipRole, entity: TResource, operation: TOperation) => {
@@ -36,6 +36,15 @@ export const formatErrors = (errors: ZodIssue[]) => {
       return acc;
     }, {}),
   };
+};
+
+const getMembershipRole = async (userId: string, organizationId: string) => {
+  const membership = await getMembershipByUserIdOrganizationId(userId, organizationId);
+  if (!membership) {
+    throw new AuthorizationError("Not authorized");
+  }
+
+  return membership.role;
 };
 
 export const checkAuthorization = async <T extends z.ZodRawShape>({

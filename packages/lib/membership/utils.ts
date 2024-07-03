@@ -1,7 +1,4 @@
-import "server-only";
-import { AuthorizationError } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
-import { getMembershipByUserIdOrganizationId } from "./service";
 
 export const getAccessFlags = (role?: TMembershipRole) => {
   const isAdmin = role === "admin";
@@ -17,13 +14,4 @@ export const getAccessFlags = (role?: TMembershipRole) => {
     isDeveloper,
     isViewer,
   };
-};
-
-export const getMembershipRole = async (userId: string, organizationId: string) => {
-  const membership = await getMembershipByUserIdOrganizationId(userId, organizationId);
-  if (!membership) {
-    throw new AuthorizationError("Not authorized");
-  }
-
-  return membership.role;
 };
