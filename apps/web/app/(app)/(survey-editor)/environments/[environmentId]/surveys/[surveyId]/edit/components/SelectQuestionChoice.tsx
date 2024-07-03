@@ -1,7 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
-import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -24,13 +23,11 @@ interface ChoiceProps {
   updateChoice: (choiceIdx: number, updatedAttributes: { label: TI18nString }) => void;
   deleteChoice: (choiceIdx: number) => void;
   addChoice: (choiceIdx: number) => void;
-  setisInvalidValue: (value: string | null) => void;
   isInvalid: boolean;
   localSurvey: TSurvey;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   surveyLanguages: TSurveyLanguage[];
-  findDuplicateLabel: () => string | null;
   question: TSurveyMultipleChoiceQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceQuestion>) => void;
   surveyLanguageCodes: string[];
@@ -47,10 +44,8 @@ export const SelectQuestionChoice = ({
   questionIdx,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  setisInvalidValue,
   surveyLanguages,
   updateChoice,
-  findDuplicateLabel,
   question,
   surveyLanguageCodes,
   updateQuestion,
@@ -83,15 +78,6 @@ export const SelectQuestionChoice = ({
           localSurvey={localSurvey}
           questionIdx={questionIdx}
           value={choice.label}
-          onBlur={() => {
-            const duplicateLabel = findDuplicateLabel();
-            if (duplicateLabel) {
-              toast.error("Duplicate choices");
-              setisInvalidValue(duplicateLabel);
-            } else {
-              setisInvalidValue(null);
-            }
-          }}
           updateChoice={updateChoice}
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}

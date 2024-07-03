@@ -107,8 +107,6 @@ export const QuestionsView = ({
     }
   };
 
-  console.log({ invalidQuestions });
-
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
     let updatedSurvey = { ...localSurvey };
     if ("id" in updatedAttributes) {

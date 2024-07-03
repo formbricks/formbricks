@@ -8,8 +8,8 @@ import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
 import {
   extractLanguageCodes,
+  findLanguageCodesForDuplicateLabels,
   findQuestionsWithCyclicLogic,
-  hasDuplicates,
   validateCardFieldsForAllLanguages,
   validateQuestionLabels,
 } from "./validation";
@@ -406,24 +406,6 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
   rows: z.array(ZI18nString),
   columns: z.array(ZI18nString),
   logic: z.array(ZSurveyMatrixLogic).optional(),
-}).superRefine((question, ctx) => {
-  const { rows, columns } = question;
-
-  if (hasDuplicates(rows)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Duplicate rows found",
-      path: ["rows"],
-    });
-  }
-
-  if (hasDuplicates(columns)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Duplicate columns found",
-      path: ["columns"],
-    });
-  }
 });
 
 export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
@@ -731,23 +713,27 @@ export const ZSurvey = z
           }
         });
 
-        const enabledLanguages = languages.filter((lang) => lang.enabled);
-        const languageCodes = extractLanguageCodes(enabledLanguages);
+        const duplicateChoicesLanguageCodes = findLanguageCodesForDuplicateLabels(
+          question.choices.map((choice) => choice.label),
+          languages
+        );
 
-        const languagesToCheck = languageCodes.length === 0 ? ["default"] : languageCodes;
+        if (duplicateChoicesLanguageCodes.length > 0) {
+          const invalidLanguageCodes = duplicateChoicesLanguageCodes.map((invalidLanguageCode) =>
+            invalidLanguageCode === "default"
+              ? languages.find((lang) => lang.default)?.language.code || "default"
+              : invalidLanguageCode
+          );
 
-        languagesToCheck.forEach((language) => {
-          const choiceLabels = question.choices.map((choice) => choice.label[language]).filter(Boolean);
-          const uniqueLabels = new Set(choiceLabels);
+          const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
-          if (uniqueLabels.size !== choiceLabels.length) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Choice labels in question ${questionIndex + 1} are not unique.`,
-              path: ["questions", questionIndex, "choices"],
-            });
-          }
-        });
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Question ${questionIndex + 1} has duplicate choice labels for the following languages:`,
+            path: ["questions", questionIndex, "choices"],
+            params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+          });
+        }
       }
 
       if (question.type === TSurveyQuestionTypeEnum.Consent) {
@@ -791,6 +777,43 @@ export const ZSurvey = z
             ctx.addIssue(multiLangIssue);
           }
         });
+
+        const duplicateRowsLanguageCodes = findLanguageCodesForDuplicateLabels(question.rows, languages);
+        const duplicateColumnLanguageCodes = findLanguageCodesForDuplicateLabels(question.columns, languages);
+
+        if (duplicateRowsLanguageCodes.length > 0) {
+          const invalidLanguageCodes = duplicateRowsLanguageCodes.map((invalidLanguageCode) =>
+            invalidLanguageCode === "default"
+              ? languages.find((lang) => lang.default)?.language.code || "default"
+              : invalidLanguageCode
+          );
+
+          const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
+
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Matrix question ${questionIndex + 1} has duplicate row labels for the following languages:`,
+            path: ["questions", questionIndex, "rows"],
+            params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+          });
+        }
+
+        if (duplicateColumnLanguageCodes.length > 0) {
+          const invalidLanguageCodes = duplicateColumnLanguageCodes.map((invalidLanguageCode) =>
+            invalidLanguageCode === "default"
+              ? languages.find((lang) => lang.default)?.language.code || "default"
+              : invalidLanguageCode
+          );
+
+          const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
+
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Matrix question ${questionIndex + 1} has duplicate column labels for the following languages:`,
+            path: ["questions", questionIndex, "columns"],
+            params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+          });
+        }
       }
 
       if (question.logic) {

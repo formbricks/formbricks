@@ -68,20 +68,6 @@ export const MultipleChoiceQuestionForm = ({
     },
   };
 
-  const findDuplicateLabel = () => {
-    for (let i = 0; i < question.choices.length; i++) {
-      for (let j = i + 1; j < question.choices.length; j++) {
-        if (
-          getLocalizedValue(question.choices[i].label, selectedLanguageCode).trim() ===
-          getLocalizedValue(question.choices[j].label, selectedLanguageCode).trim()
-        ) {
-          return getLocalizedValue(question.choices[i].label, selectedLanguageCode).trim(); // Return the duplicate label
-        }
-      }
-    }
-    return null;
-  };
-
   const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
     const newLabel = updatedAttributes.label.en;
     const oldLabel = question.choices[choiceIdx].label;
@@ -267,13 +253,11 @@ export const MultipleChoiceQuestionForm = ({
                       updateChoice={updateChoice}
                       deleteChoice={deleteChoice}
                       addChoice={addChoice}
-                      setisInvalidValue={setisInvalidValue}
                       isInvalid={isInvalid}
                       localSurvey={localSurvey}
                       selectedLanguageCode={selectedLanguageCode}
                       setSelectedLanguageCode={setSelectedLanguageCode}
                       surveyLanguages={surveyLanguages}
-                      findDuplicateLabel={findDuplicateLabel}
                       question={question}
                       updateQuestion={updateQuestion}
                       surveyLanguageCodes={surveyLanguageCodes}

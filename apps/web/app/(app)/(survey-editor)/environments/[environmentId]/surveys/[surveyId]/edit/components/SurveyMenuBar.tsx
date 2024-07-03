@@ -26,7 +26,7 @@ interface SurveyMenuBarProps {
   environment: TEnvironment;
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
-  setInvalidQuestions: (invalidQuestions: string[]) => void;
+  setInvalidQuestions: React.Dispatch<React.SetStateAction<string[]>>;
   product: TProduct;
   responseCount: number;
   selectedLanguageCode: string;
@@ -147,8 +147,6 @@ export const SurveyMenuBar = ({
     const localSurveyValidation = ZSurvey.safeParse(localSurvey);
     if (!localSurveyValidation.success) {
       const currentError = localSurveyValidation.error.errors[0];
-      console.log({ currentError });
-
       if (currentError.path[0] === "questions") {
         const questionIdx = currentError.path[1];
         const question: TSurveyQuestion = localSurvey.questions[questionIdx];
@@ -173,14 +171,15 @@ export const SurveyMenuBar = ({
           toast.error(`${currentError.message} ${invalidLanguageLabels.join(", ")}`);
         } else {
           toast.error(currentError.message);
-          setIsSurveySaving(false);
-          return;
         }
-      } else {
-        toast.error(currentError.message);
+
         setIsSurveySaving(false);
         return;
       }
+
+      toast.error(currentError.message);
+      setIsSurveySaving(false);
+      return;
     }
 
     try {

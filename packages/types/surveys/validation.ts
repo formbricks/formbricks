@@ -69,19 +69,27 @@ export const validateCardFieldsForAllLanguages = (
   return null;
 };
 
-export const hasDuplicates = (labels: TI18nString[]) => {
-  const flattenedLabels = labels
-    .map((label) =>
-      Object.keys(label)
-        .map((lang) => {
-          const text = label[lang].trim().toLowerCase();
-          return text && `${lang}:${text}`;
-        })
-        .filter((text) => text)
-    )
-    .flat();
-  const uniqueLabels = new Set(flattenedLabels);
-  return uniqueLabels.size !== flattenedLabels.length;
+export const findLanguageCodesForDuplicateLabels = (
+  labels: TI18nString[],
+  surveyLanguages: TSurveyLanguage[]
+): string[] => {
+  const enabledLanguages = surveyLanguages.filter((lang) => lang.enabled);
+  const languageCodes = extractLanguageCodes(enabledLanguages);
+
+  const languagesToCheck = languageCodes.length === 0 ? ["default"] : languageCodes;
+
+  const duplicateLabels = new Set<string>();
+
+  for (const language of languagesToCheck) {
+    const labelTexts = labels.map((label) => label[language]).filter(Boolean);
+    const uniqueLabels = new Set(labelTexts);
+
+    if (uniqueLabels.size !== labelTexts.length) {
+      duplicateLabels.add(language);
+    }
+  }
+
+  return Array.from(duplicateLabels);
 };
 
 export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): string[] => {
