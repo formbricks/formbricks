@@ -41,8 +41,8 @@ export const updateOrganizationNameAction = async (props: z.infer<typeof ZUpdate
       return next({ ctx: { ...ctx, organizationId } });
     })
     .use(async ({ ctx, next, metadata }) => {
-      checkAuthorization({
-        zodSchema: ZOrganizationUpdateInput.pick({ name: true }),
+      await checkAuthorization({
+        schema: ZOrganizationUpdateInput.pick({ name: true }),
         data: props.data,
         userId: ctx.user.id,
         organizationId: ctx.organizationId,

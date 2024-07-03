@@ -3,9 +3,10 @@
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization, getOrganizationIdFromResponseId } from "@formbricks/lib/actionClient/utils";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getOrganizationIdFromResponseId } from "@formbricks/lib/organization/utils";
 import { canUserAccessResponse } from "@formbricks/lib/response/auth";
 import { deleteResponse, getResponse } from "@formbricks/lib/response/service";
 import { canUserModifyResponseNote, canUserResolveResponseNote } from "@formbricks/lib/responseNote/auth";

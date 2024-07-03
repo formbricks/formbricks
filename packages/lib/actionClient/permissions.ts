@@ -1,6 +1,6 @@
 import { ZProductUpdateInput } from "@formbricks/types/product";
 
-export const Roles = {
+export const Permissions = {
   owner: {
     product: {
       create: true,

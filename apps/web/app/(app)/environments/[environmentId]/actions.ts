@@ -88,8 +88,8 @@ export const createProductAction = async (props: z.infer<typeof ZCreateProductAc
       return next({ ctx: { ...ctx, organizationId } });
     })
     .use(async ({ ctx, next, metadata }) => {
-      checkAuthorization({
-        zodSchema: ZProductUpdateInput,
+      await checkAuthorization({
+        schema: ZProductUpdateInput,
         data: props.data,
         userId: ctx.user.id,
         organizationId: ctx.organizationId,

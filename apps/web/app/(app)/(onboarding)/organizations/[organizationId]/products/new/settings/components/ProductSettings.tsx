@@ -53,6 +53,19 @@ export const ProductSettings = ({
         },
       });
 
+      if (createProductResponse?.serverError || createProductResponse?.validationErrors) {
+        if (createProductResponse.serverError) {
+          toast.error(createProductResponse.serverError);
+        } else {
+          const errors = createProductResponse.validationErrors;
+          const errorMessage = Object.keys(errors?.data || {})
+            .map((key) => `${key ? `${key}:` : ""}${errors?.data?.[key].join(", ")}`)
+            .join("\n");
+
+          toast.error(errorMessage);
+        }
+      }
+
       if (createProductResponse?.data) {
         // get production environment
         const productionEnvironment = createProductResponse.data.environments.find(

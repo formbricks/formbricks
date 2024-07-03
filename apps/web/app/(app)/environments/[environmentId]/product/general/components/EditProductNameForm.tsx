@@ -51,6 +51,19 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
         },
       });
 
+      if (updatedProductResponse?.serverError || updatedProductResponse?.validationErrors) {
+        if (updatedProductResponse.serverError) {
+          toast.error(updatedProductResponse.serverError);
+        } else {
+          const errors = updatedProductResponse.validationErrors;
+          const errorMessage = Object.keys(errors?.data || {})
+            .map((key) => `${key ? `${key}:` : ""}${errors?.data?.[key].join(", ")}`)
+            .join("\n");
+
+          toast.error(errorMessage);
+        }
+      }
+
       if (updatedProductResponse?.data) {
         toast.success("Product name updated successfully.");
         form.resetField("name", { defaultValue: updatedProductResponse.data.name });

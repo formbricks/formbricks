@@ -2,7 +2,8 @@
 
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization, getOrganizationIdFromPersonId } from "@formbricks/lib/actionClient/utils";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { getOrganizationIdFromPersonId } from "@formbricks/lib/organization/utils";
 import { deletePerson } from "@formbricks/lib/person/service";
 
 const ZPersonDeleteAction = z.object({

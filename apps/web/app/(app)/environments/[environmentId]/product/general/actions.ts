@@ -2,7 +2,8 @@
 
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization, getOrganizationIdFromProductId } from "@formbricks/lib/actionClient/utils";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { getOrganizationIdFromProductId } from "@formbricks/lib/organization/utils";
 import { deleteProduct, getProducts, updateProduct } from "@formbricks/lib/product/service";
 import { ZProductUpdateInput } from "@formbricks/types/product";
 
@@ -10,6 +11,7 @@ const ZUpdateProductAction = z.object({
   productId: z.string(),
   data: ZProductUpdateInput,
 });
+
 export const updateProductAction = async (props: z.infer<typeof ZUpdateProductAction>) =>
   authenticatedActionClient
     .schema(ZUpdateProductAction)
@@ -21,8 +23,8 @@ export const updateProductAction = async (props: z.infer<typeof ZUpdateProductAc
     })
     // check authorization
     .use(async ({ ctx, next, metadata }) => {
-      checkAuthorization({
-        zodSchema: ZProductUpdateInput,
+      await checkAuthorization({
+        schema: ZProductUpdateInput,
         data: props.data,
         userId: ctx.user.id,
         organizationId: ctx.organizationId,
@@ -36,6 +38,7 @@ export const updateProductAction = async (props: z.infer<typeof ZUpdateProductAc
 const ZProductDeleteAction = z.object({
   productId: z.string(),
 });
+
 export const deleteProductAction = async (props: z.infer<typeof ZProductDeleteAction>) =>
   authenticatedActionClient
     .schema(ZProductDeleteAction)
@@ -46,7 +49,11 @@ export const deleteProductAction = async (props: z.infer<typeof ZProductDeleteAc
       return next({ ctx: { ...ctx, organizationId } });
     })
     .use(async ({ ctx, next, metadata }) => {
-      checkAuthorization({ userId: ctx.user.id, organizationId: ctx.organizationId, rules: metadata.rules });
+      await checkAuthorization({
+        userId: ctx.user.id,
+        organizationId: ctx.organizationId,
+        rules: metadata.rules,
+      });
       return next({ ctx });
     })
     .action(async ({ ctx: { organizationId }, parsedInput }) => {
