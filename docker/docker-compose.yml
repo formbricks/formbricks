@@ -23,9 +23,9 @@ x-environment: &environment
     # You can use: $(openssl rand -hex 32) to generate one
     ENCRYPTION_KEY:
 
-    # Set the below to use it intead of API Key for the API & use as an auth for cronjobs
+    # Set the below to use it instead of API Key for the API & use as an auth for cronjobs
     # You can use: $(openssl rand -hex 32) to generate a secure one
-    # CRON_SECRET:
+    CRON_SECRET:
 
     ############################################# OPTIONAL (ENTERPRISE EDITION) #############################################
 

@@ -21,6 +21,7 @@ We are so happy that you are interested in contributing to Formbricks 🤗 There
 - **How to create a service**: [Read this document to understand how we use services](https://formbricks.notion.site/How-to-create-a-service-8e0c035704bb40cb9ea5e5beeeeabd67?pvs=4). This is particulalry important when you need to write a new one.
 
 ## Talk to us first
+
 We highly recommend connecting with us on [Discord server](https://formbricks.com/discord) before you ship a contribution. This will increase the likelihood of your PR being merged. And it will decrease the likelihood of you wasting your time :)
 
 ## Contributor License Agreement (CLA)
@@ -98,6 +99,7 @@ cp .env.example .env
 ```bash
 sed -i '/^ENCRYPTION_KEY=/c\ENCRYPTION_KEY='$(openssl rand -hex 32) .env
 sed -i '/^NEXTAUTH_SECRET=/c\NEXTAUTH_SECRET='$(openssl rand -hex 32) .env
+sed -i '/^CRON_SECRET=/c\CRON_SECRET='$(openssl rand -hex 32) .env
 ```
 
    </CodeGroup>

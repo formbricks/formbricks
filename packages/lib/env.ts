@@ -11,7 +11,7 @@ export const env = createEnv({
     AZUREAD_CLIENT_ID: z.string().optional(),
     AZUREAD_CLIENT_SECRET: z.string().optional(),
     AZUREAD_TENANT_ID: z.string().optional(),
-    CRON_SECRET: z.string().optional(),
+    CRON_SECRET: z.string().min(1),
     CUSTOMER_IO_API_KEY: z.string().optional(),
     CUSTOMER_IO_SITE_ID: z.string().optional(),
     DATABASE_URL: z.string().url(),
