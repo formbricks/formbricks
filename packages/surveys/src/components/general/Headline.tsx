@@ -12,14 +12,16 @@ export const Headline = ({
   alignTextCenter = false,
 }: HeadlineProps) => {
   return (
-    <label htmlFor={questionId} className="text-heading mb-1.5 block text-base font-semibold leading-6">
+    <label
+      htmlFor={questionId}
+      className="fb-text-heading fb-mb-1.5 fb-block fb-text-base fb-font-semibold fb-leading-6">
       <div
-        className={`flex items-center  ${alignTextCenter ? "justify-center" : "justify-between"}`}
+        className={`fb-flex fb-items-center ${alignTextCenter ? "fb-justify-center" : "fb-justify-between"}`}
         dir="auto">
         {headline}
         {!required && (
           <span
-            className="text-heading mx-2 self-start text-sm font-normal leading-7 opacity-60"
+            className="fb-text-heading fb-mx-2 fb-self-start fb-text-sm fb-font-normal fb-leading-7 fb-opacity-60"
             tabIndex={-1}>
             Optional
           </span>

@@ -78,7 +78,7 @@ export const OpenTextQuestion = ({
         setTtc(updatedttc);
         onSubmit({ [question.id]: value }, updatedttc);
       }}
-      className="w-full">
+      className="fb-w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -91,7 +91,7 @@ export const OpenTextQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="mt-4">
+          <div className="fb-mt-4">
             {question.longAnswer === false ? (
               <input
                 ref={openTextRef}
@@ -106,7 +106,7 @@ export const OpenTextQuestion = ({
                 type={question.inputType}
                 onInput={(e) => handleInputChange(e.currentTarget.value)}
                 autoFocus={autoFocusEnabled}
-                className="border-border placeholder:text-placeholder text-subheading focus:border-brand bg-input-bg rounded-custom block w-full border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
+                className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
                 title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
               />
@@ -128,7 +128,7 @@ export const OpenTextQuestion = ({
                   handleInputResize(e);
                 }}
                 autoFocus={autoFocusEnabled}
-                className="border-border placeholder:text-placeholder bg-input-bg text-subheading focus:border-brand rounded-custom block w-full border p-2 shadow-sm  focus:ring-0 sm:text-sm"
+                className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
                 title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
               />
@@ -136,7 +136,7 @@ export const OpenTextQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

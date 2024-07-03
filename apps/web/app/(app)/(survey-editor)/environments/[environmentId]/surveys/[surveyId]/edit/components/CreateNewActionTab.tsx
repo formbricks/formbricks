@@ -152,6 +152,7 @@ export const CreateNewActionTab = ({
 
       reset();
       resetAllStates();
+      toast.success("Action created successfully");
     } catch (e: any) {
       toast.error(e.message);
     }

@@ -63,14 +63,14 @@ export const NoCodeActionForm = ({ form }: NoCodeActionFormProps) => {
         )}
         {watch("noCodeConfig.type") === "pageView" && (
           <Alert>
-            <InfoIcon className=" h-4 w-4" />
+            <InfoIcon className="h-4 w-4" />
             <AlertTitle>Page View</AlertTitle>
             <AlertDescription>This action will be triggered when the page is loaded.</AlertDescription>
           </Alert>
         )}
         {watch("noCodeConfig.type") === "exitIntent" && (
           <Alert>
-            <InfoIcon className=" h-4 w-4" />
+            <InfoIcon className="h-4 w-4" />
             <AlertTitle>Exit Intent</AlertTitle>
             <AlertDescription>
               This action will be triggered when the user tries to leave the page.
@@ -79,7 +79,7 @@ export const NoCodeActionForm = ({ form }: NoCodeActionFormProps) => {
         )}
         {watch("noCodeConfig.type") === "fiftyPercentScroll" && (
           <Alert>
-            <InfoIcon className=" h-4 w-4" />
+            <InfoIcon className="h-4 w-4" />
             <AlertTitle>50% Scroll</AlertTitle>
             <AlertDescription>
               This action will be triggered when the user scrolls 50% of the page.

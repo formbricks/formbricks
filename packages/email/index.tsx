@@ -62,26 +62,23 @@ const getEmailSubject = (productName: string): string => {
 };
 
 export const sendEmail = async (emailData: SendEmailDataProps) => {
-  if (IS_SMTP_CONFIGURED) {
-    const transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
-      auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASSWORD,
-      },
-      logger: DEBUG,
-      debug: DEBUG,
-    } as SMTPTransport.Options);
-    const emailDefaults = {
-      from: `Formbricks <${MAIL_FROM ?? "noreply@formbricks.com"}>`,
-    };
-    await transporter.sendMail({ ...emailDefaults, ...emailData });
-  } else {
-    // eslint-disable-next-line no-console -- necessary for logging email configuration errors
-    console.error(`Could not Email :: SMTP not configured :: ${emailData.subject}`);
-  }
+  if (!IS_SMTP_CONFIGURED) return;
+
+  const transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASSWORD,
+    },
+    logger: DEBUG,
+    debug: DEBUG,
+  } as SMTPTransport.Options);
+  const emailDefaults = {
+    from: `Formbricks <${MAIL_FROM ?? "noreply@formbricks.com"}>`,
+  };
+  await transporter.sendMail({ ...emailDefaults, ...emailData });
 };
 
 export const sendVerificationEmail = async (user: TEmailUser) => {

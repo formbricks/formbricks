@@ -66,7 +66,7 @@ const Loading = () => {
           </div>
         </div>
         <section className="pb-24 pt-6">
-          <div className="grid grid-cols-1 gap-x-8  md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-x-8 md:grid-cols-4">
             <div className="space-y-6">
               <h2 className="text-lg font-bold text-slate-700">Attributes</h2>
               <div>
@@ -105,14 +105,14 @@ const Loading = () => {
                   </button>
                 </div>
               </div>
-              <div className="group space-y-4 rounded-lg bg-white p-6 ">
+              <div className="group space-y-4 rounded-lg bg-white p-6">
                 <div className="flex items-center space-x-4">
                   <div className="h-12 w-12 flex-shrink-0 rounded-full bg-slate-100"></div>
-                  <div className=" h-6 w-full rounded-full bg-slate-100"></div>
+                  <div className="h-6 w-full rounded-full bg-slate-100"></div>
                 </div>
                 <div className="space-y-4">
                   <div className="h-12 w-full rounded-full bg-slate-100"></div>
-                  <div className=" flex h-12 w-full items-center justify-center rounded-full bg-slate-50 text-sm text-slate-500 hover:bg-slate-100">
+                  <div className="flex h-12 w-full items-center justify-center rounded-full bg-slate-50 text-sm text-slate-500 hover:bg-slate-100">
                     <span className="animate-pulse text-center">Loading user responses</span>
                   </div>
                   <div className="h-12 w-full rounded-full bg-slate-50/50"></div>

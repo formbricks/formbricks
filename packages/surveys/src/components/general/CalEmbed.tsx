@@ -51,8 +51,8 @@ export const CalEmbed = ({ question, onSuccessfulBooking }: CalEmbedProps) => {
   }, [cal, question.calUserName]);
 
   return (
-    <div className="relative mt-4 overflow-auto">
-      <div id="fb-cal-embed" className={cn("border-border rounded-lg border")} />
+    <div className="fb-relative fb-mt-4 fb-overflow-auto">
+      <div id="fb-cal-embed" className={cn("fb-border-border fb-rounded-lg fb-border")} />
     </div>
   );
 };
