@@ -3,7 +3,7 @@
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
-import * as React from "react";
+import { useRef, useState } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
@@ -38,9 +38,9 @@ export const QuestionFilterComboBox = ({
   handleRemoveMultiSelect,
   disabled = false,
 }: QuestionFilterComboBoxProps) => {
-  const [open, setOpen] = React.useState(false);
-  const [openFilterValue, setOpenFilterValue] = React.useState<boolean>(false);
-  const commandRef = React.useRef(null);
+  const [open, setOpen] = useState(false);
+  const [openFilterValue, setOpenFilterValue] = useState<boolean>(false);
+  const commandRef = useRef(null);
   const defaultLanguageCode = "default";
   useClickOutside(commandRef, () => setOpen(false));
 
