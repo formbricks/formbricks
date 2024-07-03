@@ -116,10 +116,11 @@ export const CalQuestionForm = ({
 
             {isCalHostEnabled && (
               <div className="flex flex-col gap-2">
-                <Label htmlFor="calHost">Enter the URL of your self-hosted Cal.com instance</Label>
+                <Label htmlFor="calHost">Enter the hostname of your self-hosted Cal.com instance</Label>
                 <Input
                   id="calHost"
                   name="calHost"
+                  placeholder="cal.com"
                   value={question.calHost}
                   onChange={(e) => updateQuestion(questionIdx, { calHost: e.target.value })}
                 />
