@@ -12,6 +12,7 @@ const ZResource = z.enum([
   "invite",
   "response",
   "survey",
+  "person",
 ]);
 const ZAction = z.enum(["create", "read", "update", "delete"]);
 

@@ -1,6 +1,6 @@
 "use server";
 
-import z from "zod";
+import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization, getOrganizationIdFromProductId } from "@formbricks/lib/actionClient/utils";
 import { deleteProduct, getProducts, updateProduct } from "@formbricks/lib/product/service";

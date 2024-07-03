@@ -8,7 +8,20 @@ export const Roles = {
       update: true,
       delete: true,
     },
+    organization: {
+      update: true,
+    },
+    person: {
+      delete: true,
+    },
+    response: {
+      delete: true,
+    },
+    survey: {
+      create: true,
+    },
   },
+
   admin: {
     product: {
       create: true,
@@ -16,7 +29,20 @@ export const Roles = {
       update: true,
       delete: true,
     },
+    organization: {
+      update: true,
+    },
+    person: {
+      delete: true,
+    },
+    response: {
+      delete: true,
+    },
+    survey: {
+      create: true,
+    },
   },
+
   editor: {
     product: {
       create: true,
@@ -24,7 +50,20 @@ export const Roles = {
       update: true,
       delete: true,
     },
+    organization: {
+      update: false,
+    },
+    person: {
+      delete: true,
+    },
+    response: {
+      delete: true,
+    },
+    survey: {
+      create: true,
+    },
   },
+
   developer: {
     product: {
       create: true,
@@ -35,13 +74,38 @@ export const Roles = {
       }).strict(),
       delete: true,
     },
+    organization: {
+      update: false,
+    },
+    person: {
+      delete: true,
+    },
+    response: {
+      delete: true,
+    },
+    survey: {
+      create: true,
+    },
   },
+
   viewer: {
     product: {
       create: false,
       read: true,
       update: false,
       delete: false,
+    },
+    organization: {
+      update: false,
+    },
+    person: {
+      delete: false,
+    },
+    response: {
+      delete: false,
+    },
+    survey: {
+      create: false,
     },
   },
 };

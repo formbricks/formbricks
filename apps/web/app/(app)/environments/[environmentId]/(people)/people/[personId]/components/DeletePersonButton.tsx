@@ -22,14 +22,18 @@ export const DeletePersonButton = ({ environmentId, personId, isViewer }: Delete
   const handleDeletePerson = async () => {
     try {
       setIsDeletingPerson(true);
-      await deletePersonAction(personId);
-      router.refresh();
-      router.push(`/environments/${environmentId}/people`);
-      toast.success("Person deleted successfully.");
+      const deletePersonResponse = await deletePersonAction({ personId });
+
+      if (deletePersonResponse?.data) {
+        router.refresh();
+        router.push(`/environments/${environmentId}/people`);
+        toast.success("Person deleted successfully.");
+      }
     } catch (error) {
       toast.error(error.message);
     } finally {
       setIsDeletingPerson(false);
+      setDeleteDialogOpen(false);
     }
   };
 

@@ -1,8 +1,12 @@
 import { returnValidationErrors } from "next-safe-action";
+import { getResponse } from "response/service";
+import { getSurvey } from "survey/service";
 import { ZodIssue, z } from "zod";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { getEnvironment } from "../environment/service";
 import { getMembershipByUserIdOrganizationId } from "../membership/service";
+import { getPerson } from "../person/service";
 import { getProduct } from "../product/service";
 import { TAction, TResource } from "./index";
 import { Roles } from "./rulesEngine";
@@ -63,7 +67,7 @@ export const checkAuthorization = async <T extends z.ZodRawShape>({
 }) => {
   const role = await getMembershipRole(userId, organizationId);
   if (zodSchema) {
-    const schema = getRoleBasedSchema(zodSchema!, role, ...rules);
+    const schema = getRoleBasedSchema(zodSchema, role, ...rules);
     const parsedResult = schema.safeParse(data);
     if (!parsedResult.success) {
       return returnValidationErrors(schema, formatErrors(parsedResult.error.issues));
@@ -84,4 +88,44 @@ export const getOrganizationIdFromProductId = async (productId: string) => {
   }
 
   return product.organizationId;
+};
+
+export const getOrganizationIdFromEnvironmentId = async (environmentId: string) => {
+  const environment = await getEnvironment(environmentId);
+  if (!environment) {
+    throw new ResourceNotFoundError("environment", environmentId);
+  }
+
+  const organizationId = await getOrganizationIdFromProductId(environment.productId);
+  return organizationId;
+};
+
+export const getOrganizationIdFromSurveyId = async (surveyId: string) => {
+  const survey = await getSurvey(surveyId);
+  if (!survey) {
+    throw new ResourceNotFoundError("survey", surveyId);
+  }
+
+  const organizationId = await getOrganizationIdFromEnvironmentId(survey.environmentId);
+  return organizationId;
+};
+
+export const getOrganizationIdFromResponseId = async (responseId: string) => {
+  const response = await getResponse(responseId);
+  if (!response) {
+    throw new ResourceNotFoundError("response", responseId);
+  }
+
+  const organizationId = await getOrganizationIdFromSurveyId(response.surveyId);
+  return organizationId;
+};
+
+export const getOrganizationIdFromPersonId = async (personId: string) => {
+  const person = await getPerson(personId);
+  if (!person) {
+    throw new ResourceNotFoundError("person", personId);
+  }
+
+  const organizationId = await getOrganizationIdFromEnvironmentId(person.environmentId);
+  return organizationId;
 };
