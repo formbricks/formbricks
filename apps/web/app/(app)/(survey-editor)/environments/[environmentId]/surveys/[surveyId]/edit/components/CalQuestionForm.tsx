@@ -1,8 +1,10 @@
 import { PlusIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
+import { Checkbox } from "@formbricks/ui/Checkbox";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
@@ -30,6 +32,15 @@ export const CalQuestionForm = ({
   attributeClasses,
 }: CalQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
+  const [isCalHostEnabled, setIsCalHostEnabled] = useState(!!question.calHost);
+
+  useEffect(() => {
+    if (!isCalHostEnabled) {
+      updateQuestion(questionIdx, { calHost: undefined });
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCalHostEnabled]);
 
   return (
     <form>
@@ -80,24 +91,40 @@ export const CalQuestionForm = ({
             Add Description
           </Button>
         )}
-        <div className="mt-3">
-          <Label htmlFor="calUserName">Add your Cal.com username or username/event</Label>
-          <div className="mt-2">
-            <Input
-              id="calUserName"
-              name="calUserName"
-              value={question.calUserName}
-              onChange={(e) => updateQuestion(questionIdx, { calUserName: e.target.value })}
-            />
+        <div className="mt-3 flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
+            <Label htmlFor="calUserName">Add your Cal.com username or username/event</Label>
+            <div>
+              <Input
+                id="calUserName"
+                name="calUserName"
+                value={question.calUserName}
+                onChange={(e) => updateQuestion(questionIdx, { calUserName: e.target.value })}
+              />
+            </div>
           </div>
-          <Label htmlFor="calHost">Your self-hosted Cal.com instance</Label>
-          <div className="mt-2">
-            <Input
-              id="calHost"
-              name="calHost"
-              value={question.calHost}
-              onChange={(e) => updateQuestion(questionIdx, { calHost: e.target.value })}
-            />
+
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="calHost"
+                checked={isCalHostEnabled}
+                onCheckedChange={(checked: boolean) => setIsCalHostEnabled(checked)}
+              />
+              <Label htmlFor="calHost">Do you have a self-hosted Cal.com instance?</Label>
+            </div>
+
+            {isCalHostEnabled && (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="calHost">Enter the URL of your self-hosted Cal.com instance</Label>
+                <Input
+                  id="calHost"
+                  name="calHost"
+                  value={question.calHost}
+                  onChange={(e) => updateQuestion(questionIdx, { calHost: e.target.value })}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
