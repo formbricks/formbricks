@@ -44,7 +44,6 @@ export const SurveyMenuBar = ({
   product,
   responseCount,
   selectedLanguageCode,
-  setSelectedLanguageCode,
 }: SurveyMenuBarProps) => {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -54,7 +53,7 @@ export const SurveyMenuBar = ({
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const cautionText = "This survey received responses.";
 
-  const faultyQuestions: string[] = [];
+  // const faultyQuestions: string[] = [];
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {

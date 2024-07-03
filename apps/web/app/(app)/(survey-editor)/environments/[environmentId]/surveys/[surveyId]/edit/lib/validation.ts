@@ -1,5 +1,5 @@
 // extend this object in order to add more validation rules
-import { isEqual } from "lodash";
+// import { isEqual } from "lodash";
 import { toast } from "react-hot-toast";
 import { extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
@@ -14,8 +14,7 @@ import {
   TSurveyMultipleChoiceQuestion,
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
+  TSurveyQuestion, // TSurveyQuestionTypeEnum,
   TSurveyQuestions,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,

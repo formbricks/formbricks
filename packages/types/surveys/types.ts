@@ -7,7 +7,6 @@ import { ZLanguage } from "../product";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
 import {
-  extractLanguageCodes,
   findLanguageCodesForDuplicateLabels,
   findQuestionsWithCyclicLogic,
   validateCardFieldsForAllLanguages,
