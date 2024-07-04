@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization, ZOrganization } from "@formbricks/types/organizations";
@@ -45,6 +46,9 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
       if (updatedOrganizationResponse?.data) {
         toast.success("Organization name updated successfully.");
         form.reset({ name: updatedOrganizationResponse.data.name });
+      } else {
+        const errorMessage = getFormattedErrorMessage(updatedOrganizationResponse);
+        toast.error(errorMessage);
       }
     } catch (err) {
       toast.error(`Error: ${err.message}`);

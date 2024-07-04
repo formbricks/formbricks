@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TProduct, ZProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/Form";
@@ -51,22 +52,13 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
         },
       });
 
-      if (updatedProductResponse?.serverError || updatedProductResponse?.validationErrors) {
-        if (updatedProductResponse.serverError) {
-          toast.error(updatedProductResponse.serverError);
-        } else {
-          const errors = updatedProductResponse.validationErrors;
-          const errorMessage = Object.keys(errors?.data || {})
-            .map((key) => `${key ? `${key}:` : ""}${errors?.data?.[key].join(", ")}`)
-            .join("\n");
-
-          toast.error(errorMessage);
-        }
-      }
-
+      console.log({ updatedProductResponse });
       if (updatedProductResponse?.data) {
         toast.success("Product name updated successfully.");
         form.resetField("name", { defaultValue: updatedProductResponse.data.name });
+      } else {
+        const errorMessage = getFormattedErrorMessage(updatedProductResponse);
+        toast.error(errorMessage);
       }
     } catch (err) {
       console.error(err);

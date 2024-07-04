@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
 import {
   TProductConfigChannel,
@@ -53,19 +54,6 @@ export const ProductSettings = ({
         },
       });
 
-      if (createProductResponse?.serverError || createProductResponse?.validationErrors) {
-        if (createProductResponse.serverError) {
-          toast.error(createProductResponse.serverError);
-        } else {
-          const errors = createProductResponse.validationErrors;
-          const errorMessage = Object.keys(errors?.data || {})
-            .map((key) => `${key ? `${key}:` : ""}${errors?.data?.[key].join(", ")}`)
-            .join("\n");
-
-          toast.error(errorMessage);
-        }
-      }
-
       if (createProductResponse?.data) {
         // get production environment
         const productionEnvironment = createProductResponse.data.environments.find(
@@ -76,6 +64,9 @@ export const ProductSettings = ({
         } else {
           router.push(`/environments/${productionEnvironment?.id}/surveys`);
         }
+      } else {
+        const errorMessage = getFormattedErrorMessage(createProductResponse);
+        toast.error(errorMessage);
       }
     } catch (error) {
       toast.error("Product creation failed");

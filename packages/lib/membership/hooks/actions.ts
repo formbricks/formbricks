@@ -2,7 +2,7 @@
 
 import "server-only";
 import { getServerSession } from "next-auth";
-import { AuthenticationError } from "@formbricks/types/errors";
+import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { TUser } from "@formbricks/types/user";
 import { authOptions } from "../../authOptions";
 import { getOrganizationByEnvironmentId } from "../../organization/service";
@@ -21,11 +21,16 @@ export const getMembershipByUserIdOrganizationIdAction = async (environmentId: s
     throw new Error("Organization not found");
   }
 
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(user.id, organization.id);
+  const currentUserMembership = await getMembershipRole(user.id, organization.id);
 
-  if (!currentUserMembership) {
-    throw new Error("Membership not found");
+  return currentUserMembership;
+};
+
+export const getMembershipRole = async (userId: string, organizationId: string) => {
+  const membership = await getMembershipByUserIdOrganizationId(userId, organizationId);
+  if (!membership) {
+    throw new AuthorizationError("Not authorized");
   }
 
-  return currentUserMembership?.role;
+  return membership.role;
 };

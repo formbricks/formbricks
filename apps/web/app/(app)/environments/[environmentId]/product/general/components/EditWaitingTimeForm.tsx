@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TProduct, ZProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/Form";
@@ -35,6 +36,9 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product })
       if (updatedProductResponse?.data) {
         toast.success("Waiting period updated successfully.");
         form.resetField("recontactDays", { defaultValue: updatedProductResponse.data.recontactDays });
+      } else {
+        const errorMessage = getFormattedErrorMessage(updatedProductResponse);
+        toast.error(errorMessage);
       }
     } catch (err) {
       toast.error(`Error: ${err.message}`);

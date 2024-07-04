@@ -70,8 +70,7 @@ export const Permissions = {
       read: true,
       update: ZProductUpdateInput.omit({
         name: true,
-        inAppSurveyBranding: true,
-      }).strict(),
+      }),
       delete: true,
     },
     organization: {
