@@ -1,5 +1,4 @@
 // extend this object in order to add more validation rules
-// import { isEqual } from "lodash";
 import { toast } from "react-hot-toast";
 import { extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
@@ -14,11 +13,12 @@ import {
   TSurveyMultipleChoiceQuestion,
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
-  TSurveyQuestion, // TSurveyQuestionTypeEnum,
+  TSurveyQuestion,
   TSurveyQuestions,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
+import { findLanguageCodesForDuplicateLabels } from "@formbricks/types/surveys/validation";
 
 // Utility function to check if label is valid for all required languages
 export const isLabelValidForAllLanguages = (
@@ -38,22 +38,16 @@ const handleI18nCheckForMultipleChoice = (
   question: TSurveyMultipleChoiceQuestion,
   languages: TSurveyLanguage[]
 ): boolean => {
-  return question.choices.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
-};
+  const invalidLangCodes = findLanguageCodesForDuplicateLabels(
+    question.choices.map((choice) => choice.label),
+    languages
+  );
 
-const hasDuplicates = (labels: TI18nString[]) => {
-  const flattenedLabels = labels
-    .map((label) =>
-      Object.keys(label)
-        .map((lang) => {
-          const text = label[lang].trim().toLowerCase();
-          return text && `${lang}:${text}`;
-        })
-        .filter((text) => text)
-    )
-    .flat();
-  const uniqueLabels = new Set(flattenedLabels);
-  return uniqueLabels.size !== flattenedLabels.length;
+  if (invalidLangCodes.length > 0) {
+    return false;
+  }
+
+  return question.choices.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
 };
 
 const handleI18nCheckForMatrixLabels = (
@@ -62,13 +56,13 @@ const handleI18nCheckForMatrixLabels = (
 ): boolean => {
   const rowsAndColumns = [...question.rows, ...question.columns];
 
-  if (hasDuplicates(question.rows)) {
+  const invalidRowsLangCodes = findLanguageCodesForDuplicateLabels(question.rows, languages);
+  const invalidColumnsLangCodes = findLanguageCodesForDuplicateLabels(question.columns, languages);
+
+  if (invalidRowsLangCodes.length > 0 || invalidColumnsLangCodes.length > 0) {
     return false;
   }
 
-  if (hasDuplicates(question.columns)) {
-    return false;
-  }
   return rowsAndColumns.every((label) => isLabelValidForAllLanguages(label, languages));
 };
 
@@ -231,6 +225,7 @@ export const validateId = (
     "multiLanguage",
     "embed",
   ];
+
   if (forbiddenIds.includes(field)) {
     toast.error(`${type} Id not allowed.`);
     return false;

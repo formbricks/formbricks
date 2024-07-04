@@ -728,7 +728,7 @@ export const ZSurvey = z
 
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Question ${questionIndex + 1} has duplicate choice labels for the following languages:`,
+            message: `Question ${questionIndex + 1} has duplicate choice labels ${isDefaultOnly ? "" : "for the following languages:"}`,
             path: ["questions", questionIndex, "choices"],
             params: isDefaultOnly ? undefined : { invalidLanguageCodes },
           });
@@ -791,7 +791,7 @@ export const ZSurvey = z
 
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Matrix question ${questionIndex + 1} has duplicate row labels for the following languages:`,
+            message: `Question ${questionIndex + 1} has duplicate row labels ${isDefaultOnly ? "" : "for the following languages:"}`,
             path: ["questions", questionIndex, "rows"],
             params: isDefaultOnly ? undefined : { invalidLanguageCodes },
           });
@@ -808,7 +808,7 @@ export const ZSurvey = z
 
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Matrix question ${questionIndex + 1} has duplicate column labels for the following languages:`,
+            message: `Question ${questionIndex + 1} has duplicate column labels ${isDefaultOnly ? "" : "for the following languages:"}`,
             path: ["questions", questionIndex, "columns"],
             params: isDefaultOnly ? undefined : { invalidLanguageCodes },
           });

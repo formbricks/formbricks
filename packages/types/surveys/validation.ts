@@ -81,7 +81,7 @@ export const findLanguageCodesForDuplicateLabels = (
   const duplicateLabels = new Set<string>();
 
   for (const language of languagesToCheck) {
-    const labelTexts = labels.map((label) => label[language]).filter(Boolean);
+    const labelTexts = labels.map((label) => label[language]?.trim()).filter(Boolean);
     const uniqueLabels = new Set(labelTexts);
 
     if (uniqueLabels.size !== labelTexts.length) {
