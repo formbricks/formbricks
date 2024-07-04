@@ -7,7 +7,7 @@ export const testEndpoint = async (url: string) => {
     const response = await fetch(url, {
       method: "POST",
       body: JSON.stringify({
-        event: "testEndpoint",
+        content: "Just testing webhooks",
       }),
       headers: {
         "Content-Type": "application/json",
