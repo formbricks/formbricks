@@ -147,27 +147,29 @@ export const FileInput = ({
 
   return (
     <div
-      className={`items-left bg-input-bg hover:bg-input-bg-selected border-border relative mt-3 flex w-full flex-col justify-center rounded-lg border-2 border-dashed dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800`}>
+      className={`fb-items-left fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-relative fb-mt-3 fb-flex fb-w-full fb-flex-col fb-justify-center fb-rounded-lg fb-border-2 fb-border-dashed dark:fb-border-slate-600 dark:fb-bg-slate-700 dark:hover:fb-border-slate-500 dark:hover:fb-bg-slate-800`}>
       <div>
         {fileUrls?.map((file, index) => {
           const fileName = getOriginalFileNameFromUrl(file);
           return (
-            <div key={index} className="bg-input-bg-selected border-border relative m-2 rounded-md border">
-              <div className="absolute right-0 top-0 m-2">
-                <div className="bg-survey-bg flex h-5 w-5 cursor-pointer items-center justify-center rounded-md">
+            <div
+              key={index}
+              className="fb-bg-input-bg-selected fb-border-border fb-relative fb-m-2 fb-rounded-md fb-border">
+              <div className="fb-absolute fb-right-0 fb-top-0 fb-m-2">
+                <div className="fb-bg-survey-bg fb-flex fb-h-5 fb-w-5 fb-cursor-pointer fb-items-center fb-justify-center fb-rounded-md">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 26 26"
                     strokeWidth={1}
                     stroke="currentColor"
-                    className="text-heading h-5"
+                    className="fb-text-heading fb-h-5"
                     onClick={(e) => handleDeleteFile(index, e)}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10 10m0-10L9 19" />
                   </svg>
                 </div>
               </div>
-              <div className="flex flex-col items-center justify-center p-2">
+              <div className="fb-flex fb-flex-col fb-items-center fb-justify-center fb-p-2">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -178,11 +180,11 @@ export const FileInput = ({
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="text-heading h-6">
+                  className="fb-text-heading fb-h-6">
                   <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                   <polyline points="14 2 14 8 20 8" />
                 </svg>
-                <p className="text-heading mt-1 w-full overflow-hidden overflow-ellipsis whitespace-nowrap px-2 text-center text-sm">
+                <p className="fb-text-heading fb-mt-1 fb-w-full fb-overflow-hidden fb-overflow-ellipsis fb-whitespace-nowrap fb-px-2 fb-text-center fb-text-sm">
                   {fileName}
                 </p>
               </div>
@@ -193,8 +195,8 @@ export const FileInput = ({
 
       <div>
         {isUploading && (
-          <div className="inset-0 flex animate-pulse items-center justify-center rounded-lg py-4">
-            <label htmlFor={uniqueHtmlFor} className="text-subheading text-sm font-medium">
+          <div className="fb-inset-0 fb-flex fb-animate-pulse fb-items-center fb-justify-center fb-rounded-lg fb-py-4">
+            <label htmlFor={uniqueHtmlFor} className="fb-text-subheading fb-text-sm fb-font-medium">
               Uploading...
             </label>
           </div>
@@ -203,7 +205,7 @@ export const FileInput = ({
         <label htmlFor={uniqueHtmlFor} onDragOver={handleDragOver} onDrop={handleDrop}>
           {showUploader && (
             <div
-              className="focus:outline-brand flex flex-col items-center justify-center py-6 hover:cursor-pointer"
+              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer"
               tabIndex={1}
               onKeyDown={(e) => {
                 // Accessibility: if spacebar was pressed pass this down to the input
@@ -219,22 +221,22 @@ export const FileInput = ({
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
                 stroke="currentColor"
-                className="text-placeholder h-6">
+                className="fb-text-placeholder fb-h-6">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
                 />
               </svg>
-              <p className="text-placeholder mt-2 text-sm dark:text-slate-400">
-                <span className="font-medium">Click or drag to upload files.</span>
+              <p className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400">
+                <span className="fb-font-medium">Click or drag to upload files.</span>
               </p>
               <input
                 type="file"
                 id={uniqueHtmlFor}
                 name={uniqueHtmlFor}
                 accept={allowedFileExtensions?.map((ext) => `.${ext}`).join(",")}
-                className="hidden"
+                className="fb-hidden"
                 onChange={(e) => {
                   const inputElement = e.target as HTMLInputElement;
                   if (inputElement.files) {

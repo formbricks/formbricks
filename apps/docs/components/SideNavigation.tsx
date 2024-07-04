@@ -47,13 +47,13 @@ export const SideNavigation = ({ pathname }) => {
           return (
             <li
               key={heading.text}
-              className={`mb-4 ml-4 text-slate-900 dark:text-white  ml-${heading.level === 2 ? 0 : heading.level === 3 ? 4 : 6}`}>
+              className={`mb-4 ml-4 text-slate-900 dark:text-white ml-${heading.level === 2 ? 0 : heading.level === 3 ? 4 : 6}`}>
               <Link
                 href={`#${heading.id}`}
                 onClick={() => setSelectedId(heading.id)}
                 className={`${
                   heading.id === selectedId
-                    ? "text-brand font-medium text-opacity-35"
+                    ? "text-brand font-medium"
                     : "font-normal text-slate-600 hover:text-slate-950 dark:text-white dark:hover:text-slate-50"
                 }`}>
                 {heading.text}

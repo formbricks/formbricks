@@ -115,19 +115,26 @@ export const StackedCardsContainer = ({
 
   // UseEffect to handle the resize of current question card and set cardHeight accordingly
   useEffect(() => {
-    const currentElement = cardRefs.current[questionIdxTemp];
-    if (currentElement) {
-      if (resizeObserver.current) resizeObserver.current.disconnect();
-      resizeObserver.current = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          setCardHeight(entry.contentRect.height + "px");
-          setCardWidth(entry.contentRect.width);
+    const timer = setTimeout(() => {
+      const currentElement = cardRefs.current[questionIdxTemp];
+      if (currentElement) {
+        if (resizeObserver.current) {
+          resizeObserver.current.disconnect();
         }
-      });
-      resizeObserver.current.observe(currentElement);
-    }
-    return () => resizeObserver.current?.disconnect();
-  }, [questionIdxTemp, cardArrangement]);
+        resizeObserver.current = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            setCardHeight(entry.contentRect.height + "px");
+            setCardWidth(entry.contentRect.width);
+          }
+        });
+        resizeObserver.current.observe(currentElement);
+      }
+    }, 0);
+    return () => {
+      resizeObserver.current?.disconnect();
+      clearTimeout(timer);
+    };
+  }, [questionIdxTemp, cardArrangement, cardRefs]);
 
   // Reset question progress, when card arrangement changes
   useEffect(() => {
@@ -155,7 +162,7 @@ export const StackedCardsContainer = ({
 
   return (
     <div
-      className="relative flex h-full items-end justify-center md:items-center"
+      className="fb-relative fb-flex fb-h-full fb-items-end fb-justify-center md:fb-items-center"
       onMouseEnter={() => {
         setHovered(true);
       }}
@@ -197,7 +204,7 @@ export const StackedCardsContainer = ({
                   ...straightCardArrangementStyles(offset),
                   ...getBottomStyles(),
                 }}
-                className="pointer rounded-custom bg-survey-bg absolute inset-x-0 backdrop-blur-md transition-all ease-in-out">
+                className="fb-pointer fb-rounded-custom fb-bg-survey-bg fb-absolute fb-inset-x-0 fb-backdrop-blur-md fb-transition-all fb-ease-in-out">
                 {getCardContent(questionIdxTemp, offset)}
               </div>
             );

@@ -28,8 +28,7 @@ export const CLOUD_PRICING_DATA = {
       id: "startup",
       featured: false,
       description: "Everything in Free with additional features.",
-      offer: true,
-      price: { monthly: "€29", yearly: "€25" },
+      price: { monthly: "€59", yearly: "€49" },
       mainFeatures: [
         "Everything in Free",
         "Remove Branding",
@@ -44,8 +43,7 @@ export const CLOUD_PRICING_DATA = {
       id: "scale",
       featured: true,
       description: "Advanced features for scaling your business.",
-      offer: true,
-      price: { monthly: "€99", yearly: "€89" },
+      price: { monthly: "€199", yearly: "€179" },
       mainFeatures: [
         "Everything in Startup",
         "Team Access Roles",

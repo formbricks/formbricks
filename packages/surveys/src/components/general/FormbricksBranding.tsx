@@ -4,11 +4,11 @@ export const FormbricksBranding = () => {
       href="https://formbricks.com?utm_source=survey_branding"
       target="_blank"
       tabIndex={-1}
-      className="my-2 flex justify-center">
-      <p className="text-signature text-xs">
+      className="fb-my-2 fb-flex fb-justify-center">
+      <p className="fb-text-signature fb-text-xs">
         Powered by{" "}
         <b>
-          <span className="text-branding-text hover:text-signature">Formbricks</span>
+          <span className="fb-text-branding-text hover:fb-text-signature">Formbricks</span>
         </b>
       </p>
     </a>

@@ -42,7 +42,7 @@ export const QuestionSummaryHeader = ({
 
   return (
     <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-      <div className={"align-center flex justify-between gap-4 "}>
+      <div className={"align-center flex justify-between gap-4"}>
         <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">
           {formatTextWithSlashes(
             recallToHeadline(questionSummary.question.headline, survey, true, "default", attributeClasses)[
@@ -52,19 +52,19 @@ export const QuestionSummaryHeader = ({
         </h3>
       </div>
       <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
-        <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
-          {questionType && <questionType.icon className="mr-2 h-4 w-4 " />}
+        <div className="flex items-center rounded-lg bg-slate-100 p-2">
+          {questionType && <questionType.icon className="mr-2 h-4 w-4" />}
           {questionType ? questionType.label : "Unknown Question Type"} Question
         </div>
         {showResponses && (
-          <div className=" flex items-center rounded-lg bg-slate-100 p-2">
+          <div className="flex items-center rounded-lg bg-slate-100 p-2">
             <InboxIcon className="mr-2 h-4 w-4" />
             {`${questionSummary.responseCount} Responses`}
           </div>
         )}
         {insights}
         {!questionSummary.question.required && (
-          <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
+          <div className="flex items-center rounded-lg bg-slate-100 p-2">Optional</div>
         )}
       </div>
     </div>

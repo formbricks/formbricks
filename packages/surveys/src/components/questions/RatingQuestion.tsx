@@ -77,7 +77,7 @@ export const RatingQuestion = ({
       id={id}
       name="rating"
       value={number}
-      className="invisible absolute left-0 h-full w-full cursor-pointer opacity-0"
+      className="fb-invisible fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
       onClick={() => handleSelect(number)}
       required={question.required}
       checked={value === number}
@@ -88,6 +88,22 @@ export const RatingQuestion = ({
     setHoveredNumber(0);
   }, [question.id, setHoveredNumber]);
 
+  const getRatingNumberOptionColor = (range: number, idx: number) => {
+    if (range > 5) {
+      if (range - idx < 2) return "fb-bg-emerald-100";
+      if (range - idx < 4) return "fb-bg-orange-100";
+      return "fb-bg-rose-100";
+    } else if (range < 5) {
+      if (range - idx < 1) return "fb-bg-emerald-100";
+      if (range - idx < 2) return "fb-bg-orange-100";
+      return "fb-bg-rose-100";
+    } else {
+      if (range - idx < 2) return "fb-bg-emerald-100";
+      if (range - idx < 3) return "fb-bg-orange-100";
+      return "fb-bg-rose-100";
+    }
+  };
+
   return (
     <form
       key={question.id}
@@ -97,7 +113,7 @@ export const RatingQuestion = ({
         setTtc(updatedTtcObj);
         onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}
-      className="w-full">
+      className="fb-w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -110,16 +126,16 @@ export const RatingQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="mb-4 mt-6 flex items-center justify-center">
-            <fieldset className="w-full">
-              <legend className="sr-only">Choices</legend>
-              <div className="flex w-full">
+          <div className="fb-mb-4 fb-mt-6 fb-flex fb-items-center fb-justify-center">
+            <fieldset className="fb-w-full">
+              <legend className="fb-sr-only">Choices</legend>
+              <div className="fb-flex fb-w-full">
                 {Array.from({ length: question.range }, (_, i) => i + 1).map((number, i, a) => (
                   <span
                     key={number}
                     onMouseOver={() => setHoveredNumber(number)}
                     onMouseLeave={() => setHoveredNumber(0)}
-                    className="bg-survey-bg flex-1 text-center text-sm">
+                    className="fb-bg-survey-bg fb-flex-1 fb-text-center fb-text-sm">
                     {question.scale === "number" ? (
                       <label
                         tabIndex={i + 1}
@@ -133,13 +149,19 @@ export const RatingQuestion = ({
                         }}
                         className={cn(
                           value === number
-                            ? "bg-accent-selected-bg border-border-highlight z-10 border"
-                            : "border-border",
-                          a.length === number ? "rounded-r-custom border-r" : "",
-                          number === 1 ? "rounded-l-custom" : "",
-                          hoveredNumber === number ? "bg-accent-bg " : "",
-                          "text-heading focus:border-brand relative flex min-h-[41px] w-full cursor-pointer items-center justify-center border-b border-l border-t focus:border-2 focus:outline-none"
+                            ? "fb-bg-accent-selected-bg fb-border-border-highlight fb-z-10 fb-border"
+                            : "fb-border-border",
+                          a.length === number ? "fb-rounded-r-custom fb-border-r" : "",
+                          number === 1 ? "fb-rounded-l-custom" : "",
+                          hoveredNumber === number ? "fb-bg-accent-bg" : "",
+                          question.isColorCodingEnabled ? "fb-min-h-[47px]" : "fb-min-h-[41px]",
+                          "fb-text-heading focus:fb-border-brand fb-relative fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-justify-center fb-overflow-hidden fb-border-b fb-border-l fb-border-t focus:fb-border-2 focus:fb-outline-none"
                         )}>
+                        {question.isColorCodingEnabled && (
+                          <div
+                            className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getRatingNumberOptionColor(question.range, number)}`}
+                          />
+                        )}
                         <HiddenRadioInput number={number} id={number.toString()} />
                         {number}
                       </label>
@@ -156,15 +178,15 @@ export const RatingQuestion = ({
                         }}
                         className={cn(
                           number <= hoveredNumber || number <= (value as number)
-                            ? "text-amber-400"
-                            : "text-[#8696AC]",
-                          hoveredNumber === number ? "text-amber-400 " : "",
-                          "relative flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none"
+                            ? "fb-text-amber-400"
+                            : "fb-text-[#8696AC]",
+                          hoveredNumber === number ? "fb-text-amber-400" : "",
+                          "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-cursor-pointer fb-justify-center focus:fb-outline-none"
                         )}
                         onFocus={() => setHoveredNumber(number)}
                         onBlur={() => setHoveredNumber(0)}>
                         <HiddenRadioInput number={number} id={number.toString()} />
-                        <div className="h-full w-full max-w-[74px] object-contain">
+                        <div className="fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain">
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <path
                               fillRule="evenodd"
@@ -176,10 +198,10 @@ export const RatingQuestion = ({
                     ) : (
                       <label
                         className={cn(
-                          "relative flex max-h-16 min-h-9 w-full cursor-pointer justify-center",
+                          "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-w-full fb-cursor-pointer fb-justify-center",
                           value === number || hoveredNumber === number
-                            ? "stroke-rating-selected text-rating-selected"
-                            : "stroke-heading text-heading focus:border-accent-bg focus:border-2 focus:outline-none"
+                            ? "fb-stroke-rating-selected fb-text-rating-selected"
+                            : "fb-stroke-heading fb-text-heading focus:fb-border-accent-bg focus:fb-border-2 focus:fb-outline-none"
                         )}
                         tabIndex={i + 1}
                         onKeyDown={(e) => {
@@ -193,11 +215,12 @@ export const RatingQuestion = ({
                         onFocus={() => setHoveredNumber(number)}
                         onBlur={() => setHoveredNumber(0)}>
                         <HiddenRadioInput number={number} id={number.toString()} />
-                        <div className="h-full w-full max-w-[74px] object-contain">
+                        <div className={cn("fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain")}>
                           <RatingSmiley
                             active={value === number || hoveredNumber === number}
                             idx={i}
                             range={question.range}
+                            addColors={question.isColorCodingEnabled}
                           />
                         </div>
                       </label>
@@ -205,11 +228,11 @@ export const RatingQuestion = ({
                   </span>
                 ))}
               </div>
-              <div className="text-subheading mt-4 flex justify-between px-1.5 text-xs leading-6">
-                <p className="w-1/2 text-left" dir="auto">
+              <div className="fb-text-subheading fb-mt-4 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6">
+                <p className="fb-w-1/2 fb-text-left" dir="auto">
                   {getLocalizedValue(question.lowerLabel, languageCode)}
                 </p>
-                <p className="w-1/2 text-right" dir="auto">
+                <p className="fb-w-1/2 fb-text-right" dir="auto">
                   {getLocalizedValue(question.upperLabel, languageCode)}
                 </p>
               </div>
@@ -217,7 +240,7 @@ export const RatingQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton
             tabIndex={!question.required || value ? question.range + 2 : question.range + 1}
@@ -246,12 +269,46 @@ interface RatingSmileyProps {
   active: boolean;
   idx: number;
   range: number;
+  addColors?: boolean;
 }
 
-const RatingSmiley = ({ active, idx, range }: RatingSmileyProps): JSX.Element => {
-  const activeColor = "fill-rating-fill";
-  const inactiveColor = "fill-none";
-  let icons = [
+const getSmileyColor = (range: number, idx: number) => {
+  if (range > 5) {
+    if (range - idx < 3) return "fb-fill-emerald-100";
+    if (range - idx < 5) return "fb-fill-orange-100";
+    return "fb-fill-rose-100";
+  } else if (range < 5) {
+    if (range - idx < 2) return "fb-fill-emerald-100";
+    if (range - idx < 3) return "fb-fill-orange-100";
+    return "fb-fill-rose-100";
+  } else {
+    if (range - idx < 3) return "fb-fill-emerald-100";
+    if (range - idx < 4) return "fb-fill-orange-100";
+    return "fb-fill-rose-100";
+  }
+};
+
+const getActiveSmileyColor = (range: number, idx: number) => {
+  if (range > 5) {
+    if (range - idx < 3) return "fb-fill-emerald-300";
+    if (range - idx < 5) return "fb-fill-orange-300";
+    return "fb-fill-rose-300";
+  } else if (range < 5) {
+    if (range - idx < 2) return "fb-fill-emerald-300";
+    if (range - idx < 3) return "fb-fill-orange-300";
+    return "fb-fill-rose-300";
+  } else {
+    if (range - idx < 3) return "fb-fill-emerald-300";
+    if (range - idx < 4) return "fb-fill-orange-300";
+    return "fb-fill-rose-300";
+  }
+};
+
+const getSmiley = (iconIdx: number, idx: number, range: number, active: boolean, addColors: boolean) => {
+  const activeColor = addColors ? getActiveSmileyColor(range, idx) : "fb-fill-rating-fill";
+  const inactiveColor = addColors ? getSmileyColor(range, idx) : "fb-fill-none";
+
+  const icons = [
     <TiredFace className={active ? activeColor : inactiveColor} />,
     <WearyFace className={active ? activeColor : inactiveColor} />,
     <PerseveringFace className={active ? activeColor : inactiveColor} />,
@@ -264,9 +321,16 @@ const RatingSmiley = ({ active, idx, range }: RatingSmileyProps): JSX.Element =>
     <GrinningSquintingFace className={active ? activeColor : inactiveColor} />,
   ];
 
-  if (range == 7) icons = [icons[1], icons[3], icons[4], icons[5], icons[6], icons[8], icons[9]];
-  else if (range == 5) icons = [icons[3], icons[4], icons[5], icons[6], icons[7]];
-  else if (range == 4) icons = [icons[4], icons[5], icons[6], icons[7]];
-  else if (range == 3) icons = [icons[4], icons[5], icons[7]];
-  return icons[idx];
+  return icons[iconIdx];
+};
+
+export const RatingSmiley = ({ active, idx, range, addColors = false }: RatingSmileyProps): JSX.Element => {
+  let iconsIdx: number[] = [];
+  if (range === 10) iconsIdx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  else if (range === 7) iconsIdx = [1, 3, 4, 5, 6, 8, 9];
+  else if (range === 5) iconsIdx = [3, 4, 5, 6, 7];
+  else if (range === 4) iconsIdx = [4, 5, 6, 7];
+  else if (range === 3) iconsIdx = [4, 5, 7];
+
+  return getSmiley(iconsIdx[idx], idx, range, active, addColors);
 };

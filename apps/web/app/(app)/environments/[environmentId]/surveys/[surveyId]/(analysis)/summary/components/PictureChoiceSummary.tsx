@@ -29,7 +29,7 @@ export const PictureChoiceSummary = ({
         {results.map((result) => (
           <div key={result.id}>
             <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
-              <div className="mr-8 flex w-full justify-between space-x-1 sm:justify-normal ">
+              <div className="mr-8 flex w-full justify-between space-x-1 sm:justify-normal">
                 <div className="relative h-32 w-[220px]">
                   <Image
                     src={result.imageUrl}
