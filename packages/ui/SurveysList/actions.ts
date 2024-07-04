@@ -1,6 +1,7 @@
 "use server";
 
 import { Prisma as prismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -41,7 +42,7 @@ export const copyToOtherEnvironmentAction = async (
   environmentId: string,
   surveyId: string,
   targetEnvironmentId: string,
-  ProductId: string //productId of the selected product
+  productId: string
 ) => {
   const session = await getServerSession(authOptions);
 
@@ -51,16 +52,34 @@ export const copyToOtherEnvironmentAction = async (
     session.user.id,
     environmentId
   );
+
   if (!isAuthorizedToAccessSourceEnvironment) throw new AuthorizationError("Not authorized");
 
   const isAuthorizedToAccessTargetEnvironment = await hasUserEnvironmentAccess(
     session.user.id,
     targetEnvironmentId
   );
+
   if (!isAuthorizedToAccessTargetEnvironment) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const existingEnvironment = await prisma.environment.findFirst({ where: { id: environmentId } });
+
+  if (!existingEnvironment) {
+    throw new ResourceNotFoundError("Environment", environmentId);
+  }
+
+  const existingTargetEnvironment = await prisma.environment.findFirst({
+    where: {
+      id: targetEnvironmentId,
+    },
+  });
+
+  if (!existingTargetEnvironment) {
+    throw new ResourceNotFoundError("Environment", targetEnvironmentId);
+  }
 
   const existingSurvey = await prisma.survey.findFirst({
     where: {
@@ -95,10 +114,6 @@ export const copyToOtherEnvironmentAction = async (
 
   if (!existingSurvey) {
     throw new ResourceNotFoundError("Survey", surveyId);
-  }
-
-  if (!existingSurvey) {
-    throw new ResourceNotFoundError("Environment", environmentId);
   }
 
   let targetEnvironmentTriggers: string[] = [];
@@ -228,7 +243,7 @@ export const copyToOtherEnvironmentAction = async (
   if (existingSurvey.segment) {
     if (existingSurvey.segment.isPrivate) {
       const newInlineSegment = await createSegment({
-        environmentId,
+        environmentId: targetEnvironmentId,
         title: `${newSurvey.id}`,
         isPrivate: true,
         surveyId: newSurvey.id,
@@ -253,21 +268,56 @@ export const copyToOtherEnvironmentAction = async (
         environmentId: newSurvey.environmentId,
       });
     } else {
-      await prisma.survey.update({
-        where: {
-          id: newSurvey.id,
-        },
-        data: {
-          segment: {
-            connect: {
-              id: existingSurvey.segment.id,
+      // public segment
+
+      // if the environment and targetEnvironment are the same, we connect the copied segment to the copied survey.
+      if (environmentId === targetEnvironmentId) {
+        await prisma.survey.update({
+          where: {
+            id: newSurvey.id,
+          },
+          data: {
+            segment: {
+              connect: {
+                id: existingSurvey.segment.id,
+              },
             },
           },
-        },
-      });
+        });
+      } else {
+        // if a public segment of the same name exists in the target environment, we make a new segment in the target environment and then connect the copied survey to it.
+        const existingSegmentInTargetEnvironment = await prisma.segment.findFirst({
+          where: {
+            title: existingSurvey.segment.title,
+            isPrivate: false,
+            environmentId: targetEnvironmentId,
+          },
+        });
+
+        await prisma.segment.create({
+          data: {
+            title: existingSegmentInTargetEnvironment
+              ? `${existingSurvey.segment.title} (copied from environment: ${environmentId})`
+              : existingSurvey.segment.title,
+            environmentId: targetEnvironmentId,
+            isPrivate: false,
+            filters: existingSurvey.segment.filters,
+            surveys: {
+              connect: {
+                id: newSurvey.id,
+              },
+            },
+          },
+        });
+      }
 
       segmentCache.revalidate({
         id: existingSurvey.segment.id,
+        environmentId: newSurvey.environmentId,
+      });
+
+      surveyCache.revalidate({
+        id: newSurvey.id,
         environmentId: newSurvey.environmentId,
       });
     }
@@ -283,7 +333,7 @@ export const copyToOtherEnvironmentAction = async (
       id: targetEnvironmentId,
     },
     data: {
-      productId: ProductId,
+      productId: productId,
       surveys: {
         connect: {
           id: newSurvey.id,
