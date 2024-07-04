@@ -140,9 +140,7 @@ export const SurveyMenuBar = ({
     return localSurvey.segment;
   };
 
-  const handleSurveySave = async () => {
-    setIsSurveySaving(true);
-
+  const validateSurveyWithZod = (): boolean => {
     const localSurveyValidation = ZSurvey.safeParse(localSurvey);
     if (!localSurveyValidation.success) {
       const currentError = localSurveyValidation.error.errors[0];
@@ -172,19 +170,30 @@ export const SurveyMenuBar = ({
           toast.error(currentError.message);
         }
 
-        setIsSurveySaving(false);
-        return;
+        return false;
       }
 
       toast.error(currentError.message);
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSurveySave = async (): Promise<boolean> => {
+    setIsSurveySaving(true);
+
+    const isSurveyValidatedWithZod = validateSurveyWithZod();
+
+    if (!isSurveyValidatedWithZod) {
       setIsSurveySaving(false);
-      return;
+      return false;
     }
 
     try {
       if (!isSurveyValid(localSurvey, selectedLanguageCode)) {
         setIsSurveySaving(false);
-        return;
+        return false;
       }
 
       localSurvey.questions = localSurvey.questions.map((question) => {
@@ -199,21 +208,32 @@ export const SurveyMenuBar = ({
       setLocalSurvey(updatedSurvey);
 
       toast.success("Changes saved.");
+
+      return true;
     } catch (e) {
       console.error(e);
       setIsSurveySaving(false);
       toast.error(`Error saving changes`);
-      return;
+      return false;
     }
   };
 
   const handleSaveAndGoBack = async () => {
-    await handleSurveySave();
-    router.back();
+    if (await handleSurveySave()) {
+      router.back();
+    }
   };
 
   const handleSurveyPublish = async () => {
     setIsSurveyPublishing(true);
+
+    const isSurveyValidatedWithZod = validateSurveyWithZod();
+
+    if (!isSurveyValidatedWithZod) {
+      setIsSurveyPublishing(false);
+      return;
+    }
+
     try {
       if (!isSurveyValid(localSurvey, selectedLanguageCode)) {
         setIsSurveyPublishing(false);

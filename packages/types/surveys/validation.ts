@@ -1,6 +1,19 @@
 import { z } from "zod";
 import { TI18nString, TSurveyLanguage, TSurveyQuestion } from "./types";
 
+export const FORBIDDEN_IDS = [
+  "userId",
+  "source",
+  "suid",
+  "end",
+  "start",
+  "welcomeCard",
+  "hidden",
+  "verifiedEmail",
+  "multiLanguage",
+  "embed",
+];
+
 export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string[] => {
   if (!surveyLanguages) return [];
   return surveyLanguages.map((surveyLanguage) =>
@@ -92,6 +105,7 @@ export const findLanguageCodesForDuplicateLabels = (
   return Array.from(duplicateLabels);
 };
 
+// Checks if there is a cycle present in the survey data logic and returns all questions responsible for the cycle.
 export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): string[] => {
   const visited: Record<string, boolean> = {};
   const recStack: Record<string, boolean> = {};
@@ -137,4 +151,36 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
   }
 
   return Array.from(cyclicQuestions);
+};
+
+// function to validate hidden field or question id
+export const validateId = (
+  type: "Hidden field" | "Question",
+  field: string,
+  existingQuestionIds: string[],
+  existingHiddenFieldIds: string[]
+): string | null => {
+  if (field.trim() === "") {
+    return `Please enter a ${type} Id.`;
+  }
+
+  const combinedIds = [...existingQuestionIds, ...existingHiddenFieldIds];
+
+  if (combinedIds.findIndex((id) => id.toLowerCase() === field.toLowerCase()) !== -1) {
+    return `${type} Id already exists in questions or hidden fields.`;
+  }
+
+  if (FORBIDDEN_IDS.includes(field)) {
+    return `${type} Id not allowed.`;
+  }
+
+  if (field.includes(" ")) {
+    return `${type} Id not allowed, avoid using spaces.`;
+  }
+
+  if (!/^[a-zA-Z0-9_-]+$/.test(field)) {
+    return `${type} Id not allowed, use only alphanumeric characters, hyphens, or underscores.`;
+  }
+
+  return null;
 };

@@ -14,7 +14,6 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestion,
-  TSurveyQuestions,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
@@ -183,114 +182,6 @@ export const isCardValid = (
     ) &&
     isContentValid(card.buttonLabel)
   );
-};
-
-export const isValidUrl = (string: string): boolean => {
-  try {
-    new URL(string);
-    return true;
-  } catch (e) {
-    return false;
-  }
-};
-
-// Function to validate question ID and Hidden field Id
-export const validateId = (
-  type: "Hidden field" | "Question",
-  field: string,
-  existingQuestionIds: string[],
-  existingHiddenFieldIds: string[]
-): boolean => {
-  if (field.trim() === "") {
-    toast.error(`Please enter a ${type} Id.`);
-    return false;
-  }
-
-  const combinedIds = [...existingQuestionIds, ...existingHiddenFieldIds];
-
-  if (combinedIds.findIndex((id) => id.toLowerCase() === field.toLowerCase()) !== -1) {
-    toast.error(`${type} Id already exists in questions or hidden fields.`);
-    return false;
-  }
-
-  const forbiddenIds = [
-    "userId",
-    "source",
-    "suid",
-    "end",
-    "start",
-    "welcomeCard",
-    "hidden",
-    "verifiedEmail",
-    "multiLanguage",
-    "embed",
-  ];
-
-  if (forbiddenIds.includes(field)) {
-    toast.error(`${type} Id not allowed.`);
-    return false;
-  }
-
-  if (field.includes(" ")) {
-    toast.error(`${type} Id not allowed, avoid using spaces.`);
-    return false;
-  }
-
-  if (!/^[a-zA-Z0-9_-]+$/.test(field)) {
-    toast.error(`${type} Id not allowed, use only alphanumeric characters, hyphens, or underscores.`);
-    return false;
-  }
-
-  return true;
-};
-
-// Checks if there is a cycle present in the survey data logic and returns all questions responsible for the cycle.
-export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestions): string[] => {
-  const visited: Record<string, boolean> = {};
-  const recStack: Record<string, boolean> = {};
-  const cyclicQuestions: Set<string> = new Set();
-
-  const checkForCyclicLogic = (questionId: string): boolean => {
-    if (!visited[questionId]) {
-      visited[questionId] = true;
-      recStack[questionId] = true;
-
-      const question = questions.find((question) => question.id === questionId);
-      if (question && question.logic && question.logic.length > 0) {
-        for (const logic of question.logic) {
-          const destination = logic.destination;
-          if (!destination) {
-            continue;
-          }
-
-          if (!visited[destination] && checkForCyclicLogic(destination)) {
-            cyclicQuestions.add(questionId);
-            return true;
-          } else if (recStack[destination]) {
-            cyclicQuestions.add(questionId);
-            return true;
-          }
-        }
-      } else {
-        // Handle default behavior
-        const nextQuestionIndex = questions.findIndex((question) => question.id === questionId) + 1;
-        const nextQuestion = questions[nextQuestionIndex];
-        if (nextQuestion && !visited[nextQuestion.id] && checkForCyclicLogic(nextQuestion.id)) {
-          return true;
-        }
-      }
-    }
-
-    recStack[questionId] = false;
-    return false;
-  };
-
-  for (const question of questions) {
-    const questionId = question.id;
-    checkForCyclicLogic(questionId);
-  }
-
-  return Array.from(cyclicQuestions);
 };
 
 export const isSurveyValid = (survey: TSurvey, selectedLanguageCode: string) => {

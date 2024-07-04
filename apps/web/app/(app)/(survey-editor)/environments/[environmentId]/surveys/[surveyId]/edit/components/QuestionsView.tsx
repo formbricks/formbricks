@@ -18,12 +18,8 @@ import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/u
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import {
-  findQuestionsWithCyclicLogic,
-  isCardValid,
-  validateQuestion,
-  validateSurveyQuestionsInBatch,
-} from "../lib/validation";
+import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
+import { isCardValid, validateQuestion, validateSurveyQuestionsInBatch } from "../lib/validation";
 import { AddQuestionButton } from "./AddQuestionButton";
 import { EditThankYouCard } from "./EditThankYouCard";
 import { EditWelcomeCard } from "./EditWelcomeCard";

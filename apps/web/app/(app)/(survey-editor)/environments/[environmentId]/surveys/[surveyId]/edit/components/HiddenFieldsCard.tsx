@@ -5,12 +5,12 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey, TSurveyHiddenFields } from "@formbricks/types/surveys/types";
+import { validateId } from "@formbricks/types/surveys/validation";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { Tag } from "@formbricks/ui/Tag";
-import { validateId } from "../lib/validation";
 
 interface HiddenFieldsCardProps {
   localSurvey: TSurvey;
@@ -119,14 +119,24 @@ export const HiddenFieldsCard = ({
               e.preventDefault();
               const existingQuestionIds = localSurvey.questions.map((question) => question.id);
               const existingHiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
-              if (validateId("Hidden field", hiddenField, existingQuestionIds, existingHiddenFieldIds)) {
-                updateSurvey({
-                  fieldIds: [...(localSurvey.hiddenFields?.fieldIds || []), hiddenField],
-                  enabled: true,
-                });
-                toast.success("Hidden field added successfully");
-                setHiddenField("");
+              const validateIdError = validateId(
+                "Hidden field",
+                hiddenField,
+                existingQuestionIds,
+                existingHiddenFieldIds
+              );
+
+              if (validateIdError) {
+                toast.error(validateIdError);
+                return;
               }
+
+              updateSurvey({
+                fieldIds: [...(localSurvey.hiddenFields?.fieldIds || []), hiddenField],
+                enabled: true,
+              });
+              toast.success("Hidden field added successfully");
+              setHiddenField("");
             }}>
             <Label htmlFor="headline">Hidden Field</Label>
             <div className="mt-2 flex gap-2">
