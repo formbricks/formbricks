@@ -77,14 +77,16 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 
   const updateSurveyTranslations = (survey: TSurvey, updatedLanguages: TSurveyLanguage[]) => {
     const translatedSurveyResult = translateSurvey(survey, extractLanguageCodes(updatedLanguages));
-    try {
-      const parsedSurvey = ZSurvey.parse(translatedSurveyResult);
-      if (parsedSurvey) {
-        setLocalSurvey({ ...parsedSurvey, languages: updatedLanguages });
-      }
-    } catch (error) {
-      toast.error("Some error occured while translating the survey");
-    }
+    setLocalSurvey({ ...translatedSurveyResult, languages: updatedLanguages });
+    // try {
+    //   const parsedSurvey = ZSurvey.parse(translatedSurveyResult);
+    //   if (parsedSurvey) {
+    //     setLocalSurvey({ ...parsedSurvey, languages: updatedLanguages });
+    //   }
+    // } catch (error) {
+    //   console.log({ error });
+    //   toast.error("Some error occured while translating the survey");
+    // }
   };
 
   const updateSurveyLanguages = (language: TLanguage) => {
