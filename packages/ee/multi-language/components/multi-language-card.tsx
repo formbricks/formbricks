@@ -5,12 +5,10 @@ import { ArrowUpRight, Languages } from "lucide-react";
 import Link from "next/link";
 import type { FC } from "react";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { extractLanguageCodes, translateSurvey } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import type { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
-import { ZSurvey } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
@@ -77,7 +75,9 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 
   const updateSurveyTranslations = (survey: TSurvey, updatedLanguages: TSurveyLanguage[]) => {
     const translatedSurveyResult = translateSurvey(survey, extractLanguageCodes(updatedLanguages));
-    setLocalSurvey({ ...translatedSurveyResult, languages: updatedLanguages });
+
+    const updatedSurvey = { ...translatedSurveyResult, languages: updatedLanguages };
+    setLocalSurvey(updatedSurvey as TSurvey);
   };
 
   const updateSurveyLanguages = (language: TLanguage) => {
