@@ -294,8 +294,8 @@ export const ResponseOptionsCard = ({
 
   const handleInputResponse = (e) => {
     let value = parseInt(e.target.value);
-    if (Number.isNaN(value)) {
-      value = 0;
+    if (Number.isNaN(value) || value < 1) {
+      value = 1;
     }
 
     const updatedSurvey = { ...localSurvey, autoComplete: value };

@@ -580,7 +580,7 @@ export const ZSurvey = z
     thankYouCard: ZSurveyThankYouCard,
     hiddenFields: ZSurveyHiddenFields,
     delay: z.number(),
-    autoComplete: z.number().nullable(),
+    autoComplete: z.number().min(1, { message: "Response limit must be greater than 0" }).nullable(),
     runOnDate: z.date().nullable(),
     closeOnDate: z.date().nullable(),
     productOverwrites: ZSurveyProductOverwrites.nullable(),
