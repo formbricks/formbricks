@@ -184,13 +184,11 @@ export type TLegacySurveyQuestion = z.infer<typeof ZLegacySurveyQuestion>;
 export const ZLegacySurveyQuestions = z.array(ZLegacySurveyQuestion);
 
 // ZSurvey is a refinement, so to extend it to ZLegacySurvey, we need to extend the innerType and then apply the same refinements.
-export const ZLegacySurvey = ZSurvey.innerType()
-  .extend({
-    questions: ZLegacySurveyQuestions,
-    thankYouCard: ZLegacySurveyThankYouCard,
-    welcomeCard: ZLegacySurveyWelcomeCard,
-    triggers: z.array(z.string()),
-  })
-  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => {});
+export const ZLegacySurvey = ZSurvey.innerType().extend({
+  questions: ZLegacySurveyQuestions,
+  thankYouCard: ZLegacySurveyThankYouCard,
+  welcomeCard: ZLegacySurveyWelcomeCard,
+  triggers: z.array(z.string()),
+});
 
 export type TLegacySurvey = z.infer<typeof ZLegacySurvey>;
