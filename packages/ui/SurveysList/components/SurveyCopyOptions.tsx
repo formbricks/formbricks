@@ -1,11 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import z from "zod";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProductConfigChannel } from "@formbricks/types/product";
-import { CopySurveyFormValidation, TCopySurveyFormData } from "@formbricks/types/surveys";
+import { CopySurveyFormValidation, TCopySurveyFormData, TSurvey } from "@formbricks/types/surveys";
+import { Button } from "../../Button";
 import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "../../Form";
 import { TooltipRenderer } from "../../Tooltip";
 import { getProductSurveyAction, getSurveytype } from "../actions";
@@ -30,15 +32,16 @@ interface CopySurveyFormProps {
 
 const CopySurveyForm: React.FC<CopySurveyFormProps> = ({ environmentId, surveyId, onSubmit, onCancel }) => {
   // const { register, handleSubmit } = useForm();
-  const methods = useForm<TCopySurveyFormData>({
-    defaultValues: [],
-    resolver: zodResolver(CopySurveyFormValidation),
-  });
+  // const methods = useForm<TCopySurveyFormData>({
+  //   defaultValues: [],
+  //   resolver: zodResolver(CopySurveyFormValidation),
+  // });
+
+  // validating the form data using CopySurveyFormValidation.safeParse(selectedEnvironments)  handleFormSubmit function.
+  const methods = useForm<TCopySurveyFormData>({});
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [selectedEnvironments, setSelectedEnvironments] = useState<
-    { productId: string; targetenvironmentId: string; environmentType: string; productName: string }[]
-  >([]);
+  const [selectedEnvironments, setSelectedEnvironments] = useState<TCopySurveyFormData>([]);
   const [surveyType, setSurveyType] = useState<string>();
   const [loading, setLoading] = useState(true);
 
@@ -94,7 +97,18 @@ const CopySurveyForm: React.FC<CopySurveyFormProps> = ({ environmentId, surveyId
         );
       }
     };
-  const handleFormSubmit = () => {
+
+  // validating the form data using CopySurveyFormValidation.safeParse(selectedEnvironments)  handleFormSubmit function.
+  const handleFormSubmit = async () => {
+    // Manually validate data with Zod schema
+    const validationResult = CopySurveyFormValidation.safeParse(selectedEnvironments);
+    if (!validationResult.success) {
+      console.log("validate", validationResult.error);
+      console.error(validationResult.error);
+      toast.error("Validation error!");
+      return;
+    }
+    console.log("hereee");
     onSubmit(selectedEnvironments);
   };
   if (loading) {
@@ -178,9 +192,12 @@ const CopySurveyForm: React.FC<CopySurveyFormProps> = ({ environmentId, surveyId
             className="mr-2 rounded-md bg-transparent px-4 py-2 font-semibold text-slate-600">
             Cancel
           </button>
-          <button type="submit" className="h-12 rounded-md bg-slate-900 px-4 py-2 font-semibold text-white">
+          {/* <button type="submit"  className="h-12 rounded-md bg-slate-900 px-4 py-2 font-semibold text-white">
             Copy Survey
-          </button>
+          </button> */}
+          <Button variant="darkCTA" type="submit">
+            Copy survey
+          </Button>
         </div>
       </form>
     </FormProvider>
