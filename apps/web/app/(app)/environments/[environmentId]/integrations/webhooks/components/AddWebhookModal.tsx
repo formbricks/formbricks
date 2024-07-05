@@ -1,7 +1,6 @@
 import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/HardcodedTriggers";
 import { SurveyCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
 import { TriggerCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
-import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/testEndpoint";
 import clsx from "clsx";
 import { Webhook } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -15,7 +14,7 @@ import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
-import { createWebhookAction } from "../actions";
+import { createWebhookAction, testEndpointAction } from "../actions";
 
 interface AddWebhookModalProps {
   environmentId: string;
@@ -44,14 +43,14 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
   const handleTestEndpoint = async (sendSuccessToast: boolean) => {
     try {
       setHittingEndpoint(true);
-      await testEndpoint(testEndpointInput);
+      await testEndpointAction(testEndpointInput);
       setHittingEndpoint(false);
       if (sendSuccessToast) toast.success("Yay! We are able to ping the webhook!");
       setEndpointAccessible(true);
       return true;
     } catch (err) {
       setHittingEndpoint(false);
-      toast.error("Unable to ping the webhook! Please check browser console for logs");
+      toast.error(`Unable to ping the webhook! \nError:  ${err.message}`);
       console.error("Webhook Test Failed due to: ", err.message);
       setEndpointAccessible(false);
       return false;
