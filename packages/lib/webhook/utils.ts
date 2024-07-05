@@ -15,7 +15,7 @@ export const testEndpoint = async (url: string): Promise<Result<boolean>> => {
     const statusCode = response.status;
 
     if (statusCode >= 200 && statusCode < 300) {
-      return { ok: true, data: JSON.parse(JSON.stringify(true)) };
+      return { ok: true, data: true };
     } else {
       const errorMessage = await response.text();
       return {
