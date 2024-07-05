@@ -53,8 +53,6 @@ export const SurveyMenuBar = ({
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const cautionText = "This survey received responses.";
 
-  // const faultyQuestions: string[] = [];
-
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
       setAudiencePrompt(false);
@@ -191,7 +189,8 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      if (!isSurveyValid(localSurvey, selectedLanguageCode)) {
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode);
+      if (!isSurveyValidResult) {
         setIsSurveySaving(false);
         return false;
       }
@@ -219,7 +218,8 @@ export const SurveyMenuBar = ({
   };
 
   const handleSaveAndGoBack = async () => {
-    if (await handleSurveySave()) {
+    const isSurveySaved = await handleSurveySave();
+    if (isSurveySaved) {
       router.back();
     }
   };
@@ -235,7 +235,8 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      if (!isSurveyValid(localSurvey, selectedLanguageCode)) {
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode);
+      if (!isSurveyValidResult) {
         setIsSurveyPublishing(false);
         return;
       }

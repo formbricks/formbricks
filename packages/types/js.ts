@@ -1,7 +1,7 @@
 import z from "zod";
-import { ZLegacySurvey } from "./LegacySurvey";
 import { ZActionClass } from "./actionClasses";
 import { ZAttributes } from "./attributes";
+import { ZLegacySurvey } from "./legacySurveys";
 import { ZPerson } from "./people";
 import { ZProduct } from "./product";
 import { ZResponseHiddenFieldValue } from "./responses";
@@ -14,6 +14,7 @@ export const ZJsPerson = z.object({
 
 export type TJsPerson = z.infer<typeof ZJsPerson>;
 
+// ZSurvey is a refinement, so to extend it to ZSurveyWithTriggers, we need to extend the innerType and then apply the same refinements.
 const ZSurveyWithTriggers = ZSurvey.innerType()
   .extend({
     triggers: z.array(ZActionClass).or(z.array(z.string())),

@@ -1,6 +1,6 @@
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
-import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TAttributes } from "@formbricks/types/attributes";
+import { TLegacySurvey } from "@formbricks/types/legacySurveys";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const replaceAttributeRecall = (survey: TSurvey, attributes: TAttributes): TSurvey => {

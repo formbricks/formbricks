@@ -21,10 +21,7 @@ export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string
   );
 };
 
-export const validateLabelForAllLanguages = (
-  label: TI18nString,
-  surveyLanguages: TSurveyLanguage[]
-): string[] => {
+const validateLabelForAllLanguages = (label: TI18nString, surveyLanguages: TSurveyLanguage[]): string[] => {
   const enabledLanguages = surveyLanguages.filter((lang) => lang.enabled);
   const languageCodes = extractLanguageCodes(enabledLanguages);
 

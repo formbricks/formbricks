@@ -598,6 +598,7 @@ export const ZSurvey = z
   .superRefine((survey, ctx) => {
     const { questions, languages, welcomeCard, thankYouCard } = survey;
 
+    // welcome card validations
     if (welcomeCard.enabled) {
       if (welcomeCard.headline) {
         const multiLangIssue = validateCardFieldsForAllLanguages(
@@ -640,47 +641,6 @@ export const ZSurvey = z
       }
     }
 
-    // thank you card
-    if (thankYouCard.enabled) {
-      if (thankYouCard.headline) {
-        const multiLangIssue = validateCardFieldsForAllLanguages(
-          "headline",
-          thankYouCard.headline,
-          languages,
-          "thankYou"
-        );
-
-        if (multiLangIssue) {
-          ctx.addIssue(multiLangIssue);
-        }
-      }
-
-      if (thankYouCard.subheader) {
-        const multiLangIssue = validateCardFieldsForAllLanguages(
-          "subheader",
-          thankYouCard.subheader,
-          languages,
-          "thankYou"
-        );
-
-        if (multiLangIssue) {
-          ctx.addIssue(multiLangIssue);
-        }
-      }
-
-      if (thankYouCard.buttonLabel) {
-        const multiLangIssue = validateCardFieldsForAllLanguages(
-          "buttonLabel",
-          thankYouCard.buttonLabel,
-          languages,
-          "thankYou"
-        );
-        if (multiLangIssue) {
-          ctx.addIssue(multiLangIssue);
-        }
-      }
-    }
-
     // Custom default validation for each question
     questions.forEach((question, questionIndex) => {
       const existingLogicConditions = new Set();
@@ -709,15 +669,12 @@ export const ZSurvey = z
         "lowerLabel",
         "label",
         "placeholder",
-        "backButtonLabel",
       ];
 
       const fieldsToValidate =
-        questionIndex === 0
-          ? initialFieldsToValidate.filter((_, idx) => idx !== initialFieldsToValidate.length - 1)
-          : initialFieldsToValidate;
+        questionIndex === 0 ? initialFieldsToValidate : [...initialFieldsToValidate, "backButtonLabel"];
 
-      fieldsToValidate.forEach((field) => {
+      for (const field of fieldsToValidate) {
         const questionFieldValue = question[field as keyof typeof question] as TI18nString;
         if (
           questionFieldValue &&
@@ -729,7 +686,7 @@ export const ZSurvey = z
             ctx.addIssue(multiLangIssue);
           }
         }
-      });
+      }
 
       if (question.type === TSurveyQuestionTypeEnum.OpenText) {
         if (question.placeholder) {
@@ -911,8 +868,50 @@ export const ZSurvey = z
         });
       });
     }
+
+    // thank you card validations
+    if (thankYouCard.enabled) {
+      if (thankYouCard.headline) {
+        const multiLangIssue = validateCardFieldsForAllLanguages(
+          "headline",
+          thankYouCard.headline,
+          languages,
+          "thankYou"
+        );
+
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
+      }
+
+      if (thankYouCard.subheader) {
+        const multiLangIssue = validateCardFieldsForAllLanguages(
+          "subheader",
+          thankYouCard.subheader,
+          languages,
+          "thankYou"
+        );
+
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
+      }
+
+      if (thankYouCard.buttonLabel) {
+        const multiLangIssue = validateCardFieldsForAllLanguages(
+          "buttonLabel",
+          thankYouCard.buttonLabel,
+          languages,
+          "thankYou"
+        );
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
+      }
+    }
   });
 
+// ZSurvey is a refinement, so to extend it to ZSurveyUpdateInput, we need to transform the innerType and then apply the same refinements.
 export const ZSurveyUpdateInput = ZSurvey.innerType()
   .omit({ createdAt: true, updatedAt: true })
   .and(

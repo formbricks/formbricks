@@ -293,7 +293,12 @@ export const ResponseOptionsCard = ({
   };
 
   const handleInputResponse = (e) => {
-    const updatedSurvey = { ...localSurvey, autoComplete: parseInt(e.target.value) };
+    let value = parseInt(e.target.value);
+    if (Number.isNaN(value)) {
+      value = 0;
+    }
+
+    const updatedSurvey = { ...localSurvey, autoComplete: value };
     setLocalSurvey(updatedSurvey);
   };
 
@@ -343,7 +348,7 @@ export const ResponseOptionsCard = ({
             description="Automatically close the survey after a certain number of responses."
             childBorder={true}>
             <label htmlFor="autoCompleteResponses" className="cursor-pointer bg-slate-50 p-4">
-              <p className="text-sm text-slate-700">
+              <p className="text-sm font-semibold text-slate-700">
                 Automatically mark the survey as complete after
                 <Input
                   autoFocus
