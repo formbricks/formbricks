@@ -247,7 +247,7 @@ export const SurveyDropDownMenu = ({
         <div className="bg-red min-h-full min-w-full">
           <Dialog open={isCopyFormOpen} onOpenChange={setIsCopyFormOpen}>
             <DialogContent className="m-0 h-4/6 w-2/5 gap-0 overflow-hidden p-0 shadow-lg shadow-slate-500">
-              <div className="m-0 flex max-h-24 min-h-24 items-center gap-0 bg-slate-100 p-0">
+              <div className="m-0 flex max-h-28 min-h-28 items-center gap-0 bg-slate-100 p-0">
                 <div>
                   <MousePointerClick className="ml-3 text-slate-500" />
                 </div>

@@ -15,6 +15,7 @@ import { surveyCache } from "@formbricks/lib/survey/cache";
 import { deleteSurvey, duplicateSurvey, getSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ZProduct } from "@formbricks/types/product";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys";
 
 export const getSurveyAction = async (surveyId: string) => {
@@ -350,7 +351,6 @@ export const getProductSurveyAction = async (environmentId: string) => {
   if (!session) throw new AuthorizationError("Not authorized");
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
-  console.log("Organization:", organization);
 
   if (!organization) {
     throw new Error("No organization found");
@@ -370,20 +370,95 @@ export const getProductSurveyAction = async (environmentId: string) => {
           productId: product.id,
         },
       });
-      return {
+
+      // Map environments to conform to ZEnvironment schema
+      const mappedEnvironments = environments.map((env) => ({
+        id: env.id,
+        createdAt: env.createdAt,
+        updatedAt: env.updatedAt,
+        type: env.type, // Assuming EnvironmentType is defined correctly
+        productId: env.productId,
+        appSetupCompleted: env.appSetupCompleted,
+        websiteSetupCompleted: env.websiteSetupCompleted,
+      }));
+
+      // Construct product with mapped environments
+      const productWithEnvironments = {
         ...product,
-        environments: environments.map((env) => ({
-          id: env.id,
-          name: env.type,
-        })),
+        environments: mappedEnvironments,
       };
+
+      console.log("Product with environments:", productWithEnvironments);
+
+      return productWithEnvironments; // Return each product with its environments
     })
   );
 
-  console.log(productsWithEnvironments);
+  console.log("Products with environments:", productsWithEnvironments);
 
   return productsWithEnvironments;
 };
+
+// export const getProductSurveyAction = async (environmentId: string) => {
+//   const session = await getServerSession(authOptions);
+//   if (!session) throw new AuthorizationError("Not authorized");
+
+//   const organization = await getOrganizationByEnvironmentId(environmentId);
+//   console.log("Organization:", organization);
+
+//   if (!organization) {
+//     throw new Error("No organization found");
+//   }
+
+//   const products = await prisma.product.findMany({
+//     where: {
+//       organizationId: organization.id,
+//     },
+//   });
+
+//   // Fetch environments for each product
+//   const productsWithEnvironments = await Promise.all(
+//     products.map(async (product) => {
+//       const environments = await prisma.environment.findMany({
+//         where: {
+//           productId: product.id,
+//         },
+//       });
+
+//       const mappedEnvironments = environments.map((env) => ({
+//         id: env.id,
+//         createdAt: env.createdAt,
+//         updatedAt: env.updatedAt,
+//         type: env.type as EnvironmentType, // Assuming EnvironmentType is defined correctly
+//         productId: env.productId,
+//         appSetupCompleted: env.appSetupCompleted,
+//         websiteSetupCompleted: env.websiteSetupCompleted,
+//       }));
+
+//       const productWithEnvironments = {
+//         ...product,
+//         environments: mappedEnvironments,
+//       };
+
+//       return {
+//         ...product,
+//         environments: environments.map((env) => ({
+//           id: env.id,
+//     createdAt: env.createdAt,
+//     updatedAt: env.updatedAt,
+//     type: env.type,
+//     productId: env.productId,
+//     appSetupCompleted: env.appSetupCompleted,
+//     websiteSetupCompleted: env.websiteSetupCompleted,
+//         })),
+//       };
+//     })
+//   );
+
+//   console.log("pppppp",productsWithEnvironments);
+
+//   return productsWithEnvironments;
+// };
 
 export const getSurveytype = async (surveyId: string) => {
   const session = await getServerSession(authOptions);
