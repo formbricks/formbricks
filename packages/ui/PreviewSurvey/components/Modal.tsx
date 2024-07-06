@@ -128,7 +128,7 @@ export const Modal = ({
       id="preview-survey-base"
       aria-live="assertive"
       className={cn(
-        "relative h-full w-full overflow-hidden",
+        "relative h-full w-full overflow-hidden rounded-b-md",
         overlayStyle,
         "transition-all duration-500 ease-in-out"
       )}>
