@@ -102,9 +102,7 @@ export function LocalizedEditor({
         </div>
       )}
 
-      {isInComplete ? (
-        <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>
-      ) : null}
+      {isInComplete ? <div className="mt-1 text-xs text-red-400">Incomplete translations</div> : null}
     </div>
   );
 }

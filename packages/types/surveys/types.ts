@@ -863,7 +863,7 @@ export const ZSurvey = z
         const questionIndex = questions.findIndex((q) => q.id === questionId);
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Question ${questionIndex + 1}'s logic conditions have cyclic logic. Please fix it!`,
+          message: `Cyclic logic detected 🔃 Please check the logic of question ${questionIndex + 1}.`,
           path: ["questions", questionIndex, "logic"],
         });
       });

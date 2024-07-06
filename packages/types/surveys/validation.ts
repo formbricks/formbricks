@@ -50,7 +50,7 @@ export const validateQuestionLabels = (
     const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
     return {
       code: z.ZodIssueCode.custom,
-      message: `${field} in question ${questionIndex + 1} is ${isDefaultOnly ? "invalid" : "not valid for the following languages: "}`,
+      message: `The ${field} in question ${questionIndex + 1} is ${isDefaultOnly ? "invalid" : "not valid for the following languages: "}`,
       path: ["questions", questionIndex, field],
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
     };
@@ -70,7 +70,7 @@ export const validateCardFieldsForAllLanguages = (
     const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
     return {
       code: z.ZodIssueCode.custom,
-      message: `${field} in ${cardType === "welcome" ? "Welcome" : "Thank You"} Card is ${isDefaultOnly ? "invalid" : "not valid for the following languages: "}`,
+      message: `The ${field} on the ${cardType === "welcome" ? "Welcome" : "Thank You"} card is ${isDefaultOnly ? "invalid" : "not valid for the following languages: "}`,
       path: [cardType === "welcome" ? "welcomeCard" : "thankYouCard", field],
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
     };
@@ -164,19 +164,19 @@ export const validateId = (
   const combinedIds = [...existingQuestionIds, ...existingHiddenFieldIds];
 
   if (combinedIds.findIndex((id) => id.toLowerCase() === field.toLowerCase()) !== -1) {
-    return `${type} Id already exists in questions or hidden fields.`;
+    return `${type} ID already exists in questions or hidden fields.`;
   }
 
   if (FORBIDDEN_IDS.includes(field)) {
-    return `${type} Id not allowed.`;
+    return `${type} ID is not allowed.`;
   }
 
   if (field.includes(" ")) {
-    return `${type} Id not allowed, avoid using spaces.`;
+    return `${type} ID cannot contain spaces. Please remove spaces.`;
   }
 
   if (!/^[a-zA-Z0-9_-]+$/.test(field)) {
-    return `${type} Id not allowed, use only alphanumeric characters, hyphens, or underscores.`;
+    return `${type} ID is not allowed. Please use only alphanumeric characters, hyphens, or underscores.`;
   }
 
   return null;
