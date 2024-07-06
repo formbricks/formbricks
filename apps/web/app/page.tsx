@@ -27,9 +27,6 @@ const Page = async () => {
   let environment: TEnvironment | null = null;
   try {
     environment = await getFirstEnvironmentByUserId(session?.user.id);
-    if (!environment) {
-      throw new Error("No environment found");
-    }
   } catch (error) {
     console.error(`error getting environment: ${error}`);
   }
@@ -41,7 +38,7 @@ const Page = async () => {
   }
 
   if (!environment) {
-    console.error("Failed to get first environment of user; signing out");
+    console.error("Failed to get first environment of user");
     return redirect(`/organizations/${userOrganizations[0].id}/products/new/channel`);
   }
 
