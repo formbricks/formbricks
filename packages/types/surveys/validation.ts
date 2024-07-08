@@ -14,6 +14,13 @@ export const FORBIDDEN_IDS = [
   "embed",
 ];
 
+const FIELD_TO_LABEL_MAP: Record<string, string> = {
+  headline: "question",
+  subheader: "description",
+  buttonLabel: "next button label",
+  backButtonLabel: "back button label",
+};
+
 export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string[] => {
   if (!surveyLanguages) return [];
   return surveyLanguages.map((surveyLanguage) =>
@@ -46,11 +53,12 @@ export const validateQuestionLabels = (
   questionIndex: number
 ): z.IssueData | null => {
   const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
+
   if (invalidLanguageCodes.length) {
     const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
     return {
       code: z.ZodIssueCode.custom,
-      message: `The ${field} in question ${questionIndex + 1} is ${isDefaultOnly ? "invalid" : "not valid for the following languages: "}`,
+      message: `The ${FIELD_TO_LABEL_MAP[field]} field in question ${questionIndex + 1} is ${isDefaultOnly ? "missing" : "missing for the following languages: "}`,
       path: ["questions", questionIndex, field],
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
     };
