@@ -66,24 +66,19 @@ const ZDeleteResponseAction = z.object({
   responseId: z.string(),
 });
 
-export const deleteResponseAction = async (props: z.infer<typeof ZDeleteResponseAction>) =>
-  authenticatedActionClient
-    .schema(ZDeleteResponseAction)
-    .metadata({ rules: ["response", "delete"] })
+export const deleteResponseAction = authenticatedActionClient
+  .schema(ZDeleteResponseAction)
+  .action(async ({ parsedInput, ctx }) => {
     // get organizationId from responseId
-    .use(async ({ ctx, next }) => {
-      const organizationId = await getOrganizationIdFromResponseId(props.responseId);
-      return next({ ctx: { ...ctx, organizationId } });
-    })
-    .use(async ({ ctx, next, metadata }) => {
-      await checkAuthorization({
-        userId: ctx.user.id,
-        organizationId: ctx.organizationId,
-        rules: metadata.rules,
-      });
-      return next({ ctx });
-    })
-    .action(async ({ parsedInput }) => await deleteResponse(parsedInput.responseId))(props);
+    const organizationId = await getOrganizationIdFromResponseId(parsedInput.responseId);
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: organizationId,
+      rules: ["response", "delete"],
+    });
+
+    return await deleteResponse(parsedInput.responseId);
+  });
 
 export const updateResponseNoteAction = async (responseNoteId: string, text: string) => {
   const session = await getServerSession(authOptions);

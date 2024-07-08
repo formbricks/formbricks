@@ -79,42 +79,35 @@ const ZCreateProductAction = z.object({
   data: ZProductUpdateInput,
 });
 
-export const createProductAction = async (props: z.infer<typeof ZCreateProductAction>) =>
-  authenticatedActionClient
-    .schema(ZCreateProductAction)
-    .metadata({ rules: ["product", "create"] })
-    .use(async ({ ctx, next }) => {
-      const organizationId = props.organizationId;
-      return next({ ctx: { ...ctx, organizationId } });
-    })
-    .use(async ({ ctx, next, metadata }) => {
-      await checkAuthorization({
-        schema: ZProductUpdateInput,
-        data: props.data,
-        userId: ctx.user.id,
-        organizationId: ctx.organizationId,
-        rules: metadata.rules,
-      });
-      return next({ ctx });
-    })
-    .action(async ({ parsedInput, ctx }) => {
-      const { user } = ctx;
+export const createProductAction = authenticatedActionClient
+  .schema(ZCreateProductAction)
+  .action(async ({ parsedInput, ctx }) => {
+    const organizationId = parsedInput.organizationId;
+    await checkAuthorization({
+      schema: ZProductUpdateInput,
+      data: parsedInput.data,
+      userId: ctx.user.id,
+      organizationId: organizationId,
+      rules: ["product", "create"],
+    });
 
-      const product = await createProduct(parsedInput.organizationId, parsedInput.data);
-      const updatedNotificationSettings = {
-        ...user.notificationSettings,
-        alert: {
-          ...user.notificationSettings?.alert,
-        },
-        weeklySummary: {
-          ...user.notificationSettings?.weeklySummary,
-          [product.id]: true,
-        },
-      };
+    const { user } = ctx;
 
-      await updateUser(user.id, {
-        notificationSettings: updatedNotificationSettings,
-      });
+    const product = await createProduct(parsedInput.organizationId, parsedInput.data);
+    const updatedNotificationSettings = {
+      ...user.notificationSettings,
+      alert: {
+        ...user.notificationSettings?.alert,
+      },
+      weeklySummary: {
+        ...user.notificationSettings?.weeklySummary,
+        [product.id]: true,
+      },
+    };
 
-      return product;
-    })(props);
+    await updateUser(user.id, {
+      notificationSettings: updatedNotificationSettings,
+    });
+
+    return product;
+  });

@@ -12,57 +12,43 @@ const ZUpdateProductAction = z.object({
   data: ZProductUpdateInput,
 });
 
-export const updateProductAction = async (props: z.infer<typeof ZUpdateProductAction>) =>
-  authenticatedActionClient
-    .schema(ZUpdateProductAction)
-    .metadata({ rules: ["product", "update"] })
+export const updateProductAction = authenticatedActionClient
+  .schema(ZUpdateProductAction)
+  .action(async ({ ctx, parsedInput }) => {
     // get organizationId from productId
-    .use(async ({ ctx, next }) => {
-      const organizationId = await getOrganizationIdFromProductId(props.productId);
-      return next({ ctx: { ...ctx, organizationId } });
-    })
-    // check authorization
-    .use(async ({ ctx, next, metadata }) => {
-      await checkAuthorization({
-        schema: ZProductUpdateInput,
-        data: props.data,
-        userId: ctx.user.id,
-        organizationId: ctx.organizationId,
-        rules: metadata.rules,
-      });
-      return next({ ctx });
-    })
-    // update product
-    .action(async ({ parsedInput }) => await updateProduct(parsedInput.productId, parsedInput.data))(props);
+    const organizationId = await getOrganizationIdFromProductId(parsedInput.productId);
+    await checkAuthorization({
+      schema: ZProductUpdateInput,
+      data: parsedInput.data,
+      userId: ctx.user.id,
+      organizationId: organizationId,
+      rules: ["product", "update"],
+    });
+
+    return await updateProduct(parsedInput.productId, parsedInput.data);
+  });
 
 const ZProductDeleteAction = z.object({
   productId: z.string(),
 });
 
-export const deleteProductAction = async (props: z.infer<typeof ZProductDeleteAction>) =>
-  authenticatedActionClient
-    .schema(ZProductDeleteAction)
-    .metadata({ rules: ["product", "delete"] })
+export const deleteProductAction = authenticatedActionClient
+  .schema(ZProductDeleteAction)
+  .action(async ({ ctx, parsedInput }) => {
     // get organizationId from productId
-    .use(async ({ ctx, next }) => {
-      const organizationId = await getOrganizationIdFromProductId(props.productId);
-      return next({ ctx: { ...ctx, organizationId } });
-    })
-    .use(async ({ ctx, next, metadata }) => {
-      await checkAuthorization({
-        userId: ctx.user.id,
-        organizationId: ctx.organizationId,
-        rules: metadata.rules,
-      });
-      return next({ ctx });
-    })
-    .action(async ({ ctx: { organizationId }, parsedInput }) => {
-      const availableProducts = (await getProducts(organizationId)) ?? null;
+    const organizationId = await getOrganizationIdFromProductId(parsedInput.productId);
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: organizationId,
+      rules: ["product", "delete"],
+    });
 
-      if (!!availableProducts && availableProducts?.length <= 1) {
-        throw new Error("You can't delete the last product in the environment.");
-      }
+    const availableProducts = (await getProducts(organizationId)) ?? null;
 
-      // delete product
-      return await deleteProduct(parsedInput.productId);
-    })(props);
+    if (!!availableProducts && availableProducts?.length <= 1) {
+      throw new Error("You can't delete the last product in the environment.");
+    }
+
+    // delete product
+    return await deleteProduct(parsedInput.productId);
+  });

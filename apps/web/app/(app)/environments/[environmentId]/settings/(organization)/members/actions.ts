@@ -32,27 +32,19 @@ const ZUpdateOrganizationNameAction = z.object({
   data: ZOrganizationUpdateInput.pick({ name: true }),
 });
 
-export const updateOrganizationNameAction = async (props: z.infer<typeof ZUpdateOrganizationNameAction>) =>
-  authenticatedActionClient
-    .schema(ZUpdateOrganizationNameAction)
-    .metadata({ rules: ["organization", "update"] })
-    .use(async ({ ctx, next }) => {
-      const organizationId = props.organizationId;
-      return next({ ctx: { ...ctx, organizationId } });
-    })
-    .use(async ({ ctx, next, metadata }) => {
-      await checkAuthorization({
-        schema: ZOrganizationUpdateInput.pick({ name: true }),
-        data: props.data,
-        userId: ctx.user.id,
-        organizationId: ctx.organizationId,
-        rules: metadata.rules,
-      });
-      return next({ ctx });
-    })
-    .action(
-      async ({ parsedInput }) => await updateOrganization(parsedInput.organizationId, parsedInput.data)
-    )(props);
+export const updateOrganizationNameAction = authenticatedActionClient
+  .schema(ZUpdateOrganizationNameAction)
+  .action(async ({ parsedInput, ctx }) => {
+    const organizationId = parsedInput.organizationId;
+    await checkAuthorization({
+      schema: ZOrganizationUpdateInput.pick({ name: true }),
+      data: parsedInput.data,
+      userId: ctx.user.id,
+      organizationId: organizationId,
+      rules: ["organization", "update"],
+    });
+    return await updateOrganization(parsedInput.organizationId, parsedInput.data);
+  });
 
 export const deleteInviteAction = async (inviteId: string, organizationId: string) => {
   const session = await getServerSession(authOptions);

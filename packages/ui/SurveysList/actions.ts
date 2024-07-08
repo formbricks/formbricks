@@ -46,248 +46,241 @@ const ZCopyToOtherEnvironmentAction = z.object({
   targetEnvironmentId: z.string(),
 });
 
-export const copyToOtherEnvironmentAction = async (props: z.infer<typeof ZCopyToOtherEnvironmentAction>) =>
-  authenticatedActionClient
-    .schema(ZCopyToOtherEnvironmentAction)
-    // duplication is a survey creation
-    .metadata({ rules: ["survey", "create"] })
-    // get organizationId from environment ID
-    .use(async ({ ctx, next }) => {
-      const sourceEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(props.environmentId);
-      const targetEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(
-        props.targetEnvironmentId
-      );
+export const copyToOtherEnvironmentAction = authenticatedActionClient
+  .schema(ZCopyToOtherEnvironmentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const sourceEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(
+      parsedInput.environmentId
+    );
+    const targetEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(
+      parsedInput.targetEnvironmentId
+    );
 
-      return next({ ctx: { ...ctx, sourceEnvironmentOrganizationId, targetEnvironmentOrganizationId } });
-    })
-    .use(async ({ ctx, next, metadata }) => {
-      // check if user has access to source and target environments
-      await checkAuthorization({
-        userId: ctx.user.id,
-        organizationId: ctx.sourceEnvironmentOrganizationId,
-        rules: metadata.rules,
-      });
-      await checkAuthorization({
-        userId: ctx.user.id,
-        organizationId: ctx.targetEnvironmentOrganizationId,
-        rules: metadata.rules,
-      });
-      return next({ ctx });
-    })
-    .action(async ({ ctx, parsedInput }) => {
-      const existingSurvey = await prisma.survey.findFirst({
-        where: {
-          id: parsedInput.surveyId,
-          environmentId: parsedInput.environmentId,
+    // check if user has access to source and target environments
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: sourceEnvironmentOrganizationId,
+      rules: ["survey", "create"],
+    });
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: targetEnvironmentOrganizationId,
+      rules: ["survey", "create"],
+    });
+
+    const existingSurvey = await prisma.survey.findFirst({
+      where: {
+        id: parsedInput.surveyId,
+        environmentId: parsedInput.environmentId,
+      },
+      include: {
+        triggers: {
+          include: {
+            actionClass: true,
+          },
         },
-        include: {
-          triggers: {
-            include: {
-              actionClass: true,
-            },
+        attributeFilters: {
+          include: {
+            attributeClass: true,
           },
-          attributeFilters: {
-            include: {
-              attributeClass: true,
-            },
-          },
-          languages: {
-            select: {
-              default: true,
-              enabled: true,
-              language: {
-                select: {
-                  id: true,
-                },
+        },
+        languages: {
+          select: {
+            default: true,
+            enabled: true,
+            language: {
+              select: {
+                id: true,
               },
             },
           },
-          segment: true,
+        },
+        segment: true,
+      },
+    });
+
+    if (!existingSurvey) {
+      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
+
+    let targetEnvironmentTriggers: string[] = [];
+    // map the local triggers to the target environment
+    for (const trigger of existingSurvey.triggers) {
+      const targetEnvironmentTrigger = await prisma.actionClass.findFirst({
+        where: {
+          ...(trigger.actionClass.type === "code"
+            ? { key: trigger.actionClass.key }
+            : { name: trigger.actionClass.name }),
+          environment: {
+            id: parsedInput.targetEnvironmentId,
+          },
         },
       });
-
-      if (!existingSurvey) {
-        throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
-      }
-
-      let targetEnvironmentTriggers: string[] = [];
-      // map the local triggers to the target environment
-      for (const trigger of existingSurvey.triggers) {
-        const targetEnvironmentTrigger = await prisma.actionClass.findFirst({
-          where: {
+      if (!targetEnvironmentTrigger) {
+        // if the trigger does not exist in the target environment, create it
+        const newTrigger = await prisma.actionClass.create({
+          data: {
+            name: trigger.actionClass.name,
+            environment: {
+              connect: {
+                id: parsedInput.targetEnvironmentId,
+              },
+            },
+            description: trigger.actionClass.description,
+            type: trigger.actionClass.type,
             ...(trigger.actionClass.type === "code"
               ? { key: trigger.actionClass.key }
-              : { name: trigger.actionClass.name }),
-            environment: {
-              id: parsedInput.targetEnvironmentId,
-            },
+              : {
+                  noCodeConfig: trigger.actionClass.noCodeConfig
+                    ? structuredClone(trigger.actionClass.noCodeConfig)
+                    : undefined,
+                }),
           },
         });
-        if (!targetEnvironmentTrigger) {
-          // if the trigger does not exist in the target environment, create it
-          const newTrigger = await prisma.actionClass.create({
-            data: {
-              name: trigger.actionClass.name,
-              environment: {
-                connect: {
-                  id: parsedInput.targetEnvironmentId,
-                },
-              },
-              description: trigger.actionClass.description,
-              type: trigger.actionClass.type,
-              ...(trigger.actionClass.type === "code"
-                ? { key: trigger.actionClass.key }
-                : {
-                    noCodeConfig: trigger.actionClass.noCodeConfig
-                      ? structuredClone(trigger.actionClass.noCodeConfig)
-                      : undefined,
-                  }),
-            },
-          });
-          targetEnvironmentTriggers.push(newTrigger.id);
-        } else {
-          targetEnvironmentTriggers.push(targetEnvironmentTrigger.id);
-        }
+        targetEnvironmentTriggers.push(newTrigger.id);
+      } else {
+        targetEnvironmentTriggers.push(targetEnvironmentTrigger.id);
       }
+    }
 
-      let targetEnvironmentAttributeFilters: string[] = [];
-      // map the local attributeFilters to the target env
-      for (const attributeFilter of existingSurvey.attributeFilters) {
-        // check if attributeClass exists in target env.
-        // if not, create it
-        const targetEnvironmentAttributeClass = await prisma.attributeClass.findFirst({
-          where: {
-            name: attributeFilter.attributeClass.name,
-            environment: {
-              id: parsedInput.targetEnvironmentId,
-            },
-          },
-        });
-        if (!targetEnvironmentAttributeClass) {
-          const newAttributeClass = await prisma.attributeClass.create({
-            data: {
-              name: attributeFilter.attributeClass.name,
-              description: attributeFilter.attributeClass.description,
-              type: attributeFilter.attributeClass.type,
-              environment: {
-                connect: {
-                  id: parsedInput.targetEnvironmentId,
-                },
-              },
-            },
-          });
-          targetEnvironmentAttributeFilters.push(newAttributeClass.id);
-        } else {
-          targetEnvironmentAttributeFilters.push(targetEnvironmentAttributeClass.id);
-        }
-      }
-
-      const defaultLanguageId = existingSurvey.languages.find((l) => l.default)?.language.id;
-
-      // create new survey with the data of the existing survey
-      const newSurvey = await prisma.survey.create({
-        data: {
-          ...existingSurvey,
-          id: undefined, // id is auto-generated
-          environmentId: undefined, // environmentId is set below
-          createdBy: undefined,
-          segmentId: undefined,
-          name: `${existingSurvey.name} (copy)`,
-          status: "draft",
-          questions: structuredClone(existingSurvey.questions),
-          thankYouCard: structuredClone(existingSurvey.thankYouCard),
-          languages: {
-            create: existingSurvey.languages?.map((surveyLanguage) => ({
-              languageId: surveyLanguage.language.id,
-              default: surveyLanguage.language.id === defaultLanguageId,
-            })),
-          },
-          triggers: {
-            create: targetEnvironmentTriggers.map((actionClassId) => ({
-              actionClassId: actionClassId,
-            })),
-          },
-          attributeFilters: {
-            create: existingSurvey.attributeFilters.map((attributeFilter, idx) => ({
-              attributeClassId: targetEnvironmentAttributeFilters[idx],
-              condition: attributeFilter.condition,
-              value: attributeFilter.value,
-            })),
-          },
+    let targetEnvironmentAttributeFilters: string[] = [];
+    // map the local attributeFilters to the target env
+    for (const attributeFilter of existingSurvey.attributeFilters) {
+      // check if attributeClass exists in target env.
+      // if not, create it
+      const targetEnvironmentAttributeClass = await prisma.attributeClass.findFirst({
+        where: {
+          name: attributeFilter.attributeClass.name,
           environment: {
-            connect: {
-              id: parsedInput.targetEnvironmentId,
-            },
+            id: parsedInput.targetEnvironmentId,
           },
-          creator: {
-            connect: {
-              id: ctx.user.id,
-            },
-          },
-          surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,
-          singleUse: existingSurvey.singleUse ?? prismaClient.JsonNull,
-          productOverwrites: existingSurvey.productOverwrites ?? prismaClient.JsonNull,
-          verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
-          styling: existingSurvey.styling ?? prismaClient.JsonNull,
-          segment: undefined,
         },
       });
-
-      // if the existing survey has an inline segment, we copy the filters and create a new inline segment and connect it to the new survey
-      if (existingSurvey.segment) {
-        if (existingSurvey.segment.isPrivate) {
-          const newInlineSegment = await createSegment({
-            environmentId: parsedInput.environmentId,
-            title: `${newSurvey.id}`,
-            isPrivate: true,
-            surveyId: newSurvey.id,
-            filters: existingSurvey.segment.filters,
-          });
-
-          await prisma.survey.update({
-            where: {
-              id: newSurvey.id,
-            },
-            data: {
-              segment: {
-                connect: {
-                  id: newInlineSegment.id,
-                },
+      if (!targetEnvironmentAttributeClass) {
+        const newAttributeClass = await prisma.attributeClass.create({
+          data: {
+            name: attributeFilter.attributeClass.name,
+            description: attributeFilter.attributeClass.description,
+            type: attributeFilter.attributeClass.type,
+            environment: {
+              connect: {
+                id: parsedInput.targetEnvironmentId,
               },
             },
-          });
-
-          segmentCache.revalidate({
-            id: newInlineSegment.id,
-            environmentId: newSurvey.environmentId,
-          });
-        } else {
-          await prisma.survey.update({
-            where: {
-              id: newSurvey.id,
-            },
-            data: {
-              segment: {
-                connect: {
-                  id: existingSurvey.segment.id,
-                },
-              },
-            },
-          });
-
-          segmentCache.revalidate({
-            id: existingSurvey.segment.id,
-            environmentId: newSurvey.environmentId,
-          });
-        }
+          },
+        });
+        targetEnvironmentAttributeFilters.push(newAttributeClass.id);
+      } else {
+        targetEnvironmentAttributeFilters.push(targetEnvironmentAttributeClass.id);
       }
+    }
 
-      surveyCache.revalidate({
-        id: newSurvey.id,
-        environmentId: parsedInput.targetEnvironmentId,
-      });
-      return newSurvey;
-    })(props);
+    const defaultLanguageId = existingSurvey.languages.find((l) => l.default)?.language.id;
+
+    // create new survey with the data of the existing survey
+    const newSurvey = await prisma.survey.create({
+      data: {
+        ...existingSurvey,
+        id: undefined, // id is auto-generated
+        environmentId: undefined, // environmentId is set below
+        createdBy: undefined,
+        segmentId: undefined,
+        name: `${existingSurvey.name} (copy)`,
+        status: "draft",
+        questions: structuredClone(existingSurvey.questions),
+        thankYouCard: structuredClone(existingSurvey.thankYouCard),
+        languages: {
+          create: existingSurvey.languages?.map((surveyLanguage) => ({
+            languageId: surveyLanguage.language.id,
+            default: surveyLanguage.language.id === defaultLanguageId,
+          })),
+        },
+        triggers: {
+          create: targetEnvironmentTriggers.map((actionClassId) => ({
+            actionClassId: actionClassId,
+          })),
+        },
+        attributeFilters: {
+          create: existingSurvey.attributeFilters.map((attributeFilter, idx) => ({
+            attributeClassId: targetEnvironmentAttributeFilters[idx],
+            condition: attributeFilter.condition,
+            value: attributeFilter.value,
+          })),
+        },
+        environment: {
+          connect: {
+            id: parsedInput.targetEnvironmentId,
+          },
+        },
+        creator: {
+          connect: {
+            id: ctx.user.id,
+          },
+        },
+        surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,
+        singleUse: existingSurvey.singleUse ?? prismaClient.JsonNull,
+        productOverwrites: existingSurvey.productOverwrites ?? prismaClient.JsonNull,
+        verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
+        styling: existingSurvey.styling ?? prismaClient.JsonNull,
+        segment: undefined,
+      },
+    });
+
+    // if the existing survey has an inline segment, we copy the filters and create a new inline segment and connect it to the new survey
+    if (existingSurvey.segment) {
+      if (existingSurvey.segment.isPrivate) {
+        const newInlineSegment = await createSegment({
+          environmentId: parsedInput.environmentId,
+          title: `${newSurvey.id}`,
+          isPrivate: true,
+          surveyId: newSurvey.id,
+          filters: existingSurvey.segment.filters,
+        });
+
+        await prisma.survey.update({
+          where: {
+            id: newSurvey.id,
+          },
+          data: {
+            segment: {
+              connect: {
+                id: newInlineSegment.id,
+              },
+            },
+          },
+        });
+
+        segmentCache.revalidate({
+          id: newInlineSegment.id,
+          environmentId: newSurvey.environmentId,
+        });
+      } else {
+        await prisma.survey.update({
+          where: {
+            id: newSurvey.id,
+          },
+          data: {
+            segment: {
+              connect: {
+                id: existingSurvey.segment.id,
+              },
+            },
+          },
+        });
+
+        segmentCache.revalidate({
+          id: existingSurvey.segment.id,
+          environmentId: newSurvey.environmentId,
+        });
+      }
+    }
+
+    surveyCache.revalidate({
+      id: newSurvey.id,
+      environmentId: parsedInput.targetEnvironmentId,
+    });
+    return newSurvey;
+  });
 
 export const deleteSurveyAction = async (surveyId: string) => {
   const session = await getServerSession(authOptions);
