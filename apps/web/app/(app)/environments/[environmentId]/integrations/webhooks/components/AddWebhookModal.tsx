@@ -127,7 +127,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
   };
 
   return (
-    <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={false}>
+    <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={true}>
       <div className="flex h-full flex-col rounded-lg">
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex w-full items-center justify-between p-6">
@@ -183,6 +183,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
                     variant="secondary"
                     loading={hittingEndpoint}
                     className="ml-2 whitespace-nowrap"
+                    disabled={testEndpointInput.trim() === ""}
                     onClick={() => {
                       handleTestEndpoint(true);
                     }}>
