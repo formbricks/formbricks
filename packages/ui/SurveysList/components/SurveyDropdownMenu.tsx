@@ -260,6 +260,7 @@ export const SurveyDropDownMenu = ({
               </div>
 
               <CopySurveyForm
+                //username="smriti"
                 environmentId={environmentId}
                 surveyId={survey.id}
                 onSubmit={copyToOtherEnvironment}

@@ -38,7 +38,9 @@ const CopySurveyForm: React.FC<CopySurveyFormProps> = ({ environmentId, surveyId
   // });
 
   // validating the form data using CopySurveyFormValidation.safeParse(selectedEnvironments)  handleFormSubmit function.
-  const methods = useForm<TCopySurveyFormData>({});
+  const methods = useForm<TCopySurveyFormData>({
+    resolver: zodResolver(CopySurveyFormValidation),
+  });
 
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedEnvironments, setSelectedEnvironments] = useState<TCopySurveyFormData>([]);
