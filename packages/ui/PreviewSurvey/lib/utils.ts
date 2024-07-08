@@ -5,9 +5,9 @@ export const getPlacementStyle = (placement: TPlacement) => {
     case "bottomRight":
       return "bottom-3 sm:right-3";
     case "topRight":
-      return "sm:top-3 sm:right-3 bottom-3";
+      return "sm:top-6 sm:right-6";
     case "topLeft":
-      return "sm:top-3 sm:left-3 bottom-3";
+      return "sm:top-6 sm:left-6";
     case "bottomLeft":
       return "bottom-3 sm:left-3";
     case "center":
