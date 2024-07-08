@@ -69,18 +69,18 @@ Refer to our [Example HTML project](https://github.com/formbricks/examples/tree/
 
 ## ReactJS
 
-Install the Formbricks SDK using one of the package managers ie `npm`,`pnpm`,`yarn`.
+Install the Formbricks SDK using one of the package managers ie `npm`,`pnpm`,`yarn`. Note that zod is required as a peer dependency must also be installed in your project.
 
 <Col>
 <CodeGroup title="Install Formbricks JS library">
 ```shell {{ title: 'npm' }}
-npm install @formbricks/js
+npm install @formbricks/js zod
 ```
 ```shell {{ title: 'pnpm' }}
-pnpm add @formbricks/js
+pnpm add @formbricks/js zod
 ```
 ```shell {{ title: 'yarn' }}
-yarn add @formbricks/js
+yarn add @formbricks/js zod
 ```
 
 </CodeGroup>
@@ -142,13 +142,13 @@ Code snippets for the integration for both conventions are provided to further a
 <Col>
 <CodeGroup title="Install Formbricks JS library">
 ```shell {{ title: 'npm' }}
-npm install @formbricks/js
+npm install @formbricks/js zod
 ```
 ```shell {{ title: 'pnpm' }}
-pnpm add @formbricks/js
+pnpm add @formbricks/js zod
 ```
 ```shell {{ title: 'yarn' }}
-yarn add @formbricks/js
+yarn add @formbricks/js zod
 ```
 
 </CodeGroup>
@@ -164,7 +164,6 @@ yarn add @formbricks/js
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-
 import formbricks from "@formbricks/js/app";
 
 export default function FormbricksProvider() {
@@ -218,7 +217,6 @@ Refer to our [Example NextJS App Directory project](https://github.com/formbrick
 // other import
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-
 import formbricks from "@formbricks/js/app";
 
 if (typeof window !== "undefined") {
