@@ -14,6 +14,10 @@ x-nextauth-secret: &nextauth_secret
   # Set this to your public-facing URL, e.g., https://example.com
   # You do not need the NEXTAUTH_URL environment variable in Vercel.
 
+  x-cron-secret: &cron_secret
+    # Set the below to use it instead of API Key for the API & use as an auth for cronjobs
+    # You can use: $(openssl rand -hex 32) to generate a secure one
+
 
 x-nextauth-url: &nextauth_url http://localhost:3000
 
@@ -63,9 +67,6 @@ x-sentry-ignore-api-resolution-error: &sentry_ignore_api_resolution_error # Disa
 
 
 x-next-public-sentry-dsn: &next_public_sentry_dsn # Enable Sentry Error Tracking
-
-
-x-cron-secret: &cron_secret # Set this to a random string to secure your cron endpoints
 
 
 services:
