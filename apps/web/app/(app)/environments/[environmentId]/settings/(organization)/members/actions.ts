@@ -35,12 +35,11 @@ const ZUpdateOrganizationNameAction = z.object({
 export const updateOrganizationNameAction = authenticatedActionClient
   .schema(ZUpdateOrganizationNameAction)
   .action(async ({ parsedInput, ctx }) => {
-    const organizationId = parsedInput.organizationId;
     await checkAuthorization({
       schema: ZOrganizationUpdateInput.pick({ name: true }),
       data: parsedInput.data,
       userId: ctx.user.id,
-      organizationId: organizationId,
+      organizationId: parsedInput.organizationId,
       rules: ["organization", "update"],
     });
     return await updateOrganization(parsedInput.organizationId, parsedInput.data);

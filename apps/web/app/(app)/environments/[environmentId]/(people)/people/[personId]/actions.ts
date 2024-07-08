@@ -13,12 +13,11 @@ const ZPersonDeleteAction = z.object({
 export const deletePersonAction = authenticatedActionClient
   .schema(ZPersonDeleteAction)
   .action(async ({ ctx, parsedInput }) => {
-    // get organizationId from personId
-    const organizationId = await getOrganizationIdFromPersonId(parsedInput.personId);
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: organizationId,
+      organizationId: await getOrganizationIdFromPersonId(parsedInput.personId),
       rules: ["person", "delete"],
     });
+
     return await deletePerson(parsedInput.personId);
   });

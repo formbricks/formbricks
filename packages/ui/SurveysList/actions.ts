@@ -49,22 +49,15 @@ const ZCopyToOtherEnvironmentAction = z.object({
 export const copyToOtherEnvironmentAction = authenticatedActionClient
   .schema(ZCopyToOtherEnvironmentAction)
   .action(async ({ ctx, parsedInput }) => {
-    const sourceEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(
-      parsedInput.environmentId
-    );
-    const targetEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(
-      parsedInput.targetEnvironmentId
-    );
-
     // check if user has access to source and target environments
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: sourceEnvironmentOrganizationId,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
       rules: ["survey", "create"],
     });
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: targetEnvironmentOrganizationId,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.targetEnvironmentId),
       rules: ["survey", "create"],
     });
 

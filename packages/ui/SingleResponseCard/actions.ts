@@ -69,11 +69,9 @@ const ZDeleteResponseAction = z.object({
 export const deleteResponseAction = authenticatedActionClient
   .schema(ZDeleteResponseAction)
   .action(async ({ parsedInput, ctx }) => {
-    // get organizationId from responseId
-    const organizationId = await getOrganizationIdFromResponseId(parsedInput.responseId);
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: organizationId,
+      organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
       rules: ["response", "delete"],
     });
 

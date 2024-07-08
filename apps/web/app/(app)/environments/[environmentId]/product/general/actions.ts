@@ -15,13 +15,11 @@ const ZUpdateProductAction = z.object({
 export const updateProductAction = authenticatedActionClient
   .schema(ZUpdateProductAction)
   .action(async ({ ctx, parsedInput }) => {
-    // get organizationId from productId
-    const organizationId = await getOrganizationIdFromProductId(parsedInput.productId);
     await checkAuthorization({
       schema: ZProductUpdateInput,
       data: parsedInput.data,
       userId: ctx.user.id,
-      organizationId: organizationId,
+      organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
       rules: ["product", "update"],
     });
 
@@ -37,6 +35,7 @@ export const deleteProductAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     // get organizationId from productId
     const organizationId = await getOrganizationIdFromProductId(parsedInput.productId);
+
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: organizationId,

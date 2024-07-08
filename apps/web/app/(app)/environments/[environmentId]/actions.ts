@@ -82,16 +82,15 @@ const ZCreateProductAction = z.object({
 export const createProductAction = authenticatedActionClient
   .schema(ZCreateProductAction)
   .action(async ({ parsedInput, ctx }) => {
-    const organizationId = parsedInput.organizationId;
+    const { user } = ctx;
+
     await checkAuthorization({
       schema: ZProductUpdateInput,
       data: parsedInput.data,
-      userId: ctx.user.id,
-      organizationId: organizationId,
+      userId: user.id,
+      organizationId: parsedInput.organizationId,
       rules: ["product", "create"],
     });
-
-    const { user } = ctx;
 
     const product = await createProduct(parsedInput.organizationId, parsedInput.data);
     const updatedNotificationSettings = {
