@@ -11,18 +11,14 @@ x-redis-url: &redis_url
 
 
 x-nextauth-secret: &nextauth_secret
-  # Set this to your public-facing URL, e.g., https://example.com
-  # You do not need the NEXTAUTH_URL environment variable in Vercel.
+  # Encryption key
+  # You can use: `openssl rand -hex 32` to generate one
 
   x-cron-secret: &cron_secret
     # Set the below to use it instead of API Key for the API & use as an auth for cronjobs
     # You can use: $(openssl rand -hex 32) to generate a secure one
 
 
-x-nextauth-url: &nextauth_url http://localhost:3000
-
-# Encryption key
-# You can use: `openssl rand -hex 32` to generate one
 x-encryption-key: &encryption_key
 
 x-mail-from: &mail_from
@@ -92,7 +88,6 @@ services:
       WEBAPP_URL: *webapp_url
       DATABASE_URL: *database_url
       NEXTAUTH_SECRET: *nextauth_secret
-      NEXTAUTH_URL: *nextauth_url
       MAIL_FROM: *mail_from
       SMTP_HOST: *smtp_host
       SMTP_PORT: *smtp_port

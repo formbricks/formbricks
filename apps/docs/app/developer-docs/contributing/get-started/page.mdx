@@ -91,15 +91,29 @@ cp .env.example .env
    </CodeGroup>
 </Col>
 
-4. Generate & set some secret values mandatory for the `ENCRYPTION_KEY` & `NEXTAUTH_SECRET` in the .env file. You can use the following command to generate the random string of required length:
+4. Generate & set some secret values mandatory for the `ENCRYPTION_KEY`, `NEXTAUTH_SECRET` and `CRON_SECRET` in the .env file. You can use the following command to generate the random string of required length:
 
+- For Linux
 <Col>
-   <CodeGroup title="Set value of ENCRYPTION_KEY">
+   <CodeGroup title="For Linux">
 
 ```bash
 sed -i '/^ENCRYPTION_KEY=/c\ENCRYPTION_KEY='$(openssl rand -hex 32) .env
 sed -i '/^NEXTAUTH_SECRET=/c\NEXTAUTH_SECRET='$(openssl rand -hex 32) .env
 sed -i '/^CRON_SECRET=/c\CRON_SECRET='$(openssl rand -hex 32) .env
+```
+
+   </CodeGroup>
+</Col>
+
+- For Mac   
+<Col>
+   <CodeGroup title="For Mac">
+
+```bash
+sed -i '' '/^ENCRYPTION_KEY=/s|.*|ENCRYPTION_KEY='$(openssl rand -hex 32)'|' .env
+sed -i '' '/^NEXTAUTH_SECRET=/s|.*|NEXTAUTH_SECRET='$(openssl rand -hex 32)'|' .env
+sed -i '' '/^CRON_SECRET=/s|.*|CRON_SECRET='$(openssl rand -hex 32)'|' .env
 ```
 
    </CodeGroup>
