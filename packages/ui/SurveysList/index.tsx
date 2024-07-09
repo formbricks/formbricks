@@ -109,11 +109,12 @@ export const SurveysList = ({
         <div>
           {orientation === "list" && (
             <div className="flex-col space-y-3">
-              <div className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 text-sm text-slate-800">
+              <div className="mt-6 grid w-full grid-cols-8 place-items-center gap-2 px-6 text-sm text-slate-800">
                 <div className="col-span-4 place-self-start">Name</div>
-                <div className="col-span-4 grid w-full grid-cols-5 place-items-center">
+                <div className="col-span-4 grid w-full grid-cols-7 place-items-center">
                   <div className="col-span-2">Created at</div>
                   <div className="col-span-2">Updated at</div>
+                  <div className="col-span-2">Created By</div>
                 </div>
               </div>
               {surveys.map((survey) => {
