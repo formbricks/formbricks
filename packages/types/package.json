@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "main": "index.ts",
-  "type": "module",
   "sideEffects": false,
   "scripts": {
     "clean": "rimraf node_modules .turbo"
