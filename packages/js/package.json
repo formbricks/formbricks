@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/js",
   "license": "MIT",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Formbricks-js allows you to connect your app to Formbricks, display surveys and trigger events.",
   "homepage": "https://formbricks.com",
   "repository": {
@@ -57,5 +57,8 @@
     "terser": "^5.31.1",
     "vite": "^5.3.1",
     "vite-plugin-dts": "^3.9.1"
+  },
+  "peerDependencies": {
+    "zod": "3.x"
   }
 }
