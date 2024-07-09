@@ -23,16 +23,16 @@
     "@formbricks/database": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
-    "@radix-ui/react-collapsible": "^1.0.3",
-    "https-proxy-agent": "^7.0.4",
-    "lucide-react": "^0.395.0",
+    "@radix-ui/react-collapsible": "^1.1.0",
+    "https-proxy-agent": "^7.0.5",
+    "lucide-react": "^0.404.0",
     "next": "^14.2.4",
     "next-auth": "^4.24.7",
     "node-fetch": "^3.3.2",
-    "react-hook-form": "^7.52.0",
+    "react-hook-form": "^7.52.1",
     "react-hot-toast": "^2.4.1",
     "server-only": "^0.0.1",
-    "stripe": "^15.12.0",
+    "stripe": "^16.2.0",
     "zod": "^3.23.8"
   }
 }
