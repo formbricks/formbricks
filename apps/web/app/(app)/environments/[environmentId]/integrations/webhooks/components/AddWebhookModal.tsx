@@ -50,7 +50,10 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
       return true;
     } catch (err) {
       setHittingEndpoint(false);
-      toast.error(`Unable to ping the webhook! \nError:  ${err.message}`);
+      toast.error(
+        `Unable to ping the webhook! \n ${err.message.length < 250 ? `Error:  ${err.message}` : "Please check the console for more details"}`,
+        { className: err.message.length < 250 ? "break-all" : "" }
+      );
       console.error("Webhook Test Failed due to: ", err.message);
       setEndpointAccessible(false);
       return false;
