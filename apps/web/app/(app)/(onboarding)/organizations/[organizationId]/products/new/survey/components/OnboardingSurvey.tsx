@@ -1,7 +1,5 @@
 "use client";
 
-import OnboardingSurveyBg from "@/images/onboarding-survey-bg.jpg";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { TProductConfigChannel } from "@formbricks/types/product";
@@ -41,13 +39,10 @@ export const OnboardingSurvey = ({ organizationId, channel, userId }: Onboarding
   return (
     <div
       className={`overflow relative flex h-[100vh] flex-col items-center justify-center ${fadeout ? "opacity-0 transition-opacity duration-1000" : "opacity-100"}`}>
-      <Image src={OnboardingSurveyBg} className="absolute inset-0 h-full w-full" alt="OnboardingSurveyBg" />
-      <div className="relative h-[60vh] w-[50vh] overflow-auto">
-        <iframe
-          onLoad={() => setIsIFrameVisible(true)}
-          src={`https://app.formbricks.com/s/clxcwr22p0cwlpvgekzdab2x5?embed=true&userId=${userId}`}
-          className="absolute left-0 top-0 h-full w-full overflow-visible border-0"></iframe>
-      </div>
+      <iframe
+        onLoad={() => setIsIFrameVisible(true)}
+        src={`https://app.formbricks.com/s/clxcwr22p0cwlpvgekzdab2x5?userId=${userId}`}
+        className="absolute left-0 top-0 h-full w-full overflow-visible border-0"></iframe>
     </div>
   );
 };

@@ -185,6 +185,7 @@ export const questionTypes: TQuestion[] = [
     preset: {
       headline: { default: "Schedule a call with me" },
       calUserName: "rick/get-rick-rolled",
+      calHost: "cal.com",
     } as Partial<TSurveyCalQuestion>,
   },
   {

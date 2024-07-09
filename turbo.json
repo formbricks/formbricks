@@ -105,7 +105,6 @@
         "OPENTELEMETRY_LISTENER_URL",
         "NEXT_RUNTIME",
         "NEXTAUTH_SECRET",
-        "NEXTAUTH_URL",
         "NODE_ENV",
         "OIDC_CLIENT_ID",
         "OIDC_CLIENT_SECRET",

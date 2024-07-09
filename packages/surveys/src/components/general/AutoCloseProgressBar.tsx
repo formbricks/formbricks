@@ -4,10 +4,10 @@ interface AutoCloseProgressBarProps {
 
 export const AutoCloseProgressBar = ({ autoCloseTimeout }: AutoCloseProgressBarProps) => {
   return (
-    <div className="bg-accent-bg h-2 w-full overflow-hidden rounded-full">
+    <div className="fb-bg-accent-bg fb-h-2 fb-w-full fb-overflow-hidden fb-rounded-full">
       <div
         key={autoCloseTimeout}
-        className="bg-brand z-20 h-2 rounded-full"
+        className="fb-bg-brand fb-z-20 fb-h-2 fb-rounded-full"
         style={{
           animation: `shrink-width-to-zero ${autoCloseTimeout}s linear forwards`,
         }}></div>
