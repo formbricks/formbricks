@@ -59,6 +59,6 @@
     "vite-plugin-dts": "^3.9.1"
   },
   "peerDependencies": {
-    "zod": "^3.23.8"
+    "zod": "3.x"
   }
 }
