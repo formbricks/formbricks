@@ -84,6 +84,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Hidden Fields", href: "/link-surveys/hidden-fields" },
           { title: "Start At Question", href: "/link-surveys/start-at-question" },
           { title: "Embed Surveys Anywhere", href: "/link-surveys/embed-surveys" },
+          { title: "Market Research Panel", href: "/link-surveys/market-research-panel" },
           { title: "Multi Language Surveys", href: "/global/multi-language-surveys" },
           { title: "User Metadata", href: "/global/metadata" },
           { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
