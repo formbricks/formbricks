@@ -19,6 +19,15 @@ const FIELD_TO_LABEL_MAP: Record<string, string> = {
   subheader: "description",
   buttonLabel: "next button label",
   backButtonLabel: "back button label",
+  placeholder: "placeholder",
+  upperLabel: "upper label",
+  lowerLabel: "lower label",
+  "consent.label": "checkbox label",
+  dismissButtonLabel: "dismiss button label",
+  html: "description",
+  cardHeadline: "note",
+  welcomeCardHtml: "welcome message",
+  thankYouCardButtonLabel: "button label",
 };
 
 export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string[] => {
@@ -50,15 +59,20 @@ export const validateQuestionLabels = (
   field: string,
   fieldLabel: TI18nString,
   languages: TSurveyLanguage[],
-  questionIndex: number
+  questionIndex: number,
+  skipArticle: boolean = false
 ): z.IssueData | null => {
   const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
+  const isDefaultOnly = invalidLanguageCodes?.length === 1 && invalidLanguageCodes[0] === "default";
+
+  const messagePrefix = skipArticle ? "" : "The ";
+  const messageField = FIELD_TO_LABEL_MAP[field] ? FIELD_TO_LABEL_MAP[field] : field;
+  const messageSuffix = isDefaultOnly ? " is missing" : " is missing for the following languages: ";
 
   if (invalidLanguageCodes.length) {
-    const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
     return {
       code: z.ZodIssueCode.custom,
-      message: `The ${FIELD_TO_LABEL_MAP[field]} field in question ${questionIndex + 1} is ${isDefaultOnly ? "missing" : "missing for the following languages: "}`,
+      message: `${messagePrefix}${messageField} in question ${questionIndex + 1}${messageSuffix}`,
       path: ["questions", questionIndex, field],
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
     };
@@ -71,14 +85,22 @@ export const validateCardFieldsForAllLanguages = (
   field: string,
   fieldLabel: TI18nString,
   languages: TSurveyLanguage[],
-  cardType: "welcome" | "thankYou"
+  cardType: "welcome" | "thankYou",
+  skipArticle: boolean = false
 ): z.IssueData | null => {
   const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
+  const isDefaultOnly = invalidLanguageCodes?.length === 1 && invalidLanguageCodes[0] === "default";
+
+  const messagePrefix = skipArticle ? "" : "The ";
+  const messageField = FIELD_TO_LABEL_MAP[field] ? FIELD_TO_LABEL_MAP[field] : field;
+  const messageSuffix = isDefaultOnly ? " is missing" : " is missing for the following languages: ";
+
   if (invalidLanguageCodes.length) {
-    const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
     return {
       code: z.ZodIssueCode.custom,
-      message: `The ${field} on the ${cardType === "welcome" ? "Welcome" : "Thank You"} card is ${isDefaultOnly ? "invalid" : "not valid for the following languages: "}`,
+      message: `${messagePrefix}${messageField} on the ${
+        cardType === "welcome" ? "Welcome" : "Thank You"
+      } card${messageSuffix}`,
       path: [cardType === "welcome" ? "welcomeCard" : "thankYouCard", field],
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
     };

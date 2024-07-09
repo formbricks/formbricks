@@ -391,7 +391,7 @@ export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.CTA),
   html: ZI18nString.optional(),
-  buttonUrl: z.string().optional(),
+  buttonUrl: z.string().url({ message: "Invalid button url" }).optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: ZI18nString.optional(),
   logic: z.array(ZSurveyCTALogic).optional(),
@@ -602,7 +602,7 @@ export const ZSurvey = z
     if (welcomeCard.enabled) {
       if (welcomeCard.headline) {
         const multiLangIssue = validateCardFieldsForAllLanguages(
-          "headline",
+          "cardHeadline",
           welcomeCard.headline,
           languages,
           "welcome"
@@ -614,17 +614,14 @@ export const ZSurvey = z
       }
 
       if (welcomeCard.html) {
-        if (welcomeCard.headline) {
-          const multiLangIssue = validateCardFieldsForAllLanguages(
-            "headline",
-            welcomeCard.headline,
-            languages,
-            "welcome"
-          );
-
-          if (multiLangIssue) {
-            ctx.addIssue(multiLangIssue);
-          }
+        const multiLangIssue = validateCardFieldsForAllLanguages(
+          "welcomeCardHtml",
+          welcomeCard.html,
+          languages,
+          "welcome"
+        );
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
         }
       }
 
@@ -675,6 +672,11 @@ export const ZSurvey = z
         questionIndex === 0 ? initialFieldsToValidate : [...initialFieldsToValidate, "backButtonLabel"];
 
       for (const field of fieldsToValidate) {
+        // Skip label validation for consent questions as its called checkbox label
+        if (field === "label" && question.type === TSurveyQuestionTypeEnum.Consent) {
+          continue;
+        }
+
         const questionFieldValue = question[field as keyof typeof question] as TI18nString;
         if (
           questionFieldValue &&
@@ -711,7 +713,8 @@ export const ZSurvey = z
             `Choice ${choiceIndex + 1}`,
             choice.label,
             languages,
-            questionIndex
+            questionIndex,
+            true
           );
           if (multiLangIssue) {
             ctx.addIssue(multiLangIssue);
@@ -742,7 +745,13 @@ export const ZSurvey = z
       }
 
       if (question.type === TSurveyQuestionTypeEnum.Consent) {
-        const multiLangIssue = validateQuestionLabels("label", question.label, languages, questionIndex);
+        const multiLangIssue = validateQuestionLabels(
+          "consent.label",
+          question.label,
+          languages,
+          questionIndex
+        );
+
         if (multiLangIssue) {
           ctx.addIssue(multiLangIssue);
         }
@@ -756,7 +765,6 @@ export const ZSurvey = z
             languages,
             questionIndex
           );
-
           if (multiLangIssue) {
             ctx.addIssue(multiLangIssue);
           }
@@ -765,7 +773,13 @@ export const ZSurvey = z
 
       if (question.type === TSurveyQuestionTypeEnum.Matrix) {
         question.rows.forEach((row, rowIndex) => {
-          const multiLangIssue = validateQuestionLabels(`Row ${rowIndex + 1}`, row, languages, questionIndex);
+          const multiLangIssue = validateQuestionLabels(
+            `Row ${rowIndex + 1}`,
+            row,
+            languages,
+            questionIndex,
+            true
+          );
           if (multiLangIssue) {
             ctx.addIssue(multiLangIssue);
           }
@@ -776,7 +790,8 @@ export const ZSurvey = z
             `Column ${columnIndex + 1}`,
             column,
             languages,
-            questionIndex
+            questionIndex,
+            true
           );
           if (multiLangIssue) {
             ctx.addIssue(multiLangIssue);
@@ -873,7 +888,7 @@ export const ZSurvey = z
     if (thankYouCard.enabled) {
       if (thankYouCard.headline) {
         const multiLangIssue = validateCardFieldsForAllLanguages(
-          "headline",
+          "cardHeadline",
           thankYouCard.headline,
           languages,
           "thankYou"
@@ -899,7 +914,7 @@ export const ZSurvey = z
 
       if (thankYouCard.buttonLabel) {
         const multiLangIssue = validateCardFieldsForAllLanguages(
-          "buttonLabel",
+          "thankYouCardButtonLabel",
           thankYouCard.buttonLabel,
           languages,
           "thankYou"
