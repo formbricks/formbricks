@@ -734,7 +734,7 @@ importers:
   packages/js:
     dependencies:
       zod:
-        specifier: ^3.23.8
+        specifier: 3.x
         version: 3.23.8
     devDependencies:
       '@formbricks/config-typescript':
