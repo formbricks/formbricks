@@ -23,7 +23,7 @@ export const HtmlBody = ({ htmlString, questionId }: HtmlBodyProps) => {
   return (
     <label
       htmlFor={questionId}
-      className={cn("fb-htmlbody break-words")} // styles are in global.css
+      className={cn("fb-htmlbody fb-break-words")} // styles are in global.css
       dangerouslySetInnerHTML={{ __html: safeHtml }}
       dir="auto"
     />

@@ -16,7 +16,7 @@ export const GET = async (req: NextRequest) => {
   const baseId = z.string().safeParse(queryParams.get("baseId"));
 
   if (!baseId.success) {
-    return responses.missingFieldResponse("Base Id is Required");
+    return responses.badRequestResponse("Base Id is Required");
   }
 
   if (!session) {
