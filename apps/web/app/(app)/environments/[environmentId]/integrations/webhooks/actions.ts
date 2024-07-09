@@ -5,6 +5,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { canUserAccessWebhook } from "@formbricks/lib/webhook/auth";
 import { createWebhook, deleteWebhook, updateWebhook } from "@formbricks/lib/webhook/service";
+import { testEndpoint } from "@formbricks/lib/webhook/utils";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TWebhook, TWebhookInput } from "@formbricks/types/webhooks";
 
@@ -43,4 +44,15 @@ export const updateWebhookAction = async (
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   return await updateWebhook(environmentId, webhookId, webhookInput);
+};
+
+export const testEndpointAction = async (url: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const res = await testEndpoint(url);
+
+  if (!res.ok) {
+    throw res.error;
+  }
 };
