@@ -154,6 +154,10 @@ export const SurveyMenuBar = ({
         setInvalidQuestions((prevInvalidQuestions) =>
           prevInvalidQuestions ? [...prevInvalidQuestions, "start"] : ["start"]
         );
+      } else if (currentError.path[0] === "thankYouCard") {
+        setInvalidQuestions((prevInvalidQuestions) =>
+          prevInvalidQuestions ? [...prevInvalidQuestions, "end"] : ["end"]
+        );
       }
 
       if (currentError.code === "custom") {

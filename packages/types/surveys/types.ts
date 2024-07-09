@@ -25,7 +25,7 @@ export const ZSurveyThankYouCard = z.object({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: z.optional(z.string()),
+  buttonLink: z.string().url("Invalid button link in thank you card").optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
@@ -832,6 +832,17 @@ export const ZSurvey = z
             message: `Question ${questionIndex + 1} has duplicate column labels ${isDefaultOnly ? "" : "for the following languages:"}`,
             path: ["questions", questionIndex, "columns"],
             params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+          });
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.FileUpload) {
+        // allowedFileExtensions must have atleast one element
+        if (question.allowedFileExtensions && question.allowedFileExtensions.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Question ${questionIndex + 1} must have atleast one allowed file extension`,
+            path: ["questions", questionIndex, "allowedFileExtensions"],
           });
         }
       }
