@@ -1,6 +1,6 @@
-import { Result } from "@formbricks/types/errorHandlers";
-import { NetworkError } from "@formbricks/types/errors";
-import { makeRequest } from "../../utils/makeRequest";
+import { type Result } from "@formbricks/types/errorHandlers";
+import { type NetworkError } from "@formbricks/types/errors";
+import { makeRequest } from "../../utils/make-request";
 
 export class PeopleAPI {
   private apiHost: string;
@@ -11,7 +11,7 @@ export class PeopleAPI {
     this.environmentId = environmentId;
   }
 
-  async create(userId: string): Promise<Result<{}, NetworkError | Error>> {
+  async create(userId: string): Promise<Result<{ userId: string }, NetworkError | Error>> {
     return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/people`, "POST", {
       environmentId: this.environmentId,
       userId,
