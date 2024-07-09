@@ -44,7 +44,7 @@
     "data-migration:multiple-endings": "ts-node ./data-migrations/20240709132818_thankYouCard_to_endings/data-migration.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.15.1",
+    "@prisma/client": "^5.16.2",
     "@prisma/extension-accelerate": "^1.1.0",
     "dotenv-cli": "^7.4.2"
   },
@@ -53,7 +53,7 @@
     "@formbricks/types": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
     "@formbricks/eslint-config": "workspace:*",
-    "prisma": "^5.15.1",
+    "prisma": "^5.16.2",
     "prisma-dbml-generator": "^0.12.0",
     "prisma-json-types-generator": "^3.0.4",
     "ts-node": "^10.9.2",

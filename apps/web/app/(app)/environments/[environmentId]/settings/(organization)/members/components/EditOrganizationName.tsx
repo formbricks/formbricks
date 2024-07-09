@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SubmitHandler, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -50,11 +51,18 @@ export const EditOrganizationName = ({ organization, membershipRole }: EditOrgan
     try {
       data.name = data.name.trim();
       setIsUpdatingOrganization(true);
-      await updateOrganizationNameAction(organization.id, data.name);
+      const updatedOrganizationResponse = await updateOrganizationNameAction({
+        organizationId: organization.id,
+        data: { name: data.name },
+      });
 
-      setIsUpdatingOrganization(false);
-      toast.success("Organization name updated successfully.");
-
+      if (updatedOrganizationResponse?.data) {
+        setIsUpdatingOrganization(false);
+        toast.success("Organization name updated successfully.");
+      } else {
+        const errorMessage = getFormattedErrorMessage(updatedOrganizationResponse);
+        toast.error(errorMessage);
+      }
       router.refresh();
     } catch (err) {
       setIsUpdatingOrganization(false);
