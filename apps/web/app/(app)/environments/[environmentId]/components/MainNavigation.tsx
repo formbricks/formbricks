@@ -82,6 +82,7 @@ export const MainNavigation = ({
 
   const product = products.find((product) => product.id === environment.productId);
   const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
+  const isOwnerOrAdmin = isAdmin || isOwner;
   const isPricingDisabled = !isOwner && !isAdmin;
 
   const toggleSidebar = () => {
@@ -329,7 +330,7 @@ export const MainNavigation = ({
                   ))}
                 </DropdownMenuRadioGroup>
                 <DropdownMenuSeparator />
-                {!isViewer && (
+                {isOwnerOrAdmin && (
                   <DropdownMenuItem onClick={() => handleAddProduct(organization.id)} className="rounded-lg">
                     <PlusIcon className="mr-2 h-4 w-4" />
                     <span>Add product</span>
