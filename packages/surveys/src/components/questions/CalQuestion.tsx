@@ -68,7 +68,7 @@ export const CalQuestion = ({
         onChange({ [question.id]: value });
         onSubmit({ [question.id]: value }, updatedttc);
       }}
-      className="w-full">
+      className="fb-w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -82,12 +82,12 @@ export const CalQuestion = ({
             questionId={question.id}
           />
           <>
-            {errorMessage && <span className="text-red-500">{errorMessage}</span>}
+            {errorMessage && <span className="fb-text-red-500">{errorMessage}</span>}
             <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
           </>
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

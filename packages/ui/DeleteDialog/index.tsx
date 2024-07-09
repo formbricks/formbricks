@@ -34,7 +34,7 @@ export const DeleteDialog = ({
     <Modal open={open} setOpen={setOpen} title={`Delete ${deleteWhat}`}>
       <p>{text || "Are you sure? This action cannot be undone."}</p>
       <div>{children}</div>
-      <div className="space-x-2 text-right">
+      <div className="mt-4 space-x-2 text-right">
         <Button
           loading={isSaving}
           variant="secondary"
