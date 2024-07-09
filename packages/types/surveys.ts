@@ -13,8 +13,16 @@ export const ZI18nString = z.record(z.string()).refine((obj) => "default" in obj
 
 export type TI18nString = z.infer<typeof ZI18nString>;
 
-export const ZSurveyThankYouCard = z.object({
+const ZEndScreenType = z.union([z.literal("endScreen"), z.literal("redirectToUrl")]);
+
+const ZSurveyEndingBase = z.object({
+  id: z.string(),
+  type: ZEndScreenType,
   enabled: z.boolean(),
+});
+
+export const ZSurveyEndScreen = ZSurveyEndingBase.extend({
+  type: z.literal("endScreen"),
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
@@ -22,6 +30,16 @@ export const ZSurveyThankYouCard = z.object({
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
+export type TSurveyEndScreen = z.infer<typeof ZSurveyEndScreen>;
+
+export const ZSurveyRedirectUrl = ZSurveyEndingBase.extend({
+  type: z.literal("redirectToUrl"),
+  url: z.string(),
+  label: z.string().optional(),
+});
+export type TSurveyRedirectUrl = z.infer<typeof ZSurveyRedirectUrl>;
+
+export const ZSurveyEndings = z.array(z.union([ZSurveyEndScreen, ZSurveyRedirectUrl]));
 
 export enum TSurveyQuestionTypeEnum {
   FileUpload = "fileUpload",
@@ -110,7 +128,7 @@ export type TSurveyVerifyEmail = z.infer<typeof ZSurveyVerifyEmail>;
 
 export type TSurveyWelcomeCard = z.infer<typeof ZSurveyWelcomeCard>;
 
-export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
+export type TSurveyEndings = z.infer<typeof ZSurveyEndings>;
 
 export type TSurveyHiddenFields = z.infer<typeof ZSurveyHiddenFields>;
 
@@ -506,7 +524,7 @@ export const ZSurvey = z.object({
   displayLimit: z.number().nullable(),
   welcomeCard: ZSurveyWelcomeCard,
   questions: ZSurveyQuestions,
-  thankYouCard: ZSurveyThankYouCard,
+  endings: ZSurveyEndings,
   hiddenFields: ZSurveyHiddenFields,
   delay: z.number(),
   autoComplete: z.number().nullable(),
@@ -543,7 +561,7 @@ export const ZSurveyInput = z.object({
   recontactDays: z.number().nullish(),
   welcomeCard: ZSurveyWelcomeCard.optional(),
   questions: ZSurveyQuestions.optional(),
-  thankYouCard: ZSurveyThankYouCard.optional(),
+  endings: ZSurveyEndings.optional(),
   hiddenFields: ZSurveyHiddenFields.optional(),
   delay: z.number().optional(),
   autoComplete: z.number().nullish(),

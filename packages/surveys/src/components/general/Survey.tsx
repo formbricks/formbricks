@@ -1,10 +1,10 @@
+import { EndingCard } from "@/components/general/EndingCard";
 import { FormbricksBranding } from "@/components/general/FormbricksBranding";
 import { LanguageSwitch } from "@/components/general/LanguageSwitch";
 import { ProgressBar } from "@/components/general/ProgressBar";
 import { QuestionConditional } from "@/components/general/QuestionConditional";
 import { ResponseErrorComponent } from "@/components/general/ResponseErrorComponent";
 import { SurveyCloseButton } from "@/components/general/SurveyCloseButton";
-import { ThankYouCard } from "@/components/general/ThankYouCard";
 import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
@@ -13,6 +13,7 @@ import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getFirstEnabledEnding } from "@formbricks/lib/utils/survey";
 import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";
 import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 
@@ -72,7 +73,7 @@ export const Survey = ({
 
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = useMemo(() => {
-    if (questionId === "end" && !survey.thankYouCard.enabled) {
+    if (questionId.startsWith("end:")) {
       const newHistory = [...history];
       const prevQuestionId = newHistory.pop();
       return survey.questions.find((q) => q.id === prevQuestionId);
@@ -137,9 +138,8 @@ export const Survey = ({
   const getNextQuestionId = (data: TResponseData): string => {
     const questions = survey.questions;
     const responseValue = data[questionId];
-
-    if (questionId === "start") return questions[0]?.id || "end";
-
+    const firstEnabledEndingId = getFirstEnabledEnding(survey)?.id ?? survey.endings[0].id;
+    if (questionId === "start") return questions[0]?.id || firstEnabledEndingId;
     if (currIdxTemp === -1) throw new Error("Question not found");
     if (currQuesTemp?.logic && currQuesTemp?.logic.length > 0 && currentQuestion) {
       for (let logic of currQuesTemp.logic) {
@@ -194,7 +194,7 @@ export const Survey = ({
       }
     }
 
-    return questions[currIdxTemp + 1]?.id || "end";
+    return questions[currIdxTemp + 1]?.id || firstEnabledEndingId;
   };
 
   const onChange = (responseDataUpdate: TResponseData) => {
@@ -206,7 +206,7 @@ export const Survey = ({
     const questionId = Object.keys(responseData)[0];
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId(responseData);
-    const finished = nextQuestionId === "end";
+    const finished = nextQuestionId.startsWith("end:");
     onChange(responseData);
     onResponse({ data: responseData, ttc, finished, language: selectedLanguage });
     if (finished) {
@@ -267,30 +267,23 @@ export const Survey = ({
             isCurrent={offset === 0}
           />
         );
-      } else if (questionIdx === survey.questions.length) {
-        return (
-          <ThankYouCard
-            key="end"
-            headline={replaceRecallInfo(
-              getLocalizedValue(survey.thankYouCard.headline, selectedLanguage),
-              responseData
-            )}
-            subheader={replaceRecallInfo(
-              getLocalizedValue(survey.thankYouCard.subheader, selectedLanguage),
-              responseData
-            )}
-            isResponseSendingFinished={isResponseSendingFinished}
-            buttonLabel={getLocalizedValue(survey.thankYouCard.buttonLabel, selectedLanguage)}
-            buttonLink={survey.thankYouCard.buttonLink}
-            survey={survey}
-            imageUrl={survey.thankYouCard.imageUrl}
-            videoUrl={survey.thankYouCard.videoUrl}
-            redirectUrl={survey.redirectUrl}
-            isRedirectDisabled={isRedirectDisabled}
-            autoFocusEnabled={autoFocusEnabled}
-            isCurrent={offset === 0}
-          />
-        );
+      } else if (questionIdx >= survey.questions.length) {
+        const endingCard = survey.endings.find((ending) => {
+          return ending.id === questionId;
+        });
+        if (endingCard) {
+          return (
+            <EndingCard
+              survey={survey}
+              endingCard={endingCard}
+              isRedirectDisabled={isRedirectDisabled}
+              autoFocusEnabled={autoFocusEnabled}
+              isCurrent={offset === 0}
+              languageCode={selectedLanguage}
+              isResponseSendingFinished={isResponseSendingFinished}
+            />
+          );
+        }
       } else {
         const question = survey.questions[questionIdx];
         return (

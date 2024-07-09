@@ -3,18 +3,20 @@ import { TActionClass } from "@formbricks/types/actionClasses";
 import {
   TSurveyCTAQuestion,
   TSurveyDisplayOption,
+  TSurveyEndScreen,
   TSurveyHiddenFields,
   TSurveyInput,
   TSurveyOpenTextQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyStatus,
-  TSurveyThankYouCard,
   TSurveyType,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 
-const thankYouCardDefault: TSurveyThankYouCard = {
+const endingCardDefault: TSurveyEndScreen = {
+  id: "end:1",
+  type: "endScreen",
   enabled: true,
   headline: { default: "Thank you!" },
   subheader: { default: "We appreciate your feedback." },
@@ -38,7 +40,7 @@ const welcomeCardDefault: TSurveyWelcomeCard = {
 const surveyDefault: TTemplate["preset"] = {
   name: "New Survey",
   welcomeCard: welcomeCardDefault,
-  thankYouCard: thankYouCardDefault,
+  endings: [endingCardDefault],
   hiddenFields: hiddenFieldsDefault,
   questions: [],
 };
@@ -2044,7 +2046,7 @@ export const templates: TTemplate[] = [
           inputType: "text",
         },
       ],
-      thankYouCard: thankYouCardDefault,
+      endings: [endingCardDefault],
       hiddenFields: hiddenFieldsDefault,
     },
   },

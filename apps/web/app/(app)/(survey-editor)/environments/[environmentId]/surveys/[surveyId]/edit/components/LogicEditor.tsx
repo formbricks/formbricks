@@ -390,7 +390,15 @@ export const LogicEditor = ({
                         </SelectItem>
                       )
                   )}
-                  <SelectItem value="end">End of survey</SelectItem>
+                  {localSurvey.endings.map((ending) => {
+                    return (
+                      <SelectItem value={ending.id}>
+                        {ending.type === "endScreen"
+                          ? getLocalizedValue(ending.headline, "default")
+                          : ending.label}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               <div>

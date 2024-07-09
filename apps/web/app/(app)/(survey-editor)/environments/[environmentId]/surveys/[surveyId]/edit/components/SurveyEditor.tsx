@@ -8,6 +8,7 @@ import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys";
@@ -34,6 +35,7 @@ interface SurveyEditorProps {
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
   isUnsplashConfigured: boolean;
+  plan: TOrganizationBillingPlan;
 }
 
 export const SurveyEditor = ({
@@ -50,6 +52,7 @@ export const SurveyEditor = ({
   isUserTargetingAllowed = false,
   isFormbricksCloud,
   isUnsplashConfigured,
+  plan,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -164,6 +167,7 @@ export const SurveyEditor = ({
                 isMultiLanguageAllowed={isMultiLanguageAllowed}
                 isFormbricksCloud={isFormbricksCloud}
                 attributeClasses={attributeClasses}
+                plan={plan}
               />
             )}
 

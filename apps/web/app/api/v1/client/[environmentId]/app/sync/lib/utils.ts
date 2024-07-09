@@ -26,28 +26,19 @@ export const replaceAttributeRecall = (survey: TSurvey, attributes: TAttributes)
       }
     });
   }
-  if (surveyTemp.thankYouCard.enabled) {
-    languages.forEach((language) => {
-      if (
-        surveyTemp.thankYouCard.headline &&
-        surveyTemp.thankYouCard.headline[language].includes("recall:")
-      ) {
-        surveyTemp.thankYouCard.headline[language] = parseRecallInfo(
-          surveyTemp.thankYouCard.headline[language],
-          attributes
-        );
-        if (
-          surveyTemp.thankYouCard.subheader &&
-          surveyTemp.thankYouCard.subheader[language].includes("recall:")
-        ) {
-          surveyTemp.thankYouCard.subheader[language] = parseRecallInfo(
-            surveyTemp.thankYouCard.subheader[language],
-            attributes
-          );
+  surveyTemp.endings.forEach((ending) => {
+    if (ending.type === "endScreen" && ending.enabled) {
+      languages.forEach((language) => {
+        if (ending.headline && ending.headline[language].includes("recall:")) {
+          ending.headline[language] = parseRecallInfo(ending.headline[language], attributes);
+          if (ending.subheader && ending.subheader[language].includes("recall:")) {
+            ending.subheader[language] = parseRecallInfo(ending.subheader[language], attributes);
+          }
         }
-      }
-    });
-  }
+      });
+    }
+  });
+
   return surveyTemp;
 };
 

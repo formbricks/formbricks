@@ -39,20 +39,32 @@ export const getMatrixLabel = (
   return labels[idx] || createI18nString("", surveyLanguageCodes);
 };
 
-export const getCardText = (
+export const getWelcomeCardText = (
   survey: TSurvey,
   id: string,
-  isThankYouCard: boolean,
   surveyLanguageCodes: string[]
 ): TI18nString => {
-  const card = isThankYouCard ? survey.thankYouCard : survey.welcomeCard;
+  const card = survey.welcomeCard;
   return (card[id as keyof typeof card] as TI18nString) || createI18nString("", surveyLanguageCodes);
+};
+
+export const getEndingCardText = (
+  survey: TSurvey,
+  id: string,
+  surveyLanguageCodes: string[],
+  questionIdx: number
+): TI18nString => {
+  const endingCardIndex = questionIdx - survey.questions.length;
+  const card = survey.endings[endingCardIndex];
+  if (card.type === "endScreen") {
+    return (card[id as keyof typeof card] as TI18nString) || createI18nString("", surveyLanguageCodes);
+  } else {
+    return createI18nString("", surveyLanguageCodes);
+  }
 };
 
 export const determineImageUploaderVisibility = (questionIdx: number, localSurvey: TSurvey) => {
   switch (questionIdx) {
-    case localSurvey.questions.length: // Thank You Card
-      return !!localSurvey.thankYouCard.imageUrl || !!localSurvey.thankYouCard.videoUrl;
     case -1: // Welcome Card
       return false;
     default:

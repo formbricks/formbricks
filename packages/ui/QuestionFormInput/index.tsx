@@ -34,11 +34,12 @@ import { FallbackInput } from "./components/FallbackInput";
 import { RecallItemSelect } from "./components/RecallItemSelect";
 import {
   determineImageUploaderVisibility,
-  getCardText,
   getChoiceLabel,
+  getEndingCardText,
   getIndex,
   getMatrixLabel,
   getPlaceHolderById,
+  getWelcomeCardText,
   isValueIncomplete,
 } from "./utils";
 
@@ -85,18 +86,21 @@ export const QuestionFormInput = ({
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
   const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
-
   const question: TSurveyQuestion = localSurvey.questions[questionIdx];
   const isChoice = id.includes("choice");
   const isMatrixLabelRow = id.includes("row");
   const isMatrixLabelColumn = id.includes("column");
-  const isThankYouCard = questionIdx === localSurvey.questions.length;
+  const isEndingCard = questionIdx >= localSurvey.questions.length;
   const isWelcomeCard = questionIdx === -1;
   const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
 
   const questionId = useMemo(() => {
-    return isWelcomeCard ? "start" : isThankYouCard ? "end" : question.id;
-  }, [isWelcomeCard, isThankYouCard, question?.id]);
+    return isWelcomeCard
+      ? "start"
+      : isEndingCard
+        ? `end:${questionIdx - localSurvey.questions.length}`
+        : question.id;
+  }, [isWelcomeCard, isEndingCard, question?.id]);
 
   const enabledLanguages = useMemo(
     () => getEnabledLanguages(localSurvey.languages ?? []),
@@ -117,8 +121,12 @@ export const QuestionFormInput = ({
       return getChoiceLabel(question, index, surveyLanguageCodes);
     }
 
-    if (isThankYouCard || isWelcomeCard) {
-      return getCardText(localSurvey, id, isThankYouCard, surveyLanguageCodes);
+    if (isWelcomeCard) {
+      return getWelcomeCardText(localSurvey, id, surveyLanguageCodes);
+    }
+
+    if (isEndingCard) {
+      return getEndingCardText(localSurvey, id, surveyLanguageCodes, questionIdx);
     }
 
     if ((isMatrixLabelColumn || isMatrixLabelRow) && typeof index === "number") {
@@ -352,7 +360,7 @@ export const QuestionFormInput = ({
 
     if (isChoice) {
       updateChoiceDetails(translatedText);
-    } else if (isThankYouCard || isWelcomeCard) {
+    } else if (isEndingCard || isWelcomeCard) {
       updateSurveyDetails(translatedText);
     } else if (isMatrixLabelRow || isMatrixLabelColumn) {
       updateMatrixLabelDetails(translatedText);
@@ -393,14 +401,12 @@ export const QuestionFormInput = ({
   };
 
   const getFileUrl = () => {
-    if (isThankYouCard) return localSurvey.thankYouCard.imageUrl;
-    else if (isWelcomeCard) return localSurvey.welcomeCard.fileUrl;
+    if (isWelcomeCard) return localSurvey.welcomeCard.fileUrl;
     else return question.imageUrl;
   };
 
   const getVideoUrl = () => {
-    if (isThankYouCard) return localSurvey.thankYouCard.videoUrl;
-    else if (isWelcomeCard) return localSurvey.welcomeCard.videoUrl;
+    if (isWelcomeCard) return localSurvey.welcomeCard.videoUrl;
     else return question.videoUrl;
   };
 
@@ -423,7 +429,7 @@ export const QuestionFormInput = ({
                     fileType === "video"
                       ? { videoUrl: url[0], imageUrl: "" }
                       : { imageUrl: url[0], videoUrl: "" };
-                  if (isThankYouCard && updateSurvey) {
+                  if (isEndingCard && updateSurvey) {
                     updateSurvey(update);
                   } else if (updateQuestion) {
                     updateQuestion(questionIdx, update);

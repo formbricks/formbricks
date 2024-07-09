@@ -2,42 +2,35 @@ import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
 import { LoadingSpinner } from "@/components/general/LoadingSpinner";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
-import { RedirectCountDown } from "@/components/general/RedirectCountdown";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { useEffect } from "preact/hooks";
-import { TSurvey } from "@formbricks/types/surveys";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TSurvey, TSurveyEndScreen, TSurveyRedirectUrl } from "@formbricks/types/surveys";
 
-interface ThankYouCardProps {
-  headline?: string;
-  subheader?: string;
-  redirectUrl: string | null;
+interface EndingCardProps {
+  survey: TSurvey;
+  endingCard: TSurveyEndScreen | TSurveyRedirectUrl;
   isRedirectDisabled: boolean;
-  buttonLabel?: string;
-  buttonLink?: string;
-  imageUrl?: string;
-  videoUrl?: string;
   isResponseSendingFinished: boolean;
   autoFocusEnabled: boolean;
   isCurrent: boolean;
-  survey: TSurvey;
+  languageCode: string;
 }
 
-export const ThankYouCard = ({
-  headline,
-  subheader,
-  redirectUrl,
+export const EndingCard = ({
+  survey,
+  endingCard,
   isRedirectDisabled,
-  buttonLabel,
-  buttonLink,
-  imageUrl,
-  videoUrl,
   isResponseSendingFinished,
   autoFocusEnabled,
   isCurrent,
-  survey,
-}: ThankYouCardProps) => {
-  const media = imageUrl || videoUrl ? <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} /> : null;
+  languageCode,
+}: EndingCardProps) => {
+  const media =
+    endingCard.type === "endScreen" && (endingCard.imageUrl || endingCard.videoUrl) ? (
+      <QuestionMedia imgUrl={endingCard.imageUrl} videoUrl={endingCard.videoUrl} />
+    ) : null;
   const checkmark = (
     <div className="fb-text-brand fb-flex fb-flex-col fb-items-center fb-justify-center">
       <svg
@@ -58,10 +51,17 @@ export const ThankYouCard = ({
   );
 
   const handleSubmit = () => {
-    if (buttonLink) window.location.replace(buttonLink);
+    if (!isRedirectDisabled && endingCard.type === "endScreen" && endingCard.buttonLink) {
+      window.location.replace(endingCard.buttonLink);
+    }
   };
 
   useEffect(() => {
+    if (isCurrent) {
+      if (!isRedirectDisabled && endingCard.type === "redirectToUrl" && endingCard.url) {
+        window.top?.location.replace(endingCard.url);
+      }
+    }
     const handleEnter = (e: KeyboardEvent) => {
       if (e.key === "Enter") {
         handleSubmit();
@@ -87,17 +87,27 @@ export const ThankYouCard = ({
         {isResponseSendingFinished ? (
           <>
             {media || checkmark}
-            <Headline alignTextCenter={true} headline={headline} questionId="thankYouCard" />
-            <Subheader subheader={subheader} questionId="thankYouCard" />
-            <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
-            {buttonLabel && (
-              <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
-                <SubmitButton
-                  buttonLabel={buttonLabel}
-                  isLastQuestion={false}
-                  focus={autoFocusEnabled}
-                  onClick={handleSubmit}
+            {endingCard.type === "endScreen" && (
+              <div>
+                <Headline
+                  alignTextCenter={true}
+                  headline={getLocalizedValue(endingCard.headline, languageCode)}
+                  questionId="EndingCard"
                 />
+                <Subheader
+                  subheader={getLocalizedValue(endingCard.subheader, languageCode)}
+                  questionId="EndingCard"
+                />
+                {endingCard.buttonLabel && (
+                  <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
+                    <SubmitButton
+                      buttonLabel={getLocalizedValue(endingCard.buttonLabel, languageCode)}
+                      isLastQuestion={false}
+                      focus={autoFocusEnabled}
+                      onClick={handleSubmit}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </>

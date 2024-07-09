@@ -98,15 +98,19 @@ export const PREVIEW_SURVEY = {
       shuffleOption: "none",
     },
   ],
-  thankYouCard: {
-    enabled: true,
-    headline: {
-      default: "Thank you!",
+  endings: [
+    {
+      type: "endScreen",
+      id: "end:1",
+      enabled: true,
+      headline: {
+        default: "Thank you!",
+      },
+      subheader: {
+        default: "We appreciate your feedback.",
+      },
     },
-    subheader: {
-      default: "We appreciate your feedback.",
-    },
-  },
+  ],
   hiddenFields: {
     enabled: true,
     fieldIds: [],

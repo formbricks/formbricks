@@ -9,6 +9,7 @@ import {
   TSurvey,
   TSurveyCTAQuestion,
   TSurveyConsentQuestion,
+  TSurveyEndScreen,
   TSurveyLanguage,
   TSurveyMatrixQuestion,
   TSurveyMultipleChoiceQuestion,
@@ -17,7 +18,7 @@ import {
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyQuestions,
-  TSurveyThankYouCard,
+  TSurveyRedirectUrl,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
 
@@ -171,25 +172,31 @@ export const validateSurveyQuestionsInBatch = (
   return invalidQuestions;
 };
 
-export const isCardValid = (
-  card: TSurveyWelcomeCard | TSurveyThankYouCard,
-  cardType: "start" | "end",
-  surveyLanguages: TSurveyLanguage[]
-): boolean => {
-  const defaultLanguageCode = "default";
-  const isContentValid = (content: Record<string, string> | undefined) => {
-    return (
-      !content || content[defaultLanguageCode] === "" || isLabelValidForAllLanguages(content, surveyLanguages)
-    );
-  };
+const isContentValid = (content: Record<string, string> | undefined, surveyLanguages: TSurveyLanguage[]) => {
+  return !content || isLabelValidForAllLanguages(content, surveyLanguages);
+};
 
-  return (
-    (card.headline ? isLabelValidForAllLanguages(card.headline, surveyLanguages) : true) &&
-    isContentValid(
-      cardType === "start" ? (card as TSurveyWelcomeCard).html : (card as TSurveyThankYouCard).subheader
-    ) &&
-    isContentValid(card.buttonLabel)
-  );
+export const isWelcomeCardValid = (card: TSurveyWelcomeCard, surveyLanguages: TSurveyLanguage[]): boolean => {
+  return isContentValid(card.headline, surveyLanguages) && isContentValid(card.html, surveyLanguages);
+};
+
+export const isEndingCardValid = (
+  card: TSurveyEndScreen | TSurveyRedirectUrl,
+  surveyLanguages: TSurveyLanguage[]
+) => {
+  if (card.type === "endScreen") {
+    return (
+      isContentValid(card.headline, surveyLanguages) &&
+      isContentValid(card.subheader, surveyLanguages) &&
+      isContentValid(card.buttonLabel, surveyLanguages)
+    );
+  } else {
+    const isRedirectUrlValid = isValidUrl(card.url);
+    if (!isRedirectUrlValid) {
+      toast.error("Invalid Redirect Url in Ending card");
+    }
+    return isRedirectUrlValid && card.label?.trim() !== "";
+  }
 };
 
 export const isValidUrl = (string: string): boolean => {
@@ -316,16 +323,16 @@ export const isSurveyValid = (
 
   // Checking the validity of the welcome and thank-you cards if they are enabled.
   if (survey.welcomeCard.enabled) {
-    if (!isCardValid(survey.welcomeCard, "start", survey.languages)) {
+    if (!isWelcomeCardValid(survey.welcomeCard, survey.languages)) {
       faultyQuestions.push("start");
     }
   }
 
-  if (survey.thankYouCard.enabled) {
-    if (!isCardValid(survey.thankYouCard, "end", survey.languages)) {
-      faultyQuestions.push("end");
+  survey.endings.forEach((ending) => {
+    if (ending.enabled && !isEndingCardValid(ending, survey.languages)) {
+      faultyQuestions.push(ending.id);
     }
-  }
+  });
 
   // Verifying that any provided PIN is exactly four digits long.
   const pin = survey.pin;

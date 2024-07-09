@@ -318,6 +318,7 @@ model Survey {
   displayPercentage  Decimal?
   languages          SurveyLanguage[]
   showLanguageSwitch Boolean?
+  endings            Json[]           @default([])
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])

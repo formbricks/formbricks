@@ -41,7 +41,7 @@ export const reverseTranslateSurvey = (survey: TSurvey, languageCode: string = "
   }
 
   reversedSurvey.welcomeCard = reverseTranslateObject(reversedSurvey.welcomeCard, languageCode);
-  reversedSurvey.thankYouCard = reverseTranslateObject(reversedSurvey.thankYouCard, languageCode);
+  // reversedSurvey.thankYouCard = reverseTranslateObject(reversedSurvey.thankYouCard, languageCode);
   // validate the type with zod
   return ZLegacySurvey.parse(reversedSurvey);
 };

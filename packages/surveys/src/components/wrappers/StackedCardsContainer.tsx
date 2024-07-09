@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { getEnabledEndingCardsCount } from "@formbricks/lib/utils/survey";
 import { TProductStyling } from "@formbricks/types/product";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
@@ -39,9 +40,11 @@ export const StackedCardsContainer = ({
 
   const questionIdxTemp = useMemo(() => {
     if (currentQuestionId === "start") return survey.welcomeCard.enabled ? -1 : 0;
-    if (currentQuestionId === "end") return survey.thankYouCard.enabled ? survey.questions.length : 0;
+    if (currentQuestionId.includes("end:")) {
+      return survey.questions.length;
+    }
     return survey.questions.findIndex((question) => question.id === currentQuestionId);
-  }, [currentQuestionId, survey.welcomeCard.enabled, survey.thankYouCard.enabled, survey.questions]);
+  }, [currentQuestionId, survey.welcomeCard.enabled, survey.questions]);
 
   const [prevQuestionIdx, setPrevQuestionIdx] = useState(questionIdxTemp - 1);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(questionIdxTemp);
@@ -180,12 +183,9 @@ export const StackedCardsContainer = ({
         questionIdxTemp !== undefined &&
         [prevQuestionIdx, currentQuestionIdx, nextQuestionIdx, nextQuestionIdx + 1].map(
           (questionIdxTemp, index) => {
-            //Check for hiding extra card
-            if (survey.thankYouCard.enabled) {
-              if (questionIdxTemp > survey.questions.length) return;
-            } else {
-              if (questionIdxTemp > survey.questions.length - 1) return;
-            }
+            const hasEnabledEndingCard = getEnabledEndingCardsCount(survey) > 0;
+            // Check for hiding extra card
+            if (questionIdxTemp > survey.questions.length + (hasEnabledEndingCard ? 0 : -1)) return;
             const offset = index - 1;
             const isHidden = offset < 0;
             return (

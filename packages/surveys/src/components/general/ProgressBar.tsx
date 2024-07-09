@@ -31,7 +31,9 @@ export const ProgressBar = ({ survey, questionId }: ProgressBarProps) => {
 
   return (
     <Progress
-      progress={questionId === "end" ? 1 : questionId === "start" ? 0 : progressArray[currentQuestionIdx]}
+      progress={
+        questionId.includes("end:") ? 1 : questionId === "start" ? 0 : progressArray[currentQuestionIdx]
+      }
     />
   );
 };

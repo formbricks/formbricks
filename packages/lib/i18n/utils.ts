@@ -11,17 +11,18 @@ import {
   TSurveyCTAQuestion,
   TSurveyChoice,
   TSurveyConsentQuestion,
+  TSurveyEndScreen,
   TSurveyLanguage,
   TSurveyMultipleChoiceQuestion,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
   TSurveyQuestion,
   TSurveyRatingQuestion,
-  TSurveyThankYouCard,
   TSurveyWelcomeCard,
   ZSurveyCTAQuestion,
   ZSurveyCalQuestion,
   ZSurveyConsentQuestion,
+  ZSurveyEndScreen,
   ZSurveyFileUploadQuestion,
   ZSurveyMultipleChoiceQuestion,
   ZSurveyNPSQuestion,
@@ -29,7 +30,6 @@ import {
   ZSurveyPictureSelectionQuestion,
   ZSurveyQuestion,
   ZSurveyRatingQuestion,
-  ZSurveyThankYouCard,
   ZSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
 import { structuredClone } from "../pollyfills/structuredClone";
@@ -145,9 +145,9 @@ export const translateWelcomeCard = (
 // LGEGACY
 // Helper function to maintain backwards compatibility for old survey objects before Multi Language
 export const translateThankYouCard = (
-  thankYouCard: TSurveyThankYouCard | TLegacySurveyThankYouCard,
+  thankYouCard: TSurveyEndScreen | TLegacySurveyThankYouCard,
   languages: string[]
-): TSurveyThankYouCard => {
+): TSurveyEndScreen => {
   const clonedThankYouCard = structuredClone(thankYouCard);
 
   if (typeof thankYouCard.headline !== "undefined") {
@@ -161,7 +161,7 @@ export const translateThankYouCard = (
   if (typeof clonedThankYouCard.buttonLabel !== "undefined") {
     clonedThankYouCard.buttonLabel = createI18nString(thankYouCard.buttonLabel ?? "", languages);
   }
-  return ZSurveyThankYouCard.parse(clonedThankYouCard);
+  return ZSurveyEndScreen.parse(clonedThankYouCard);
 };
 
 // LGEGACY
@@ -287,20 +287,23 @@ export const extractLanguageIds = (languages: TLanguage[]): string[] => {
 // LGEGACY
 // Helper function to maintain backwards compatibility for old survey objects before Multi Language
 export const translateSurvey = (
-  survey: Pick<TSurvey, "questions" | "welcomeCard" | "thankYouCard">,
+  survey: Pick<TSurvey, "questions" | "welcomeCard" | "endings">,
   languageCodes: string[]
-): Pick<TSurvey, "questions" | "welcomeCard" | "thankYouCard"> => {
+): Pick<TSurvey, "questions" | "welcomeCard" | "endings"> => {
   const translatedQuestions = survey.questions.map((question) => {
     return translateQuestion(question, languageCodes);
   });
   const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard, languageCodes);
-  const translatedThankYouCard = translateThankYouCard(survey.thankYouCard, languageCodes);
+  const translatedEndings = survey.endings.map((ending) => {
+    if (ending.type === "endScreen") return translateThankYouCard(ending, languageCodes);
+    else return ending;
+  });
   const translatedSurvey = structuredClone(survey);
   return {
     ...translatedSurvey,
     questions: translatedQuestions,
     welcomeCard: translatedWelcomeCard,
-    thankYouCard: translatedThankYouCard,
+    endings: translatedEndings,
   };
 };
 

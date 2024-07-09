@@ -23,9 +23,16 @@ export const minimalSurvey: TSurvey = {
     showResponseCount: false,
   },
   questions: [],
-  thankYouCard: {
-    enabled: false,
-  },
+  endings: [
+    {
+      enabled: false,
+      type: "endScreen",
+      id: "end:1",
+      headline: { default: "Thank you!" },
+      subheader: { default: "We appreciate your feedback." },
+      buttonLabel: { default: "Create your own Survey" },
+    },
+  ],
   hiddenFields: {
     enabled: false,
   },

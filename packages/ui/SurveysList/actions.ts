@@ -179,7 +179,7 @@ export const copyToOtherEnvironmentAction = async (
       name: `${existingSurvey.name} (copy)`,
       status: "draft",
       questions: structuredClone(existingSurvey.questions),
-      thankYouCard: structuredClone(existingSurvey.thankYouCard),
+      endings: existingSurvey.endings,
       languages: {
         create: existingSurvey.languages?.map((surveyLanguage) => ({
           languageId: surveyLanguage.language.id,
