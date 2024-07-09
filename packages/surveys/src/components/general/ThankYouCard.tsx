@@ -39,21 +39,21 @@ export const ThankYouCard = ({
 }: ThankYouCardProps) => {
   const media = imageUrl || videoUrl ? <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} /> : null;
   const checkmark = (
-    <div className="text-brand flex flex-col items-center justify-center">
+    <div className="fb-text-brand fb-flex fb-flex-col fb-items-center fb-justify-center">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
         strokeWidth="1.5"
         stroke="currentColor"
-        class="h-24 w-24">
+        class="fb-h-24 fb-w-24">
         <path
           stroke-linecap="round"
           stroke-linejoin="round"
           d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
         />
       </svg>
-      <span className="bg-brand mb-[10px] inline-block h-1 w-16 rounded-[100%]"></span>
+      <span className="fb-bg-brand fb-mb-[10px] fb-inline-block fb-h-1 fb-w-16 fb-rounded-[100%]"></span>
     </div>
   );
 
@@ -83,7 +83,7 @@ export const ThankYouCard = ({
 
   return (
     <ScrollableContainer>
-      <div className="text-center">
+      <div className="fb-text-center">
         {isResponseSendingFinished ? (
           <>
             {media || checkmark}
@@ -91,7 +91,7 @@ export const ThankYouCard = ({
             <Subheader subheader={subheader} questionId="thankYouCard" />
             <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
             {buttonLabel && (
-              <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
+              <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
                 <SubmitButton
                   buttonLabel={buttonLabel}
                   isLastQuestion={false}
@@ -103,10 +103,10 @@ export const ThankYouCard = ({
           </>
         ) : (
           <>
-            <div className="my-3">
+            <div className="fb-my-3">
               <LoadingSpinner />
             </div>
-            <h1 className="text-brand">Sending responses...</h1>
+            <h1 className="fb-text-brand">Sending responses...</h1>
           </>
         )}
       </div>

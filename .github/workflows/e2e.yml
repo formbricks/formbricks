@@ -43,7 +43,7 @@ jobs:
 
       - name: Install pnpm
         if: env.PNPM_INSTALLED == 'false'
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
 
       - name: Install dependencies
         if: env.PNPM_INSTALLED == 'false'

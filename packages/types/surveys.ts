@@ -385,6 +385,7 @@ export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion
 export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Cal),
   calUserName: z.string(),
+  calHost: z.string().optional(),
   logic: z.array(ZSurveyCalLogic).optional(),
 });
 
@@ -523,6 +524,13 @@ export const ZSurvey = z.object({
   languages: z.array(ZSurveyLanguage),
   showLanguageSwitch: z.boolean().nullable(),
 });
+
+export const ZSurveyUpdateInput = ZSurvey.omit({ createdAt: true, updatedAt: true }).and(
+  z.object({
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
+  })
+);
 
 export const ZSurveyInput = z.object({
   name: z.string(),
