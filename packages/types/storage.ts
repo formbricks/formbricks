@@ -15,3 +15,21 @@ export const ZUploadFileConfig = z.object({
 });
 
 export type TUploadFileConfig = z.infer<typeof ZUploadFileConfig>;
+
+const ZUploadFileResponse = z.object({
+  data: z.object({
+    signedUrl: z.string(),
+    fileUrl: z.string(),
+    signingData: z
+      .object({
+        signature: z.string(),
+        timestamp: z.number(),
+        uuid: z.string(),
+      })
+      .nullable(),
+    presignedFields: z.record(z.string()).optional(),
+    updatedFileName: z.string(),
+  }),
+});
+
+export type TUploadFileResponse = z.infer<typeof ZUploadFileResponse>;

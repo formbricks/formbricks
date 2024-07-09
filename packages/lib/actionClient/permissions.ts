@@ -45,7 +45,7 @@ export const Permissions = {
 
   editor: {
     product: {
-      create: true,
+      create: false,
       read: true,
       update: true,
       delete: true,
@@ -66,7 +66,7 @@ export const Permissions = {
 
   developer: {
     product: {
-      create: true,
+      create: false,
       read: true,
       update: ZProductUpdateInput.omit({
         name: true,
