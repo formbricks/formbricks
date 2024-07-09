@@ -414,6 +414,9 @@ importers:
       next:
         specifier: 15.0.0-rc.0
         version: 15.0.0-rc.0(@opentelemetry/api@1.9.0)(@playwright/test@1.45.0)(react-dom@19.0.0-rc-935180c7e0-20240524(react@19.0.0-rc-935180c7e0-20240524))(react@19.0.0-rc-935180c7e0-20240524)
+      next-safe-action:
+        specifier: ^7.1.3
+        version: 7.1.3(@types/json-schema@7.0.15)(next@15.0.0-rc.0(@opentelemetry/api@1.9.0)(@playwright/test@1.45.0)(react-dom@19.0.0-rc-935180c7e0-20240524(react@19.0.0-rc-935180c7e0-20240524))(react@19.0.0-rc-935180c7e0-20240524))(react-dom@19.0.0-rc-935180c7e0-20240524(react@19.0.0-rc-935180c7e0-20240524))(react@19.0.0-rc-935180c7e0-20240524)(zod@3.23.8)
       optional:
         specifier: ^0.1.4
         version: 0.1.4
@@ -5313,6 +5316,87 @@ packages:
   '@types/ws@8.5.10':
     resolution: {integrity: sha512-vmQSUcfalpIq0R9q7uTo2lXs6eGIpt9wtnLdMv9LVpIjCA/+ufZRozlVoVelIYixx1ugCBKDhn89vnsEGOCx9A==}
 
+  '@typeschema/core@0.13.2':
+    resolution: {integrity: sha512-pAt0MK249/9szYaoPuvzhSfOd3smrLhhwCCpUNB4onX32mRx5F3lzDIveIYGQkLYRq58xOX5sjoW+n72f/MLLw==}
+    peerDependencies:
+      '@types/json-schema': ^7.0.15
+    peerDependenciesMeta:
+      '@types/json-schema':
+        optional: true
+
+  '@typeschema/main@0.13.10':
+    resolution: {integrity: sha512-ArdFC4GbgdVWWgPKg2tymxx2KHMus3xZ8I2kHwqw/0P4FtWBXCmSNAiBqDtpoXXF8h9cbcm7fVpcs5ftoWT9+A==}
+    peerDependencies:
+      '@typeschema/arktype': 0.13.2
+      '@typeschema/class-validator': 0.1.2
+      '@typeschema/deepkit': 0.13.4
+      '@typeschema/effect': 0.13.4
+      '@typeschema/fastest-validator': 0.1.0
+      '@typeschema/function': 0.13.2
+      '@typeschema/io-ts': 0.13.3
+      '@typeschema/joi': 0.13.3
+      '@typeschema/json': 0.13.3
+      '@typeschema/ow': 0.13.3
+      '@typeschema/runtypes': 0.13.2
+      '@typeschema/superstruct': 0.13.2
+      '@typeschema/suretype': 0.1.0
+      '@typeschema/typebox': 0.13.4
+      '@typeschema/valibot': 0.13.5
+      '@typeschema/valita': 0.1.0
+      '@typeschema/vine': 0.1.0
+      '@typeschema/yup': 0.13.3
+      '@typeschema/zod': 0.13.3
+    peerDependenciesMeta:
+      '@typeschema/arktype':
+        optional: true
+      '@typeschema/class-validator':
+        optional: true
+      '@typeschema/deepkit':
+        optional: true
+      '@typeschema/effect':
+        optional: true
+      '@typeschema/fastest-validator':
+        optional: true
+      '@typeschema/function':
+        optional: true
+      '@typeschema/io-ts':
+        optional: true
+      '@typeschema/joi':
+        optional: true
+      '@typeschema/json':
+        optional: true
+      '@typeschema/ow':
+        optional: true
+      '@typeschema/runtypes':
+        optional: true
+      '@typeschema/superstruct':
+        optional: true
+      '@typeschema/suretype':
+        optional: true
+      '@typeschema/typebox':
+        optional: true
+      '@typeschema/valibot':
+        optional: true
+      '@typeschema/valita':
+        optional: true
+      '@typeschema/vine':
+        optional: true
+      '@typeschema/yup':
+        optional: true
+      '@typeschema/zod':
+        optional: true
+
+  '@typeschema/zod@0.13.3':
+    resolution: {integrity: sha512-p5Hs22WIKkM/vZTAvw5QOLSA0EJ6QBUsQMGUrXlYnTAE2LSR/F5MLsDUb18O6S5VxGjrzU7x3VIznD5qOafJRw==}
+    peerDependencies:
+      zod: ^3.22.4
+      zod-to-json-schema: ^3.22.4
+    peerDependenciesMeta:
+      zod:
+        optional: true
+      zod-to-json-schema:
+        optional: true
+
   '@typescript-eslint/eslint-plugin@7.13.1':
     resolution: {integrity: sha512-kZqi+WZQaZfPKnsflLJQCz6Ze9FFSMfXrrIOcyargekQxG37ES7DJNpJUE9Q/X5n3yTIP/WPutVNzgknQ7biLg==}
     engines: {node: ^18.18.0 || >=20.0.0}
@@ -8932,6 +9016,18 @@ packages:
       next: ^11.1.0 || ^12.0.0 || ^13.0.0 || ^14.0.0
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+
+  next-safe-action@7.1.3:
+    resolution: {integrity: sha512-WWqgoExw2BjiVzTZPryW+rIMRhcrnEhvnKmofCDTNfDD6pmAYXk3f8tM199iTuKGYEHrJDtffs3fggQZlPuMzQ==}
+    engines: {node: '>=18.17'}
+    peerDependencies:
+      next: '>= 14.0.0'
+      react: '>= 18.2.0'
+      react-dom: '>= 18.2.0'
+      zod: '>= 3.0.0'
+    peerDependenciesMeta:
+      zod:
+        optional: true
 
   next-seo@6.5.0:
     resolution: {integrity: sha512-MfzUeWTN/x/rsKp/1n0213eojO97lIl0unxqbeCY+6pAucViHDA8GSLRRcXpgjsSmBxfCFdfpu7LXbt4ANQoNQ==}
@@ -17801,6 +17897,26 @@ snapshots:
     dependencies:
       '@types/node': 20.14.5
 
+  '@typeschema/core@0.13.2(@types/json-schema@7.0.15)':
+    optionalDependencies:
+      '@types/json-schema': 7.0.15
+
+  '@typeschema/main@0.13.10(@types/json-schema@7.0.15)(@typeschema/zod@0.13.3(@types/json-schema@7.0.15)(zod@3.23.8))':
+    dependencies:
+      '@typeschema/core': 0.13.2(@types/json-schema@7.0.15)
+    optionalDependencies:
+      '@typeschema/zod': 0.13.3(@types/json-schema@7.0.15)(zod@3.23.8)
+    transitivePeerDependencies:
+      - '@types/json-schema'
+
+  '@typeschema/zod@0.13.3(@types/json-schema@7.0.15)(zod@3.23.8)':
+    dependencies:
+      '@typeschema/core': 0.13.2(@types/json-schema@7.0.15)
+    optionalDependencies:
+      zod: 3.23.8
+    transitivePeerDependencies:
+      - '@types/json-schema'
+
   '@typescript-eslint/eslint-plugin@7.13.1(@typescript-eslint/parser@7.13.1(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)':
     dependencies:
       '@eslint-community/regexpp': 4.10.1
@@ -22331,6 +22447,37 @@ snapshots:
       next: 14.2.4(@opentelemetry/api@1.9.0)(@playwright/test@1.45.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
+
+  next-safe-action@7.1.3(@types/json-schema@7.0.15)(next@15.0.0-rc.0(@opentelemetry/api@1.9.0)(@playwright/test@1.45.0)(react-dom@19.0.0-rc-935180c7e0-20240524(react@19.0.0-rc-935180c7e0-20240524))(react@19.0.0-rc-935180c7e0-20240524))(react-dom@19.0.0-rc-935180c7e0-20240524(react@19.0.0-rc-935180c7e0-20240524))(react@19.0.0-rc-935180c7e0-20240524)(zod@3.23.8):
+    dependencies:
+      '@typeschema/main': 0.13.10(@types/json-schema@7.0.15)(@typeschema/zod@0.13.3(@types/json-schema@7.0.15)(zod@3.23.8))
+      '@typeschema/zod': 0.13.3(@types/json-schema@7.0.15)(zod@3.23.8)
+      next: 15.0.0-rc.0(@opentelemetry/api@1.9.0)(@playwright/test@1.45.0)(react-dom@19.0.0-rc-935180c7e0-20240524(react@19.0.0-rc-935180c7e0-20240524))(react@19.0.0-rc-935180c7e0-20240524)
+      react: 19.0.0-rc-935180c7e0-20240524
+      react-dom: 19.0.0-rc-935180c7e0-20240524(react@19.0.0-rc-935180c7e0-20240524)
+    optionalDependencies:
+      zod: 3.23.8
+    transitivePeerDependencies:
+      - '@types/json-schema'
+      - '@typeschema/arktype'
+      - '@typeschema/class-validator'
+      - '@typeschema/deepkit'
+      - '@typeschema/effect'
+      - '@typeschema/fastest-validator'
+      - '@typeschema/function'
+      - '@typeschema/io-ts'
+      - '@typeschema/joi'
+      - '@typeschema/json'
+      - '@typeschema/ow'
+      - '@typeschema/runtypes'
+      - '@typeschema/superstruct'
+      - '@typeschema/suretype'
+      - '@typeschema/typebox'
+      - '@typeschema/valibot'
+      - '@typeschema/valita'
+      - '@typeschema/vine'
+      - '@typeschema/yup'
+      - zod-to-json-schema
 
   next-seo@6.5.0(next@14.2.4(@opentelemetry/api@1.9.0)(@playwright/test@1.45.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
