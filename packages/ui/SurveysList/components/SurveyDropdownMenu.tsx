@@ -85,7 +85,12 @@ export const SurveyDropDownMenu = ({
   const copyToOtherEnvironment = async (surveyId: string) => {
     setLoading(true);
     try {
-      await copyToOtherEnvironmentAction(environmentId, surveyId, otherEnvironment.id);
+      // await copyToOtherEnvironmentAction(environmentId, surveyId, otherEnvironment.id);
+      await copyToOtherEnvironmentAction({
+        environmentId,
+        surveyId,
+        targetEnvironmentId: otherEnvironment.id,
+      });
       if (otherEnvironment.type === "production") {
         toast.success("Survey copied to production env.");
       } else if (otherEnvironment.type === "development") {
