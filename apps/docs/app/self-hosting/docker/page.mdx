@@ -83,7 +83,22 @@ Next, you need to generate an Encryption Key. This will be used for authenticati
 
 </Col>
 
-5.  **Start the Docker Setup**
+5.  **Generate Cron Secret**
+
+Next, you need to generate a Cron secret. This will be used as an API Secret for running cron jobs. The `sed` command below generates a random string using `openssl`, then replaces the `CRON_SECRET:` placeholder in the `docker-compose.yml` file with this generated secret:
+
+<Col>
+   <CodeGroup title="Generate Cron Secret">
+
+    ```bash
+    sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
+    ```
+
+    </CodeGroup>
+
+</Col>
+
+6.  **Start the Docker Setup**
 
 You're now ready to start the Formbricks Docker setup. The following command will start Formbricks together with a postgreSQL database using Docker Compose:
 
@@ -98,7 +113,7 @@ You're now ready to start the Formbricks Docker setup. The following command wil
 </Col>
    The `-d` flag will run the containers in detached mode, meaning they'll run in the background.
 
-6. **Visit Formbricks in Your Browser**
+7. **Visit Formbricks in Your Browser**
 
    After starting the Docker setup, visit http://localhost:3000 in your browser to interact with the Formbricks application. The first time you access this page, you'll be greeted by a setup wizard. Follow the prompts to define your first user and get started.
 
