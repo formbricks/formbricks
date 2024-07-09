@@ -25,7 +25,8 @@ export const capturePosthogEnvironmentEvent = async (
       host: env.NEXT_PUBLIC_POSTHOG_API_HOST,
     });
     client.capture({
-      distinctId: environmentId,
+      // workaround with a static string as exaplained in PostHog docs: https://posthog.com/docs/product-analytics/group-analytics
+      distinctId: "environmentEvents",
       event: eventName,
       groups: { environment: environmentId },
       properties,

@@ -90,7 +90,7 @@ export const SingleResponseCard = ({
       if (isViewer) {
         throw new Error("You are not authorized to perform this action.");
       }
-      await deleteResponseAction(response.id);
+      await deleteResponseAction({ responseId: response.id });
       deleteResponse?.(response.id);
 
       router.refresh();

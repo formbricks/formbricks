@@ -88,6 +88,8 @@ const Page = async ({ searchParams }) => {
       await updateUser(session.user.id, {
         notificationSettings: {
           ...session.user.notificationSettings,
+          alert: session.user.notificationSettings.alert ?? {},
+          weeklySummary: session.user.notificationSettings.weeklySummary ?? {},
           unsubscribedOrganizationIds: Array.from(
             new Set([
               ...(session.user.notificationSettings?.unsubscribedOrganizationIds || []),

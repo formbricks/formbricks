@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TProduct, ZProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/Form";
@@ -12,7 +13,6 @@ import { updateProductAction } from "../actions";
 
 type EditProductNameProps = {
   product: TProduct;
-  environmentId: string;
   isProductNameEditDisabled: boolean;
 };
 
@@ -22,7 +22,6 @@ type TEditProductName = z.infer<typeof ZProductNameInput>;
 
 export const EditProductNameForm: React.FC<EditProductNameProps> = ({
   product,
-  environmentId,
   isProductNameEditDisabled,
 }) => {
   const form = useForm<TEditProductName>({
@@ -46,16 +45,19 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
         return;
       }
 
-      const updatedProduct = await updateProductAction(environmentId, product.id, { name });
+      const updatedProductResponse = await updateProductAction({
+        productId: product.id,
+        data: {
+          name,
+        },
+      });
 
-      if (isProductNameEditDisabled) {
-        toast.error("Only Owners, Admins and Editors can perform this action.");
-        return;
-      }
-
-      if (!!updatedProduct?.id) {
+      if (updatedProductResponse?.data) {
         toast.success("Product name updated successfully.");
-        form.resetField("name", { defaultValue: updatedProduct.name });
+        form.resetField("name", { defaultValue: updatedProductResponse.data.name });
+      } else {
+        const errorMessage = getFormattedErrorMessage(updatedProductResponse);
+        toast.error(errorMessage);
       }
     } catch (err) {
       console.error(err);
