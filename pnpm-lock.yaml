@@ -732,6 +732,10 @@ importers:
         version: 18.3.3
 
   packages/js:
+    dependencies:
+      zod:
+        specifier: 3.x
+        version: 3.23.8
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
