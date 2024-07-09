@@ -442,7 +442,7 @@ export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion
 
 export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Cal),
-  calUserName: z.string(),
+  calUserName: z.string().min(1, { message: "Cal user name is required" }),
   calHost: z.string().optional(),
   logic: z.array(ZSurveyCalLogic).optional(),
 });
