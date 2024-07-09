@@ -1,7 +1,12 @@
 import { z } from "zod";
-import { ZLegacySurveyQuestions, ZLegacySurveyThankYouCard, ZLegacySurveyWelcomeCard } from "./LegacySurvey";
+import { ZLegacySurveyQuestions, ZLegacySurveyThankYouCard, ZLegacySurveyWelcomeCard } from "./legacySurveys";
 import { ZProductConfigChannel, ZProductConfigIndustry } from "./product";
-import { ZSurveyHiddenFields, ZSurveyQuestions, ZSurveyThankYouCard, ZSurveyWelcomeCard } from "./surveys";
+import {
+  ZSurveyHiddenFields,
+  ZSurveyQuestions,
+  ZSurveyThankYouCard,
+  ZSurveyWelcomeCard,
+} from "./surveys/types";
 import { ZUserObjective } from "./user";
 
 export const ZTemplateRole = z.enum(["productManager", "customerSuccess", "marketing", "sales"]);

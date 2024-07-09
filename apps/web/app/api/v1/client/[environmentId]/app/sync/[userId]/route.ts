@@ -20,10 +20,10 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
-import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TJsAppLegacyStateSync, TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
+import { TLegacySurvey } from "@formbricks/types/legacySurveys";
 import { TProductLegacy } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);

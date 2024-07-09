@@ -17,7 +17,6 @@ const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
 
 export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) => {
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
-  console.log("subscription created or updated: ", JSON.stringify(stripeSubscriptionObject, null, 2));
   const organizationId = stripeSubscriptionObject.metadata.organizationId;
 
   if (

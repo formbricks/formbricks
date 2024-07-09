@@ -1,11 +1,18 @@
 import { z } from "zod";
-import { ZActionClass, ZActionClassNoCodeConfig } from "./actionClasses";
-import { ZAttributes } from "./attributes";
-import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
-import { ZId } from "./environment";
-import { ZLanguage } from "./product";
-import { ZSegment } from "./segment";
-import { ZBaseStyling } from "./styling";
+import { ZActionClass, ZActionClassNoCodeConfig } from "../actionClasses";
+import { ZAttributes } from "../attributes";
+import { ZAllowedFileExtension, ZColor, ZPlacement } from "../common";
+import { ZId } from "../environment";
+import { ZLanguage } from "../product";
+import { ZSegment } from "../segment";
+import { ZBaseStyling } from "../styling";
+import {
+  FORBIDDEN_IDS,
+  findLanguageCodesForDuplicateLabels,
+  findQuestionsWithCyclicLogic,
+  validateCardFieldsForAllLanguages,
+  validateQuestionLabels,
+} from "./validation";
 
 export const ZI18nString = z.record(z.string()).refine((obj) => "default" in obj, {
   message: "Object must have a 'default' key",
@@ -18,7 +25,7 @@ export const ZSurveyThankYouCard = z.object({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: z.optional(z.string()),
+  buttonLink: z.string().url("Invalid button link in thank you card").optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
@@ -56,7 +63,33 @@ export const ZSurveyWelcomeCard = z
 
 export const ZSurveyHiddenFields = z.object({
   enabled: z.boolean(),
-  fieldIds: z.optional(z.array(z.string())),
+  fieldIds: z.optional(
+    z.array(
+      z.string().superRefine((field, ctx) => {
+        if (FORBIDDEN_IDS.includes(field)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Hidden field id is not allowed`,
+          });
+        }
+
+        if (field.includes(" ")) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Hidden field id not allowed, avoid using spaces.",
+          });
+        }
+
+        if (!/^[a-zA-Z0-9_-]+$/.test(field)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+              "Hidden field id not allowed, use only alphanumeric characters, hyphens, or underscores.",
+          });
+        }
+      })
+    )
+  ),
 });
 
 export const ZSurveyProductOverwrites = z.object({
@@ -251,7 +284,28 @@ export const ZSurveyLogic = z.union([
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
 
 export const ZSurveyQuestionBase = z.object({
-  id: z.string(),
+  id: z.string().superRefine((id, ctx) => {
+    if (FORBIDDEN_IDS.includes(id)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Question id is not allowed`,
+      });
+    }
+
+    if (id.includes(" ")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Question id not allowed, avoid using spaces.",
+      });
+    }
+
+    if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Question id not allowed, use only alphanumeric characters, hyphens, or underscores.",
+      });
+    }
+  }),
   type: z.string(),
   headline: ZI18nString,
   subheader: ZI18nString.optional(),
@@ -298,7 +352,9 @@ export const ZSurveyMultipleChoiceQuestion = ZSurveyQuestionBase.extend({
     z.literal(TSurveyQuestionTypeEnum.MultipleChoiceSingle),
     z.literal(TSurveyQuestionTypeEnum.MultipleChoiceMulti),
   ]),
-  choices: z.array(ZSurveyChoice),
+  choices: z
+    .array(ZSurveyChoice)
+    .min(2, { message: "Multiple Choice Question must have at least two choices" }),
   logic: z.array(ZSurveyMultipleChoiceLogic).optional(),
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
@@ -335,7 +391,7 @@ export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.CTA),
   html: ZI18nString.optional(),
-  buttonUrl: z.string().optional(),
+  buttonUrl: z.string().url({ message: "Invalid button url" }).optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: ZI18nString.optional(),
   logic: z.array(ZSurveyCTALogic).optional(),
@@ -366,7 +422,9 @@ export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.PictureSelection),
   allowMulti: z.boolean().optional().default(false),
-  choices: z.array(ZSurveyPictureChoice),
+  choices: z
+    .array(ZSurveyPictureChoice)
+    .min(2, { message: "Picture Selection question must have atleast 2 choices" }),
   logic: z.array(ZSurveyPictureSelectionLogic).optional(),
 });
 
@@ -384,7 +442,7 @@ export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion
 
 export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Cal),
-  calUserName: z.string(),
+  calUserName: z.string().min(1, { message: "Cal user name is required" }),
   calHost: z.string().optional(),
   logic: z.array(ZSurveyCalLogic).optional(),
 });
@@ -489,48 +547,406 @@ export const ZSurveyInlineTriggers = z.object({
 
 export type TSurveyInlineTriggers = z.infer<typeof ZSurveyInlineTriggers>;
 
-export const ZSurvey = z.object({
-  id: z.string().cuid2(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  name: z.string(),
-  type: ZSurveyType,
-  environmentId: z.string(),
-  createdBy: z.string().nullable(),
-  status: ZSurveyStatus,
-  displayOption: ZSurveyDisplayOption,
-  autoClose: z.number().nullable(),
-  triggers: z.array(z.object({ actionClass: ZActionClass })),
-  redirectUrl: z.string().url().nullable(),
-  recontactDays: z.number().nullable(),
-  displayLimit: z.number().nullable(),
-  welcomeCard: ZSurveyWelcomeCard,
-  questions: ZSurveyQuestions,
-  thankYouCard: ZSurveyThankYouCard,
-  hiddenFields: ZSurveyHiddenFields,
-  delay: z.number(),
-  autoComplete: z.number().nullable(),
-  runOnDate: z.date().nullable(),
-  closeOnDate: z.date().nullable(),
-  productOverwrites: ZSurveyProductOverwrites.nullable(),
-  styling: ZSurveyStyling.nullable(),
-  surveyClosedMessage: ZSurveyClosedMessage.nullable(),
-  segment: ZSegment.nullable(),
-  singleUse: ZSurveySingleUse.nullable(),
-  verifyEmail: ZSurveyVerifyEmail.nullable(),
-  pin: z.string().nullish(),
-  resultShareKey: z.string().nullable(),
-  displayPercentage: z.number().min(0.01).max(100).nullable(),
-  languages: z.array(ZSurveyLanguage),
-  showLanguageSwitch: z.boolean().nullable(),
-});
-
-export const ZSurveyUpdateInput = ZSurvey.omit({ createdAt: true, updatedAt: true }).and(
-  z.object({
-    createdAt: z.coerce.date(),
-    updatedAt: z.coerce.date(),
+export const ZSurvey = z
+  .object({
+    id: z.string().cuid2(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+    name: z.string(),
+    type: ZSurveyType,
+    environmentId: z.string(),
+    createdBy: z.string().nullable(),
+    status: ZSurveyStatus,
+    displayOption: ZSurveyDisplayOption,
+    autoClose: z.number().nullable(),
+    triggers: z.array(z.object({ actionClass: ZActionClass })),
+    redirectUrl: z.string().url({ message: "Invalid redirect URL" }).nullable(),
+    recontactDays: z.number().nullable(),
+    displayLimit: z.number().nullable(),
+    welcomeCard: ZSurveyWelcomeCard,
+    questions: ZSurveyQuestions.min(1, {
+      message: "Survey must have at least one question",
+    }).superRefine((questions, ctx) => {
+      const questionIds = questions.map((q) => q.id);
+      const uniqueQuestionIds = new Set(questionIds);
+      if (uniqueQuestionIds.size !== questionIds.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Question IDs must be unique",
+          path: [questionIds.findIndex((id, index) => questionIds.indexOf(id) !== index), "id"],
+        });
+      }
+    }),
+    thankYouCard: ZSurveyThankYouCard,
+    hiddenFields: ZSurveyHiddenFields,
+    delay: z.number(),
+    autoComplete: z.number().min(1, { message: "Response limit must be greater than 0" }).nullable(),
+    runOnDate: z.date().nullable(),
+    closeOnDate: z.date().nullable(),
+    productOverwrites: ZSurveyProductOverwrites.nullable(),
+    styling: ZSurveyStyling.nullable(),
+    showLanguageSwitch: z.boolean().nullable(),
+    surveyClosedMessage: ZSurveyClosedMessage.nullable(),
+    segment: ZSegment.nullable(),
+    singleUse: ZSurveySingleUse.nullable(),
+    verifyEmail: ZSurveyVerifyEmail.nullable(),
+    pin: z.string().min(4, { message: "PIN must be a four digit number" }).nullish(),
+    resultShareKey: z.string().nullable(),
+    displayPercentage: z.number().min(0.01).max(100).nullable(),
+    languages: z.array(ZSurveyLanguage),
   })
-);
+  .superRefine((survey, ctx) => {
+    const { questions, languages, welcomeCard, thankYouCard } = survey;
+
+    // welcome card validations
+    if (welcomeCard.enabled) {
+      if (welcomeCard.headline) {
+        const multiLangIssue = validateCardFieldsForAllLanguages(
+          "cardHeadline",
+          welcomeCard.headline,
+          languages,
+          "welcome"
+        );
+
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
+      }
+
+      if (welcomeCard.html) {
+        const multiLangIssue = validateCardFieldsForAllLanguages(
+          "welcomeCardHtml",
+          welcomeCard.html,
+          languages,
+          "welcome"
+        );
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
+      }
+
+      if (welcomeCard.buttonLabel) {
+        const multiLangIssue = validateCardFieldsForAllLanguages(
+          "buttonLabel",
+          welcomeCard.buttonLabel,
+          languages,
+          "welcome"
+        );
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
+      }
+    }
+
+    // Custom default validation for each question
+    questions.forEach((question, questionIndex) => {
+      const existingLogicConditions = new Set();
+      const multiLangIssue = validateQuestionLabels("headline", question.headline, languages, questionIndex);
+      if (multiLangIssue) {
+        ctx.addIssue(multiLangIssue);
+      }
+
+      if (question.subheader) {
+        const multiLangIssue = validateQuestionLabels(
+          "subheader",
+          question.subheader,
+          languages,
+          questionIndex
+        );
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
+      }
+
+      const defaultLanguageCode = "default";
+      const initialFieldsToValidate = [
+        "html",
+        "buttonLabel",
+        "upperLabel",
+        "lowerLabel",
+        "label",
+        "placeholder",
+      ];
+
+      const fieldsToValidate =
+        questionIndex === 0 ? initialFieldsToValidate : [...initialFieldsToValidate, "backButtonLabel"];
+
+      for (const field of fieldsToValidate) {
+        // Skip label validation for consent questions as its called checkbox label
+        if (field === "label" && question.type === TSurveyQuestionTypeEnum.Consent) {
+          continue;
+        }
+
+        const questionFieldValue = question[field as keyof typeof question] as TI18nString;
+        if (
+          questionFieldValue &&
+          typeof questionFieldValue[defaultLanguageCode] !== "undefined" &&
+          questionFieldValue[defaultLanguageCode].trim() !== ""
+        ) {
+          const multiLangIssue = validateQuestionLabels(field, questionFieldValue, languages, questionIndex);
+          if (multiLangIssue) {
+            ctx.addIssue(multiLangIssue);
+          }
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.OpenText) {
+        if (question.placeholder) {
+          const multiLangIssue = validateQuestionLabels(
+            "placeholder",
+            question.placeholder,
+            languages,
+            questionIndex
+          );
+          if (multiLangIssue) {
+            ctx.addIssue(multiLangIssue);
+          }
+        }
+      }
+
+      if (
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
+      ) {
+        question.choices.forEach((choice, choiceIndex) => {
+          const multiLangIssue = validateQuestionLabels(
+            `Choice ${choiceIndex + 1}`,
+            choice.label,
+            languages,
+            questionIndex,
+            true
+          );
+          if (multiLangIssue) {
+            ctx.addIssue(multiLangIssue);
+          }
+        });
+
+        const duplicateChoicesLanguageCodes = findLanguageCodesForDuplicateLabels(
+          question.choices.map((choice) => choice.label),
+          languages
+        );
+
+        if (duplicateChoicesLanguageCodes.length > 0) {
+          const invalidLanguageCodes = duplicateChoicesLanguageCodes.map((invalidLanguageCode) =>
+            invalidLanguageCode === "default"
+              ? languages.find((lang) => lang.default)?.language.code || "default"
+              : invalidLanguageCode
+          );
+
+          const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
+
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Question ${questionIndex + 1} has duplicate choice labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+            path: ["questions", questionIndex, "choices"],
+            params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+          });
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.Consent) {
+        const multiLangIssue = validateQuestionLabels(
+          "consent.label",
+          question.label,
+          languages,
+          questionIndex
+        );
+
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.CTA) {
+        if (!question.required && question.dismissButtonLabel) {
+          const multiLangIssue = validateQuestionLabels(
+            "dismissButtonLabel",
+            question.dismissButtonLabel,
+            languages,
+            questionIndex
+          );
+          if (multiLangIssue) {
+            ctx.addIssue(multiLangIssue);
+          }
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.Matrix) {
+        question.rows.forEach((row, rowIndex) => {
+          const multiLangIssue = validateQuestionLabels(
+            `Row ${rowIndex + 1}`,
+            row,
+            languages,
+            questionIndex,
+            true
+          );
+          if (multiLangIssue) {
+            ctx.addIssue(multiLangIssue);
+          }
+        });
+
+        question.columns.forEach((column, columnIndex) => {
+          const multiLangIssue = validateQuestionLabels(
+            `Column ${columnIndex + 1}`,
+            column,
+            languages,
+            questionIndex,
+            true
+          );
+          if (multiLangIssue) {
+            ctx.addIssue(multiLangIssue);
+          }
+        });
+
+        const duplicateRowsLanguageCodes = findLanguageCodesForDuplicateLabels(question.rows, languages);
+        const duplicateColumnLanguageCodes = findLanguageCodesForDuplicateLabels(question.columns, languages);
+
+        if (duplicateRowsLanguageCodes.length > 0) {
+          const invalidLanguageCodes = duplicateRowsLanguageCodes.map((invalidLanguageCode) =>
+            invalidLanguageCode === "default"
+              ? languages.find((lang) => lang.default)?.language.code || "default"
+              : invalidLanguageCode
+          );
+
+          const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
+
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Question ${questionIndex + 1} has duplicate row labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+            path: ["questions", questionIndex, "rows"],
+            params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+          });
+        }
+
+        if (duplicateColumnLanguageCodes.length > 0) {
+          const invalidLanguageCodes = duplicateColumnLanguageCodes.map((invalidLanguageCode) =>
+            invalidLanguageCode === "default"
+              ? languages.find((lang) => lang.default)?.language.code || "default"
+              : invalidLanguageCode
+          );
+
+          const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
+
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Question ${questionIndex + 1} has duplicate column labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+            path: ["questions", questionIndex, "columns"],
+            params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+          });
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.FileUpload) {
+        // allowedFileExtensions must have atleast one element
+        if (question.allowedFileExtensions && question.allowedFileExtensions.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Question ${questionIndex + 1} must have atleast one allowed file extension`,
+            path: ["questions", questionIndex, "allowedFileExtensions"],
+          });
+        }
+      }
+
+      if (question.logic) {
+        question.logic.forEach((logic, logicIndex) => {
+          const logicConditions = ["condition", "value", "destination"] as const;
+          const validFields = logicConditions.filter((field) => logic[field] !== undefined)?.length;
+
+          if (validFields < 2) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Logic for question ${questionIndex + 1} is missing required fields`,
+              path: ["questions", questionIndex, "logic"],
+            });
+          }
+
+          if (question.required && logic.condition === "skipped") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Logic for question ${questionIndex + 1} is invalid. Required questions cannot be skipped.`,
+              path: ["questions", questionIndex, "logic"],
+            });
+          }
+
+          // logic condition and value mapping should not be repeated
+          const thisLogic = `${logic.condition}-${logic.value}`;
+          if (existingLogicConditions.has(thisLogic)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message:
+                "There are two competing logic conditions: Please update or delete one in the Questions tab.",
+              path: ["questions", questionIndex, "logic", logicIndex],
+            });
+          }
+          existingLogicConditions.add(thisLogic);
+        });
+      }
+    });
+
+    const questionsWithCyclicLogic = findQuestionsWithCyclicLogic(questions);
+    if (questionsWithCyclicLogic.length > 0) {
+      questionsWithCyclicLogic.forEach((questionId) => {
+        const questionIndex = questions.findIndex((q) => q.id === questionId);
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Cyclic logic detected 🔃 Please check the logic of question ${questionIndex + 1}.`,
+          path: ["questions", questionIndex, "logic"],
+        });
+      });
+    }
+
+    // thank you card validations
+    if (thankYouCard.enabled) {
+      if (thankYouCard.headline) {
+        const multiLangIssue = validateCardFieldsForAllLanguages(
+          "cardHeadline",
+          thankYouCard.headline,
+          languages,
+          "thankYou"
+        );
+
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
+      }
+
+      if (thankYouCard.subheader) {
+        const multiLangIssue = validateCardFieldsForAllLanguages(
+          "subheader",
+          thankYouCard.subheader,
+          languages,
+          "thankYou"
+        );
+
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
+      }
+
+      if (thankYouCard.buttonLabel) {
+        const multiLangIssue = validateCardFieldsForAllLanguages(
+          "thankYouCardButtonLabel",
+          thankYouCard.buttonLabel,
+          languages,
+          "thankYou"
+        );
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
+      }
+    }
+  });
+
+// ZSurvey is a refinement, so to extend it to ZSurveyUpdateInput, we need to transform the innerType and then apply the same refinements.
+export const ZSurveyUpdateInput = ZSurvey.innerType()
+  .omit({ createdAt: true, updatedAt: true })
+  .and(
+    z.object({
+      createdAt: z.coerce.date(),
+      updatedAt: z.coerce.date(),
+    })
+  )
+  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => {});
 
 export const ZSurveyInput = z.object({
   name: z.string(),

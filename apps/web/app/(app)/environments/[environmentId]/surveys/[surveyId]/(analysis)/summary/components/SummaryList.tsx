@@ -13,9 +13,9 @@ import { PictureChoiceSummary } from "@/app/(app)/environments/[environmentId]/s
 import { RatingSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/RatingSummary";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurveySummary } from "@formbricks/types/surveys";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurveySummary } from "@formbricks/types/surveys/types";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { SkeletonLoader } from "@formbricks/ui/SkeletonLoader";
 import { AddressSummary } from "./AddressSummary";
