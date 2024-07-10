@@ -1,8 +1,8 @@
 import "server-only";
-import { getFirstEnabledEnding } from "utils/survey";
 import { TLegacySurvey, TLegacySurveyThankYouCard, ZLegacySurvey } from "@formbricks/types/legacySurveys";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
 import { structuredClone } from "../pollyfills/structuredClone";
+import { getFirstEnabledEnding } from "../utils/survey";
 import { getLocalizedValue, isI18nObject } from "./utils";
 
 // Helper function to extract a regular string from an i18nString.
@@ -66,7 +66,7 @@ export const reverseTranslateSurvey = (survey: TSurvey, languageCode: string = "
     // @ts-expect-error
     reversedSurvey.redirectUrl = firstEnabledEnding.url;
   }
+  // @ts-expect-error
   reversedSurvey.endings = undefined;
-  console.log(reversedSurvey);
   return ZLegacySurvey.parse(reversedSurvey);
 };

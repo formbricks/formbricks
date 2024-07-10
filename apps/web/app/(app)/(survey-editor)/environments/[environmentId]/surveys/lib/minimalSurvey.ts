@@ -12,7 +12,6 @@ export const minimalSurvey: TSurvey = {
   displayOption: "displayOnce",
   autoClose: null,
   triggers: [],
-  redirectUrl: null,
   recontactDays: null,
   displayLimit: null,
   welcomeCard: {
