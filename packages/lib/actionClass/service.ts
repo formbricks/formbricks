@@ -2,6 +2,7 @@
 
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/actionClasses";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -24,85 +25,88 @@ const selectActionClass = {
   environmentId: true,
 } satisfies Prisma.ActionClassSelect;
 
-export const getActionClasses = (environmentId: string, page?: number): Promise<TActionClass[]> =>
-  cache(
-    async () => {
-      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+export const getActionClasses = reactCache(
+  async (environmentId: string, page?: number): Promise<TActionClass[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
-      try {
-        return await prisma.actionClass.findMany({
-          where: {
-            environmentId: environmentId,
-          },
-          select: selectActionClass,
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-          orderBy: {
-            createdAt: "asc",
-          },
-        });
-      } catch (error) {
-        throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
+        try {
+          return await prisma.actionClass.findMany({
+            where: {
+              environmentId: environmentId,
+            },
+            select: selectActionClass,
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+            orderBy: {
+              createdAt: "asc",
+            },
+          });
+        } catch (error) {
+          throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
+        }
+      },
+      [`getActionClasses-${environmentId}-${page}`],
+      {
+        tags: [actionClassCache.tag.byEnvironmentId(environmentId)],
       }
-    },
-    [`getActionClasses-${environmentId}-${page}`],
-    {
-      tags: [actionClassCache.tag.byEnvironmentId(environmentId)],
-    }
-  )();
+    )()
+);
 
 // This function is used to get an action by its name and environmentId(it can return private actions as well)
-export const getActionClassByEnvironmentIdAndName = (
-  environmentId: string,
-  name: string
-): Promise<TActionClass | null> =>
-  cache(
-    async () => {
-      validateInputs([environmentId, ZId], [name, ZString]);
+export const getActionClassByEnvironmentIdAndName = reactCache(
+  async (environmentId: string, name: string): Promise<TActionClass | null> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [name, ZString]);
 
-      try {
-        const actionClass = await prisma.actionClass.findFirst({
-          where: {
-            name,
-            environmentId,
-          },
-          select: selectActionClass,
-        });
+        try {
+          const actionClass = await prisma.actionClass.findFirst({
+            where: {
+              name,
+              environmentId,
+            },
+            select: selectActionClass,
+          });
 
-        return actionClass;
-      } catch (error) {
-        throw new DatabaseError(`Database error when fetching action`);
+          return actionClass;
+        } catch (error) {
+          throw new DatabaseError(`Database error when fetching action`);
+        }
+      },
+      [`getActionClassByEnvironmentIdAndName-${environmentId}-${name}`],
+      {
+        tags: [actionClassCache.tag.byNameAndEnvironmentId(name, environmentId)],
       }
-    },
-    [`getActionClassByEnvironmentIdAndName-${environmentId}-${name}`],
-    {
-      tags: [actionClassCache.tag.byNameAndEnvironmentId(name, environmentId)],
-    }
-  )();
+    )()
+);
 
-export const getActionClass = (actionClassId: string): Promise<TActionClass | null> =>
-  cache(
-    async () => {
-      validateInputs([actionClassId, ZId]);
+export const getActionClass = reactCache(
+  async (actionClassId: string): Promise<TActionClass | null> =>
+    cache(
+      async () => {
+        validateInputs([actionClassId, ZId]);
 
-      try {
-        const actionClass = await prisma.actionClass.findUnique({
-          where: {
-            id: actionClassId,
-          },
-          select: selectActionClass,
-        });
+        try {
+          const actionClass = await prisma.actionClass.findUnique({
+            where: {
+              id: actionClassId,
+            },
+            select: selectActionClass,
+          });
 
-        return actionClass;
-      } catch (error) {
-        throw new DatabaseError(`Database error when fetching action`);
+          return actionClass;
+        } catch (error) {
+          throw new DatabaseError(`Database error when fetching action`);
+        }
+      },
+      [`getActionClass-${actionClassId}`],
+      {
+        tags: [actionClassCache.tag.byId(actionClassId)],
       }
-    },
-    [`getActionClass-${actionClassId}`],
-    {
-      tags: [actionClassCache.tag.byId(actionClassId)],
-    }
-  )();
+    )()
+);
 
 export const deleteActionClass = async (
   environmentId: string,
