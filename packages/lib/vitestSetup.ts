@@ -10,6 +10,18 @@ vi.mock("next/cache", () => ({
   revalidateTag: vi.fn(),
 }));
 
+// mock react cache
+const testCache = <T extends Function>(func: T) => func;
+
+vi.mock("react", () => {
+  const originalModule = vi.importActual("react");
+  return {
+    ...originalModule,
+    cache: testCache,
+  };
+});
+
+// mock server-only
 vi.mock("server-only", () => {
   return {};
 });
