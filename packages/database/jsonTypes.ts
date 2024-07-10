@@ -14,7 +14,7 @@ import {
   TSurveyStyling,
   TSurveyVerifyEmail,
   TSurveyWelcomeCard,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
 declare global {

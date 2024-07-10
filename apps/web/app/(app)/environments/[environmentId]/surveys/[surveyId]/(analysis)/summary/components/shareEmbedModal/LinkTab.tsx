@@ -1,6 +1,6 @@
 import { UrlShortenerForm } from "@/app/(app)/environments/[environmentId]/components/UrlShortenerForm";
 import Link from "next/link";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { ShareSurveyLink } from "@formbricks/ui/ShareSurveyLink";
 
 interface LinkTabProps {

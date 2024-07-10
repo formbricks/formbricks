@@ -1,8 +1,8 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
-import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
+import { TLegacySurvey } from "@formbricks/types/legacySurveys";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 
 export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
   let segment: TSegment | null = null;

@@ -9,7 +9,7 @@ import { getEnabledEndingCardsCount } from "@formbricks/lib/utils/survey";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 import { Badge } from "@formbricks/ui/Badge";
 import { Label } from "@formbricks/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";

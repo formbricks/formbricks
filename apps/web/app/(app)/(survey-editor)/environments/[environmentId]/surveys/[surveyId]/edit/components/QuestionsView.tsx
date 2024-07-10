@@ -21,9 +21,9 @@ import { getFirstEnabledEnding } from "@formbricks/lib/utils/survey";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
 import {
-  findQuestionsWithCyclicLogic,
   isEndingCardValid,
   isWelcomeCardValid,
   validateQuestion,
@@ -42,7 +42,7 @@ interface QuestionsViewProps {
   setActiveQuestionId: (questionId: string | null) => void;
   product: TProduct;
   invalidQuestions: string[] | null;
-  setInvalidQuestions: (invalidQuestions: string[] | null) => void;
+  setInvalidQuestions: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isMultiLanguageAllowed?: boolean;
@@ -99,19 +99,24 @@ export const QuestionsView = ({
     if (invalidQuestions === null) {
       return;
     }
+
     const isFirstQuestion = question.id === localSurvey.questions[0].id;
-    let temp = structuredClone(invalidQuestions);
+
     if (validateQuestion(question, surveyLanguages, isFirstQuestion)) {
       // If question is valid, we now check for cyclic logic
       const questionsWithCyclicLogic = findQuestionsWithCyclicLogic(localSurvey.questions);
-      if (!questionsWithCyclicLogic.includes(question.id)) {
-        temp = invalidQuestions.filter((id) => id !== question.id);
-        setInvalidQuestions(temp);
+
+      if (questionsWithCyclicLogic.includes(question.id) && !invalidQuestions.includes(question.id)) {
+        setInvalidQuestions([...invalidQuestions, question.id]);
+        return;
       }
-    } else if (!invalidQuestions.includes(question.id)) {
-      temp.push(question.id);
-      setInvalidQuestions(temp);
+
+      setInvalidQuestions(invalidQuestions.filter((id) => id !== question.id));
+      return;
     }
+
+    setInvalidQuestions([...invalidQuestions, question.id]);
+    return;
   };
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
@@ -132,6 +137,7 @@ export const QuestionsView = ({
       delete internalQuestionIdMap[localSurvey.questions[questionIdx].id];
       setActiveQuestionId(updatedAttributes.id);
     }
+
     updatedSurvey.questions[questionIdx] = {
       ...updatedSurvey.questions[questionIdx],
       ...updatedAttributes,

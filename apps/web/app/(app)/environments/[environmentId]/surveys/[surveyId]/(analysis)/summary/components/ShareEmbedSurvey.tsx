@@ -4,7 +4,7 @@ import { BellRing, BlocksIcon, Code2Icon, LinkIcon, MailIcon, UsersRound } from 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { Badge } from "@formbricks/ui/Badge";
 import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
