@@ -84,6 +84,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Hidden Fields", href: "/link-surveys/hidden-fields" },
           { title: "Start At Question", href: "/link-surveys/start-at-question" },
           { title: "Embed Surveys Anywhere", href: "/link-surveys/embed-surveys" },
+          { title: "Market Research Panel", href: "/link-surveys/market-research-panel" },
           { title: "Multi Language Surveys", href: "/global/multi-language-surveys" },
           { title: "User Metadata", href: "/global/metadata" },
           { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
@@ -140,7 +141,15 @@ export const navigation: Array<NavGroup> = [
       { title: "SDK: Formbricks API", href: "/developer-docs/api-sdk" },
       { title: "REST API", href: "/developer-docs/rest-api" },
       { title: "Webhooks", href: "/developer-docs/webhooks" },
-      { title: "Contributing", href: "/developer-docs/contributing" },
+      {
+        title: "Contributing",
+        children: [
+          { title: "Get started", href: "/developer-docs/contributing/get-started" },
+          { title: "Codespaces", href: "/developer-docs/contributing/codespaces" },
+          { title: "Gitpod", href: "/developer-docs/contributing/gitpod" },
+          { title: "Troubleshooting", href: "/developer-docs/contributing/troubleshooting" },
+        ],
+      },
     ],
   },
 ];
