@@ -1,6 +1,7 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { createHash, randomBytes } from "crypto";
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TApiKey, TApiKeyCreateInput, ZApiKeyCreateInput } from "@formbricks/types/api-keys";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -12,64 +13,68 @@ import { getHash } from "../crypto";
 import { validateInputs } from "../utils/validate";
 import { apiKeyCache } from "./cache";
 
-export const getApiKey = (apiKeyId: string): Promise<TApiKey | null> =>
-  cache(
-    async () => {
-      validateInputs([apiKeyId, ZString]);
+export const getApiKey = reactCache(
+  (apiKeyId: string): Promise<TApiKey | null> =>
+    cache(
+      async () => {
+        validateInputs([apiKeyId, ZString]);
 
-      if (!apiKeyId) {
-        throw new InvalidInputError("API key cannot be null or undefined.");
-      }
-
-      try {
-        const apiKeyData = await prisma.apiKey.findUnique({
-          where: {
-            id: apiKeyId,
-          },
-        });
-
-        return apiKeyData;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+        if (!apiKeyId) {
+          throw new InvalidInputError("API key cannot be null or undefined.");
         }
 
-        throw error;
-      }
-    },
-    [`getApiKey-${apiKeyId}`],
-    {
-      tags: [apiKeyCache.tag.byId(apiKeyId)],
-    }
-  )();
+        try {
+          const apiKeyData = await prisma.apiKey.findUnique({
+            where: {
+              id: apiKeyId,
+            },
+          });
 
-export const getApiKeys = (environmentId: string, page?: number): Promise<TApiKey[]> =>
-  cache(
-    async () => {
-      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+          return apiKeyData;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
 
-      try {
-        const apiKeys = await prisma.apiKey.findMany({
-          where: {
-            environmentId,
-          },
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-        });
-
-        return apiKeys;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+          throw error;
         }
-        throw error;
+      },
+      [`getApiKey-${apiKeyId}`],
+      {
+        tags: [apiKeyCache.tag.byId(apiKeyId)],
       }
-    },
-    [`getApiKeys-${environmentId}-${page}`],
-    {
-      tags: [apiKeyCache.tag.byEnvironmentId(environmentId)],
-    }
-  )();
+    )()
+);
+
+export const getApiKeys = reactCache(
+  (environmentId: string, page?: number): Promise<TApiKey[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+
+        try {
+          const apiKeys = await prisma.apiKey.findMany({
+            where: {
+              environmentId,
+            },
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          });
+
+          return apiKeys;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+          throw error;
+        }
+      },
+      [`getApiKeys-${environmentId}-${page}`],
+      {
+        tags: [apiKeyCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);
 
 export const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
 
@@ -105,9 +110,8 @@ export const createApiKey = async (
   }
 };
 
-export const getApiKeyFromKey = (apiKey: string): Promise<TApiKey | null> => {
+export const getApiKeyFromKey = reactCache((apiKey: string): Promise<TApiKey | null> => {
   const hashedKey = getHash(apiKey);
-
   return cache(
     async () => {
       validateInputs([apiKey, ZString]);
@@ -137,7 +141,7 @@ export const getApiKeyFromKey = (apiKey: string): Promise<TApiKey | null> => {
       tags: [apiKeyCache.tag.byHashedKey(hashedKey)],
     }
   )();
-};
+});
 
 export const deleteApiKey = async (id: string): Promise<TApiKey | null> => {
   validateInputs([id, ZId]);

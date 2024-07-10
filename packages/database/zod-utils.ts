@@ -1,4 +1,4 @@
-import z from "zod";
+import { z } from "zod";
 
 export const ZActionProperties = z.record(z.string());
 export { ZActionClassNoCodeConfig } from "@formbricks/types/action-classes";

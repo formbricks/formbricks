@@ -6,6 +6,7 @@ interface RevalidateProps {
   actionClassId?: string;
   environmentId?: string;
   segmentId?: string;
+  resultShareKey?: string;
 }
 
 export const surveyCache = {
@@ -25,8 +26,18 @@ export const surveyCache = {
     bySegmentId(segmentId: string) {
       return `segments-${segmentId}-surveys`;
     },
+    byResultShareKey(resultShareKey: string) {
+      return `surveys-resultShare-${resultShareKey}`;
+    },
   },
-  revalidate({ id, attributeClassId, actionClassId, environmentId, segmentId }: RevalidateProps): void {
+  revalidate({
+    id,
+    attributeClassId,
+    actionClassId,
+    environmentId,
+    segmentId,
+    resultShareKey,
+  }: RevalidateProps): void {
     if (id) {
       revalidateTag(this.tag.byId(id));
     }
@@ -44,6 +55,10 @@ export const surveyCache = {
     }
 
     if (segmentId) {
+      revalidateTag(this.tag.byResultShareKey(resultShareKey));
+    }
+
+    if (resultShareKey) {
       revalidateTag(this.tag.bySegmentId(segmentId));
     }
   },
