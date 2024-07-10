@@ -170,7 +170,7 @@ const baseSurveyProperties = {
   displayLimit: 3,
   welcomeCard: mockWelcomeCard,
   questions: [mockQuestion],
-  thankYouCard: { enabled: false },
+  endings: [{ enabled: false, id: "end:1", type: "endScreen" }],
   hiddenFields: { enabled: false },
   surveyClosedMessage: {
     enabled: false,

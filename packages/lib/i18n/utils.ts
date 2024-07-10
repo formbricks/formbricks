@@ -12,6 +12,7 @@ import {
   TSurveyChoice,
   TSurveyConsentQuestion,
   TSurveyEndScreen,
+  TSurveyEndings,
   TSurveyLanguage,
   TSurveyMultipleChoiceQuestion,
   TSurveyNPSQuestion,
@@ -144,24 +145,47 @@ export const translateWelcomeCard = (
 
 // LGEGACY
 // Helper function to maintain backwards compatibility for old survey objects before Multi Language
-export const translateThankYouCard = (
-  thankYouCard: TSurveyEndScreen | TLegacySurveyThankYouCard,
+export const translateEndings = (
+  endings: TSurveyEndings | TLegacySurveyThankYouCard,
   languages: string[]
-): TSurveyEndScreen => {
-  const clonedThankYouCard = structuredClone(thankYouCard);
+): TSurveyEndings => {
+  const isEndingsArray = Array.isArray(endings);
+  if (isEndingsArray) {
+    return endings.map((ending) => {
+      if (ending.type === "redirectToUrl") return ending;
+      else {
+        const clonedEndingCard = structuredClone(ending);
 
-  if (typeof thankYouCard.headline !== "undefined") {
-    clonedThankYouCard.headline = createI18nString(thankYouCard.headline ?? "", languages);
-  }
+        if (typeof ending.headline !== "undefined") {
+          clonedEndingCard.headline = createI18nString(ending.headline ?? "", languages);
+        }
 
-  if (typeof thankYouCard.subheader !== "undefined") {
-    clonedThankYouCard.subheader = createI18nString(thankYouCard.subheader ?? "", languages);
-  }
+        if (typeof ending.subheader !== "undefined") {
+          clonedEndingCard.subheader = createI18nString(ending.subheader ?? "", languages);
+        }
 
-  if (typeof clonedThankYouCard.buttonLabel !== "undefined") {
-    clonedThankYouCard.buttonLabel = createI18nString(thankYouCard.buttonLabel ?? "", languages);
+        if (typeof ending.buttonLabel !== "undefined") {
+          clonedEndingCard.buttonLabel = createI18nString(ending.buttonLabel ?? "", languages);
+        }
+        return ZSurveyEndScreen.parse(clonedEndingCard);
+      }
+    });
+  } else {
+    const clonedEndingCard = structuredClone(endings) as unknown as TSurveyEndScreen;
+
+    if (typeof clonedEndingCard.headline !== "undefined") {
+      clonedEndingCard.headline = createI18nString(clonedEndingCard.headline ?? "", languages);
+    }
+
+    if (typeof clonedEndingCard.subheader !== "undefined") {
+      clonedEndingCard.subheader = createI18nString(clonedEndingCard.subheader ?? "", languages);
+    }
+
+    if (typeof clonedEndingCard.buttonLabel !== "undefined") {
+      clonedEndingCard.buttonLabel = createI18nString(clonedEndingCard.buttonLabel ?? "", languages);
+    }
+    return [ZSurveyEndScreen.parse(clonedEndingCard)];
   }
-  return ZSurveyEndScreen.parse(clonedThankYouCard);
 };
 
 // LGEGACY
@@ -294,10 +318,7 @@ export const translateSurvey = (
     return translateQuestion(question, languageCodes);
   });
   const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard, languageCodes);
-  const translatedEndings = survey.endings.map((ending) => {
-    if (ending.type === "endScreen") return translateThankYouCard(ending, languageCodes);
-    else return ending;
-  });
+  const translatedEndings = translateEndings(survey.endings, languageCodes);
   const translatedSurvey = structuredClone(survey);
   return {
     ...translatedSurvey,

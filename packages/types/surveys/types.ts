@@ -578,7 +578,6 @@ export const ZSurvey = z
     displayOption: ZSurveyDisplayOption,
     autoClose: z.number().nullable(),
     triggers: z.array(z.object({ actionClass: ZActionClass })),
-    redirectUrl: z.string().url({ message: "Invalid redirect URL" }).nullable(),
     recontactDays: z.number().nullable(),
     displayLimit: z.number().nullable(),
     welcomeCard: ZSurveyWelcomeCard,
