@@ -76,6 +76,8 @@ services:
 
   formbricks:
     restart: always
+    # You also need to execute 'chown -R 1000:1000 .' in this directory
+    user: '1000'
     build:
       context: .
       dockerfile: ./apps/web/Dockerfile
@@ -119,4 +121,3 @@ services:
 volumes:
   postgres:
     driver: local
-  uploads:
