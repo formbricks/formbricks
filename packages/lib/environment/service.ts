@@ -153,7 +153,7 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
   }
 };
 
-export const getEnvironmentIdsForUser = async (userId: string): Promise<string[]> =>
+export const getProductionEnvironmentIdsByUserId = async (userId: string): Promise<string[]> =>
   cache(
     async () => {
       validateInputs([userId, z.string()]);
@@ -200,7 +200,7 @@ export const getEnvironmentIdsForUser = async (userId: string): Promise<string[]
         throw new Error("Error while fetching environment IDs");
       }
     },
-    [`getEnvironmentIdsForUser-${userId}`],
+    [`getProductionEnvironmentIdsByUserId-${userId}`],
     {
       tags: [
         membershipCache.tag.byUserId(userId),

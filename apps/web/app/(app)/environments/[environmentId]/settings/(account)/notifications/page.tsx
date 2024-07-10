@@ -3,7 +3,7 @@ import { getMembershipsForNotification } from "@/app/(app)/environments/[environ
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getEnvironmentIdsForUser } from "@formbricks/lib/environment/service";
+import { getProductionEnvironmentIdsByUserId } from "@formbricks/lib/environment/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
@@ -50,7 +50,7 @@ const Page = async ({ params, searchParams }) => {
   const autoDisableNotificationElementId = searchParams["elementId"];
   const [user, userEnvironmentIds] = await Promise.all([
     getUser(session.user.id),
-    getEnvironmentIdsForUser(session.user.id),
+    getProductionEnvironmentIdsByUserId(session.user.id),
   ]);
   const memberships = await getMembershipsForNotification(session.user.id, userEnvironmentIds);
   if (!user) {
