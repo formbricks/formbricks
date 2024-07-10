@@ -5,7 +5,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
-import { TApiKey } from "@formbricks/types/apiKeys";
+import { TApiKey } from "@formbricks/types/api-keys";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";

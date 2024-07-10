@@ -2,7 +2,7 @@ import {
   TActionClass,
   TActionClassNoCodeConfig,
   TActionClassPageUrlRule,
-} from "@formbricks/types/actionClasses";
+} from "@formbricks/types/action-classes";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TJsTrackProperties } from "@formbricks/types/js";
 import { TResponseHiddenFieldValue } from "@formbricks/types/responses";

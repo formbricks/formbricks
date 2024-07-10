@@ -1,5 +1,5 @@
 import React from "react";
-import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
+import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
 import { CreateReminderNotificationBody } from "./create-reminder-notification-body";
 import { NotificationHeader } from "./notification-header";
 

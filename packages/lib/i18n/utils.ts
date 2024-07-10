@@ -3,7 +3,7 @@ import {
   TLegacySurveyQuestion,
   TLegacySurveyThankYouCard,
   TLegacySurveyWelcomeCard,
-} from "@formbricks/types/legacySurveys";
+} from "@formbricks/types/legacy-surveys";
 import { TLanguage } from "@formbricks/types/product";
 import {
   TI18nString,

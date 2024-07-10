@@ -1,4 +1,4 @@
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TResponseData } from "@formbricks/types/responses";
 import {

@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+import { TActionClassNoCodeConfig } from "@formbricks/types/action-classes";
 
 const prisma = new PrismaClient();
 

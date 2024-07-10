@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { ZLegacySurveyQuestions, ZLegacySurveyThankYouCard, ZLegacySurveyWelcomeCard } from "./legacySurveys";
+import {
+  ZLegacySurveyQuestions,
+  ZLegacySurveyThankYouCard,
+  ZLegacySurveyWelcomeCard,
+} from "./legacy-surveys";
 import { ZProductConfigChannel, ZProductConfigIndustry } from "./product";
 import {
   ZSurveyHiddenFields,

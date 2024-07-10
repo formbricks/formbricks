@@ -1,7 +1,7 @@
 import { questionTypes } from "@/app/lib/questions";
 import { InboxIcon } from "lucide-react";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
 
 interface HeadProps {

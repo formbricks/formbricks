@@ -1,4 +1,4 @@
-import { TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+import { TActionClassNoCodeConfig } from "@formbricks/types/action-classes";
 import { TIntegrationConfig } from "@formbricks/types/integration";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TProductConfig, TProductStyling } from "@formbricks/types/product";

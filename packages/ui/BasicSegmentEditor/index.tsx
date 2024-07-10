@@ -1,6 +1,6 @@
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { deleteResource, isResourceFilter, moveResource } from "@formbricks/lib/segment/utils";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 import { BasicSegmentFilter } from "./components/BasicSegmentFilter";
 
