@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
-import { TActionClass } from "@formbricks/types/actionClasses";
+import { TActionClass } from "@formbricks/types/action-classes";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { ActionDetailModal } from "./ActionDetailModal";

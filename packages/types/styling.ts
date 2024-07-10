@@ -24,7 +24,7 @@ export const ZSurveyStylingBackground = z
   .refine(
     (surveyBackground) => {
       if (surveyBackground.bgType === "upload") {
-        return !!surveyBackground.bg;
+        return Boolean(surveyBackground.bg);
       }
 
       return true;

@@ -1,7 +1,7 @@
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getSurveysBySegmentId } from "@formbricks/lib/survey/service";
-import { TActionClass } from "@formbricks/types/actionClasses";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TActionClass } from "@formbricks/types/action-classes";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSegment } from "@formbricks/types/segment";
 import { SegmentTableDataRow } from "./SegmentTableDataRow";
 

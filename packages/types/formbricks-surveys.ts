@@ -1,7 +1,7 @@
-import { TProductStyling } from "./product";
-import { TResponseData, TResponseUpdate } from "./responses";
-import { TUploadFileConfig } from "./storage";
-import { TSurvey, TSurveyStyling } from "./surveys/types";
+import { type TProductStyling } from "./product";
+import { type TResponseData, type TResponseUpdate } from "./responses";
+import { type TUploadFileConfig } from "./storage";
+import type { TSurvey, TSurveyStyling } from "./surveys/types";
 
 export interface SurveyBaseProps {
   survey: TSurvey;

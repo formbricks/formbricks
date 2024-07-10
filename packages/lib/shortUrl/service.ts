@@ -4,7 +4,7 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TShortUrl, ZShortUrlId } from "@formbricks/types/shortUrl";
+import { TShortUrl, ZShortUrlId } from "@formbricks/types/short-url";
 import { cache } from "../cache";
 import { validateInputs } from "../utils/validate";
 import { shortUrlCache } from "./cache";

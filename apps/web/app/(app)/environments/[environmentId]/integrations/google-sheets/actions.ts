@@ -5,7 +5,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getSpreadsheetNameById } from "@formbricks/lib/googleSheet/service";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
+import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 
 export async function getSpreadsheetNameByIdAction(
   googleSheetIntegration: TIntegrationGoogleSheets,

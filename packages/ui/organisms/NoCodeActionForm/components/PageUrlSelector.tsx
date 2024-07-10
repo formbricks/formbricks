@@ -5,7 +5,7 @@ import { UseFormReturn } from "react-hook-form";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
-import { TActionClassInput, TActionClassPageUrlRule } from "@formbricks/types/actionClasses";
+import { TActionClassInput, TActionClassPageUrlRule } from "@formbricks/types/action-classes";
 import { Alert, AlertDescription, AlertTitle } from "../../../Alert";
 import { Button } from "../../../Button";
 import { FormControl, FormField, FormItem } from "../../../Form";

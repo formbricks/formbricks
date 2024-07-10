@@ -4,7 +4,7 @@ import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
-import { TActionClass } from "@formbricks/types/actionClasses";
+import { TActionClass } from "@formbricks/types/action-classes";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { Label } from "@formbricks/ui/Label";

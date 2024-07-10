@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { createHash, randomBytes } from "crypto";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { TApiKey, TApiKeyCreateInput, ZApiKeyCreateInput } from "@formbricks/types/apiKeys";
+import { TApiKey, TApiKeyCreateInput, ZApiKeyCreateInput } from "@formbricks/types/api-keys";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";

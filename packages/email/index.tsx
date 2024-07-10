@@ -15,7 +15,7 @@ import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formb
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
+import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
 import { ForgotPasswordEmail } from "./components/auth/forgot-password-email";
 import { PasswordResetNotifyEmail } from "./components/auth/password-reset-notify-email";
 import { VerificationEmail } from "./components/auth/verification-email";

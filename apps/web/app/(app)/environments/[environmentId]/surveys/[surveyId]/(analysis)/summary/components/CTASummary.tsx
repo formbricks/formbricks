@@ -1,5 +1,5 @@
 import { InboxIcon } from "lucide-react";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryCta } from "@formbricks/types/surveys/types";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { convertFloatToNDecimal } from "../lib/utils";
