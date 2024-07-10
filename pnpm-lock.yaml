@@ -746,6 +746,9 @@ importers:
       '@formbricks/js-core':
         specifier: workspace:*
         version: link:../js-core
+      '@formbricks/types':
+        specifier: workspace:*
+        version: link:../types
       terser:
         specifier: ^5.31.1
         version: 5.31.1

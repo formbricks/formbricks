@@ -1,15 +1,15 @@
 // Simple queue for formbricks methods
 
 export class MethodQueue {
-  private queue: (() => Promise<void>)[] = [];
+  private queue: (() => Promise<unknown>)[] = [];
   private isExecuting = false;
 
-  add = (method: () => Promise<void>) => {
+  add = (method: () => Promise<unknown>): void => {
     this.queue.push(method);
-    this.run();
+    void this.run();
   };
 
-  private runNext = async () => {
+  private runNext = async (): Promise<void> => {
     if (this.isExecuting) return;
 
     const method = this.queue.shift();
@@ -20,19 +20,19 @@ export class MethodQueue {
       } finally {
         this.isExecuting = false;
         if (this.queue.length > 0) {
-          this.runNext();
+          void this.runNext();
         }
       }
     }
   };
 
-  run = async () => {
+  run = async (): Promise<void> => {
     if (!this.isExecuting && this.queue.length > 0) {
       await this.runNext();
     }
   };
 
-  clear = () => {
+  clear = (): void => {
     this.queue = [];
   };
 }
