@@ -10,7 +10,7 @@ import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { TSurvey, TSurveyEndScreen, TSurveyRedirectUrl } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
@@ -20,7 +20,6 @@ import { TooltipRenderer } from "@formbricks/ui/Tooltip";
 
 interface EditEndingCardProps {
   localSurvey: TSurvey;
-  ending: TSurveyEndScreen | TSurveyRedirectUrl;
   endingCardIndex: number;
   setLocalSurvey: (survey: TSurvey) => void;
   setActiveQuestionId: (id: string | null) => void;
@@ -32,14 +31,13 @@ interface EditEndingCardProps {
   plan: TOrganizationBillingPlan;
 }
 
-const endScreenTypes = [
+const endingCardTypes = [
   { id: "endScreen", label: "End Screen" },
   { id: "redirectToUrl", label: "Redirect to Url" },
 ];
 
 export const EditEndingCard = ({
   localSurvey,
-  ending,
   endingCardIndex,
   setLocalSurvey,
   setActiveQuestionId,
@@ -50,10 +48,10 @@ export const EditEndingCard = ({
   attributeClasses,
   plan,
 }: EditEndingCardProps) => {
+  const endingCard = localSurvey[endingCardIndex];
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: ending.id,
+    id: endingCard.id,
   });
-  const endingCard = ending;
   let open = activeQuestionId == `end:${endingCardIndex + 1}`;
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&
@@ -108,6 +106,30 @@ export const EditEndingCard = ({
     zIndex: isDragging ? 10 : 1,
   };
 
+  const handleToggle = () => {
+    if (localSurvey.endings[endingCardIndex].enabled) {
+      const hasEndingInLogic = localSurvey.questions.some((question) => {
+        return (
+          question.logic &&
+          question.logic.some((logic) => logic.destination === localSurvey.endings[endingCardIndex].id)
+        );
+      });
+      if (hasEndingInLogic) {
+        const questionIndexWithEnding = localSurvey.questions.findIndex((question) => {
+          return (
+            question.logic &&
+            question.logic.some((logic) => logic.destination === localSurvey.endings[endingCardIndex].id)
+          );
+        });
+        if (questionIndexWithEnding !== -1) {
+          toast.error(`Ending card used in logic for question: ${questionIndexWithEnding + 1}`);
+          return;
+        }
+      }
+    }
+    updateSurvey({ enabled: !localSurvey.endings[endingCardIndex].enabled });
+  };
+
   return (
     <div
       className={cn(
@@ -116,7 +138,7 @@ export const EditEndingCard = ({
       )}
       ref={setNodeRef}
       style={style}
-      id={ending.id}>
+      id={endingCard.id}>
       <div
         {...listeners}
         {...attributes}
@@ -158,38 +180,12 @@ export const EditEndingCard = ({
                 <Label htmlFor="thank-you-toggle">Show</Label>
 
                 <Switch
-                  id="thank-you-toggle"
+                  id="ending-card-toggle"
                   disabled={disableEditEndingCardToggle && localSurvey.endings[endingCardIndex].enabled}
                   checked={localSurvey.endings[endingCardIndex].enabled}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (localSurvey.endings[endingCardIndex].enabled) {
-                      const hasEndingInLogic = localSurvey.questions.some((question) => {
-                        return (
-                          question.logic &&
-                          question.logic.some(
-                            (logic) => logic.destination === localSurvey.endings[endingCardIndex].id
-                          )
-                        );
-                      });
-                      if (hasEndingInLogic) {
-                        const questionIndexWithEnding = localSurvey.questions.findIndex((question) => {
-                          return (
-                            question.logic &&
-                            question.logic.some(
-                              (logic) => logic.destination === localSurvey.endings[endingCardIndex].id
-                            )
-                          );
-                        });
-                        if (questionIndexWithEnding !== -1) {
-                          toast.error(
-                            `Ending card used in logic for question: ${questionIndexWithEnding + 1}`
-                          );
-                          return;
-                        }
-                      }
-                    }
-                    updateSurvey({ enabled: !localSurvey.endings[endingCardIndex].enabled });
+                    handleToggle();
                   }}
                 />
               </div>
@@ -212,10 +208,10 @@ export const EditEndingCard = ({
             tooltipContent={"Redirect To Url is not available on free plan"}
             triggerClass="w-full">
             <TabBar
-              tabs={endScreenTypes}
+              tabs={endingCardTypes}
               activeId={endingCard.type}
               className="w-full"
-              // disabled={endingCard.type === "endScreen" && plan === "free"}
+              disabled={endingCard.type === "endScreen" && plan === "free"}
               setActiveId={() => {
                 if (endingCard.type === "endScreen") {
                   updateSurvey({ type: "redirectToUrl", url: "", label: "" });

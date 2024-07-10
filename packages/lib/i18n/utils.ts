@@ -11,7 +11,7 @@ import {
   TSurveyCTAQuestion,
   TSurveyChoice,
   TSurveyConsentQuestion,
-  TSurveyEndScreen,
+  TSurveyEndScreenCard,
   TSurveyEndings,
   TSurveyLanguage,
   TSurveyMultipleChoiceQuestion,
@@ -23,7 +23,7 @@ import {
   ZSurveyCTAQuestion,
   ZSurveyCalQuestion,
   ZSurveyConsentQuestion,
-  ZSurveyEndScreen,
+  ZSurveyEndScreenCard,
   ZSurveyFileUploadQuestion,
   ZSurveyMultipleChoiceQuestion,
   ZSurveyNPSQuestion,
@@ -167,11 +167,11 @@ export const translateEndings = (
         if (typeof ending.buttonLabel !== "undefined") {
           clonedEndingCard.buttonLabel = createI18nString(ending.buttonLabel ?? "", languages);
         }
-        return ZSurveyEndScreen.parse(clonedEndingCard);
+        return ZSurveyEndScreenCard.parse(clonedEndingCard);
       }
     });
   } else {
-    const clonedEndingCard = structuredClone(endings) as unknown as TSurveyEndScreen;
+    const clonedEndingCard = structuredClone(endings) as unknown as TSurveyEndScreenCard;
 
     if (typeof clonedEndingCard.headline !== "undefined") {
       clonedEndingCard.headline = createI18nString(clonedEndingCard.headline ?? "", languages);
@@ -184,7 +184,7 @@ export const translateEndings = (
     if (typeof clonedEndingCard.buttonLabel !== "undefined") {
       clonedEndingCard.buttonLabel = createI18nString(clonedEndingCard.buttonLabel ?? "", languages);
     }
-    return [ZSurveyEndScreen.parse(clonedEndingCard)];
+    return [ZSurveyEndScreenCard.parse(clonedEndingCard)];
   }
 };
 

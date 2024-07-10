@@ -392,7 +392,6 @@ export const QuestionsView = ({
               return (
                 <EditEndingCard
                   localSurvey={localSurvey}
-                  ending={ending}
                   endingCardIndex={index}
                   setLocalSurvey={setLocalSurvey}
                   setActiveQuestionId={setActiveQuestionId}

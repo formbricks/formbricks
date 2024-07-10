@@ -3,7 +3,7 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import {
   TSurveyCTAQuestion,
   TSurveyDisplayOption,
-  TSurveyEndScreen,
+  TSurveyEndScreenCard,
   TSurveyHiddenFields,
   TSurveyInput,
   TSurveyOpenTextQuestion,
@@ -14,7 +14,7 @@ import {
 } from "@formbricks/types/surveys/types";
 import { TTemplate } from "@formbricks/types/templates";
 
-const endingCardDefault: TSurveyEndScreen = {
+const endingCardDefault: TSurveyEndScreenCard = {
   id: "end:1",
   type: "endScreen",
   enabled: true,

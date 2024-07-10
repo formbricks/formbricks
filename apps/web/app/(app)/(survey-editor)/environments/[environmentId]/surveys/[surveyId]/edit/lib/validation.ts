@@ -9,14 +9,14 @@ import {
   TSurvey,
   TSurveyCTAQuestion,
   TSurveyConsentQuestion,
-  TSurveyEndScreen,
+  TSurveyEndScreenCard,
   TSurveyLanguage,
   TSurveyMatrixQuestion,
   TSurveyMultipleChoiceQuestion,
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestion,
-  TSurveyRedirectUrl,
+  TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { findLanguageCodesForDuplicateLabels } from "@formbricks/types/surveys/validation";
@@ -174,7 +174,7 @@ export const isWelcomeCardValid = (card: TSurveyWelcomeCard, surveyLanguages: TS
 };
 
 export const isEndingCardValid = (
-  card: TSurveyEndScreen | TSurveyRedirectUrl,
+  card: TSurveyEndScreenCard | TSurveyRedirectUrlCard,
   surveyLanguages: TSurveyLanguage[]
 ) => {
   if (card.type === "endScreen") {

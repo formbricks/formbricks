@@ -28,7 +28,7 @@ const ZSurveyEndingBase = z.object({
   enabled: z.boolean(),
 });
 
-export const ZSurveyEndScreen = ZSurveyEndingBase.extend({
+export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   type: z.literal("endScreen"),
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
@@ -37,16 +37,16 @@ export const ZSurveyEndScreen = ZSurveyEndingBase.extend({
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
-export type TSurveyEndScreen = z.infer<typeof ZSurveyEndScreen>;
+export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
-export const ZSurveyRedirectUrl = ZSurveyEndingBase.extend({
+export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
   url: z.string().url("Invalid redirect Url in Ending card").optional(),
   label: z.string().optional(),
 });
-export type TSurveyRedirectUrl = z.infer<typeof ZSurveyRedirectUrl>;
+export type TSurveyRedirectUrlCard = z.infer<typeof ZSurveyRedirectUrlCard>;
 
-export const ZSurveyEndings = z.array(z.union([ZSurveyEndScreen, ZSurveyRedirectUrl]));
+export const ZSurveyEndings = z.array(z.union([ZSurveyEndScreenCard, ZSurveyRedirectUrlCard]));
 
 export enum TSurveyQuestionTypeEnum {
   FileUpload = "fileUpload",

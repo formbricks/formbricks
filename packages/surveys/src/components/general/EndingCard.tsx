@@ -6,11 +6,11 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { useEffect } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TSurvey, TSurveyEndScreen, TSurveyRedirectUrl } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 
 interface EndingCardProps {
   survey: TSurvey;
-  endingCard: TSurveyEndScreen | TSurveyRedirectUrl;
+  endingCard: TSurveyEndScreenCard | TSurveyRedirectUrlCard;
   isRedirectDisabled: boolean;
   isResponseSendingFinished: boolean;
   autoFocusEnabled: boolean;
