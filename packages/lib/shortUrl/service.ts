@@ -1,13 +1,13 @@
 import { Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
 import { cache as reactCache } from "react";
-import { shortUrlCache } from "shortUrl/cache";
-import z from "zod";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TShortUrl, ZShortUrlId } from "@formbricks/types/shortUrl";
 import { cache } from "../cache";
 import { validateInputs } from "../utils/validate";
+import { shortUrlCache } from "./cache";
 
 // Create the short url and return it
 export const createShortUrl = async (url: string): Promise<TShortUrl> => {

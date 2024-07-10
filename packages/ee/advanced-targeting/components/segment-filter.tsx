@@ -8,7 +8,7 @@ import {
   Users2Icon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import z from "zod";
+import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import {

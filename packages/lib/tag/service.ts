@@ -1,6 +1,5 @@
 import "server-only";
 import { cache as reactCache } from "react";
-import { tagCache } from "tag/cache";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
@@ -8,6 +7,7 @@ import { TTag } from "@formbricks/types/tags";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
+import { tagCache } from "./cache";
 
 export const getTagsByEnvironmentId = reactCache(
   (environmentId: string, page?: number): Promise<TTag[]> =>
