@@ -22,7 +22,7 @@ import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
 
 export const getEnvironment = reactCache(
-  async (environmentId: string): Promise<TEnvironment | null> =>
+  (environmentId: string): Promise<TEnvironment | null> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -51,7 +51,7 @@ export const getEnvironment = reactCache(
 );
 
 export const getEnvironments = reactCache(
-  async (productId: string): Promise<TEnvironment[]> =>
+  (productId: string): Promise<TEnvironment[]> =>
     cache(
       async (): Promise<TEnvironment[]> => {
         validateInputs([productId, ZId]);

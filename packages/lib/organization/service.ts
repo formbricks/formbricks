@@ -34,7 +34,7 @@ export const getOrganizationByEnvironmentIdCacheTag = (environmentId: string) =>
   `environments-${environmentId}-organization`;
 
 export const getOrganizationsByUserId = reactCache(
-  async (userId: string, page?: number): Promise<TOrganization[]> =>
+  (userId: string, page?: number): Promise<TOrganization[]> =>
     cache(
       async () => {
         validateInputs([userId, ZString], [page, ZOptionalNumber]);
@@ -72,7 +72,7 @@ export const getOrganizationsByUserId = reactCache(
 );
 
 export const getOrganizationByEnvironmentId = reactCache(
-  async (environmentId: string): Promise<TOrganization | null> =>
+  (environmentId: string): Promise<TOrganization | null> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -111,7 +111,7 @@ export const getOrganizationByEnvironmentId = reactCache(
 );
 
 export const getOrganization = reactCache(
-  async (organizationId: string): Promise<TOrganization | null> =>
+  (organizationId: string): Promise<TOrganization | null> =>
     cache(
       async () => {
         validateInputs([organizationId, ZString]);
@@ -279,7 +279,7 @@ export const deleteOrganization = async (organizationId: string): Promise<TOrgan
 };
 
 export const getMonthlyActiveOrganizationPeopleCount = reactCache(
-  async (organizationId: string): Promise<number> =>
+  (organizationId: string): Promise<number> =>
     cache(
       async () => {
         validateInputs([organizationId, ZId]);
@@ -303,7 +303,7 @@ export const getMonthlyActiveOrganizationPeopleCount = reactCache(
 );
 
 export const getMonthlyOrganizationResponseCount = reactCache(
-  async (organizationId: string): Promise<number> =>
+  (organizationId: string): Promise<number> =>
     cache(
       async () => {
         validateInputs([organizationId, ZId]);
