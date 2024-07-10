@@ -164,16 +164,17 @@ services:
 
   formbricks:
     restart: always
+    # You also need to execute 'chown -R 1000:1000 .' in this directory
+    user: '1000'
     image: ghcr.io/formbricks/formbricks:latest
     depends_on:
       - postgres
     ports:
       - 3000:3000
     volumes:
-      - uploads:/home/nextjs/apps/web/uploads/
+      - ./uploads:/home/nextjs/apps/web/uploads/
     <<: *environment
 
 volumes:
   postgres:
     driver: local
-  uploads:
