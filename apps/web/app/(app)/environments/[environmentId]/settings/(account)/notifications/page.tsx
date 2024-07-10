@@ -3,6 +3,7 @@ import { getMembershipsForNotification } from "@/app/(app)/environments/[environ
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
+import { getEnvironmentIdsForUser } from "@formbricks/lib/environment/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
@@ -47,10 +48,11 @@ const Page = async ({ params, searchParams }) => {
   }
   const autoDisableNotificationType = searchParams["type"];
   const autoDisableNotificationElementId = searchParams["elementId"];
-  const [user, memberships] = await Promise.all([
+  const [user, userEnvironments] = await Promise.all([
     getUser(session.user.id),
-    getMembershipsForNotification(session.user.id),
+    getEnvironmentIdsForUser(session.user.id),
   ]);
+  const memberships = await getMembershipsForNotification(session.user.id, userEnvironments);
   if (!user) {
     throw new Error("User not found");
   }

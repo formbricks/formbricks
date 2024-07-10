@@ -31,13 +31,7 @@ import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
 import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import {
-  anySurveyHasFilters,
-  buildOrderByClause,
-  buildWhereClause,
-  revalidateMembershipByEnvironmentId,
-  transformPrismaSurvey,
-} from "./utils";
+import { anySurveyHasFilters, buildOrderByClause, buildWhereClause, transformPrismaSurvey } from "./utils";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -513,7 +507,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       environmentId: modifiedSurvey.environmentId,
       segmentId: modifiedSurvey.segment?.id,
     });
-    revalidateMembershipByEnvironmentId(updatedSurvey.environmentId);
 
     return modifiedSurvey;
   } catch (error) {
@@ -574,8 +567,6 @@ export const deleteSurvey = async (surveyId: string) => {
         actionClassId: trigger.actionClass.id,
       });
     });
-
-    revalidateMembershipByEnvironmentId(deletedSurvey.environmentId);
 
     return deletedSurvey;
   } catch (error) {
@@ -675,7 +666,6 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
       id: survey.id,
       environmentId: survey.environmentId,
     });
-    revalidateMembershipByEnvironmentId(survey.environmentId);
 
     if (createdBy) {
       await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy);
@@ -807,7 +797,6 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
       id: newSurvey.id,
       environmentId: newSurvey.environmentId,
     });
-    revalidateMembershipByEnvironmentId(newSurvey.environmentId);
 
     existingSurvey.triggers.forEach((trigger) => {
       surveyCache.revalidate({

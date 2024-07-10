@@ -4,11 +4,17 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { membershipCache } from "@formbricks/lib/membership/cache";
+import { organizationCache } from "@formbricks/lib/organization/cache";
+import { productCache } from "@formbricks/lib/product/cache";
+import { surveyCache } from "@formbricks/lib/survey/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 
-export const getMembershipsForNotification = async (userId: string): Promise<Membership[]> =>
+export const getMembershipsForNotification = async (
+  userId: string,
+  environmentIds: string[]
+): Promise<Membership[]> =>
   cache(
     async () => {
       validateInputs([userId, ZString]);
@@ -59,6 +65,11 @@ export const getMembershipsForNotification = async (userId: string): Promise<Mem
     },
     [`getMembershipsForNotification-${userId}`],
     {
-      tags: [membershipCache.tag.byUserId(userId)],
+      tags: [
+        membershipCache.tag.byUserId(userId),
+        productCache.tag.byUserId(userId),
+        organizationCache.tag.byUserId(userId),
+        ...environmentIds.map((environmentId) => surveyCache.tag.byEnvironmentId(environmentId)),
+      ],
     }
   )();
