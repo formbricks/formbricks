@@ -1,5 +1,6 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
@@ -29,64 +30,68 @@ const responseSelection = {
 };
 
 // function to retrive basic information about a user's user
-export const getUser = (id: string): Promise<TUser | null> =>
-  cache(
-    async () => {
-      validateInputs([id, ZId]);
+export const getUser = reactCache(
+  (id: string): Promise<TUser | null> =>
+    cache(
+      async () => {
+        validateInputs([id, ZId]);
 
-      try {
-        const user = await prisma.user.findUnique({
-          where: {
-            id,
-          },
-          select: responseSelection,
-        });
+        try {
+          const user = await prisma.user.findUnique({
+            where: {
+              id,
+            },
+            select: responseSelection,
+          });
 
-        if (!user) {
-          return null;
+          if (!user) {
+            return null;
+          }
+          return user;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-        return user;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
+      },
+      [`getUser-${id}`],
+      {
+        tags: [userCache.tag.byId(id)],
       }
-    },
-    [`getUser-${id}`],
-    {
-      tags: [userCache.tag.byId(id)],
-    }
-  )();
+    )()
+);
 
-export const getUserByEmail = (email: string): Promise<TUser | null> =>
-  cache(
-    async () => {
-      validateInputs([email, z.string().email()]);
+export const getUserByEmail = reactCache(
+  (email: string): Promise<TUser | null> =>
+    cache(
+      async () => {
+        validateInputs([email, z.string().email()]);
 
-      try {
-        const user = await prisma.user.findFirst({
-          where: {
-            email,
-          },
-          select: responseSelection,
-        });
+        try {
+          const user = await prisma.user.findFirst({
+            where: {
+              email,
+            },
+            select: responseSelection,
+          });
 
-        return user;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+          return user;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        throw error;
+      },
+      [`getUserByEmail-${email}`],
+      {
+        tags: [userCache.tag.byEmail(email)],
       }
-    },
-    [`getUserByEmail-${email}`],
-    {
-      tags: [userCache.tag.byEmail(email)],
-    }
-  )();
+    )()
+);
 
 const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>
   memberships.filter((membership) => membership.role === "admin");
