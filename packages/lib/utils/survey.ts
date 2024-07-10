@@ -1,4 +1,4 @@
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const getFirstEnabledEnding = (survey: TSurvey) => {
   const firstEnabledEnding = survey.endings.find((ending) => {

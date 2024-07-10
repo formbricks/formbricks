@@ -16,7 +16,7 @@ import {
   TSurveyRedirectUrl,
   ZSurveyEndScreen,
   ZSurveyRedirectUrl,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";

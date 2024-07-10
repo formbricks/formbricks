@@ -2,7 +2,7 @@
 
 import { PlusIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface AddEndingCardButtonProps {
   localSurvey: TSurvey;
