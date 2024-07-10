@@ -1,5 +1,5 @@
 import "server-only";
-import { Result } from "@formbricks/types/errorHandlers";
+import { Result } from "@formbricks/types/error-handlers";
 
 export const testEndpoint = async (url: string): Promise<Result<boolean>> => {
   try {

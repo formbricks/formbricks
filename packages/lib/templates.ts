@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { TActionClass } from "@formbricks/types/actionClasses";
+import { TActionClass } from "@formbricks/types/action-classes";
 import {
   TSurveyCTAQuestion,
   TSurveyDisplayOption,

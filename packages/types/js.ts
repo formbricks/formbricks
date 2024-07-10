@@ -1,7 +1,7 @@
-import z from "zod";
-import { ZActionClass } from "./actionClasses";
+import { z } from "zod";
+import { ZActionClass } from "./action-classes";
 import { ZAttributes } from "./attributes";
-import { ZLegacySurvey } from "./legacySurveys";
+import { ZLegacySurvey } from "./legacy-surveys";
 import { ZPerson } from "./people";
 import { ZProduct } from "./product";
 import { ZResponseHiddenFieldValue } from "./responses";
@@ -19,7 +19,7 @@ const ZSurveyWithTriggers = ZSurvey.innerType()
   .extend({
     triggers: z.array(ZActionClass).or(z.array(z.string())),
   })
-  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => {});
+  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
 
 export type TSurveyWithTriggers = z.infer<typeof ZSurveyWithTriggers>;
 

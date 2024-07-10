@@ -1,5 +1,5 @@
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
-import { TActionClass } from "@formbricks/types/actionClasses";
+import { TActionClass } from "@formbricks/types/action-classes";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";

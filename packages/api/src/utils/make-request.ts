@@ -1,4 +1,4 @@
-import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/errorHandlers";
+import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type NetworkError } from "@formbricks/types/errors";
 import type { ApiErrorResponse, ApiResponse, ApiSuccessResponse } from "../types";
 

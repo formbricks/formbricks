@@ -3,8 +3,8 @@
 import { format, formatDistanceToNow } from "date-fns";
 import { UsersIcon } from "lucide-react";
 import { useState } from "react";
-import { TActionClass } from "@formbricks/types/actionClasses";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TActionClass } from "@formbricks/types/action-classes";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { EditSegmentModal } from "./EditSegmentModal";
 

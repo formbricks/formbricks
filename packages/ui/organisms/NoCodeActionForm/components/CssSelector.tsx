@@ -1,5 +1,5 @@
 import { UseFormReturn } from "react-hook-form";
-import { TActionClassInput } from "@formbricks/types/actionClasses";
+import { TActionClassInput } from "@formbricks/types/action-classes";
 import { AdvancedOptionToggle } from "../../../AdvancedOptionToggle";
 import { FormControl, FormField, FormItem } from "../../../Form";
 import { Input } from "../../../Input";

@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { canUserAccessAttributeClass } from "@formbricks/lib/attributeClass/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getSegmentsByAttributeClassName } from "@formbricks/lib/segment/service";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { AuthorizationError } from "@formbricks/types/errors";
 
 export const getSegmentsByAttributeClassAction = async (

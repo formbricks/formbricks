@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const ZActionProperties = z.record(z.string());
-export { ZActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+export { ZActionClassNoCodeConfig } from "@formbricks/types/action-classes";
 export { ZIntegrationConfig } from "@formbricks/types/integration";
 
 export {

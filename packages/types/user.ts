@@ -1,4 +1,4 @@
-import z from "zod";
+import { z } from "zod";
 
 const ZRole = z.enum(["project_manager", "engineer", "founder", "marketing_specialist", "other"]);
 
