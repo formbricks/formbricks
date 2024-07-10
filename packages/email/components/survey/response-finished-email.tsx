@@ -91,14 +91,14 @@ export function ResponseFinishedEmail({
               </Row>
             );
           })}
-          {survey.hiddenFields.fieldIds?.map((hiddenField) => {
-            const hiddenFieldResponse = response.data[hiddenField];
+          {survey.hiddenFields.fieldIds?.map((hiddenFieldId) => {
+            const hiddenFieldResponse = response.data[hiddenFieldId];
             if (hiddenFieldResponse && typeof hiddenFieldResponse === "string") {
               return (
-                <Row key={hiddenField}>
+                <Row key={hiddenFieldId}>
                   <Column className="w-full">
                     <Text className="mb-2 flex items-center gap-2 font-medium">
-                      {hiddenField} <EyeOffIcon />
+                      {hiddenFieldId} <EyeOffIcon />
                     </Text>
                     <Text className="mt-0 whitespace-pre-wrap break-words font-bold">
                       {hiddenFieldResponse}
