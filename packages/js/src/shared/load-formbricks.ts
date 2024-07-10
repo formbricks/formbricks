@@ -6,7 +6,7 @@
   eslint-disable no-console -- 
   * Required for logging errors
 */
-import { type Result, wrapThrowsAsync } from "@formbricks/types/types/error-handlers";
+import { type Result, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { MethodQueue } from "../method-queue";
 
 let isInitializing = false;
