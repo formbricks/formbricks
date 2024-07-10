@@ -1,4 +1,4 @@
-// migration script for thankYouCard to survey endings
+// migration script for converting thankYouCard to survey endings
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
