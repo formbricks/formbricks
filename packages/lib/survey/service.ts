@@ -1,5 +1,6 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { ZOptionalNumber } from "@formbricks/types/common";
@@ -182,128 +183,134 @@ const handleTriggerUpdates = (
   return triggersUpdate;
 };
 
-export const getSurvey = (surveyId: string): Promise<TSurvey | null> =>
-  cache(
-    async () => {
-      validateInputs([surveyId, ZId]);
+export const getSurvey = reactCache(
+  async (surveyId: string): Promise<TSurvey | null> =>
+    cache(
+      async () => {
+        validateInputs([surveyId, ZId]);
 
-      let surveyPrisma;
-      try {
-        surveyPrisma = await prisma.survey.findUnique({
-          where: {
-            id: surveyId,
-          },
-          select: selectSurvey,
-        });
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error);
-          throw new DatabaseError(error.message);
+        let surveyPrisma;
+        try {
+          surveyPrisma = await prisma.survey.findUnique({
+            where: {
+              id: surveyId,
+            },
+            select: selectSurvey,
+          });
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+          throw error;
         }
-        throw error;
+
+        if (!surveyPrisma) {
+          return null;
+        }
+
+        return transformPrismaSurvey(surveyPrisma);
+      },
+      [`getSurvey-${surveyId}`],
+      {
+        tags: [surveyCache.tag.byId(surveyId)],
       }
+    )()
+);
 
-      if (!surveyPrisma) {
-        return null;
-      }
+export const getSurveysByActionClassId = reactCache(
+  async (actionClassId: string, page?: number): Promise<TSurvey[]> =>
+    cache(
+      async () => {
+        validateInputs([actionClassId, ZId], [page, ZOptionalNumber]);
 
-      return transformPrismaSurvey(surveyPrisma);
-    },
-    [`getSurvey-${surveyId}`],
-    {
-      tags: [surveyCache.tag.byId(surveyId)],
-    }
-  )();
-
-export const getSurveysByActionClassId = (actionClassId: string, page?: number): Promise<TSurvey[]> =>
-  cache(
-    async () => {
-      validateInputs([actionClassId, ZId], [page, ZOptionalNumber]);
-
-      let surveysPrisma;
-      try {
-        surveysPrisma = await prisma.survey.findMany({
-          where: {
-            triggers: {
-              some: {
-                actionClass: {
-                  id: actionClassId,
+        let surveysPrisma;
+        try {
+          surveysPrisma = await prisma.survey.findMany({
+            where: {
+              triggers: {
+                some: {
+                  actionClass: {
+                    id: actionClassId,
+                  },
                 },
               },
             },
-          },
-          select: selectSurvey,
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-        });
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error);
-          throw new DatabaseError(error.message);
+            select: selectSurvey,
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          });
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
 
-        throw error;
-      }
+        const surveys: TSurvey[] = [];
 
-      const surveys: TSurvey[] = [];
-
-      for (const surveyPrisma of surveysPrisma) {
-        const transformedSurvey = transformPrismaSurvey(surveyPrisma);
-        surveys.push(transformedSurvey);
-      }
-
-      return surveys;
-    },
-    [`getSurveysByActionClassId-${actionClassId}-${page}`],
-    {
-      tags: [surveyCache.tag.byActionClassId(actionClassId)],
-    }
-  )();
-
-export const getSurveys = (
-  environmentId: string,
-  limit?: number,
-  offset?: number,
-  filterCriteria?: TSurveyFilterCriteria
-): Promise<TSurvey[]> =>
-  cache(
-    async () => {
-      validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
-      let surveysPrisma;
-
-      try {
-        surveysPrisma = await prisma.survey.findMany({
-          where: {
-            environmentId,
-            ...buildWhereClause(filterCriteria),
-          },
-          select: selectSurvey,
-          orderBy: buildOrderByClause(filterCriteria?.sortBy),
-          take: limit ? limit : undefined,
-          skip: offset ? offset : undefined,
-        });
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error);
-          throw new DatabaseError(error.message);
+        for (const surveyPrisma of surveysPrisma) {
+          const transformedSurvey = transformPrismaSurvey(surveyPrisma);
+          surveys.push(transformedSurvey);
         }
 
-        throw error;
+        return surveys;
+      },
+      [`getSurveysByActionClassId-${actionClassId}-${page}`],
+      {
+        tags: [surveyCache.tag.byActionClassId(actionClassId)],
       }
+    )()
+);
 
-      const surveys: TSurvey[] = [];
+export const getSurveys = reactCache(
+  async (
+    environmentId: string,
+    limit?: number,
+    offset?: number,
+    filterCriteria?: TSurveyFilterCriteria
+  ): Promise<TSurvey[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+        let surveysPrisma;
 
-      for (const surveyPrisma of surveysPrisma) {
-        const transformedSurvey = transformPrismaSurvey(surveyPrisma);
-        surveys.push(transformedSurvey);
+        try {
+          surveysPrisma = await prisma.survey.findMany({
+            where: {
+              environmentId,
+              ...buildWhereClause(filterCriteria),
+            },
+            select: selectSurvey,
+            orderBy: buildOrderByClause(filterCriteria?.sortBy),
+            take: limit ? limit : undefined,
+            skip: offset ? offset : undefined,
+          });
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+
+        const surveys: TSurvey[] = [];
+
+        for (const surveyPrisma of surveysPrisma) {
+          const transformedSurvey = transformPrismaSurvey(surveyPrisma);
+          surveys.push(transformedSurvey);
+        }
+        return surveys;
+      },
+      [`getSurveys-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
+      {
+        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       }
-      return surveys;
-    },
-    [`getSurveys-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
-    {
-      tags: [surveyCache.tag.byEnvironmentId(environmentId)],
-    }
-  )();
+    )()
+);
 
 export const transformToLegacySurvey = async (
   survey: TSurvey,
@@ -322,32 +329,34 @@ export const transformToLegacySurvey = async (
   return transformedSurvey;
 };
 
-export const getSurveyCount = async (environmentId: string): Promise<number> =>
-  cache(
-    async () => {
-      validateInputs([environmentId, ZId]);
-      try {
-        const surveyCount = await prisma.survey.count({
-          where: {
-            environmentId: environmentId,
-          },
-        });
+export const getSurveyCount = reactCache(
+  async (environmentId: string): Promise<number> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId]);
+        try {
+          const surveyCount = await prisma.survey.count({
+            where: {
+              environmentId: environmentId,
+            },
+          });
 
-        return surveyCount;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error);
-          throw new DatabaseError(error.message);
+          return surveyCount;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        throw error;
+      },
+      [`getSurveyCount-${environmentId}`],
+      {
+        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       }
-    },
-    [`getSurveyCount-${environmentId}`],
-    {
-      tags: [surveyCache.tag.byEnvironmentId(environmentId)],
-    }
-  )();
+    )()
+);
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   validateInputs([updatedSurvey, ZSurvey]);
@@ -506,6 +515,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       id: modifiedSurvey.id,
       environmentId: modifiedSurvey.environmentId,
       segmentId: modifiedSurvey.segment?.id,
+      resultShareKey: modifiedSurvey.resultShareKey ?? undefined,
     });
 
     return modifiedSurvey;
@@ -552,6 +562,7 @@ export const deleteSurvey = async (surveyId: string) => {
     surveyCache.revalidate({
       id: deletedSurvey.id,
       environmentId: deletedSurvey.environmentId,
+      resultShareKey: deletedSurvey.resultShareKey ?? undefined,
     });
 
     if (deletedSurvey.segment?.id) {
@@ -665,6 +676,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     surveyCache.revalidate({
       id: survey.id,
       environmentId: survey.environmentId,
+      resultShareKey: survey.resultShareKey ?? undefined,
     });
 
     if (createdBy) {
@@ -796,6 +808,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
     surveyCache.revalidate({
       id: newSurvey.id,
       environmentId: newSurvey.environmentId,
+      resultShareKey: newSurvey.resultShareKey ?? undefined,
     });
 
     existingSurvey.triggers.forEach((trigger) => {
@@ -815,226 +828,237 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
   }
 };
 
-export const getSyncSurveys = (
-  environmentId: string,
-  personId: string,
-  deviceType: "phone" | "desktop" = "desktop",
-  options?: {
-    version?: string;
-  }
-): Promise<TSurvey[] | TLegacySurvey[]> =>
-  cache(
-    async () => {
-      validateInputs([environmentId, ZId]);
-      try {
-        const product = await getProductByEnvironmentId(environmentId);
+export const getSyncSurveys = reactCache(
+  async (
+    environmentId: string,
+    personId: string,
+    deviceType: "phone" | "desktop" = "desktop",
+    options?: {
+      version?: string;
+    }
+  ): Promise<TSurvey[] | TLegacySurvey[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId]);
+        try {
+          const product = await getProductByEnvironmentId(environmentId);
 
-        if (!product) {
-          throw new Error("Product not found");
-        }
+          if (!product) {
+            throw new Error("Product not found");
+          }
 
-        const person = personId === "legacy" ? ({ id: "legacy" } as TPerson) : await getPerson(personId);
+          const person = personId === "legacy" ? ({ id: "legacy" } as TPerson) : await getPerson(personId);
 
-        if (!person) {
-          throw new Error("Person not found");
-        }
+          if (!person) {
+            throw new Error("Person not found");
+          }
 
-        let surveys: TSurvey[] | TLegacySurvey[] = await getSurveys(environmentId);
+          let surveys: TSurvey[] | TLegacySurvey[] = await getSurveys(environmentId);
 
-        // filtered surveys for running and web
-        surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "app");
+          // filtered surveys for running and web
+          surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "app");
 
-        // if no surveys are left, return an empty array
-        if (surveys.length === 0) {
-          return [];
-        }
+          // if no surveys are left, return an empty array
+          if (surveys.length === 0) {
+            return [];
+          }
 
-        const displays = await getDisplaysByPersonId(person.id);
+          const displays = await getDisplaysByPersonId(person.id);
 
-        // filter surveys that meet the displayOption criteria
-        surveys = surveys.filter((survey) => {
-          switch (survey.displayOption) {
-            case "respondMultiple":
+          // filter surveys that meet the displayOption criteria
+          surveys = surveys.filter((survey) => {
+            switch (survey.displayOption) {
+              case "respondMultiple":
+                return true;
+              case "displayOnce":
+                return displays.filter((display) => display.surveyId === survey.id).length === 0;
+              case "displayMultiple":
+                return (
+                  displays
+                    .filter((display) => display.surveyId === survey.id)
+                    .filter((display) => display.responseId).length === 0
+                );
+              case "displaySome":
+                if (survey.displayLimit === null) {
+                  return true;
+                }
+
+                if (
+                  displays
+                    .filter((display) => display.surveyId === survey.id)
+                    .some((display) => display.responseId)
+                ) {
+                  return false;
+                }
+
+                return (
+                  displays.filter((display) => display.surveyId === survey.id).length < survey.displayLimit
+                );
+              default:
+                throw Error("Invalid displayOption");
+            }
+          });
+
+          const latestDisplay = displays[0];
+
+          // filter surveys that meet the recontactDays criteria
+          surveys = surveys.filter((survey) => {
+            if (!latestDisplay) {
               return true;
-            case "displayOnce":
-              return displays.filter((display) => display.surveyId === survey.id).length === 0;
-            case "displayMultiple":
-              return (
-                displays
-                  .filter((display) => display.surveyId === survey.id)
-                  .filter((display) => display.responseId).length === 0
-              );
-            case "displaySome":
-              if (survey.displayLimit === null) {
+            } else if (survey.recontactDays !== null) {
+              const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
+              if (!lastDisplaySurvey) {
                 return true;
               }
-
-              if (
-                displays
-                  .filter((display) => display.surveyId === survey.id)
-                  .some((display) => display.responseId)
-              ) {
-                return false;
-              }
-
-              return (
-                displays.filter((display) => display.surveyId === survey.id).length < survey.displayLimit
-              );
-            default:
-              throw Error("Invalid displayOption");
-          }
-        });
-
-        const latestDisplay = displays[0];
-
-        // filter surveys that meet the recontactDays criteria
-        surveys = surveys.filter((survey) => {
-          if (!latestDisplay) {
-            return true;
-          } else if (survey.recontactDays !== null) {
-            const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
-            if (!lastDisplaySurvey) {
+              return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
+            } else if (product.recontactDays !== null) {
+              return diffInDays(new Date(), new Date(latestDisplay.createdAt)) >= product.recontactDays;
+            } else {
               return true;
             }
-            return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
-          } else if (product.recontactDays !== null) {
-            return diffInDays(new Date(), new Date(latestDisplay.createdAt)) >= product.recontactDays;
-          } else {
-            return true;
-          }
-        });
+          });
 
-        // if no surveys are left, return an empty array
-        if (surveys.length === 0) {
-          return [];
-        }
-
-        // if no surveys have segment filters, return the surveys
-        if (!anySurveyHasFilters(surveys)) {
-          return surveys;
-        }
-
-        const personActions = await getActionsByPersonId(person.id);
-        const personActionClassIds = Array.from(
-          new Set(personActions?.map((action) => action.actionClass?.id ?? ""))
-        );
-
-        const attributes = await getAttributes(person.id);
-        const personUserId = person.userId;
-
-        // the surveys now have segment filters, so we need to evaluate them
-        const surveyPromises = surveys.map(async (survey) => {
-          const { segment } = survey;
-          // if the survey has no segment, or the segment has no filters, we return the survey
-          if (!segment || !segment.filters?.length) {
-            return survey;
+          // if no surveys are left, return an empty array
+          if (surveys.length === 0) {
+            return [];
           }
 
-          // backwards compatibility for older versions of the js package
-          // if the version is not provided, we will use the old method of evaluating the segment, which is attribute filters
-          // transform the segment filters to attribute filters and evaluate them
-          if (!options?.version) {
-            const attributeFilters = transformSegmentFiltersToAttributeFilters(segment.filters);
+          // if no surveys have segment filters, return the surveys
+          if (!anySurveyHasFilters(surveys)) {
+            return surveys;
+          }
 
-            // if the attribute filters are null, it means the segment filters don't match the expected format for attribute filters, so we skip this survey
-            if (attributeFilters === null) {
-              return null;
-            }
+          const personActions = await getActionsByPersonId(person.id);
+          const personActionClassIds = Array.from(
+            new Set(personActions?.map((action) => action.actionClass?.id ?? ""))
+          );
 
-            // if there are no attribute filters, we return the survey
-            if (!attributeFilters.length) {
+          const attributes = await getAttributes(person.id);
+          const personUserId = person.userId;
+
+          // the surveys now have segment filters, so we need to evaluate them
+          const surveyPromises = surveys.map(async (survey) => {
+            const { segment } = survey;
+            // if the survey has no segment, or the segment has no filters, we return the survey
+            if (!segment || !segment.filters?.length) {
               return survey;
             }
 
-            // we check if the person meets the attribute filters for all the attribute filters
-            const isEligible = attributeFilters.every((attributeFilter) => {
-              const personAttributeValue = attributes[attributeFilter.attributeClassName];
-              if (!personAttributeValue) {
-                return false;
+            // backwards compatibility for older versions of the js package
+            // if the version is not provided, we will use the old method of evaluating the segment, which is attribute filters
+            // transform the segment filters to attribute filters and evaluate them
+            if (!options?.version) {
+              const attributeFilters = transformSegmentFiltersToAttributeFilters(segment.filters);
+
+              // if the attribute filters are null, it means the segment filters don't match the expected format for attribute filters, so we skip this survey
+              if (attributeFilters === null) {
+                return null;
               }
 
-              if (attributeFilter.operator === "equals") {
-                return personAttributeValue === attributeFilter.value;
-              } else if (attributeFilter.operator === "notEquals") {
-                return personAttributeValue !== attributeFilter.value;
-              } else {
-                // if the operator is not equals or not equals, we skip the survey, this means that new segment filter options are being used
-                return false;
+              // if there are no attribute filters, we return the survey
+              if (!attributeFilters.length) {
+                return survey;
               }
-            });
 
-            return isEligible ? survey : null;
+              // we check if the person meets the attribute filters for all the attribute filters
+              const isEligible = attributeFilters.every((attributeFilter) => {
+                const personAttributeValue = attributes[attributeFilter.attributeClassName];
+                if (!personAttributeValue) {
+                  return false;
+                }
+
+                if (attributeFilter.operator === "equals") {
+                  return personAttributeValue === attributeFilter.value;
+                } else if (attributeFilter.operator === "notEquals") {
+                  return personAttributeValue !== attributeFilter.value;
+                } else {
+                  // if the operator is not equals or not equals, we skip the survey, this means that new segment filter options are being used
+                  return false;
+                }
+              });
+
+              return isEligible ? survey : null;
+            }
+
+            // Evaluate the segment filters
+            const result = await evaluateSegment(
+              {
+                attributes: attributes ?? {},
+                actionIds: personActionClassIds,
+                deviceType,
+                environmentId,
+                personId: person.id,
+                userId: personUserId,
+              },
+              segment.filters
+            );
+
+            return result ? survey : null;
+          });
+
+          const resolvedSurveys = await Promise.all(surveyPromises);
+          surveys = resolvedSurveys.filter((survey) => !!survey) as TSurvey[];
+
+          if (!surveys) {
+            throw new ResourceNotFoundError("Survey", environmentId);
+          }
+          return surveys;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
           }
 
-          // Evaluate the segment filters
-          const result = await evaluateSegment(
-            {
-              attributes: attributes ?? {},
-              actionIds: personActionClassIds,
-              deviceType,
-              environmentId,
-              personId: person.id,
-              userId: personUserId,
-            },
-            segment.filters
-          );
-
-          return result ? survey : null;
-        });
-
-        const resolvedSurveys = await Promise.all(surveyPromises);
-        surveys = resolvedSurveys.filter((survey) => !!survey) as TSurvey[];
-
-        if (!surveys) {
-          throw new ResourceNotFoundError("Survey", environmentId);
+          throw error;
         }
-        return surveys;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error);
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
+      },
+      [`getSyncSurveys-${environmentId}-${personId}`],
+      {
+        tags: [
+          personCache.tag.byEnvironmentId(environmentId),
+          personCache.tag.byId(personId),
+          displayCache.tag.byPersonId(personId),
+          surveyCache.tag.byEnvironmentId(environmentId),
+          productCache.tag.byEnvironmentId(environmentId),
+          attributeCache.tag.byPersonId(personId),
+        ],
       }
-    },
-    [`getSyncSurveys-${environmentId}-${personId}`],
-    {
-      tags: [
-        personCache.tag.byEnvironmentId(environmentId),
-        personCache.tag.byId(personId),
-        displayCache.tag.byPersonId(personId),
-        surveyCache.tag.byEnvironmentId(environmentId),
-        productCache.tag.byEnvironmentId(environmentId),
-        attributeCache.tag.byPersonId(personId),
-      ],
-    }
-  )();
+    )()
+);
 
-export const getSurveyIdByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
-  try {
-    const survey = await prisma.survey.findFirst({
-      where: {
-        resultShareKey,
+export const getSurveyIdByResultShareKey = reactCache(
+  async (resultShareKey: string): Promise<string | null> =>
+    cache(
+      async () => {
+        try {
+          const survey = await prisma.survey.findFirst({
+            where: {
+              resultShareKey,
+            },
+            select: {
+              id: true,
+            },
+          });
+
+          if (!survey) {
+            return null;
+          }
+
+          return survey.id;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
       },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!survey) {
-      return null;
-    }
-
-    return survey.id;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
+      [`getSurveyIdByResultShareKey-${resultShareKey}`],
+      {
+        tags: [surveyCache.tag.byResultShareKey(resultShareKey)],
+      }
+    )()
+);
 
 export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: string): Promise<TSurvey> => {
   validateInputs([surveyId, ZId], [newSegmentId, ZId]);
@@ -1091,33 +1115,35 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
   }
 };
 
-export const getSurveysBySegmentId = (segmentId: string): Promise<TSurvey[]> =>
-  cache(
-    async () => {
-      try {
-        const surveysPrisma = await prisma.survey.findMany({
-          where: { segmentId },
-          select: selectSurvey,
-        });
+export const getSurveysBySegmentId = reactCache(
+  async (segmentId: string): Promise<TSurvey[]> =>
+    cache(
+      async () => {
+        try {
+          const surveysPrisma = await prisma.survey.findMany({
+            where: { segmentId },
+            select: selectSurvey,
+          });
 
-        const surveys: TSurvey[] = [];
+          const surveys: TSurvey[] = [];
 
-        for (const surveyPrisma of surveysPrisma) {
-          const transformedSurvey = transformPrismaSurvey(surveyPrisma);
-          surveys.push(transformedSurvey);
+          for (const surveyPrisma of surveysPrisma) {
+            const transformedSurvey = transformPrismaSurvey(surveyPrisma);
+            surveys.push(transformedSurvey);
+          }
+
+          return surveys;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        return surveys;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
+      },
+      [`getSurveysBySegmentId-${segmentId}`],
+      {
+        tags: [surveyCache.tag.bySegmentId(segmentId), segmentCache.tag.byId(segmentId)],
       }
-    },
-    [`getSurveysBySegmentId-${segmentId}`],
-    {
-      tags: [surveyCache.tag.bySegmentId(segmentId), segmentCache.tag.byId(segmentId)],
-    }
-  )();
+    )()
+);
