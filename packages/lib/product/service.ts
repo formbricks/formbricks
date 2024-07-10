@@ -11,8 +11,6 @@ import { cache } from "../cache";
 import { ITEMS_PER_PAGE, isS3Configured } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { createEnvironment } from "../environment/service";
-import { membershipCache } from "../membership/cache";
-import { getMembersByOrganizationId } from "../membership/service";
 import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "../storage/service";
 import { validateInputs } from "../utils/validate";
 import { productCache } from "./cache";
@@ -230,13 +228,6 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
           id: environment.id,
         });
       });
-
-      const organizationMembers = await getMembersByOrganizationId(product.organizationId);
-      organizationMembers.forEach((member) => {
-        membershipCache.revalidate({
-          userId: member.userId,
-        });
-      });
     }
 
     return product;
@@ -289,13 +280,6 @@ export const createProduct = async (
 
     const updatedProduct = await updateProduct(product.id, {
       environments: [devEnvironment, prodEnvironment],
-    });
-
-    const organizationMembers = await getMembersByOrganizationId(organizationId);
-    organizationMembers.forEach((member) => {
-      membershipCache.revalidate({
-        userId: member.userId,
-      });
     });
 
     return updatedProduct;

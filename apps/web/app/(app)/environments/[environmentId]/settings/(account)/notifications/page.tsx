@@ -48,11 +48,11 @@ const Page = async ({ params, searchParams }) => {
   }
   const autoDisableNotificationType = searchParams["type"];
   const autoDisableNotificationElementId = searchParams["elementId"];
-  const [user, userEnvironments] = await Promise.all([
+  const [user, userEnvironmentIds] = await Promise.all([
     getUser(session.user.id),
     getEnvironmentIdsForUser(session.user.id),
   ]);
-  const memberships = await getMembershipsForNotification(session.user.id, userEnvironments);
+  const memberships = await getMembershipsForNotification(session.user.id, userEnvironmentIds);
   if (!user) {
     throw new Error("User not found");
   }
