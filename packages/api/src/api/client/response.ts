@@ -1,4 +1,4 @@
-import { type Result } from "@formbricks/types/errorHandlers";
+import { type Result } from "@formbricks/types/error-handlers";
 import { type NetworkError } from "@formbricks/types/errors";
 import { type TResponseInput, type TResponseUpdateInput } from "@formbricks/types/responses";
 import { makeRequest } from "../../utils/make-request";

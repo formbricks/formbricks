@@ -1,6 +1,6 @@
 import { InfoIcon } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { TActionClassInput } from "@formbricks/types/actionClasses";
+import { TActionClassInput } from "@formbricks/types/action-classes";
 import { Alert, AlertDescription, AlertTitle } from "../../Alert";
 import { FormControl, FormError, FormField, FormItem } from "../../Form";
 import { Label } from "../../Label";

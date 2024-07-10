@@ -4,8 +4,8 @@ import { createId } from "@paralleldrive/cuid2";
 import { FingerprintIcon, MonitorSmartphoneIcon, MousePointerClick, TagIcon, Users2Icon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import type { TActionClass } from "@formbricks/types/actionClasses";
-import type { TAttributeClass } from "@formbricks/types/attributeClasses";
+import type { TActionClass } from "@formbricks/types/action-classes";
+import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type {
   TBaseFilter,
   TSegment,

@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TBaseFilter, TSegment, TSegmentWithSurveyNames, ZSegmentFilters } from "@formbricks/types/segment";
 import { BasicAddFilterModal } from "@formbricks/ui/BasicAddFilterModal";
 import { BasicSegmentEditor } from "@formbricks/ui/BasicSegmentEditor";

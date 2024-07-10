@@ -9,7 +9,7 @@ import {
   TAttributeClassUpdateInput,
   ZAttributeClassType,
   ZAttributeClassUpdateInput,
-} from "@formbricks/types/attributeClasses";
+} from "@formbricks/types/attribute-classes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";

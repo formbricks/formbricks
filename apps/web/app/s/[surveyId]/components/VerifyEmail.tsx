@@ -8,7 +8,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isValidEmail } from "@formbricks/lib/utils/email";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";

@@ -1,5 +1,5 @@
 import { type TActionInput } from "@formbricks/types/actions";
-import { type Result } from "@formbricks/types/errorHandlers";
+import { type Result } from "@formbricks/types/error-handlers";
 import { type NetworkError } from "@formbricks/types/errors";
 import { makeRequest } from "../../utils/make-request";
 

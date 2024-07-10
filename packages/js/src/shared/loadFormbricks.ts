@@ -1,4 +1,4 @@
-import { Result, wrapThrowsAsync } from "../../../types/errorHandlers";
+import { Result, wrapThrowsAsync } from "../../../types/error-handlers";
 import { MethodQueue } from "../methodQueue";
 
 let isInitializing = false;

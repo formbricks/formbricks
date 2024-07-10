@@ -2,7 +2,7 @@ import { SurveyInline } from "@/components/general/SurveyInline";
 import { SurveyModal } from "@/components/general/SurveyModal";
 import { addCustomThemeToDom, addStylesToDom } from "@/lib/styles";
 import { h, render } from "preact";
-import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
+import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricks-surveys";
 
 export const renderSurveyInline = (props: SurveyInlineProps) => {
   addStylesToDom();
