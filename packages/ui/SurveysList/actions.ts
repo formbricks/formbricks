@@ -1,13 +1,13 @@
 "use server";
 
 import { Prisma as prismaClient } from "@prisma/client";
-import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
+import { getProducts } from "@formbricks/lib/product/service";
 import { segmentCache } from "@formbricks/lib/segment/cache";
 import { createSegment } from "@formbricks/lib/segment/service";
 import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
@@ -15,7 +15,6 @@ import { surveyCache } from "@formbricks/lib/survey/cache";
 import { deleteSurvey, duplicateSurvey, getSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZProduct } from "@formbricks/types/product";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys";
 
 export const getSurveyAction = async (surveyId: string) => {
@@ -328,6 +327,7 @@ export const copyToOtherEnvironmentAction = async (
     id: newSurvey.id,
     environmentId: targetEnvironmentId,
   });
+
   // update the environment with the productId in which the survey has been copied.
   await prisma.environment.update({
     where: {
@@ -356,127 +356,8 @@ export const getProductSurveyAction = async (environmentId: string) => {
     throw new Error("No organization found");
   }
 
-  const products = await prisma.product.findMany({
-    where: {
-      organizationId: organization.id,
-    },
-  });
-
-  // Fetch environments for each product
-  const productsWithEnvironments = await Promise.all(
-    products.map(async (product) => {
-      const environments = await prisma.environment.findMany({
-        where: {
-          productId: product.id,
-        },
-      });
-
-      // Map environments to conform to ZEnvironment schema
-      const mappedEnvironments = environments.map((env) => ({
-        id: env.id,
-        createdAt: env.createdAt,
-        updatedAt: env.updatedAt,
-        type: env.type, // Assuming EnvironmentType is defined correctly
-        productId: env.productId,
-        appSetupCompleted: env.appSetupCompleted,
-        websiteSetupCompleted: env.websiteSetupCompleted,
-      }));
-
-      // Construct product with mapped environments
-      const productWithEnvironments = {
-        ...product,
-        environments: mappedEnvironments,
-      };
-
-      console.log("Product with environments:", productWithEnvironments);
-
-      return productWithEnvironments; // Return each product with its environments
-    })
-  );
-
-  console.log("Products with environments:", productsWithEnvironments);
-
-  return productsWithEnvironments;
-};
-
-// export const getProductSurveyAction = async (environmentId: string) => {
-//   const session = await getServerSession(authOptions);
-//   if (!session) throw new AuthorizationError("Not authorized");
-
-//   const organization = await getOrganizationByEnvironmentId(environmentId);
-//   console.log("Organization:", organization);
-
-//   if (!organization) {
-//     throw new Error("No organization found");
-//   }
-
-//   const products = await prisma.product.findMany({
-//     where: {
-//       organizationId: organization.id,
-//     },
-//   });
-
-//   // Fetch environments for each product
-//   const productsWithEnvironments = await Promise.all(
-//     products.map(async (product) => {
-//       const environments = await prisma.environment.findMany({
-//         where: {
-//           productId: product.id,
-//         },
-//       });
-
-//       const mappedEnvironments = environments.map((env) => ({
-//         id: env.id,
-//         createdAt: env.createdAt,
-//         updatedAt: env.updatedAt,
-//         type: env.type as EnvironmentType, // Assuming EnvironmentType is defined correctly
-//         productId: env.productId,
-//         appSetupCompleted: env.appSetupCompleted,
-//         websiteSetupCompleted: env.websiteSetupCompleted,
-//       }));
-
-//       const productWithEnvironments = {
-//         ...product,
-//         environments: mappedEnvironments,
-//       };
-
-//       return {
-//         ...product,
-//         environments: environments.map((env) => ({
-//           id: env.id,
-//     createdAt: env.createdAt,
-//     updatedAt: env.updatedAt,
-//     type: env.type,
-//     productId: env.productId,
-//     appSetupCompleted: env.appSetupCompleted,
-//     websiteSetupCompleted: env.websiteSetupCompleted,
-//         })),
-//       };
-//     })
-//   );
-
-//   console.log("pppppp",productsWithEnvironments);
-
-//   return productsWithEnvironments;
-// };
-
-export const getSurveytype = async (surveyId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const findsurvey = await prisma.survey.findFirst({
-    where: {
-      id: surveyId,
-    },
-  });
-
-  if (!findsurvey) {
-    throw new ResourceNotFoundError("Survey", surveyId);
-  }
-
-  const surveytype = findsurvey?.type;
-
-  return surveytype;
+  const products = await getProducts(organization.id);
+  return products;
 };
 
 export const deleteSurveyAction = async (surveyId: string) => {

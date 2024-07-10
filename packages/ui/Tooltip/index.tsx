@@ -44,7 +44,7 @@ export const TooltipRenderer = (props: TooltipRendererProps) => {
     return (
       <TooltipProvider delayDuration={0}>
         <Tooltip>
-          <TooltipTrigger>{children}</TooltipTrigger>
+          <TooltipTrigger type="button">{children}</TooltipTrigger>
           <TooltipContent className={className}>{tooltipContent}</TooltipContent>
         </Tooltip>
       </TooltipProvider>

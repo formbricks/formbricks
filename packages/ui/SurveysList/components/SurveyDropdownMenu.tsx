@@ -5,7 +5,7 @@ import {
   CopyIcon,
   EyeIcon,
   LinkIcon,
-  MousePointerClick,
+  MousePointerClickIcon,
   SquarePenIcon,
   TrashIcon,
 } from "lucide-react";
@@ -17,7 +17,6 @@ import toast from "react-hot-toast";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TSurvey } from "@formbricks/types/surveys";
 import { DeleteDialog } from "../../DeleteDialog";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../../Dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,13 +24,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../DropdownMenu";
-import {
-  copyToOtherEnvironmentAction,
-  deleteSurveyAction,
-  duplicateSurveyAction,
-  getSurveyAction,
-} from "../actions";
-import CopySurveyForm from "./SurveyCopyOptions";
+import { Modal } from "../../Modal";
+import { deleteSurveyAction, duplicateSurveyAction, getSurveyAction } from "../actions";
+import SurveyCopyOptions from "./SurveyCopyOptions";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
@@ -87,37 +82,6 @@ export const SurveyDropDownMenu = ({
     } catch (error) {
       toast.error("Failed to duplicate the survey.");
     }
-    setLoading(false);
-  };
-
-  const copyToOtherEnvironment = async (
-    formData: {
-      productId: string;
-      targetenvironmentId: string;
-      environmentType: string;
-      productName: string;
-    }[]
-  ) => {
-    setLoading(true);
-    try {
-      await Promise.all(
-        formData.map(async (data) => {
-          await copyToOtherEnvironmentAction(
-            environmentId,
-            survey.id,
-            data.targetenvironmentId,
-            data.productId
-          );
-        })
-      );
-      formData.forEach((data) => {
-        setIsCopyFormOpen(false);
-        toast.success(`Survey copied to ${data.environmentType} env of ${data.productName}`);
-      });
-    } catch (error) {
-      toast.error(`Failed to copy to survey`);
-    }
-
     setLoading(false);
   };
 
@@ -244,31 +208,34 @@ export const SurveyDropDownMenu = ({
       )}
 
       {isCopyFormOpen && (
-        <div className="bg-red min-h-full min-w-full">
-          <Dialog open={isCopyFormOpen} onOpenChange={setIsCopyFormOpen}>
-            <DialogContent className="m-0 h-4/6 w-2/5 gap-0 overflow-hidden p-0 shadow-lg shadow-slate-500">
-              <div className="m-0 flex max-h-28 min-h-28 items-center gap-0 bg-slate-100 p-0">
-                <div>
-                  <MousePointerClick className="ml-3 text-slate-500" />
-                </div>
-                <div>
-                  <DialogTitle className="mb-0 pb-1 pl-6 text-xl text-slate-600"> Copy Survey</DialogTitle>
-                  <DialogDescription className="mt-0 gap-0 pb-3 pl-6 text-slate-400">
-                    Copy this survey to another environment or product.
-                  </DialogDescription>
+        <Modal open={isCopyFormOpen} setOpen={setIsCopyFormOpen} noPadding>
+          <div className="flex h-full flex-col rounded-lg">
+            <div className="rounded-t-lg bg-slate-100">
+              <div className="flex w-full items-center justify-between p-6">
+                <div className="flex items-center space-x-2">
+                  <div className="mr-1.5 h-6 w-6 text-slate-500">
+                    <MousePointerClickIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-xl font-medium text-slate-700">Copy Survey</div>
+                    <div className="text-sm text-slate-500">
+                      Copy this survey to another environment or product.
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <CopySurveyForm
-                //username="smriti"
-                environmentId={environmentId}
-                surveyId={survey.id}
-                onSubmit={copyToOtherEnvironment}
-                onCancel={() => setIsCopyFormOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
+          <div className="pl-4">
+            <SurveyCopyOptions
+              survey={survey}
+              environmentId={environmentId}
+              onCancel={() => setIsCopyFormOpen(false)}
+              setOpen={setIsCopyFormOpen}
+            />
+          </div>
+        </Modal>
       )}
     </div>
   );

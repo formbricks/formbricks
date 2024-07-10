@@ -1,202 +1,179 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import React, { useEffect, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import z from "zod";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TProductConfigChannel } from "@formbricks/types/product";
+import { TProduct } from "@formbricks/types/product";
 import { CopySurveyFormValidation, TCopySurveyFormData, TSurvey } from "@formbricks/types/surveys";
 import { Button } from "../../Button";
-import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "../../Form";
+import { Checkbox } from "../../Checkbox";
+import { FormControl, FormField, FormItem, FormProvider } from "../../Form";
 import { TooltipRenderer } from "../../Tooltip";
-import { getProductSurveyAction, getSurveytype } from "../actions";
+import { copyToOtherEnvironmentAction, getProductSurveyAction } from "../actions";
 
-interface Product {
-  id: string;
-  name: string;
-  environments: TEnvironment[];
-  config: {
-    channel: TProductConfigChannel;
-  };
-}
-
-interface CopySurveyFormProps {
-  surveyId: string;
+interface SurveyCopyOptionsProps {
+  survey: TSurvey;
   environmentId: string;
-  onSubmit: (
-    data: { productId: string; targetenvironmentId: string; environmentType: string; productName: string }[]
-  ) => void;
   onCancel: () => void;
+  setOpen: (value: boolean) => void;
 }
 
-const CopySurveyForm: React.FC<CopySurveyFormProps> = ({ environmentId, surveyId, onSubmit, onCancel }) => {
-  // const { register, handleSubmit } = useForm();
-  // const methods = useForm<TCopySurveyFormData>({
-  //   defaultValues: [],
-  //   resolver: zodResolver(CopySurveyFormValidation),
-  // });
-
-  // validating the form data using CopySurveyFormValidation.safeParse(selectedEnvironments)  handleFormSubmit function.
-  const methods = useForm<TCopySurveyFormData>({
-    resolver: zodResolver(CopySurveyFormValidation),
-  });
-
-  const [products, setProducts] = useState<Product[]>([]);
-  const [selectedEnvironments, setSelectedEnvironments] = useState<TCopySurveyFormData>([]);
-  const [surveyType, setSurveyType] = useState<string>();
-  const [loading, setLoading] = useState(true);
+const SurveyCopyOptions = ({ environmentId, survey, onCancel, setOpen }: SurveyCopyOptionsProps) => {
+  const [products, setProducts] = useState<TProduct[]>([]);
+  const [productLoading, setProductLoading] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const products = await getProductSurveyAction(environmentId);
-        console.log("products", products);
         setProducts(products);
       } catch (error) {
         toast.error("Error fetching products");
       } finally {
-        setLoading(false); // Set loading to false once products are fetched
+        setProductLoading(false);
       }
     };
 
-    const fetchSurveyTypes = async () => {
-      try {
-        const type = await getSurveytype(surveyId); // Pass surveyId in the POST request
-        setSurveyType(type);
-      } catch (error) {
-        toast.error("Error fetching survey types");
-      }
-    };
-    fetchSurveyTypes();
     fetchProducts();
-  }, [surveyId]);
+  }, [environmentId]);
 
-  const handleCheckboxChange =
-    (productId: string, targetenvironmentId: string, environmentType: string, productName: string) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const isChecked = e.target.checked;
-
-      if (isChecked) {
-        setSelectedEnvironments((prevSelected) => {
-          const isAlreadySelected = prevSelected.some(
-            (env) => env.productId === productId && env.targetenvironmentId === targetenvironmentId
-          );
-
-          if (isAlreadySelected) {
-            return prevSelected.filter(
-              (env) => !(env.productId === productId && env.targetenvironmentId === targetenvironmentId)
-            );
-          } else {
-            return [...prevSelected, { productId, targetenvironmentId, environmentType, productName }];
-          }
-        });
-      } else {
-        setSelectedEnvironments((prevSelected) =>
-          prevSelected.filter(
-            (env) => !(env.productId === productId && env.targetenvironmentId === targetenvironmentId)
-          )
-        );
-      }
-    };
-
-  // validating the form data using CopySurveyFormValidation.safeParse(selectedEnvironments)  handleFormSubmit function.
-  const handleFormSubmit = async () => {
-    // Manually validate data with Zod schema
-    const validationResult = CopySurveyFormValidation.safeParse(selectedEnvironments);
-    if (!validationResult.success) {
-      console.log("validate", validationResult.error);
-      console.error(validationResult.error);
-      toast.error("Validation error!");
-      return;
-    }
-    console.log("hereee");
-    onSubmit(selectedEnvironments);
-  };
-  if (loading) {
+  if (productLoading) {
     return (
-      <div className="relative mb-96 flex h-full w-full items-center justify-center bg-white pb-12">
+      <div className="relative flex h-full min-h-96 w-full items-center justify-center bg-white pb-12">
         <Loader2 className="animate-spin" />
       </div>
     );
   }
 
+  return <CopySurveyForm defaultProducts={products} survey={survey} onCancel={onCancel} setOpen={setOpen} />;
+};
+
+const CopySurveyForm = ({
+  defaultProducts,
+  survey,
+  onCancel,
+  setOpen,
+}: {
+  defaultProducts: TProduct[];
+  survey: TSurvey;
+  onCancel: () => void;
+  setOpen: (value: boolean) => void;
+}) => {
+  const form = useForm<TCopySurveyFormData>({
+    resolver: zodResolver(CopySurveyFormValidation),
+    defaultValues: {
+      products: defaultProducts.map((product) => ({
+        product: product.id,
+        environments: [],
+      })),
+    },
+  });
+
+  const formFields = useFieldArray({
+    name: "products",
+    control: form.control,
+  });
+
+  const onSubmit = async (data: TCopySurveyFormData) => {
+    const filteredData = data.products.filter((product) => product.environments.length > 0);
+
+    try {
+      filteredData.map(async (product) => {
+        product.environments.map(async (environment) => {
+          await copyToOtherEnvironmentAction(survey.environmentId, survey.id, environment, product.product);
+        });
+      });
+
+      toast.success("Survey copied successfully!");
+    } catch (error) {
+      toast.error("Failed to copy survey");
+    } finally {
+      setOpen(false);
+    }
+  };
+
   return (
-    <FormProvider {...methods}>
+    <FormProvider {...form}>
       <form
-        onSubmit={methods.handleSubmit(handleFormSubmit)}
-        className="relative mb-36 h-full w-full overflow-y-auto bg-white p-4">
-        {products.map((product, productIndex) => {
-          const isDisabled = !surveyType?.includes(product.config.channel!);
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="relative flex h-full w-full flex-col gap-8 overflow-y-auto bg-white p-4">
+        {formFields.fields.map((field, productIndex) => {
+          const product = defaultProducts.find((product) => product.id === field.product);
+          const isDisabled = survey.type !== "link" && product?.config.channel !== survey.type;
+
           return (
-            <div key={product.id} className="mb-11 ml-8">
-              <TooltipRenderer
-                key={product.id}
-                shouldRender={isDisabled}
-                tooltipContent={
-                  <span>
-                    This product is not compatible with the survey type. Please select a different product.
-                  </span>
-                }>
-                <FormField
-                  control={methods.control}
-                  name={`${productIndex}.productId`}
-                  render={({ field, fieldState: { error } }) => (
-                    <FormItem className="w-full space-y-4">
-                      <div>
-                        <FormLabel className="block text-xl font-semibold text-black">
-                          {product.name}
-                          {isDisabled && <span className="ml-2 mr-11 text-sm text-gray-500">(Disabled)</span>}
-                        </FormLabel>
-                      </div>
-                      <FormControl>
-                        <div>
-                          {product.environments.map((environment) => (
-                            <div className="mb-2 flex items-center" key={environment.id}>
-                              <input
-                                type="checkbox"
-                                id={`${environment.type}_${product.id}`}
-                                {...field}
-                                checked={selectedEnvironments.some(
-                                  (env) =>
-                                    env.productId === product.id && env.targetenvironmentId === environment.id
-                                )}
-                                onChange={handleCheckboxChange(
-                                  product.id,
-                                  environment.id,
-                                  environment.type,
-                                  product.name
-                                )}
-                                className="mr-2 h-4 w-4 appearance-none rounded-full border-gray-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
-                                disabled={isDisabled}
-                              />
-                              <label
-                                htmlFor={`${environment.type}_${product.id}`}
-                                className={`text-lg capitalize text-gray-800 ${isDisabled ? "text-gray-400" : ""}`}>
-                                {environment.type}
-                              </label>
-                            </div>
-                          ))}
-                          {error?.message && <FormError className="text-left">{error.message}</FormError>}
-                        </div>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </TooltipRenderer>
+            <div key={product?.id}>
+              <div className="flex flex-col gap-4">
+                <TooltipRenderer
+                  shouldRender={isDisabled}
+                  tooltipContent={
+                    <span>
+                      This product is not compatible with the survey type. Please select a different product.
+                    </span>
+                  }>
+                  <div className="w-fit">
+                    <p className="text-base font-semibold text-slate-900">
+                      {product?.name}
+                      {isDisabled && <span className="ml-2 mr-11 text-sm text-gray-500">(Disabled)</span>}
+                    </p>
+                  </div>
+                </TooltipRenderer>
+
+                <div className="flex flex-col gap-4">
+                  {product?.environments.map((environment) => {
+                    return (
+                      <FormField
+                        control={form.control}
+                        name={`products.${productIndex}.environments`}
+                        render={({ field }) => {
+                          return (
+                            <FormItem>
+                              <div className="flex items-center">
+                                <FormControl>
+                                  <>
+                                    <Checkbox
+                                      {...field}
+                                      type="button"
+                                      onClick={(e) => {
+                                        if (isDisabled) {
+                                          e.preventDefault();
+                                        }
+                                      }}
+                                      onCheckedChange={() => {
+                                        console.log("hello");
+                                        if (field.value.includes(environment.id)) {
+                                          field.onChange(
+                                            field.value.filter((id: string) => id !== environment.id)
+                                          );
+                                        } else {
+                                          field.onChange([...field.value, environment.id]);
+                                        }
+                                      }}
+                                      className="mr-2 h-4 w-4 appearance-none rounded-full border-gray-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
+                                      disabled={isDisabled}
+                                    />
+                                    <p className="text-sm font-medium capitalize text-slate-900">
+                                      {environment.type}
+                                    </p>
+                                  </>
+                                </FormControl>
+                              </div>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           );
         })}
         <div className="relative bottom-4 right-4 flex justify-end space-x-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="mr-2 rounded-md bg-transparent px-4 py-2 font-semibold text-slate-600">
+          <Button type="button" onClick={onCancel} variant="minimal">
             Cancel
-          </button>
-          {/* <button type="submit"  className="h-12 rounded-md bg-slate-900 px-4 py-2 font-semibold text-white">
-            Copy Survey
-          </button> */}
+          </Button>
+
           <Button variant="darkCTA" type="submit">
             Copy survey
           </Button>
@@ -206,4 +183,4 @@ const CopySurveyForm: React.FC<CopySurveyFormProps> = ({ environmentId, surveyId
   );
 };
 
-export default CopySurveyForm;
+export default SurveyCopyOptions;
