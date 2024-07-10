@@ -186,7 +186,7 @@ export const isEndingCardValid = (
   } else {
     const parseResult = z.string().url().safeParse(card.url);
     if (parseResult.success) {
-      card.label?.trim() !== "";
+      return card.label?.trim() !== "";
     } else {
       toast.error("Invalid Redirect Url in Ending card");
       return false;

@@ -142,6 +142,8 @@ export const SurveyMenuBar = ({
     const localSurveyValidation = ZSurvey.safeParse(localSurvey);
     if (!localSurveyValidation.success) {
       const currentError = localSurveyValidation.error.errors[0];
+      console.log(currentError.path);
+
       if (currentError.path[0] === "questions") {
         const questionIdx = currentError.path[1];
         const question: TSurveyQuestion = localSurvey.questions[questionIdx];
@@ -154,9 +156,10 @@ export const SurveyMenuBar = ({
         setInvalidQuestions((prevInvalidQuestions) =>
           prevInvalidQuestions ? [...prevInvalidQuestions, "start"] : ["start"]
         );
-      } else if (currentError.path[0] === "thankYouCard") {
+      } else if (currentError.path[0] === "endings") {
+        const endingIdx = typeof currentError.path[1] === "number" ? currentError.path[1] + 1 : -1;
         setInvalidQuestions((prevInvalidQuestions) =>
-          prevInvalidQuestions ? [...prevInvalidQuestions, "end"] : ["end"]
+          prevInvalidQuestions ? [...prevInvalidQuestions, `end:${endingIdx}`] : [`end:${endingIdx}`]
         );
       }
 

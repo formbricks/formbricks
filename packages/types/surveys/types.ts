@@ -41,7 +41,7 @@ export type TSurveyEndScreen = z.infer<typeof ZSurveyEndScreen>;
 
 export const ZSurveyRedirectUrl = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: z.string(),
+  url: z.string().url("Invalid redirect Url in Ending card").optional(),
   label: z.string().optional(),
 });
 export type TSurveyRedirectUrl = z.infer<typeof ZSurveyRedirectUrl>;
@@ -204,7 +204,7 @@ export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
 export const ZSurveyLogicBase = z.object({
   condition: ZSurveyLogicCondition.optional(),
   value: z.union([z.string(), z.array(z.string())]).optional(),
-  destination: z.union([z.string(), z.literal("end")]).optional(),
+  destination: z.union([z.string(), z.literal("end:1")]).optional(),
 });
 
 export const ZSurveyFileUploadLogic = ZSurveyLogicBase.extend({
@@ -594,7 +594,19 @@ export const ZSurvey = z
         });
       }
     }),
-    endings: ZSurveyEndings,
+    endings: ZSurveyEndings.min(1, {
+      message: "Survey must have at least one ending card",
+    }).superRefine((endings, ctx) => {
+      const endingIds = endings.map((q) => q.id);
+      const uniqueEndingIds = new Set(endingIds);
+      if (uniqueEndingIds.size !== endingIds.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Ending IDs must be unique",
+          path: [endingIds.findIndex((id, index) => endingIds.indexOf(id) !== index), "id"],
+        });
+      }
+    }),
     hiddenFields: ZSurveyHiddenFields,
     delay: z.number(),
     autoComplete: z.number().min(1, { message: "Response limit must be greater than 0" }).nullable(),
@@ -911,7 +923,7 @@ export const ZSurvey = z
         });
       });
     }
-    endings.forEach((ending) => {
+    endings.forEach((ending, index) => {
       // thank you card validations
       if (ending.type === "endScreen" && ending.enabled) {
         if (ending.headline) {
@@ -919,7 +931,8 @@ export const ZSurvey = z
             "cardHeadline",
             ending.headline,
             languages,
-            "thankYou"
+            "end",
+            index
           );
 
           if (multiLangIssue) {
@@ -932,7 +945,8 @@ export const ZSurvey = z
             "subheader",
             ending.subheader,
             languages,
-            "thankYou"
+            "end",
+            index
           );
 
           if (multiLangIssue) {
@@ -942,10 +956,11 @@ export const ZSurvey = z
 
         if (ending.buttonLabel) {
           const multiLangIssue = validateCardFieldsForAllLanguages(
-            "thankYouCardButtonLabel",
+            "endingCardButtonLabel",
             ending.buttonLabel,
             languages,
-            "thankYou"
+            "end",
+            index
           );
           if (multiLangIssue) {
             ctx.addIssue(multiLangIssue);

@@ -27,7 +27,7 @@ const FIELD_TO_LABEL_MAP: Record<string, string> = {
   html: "description",
   cardHeadline: "note",
   welcomeCardHtml: "welcome message",
-  thankYouCardButtonLabel: "button label",
+  endingCardButtonLabel: "button label",
 };
 
 export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string[] => {
@@ -85,7 +85,8 @@ export const validateCardFieldsForAllLanguages = (
   field: string,
   fieldLabel: TI18nString,
   languages: TSurveyLanguage[],
-  cardType: "welcome" | "thankYou",
+  cardType: "welcome" | "end",
+  endingCardIndex?: number,
   skipArticle: boolean = false
 ): z.IssueData | null => {
   const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
@@ -99,9 +100,9 @@ export const validateCardFieldsForAllLanguages = (
     return {
       code: z.ZodIssueCode.custom,
       message: `${messagePrefix}${messageField} on the ${
-        cardType === "welcome" ? "Welcome" : "Thank You"
-      } card${messageSuffix}`,
-      path: [cardType === "welcome" ? "welcomeCard" : "thankYouCard", field],
+        cardType === "welcome" ? "Welcome card" : "Ending Card " + ((endingCardIndex ?? -1) + 1)
+      } ${messageSuffix}`,
+      path: cardType === "welcome" ? ["welcomeCard", field] : ["endings", endingCardIndex ?? -1, field],
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
     };
   }

@@ -10,13 +10,7 @@ import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import {
-  TSurvey,
-  TSurveyEndScreen,
-  TSurveyRedirectUrl,
-  ZSurveyEndScreen,
-  ZSurveyRedirectUrl,
-} from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyEndScreen, TSurveyRedirectUrl } from "@formbricks/types/surveys/types";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
@@ -59,8 +53,7 @@ export const EditEndingCard = ({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: ending.id,
   });
-  const endingCard =
-    ending.type === "endScreen" ? ZSurveyEndScreen.parse(ending) : ZSurveyRedirectUrl.parse(ending);
+  const endingCard = ending;
   let open = activeQuestionId == `end:${endingCardIndex + 1}`;
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&
@@ -222,7 +215,7 @@ export const EditEndingCard = ({
               tabs={endScreenTypes}
               activeId={endingCard.type}
               className="w-full"
-              disabled={endingCard.type === "endScreen" && plan === "free"}
+              // disabled={endingCard.type === "endScreen" && plan === "free"}
               setActiveId={() => {
                 if (endingCard.type === "endScreen") {
                   updateSurvey({ type: "redirectToUrl", url: "", label: "" });

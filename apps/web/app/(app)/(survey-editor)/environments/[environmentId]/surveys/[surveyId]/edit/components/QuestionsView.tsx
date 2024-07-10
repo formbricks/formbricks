@@ -93,6 +93,36 @@ export const QuestionsView = ({
     return survey;
   };
 
+  useEffect(() => {
+    if (!invalidQuestions) return;
+    let updatedInvalidQuestions: string[] = invalidQuestions;
+
+    // Check welcome card
+    if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
+      if (!updatedInvalidQuestions.includes("start")) {
+        updatedInvalidQuestions.push("start");
+      }
+    } else {
+      updatedInvalidQuestions = updatedInvalidQuestions.filter((questionId) => questionId !== "start");
+    }
+
+    // Check thank you card
+    localSurvey.endings.forEach((ending) => {
+      if (ending.enabled && !isEndingCardValid(ending, surveyLanguages)) {
+        if (!updatedInvalidQuestions.includes(ending.id)) {
+          updatedInvalidQuestions.push(ending.id);
+        }
+      } else {
+        updatedInvalidQuestions = updatedInvalidQuestions.filter((questionId) => questionId !== ending.id);
+      }
+    });
+
+    if (JSON.stringify(updatedInvalidQuestions) !== JSON.stringify(invalidQuestions)) {
+      setInvalidQuestions(updatedInvalidQuestions);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localSurvey.languages, localSurvey.endings, localSurvey.welcomeCard]);
+
   // function to validate individual questions
   const validateSurveyQuestion = (question: TSurveyQuestion) => {
     // prevent this function to execute further if user hasnt still tried to save the survey
@@ -192,7 +222,7 @@ export const QuestionsView = ({
       }
     });
     updatedSurvey.questions.splice(questionIdx, 1);
-    updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end");
+    updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end:1");
     const enabledEnding = getFirstEnabledEnding(localSurvey);
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];
@@ -268,26 +298,6 @@ export const QuestionsView = ({
         surveyLanguages,
         index === 0
       );
-    });
-
-    // Check welcome card
-    if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
-      if (!updatedInvalidQuestions.includes("start")) {
-        updatedInvalidQuestions.push("start");
-      }
-    } else {
-      updatedInvalidQuestions = updatedInvalidQuestions.filter((questionId) => questionId !== "start");
-    }
-
-    // Check thank you card
-    localSurvey.endings.forEach((ending) => {
-      if (ending.enabled && !isEndingCardValid(ending, surveyLanguages)) {
-        if (!updatedInvalidQuestions.includes(ending.id)) {
-          updatedInvalidQuestions.push(ending.id);
-        }
-      } else {
-        updatedInvalidQuestions = updatedInvalidQuestions.filter((questionId) => questionId !== ending.id);
-      }
     });
 
     if (JSON.stringify(updatedInvalidQuestions) !== JSON.stringify(invalidQuestions)) {
