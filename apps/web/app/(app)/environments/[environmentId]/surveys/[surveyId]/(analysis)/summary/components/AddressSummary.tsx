@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryAddress } from "@formbricks/types/surveys/types";
 import { AddressResponse } from "@formbricks/ui/AddressResponse";
 import { PersonAvatar } from "@formbricks/ui/Avatars";

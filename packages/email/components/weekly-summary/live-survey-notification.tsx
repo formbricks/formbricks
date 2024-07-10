@@ -5,7 +5,7 @@ import type { TSurveyStatus } from "@formbricks/types/surveys/types";
 import type {
   TWeeklySummaryNotificationDataSurvey,
   TWeeklySummarySurveyResponseData,
-} from "@formbricks/types/weeklySummary";
+} from "@formbricks/types/weekly-summary";
 import { EmailButton } from "../general/email-button";
 import { renderEmailResponseValue } from "../survey/response-finished-email";
 

@@ -1,4 +1,4 @@
-import { SurveyInlineProps } from "@formbricks/types/formbricksSurveys";
+import { SurveyInlineProps } from "@formbricks/types/formbricks-surveys";
 import { Survey } from "./Survey";
 
 export const SurveyInline = (props: SurveyInlineProps) => {

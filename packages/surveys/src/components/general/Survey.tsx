@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getFirstEnabledEnding } from "@formbricks/lib/utils/survey";
-import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";
+import { SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
 import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 
 export const Survey = ({

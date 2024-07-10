@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
@@ -116,67 +117,71 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
   }
 };
 
-export const getSegments = (environmentId: string): Promise<TSegment[]> =>
-  cache(
-    async () => {
-      validateInputs([environmentId, ZId]);
-      try {
-        const segments = await prisma.segment.findMany({
-          where: {
-            environmentId,
-          },
-          select: selectSegment,
-        });
+export const getSegments = reactCache(
+  (environmentId: string): Promise<TSegment[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId]);
+        try {
+          const segments = await prisma.segment.findMany({
+            where: {
+              environmentId,
+            },
+            select: selectSegment,
+          });
 
-        if (!segments) {
-          return [];
+          if (!segments) {
+            return [];
+          }
+
+          return segments.map((segment) => transformPrismaSegment(segment));
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        return segments.map((segment) => transformPrismaSegment(segment));
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
+      },
+      [`getSegments-${environmentId}`],
+      {
+        tags: [segmentCache.tag.byEnvironmentId(environmentId)],
       }
-    },
-    [`getSegments-${environmentId}`],
-    {
-      tags: [segmentCache.tag.byEnvironmentId(environmentId)],
-    }
-  )();
+    )()
+);
 
-export const getSegment = (segmentId: string): Promise<TSegment> =>
-  cache(
-    async () => {
-      validateInputs([segmentId, ZId]);
-      try {
-        const segment = await prisma.segment.findUnique({
-          where: {
-            id: segmentId,
-          },
-          select: selectSegment,
-        });
+export const getSegment = reactCache(
+  (segmentId: string): Promise<TSegment> =>
+    cache(
+      async () => {
+        validateInputs([segmentId, ZId]);
+        try {
+          const segment = await prisma.segment.findUnique({
+            where: {
+              id: segmentId,
+            },
+            select: selectSegment,
+          });
 
-        if (!segment) {
-          throw new ResourceNotFoundError("segment", segmentId);
+          if (!segment) {
+            throw new ResourceNotFoundError("segment", segmentId);
+          }
+
+          return transformPrismaSegment(segment);
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        return transformPrismaSegment(segment);
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
+      },
+      [`getSegment-${segmentId}`],
+      {
+        tags: [segmentCache.tag.byId(segmentId)],
       }
-    },
-    [`getSegment-${segmentId}`],
-    {
-      tags: [segmentCache.tag.byId(segmentId)],
-    }
-  )();
+    )()
+);
 
 export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput): Promise<TSegment> => {
   validateInputs([segmentId, ZId], [data, ZSegmentUpdateInput]);
@@ -330,43 +335,45 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
   }
 };
 
-export const getSegmentsByAttributeClassName = (environmentId: string, attributeClassName: string) =>
-  cache(
-    async () => {
-      validateInputs([environmentId, ZId], [attributeClassName, ZString]);
+export const getSegmentsByAttributeClassName = reactCache(
+  (environmentId: string, attributeClassName: string) =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [attributeClassName, ZString]);
 
-      try {
-        const segments = await prisma.segment.findMany({
-          where: {
-            environmentId,
-          },
-          select: selectSegment,
-        });
+        try {
+          const segments = await prisma.segment.findMany({
+            where: {
+              environmentId,
+            },
+            select: selectSegment,
+          });
 
-        // search for attributeClassName in the filters
-        const clonedSegments = structuredClone(segments);
+          // search for attributeClassName in the filters
+          const clonedSegments = structuredClone(segments);
 
-        const filteredSegments = clonedSegments.filter((segment) => {
-          return searchForAttributeClassNameInSegment(segment.filters, attributeClassName);
-        });
+          const filteredSegments = clonedSegments.filter((segment) => {
+            return searchForAttributeClassNameInSegment(segment.filters, attributeClassName);
+          });
 
-        return filteredSegments;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+          return filteredSegments;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        throw error;
+      },
+      [`getSegmentsByAttributeClassName-${environmentId}-${attributeClassName}`],
+      {
+        tags: [
+          segmentCache.tag.byEnvironmentId(environmentId),
+          segmentCache.tag.byAttributeClassName(attributeClassName),
+        ],
       }
-    },
-    [`getSegmentsByAttributeClassName-${environmentId}-${attributeClassName}`],
-    {
-      tags: [
-        segmentCache.tag.byEnvironmentId(environmentId),
-        segmentCache.tag.byAttributeClassName(attributeClassName),
-      ],
-    }
-  )();
+    )()
+);
 
 export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> => {
   validateInputs([surveyId, ZId]);

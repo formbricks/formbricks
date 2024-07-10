@@ -11,7 +11,7 @@ import { deleteActionClass, updateActionClass } from "@formbricks/lib/actionClas
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getSurveysByActionClassId } from "@formbricks/lib/survey/service";
-import { TActionClassInput } from "@formbricks/types/actionClasses";
+import { TActionClassInput } from "@formbricks/types/action-classes";
 import { AuthorizationError } from "@formbricks/types/errors";
 
 export const deleteActionClassAction = async (environmentId, actionClassId: string) => {

@@ -5,10 +5,11 @@ import {
   AddIntegrationModal,
   IntegrationModalInputs,
 } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AddIntegrationModal";
+import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
@@ -74,11 +75,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
       <div className="flex w-full justify-end gap-x-6">
         <div className="flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
-          <span
-            className="cursor-pointer text-slate-500"
-            onClick={() => {
-              setIsDeleteIntegrationModalOpen(true);
-            }}>
+          <span className="cursor-pointer text-slate-500">
             Connected with {airtableIntegration.config.email}
           </span>
         </div>
@@ -135,6 +132,15 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
           />
         </div>
       )}
+
+      <Button
+        variant="minimal"
+        onClick={() => setIsDeleteIntegrationModalOpen(true)}
+        className="mt-4"
+        StartIcon={Trash2Icon}
+        startIconClassName="h-5 w-5 mr-2">
+        Delete Integration
+      </Button>
 
       <DeleteDialog
         open={isDeleteIntegrationModalOpen}

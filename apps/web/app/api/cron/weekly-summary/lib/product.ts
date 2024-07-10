@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { TWeeklySummaryProductData } from "@formbricks/types/weeklySummary";
+import { TWeeklySummaryProductData } from "@formbricks/types/weekly-summary";
 
 export const getProductsByOrganizationId = async (
   organizationId: string

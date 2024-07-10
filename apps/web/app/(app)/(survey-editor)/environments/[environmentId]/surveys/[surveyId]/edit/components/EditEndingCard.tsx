@@ -8,7 +8,7 @@ import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TSurvey, TSurveyEndScreen, TSurveyRedirectUrl } from "@formbricks/types/surveys/types";
 import { Input } from "@formbricks/ui/Input";

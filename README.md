@@ -160,7 +160,7 @@ Here is what you need to be able to run Formbricks:
 
 ### Local Setup
 
-To get started locally, we've got a [guide to help you](https://formbricks.com/docs/contributing/setup).
+To get started locally, we've got a [guide to help you](https://formbricks.com/docs/developer-docs/contributing/get-started#local-machine-setup).
 
 ### Gitpod Setup
 
@@ -184,7 +184,7 @@ Here are a few options:
 
 - Upvote issues with 👍 reaction so we know what the demand for a particular issue is to prioritize it within the roadmap.
 
-Please check out [our contribution guide](https://formbricks.com/docs/contributing/introduction) and our [list of open issues](https://github.com/formbricks/formbricks/issues) for more information.
+Please check out [our contribution guide](https://formbricks.com/docs/developer-docs/contributing/get-started) and our [list of open issues](https://github.com/formbricks/formbricks/issues) for more information.
 
 ## All Thanks To Our Contributors
 
