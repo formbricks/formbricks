@@ -2,10 +2,12 @@
  * Required for dynamic function calls
  */
 
+ 
+
 /*
   eslint-disable no-console -- 
   * Required for logging errors
-**/
+*/
 import { type Result, wrapThrowsAsync } from "@formbricks/types/errorHandlers";
 import { MethodQueue } from "../method-queue";
 

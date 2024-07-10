@@ -1,3 +1,4 @@
+ 
 import { type TFormbricksApp } from "@formbricks/js-core/app";
 import { type TFormbricksWebsite } from "@formbricks/js-core/website";
 import { loadFormbricksToProxy } from "./shared/load-formbricks";
@@ -15,5 +16,6 @@ const formbricksProxyHandler: ProxyHandler<TFormbricksWebsite> = {
 };
 
 const formbricksWebsite: TFormbricksWebsite = new Proxy({} as TFormbricksWebsite, formbricksProxyHandler);
+
 // eslint-disable-next-line import/no-default-export -- Required for UMD
 export default formbricksWebsite;
