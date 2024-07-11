@@ -928,7 +928,7 @@ export const ZSurvey = z
         if (!parsedButtonLink.success) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Invalid button link`,
+            message: `Invalid URL for the button link in thank you card.`,
             path: ["thankYouCard", "buttonLink"],
           });
         }
