@@ -32,85 +32,88 @@ export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
 
 const prisma = new PrismaClient();
 
+const surveySelect = {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  name: true,
+  type: true,
+  environmentId: true,
+  createdBy: true,
+  status: true,
+  welcomeCard: true,
+  questions: true,
+  thankYouCard: true,
+  hiddenFields: true,
+  displayOption: true,
+  recontactDays: true,
+  displayLimit: true,
+  autoClose: true,
+  runOnDate: true,
+  closeOnDate: true,
+  delay: true,
+  displayPercentage: true,
+  autoComplete: true,
+  verifyEmail: true,
+  redirectUrl: true,
+  productOverwrites: true,
+  styling: true,
+  surveyClosedMessage: true,
+  singleUse: true,
+  pin: true,
+  resultShareKey: true,
+  showLanguageSwitch: true,
+  languages: {
+    select: {
+      default: true,
+      enabled: true,
+      language: {
+        select: {
+          id: true,
+          code: true,
+          alias: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+    },
+  },
+  triggers: {
+    select: {
+      actionClass: {
+        select: {
+          id: true,
+          createdAt: true,
+          updatedAt: true,
+          environmentId: true,
+          name: true,
+          description: true,
+          type: true,
+          key: true,
+          noCodeConfig: true,
+        },
+      },
+    },
+  },
+  segment: {
+    include: {
+      surveys: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  },
+};
+
 async function main() {
   await prisma.$transaction(
     async (tx) => {
       console.log("starting migration");
       console.log("finding all surveys");
+
       const prismaSurveys = await tx.survey.findMany({
-        select: {
-          id: true,
-          createdAt: true,
-          updatedAt: true,
-          name: true,
-          type: true,
-          environmentId: true,
-          createdBy: true,
-          status: true,
-          welcomeCard: true,
-          questions: true,
-          thankYouCard: true,
-          hiddenFields: true,
-          displayOption: true,
-          recontactDays: true,
-          displayLimit: true,
-          autoClose: true,
-          runOnDate: true,
-          closeOnDate: true,
-          delay: true,
-          displayPercentage: true,
-          autoComplete: true,
-          verifyEmail: true,
-          redirectUrl: true,
-          productOverwrites: true,
-          styling: true,
-          surveyClosedMessage: true,
-          singleUse: true,
-          pin: true,
-          resultShareKey: true,
-          showLanguageSwitch: true,
-          languages: {
-            select: {
-              default: true,
-              enabled: true,
-              language: {
-                select: {
-                  id: true,
-                  code: true,
-                  alias: true,
-                  createdAt: true,
-                  updatedAt: true,
-                },
-              },
-            },
-          },
-          triggers: {
-            select: {
-              actionClass: {
-                select: {
-                  id: true,
-                  createdAt: true,
-                  updatedAt: true,
-                  environmentId: true,
-                  name: true,
-                  description: true,
-                  type: true,
-                  key: true,
-                  noCodeConfig: true,
-                },
-              },
-            },
-          },
-          segment: {
-            include: {
-              surveys: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          },
-        },
+        select: surveySelect,
       });
 
       console.log("found surveys: ", prismaSurveys.length);
@@ -146,7 +149,7 @@ async function main() {
       console.log("Surveys parsed with errors: ", errors);
       console.log("Feedback Survey errors: ", feedbackSurveyErrors);
     },
-    { timeout: 50000 }
+    { timeout: 1000 * 60 * 2 }
   );
 }
 

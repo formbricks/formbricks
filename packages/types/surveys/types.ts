@@ -917,7 +917,7 @@ export const ZSurvey = z
         }
       }
 
-      if (thankYouCard.buttonLabel) {
+      if (thankYouCard.buttonLabel && thankYouCard.buttonLabel.default.trim() !== "") {
         multiLangIssue = validateCardFieldsForAllLanguages(
           "thankYouCardButtonLabel",
           thankYouCard.buttonLabel,
@@ -928,13 +928,15 @@ export const ZSurvey = z
           ctx.addIssue(multiLangIssue);
         }
 
-        const parsedButtonLink = z.string().url().safeParse(thankYouCard.buttonLink);
-        if (!parsedButtonLink.success) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Invalid URL for the button link in thank you card.`,
-            path: ["thankYouCard", "buttonLink"],
-          });
+        if (thankYouCard.buttonLink) {
+          const parsedButtonLink = z.string().url().safeParse(thankYouCard.buttonLink);
+          if (!parsedButtonLink.success) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Invalid URL for the button link in thank you card.`,
+              path: ["thankYouCard", "buttonLink"],
+            });
+          }
         }
       }
     }
