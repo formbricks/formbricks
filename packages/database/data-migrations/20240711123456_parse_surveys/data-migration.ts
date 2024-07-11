@@ -35,6 +35,8 @@ const prisma = new PrismaClient();
 async function main() {
   await prisma.$transaction(
     async (tx) => {
+      console.log("starting migration");
+      console.log("finding all surveys");
       const prismaSurveys = await tx.survey.findMany({
         select: {
           id: true,
@@ -111,25 +113,39 @@ async function main() {
         },
       });
 
+      console.log("found surveys: ", prismaSurveys.length);
+
       // safe parse each survey with zod
       let errors = 0;
+      let feedbackSurveyErrors = 0;
       for (const survey of prismaSurveys) {
+        console.log("Parsing survey: ", survey.id, survey.name);
         const transformedSurvey = transformPrismaSurvey(survey);
-        const surveyParsingResult = ZSurvey.safeParse(transformedSurvey);
-        if (!surveyParsingResult.success) {
-          errors += 1;
-          console.log(
-            `Error parsing survey ${survey.id}: \n`,
-            transformErrorToDetails(surveyParsingResult.error),
-            "\n",
-            "-----------------",
-            "\n"
-          );
+        try {
+          const surveyParsingResult = ZSurvey.safeParse(transformedSurvey);
+          if (!surveyParsingResult.success) {
+            errors += 1;
+            console.log(
+              `Error parsing survey ${survey.id}: \n`,
+              transformErrorToDetails(surveyParsingResult.error),
+              "\n",
+              "-----------------",
+              "\n"
+            );
+          }
+        } catch (err) {
+          console.error("Error parsing survey: ", survey.id, survey.name, err);
+          if (survey.name.includes("Feedback Survey")) {
+            feedbackSurveyErrors += 1;
+          } else {
+            throw err;
+          }
         }
       }
 
       console.log("Total surveys: ", prismaSurveys.length);
       console.log("Surveys parsed with errors: ", errors);
+      console.log("Feedback Survey errors: ", feedbackSurveyErrors);
     },
     { timeout: 50000 }
   );

@@ -614,7 +614,7 @@ export const ZSurvey = z
         }
       }
 
-      if (welcomeCard.html) {
+      if (welcomeCard.html && welcomeCard.html.default.trim() !== "") {
         multiLangIssue = validateCardFieldsForAllLanguages(
           "welcomeCardHtml",
           welcomeCard.html,
@@ -626,7 +626,7 @@ export const ZSurvey = z
         }
       }
 
-      if (welcomeCard.buttonLabel) {
+      if (welcomeCard.buttonLabel && welcomeCard.buttonLabel.default.trim() !== "") {
         multiLangIssue = validateCardFieldsForAllLanguages(
           "buttonLabel",
           welcomeCard.buttonLabel,
@@ -647,7 +647,7 @@ export const ZSurvey = z
         ctx.addIssue(multiLangIssue);
       }
 
-      if (question.subheader && question.subheader.default.trim() !== "" && languages.length > 1) {
+      if (question.subheader && question.subheader.default.trim() !== "") {
         multiLangIssue = validateQuestionLabels("subheader", question.subheader, languages, questionIndex);
         if (multiLangIssue) {
           ctx.addIssue(multiLangIssue);
@@ -904,7 +904,7 @@ export const ZSurvey = z
         }
       }
 
-      if (thankYouCard.subheader) {
+      if (thankYouCard.subheader && thankYouCard.subheader.default.trim() !== "") {
         multiLangIssue = validateCardFieldsForAllLanguages(
           "subheader",
           thankYouCard.subheader,
