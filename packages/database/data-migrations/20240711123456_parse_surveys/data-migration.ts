@@ -119,7 +119,6 @@ async function main() {
       let errors = 0;
       let feedbackSurveyErrors = 0;
       for (const survey of prismaSurveys) {
-        console.log("Parsing survey: ", survey.id, survey.name);
         const transformedSurvey = transformPrismaSurvey(survey);
         try {
           const surveyParsingResult = ZSurvey.safeParse(transformedSurvey);
