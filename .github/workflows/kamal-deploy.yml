@@ -27,6 +27,7 @@ jobs:
       SMTP_PORT: ${{ secrets.SMTP_PORT }}
       SMTP_USER: ${{ secrets.SMTP_USER }}
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      SMTP_REJECT_UNAUTHORIZED_TLS: ${{ secrets.SMTP_REJECT_UNAUTHORIZED_TLS }}
       PRIVACY_URL: ${{ vars.PRIVACY_URL }}
       TERMS_URL: ${{ vars.TERMS_URL }}
       IMPRINT_URL: ${{ vars.IMPRINT_URL }}
