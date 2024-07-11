@@ -647,7 +647,7 @@ export const ZSurvey = z
         ctx.addIssue(multiLangIssue);
       }
 
-      if (question.subheader) {
+      if (question.subheader && question.subheader.default.trim() !== "" && languages.length > 1) {
         multiLangIssue = validateQuestionLabels("subheader", question.subheader, languages, questionIndex);
         if (multiLangIssue) {
           ctx.addIssue(multiLangIssue);
