@@ -686,7 +686,11 @@ export const ZSurvey = z
       }
 
       if (question.type === TSurveyQuestionTypeEnum.OpenText) {
-        if (question.placeholder) {
+        if (
+          question.placeholder &&
+          question.placeholder[defaultLanguageCode].trim() !== "" &&
+          languages.length > 1
+        ) {
           multiLangIssue = validateQuestionLabels(
             "placeholder",
             question.placeholder,
