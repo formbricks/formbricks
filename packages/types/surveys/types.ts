@@ -25,7 +25,7 @@ export const ZSurveyThankYouCard = z.object({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: z.string().url("Invalid button link in thank you card").optional(),
+  buttonLink: z.string().optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
@@ -614,7 +614,7 @@ export const ZSurvey = z
         }
       }
 
-      if (welcomeCard.html) {
+      if (welcomeCard.html && welcomeCard.html.default.trim() !== "") {
         multiLangIssue = validateCardFieldsForAllLanguages(
           "welcomeCardHtml",
           welcomeCard.html,
@@ -626,7 +626,7 @@ export const ZSurvey = z
         }
       }
 
-      if (welcomeCard.buttonLabel) {
+      if (welcomeCard.buttonLabel && welcomeCard.buttonLabel.default.trim() !== "") {
         multiLangIssue = validateCardFieldsForAllLanguages(
           "buttonLabel",
           welcomeCard.buttonLabel,
@@ -647,7 +647,7 @@ export const ZSurvey = z
         ctx.addIssue(multiLangIssue);
       }
 
-      if (question.subheader) {
+      if (question.subheader && question.subheader.default.trim() !== "") {
         multiLangIssue = validateQuestionLabels("subheader", question.subheader, languages, questionIndex);
         if (multiLangIssue) {
           ctx.addIssue(multiLangIssue);
@@ -686,7 +686,11 @@ export const ZSurvey = z
       }
 
       if (question.type === TSurveyQuestionTypeEnum.OpenText) {
-        if (question.placeholder) {
+        if (
+          question.placeholder &&
+          question.placeholder[defaultLanguageCode].trim() !== "" &&
+          languages.length > 1
+        ) {
           multiLangIssue = validateQuestionLabels(
             "placeholder",
             question.placeholder,
@@ -900,7 +904,7 @@ export const ZSurvey = z
         }
       }
 
-      if (thankYouCard.subheader) {
+      if (thankYouCard.subheader && thankYouCard.subheader.default.trim() !== "") {
         multiLangIssue = validateCardFieldsForAllLanguages(
           "subheader",
           thankYouCard.subheader,
@@ -913,7 +917,7 @@ export const ZSurvey = z
         }
       }
 
-      if (thankYouCard.buttonLabel) {
+      if (thankYouCard.buttonLabel && thankYouCard.buttonLabel.default.trim() !== "") {
         multiLangIssue = validateCardFieldsForAllLanguages(
           "thankYouCardButtonLabel",
           thankYouCard.buttonLabel,
@@ -922,6 +926,17 @@ export const ZSurvey = z
         );
         if (multiLangIssue) {
           ctx.addIssue(multiLangIssue);
+        }
+
+        if (thankYouCard.buttonLink) {
+          const parsedButtonLink = z.string().url().safeParse(thankYouCard.buttonLink);
+          if (!parsedButtonLink.success) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Invalid URL for the button link in thank you card.`,
+              path: ["thankYouCard", "buttonLink"],
+            });
+          }
         }
       }
     }
