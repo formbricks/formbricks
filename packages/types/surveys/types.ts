@@ -25,7 +25,7 @@ export const ZSurveyThankYouCard = z.object({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: z.string().url("Invalid button link in thank you card").optional(),
+  buttonLink: z.string().optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
@@ -922,6 +922,15 @@ export const ZSurvey = z
         );
         if (multiLangIssue) {
           ctx.addIssue(multiLangIssue);
+        }
+
+        const parsedButtonLink = z.string().url().safeParse(thankYouCard.buttonLink);
+        if (!parsedButtonLink.success) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Invalid button link`,
+            path: ["thankYouCard", "buttonLink"],
+          });
         }
       }
     }
