@@ -1,11 +1,6 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-import {
-  getActionCountInLast7Days,
-  getActionCountInLast24Hours,
-  getActionCountInLastHour,
-} from "@formbricks/lib/action/service";
 import { canUserUpdateActionClass, verifyUserRoleAccess } from "@formbricks/lib/actionClass/auth";
 import { deleteActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -54,54 +49,6 @@ export const updateActionClassAction = async (
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await updateActionClass(environmentId, actionClassId, updatedAction);
-};
-
-export const getActionCountInLastHourAction = async (actionClassId: string, environmentId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const organization = await getOrganizationByEnvironmentId(environmentId);
-
-  if (!organization) {
-    throw new Error("Organization not found");
-  }
-
-  const isAuthorized = await canUserUpdateActionClass(session.user.id, actionClassId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  return await getActionCountInLastHour(actionClassId);
-};
-
-export const getActionCountInLast24HoursAction = async (actionClassId: string, environmentId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const organization = await getOrganizationByEnvironmentId(environmentId);
-
-  if (!organization) {
-    throw new Error("Organization not found");
-  }
-
-  const isAuthorized = await canUserUpdateActionClass(session.user.id, actionClassId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  return await getActionCountInLast24Hours(actionClassId);
-};
-
-export const getActionCountInLast7DaysAction = async (actionClassId: string, environmentId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const organization = await getOrganizationByEnvironmentId(environmentId);
-
-  if (!organization) {
-    throw new Error("Organization not found");
-  }
-
-  const isAuthorized = await canUserUpdateActionClass(session.user.id, actionClassId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  return await getActionCountInLast7Days(actionClassId);
 };
 
 export const getActiveInactiveSurveysAction = async (
