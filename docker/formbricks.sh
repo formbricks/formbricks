@@ -160,7 +160,6 @@ EOT
     sed -i "s|# SMTP_SECURE_ENABLED:|SMTP_SECURE_ENABLED: $smtp_secure_enabled|" docker-compose.yml
     sed -i "s|# SMTP_USER:|SMTP_USER: \"$smtp_user\"|" docker-compose.yml
     sed -i "s|# SMTP_PASSWORD:|SMTP_PASSWORD: \"$smtp_password\"|" docker-compose.yml
-    sed -i "s|# SMTP_REJECT_UNAUTHORIZED_TLS:|SMTP_REJECT_UNAUTHORIZED_TLS: \"$smtp_reject_unauthorized_tls\"|" docker-compose.yml
   fi
 
   awk -v domain_name="$domain_name" '
