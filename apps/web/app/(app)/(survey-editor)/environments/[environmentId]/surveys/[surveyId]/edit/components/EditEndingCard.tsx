@@ -48,7 +48,7 @@ export const EditEndingCard = ({
   attributeClasses,
   plan,
 }: EditEndingCardProps) => {
-  const endingCard = localSurvey[endingCardIndex];
+  const endingCard = localSurvey.endings[endingCardIndex];
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: endingCard.id,
   });
