@@ -390,7 +390,7 @@ export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.CTA),
   html: ZI18nString.optional(),
-  buttonUrl: z.string().url({ message: "Invalid button url" }).optional(),
+  buttonUrl: z.string().optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: ZI18nString.optional(),
   logic: z.array(ZSurveyCTALogic).optional(),
@@ -761,6 +761,17 @@ export const ZSurvey = z
           );
           if (multiLangIssue) {
             ctx.addIssue(multiLangIssue);
+          }
+        }
+
+        if (question.buttonExternal) {
+          const parsedButtonUrl = z.string().url().safeParse(question.buttonUrl);
+          if (!parsedButtonUrl.success) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Question ${String(questionIndex + 1)} has an invalid button URL`,
+              path: ["questions", questionIndex, "buttonUrl"],
+            });
           }
         }
       }
