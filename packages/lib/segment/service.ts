@@ -243,18 +243,51 @@ export const deleteSegment = async (segmentId: string): Promise<TSegment> => {
       select: selectSegment,
     });
 
-    // pause all the running surveys that are using this segment
     const surveyIds = segment.surveys.map((survey) => survey.id);
     if (!!surveyIds?.length) {
-      await prisma.survey.updateMany({
-        where: {
-          id: { in: surveyIds },
-          status: "inProgress",
-        },
-        data: {
-          status: "paused",
-        },
-      });
+      for (const surveyId of surveyIds) {
+        let privateSegmentId: string | null = null;
+        const privateSegment = await prisma.segment.findFirst({
+          where: {
+            title: surveyId,
+            isPrivate: true,
+          },
+        });
+
+        if (privateSegment?.id) {
+          privateSegmentId = privateSegment.id;
+        } else {
+          await prisma.segment.create({
+            data: {
+              title: surveyId,
+              isPrivate: true,
+              filters: [],
+              surveys: { connect: { id: surveyId } },
+              environment: {
+                connect: {
+                  id: currentSegment.environmentId,
+                },
+              },
+            },
+          });
+        }
+
+        await prisma.survey.update({
+          where: {
+            id: surveyId,
+          },
+          data: {
+            status: "paused",
+            ...(privateSegmentId && {
+              segment: {
+                connect: {
+                  id: privateSegmentId,
+                },
+              },
+            }),
+          },
+        });
+      }
     }
 
     segmentCache.revalidate({ id: segmentId, environmentId: segment.environmentId });
