@@ -75,6 +75,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
   const [formStylingOpen, setFormStylingOpen] = useState(false);
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [backgroundStylingOpen, setBackgroundStylingOpen] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
 
   const onReset = useCallback(async () => {
     const defaultStyling: TProductStyling = {
@@ -122,15 +123,17 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
   }, [form, product.id, router]);
 
   const onSubmit: SubmitHandler<TProductStyling> = async (data) => {
-    try {
-      const updatedProduct = await updateProductAction(product.id, {
-        styling: data,
-      });
+    if (isRestarting) {
+      try {
+        const updatedProduct = await updateProductAction(product.id, {
+          styling: data,
+        });
 
-      form.reset({ ...updatedProduct.styling });
-      toast.success("Styling updated successfully.");
-    } catch (err) {
-      toast.error("Error updating styling.");
+        form.reset({ ...updatedProduct.styling });
+        toast.success("Styling updated successfully.");
+      } catch (err) {
+        toast.error("Error updating styling.");
+      }
     }
   };
 
@@ -200,7 +203,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
             </div>
 
             <div className="mt-4 flex items-center gap-2">
-              <Button variant="darkCTA" size="sm" type="submit">
+              <Button variant="darkCTA" size="sm" type="submit" onClick={() => setIsRestarting(true)}>
                 Save
               </Button>
               <Button
