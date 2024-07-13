@@ -231,6 +231,8 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
                 }}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}
+                isRestarting={isRestarting}
+                setIsRestarting={setIsRestarting}
               />
             </div>
           </div>
