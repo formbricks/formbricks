@@ -8,8 +8,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import type { TActionClass } from "@formbricks/types/actionClasses";
-import type { TAttributeClass } from "@formbricks/types/attributeClasses";
+import type { TActionClass } from "@formbricks/types/action-classes";
+import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type {
   TBaseFilter,
   TSegment,

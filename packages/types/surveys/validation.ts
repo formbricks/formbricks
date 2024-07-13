@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TI18nString, TSurveyLanguage, TSurveyQuestion } from "./types";
+import type { TI18nString, TSurveyLanguage, TSurveyQuestion } from "./types";
 
 export const FORBIDDEN_IDS = [
   "userId",
@@ -30,7 +30,7 @@ const FIELD_TO_LABEL_MAP: Record<string, string> = {
   thankYouCardButtonLabel: "button label",
 };
 
-export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string[] => {
+const extractLanguageCodes = (surveyLanguages?: TSurveyLanguage[]): string[] => {
   if (!surveyLanguages) return [];
   return surveyLanguages.map((surveyLanguage) =>
     surveyLanguage.default ? "default" : surveyLanguage.language.code
@@ -43,12 +43,12 @@ const validateLabelForAllLanguages = (label: TI18nString, surveyLanguages: TSurv
 
   const languages = !languageCodes.length ? ["default"] : languageCodes;
   const invalidLanguageCodes = languages.filter(
-    (language) => !label || !label[language] || label[language].trim() === ""
+    (language) => !label[language] || label[language].trim() === ""
   );
 
   return invalidLanguageCodes.map((invalidLanguageCode) => {
     if (invalidLanguageCode === "default") {
-      return surveyLanguages.find((lang) => lang.default)?.language.code || "default";
+      return surveyLanguages.find((lang) => lang.default)?.language.code ?? "default";
     }
 
     return invalidLanguageCode;
@@ -60,10 +60,10 @@ export const validateQuestionLabels = (
   fieldLabel: TI18nString,
   languages: TSurveyLanguage[],
   questionIndex: number,
-  skipArticle: boolean = false
+  skipArticle = false
 ): z.IssueData | null => {
   const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
-  const isDefaultOnly = invalidLanguageCodes?.length === 1 && invalidLanguageCodes[0] === "default";
+  const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
   const messagePrefix = skipArticle ? "" : "The ";
   const messageField = FIELD_TO_LABEL_MAP[field] ? FIELD_TO_LABEL_MAP[field] : field;
@@ -72,7 +72,7 @@ export const validateQuestionLabels = (
   if (invalidLanguageCodes.length) {
     return {
       code: z.ZodIssueCode.custom,
-      message: `${messagePrefix}${messageField} in question ${questionIndex + 1}${messageSuffix}`,
+      message: `${messagePrefix}${messageField} in question ${String(questionIndex + 1)}${messageSuffix}`,
       path: ["questions", questionIndex, field],
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
     };
@@ -86,10 +86,10 @@ export const validateCardFieldsForAllLanguages = (
   fieldLabel: TI18nString,
   languages: TSurveyLanguage[],
   cardType: "welcome" | "thankYou",
-  skipArticle: boolean = false
+  skipArticle = false
 ): z.IssueData | null => {
   const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
-  const isDefaultOnly = invalidLanguageCodes?.length === 1 && invalidLanguageCodes[0] === "default";
+  const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
   const messagePrefix = skipArticle ? "" : "The ";
   const messageField = FIELD_TO_LABEL_MAP[field] ? FIELD_TO_LABEL_MAP[field] : field;
@@ -121,7 +121,7 @@ export const findLanguageCodesForDuplicateLabels = (
   const duplicateLabels = new Set<string>();
 
   for (const language of languagesToCheck) {
-    const labelTexts = labels.map((label) => label[language]?.trim()).filter(Boolean);
+    const labelTexts = labels.map((label) => label[language].trim()).filter(Boolean);
     const uniqueLabels = new Set(labelTexts);
 
     if (uniqueLabels.size !== labelTexts.length) {
@@ -136,15 +136,15 @@ export const findLanguageCodesForDuplicateLabels = (
 export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): string[] => {
   const visited: Record<string, boolean> = {};
   const recStack: Record<string, boolean> = {};
-  const cyclicQuestions: Set<string> = new Set();
+  const cyclicQuestions = new Set<string>();
 
   const checkForCyclicLogic = (questionId: string): boolean => {
     if (!visited[questionId]) {
       visited[questionId] = true;
       recStack[questionId] = true;
 
-      const question = questions.find((question) => question.id === questionId);
-      if (question && question.logic && question.logic.length > 0) {
+      const question = questions.find((ques) => ques.id === questionId);
+      if (question?.logic && question.logic.length > 0) {
         for (const logic of question.logic) {
           const destination = logic.destination;
           if (!destination) {
@@ -161,8 +161,8 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
         }
       } else {
         // Handle default behavior
-        const nextQuestionIndex = questions.findIndex((question) => question.id === questionId) + 1;
-        const nextQuestion = questions[nextQuestionIndex];
+        const nextQuestionIndex = questions.findIndex((ques) => ques.id === questionId) + 1;
+        const nextQuestion = questions[nextQuestionIndex] as TSurveyQuestion | undefined;
         if (nextQuestion && !visited[nextQuestion.id] && checkForCyclicLogic(nextQuestion.id)) {
           return true;
         }

@@ -1,6 +1,6 @@
 import { returnValidationErrors } from "next-safe-action";
 import { ZodIssue, z } from "zod";
-import { TOperation, TResource } from "@formbricks/types/actionClient";
+import { TOperation, TResource } from "@formbricks/types/action-client";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { getMembershipRole } from "../membership/hooks/actions";

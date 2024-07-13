@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZActionClass, ZActionClassNoCodeConfig } from "../actionClasses";
+import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAttributes } from "../attributes";
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "../common";
 import { ZId } from "../environment";
@@ -25,7 +25,7 @@ export const ZSurveyThankYouCard = z.object({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: z.string().url("Invalid button link in thank you card").optional(),
+  buttonLink: z.string().optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
@@ -365,10 +365,9 @@ export const ZSurveyMultipleChoiceQuestion = ZSurveyQuestionBase.extend({
     if (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) {
       // The single choice question should not have 'includesAll' logic
       return !logic?.some((l) => l.condition === "includesAll");
-    } else {
-      // The multi choice question should not have 'notEquals' logic
-      return !logic?.some((l) => l.condition === "notEquals");
     }
+    // The multi choice question should not have 'notEquals' logic
+    return !logic?.some((l) => l.condition === "notEquals");
   },
   {
     message:
@@ -391,7 +390,7 @@ export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.CTA),
   html: ZI18nString.optional(),
-  buttonUrl: z.string().url({ message: "Invalid button url" }).optional(),
+  buttonUrl: z.string().optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: ZI18nString.optional(),
   logic: z.array(ZSurveyCTALogic).optional(),
@@ -598,10 +597,12 @@ export const ZSurvey = z
   .superRefine((survey, ctx) => {
     const { questions, languages, welcomeCard, thankYouCard } = survey;
 
+    let multiLangIssue: z.IssueData | null;
+
     // welcome card validations
     if (welcomeCard.enabled) {
       if (welcomeCard.headline) {
-        const multiLangIssue = validateCardFieldsForAllLanguages(
+        multiLangIssue = validateCardFieldsForAllLanguages(
           "cardHeadline",
           welcomeCard.headline,
           languages,
@@ -613,8 +614,8 @@ export const ZSurvey = z
         }
       }
 
-      if (welcomeCard.html) {
-        const multiLangIssue = validateCardFieldsForAllLanguages(
+      if (welcomeCard.html && welcomeCard.html.default.trim() !== "") {
+        multiLangIssue = validateCardFieldsForAllLanguages(
           "welcomeCardHtml",
           welcomeCard.html,
           languages,
@@ -625,8 +626,8 @@ export const ZSurvey = z
         }
       }
 
-      if (welcomeCard.buttonLabel) {
-        const multiLangIssue = validateCardFieldsForAllLanguages(
+      if (welcomeCard.buttonLabel && welcomeCard.buttonLabel.default.trim() !== "") {
+        multiLangIssue = validateCardFieldsForAllLanguages(
           "buttonLabel",
           welcomeCard.buttonLabel,
           languages,
@@ -641,18 +642,13 @@ export const ZSurvey = z
     // Custom default validation for each question
     questions.forEach((question, questionIndex) => {
       const existingLogicConditions = new Set();
-      const multiLangIssue = validateQuestionLabels("headline", question.headline, languages, questionIndex);
+      multiLangIssue = validateQuestionLabels("headline", question.headline, languages, questionIndex);
       if (multiLangIssue) {
         ctx.addIssue(multiLangIssue);
       }
 
-      if (question.subheader) {
-        const multiLangIssue = validateQuestionLabels(
-          "subheader",
-          question.subheader,
-          languages,
-          questionIndex
-        );
+      if (question.subheader && question.subheader.default.trim() !== "") {
+        multiLangIssue = validateQuestionLabels("subheader", question.subheader, languages, questionIndex);
         if (multiLangIssue) {
           ctx.addIssue(multiLangIssue);
         }
@@ -677,13 +673,12 @@ export const ZSurvey = z
           continue;
         }
 
-        const questionFieldValue = question[field as keyof typeof question] as TI18nString;
+        const questionFieldValue = question[field as keyof typeof question] as TI18nString | null;
         if (
-          questionFieldValue &&
-          typeof questionFieldValue[defaultLanguageCode] !== "undefined" &&
+          typeof questionFieldValue?.[defaultLanguageCode] !== "undefined" &&
           questionFieldValue[defaultLanguageCode].trim() !== ""
         ) {
-          const multiLangIssue = validateQuestionLabels(field, questionFieldValue, languages, questionIndex);
+          multiLangIssue = validateQuestionLabels(field, questionFieldValue, languages, questionIndex);
           if (multiLangIssue) {
             ctx.addIssue(multiLangIssue);
           }
@@ -691,8 +686,12 @@ export const ZSurvey = z
       }
 
       if (question.type === TSurveyQuestionTypeEnum.OpenText) {
-        if (question.placeholder) {
-          const multiLangIssue = validateQuestionLabels(
+        if (
+          question.placeholder &&
+          question.placeholder[defaultLanguageCode].trim() !== "" &&
+          languages.length > 1
+        ) {
+          multiLangIssue = validateQuestionLabels(
             "placeholder",
             question.placeholder,
             languages,
@@ -709,8 +708,8 @@ export const ZSurvey = z
         question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
       ) {
         question.choices.forEach((choice, choiceIndex) => {
-          const multiLangIssue = validateQuestionLabels(
-            `Choice ${choiceIndex + 1}`,
+          multiLangIssue = validateQuestionLabels(
+            `Choice ${String(choiceIndex + 1)}`,
             choice.label,
             languages,
             questionIndex,
@@ -729,7 +728,7 @@ export const ZSurvey = z
         if (duplicateChoicesLanguageCodes.length > 0) {
           const invalidLanguageCodes = duplicateChoicesLanguageCodes.map((invalidLanguageCode) =>
             invalidLanguageCode === "default"
-              ? languages.find((lang) => lang.default)?.language.code || "default"
+              ? languages.find((lang) => lang.default)?.language.code ?? "default"
               : invalidLanguageCode
           );
 
@@ -737,7 +736,7 @@ export const ZSurvey = z
 
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Question ${questionIndex + 1} has duplicate choice labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+            message: `Question ${String(questionIndex + 1)} has duplicate choice labels ${isDefaultOnly ? "" : "for the following languages:"}`,
             path: ["questions", questionIndex, "choices"],
             params: isDefaultOnly ? undefined : { invalidLanguageCodes },
           });
@@ -745,12 +744,7 @@ export const ZSurvey = z
       }
 
       if (question.type === TSurveyQuestionTypeEnum.Consent) {
-        const multiLangIssue = validateQuestionLabels(
-          "consent.label",
-          question.label,
-          languages,
-          questionIndex
-        );
+        multiLangIssue = validateQuestionLabels("consent.label", question.label, languages, questionIndex);
 
         if (multiLangIssue) {
           ctx.addIssue(multiLangIssue);
@@ -759,7 +753,7 @@ export const ZSurvey = z
 
       if (question.type === TSurveyQuestionTypeEnum.CTA) {
         if (!question.required && question.dismissButtonLabel) {
-          const multiLangIssue = validateQuestionLabels(
+          multiLangIssue = validateQuestionLabels(
             "dismissButtonLabel",
             question.dismissButtonLabel,
             languages,
@@ -769,12 +763,23 @@ export const ZSurvey = z
             ctx.addIssue(multiLangIssue);
           }
         }
+
+        if (question.buttonExternal) {
+          const parsedButtonUrl = z.string().url().safeParse(question.buttonUrl);
+          if (!parsedButtonUrl.success) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Question ${String(questionIndex + 1)} has an invalid button URL`,
+              path: ["questions", questionIndex, "buttonUrl"],
+            });
+          }
+        }
       }
 
       if (question.type === TSurveyQuestionTypeEnum.Matrix) {
         question.rows.forEach((row, rowIndex) => {
-          const multiLangIssue = validateQuestionLabels(
-            `Row ${rowIndex + 1}`,
+          multiLangIssue = validateQuestionLabels(
+            `Row ${String(rowIndex + 1)}`,
             row,
             languages,
             questionIndex,
@@ -786,8 +791,8 @@ export const ZSurvey = z
         });
 
         question.columns.forEach((column, columnIndex) => {
-          const multiLangIssue = validateQuestionLabels(
-            `Column ${columnIndex + 1}`,
+          multiLangIssue = validateQuestionLabels(
+            `Column ${String(columnIndex + 1)}`,
             column,
             languages,
             questionIndex,
@@ -804,7 +809,7 @@ export const ZSurvey = z
         if (duplicateRowsLanguageCodes.length > 0) {
           const invalidLanguageCodes = duplicateRowsLanguageCodes.map((invalidLanguageCode) =>
             invalidLanguageCode === "default"
-              ? languages.find((lang) => lang.default)?.language.code || "default"
+              ? languages.find((lang) => lang.default)?.language.code ?? "default"
               : invalidLanguageCode
           );
 
@@ -812,7 +817,7 @@ export const ZSurvey = z
 
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Question ${questionIndex + 1} has duplicate row labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+            message: `Question ${String(questionIndex + 1)} has duplicate row labels ${isDefaultOnly ? "" : "for the following languages:"}`,
             path: ["questions", questionIndex, "rows"],
             params: isDefaultOnly ? undefined : { invalidLanguageCodes },
           });
@@ -821,7 +826,7 @@ export const ZSurvey = z
         if (duplicateColumnLanguageCodes.length > 0) {
           const invalidLanguageCodes = duplicateColumnLanguageCodes.map((invalidLanguageCode) =>
             invalidLanguageCode === "default"
-              ? languages.find((lang) => lang.default)?.language.code || "default"
+              ? languages.find((lang) => lang.default)?.language.code ?? "default"
               : invalidLanguageCode
           );
 
@@ -829,7 +834,7 @@ export const ZSurvey = z
 
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Question ${questionIndex + 1} has duplicate column labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+            message: `Question ${String(questionIndex + 1)} has duplicate column labels ${isDefaultOnly ? "" : "for the following languages:"}`,
             path: ["questions", questionIndex, "columns"],
             params: isDefaultOnly ? undefined : { invalidLanguageCodes },
           });
@@ -841,7 +846,7 @@ export const ZSurvey = z
         if (question.allowedFileExtensions && question.allowedFileExtensions.length === 0) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Question ${questionIndex + 1} must have atleast one allowed file extension`,
+            message: `Question ${String(questionIndex + 1)} must have atleast one allowed file extension`,
             path: ["questions", questionIndex, "allowedFileExtensions"],
           });
         }
@@ -850,12 +855,12 @@ export const ZSurvey = z
       if (question.logic) {
         question.logic.forEach((logic, logicIndex) => {
           const logicConditions = ["condition", "value", "destination"] as const;
-          const validFields = logicConditions.filter((field) => logic[field] !== undefined)?.length;
+          const validFields = logicConditions.filter((field) => logic[field] !== undefined).length;
 
           if (validFields < 2) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: `Logic for question ${questionIndex + 1} is missing required fields`,
+              message: `Logic for question ${String(questionIndex + 1)} is missing required fields`,
               path: ["questions", questionIndex, "logic"],
             });
           }
@@ -863,13 +868,13 @@ export const ZSurvey = z
           if (question.required && logic.condition === "skipped") {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: `Logic for question ${questionIndex + 1} is invalid. Required questions cannot be skipped.`,
+              message: `Logic for question ${String(questionIndex + 1)} is invalid. Required questions cannot be skipped.`,
               path: ["questions", questionIndex, "logic"],
             });
           }
 
           // logic condition and value mapping should not be repeated
-          const thisLogic = `${logic.condition}-${logic.value}`;
+          const thisLogic = `${logic.condition ?? ""}-${String(logic.value)}`;
           if (existingLogicConditions.has(thisLogic)) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
@@ -889,7 +894,7 @@ export const ZSurvey = z
         const questionIndex = questions.findIndex((q) => q.id === questionId);
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Cyclic logic detected 🔃 Please check the logic of question ${questionIndex + 1}.`,
+          message: `Cyclic logic detected 🔃 Please check the logic of question ${String(questionIndex + 1)}.`,
           path: ["questions", questionIndex, "logic"],
         });
       });
@@ -898,7 +903,7 @@ export const ZSurvey = z
     // thank you card validations
     if (thankYouCard.enabled) {
       if (thankYouCard.headline) {
-        const multiLangIssue = validateCardFieldsForAllLanguages(
+        multiLangIssue = validateCardFieldsForAllLanguages(
           "cardHeadline",
           thankYouCard.headline,
           languages,
@@ -910,8 +915,8 @@ export const ZSurvey = z
         }
       }
 
-      if (thankYouCard.subheader) {
-        const multiLangIssue = validateCardFieldsForAllLanguages(
+      if (thankYouCard.subheader && thankYouCard.subheader.default.trim() !== "") {
+        multiLangIssue = validateCardFieldsForAllLanguages(
           "subheader",
           thankYouCard.subheader,
           languages,
@@ -923,8 +928,8 @@ export const ZSurvey = z
         }
       }
 
-      if (thankYouCard.buttonLabel) {
-        const multiLangIssue = validateCardFieldsForAllLanguages(
+      if (thankYouCard.buttonLabel && thankYouCard.buttonLabel.default.trim() !== "") {
+        multiLangIssue = validateCardFieldsForAllLanguages(
           "thankYouCardButtonLabel",
           thankYouCard.buttonLabel,
           languages,
@@ -932,6 +937,17 @@ export const ZSurvey = z
         );
         if (multiLangIssue) {
           ctx.addIssue(multiLangIssue);
+        }
+
+        if (thankYouCard.buttonLink) {
+          const parsedButtonLink = z.string().url().safeParse(thankYouCard.buttonLink);
+          if (!parsedButtonLink.success) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Invalid URL for the button link in thank you card.`,
+              path: ["thankYouCard", "buttonLink"],
+            });
+          }
         }
       }
     }
@@ -946,7 +962,7 @@ export const ZSurveyUpdateInput = ZSurvey.innerType()
       updatedAt: z.coerce.date(),
     })
   )
-  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => {});
+  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => undefined);
 
 export const ZSurveyInput = z.object({
   name: z.string(),
@@ -977,12 +993,12 @@ export const ZSurveyInput = z.object({
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 
-export type TSurveyDates = {
+export interface TSurveyDates {
   createdAt: TSurvey["createdAt"];
   updatedAt: TSurvey["updatedAt"];
   runOnDate: TSurvey["runOnDate"];
   closeOnDate: TSurvey["closeOnDate"];
-};
+}
 
 export type TSurveyInput = z.infer<typeof ZSurveyInput>;
 

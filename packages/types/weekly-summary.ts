@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZAttributeClass } from "./attributeClasses";
+import { ZAttributeClass } from "./attribute-classes";
 import { ZResponseData } from "./responses";
 import { ZSurveyHiddenFields, ZSurveyQuestion, ZSurveyQuestionType, ZSurveyStatus } from "./surveys/types";
 import { ZUserNotificationSettings } from "./user";

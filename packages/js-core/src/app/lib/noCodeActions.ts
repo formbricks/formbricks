@@ -1,4 +1,4 @@
-import type { TActionClass } from "@formbricks/types/actionClasses";
+import type { TActionClass } from "@formbricks/types/action-classes";
 import { ErrorHandler, NetworkError, Result, err, match, okVoid } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import { evaluateNoCodeConfigClick, handleUrlFilters } from "../../shared/utils";

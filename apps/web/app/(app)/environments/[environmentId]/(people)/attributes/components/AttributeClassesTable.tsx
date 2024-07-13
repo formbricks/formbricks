@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { Switch } from "@formbricks/ui/Switch";
 import { AttributeDetailModal } from "./AttributeDetailModal";
 import { AttributeClassDataRow } from "./AttributeRowData";

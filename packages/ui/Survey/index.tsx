@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
-import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
+import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricks-surveys";
 import { loadSurveyScript } from "./lib/loadScript";
 
 const createContainerId = () => `formbricks-survey-container`;
