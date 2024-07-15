@@ -150,12 +150,7 @@ export const ThemeStylingPreviewSurvey = ({
               <p>{isAppSurvey ? "Your web app" : "Preview"}</p>
 
               <div className="flex items-center">
-                <ResetProgressButton
-                  onClick={(e) => {
-                    e.preventDefault();
-                    resetQuestionProgress();
-                  }}
-                />
+                <ResetProgressButton onClick={resetQuestionProgress} />
               </div>
             </div>
           </div>
