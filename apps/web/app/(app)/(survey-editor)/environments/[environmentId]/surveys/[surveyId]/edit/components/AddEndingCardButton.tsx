@@ -45,7 +45,7 @@ export const AddEndingCardButton = ({ localSurvey, setLocalSurvey }: AddEndingCa
       </div>
       <div className="px-4 py-3">
         <p className="font-semibold">Add Ending Card</p>
-        <p className="mt-1 text-sm text-slate-500">Add a ending to your survey</p>
+        <p className="mt-1 text-sm text-slate-500">Add an ending to your survey</p>
       </div>
     </div>
   );
