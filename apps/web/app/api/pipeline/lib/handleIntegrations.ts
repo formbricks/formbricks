@@ -227,7 +227,7 @@ const buildNotionPayloadProperties = (
     } else {
       const value = responses[map.question.id];
       properties[map.column.name] = {
-        [map.column.type]: getValue(map.column.type, processResponseData(value)),
+        [map.column.type]: getValue(map.column.type, value),
       };
     }
   });
@@ -245,7 +245,9 @@ const getValue = (colType: string, value: string | string[] | number | Record<st
           name: value,
         };
       case "multi_select":
-        return (value as []).map((v: string) => ({ name: v }));
+        if (Array.isArray(value)) {
+          return value.map((v: string) => ({ name: v }));
+        }
       case "title":
         return [
           {
