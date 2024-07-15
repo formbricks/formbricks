@@ -16,8 +16,6 @@ interface ThemeStylingPreviewSurveyProps {
   product: TProduct;
   previewType: TSurveyType;
   setPreviewType: (type: TSurveyType) => void;
-  isRestarting: boolean;
-  setIsRestarting: (value: boolean) => void;
 }
 
 const previewParentContainerVariant: Variants = {
@@ -53,8 +51,6 @@ export const ThemeStylingPreviewSurvey = ({
   previewType,
   setPreviewType,
   setQuestionId,
-  isRestarting,
-  setIsRestarting,
 }: ThemeStylingPreviewSurveyProps) => {
   const [isFullScreenPreview] = useState(false);
   const [previewPosition] = useState("relative");
@@ -110,7 +106,6 @@ export const ThemeStylingPreviewSurvey = ({
 
   const resetQuestionProgress = () => {
     setQuestionId(survey?.questions[0]?.id);
-    setIsRestarting(false);
   };
 
   const onFileUpload = async (file: File) => file.name;
@@ -155,7 +150,12 @@ export const ThemeStylingPreviewSurvey = ({
               <p>{isAppSurvey ? "Your web app" : "Preview"}</p>
 
               <div className="flex items-center">
-                <ResetProgressButton onClick={resetQuestionProgress} />
+                <ResetProgressButton
+                  onClick={(e) => {
+                    e.preventDefault();
+                    resetQuestionProgress();
+                  }}
+                />
               </div>
             </div>
           </div>

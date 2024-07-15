@@ -2,7 +2,7 @@ import { Repeat2 } from "lucide-react";
 import { Button } from "../Button";
 
 interface ResetProgressButtonProps {
-  onClick: () => void;
+  onClick: (e?: React.MouseEvent) => void;
 }
 
 export const ResetProgressButton = ({ onClick }: ResetProgressButtonProps) => {
