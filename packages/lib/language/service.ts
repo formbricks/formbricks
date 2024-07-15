@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
@@ -10,7 +10,6 @@ import {
   ZLanguageInput,
   ZLanguageUpdate,
 } from "@formbricks/types/product";
-
 import { productCache } from "../product/cache";
 import { surveyCache } from "../survey/cache";
 import { validateInputs } from "../utils/validate";
@@ -60,7 +59,7 @@ export const createLanguage = async (
   }
 };
 
-export const getSurveysUsingGivenLanguage = async (languageId: string): Promise<string[]> => {
+export const getSurveysUsingGivenLanguage = reactCache(async (languageId: string): Promise<string[]> => {
   try {
     // Check if the language is used in any survey
     const surveys = await prisma.surveyLanguage.findMany({
@@ -86,7 +85,7 @@ export const getSurveysUsingGivenLanguage = async (languageId: string): Promise<
     }
     throw error;
   }
-};
+});
 
 export const deleteLanguage = async (environmentId: string, languageId: string): Promise<TLanguage> => {
   try {

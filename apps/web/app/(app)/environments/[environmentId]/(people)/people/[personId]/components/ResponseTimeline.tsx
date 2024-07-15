@@ -3,11 +3,10 @@
 import { ResponseFeed } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponsesFeed";
 import { ArrowDownUpIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 
@@ -38,7 +37,7 @@ export const ResponseTimeline = ({
   }, [responses]);
 
   return (
-    <div className="md:col-span-2">
+    <div className="md:col-span-3">
       <div className="flex items-center justify-between pb-6">
         <h2 className="text-lg font-bold text-slate-700">Responses</h2>
         <div className="text-right">

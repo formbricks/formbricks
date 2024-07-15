@@ -3,7 +3,6 @@
 import { CheckIcon, CopyIcon } from "lucide-react";
 import { useRef } from "react";
 import toast from "react-hot-toast";
-
 import { Button } from "@formbricks/ui/Button";
 import { Modal } from "@formbricks/ui/Modal";
 

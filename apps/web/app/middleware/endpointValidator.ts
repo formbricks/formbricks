@@ -15,9 +15,12 @@ export const shareUrlRoute = (url: string): boolean => {
   return regex.test(url);
 };
 
-export const isWebAppRoute = (url: string): boolean =>
-  url.startsWith("/environments") && url !== "/api/auth/signout";
+export const isAuthProtectedRoute = (url: string): boolean => {
+  // List of routes that require authentication
+  const protectedRoutes = ["/environments", "/setup/organization", "/organizations"];
 
+  return protectedRoutes.some((route) => url.startsWith(route));
+};
 export const isSyncWithUserIdentificationEndpoint = (
   url: string
 ): { environmentId: string; userId: string } | false => {

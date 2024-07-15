@@ -1,11 +1,8 @@
 import { prisma } from "../../__mocks__/database";
-
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
-
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-
 import {
   createSurvey,
   deleteSurvey,

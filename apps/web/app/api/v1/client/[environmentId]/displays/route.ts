@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-
 import { createDisplay } from "@formbricks/lib/display/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { ZDisplayCreateInput } from "@formbricks/types/displays";

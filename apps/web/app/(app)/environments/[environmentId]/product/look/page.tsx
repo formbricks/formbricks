@@ -1,7 +1,6 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { EditLogo } from "@/app/(app)/environments/[environmentId]/product/look/components/EditLogo";
 import { getServerSession } from "next-auth";
-
 import {
   getMultiLanguagePermission,
   getRemoveInAppBrandingPermission,
@@ -16,7 +15,6 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
-
 import { SettingsCard } from "../../settings/components/SettingsCard";
 import { EditFormbricksBranding } from "./components/EditBranding";
 import { EditPlacementForm } from "./components/EditPlacementForm";
@@ -50,6 +48,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   }
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const currentProductChannel = product?.config.channel ?? null;
 
   return (
     <PageContentWrapper>
@@ -58,6 +57,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           environmentId={params.environmentId}
           activeId="look"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
+          productChannel={currentProductChannel}
         />
       </PageHeader>
       <SettingsCard
@@ -74,26 +74,32 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">
         <EditLogo product={product} environmentId={params.environmentId} isViewer={isViewer} />
       </SettingsCard>
-      <SettingsCard
-        title="In-app Survey Placement"
-        description="Change where surveys will be shown in your web app.">
-        <EditPlacementForm product={product} environmentId={params.environmentId} />
-      </SettingsCard>
+      {currentProductChannel !== "link" && (
+        <SettingsCard
+          title="In-app Survey Placement"
+          description="Change where surveys will be shown in your web app.">
+          <EditPlacementForm product={product} environmentId={params.environmentId} />
+        </SettingsCard>
+      )}
       <SettingsCard
         title="Formbricks Branding"
         description="We love your support but understand if you toggle it off.">
-        <EditFormbricksBranding
-          type="linkSurvey"
-          product={product}
-          canRemoveBranding={canRemoveLinkBranding}
-          environmentId={params.environmentId}
-        />
-        <EditFormbricksBranding
-          type="inAppSurvey"
-          product={product}
-          canRemoveBranding={canRemoveInAppBranding}
-          environmentId={params.environmentId}
-        />
+        <div className="space-y-4">
+          <EditFormbricksBranding
+            type="linkSurvey"
+            product={product}
+            canRemoveBranding={canRemoveLinkBranding}
+            environmentId={params.environmentId}
+          />
+          {currentProductChannel !== "link" && (
+            <EditFormbricksBranding
+              type="inAppSurvey"
+              product={product}
+              canRemoveBranding={canRemoveInAppBranding}
+              environmentId={params.environmentId}
+            />
+          )}
+        </div>
       </SettingsCard>
     </PageContentWrapper>
   );

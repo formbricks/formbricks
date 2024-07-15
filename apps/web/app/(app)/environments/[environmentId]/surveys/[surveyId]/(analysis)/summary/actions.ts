@@ -3,7 +3,6 @@
 import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
 import { customAlphabet } from "nanoid";
 import { getServerSession } from "next-auth";
-
 import { sendEmbedSurveyPreviewEmail } from "@formbricks/email";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";

@@ -17,11 +17,9 @@ import {
   mockTags,
   mockUserId,
 } from "./__mocks__/data.mock";
-
 import { Prisma } from "@prisma/client";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vitest } from "vitest";
 import { testInputValidation } from "vitestSetup";
-
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TResponse,
@@ -30,9 +28,12 @@ import {
   TResponseLegacyInput,
 } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
-
 import { selectPerson } from "../../person/service";
-import { mockAttributeClass, mockSurveyOutput } from "../../survey/tests/__mock__/survey.mock";
+import {
+  mockAttributeClass,
+  mockOrganizationOutput,
+  mockSurveyOutput,
+} from "../../survey/tests/__mock__/survey.mock";
 import {
   createResponse,
   createResponseLegacy,
@@ -49,6 +50,13 @@ import {
 } from "../service";
 import { buildWhereClause } from "../utils";
 import { constantsForTests } from "./constants";
+
+// vitest.mock("../../organization/service", async (methods) => {
+//   return {
+//     ...methods,
+//     getOrganizationByEnvironmentId: vitest.fn(),
+//   };
+// });
 
 const expectedResponseWithoutPerson: TResponse = {
   ...mockResponse,
@@ -128,6 +136,12 @@ beforeEach(() => {
   prisma.display.delete.mockResolvedValue({ ...mockDisplay, status: "seen" });
 
   prisma.response.count.mockResolvedValue(1);
+
+  prisma.organization.findFirst.mockResolvedValue(mockOrganizationOutput);
+  prisma.organization.findUnique.mockResolvedValue(mockOrganizationOutput);
+  prisma.product.findMany.mockResolvedValue([]);
+  // @ts-expect-error
+  prisma.response.aggregate.mockResolvedValue({ _count: { id: 1 } });
 });
 
 describe("Tests for getResponsesByPersonId", () => {
@@ -220,6 +234,7 @@ describe("Tests for createResponse service", () => {
       prisma.person.findFirst.mockResolvedValue(null);
       prisma.person.create.mockResolvedValue(mockPerson);
       prisma.attribute.findMany.mockResolvedValue([]);
+
       const response = await createResponse(mockResponseInputWithUserId);
 
       expect(response).toEqual(expectedResponseWithPerson);

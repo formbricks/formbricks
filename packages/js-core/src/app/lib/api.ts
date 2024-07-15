@@ -1,5 +1,4 @@
 import { FormbricksAPI } from "@formbricks/api";
-
 import { AppConfig } from "./config";
 
 export const getApi = (): FormbricksAPI => {

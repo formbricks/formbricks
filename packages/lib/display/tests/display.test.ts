@@ -14,13 +14,10 @@ import {
   mockResponseId,
   mockSurveyId,
 } from "./__mocks__/data.mock";
-
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
-
 import { DatabaseError } from "@formbricks/types/errors";
-
 import {
   createDisplay,
   createDisplayLegacy,

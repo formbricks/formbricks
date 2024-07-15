@@ -1,6 +1,5 @@
 import React from "react";
-
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 
 interface SurveyCheckboxGroupProps {
@@ -21,7 +20,7 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
   allowChanges,
 }) => {
   return (
-    <div className="mt-1 rounded-lg border border-slate-200">
+    <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
         <div className="my-1 flex items-center space-x-2">
           <Checkbox

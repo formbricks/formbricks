@@ -1,7 +1,6 @@
 import { getSessionUser } from "@/app/lib/api/apiHelper";
 import { MembershipRole } from "@prisma/client";
 import { NextRequest } from "next/server";
-
 import { prisma } from "@formbricks/database";
 
 interface Membership {

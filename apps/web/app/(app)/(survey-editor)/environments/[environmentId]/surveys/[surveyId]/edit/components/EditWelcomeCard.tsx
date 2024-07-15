@@ -3,11 +3,10 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-
-import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
+import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { cn } from "@formbricks/lib/cn";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { FileInput } from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
@@ -62,7 +61,7 @@ export const EditWelcomeCard = ({
   return (
     <div
       className={cn(
-        open ? "scale-100 shadow-lg " : "scale-97 shadow-md",
+        open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
         "group flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
       )}>
       <div
@@ -126,7 +125,7 @@ export const EditWelcomeCard = ({
               <QuestionFormInput
                 id="headline"
                 value={localSurvey.welcomeCard.headline}
-                label="Headline"
+                label="Note*"
                 localSurvey={localSurvey}
                 questionIdx={-1}
                 isInvalid={isInvalid}
@@ -169,6 +168,7 @@ export const EditWelcomeCard = ({
                     selectedLanguageCode={selectedLanguageCode}
                     setSelectedLanguageCode={setSelectedLanguageCode}
                     attributeClasses={attributeClasses}
+                    label={`"Next" Button Label`}
                   />
                 </div>
               </div>

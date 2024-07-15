@@ -1,54 +1,18 @@
 import { Prisma } from "@prisma/client";
-
-import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationAirtable,
   TIntegrationAirtableConfigData,
   TIntegrationAirtableCredential,
-  TIntegrationAirtableInput,
   ZIntegrationAirtableBases,
   ZIntegrationAirtableCredential,
   ZIntegrationAirtableTables,
   ZIntegrationAirtableTablesWithFields,
   ZIntegrationAirtableTokenSchema,
 } from "@formbricks/types/integration/airtable";
-
 import { AIRTABLE_CLIENT_ID } from "../constants";
 import { createOrUpdateIntegration, deleteIntegration, getIntegrationByType } from "../integration/service";
-
-interface ConnectAirtableOptions {
-  environmentId: string;
-  key: TIntegrationAirtableCredential;
-  email: string;
-}
-
-export const connectAirtable = async ({ email, environmentId, key }: ConnectAirtableOptions) => {
-  const type: TIntegrationAirtableInput["type"] = "airtable";
-
-  const baseData: TIntegrationAirtableInput = {
-    type,
-    config: { data: [], key, email },
-  };
-
-  await prisma.integration.upsert({
-    where: {
-      type_environmentId: {
-        environmentId,
-        type,
-      },
-    },
-    update: {
-      ...baseData,
-      environment: { connect: { id: environmentId } },
-    },
-    create: {
-      ...baseData,
-      environment: { connect: { id: environmentId } },
-    },
-  });
-};
 
 export const getBases = async (key: string) => {
   const req = await fetch("https://api.airtable.com/v0/meta/bases", {

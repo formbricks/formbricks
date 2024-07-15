@@ -1,4 +1,4 @@
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TResponseData } from "@formbricks/types/responses";
 import {
@@ -7,8 +7,7 @@ import {
   TSurveyQuestion,
   TSurveyQuestionsObject,
   TSurveyRecallItem,
-} from "@formbricks/types/surveys";
-
+} from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "./datetime";

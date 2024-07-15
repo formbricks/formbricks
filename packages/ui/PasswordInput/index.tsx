@@ -2,7 +2,6 @@
 
 import { EyeIcon, EyeOff } from "lucide-react";
 import { forwardRef, useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 
 export interface PasswordInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {
@@ -32,9 +31,9 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           className={cn("absolute right-3 top-1/2 -translate-y-1/2 transform")}
           onClick={togglePasswordVisibility}>
           {showPassword ? (
-            <EyeOff className="h-5 w-5 text-slate-400 " />
+            <EyeOff className="h-5 w-5 text-slate-400" />
           ) : (
-            <EyeIcon className="h-5 w-5 text-slate-400 " />
+            <EyeIcon className="h-5 w-5 text-slate-400" />
           )}
         </button>
       </div>

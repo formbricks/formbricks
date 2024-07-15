@@ -8,18 +8,17 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TSurvey,
   TSurveyLogic,
   TSurveyLogicCondition,
   TSurveyQuestion,
-  TSurveyQuestionType,
-} from "@formbricks/types/surveys";
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,
@@ -66,7 +65,7 @@ export const LogicEditor = ({
       return question.choices.map((choice) => getLocalizedValue(choice.label, "default"));
     } else if ("range" in question) {
       return Array.from({ length: question.range ? question.range : 0 }, (_, i) => (i + 1).toString());
-    } else if (question.type === TSurveyQuestionType.NPS) {
+    } else if (question.type === TSurveyQuestionTypeEnum.NPS) {
       return Array.from({ length: 11 }, (_, i) => (i + 0).toString());
     }
     return [];
@@ -286,11 +285,13 @@ export const LogicEditor = ({
         <div className="mt-2 space-y-3">
           {question?.logic?.map((logic, logicIdx) => (
             <div key={logicIdx} className="flex items-center space-x-2 space-y-1 text-xs xl:text-sm">
-              <CornerDownRightIcon className="h-4 w-4" />
+              <div>
+                <CornerDownRightIcon className="h-4 w-4" />
+              </div>
               <p className="text-slate-800">If this answer</p>
 
               <Select value={logic.condition} onValueChange={(e) => updateLogic(logicIdx, { condition: e })}>
-                <SelectTrigger className=" min-w-fit flex-1">
+                <SelectTrigger className="min-w-fit flex-1">
                   <SelectValue placeholder="Select condition" className="text-xs lg:text-sm" />
                 </SelectTrigger>
                 <SelectContent>
@@ -368,7 +369,7 @@ export const LogicEditor = ({
               <Select
                 value={logic.destination}
                 onValueChange={(e) => updateLogic(logicIdx, { destination: e })}>
-                <SelectTrigger className="w-fit overflow-hidden ">
+                <SelectTrigger className="w-fit overflow-hidden">
                   <SelectValue placeholder="Select question" />
                 </SelectTrigger>
                 <SelectContent>
@@ -379,8 +380,10 @@ export const LogicEditor = ({
                           key={question.id}
                           value={question.id}
                           title={getLocalizedValue(question.headline, "default")}>
-                          <div className="w-40">
+                          <div className="w-96">
                             <p className="truncate text-left">
+                              {idx + 1}
+                              {". "}
                               {getLocalizedValue(question.headline, "default")}
                             </p>
                           </div>
@@ -390,11 +393,12 @@ export const LogicEditor = ({
                   <SelectItem value="end">End of survey</SelectItem>
                 </SelectContent>
               </Select>
-
-              <TrashIcon
-                className="h-4 w-4 cursor-pointer text-slate-400"
-                onClick={() => deleteLogic(logicIdx)}
-              />
+              <div>
+                <TrashIcon
+                  className="h-4 w-4 cursor-pointer text-slate-400"
+                  onClick={() => deleteLogic(logicIdx)}
+                />
+              </div>
             </div>
           ))}
           <div className="flex flex-wrap items-center space-x-2 py-1 text-sm">

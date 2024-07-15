@@ -2,7 +2,6 @@
 
 import React from "react";
 import { useFormContext } from "react-hook-form";
-
 import { Input } from "@formbricks/ui/Input";
 
 export const TwoFactorBackup = () => {

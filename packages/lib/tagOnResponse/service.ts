@@ -1,12 +1,10 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
-
 import { cache } from "../cache";
 import { responseCache } from "../response/cache";
 import { getResponse } from "../response/service";
@@ -94,38 +92,40 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
   }
 };
 
-export const getTagsOnResponsesCount = async (environmentId: string): Promise<TTagsCount> =>
-  cache(
-    async () => {
-      validateInputs([environmentId, ZId]);
+export const getTagsOnResponsesCount = reactCache(
+  (environmentId: string): Promise<TTagsCount> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId]);
 
-      try {
-        const tagsCount = await prisma.tagsOnResponses.groupBy({
-          by: ["tagId"],
-          where: {
-            response: {
-              survey: {
-                environment: {
-                  id: environmentId,
+        try {
+          const tagsCount = await prisma.tagsOnResponses.groupBy({
+            by: ["tagId"],
+            where: {
+              response: {
+                survey: {
+                  environment: {
+                    id: environmentId,
+                  },
                 },
               },
             },
-          },
-          _count: {
-            _all: true,
-          },
-        });
+            _count: {
+              _all: true,
+            },
+          });
 
-        return tagsCount.map((tagCount) => ({ tagId: tagCount.tagId, count: tagCount._count._all }));
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+          return tagsCount.map((tagCount) => ({ tagId: tagCount.tagId, count: tagCount._count._all }));
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+          throw error;
         }
-        throw error;
+      },
+      [`getTagsOnResponsesCount-${environmentId}`],
+      {
+        tags: [tagOnResponseCache.tag.byEnvironmentId(environmentId)],
       }
-    },
-    [`getTagsOnResponsesCount-${environmentId}`],
-    {
-      tags: [tagOnResponseCache.tag.byEnvironmentId(environmentId)],
-    }
-  )();
+    )()
+);

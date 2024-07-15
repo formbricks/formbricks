@@ -4,7 +4,7 @@
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
-
+import { getBiggerUploadFileSizePermission } from "@formbricks/ee/lib/service";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -108,13 +108,18 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   }
 
   try {
-    const plan = ["active", "canceled"].includes(organization.billing.features.linkSurvey.status)
-      ? "pro"
-      : "free";
+    const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization);
     const bytes = await file.arrayBuffer();
     const fileBuffer = Buffer.from(bytes);
 
-    await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR, false, plan);
+    await putFileToLocalStorage(
+      fileName,
+      fileBuffer,
+      accessType,
+      environmentId,
+      UPLOADS_DIR,
+      isBiggerFileUploadAllowed
+    );
 
     return responses.successResponse({
       message: "File uploaded successfully",

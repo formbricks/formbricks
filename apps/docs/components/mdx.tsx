@@ -19,9 +19,18 @@ export const wrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const h2 = (props: Omit<React.ComponentPropsWithoutRef<typeof Heading>, "level">) => {
-  return <Heading level={2} {...props} />;
+const createHeadingComponent = (level: 2 | 3 | 4) => {
+  const Component = (props: Omit<React.ComponentPropsWithoutRef<typeof Heading>, "level">) => {
+    return <Heading level={level} {...props} />;
+  };
+
+  Component.displayName = `H${level}`;
+  return Component;
 };
+
+export const h2 = createHeadingComponent(2);
+export const h3 = createHeadingComponent(3);
+export const h4 = createHeadingComponent(4);
 
 const InfoIcon = (props: React.ComponentPropsWithoutRef<"svg">) => {
   return (

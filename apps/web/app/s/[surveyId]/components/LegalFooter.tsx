@@ -15,14 +15,6 @@ export const LegalFooter = ({
 }: LegalFooterProps) => {
   if (!IMPRINT_URL && !PRIVACY_URL && !IS_FORMBRICKS_CLOUD) return null;
 
-  const createMailToLink = (surveyLink) => {
-    const subject = encodeURIComponent("Reporting this survey");
-    const body = encodeURIComponent(
-      `I report the survey to the Formbricks team as it is spam, abusive or violates the terms.\n\n${surveyLink}`
-    );
-    return `mailto:hola@formbricks.com?subject=${subject}&body=${body}`;
-  };
-
   return (
     <div className="absolute bottom-0 h-10 w-full">
       <div className="mx-auto max-w-lg p-2 text-center text-xs text-slate-400 text-opacity-50">
@@ -39,7 +31,10 @@ export const LegalFooter = ({
         )}
         {PRIVACY_URL && IS_FORMBRICKS_CLOUD && <span className="px-2">|</span>}
         {IS_FORMBRICKS_CLOUD && (
-          <Link href={createMailToLink(surveyUrl)} target="_blank" className="hover:underline">
+          <Link
+            href={`https://app.formbricks.com/s/clxbivtla014iye2vfrn436xd?surveyUrl=${surveyUrl}`}
+            target="_blank"
+            className="hover:underline">
             Report Survey
           </Link>
         )}

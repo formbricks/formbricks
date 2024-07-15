@@ -1,7 +1,6 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import {
@@ -19,7 +18,6 @@ import {
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
-
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { createPerson, getPersonByUserId } from "../person/service";
@@ -36,33 +34,35 @@ export const selectDisplay = {
   status: true,
 };
 
-export const getDisplay = (displayId: string): Promise<TDisplay | null> =>
-  cache(
-    async () => {
-      validateInputs([displayId, ZId]);
+export const getDisplay = reactCache(
+  async (displayId: string): Promise<TDisplay | null> =>
+    cache(
+      async () => {
+        validateInputs([displayId, ZId]);
 
-      try {
-        const display = await prisma.display.findUnique({
-          where: {
-            id: displayId,
-          },
-          select: selectDisplay,
-        });
+        try {
+          const display = await prisma.display.findUnique({
+            where: {
+              id: displayId,
+            },
+            select: selectDisplay,
+          });
 
-        return display;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+          return display;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        throw error;
+      },
+      [`getDisplay-${displayId}`],
+      {
+        tags: [displayCache.tag.byId(displayId)],
       }
-    },
-    [`getDisplay-${displayId}`],
-    {
-      tags: [displayCache.tag.byId(displayId)],
-    }
-  )();
+    )()
+);
 
 export const updateDisplay = async (
   displayId: string,
@@ -275,38 +275,40 @@ export const markDisplayRespondedLegacy = async (displayId: string): Promise<TDi
   }
 };
 
-export const getDisplaysByPersonId = (personId: string, page?: number): Promise<TDisplay[]> =>
-  cache(
-    async () => {
-      validateInputs([personId, ZId], [page, ZOptionalNumber]);
+export const getDisplaysByPersonId = reactCache(
+  async (personId: string, page?: number): Promise<TDisplay[]> =>
+    cache(
+      async () => {
+        validateInputs([personId, ZId], [page, ZOptionalNumber]);
 
-      try {
-        const displays = await prisma.display.findMany({
-          where: {
-            personId: personId,
-          },
-          select: selectDisplay,
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-          orderBy: {
-            createdAt: "desc",
-          },
-        });
+        try {
+          const displays = await prisma.display.findMany({
+            where: {
+              personId: personId,
+            },
+            select: selectDisplay,
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+            orderBy: {
+              createdAt: "desc",
+            },
+          });
 
-        return displays;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+          return displays;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        throw error;
+      },
+      [`getDisplaysByPersonId-${personId}-${page}`],
+      {
+        tags: [displayCache.tag.byPersonId(personId)],
       }
-    },
-    [`getDisplaysByPersonId-${personId}-${page}`],
-    {
-      tags: [displayCache.tag.byPersonId(personId)],
-    }
-  )();
+    )()
+);
 
 export const deleteDisplayByResponseId = async (
   responseId: string,
@@ -336,34 +338,36 @@ export const deleteDisplayByResponseId = async (
   }
 };
 
-export const getDisplayCountBySurveyId = (surveyId: string, filters?: TDisplayFilters): Promise<number> =>
-  cache(
-    async () => {
-      validateInputs([surveyId, ZId]);
+export const getDisplayCountBySurveyId = reactCache(
+  (surveyId: string, filters?: TDisplayFilters): Promise<number> =>
+    cache(
+      async () => {
+        validateInputs([surveyId, ZId]);
 
-      try {
-        const displayCount = await prisma.display.count({
-          where: {
-            surveyId: surveyId,
-            ...(filters &&
-              filters.createdAt && {
-                createdAt: {
-                  gte: filters.createdAt.min,
-                  lte: filters.createdAt.max,
-                },
-              }),
-          },
-        });
-        return displayCount;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+        try {
+          const displayCount = await prisma.display.count({
+            where: {
+              surveyId: surveyId,
+              ...(filters &&
+                filters.createdAt && {
+                  createdAt: {
+                    gte: filters.createdAt.min,
+                    lte: filters.createdAt.max,
+                  },
+                }),
+            },
+          });
+          return displayCount;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+          throw error;
         }
-        throw error;
+      },
+      [`getDisplayCountBySurveyId-${surveyId}-${JSON.stringify(filters)}`],
+      {
+        tags: [displayCache.tag.bySurveyId(surveyId)],
       }
-    },
-    [`getDisplayCountBySurveyId-${surveyId}-${JSON.stringify(filters)}`],
-    {
-      tags: [displayCache.tag.bySurveyId(surveyId)],
-    }
-  )();
+    )()
+);

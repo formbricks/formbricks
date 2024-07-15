@@ -1,7 +1,6 @@
 "use client";
 
 import { FileIcon } from "lucide-react";
-
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 
 interface FileUploadResponseProps {

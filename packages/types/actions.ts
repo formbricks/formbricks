@@ -1,6 +1,5 @@
 import { z } from "zod";
-
-import { ZActionClass } from "./actionClasses";
+import { ZActionClass } from "./action-classes";
 
 export const ZAction = z.object({
   id: z.string(),

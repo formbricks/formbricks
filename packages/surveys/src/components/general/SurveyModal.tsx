@@ -1,8 +1,6 @@
 import { Modal } from "@/components/wrappers/Modal";
 import { useState } from "preact/hooks";
-
-import { SurveyModalProps } from "@formbricks/types/formbricksSurveys";
-
+import { SurveyModalProps } from "@formbricks/types/formbricks-surveys";
 import { Survey } from "./Survey";
 
 export const SurveyModal = ({
@@ -38,7 +36,7 @@ export const SurveyModal = ({
   const highlightBorderColor = styling?.highlightBorderColor?.light || null;
 
   return (
-    <div id="fbjs" className="formbricks-form">
+    <div id="fbjs" className="fb-formbricks-form">
       <Modal
         placement={placement}
         clickOutside={clickOutside}

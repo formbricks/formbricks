@@ -3,9 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-
 import { TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface MediaBackgroundProps {
   children: React.ReactNode;

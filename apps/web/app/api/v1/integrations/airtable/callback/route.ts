@@ -2,11 +2,11 @@ import { responses } from "@/app/lib/api/response";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import * as z from "zod";
-
-import { connectAirtable, fetchAirtableAuthToken } from "@formbricks/lib/airtable/service";
+import { fetchAirtableAuthToken } from "@formbricks/lib/airtable/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
 
 const getEmail = async (token: string) => {
   const req_ = await fetch("https://api.airtable.com/v0/meta/whoami", {
@@ -65,11 +65,16 @@ export const GET = async (req: NextRequest) => {
     }
     const email = await getEmail(key.access_token);
 
-    await connectAirtable({
-      environmentId,
-      email,
-      key,
-    });
+    const airtableIntegrationInput = {
+      type: "airtable" as "airtable",
+      environment: environmentId,
+      config: {
+        key,
+        data: [],
+        email,
+      },
+    };
+    await createOrUpdateIntegration(environmentId, airtableIntegrationInput);
     return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/airtable`);
   } catch (error) {
     console.error(error);

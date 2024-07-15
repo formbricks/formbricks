@@ -1,13 +1,12 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "@formbricks/lib/auth/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { deleteFile } from "@formbricks/lib/storage/service";
 import { getFileNameWithIdFromUrl } from "@formbricks/lib/storage/utils";
-import { deleteUser, updateUser } from "@formbricks/lib/user/service";
+import { updateUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TUserUpdateInput } from "@formbricks/types/user";
 
@@ -16,13 +15,6 @@ export const updateUserAction = async (data: Partial<TUserUpdateInput>) => {
   if (!session) throw new AuthorizationError("Not authorized");
 
   return await updateUser(session.user.id, data);
-};
-
-export const deleteUserAction = async () => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  return await deleteUser(session.user.id);
 };
 
 export const setupTwoFactorAuthAction = async (password: string) => {

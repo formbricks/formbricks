@@ -6,10 +6,9 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyAddressQuestion } from "@formbricks/types/surveys";
+import type { TSurveyAddressQuestion } from "@formbricks/types/surveys/types";
 
 interface AddressQuestionProps {
   question: TSurveyAddressQuestion;
@@ -23,7 +22,7 @@ interface AddressQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -38,7 +37,7 @@ export const AddressQuestion = ({
   languageCode,
   ttc,
   setTtc,
-  isInIframe,
+  autoFocusEnabled,
   currentQuestionId,
 }: AddressQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
@@ -123,15 +122,15 @@ export const AddressQuestion = ({
 
   const addressTextRef = useCallback(
     (currentElement: HTMLInputElement | null) => {
-      if (question.id && currentElement && !isInIframe) {
+      if (question.id && currentElement && autoFocusEnabled) {
         currentElement.focus();
       }
     },
-    [question.id, isInIframe]
+    [question.id, autoFocusEnabled]
   );
 
   return (
-    <form key={question.id} onSubmit={handleSubmit} className="w-full" ref={formRef}>
+    <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
       <ScrollableContainer>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -144,10 +143,11 @@ export const AddressQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="mt-4 space-y-2">
+          <div className="fb-mt-4 fb-space-y-2">
             {inputConfig.map(({ name, placeholder, required }, index) => (
               <input
                 ref={index === 0 ? addressTextRef : null}
+                dir="auto"
                 key={index}
                 name={name}
                 autoComplete={name}
@@ -157,14 +157,14 @@ export const AddressQuestion = ({
                 required={required}
                 value={safeValue[index] || ""}
                 onInput={(e) => handleInputChange(e.currentTarget.value, index)}
-                autoFocus={!isInIframe && index === 0}
-                className="border-border focus:border-brand placeholder:text-placeholder text-subheading bg-input-bg rounded-custom block w-full border p-2 shadow-sm sm:text-sm"
+                autoFocus={autoFocusEnabled && index === 0}
+                className="fb-border-border focus:fb-border-brand placeholder:fb-text-placeholder fb-text-subheading fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm sm:fb-text-sm"
               />
             ))}
           </div>
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton
             tabIndex={8}

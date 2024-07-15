@@ -17,7 +17,7 @@ jobs:
           node-version: 20.x
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
 
       - name: Install dependencies
         run: pnpm install --config.platform=linux --config.architecture=x64
@@ -25,10 +25,10 @@ jobs:
       - name: create .env
         run: cp .env.example .env
 
-      - name: Generate Random ENCRYPTION_KEY
+      - name: Generate Random ENCRYPTION_KEY and fill in .env
         run: |
-          SECRET=$(openssl rand -hex 32)
-          echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
+          ENCRYPTION_KEY=$(openssl rand -hex 32)
+          sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${ENCRYPTION_KEY}/" .env
 
       - name: Test
         run: pnpm test

@@ -1,13 +1,11 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-
-import { AddMemberRole } from "@formbricks/ee/RoleManagement/components/AddMemberRole";
+import { AddMemberRole } from "@formbricks/ee/role-management/components/add-member-role";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
-
 import { MembershipRole } from "./AddMemberModal";
 
 interface IndividualInviteTabProps {
@@ -24,7 +22,14 @@ export const IndividualInviteTab = ({
   isFormbricksCloud,
   environmentId,
 }: IndividualInviteTabProps) => {
-  const { register, getValues, handleSubmit, reset, control } = useForm<{
+  const {
+    register,
+    getValues,
+    handleSubmit,
+    reset,
+    control,
+    formState: { isSubmitting },
+  } = useForm<{
     name: string;
     email: string;
     role: MembershipRole;
@@ -33,13 +38,13 @@ export const IndividualInviteTab = ({
   const submitEventClass = async () => {
     const data = getValues();
     data.role = data.role || MembershipRole.Admin;
-    onSubmit([data]);
+    await onSubmit([data]);
     setOpen(false);
     reset();
   };
   return (
     <form onSubmit={handleSubmit(submitEventClass)}>
-      <div className="flex justify-between rounded-lg ">
+      <div className="flex justify-between rounded-lg">
         <div className="w-full space-y-4">
           <div>
             <Label htmlFor="memberNameInput">Full Name</Label>
@@ -88,7 +93,7 @@ export const IndividualInviteTab = ({
             }}>
             Cancel
           </Button>
-          <Button variant="darkCTA" type="submit" size="sm">
+          <Button variant="darkCTA" type="submit" size="sm" loading={isSubmitting}>
             Send Invitation
           </Button>
         </div>

@@ -6,7 +6,6 @@ import clsx from "clsx";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { forwardRef } from "react";
-
 import { Button } from "./Button";
 import { MobileNavigation, useIsInsideMobileNavigation, useMobileNavigationStore } from "./MobileNavigation";
 import { ThemeToggle } from "./ThemeToggle";

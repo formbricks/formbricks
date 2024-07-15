@@ -1,6 +1,6 @@
-import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
-import { TSurvey } from "@formbricks/types/surveys";
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhook } from "@formbricks/types/webhooks";
 import { Label } from "@formbricks/ui/Label";
 
@@ -75,13 +75,13 @@ export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">
         <div>
           <Label className="text-xs font-normal text-slate-500">Created on</Label>
-          <p className=" text-xs text-slate-700">
+          <p className="text-xs text-slate-700">
             {convertDateTimeStringShort(webhook.createdAt?.toString())}
           </p>
         </div>
         <div>
-          <Label className=" text-xs font-normal text-slate-500">Last updated</Label>
-          <p className=" text-xs text-slate-700">
+          <Label className="text-xs font-normal text-slate-500">Last updated</Label>
+          <p className="text-xs text-slate-700">
             {convertDateTimeStringShort(webhook.updatedAt?.toString())}
           </p>
         </div>

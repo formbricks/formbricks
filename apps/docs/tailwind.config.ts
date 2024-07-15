@@ -3,7 +3,6 @@ import forms from "@tailwindcss/forms";
 import typographyPlugin from "@tailwindcss/typography";
 import { type Config } from "tailwindcss";
 import defaultTheme from "tailwindcss/defaultTheme";
-
 import typographyStyles from "./typography";
 
 export default {

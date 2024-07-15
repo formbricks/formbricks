@@ -2,13 +2,11 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { validateId } from "@formbricks/types/surveys/validation";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-
-import { validateId } from "../lib/validation";
 
 interface UpdateQuestionIdProps {
   localSurvey: TSurvey;
@@ -37,14 +35,20 @@ export const UpdateQuestionId = ({
 
     const questionIds = localSurvey.questions.map((q) => q.id);
     const hiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
-    if (validateId("Question", currentValue, questionIds, hiddenFieldIds)) {
-      setIsInputInvalid(false);
-      toast.success("Question ID updated.");
-      updateQuestion(questionIdx, { id: currentValue });
-      setPrevValue(currentValue); // after successful update, set current value as previous value
-    } else {
+
+    const validateIdError = validateId("Question", currentValue, questionIds, hiddenFieldIds);
+
+    if (validateIdError) {
+      setIsInputInvalid(true);
+      toast.error(validateIdError);
       setCurrentValue(prevValue);
+      return;
     }
+
+    setIsInputInvalid(false);
+    toast.success("Question ID updated.");
+    updateQuestion(questionIdx, { id: currentValue });
+    setPrevValue(currentValue); // after successful update, set current value as previous value
   };
 
   const isButtonDisabled = () => {
@@ -63,6 +67,7 @@ export const UpdateQuestionId = ({
           onChange={(e) => {
             setCurrentValue(e.target.value);
           }}
+          dir="auto"
           disabled={localSurvey.status !== "draft" && !question.isDraft}
           className={`h-10 ${isInputInvalid ? "border-red-300 focus:border-red-300" : ""}`}
         />

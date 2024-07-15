@@ -1,5 +1,4 @@
 import { GoogleSheetWrapper } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/GoogleSheetWrapper";
-
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
@@ -11,7 +10,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
+import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { GoBackButton } from "@formbricks/ui/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";

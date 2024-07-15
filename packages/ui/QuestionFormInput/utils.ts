@@ -6,7 +6,7 @@ import {
   TSurveyMatrixQuestion,
   TSurveyMultipleChoiceQuestion,
   TSurveyQuestion,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 
 // Function to get index for choice /rowLabel /columnLabel
 export const getIndex = (id: string, isChoice: boolean) => {
@@ -59,27 +59,6 @@ export const determineImageUploaderVisibility = (questionIdx: number, localSurve
       // Regular Survey Question
       const question = localSurvey.questions[questionIdx];
       return (!!question && !!question.imageUrl) || (!!question && !!question.videoUrl);
-  }
-};
-
-export const getLabelById = (id: string) => {
-  switch (id) {
-    case "headline":
-      return "Question";
-    case "subheader":
-      return "Description";
-    case "placeholder":
-      return "Placeholder";
-    case "buttonLabel":
-      return `"Next" Button Label`;
-    case "backButtonLabel":
-      return `"Back" Button Label`;
-    case "lowerLabel":
-      return "Lower Label";
-    case "upperLabel":
-      return "Upper Label";
-    default:
-      return "";
   }
 };
 

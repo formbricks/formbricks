@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
@@ -12,7 +11,6 @@ import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@form
 import { Label } from "@formbricks/ui/Label";
 import { getPlacementStyle } from "@formbricks/ui/PreviewSurvey/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
-
 import { updateProductAction } from "../actions";
 
 const placements = [

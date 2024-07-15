@@ -1,6 +1,5 @@
 import { TimerIcon } from "lucide-react";
-
-import { TSurveySummary } from "@formbricks/types/surveys";
+import { TSurveySummary } from "@formbricks/types/surveys/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 interface SummaryDropOffsProps {
@@ -37,7 +36,7 @@ export const SummaryDropOffs = ({ dropOff }: SummaryDropOffsProps) => {
               {quesDropOff.ttc > 0 ? (quesDropOff.ttc / 1000).toFixed(2) + "s" : "N/A"}
             </div>
             <div className="whitespace-pre-wrap text-center font-semibold">{quesDropOff.impressions}</div>
-            <div className=" pl-6 text-center md:px-6">
+            <div className="pl-6 text-center md:px-6">
               <span className="mr-1.5 font-semibold">{quesDropOff.dropOffCount}</span>
               <span>({Math.round(quesDropOff.dropOffPercentage)}%)</span>
             </div>

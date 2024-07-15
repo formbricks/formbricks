@@ -1,5 +1,5 @@
 import { Client } from "./api/client";
-import { ApiConfig } from "./types/index";
+import { type ApiConfig } from "./types/index";
 
 export class FormbricksAPI {
   client: Client;

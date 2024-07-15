@@ -1,7 +1,7 @@
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { getPerson } from "@formbricks/lib/person/service";
 import { getResponsesByPersonId } from "@formbricks/lib/response/service";
-import { capitalizeFirstLetter } from "@formbricks/lib/strings";
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 
 export const AttributesSection = async ({ personId }: { personId: string }) => {
   const [person, attributes] = await Promise.all([getPerson(personId), getAttributes(personId)]);

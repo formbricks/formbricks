@@ -15,15 +15,7 @@ export const metadata = {
 
 Formbricks offers two types of APIs: the **Public Client API** and the **Management API**. Each API serves a different purpose, has different authentication requirements, and provides access to different data and settings.
 
-View our [API Documentation](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh) in more than 30 frameworks and languages. Or directly try out our APIs in Postman by clicking the button below:
-
-<div className="max-w-full sm:max-w-3xl">
-  <a
-    target="_blank"
-    href="https://formbricks.postman.co/collection/11026000-927c954f-85a9-4f8f-b0ec-14191b903737?source=rip_html">
-    <img alt="Run in Postman" src="https://run.pstmn.io/button.svg" />
-  </a>
-</div>
+View our [API Documentation](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh) in more than 30 frameworks and languages.
 
 ## Public Client API
 
@@ -67,8 +59,8 @@ The API requests are authorized with a personal API key. This API key gives you 
    />
 
 <Note>
-  ### Store API key safely!
-  Anyone who has your API key has full control over your account. For security reasons, you cannot view the API key again.
+  ### Store API key safely! Anyone who has your API key has full control over your account. For security
+  reasons, you cannot view the API key again.
 </Note>
 
 ### Test your API Key
@@ -123,7 +115,8 @@ Hit the below request to verify that you are authenticated with your API Key and
           "id": "cll2m30r60003mx0hnemjfckr",
           "name": "My Product"
       },
-      "widgetSetupCompleted": false
+      "appSetupCompleted": false,
+      "websiteSetupCompleted": false,
     }
     ```
     ```json {{ title: '401 Not Authenticated' }}

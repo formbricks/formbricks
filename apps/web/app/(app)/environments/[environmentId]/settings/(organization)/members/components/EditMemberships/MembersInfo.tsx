@@ -1,7 +1,6 @@
 import { MemberActions } from "@/app/(app)/environments/[environmentId]/settings/(organization)/members/components/EditMemberships/MemberActions";
 import { isInviteExpired } from "@/app/lib/utils";
-
-import { EditMembershipRole } from "@formbricks/ee/RoleManagement/components/EditMembershipRole";
+import { EditMembershipRole } from "@formbricks/ee/role-management/components/edit-membership-role";
 import { TInvite } from "@formbricks/types/invites";
 import { TMember, TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -42,7 +41,7 @@ export const MembersInfo = async ({
           <div className="ph-no-capture col-span-5 flex flex-col justify-center break-all">
             <p>{member.name}</p>
           </div>
-          <div className="ph-no-capture col-span-5  flex flex-col justify-center break-all">
+          <div className="ph-no-capture col-span-5 flex flex-col justify-center break-all">
             {member.email}
           </div>
 

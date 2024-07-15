@@ -1,9 +1,8 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-
 import { createActionClass, getActionClasses } from "@formbricks/lib/actionClass/service";
-import { TActionClass, ZActionClassInput } from "@formbricks/types/actionClasses";
+import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const GET = async (request: Request) => {

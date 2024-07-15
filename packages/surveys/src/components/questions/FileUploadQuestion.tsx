@@ -4,12 +4,10 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import type { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
-
+import type { TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { BackButton } from "../buttons/BackButton";
 import { FileInput } from "../general/FileInput";
 import { Subheader } from "../general/Subheader";
@@ -27,7 +25,7 @@ interface FileUploadQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -71,7 +69,7 @@ export const FileUploadQuestion = ({
           }
         }
       }}
-      className="w-full ">
+      className="fb-w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -104,7 +102,7 @@ export const FileUploadQuestion = ({
           />
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

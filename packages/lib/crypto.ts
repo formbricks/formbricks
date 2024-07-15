@@ -1,6 +1,5 @@
 import crypto from "crypto";
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from "crypto";
-
 import { ENCRYPTION_KEY } from "./constants";
 
 const ALGORITHM = "aes256";

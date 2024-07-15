@@ -5,12 +5,12 @@ import { MailIcon } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { isValidEmail } from "@formbricks/lib/utils/email";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProductStyling } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { StackedCardsContainer } from "@formbricks/ui/StackedCardsContainer";
@@ -41,11 +41,9 @@ export const VerifyEmail = ({
   const [emailSent, setEmailSent] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const validateEmail = (inputEmail) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inputEmail);
-
   const submitEmail = async (email) => {
     setIsLoading(true);
-    if (!validateEmail(email)) {
+    if (!isValidEmail(email)) {
       toast.error("Please enter a valid email");
       setIsLoading(false);
       return;

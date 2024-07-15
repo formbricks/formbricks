@@ -1,14 +1,14 @@
 import { EnvironmentLayout } from "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
-
+import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { ToasterClient } from "@formbricks/ui/ToasterClient";
-
 import { FormbricksClient } from "../../components/FormbricksClient";
 import { PosthogIdentify } from "./components/PosthogIdentify";
 
@@ -26,6 +26,13 @@ const EnvLayout = async ({ children, params }) => {
   if (!organization) {
     throw new Error("Organization not found");
   }
+  const product = await getProductByEnvironmentId(params.environmentId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
+  if (!membership) return notFound();
 
   return (
     <>
@@ -35,9 +42,7 @@ const EnvLayout = async ({ children, params }) => {
           environmentId={params.environmentId}
           organizationId={organization.id}
           organizationName={organization.name}
-          inAppSurveyBillingStatus={organization.billing.features.inAppSurvey.status}
-          linkSurveyBillingStatus={organization.billing.features.linkSurvey.status}
-          userTargetingBillingStatus={organization.billing.features.userTargeting.status}
+          organizationBilling={organization.billing}
         />
         <FormbricksClient session={session} />
         <ToasterClient />

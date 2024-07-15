@@ -1,9 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
-
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "@formbricks/email";
 import { CRON_SECRET } from "@formbricks/lib/constants";
-
 import { getNotificationResponse } from "./lib/notificationResponse";
 import { getOrganizationIds } from "./lib/organization";
 import { getProductsByOrganizationId } from "./lib/product";

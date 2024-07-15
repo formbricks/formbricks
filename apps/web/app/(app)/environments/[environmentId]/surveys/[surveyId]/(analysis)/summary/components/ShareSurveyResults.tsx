@@ -1,7 +1,6 @@
 import { AlertCircleIcon, CheckCircle2Icon } from "lucide-react";
 import { Clipboard } from "lucide-react";
 import { toast } from "react-hot-toast";
-
 import { Button } from "@formbricks/ui/Button";
 import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
 
@@ -61,12 +60,12 @@ export const ShareSurveyResults = ({
               <Button
                 type="submit"
                 variant="secondary"
-                className=" text-center"
+                className="text-center"
                 onClick={() => handleUnpublish()}>
                 Unpublish
               </Button>
 
-              <Button variant="darkCTA" className=" text-center" href={surveyUrl} target="_blank">
+              <Button variant="darkCTA" className="text-center" href={surveyUrl} target="_blank">
                 View site
               </Button>
             </div>

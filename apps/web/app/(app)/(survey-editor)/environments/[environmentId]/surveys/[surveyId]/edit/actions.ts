@@ -1,7 +1,6 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
@@ -24,11 +23,11 @@ import {
   loadNewSegmentInSurvey,
   updateSurvey,
 } from "@formbricks/lib/survey/service";
-import { TActionClassInput } from "@formbricks/types/actionClasses";
+import { TActionClassInput } from "@formbricks/types/action-classes";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TProduct } from "@formbricks/types/product";
 import { TBaseFilters, TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const surveyMutateAction = async (survey: TSurvey): Promise<TSurvey> => {
   return await updateSurvey(survey);
@@ -251,12 +250,15 @@ export const triggerDownloadUnsplashImageAction = async (downloadUrl: string) =>
   }
 };
 
-export const createActionClassAction = async (action: TActionClassInput) => {
+export const createActionClassAction = async (environmentId: string, action: TActionClassInput) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, action.environmentId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
+  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await createActionClass(action.environmentId, action);
 };

@@ -1,5 +1,4 @@
 import type { TJSAppConfig, TJsWebsiteConfig, TJsWebsiteConfigInput } from "@formbricks/types/js";
-
 import {
   ErrorHandler,
   MissingFieldError,

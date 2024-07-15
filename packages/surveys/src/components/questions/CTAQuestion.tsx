@@ -6,11 +6,10 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "react";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyCTAQuestion } from "@formbricks/types/surveys";
+import type { TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
@@ -23,7 +22,7 @@ interface CTAQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -37,7 +36,7 @@ export const CTAQuestion = ({
   languageCode,
   ttc,
   setTtc,
-  isInIframe,
+  autoFocusEnabled,
   currentQuestionId,
 }: CTAQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
@@ -58,7 +57,7 @@ export const CTAQuestion = ({
           <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} questionId={question.id} />
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
@@ -70,9 +69,10 @@ export const CTAQuestion = ({
             }}
           />
         )}
-        <div className="flex w-full justify-end">
+        <div className="fb-flex fb-w-full fb-justify-end">
           {!question.required && (
             <button
+              dir="auto"
               tabIndex={0}
               type="button"
               onClick={() => {
@@ -81,14 +81,14 @@ export const CTAQuestion = ({
                 onSubmit({ [question.id]: "dismissed" }, updatedTtcObj);
                 onChange({ [question.id]: "dismissed" });
               }}
-              className="text-heading focus:ring-focus mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2">
+              className="fb-text-heading focus:fb-ring-focus fb-mr-4 fb-flex fb-items-center fb-rounded-md fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
               {getLocalizedValue(question.dismissButtonLabel, languageCode) || "Skip"}
             </button>
           )}
           <SubmitButton
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            focus={!isInIframe}
+            focus={autoFocusEnabled}
             onClick={() => {
               if (question.buttonExternal && question.buttonUrl) {
                 window?.open(question.buttonUrl, "_blank")?.focus();

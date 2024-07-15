@@ -2,7 +2,6 @@ import { responses } from "@/app/lib/api/response";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import * as z from "zod";
-
 import { getTables } from "@formbricks/lib/airtable/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
@@ -17,7 +16,7 @@ export const GET = async (req: NextRequest) => {
   const baseId = z.string().safeParse(queryParams.get("baseId"));
 
   if (!baseId.success) {
-    return responses.missingFieldResponse("Base Id is Required");
+    return responses.badRequestResponse("Base Id is Required");
   }
 
   if (!session) {

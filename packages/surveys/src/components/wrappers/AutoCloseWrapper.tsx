@@ -1,20 +1,20 @@
 import { AutoCloseProgressBar } from "@/components/general/AutoCloseProgressBar";
 import React from "preact/compat";
 import { useEffect, useRef, useState } from "preact/hooks";
-
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface AutoCloseProps {
   survey: TSurvey;
   onClose: () => void;
+  offset: number;
   children: React.ReactNode;
 }
 
-export const AutoCloseWrapper = ({ survey, onClose, children }: AutoCloseProps) => {
+export const AutoCloseWrapper = ({ survey, onClose, children, offset }: AutoCloseProps) => {
   const [countDownActive, setCountDownActive] = useState(true);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isAppSurvey = survey.type === "app" || survey.type === "website";
-  const showAutoCloseProgressBar = countDownActive && isAppSurvey;
+  const showAutoCloseProgressBar = countDownActive && isAppSurvey && offset === 0;
 
   const startCountdown = () => {
     if (!survey.autoClose) return;
@@ -44,11 +44,11 @@ export const AutoCloseWrapper = ({ survey, onClose, children }: AutoCloseProps) 
   }, [survey.autoClose]);
 
   return (
-    <div className="h-full w-full">
+    <div className="fb-h-full fb-w-full">
       {survey.autoClose && showAutoCloseProgressBar && (
         <AutoCloseProgressBar autoCloseTimeout={survey.autoClose} />
       )}
-      <div onClick={stopCountdown} onMouseOver={stopCountdown} className="h-full w-full">
+      <div onClick={stopCountdown} onMouseOver={stopCountdown} className="fb-h-full fb-w-full">
         {children}
       </div>
     </div>

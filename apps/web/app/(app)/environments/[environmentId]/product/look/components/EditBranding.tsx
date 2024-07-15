@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
-
 import { updateProductAction } from "../actions";
 
 interface EditFormbricksBrandingProps {
@@ -47,7 +45,7 @@ export const EditFormbricksBranding = ({
 
   return (
     <div className="w-full items-center space-y-4">
-      <div className="mb-4 flex items-center space-x-2">
+      <div className="flex items-center space-x-2">
         <Switch
           id={`branding-${type}`}
           checked={isBrandingEnabled}

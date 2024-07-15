@@ -1,7 +1,6 @@
-import { TActionClass } from "@formbricks/types/actionClasses";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TActionClass } from "@formbricks/types/action-classes";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSegment } from "@formbricks/types/segment";
-
 import { SegmentTableDataRowContainer } from "./SegmentTableDataRowContainer";
 
 type TSegmentTableProps = {

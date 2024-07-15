@@ -11,18 +11,17 @@ import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import {
   TIntegrationNotion,
   TIntegrationNotionConfigData,
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { DropdownSelector } from "@formbricks/ui/DropdownSelector";
 import { Label } from "@formbricks/ui/Label";
@@ -122,11 +121,19 @@ export const AddIntegrationModal = ({
     const hiddenFields = selectedSurvey?.hiddenFields.enabled
       ? selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
           id: fId,
-          name: fId,
-          type: TSurveyQuestionType.OpenText,
+          name: `Hidden field : ${fId}`,
+          type: TSurveyQuestionTypeEnum.OpenText,
         })) || []
       : [];
-    return [...questions, ...hiddenFields];
+    const Metadata = [
+      {
+        id: "metadata",
+        name: `Metadata`,
+        type: TSurveyQuestionTypeEnum.OpenText,
+      },
+    ];
+
+    return [...questions, ...hiddenFields, ...Metadata];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSurvey?.id]);
 

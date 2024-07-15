@@ -80,12 +80,12 @@ class AuthorizationError extends Error {
   }
 }
 
-type NetworkError = {
+interface NetworkError {
   code: "network_error";
   message: string;
   status: number;
   url: URL;
-};
+}
 
 export const ZErrorHandler = z.function().args(z.any()).returns(z.void());
 

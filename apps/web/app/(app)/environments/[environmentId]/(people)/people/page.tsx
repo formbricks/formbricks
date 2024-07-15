@@ -1,6 +1,5 @@
 import { PeopleSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PeopleSecondaryNavigation";
 import { CircleHelpIcon } from "lucide-react";
-
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";
@@ -10,7 +9,6 @@ import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 import { Pagination } from "@formbricks/ui/Pagination";
-
 import { PersonCard } from "./components/PersonCard";
 
 const Page = async ({
@@ -66,7 +64,7 @@ const Page = async ({
       ) : (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="grid h-12 grid-cols-7 content-center border-b border-slate-200 text-left text-sm font-semibold text-slate-900">
-            <div className="col-span-3 pl-6 ">User</div>
+            <div className="col-span-3 pl-6">User</div>
             <div className="col-span-2 hidden text-center sm:block">User ID</div>
             <div className="col-span-2 hidden text-center sm:block">Email</div>
           </div>

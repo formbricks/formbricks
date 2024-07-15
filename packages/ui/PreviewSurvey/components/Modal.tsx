@@ -1,8 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
-
 import { getPlacementStyle } from "../lib/utils";
 
 interface ModalProps {
@@ -130,7 +128,7 @@ export const Modal = ({
       id="preview-survey-base"
       aria-live="assertive"
       className={cn(
-        "relative h-full w-full overflow-hidden",
+        "relative h-full w-full overflow-hidden rounded-b-md",
         overlayStyle,
         "transition-all duration-500 ease-in-out"
       )}>
@@ -146,7 +144,7 @@ export const Modal = ({
           }),
         }}
         className={cn(
-          "no-scrollbar pointer-events-auto absolute h-fit max-h-[90%] w-full max-w-sm transition-all duration-500 ease-in-out ",
+          "no-scrollbar pointer-events-auto absolute max-h-[90%] w-full max-w-sm transition-all duration-500 ease-in-out",
           previewMode === "desktop" ? getPlacementStyle(placement) : "max-w-full",
           slidingAnimationClass
         )}>

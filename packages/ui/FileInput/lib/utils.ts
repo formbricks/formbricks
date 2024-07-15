@@ -1,7 +1,6 @@
 "use client";
 
 import { toast } from "react-hot-toast";
-
 import { TAllowedFileExtension } from "@formbricks/types/common";
 
 export const uploadFile = async (

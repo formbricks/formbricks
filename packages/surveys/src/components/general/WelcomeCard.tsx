@@ -1,11 +1,10 @@
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { calculateElementIdx } from "@/lib/utils";
-
+import { useEffect } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import { TI18nString, TSurvey } from "@formbricks/types/surveys";
-
+import { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
 import { Headline } from "./Headline";
 import { HtmlBody } from "./HtmlBody";
 
@@ -18,13 +17,14 @@ interface WelcomeCardProps {
   survey: TSurvey;
   languageCode: string;
   responseCount?: number;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   replaceRecallInfo: (text: string, responseData: TResponseData) => string;
+  isCurrent: boolean;
 }
 
 const TimerIcon = () => {
   return (
-    <div className="mr-1">
+    <div className="fb-mr-1">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="16"
@@ -41,14 +41,14 @@ const TimerIcon = () => {
 
 const UsersIcon = () => {
   return (
-    <div className="mr-1">
+    <div className="fb-mr-1">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
         strokeWidth="1.5"
         stroke="currentColor"
-        class="h-4 w-4">
+        class="fb-h-4 fb-w-4">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -68,8 +68,9 @@ export const WelcomeCard = ({
   languageCode,
   survey,
   responseCount,
-  isInIframe,
+  autoFocusEnabled,
   replaceRecallInfo,
+  isCurrent,
 }: WelcomeCardProps) => {
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
@@ -102,13 +103,40 @@ export const WelcomeCard = ({
   const timeToFinish = survey.welcomeCard.timeToFinish;
   const showResponseCount = survey.welcomeCard.showResponseCount;
 
+  const handleSubmit = () => {
+    onSubmit({ ["welcomeCard"]: "clicked" }, {});
+  };
+
+  useEffect(() => {
+    const handleEnter = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        handleSubmit();
+      }
+    };
+
+    if (isCurrent && survey.type === "link") {
+      document.addEventListener("keydown", handleEnter);
+    } else {
+      document.removeEventListener("keydown", handleEnter);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEnter);
+    };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCurrent]);
+
   return (
     <div>
       <ScrollableContainer>
         <div>
           {fileUrl && (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
+            <img
+              src={fileUrl}
+              className="fb-mb-8 fb-max-h-96 fb-w-1/3 fb-rounded-lg fb-object-contain"
+              alt="Company Logo"
+            />
           )}
 
           <Headline
@@ -122,37 +150,35 @@ export const WelcomeCard = ({
         </div>
       </ScrollableContainer>
 
-      <div className="mx-6 mt-4 flex gap-4 py-4">
+      <div className="fb-mx-6 fb-mt-4 fb-flex fb-gap-4 fb-py-4">
         <SubmitButton
           buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
           isLastQuestion={false}
-          focus={!isInIframe}
-          onClick={() => {
-            onSubmit({ ["welcomeCard"]: "clicked" }, {});
-          }}
+          focus={autoFocusEnabled}
+          onClick={handleSubmit}
           type="button"
+          onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
         />
-        <div className="text-subheading hidden items-center text-xs md:flex">Press Enter ↵</div>
       </div>
 
       {timeToFinish && !showResponseCount ? (
-        <div className="item-center text-subheading my-4 ml-6 flex">
+        <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
           <TimerIcon />
-          <p className="pt-1 text-xs">
+          <p className="fb-pt-1 fb-text-xs">
             <span> Takes {calculateTimeToComplete()} </span>
           </p>
         </div>
       ) : showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
-        <div className="item-center text-subheading my-4 ml-6 flex">
+        <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
           <UsersIcon />
-          <p className="pt-1 text-xs">
+          <p className="fb-pt-1 fb-text-xs">
             <span>{`${responseCount} people responded`}</span>
           </p>
         </div>
       ) : timeToFinish && showResponseCount ? (
-        <div className="item-center text-subheading my-4 ml-6 flex">
+        <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
           <TimerIcon />
-          <p className="pt-1 text-xs">
+          <p className="fb-pt-1 fb-text-xs">
             <span> Takes {calculateTimeToComplete()} </span>
             <span>{responseCount && responseCount > 3 ? `⋅ ${responseCount} people responded` : ""}</span>
           </p>

@@ -1,7 +1,5 @@
 import React, { useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
-
 import { Label } from "../Label";
 
 interface Option<T> {

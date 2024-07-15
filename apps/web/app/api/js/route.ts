@@ -2,7 +2,6 @@
 // Deprecated since 22-03-2024
 // This endpoint has been deprecated. Please use the new endpoint /api/packages/js instead.
 import { responses } from "@/app/lib/api/response";
-
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 
 export const GET = async () => {

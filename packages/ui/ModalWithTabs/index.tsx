@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import { Modal } from "../Modal";
 
 interface ModalWithTabsProps {
@@ -11,6 +10,7 @@ interface ModalWithTabsProps {
   tabs: TabProps[];
   closeOnOutsideClick?: boolean;
   size?: "md" | "lg";
+  restrictOverflow?: boolean;
 }
 
 interface TabProps {
@@ -27,6 +27,7 @@ export const ModalWithTabs = ({
   description,
   closeOnOutsideClick,
   size = "lg",
+  restrictOverflow = false,
 }: ModalWithTabsProps) => {
   const [activeTab, setActiveTab] = useState(0);
 
@@ -41,7 +42,13 @@ export const ModalWithTabs = ({
   }, [open]);
 
   return (
-    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={closeOnOutsideClick} size={size}>
+    <Modal
+      open={open}
+      setOpen={setOpen}
+      noPadding
+      closeOnOutsideClick={closeOnOutsideClick}
+      size={size}
+      restrictOverflow={restrictOverflow}>
       <div className="flex h-full flex-col rounded-lg">
         <div className="rounded-t-lg bg-slate-100">
           <div className="mr-20 flex items-center justify-between truncate p-6">
@@ -54,7 +61,7 @@ export const ModalWithTabs = ({
             </div>
           </div>
         </div>
-        <div className="flex  h-full w-full items-center  justify-center space-x-2 border-b border-slate-200 px-6 ">
+        <div className="flex h-full w-full items-center justify-center space-x-2 border-b border-slate-200 px-6">
           {tabs.map((tab, index) => (
             <button
               key={index}

@@ -11,21 +11,15 @@ import {
 import { createId } from "@paralleldrive/cuid2";
 import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
-import { MultiLanguageCard } from "@formbricks/ee/multiLanguage/components/MultiLanguageCard";
+import { MultiLanguageCard } from "@formbricks/ee/multi-language/components/multi-language-card";
 import { extractLanguageCodes, getLocalizedValue, translateQuestion } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProduct } from "@formbricks/types/product";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
-
-import {
-  findQuestionsWithCyclicLogic,
-  isCardValid,
-  validateQuestion,
-  validateSurveyQuestionsInBatch,
-} from "../lib/validation";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
+import { isCardValid, validateQuestion, validateSurveyQuestionsInBatch } from "../lib/validation";
 import { AddQuestionButton } from "./AddQuestionButton";
 import { EditThankYouCard } from "./EditThankYouCard";
 import { EditWelcomeCard } from "./EditWelcomeCard";
@@ -39,7 +33,7 @@ interface QuestionsViewProps {
   setActiveQuestionId: (questionId: string | null) => void;
   product: TProduct;
   invalidQuestions: string[] | null;
-  setInvalidQuestions: (invalidQuestions: string[] | null) => void;
+  setInvalidQuestions: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isMultiLanguageAllowed?: boolean;
@@ -94,19 +88,24 @@ export const QuestionsView = ({
     if (invalidQuestions === null) {
       return;
     }
+
     const isFirstQuestion = question.id === localSurvey.questions[0].id;
-    let temp = structuredClone(invalidQuestions);
+
     if (validateQuestion(question, surveyLanguages, isFirstQuestion)) {
       // If question is valid, we now check for cyclic logic
       const questionsWithCyclicLogic = findQuestionsWithCyclicLogic(localSurvey.questions);
-      if (!questionsWithCyclicLogic.includes(question.id)) {
-        temp = invalidQuestions.filter((id) => id !== question.id);
-        setInvalidQuestions(temp);
+
+      if (questionsWithCyclicLogic.includes(question.id) && !invalidQuestions.includes(question.id)) {
+        setInvalidQuestions([...invalidQuestions, question.id]);
+        return;
       }
-    } else if (!invalidQuestions.includes(question.id)) {
-      temp.push(question.id);
-      setInvalidQuestions(temp);
+
+      setInvalidQuestions(invalidQuestions.filter((id) => id !== question.id));
+      return;
     }
+
+    setInvalidQuestions([...invalidQuestions, question.id]);
+    return;
   };
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
@@ -127,6 +126,7 @@ export const QuestionsView = ({
       delete internalQuestionIdMap[localSurvey.questions[questionIdx].id];
       setActiveQuestionId(updatedAttributes.id);
     }
+
     updatedSurvey.questions[questionIdx] = {
       ...updatedSurvey.questions[questionIdx],
       ...updatedAttributes,
@@ -148,17 +148,17 @@ export const QuestionsView = ({
         setbackButtonLabel(updatedAttributes.backButtonLabel);
       }
     }
-    // If the value of buttonLabel is equal to {default:""}, then delete buttonLabel key
-    if ("buttonLabel" in updatedAttributes) {
-      const currentButtonLabel = updatedSurvey.questions[questionIdx].buttonLabel;
-      if (
-        currentButtonLabel &&
-        Object.keys(currentButtonLabel).length === 1 &&
-        currentButtonLabel["default"].trim() === ""
-      ) {
-        delete updatedSurvey.questions[questionIdx].buttonLabel;
+    const attributesToCheck = ["buttonLabel", "upperLabel", "lowerLabel"];
+
+    // If the value of buttonLabel, lowerLabel or upperLabel is equal to {default:""}, then delete buttonLabel key
+    attributesToCheck.forEach((attribute) => {
+      if (Object.keys(updatedAttributes).includes(attribute)) {
+        const currentLabel = updatedSurvey.questions[questionIdx][attribute];
+        if (currentLabel && Object.keys(currentLabel).length === 1 && currentLabel["default"].trim() === "") {
+          delete updatedSurvey.questions[questionIdx][attribute];
+        }
       }
-    }
+    });
     setLocalSurvey(updatedSurvey);
     validateSurveyQuestion(updatedSurvey.questions[questionIdx]);
   };
@@ -337,8 +337,8 @@ export const QuestionsView = ({
   };
 
   return (
-    <div className="mt-16 px-5 py-4">
-      <div className="mb-5 flex flex-col gap-5">
+    <div className="mt-16 w-full px-5 py-4">
+      <div className="mb-5 flex w-full flex-col gap-5">
         <EditWelcomeCard
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
@@ -367,6 +367,7 @@ export const QuestionsView = ({
           internalQuestionIdMap={internalQuestionIdMap}
           attributeClasses={attributeClasses}
           addQuestion={addQuestion}
+          isFormbricksCloud={isFormbricksCloud}
         />
       </DndContext>
 
@@ -383,14 +384,12 @@ export const QuestionsView = ({
           attributeClasses={attributeClasses}
         />
 
-        {localSurvey.type === "link" ? (
-          <HiddenFieldsCard
-            localSurvey={localSurvey}
-            setLocalSurvey={setLocalSurvey}
-            setActiveQuestionId={setActiveQuestionId}
-            activeQuestionId={activeQuestionId}
-          />
-        ) : null}
+        <HiddenFieldsCard
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+          setActiveQuestionId={setActiveQuestionId}
+          activeQuestionId={activeQuestionId}
+        />
 
         <MultiLanguageCard
           localSurvey={localSurvey}

@@ -1,13 +1,11 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TAttributes, ZAttributes } from "@formbricks/types/attributes";
 import { ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
-
 import { attributeCache } from "../attribute/cache";
 import { attributeClassCache } from "../attributeClass/cache";
 import {
@@ -41,67 +39,71 @@ const convertPrismaAttributes = (prismaAttributes: any): TAttributes => {
   );
 };
 
-export const getAttributes = (personId: string): Promise<TAttributes> =>
-  cache(
-    async () => {
-      validateInputs([personId, ZId]);
+export const getAttributes = reactCache(
+  (personId: string): Promise<TAttributes> =>
+    cache(
+      async () => {
+        validateInputs([personId, ZId]);
 
-      try {
-        const prismaAttributes = await prisma.attribute.findMany({
-          where: {
-            personId,
-          },
-          select: selectAttribute,
-        });
+        try {
+          const prismaAttributes = await prisma.attribute.findMany({
+            where: {
+              personId,
+            },
+            select: selectAttribute,
+          });
 
-        return convertPrismaAttributes(prismaAttributes);
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+          return convertPrismaAttributes(prismaAttributes);
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getAttributes-${personId}`],
+      {
+        tags: [attributeCache.tag.byPersonId(personId)],
+      }
+    )()
+);
+
+export const getAttributesByUserId = reactCache(
+  (environmentId: string, userId: string): Promise<TAttributes> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [userId, ZString]);
+
+        const person = await getPersonByUserId(environmentId, userId);
+
+        if (!person) {
+          throw new Error("Person not found");
         }
 
-        throw error;
-      }
-    },
-    [`getAttributes-${personId}`],
-    {
-      tags: [attributeCache.tag.byPersonId(personId)],
-    }
-  )();
+        try {
+          const prismaAttributes = await prisma.attribute.findMany({
+            where: {
+              personId: person.id,
+            },
+            select: selectAttribute,
+          });
 
-export const getAttributesByUserId = (environmentId: string, userId: string): Promise<TAttributes> =>
-  cache(
-    async () => {
-      validateInputs([environmentId, ZId], [userId, ZString]);
+          return convertPrismaAttributes(prismaAttributes);
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
 
-      const person = await getPersonByUserId(environmentId, userId);
-
-      if (!person) {
-        throw new Error("Person not found");
-      }
-
-      try {
-        const prismaAttributes = await prisma.attribute.findMany({
-          where: {
-            personId: person.id,
-          },
-          select: selectAttribute,
-        });
-
-        return convertPrismaAttributes(prismaAttributes);
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+          throw error;
         }
-
-        throw error;
+      },
+      [`getAttributesByUserId-${environmentId}-${userId}`],
+      {
+        tags: [attributeCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
       }
-    },
-    [`getAttributesByUserId-${environmentId}-${userId}`],
-    {
-      tags: [attributeCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
-    }
-  )();
+    )()
+);
 
 export const getAttribute = (name: string, personId: string): Promise<string | undefined> =>
   cache(

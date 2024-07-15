@@ -1,4 +1,5 @@
 import { MdxImage } from "@/components/MdxImage";
+import I1 from "./images/1-set-up-website-micro-survey-popup.webp";
 
 export const metadata = {
   title: "Formbricks Website Survey SDK",
@@ -139,6 +140,27 @@ To enable debug mode in Formbricks, add `?formbricksDebug=true` to your app’s 
 For example, if you’ve integrated Formbricks JS to your app hosted at `https://example.com`, then change the URL to `https://example.com?formbricksDebug=true` and refresh the page, now view the console logs to see the debug mode live in action.
 
 This activates detailed debug messages in the browser console, providing deeper insights into Formbricks' operation and potential issues.
+
+---
+
+## Troubleshooting
+
+In case you don’t see your survey right away, here's what you can do. Go through these to find the error fast:
+
+### Formbricks Cloud and your website are not connected properly.
+
+Go back to [app.formbricks.com](http://app.formbricks.com) or your self-hosted instance's URL and go to the Website connection in the Configuration. If the status is still indicated as “Not connected” your app hasn't yet pinged the Formbricks Cloud:
+
+<MdxImage
+  src={I1}
+  alt="setup checklist ui of survey popup for website surveys"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+**How to fix it:**
+
+1. Check if your website loads the Formbricks widget correctly.
+2. Make sure you have `debug` mode enabled in your integration and you should see the Formbricks debug logs in your browser console while being in your app (right click in the browser, `Inspect`, switch to the console tab). If you don’t see them, double check your integration.
 
 ---
 

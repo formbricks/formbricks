@@ -6,17 +6,16 @@ import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
-import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
+import { createSegmentAction } from "@formbricks/ee/advanced-targeting/lib/actions";
+import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyEditorTabs } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyEditorTabs, TSurveyQuestion, ZSurvey } from "@formbricks/types/surveys/types";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-
 import { updateSurveyAction } from "../actions";
 import { isSurveyValid } from "../lib/validation";
 
@@ -27,7 +26,7 @@ interface SurveyMenuBarProps {
   environment: TEnvironment;
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
-  setInvalidQuestions: (invalidQuestions: string[]) => void;
+  setInvalidQuestions: React.Dispatch<React.SetStateAction<string[]>>;
   product: TProduct;
   responseCount: number;
   selectedLanguageCode: string;
@@ -45,7 +44,6 @@ export const SurveyMenuBar = ({
   product,
   responseCount,
   selectedLanguageCode,
-  setSelectedLanguageCode,
 }: SurveyMenuBarProps) => {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -54,8 +52,6 @@ export const SurveyMenuBar = ({
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const cautionText = "This survey received responses.";
-
-  const faultyQuestions: string[] = [];
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -142,20 +138,65 @@ export const SurveyMenuBar = ({
     return localSurvey.segment;
   };
 
-  const handleSurveySave = async () => {
+  const validateSurveyWithZod = (): boolean => {
+    const localSurveyValidation = ZSurvey.safeParse(localSurvey);
+    if (!localSurveyValidation.success) {
+      const currentError = localSurveyValidation.error.errors[0];
+      if (currentError.path[0] === "questions") {
+        const questionIdx = currentError.path[1];
+        const question: TSurveyQuestion = localSurvey.questions[questionIdx];
+        if (question) {
+          setInvalidQuestions((prevInvalidQuestions) =>
+            prevInvalidQuestions ? [...prevInvalidQuestions, question.id] : [question.id]
+          );
+        }
+      } else if (currentError.path[0] === "welcomeCard") {
+        setInvalidQuestions((prevInvalidQuestions) =>
+          prevInvalidQuestions ? [...prevInvalidQuestions, "start"] : ["start"]
+        );
+      } else if (currentError.path[0] === "thankYouCard") {
+        setInvalidQuestions((prevInvalidQuestions) =>
+          prevInvalidQuestions ? [...prevInvalidQuestions, "end"] : ["end"]
+        );
+      }
+
+      if (currentError.code === "custom") {
+        const params = currentError.params ?? ({} as { invalidLanguageCodes: string[] });
+        if (params.invalidLanguageCodes && params.invalidLanguageCodes.length) {
+          const invalidLanguageLabels = params.invalidLanguageCodes.map(
+            (invalidLanguage: string) => getLanguageLabel(invalidLanguage) ?? invalidLanguage
+          );
+
+          toast.error(`${currentError.message} ${invalidLanguageLabels.join(", ")}`);
+        } else {
+          toast.error(currentError.message);
+        }
+
+        return false;
+      }
+
+      toast.error(currentError.message);
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSurveySave = async (): Promise<boolean> => {
     setIsSurveySaving(true);
+
+    const isSurveyValidatedWithZod = validateSurveyWithZod();
+
+    if (!isSurveyValidatedWithZod) {
+      setIsSurveySaving(false);
+      return false;
+    }
+
     try {
-      if (
-        !isSurveyValid(
-          localSurvey,
-          faultyQuestions,
-          setInvalidQuestions,
-          selectedLanguageCode,
-          setSelectedLanguageCode
-        )
-      ) {
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode);
+      if (!isSurveyValidResult) {
         setIsSurveySaving(false);
-        return;
+        return false;
       }
 
       localSurvey.questions = localSurvey.questions.map((question) => {
@@ -170,31 +211,36 @@ export const SurveyMenuBar = ({
       setLocalSurvey(updatedSurvey);
 
       toast.success("Changes saved.");
+
+      return true;
     } catch (e) {
       console.error(e);
       setIsSurveySaving(false);
       toast.error(`Error saving changes`);
-      return;
+      return false;
     }
   };
 
   const handleSaveAndGoBack = async () => {
-    await handleSurveySave();
-    router.back();
+    const isSurveySaved = await handleSurveySave();
+    if (isSurveySaved) {
+      router.back();
+    }
   };
 
   const handleSurveyPublish = async () => {
     setIsSurveyPublishing(true);
+
+    const isSurveyValidatedWithZod = validateSurveyWithZod();
+
+    if (!isSurveyValidatedWithZod) {
+      setIsSurveyPublishing(false);
+      return;
+    }
+
     try {
-      if (
-        !isSurveyValid(
-          localSurvey,
-          faultyQuestions,
-          setInvalidQuestions,
-          selectedLanguageCode,
-          setSelectedLanguageCode
-        )
-      ) {
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode);
+      if (!isSurveyValidResult) {
         setIsSurveyPublishing(false);
         return;
       }
@@ -233,7 +279,7 @@ export const SurveyMenuBar = ({
               const updatedSurvey = { ...localSurvey, name: e.target.value };
               setLocalSurvey(updatedSurvey);
             }}
-            className="w-72 border-white hover:border-slate-200 "
+            className="w-72 border-white hover:border-slate-200"
           />
         </div>
         {responseCount > 0 && (
@@ -241,16 +287,14 @@ export const SurveyMenuBar = ({
             <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger>
-                  <AlertTriangleIcon className=" h-5 w-5 text-amber-400" />
+                  <AlertTriangleIcon className="h-5 w-5 text-amber-400" />
                 </TooltipTrigger>
                 <TooltipContent side={"top"} className="lg:hidden">
-                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400 ">
-                    {cautionText}
-                  </p>
+                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">{cautionText}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <p className=" hidden pl-1 text-xs md:text-sm lg:block">{cautionText}</p>
+            <p className="hidden pl-1 text-xs md:text-sm lg:block">{cautionText}</p>
           </div>
         )}
         <div className="mt-3 flex sm:ml-4 sm:mt-0">
@@ -266,7 +310,8 @@ export const SurveyMenuBar = ({
             variant="secondary"
             className="mr-3"
             loading={isSurveySaving}
-            onClick={() => handleSurveySave()}>
+            onClick={() => handleSurveySave()}
+            type="submit">
             Save
           </Button>
           {localSurvey.status !== "draft" && (

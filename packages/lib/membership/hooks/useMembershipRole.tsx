@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import { getMembershipByUserIdOrganizationIdAction } from "./actions";
 
 enum MembershipRole {

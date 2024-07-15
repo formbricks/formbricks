@@ -3,14 +3,14 @@ FROM node:20-alpine AS base
 #
 ## step 1: Prune monorepo
 #
-FROM base AS builder
-RUN apk add --no-cache libc6-compat
-RUN apk update
+# FROM base AS builder
+# RUN apk add --no-cache libc6-compat
+# RUN apk update
 # Set working directory
-WORKDIR /app
-RUN yarn global add turbo
-COPY . .
-RUN turbo prune @formbricks/web --docker
+# WORKDIR /app
+# RUN yarn global add turbo
+# COPY . .
+# RUN turbo prune @formbricks/web --docker
 
 #
 ## step 2: Install & build
@@ -27,6 +27,7 @@ RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
 ENV DATABASE_URL="postgresql://placeholder:for@build:5432/gets_overwritten_at_runtime?schema=public"
 ENV NEXTAUTH_SECRET="placeholder_for_next_auth_of_64_chars_get_overwritten_at_runtime"
 ENV ENCRYPTION_KEY="placeholder_for_build_key_of_64_chars_get_overwritten_at_runtime"
+ENV CRON_SECRET="placeholder_for_cron_secret_of_64_chars_get_overwritten_at_runtime"
 
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
@@ -35,21 +36,23 @@ ARG SENTRY_AUTH_TOKEN
 WORKDIR /app
 
 # Copy the package information
-COPY .gitignore .gitignore
-COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+# COPY .gitignore .gitignore
+# COPY --from=builder /app/out/json/ .
+# COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
 # Install the dependencies
-RUN pnpm install
+# RUN pnpm install
 
 # Prepare the build
-COPY --from=builder /app/out/full/ .
+COPY . .
 # Create a .env file
-RUN touch /app/apps/web/.env
+RUN touch apps/web/.env
+
+RUN pnpm install
 
 # Build the project
-RUN pnpm post-install --filter=web...
-RUN pnpm turbo run build --filter=web...
+# RUN pnpm post-install --filter=@formbricks/web...
+RUN pnpm build --filter=@formbricks/web...
 
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt

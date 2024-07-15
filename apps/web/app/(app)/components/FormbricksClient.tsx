@@ -3,7 +3,6 @@
 import { formbricksEnabled } from "@/app/lib/formbricks";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
-
 import formbricks from "@formbricks/js/app";
 import { env } from "@formbricks/lib/env";
 

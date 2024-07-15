@@ -5,9 +5,7 @@ import Prism from "prismjs";
 import "prismjs/themes/prism.css";
 import React, { useEffect } from "react";
 import toast from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
-
 import "./style.css";
 
 interface CodeBlockProps {

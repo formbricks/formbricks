@@ -4,16 +4,14 @@ import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/inte
 import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/lib/google";
 import googleSheetLogo from "@/images/googleSheetsLogo.png";
 import { useState } from "react";
-
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
-} from "@formbricks/types/integration/googleSheet";
-import { TSurvey } from "@formbricks/types/surveys";
+} from "@formbricks/types/integration/google-sheet";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { ConnectIntegration } from "@formbricks/ui/ConnectIntegration";
-
 import { AddIntegrationModal } from "./AddIntegrationModal";
 
 interface GoogleSheetWrapperProps {

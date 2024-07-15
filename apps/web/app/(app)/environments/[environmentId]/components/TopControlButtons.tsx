@@ -3,7 +3,6 @@
 import { EnvironmentSwitch } from "@/app/(app)/environments/[environmentId]/components/EnvironmentSwitch";
 import { CircleUserIcon, MessageCircleQuestionIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-
 import formbricks from "@formbricks/js/app";
 import { TEnvironment } from "@formbricks/types/environment";
 import { Button } from "@formbricks/ui/Button";

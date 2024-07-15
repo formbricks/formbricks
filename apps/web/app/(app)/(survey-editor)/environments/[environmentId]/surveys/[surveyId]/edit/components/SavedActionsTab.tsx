@@ -1,8 +1,7 @@
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 import { useState } from "react";
-
-import { TActionClass } from "@formbricks/types/actionClasses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TActionClass } from "@formbricks/types/action-classes";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Input } from "@formbricks/ui/Input";
 
 interface SavedActionsTabProps {

@@ -7,10 +7,9 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceQuestion } from "@formbricks/types/surveys";
+import type { TSurveyMultipleChoiceQuestion } from "@formbricks/types/surveys/types";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceQuestion;
@@ -23,7 +22,7 @@ interface MultipleChoiceSingleProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -38,7 +37,7 @@ export const MultipleChoiceSingleQuestion = ({
   languageCode,
   ttc,
   setTtc,
-  isInIframe,
+  autoFocusEnabled,
   currentQuestionId,
 }: MultipleChoiceSingleProps) => {
   const [startTime, setStartTime] = useState(performance.now());
@@ -107,7 +106,7 @@ export const MultipleChoiceSingleQuestion = ({
         setTtc(updatedTtcObj);
         onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}
-      className="w-full">
+      className="fb-w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -120,22 +119,26 @@ export const MultipleChoiceSingleQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="mt-4">
+          <div className="fb-mt-4">
             <fieldset>
-              <legend className="sr-only">Options</legend>
+              <legend className="fb-sr-only">Options</legend>
 
-              <div className="bg-survey-bg relative space-y-2" role="radiogroup" ref={choicesContainerRef}>
+              <div
+                className="fb-bg-survey-bg fb-relative fb-space-y-2"
+                role="radiogroup"
+                ref={choicesContainerRef}>
                 {questionChoices.map((choice, idx) => {
                   if (!choice || choice.id === "other") return;
                   return (
                     <label
+                      dir="auto"
                       tabIndex={idx + 1}
                       key={choice.id}
                       className={cn(
                         value === getLocalizedValue(choice.label, languageCode)
-                          ? "border-brand z-10"
-                          : "border-border",
-                        "text-heading bg-input-bg focus-within:border-brand focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                          ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
+                          : "fb-border-border",
+                        "fb-text-heading fb-bg-input-bg focus-within:fb-border-brand focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
                       )}
                       onKeyDown={(e) => {
                         // Accessibility: if spacebar was pressed pass this down to the input
@@ -145,15 +148,16 @@ export const MultipleChoiceSingleQuestion = ({
                           document.getElementById(choice.id)?.focus();
                         }
                       }}
-                      autoFocus={idx === 0 && !isInIframe}>
-                      <span className="flex items-center text-sm">
+                      autoFocus={idx === 0 && autoFocusEnabled}>
+                      <span className="fb-flex fb-items-center fb-text-sm">
                         <input
                           tabIndex={-1}
                           type="radio"
                           id={choice.id}
                           name={question.id}
                           value={getLocalizedValue(choice.label, languageCode)}
-                          className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
+                          dir="auto"
+                          className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                           aria-labelledby={`${choice.id}-label`}
                           onChange={() => {
                             setOtherSelected(false);
@@ -162,7 +166,7 @@ export const MultipleChoiceSingleQuestion = ({
                           checked={value === getLocalizedValue(choice.label, languageCode)}
                           required={question.required && idx === 0}
                         />
-                        <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                        <span id={`${choice.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
                           {getLocalizedValue(choice.label, languageCode)}
                         </span>
                       </span>
@@ -171,12 +175,13 @@ export const MultipleChoiceSingleQuestion = ({
                 })}
                 {otherOption && (
                   <label
+                    dir="auto"
                     tabIndex={questionChoices.length + 1}
                     className={cn(
                       value === getLocalizedValue(otherOption.label, languageCode)
-                        ? "border-border bg-input-bg-selected z-10"
-                        : "border-border",
-                      "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                        ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
+                        : "fb-border-border",
+                      "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
                     )}
                     onKeyDown={(e) => {
                       // Accessibility: if spacebar was pressed pass this down to the input
@@ -186,14 +191,15 @@ export const MultipleChoiceSingleQuestion = ({
                         document.getElementById(otherOption.id)?.focus();
                       }
                     }}>
-                    <span className="flex items-center text-sm">
+                    <span className="fb-flex fb-items-center fb-text-sm">
                       <input
+                        dir="auto"
                         type="radio"
                         id={otherOption.id}
                         tabIndex={-1}
                         name={question.id}
                         value={getLocalizedValue(otherOption.label, languageCode)}
-                        className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
+                        className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                         aria-labelledby={`${otherOption.id}-label`}
                         onChange={() => {
                           setOtherSelected(!otherSelected);
@@ -201,7 +207,10 @@ export const MultipleChoiceSingleQuestion = ({
                         }}
                         checked={otherSelected}
                       />
-                      <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
+                      <span
+                        id={`${otherOption.id}-label`}
+                        className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
+                        dir="auto">
                         {getLocalizedValue(otherOption.label, languageCode)}
                       </span>
                     </span>
@@ -210,12 +219,13 @@ export const MultipleChoiceSingleQuestion = ({
                         ref={otherSpecify}
                         tabIndex={questionChoices.length + 1}
                         id={`${otherOption.id}-label`}
+                        dir="auto"
                         name={question.id}
                         value={value}
                         onChange={(e) => {
                           onChange({ [question.id]: e.currentTarget.value });
                         }}
-                        className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus rounded-custom mt-3 flex h-10 w-full border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="placeholder:fb-text-placeholder fb-border-border fb-bg-survey-bg fb-text-heading focus:fb-ring-focus fb-rounded-custom fb-mt-3 fb-flex fb-h-10 fb-w-full fb-border fb-px-3 fb-py-2 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50"
                         placeholder={
                           getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
                         }
@@ -230,7 +240,7 @@ export const MultipleChoiceSingleQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

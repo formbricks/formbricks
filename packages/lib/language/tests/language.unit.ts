@@ -7,12 +7,9 @@ import {
   mockProductId,
   mockUpdatedLanguage,
 } from "./__mocks__/data.mock";
-
 import { Prisma } from "@prisma/client";
-
 import { prismaMock } from "@formbricks/database/src/jestClient";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
-
 import { createLanguage, deleteLanguage, updateLanguage } from "../service";
 
 const testInputValidation = async (service: Function, ...args: any[]): Promise<void> => {

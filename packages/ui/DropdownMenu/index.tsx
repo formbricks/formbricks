@@ -3,7 +3,6 @@
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { Check, ChevronRight, Circle } from "lucide-react";
 import * as React from "react";
-
 import { cn } from "@formbricks/lib/cn";
 
 const DropdownMenu: React.ComponentType<DropdownMenuPrimitive.DropdownMenuProps> = DropdownMenuPrimitive.Root;
@@ -91,7 +90,7 @@ const DropdownMenuItem: React.ForwardRefExoticComponent<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ",
+      "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       inset && "pl-8",
       className
     )}
@@ -159,7 +158,7 @@ const DropdownMenuLabel: React.ComponentType<
 >(({ className, inset, ...props }, ref) => (
   <DropdownMenuPrimitive.Label
     ref={ref}
-    className={cn("px-2 py-1.5 text-sm font-semibold text-slate-900 ", inset && "pl-8", className)}
+    className={cn("px-2 py-1.5 text-sm font-semibold text-slate-900", inset && "pl-8", className)}
     {...props}
   />
 ));
@@ -173,7 +172,7 @@ const DropdownMenuSeparator: React.ComponentType<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Separator
     ref={ref}
-    className={cn("-mx-1 my-1 h-px bg-slate-100 ", className)}
+    className={cn("-mx-1 my-1 h-px bg-slate-100", className)}
     {...props}
   />
 ));

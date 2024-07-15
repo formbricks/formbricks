@@ -14,16 +14,14 @@ import { TrashIcon } from "lucide-react";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
-
 import { OptionsType, QuestionOption, QuestionsComboBox } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
-  type: TSurveyQuestionType | "Attributes" | "Tags" | "Languages";
+  type: TSurveyQuestionTypeEnum | "Attributes" | "Tags" | "Languages";
   filterOptions: string[];
   filterComboBoxOptions: string[];
   id: string;
@@ -203,10 +201,10 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[300px] border-slate-200  bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px] ">
+        className="w-[300px] border-slate-200 bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px]">
         <div className="mb-8 flex flex-wrap items-start justify-between">
           <p className="hidden text-lg font-bold text-black sm:block">Show all responses that match</p>
-          <p className="block text-base  text-slate-500 sm:hidden">Show all responses where...</p>
+          <p className="block text-base text-slate-500 sm:hidden">Show all responses where...</p>
           <div className="flex items-center space-x-2">
             <label className="text-sm font-normal text-slate-600">Only completed</label>
             <Checkbox

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import { Button } from "@formbricks/ui/Button";
 import { Confetti } from "@formbricks/ui/Confetti";
 

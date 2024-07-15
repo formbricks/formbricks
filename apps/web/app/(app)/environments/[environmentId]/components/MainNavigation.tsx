@@ -26,10 +26,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { capitalizeFirstLetter, truncate } from "@formbricks/lib/strings";
+import { capitalizeFirstLetter, truncate } from "@formbricks/lib/utils/strings";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -51,8 +50,6 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 
-import { AddProductModal } from "./AddProductModal";
-
 interface NavigationProps {
   environment: TEnvironment;
   organizations: TOrganization[];
@@ -61,6 +58,7 @@ interface NavigationProps {
   products: TProduct[];
   isFormbricksCloud: boolean;
   membershipRole?: TMembershipRole;
+  isMultiOrgEnabled: boolean;
 }
 
 export const MainNavigation = ({
@@ -71,19 +69,20 @@ export const MainNavigation = ({
   products,
   isFormbricksCloud,
   membershipRole,
+  isMultiOrgEnabled,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
 
   const [currentOrganizationName, setCurrentOrganizationName] = useState("");
   const [currentOrganizationId, setCurrentOrganizationId] = useState("");
-  const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
 
   const product = products.find((product) => product.id === environment.productId);
   const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
+  const isOwnerOrAdmin = isAdmin || isOwner;
   const isPricingDisabled = !isOwner && !isAdmin;
 
   const toggleSidebar = () => {
@@ -127,6 +126,10 @@ export const MainNavigation = ({
     router.push(`/organizations/${organizationId}/`);
   };
 
+  const handleAddProduct = (organizationId: string) => {
+    router.push(`/organizations/${organizationId}/products/new/channel`);
+  };
+
   const mainNavigation = useMemo(
     () => [
       {
@@ -150,7 +153,7 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
         isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
-        isHidden: false,
+        isHidden: product?.config.channel === "link",
       },
       {
         name: "Integrations",
@@ -284,7 +287,7 @@ export const MainNavigation = ({
                       <div>
                         <p
                           className={cn(
-                            "ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700 transition-opacity duration-200 ",
+                            "ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700 transition-opacity duration-200",
                             isTextVisible ? "opacity-0" : "opacity-100"
                           )}>
                           {product.name}
@@ -327,8 +330,8 @@ export const MainNavigation = ({
                   ))}
                 </DropdownMenuRadioGroup>
                 <DropdownMenuSeparator />
-                {!isViewer && (
-                  <DropdownMenuItem onClick={() => setShowAddProductModal(true)} className="rounded-lg">
+                {isOwnerOrAdmin && (
+                  <DropdownMenuItem onClick={() => handleAddProduct(organization.id)} className="rounded-lg">
                     <PlusIcon className="mr-2 h-4 w-4" />
                     <span>Add product</span>
                   </DropdownMenuItem>
@@ -414,42 +417,46 @@ export const MainNavigation = ({
 
                   {/* Organization Switch */}
 
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="rounded-lg">
-                      <div>
-                        <p>{currentOrganizationName}</p>
-                        <p className="block text-xs text-slate-500">Switch organization</p>
-                      </div>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent
-                        className="rounded-xl border border-slate-200 shadow-sm"
-                        sideOffset={10}
-                        alignOffset={5}>
-                        <DropdownMenuRadioGroup
-                          value={currentOrganizationId}
-                          onValueChange={(organizationId) =>
-                            handleEnvironmentChangeByOrganization(organizationId)
-                          }>
-                          {sortedOrganizations.map((organization) => (
-                            <DropdownMenuRadioItem
-                              value={organization.id}
-                              className="cursor-pointer rounded-lg"
-                              key={organization.id}>
-                              {organization.name}
-                            </DropdownMenuRadioItem>
-                          ))}
-                        </DropdownMenuRadioGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => setShowCreateOrganizationModal(true)}
-                          className="rounded-lg">
-                          <PlusIcon className="mr-2 h-4 w-4" />
-                          <span>Create new organization</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
+                  {(isMultiOrgEnabled || organizations.length > 1) && (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="rounded-lg">
+                        <div>
+                          <p>{currentOrganizationName}</p>
+                          <p className="block text-xs text-slate-500">Switch organization</p>
+                        </div>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent
+                          className="rounded-xl border border-slate-200 shadow-sm"
+                          sideOffset={10}
+                          alignOffset={5}>
+                          <DropdownMenuRadioGroup
+                            value={currentOrganizationId}
+                            onValueChange={(organizationId) =>
+                              handleEnvironmentChangeByOrganization(organizationId)
+                            }>
+                            {sortedOrganizations.map((organization) => (
+                              <DropdownMenuRadioItem
+                                value={organization.id}
+                                className="cursor-pointer rounded-lg"
+                                key={organization.id}>
+                                {organization.name}
+                              </DropdownMenuRadioItem>
+                            ))}
+                          </DropdownMenuRadioGroup>
+                          <DropdownMenuSeparator />
+                          {isMultiOrgEnabled && (
+                            <DropdownMenuItem
+                              onClick={() => setShowCreateOrganizationModal(true)}
+                              className="rounded-lg">
+                              <PlusIcon className="mr-2 h-4 w-4" />
+                              <span>Create new organization</span>
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -459,11 +466,6 @@ export const MainNavigation = ({
       <CreateOrganizationModal
         open={showCreateOrganizationModal}
         setOpen={(val) => setShowCreateOrganizationModal(val)}
-      />
-      <AddProductModal
-        open={showAddProductModal}
-        setOpen={(val) => setShowAddProductModal(val)}
-        environmentId={environment.id}
       />
     </>
   );

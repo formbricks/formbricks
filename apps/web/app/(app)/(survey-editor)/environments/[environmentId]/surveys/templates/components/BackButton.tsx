@@ -2,7 +2,6 @@
 
 import { ArrowLeftIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-
 import { Button } from "@formbricks/ui/Button";
 
 export const BackButton = () => {

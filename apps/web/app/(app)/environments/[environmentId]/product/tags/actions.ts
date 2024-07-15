@@ -1,7 +1,6 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { canUserAccessTag, verifyUserRoleAccess } from "@formbricks/lib/tag/auth";
 import { deleteTag, getTag, mergeTags, updateTagName } from "@formbricks/lib/tag/service";

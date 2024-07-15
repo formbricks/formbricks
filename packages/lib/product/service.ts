@@ -1,15 +1,13 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
 import { z } from "zod";
-
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
-
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE, isS3Configured } from "../constants";
 import { environmentCache } from "../environment/cache";
@@ -28,6 +26,7 @@ const selectProduct = {
   recontactDays: true,
   linkSurveyBranding: true,
   inAppSurveyBranding: true,
+  config: true,
   placement: true,
   clickOutsideClose: true,
   darkOverlay: true,
@@ -36,68 +35,72 @@ const selectProduct = {
   logo: true,
 };
 
-export const getProducts = (organizationId: string, page?: number): Promise<TProduct[]> =>
-  cache(
-    async () => {
-      validateInputs([organizationId, ZId], [page, ZOptionalNumber]);
+export const getProducts = reactCache(
+  (organizationId: string, page?: number): Promise<TProduct[]> =>
+    cache(
+      async () => {
+        validateInputs([organizationId, ZId], [page, ZOptionalNumber]);
 
-      try {
-        const products = await prisma.product.findMany({
-          where: {
-            organizationId,
-          },
-          select: selectProduct,
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-        });
-        return products;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+        try {
+          const products = await prisma.product.findMany({
+            where: {
+              organizationId,
+            },
+            select: selectProduct,
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          });
+          return products;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        throw error;
+      },
+      [`getProducts-${organizationId}-${page}`],
+      {
+        tags: [productCache.tag.byOrganizationId(organizationId)],
       }
-    },
-    [`getProducts-${organizationId}-${page}`],
-    {
-      tags: [productCache.tag.byOrganizationId(organizationId)],
-    }
-  )();
+    )()
+);
 
-export const getProductByEnvironmentId = (environmentId: string): Promise<TProduct | null> =>
-  cache(
-    async () => {
-      validateInputs([environmentId, ZId]);
+export const getProductByEnvironmentId = reactCache(
+  (environmentId: string): Promise<TProduct | null> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId]);
 
-      let productPrisma;
+        let productPrisma;
 
-      try {
-        productPrisma = await prisma.product.findFirst({
-          where: {
-            environments: {
-              some: {
-                id: environmentId,
+        try {
+          productPrisma = await prisma.product.findFirst({
+            where: {
+              environments: {
+                some: {
+                  id: environmentId,
+                },
               },
             },
-          },
-          select: selectProduct,
-        });
+            select: selectProduct,
+          });
 
-        return productPrisma;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error);
-          throw new DatabaseError(error.message);
+          return productPrisma;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+          throw error;
         }
-        throw error;
+      },
+      [`getProductByEnvironmentId-${environmentId}`],
+      {
+        tags: [productCache.tag.byEnvironmentId(environmentId)],
       }
-    },
-    [`getProductByEnvironmentId-${environmentId}`],
-    {
-      tags: [productCache.tag.byEnvironmentId(environmentId)],
-    }
-  )();
+    )()
+);
 
 export const updateProduct = async (
   productId: string,
@@ -150,31 +153,33 @@ export const updateProduct = async (
   }
 };
 
-export const getProduct = async (productId: string): Promise<TProduct | null> =>
-  cache(
-    async () => {
-      let productPrisma;
-      try {
-        productPrisma = await prisma.product.findUnique({
-          where: {
-            id: productId,
-          },
-          select: selectProduct,
-        });
+export const getProduct = reactCache(
+  (productId: string): Promise<TProduct | null> =>
+    cache(
+      async () => {
+        let productPrisma;
+        try {
+          productPrisma = await prisma.product.findUnique({
+            where: {
+              id: productId,
+            },
+            select: selectProduct,
+          });
 
-        return productPrisma;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+          return productPrisma;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+          throw error;
         }
-        throw error;
+      },
+      [`getProduct-${productId}`],
+      {
+        tags: [productCache.tag.byId(productId)],
       }
-    },
-    [`getProduct-${productId}`],
-    {
-      tags: [productCache.tag.byId(productId)],
-    }
-  )();
+    )()
+);
 
 export const deleteProduct = async (productId: string): Promise<TProduct> => {
   try {
@@ -256,6 +261,10 @@ export const createProduct = async (
   try {
     let product = await prisma.product.create({
       data: {
+        config: {
+          channel: null,
+          industry: null,
+        },
         ...data,
         name: productInput.name,
         organizationId,

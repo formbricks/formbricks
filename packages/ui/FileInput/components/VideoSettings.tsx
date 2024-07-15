@@ -1,10 +1,8 @@
 import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { checkForYoutubeUrl } from "@formbricks/lib/utils/videoUpload";
 import { extractYoutubeId, parseVideoUrl } from "@formbricks/lib/utils/videoUpload";
-
 import { AdvancedOptionToggle } from "../../AdvancedOptionToggle";
 import { Button } from "../../Button";
 import { Input } from "../../Input";

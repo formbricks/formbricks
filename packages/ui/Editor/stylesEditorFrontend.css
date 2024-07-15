@@ -7,7 +7,6 @@
 }
 
 .fb-editor-link {
-  color: #334155 !important;
   text-decoration: underline !important;
 }
 
@@ -18,7 +17,6 @@
 .fb-editor-paragraph {
   margin: 0 !important;
   position: relative !important;
-  color: #334155 !important;
 }
 
 .fb-editor-paragraph:last-child {
@@ -52,4 +50,12 @@
 
 .fb-editor-nested-listitem {
   list-style-type: none !important;
+}
+
+.fb-editor-rtl {
+  text-align: right !important;
+}
+
+.fb-editor-ltr {
+  text-align: left !important;
 }

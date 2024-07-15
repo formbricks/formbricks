@@ -1,5 +1,4 @@
 import Link from "next/link";
-
 import { Alert, AlertDescription } from "../Alert";
 import { Badge } from "../Badge";
 

@@ -7,11 +7,10 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 import { useCallback } from "react";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
+import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys/types";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
@@ -25,7 +24,7 @@ interface OpenTextQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  isInIframe: boolean;
+  autoFocusEnabled: boolean;
   currentQuestionId: string;
 }
 
@@ -40,7 +39,7 @@ export const OpenTextQuestion = ({
   languageCode,
   ttc,
   setTtc,
-  isInIframe,
+  autoFocusEnabled,
   currentQuestionId,
 }: OpenTextQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
@@ -63,11 +62,11 @@ export const OpenTextQuestion = ({
 
   const openTextRef = useCallback(
     (currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
-      if (question.id && currentElement && !isInIframe) {
+      if (question.id && currentElement && autoFocusEnabled) {
         currentElement.focus();
       }
     },
-    [question.id, isInIframe]
+    [question.id, autoFocusEnabled]
   );
 
   return (
@@ -77,9 +76,9 @@ export const OpenTextQuestion = ({
         e.preventDefault();
         const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedttc);
-        onSubmit({ [question.id]: value, inputType: question.inputType }, updatedttc);
+        onSubmit({ [question.id]: value }, updatedttc);
       }}
-      className="w-full">
+      className="fb-w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -92,7 +91,7 @@ export const OpenTextQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="mt-4">
+          <div className="fb-mt-4">
             {question.longAnswer === false ? (
               <input
                 ref={openTextRef}
@@ -100,13 +99,14 @@ export const OpenTextQuestion = ({
                 name={question.id}
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
+                dir="auto"
                 step={"any"}
                 required={question.required}
                 value={value ? (value as string) : ""}
                 type={question.inputType}
                 onInput={(e) => handleInputChange(e.currentTarget.value)}
-                autoFocus={!isInIframe}
-                className="border-border placeholder:text-placeholder text-subheading focus:border-brand bg-input-bg rounded-custom block w-full border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
+                autoFocus={autoFocusEnabled}
+                className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
                 title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
               />
@@ -119,6 +119,7 @@ export const OpenTextQuestion = ({
                 aria-label="textarea"
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
+                dir="auto"
                 required={question.required}
                 value={value as string}
                 type={question.inputType}
@@ -126,8 +127,8 @@ export const OpenTextQuestion = ({
                   handleInputChange(e.currentTarget.value);
                   handleInputResize(e);
                 }}
-                autoFocus={!isInIframe}
-                className="border-border placeholder:text-placeholder bg-input-bg text-subheading focus:border-brand rounded-custom block w-full border p-2 shadow-sm  focus:ring-0 sm:text-sm"
+                autoFocus={autoFocusEnabled}
+                className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
                 title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
               />
@@ -135,7 +136,7 @@ export const OpenTextQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

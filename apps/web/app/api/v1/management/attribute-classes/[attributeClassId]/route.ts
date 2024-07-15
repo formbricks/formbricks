@@ -1,13 +1,12 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-
 import {
   deleteAttributeClass,
   getAttributeClass,
   updateAttributeClass,
 } from "@formbricks/lib/attributeClass/service";
-import { TAttributeClass, ZAttributeClassUpdateInput } from "@formbricks/types/attributeClasses";
+import { TAttributeClass, ZAttributeClassUpdateInput } from "@formbricks/types/attribute-classes";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 
 const fetchAndAuthorizeAttributeClass = async (

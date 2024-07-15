@@ -1,5 +1,4 @@
 import React from "react";
-
 import { TPipelineTrigger } from "@formbricks/types/pipelines";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 

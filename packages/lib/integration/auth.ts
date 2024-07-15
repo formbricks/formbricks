@@ -1,7 +1,5 @@
 import "server-only";
-
 import { ZId } from "@formbricks/types/environment";
-
 import { cache } from "../cache";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { validateInputs } from "../utils/validate";

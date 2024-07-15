@@ -3,7 +3,6 @@
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
 

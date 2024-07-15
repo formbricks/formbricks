@@ -1,10 +1,9 @@
 "use client";
 
-import { forgotPassword } from "@/app/lib/users/users";
 import { XCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
+import { forgotPassword } from "@formbricks/lib/utils/users";
 import { Button } from "@formbricks/ui/Button";
 
 export const PasswordResetForm = ({}) => {

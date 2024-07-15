@@ -43,9 +43,8 @@ To display an Interview Prompt in your app you want to proceed as follows:
 3. That’s it! 🎉
 
 <Note>
-  ## Formbricks Widget running?
-  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide
-  (15mins).](/app-surveys/quickstart)
+  ## Formbricks Widget running? 
+  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide (15mins).](/app-surveys/quickstart)
 </Note>
 
 ### 1. Create new Interview Prompt
@@ -86,9 +85,7 @@ Save, and move over to the “Audience” tab.
 ### 3. Pre-segment your audience (coming soon)
 
 <Note>
-  ## Filter by attribute coming soon.
-     We're working on pre-segmenting users by attributes. We will update this
-     manual in the next few days.
+  ## Filter by attribute coming soon. We're working on pre-segmenting users by attributes. We will update this manual in the next few days.
 </Note>
 
 Once you clicked over to the “Audience” tab you can change the settings. In the **Who To Send** card, select “Filter audience by attribute”. This allows you to only show the prompt to a specific segment of your user base.
@@ -99,13 +96,13 @@ Great, now only the “Power User” segment will see our Interview Prompt. But 
 
 ### 4. Set up a trigger for the Interview Prompt:
 
-To create the trigger to show your Interview Prompt, go to the “Audience” tab, find the “When to send” card and choose “Add Action”. We will now use our super cool No-Code User Action Tracker:
+To create the trigger to show your Interview Prompt, go to the “Audience” tab, find the “When to send” card and choose “Add Action”. We will now use our super cool User Action Tracker:
 
 <MdxImage src={AddAction} alt="Add action" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 Generally, we have two types of user actions: Page views and clicks. The Interview Prompt, you’ll likely want to display it on a page visit since you already filter who sees the prompt by attributes.
 
-1. **pageURL:** Whenever a user visits a page the survey will be displayed, as long as the other conditions match. Other conditions are pre-segmentation, if this user has seen a survey in the past 2 weeks, etc.
+1. **Page view:** Whenever a user visits a page the survey will be displayed, as long as the other conditions match. Other conditions are pre-segmentation, if this user has seen a survey in the past 2 weeks, etc.
 
 <MdxImage
   src={ActionPageurl}
@@ -114,7 +111,7 @@ Generally, we have two types of user actions: Page views and clicks. The Intervi
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-2. **innerText & CSS-Selector:** When a user clicks an element (like a button) with a specific text content or CSS selector, the prompt will be displayed as long as the other conditions also match.
+2. **Click(Inner Text & CSS Selector):** When a user clicks an element (like a button) with a specific text content or CSS selector, the prompt will be displayed as long as the other conditions also match.
 
 <div className="grid max-w-full grid-cols-2 space-x-2 sm:max-w-3xl">
   <MdxImage src={ActionCSS} alt="Add CSS action" quality="100" className="rounded-lg" />
@@ -146,8 +143,7 @@ Scroll down to “Recontact Options”. Here you have to choose the correct sett
 <MdxImage src={Publish} alt="Publish survey" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 <Note>
-  ## Formbricks Widget running? 
-  You need to have the Formbricks Widget installed to display the Feedback Box in your app. Please follow [this tutorial (Step 4 onwards)](/app-surveys/quickstart) to install the widget.
+  ## Formbricks Widget running? You need to have the Formbricks Widget installed to display the Feedback Box in your app. Please follow [this tutorial (Step 4 onwards)](/app-surveys/quickstart) to install the widget.
 </Note>
 
 ###

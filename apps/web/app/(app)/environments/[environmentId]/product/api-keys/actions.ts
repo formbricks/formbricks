@@ -1,12 +1,11 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
 import { canUserAccessApiKey } from "@formbricks/lib/apiKey/auth";
 import { createApiKey, deleteApiKey } from "@formbricks/lib/apiKey/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { TApiKeyCreateInput } from "@formbricks/types/apiKeys";
+import { TApiKeyCreateInput } from "@formbricks/types/api-keys";
 import { AuthorizationError } from "@formbricks/types/errors";
 
 export const deleteApiKeyAction = async (id: string) => {

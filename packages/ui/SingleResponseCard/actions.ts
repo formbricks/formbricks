@@ -1,9 +1,12 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getOrganizationIdFromResponseId } from "@formbricks/lib/organization/utils";
 import { canUserAccessResponse } from "@formbricks/lib/response/auth";
 import { deleteResponse, getResponse } from "@formbricks/lib/response/service";
 import { canUserModifyResponseNote, canUserResolveResponseNote } from "@formbricks/lib/responseNote/auth";
@@ -59,14 +62,21 @@ export const deleteTagOnResponseAction = async (responseId: string, tagId: strin
   return await deleteTagOnResponse(responseId, tagId);
 };
 
-export const deleteResponseAction = async (responseId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-  const isAuthorized = await canUserAccessResponse(session.user!.id, responseId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+const ZDeleteResponseAction = z.object({
+  responseId: z.string(),
+});
 
-  return await deleteResponse(responseId);
-};
+export const deleteResponseAction = authenticatedActionClient
+  .schema(ZDeleteResponseAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
+      rules: ["response", "delete"],
+    });
+
+    return await deleteResponse(parsedInput.responseId);
+  });
 
 export const updateResponseNoteAction = async (responseNoteId: string, text: string) => {
   const session = await getServerSession(authOptions);

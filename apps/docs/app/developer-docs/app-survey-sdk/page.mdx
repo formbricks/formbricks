@@ -16,7 +16,7 @@ export const metadata = {
 
 ### Overview
 
-The Formbricks JS SDK is a 2-in-1 SDK for seamlessly integrating both App Surveys and Website Surveys into your projects. In this section, we'll explore how to leverage the SDK specifically for **app** surveys.  It’s available on npm [here](https://www.npmjs.com/package/@formbricks/js/).
+The Formbricks JS SDK is a 2-in-1 SDK for seamlessly integrating both App Surveys and Website Surveys into your projects. In this section, we'll explore how to leverage the SDK specifically for **app** surveys. It’s available on npm [here](https://www.npmjs.com/package/@formbricks/js/).
 
 ### Install
 
@@ -26,9 +26,11 @@ The Formbricks JS SDK is a 2-in-1 SDK for seamlessly integrating both App Survey
 ```js {{ title: 'npm' }}
 npm install @formbricks/js
 ```
+
 ```js {{ title: 'yarn' }}
 yarn add @formbricks/js
 ```
+
 ```js {{ title: 'pnpm' }}
 pnpm add @formbricks/js
 ```
@@ -51,9 +53,10 @@ import formbricks from "@formbricks/js/app";
 formbricks.init({
   environmentId: "<your-environment-id>", // required
   apiHost: "<your-api-host>", // required
-  userId: "<user-id>" // required
+  userId: "<user-id>", // required
 });
 ```
+
 </CodeGroup>
 </Col>
 
@@ -67,15 +70,16 @@ Formbricks JS is a client SDK meant to be run client-side in their browser so ma
 
 ```js
 if (window !== undefined) {
-    formbricks.init({
-        environmentId: "<your-environment-id>",
-        apiHost: "<your-api-host>", 
-        userId: "<user-id>"
-    });
+  formbricks.init({
+    environmentId: "<your-environment-id>",
+    apiHost: "<your-api-host>",
+    userId: "<user-id>",
+  });
 } else {
-    console.error("Window object not accessible to init Formbricks");
+  console.error("Window object not accessible to init Formbricks");
 }
 ```
+
 </CodeGroup>
 </Col>
 
@@ -91,6 +95,7 @@ You can set custom attributes for the identified user. This can be helpful for s
 ```js
 formbricks.setAttribute("Plan", "Paid");
 ```
+
 </CodeGroup>
 </Col>
 
@@ -104,9 +109,9 @@ Track user actions to trigger surveys based on user interactions, such as button
 ```js
 formbricks.track("Clicked on Claim");
 ```
+
 </CodeGroup>
 </Col>
-
 
 ### Logout
 
@@ -118,6 +123,7 @@ To log out and deinitialize Formbricks, use the formbricks.logout() function. Th
 ```js
 formbricks.logout();
 ```
+
 </CodeGroup>
 </Col>
 
@@ -133,6 +139,7 @@ Reset the current instance and fetch the latest surveys and state again:
 ```js
 formbricks.reset();
 ```
+
 </CodeGroup>
 </Col>
 
@@ -140,7 +147,11 @@ formbricks.reset();
 
 Listen for page changes and dynamically show surveys configured via no-code actions in the Formbricks app:
 
-<Note> This is only needed when your framework has a custom routing system and you want to trigger surveys on route changes. For example: NextJs</Note>
+<Note>
+  {" "}
+  This is only needed when your framework has a custom routing system and you want to trigger surveys on route
+  changes. For example: NextJs
+</Note>
 
 <Col>
 <CodeGroup>
@@ -148,6 +159,7 @@ Listen for page changes and dynamically show surveys configured via no-code acti
 ```js
 formbricks.registerRouteChange();
 ```
+
 </CodeGroup>
 </Col>
 
@@ -167,7 +179,7 @@ In case you don’t see your survey right away, here's what you can do. Go throu
 
 ### Formbricks Cloud and your app are not connected properly.
 
-Go back to [app.formbricks.com](http://app.formbricks.com) or your self-hosted instance's URL and go to the Setup Checklist in the Settings. If the status is still indicated as “Not connected” your app hasn't yet pinged the Formbricks Cloud:
+Go back to [app.formbricks.com](http://app.formbricks.com) or your self-hosted instance's URL and go to the App connection in the Configuration. If the status is still indicated as “Not connected” your app hasn't yet pinged the Formbricks Cloud:
 
 <MdxImage
   src={I1}

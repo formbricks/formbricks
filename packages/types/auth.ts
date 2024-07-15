@@ -1,5 +1,4 @@
 import { z } from "zod";
-
 import { ZUser } from "./user";
 
 const ZAuthSession = z.object({

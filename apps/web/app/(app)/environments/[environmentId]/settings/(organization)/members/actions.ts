@@ -1,8 +1,11 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-
+import { z } from "zod";
+import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { sendInviteMemberEmail } from "@formbricks/email";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { hasOrganizationAuthority } from "@formbricks/lib/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
@@ -15,22 +18,32 @@ import {
 } from "@formbricks/lib/membership/service";
 import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
 import { deleteOrganization, updateOrganization } from "@formbricks/lib/organization/service";
-import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  OperationNotAllowedError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { ZOrganizationUpdateInput } from "@formbricks/types/organizations";
 
-export const updateOrganizationNameAction = async (organizationId: string, organizationName: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
+const ZUpdateOrganizationNameAction = z.object({
+  organizationId: z.string(),
+  data: ZOrganizationUpdateInput.pick({ name: true }),
+});
 
-  const isUserAuthorized = await hasOrganizationAuthority(session.user.id, organizationId);
-  if (!isUserAuthorized) {
-    throw new AuthenticationError("Not authorized");
-  }
-
-  return await updateOrganization(organizationId, { name: organizationName });
-};
+export const updateOrganizationNameAction = authenticatedActionClient
+  .schema(ZUpdateOrganizationNameAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      schema: ZOrganizationUpdateInput.pick({ name: true }),
+      data: parsedInput.data,
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["organization", "update"],
+    });
+    return await updateOrganization(parsedInput.organizationId, parsedInput.data);
+  });
 
 export const deleteInviteAction = async (inviteId: string, organizationId: string) => {
   const session = await getServerSession(authOptions);
@@ -171,7 +184,6 @@ export const inviteUserAction = async (
 
   const invite = await inviteUser({
     organizationId,
-    currentUser: { id: session.user.id, name: session.user.name },
     invitee: {
       email,
       name,
@@ -187,6 +199,8 @@ export const inviteUserAction = async (
 };
 
 export const deleteOrganizationAction = async (organizationId: string) => {
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  if (!isMultiOrgEnabled) throw new OperationNotAllowedError("Organization deletion disabled");
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new AuthenticationError("Not authenticated");

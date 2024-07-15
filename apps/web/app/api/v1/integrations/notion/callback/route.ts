@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { NextRequest } from "next/server";
-
 import {
   ENCRYPTION_KEY,
   NOTION_OAUTH_CLIENT_ID,

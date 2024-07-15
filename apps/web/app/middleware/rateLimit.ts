@@ -1,5 +1,4 @@
 import { LRUCache } from "lru-cache";
-
 import { REDIS_HTTP_URL } from "@formbricks/lib/constants";
 
 type Options = {

@@ -1,6 +1,5 @@
 import { BadgeCheckIcon } from "lucide-react";
 import { Metadata } from "next";
-
 import { prisma } from "@formbricks/database";
 
 export const dynamic = "force-dynamic"; // no caching
@@ -20,6 +19,7 @@ const checkDatabaseConnection = async () => {
   try {
     await prisma.$queryRaw`SELECT 1`;
   } catch (e) {
+    console.error("Database connection error:", e);
     throw new Error("Database could not be reached");
   }
 };

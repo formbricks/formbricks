@@ -2,7 +2,6 @@
 
 import { ArrowLeftIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-
 import { Button } from "../Button";
 
 export const GoBackButton = ({ url }: { url?: string }) => {

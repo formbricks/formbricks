@@ -4,36 +4,30 @@ import { deleteProductAction } from "@/app/(app)/environments/[environmentId]/pr
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-
-import { truncate } from "@formbricks/lib/strings";
+import { truncate } from "@formbricks/lib/utils/strings";
 import { TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 
 type DeleteProductRenderProps = {
-  environmentId: string;
   isDeleteDisabled: boolean;
   isUserAdminOrOwner: boolean;
   product: TProduct;
-  userId: string;
 };
 
 export const DeleteProductRender = ({
-  environmentId,
   isDeleteDisabled,
   isUserAdminOrOwner,
   product,
-  userId,
 }: DeleteProductRenderProps) => {
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
   const handleDeleteProduct = async () => {
     try {
       setIsDeleting(true);
-      const deletedProduct = await deleteProductAction(environmentId, userId, product.id);
-      if (!!deletedProduct?.id) {
+      const deletedProductActionResult = await deleteProductAction({ productId: product.id });
+      if (deletedProductActionResult?.data) {
         toast.success("Product deleted successfully.");
         router.push("/");
       }

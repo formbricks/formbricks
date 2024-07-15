@@ -1,11 +1,9 @@
 "use client";
 
-import { PlusIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
-
+import { PlusIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TSurvey, TSurveyAddressQuestion } from "@formbricks/types/surveys";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TSurvey, TSurveyAddressQuestion } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
@@ -32,7 +30,6 @@ export const AddressQuestionForm = ({
   setSelectedLanguageCode,
   attributeClasses,
 }: AddressQuestionFormProps): JSX.Element => {
-  const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
 
   return (
@@ -40,6 +37,7 @@ export const AddressQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
+        label={"Question*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -50,12 +48,13 @@ export const AddressQuestionForm = ({
       />
 
       <div>
-        {showSubheader && (
+        {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
+                label={"Description"}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -65,17 +64,9 @@ export const AddressQuestionForm = ({
                 attributeClasses={attributeClasses}
               />
             </div>
-
-            <TrashIcon
-              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => {
-                setShowSubheader(false);
-                updateQuestion(questionIdx, { subheader: undefined });
-              }}
-            />
           </div>
         )}
-        {!showSubheader && (
+        {question.subheader === undefined && (
           <Button
             size="sm"
             variant="minimal"
@@ -85,7 +76,6 @@ export const AddressQuestionForm = ({
               updateQuestion(questionIdx, {
                 subheader: createI18nString("", surveyLanguageCodes),
               });
-              setShowSubheader(true);
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description

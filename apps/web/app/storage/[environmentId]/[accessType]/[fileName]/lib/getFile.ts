@@ -1,7 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { notFound } from "next/navigation";
 import path from "path";
-
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
 import { isS3Configured } from "@formbricks/lib/constants";
 import { getLocalFile, getS3File } from "@formbricks/lib/storage/service";

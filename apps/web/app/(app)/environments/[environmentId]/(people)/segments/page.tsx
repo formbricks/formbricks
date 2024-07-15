@@ -1,9 +1,7 @@
 import { PeopleSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PeopleSecondaryNavigation";
 import { BasicCreateSegmentModal } from "@/app/(app)/environments/[environmentId]/(people)/segments/components/BasicCreateSegmentModal";
 import { SegmentTable } from "@/app/(app)/environments/[environmentId]/(people)/segments/components/SegmentTable";
-
-import { CreateSegmentModal } from "@formbricks/ee/advancedTargeting/components/CreateSegmentModal";
-import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedTargeting/lib/constants";
+import { CreateSegmentModal } from "@formbricks/ee/advanced-targeting/components/create-segment-modal";
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
@@ -15,7 +13,7 @@ import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
 const Page = async ({ params }) => {
-  const [environment, segments, attributeClasses, actionClassesFromServer, organization] = await Promise.all([
+  const [environment, segments, attributeClasses, actionClasses, organization] = await Promise.all([
     getEnvironment(params.environmentId),
     getSegments(params.environmentId),
     getAttributeClasses(params.environmentId),
@@ -38,18 +36,6 @@ const Page = async ({ params }) => {
   }
 
   const filteredSegments = segments.filter((segment) => !segment.isPrivate);
-
-  const actionClasses = actionClassesFromServer.filter((actionClass) => {
-    if (actionClass.type === "automatic") {
-      if (ACTIONS_TO_EXCLUDE.includes(actionClass.name)) {
-        return false;
-      }
-
-      return true;
-    }
-
-    return true;
-  });
 
   const renderCreateSegmentButton = () =>
     isAdvancedTargetingAllowed ? (

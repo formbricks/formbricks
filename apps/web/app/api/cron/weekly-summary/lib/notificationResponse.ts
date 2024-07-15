@@ -6,7 +6,7 @@ import {
   TWeeklySummaryNotificationDataSurvey,
   TWeeklySummaryNotificationResponse,
   TWeeklySummarySurveyResponseData,
-} from "@formbricks/types/weeklySummary";
+} from "@formbricks/types/weekly-summary";
 
 export const getNotificationResponse = (
   environment: TWeeklySummaryEnvironmentData,

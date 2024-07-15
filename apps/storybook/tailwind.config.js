@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-import base from "../../packages/tailwind-config/tailwind.config";
+import base from "../../packages/config-tailwind/tailwind.config";
 
 export default {
   ...base,

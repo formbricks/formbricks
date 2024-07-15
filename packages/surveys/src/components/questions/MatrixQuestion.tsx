@@ -7,10 +7,9 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TI18nString, TSurveyMatrixQuestion } from "@formbricks/types/surveys";
+import type { TI18nString, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
 
 interface MatrixQuestionProps {
   question: TSurveyMatrixQuestion;
@@ -85,7 +84,10 @@ export const MatrixQuestion = ({
   const columnsHeaders = useMemo(
     () =>
       question.columns.map((column, index) => (
-        <th key={index} className="text-heading max-w-40 break-words px-4 py-2 font-normal">
+        <th
+          key={index}
+          className="fb-text-heading fb-max-w-40 fb-break-words fb-px-4 fb-py-2 fb-font-normal"
+          dir="auto">
           {getLocalizedValue(column, languageCode)}
         </th>
       )),
@@ -93,7 +95,7 @@ export const MatrixQuestion = ({
   );
 
   return (
-    <form key={question.id} onSubmit={handleSubmit} className="w-full">
+    <form key={question.id} onSubmit={handleSubmit} className="fb-w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -106,11 +108,11 @@ export const MatrixQuestion = ({
             subheader={getLocalizedValue(question.subheader, languageCode)}
             questionId={question.id}
           />
-          <div className="overflow-x-auto py-4">
-            <table className="no-scrollbar min-w-full table-auto border-collapse text-sm">
+          <div className="fb-overflow-x-auto fb-py-4">
+            <table className="fb-no-scrollbar fb-min-w-full fb-table-auto fb-border-collapse fb-text-sm">
               <thead>
                 <tr>
-                  <th className="px-4 py-2"></th>
+                  <th className="fb-px-4 fb-py-2"></th>
                   {columnsHeaders}
                 </tr>
               </thead>
@@ -118,14 +120,16 @@ export const MatrixQuestion = ({
                 {question.rows.map((row, rowIndex) => (
                   // Table rows
                   <tr className={`${rowIndex % 2 === 0 ? "bg-input-bg" : ""}`}>
-                    <td className="text-heading rounded-l-custom max-w-40 break-words px-4 py-2">
+                    <td
+                      className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-px-4 fb-py-2"
+                      dir="auto">
                       {getLocalizedValue(row, languageCode)}
                     </td>
                     {question.columns.map((column, columnIndex) => (
                       <td
                         key={columnIndex}
                         tabIndex={0}
-                        className={`outline-brand px-4 py-2 text-gray-800 ${columnIndex === question.columns.length - 1 ? "rounded-r-custom" : ""}`}
+                        className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-gray-800 ${columnIndex === question.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
                         onClick={() =>
                           handleSelect(
                             getLocalizedValue(column, languageCode),
@@ -140,10 +144,12 @@ export const MatrixQuestion = ({
                               getLocalizedValue(row, languageCode)
                             );
                           }
-                        }}>
-                        <div className="flex items-center justify-center p-2">
+                        }}
+                        dir="auto">
+                        <div className="fb-flex fb-items-center fb-justify-center fb-p-2">
                           {/* radio input  */}
                           <input
+                            dir="auto"
                             type="radio"
                             tabIndex={-1}
                             id={`${row}-${column}`}
@@ -155,7 +161,7 @@ export const MatrixQuestion = ({
                                   getLocalizedValue(column, languageCode)
                                 : false
                             }
-                            className="border-brand text-brand h-5 w-5 border focus:ring-0 focus:ring-offset-0"
+                            className="fb-border-brand fb-text-brand fb-h-5 fb-w-5 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                           />
                         </div>
                       </td>
@@ -167,7 +173,7 @@ export const MatrixQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="flex w-full justify-between px-6 py-4">
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

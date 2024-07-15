@@ -9,7 +9,6 @@ import {
   ShieldCheckIcon,
   UsersIcon,
 } from "lucide-react";
-
 import { classNames } from "../lib/utils";
 
 const navigation = [

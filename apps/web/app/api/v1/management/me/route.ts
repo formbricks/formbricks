@@ -1,6 +1,5 @@
 import { getSessionUser, hashApiKey } from "@/app/lib/api/apiHelper";
 import { headers } from "next/headers";
-
 import { prisma } from "@formbricks/database";
 
 export const GET = async () => {
@@ -24,7 +23,8 @@ export const GET = async () => {
                 name: true,
               },
             },
-            widgetSetupCompleted: true,
+            appSetupCompleted: true,
+            websiteSetupCompleted: true,
           },
         },
       },

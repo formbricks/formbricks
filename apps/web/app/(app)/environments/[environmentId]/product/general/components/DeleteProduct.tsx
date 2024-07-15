@@ -1,6 +1,5 @@
 import { DeleteProductRender } from "@/app/(app)/environments/[environmentId]/product/general/components/DeleteProductRender";
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -37,8 +36,6 @@ export const DeleteProduct = async ({ environmentId, product }: DeleteProductPro
       isDeleteDisabled={isDeleteDisabled}
       isUserAdminOrOwner={isUserAdminOrOwner}
       product={product}
-      environmentId={environmentId}
-      userId={session?.user.id ?? ""}
     />
   );
 };

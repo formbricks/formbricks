@@ -2,7 +2,6 @@ import { responses } from "@/app/lib/api/response";
 import crypto from "crypto";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";

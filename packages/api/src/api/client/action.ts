@@ -1,8 +1,7 @@
-import { TActionInput } from "@formbricks/types/actions";
-import { Result } from "@formbricks/types/errorHandlers";
-import { NetworkError } from "@formbricks/types/errors";
-
-import { makeRequest } from "../../utils/makeRequest";
+import { type TActionInput } from "@formbricks/types/actions";
+import { type Result } from "@formbricks/types/error-handlers";
+import { type NetworkError } from "@formbricks/types/errors";
+import { makeRequest } from "../../utils/make-request";
 
 export class ActionAPI {
   private apiHost: string;
@@ -13,7 +12,9 @@ export class ActionAPI {
     this.environmentId = environmentId;
   }
 
-  async create(actionInput: Omit<TActionInput, "environmentId">): Promise<Result<{}, NetworkError | Error>> {
+  async create(
+    actionInput: Omit<TActionInput, "environmentId">
+  ): Promise<Result<object, NetworkError | Error>> {
     return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/actions`, "POST", actionInput);
   }
 }

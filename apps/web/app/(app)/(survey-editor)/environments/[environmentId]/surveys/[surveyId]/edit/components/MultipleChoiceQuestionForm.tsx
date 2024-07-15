@@ -3,24 +3,22 @@
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { createId } from "@paralleldrive/cuid2";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
   TShuffleOption,
   TSurvey,
   TSurveyMultipleChoiceQuestion,
-  TSurveyQuestionType,
-} from "@formbricks/types/surveys";
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-
 import { SelectQuestionChoice } from "./SelectQuestionChoice";
 
 interface OpenQuestionFormProps {
@@ -47,7 +45,6 @@ export const MultipleChoiceQuestionForm = ({
 }: OpenQuestionFormProps): JSX.Element => {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
-  const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
 
   const questionRef = useRef<HTMLInputElement>(null);
@@ -69,20 +66,6 @@ export const MultipleChoiceQuestionForm = ({
       label: "Randomize all except last option",
       show: true,
     },
-  };
-
-  const findDuplicateLabel = () => {
-    for (let i = 0; i < question.choices.length; i++) {
-      for (let j = i + 1; j < question.choices.length; j++) {
-        if (
-          getLocalizedValue(question.choices[i].label, selectedLanguageCode).trim() ===
-          getLocalizedValue(question.choices[j].label, selectedLanguageCode).trim()
-        ) {
-          return getLocalizedValue(question.choices[i].label, selectedLanguageCode).trim(); // Return the duplicate label
-        }
-      }
-    }
-    return null;
   };
 
   const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
@@ -187,6 +170,7 @@ export const MultipleChoiceQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
+        label={"Question*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -197,12 +181,13 @@ export const MultipleChoiceQuestionForm = ({
       />
 
       <div>
-        {showSubheader && (
+        {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
+                label={"Description"}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -212,17 +197,9 @@ export const MultipleChoiceQuestionForm = ({
                 attributeClasses={attributeClasses}
               />
             </div>
-
-            <TrashIcon
-              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => {
-                setShowSubheader(false);
-                updateQuestion(questionIdx, { subheader: undefined });
-              }}
-            />
           </div>
         )}
-        {!showSubheader && (
+        {question.subheader === undefined && (
           <Button
             size="sm"
             variant="minimal"
@@ -232,9 +209,7 @@ export const MultipleChoiceQuestionForm = ({
               updateQuestion(questionIdx, {
                 subheader: createI18nString("", surveyLanguageCodes),
               });
-              setShowSubheader(true);
             }}>
-            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>
@@ -242,7 +217,7 @@ export const MultipleChoiceQuestionForm = ({
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="choices">Options</Label>
+        <Label htmlFor="choices">Options*</Label>
         <div className="mt-2" id="choices">
           <DndContext
             onDragEnd={(event) => {
@@ -278,13 +253,11 @@ export const MultipleChoiceQuestionForm = ({
                       updateChoice={updateChoice}
                       deleteChoice={deleteChoice}
                       addChoice={addChoice}
-                      setisInvalidValue={setisInvalidValue}
                       isInvalid={isInvalid}
                       localSurvey={localSurvey}
                       selectedLanguageCode={selectedLanguageCode}
                       setSelectedLanguageCode={setSelectedLanguageCode}
                       surveyLanguages={surveyLanguages}
-                      findDuplicateLabel={findDuplicateLabel}
                       question={question}
                       updateQuestion={updateQuestion}
                       surveyLanguageCodes={surveyLanguageCodes}
@@ -307,13 +280,13 @@ export const MultipleChoiceQuestionForm = ({
               onClick={() => {
                 updateQuestion(questionIdx, {
                   type:
-                    question.type === TSurveyQuestionType.MultipleChoiceMulti
-                      ? TSurveyQuestionType.MultipleChoiceSingle
-                      : TSurveyQuestionType.MultipleChoiceMulti,
+                    question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
+                      ? TSurveyQuestionTypeEnum.MultipleChoiceSingle
+                      : TSurveyQuestionTypeEnum.MultipleChoiceMulti,
                 });
               }}>
-              Convert to {question.type === TSurveyQuestionType.MultipleChoiceSingle ? "Multiple" : "Single"}{" "}
-              Select
+              Convert to{" "}
+              {question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? "Multiple" : "Single"} Select
             </Button>
 
             <div className="flex flex-1 items-center justify-end gap-2">

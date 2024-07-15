@@ -1,6 +1,5 @@
 // mock these globally used functions
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-
 import { ValidationError } from "@formbricks/types/errors";
 
 vi.mock("next/cache", () => ({
@@ -11,6 +10,18 @@ vi.mock("next/cache", () => ({
   revalidateTag: vi.fn(),
 }));
 
+// mock react cache
+const testCache = <T extends Function>(func: T) => func;
+
+vi.mock("react", () => {
+  const originalModule = vi.importActual("react");
+  return {
+    ...originalModule,
+    cache: testCache,
+  };
+});
+
+// mock server-only
 vi.mock("server-only", () => {
   return {};
 });

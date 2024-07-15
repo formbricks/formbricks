@@ -4,9 +4,7 @@ import { AlertCircleIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-
 import { TTag } from "@formbricks/types/tags";
-
 import { Button } from "../../Button";
 import { Tag } from "../../Tag";
 import { TagsCombobox } from "../../TagsCombobox";

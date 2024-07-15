@@ -2,12 +2,11 @@
 
 import { EmptyAppSurveys } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import { useEffect, useRef, useState } from "react";
-
 import { getMembershipByUserIdOrganizationIdAction } from "@formbricks/lib/membership/hooks/actions";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
@@ -49,6 +48,9 @@ export const ResponseTimeline = ({
   const [isViewer, setIsViewer] = useState(false);
   const loadingRef = useRef(null);
 
+  const widgetSetupCompleted =
+    survey.type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
+
   useEffect(() => {
     const currentLoadingRef = loadingRef.current;
 
@@ -87,7 +89,7 @@ export const ResponseTimeline = ({
     <div className="space-y-4">
       {(survey.type === "app" || survey.type === "website") &&
       responses.length === 0 &&
-      !environment.widgetSetupCompleted ? (
+      !widgetSetupCompleted ? (
         <EmptyAppSurveys environment={environment} surveyType={survey.type} />
       ) : isFetchingFirstPage ? (
         <SkeletonLoader type="response" />
@@ -97,6 +99,7 @@ export const ResponseTimeline = ({
           environment={environment}
           noWidgetRequired={survey.type === "link"}
           emptyMessage={totalResponseCount === 0 ? undefined : "No response matches your filter"}
+          widgetSetupCompleted={widgetSetupCompleted}
         />
       ) : (
         <div>

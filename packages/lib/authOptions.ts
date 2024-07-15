@@ -4,9 +4,7 @@ import AzureAD from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-
 import { prisma } from "@formbricks/database";
-
 import { createAccount } from "./account/service";
 import { verifyPassword } from "./auth/utils";
 import {
@@ -29,7 +27,6 @@ import {
 import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
 import { createOrganization, getOrganization } from "./organization/service";
-import { createProduct } from "./product/service";
 import { createUser, getUserByEmail, updateUser } from "./user/service";
 
 export const authOptions: NextAuthOptions = {
@@ -254,7 +251,6 @@ export const authOptions: NextAuthOptions = {
           name: user.name || user.email.split("@")[0],
           email: user.email,
           emailVerified: new Date(Date.now()),
-          onboardingCompleted: false,
           identityProvider: provider,
           identityProviderAccountId: account.providerAccountId,
         });
@@ -278,34 +274,27 @@ export const authOptions: NextAuthOptions = {
             ...account,
             userId: userProfile.id,
           });
-          return true;
-        }
-        // Without default organization assignment
-        else {
-          const organization = await createOrganization({ name: userProfile.name + "'s Organization" });
-          await createMembership(organization.id, userProfile.id, { role: "owner", accepted: true });
-          await createAccount({
-            ...account,
-            userId: userProfile.id,
-          });
-          const product = await createProduct(organization.id, { name: "My Product" });
+
           const updatedNotificationSettings = {
             ...userProfile.notificationSettings,
             alert: {
               ...userProfile.notificationSettings?.alert,
             },
-            weeklySummary: {
-              ...userProfile.notificationSettings?.weeklySummary,
-              [product.id]: true,
-            },
+            unsubscribedOrganizationIds: Array.from(
+              new Set([
+                ...(userProfile.notificationSettings?.unsubscribedOrganizationIds || []),
+                organization.id,
+              ])
+            ),
           };
 
           await updateUser(userProfile.id, {
             notificationSettings: updatedNotificationSettings,
           });
-
           return true;
         }
+        // Without default organization assignment
+        return true;
       }
 
       return true;

@@ -2,11 +2,10 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
-
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
@@ -62,7 +61,7 @@ export const EditThankYouCard = ({
   return (
     <div
       className={cn(
-        open ? "scale-100 shadow-lg " : "scale-97 shadow-md",
+        open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
         "group z-20 flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
       )}>
       <div
@@ -112,7 +111,7 @@ export const EditThankYouCard = ({
           <form>
             <QuestionFormInput
               id="headline"
-              label="Headline"
+              label="Note*"
               value={localSurvey?.thankYouCard?.headline}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
@@ -126,6 +125,7 @@ export const EditThankYouCard = ({
             <QuestionFormInput
               id="subheader"
               value={localSurvey.thankYouCard.subheader}
+              label={"Description"}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
               isInvalid={isInvalid}

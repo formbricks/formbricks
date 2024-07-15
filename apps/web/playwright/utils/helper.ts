@@ -2,6 +2,7 @@ import { CreateSurveyParams } from "@/playwright/utils/mock";
 import { expect } from "@playwright/test";
 import { readFileSync, writeFileSync } from "fs";
 import { Page } from "playwright";
+import { TProductConfigChannel } from "@formbricks/types/product";
 
 export const signUpAndLogin = async (
   page: Page,
@@ -54,42 +55,53 @@ export const login = async (page: Page, email: string, password: string): Promis
   await page.getByRole("button", { name: "Login with Email" }).click();
 };
 
-export const finishOnboarding = async (page: Page, deleteExampleSurvey: boolean = true): Promise<void> => {
-  await page.waitForURL("/onboarding");
-  await expect(page).toHaveURL("/onboarding");
+export const apiLogin = async (page: Page, email: string, password: string) => {
+  const csrfToken = await page
+    .context()
+    .request.get("/api/auth/csrf")
+    .then((response) => response.json())
+    .then((json) => json.csrfToken);
+  const data = {
+    email,
+    password,
+    callbackURL: "/",
+    redirect: "true",
+    json: "true",
+    csrfToken,
+  };
 
-  const hiddenSkipButton = page.locator("#FB__INTERNAL__SKIP_ONBOARDING");
-  hiddenSkipButton.evaluate((el: HTMLElement) => el.click());
+  return page.context().request.post("/api/auth/callback/credentials", {
+    data,
+  });
+};
 
-  await expect(page.getByText("My Product")).toBeVisible();
+export const finishOnboarding = async (
+  page: Page,
+  ProductChannel: TProductConfigChannel = "website"
+): Promise<void> => {
+  await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/channel/);
 
-  let currentDir = process.cwd();
-  let htmlFilePath = currentDir + "/packages/js/index.html";
-
-  const environmentId =
-    /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
-    (() => {
-      throw new Error("Unable to parse environmentId from URL");
-    })();
-
-  let htmlFile = replaceEnvironmentIdInHtml(htmlFilePath, environmentId);
-  await page.goto(htmlFile);
-
-  // Formbricks Website Sync has happened
-  const syncApi = await page.waitForResponse((response) => response.url().includes("/website/sync"));
-  expect(syncApi.status()).toBe(200);
-
-  await page.goto("/");
-  await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-
-  if (deleteExampleSurvey) {
-    await page.click("#example-survey-survey-actions");
-    await page.getByRole("menuitem", { name: "Delete" }).click();
-    await page.getByRole("button", { name: "Delete" }).click();
-    await expect(page.getByText("Survey deleted successfully.")).toBeVisible();
-    await page.reload();
-    await expect(page.getByText("Start from scratchCreate a")).toBeVisible();
+  if (ProductChannel === "website") {
+    await page.getByRole("button", { name: "Built for scale Public website" }).click();
+  } else if (ProductChannel === "app") {
+    await page.getByRole("button", { name: "Enrich user profiles App with" }).click();
+  } else {
+    await page.getByRole("button", { name: "100% custom branding Anywhere" }).click();
   }
+
+  await page.getByRole("button", { name: "Proven methods SaaS" }).click();
+  await page.getByPlaceholder("Formbricks Merch Store").click();
+  await page.getByPlaceholder("Formbricks Merch Store").fill("My Product");
+  await page.locator("form").filter({ hasText: "Brand colorChange the brand" }).getByRole("button").click();
+
+  if (ProductChannel !== "link") {
+    await page.getByRole("button", { name: "Skip" }).click();
+    await page.waitForTimeout(500);
+    await page.getByRole("button", { name: "Skip" }).click();
+  }
+
+  await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+  await expect(page.getByText("My Product")).toBeVisible();
 };
 
 export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: string): string => {
@@ -121,33 +133,26 @@ export const signupUsingInviteToken = async (page: Page, name: string, email: st
   await page.getByRole("button", { name: "Login with Email" }).click();
 };
 
-export const createSurvey = async (
-  page: Page,
-  name: string,
-  email: string,
-  password: string,
-  params: CreateSurveyParams
-) => {
+export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   const addQuestion = "Add QuestionAdd a new question to your survey";
-
-  await signUpAndLogin(page, name, email, password);
-  await finishOnboarding(page);
 
   await page.getByRole("button", { name: "Start from scratch Create a" }).click();
   await page.getByRole("button", { name: "Create survey", exact: true }).click();
+
+  await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
 
   // Welcome Card
   await expect(page.locator("#welcome-toggle")).toBeVisible();
   await page.getByText("Welcome Card").click();
   await page.locator("#welcome-toggle").check();
-  await page.getByLabel("Headline").fill(params.welcomeCard.headline);
+  await page.getByLabel("Note*").fill(params.welcomeCard.headline);
   await page.locator("form").getByText("Thanks for providing your").fill(params.welcomeCard.description);
   await page.getByText("Welcome CardOn").click();
 
   // Open Text Question
   await page.getByRole("main").getByText("What would you like to know?").click();
 
-  await page.getByLabel("Question").fill(params.openTextQuestion.question);
+  await page.getByLabel("Question*").fill(params.openTextQuestion.question);
   await page.getByLabel("Description").fill(params.openTextQuestion.description);
   await page.getByLabel("Placeholder").fill(params.openTextQuestion.placeholder);
 
@@ -160,7 +165,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Single-Select" }).click();
-  await page.getByLabel("Question").fill(params.singleSelectQuestion.question);
+  await page.getByLabel("Question*").fill(params.singleSelectQuestion.question);
   await page.getByLabel("Description").fill(params.singleSelectQuestion.description);
   await page.getByPlaceholder("Option 1").fill(params.singleSelectQuestion.options[0]);
   await page.getByPlaceholder("Option 2").fill(params.singleSelectQuestion.options[1]);
@@ -173,7 +178,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Multi-Select" }).click();
-  await page.getByLabel("Question").fill(params.multiSelectQuestion.question);
+  await page.getByLabel("Question*").fill(params.multiSelectQuestion.question);
   await page.getByRole("button", { name: "Add Description", exact: true }).click();
   await page.getByLabel("Description").fill(params.multiSelectQuestion.description);
   await page.getByPlaceholder("Option 1").fill(params.multiSelectQuestion.options[0]);
@@ -187,7 +192,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Rating" }).click();
-  await page.getByLabel("Question").fill(params.ratingQuestion.question);
+  await page.getByLabel("Question*").fill(params.ratingQuestion.question);
   await page.getByLabel("Description").fill(params.ratingQuestion.description);
   await page.getByPlaceholder("Not good").fill(params.ratingQuestion.lowLabel);
   await page.getByPlaceholder("Very satisfied").fill(params.ratingQuestion.highLabel);
@@ -199,7 +204,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Net Promoter Score (NPS)" }).click();
-  await page.getByLabel("Question").fill(params.npsQuestion.question);
+  await page.getByLabel("Question*").fill(params.npsQuestion.question);
   await page.getByLabel("Lower label").fill(params.npsQuestion.lowLabel);
   await page.getByLabel("Upper label").fill(params.npsQuestion.highLabel);
 
@@ -220,7 +225,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Consent" }).click();
-  await page.getByLabel("Question").fill(params.consentQuestion.question);
+  await page.getByLabel("Question*").fill(params.consentQuestion.question);
   await page.getByPlaceholder("I agree to the terms and").fill(params.consentQuestion.checkboxLabel);
 
   // Picture Select Question
@@ -230,7 +235,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Picture Selection" }).click();
-  await page.getByLabel("Question").fill(params.pictureSelectQuestion.question);
+  await page.getByLabel("Question*").fill(params.pictureSelectQuestion.question);
   await page.getByLabel("Description").fill(params.pictureSelectQuestion.description);
 
   // File Upload Question
@@ -240,7 +245,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "File Upload" }).click();
-  await page.getByLabel("Question").fill(params.fileUploadQuestion.question);
+  await page.getByLabel("Question*").fill(params.fileUploadQuestion.question);
 
   // Fill Matrix question in german
   // File Upload Question
@@ -250,7 +255,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Matrix" }).click();
-  await page.getByLabel("Question").fill(params.matrix.question);
+  await page.getByLabel("Question*").fill(params.matrix.question);
   await page.getByLabel("Description").fill(params.matrix.description);
   await page.locator("#row-0").click();
   await page.locator("#row-0").fill(params.matrix.rows[0]);
@@ -274,10 +279,10 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Address" }).click();
-  await page.getByLabel("Question").fill(params.address.question);
+  await page.getByLabel("Question*").fill(params.address.question);
 
   // Thank You Card
   await page.getByText("Thank You CardShown").click();
-  await page.getByLabel("Headline").fill(params.thankYouCard.headline);
+  await page.getByLabel("Note*").fill(params.thankYouCard.headline);
   await page.getByLabel("Description").fill(params.thankYouCard.description);
 };

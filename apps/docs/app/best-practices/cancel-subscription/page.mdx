@@ -41,9 +41,7 @@ To run the Churn Survey in your app you want to proceed as follows:
 4. Prevent that churn!
 
 <Note>
-  ## Formbricks Widget running?
-  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide
-  (takes 15mins max.)](/app-surveys/quickstart)
+  ## Formbricks Widget running? We assume that you have already installed the Formbricks Widget in your web app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide (takes 15mins max.)](/app-surveys/quickstart)
 </Note>
 
 ### 1. Create new Churn Survey
@@ -80,9 +78,9 @@ In this case, you don’t really need to pre-segment your audience. You likely w
 
 ### 4. Set up a trigger
 
-To create the trigger for your Churn Survey, you have two options to choose from:
+To create the trigger for your Churn Survey, you have three options to choose from:
 
-1. **Trigger by innerText:** You likely have a “Cancel Subscription” button in your app. You can setup a user Action with the according `innerText` to trigger the survey, like so:
+1. **Trigger by Inner Text:** You likely have a “Cancel Subscription” button in your app. You can setup a user Action with the according `Inner Text` to trigger the survey, like so:
 
 <MdxImage
   src={TriggerInnerText}
@@ -100,7 +98,7 @@ To create the trigger for your Churn Survey, you have two options to choose from
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-3. **Trigger by pageURL:** Lastly, you could also display your survey on a subpage “/subscription-cancelled” where you forward users once they cancelled the trial subscription. You can then create a user Action with the type `pageURL` with the following settings:
+1. **Trigger by page view filters:** Lastly, you could also display your survey on a subpage “/subscription-cancelled” where you forward users once they cancelled the trial subscription. You can then create a user Action with the type `Page View` and add select `Limit to specific pages` to add url filters, with the following settings:
 
 <MdxImage
   src={TriggerPageUrl}
@@ -111,7 +109,7 @@ To create the trigger for your Churn Survey, you have two options to choose from
 
 Whenever a user visits this page, matches the filter conditions above and the recontact options (below) the survey will be displayed ✅
 
-Here is our complete [Actions manual](/actions/why) covering [Code](/actions/code) and [No-Code](/actions/no-code) Actions.
+Here is our complete [Actions manual](/app-surveys/actions/) covering [No-Code](/app-surveys/actions#setting-up-no-code-actions) and [Code](/app-surveys/actions#setting-up-code-actions) Actions.
 
 <Note>
   ## Pre-churn flow coming soon We’re currently building full-screen survey pop-ups. You’ll be able to prevent
