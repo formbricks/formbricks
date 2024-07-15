@@ -37,7 +37,7 @@ runs:
       if: steps.cache-build.outputs.cache-hit != 'true'
 
     - name: Install pnpm
-      uses: pnpm/action-setup@v2
+      uses: pnpm/action-setup@v4
       if: steps.cache-build.outputs.cache-hit != 'true'
 
     - name: Install dependencies

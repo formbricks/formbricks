@@ -691,7 +691,7 @@ export const templates: TTemplate[] = [
             },
             {
               id: createId(),
-              label: { default: "productManager" },
+              label: { default: "Product Manager" },
             },
             {
               id: createId(),
@@ -756,7 +756,7 @@ export const templates: TTemplate[] = [
             },
             {
               id: createId(),
-              label: { default: "productManager" },
+              label: { default: "Product Manager" },
             },
             {
               id: createId(),

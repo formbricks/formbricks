@@ -169,6 +169,7 @@ const nextConfig = {
   env: {
     INSTANCE_ID: createId(),
     INTERNAL_SECRET: createId(),
+    NEXTAUTH_URL: process.env.WEBAPP_URL,
   },
 };
 
