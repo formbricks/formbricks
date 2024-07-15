@@ -105,7 +105,8 @@ export const validationRules = {
   // Assuming headline is of type TI18nString
   defaultValidation: (question: TSurveyQuestion, languages: TSurveyLanguage[], isFirstQuestion: boolean) => {
     // headline and subheader are default for every question
-    const isHeadlineValid = isLabelValidForAllLanguages(question.headline, languages);
+    const isHeadlineValid =
+      question.type !== "ad" ? isLabelValidForAllLanguages(question.headline, languages) : true;
     const isSubheaderValid =
       question.subheader &&
       getLocalizedValue(question.subheader, "default").trim() !== "" &&

@@ -31,7 +31,15 @@ yarn-error.log*
 .env.local
 .env.development.local
 .env.test.local
+.env.sandbox.local
+.env.sandbox
+.env.staging.local
+.env.staging
 .env.production.local
+.env.production
+local.env
+staging.env
+production.env
 !packages/database/.env
 !apps/web/.env
 
@@ -58,3 +66,4 @@ packages/lib/uploads
 # Vite Timestamps
 vite.config.*.timestamp-*
 
+.idea/

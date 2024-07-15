@@ -112,6 +112,7 @@ const ZResponseFilterCriteriaMatrix = z.object({
 
 export const ZResponseFilterCriteria = z.object({
   finished: z.boolean().optional(),
+  failed: z.boolean().optional(),
   createdAt: z
     .object({
       min: z.date().optional(),
@@ -229,6 +230,7 @@ export const ZResponse = z.object({
   person: ZResponsePerson.nullable(),
   personAttributes: ZResponsePersonAttributes,
   finished: z.boolean(),
+  failed: z.boolean(),
   data: ZResponseData,
   ttc: ZResponseTtc.optional(),
   notes: z.array(ZResponseNote),
@@ -248,6 +250,7 @@ export const ZResponseInput = z.object({
   userId: z.string().nullish(),
   singleUseId: z.string().nullable().optional(),
   finished: z.boolean(),
+  failed: z.boolean(),
   language: z.string().optional(),
   data: ZResponseData,
   ttc: ZResponseTtc.optional(),
@@ -278,6 +281,7 @@ export type TResponseLegacyInput = z.infer<typeof ZResponseLegacyInput>;
 
 export const ZResponseUpdateInput = z.object({
   finished: z.boolean(),
+  failed: z.boolean(),
   data: ZResponseData,
   ttc: ZResponseTtc.optional(),
   language: z.string().optional(),
@@ -296,6 +300,7 @@ export type TResponseHiddenFieldValue = z.infer<typeof ZResponseHiddenFieldValue
 
 export const ZResponseUpdate = z.object({
   finished: z.boolean(),
+  failed: z.boolean(),
   data: ZResponseData,
   language: z.string().optional(),
   ttc: ZResponseTtc.optional(),

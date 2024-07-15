@@ -9,6 +9,7 @@ import { createMembership, getMembershipByUserIdOrganizationId } from "@formbric
 import { createOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { createShortUrl } from "@formbricks/lib/shortUrl/service";
+import { getAllDbCountries } from "@formbricks/lib/survey/service";
 import { updateUser } from "@formbricks/lib/user/service";
 import { AuthenticationError, AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
@@ -69,6 +70,10 @@ export const createOrganizationAction = async (organizationName: string): Promis
   });
 
   return newOrganization;
+};
+
+export const getAllCountries = async () => {
+  return await getAllDbCountries();
 };
 
 export const createProductAction = async (

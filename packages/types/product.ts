@@ -61,6 +61,9 @@ export const ZProduct = z.object({
     .int()
     .min(0, { message: "Must be a positive number" })
     .max(365, { message: "Must be less than 365" }),
+  defaultRewardInUSD: z.number(),
+  defaultRedirectOnCompleteUrl: z.string().url().nullish(),
+  defaultRedirectOnFailUrl: z.string().url().nullish(),
   inAppSurveyBranding: z.boolean(),
   linkSurveyBranding: z.boolean(),
   config: ZProductConfig,
@@ -86,6 +89,9 @@ export const ZProductLegacy = z.object({
     .int()
     .min(0, { message: "Must be a positive number" })
     .max(365, { message: "Must be less than 365" }),
+  defaultRewardInUSD: z.number(),
+  defaultRedirectOnCompleteUrl: z.string().url().nullish(),
+  defaultRedirectOnFailUrl: z.string().url().nullish(),
   inAppSurveyBranding: z.boolean(),
   linkSurveyBranding: z.boolean(),
   config: ZProductConfig,
@@ -106,6 +112,9 @@ export const ZProductUpdateInput = z.object({
   organizationId: z.string().optional(),
   highlightBorderColor: ZColor.nullish(),
   recontactDays: z.number().int().optional(),
+  defaultRewardInUSD: z.number().optional(),
+  defaultRedirectOnCompleteUrl: z.string().nullish(),
+  defaultRedirectOnFailUrl: z.string().nullish(),
   inAppSurveyBranding: z.boolean().optional(),
   linkSurveyBranding: z.boolean().optional(),
   config: ZProductConfig.optional(),

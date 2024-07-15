@@ -15,6 +15,7 @@ export {
   ZSurveyWelcomeCard,
   ZSurveyQuestions,
   ZSurveyThankYouCard,
+  ZSurveyFailureCard,
   ZSurveyHiddenFields,
   ZSurveyClosedMessage,
   ZSurveyProductOverwrites,

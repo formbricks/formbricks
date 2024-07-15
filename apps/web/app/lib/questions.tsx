@@ -12,10 +12,12 @@ import {
   PhoneIcon,
   PresentationIcon,
   Rows3Icon,
+  ScanEyeIcon,
   StarIcon,
 } from "lucide-react";
 import {
   TSurveyQuestionTypeEnum as QuestionId,
+  TSurveyAdQuestion,
   TSurveyAddressQuestion,
   TSurveyCTAQuestion,
   TSurveyCalQuestion,
@@ -145,6 +147,17 @@ export const questionTypes: TQuestion[] = [
       buttonExternal: false,
       dismissButtonLabel: { default: "Skip" },
     } as Partial<TSurveyCTAQuestion>,
+  },
+  {
+    id: QuestionId.Ad,
+    label: "Ad",
+    description: "Show an advertisement",
+    icon: ScanEyeIcon,
+    preset: {
+      headline: {
+        default: "Sponsored links",
+      },
+    } as Partial<TSurveyAdQuestion>,
   },
   {
     id: QuestionId.Consent,

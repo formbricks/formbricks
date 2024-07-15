@@ -216,6 +216,7 @@ const ZJsSettingsSurvey = ZSurvey.pick({
   questions: true,
   triggers: true,
   thankYouCard: true,
+  failureCard: true,
   autoClose: true,
   delay: true,
 });

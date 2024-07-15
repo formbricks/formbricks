@@ -202,13 +202,18 @@ export const Survey = ({
     setResponseData(updatedResponseData);
   };
 
+  const [failed, setFailed] = useState(false);
+
   const onSubmit = (responseData: TResponseData, ttc: TResponseTtc) => {
     const questionId = Object.keys(responseData)[0];
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId(responseData);
     const finished = nextQuestionId === "end";
+    const random = Math.random() * 100;
+    const surveyFailed = finished && random <= survey.failureChance;
+    setFailed(surveyFailed);
     onChange(responseData);
-    onResponse({ data: responseData, ttc, finished, language: selectedLanguage });
+    onResponse({ data: responseData, ttc, finished, language: selectedLanguage, failed: surveyFailed });
     if (finished) {
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*");
@@ -242,6 +247,18 @@ export const Survey = ({
     return undefined;
   };
 
+  const appendSurveyAndPanelistQueryParamsToRedirectUrl = (url: string | null): string | null => {
+    if (!url) return null;
+    const urlObj = new URL(url);
+    urlObj.searchParams.append("survey_id", survey.id);
+    const urlParams = new URLSearchParams(window.location.search);
+    const user_id = urlParams.get("userId");
+    if (user_id) {
+      urlObj.searchParams.append("panelist_id", user_id);
+    }
+    return urlObj.toString();
+  };
+
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
     if (showError) {
       return (
@@ -268,6 +285,32 @@ export const Survey = ({
           />
         );
       } else if (questionIdx === survey.questions.length) {
+        if (survey.failureCard.enabled && failed) {
+          return (
+            <ThankYouCard
+              key="end"
+              headline={replaceRecallInfo(
+                getLocalizedValue(survey.thankYouCard.headline, selectedLanguage),
+                responseData
+              )}
+              subheader={replaceRecallInfo(
+                getLocalizedValue(survey.thankYouCard.subheader, selectedLanguage),
+                responseData
+              )}
+              isResponseSendingFinished={isResponseSendingFinished}
+              buttonLabel={getLocalizedValue(survey.thankYouCard.buttonLabel, selectedLanguage)}
+              buttonLink={survey.thankYouCard.buttonLink}
+              survey={survey}
+              imageUrl={survey.thankYouCard.imageUrl}
+              videoUrl={survey.thankYouCard.videoUrl}
+              redirectUrl={appendSurveyAndPanelistQueryParamsToRedirectUrl(survey.redirectUrl)}
+              isRedirectDisabled={isRedirectDisabled}
+              autoFocusEnabled={autoFocusEnabled}
+              isCurrent={offset === 0}
+              failed={true}
+            />
+          );
+        }
         return (
           <ThankYouCard
             key="end"
@@ -285,10 +328,11 @@ export const Survey = ({
             survey={survey}
             imageUrl={survey.thankYouCard.imageUrl}
             videoUrl={survey.thankYouCard.videoUrl}
-            redirectUrl={survey.redirectUrl}
+            redirectUrl={appendSurveyAndPanelistQueryParamsToRedirectUrl(survey.redirectUrl)}
             isRedirectDisabled={isRedirectDisabled}
             autoFocusEnabled={autoFocusEnabled}
             isCurrent={offset === 0}
+            failed={false}
           />
         );
       } else {
@@ -347,6 +391,22 @@ export const Survey = ({
           <div className="fb-mx-6 fb-mb-10 fb-mt-2 fb-space-y-3 md:fb-mb-6 md:fb-mt-6">
             {isBrandingEnabled && <FormbricksBranding />}
             {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
+            {currentQuestion && currentQuestion.type === "ad" && (
+              <div
+                style={{
+                  maxHeight: "100px",
+                  overflow: "auto",
+                  fontSize: "small",
+                  textAlign: "center",
+                  lineHeight: "1.5",
+                }}>
+                <div style={{ marginBottom: "25px" }}>Why are you seeing an ad in this survey?</div>
+                <div style={{ fontSize: "large", marginBottom: "25px" }}>⬇️</div>
+                In some selected surveys you might be presented with an ad that you can simply skip to
+                continue with the survey. We use ads to finance the continued growth and development of this
+                platform, so you can continue to earn money and enjoy our surveys.
+              </div>
+            )}
           </div>
         </div>
       </AutoCloseWrapper>

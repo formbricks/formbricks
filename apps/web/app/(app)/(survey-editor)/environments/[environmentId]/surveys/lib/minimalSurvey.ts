@@ -13,6 +13,7 @@ export const minimalSurvey: TSurvey = {
   autoClose: null,
   triggers: [],
   redirectUrl: null,
+  redirectOnFailUrl: null,
   recontactDays: null,
   displayLimit: null,
   welcomeCard: {
@@ -24,6 +25,9 @@ export const minimalSurvey: TSurvey = {
   },
   questions: [],
   thankYouCard: {
+    enabled: false,
+  },
+  failureCard: {
     enabled: false,
   },
   hiddenFields: {
@@ -44,4 +48,8 @@ export const minimalSurvey: TSurvey = {
   segment: null,
   languages: [],
   showLanguageSwitch: false,
+  countries: [],
+  limitedCountries: false,
+  reward: 0,
+  failureChance: 0,
 };

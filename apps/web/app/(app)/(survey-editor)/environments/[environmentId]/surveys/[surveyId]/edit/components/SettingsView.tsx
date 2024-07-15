@@ -1,3 +1,4 @@
+import SurveyGeneralSettings from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyGeneralSettings";
 import { AdvancedTargetingCard } from "@formbricks/ee/advanced-targeting/components/advanced-targeting-card";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -6,7 +7,6 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
-import { HowToSendCard } from "./HowToSendCard";
 import { RecontactOptionsCard } from "./RecontactOptionsCard";
 import { ResponseOptionsCard } from "./ResponseOptionsCard";
 import { SurveyPlacementCard } from "./SurveyPlacementCard";
@@ -25,6 +25,10 @@ interface SettingsViewProps {
   isUserTargetingAllowed?: boolean;
   isFormbricksCloud: boolean;
   product: TProduct;
+  invalidQuestions: string[] | null;
+  setInvalidQuestions: (invalidQuestions: string[] | null) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (languageCode: string) => void;
 }
 
 export const SettingsView = ({
@@ -39,16 +43,23 @@ export const SettingsView = ({
   isUserTargetingAllowed = false,
   isFormbricksCloud,
   product,
+  invalidQuestions,
+  setSelectedLanguageCode,
+  selectedLanguageCode,
 }: SettingsViewProps) => {
   const isWebSurvey = localSurvey.type === "website" || localSurvey.type === "app";
 
   return (
     <div className="mt-12 space-y-3 p-5">
-      <HowToSendCard
+      <SurveyGeneralSettings
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         environment={environment}
         product={product}
+        isInvalid={invalidQuestions ? invalidQuestions.includes("end") : false}
+        setSelectedLanguageCode={setSelectedLanguageCode}
+        selectedLanguageCode={selectedLanguageCode}
+        attributeClasses={attributeClasses}
       />
 
       {localSurvey.type === "app" ? (
@@ -89,6 +100,7 @@ export const SettingsView = ({
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         responseCount={responseCount}
+        product={product}
       />
 
       <RecontactOptionsCard

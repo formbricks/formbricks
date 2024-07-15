@@ -245,8 +245,6 @@ export const SigninForm = ({
 
         {publicSignUpEnabled && !totpLogin && isMultiOrgEnabled && (
           <div className="mt-9 text-center text-xs">
-            <span className="leading-5 text-slate-500">New to Formbricks?</span>
-            <br />
             <Link
               href={inviteToken ? `/auth/signup?inviteToken=${inviteToken}` : "/auth/signup"}
               className="font-semibold text-slate-600 underline hover:text-slate-700">

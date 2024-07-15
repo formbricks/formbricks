@@ -1,9 +1,10 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { createHmac } from "crypto";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { sendResponseFinishedEmail } from "@formbricks/email";
-import { INTERNAL_SECRET } from "@formbricks/lib/constants";
+import { INTERNAL_SECRET, WEBHOOK_SECRET } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
@@ -62,16 +63,20 @@ export const POST = async (request: Request) => {
   // send request to all webhooks
   await Promise.all(
     webhooks.map(async (webhook) => {
+      const body = {
+        webhookId: webhook.id,
+        event,
+        data: response,
+      };
+
+      body["hash"] = createHmac("sha256", WEBHOOK_SECRET).update(JSON.stringify(body)).digest("hex");
+
       await fetch(webhook.url, {
         method: "POST",
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({
-          webhookId: webhook.id,
-          event,
-          data: response,
-        }),
+        body: JSON.stringify(body),
       });
     })
   );

@@ -43,9 +43,14 @@ export const getCardText = (
   survey: TSurvey,
   id: string,
   isThankYouCard: boolean,
-  surveyLanguageCodes: string[]
+  surveyLanguageCodes: string[],
+  fail?: boolean
 ): TI18nString => {
-  const card = isThankYouCard ? survey.thankYouCard : survey.welcomeCard;
+  const card = isThankYouCard
+    ? fail === undefined
+      ? survey.thankYouCard
+      : survey.failureCard
+    : survey.welcomeCard;
   return (card[id as keyof typeof card] as TI18nString) || createI18nString("", surveyLanguageCodes);
 };
 

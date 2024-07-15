@@ -111,6 +111,7 @@ model Response {
   createdAt        DateTime          @default(now()) @map(name: "created_at")
   updatedAt        DateTime          @updatedAt @map(name: "updated_at")
   finished         Boolean           @default(false)
+  failed           Boolean           @default(false)
   survey           Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId         String
   person           Person?           @relation(fields: [personId], references: [id], onDelete: Cascade)
@@ -259,6 +260,7 @@ model Survey {
   updatedAt           DateTime                @updatedAt @map(name: "updated_at")
   name                String
   redirectUrl         String?
+  redirectOnFailUrl   String?
   type                SurveyType              @default(web)
   environment         Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId       String
@@ -274,6 +276,9 @@ model Survey {
   /// @zod.custom(imports.ZSurveyThankYouCard)
   /// [SurveyThankYouCard]
   thankYouCard        Json                    @default("{\"enabled\": false}")
+  /// @zod.custom(imports.ZSurveyFailureCard)
+  /// [SurveyFailureCard]
+  failureCard         Json                    @default("{\"enabled\": false}")
   /// @zod.custom(imports.ZSurveyHiddenFields)
   /// [SurveyHiddenFields]
   hiddenFields        Json                    @default("{\"enabled\": false}")
@@ -308,7 +313,7 @@ model Survey {
 
   /// @zod.custom(imports.ZSurveySingleUse)
   /// [SurveySingleUse]
-  singleUse Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
+  singleUse Json? @default("{\"enabled\": true, \"isEncrypted\": true}")
 
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
@@ -318,9 +323,21 @@ model Survey {
   displayPercentage  Decimal?
   languages          SurveyLanguage[]
   showLanguageSwitch Boolean?
+  reward             Float            @default(0)
+  failureChance      Float            @default(0)
+
+  countries        Country[] @relation("SurveyCountries")
+  limitedCountries Boolean   @default(false)
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
+}
+
+model Country {
+  isoCode String @id
+  name    String
+
+  surveys Survey[] @relation("SurveyCountries")
 }
 
 enum ActionType {
@@ -424,31 +441,34 @@ enum WidgetPlacement {
 }
 
 model Product {
-  id                   String          @id @default(cuid())
-  createdAt            DateTime        @default(now()) @map(name: "created_at")
-  updatedAt            DateTime        @updatedAt @map(name: "updated_at")
-  name                 String
-  organization         Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId       String
-  environments         Environment[]
-  brandColor           String? // deprecated; use styling.brandColor instead
-  highlightBorderColor String? // deprecated
+  id                           String          @id @default(cuid())
+  createdAt                    DateTime        @default(now()) @map(name: "created_at")
+  updatedAt                    DateTime        @updatedAt @map(name: "updated_at")
+  name                         String
+  organization                 Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId               String
+  environments                 Environment[]
+  brandColor                   String? // deprecated; use styling.brandColor instead
+  highlightBorderColor         String? // deprecated
   /// @zod.custom(imports.ZProductStyling)
   /// [Styling]
-  styling              Json            @default("{\"allowStyleOverwrite\":true}")
+  styling                      Json            @default("{\"allowStyleOverwrite\":true}")
   /// @zod.custom(imports.ZProductConfig)
   /// [ProductConfig]
-  config               Json            @default("{}")
-  recontactDays        Int             @default(7)
-  linkSurveyBranding   Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
-  inAppSurveyBranding  Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys
-  placement            WidgetPlacement @default(bottomRight)
-  clickOutsideClose    Boolean         @default(true)
-  darkOverlay          Boolean         @default(false)
-  languages            Language[]
+  config                       Json            @default("{}")
+  recontactDays                Int             @default(7)
+  linkSurveyBranding           Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
+  inAppSurveyBranding          Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys
+  placement                    WidgetPlacement @default(bottomRight)
+  clickOutsideClose            Boolean         @default(true)
+  darkOverlay                  Boolean         @default(false)
+  languages                    Language[]
+  defaultRewardInUSD           Float           @default(0)
+  defaultRedirectOnCompleteUrl String?
+  defaultRedirectOnFailUrl     String?
   /// @zod.custom(imports.ZLogo)
   /// [Logo]
-  logo                 Json?
+  logo                         Json?
 
   @@unique([organizationId, name])
   @@index([organizationId])

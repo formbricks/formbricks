@@ -46,6 +46,22 @@ const nextConfig = {
         hostname: "localhost",
       },
       {
+        protocol: "http",
+        hostname: "opinodo-surveys-app-lb-918565339.eu-central-1.elb.amazonaws.com"
+      },
+      {
+        protocol: "https",
+        hostname: "surveys.opinodo.com"
+      },
+      {
+        protocol: "https",
+        hostname: "staging.surveys.digiopinion.com"
+      },
+      {
+        protocol: "https",
+        hostname: "surveys.digiopinion.com"
+      },
+      {
         protocol: "https",
         hostname: "app.formbricks.com",
       },

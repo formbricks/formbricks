@@ -15,6 +15,8 @@ export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
 
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
+// eslint-disable-next-line turbo/no-undeclared-env-vars
+export const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "";
 export const CRON_SECRET = env.CRON_SECRET;
 export const DEFAULT_BRAND_COLOR = "#64748b";
 

@@ -1,28 +1,29 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { ArrowUpRight, CheckIcon } from "lucide-react";
-import Link from "next/link";
+import { CheckIcon } from "lucide-react";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
+import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { DatePicker } from "@formbricks/ui/DatePicker";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { Switch } from "@formbricks/ui/Switch";
 
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey) => TSurvey)) => void;
   responseCount: number;
+  product: TProduct;
 }
 
 export const ResponseOptionsCard = ({
   localSurvey,
   setLocalSurvey,
   responseCount,
+  product,
 }: ResponseOptionsCardProps) => {
   const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
   const autoComplete = localSurvey.autoComplete !== null;
@@ -30,8 +31,11 @@ export const ResponseOptionsCard = ({
   const [runOnDateToggle, setRunOnDateToggle] = useState(false);
   const [closeOnDateToggle, setCloseOnDateToggle] = useState(false);
   useState;
-  const [redirectUrl, setRedirectUrl] = useState<string | null>("");
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(
+    localSurvey.redirectUrl ? localSurvey.redirectUrl : product.defaultRedirectOnCompleteUrl ?? null
+  );
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
+  const [surveyLinkUsedMessageToggle, setSurveyLinkUsedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(false);
 
   const [surveyClosedMessage, setSurveyClosedMessage] = useState({
@@ -58,6 +62,10 @@ export const ResponseOptionsCard = ({
 
   const handleRedirectCheckMark = () => {
     setRedirectToggle((prev) => !prev);
+    if (!localSurvey.redirectUrl) {
+      setRedirectUrl(product.defaultRedirectOnCompleteUrl ?? null);
+      setLocalSurvey({ ...localSurvey, redirectUrl: redirectUrl });
+    }
 
     if (redirectToggle && localSurvey.redirectUrl) {
       setRedirectUrl(null);
@@ -129,6 +137,12 @@ export const ResponseOptionsCard = ({
     }
   };
 
+  const handleSurveyLinkUsedMessageToggle = () => {
+    setSurveyLinkUsedMessageToggle((prev) => !prev);
+
+    setLocalSurvey({ ...localSurvey, singleUse: { enabled: true, isEncrypted: true } });
+  };
+
   const handleVerifyEmailToogle = () => {
     setVerifyEmailToggle((prev) => !prev);
 
@@ -172,17 +186,6 @@ export const ResponseOptionsCard = ({
     setLocalSurvey({ ...localSurvey, surveyClosedMessage: message });
   };
 
-  const handleSingleUseSurveyToggle = () => {
-    if (!localSurvey.singleUse?.enabled) {
-      setLocalSurvey({
-        ...localSurvey,
-        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: singleUseEncryption },
-      });
-    } else {
-      setLocalSurvey({ ...localSurvey, singleUse: { enabled: false, isEncrypted: false } });
-    }
-  };
-
   const handleSingleUseSurveyMessageChange = ({
     heading,
     subheading,
@@ -203,22 +206,6 @@ export const ResponseOptionsCard = ({
     });
   };
 
-  const hangleSingleUseEncryptionToggle = () => {
-    if (!singleUseEncryption) {
-      setSingleUseEncryption(true);
-      setLocalSurvey({
-        ...localSurvey,
-        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: true },
-      });
-    } else {
-      setSingleUseEncryption(false);
-      setLocalSurvey({
-        ...localSurvey,
-        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: false },
-      });
-    }
-  };
-
   const handleVerifyEmailSurveyDetailsChange = ({
     name,
     subheading,
@@ -237,7 +224,9 @@ export const ResponseOptionsCard = ({
 
   useEffect(() => {
     if (localSurvey.redirectUrl) {
-      setRedirectUrl(localSurvey.redirectUrl);
+      setRedirectUrl(
+        localSurvey.redirectUrl ? localSurvey.redirectUrl : product.defaultRedirectOnCompleteUrl ?? null
+      );
       setRedirectToggle(true);
     }
 
@@ -280,6 +269,8 @@ export const ResponseOptionsCard = ({
     singleUseMessage.subheading,
     surveyClosedMessage.heading,
     surveyClosedMessage.subheading,
+    product.defaultRedirectOnFailUrl,
+    product.defaultRedirectOnCompleteUrl,
   ]);
 
   const toggleAutocomplete = () => {
@@ -438,36 +429,17 @@ export const ResponseOptionsCard = ({
                 </div>
               </AdvancedOptionToggle>
 
-              {/* Single User Survey Options */}
+              {/* Adjust Survey Link Used Message */}
               <AdvancedOptionToggle
-                htmlId="singleUserSurveyOptions"
-                isChecked={!!localSurvey.singleUse?.enabled}
-                onToggle={handleSingleUseSurveyToggle}
-                title="Single-use survey links"
-                description="Allow only 1 response per survey link."
+                htmlId="adjustSurveyLinkUsedMessage"
+                isChecked={surveyLinkUsedMessageToggle}
+                onToggle={handleSurveyLinkUsedMessageToggle}
+                title="Adjust 'Survey Used' message"
+                description="Change the message visitors see when the survey has been already used."
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
-                  <div className="w-full cursor-pointer items-center bg-slate-50">
-                    <div className="row mb-2 flex cursor-default items-center space-x-2">
-                      <Label htmlFor="howItWorks">How it works</Label>
-                    </div>
-                    <ul className="mb-3 ml-4 cursor-default list-inside list-disc space-y-1">
-                      <li className="text-sm text-slate-600">
-                        Blocks survey if the survey URL has no Single Use Id (suId).
-                      </li>
-                      <li className="text-sm text-slate-600">
-                        Blocks survey if a submission with the Single Use Id (suId) exists already.
-                      </li>
-                      <li className="text-sm text-slate-600">
-                        <Link
-                          href="https://formbricks.com/docs/link-surveys/single-use-links"
-                          target="_blank"
-                          className="underline">
-                          Docs <ArrowUpRight className="inline" size={16} />
-                        </Link>
-                      </li>
-                    </ul>
-                    <Label htmlFor="headline">&lsquo;Link Used&rsquo; Message</Label>
+                  <div className="w-full cursor-pointer items-center  bg-slate-50">
+                    <Label htmlFor="headline">‘Link Used’ Message</Label>
                     <Input
                       autoFocus
                       id="heading"
@@ -479,29 +451,12 @@ export const ResponseOptionsCard = ({
 
                     <Label htmlFor="headline">Subheading</Label>
                     <Input
-                      className="mb-4 mt-2 bg-white"
+                      className="mt-2 bg-white"
                       id="subheading"
                       name="subheading"
                       defaultValue={singleUseMessage.subheading}
                       onChange={(e) => handleSingleUseSurveyMessageChange({ subheading: e.target.value })}
                     />
-                    <Label htmlFor="headline">URL Encryption</Label>
-                    <div>
-                      <div className="mt-2 flex items-center space-x-1">
-                        <Switch
-                          id="encryption-switch"
-                          checked={singleUseEncryption}
-                          onCheckedChange={hangleSingleUseEncryptionToggle}
-                        />
-                        <Label htmlFor="encryption-label">
-                          <div className="ml-2">
-                            <p className="text-sm font-normal text-slate-600">
-                              Enable encryption of Single Use Id (suId) in survey URL.
-                            </p>
-                          </div>
-                        </Label>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </AdvancedOptionToggle>

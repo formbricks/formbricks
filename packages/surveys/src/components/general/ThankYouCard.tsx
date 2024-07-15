@@ -21,6 +21,7 @@ interface ThankYouCardProps {
   autoFocusEnabled: boolean;
   isCurrent: boolean;
   survey: TSurvey;
+  failed: boolean;
 }
 
 export const ThankYouCard = ({
@@ -36,6 +37,7 @@ export const ThankYouCard = ({
   autoFocusEnabled,
   isCurrent,
   survey,
+  failed,
 }: ThankYouCardProps) => {
   const media = imageUrl || videoUrl ? <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} /> : null;
   const checkmark = (
@@ -82,34 +84,44 @@ export const ThankYouCard = ({
   }, [isCurrent]);
 
   return (
-    <ScrollableContainer>
-      <div className="fb-text-center">
-        {isResponseSendingFinished ? (
-          <>
-            {media || checkmark}
-            <Headline alignTextCenter={true} headline={headline} questionId="thankYouCard" />
-            <Subheader subheader={subheader} questionId="thankYouCard" />
-            <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
-            {buttonLabel && (
-              <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
-                <SubmitButton
-                  buttonLabel={buttonLabel}
-                  isLastQuestion={false}
-                  focus={autoFocusEnabled}
-                  onClick={handleSubmit}
-                />
+    <>
+      <ScrollableContainer>
+        <div className="fb-text-center">
+          {isResponseSendingFinished ? (
+            <>
+              {(failed && (
+                <div className="text-brand mb-4 flex items-center justify-center">
+                  <div className="text-brand text-6xl font-bold">Ughh</div>
+                </div>
+              )) ||
+                media ||
+                checkmark}
+              <Headline alignTextCenter={true} headline={headline} questionId="thankYouCard" />
+              <Subheader subheader={subheader} questionId="thankYouCard" />
+              <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
+              {buttonLabel && (
+                <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
+                  <SubmitButton
+                    buttonLabel={buttonLabel}
+                    isLastQuestion={false}
+                    focus={autoFocusEnabled}
+                    onClick={handleSubmit
+                    }
+                  />
+
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="fb-my-3">
+                <LoadingSpinner />
               </div>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="fb-my-3">
-              <LoadingSpinner />
-            </div>
-            <h1 className="fb-text-brand">Sending responses...</h1>
-          </>
-        )}
-      </div>
-    </ScrollableContainer>
+              <h1 className="fb-text-brand">Sending responses...</h1>
+            </>
+          )}
+        </div>
+      </ScrollableContainer>
+    </>
   );
 };

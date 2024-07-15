@@ -61,6 +61,7 @@ interface QuestionFormInputProps {
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
   attributeClasses: TAttributeClass[];
+  fail?: boolean;
 }
 
 export const QuestionFormInput = ({
@@ -81,6 +82,7 @@ export const QuestionFormInput = ({
   onBlur,
   className,
   attributeClasses,
+  fail,
 }: QuestionFormInputProps) => {
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
@@ -118,6 +120,9 @@ export const QuestionFormInput = ({
     }
 
     if (isThankYouCard || isWelcomeCard) {
+      if (fail) {
+        return getCardText(localSurvey, id, isThankYouCard, surveyLanguageCodes, true);
+      }
       return getCardText(localSurvey, id, isThankYouCard, surveyLanguageCodes);
     }
 
@@ -352,7 +357,7 @@ export const QuestionFormInput = ({
 
     if (isChoice) {
       updateChoiceDetails(translatedText);
-    } else if (isThankYouCard || isWelcomeCard) {
+    } else if (isThankYouCard || isWelcomeCard || fail) {
       updateSurveyDetails(translatedText);
     } else if (isMatrixLabelRow || isMatrixLabelColumn) {
       updateMatrixLabelDetails(translatedText);

@@ -14,6 +14,7 @@ import { TI18nString, TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
+import { AdQuestionForm } from "./AdQuestionForm";
 import { AddressQuestionForm } from "./AddressQuestionForm";
 import { AdvancedSettings } from "./AdvancedSettings";
 import { CTAQuestionForm } from "./CTAQuestionForm";
@@ -276,6 +277,8 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
             />
+          ) : question.type === TSurveyQuestionTypeEnum.Ad ? (
+            <AdQuestionForm />
           ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
             <RatingQuestionForm
               localSurvey={localSurvey}

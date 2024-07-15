@@ -15,7 +15,8 @@ export interface ApiErrorResponse {
     | "unauthorized"
     | "method_not_allowed"
     | "not_authenticated"
-    | "forbidden";
+    | "forbidden"
+    | "validation_error";
   message: string;
   details: {
     [key: string]: string | string[] | number | number[] | boolean | boolean[];
@@ -258,6 +259,20 @@ const tooManyRequestsResponse = (
   );
 };
 
+const validationResponse = (details?: { [key: string]: string }, cors: boolean = false) => {
+  return Response.json(
+    {
+      code: "validation_error",
+      message: "The given data was invalid.",
+      details: details || {},
+    } as ApiErrorResponse,
+    {
+      status: 422,
+      ...(cors && { headers: corsHeaders }),
+    }
+  );
+};
+
 export const responses = {
   goneResponse,
   badRequestResponse,
@@ -267,6 +282,7 @@ export const responses = {
   unauthorizedResponse,
   notFoundResponse,
   successResponse,
+  validationResponse,
   tooManyRequestsResponse,
   forbiddenResponse,
 };

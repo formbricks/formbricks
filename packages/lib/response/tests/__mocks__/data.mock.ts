@@ -87,7 +87,8 @@ export const mockResponse: ResponseMock = {
   person: null,
   personAttributes: {},
   createdAt: new Date(),
-  finished: constantsForTests.boolean,
+  finished: false,
+  failed: false,
   meta: mockMeta,
   notes: [mockResponseNote],
   tags: mockTags,
@@ -116,6 +117,7 @@ export const mockResponses: ResponseMock[] = [
     updatedAt: new Date("2024-02-13T11:00:00.000Z"),
     surveyId: mockSurveyId,
     finished: false,
+    failed: false,
     data: {
       hagrboqlnynmxh3obl1wvmtl: "Google Search",
       uvy0fa96e1xpd10nrj1je662: ["Sun ☀️"],
@@ -140,6 +142,7 @@ export const mockResponses: ResponseMock[] = [
     updatedAt: new Date("2024-02-13T11:00:00.000Z"),
     surveyId: mockSurveyId,
     finished: false,
+    failed: false,
     data: {
       hagrboqlnynmxh3obl1wvmtl: "Google Search",
       uvy0fa96e1xpd10nrj1je662: ["Sun ☀️"],
@@ -164,6 +167,7 @@ export const mockResponses: ResponseMock[] = [
     updatedAt: new Date("2024-02-13T11:00:00.000Z"),
     surveyId: mockSurveyId,
     finished: false,
+    failed: false,
     data: {
       hagrboqlnynmxh3obl1wvmtl: "Google Search",
     },
@@ -187,6 +191,7 @@ export const mockResponses: ResponseMock[] = [
     updatedAt: new Date("2024-02-13T11:00:00.000Z"),
     surveyId: mockSurveyId,
     finished: false,
+    failed: false,
     data: {
       hagrboqlnynmxh3obl1wvmtl: "Recommendation",
     },
@@ -210,6 +215,7 @@ export const mockResponses: ResponseMock[] = [
     updatedAt: new Date("2024-02-13T11:00:00.000Z"),
     surveyId: mockSurveyId,
     finished: true,
+    failed: false,
     data: {
       hagrboqlnynmxh3obl1wvmtl: "Social Media",
     },
@@ -346,9 +352,13 @@ export const mockResponseData: TResponseUpdateInput["data"] = {
   key3: 20,
 };
 
-export const getMockUpdateResponseInput = (finished: boolean = false): TResponseUpdateInput => ({
+export const getMockUpdateResponseInput = (
+  finished: boolean = false,
+  failed: boolean = false
+): TResponseUpdateInput => ({
   data: mockResponseData,
   finished,
+  failed,
 });
 
 export const mockSurveySummaryOutput = {
@@ -364,10 +374,10 @@ export const mockSurveySummaryOutput = {
   ],
   meta: {
     completedPercentage: 0,
-    completedResponses: 1,
+    completedResponses: 0,
     displayCount: 0,
-    dropOffPercentage: 0,
-    dropOffCount: 0,
+    dropOffPercentage: 100,
+    dropOffCount: 1,
     startsPercentage: 0,
     totalResponses: 1,
     ttcAverage: 0,

@@ -160,6 +160,7 @@ const renderWidget = async (
             action,
           },
           hiddenFields,
+          failed: responseUpdate.failed,
         });
       },
       onClose: closeSurvey,

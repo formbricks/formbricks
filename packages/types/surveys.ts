@@ -23,6 +23,15 @@ export const ZSurveyThankYouCard = z.object({
   videoUrl: z.string().optional(),
 });
 
+export const ZSurveyFailureCard = z.object({
+  enabled: z.boolean(),
+  headline: ZI18nString.optional(),
+  subheader: ZI18nString.optional(),
+  buttonLabel: ZI18nString.optional(),
+  buttonLink: z.optional(z.string()),
+  imageUrl: z.string().optional(),
+});
+
 export enum TSurveyQuestionTypeEnum {
   FileUpload = "fileUpload",
   OpenText = "openText",
@@ -37,6 +46,7 @@ export enum TSurveyQuestionTypeEnum {
   Date = "date",
   Matrix = "matrix",
   Address = "address",
+  Ad = "ad",
 }
 
 export const ZSurveyWelcomeCard = z
@@ -111,6 +121,8 @@ export type TSurveyVerifyEmail = z.infer<typeof ZSurveyVerifyEmail>;
 export type TSurveyWelcomeCard = z.infer<typeof ZSurveyWelcomeCard>;
 
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
+
+export type TSurveyFailureCard = z.infer<typeof ZSurveyFailureCard>;
 
 export type TSurveyHiddenFields = z.infer<typeof ZSurveyHiddenFields>;
 
@@ -203,6 +215,11 @@ export const ZSurveyCTALogic = ZSurveyLogicBase.extend({
   value: z.undefined(),
 });
 
+export const ZSurveyAdLogic = ZSurveyLogicBase.extend({
+  condition: z.enum(["clicked", "submitted", "skipped"]).optional(),
+  value: z.undefined(),
+});
+
 export const ZSurveyRatingLogic = ZSurveyLogicBase.extend({
   condition: z
     .enum([
@@ -240,6 +257,7 @@ export const ZSurveyLogic = z.union([
   ZSurveyMultipleChoiceLogic,
   ZSurveyNPSLogic,
   ZSurveyCTALogic,
+  ZSurveyAdLogic,
   ZSurveyRatingLogic,
   ZSurveyPictureSelectionLogic,
   ZSurveyFileUploadLogic,
@@ -343,6 +361,13 @@ export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyCTAQuestion = z.infer<typeof ZSurveyCTAQuestion>;
 
+export const ZSurveyAdQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionTypeEnum.Ad),
+  logic: z.array(ZSurveyAdLogic).optional(),
+});
+
+export type TSurveyAdQuestion = z.infer<typeof ZSurveyAdQuestion>;
+
 export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Rating),
   scale: z.enum(["number", "smiley", "star"]),
@@ -417,6 +442,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyMultipleChoiceQuestion,
   ZSurveyNPSQuestion,
   ZSurveyCTAQuestion,
+  ZSurveyAdQuestion,
   ZSurveyRatingQuestion,
   ZSurveyPictureSelectionQuestion,
   ZSurveyDateQuestion,
@@ -435,6 +461,7 @@ export type TSurveyQuestions = z.infer<typeof ZSurveyQuestions>;
 export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.Address,
   TSurveyQuestionTypeEnum.CTA,
+  TSurveyQuestionTypeEnum.Ad,
   TSurveyQuestionTypeEnum.Consent,
   TSurveyQuestionTypeEnum.Date,
   TSurveyQuestionTypeEnum.FileUpload,
@@ -482,6 +509,10 @@ export const ZSurveyStatus = z.enum(["draft", "scheduled", "inProgress", "paused
 
 export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
+export const ZCountry = z.object({
+  name: z.string(),
+  isoCode: z.string(),
+});
 export const ZSurveyInlineTriggers = z.object({
   codeConfig: z.object({ identifier: z.string() }).optional(),
   noCodeConfig: ZActionClassNoCodeConfig.optional(),
@@ -502,11 +533,13 @@ export const ZSurvey = z.object({
   autoClose: z.number().nullable(),
   triggers: z.array(z.object({ actionClass: ZActionClass })),
   redirectUrl: z.string().url().nullable(),
+  redirectOnFailUrl: z.string().url().nullable(),
   recontactDays: z.number().nullable(),
   displayLimit: z.number().nullable(),
   welcomeCard: ZSurveyWelcomeCard,
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
+  failureCard: ZSurveyFailureCard,
   hiddenFields: ZSurveyHiddenFields,
   delay: z.number(),
   autoComplete: z.number().nullable(),
@@ -520,6 +553,10 @@ export const ZSurvey = z.object({
   verifyEmail: ZSurveyVerifyEmail.nullable(),
   pin: z.string().nullish(),
   resultShareKey: z.string().nullable(),
+  reward: z.number(),
+  failureChance: z.number(),
+  countries: z.array(ZCountry),
+  limitedCountries: z.boolean(),
   displayPercentage: z.number().min(0.01).max(100).nullable(),
   languages: z.array(ZSurveyLanguage),
   showLanguageSwitch: z.boolean().nullable(),
@@ -540,10 +577,12 @@ export const ZSurveyInput = z.object({
   displayOption: ZSurveyDisplayOption.optional(),
   autoClose: z.number().nullish(),
   redirectUrl: z.string().url().nullish(),
+  redirectOnFailUrl: z.string().url().nullish(),
   recontactDays: z.number().nullish(),
   welcomeCard: ZSurveyWelcomeCard.optional(),
   questions: ZSurveyQuestions.optional(),
   thankYouCard: ZSurveyThankYouCard.optional(),
+  failureCard: ZSurveyFailureCard.optional(),
   hiddenFields: ZSurveyHiddenFields.optional(),
   delay: z.number().optional(),
   autoComplete: z.number().nullish(),
@@ -700,6 +739,21 @@ export const ZSurveyQuestionSummaryCta = z.object({
 
 export type TSurveyQuestionSummaryCta = z.infer<typeof ZSurveyQuestionSummaryCta>;
 
+export const ZSurveyQuestionSummaryAd = z.object({
+  type: z.literal("ad"),
+  question: ZSurveyAdQuestion,
+  impressionCount: z.number(),
+  clickCount: z.number(),
+  skipCount: z.number(),
+  responseCount: z.number(),
+  ctr: z.object({
+    count: z.number(),
+    percentage: z.number(),
+  }),
+});
+
+export type TSurveyQuestionSummaryAd = z.infer<typeof ZSurveyQuestionSummaryAd>;
+
 export const ZSurveyQuestionSummaryConsent = z.object({
   type: z.literal("consent"),
   question: ZSurveyConsentQuestion,
@@ -841,6 +895,7 @@ export const ZSurveyQuestionSummary = z.union([
   ZSurveyQuestionSummaryRating,
   ZSurveyQuestionSummaryNps,
   ZSurveyQuestionSummaryCta,
+  ZSurveyQuestionSummaryAd,
   ZSurveyQuestionSummaryConsent,
   ZSurveyQuestionSummaryDate,
   ZSurveyQuestionSummaryFileUpload,

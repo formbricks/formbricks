@@ -242,6 +242,7 @@ export const LinkSurvey = ({
             });
             const res = await api.client.display.create({
               surveyId: survey.id,
+              ...(userId ? { userId: userId } : {}),
             });
             if (!res.ok) {
               throw new Error("Could not create display");
@@ -262,6 +263,7 @@ export const LinkSurvey = ({
               },
               ttc: responseUpdate.ttc,
               finished: responseUpdate.finished,
+              failed: responseUpdate.failed,
               language:
                 responseUpdate.language === "default" && defaultLanguageCode
                   ? defaultLanguageCode

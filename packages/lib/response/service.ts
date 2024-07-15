@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
   TResponse,
@@ -57,6 +57,7 @@ export const responseSelection = {
   updatedAt: true,
   surveyId: true,
   finished: true,
+  failed: true,
   data: true,
   meta: true,
   ttc: true,
@@ -109,6 +110,7 @@ export const getResponsesByPersonId = (personId: string, page?: number): Promise
         const responsePrisma = await prisma.response.findMany({
           where: {
             personId,
+            failed: false,
           },
           select: responseSelection,
           take: page ? ITEMS_PER_PAGE : undefined,
@@ -197,6 +199,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     userId,
     surveyId,
     finished,
+    failed,
     data,
     meta,
     singleUseId,
@@ -233,6 +236,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         },
       },
       finished: finished,
+      failed: failed,
       data: data,
       language: language,
       ...(person?.id && {
@@ -335,6 +339,7 @@ export const createResponseLegacy = async (responseInput: TResponseLegacyInput):
           },
         },
         finished: responseInput.finished,
+        failed: responseInput.failed,
         data: responseInput.data,
         ttc,
         ...(responseInput.personId && {
@@ -647,6 +652,7 @@ export const getResponsesByEnvironmentId = (
             survey: {
               environmentId,
             },
+            failed: false,
           },
           select: responseSelection,
           orderBy: [
@@ -701,6 +707,9 @@ export const updateResponse = async (
     if (!currentResponse) {
       throw new ResourceNotFoundError("Response", responseId);
     }
+    if (currentResponse.finished) {
+      throw new InvalidInputError("Already finished response " + responseId);
+    }
 
     // merge data object
     const data = {
@@ -720,6 +729,7 @@ export const updateResponse = async (
       },
       data: {
         finished: responseInput.finished,
+        failed: responseInput.failed,
         data,
         ttc,
         language,

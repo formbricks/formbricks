@@ -4,8 +4,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | Formbricks",
-    default: "Formbricks",
+    template: "%s | Opinodo Surveys",
+    default: "Opinodo Surveys",
   },
   description: "Open-Source Survey Suite",
 };

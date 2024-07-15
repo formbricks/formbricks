@@ -54,6 +54,7 @@ export const selectSurvey = {
   welcomeCard: true,
   questions: true,
   thankYouCard: true,
+  failureCard: true,
   hiddenFields: true,
   displayOption: true,
   recontactDays: true,
@@ -66,12 +67,17 @@ export const selectSurvey = {
   autoComplete: true,
   verifyEmail: true,
   redirectUrl: true,
+  redirectOnFailUrl: true,
   productOverwrites: true,
   styling: true,
   surveyClosedMessage: true,
   singleUse: true,
   pin: true,
   resultShareKey: true,
+  reward: true,
+  failureChance: true,
+  countries: true,
+  limitedCountries: true,
   showLanguageSwitch: true,
   languages: {
     select: {
@@ -363,7 +369,14 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, environmentId, segment, questions, languages, type, ...surveyData } = updatedSurvey;
+    const { countries, triggers, environmentId, segment, questions, languages, type, ...surveyData } =
+      updatedSurvey;
+
+    if (countries) {
+      data.countries = {
+        set: countries.map((country) => ({ isoCode: country.isoCode })),
+      };
+    }
 
     if (languages) {
       // Process languages update logic here
@@ -478,6 +491,10 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       data.runOnDate > new Date()
     ) {
       data.status = "scheduled";
+    }
+
+    if (data.reward !== undefined) {
+      data.reward = Math.max(0, Math.min(20, data.reward));
     }
 
     const prismaSurvey = await prisma.survey.update({
@@ -707,6 +724,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
         status: "draft",
         questions: structuredClone(existingSurvey.questions),
         thankYouCard: structuredClone(existingSurvey.thankYouCard),
+        failureCard: structuredClone(existingSurvey.failureCard),
         languages: {
           create: existingSurvey.languages?.map((surveyLanguage) => ({
             languageId: surveyLanguage.language.id,
@@ -741,6 +759,9 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
           : Prisma.JsonNull,
         // we'll update the segment later
         segment: undefined,
+        countries: {
+          connect: existingSurvey.countries,
+        },
       },
     });
 
@@ -1035,6 +1056,17 @@ export const getSurveyIdByResultShareKey = async (resultShareKey: string): Promi
     throw error;
   }
 };
+
+export async function getAllDbCountries() {
+  try {
+    return await prisma.country.findMany();
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+}
 
 export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: string): Promise<TSurvey> => {
   validateInputs([surveyId, ZId], [newSegmentId, ZId]);

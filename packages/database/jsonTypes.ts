@@ -6,6 +6,7 @@ import { TResponseData, TResponseMeta, TResponsePersonAttributes } from "@formbr
 import { TBaseFilters } from "@formbricks/types/segment";
 import {
   TSurveyClosedMessage,
+  TSurveyFailureCard,
   TSurveyHiddenFields,
   TSurveyProductOverwrites,
   TSurveyQuestions,
@@ -29,6 +30,7 @@ declare global {
     export type welcomeCard = TSurveyWelcomeCard;
     export type SurveyQuestions = TSurveyQuestions;
     export type SurveyThankYouCard = TSurveyThankYouCard;
+    export type SurveyFailureCard = TSurveyFailureCard;
     export type SurveyHiddenFields = TSurveyHiddenFields;
     export type SurveyProductOverwrites = TSurveyProductOverwrites;
     export type SurveyStyling = TSurveyStyling;

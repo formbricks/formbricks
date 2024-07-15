@@ -4,6 +4,7 @@ import {
   getMockUpdateResponseInput,
   mockDisplay,
   mockEnvironmentId,
+  mockFinishedResponse,
   mockMeta,
   mockPerson,
   mockPersonId,
@@ -75,6 +76,7 @@ const mockResponseInputWithoutUserId: TResponseInput = {
   surveyId: mockSurveyId,
   singleUseId: mockSingleUseId,
   finished: constantsForTests.boolean,
+  failed: constantsForTests.boolean,
   data: {},
   meta: mockMeta,
 };
@@ -86,6 +88,7 @@ const mockResponseInputWithUserId: TResponseInput = {
 
 const createMockResponseLegacyInput = (personId?: string): TResponseLegacyInput => ({
   finished: constantsForTests.boolean,
+  failed: constantsForTests.boolean,
   personId: personId ?? null,
   surveyId: mockSurveyId,
   meta: mockMeta,
@@ -591,6 +594,7 @@ describe("Tests for updateResponse Service", () => {
       const response = await updateResponse(mockResponse.id, getMockUpdateResponseInput(true));
       expect(response).toEqual({
         ...expectedResponseWithoutPerson,
+        finished: true,
         data: mockResponseData,
       });
     });

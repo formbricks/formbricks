@@ -6,6 +6,7 @@ import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
+import { updateAttributes } from "@formbricks/lib/attribute/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -27,6 +28,9 @@ interface LinkSurveyPageProps {
     verify?: string;
     lang?: string;
     embed?: string;
+    email?: string;
+    country?: string;
+    language?: string;
   };
 }
 
@@ -147,10 +151,19 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   const userId = searchParams.userId;
   if (userId) {
     // make sure the person exists or get's created
-    const person = await getPersonByUserId(survey.environmentId, userId);
+    let person = await getPersonByUserId(survey.environmentId, userId);
     if (!person) {
-      await createPerson(survey.environmentId, userId);
+      person = await createPerson(survey.environmentId, userId);
     }
+
+    // update attributes for the person
+    const updatedAttributes = {
+      ...(searchParams.email && { email: searchParams.email }),
+      ...(searchParams.country && { country: searchParams.country }),
+      ...(searchParams.language && { language: searchParams.language }),
+    };
+
+    await updateAttributes(person.id, updatedAttributes);
   }
 
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);

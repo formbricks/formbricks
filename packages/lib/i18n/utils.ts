@@ -19,6 +19,7 @@ import {
   TSurveyRatingQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
+  ZSurveyAdQuestion,
   ZSurveyCTAQuestion,
   ZSurveyCalQuestion,
   ZSurveyConsentQuestion,
@@ -224,6 +225,9 @@ export const translateQuestion = (
         (clonedQuestion as TSurveyCTAQuestion).html = createI18nString(question.html ?? "", languages);
       }
       return ZSurveyCTAQuestion.parse(clonedQuestion);
+
+    case "ad":
+      return ZSurveyAdQuestion.parse(clonedQuestion);
 
     case "consent":
       if (typeof question.html !== "undefined") {

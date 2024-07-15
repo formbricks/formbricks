@@ -1,7 +1,13 @@
 import { z } from "zod";
 import { ZLegacySurveyQuestions, ZLegacySurveyThankYouCard, ZLegacySurveyWelcomeCard } from "./LegacySurvey";
 import { ZProductConfigChannel, ZProductConfigIndustry } from "./product";
-import { ZSurveyHiddenFields, ZSurveyQuestions, ZSurveyThankYouCard, ZSurveyWelcomeCard } from "./surveys";
+import {
+  ZSurveyFailureCard,
+  ZSurveyHiddenFields,
+  ZSurveyQuestions,
+  ZSurveyThankYouCard,
+  ZSurveyWelcomeCard,
+} from "./surveys";
 import { ZUserObjective } from "./user";
 
 export const ZTemplateRole = z.enum(["productManager", "customerSuccess", "marketing", "sales"]);
@@ -20,7 +26,11 @@ export const ZTemplate = z.object({
     welcomeCard: ZSurveyWelcomeCard,
     questions: ZSurveyQuestions,
     thankYouCard: ZSurveyThankYouCard,
+    failureCard: ZSurveyFailureCard,
     hiddenFields: ZSurveyHiddenFields,
+    reward: z.number(),
+    redirectUrl: z.string().url().nullish(),
+    redirectOnFailUrl: z.string().url().nullish(),
   }),
 });
 

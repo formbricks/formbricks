@@ -141,6 +141,26 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
           </Section>
         </EmailTemplateWrapper>
       );
+      case TSurveyQuestionTypeEnum.Ad:
+        return (
+        <EmailTemplateWrapper styling={styling} surveyUrl={url}>
+          <Text className="text-question-color m-0 block text-base font-semibold leading-6">
+            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+          </Text>
+
+          <Container className="mx-0 mt-4 max-w-none">
+            <EmailButton
+              className={cn(
+                "bg-brand-color rounded-custom inline-flex cursor-pointer appearance-none px-6 py-3 text-sm font-medium",
+                isLight(brandColor) ? "text-black" : "text-white"
+              )}
+              href={`${urlWithPrefilling}${firstQuestion.id}=clicked`}>
+              {getLocalizedValue(firstQuestion.buttonLabel, defaultLanguageCode)}
+            </EmailButton>
+          </Container>
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
     case TSurveyQuestionTypeEnum.CTA:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>

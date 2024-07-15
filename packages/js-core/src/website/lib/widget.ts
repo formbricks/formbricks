@@ -183,6 +183,7 @@ const renderWidget = async (
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
+          failed: responseUpdate.failed,
           language:
             responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
           meta: {

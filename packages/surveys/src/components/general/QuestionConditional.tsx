@@ -1,3 +1,4 @@
+import { AdQuestion } from "@/components/questions/AdQuestion";
 import { AddressQuestion } from "@/components/questions/AddressQuestion";
 import { CTAQuestion } from "@/components/questions/CTAQuestion";
 import { CalQuestion } from "@/components/questions/CalQuestion";
@@ -126,6 +127,22 @@ export const QuestionConditional = ({
     />
   ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
     <CTAQuestion
+      key={question.id}
+      question={question}
+      value={typeof value === "string" ? value : ""}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.Ad ? (
+    <AdQuestion
       key={question.id}
       question={question}
       value={typeof value === "string" ? value : ""}

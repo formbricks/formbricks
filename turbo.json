@@ -85,6 +85,7 @@
         "IMPRINT_URL",
         "INSTANCE_ID",
         "INTERNAL_SECRET",
+        "WEBHOOK_SECRET",
         "INVITE_DISABLED",
         "IS_FORMBRICKS_CLOUD",
         "MAIL_FROM",
