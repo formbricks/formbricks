@@ -282,6 +282,7 @@ const getValue = (colType: string, value: string | string[] | number | Record<st
         return typeof value === "string" ? value : (value as string[]).join(", ");
     }
   } catch (error) {
+    console.error(error);
     throw new Error("Payload build failed!");
   }
 };
