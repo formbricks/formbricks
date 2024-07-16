@@ -245,16 +245,18 @@ export function AddFilterModal({
     icon?: React.ReactNode;
   }[] = [
     { id: "all", label: "All" },
-    { id: "actions", label: "Actions", icon: <MousePointerClick className="h-4 w-4" /> },
     { id: "attributes", label: "Person & Attributes", icon: <TagIcon className="h-4 w-4" /> },
     { id: "segments", label: "Segments", icon: <Users2Icon className="h-4 w-4" /> },
     { id: "devices", label: "Devices", icon: <MonitorSmartphoneIcon className="h-4 w-4" /> },
   ];
 
-  const devices = [
-    { id: "phone", name: "Phone" },
-    { id: "desktop", name: "Desktop" },
-  ];
+  const devices = useMemo(
+    () => [
+      { id: "phone", name: "Phone" },
+      { id: "desktop", name: "Desktop" },
+    ],
+    []
+  );
 
   const actionClassesFiltered = useMemo(() => {
     if (!searchValue) return actionClasses;
