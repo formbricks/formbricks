@@ -68,7 +68,7 @@ install_formbricks() {
   echo "🔗 Do you want us to set up an HTTPS certificate for you? (yes/no)"
   read https_setup
   if [[ $https_setup == "yes" ]]; then
-    echo "🔗 Please make sure the domain points to the server's IP address and are ports 80 & 443 open in your server's firewall. Is everything set up? (yes/no)"
+    echo "🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? (yes/no)"
     read dns_setup
     if [[ $dns_setup == "yes" ]]; then
       echo "💡 Please enter your email address for the SSL certificate:"
@@ -83,7 +83,7 @@ install_formbricks() {
       fi
       
     else
-      echo "❌ Ports 80 & 443 are not exposed. We can't help you in providing the SSL certificate."
+      echo "❌ Ports 80 & 443 are not open. We can't help you in providing the SSL certificate."
       https_setup="no"
       hsts_enabled="no"
     fi
@@ -96,7 +96,7 @@ install_formbricks() {
   if [[ $https_setup == "no" ]]; then
     echo -e "You have chosen not to set up HTTPS certificate for your domain. Please make sure to set up HTTPS on your own. You can refer to the \e]8;;https://formbricks.com/docs/self-hosting/custom-ssl\aFormbricks documentation\e]8;;\a for more information."
 
-    echo "🔗 Do you want to have HTTPS only header? (yes/no)"
+    echo "🔗 Do you want to enforce HTTPS (HSTS)? (yes/no)"
     read hsts_enabled
   fi
 
