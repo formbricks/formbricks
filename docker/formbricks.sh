@@ -106,11 +106,19 @@ install_formbricks() {
   if [[ $hsts_enabled == "yes" ]]; then
     hsts_middlewares="middlewares:
         - hstsHeader"
+    http_redirection="http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true"
   else
     hsts_middlewares=""
+    http_redirection=""
   fi
 
   if [[ $https_setup == "yes" ]]; then
+    certResolver="certResolver: default"
     certificates_resolvers="certificatesResolvers:
   default:
     acme:
@@ -119,6 +127,7 @@ install_formbricks() {
       caServer: \"https://acme-v01.api.letsencrypt.org/directory\"
       tlsChallenge: {}"
   else
+    certResolver=""
     certificates_resolvers=""
   fi
 
@@ -126,17 +135,12 @@ install_formbricks() {
 entryPoints:
   web:
     address: ":80"
-    http:
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
-          permanent: true
+    $http_redirection
   websecure:
     address: ":443"
     http:
       tls:
-        certResolver: default
+        $certResolver
         options: default
       $hsts_middlewares
 providers:
@@ -176,7 +180,7 @@ EOT
 
   echo "💡 Created traefik.yaml and traefik-dynamic.yaml file."
 
-  if[[ $https_setup == "yes"]]; then
+  if [[ $https_setup == "yes" ]]; then
     touch acme.json
     chmod 600 acme.json
     echo "💡 Created acme.json file with correct permissions."
