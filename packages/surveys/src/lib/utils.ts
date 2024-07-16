@@ -1,4 +1,4 @@
-import { TSurvey, TSurveyChoice } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyChoice } from "@formbricks/types/surveys/types";
 
 export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");

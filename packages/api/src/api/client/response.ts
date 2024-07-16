@@ -1,7 +1,7 @@
-import { Result } from "@formbricks/types/errorHandlers";
-import { NetworkError } from "@formbricks/types/errors";
-import { TResponseInput, TResponseUpdateInput } from "@formbricks/types/responses";
-import { makeRequest } from "../../utils/makeRequest";
+import { type Result } from "@formbricks/types/error-handlers";
+import { type NetworkError } from "@formbricks/types/errors";
+import { type TResponseInput, type TResponseUpdateInput } from "@formbricks/types/responses";
+import { makeRequest } from "../../utils/make-request";
 
 type TResponseUpdateInputWithResponseId = TResponseUpdateInput & { responseId: string };
 
@@ -26,7 +26,7 @@ export class ResponseAPI {
     data,
     ttc,
     language,
-  }: TResponseUpdateInputWithResponseId): Promise<Result<{}, NetworkError | Error>> {
+  }: TResponseUpdateInputWithResponseId): Promise<Result<object, NetworkError | Error>> {
     return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses/${responseId}`, "PUT", {
       finished,
       data,

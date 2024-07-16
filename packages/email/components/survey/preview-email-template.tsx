@@ -16,8 +16,7 @@ import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
-import type { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
+import { type TSurvey, TSurveyQuestionTypeEnum, type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { RatingSmiley } from "@formbricks/ui/RatingSmiley";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../../utils";
 

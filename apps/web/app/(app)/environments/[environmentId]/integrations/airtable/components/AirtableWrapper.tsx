@@ -4,11 +4,11 @@ import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/inte
 import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
 import airtableLogo from "@/images/airtableLogo.svg";
 import { useState } from "react";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { ConnectIntegration } from "@formbricks/ui/ConnectIntegration";
 
 interface AirtableWrapperProps {

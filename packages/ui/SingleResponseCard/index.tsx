@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import { DeleteDialog } from "../DeleteDialog";
@@ -90,7 +90,7 @@ export const SingleResponseCard = ({
       if (isViewer) {
         throw new Error("You are not authorized to perform this action.");
       }
-      await deleteResponseAction(response.id);
+      await deleteResponseAction({ responseId: response.id });
       deleteResponse?.(response.id);
 
       router.refresh();

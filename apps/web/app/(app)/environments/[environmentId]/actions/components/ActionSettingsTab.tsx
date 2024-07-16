@@ -13,7 +13,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/actionClasses";
+import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";

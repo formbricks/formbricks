@@ -1,4 +1,4 @@
-import z from "zod";
+import { z } from "zod";
 
 export const ZShortUrlId = z.string().length(10);
 

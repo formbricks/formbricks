@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-export * from "./sharedTypes";
-
 export const ZIntegrationBase = z.object({
   id: z.string(),
   environmentId: z.string(),

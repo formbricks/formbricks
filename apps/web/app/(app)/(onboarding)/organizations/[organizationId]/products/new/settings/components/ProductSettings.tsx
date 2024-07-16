@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
 import {
   TProductConfigChannel,
@@ -45,18 +46,27 @@ export const ProductSettings = ({
 
   const addProduct = async (data: TProductUpdateInput) => {
     try {
-      const product = await createProductAction(organizationId, {
-        ...data,
-        config: { channel, industry },
+      const createProductResponse = await createProductAction({
+        organizationId,
+        data: {
+          ...data,
+          config: { channel, industry },
+        },
       });
-      // get production environment
-      const productionEnvironment = product.environments.find(
-        (environment) => environment.type === "production"
-      );
-      if (channel !== "link") {
-        router.push(`/environments/${productionEnvironment?.id}/connect`);
+
+      if (createProductResponse?.data) {
+        // get production environment
+        const productionEnvironment = createProductResponse.data.environments.find(
+          (environment) => environment.type === "production"
+        );
+        if (channel !== "link") {
+          router.push(`/environments/${productionEnvironment?.id}/connect`);
+        } else {
+          router.push(`/environments/${productionEnvironment?.id}/surveys`);
+        }
       } else {
-        router.push(`/environments/${productionEnvironment?.id}/surveys`);
+        const errorMessage = getFormattedErrorMessage(createProductResponse);
+        toast.error(errorMessage);
       }
     } catch (error) {
       toast.error("Product creation failed");

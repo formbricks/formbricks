@@ -3,8 +3,11 @@ import { getQuestionResponseMapping } from "@formbricks/lib/responses";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import type { TOrganization } from "@formbricks/types/organizations";
 import type { TResponse } from "@formbricks/types/responses";
-import type { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
+import {
+  type TSurvey,
+  type TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import { EmailButton } from "../general/email-button";
 
 export const renderEmailResponseValue = (response: string | string[], questionType: TSurveyQuestionType) => {

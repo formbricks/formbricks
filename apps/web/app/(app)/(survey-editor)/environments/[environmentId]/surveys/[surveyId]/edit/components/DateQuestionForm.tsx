@@ -1,7 +1,7 @@
 import { PlusIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";

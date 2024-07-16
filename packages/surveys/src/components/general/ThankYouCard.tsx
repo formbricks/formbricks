@@ -6,7 +6,7 @@ import { RedirectCountDown } from "@/components/general/RedirectCountdown";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { useEffect } from "preact/hooks";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface ThankYouCardProps {
   headline?: string;
