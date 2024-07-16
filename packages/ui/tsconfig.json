@@ -3,6 +3,7 @@
   "include": [".", "../types/*.d.ts", "../lib/templates.ts"],
   "exclude": ["build", "node_modules"],
   "compilerOptions": {
+    "jsx": "react",
     "lib": ["ES2021.String"]
   }
 }
