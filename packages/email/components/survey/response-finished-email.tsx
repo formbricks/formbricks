@@ -107,6 +107,7 @@ export function ResponseFinishedEmail({
                 </Row>
               );
             }
+            return null;
           })}
           <EmailButton
             href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
@@ -142,7 +143,7 @@ export function ResponseFinishedEmail({
   );
 }
 
-const FileIcon = () => {
+function FileIcon() {
   return (
     <svg
       className="lucide lucide-file"
@@ -159,9 +160,9 @@ const FileIcon = () => {
       <path d="M14 2v4a2 2 0 0 0 2 2h4" />
     </svg>
   );
-};
+}
 
-const EyeOffIcon = () => {
+function EyeOffIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -170,9 +171,9 @@ const EyeOffIcon = () => {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       className="lucide lucide-eye-off h-4 w-4 rounded-lg bg-slate-200 p-1">
       <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
       <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
@@ -180,4 +181,4 @@ const EyeOffIcon = () => {
       <line x1="2" x2="22" y1="2" y2="22" />
     </svg>
   );
-};
+}
