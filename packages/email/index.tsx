@@ -7,6 +7,7 @@ import {
   SMTP_HOST,
   SMTP_PASSWORD,
   SMTP_PORT,
+  SMTP_REJECT_UNAUTHORIZED_TLS,
   SMTP_SECURE_ENABLED,
   SMTP_USER,
   WEBAPP_URL,
@@ -71,6 +72,9 @@ export const sendEmail = async (emailData: SendEmailDataProps) => {
     auth: {
       user: SMTP_USER,
       pass: SMTP_PASSWORD,
+    },
+    tls: {
+      rejectUnauthorized: SMTP_REJECT_UNAUTHORIZED_TLS,
     },
     logger: DEBUG,
     debug: DEBUG,

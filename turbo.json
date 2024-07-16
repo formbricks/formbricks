@@ -132,6 +132,7 @@
         "SMTP_PORT",
         "SMTP_SECURE_ENABLED",
         "SMTP_USER",
+        "SMTP_REJECT_UNAUTHORIZED_TLS",
         "STRAPI_API_KEY",
         "STRIPE_SECRET_KEY",
         "STRIPE_WEBHOOK_SECRET",
