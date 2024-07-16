@@ -1,4 +1,5 @@
 // migration script for converting thankYouCard to survey endings
+import { createId } from "@paralleldrive/cuid2";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -38,14 +39,19 @@ const main = async () => {
               enabled: true,
               type: "redirectToUrl",
               label: "Redirect Url",
-              id: "end:1",
+              id: createId(),
               url: survey.redirectUrl,
             },
           ];
         } else {
           // @ts-expect-error
           updatedSurvey.endings = [
-            { ...survey.thankYouCard, type: "endScreen", enabled: survey.thankYouCard.enabled, id: "end:1" },
+            {
+              ...survey.thankYouCard,
+              type: "endScreen",
+              enabled: survey.thankYouCard.enabled,
+              id: createId(),
+            },
           ];
         }
 
