@@ -972,6 +972,15 @@ export const ZSurvey = z
           }
         }
       }
+      if (ending.type === "redirectToUrl" && ending.enabled) {
+        if (!ending.label || ending.label.trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Redirect Url label cannot be empty for ending Card ${String(index + 1)}.`,
+            path: ["endings", index, "label"],
+          });
+        }
+      }
     });
   });
 
