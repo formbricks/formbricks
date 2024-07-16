@@ -309,7 +309,7 @@ export const AddIntegrationModal = ({
           col={mapping[idx].column}
           ques={mapping[idx].question}
         />
-        <div className="flex w-full items-center gap-3">
+        <div className="flex w-full items-center">
           <div className="flex w-full items-center">
             <div className="w-[340px] max-w-full">
               <DropdownSelector
@@ -483,7 +483,7 @@ export const AddIntegrationModal = ({
                 {selectedDatabase && selectedSurvey && (
                   <div>
                     <Label>Map Formbricks fields to Notion property</Label>
-                    <div className="mt-4">
+                    <div className="mt-4 max-h-[20vh] w-full overflow-y-auto">
                       {mapping.map((_, idx) => (
                         <MappingRow idx={idx} key={idx} />
                       ))}
