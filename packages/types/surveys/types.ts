@@ -23,9 +23,8 @@ export type TI18nString = z.infer<typeof ZI18nString>;
 const ZEndScreenType = z.union([z.literal("endScreen"), z.literal("redirectToUrl")]);
 
 const ZSurveyEndingBase = z.object({
-  id: z.string(),
+  id: z.string().cuid2(),
   type: ZEndScreenType,
-  enabled: z.boolean(),
 });
 
 export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
@@ -930,7 +929,7 @@ export const ZSurvey = z
     }
     endings.forEach((ending, index) => {
       // thank you card validations
-      if (ending.type === "endScreen" && ending.enabled) {
+      if (ending.type === "endScreen") {
         const multiLangIssueInHeadline = validateCardFieldsForAllLanguages(
           "cardHeadline",
           ending.headline ?? {},
@@ -970,7 +969,7 @@ export const ZSurvey = z
           }
         }
       }
-      if (ending.type === "redirectToUrl" && ending.enabled) {
+      if (ending.type === "redirectToUrl") {
         if (!ending.label || ending.label.trim() === "") {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,

@@ -101,8 +101,7 @@ export const PREVIEW_SURVEY = {
   endings: [
     {
       type: "endScreen",
-      id: "end:1",
-      enabled: true,
+      id: "bt22ypnn0agruu48k1c6ot2t",
       headline: {
         default: "Thank you!",
       },

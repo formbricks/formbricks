@@ -14,10 +14,14 @@ import { createId } from "@paralleldrive/cuid2";
 import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { MultiLanguageCard } from "@formbricks/ee/multi-language/components/multi-language-card";
-import { extractLanguageCodes, getLocalizedValue, translateQuestion } from "@formbricks/lib/i18n/utils";
+import {
+  createI18nString,
+  extractLanguageCodes,
+  getLocalizedValue,
+  translateQuestion,
+} from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { getFirstEnabledEnding } from "@formbricks/lib/utils/survey";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
@@ -108,7 +112,7 @@ export const QuestionsView = ({
 
     // Check thank you card
     localSurvey.endings.forEach((ending) => {
-      if (ending.enabled && !isEndingCardValid(ending, surveyLanguages)) {
+      if (!isEndingCardValid(ending, surveyLanguages)) {
         if (!updatedInvalidQuestions.includes(ending.id)) {
           updatedInvalidQuestions.push(ending.id);
         }
@@ -223,14 +227,14 @@ export const QuestionsView = ({
     });
     updatedSurvey.questions.splice(questionIdx, 1);
     updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "");
-    const enabledEnding = getFirstEnabledEnding(localSurvey);
+    const firstEndingCard = localSurvey.endings[0];
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];
     if (questionId === activeQuestionIdTemp) {
       if (questionIdx <= localSurvey.questions.length && localSurvey.questions.length > 0) {
         setActiveQuestionId(localSurvey.questions[questionIdx % localSurvey.questions.length].id);
-      } else if (enabledEnding) {
-        setActiveQuestionId(enabledEnding.id);
+      } else if (firstEndingCard) {
+        setActiveQuestionId(firstEndingCard.id);
       }
     }
     toast.success("Question deleted.");
@@ -275,6 +279,22 @@ export const QuestionsView = ({
     setLocalSurvey(updatedSurvey);
     setActiveQuestionId(question.id);
     internalQuestionIdMap[question.id] = createId();
+  };
+
+  const addEndingCard = (index: number) => {
+    const updatedSurvey = structuredClone(localSurvey);
+    const languageSymbols = extractLanguageCodes(localSurvey.languages);
+    const newEndingCard = {
+      type: "endScreen" as "endScreen",
+      enabled: true,
+      headline: createI18nString("Thank you!", languageSymbols),
+      subheader: createI18nString("We appreciate your feedback", languageSymbols),
+      id: createId(),
+    };
+
+    updatedSurvey.endings.splice(index, 0, newEndingCard);
+
+    setLocalSurvey(updatedSurvey);
   };
 
   const moveQuestion = (questionIndex: number, up: boolean) => {
@@ -402,13 +422,18 @@ export const QuestionsView = ({
                   selectedLanguageCode={selectedLanguageCode}
                   attributeClasses={attributeClasses}
                   plan={plan}
+                  addEndingCard={addEndingCard}
                 />
               );
             })}
           </SortableContext>
         </DndContext>
 
-        <AddEndingCardButton localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+        <AddEndingCardButton
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+          addEndingCard={addEndingCard}
+        />
         <hr />
 
         <HiddenFieldsCard

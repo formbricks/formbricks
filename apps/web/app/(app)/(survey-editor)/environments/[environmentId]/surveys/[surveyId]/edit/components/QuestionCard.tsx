@@ -25,13 +25,13 @@ import { CTAQuestionForm } from "./CTAQuestionForm";
 import { CalQuestionForm } from "./CalQuestionForm";
 import { ConsentQuestionForm } from "./ConsentQuestionForm";
 import { DateQuestionForm } from "./DateQuestionForm";
+import { EditorCardMenu } from "./EditorCardMenu";
 import { FileUploadQuestionForm } from "./FileUploadQuestionForm";
 import { MatrixQuestionForm } from "./MatrixQuestionForm";
 import { MultipleChoiceQuestionForm } from "./MultipleChoiceQuestionForm";
 import { NPSQuestionForm } from "./NPSQuestionForm";
 import { OpenQuestionForm } from "./OpenQuestionForm";
 import { PictureSelectionForm } from "./PictureSelectionForm";
-import { QuestionMenu } from "./QuestionMenu";
 import { RatingQuestionForm } from "./RatingQuestionForm";
 
 interface QuestionCardProps {
@@ -206,16 +206,17 @@ export const QuestionCard = ({
             </div>
 
             <div className="flex items-center space-x-2">
-              <QuestionMenu
-                questionIdx={questionIdx}
-                lastQuestion={lastQuestion}
-                duplicateQuestion={duplicateQuestion}
-                deleteQuestion={deleteQuestion}
-                moveQuestion={moveQuestion}
-                question={question}
+              <EditorCardMenu
+                cardIdx={questionIdx}
+                lastCard={lastQuestion}
+                duplicateCard={duplicateQuestion}
+                deleteCard={deleteQuestion}
+                moveCard={moveQuestion}
+                card={question}
                 product={product}
-                updateQuestion={updateQuestion}
-                addQuestion={addQuestion}
+                updateCard={updateQuestion}
+                addCard={addQuestion}
+                cardType="question"
               />
             </div>
           </div>

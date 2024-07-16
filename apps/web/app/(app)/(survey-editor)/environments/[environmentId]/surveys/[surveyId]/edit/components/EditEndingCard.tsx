@@ -1,11 +1,12 @@
 "use client";
 
+import { EditorCardMenu } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/EditorCardMenu";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { GripIcon, TrashIcon } from "lucide-react";
-import { useMemo, useState } from "react";
-import { toast } from "react-hot-toast";
+import { GripIcon } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -29,6 +30,7 @@ interface EditEndingCardProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   attributeClasses: TAttributeClass[];
   plan: TOrganizationBillingPlan;
+  addEndingCard: (index: number) => void;
 }
 
 const endingCardTypes = [
@@ -47,6 +49,7 @@ export const EditEndingCard = ({
   setSelectedLanguageCode,
   attributeClasses,
   plan,
+  addEndingCard,
 }: EditEndingCardProps) => {
   const endingCard = localSurvey.endings[endingCardIndex];
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -85,49 +88,35 @@ export const EditEndingCard = ({
     setLocalSurvey({ ...localSurvey, endings: updatedEndings });
   };
 
-  const disableEditEndingCardToggle = useMemo(() => {
-    if (localSurvey.type === "app" || localSurvey.type === "website") {
-      return false;
-    } else {
-      let enabledEditEndingCardCount = 0;
-      localSurvey.endings.forEach((ending) => {
-        if (ending.enabled) {
-          enabledEditEndingCardCount++;
-        }
-      });
-      if (enabledEditEndingCardCount <= 1) return true;
-      else return false;
-    }
-  }, [localSurvey.type, localSurvey.endings]);
-
   const style = {
     transition: transition ?? "transform 100ms ease",
     transform: CSS.Translate.toString(transform),
     zIndex: isDragging ? 10 : 1,
   };
 
-  const handleToggle = () => {
-    if (localSurvey.endings[endingCardIndex].enabled) {
-      const hasEndingInLogic = localSurvey.questions.some((question) => {
-        return (
-          question.logic &&
-          question.logic.some((logic) => logic.destination === localSurvey.endings[endingCardIndex].id)
-        );
-      });
-      if (hasEndingInLogic) {
-        const questionIndexWithEnding = localSurvey.questions.findIndex((question) => {
-          return (
-            question.logic &&
-            question.logic.some((logic) => logic.destination === localSurvey.endings[endingCardIndex].id)
-          );
-        });
-        if (questionIndexWithEnding !== -1) {
-          toast.error(`Ending card used in logic for question: ${questionIndexWithEnding + 1}`);
-          return;
-        }
-      }
-    }
-    updateSurvey({ enabled: !localSurvey.endings[endingCardIndex].enabled });
+  const duplicateEndingCard = () => {
+    const updatedSurvey = structuredClone(localSurvey);
+    const endingToDuplicate = updatedSurvey.endings[endingCardIndex];
+
+    // Create a new ending card by cloning the one to be duplicated and giving it a new ID
+    const duplicatedEndingCard = {
+      ...endingToDuplicate,
+      id: createId(),
+    };
+
+    // Insert the duplicated ending card immediately after the original
+    updatedSurvey.endings.splice(endingCardIndex + 1, 0, duplicatedEndingCard);
+
+    setLocalSurvey(updatedSurvey);
+  };
+
+  const moveEndingCard = (endingCardIndex: number, up: boolean) => {
+    const newEndings = Array.from(localSurvey.endings);
+    const [reorderedEndings] = newEndings.splice(endingCardIndex, 1);
+    const destinationIndex = up ? endingCardIndex - 1 : endingCardIndex + 1;
+    newEndings.splice(destinationIndex, 0, reorderedEndings);
+    const updatedSurvey = { ...localSurvey, endings: newEndings };
+    setLocalSurvey(updatedSurvey);
   };
 
   return (
@@ -167,38 +156,21 @@ export const EditEndingCard = ({
                     ? getLocalizedValue(endingCard.headline, selectedLanguageCode)
                     : endingCard.label}
                 </p>
-                {!open && (
-                  <p className="mt-1 truncate text-xs text-slate-500">
-                    {endingCard.enabled ? "Shown" : "Hidden"}
-                  </p>
-                )}
               </div>
             </div>
 
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="thank-you-toggle">Show</Label>
-
-                <Switch
-                  id="ending-card-toggle"
-                  disabled={disableEditEndingCardToggle && localSurvey.endings[endingCardIndex].enabled}
-                  checked={localSurvey.endings[endingCardIndex].enabled}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleToggle();
-                  }}
-                />
-              </div>
-
-              {localSurvey.endings.length > 1 && !disableEditEndingCardToggle && (
-                <TrashIcon
-                  className="h-4 cursor-pointer text-slate-500 hover:text-slate-600"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteEndingCard();
-                  }}
-                />
-              )}
+              <EditorCardMenu
+                cardIdx={endingCardIndex}
+                lastCard={endingCardIndex === localSurvey.endings.length - 1}
+                duplicateCard={duplicateEndingCard}
+                deleteCard={deleteEndingCard}
+                moveCard={moveEndingCard}
+                card={endingCard}
+                updateCard={() => {}}
+                addCard={addEndingCard}
+                cardType="ending"
+              />
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>

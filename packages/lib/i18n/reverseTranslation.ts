@@ -2,7 +2,6 @@ import "server-only";
 import { TLegacySurvey, TLegacySurveyThankYouCard, ZLegacySurvey } from "@formbricks/types/legacy-surveys";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
 import { structuredClone } from "../pollyfills/structuredClone";
-import { getFirstEnabledEnding } from "../utils/survey";
 import { getLocalizedValue, isI18nObject } from "./utils";
 
 // Helper function to extract a regular string from an i18nString.
@@ -30,14 +29,14 @@ const reverseTranslateObject = <T extends Record<string, any>>(obj: T, languageC
 };
 
 const reverseTranslateEndings = (survey: TSurvey, languageCode: string): TLegacySurveyThankYouCard => {
-  const firstEnabledEnding = getFirstEnabledEnding(survey);
-  if (firstEnabledEnding && firstEnabledEnding.type === "endScreen") {
+  const firstEndingCard = survey.endings[0];
+  if (firstEndingCard && firstEndingCard.type === "endScreen") {
     return {
-      headline: getLocalizedValue(firstEnabledEnding.headline, languageCode),
-      subheader: getLocalizedValue(firstEnabledEnding.subheader, languageCode),
-      buttonLabel: getLocalizedValue(firstEnabledEnding.buttonLabel, languageCode),
-      buttonLink: firstEnabledEnding.buttonLink,
-      enabled: firstEnabledEnding.enabled,
+      headline: getLocalizedValue(firstEndingCard.headline, languageCode),
+      subheader: getLocalizedValue(firstEndingCard.subheader, languageCode),
+      buttonLabel: getLocalizedValue(firstEndingCard.buttonLabel, languageCode),
+      buttonLink: firstEndingCard.buttonLink,
+      enabled: true,
     };
   } else {
     return { enabled: false };
@@ -59,10 +58,10 @@ export const reverseTranslateSurvey = (survey: TSurvey, languageCode: string = "
   reversedSurvey.welcomeCard = reverseTranslateObject(reversedSurvey.welcomeCard, languageCode);
   // @ts-expect-error
   reversedSurvey.thankYouCard = reverseTranslateEndings(reversedSurvey, languageCode);
-  const firstEnabledEnding = getFirstEnabledEnding(survey);
+  const firstEndingCard = survey.endings[0];
   // @ts-expect-error
   reversedSurvey.redirectUrl = null;
-  if (firstEnabledEnding?.type === "redirectToUrl") {
+  if (firstEndingCard?.type === "redirectToUrl") {
     // @ts-expect-error
     reversedSurvey.redirectUrl = firstEnabledEnding.url;
   }

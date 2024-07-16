@@ -1,6 +1,5 @@
 import { Modal } from "@/components/wrappers/Modal";
 import { useState } from "preact/hooks";
-import { getFirstEnabledEnding } from "@formbricks/lib/utils/survey";
 import { SurveyModalProps } from "@formbricks/types/formbricks-surveys";
 import { Survey } from "./Survey";
 
@@ -56,7 +55,7 @@ export const SurveyModal = ({
           onFinished={() => {
             onFinished();
             setTimeout(() => {
-              const firstEnabledEnding = getFirstEnabledEnding(survey);
+              const firstEnabledEnding = survey.endings[0];
               if (firstEnabledEnding?.type !== "redirectToUrl") {
                 close();
               }

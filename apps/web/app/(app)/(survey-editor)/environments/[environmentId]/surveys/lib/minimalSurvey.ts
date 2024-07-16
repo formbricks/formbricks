@@ -25,7 +25,6 @@ export const minimalSurvey: TSurvey = {
   questions: [],
   endings: [
     {
-      enabled: false,
       type: "endScreen",
       id: createId(),
       headline: { default: "Thank you!" },

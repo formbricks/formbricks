@@ -44,15 +44,20 @@ const main = async () => {
             },
           ];
         } else {
-          // @ts-expect-error
-          updatedSurvey.endings = [
-            {
-              ...survey.thankYouCard,
-              type: "endScreen",
-              enabled: survey.thankYouCard.enabled,
-              id: createId(),
-            },
-          ];
+          if (survey.thankYouCard.enabled) {
+            // @ts-expect-error
+            updatedSurvey.endings = [
+              {
+                ...survey.thankYouCard,
+                type: "endScreen",
+                enabled: true,
+                id: createId(),
+              },
+            ];
+          } else {
+            // @ts-expect-error
+            updatedSurvey.endings = [];
+          }
         }
 
         // Return the update promise

@@ -17,7 +17,6 @@ import { TTemplate } from "@formbricks/types/templates";
 const endingCardDefault: TSurveyEndScreenCard = {
   id: createId(),
   type: "endScreen",
-  enabled: true,
   headline: { default: "Thank you!" },
   subheader: { default: "We appreciate your feedback." },
   buttonLabel: { default: "Create your own Survey" },

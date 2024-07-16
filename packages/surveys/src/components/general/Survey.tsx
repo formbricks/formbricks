@@ -13,7 +13,6 @@ import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { getFirstEnabledEnding } from "@formbricks/lib/utils/survey";
 import { SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
 import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 
@@ -136,11 +135,11 @@ export const Survey = ({
   let currIdxTemp = currentQuestionIndex;
   let currQuesTemp = currentQuestion;
 
-  const getNextQuestionId = (data: TResponseData): string => {
+  const getNextQuestionId = (data: TResponseData): string | undefined => {
     const questions = survey.questions;
     const responseValue = data[questionId];
-    const firstEnabledEndingId = getFirstEnabledEnding(survey)?.id ?? survey.endings[0].id;
-    if (questionId === "start") return questions[0]?.id || firstEnabledEndingId;
+    const firstEndingId = survey.endings.length > 0 ? survey.endings[0].id : undefined;
+    if (questionId === "start") return questions[0]?.id || firstEndingId;
     if (currIdxTemp === -1) throw new Error("Question not found");
     if (currQuesTemp?.logic && currQuesTemp?.logic.length > 0 && currentQuestion) {
       for (let logic of currQuesTemp.logic) {
@@ -195,7 +194,7 @@ export const Survey = ({
       }
     }
 
-    return questions[currIdxTemp + 1]?.id || firstEnabledEndingId;
+    return questions[currIdxTemp + 1]?.id || firstEndingId;
   };
 
   const onChange = (responseDataUpdate: TResponseData) => {
@@ -207,7 +206,9 @@ export const Survey = ({
     const questionId = Object.keys(responseData)[0];
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId(responseData);
-    const finished = !survey.questions.map((question) => question.id).includes(nextQuestionId);
+    const finished =
+      nextQuestionId === undefined ||
+      !survey.questions.map((question) => question.id).includes(nextQuestionId);
     onChange(responseData);
     onResponse({ data: responseData, ttc, finished, language: selectedLanguage });
     if (finished) {
@@ -215,7 +216,9 @@ export const Survey = ({
       window.parent.postMessage("formbricksSurveyCompleted", "*");
       onFinished();
     }
-    setQuestionId(nextQuestionId);
+    if (nextQuestionId) {
+      setQuestionId(nextQuestionId);
+    }
     // add to history
     setHistory([...history, questionId]);
     setLoadingElement(false);

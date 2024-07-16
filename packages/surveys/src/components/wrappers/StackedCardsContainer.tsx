@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { getEnabledEndingCardsCount } from "@formbricks/lib/utils/survey";
 import { TProductStyling } from "@formbricks/types/product";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -183,9 +182,9 @@ export const StackedCardsContainer = ({
         questionIdxTemp !== undefined &&
         [prevQuestionIdx, currentQuestionIdx, nextQuestionIdx, nextQuestionIdx + 1].map(
           (questionIdxTemp, index) => {
-            const hasEnabledEndingCard = getEnabledEndingCardsCount(survey) > 0;
+            const hasEndingCard = survey.endings.length > 0;
             // Check for hiding extra card
-            if (questionIdxTemp > survey.questions.length + (hasEnabledEndingCard ? 0 : -1)) return;
+            if (questionIdxTemp > survey.questions.length + (hasEndingCard ? 0 : -1)) return;
             const offset = index - 1;
             const isHidden = offset < 0;
             return (
