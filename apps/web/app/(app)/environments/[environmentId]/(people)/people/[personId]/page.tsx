@@ -1,4 +1,3 @@
-import { ActivitySection } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ActivitySection";
 import { AttributesSection } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/AttributesSection";
 import { DeletePersonButton } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/DeletePersonButton";
 import { ResponseSection } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseSection";
@@ -71,7 +70,6 @@ const Page = async ({ params }) => {
             environmentTags={environmentTags}
             attributeClasses={attributeClasses}
           />
-          <ActivitySection environmentId={params.environmentId} personId={params.personId} />
         </div>
       </section>
     </PageContentWrapper>

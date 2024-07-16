@@ -33,7 +33,7 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: z.string().url("Invalid button link in thank you card").optional(),
+  buttonLink: z.string().optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
@@ -408,7 +408,7 @@ export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.CTA),
   html: ZI18nString.optional(),
-  buttonUrl: z.string().url({ message: "Invalid button url" }).optional(),
+  buttonUrl: z.string().optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: ZI18nString.optional(),
   logic: z.array(ZSurveyCTALogic).optional(),
@@ -643,7 +643,7 @@ export const ZSurvey = z
         }
       }
 
-      if (welcomeCard.html) {
+      if (welcomeCard.html && welcomeCard.html.default.trim() !== "") {
         multiLangIssue = validateCardFieldsForAllLanguages(
           "welcomeCardHtml",
           welcomeCard.html,
@@ -655,7 +655,7 @@ export const ZSurvey = z
         }
       }
 
-      if (welcomeCard.buttonLabel) {
+      if (welcomeCard.buttonLabel && welcomeCard.buttonLabel.default.trim() !== "") {
         multiLangIssue = validateCardFieldsForAllLanguages(
           "buttonLabel",
           welcomeCard.buttonLabel,
@@ -676,7 +676,7 @@ export const ZSurvey = z
         ctx.addIssue(multiLangIssue);
       }
 
-      if (question.subheader) {
+      if (question.subheader && question.subheader.default.trim() !== "") {
         multiLangIssue = validateQuestionLabels("subheader", question.subheader, languages, questionIndex);
         if (multiLangIssue) {
           ctx.addIssue(multiLangIssue);
@@ -715,7 +715,11 @@ export const ZSurvey = z
       }
 
       if (question.type === TSurveyQuestionTypeEnum.OpenText) {
-        if (question.placeholder) {
+        if (
+          question.placeholder &&
+          question.placeholder[defaultLanguageCode].trim() !== "" &&
+          languages.length > 1
+        ) {
           multiLangIssue = validateQuestionLabels(
             "placeholder",
             question.placeholder,
@@ -786,6 +790,17 @@ export const ZSurvey = z
           );
           if (multiLangIssue) {
             ctx.addIssue(multiLangIssue);
+          }
+        }
+
+        if (question.buttonExternal) {
+          const parsedButtonUrl = z.string().url().safeParse(question.buttonUrl);
+          if (!parsedButtonUrl.success) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Question ${String(questionIndex + 1)} has an invalid button URL`,
+              path: ["questions", questionIndex, "buttonUrl"],
+            });
           }
         }
       }

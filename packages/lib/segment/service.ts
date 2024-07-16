@@ -705,3 +705,34 @@ export const evaluateSegment = async (
     throw error;
   }
 };
+
+// This function is used to check if the environment has a segment that uses actions
+export const getHasEnvironmentActionSegment = reactCache(
+  (environmentId: string): Promise<boolean> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId]);
+        const segments = await getSegments(environmentId);
+
+        if (!segments || !segments.length) {
+          return false;
+        }
+
+        let hasEnvironmentActionSegment = false;
+
+        for (let segment of segments) {
+          const hasActionFilter = JSON.stringify(segment.filters).includes(`"type":"action"`);
+          if (hasActionFilter) {
+            hasEnvironmentActionSegment = true;
+            break;
+          }
+        }
+
+        return hasEnvironmentActionSegment;
+      },
+      [`getHasActionSegment-${environmentId}`],
+      {
+        tags: [segmentCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);
