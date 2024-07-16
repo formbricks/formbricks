@@ -222,7 +222,7 @@ export const QuestionsView = ({
       }
     });
     updatedSurvey.questions.splice(questionIdx, 1);
-    updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end:1");
+    updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "");
     const enabledEnding = getFirstEnabledEnding(localSurvey);
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];

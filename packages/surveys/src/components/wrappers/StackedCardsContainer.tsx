@@ -40,7 +40,7 @@ export const StackedCardsContainer = ({
 
   const questionIdxTemp = useMemo(() => {
     if (currentQuestionId === "start") return survey.welcomeCard.enabled ? -1 : 0;
-    if (currentQuestionId.includes("end:")) {
+    if (!survey.questions.map((question) => question.id).includes(currentQuestionId)) {
       return survey.questions.length;
     }
     return survey.questions.findIndex((question) => question.id === currentQuestionId);

@@ -52,14 +52,14 @@ export const EditEndingCard = ({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: endingCard.id,
   });
-  let open = activeQuestionId == `end:${endingCardIndex + 1}`;
+  let open = activeQuestionId === endingCard.id;
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&
       (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
   );
   const setOpen = (e) => {
     if (e) {
-      setActiveQuestionId(`end:${endingCardIndex + 1}`);
+      setActiveQuestionId(endingCard.id);
     } else {
       setActiveQuestionId(null);
     }

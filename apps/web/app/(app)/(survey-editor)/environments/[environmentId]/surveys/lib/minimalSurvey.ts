@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const minimalSurvey: TSurvey = {
@@ -26,7 +27,7 @@ export const minimalSurvey: TSurvey = {
     {
       enabled: false,
       type: "endScreen",
-      id: "end:1",
+      id: createId(),
       headline: { default: "Thank you!" },
       subheader: { default: "We appreciate your feedback." },
       buttonLabel: { default: "Create your own Survey" },

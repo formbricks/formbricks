@@ -1,5 +1,6 @@
 "use client";
 
+import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -30,7 +31,7 @@ export const AddEndingCardButton = ({ localSurvey, setLocalSurvey }: AddEndingCa
       enabled: true,
       headline: createI18nString("Thank you!", surveyLanguageCodes),
       subheader: createI18nString("We appreciate your feedback", surveyLanguageCodes),
-      id: `end:${highestId + 1}`,
+      id: createId(),
     });
 
     setLocalSurvey(updatedSurvey);

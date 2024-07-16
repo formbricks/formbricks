@@ -157,9 +157,11 @@ export const SurveyMenuBar = ({
           prevInvalidQuestions ? [...prevInvalidQuestions, "start"] : ["start"]
         );
       } else if (currentError.path[0] === "endings") {
-        const endingIdx = typeof currentError.path[1] === "number" ? currentError.path[1] + 1 : -1;
+        const endingIdx = typeof currentError.path[1] === "number" ? currentError.path[1] : -1;
         setInvalidQuestions((prevInvalidQuestions) =>
-          prevInvalidQuestions ? [...prevInvalidQuestions, `end:${endingIdx}`] : [`end:${endingIdx}`]
+          prevInvalidQuestions
+            ? [...prevInvalidQuestions, survey.endings[endingIdx].id]
+            : [survey.endings[endingIdx].id]
         );
       }
 

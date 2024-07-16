@@ -63,6 +63,7 @@ export const Survey = ({
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
   const [ttc, setTtc] = useState<TResponseTtc>({});
+  const questionIds = useMemo(() => survey.questions.map((question) => question.id), [survey.questions]);
   const cardArrangement = useMemo(() => {
     if (survey.type === "link") {
       return styling.cardArrangement?.linkSurveys ?? "straight";
@@ -73,7 +74,7 @@ export const Survey = ({
 
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = useMemo(() => {
-    if (questionId.startsWith("end:")) {
+    if (!questionIds.includes(questionId)) {
       const newHistory = [...history];
       const prevQuestionId = newHistory.pop();
       return survey.questions.find((q) => q.id === prevQuestionId);
@@ -206,7 +207,7 @@ export const Survey = ({
     const questionId = Object.keys(responseData)[0];
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId(responseData);
-    const finished = nextQuestionId.startsWith("end:");
+    const finished = !survey.questions.map((question) => question.id).includes(nextQuestionId);
     onChange(responseData);
     onResponse({ data: responseData, ttc, finished, language: selectedLanguage });
     if (finished) {

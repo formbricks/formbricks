@@ -97,7 +97,7 @@ export const QuestionFormInput = ({
     return isWelcomeCard
       ? "start"
       : isEndingCard
-        ? `end:${questionIdx - localSurvey.questions.length}`
+        ? localSurvey.endings[questionIdx - localSurvey.questions.length].id
         : question.id;
   }, [isWelcomeCard, isEndingCard, question?.id]);
 
