@@ -931,22 +931,20 @@ export const ZSurvey = z
     endings.forEach((ending, index) => {
       // thank you card validations
       if (ending.type === "endScreen" && ending.enabled) {
-        if (ending.headline) {
-          const multiLangIssue = validateCardFieldsForAllLanguages(
-            "cardHeadline",
-            ending.headline,
-            languages,
-            "end",
-            index
-          );
+        const multiLangIssueInHeadline = validateCardFieldsForAllLanguages(
+          "cardHeadline",
+          ending.headline ?? {},
+          languages,
+          "end",
+          index
+        );
 
-          if (multiLangIssue) {
-            ctx.addIssue(multiLangIssue);
-          }
+        if (multiLangIssueInHeadline) {
+          ctx.addIssue(multiLangIssueInHeadline);
         }
 
         if (ending.subheader) {
-          const multiLangIssue = validateCardFieldsForAllLanguages(
+          const multiLangIssueInSubheader = validateCardFieldsForAllLanguages(
             "subheader",
             ending.subheader,
             languages,
@@ -954,21 +952,21 @@ export const ZSurvey = z
             index
           );
 
-          if (multiLangIssue) {
-            ctx.addIssue(multiLangIssue);
+          if (multiLangIssueInSubheader) {
+            ctx.addIssue(multiLangIssueInSubheader);
           }
         }
 
         if (ending.buttonLabel) {
-          const multiLangIssue = validateCardFieldsForAllLanguages(
+          const multiLangIssueInButtonLabel = validateCardFieldsForAllLanguages(
             "endingCardButtonLabel",
             ending.buttonLabel,
             languages,
             "end",
             index
           );
-          if (multiLangIssue) {
-            ctx.addIssue(multiLangIssue);
+          if (multiLangIssueInButtonLabel) {
+            ctx.addIssue(multiLangIssueInButtonLabel);
           }
         }
       }

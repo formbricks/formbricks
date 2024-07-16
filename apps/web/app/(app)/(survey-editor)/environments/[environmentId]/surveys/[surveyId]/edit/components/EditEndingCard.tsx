@@ -211,10 +211,10 @@ export const EditEndingCard = ({
               tabs={endingCardTypes}
               activeId={endingCard.type}
               className="w-full"
-              disabled={endingCard.type === "endScreen" && plan === "free"}
+              disabled={false}
               setActiveId={() => {
                 if (endingCard.type === "endScreen") {
-                  updateSurvey({ type: "redirectToUrl", url: "", label: "" });
+                  updateSurvey({ type: "redirectToUrl" });
                 } else {
                   updateSurvey({ type: "endScreen" });
                 }

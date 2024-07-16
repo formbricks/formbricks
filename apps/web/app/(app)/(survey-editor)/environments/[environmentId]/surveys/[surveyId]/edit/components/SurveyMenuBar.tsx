@@ -11,7 +11,14 @@ import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyEditorTabs, TSurveyQuestion, ZSurvey } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyEditorTabs,
+  TSurveyQuestion,
+  ZSurvey,
+  ZSurveyEndScreenCard,
+  ZSurveyRedirectUrlCard,
+} from "@formbricks/types/surveys/types";
 import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -142,7 +149,6 @@ export const SurveyMenuBar = ({
     const localSurveyValidation = ZSurvey.safeParse(localSurvey);
     if (!localSurveyValidation.success) {
       const currentError = localSurveyValidation.error.errors[0];
-      console.log(currentError.path);
 
       if (currentError.path[0] === "questions") {
         const questionIdx = currentError.path[1];
@@ -207,6 +213,14 @@ export const SurveyMenuBar = ({
       localSurvey.questions = localSurvey.questions.map((question) => {
         const { isDraft, ...rest } = question;
         return rest;
+      });
+
+      localSurvey.endings = localSurvey.endings.map((ending) => {
+        if (ending.type === "redirectToUrl") {
+          return ZSurveyRedirectUrlCard.parse(ending);
+        } else {
+          return ZSurveyEndScreenCard.parse(ending);
+        }
       });
 
       const segment = await handleSegmentUpdate();
