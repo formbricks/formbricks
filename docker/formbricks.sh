@@ -61,12 +61,66 @@ install_formbricks() {
   mkdir -p formbricks && cd formbricks
   echo "📁 Created Formbricks Quickstart directory at ./formbricks."
 
-  # Ask the user for their email address
-  echo "💡 Please enter your email address for the SSL certificate:"
-  read email_address
+  # Ask the user for their domain name
+  echo "🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):"
+  read domain_name
+
+  echo "🔗 Do you want us to set up an HTTPS certificate for you? (yes/no)"
+  read https_setup
+  if [[ $https_setup == "yes" ]]; then
+    echo "🔗 Please make sure the domain points to the server's IP address and are ports 80 & 443 open in your server's firewall. Is everything set up? (yes/no)"
+    read dns_setup
+    if [[ $dns_setup == "yes" ]]; then
+      echo "💡 Please enter your email address for the SSL certificate:"
+      read email_address
+
+      echo "🔗 Do you want to enforce HTTPS (HSTS)? (yes default/ no)"
+      read hsts_enabled
+
+      #  Set default value for HSTS
+      if [[ -z $hsts_enabled ]]; then
+        hsts_enabled="yes"
+      fi
+      
+    else
+      echo "❌ Ports 80 & 443 are not exposed. We can't help you in providing the SSL certificate."
+      https_setup="no"
+      hsts_enabled="no"
+    fi
+  else
+    https_setup="no"
+    hsts_enabled="no"
+  fi
+
+  # Ask for HSTS configuration for HTTPS redirection if custom certificate is used
+  if [[ $https_setup == "no" ]]; then
+    echo -e "You have chosen not to set up HTTPS certificate for your domain. Please make sure to set up HTTPS on your own. You can refer to the \e]8;;https://formbricks.com/docs/self-hosting/custom-ssl\aFormbricks documentation\e]8;;\a for more information."
+
+    echo "🔗 Do you want to have HTTPS only header? (yes/no)"
+    read hsts_enabled
+  fi
 
   # Installing Traefik
   echo "🚗 Configuring Traefik..."
+
+  if [[ $hsts_enabled == "yes" ]]; then
+    hsts_middlewares="middlewares:
+        - hstsHeader"
+  else
+    hsts_middlewares=""
+  fi
+
+  if [[ $https_setup == "yes" ]]; then
+    certificates_resolvers="certificatesResolvers:
+  default:
+    acme:
+      email: $email_address
+      storage: acme.json
+      caServer: \"https://acme-v01.api.letsencrypt.org/directory\"
+      tlsChallenge: {}"
+  else
+    certificates_resolvers=""
+  fi
 
   cat <<EOT >traefik.yaml
 entryPoints:
@@ -83,28 +137,50 @@ entryPoints:
     http:
       tls:
         certResolver: default
+        options: default
+      $hsts_middlewares
 providers:
   docker:
     watch: true
     exposedByDefault: false
-certificatesResolvers:
-  default:
-    acme:
-      email: $email_address
-      storage: acme.json
-      caServer: "https://acme-v01.api.letsencrypt.org/directory"
-      tlsChallenge: {}
+$certificates_resolvers
 EOT
 
-  echo "💡 Created traefik.yaml file with your provided email address."
+  cat <<EOT >traefik-dynamic.yaml
+# configuring min TLS version
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+      cipherSuites:
+        # TLS 1.2 Ciphers
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
+        - TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
+        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
 
-  touch acme.json
-  chmod 600 acme.json
-  echo "💡 Created acme.json file with correct permissions."
+        # TLS 1.3 Ciphers (These are automatically used for TLS 1.3 connections)
+        - TLS_AES_128_GCM_SHA256
+        - TLS_AES_256_GCM_SHA384
+        - TLS_CHACHA20_POLY1305_SHA256
 
-  # Ask the user for their domain name
-  echo "🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):"
-  read domain_name
+        # Fallback
+        - TLS_FALLBACK_SCSV
+EOT
+
+  echo "💡 Created traefik.yaml and traefik-dynamic.yaml file."
+
+  if[[ $https_setup == "yes"]]; then
+    touch acme.json
+    chmod 600 acme.json
+    echo "💡 Created acme.json file with correct permissions."
+  fi
 
   # Prompt for email service setup
   read -p "Do you want to set up the email service? (yes/no) You will need SMTP credentials for the same! " email_service
@@ -162,7 +238,7 @@ EOT
     sed -i "s|# SMTP_PASSWORD:|SMTP_PASSWORD: \"$smtp_password\"|" docker-compose.yml
   fi
 
-  awk -v domain_name="$domain_name" '
+  awk -v domain_name="$domain_name" -v hsts_enabled="$hsts_enabled" '
 /formbricks:/,/^ *$/ {
     if ($0 ~ /depends_on:/) {
         inserting_labels=1
@@ -173,6 +249,12 @@ EOT
         print "      - \"traefik.http.routers.formbricks.rule=Host(\`" domain_name "\`)\"  # Use your actual domain or IP"
         print "      - \"traefik.http.routers.formbricks.entrypoints=websecure\"  # Use the websecure entrypoint (port 443 with TLS)"
         print "      - \"traefik.http.services.formbricks.loadbalancer.server.port=3000\"  # Forward traffic to Formbricks on port 3000"
+        if (hsts_enabled == "yes") {
+            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000\"  # Set HSTS (HTTP Strict Transport Security) max-age to 1 year (31536000 seconds)"
+            print "      - \"traefik.http.middlewares.hstsHeader.headers.forceSTSHeader=true\"  # Ensure the HSTS header is always included in responses"
+            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsPreload=true\"  # Allow the domain to be preloaded in browser HSTS preload list"
+            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsIncludeSubdomains=true\"  # Apply HSTS policy to all subdomains as well"
+        }
         inserting_labels=0
     }
     print
@@ -191,6 +273,7 @@ EOT
     print "      - \"8080:8080\""
     print "    volumes:"
     print "      - ./traefik.yaml:/traefik.yaml"
+    print "      - ./traefik-dynamic.yaml:/traefik-dynamic.yaml"
     print "      - ./acme.json:/acme.json"
     print "      - /var/run/docker.sock:/var/run/docker.sock:ro"
     print ""
