@@ -399,14 +399,20 @@ export const QuestionFormInput = ({
     }
   };
 
-  const getFileUrl = () => {
+  const getFileUrl = (): string | undefined => {
     if (isWelcomeCard) return localSurvey.welcomeCard.fileUrl;
-    else return question.imageUrl;
+    if (isEndingCard) {
+      const endingCard = localSurvey.endings.find((ending) => ending.id === questionId);
+      if (endingCard && endingCard.type === "endScreen") return endingCard.imageUrl;
+    } else return question.imageUrl;
   };
 
-  const getVideoUrl = () => {
+  const getVideoUrl = (): string | undefined => {
     if (isWelcomeCard) return localSurvey.welcomeCard.videoUrl;
-    else return question.videoUrl;
+    if (isEndingCard) {
+      const endingCard = localSurvey.endings.find((ending) => ending.id === questionId);
+      if (endingCard && endingCard.type === "endScreen") return endingCard.videoUrl;
+    } else return question.videoUrl;
   };
 
   return (
