@@ -391,6 +391,7 @@ export const QuestionsView = ({
             {localSurvey.endings.map((ending, index) => {
               return (
                 <EditEndingCard
+                  key={ending.id}
                   localSurvey={localSurvey}
                   endingCardIndex={index}
                   setLocalSurvey={setLocalSurvey}
