@@ -423,6 +423,7 @@ export const QuestionsView = ({
                   attributeClasses={attributeClasses}
                   plan={plan}
                   addEndingCard={addEndingCard}
+                  isFormbricksCloud={isFormbricksCloud}
                 />
               );
             })}

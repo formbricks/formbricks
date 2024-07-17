@@ -1,5 +1,6 @@
 "use client";
 
+import { formatTextWithSlashes } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@/app/lib/questions";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -79,25 +80,6 @@ export const QuestionCard = ({
 
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
-
-  // formats the text to highlight specific parts of the text with slashes
-  const formatTextWithSlashes = (text) => {
-    const regex = /\/(.*?)\\/g;
-    const parts = text.split(regex);
-
-    return parts.map((part, index) => {
-      // Check if the part was inside slashes
-      if (index % 2 !== 0) {
-        return (
-          <span key={index} className="mx-1 rounded-md bg-slate-100 p-1 px-2 text-xs">
-            {part}
-          </span>
-        );
-      } else {
-        return part;
-      }
-    });
-  };
 
   const updateEmptyNextButtonLabels = (labelValue: TI18nString) => {
     localSurvey.questions.forEach((q, index) => {

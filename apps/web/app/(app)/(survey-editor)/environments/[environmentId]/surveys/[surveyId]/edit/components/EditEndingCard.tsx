@@ -1,6 +1,7 @@
 "use client";
 
 import { EditorCardMenu } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/EditorCardMenu";
+import { formatTextWithSlashes } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { createId } from "@paralleldrive/cuid2";
@@ -9,6 +10,7 @@ import { GripIcon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -31,6 +33,7 @@ interface EditEndingCardProps {
   attributeClasses: TAttributeClass[];
   plan: TOrganizationBillingPlan;
   addEndingCard: (index: number) => void;
+  isFormbricksCloud: boolean;
 }
 
 const endingCardTypes = [
@@ -50,8 +53,12 @@ export const EditEndingCard = ({
   attributeClasses,
   plan,
   addEndingCard,
+  isFormbricksCloud,
 }: EditEndingCardProps) => {
   const endingCard = localSurvey.endings[endingCardIndex];
+  const isRedirectToUrlDisabled = isFormbricksCloud
+    ? plan === "free" && endingCard.type !== "redirectToUrl"
+    : false;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: endingCard.id,
   });
@@ -152,9 +159,19 @@ export const EditEndingCard = ({
             <div className="inline-flex">
               <div>
                 <p className="text-sm font-semibold">
-                  {endingCard.type === "endScreen"
-                    ? getLocalizedValue(endingCard.headline, selectedLanguageCode)
-                    : endingCard.label}
+                  {(endingCard.type === "endScreen" &&
+                    endingCard.headline &&
+                    formatTextWithSlashes(
+                      recallToHeadline(
+                        endingCard.headline,
+                        localSurvey,
+                        true,
+                        selectedLanguageCode,
+                        attributeClasses
+                      )[selectedLanguageCode] ?? ""
+                    )) ||
+                    "Ending Card"}
+                  {(endingCard.type === "redirectToUrl" && endingCard.label) || "Ending Card"}
                 </p>
               </div>
             </div>
@@ -176,14 +193,14 @@ export const EditEndingCard = ({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <TooltipRenderer
-            shouldRender={endingCard.type === "endScreen" && plan === "free"}
+            shouldRender={endingCard.type === "endScreen" && isRedirectToUrlDisabled}
             tooltipContent={"Redirect To Url is not available on free plan"}
             triggerClass="w-full">
             <TabBar
               tabs={endingCardTypes}
               activeId={endingCard.type}
               className="w-full"
-              disabled={false}
+              disabled={isRedirectToUrlDisabled}
               setActiveId={() => {
                 if (endingCard.type === "endScreen") {
                   updateSurvey({ type: "redirectToUrl" });

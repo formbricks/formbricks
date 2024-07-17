@@ -285,6 +285,7 @@ export const Survey = ({
               isCurrent={offset === 0}
               languageCode={selectedLanguage}
               isResponseSendingFinished={isResponseSendingFinished}
+              responseData={responseData}
             />
           );
         }

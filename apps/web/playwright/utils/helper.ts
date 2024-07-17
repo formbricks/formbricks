@@ -282,7 +282,11 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByLabel("Question*").fill(params.address.question);
 
   // Thank You Card
-  await page.getByText("Thank You CardShown").click();
+  await page
+    .locator("div")
+    .filter({ hasText: /^Thank you!$/ })
+    .nth(1)
+    .click();
   await page.getByLabel("Note*").fill(params.thankYouCard.headline);
   await page.getByLabel("Description").fill(params.thankYouCard.description);
 };

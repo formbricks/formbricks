@@ -4,8 +4,10 @@ import { LoadingSpinner } from "@/components/general/LoadingSpinner";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
+import { replaceRecallInfo } from "@/lib/recall";
 import { useEffect } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 
 interface EndingCardProps {
@@ -16,6 +18,7 @@ interface EndingCardProps {
   autoFocusEnabled: boolean;
   isCurrent: boolean;
   languageCode: string;
+  responseData: TResponseData;
 }
 
 export const EndingCard = ({
@@ -26,6 +29,7 @@ export const EndingCard = ({
   autoFocusEnabled,
   isCurrent,
   languageCode,
+  responseData,
 }: EndingCardProps) => {
   const media =
     endingCard.type === "endScreen" && (endingCard.imageUrl || endingCard.videoUrl) ? (
@@ -91,7 +95,10 @@ export const EndingCard = ({
               <div>
                 <Headline
                   alignTextCenter={true}
-                  headline={getLocalizedValue(endingCard.headline, languageCode)}
+                  headline={replaceRecallInfo(
+                    getLocalizedValue(endingCard.headline, languageCode),
+                    responseData
+                  )}
                   questionId="EndingCard"
                 />
                 <Subheader
@@ -101,7 +108,10 @@ export const EndingCard = ({
                 {endingCard.buttonLabel && (
                   <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
                     <SubmitButton
-                      buttonLabel={getLocalizedValue(endingCard.buttonLabel, languageCode)}
+                      buttonLabel={replaceRecallInfo(
+                        getLocalizedValue(endingCard.buttonLabel, languageCode),
+                        responseData
+                      )}
                       isLastQuestion={false}
                       focus={autoFocusEnabled}
                       onClick={handleSubmit}
