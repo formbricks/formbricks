@@ -6,6 +6,10 @@ const meta: Meta<typeof PageHeader> = {
   title: "ui/PageHeader",
   component: PageHeader,
   tags: ["autodocs"],
+  argTypes: {
+    cta: { control: "text" },
+    children: { control: "text" },
+  },
 };
 
 export default meta;
