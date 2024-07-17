@@ -238,8 +238,7 @@ export const mockCalQuestion: TSurveyCalQuestion = {
 export const mockEndings: TSurveyEndings = [
   {
     type: "endScreen",
-    id: "end:1",
-    enabled: true,
+    id: "umyknohldc7w26ocjdhaa62c",
     headline: {
       default: "Thank you!",
     },
@@ -277,7 +276,7 @@ export const mockSurvey: TSurvey = {
   endings: [
     {
       type: "endScreen",
-      id: "end:1",
+      id: "umyknohldc7w26ocjdhaa62c",
       enabled: true,
       headline: {
         default: "Thank you!",
