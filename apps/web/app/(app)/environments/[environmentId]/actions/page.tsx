@@ -4,9 +4,7 @@ import { ActionTableHeading } from "@/app/(app)/environments/[environmentId]/act
 import { AddActionModal } from "@/app/(app)/environments/[environmentId]/actions/components/AddActionModal";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
@@ -32,11 +30,6 @@ const Page = async ({ params }) => {
     return notFound();
   }
 
-  // On Formbricks Cloud only render the timeline if the user targeting feature is booked
-  const isUserTargetingEnabled = IS_FORMBRICKS_CLOUD
-    ? await getAdvancedTargetingPermission(organization)
-    : true;
-
   const renderAddActionButton = () => (
     <AddActionModal environmentId={params.environmentId} actionClasses={actionClasses} />
   );
@@ -44,11 +37,7 @@ const Page = async ({ params }) => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="Actions" cta={renderAddActionButton()} />
-      <ActionClassesTable
-        environmentId={params.environmentId}
-        actionClasses={actionClasses}
-        isUserTargetingEnabled={isUserTargetingEnabled}
-        currentProductChannel={currentProductChannel}>
+      <ActionClassesTable environmentId={params.environmentId} actionClasses={actionClasses}>
         <ActionTableHeading />
         {actionClasses.map((actionClass) => (
           <ActionClassDataRow key={actionClass.id} actionClass={actionClass} />

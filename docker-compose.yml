@@ -30,6 +30,8 @@ x-smtp-secure-enabled: &smtp_secure_enabled # Enable SMTP_SECURE_ENABLED for TLS
 x-smtp-user: &smtp_user
 x-smtp-password: &smtp_password
 
+x-smtp-reject-unauthorized-tls: &smtp_reject_unauthorized_tls 1 # If set to 0, the server will accept connections without requiring authorization from the list of supplied CAs.
+
 x-short-url-base:
   &short_url_base # Set the below value if you have and want to share a shorter base URL than the x-survey-base-url
 
@@ -94,6 +96,7 @@ services:
       SMTP_SECURE_ENABLED: *smtp_secure_enabled
       SMTP_USER: *smtp_user
       SMTP_PASSWORD: *smtp_password
+      SMTP_REJECT_UNAUTHORIZED_TLS: *smtp_reject_unauthorized_tls
       ENCRYPTION_KEY: *encryption_key
       SHORT_URL_BASE: *short_url_base
       PRIVACY_URL: *privacy_url
