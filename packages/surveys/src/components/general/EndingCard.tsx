@@ -56,7 +56,7 @@ export const EndingCard = ({
 
   const handleSubmit = () => {
     if (!isRedirectDisabled && endingCard.type === "endScreen" && endingCard.buttonLink) {
-      window.location.replace(endingCard.buttonLink);
+      window.top?.location.replace(endingCard.buttonLink);
     }
   };
 
