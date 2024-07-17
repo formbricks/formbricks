@@ -59,6 +59,7 @@ interface NavigationProps {
   isFormbricksCloud: boolean;
   membershipRole?: TMembershipRole;
   isMultiOrgEnabled: boolean;
+  webappUrl: string;
 }
 
 export const MainNavigation = ({
@@ -70,6 +71,7 @@ export const MainNavigation = ({
   isFormbricksCloud,
   membershipRole,
   isMultiOrgEnabled,
+  webappUrl,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -408,7 +410,7 @@ export const MainNavigation = ({
                   <DropdownMenuItem
                     className="w-full gap-x-2 rounded-lg font-normal"
                     onClick={async () => {
-                      await signOut({ callbackUrl: "/auth/login" });
+                      await signOut({ callbackUrl: `${webappUrl}/auth/login` });
                       await formbricksLogout();
                     }}>
                     <LogOutIcon className="h-4 w-4" strokeWidth={1.5} />
