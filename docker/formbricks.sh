@@ -65,45 +65,45 @@ install_formbricks() {
   echo "🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):"
   read domain_name
 
-  echo "🔗 Do you want us to set up an HTTPS certificate for you? (yes/no)"
+  echo "🔗 Do you want us to set up an HTTPS certificate for you? (y/N)"
   read https_setup
-  if [[ $https_setup == "yes" ]]; then
-    echo "🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? (yes/no)"
+  if [[ $https_setup == "y" ]]; then
+    echo "🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? (y/N)"
     read dns_setup
-    if [[ $dns_setup == "yes" ]]; then
+    if [[ $dns_setup == "y" ]]; then
       echo "💡 Please enter your email address for the SSL certificate:"
       read email_address
 
-      echo "🔗 Do you want to enforce HTTPS (HSTS)? (yes default/ no)"
+      echo "🔗 Do you want to enforce HTTPS (HSTS)? (y default/ N)"
       read hsts_enabled
 
       #  Set default value for HSTS
       if [[ -z $hsts_enabled ]]; then
-        hsts_enabled="yes"
+        hsts_enabled="y"
       fi
       
     else
       echo "❌ Ports 80 & 443 are not open. We can't help you in providing the SSL certificate."
-      https_setup="no"
-      hsts_enabled="no"
+      https_setup="N"
+      hsts_enabled="N"
     fi
   else
-    https_setup="no"
-    hsts_enabled="no"
+    https_setup="N"
+    hsts_enabled="N"
   fi
 
   # Ask for HSTS configuration for HTTPS redirection if custom certificate is used
-  if [[ $https_setup == "no" ]]; then
-    echo -e "You have chosen not to set up HTTPS certificate for your domain. Please make sure to set up HTTPS on your own. You can refer to the \e]8;;https://formbricks.com/docs/self-hosting/custom-ssl\aFormbricks documentation\e]8;;\a for more information."
+  if [[ $https_setup == "N" ]]; then
+    echo "You have chosen not to set up HTTPS certificate for your domain. Please make sure to set up HTTPS on your own. You can refer to the Formbricks documentation(https://formbricks.com/docs/self-hosting/custom-ssl) for more information."
 
-    echo "🔗 Do you want to enforce HTTPS (HSTS)? (yes/no)"
+    echo "🔗 Do you want to enforce HTTPS (HSTS)? (y/N)"
     read hsts_enabled
   fi
 
   # Installing Traefik
   echo "🚗 Configuring Traefik..."
 
-  if [[ $hsts_enabled == "yes" ]]; then
+  if [[ $hsts_enabled == "y" ]]; then
     hsts_middlewares="middlewares:
         - hstsHeader"
     http_redirection="http:
@@ -117,7 +117,7 @@ install_formbricks() {
     http_redirection=""
   fi
 
-  if [[ $https_setup == "yes" ]]; then
+  if [[ $https_setup == "y" ]]; then
     certResolver="certResolver: default"
     certificates_resolvers="certificatesResolvers:
   default:
@@ -147,6 +147,8 @@ providers:
   docker:
     watch: true
     exposedByDefault: false
+  file:
+    directory: /
 $certificates_resolvers
 EOT
 
@@ -180,7 +182,7 @@ EOT
 
   echo "💡 Created traefik.yaml and traefik-dynamic.yaml file."
 
-  if [[ $https_setup == "yes" ]]; then
+  if [[ $https_setup == "y" ]]; then
     touch acme.json
     chmod 600 acme.json
     echo "💡 Created acme.json file with correct permissions."
@@ -252,12 +254,16 @@ EOT
         print "      - \"traefik.enable=true\"  # Enable Traefik for this service"
         print "      - \"traefik.http.routers.formbricks.rule=Host(\`" domain_name "\`)\"  # Use your actual domain or IP"
         print "      - \"traefik.http.routers.formbricks.entrypoints=websecure\"  # Use the websecure entrypoint (port 443 with TLS)"
+        print "      - \"traefik.http.routers.formbricks.tls=true\"  # Enable TLS"
         print "      - \"traefik.http.services.formbricks.loadbalancer.server.port=3000\"  # Forward traffic to Formbricks on port 3000"
-        if (hsts_enabled == "yes") {
+        if (hsts_enabled == "y") {
             print "      - \"traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000\"  # Set HSTS (HTTP Strict Transport Security) max-age to 1 year (31536000 seconds)"
             print "      - \"traefik.http.middlewares.hstsHeader.headers.forceSTSHeader=true\"  # Ensure the HSTS header is always included in responses"
             print "      - \"traefik.http.middlewares.hstsHeader.headers.stsPreload=true\"  # Allow the domain to be preloaded in browser HSTS preload list"
             print "      - \"traefik.http.middlewares.hstsHeader.headers.stsIncludeSubdomains=true\"  # Apply HSTS policy to all subdomains as well"
+        } else {
+            print "      - \"traefik.http.routers.formbricks_http.entrypoints=web\"  # Use the web entrypoint (port 80)"
+            print "      - \"traefik.http.routers.formbricks_http.rule=Host(\`" domain_name "\`)\"  # Use your actual domain or IP"
         }
         inserting_labels=0
     }
