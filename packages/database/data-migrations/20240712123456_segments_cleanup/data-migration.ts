@@ -14,12 +14,12 @@ async function main() {
         },
       });
 
-      const ids = segmentsWithNoSurveys.map((segment) => segment.id);
+      const surveyIds = segmentsWithNoSurveys.map((segment) => segment.id);
 
       await tx.segment.deleteMany({
         where: {
           id: {
-            in: ids,
+            in: surveyIds,
           },
         },
       });
