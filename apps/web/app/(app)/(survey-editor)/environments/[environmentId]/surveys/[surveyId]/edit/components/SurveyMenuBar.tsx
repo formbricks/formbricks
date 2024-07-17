@@ -166,8 +166,8 @@ export const SurveyMenuBar = ({
         const endingIdx = typeof currentError.path[1] === "number" ? currentError.path[1] : -1;
         setInvalidQuestions((prevInvalidQuestions) =>
           prevInvalidQuestions
-            ? [...prevInvalidQuestions, survey.endings[endingIdx].id]
-            : [survey.endings[endingIdx].id]
+            ? [...prevInvalidQuestions, localSurvey.endings[endingIdx].id]
+            : [localSurvey.endings[endingIdx].id]
         );
       }
 

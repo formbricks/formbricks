@@ -34,9 +34,10 @@ export const UpdateQuestionId = ({
     }
 
     const questionIds = localSurvey.questions.map((q) => q.id);
+    const endingCardIds = localSurvey.endings.map((e) => e.id);
     const hiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
 
-    const validateIdError = validateId("Question", currentValue, questionIds, hiddenFieldIds);
+    const validateIdError = validateId("Question", currentValue, questionIds, endingCardIds, hiddenFieldIds);
 
     if (validateIdError) {
       setIsInputInvalid(true);

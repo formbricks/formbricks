@@ -160,24 +160,24 @@ export const EditEndingCard = ({
               <div>
                 <p className="text-sm font-semibold">
                   {endingCard.type === "endScreen" &&
-                  endingCard.headline &&
-                  recallToHeadline(
-                    endingCard.headline,
-                    localSurvey,
-                    true,
-                    selectedLanguageCode,
-                    attributeClasses
-                  )[selectedLanguageCode]
-                    ? formatTextWithSlashes(
-                        recallToHeadline(
-                          endingCard.headline,
-                          localSurvey,
-                          true,
-                          selectedLanguageCode,
-                          attributeClasses
-                        )[selectedLanguageCode]
-                      )
-                    : "Ending Card"}
+                    (endingCard.headline &&
+                    recallToHeadline(
+                      endingCard.headline,
+                      localSurvey,
+                      true,
+                      selectedLanguageCode,
+                      attributeClasses
+                    )[selectedLanguageCode]
+                      ? formatTextWithSlashes(
+                          recallToHeadline(
+                            endingCard.headline,
+                            localSurvey,
+                            true,
+                            selectedLanguageCode,
+                            attributeClasses
+                          )[selectedLanguageCode]
+                        )
+                      : "Ending Card")}
                   {(endingCard.type === "redirectToUrl" && endingCard.label) ?? "Ending Card"}
                 </p>
               </div>
@@ -185,6 +185,7 @@ export const EditEndingCard = ({
 
             <div className="flex items-center space-x-4">
               <EditorCardMenu
+                survey={localSurvey}
                 cardIdx={endingCardIndex}
                 lastCard={endingCardIndex === localSurvey.endings.length - 1}
                 duplicateCard={duplicateEndingCard}

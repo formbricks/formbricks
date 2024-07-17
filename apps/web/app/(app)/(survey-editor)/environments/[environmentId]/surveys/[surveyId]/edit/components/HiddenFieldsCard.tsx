@@ -118,11 +118,13 @@ export const HiddenFieldsCard = ({
             onSubmit={(e) => {
               e.preventDefault();
               const existingQuestionIds = localSurvey.questions.map((question) => question.id);
+              const existingEndingCardIds = localSurvey.endings.map((ending) => ending.id);
               const existingHiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
               const validateIdError = validateId(
                 "Hidden field",
                 hiddenField,
                 existingQuestionIds,
+                existingEndingCardIds,
                 existingHiddenFieldIds
               );
 

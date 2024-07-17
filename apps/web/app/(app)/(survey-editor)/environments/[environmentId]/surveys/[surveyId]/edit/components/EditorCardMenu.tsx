@@ -4,8 +4,10 @@ import { QUESTIONS_ICON_MAP, QUESTIONS_NAME_MAP, getQuestionDefaults } from "@/a
 import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import React, { useState } from "react";
+import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
 import {
+  TSurvey,
   TSurveyEndScreenCard,
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
@@ -24,6 +26,7 @@ import {
 } from "@formbricks/ui/DropdownMenu";
 
 interface EditorCardMenuProps {
+  survey: TSurvey;
   cardIdx: number;
   lastCard: boolean;
   duplicateCard: (cardIdx: number) => void;
@@ -37,6 +40,7 @@ interface EditorCardMenuProps {
 }
 
 export const EditorCardMenu = ({
+  survey,
   cardIdx,
   lastCard,
   duplicateCard,
@@ -134,8 +138,12 @@ export const EditorCardMenu = ({
         }}
       />
       <TrashIcon
-        className="h-4 cursor-pointer text-slate-500 hover:text-slate-600"
+        className={cn(
+          "h-4 cursor-pointer text-slate-500 hover:text-slate-600",
+          survey.type === "link" && survey.endings.length === 1 && "cursor-not-allowed"
+        )}
         onClick={(e) => {
+          if (survey.type === "link" && survey.endings.length === 1) return;
           e.stopPropagation();
           deleteCard(cardIdx);
         }}

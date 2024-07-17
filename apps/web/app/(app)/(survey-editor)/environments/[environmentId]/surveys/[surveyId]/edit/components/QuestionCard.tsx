@@ -189,6 +189,7 @@ export const QuestionCard = ({
 
             <div className="flex items-center space-x-2">
               <EditorCardMenu
+                survey={localSurvey}
                 cardIdx={questionIdx}
                 lastCard={lastQuestion}
                 duplicateCard={duplicateQuestion}
