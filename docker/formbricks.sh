@@ -65,45 +65,62 @@ install_formbricks() {
   echo "🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):"
   read domain_name
 
-  echo "🔗 Do you want us to set up an HTTPS certificate for you? (y/N)"
+  echo "🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]"
   read https_setup
-  if [[ $https_setup == "y" ]]; then
-    echo "🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? (y/N)"
+
+  # Set default value for HTTPS setup
+  if [[ -z $https_setup ]]; then
+    https_setup="Y"
+  fi
+
+  if [[ $https_setup == "Y" ]]; then
+    echo "🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]"
     read dns_setup
-    if [[ $dns_setup == "y" ]]; then
+
+    # Set default value for DNS setup
+    if [[ -z $dns_setup ]]; then
+      dns_setup="Y"
+    fi
+
+    if [[ $dns_setup == "Y" ]]; then
       echo "💡 Please enter your email address for the SSL certificate:"
       read email_address
 
-      echo "🔗 Do you want to enforce HTTPS (HSTS)? (y default/ N)"
+      echo "🔗 Do you want to enforce HTTPS (HSTS)? [Y/n]"
       read hsts_enabled
 
       #  Set default value for HSTS
       if [[ -z $hsts_enabled ]]; then
-        hsts_enabled="y"
+        hsts_enabled="Y"
       fi
       
     else
       echo "❌ Ports 80 & 443 are not open. We can't help you in providing the SSL certificate."
-      https_setup="N"
-      hsts_enabled="N"
+      https_setup="n"
+      hsts_enabled="n"
     fi
   else
-    https_setup="N"
-    hsts_enabled="N"
+    https_setup="n"
+    hsts_enabled="n"
   fi
 
   # Ask for HSTS configuration for HTTPS redirection if custom certificate is used
-  if [[ $https_setup == "N" ]]; then
+  if [[ $https_setup == "n" ]]; then
     echo "You have chosen not to set up HTTPS certificate for your domain. Please make sure to set up HTTPS on your own. You can refer to the Formbricks documentation(https://formbricks.com/docs/self-hosting/custom-ssl) for more information."
 
-    echo "🔗 Do you want to enforce HTTPS (HSTS)? (y/N)"
+    echo "🔗 Do you want to enforce HTTPS (HSTS)? [Y/n]"
     read hsts_enabled
+
+    #  Set default value for HSTS
+    if [[ -z $hsts_enabled ]]; then
+      hsts_enabled="Y"
+    fi
   fi
 
   # Installing Traefik
   echo "🚗 Configuring Traefik..."
 
-  if [[ $hsts_enabled == "y" ]]; then
+  if [[ $hsts_enabled == "Y" ]]; then
     hsts_middlewares="middlewares:
         - hstsHeader"
     http_redirection="http:
@@ -117,7 +134,7 @@ install_formbricks() {
     http_redirection=""
   fi
 
-  if [[ $https_setup == "y" ]]; then
+  if [[ $https_setup == "Y" ]]; then
     certResolver="certResolver: default"
     certificates_resolvers="certificatesResolvers:
   default:
@@ -182,15 +199,21 @@ EOT
 
   echo "💡 Created traefik.yaml and traefik-dynamic.yaml file."
 
-  if [[ $https_setup == "y" ]]; then
+  if [[ $https_setup == "Y" ]]; then
     touch acme.json
     chmod 600 acme.json
     echo "💡 Created acme.json file with correct permissions."
   fi
 
   # Prompt for email service setup
-  read -p "Do you want to set up the email service? (yes/no) You will need SMTP credentials for the same! " email_service
-  if [[ $email_service == "yes" ]]; then
+  read -p "Do you want to set up the email service? [y/N] You will need SMTP credentials for the same! " email_service
+
+  # Set default value for email service setup
+  if [[ -z $email_service ]]; then
+    email_service="N"
+  fi
+
+  if [[ $email_service == "y" ]]; then
     echo "Please provide the following email service details: "
 
     echo -n "Enter your SMTP configured Email ID: "
@@ -257,7 +280,7 @@ EOT
         print "      - \"traefik.http.routers.formbricks.entrypoints=websecure\"  # Use the websecure entrypoint (port 443 with TLS)"
         print "      - \"traefik.http.routers.formbricks.tls=true\"  # Enable TLS"
         print "      - \"traefik.http.services.formbricks.loadbalancer.server.port=3000\"  # Forward traffic to Formbricks on port 3000"
-        if (hsts_enabled == "y") {
+        if (hsts_enabled == "Y") {
             print "      - \"traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000\"  # Set HSTS (HTTP Strict Transport Security) max-age to 1 year (31536000 seconds)"
             print "      - \"traefik.http.middlewares.hstsHeader.headers.forceSTSHeader=true\"  # Ensure the HSTS header is always included in responses"
             print "      - \"traefik.http.middlewares.hstsHeader.headers.stsPreload=true\"  # Allow the domain to be preloaded in browser HSTS preload list"
