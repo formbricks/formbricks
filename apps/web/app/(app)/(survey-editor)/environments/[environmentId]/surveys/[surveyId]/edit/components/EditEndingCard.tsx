@@ -159,19 +159,26 @@ export const EditEndingCard = ({
             <div className="inline-flex">
               <div>
                 <p className="text-sm font-semibold">
-                  {(endingCard.type === "endScreen" &&
-                    endingCard.headline &&
-                    formatTextWithSlashes(
-                      recallToHeadline(
-                        endingCard.headline,
-                        localSurvey,
-                        true,
-                        selectedLanguageCode,
-                        attributeClasses
-                      )[selectedLanguageCode] ?? ""
-                    )) ||
-                    "Ending Card"}
-                  {(endingCard.type === "redirectToUrl" && endingCard.label) || "Ending Card"}
+                  {endingCard.type === "endScreen" &&
+                  endingCard.headline &&
+                  recallToHeadline(
+                    endingCard.headline,
+                    localSurvey,
+                    true,
+                    selectedLanguageCode,
+                    attributeClasses
+                  )[selectedLanguageCode]
+                    ? formatTextWithSlashes(
+                        recallToHeadline(
+                          endingCard.headline,
+                          localSurvey,
+                          true,
+                          selectedLanguageCode,
+                          attributeClasses
+                        )[selectedLanguageCode]
+                      )
+                    : "Ending Card"}
+                  {(endingCard.type === "redirectToUrl" && endingCard.label) ?? "Ending Card"}
                 </p>
               </div>
             </div>
