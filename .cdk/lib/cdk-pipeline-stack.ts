@@ -57,6 +57,10 @@ export class CdkPipelineStack extends Stack {
                             type: BuildEnvironmentVariableType.PLAINTEXT,
                             value: "--max_old_space_size=16384"
                         },
+                        "CRON_SECRET": {
+                            type: BuildEnvironmentVariableType.PLAINTEXT,
+                            value: "bd7bd817feff04e40b3112dc373ac5dbecca81afc4b9f471b40292a4bb64cf16"
+                        }
                     },
                     buildImage:  LinuxArmBuildImage.AMAZON_LINUX_2_STANDARD_3_0,
                     computeType: ComputeType.LARGE
