@@ -592,9 +592,7 @@ export const ZSurvey = z
         });
       }
     }),
-    endings: ZSurveyEndings.min(1, {
-      message: "Survey must have at least one ending card",
-    }).superRefine((endings, ctx) => {
+    endings: ZSurveyEndings.superRefine((endings, ctx) => {
       const endingIds = endings.map((q) => q.id);
       const uniqueEndingIds = new Set(endingIds);
       if (uniqueEndingIds.size !== endingIds.length) {
