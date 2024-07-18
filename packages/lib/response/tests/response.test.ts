@@ -4,7 +4,6 @@ import {
   getMockUpdateResponseInput,
   mockDisplay,
   mockEnvironmentId,
-  mockFinishedResponse,
   mockMeta,
   mockPerson,
   mockPersonId,
