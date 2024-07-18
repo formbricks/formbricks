@@ -6,12 +6,12 @@ import { processResponseData } from "@formbricks/lib/responses";
 import { writeDataToSlack } from "@formbricks/lib/slack/service";
 import { TIntegration } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
-import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
+import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { TPipelineInput } from "@formbricks/types/pipelines";
 import { TResponseMeta } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 const convertMetaObjectToString = (metadata: TResponseMeta): string => {
   let result: string[] = [];
@@ -227,7 +227,7 @@ const buildNotionPayloadProperties = (
     } else {
       const value = responses[map.question.id];
       properties[map.column.name] = {
-        [map.column.type]: getValue(map.column.type, processResponseData(value)),
+        [map.column.type]: getValue(map.column.type, value),
       };
     }
   });
@@ -245,7 +245,9 @@ const getValue = (colType: string, value: string | string[] | number | Record<st
           name: value,
         };
       case "multi_select":
-        return (value as []).map((v: string) => ({ name: v }));
+        if (Array.isArray(value)) {
+          return value.map((v: string) => ({ name: v }));
+        }
       case "title":
         return [
           {
@@ -282,6 +284,7 @@ const getValue = (colType: string, value: string | string[] | number | Record<st
         return typeof value === "string" ? value : (value as string[]).join(", ");
     }
   } catch (error) {
+    console.error(error);
     throw new Error("Payload build failed!");
   }
 };

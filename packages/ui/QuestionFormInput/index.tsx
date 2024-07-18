@@ -1,7 +1,6 @@
 "use client";
 
-import { PencilIcon, TrashIcon } from "lucide-react";
-import { ImagePlusIcon } from "lucide-react";
+import { ImagePlusIcon, PencilIcon, TrashIcon } from "lucide-react";
 import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { extractLanguageCodes, getEnabledLanguages, getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -17,14 +16,14 @@ import {
   recallToHeadline,
   replaceRecallInfoWithUnderline,
 } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
   TSurvey,
   TSurveyChoice,
   TSurveyQuestion,
   TSurveyRecallItem,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { LanguageIndicator } from "../../ee/multi-language/components/language-indicator";
 import { createI18nString } from "../../lib/i18n/utils";
 import { FileInput } from "../FileInput";
@@ -546,7 +545,7 @@ export const QuestionFormInput = ({
         </div>
       )}
       {usedLanguageCode === "default" && localSurvey.languages?.length > 1 && isTranslationIncomplete && (
-        <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>
+        <div className="mt-1 text-xs text-red-400">Incomplete translations</div>
       )}
     </div>
   );

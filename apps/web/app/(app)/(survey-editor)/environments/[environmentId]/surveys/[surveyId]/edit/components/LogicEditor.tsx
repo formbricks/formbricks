@@ -11,14 +11,14 @@ import { toast } from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TSurvey,
   TSurveyLogic,
   TSurveyLogicCondition,
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,

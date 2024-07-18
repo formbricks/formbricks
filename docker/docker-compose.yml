@@ -7,6 +7,9 @@ x-environment: &environment
     # Set this to your public-facing URL, e.g., https://example.com
     WEBAPP_URL:
 
+    # Required for next-auth. Should be the same as WEBAPP_URL
+    NEXTAUTH_URL:
+
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
@@ -15,17 +18,13 @@ x-environment: &environment
     # You can use: `openssl rand -hex 32` to generate one
     NEXTAUTH_SECRET:
 
-    # Set this to your public-facing URL, e.g., https://example.com
-    # You do not need the NEXTAUTH_URL environment variable in Vercel.
-    NEXTAUTH_URL:
-
     # Encryption Key is used for 2FA & Single use URLs for Link Surveys
     # You can use: $(openssl rand -hex 32) to generate one
     ENCRYPTION_KEY:
 
-    # Set the below to use it intead of API Key for the API & use as an auth for cronjobs
+    # Set the below to use it instead of API Key for the API & use as an auth for cronjobs
     # You can use: $(openssl rand -hex 32) to generate a secure one
-    # CRON_SECRET:
+    CRON_SECRET:
 
     ############################################# OPTIONAL (ENTERPRISE EDITION) #############################################
 
@@ -44,6 +43,9 @@ x-environment: &environment
 
     # (Additional option for TLS (port 465) only)
     # SMTP_SECURE_ENABLED: 1
+
+    # If set to 0, the server will accept connections without requiring authorization from the list of supplied CAs (default is 1).
+    # SMTP_REJECT_UNAUTHORIZED_TLS: 0
 
     ############################################## OPTIONAL (APP CONFIGURATION) ##############################################
 

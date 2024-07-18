@@ -2,8 +2,8 @@
 
 import { UsersIcon } from "lucide-react";
 import { SegmentSettings } from "@formbricks/ee/advanced-targeting/components/segment-settings";
-import { TActionClass } from "@formbricks/types/actionClasses";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TActionClass } from "@formbricks/types/action-classes";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
 import { BasicSegmentSettings } from "./BasicSegmentSettings";

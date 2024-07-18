@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { TProductStyling } from "@formbricks/types/product";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
-import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 
 // offset = 0 -> Current question card
 // offset < 0 -> Question cards that are already answered
@@ -115,19 +115,26 @@ export const StackedCardsContainer = ({
 
   // UseEffect to handle the resize of current question card and set cardHeight accordingly
   useEffect(() => {
-    const currentElement = cardRefs.current[questionIdxTemp];
-    if (currentElement) {
-      if (resizeObserver.current) resizeObserver.current.disconnect();
-      resizeObserver.current = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          setCardHeight(entry.contentRect.height + "px");
-          setCardWidth(entry.contentRect.width);
+    const timer = setTimeout(() => {
+      const currentElement = cardRefs.current[questionIdxTemp];
+      if (currentElement) {
+        if (resizeObserver.current) {
+          resizeObserver.current.disconnect();
         }
-      });
-      resizeObserver.current.observe(currentElement);
-    }
-    return () => resizeObserver.current?.disconnect();
-  }, [questionIdxTemp, cardArrangement]);
+        resizeObserver.current = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            setCardHeight(entry.contentRect.height + "px");
+            setCardWidth(entry.contentRect.width);
+          }
+        });
+        resizeObserver.current.observe(currentElement);
+      }
+    }, 0);
+    return () => {
+      resizeObserver.current?.disconnect();
+      clearTimeout(timer);
+    };
+  }, [questionIdxTemp, cardArrangement, cardRefs]);
 
   // Reset question progress, when card arrangement changes
   useEffect(() => {
@@ -163,7 +170,7 @@ export const StackedCardsContainer = ({
       <div style={{ height: cardHeight }}></div>
       {cardArrangement === "simple" ? (
         <div
-          className={cn("w-full", fullSizeCards ? "h-full" : "")}
+          className={cn("fb-w-full", fullSizeCards ? "fb-h-full" : "")}
           style={{
             ...borderStyles,
           }}>

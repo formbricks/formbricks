@@ -1,4 +1,4 @@
-import { ApiConfig } from "../../types";
+import { type ApiConfig } from "../../types";
 import { ActionAPI } from "./action";
 import { AttributeAPI } from "./attribute";
 import { DisplayAPI } from "./display";

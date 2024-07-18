@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZIntegrationBase, ZIntegrationBaseSurveyData } from "./sharedTypes";
+import { ZIntegrationBase, ZIntegrationBaseSurveyData } from "./shared-types";
 
 export const ZIntegrationNotionCredential = z.object({
   access_token: z.string(),

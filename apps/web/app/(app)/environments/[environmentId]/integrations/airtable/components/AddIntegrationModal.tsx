@@ -11,7 +11,7 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationAirtable,
@@ -19,7 +19,7 @@ import {
   TIntegrationAirtableInput,
   TIntegrationAirtableTables,
 } from "@formbricks/types/integration/airtable";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { AdditionalIntegrationSettings } from "@formbricks/ui/AdditionalIntegrationSettings";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";

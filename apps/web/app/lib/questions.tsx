@@ -29,7 +29,7 @@ import {
   TSurveyPictureSelectionQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyRatingQuestion,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { replaceQuestionPresetPlaceholders } from "./templates";
 
 export type TQuestion = {
@@ -185,6 +185,7 @@ export const questionTypes: TQuestion[] = [
     preset: {
       headline: { default: "Schedule a call with me" },
       calUserName: "rick/get-rick-rolled",
+      calHost: "cal.com",
     } as Partial<TSurveyCalQuestion>,
   },
   {

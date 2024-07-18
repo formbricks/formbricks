@@ -3,9 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getResponsesByPersonId } from "@formbricks/lib/response/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 
 interface ResponseSectionProps {

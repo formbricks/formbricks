@@ -1,7 +1,7 @@
-import z from "zod";
+import { z } from "zod";
 
 export const ZActionProperties = z.record(z.string());
-export { ZActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+export { ZActionClassNoCodeConfig } from "@formbricks/types/action-classes";
 export { ZIntegrationConfig } from "@formbricks/types/integration";
 
 export {
@@ -22,7 +22,7 @@ export {
   ZSurveyVerifyEmail,
   ZSurveySingleUse,
   ZSurveyInlineTriggers,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 
 export { ZSegmentFilters } from "@formbricks/types/segment";
 export { ZOrganizationBilling } from "@formbricks/types/organizations";

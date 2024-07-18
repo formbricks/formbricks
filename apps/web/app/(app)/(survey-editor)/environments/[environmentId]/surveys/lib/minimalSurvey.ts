@@ -1,4 +1,4 @@
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const minimalSurvey: TSurvey = {
   id: "someUniqueId1",

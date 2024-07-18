@@ -6,9 +6,8 @@ import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { getProduct, getProductByEnvironmentId, getProducts } from "@formbricks/lib/product/service";
+import { getProduct, getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { segmentCache } from "@formbricks/lib/segment/cache";
 import { createSegment } from "@formbricks/lib/segment/service";
 import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
@@ -17,7 +16,7 @@ import { deleteSurvey, duplicateSurvey, getSurvey, getSurveys } from "@formbrick
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TProduct } from "@formbricks/types/product";
-import { TSurveyFilterCriteria } from "@formbricks/types/surveys";
+import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 
 export const getSurveyAction = async (surveyId: string) => {
   const session = await getServerSession(authOptions);
@@ -382,20 +381,6 @@ export const copyToOtherEnvironmentAction = async (
   });
 
   return newSurvey;
-};
-
-export const getProductSurveyAction = async (environmentId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const organization = await getOrganizationByEnvironmentId(environmentId);
-
-  if (!organization) {
-    throw new Error("No organization found");
-  }
-
-  const products = await getProducts(organization.id);
-  return products;
 };
 
 export const deleteSurveyAction = async (surveyId: string) => {

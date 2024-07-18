@@ -12,7 +12,7 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Calendar } from "@formbricks/ui/Calendar";
 import {
   DropdownMenu,

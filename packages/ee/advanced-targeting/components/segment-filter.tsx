@@ -8,7 +8,7 @@ import {
   Users2Icon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import z from "zod";
+import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import {
@@ -26,8 +26,8 @@ import {
   updateSegmentIdInFilter,
 } from "@formbricks/lib/segment/utils";
 import { isCapitalized } from "@formbricks/lib/utils/strings";
-import type { TActionClass } from "@formbricks/types/actionClasses";
-import type { TAttributeClass } from "@formbricks/types/attributeClasses";
+import type { TActionClass } from "@formbricks/types/action-classes";
+import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type {
   TActionMetric,
   TArithmeticOperator,

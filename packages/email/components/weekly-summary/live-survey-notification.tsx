@@ -1,11 +1,11 @@
 import { Container, Hr, Link, Tailwind, Text } from "@react-email/components";
 import React from "react";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import type { TSurveyStatus } from "@formbricks/types/surveys";
+import type { TSurveyStatus } from "@formbricks/types/surveys/types";
 import type {
   TWeeklySummaryNotificationDataSurvey,
   TWeeklySummarySurveyResponseData,
-} from "@formbricks/types/weeklySummary";
+} from "@formbricks/types/weekly-summary";
 import { EmailButton } from "../general/email-button";
 import { renderEmailResponseValue } from "../survey/response-finished-email";
 

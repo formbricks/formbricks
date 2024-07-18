@@ -1,7 +1,7 @@
 "use client";
 
-import { TActionClass } from "@formbricks/types/actionClasses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TActionClass } from "@formbricks/types/action-classes";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
 import { CreateNewActionTab } from "./CreateNewActionTab";
 import { SavedActionsTab } from "./SavedActionsTab";

@@ -40,6 +40,23 @@ test.describe("API Tests", () => {
           environmentId: environmentId,
           type: "link",
           name: "My new Survey from API",
+          questions: [
+            {
+              id: "jpvm9b73u06xdrhzi11k2h76",
+              type: "openText",
+              headline: {
+                default: "What would you like to know?",
+              },
+              required: true,
+              inputType: "text",
+              subheader: {
+                default: "This is an example survey.",
+              },
+              placeholder: {
+                default: "Type your answer here...",
+              },
+            },
+          ],
         },
       });
 

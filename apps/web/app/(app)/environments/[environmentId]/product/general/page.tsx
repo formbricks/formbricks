@@ -57,17 +57,13 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       </PageHeader>
 
       <SettingsCard title="Product Name" description="Change your products name.">
-        <EditProductNameForm
-          environmentId={params.environmentId}
-          product={product}
-          isProductNameEditDisabled={isProductNameEditDisabled}
-        />
+        <EditProductNameForm product={product} isProductNameEditDisabled={isProductNameEditDisabled} />
       </SettingsCard>
       {currentProductChannel !== "link" && (
         <SettingsCard
           title="Recontact Waiting Time"
           description="Control how frequently users can be surveyed across all surveys.">
-          <EditWaitingTimeForm environmentId={params.environmentId} product={product} />
+          <EditWaitingTimeForm product={product} />
         </SettingsCard>
       )}
       <SettingsCard
