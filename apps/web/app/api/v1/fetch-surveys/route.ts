@@ -1,11 +1,10 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 function calculateElementIdx(survey: TSurvey, currentQustionIdx: number): number {
   const currentQuestion = survey.questions[currentQustionIdx];

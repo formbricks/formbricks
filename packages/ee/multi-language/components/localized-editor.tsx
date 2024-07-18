@@ -60,7 +60,7 @@ export function LocalizedEditor({
         disableLists
         excludedToolbarItems={["blockType"]}
         firstRender={firstRender}
-        getText={() => md.render(value ? (value[selectedLanguageCode] ?? "") : "")}
+        getText={() => md.render(value ? value[selectedLanguageCode] ?? "" : "")}
         key={`${questionIdx}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}
         setText={(v: string) => {

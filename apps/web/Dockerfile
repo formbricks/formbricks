@@ -32,8 +32,6 @@ ENV CRON_SECRET="placeholder_for_cron_secret_of_64_chars_get_overwritten_at_runt
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
 
-ENV CRON_SECRET="bd7bd817feff04e40b3112dc373ac5dbecca81afc4b9f471b40292a4bb64cf16"
-
 # Set the working directory
 WORKDIR /app
 

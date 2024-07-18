@@ -5,11 +5,10 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { Adsense } from "@ctrl/react-adsense";
 import { useState } from "react";
-
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyAdQuestion } from "@formbricks/types/surveys";
+import { TSurveyAdQuestion } from "@formbricks/types/surveys/types";
 
 interface AdQuestionProps {
   question: TSurveyAdQuestion;

@@ -765,7 +765,7 @@ export const ZSurvey = z
         if (duplicateChoicesLanguageCodes.length > 0) {
           const invalidLanguageCodes = duplicateChoicesLanguageCodes.map((invalidLanguageCode) =>
             invalidLanguageCode === "default"
-              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
+              ? languages.find((lang) => lang.default)?.language.code ?? "default"
               : invalidLanguageCode
           );
 
@@ -846,7 +846,7 @@ export const ZSurvey = z
         if (duplicateRowsLanguageCodes.length > 0) {
           const invalidLanguageCodes = duplicateRowsLanguageCodes.map((invalidLanguageCode) =>
             invalidLanguageCode === "default"
-              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
+              ? languages.find((lang) => lang.default)?.language.code ?? "default"
               : invalidLanguageCode
           );
 
@@ -863,7 +863,7 @@ export const ZSurvey = z
         if (duplicateColumnLanguageCodes.length > 0) {
           const invalidLanguageCodes = duplicateColumnLanguageCodes.map((invalidLanguageCode) =>
             invalidLanguageCode === "default"
-              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
+              ? languages.find((lang) => lang.default)?.language.code ?? "default"
               : invalidLanguageCode
           );
 

@@ -3,18 +3,17 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import Select from "react-select";
-
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
-import {TAttributeClass} from "@formbricks/types/attributeClasses";
 
 interface SurveyGeneralSettingsProps {
   localSurvey: TSurvey;
@@ -37,7 +36,7 @@ export default function SurveyGeneralSettings({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  attributeClasses
+  attributeClasses,
 }: SurveyGeneralSettingsProps) {
   const [open, setOpen] = useState(true);
   const [customReward, setCustomReward] = useState(localSurvey.reward);
@@ -219,7 +218,7 @@ export default function SurveyGeneralSettings({
       onOpenChange={setOpen}
       className={cn(
         open ? "" : "hover:bg-slate-50",
-        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
+        "w-full space-y-2 rounded-lg border border-slate-300 bg-white"
       )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-4">

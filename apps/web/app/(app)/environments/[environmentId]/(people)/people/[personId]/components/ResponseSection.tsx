@@ -23,7 +23,7 @@ export const ResponseSection = async ({
 }: ResponseSectionProps) => {
   const responses = await getResponsesByPersonId(personId);
   const surveyIds = responses?.map((response) => response.surveyId) || [];
-  const surveys: TSurvey[] = surveyIds.length === 0 ? [] : ((await getSurveys(environment.id)) ?? []);
+  const surveys: TSurvey[] = surveyIds.length === 0 ? [] : (await getSurveys(environment.id)) ?? [];
   const session = await getServerSession(authOptions);
 
   if (!session) {
