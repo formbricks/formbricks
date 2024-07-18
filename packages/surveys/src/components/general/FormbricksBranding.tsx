@@ -8,7 +8,7 @@ export const FormbricksBranding = () => {
       <p className="fb-text-signature fb-text-xs">
         Powered by{" "}
         <b>
-          <span className="fb-text-branding-text hover:fb-text-signature">Opinodo Surveys</span>
+          <span className="fb-text-branding-text hover:fb-text-signature">Formbricks</span>
         </b>
       </p>
     </a>

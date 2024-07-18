@@ -1,4 +1,5 @@
 import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
+import { Testimonial } from "@/app/(auth)/auth/components/Testimonial";
 import { SigninForm } from "@/app/(auth)/auth/login/components/SigninForm";
 import { Metadata } from "next";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
@@ -22,7 +23,10 @@ const Page = async () => {
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
-      <div className="col-span-6 flex flex-col items-center justify-center">
+      <div className="col-span-2 hidden lg:flex">
+        <Testimonial />
+      </div>
+      <div className="col-span-3 flex flex-col items-center justify-center">
         <FormWrapper>
           <SigninForm
             emailAuthEnabled={EMAIL_AUTH_ENABLED}
