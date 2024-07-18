@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { ZLegacySurveyQuestions, ZLegacySurveyThankYouCard, ZLegacySurveyWelcomeCard } from "./LegacySurvey";
+import {
+  ZLegacySurveyQuestions,
+  ZLegacySurveyThankYouCard,
+  ZLegacySurveyWelcomeCard,
+} from "./legacy-surveys";
 import { ZProductConfigChannel, ZProductConfigIndustry } from "./product";
 import {
   ZSurveyFailureCard,
@@ -7,7 +11,7 @@ import {
   ZSurveyQuestions,
   ZSurveyThankYouCard,
   ZSurveyWelcomeCard,
-} from "./surveys";
+} from "./surveys/types";
 import { ZUserObjective } from "./user";
 
 export const ZTemplateRole = z.enum(["productManager", "customerSuccess", "marketing", "sales"]);

@@ -36,7 +36,6 @@ export const DeleteProduct = async ({ environmentId, product }: DeleteProductPro
       isDeleteDisabled={isDeleteDisabled}
       isUserAdminOrOwner={isUserAdminOrOwner}
       product={product}
-      environmentId={environmentId}
     />
   );
 };

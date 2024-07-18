@@ -1,4 +1,4 @@
-import { TUploadFileConfig } from "@formbricks/types/storage";
+import type { TUploadFileConfig, TUploadFileResponse } from "@formbricks/types/storage";
 
 export class StorageAPI {
   private apiHost: string;
@@ -33,12 +33,13 @@ export class StorageAPI {
     });
 
     if (!response.ok) {
-      throw new Error(`Upload failed with status: ${response.status}`);
+      throw new Error(`Upload failed with status: ${String(response.status)}`);
     }
 
-    const json = await response.json();
+    const json = (await response.json()) as TUploadFileResponse;
 
     const { data } = json;
+
     const { signedUrl, fileUrl, signingData, presignedFields, updatedFileName } = data;
 
     let requestHeaders: Record<string, string> = {};
@@ -76,7 +77,7 @@ export class StorageAPI {
     if (!uploadResponse.ok) {
       // if local storage is used, we'll use the json response:
       if (signingData) {
-        const uploadJson = await uploadResponse.json();
+        const uploadJson = (await uploadResponse.json()) as { message: string };
         const error = new Error(uploadJson.message);
         error.name = "FileTooLargeError";
         throw error;
@@ -84,13 +85,13 @@ export class StorageAPI {
 
       // if s3 is used, we'll use the text response:
       const errorText = await uploadResponse.text();
-      if (presignedFields && errorText && errorText.includes("EntityTooLarge")) {
+      if (presignedFields && errorText.includes("EntityTooLarge")) {
         const error = new Error("File size exceeds the size limit for your plan");
         error.name = "FileTooLargeError";
         throw error;
       }
 
-      throw new Error(`Upload failed with status: ${uploadResponse.status}`);
+      throw new Error(`Upload failed with status: ${String(uploadResponse.status)}`);
     }
 
     return fileUrl;

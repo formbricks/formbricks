@@ -7,6 +7,9 @@ x-environment: &environment
     # Set this to your public-facing URL, e.g., https://example.com
     WEBAPP_URL:
 
+    # Required for next-auth. Should be the same as WEBAPP_URL
+    NEXTAUTH_URL:
+
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
@@ -40,6 +43,9 @@ x-environment: &environment
 
     # (Additional option for TLS (port 465) only)
     # SMTP_SECURE_ENABLED: 1
+
+    # If set to 0, the server will accept connections without requiring authorization from the list of supplied CAs (default is 1).
+    # SMTP_REJECT_UNAUTHORIZED_TLS: 0
 
     ############################################## OPTIONAL (APP CONFIGURATION) ##############################################
 

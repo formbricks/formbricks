@@ -14,14 +14,14 @@ import toast from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import {
   TIntegrationNotion,
   TIntegrationNotionConfigData,
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { DropdownSelector } from "@formbricks/ui/DropdownSelector";
 import { Label } from "@formbricks/ui/Label";
@@ -309,7 +309,7 @@ export const AddIntegrationModal = ({
           col={mapping[idx].column}
           ques={mapping[idx].question}
         />
-        <div className="flex w-full items-center gap-3">
+        <div className="flex w-full items-center">
           <div className="flex w-full items-center">
             <div className="w-[340px] max-w-full">
               <DropdownSelector
@@ -483,7 +483,7 @@ export const AddIntegrationModal = ({
                 {selectedDatabase && selectedSurvey && (
                   <div>
                     <Label>Map Formbricks fields to Notion property</Label>
-                    <div className="mt-4">
+                    <div className="mt-4 max-h-[20vh] w-full overflow-y-auto">
                       {mapping.map((_, idx) => (
                         <MappingRow idx={idx} key={idx} />
                       ))}

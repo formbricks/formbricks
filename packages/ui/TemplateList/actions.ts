@@ -7,7 +7,7 @@ import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { createSurvey } from "@formbricks/lib/survey/service";
 import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
-import { TSurveyInput } from "@formbricks/types/surveys";
+import { TSurveyInput } from "@formbricks/types/surveys/types";
 
 export const createSurveyAction = async (environmentId: string, surveyBody: TSurveyInput) => {
   const session = await getServerSession(authOptions);

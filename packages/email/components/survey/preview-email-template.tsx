@@ -16,8 +16,7 @@ import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
-import type { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
+import { type TSurvey, TSurveyQuestionTypeEnum, type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { RatingSmiley } from "@formbricks/ui/RatingSmiley";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../../utils";
 
@@ -141,8 +140,8 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
           </Section>
         </EmailTemplateWrapper>
       );
-      case TSurveyQuestionTypeEnum.Ad:
-        return (
+    case TSurveyQuestionTypeEnum.Ad:
+      return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Text className="text-question-color m-0 block text-base font-semibold leading-6">
             {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}

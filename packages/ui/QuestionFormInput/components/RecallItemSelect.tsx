@@ -13,8 +13,13 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TSurvey, TSurveyHiddenFields, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import {
+  TSurvey,
+  TSurveyHiddenFields,
+  TSurveyQuestion,
+  TSurveyRecallItem,
+} from "@formbricks/types/surveys/types";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../../DropdownMenu";
 import { Input } from "../../Input";
 

@@ -9,7 +9,7 @@ import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceQuestion } from "@formbricks/types/surveys";
+import type { TSurveyMultipleChoiceQuestion } from "@formbricks/types/surveys/types";
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceQuestion;

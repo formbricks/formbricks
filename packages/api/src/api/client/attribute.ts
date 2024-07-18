@@ -1,7 +1,7 @@
-import { TAttributeUpdateInput } from "@formbricks/types/attributes";
-import { Result } from "@formbricks/types/errorHandlers";
-import { NetworkError } from "@formbricks/types/errors";
-import { makeRequest } from "../../utils/makeRequest";
+import { type TAttributeUpdateInput } from "@formbricks/types/attributes";
+import { type Result } from "@formbricks/types/error-handlers";
+import { type NetworkError } from "@formbricks/types/errors";
+import { makeRequest } from "../../utils/make-request";
 
 export class AttributeAPI {
   private apiHost: string;
@@ -16,7 +16,7 @@ export class AttributeAPI {
     attributeUpdateInput: Omit<TAttributeUpdateInput, "environmentId">
   ): Promise<Result<{ changed: boolean; message: string }, NetworkError | Error>> {
     // transform all attributes to string if attributes are present into a new attributes copy
-    const attributes: { [key: string]: string } = {};
+    const attributes: Record<string, string> = {};
     for (const key in attributeUpdateInput.attributes) {
       attributes[key] = String(attributeUpdateInput.attributes[key]);
     }

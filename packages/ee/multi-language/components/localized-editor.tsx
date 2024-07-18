@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { extractLanguageCodes, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
 import { md } from "@formbricks/lib/markdownIt";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import type { TI18nString, TSurvey } from "@formbricks/types/surveys";
+import type { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
 import { Editor } from "@formbricks/ui/Editor";
 import { LanguageIndicator } from "./language-indicator";
 
@@ -60,7 +60,7 @@ export function LocalizedEditor({
         disableLists
         excludedToolbarItems={["blockType"]}
         firstRender={firstRender}
-        getText={() => md.render(value ? value[selectedLanguageCode] ?? "" : "")}
+        getText={() => md.render(value ? (value[selectedLanguageCode] ?? "") : "")}
         key={`${questionIdx}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}
         setText={(v: string) => {
@@ -102,9 +102,7 @@ export function LocalizedEditor({
         </div>
       )}
 
-      {isInComplete ? (
-        <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>
-      ) : null}
+      {isInComplete ? <div className="mt-1 text-xs text-red-400">Incomplete translations</div> : null}
     </div>
   );
 }

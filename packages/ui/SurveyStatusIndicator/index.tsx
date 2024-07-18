@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckIcon, ClockIcon, PauseIcon, PencilIcon } from "lucide-react";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
 
 interface SurveyStatusIndicatorProps {

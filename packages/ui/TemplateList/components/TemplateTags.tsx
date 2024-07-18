@@ -2,7 +2,7 @@ import { SplitIcon } from "lucide-react";
 import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProductConfigIndustry } from "@formbricks/types/product";
-import { TSurveyType } from "@formbricks/types/surveys";
+import { TSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, TTemplateRole } from "@formbricks/types/templates";
 import { TooltipRenderer } from "../../Tooltip";
 import { channelMapping, industryMapping, roleMapping } from "../lib/utils";

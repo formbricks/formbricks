@@ -23,11 +23,11 @@ import {
   loadNewSegmentInSurvey,
   updateSurvey,
 } from "@formbricks/lib/survey/service";
-import { TActionClassInput } from "@formbricks/types/actionClasses";
+import { TActionClassInput } from "@formbricks/types/action-classes";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TProduct } from "@formbricks/types/product";
 import { TBaseFilters, TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const surveyMutateAction = async (survey: TSurvey): Promise<TSurvey> => {
   return await updateSurvey(survey);

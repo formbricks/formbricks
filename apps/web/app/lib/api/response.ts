@@ -2,11 +2,11 @@ import { NextApiResponse } from "next";
 
 export type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 
-export interface ApiSuccessResponse<T = { [key: string]: any }> {
+interface ApiSuccessResponse<T = { [key: string]: unknown }> {
   data: T;
 }
 
-export interface ApiErrorResponse {
+interface ApiErrorResponse {
   code:
     | "not_found"
     | "gone"

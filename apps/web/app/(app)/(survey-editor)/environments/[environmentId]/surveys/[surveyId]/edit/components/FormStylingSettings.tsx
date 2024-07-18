@@ -8,7 +8,7 @@ import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { mixColor } from "@formbricks/lib/utils/colors";
 import { TProductStyling } from "@formbricks/types/product";
-import { TSurveyStyling } from "@formbricks/types/surveys";
+import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";

@@ -35,7 +35,7 @@ export const metadata = {
         3. To prevent the "Init" task from running indefinitely due to prebuild rules, a cleanup `docker compose down` step i.e. `db:down` is added to `turbo.json`. This step is designed to halt the execution of containers that are currently running.
      - When the workspace starts:
         1. Initializing environment variables.
-        2. Replacing `NEXT_PUBLIC_WEBAPP_URL` and `NEXTAUTH_URL` to take in Gitpod URL's ports when running on VSCode browser.
+        2. Replacing `NEXT_PUBLIC_WEBAPP_URL` to take in Gitpod URL's ports when running on VSCode browser.
         3. Starting the `@formbricks/web` dev environment.
 
     **Demo Component Initialization:**
@@ -81,8 +81,8 @@ session.
 of your workspace. - You can use either choose either VS Code Browser or VS Code Desktop editor with the
 'Standard Class' for your workspace class. - If you opt for the VS Code Desktop, follow the following steps 1.
 Gitpod will prompt you to grant access to the VSCode app. Once approved, install the GitPod extension from the
-VSCode Marketplace and follow the prompts to authorize the integration. 2. Change the `WEBAPP_URL` and the
-`NEXTAUTH_URL` to `https://localhost:3000`
+VSCode Marketplace and follow the prompts to authorize the integration. 2. Change the `WEBAPP_URL` to
+`https://localhost:3000`
 
 ### 4. Gitpod preparing the created Workspace
 

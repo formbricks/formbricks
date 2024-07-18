@@ -6,7 +6,7 @@ import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import {
   TIntegrationGoogleSheets,
   ZIntegrationGoogleSheets,
-} from "@formbricks/types/integration/googleSheet";
+} from "@formbricks/types/integration/google-sheet";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
   GOOGLE_SHEETS_CLIENT_SECRET,

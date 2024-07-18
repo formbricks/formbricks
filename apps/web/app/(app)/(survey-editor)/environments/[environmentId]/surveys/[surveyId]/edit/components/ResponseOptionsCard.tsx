@@ -6,7 +6,7 @@ import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { DatePicker } from "@formbricks/ui/DatePicker";
 import { Input } from "@formbricks/ui/Input";
@@ -32,7 +32,7 @@ export const ResponseOptionsCard = ({
   const [closeOnDateToggle, setCloseOnDateToggle] = useState(false);
   useState;
   const [redirectUrl, setRedirectUrl] = useState<string | null>(
-    localSurvey.redirectUrl ? localSurvey.redirectUrl : product.defaultRedirectOnCompleteUrl ?? null
+    localSurvey.redirectUrl ? localSurvey.redirectUrl : (product.defaultRedirectOnCompleteUrl ?? null)
   );
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [surveyLinkUsedMessageToggle, setSurveyLinkUsedMessageToggle] = useState(false);
@@ -225,7 +225,7 @@ export const ResponseOptionsCard = ({
   useEffect(() => {
     if (localSurvey.redirectUrl) {
       setRedirectUrl(
-        localSurvey.redirectUrl ? localSurvey.redirectUrl : product.defaultRedirectOnCompleteUrl ?? null
+        localSurvey.redirectUrl ? localSurvey.redirectUrl : (product.defaultRedirectOnCompleteUrl ?? null)
       );
       setRedirectToggle(true);
     }
@@ -284,7 +284,12 @@ export const ResponseOptionsCard = ({
   };
 
   const handleInputResponse = (e) => {
-    const updatedSurvey = { ...localSurvey, autoComplete: parseInt(e.target.value) };
+    let value = parseInt(e.target.value);
+    if (Number.isNaN(value) || value < 1) {
+      value = 1;
+    }
+
+    const updatedSurvey = { ...localSurvey, autoComplete: value };
     setLocalSurvey(updatedSurvey);
   };
 
@@ -334,7 +339,7 @@ export const ResponseOptionsCard = ({
             description="Automatically close the survey after a certain number of responses."
             childBorder={true}>
             <label htmlFor="autoCompleteResponses" className="cursor-pointer bg-slate-50 p-4">
-              <p className="text-sm text-slate-700">
+              <p className="text-sm font-semibold text-slate-700">
                 Automatically mark the survey as complete after
                 <Input
                   autoFocus
@@ -438,7 +443,7 @@ export const ResponseOptionsCard = ({
                 description="Change the message visitors see when the survey has been already used."
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
-                  <div className="w-full cursor-pointer items-center  bg-slate-50">
+                  <div className="w-full cursor-pointer items-center bg-slate-50">
                     <Label htmlFor="headline">‘Link Used’ Message</Label>
                     <Input
                       autoFocus

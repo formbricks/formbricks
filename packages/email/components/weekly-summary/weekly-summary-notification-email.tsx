@@ -1,5 +1,5 @@
 import React from "react";
-import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
+import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
 import { LiveSurveyNotification } from "./live-survey-notification";
 import { NotificationFooter } from "./notification-footer";
 import { NotificationHeader } from "./notification-header";

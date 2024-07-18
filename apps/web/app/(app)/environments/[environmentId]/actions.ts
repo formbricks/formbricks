@@ -2,17 +2,20 @@
 
 import { Organization } from "@prisma/client";
 import { getServerSession } from "next-auth";
+import { z } from "zod";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { createMembership, getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { createShortUrl } from "@formbricks/lib/shortUrl/service";
 import { getAllDbCountries } from "@formbricks/lib/survey/service";
 import { updateUser } from "@formbricks/lib/user/service";
 import { AuthenticationError, AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
-import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
+import { ZProductUpdateInput } from "@formbricks/types/product";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
 export const createShortUrlAction = async (url: string) => {
@@ -72,37 +75,43 @@ export const createOrganizationAction = async (organizationName: string): Promis
   return newOrganization;
 };
 
-export const getAllCountries = async () => {
-  return await getAllDbCountries();
-};
+const ZCreateProductAction = z.object({
+  organizationId: z.string(),
+  data: ZProductUpdateInput,
+});
 
-export const createProductAction = async (
-  organizationId: string,
-  productInput: TProductUpdateInput
-): Promise<TProduct> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authenticated");
+export const createProductAction = authenticatedActionClient
+  .schema(ZCreateProductAction)
+  .action(async ({ parsedInput, ctx }) => {
+    const { user } = ctx;
 
-  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organizationId);
-  if (!membership || membership.role === "viewer") {
-    throw new AuthorizationError("Product creation not allowed");
-  }
+    await checkAuthorization({
+      schema: ZProductUpdateInput,
+      data: parsedInput.data,
+      userId: user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["product", "create"],
+    });
 
-  const product = await createProduct(organizationId, productInput);
-  const updatedNotificationSettings = {
-    ...session.user.notificationSettings,
-    alert: {
-      ...session.user.notificationSettings?.alert,
-    },
-    weeklySummary: {
-      ...session.user.notificationSettings?.weeklySummary,
-      [product.id]: true,
-    },
-  };
+    const product = await createProduct(parsedInput.organizationId, parsedInput.data);
+    const updatedNotificationSettings = {
+      ...user.notificationSettings,
+      alert: {
+        ...user.notificationSettings?.alert,
+      },
+      weeklySummary: {
+        ...user.notificationSettings?.weeklySummary,
+        [product.id]: true,
+      },
+    };
 
-  await updateUser(session.user.id, {
-    notificationSettings: updatedNotificationSettings,
+    await updateUser(user.id, {
+      notificationSettings: updatedNotificationSettings,
+    });
+
+    return product;
   });
 
-  return product;
+export const getAllCountries = async () => {
+  return await getAllDbCountries();
 };

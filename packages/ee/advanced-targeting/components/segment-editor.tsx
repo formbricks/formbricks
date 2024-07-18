@@ -11,8 +11,8 @@ import {
   moveResource,
   toggleGroupConnector,
 } from "@formbricks/lib/segment/utils";
-import type { TActionClass } from "@formbricks/types/actionClasses";
-import type { TAttributeClass } from "@formbricks/types/attributeClasses";
+import type { TActionClass } from "@formbricks/types/action-classes";
+import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type { TBaseFilter, TBaseFilters, TSegment, TSegmentConnector } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
 import {

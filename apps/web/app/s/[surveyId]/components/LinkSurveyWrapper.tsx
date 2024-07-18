@@ -2,7 +2,7 @@ import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
 import React from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
-import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { ClientLogo } from "@formbricks/ui/ClientLogo";
 import { MediaBackground } from "@formbricks/ui/MediaBackground";
 import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";

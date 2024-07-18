@@ -1,6 +1,6 @@
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { updateFilterValue } from "@formbricks/lib/segment/utils";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TSegment,
   TSegmentAttributeFilter,
