@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TProduct } from "@formbricks/types/product";
-import { CopySurveyFormValidation, TCopySurveyFormData, TSurvey } from "@formbricks/types/surveys";
+import { CopySurveyFormValidation, TCopySurveyFormData, TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "../../Button";
 import { Checkbox } from "../../Checkbox";
 import { FormControl, FormField, FormItem, FormProvider } from "../../Form";
 import { TooltipRenderer } from "../../Tooltip";
-import { copyToOtherEnvironmentAction, getProductSurveyAction } from "../actions";
+import { copyToOtherEnvironmentAction, getProductsByEnvironmentIdAction } from "../actions";
 
 interface SurveyCopyOptionsProps {
   survey: TSurvey;
@@ -25,7 +25,7 @@ const SurveyCopyOptions = ({ environmentId, survey, onCancel, setOpen }: SurveyC
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const products = await getProductSurveyAction(environmentId);
+        const products = await getProductsByEnvironmentIdAction(environmentId);
         setProducts(products);
       } catch (error) {
         toast.error("Error fetching products");

@@ -34,8 +34,6 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const product = await getProductByEnvironmentId(params.environmentId);
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
 
-  console.log({ product: JSON.stringify(product, null, 2) });
-
   if (!session) {
     throw new Error("Session not found");
   }
