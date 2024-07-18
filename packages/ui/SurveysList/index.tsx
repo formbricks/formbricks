@@ -96,6 +96,8 @@ export const SurveysList = ({
     setSurveys(newSurveys);
   };
 
+  console.log({ surveys: surveys[0] });
+
   return (
     <div className="space-y-6">
       <SurveyFilters

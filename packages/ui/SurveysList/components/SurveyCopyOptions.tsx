@@ -140,7 +140,6 @@ const CopySurveyForm = ({
                                         }
                                       }}
                                       onCheckedChange={() => {
-                                        console.log("hello");
                                         if (field.value.includes(environment.id)) {
                                           field.onChange(
                                             field.value.filter((id: string) => id !== environment.id)

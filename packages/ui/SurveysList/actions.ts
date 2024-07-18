@@ -5,9 +5,10 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { getProducts } from "@formbricks/lib/product/service";
+import { getProduct, getProductByEnvironmentId, getProducts } from "@formbricks/lib/product/service";
 import { segmentCache } from "@formbricks/lib/segment/cache";
 import { createSegment } from "@formbricks/lib/segment/service";
 import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
@@ -15,6 +16,7 @@ import { surveyCache } from "@formbricks/lib/survey/cache";
 import { deleteSurvey, duplicateSurvey, getSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TProduct } from "@formbricks/types/product";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys";
 
 export const getSurveyAction = async (surveyId: string) => {
@@ -42,43 +44,39 @@ export const copyToOtherEnvironmentAction = async (
   environmentId: string,
   surveyId: string,
   targetEnvironmentId: string,
-  productId: string
+  targetProductId: string
 ) => {
   const session = await getServerSession(authOptions);
-
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorizedToAccessSourceEnvironment = await hasUserEnvironmentAccess(
     session.user.id,
     environmentId
   );
-
   if (!isAuthorizedToAccessSourceEnvironment) throw new AuthorizationError("Not authorized");
 
   const isAuthorizedToAccessTargetEnvironment = await hasUserEnvironmentAccess(
     session.user.id,
     targetEnvironmentId
   );
-
   if (!isAuthorizedToAccessTargetEnvironment) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const existingEnvironment = await prisma.environment.findFirst({ where: { id: environmentId } });
-
+  const existingEnvironment = getEnvironment(environmentId);
   if (!existingEnvironment) {
     throw new ResourceNotFoundError("Environment", environmentId);
   }
 
-  const existingTargetEnvironment = await prisma.environment.findFirst({
-    where: {
-      id: targetEnvironmentId,
-    },
-  });
-
+  const existingTargetEnvironment = await getEnvironment(targetEnvironmentId);
   if (!existingTargetEnvironment) {
     throw new ResourceNotFoundError("Environment", targetEnvironmentId);
+  }
+
+  const existingProduct = await getProductByEnvironmentId(environmentId);
+  if (!existingProduct) {
+    throw new ResourceNotFoundError("Product", environmentId);
   }
 
   const existingSurvey = await prisma.survey.findFirst({
@@ -104,6 +102,7 @@ export const copyToOtherEnvironmentAction = async (
           language: {
             select: {
               id: true,
+              code: true,
             },
           },
         },
@@ -111,9 +110,19 @@ export const copyToOtherEnvironmentAction = async (
       segment: true,
     },
   });
-
   if (!existingSurvey) {
     throw new ResourceNotFoundError("Survey", surveyId);
+  }
+
+  let targetProduct: TProduct | null = null;
+  if (existingProduct.id !== targetProductId) {
+    targetProduct = await getProduct(targetProductId);
+  } else {
+    targetProduct = { ...existingProduct };
+  }
+
+  if (!targetProduct) {
+    throw new ResourceNotFoundError("Product", targetProductId);
   }
 
   let targetEnvironmentTriggers: string[] = [];
@@ -129,6 +138,7 @@ export const copyToOtherEnvironmentAction = async (
         },
       },
     });
+
     if (!targetEnvironmentTrigger) {
       // if the trigger does not exist in the target environment, create it
       const newTrigger = await prisma.actionClass.create({
@@ -188,7 +198,29 @@ export const copyToOtherEnvironmentAction = async (
     }
   }
 
-  const defaultLanguageId = existingSurvey.languages.find((l) => l.default)?.language.id;
+  const { languages: existingLanguages } = existingProduct;
+  const defaultLanguageCodeInExistingSurvey = existingSurvey.languages.find((l) => l.default)?.language.code;
+
+  // check for languages in the target product.
+  const { languages: targetLanguages } = targetProduct;
+
+  // missing langugages in the target product
+  const missingLanguages = existingLanguages.filter(
+    (existingLanguage) =>
+      !targetLanguages.find((targetLanguage) => targetLanguage.code === existingLanguage.code)
+  );
+
+  await prisma.language.createMany({
+    data: missingLanguages.map((missingLanguage) => ({
+      code: missingLanguage.code,
+      alias: missingLanguage.alias,
+      productId: targetProductId,
+    })),
+  });
+
+  const defaultLanguageCodeInTargetProduct = targetLanguages.find(
+    (lang) => lang.code === defaultLanguageCodeInExistingSurvey
+  );
 
   // create new survey with the data of the existing survey
   const newSurvey = await prisma.survey.create({
@@ -203,9 +235,16 @@ export const copyToOtherEnvironmentAction = async (
       questions: structuredClone(existingSurvey.questions),
       thankYouCard: structuredClone(existingSurvey.thankYouCard),
       languages: {
-        create: existingSurvey.languages?.map((surveyLanguage) => ({
-          languageId: surveyLanguage.language.id,
-          default: surveyLanguage.language.id === defaultLanguageId,
+        create: existingSurvey.languages.map((surveyLanguage) => ({
+          language: {
+            connect: {
+              code: surveyLanguage.language.code,
+              id: targetProduct.languages.find((l) => l.code === surveyLanguage.language.code)?.id,
+              productId: targetProductId,
+            },
+          },
+          default: surveyLanguage.language.code === defaultLanguageCodeInTargetProduct?.code,
+          enabled: surveyLanguage.enabled,
         })),
       },
       triggers: {
@@ -269,7 +308,6 @@ export const copyToOtherEnvironmentAction = async (
       });
     } else {
       // public segment
-
       // if the environment and targetEnvironment are the same, we connect the copied segment to the copied survey.
       if (environmentId === targetEnvironmentId) {
         await prisma.survey.update({
@@ -297,7 +335,7 @@ export const copyToOtherEnvironmentAction = async (
         await prisma.segment.create({
           data: {
             title: existingSegmentInTargetEnvironment
-              ? `${existingSurvey.segment.title} (copied from environment: ${environmentId})`
+              ? `${existingSurvey.segment.title} (copied from product: ${existingProduct.name})`
               : existingSurvey.segment.title,
             environmentId: targetEnvironmentId,
             isPrivate: false,
@@ -334,7 +372,7 @@ export const copyToOtherEnvironmentAction = async (
       id: targetEnvironmentId,
     },
     data: {
-      productId: productId,
+      productId: targetProductId,
       surveys: {
         connect: {
           id: newSurvey.id,
