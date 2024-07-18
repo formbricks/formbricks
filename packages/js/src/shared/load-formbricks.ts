@@ -1,4 +1,6 @@
- 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access --
+ * Required for dynamic function calls
+ */
 
 /* eslint-disable @typescript-eslint/no-unsafe-call --
  * Required for dynamic function calls
