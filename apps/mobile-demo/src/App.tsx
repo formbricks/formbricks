@@ -1,5 +1,4 @@
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
 import { Button, LogBox, StyleSheet, Text, View } from "react-native";
 import Formbricks, { track } from "@formbricks/react-native";
 
@@ -7,7 +6,7 @@ LogBox.ignoreAllLogs();
 
 export default function App() {
   const config = {
-    environmentId: "cly2j4y86000eem12ayct7yzz",
+    environmentId: "clysgq6t10009gd6fjo65y4w8",
     apiHost: "http://localhost:3000",
     userId: "111",
     attributes: {

@@ -1,5 +1,5 @@
 import { ErrorHandler, Result } from "@formbricks/lib/errors";
-import { wrapThrowsAsync } from "@formbricks/types/errorHandlers";
+import { wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { TJsPackageType } from "@formbricks/types/js";
 import { checkInitialized } from "./initialize";
 
