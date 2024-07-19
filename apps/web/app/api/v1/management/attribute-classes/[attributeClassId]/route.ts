@@ -6,7 +6,7 @@ import {
   getAttributeClass,
   updateAttributeClass,
 } from "@formbricks/lib/attributeClass/service";
-import { TAttributeClass, ZAttributeClassUpdateInput } from "@formbricks/types/attributeClasses";
+import { TAttributeClass, ZAttributeClassUpdateInput } from "@formbricks/types/attribute-classes";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 
 const fetchAndAuthorizeAttributeClass = async (

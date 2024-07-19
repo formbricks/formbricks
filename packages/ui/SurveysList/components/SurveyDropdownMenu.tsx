@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import type { TEnvironment } from "@formbricks/types/environment";
-import type { TSurvey } from "@formbricks/types/surveys";
+import type { TSurvey } from "@formbricks/types/surveys/types";
 import { DeleteDialog } from "../../DeleteDialog";
 import {
   DropdownMenu,
@@ -85,7 +85,12 @@ export const SurveyDropDownMenu = ({
   const copyToOtherEnvironment = async (surveyId: string) => {
     setLoading(true);
     try {
-      await copyToOtherEnvironmentAction(environmentId, surveyId, otherEnvironment.id);
+      // await copyToOtherEnvironmentAction(environmentId, surveyId, otherEnvironment.id);
+      await copyToOtherEnvironmentAction({
+        environmentId,
+        surveyId,
+        targetEnvironmentId: otherEnvironment.id,
+      });
       if (otherEnvironment.type === "production") {
         toast.success("Survey copied to production env.");
       } else if (otherEnvironment.type === "development") {

@@ -9,7 +9,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
-} from "@formbricks/types/integration/googleSheet";
+} from "@formbricks/types/integration/google-sheet";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";

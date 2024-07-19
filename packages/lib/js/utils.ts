@@ -2,10 +2,10 @@ import {
   TActionClass,
   TActionClassNoCodeConfig,
   TActionClassPageUrlRule,
-} from "@formbricks/types/actionClasses";
+} from "@formbricks/types/action-classes";
 import { TJsTrackProperties } from "@formbricks/types/js";
 import { TResponseHiddenFieldValue } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Logger } from "./logger";
 
 const logger = Logger.getInstance();

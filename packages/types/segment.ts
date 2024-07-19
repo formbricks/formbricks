@@ -270,11 +270,11 @@ export const ZSegmentConnector = z.enum(["and", "or"]).nullable();
 
 export type TSegmentConnector = z.infer<typeof ZSegmentConnector>;
 
-export type TBaseFilter = {
+export interface TBaseFilter {
   id: string;
   connector: TSegmentConnector;
   resource: TSegmentFilter | TBaseFilters;
-};
+}
 
 export type TBaseFilters = TBaseFilter[];
 
@@ -287,12 +287,10 @@ const refineFilters = (filters: TBaseFilters): boolean => {
 
     if (Array.isArray(group.resource)) {
       result = refineFilters(group.resource);
-    } else {
+    } else if (i === 0 && group.connector !== null) {
       // if the connector for a "first" group is not null, it's invalid
-      if (i === 0 && group.connector !== null) {
-        result = false;
-        break;
-      }
+      result = false;
+      break;
     }
   }
 
@@ -303,7 +301,6 @@ const refineFilters = (filters: TBaseFilters): boolean => {
 // more on recusrsive types -> https://zod.dev/?id=recursive-types
 
 // TODO: Figure out why this is not working, and then remove the ts-ignore
-// @ts-ignore
 export const ZSegmentFilters: z.ZodType<TBaseFilters> = z
   .array(
     z.object({
@@ -357,15 +354,13 @@ export const ZSegmentUpdateInput = z
 
 export type TSegmentUpdateInput = z.infer<typeof ZSegmentUpdateInput>;
 
-export type TEvaluateSegmentUserAttributeData = {
-  [attributeClassName: string]: string | number;
-};
+export type TEvaluateSegmentUserAttributeData = Record<string, string | number>;
 
-export type TEvaluateSegmentUserData = {
+export interface TEvaluateSegmentUserData {
   personId: string;
   userId: string;
   environmentId: string;
   attributes: TEvaluateSegmentUserAttributeData;
   actionIds: string[];
   deviceType: "phone" | "desktop";
-};
+}

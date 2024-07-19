@@ -8,7 +8,8 @@ import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
 import { TJsTrackProperties } from "@formbricks/types/js";
 import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TUploadFileConfig } from "@formbricks/types/storage";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { AppConfig } from "./config";
 import { putFormbricksInErrorState } from "./initialize";
 import { sync } from "./sync";
@@ -164,7 +165,7 @@ const renderWidget = async (
         });
       },
       onClose: closeSurvey,
-      onFileUpload: async (file: File, params) => {
+      onFileUpload: async (file: File, params: TUploadFileConfig) => {
         const api = new FormbricksAPI({
           apiHost: inAppConfig.get().apiHost,
           environmentId: inAppConfig.get().environmentId,

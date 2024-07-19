@@ -9,8 +9,8 @@ import {
   TActionClassInput,
   TActionClassInputCode,
   ZActionClassInput,
-} from "@formbricks/types/actionClasses";
-import { TSurvey } from "@formbricks/types/surveys";
+} from "@formbricks/types/action-classes";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";

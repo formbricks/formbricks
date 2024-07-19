@@ -3,8 +3,11 @@ import { getQuestionResponseMapping } from "@formbricks/lib/responses";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import type { TOrganization } from "@formbricks/types/organizations";
 import type { TResponse } from "@formbricks/types/responses";
-import type { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys";
+import {
+  type TSurvey,
+  type TSurveyQuestionType,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import { EmailButton } from "../general/email-button";
 
 export const renderEmailResponseValue = (response: string | string[], questionType: TSurveyQuestionType) => {
@@ -88,6 +91,24 @@ export function ResponseFinishedEmail({
               </Row>
             );
           })}
+          {survey.hiddenFields.fieldIds?.map((hiddenFieldId) => {
+            const hiddenFieldResponse = response.data[hiddenFieldId];
+            if (hiddenFieldResponse && typeof hiddenFieldResponse === "string") {
+              return (
+                <Row key={hiddenFieldId}>
+                  <Column className="w-full">
+                    <Text className="mb-2 flex items-center gap-2 font-medium">
+                      {hiddenFieldId} <EyeOffIcon />
+                    </Text>
+                    <Text className="mt-0 whitespace-pre-wrap break-words font-bold">
+                      {hiddenFieldResponse}
+                    </Text>
+                  </Column>
+                </Row>
+              );
+            }
+            return null;
+          })}
           <EmailButton
             href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
             label={
@@ -137,6 +158,27 @@ function FileIcon() {
       xmlns="http://www.w3.org/2000/svg">
       <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
       <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="lucide lucide-eye-off h-4 w-4 rounded-lg bg-slate-200 p-1">
+      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+      <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+      <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+      <line x1="2" x2="22" y1="2" y2="22" />
     </svg>
   );
 }

@@ -9,7 +9,7 @@ import {
   updateOperatorInFilter,
 } from "@formbricks/lib/segment/utils";
 import { isCapitalized } from "@formbricks/lib/utils/strings";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   ARITHMETIC_OPERATORS,
   ATTRIBUTE_OPERATORS,

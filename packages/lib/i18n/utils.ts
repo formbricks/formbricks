@@ -1,10 +1,10 @@
+import { TAttributes } from "@formbricks/types/attributes";
 import {
   TLegacySurveyChoice,
   TLegacySurveyQuestion,
   TLegacySurveyThankYouCard,
   TLegacySurveyWelcomeCard,
-} from "@formbricks/types/LegacySurvey";
-import { TAttributes } from "@formbricks/types/attributes";
+} from "@formbricks/types/legacy-surveys";
 import { TLanguage } from "@formbricks/types/product";
 import {
   TI18nString,
@@ -32,7 +32,7 @@ import {
   ZSurveyRatingQuestion,
   ZSurveyThankYouCard,
   ZSurveyWelcomeCard,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { structuredClone } from "../pollyfills/structuredClone";
 
 // Helper function to create an i18nString from a regular string.

@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "../../Button";
 
 interface LanguageDropdownProps {

@@ -4,8 +4,8 @@ import { createId } from "@paralleldrive/cuid2";
 import { FingerprintIcon, MonitorSmartphoneIcon, MousePointerClick, TagIcon, Users2Icon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import type { TActionClass } from "@formbricks/types/actionClasses";
-import type { TAttributeClass } from "@formbricks/types/attributeClasses";
+import type { TActionClass } from "@formbricks/types/action-classes";
+import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type {
   TBaseFilter,
   TSegment,
@@ -245,16 +245,18 @@ export function AddFilterModal({
     icon?: React.ReactNode;
   }[] = [
     { id: "all", label: "All" },
-    { id: "actions", label: "Actions", icon: <MousePointerClick className="h-4 w-4" /> },
     { id: "attributes", label: "Person & Attributes", icon: <TagIcon className="h-4 w-4" /> },
     { id: "segments", label: "Segments", icon: <Users2Icon className="h-4 w-4" /> },
     { id: "devices", label: "Devices", icon: <MonitorSmartphoneIcon className="h-4 w-4" /> },
   ];
 
-  const devices = [
-    { id: "phone", name: "Phone" },
-    { id: "desktop", name: "Desktop" },
-  ];
+  const devices = useMemo(
+    () => [
+      { id: "phone", name: "Phone" },
+      { id: "desktop", name: "Desktop" },
+    ],
+    []
+  );
 
   const actionClassesFiltered = useMemo(() => {
     if (!searchValue) return actionClasses;

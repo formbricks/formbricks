@@ -15,7 +15,7 @@ import {
   TSurveyRatingQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 
 export const mockWelcomeCard: TSurveyWelcomeCard = {
   html: {
@@ -228,6 +228,7 @@ export const mockCalQuestion: TSurveyCalQuestion = {
     default: "Skip",
   },
   calUserName: "rick/get-rick-rolled",
+  calHost: "cal.com",
   id: "o3bnux6p42u9ew9d02l14r26",
   type: TSurveyQuestionTypeEnum.Cal,
   isDraft: true,

@@ -1,7 +1,7 @@
 import { AutoCloseProgressBar } from "@/components/general/AutoCloseProgressBar";
 import React from "preact/compat";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface AutoCloseProps {
   survey: TSurvey;
@@ -44,11 +44,11 @@ export const AutoCloseWrapper = ({ survey, onClose, children, offset }: AutoClos
   }, [survey.autoClose]);
 
   return (
-    <div className="h-full w-full">
+    <div className="fb-h-full fb-w-full">
       {survey.autoClose && showAutoCloseProgressBar && (
         <AutoCloseProgressBar autoCloseTimeout={survey.autoClose} />
       )}
-      <div onClick={stopCountdown} onMouseOver={stopCountdown} className="h-full w-full">
+      <div onClick={stopCountdown} onMouseOver={stopCountdown} className="fb-h-full fb-w-full">
         {children}
       </div>
     </div>

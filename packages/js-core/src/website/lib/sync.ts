@@ -3,7 +3,7 @@ import { Logger } from "@formbricks/lib/js/logger";
 import { getIsDebug } from "@formbricks/lib/js/utils";
 import { diffInDays } from "@formbricks/lib/utils/datetime";
 import { TJsWebsiteState, TJsWebsiteSyncParams } from "@formbricks/types/js";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { WebsiteConfig } from "./config";
 
 const websiteConfig = WebsiteConfig.getInstance();

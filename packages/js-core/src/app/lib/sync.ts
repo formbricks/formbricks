@@ -3,7 +3,7 @@ import { Logger } from "@formbricks/lib/js/logger";
 import { getIsDebug } from "@formbricks/lib/js/utils";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TJsAppState, TJsAppStateSync, TJsAppSyncParams } from "@formbricks/types/js";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { AppConfig } from "./config";
 
 const appConfig = AppConfig.getInstance();

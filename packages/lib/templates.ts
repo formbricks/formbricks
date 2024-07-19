@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { TActionClass } from "@formbricks/types/actionClasses";
+import { TActionClass } from "@formbricks/types/action-classes";
 import {
   TSurveyCTAQuestion,
   TSurveyDisplayOption,
@@ -11,7 +11,7 @@ import {
   TSurveyThankYouCard,
   TSurveyType,
   TSurveyWelcomeCard,
-} from "@formbricks/types/surveys";
+} from "@formbricks/types/surveys/types";
 import { TTemplate } from "@formbricks/types/templates";
 
 const thankYouCardDefault: TSurveyThankYouCard = {
@@ -683,7 +683,7 @@ export const templates: TTemplate[] = [
             },
             {
               id: createId(),
-              label: { default: "productManager" },
+              label: { default: "Product Manager" },
             },
             {
               id: createId(),
@@ -748,7 +748,7 @@ export const templates: TTemplate[] = [
             },
             {
               id: createId(),
-              label: { default: "productManager" },
+              label: { default: "Product Manager" },
             },
             {
               id: createId(),
