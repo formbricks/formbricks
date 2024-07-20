@@ -7,6 +7,9 @@ x-environment: &environment
     # Set this to your public-facing URL, e.g., https://example.com
     WEBAPP_URL:
 
+    # Required for next-auth. Should be the same as WEBAPP_URL
+    NEXTAUTH_URL:
+
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
