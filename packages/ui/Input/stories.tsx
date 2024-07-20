@@ -1,7 +1,7 @@
 import { Meta, StoryObj } from "@storybook/react";
 import { Input } from "./index";
 
-const meta: Meta<typeof Input> = {
+const meta = {
   title: "ui/Input",
   component: Input,
   tags: ["autodocs"],
@@ -9,7 +9,8 @@ const meta: Meta<typeof Input> = {
     docs: {
       description: {
         component: `
-            The \`Input\` component is a versatile input field that can be used for various types of user input.It supports all standard HTML input attributes, along with some additional props to handle specific use cases:
+            The \`Input\` component is used to input the form fields.
+    It supports all standard HTML input attributes, along with some additional props to handle specific use cases:
     - \`isInvalid\`: Adds a visual indicator for invalid input.
     - \`crossOrigin\`: Specifies how the element handles cross-origin requests.
     - \`dangerouslySetInnerHTML\`: Allows setting inner HTML content directly, similar to the native \`dangerouslySetInnerHTML\` in React.
@@ -17,7 +18,7 @@ const meta: Meta<typeof Input> = {
       },
     },
   },
-};
+} satisfies Meta<typeof Input>;
 
 export default meta;
 
