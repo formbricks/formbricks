@@ -2,15 +2,24 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { PageHeader } from "./index";
 
-const meta: Meta<typeof PageHeader> = {
+const meta = {
   title: "ui/PageHeader",
   component: PageHeader,
   tags: ["autodocs"],
+  parameters: {
+    docs: {
+      description: {
+        component: `
+The **PageHeader** component is used to provide a styled header section within the form fields. 
+     `,
+      },
+    },
+  },
   argTypes: {
     cta: { control: "text" },
     children: { control: "text" },
   },
-};
+} satisfies Meta<typeof PageHeader>;
 
 export default meta;
 
