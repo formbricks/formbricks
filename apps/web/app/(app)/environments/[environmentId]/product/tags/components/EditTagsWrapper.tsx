@@ -14,6 +14,7 @@ import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TTag, TTagsCount } from "@formbricks/types/tags";
 import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { Input } from "@formbricks/ui/Input";
 import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
@@ -44,6 +45,19 @@ const SingleTag: React.FC<{
   // const { mergeTags, isMergingTags } = useMergeTags(environment.id);
   const [updateTagError, setUpdateTagError] = useState(false);
   const [isMergingTags, setIsMergingTags] = useState(false);
+  const [openDeleteTagDialog, setOpenDeleteTagDialog] = useState(false);
+
+  const confirmDeleteTag = () => {
+    deleteTagAction(tagId)
+      .then((response) => {
+        toast.success(`${response?.name ?? "Tag"} deleted`);
+        updateTagsCount();
+        router.refresh();
+      })
+      .catch((error) => {
+        toast.error(error?.message ?? "Something went wrong");
+      });
+  };
 
   return (
     <div className="w-full" key={tagId}>
@@ -124,17 +138,16 @@ const SingleTag: React.FC<{
               size="sm"
               // loading={isDeletingTag}
               className="font-medium text-slate-50 focus:border-transparent focus:shadow-transparent focus:outline-transparent focus:ring-0 focus:ring-transparent"
-              onClick={() => {
-                if (confirm("Are you sure you want to delete this tag?")) {
-                  deleteTagAction(tagId).then(() => {
-                    toast.success("Tag deleted");
-                    updateTagsCount();
-                    router.refresh();
-                  });
-                }
-              }}>
+              onClick={() => setOpenDeleteTagDialog(true)}>
               Delete
             </Button>
+            <DeleteDialog
+              open={openDeleteTagDialog}
+              setOpen={setOpenDeleteTagDialog}
+              deleteWhat={tagName}
+              text="Are you sure you want to delete this tag?"
+              onDelete={confirmDeleteTag}
+            />
           </div>
         </div>
       </div>
