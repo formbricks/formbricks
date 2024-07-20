@@ -1,9 +1,8 @@
-// src/Label.stories.tsx
 import type { Meta, StoryObj } from "@storybook/react";
 import { Label } from "./index";
 
-const meta: Meta<typeof Label> = {
-  title: "UI/Label",
+const meta = {
+  title: "ui/Label",
   component: Label,
   tags: ["autodocs"],
   parameters: {
@@ -11,7 +10,7 @@ const meta: Meta<typeof Label> = {
     docs: {
       description: {
         component: `
-The **Label** component is used to label form fields in your application. 
+The **Label** component is used to label the form fields. 
      `,
       },
     },
@@ -20,7 +19,7 @@ The **Label** component is used to label form fields in your application.
     className: { control: "text" },
     children: { control: "text" },
   },
-};
+} satisfies Meta<typeof Label>;
 
 export default meta;
 
