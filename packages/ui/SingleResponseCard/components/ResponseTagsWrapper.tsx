@@ -91,7 +91,6 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
             tags={environmentTags?.map((tag) => ({ value: tag.id, label: tag.name })) ?? []}
             currentTags={tagsState.map((tag) => ({ value: tag.tagId, label: tag.tagName }))}
             createTag={async (tagName) => {
-              setOpen(false);
               await createTagAction(environmentId, tagName?.trim() ?? "")
                 .then((tag) => {
                   setTagsState((prevTags) => [
@@ -104,6 +103,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                   createTagToResponeAction(responseId, tag.id).then(() => {
                     updateFetchedResponses();
                     setSearchValue("");
+                    setOpen(false);
                   });
                 })
                 .catch((err) => {
@@ -119,6 +119,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                   }
 
                   setSearchValue("");
+                  setOpen(false);
                 });
             }}
             addTag={(tagId) => {
