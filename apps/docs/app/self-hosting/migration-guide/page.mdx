@@ -677,6 +677,9 @@ x-environment: &environment
     # The url of your Formbricks instance used in the admin panel
     WEBAPP_URL:
 
+    # Required for next-auth. Should be the same as WEBAPP_URL
+    NEXTAUTH_URL:
+
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
