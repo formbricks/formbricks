@@ -1,18 +1,25 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import React from "react";
+// Ensure Button is imported as it's used within the Card component
 import { Button } from "../Button";
 import { Card } from "./index";
 
-// Ensure Button is imported as it's used within the Card component
-
-const meta: Meta<typeof Card> = {
+const meta = {
   title: "ui/Card",
   component: Card,
   tags: ["autodocs"],
   argTypes: {
-    icon: { control: SVGElement },
+    icon: { control: "text" },
   },
-};
+  parameters: {
+    docs: {
+      description: {
+        component: `
+The **card** component is used to organize and style the form fields. 
+     `,
+      },
+    },
+  },
+} satisfies Meta<typeof Card>;
 
 export default meta;
 
