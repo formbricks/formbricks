@@ -1,6 +1,6 @@
 import { TAttributes } from "@formbricks/types/attributes";
 import { TJsAppState, TJsAppStateSync, TJsAppSyncParams } from "@formbricks/types/js";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { AppConfig, RNAppConfig } from "./config";
 import { NetworkError, Result, err, ok } from "./errors";
 import { Logger } from "./logger";

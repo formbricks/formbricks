@@ -9,10 +9,10 @@ import { Logger } from "@formbricks/lib/logger";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
-import { SurveyInlineProps } from "@formbricks/types/formbricksSurveys";
+import { SurveyInlineProps } from "@formbricks/types/formbricks-surveys";
 import { ZJsRNWebViewOnMessageData } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { SurveyStore } from "./lib/surveyStore";
 
 const logger = Logger.getInstance();

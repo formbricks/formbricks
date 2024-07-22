@@ -1,4 +1,4 @@
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 type Listener = (state: TSurvey | null, prevSurvey: TSurvey | null) => void;
 

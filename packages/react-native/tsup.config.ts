@@ -1,6 +1,7 @@
 import { Options, defineConfig } from "tsup";
 
 export default defineConfig((options: Options) => ({
+  ...options,
   entry: {
     index: "src/index.ts",
   },
@@ -10,6 +11,5 @@ export default defineConfig((options: Options) => ({
   clean: true,
   format: ["cjs", "esm"],
   external: ["react"],
-  dts: true,
-  ...options,
+  experimentalDts: true,
 }));
