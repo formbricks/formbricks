@@ -25,6 +25,32 @@ async function main() {
       });
 
       console.log(`Deleted ${segmentsWithNoSurveys.length} segments with no surveys`);
+
+      const appSurveysWithoutSegment = await tx.survey.findMany({
+        where: {
+          type: "app",
+          segmentId: null,
+        },
+      });
+
+      const segmentPromises = [];
+
+      for (const appSurvey of appSurveysWithoutSegment) {
+        // create a new private segment for each app survey
+
+        segmentPromises.push(
+          tx.segment.create({
+            data: {
+              title: appSurvey.id,
+              isPrivate: true,
+              environment: { connect: { id: appSurvey.environmentId } },
+              surveys: { connect: { id: appSurvey.id } },
+            },
+          })
+        );
+      }
+
+      await Promise.all(segmentPromises);
     },
     { timeout: 50000 }
   );
