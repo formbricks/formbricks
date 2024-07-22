@@ -41,7 +41,7 @@ const Page = async ({ params, searchParams }: IndustryPageProps) => {
     },
     {
       title: "Other",
-      description: "Universal Formricks experience with features for every industry.",
+      description: "Universal Formbricks experience with features for every industry.",
       icon: HeartIcon,
       iconText: "Customer insights",
       href: IS_FORMBRICKS_CLOUD
