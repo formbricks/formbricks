@@ -19,7 +19,7 @@ import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { Input } from "@formbricks/ui/Input";
 import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 
-interface TEditTagsWrapperProps {
+interface EditTagsWrapperProps {
   environment: TEnvironment;
   environmentTags: TTag[];
   environmentTagsCount: TTagsCount;
@@ -153,7 +153,7 @@ const SingleTag: React.FC<{
   );
 };
 
-export const EditTagsWrapper: React.FC<TEditTagsWrapperProps> = (props) => {
+export const EditTagsWrapper: React.FC<EditTagsWrapperProps> = (props) => {
   const { environment, environmentTags, environmentTagsCount } = props;
   return (
     <div className="">
