@@ -26,6 +26,8 @@ formbricks:
       name: formbricks-secrets
       key: encryption_key
   moleculerMicroservice:
+    enable_metrics: true
+    enable_prometheus: true
     clientName: "formbricks"
     clientSecret:
       existingSecret:

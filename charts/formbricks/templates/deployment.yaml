@@ -63,6 +63,10 @@ spec:
                   key: {{ .Values.formbricks.nextauth.existingSecret.key }}
             - name: MOLECULER_MICROSERVICE_CLIENT_NAME
               value: "{{ .Values.formbricks.moleculerMicroservice.clientName }}"
+            - name: MOLECULER_ENABLE_METRICS
+              value: "{{ .Values.formbricks.moleculerMicroservice.enable_metrics }}"
+            - name: MOLECULER_ENABLE_METRICS_PROMETHEUS
+              value: "{{ .Values.formbricks.moleculerMicroservice.enable_prometheus }}"
             - name: MOLECULER_MICROSERVICE_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -271,12 +275,12 @@ spec:
             - name: DEFAULT_BRAND_COLOR
               value: "{{ .Values.formbricks.defaultBrandColor }}"
             {{- end }}
-            {{- if and 
+            {{- if and
                 .Values.formbricks.aws
                 .Values.formbricks.aws.existingSecret
-                .Values.formbricks.aws.existingSecret.name 
-                .Values.formbricks.aws.existingSecret.accessKey 
-                .Values.formbricks.aws.existingSecret.secretKey 
+                .Values.formbricks.aws.existingSecret.name
+                .Values.formbricks.aws.existingSecret.accessKey
+                .Values.formbricks.aws.existingSecret.secretKey
             }}
             - name: AWS_ACCESS_KEY
               valueFrom:
@@ -289,13 +293,13 @@ spec:
                   name: {{ .Values.formbricks.aws.existingSecret.name }}
                   key: {{ .Values.formbricks.aws.existingSecret.secretKey }}
             {{- end }}
-            {{- if and 
+            {{- if and
                 .Values.formbricks.aws
                 .Values.formbricks.aws.s3
                 .Values.formbricks.aws.s3.existingSecret
-                .Values.formbricks.aws.s3.existingSecret.name 
-                .Values.formbricks.aws.s3.existingSecret.accessKey 
-                .Values.formbricks.aws.s3.existingSecret.secretKey 
+                .Values.formbricks.aws.s3.existingSecret.name
+                .Values.formbricks.aws.s3.existingSecret.accessKey
+                .Values.formbricks.aws.s3.existingSecret.secretKey
             }}
             - name: S3_ACCESS_KEY
               valueFrom:
@@ -309,7 +313,7 @@ spec:
                   key: {{ .Values.formbricks.aws.s3.existingSecret.secretKey }}
             {{- end }}
             {{- if and .Values.formbricks.aws .Values.formbricks.aws.s3 .Values.formbricks.aws.s3.region }}
-            - name: S3_REGION 
+            - name: S3_REGION
               value: "{{ .Values.formbricks.aws.s3.region }}"
             {{- end }}
             {{- if and .Values.formbricks.aws .Values.formbricks.aws.s3 .Values.formbricks.aws.s3.bucketName }}
