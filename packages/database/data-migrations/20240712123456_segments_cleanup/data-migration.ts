@@ -33,6 +33,8 @@ async function main() {
         },
       });
 
+      console.log(`Found ${appSurveysWithoutSegment.length} app surveys without a segment`);
+
       const segmentPromises = [];
 
       for (const appSurvey of appSurveysWithoutSegment) {
