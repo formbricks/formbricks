@@ -19,7 +19,7 @@ import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { Input } from "@formbricks/ui/Input";
 import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 
-interface IEditTagsWrapperProps {
+interface TEditTagsWrapperProps {
   environment: TEnvironment;
   environmentTags: TTag[];
   environmentTagsCount: TTagsCount;
@@ -41,8 +41,6 @@ const SingleTag: React.FC<{
   environmentTags,
 }) => {
   const router = useRouter();
-  // const { updateTag, updateTagError } = useUpdateTag(environment.id, tagId);
-  // const { mergeTags, isMergingTags } = useMergeTags(environment.id);
   const [updateTagError, setUpdateTagError] = useState(false);
   const [isMergingTags, setIsMergingTags] = useState(false);
   const [openDeleteTagDialog, setOpenDeleteTagDialog] = useState(false);
@@ -50,7 +48,7 @@ const SingleTag: React.FC<{
   const confirmDeleteTag = () => {
     deleteTagAction(tagId)
       .then((response) => {
-        toast.success(`${response?.name ?? "Tag"} deleted`);
+        toast.success(`${response?.name ?? "Tag"} tag deleted`);
         updateTagsCount();
         router.refresh();
       })
@@ -155,7 +153,7 @@ const SingleTag: React.FC<{
   );
 };
 
-export const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
+export const EditTagsWrapper: React.FC<TEditTagsWrapperProps> = (props) => {
   const { environment, environmentTags, environmentTagsCount } = props;
   return (
     <div className="">
