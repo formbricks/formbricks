@@ -1,3 +1,4 @@
+import { GoogleTagManager } from "@next/third-parties/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Metadata } from "next";
 import "./globals.css";
@@ -20,6 +21,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
           crossOrigin="anonymous"></script>
       </head>
       {process.env.VERCEL === "1" && <SpeedInsights sampleRate={0.1} />}
+      <GoogleTagManager gtmId={"GTM-PJ6M9K9P"} />
       <body className="flex h-dvh flex-col transition-all ease-in-out">{children}</body>
     </html>
   );
