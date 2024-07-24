@@ -18,8 +18,8 @@ const thankYouCardDefault: TSurveyThankYouCard = {
   enabled: true,
   headline: { default: "Thank you!" },
   subheader: { default: "We appreciate your feedback." },
-  buttonLabel: { default: "Create your own Survey" },
-  buttonLink: "https://formbricks.com/signup",
+  buttonLabel: { default: "Take more surveys" },
+  buttonLink: "https://member.digiopinion.com/overview",
 };
 
 const failureCardDefault = {

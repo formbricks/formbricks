@@ -1,8 +1,8 @@
+import OpinodoLogo from "@/images/opinodo-logo.png";
 import { HelpCircleIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@formbricks/ui/Button";
-import footerLogo from "./lib/footerlogo.svg";
 
 const NotFound = () => {
   return (
@@ -12,13 +12,13 @@ const NotFound = () => {
         <HelpCircleIcon className="h-20 w-20" />,
         <h1 className="text-4xl font-bold text-slate-800">Survey not found.</h1>
         <p className="text-lg leading-10 text-slate-500">There is no survey with this ID.</p>
-        <Button variant="darkCTA" className="mt-2" href="https://formbricks.com">
-          Create your own
+        <Button variant="darkCTA" className="mt-2" href="https://member.digiopinion.com/overview">
+          Take more surveys
         </Button>
       </div>
       <div>
-        <Link href="https://formbricks.com">
-          <Image src={footerLogo} alt="Brand logo" className="mx-auto w-40" />
+        <Link href="https://digiopinion.com/">
+          <Image src={OpinodoLogo} alt="Brand logo" className="mx-auto w-40" />
         </Link>
       </div>
     </div>

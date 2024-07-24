@@ -2,7 +2,7 @@
 
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
-import FBLogo from "@/images/formbricks-wordmark.svg";
+import OpinodoLogo from "@/images/opinodo-logo.png";
 import {
   ArrowUpRightIcon,
   BlocksIcon,
@@ -230,7 +230,7 @@ export const MainNavigation = ({
                     "flex items-center justify-center transition-opacity duration-100",
                     isTextVisible ? "opacity-0" : "opacity-100"
                   )}>
-                  <Image src={FBLogo} width={160} height={30} alt="Formbricks Logo" />
+                  <Image src={OpinodoLogo} width={160} height={30} alt="Opinodo Logo" />
                 </Link>
               )}
               <Button
