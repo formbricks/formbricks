@@ -2,7 +2,6 @@ import { getAllCountries } from "@/app/(app)/environments/[environmentId]/action
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import Select from "react-select";
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -92,7 +91,7 @@ export default function SurveyGeneralSettings({
     isoCode: string;
   }
 
-  const [countries, setCountries] = useState<Country[]>([]);
+  const [, setCountries] = useState<Country[]>([]);
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -103,18 +102,18 @@ export default function SurveyGeneralSettings({
     fetchCountries();
   }, []);
 
-  const handleCountryChange = (selectedCountries) => {
-    const updatedCountries = selectedCountries.map((country) => ({
-      isoCode: country.value,
-      name: country.label,
-    }));
-
-    setLocalSurvey((prevState) => ({
-      ...prevState,
-      countries: updatedCountries,
-      limitedCountries: updatedCountries.length > 0,
-    }));
-  };
+  // const handleCountryChange = (selectedCountries) => {
+  //   const updatedCountries = selectedCountries.map((country) => ({
+  //     isoCode: country.value,
+  //     name: country.label,
+  //   }));
+  //
+  //   setLocalSurvey((prevState) => ({
+  //     ...prevState,
+  //     countries: updatedCountries,
+  //     limitedCountries: updatedCountries.length > 0,
+  //   }));
+  // };
 
   const [limitedToCountries, setLimitedToCountries] = useState(localSurvey.countries.length > 0);
 
@@ -451,21 +450,21 @@ export default function SurveyGeneralSettings({
                 </div>
               </Label>
 
-              {limitedToCountries && (
-                <Select
-                  options={countries.map((country) => ({
-                    value: country.isoCode,
-                    label: country.name,
-                  }))}
-                  isMulti
-                  isSearchable
-                  onChange={handleCountryChange}
-                  value={localSurvey.countries.map((country) => ({
-                    value: country.isoCode,
-                    label: country.name,
-                  }))}
-                />
-              )}
+              {/*{limitedToCountries && (*/}
+              {/*  <Select*/}
+              {/*    options={countries.map((country) => ({*/}
+              {/*      value: country.isoCode,*/}
+              {/*      label: country.name,*/}
+              {/*    }))}*/}
+              {/*    isMulti*/}
+              {/*    isSearchable*/}
+              {/*    onChange={handleCountryChange}*/}
+              {/*    value={localSurvey.countries.map((country) => ({*/}
+              {/*      value: country.isoCode,*/}
+              {/*      label: country.name,*/}
+              {/*    }))}*/}
+              {/*  />*/}
+              {/*)}*/}
             </div>
           </div>
         </div>
