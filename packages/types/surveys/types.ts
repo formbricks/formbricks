@@ -679,9 +679,11 @@ export const ZSurvey = z
     // Custom default validation for each question
     questions.forEach((question, questionIndex) => {
       const existingLogicConditions = new Set();
-      multiLangIssue = validateQuestionLabels("headline", question.headline, languages, questionIndex);
-      if (multiLangIssue) {
-        ctx.addIssue(multiLangIssue);
+      if (question.type !== TSurveyQuestionTypeEnum.Ad) {
+        multiLangIssue = validateQuestionLabels("headline", question.headline, languages, questionIndex);
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
       }
 
       if (question.subheader && question.subheader.default.trim() !== "") {
