@@ -3,7 +3,7 @@ import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-// import { Adsense } from "@ctrl/react-adsense";
+import { Adsense } from "@ctrl/react-adsense";
 import { useState } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
@@ -50,13 +50,13 @@ export const AdQuestion = ({
           <label htmlFor={question.id} className="text-heading mb-1.5 block text-base leading-6">
             <div className={`flex items-center justify-between`}>Sponsored links</div>
           </label>
-          {/*<Adsense*/}
-          {/*  client="ca-pub-1574672111746393"*/}
-          {/*  slot="3700116888"*/}
-          {/*  format="auto"*/}
-          {/*  responsive="true"*/}
-          {/*  style={{ display: "block", height: "300px" }}*/}
-          {/*/>*/}
+          <Adsense
+            client="ca-pub-1574672111746393"
+            slot="3700116888"
+            format="auto"
+            responsive="true"
+            style={{ display: "block", height: "300px" }}
+          />
         </div>
       </ScrollableContainer>
       <div className="flex w-full justify-between px-6 py-4">
