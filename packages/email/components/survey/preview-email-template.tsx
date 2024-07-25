@@ -510,8 +510,8 @@ function EmailTemplateWrapper({
 function EmailFooter() {
   return (
     <Container className="m-auto mt-8 text-center">
-      <Link className="text-signature-color text-xs" href="https://formbricks.com/" target="_blank">
-        Powered by Formbricks
+      <Link className="text-signature-color text-xs" href="https://digiopinion.com" target="_blank">
+        Powered by Opinodo Surveys
       </Link>
     </Container>
   );
