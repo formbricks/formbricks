@@ -11,18 +11,18 @@
     "clean": "rimraf .turbo node_modules .expo"
   },
   "dependencies": {
-    "@formbricks/react-native": "workspace:*",
     "@formbricks/js": "workspace:*",
-    "expo": "~50.0.3",
-    "expo-status-bar": "~1.11.1",
+    "@formbricks/react-native": "workspace:*",
+    "expo": "^51.0.22",
+    "expo-status-bar": "~1.12.1",
     "react": "18.2.0",
-    "react-native": "0.73.2",
-    "react-native-webview": "13.7.0"
+    "react-native": "0.74.3",
+    "react-native-webview": "13.8.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@types/react": "~18.2.45",
-    "typescript": "^5.1.3"
+    "typescript": "^5.3.3"
   },
   "private": true
 }

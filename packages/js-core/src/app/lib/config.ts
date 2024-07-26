@@ -45,9 +45,6 @@ export class AppConfig {
     if (typeof window !== "undefined") {
       const savedConfig = localStorage.getItem(IN_APP_LOCAL_STORAGE_KEY);
       if (savedConfig) {
-        // TODO: validate config
-        // This is a hack to get around the fact that we don't have a proper
-        // way to validate the config yet.
         const parsedConfig = JSON.parse(savedConfig) as TJSAppConfig;
 
         // check if the config has expired

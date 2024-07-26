@@ -6,9 +6,10 @@ LogBox.ignoreAllLogs();
 
 export default function App() {
   const config = {
-    environmentId: "clysgq6t10009gd6fjo65y4w8",
-    apiHost: "http://localhost:3000",
-    userId: "111",
+    environmentId: "clyr6frui0009v2pn32q5fxd3",
+    // apiHost: "http://localhost:3000",
+    apiHost: "http://192.168.10.105:3000",
+    userId: "random",
     attributes: {
       language: "en",
     },

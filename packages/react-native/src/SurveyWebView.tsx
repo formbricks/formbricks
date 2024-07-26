@@ -137,6 +137,7 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
             isBrandingEnabled,
             styling,
             languageCode,
+            apiHost: appConfig.get().apiHost,
           }),
         }}
         style={{ backgroundColor: "transparent" }}
@@ -194,7 +195,7 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
   );
 };
 
-const renderHtml = (options: Partial<SurveyInlineProps>) => {
+const renderHtml = (options: Partial<SurveyInlineProps> & { apiHost?: string }) => {
   return `
   <!doctype html>
   <html>
@@ -254,7 +255,7 @@ const renderHtml = (options: Partial<SurveyInlineProps>) => {
       }
 
       const script = document.createElement("script");
-      script.src = "http://localhost:3000/api/packages/surveys";
+      script.src = "${options.apiHost ?? "http://localhost:3000"}/api/packages/surveys";
       script.async = true;
       script.onload = () => loadSurvey();
       script.onerror = (error) => {
