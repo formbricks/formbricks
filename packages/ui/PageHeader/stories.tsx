@@ -10,7 +10,7 @@ const meta = {
     docs: {
       description: {
         component: `
-The **PageHeader** component is used to provide a styled header section within the form fields. 
+The **PageHeader** component is used to provide a styled header section for a page. It includes a title and optional call to action (CTA) button. Additional content can be included below the header.
      `,
       },
     },
