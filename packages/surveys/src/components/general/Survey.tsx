@@ -265,6 +265,7 @@ export const Survey = ({
             autoFocusEnabled={autoFocusEnabled}
             replaceRecallInfo={replaceRecallInfo}
             isCurrent={offset === 0}
+            responseData={responseData}
           />
         );
       } else if (questionIdx === survey.questions.length) {
