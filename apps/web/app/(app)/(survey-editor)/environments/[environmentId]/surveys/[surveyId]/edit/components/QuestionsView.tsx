@@ -405,7 +405,7 @@ export const QuestionsView = ({
 
       <AddQuestionButton addQuestion={addQuestion} product={product} />
       <div className="mt-5 flex flex-col gap-5">
-        <hr />
+        <hr className="border-t border-dashed" />
         <DndContext sensors={sensors} onDragEnd={onEndingCardDragEnd} collisionDetection={closestCorners}>
           <SortableContext items={localSurvey.endings} strategy={verticalListSortingStrategy}>
             {localSurvey.endings.map((ending, index) => {

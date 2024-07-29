@@ -11,7 +11,7 @@ import {
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
+import { OptionsSwitch } from "@formbricks/ui/QuestionTypeSelector";
 
 const questionTypes = [
   { value: "text", label: "Text", icon: <MessageSquareTextIcon className="h-4 w-4" /> },
@@ -127,7 +127,7 @@ export const OpenQuestionForm = ({
       <div className="mt-3">
         <Label htmlFor="questionType">Input Type</Label>
         <div className="mt-2 flex items-center">
-          <OptionsSwitcher
+          <OptionsSwitch
             options={questionTypes}
             currentOption={question.inputType}
             handleTypeChange={handleInputChange} // Use the merged function

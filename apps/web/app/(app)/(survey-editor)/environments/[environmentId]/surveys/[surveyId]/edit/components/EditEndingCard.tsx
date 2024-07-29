@@ -144,7 +144,7 @@ export const EditEndingCard = ({
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
         <p>🙏</p>
-        <button className="opacity-0 hover:cursor-move group-hover:opacity-100">
+        <button className="opacity-0 transition-all duration-300 hover:cursor-move group-hover:opacity-100">
           <GripIcon className="h-4 w-4" />
         </button>
       </div>
@@ -154,7 +154,7 @@ export const EditEndingCard = ({
         className="flex-1 rounded-r-lg border border-slate-200 transition-all duration-300 ease-in-out">
         <Collapsible.CollapsibleTrigger
           asChild
-          className="flex cursor-pointer justify-between p-4 hover:bg-slate-50">
+          className="flex cursor-pointer justify-between rounded-r-lg p-4 hover:bg-slate-50">
           <div>
             <div className="inline-flex">
               <div>
@@ -307,8 +307,8 @@ export const EditEndingCard = ({
             </form>
           )}
           {endingCard.type === "redirectToUrl" && (
-            <form className="mt-4 space-y-2">
-              <div className="space-y-4">
+            <form className="mt-3 space-y-3">
+              <div className="space-y-2">
                 <Label>URL</Label>
                 <Input
                   id="redirectUrl"
