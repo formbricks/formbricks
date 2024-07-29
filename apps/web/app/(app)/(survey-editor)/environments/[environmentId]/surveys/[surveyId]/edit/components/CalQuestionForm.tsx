@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys/types";
+import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { Input } from "@formbricks/ui/Input";
@@ -106,12 +107,13 @@ export const CalQuestionForm = ({
 
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
-              <Checkbox
-                id="calHost"
-                checked={isCalHostEnabled}
-                onCheckedChange={(checked: boolean) => setIsCalHostEnabled(checked)}
+              <AdvancedOptionToggle
+                isChecked={isCalHostEnabled}
+                onToggle={(checked: boolean) => setIsCalHostEnabled(checked)}
+                htmlId="calHost"
+                description="Do you have a self-hosted Cal.com instance?"
+                title="Custom Hostname"
               />
-              <Label htmlFor="calHost">Do you have a self-hosted Cal.com instance?</Label>
             </div>
 
             {isCalHostEnabled && (
