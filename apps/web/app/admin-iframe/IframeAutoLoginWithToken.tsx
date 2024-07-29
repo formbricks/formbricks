@@ -36,11 +36,9 @@ export const IframeAutoLoginWithToken: React.FC<React.PropsWithChildren<{ sessio
   if (session) {
     return (
       <>
-        <h2> Signed in</h2>
-        <pre>session: {JSON.stringify(session, null, 2)}</pre>
-        <button style={{ border: "1px solid black" }} onClick={() => signOut()}>
+        {/* <button style={{ border: "1px solid black" }} onClick={() => signOut()}>
           Sign out
-        </button>
+        </button> */}
         {children}
       </>
     );
