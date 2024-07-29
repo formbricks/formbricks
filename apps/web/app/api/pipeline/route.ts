@@ -1,12 +1,17 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { embed } from "ai";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { sendResponseFinishedEmail } from "@formbricks/email";
-import { INTERNAL_SECRET } from "@formbricks/lib/constants";
+import { embeddingsModel } from "@formbricks/lib/ai";
+import { INTERNAL_SECRET, IS_AI_ENABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { updateResponseEmbedding } from "@formbricks/lib/response/embedding";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
+import { getResponseAsDocumentString } from "@formbricks/lib/response/utils";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { ZPipelineInput } from "@formbricks/types/pipelines";
@@ -99,11 +104,14 @@ export const POST = async (request: Request) => {
       },
     });
 
-    const [integrations, surveyData] = await Promise.all([
-      getIntegrations(environmentId),
-      getSurvey(surveyId),
-    ]);
-    const survey = surveyData ?? undefined;
+    const [integrations, survey] = await Promise.all([getIntegrations(environmentId), getSurvey(surveyId)]);
+
+    if (!survey) {
+      console.error(`Pipeline: Survey with id ${surveyId} not found`);
+      return new Response("Survey not found", {
+        status: 404,
+      });
+    }
 
     if (integrations.length > 0 && survey) {
       handleIntegrations(integrations, inputValidation.data, survey);
@@ -154,6 +162,24 @@ export const POST = async (request: Request) => {
     };
 
     await updateSurveyStatus(surveyId);
+
+    console.log(getResponseAsDocumentString(response, survey));
+
+    // generate embedding for enterprise and scale plans
+    if (IS_FORMBRICKS_CLOUD && IS_AI_ENABLED) {
+      const organization = await getOrganizationByEnvironmentId(environmentId);
+      if (!organization) {
+        throw new Error("Organization not found");
+      }
+      if (organization.billing.plan === "enterprise" || organization.billing.plan === "scale") {
+        const { embedding } = await embed({
+          model: embeddingsModel,
+          value: getResponseAsDocumentString(response, survey),
+        });
+        console.log("Embedding", embedding);
+        await updateResponseEmbedding(response.id, embedding);
+      }
+    }
   }
 
   return Response.json({ data: {} });

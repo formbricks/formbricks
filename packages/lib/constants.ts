@@ -209,3 +209,6 @@ export const BILLING_LIMITS = {
     MIU: 20000,
   },
 } as const;
+
+export const IS_AI_ENABLED =
+  env.AI_AZURE_RESSOURCE_NAME && env.AI_AZURE_API_KEY && env.AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID;
