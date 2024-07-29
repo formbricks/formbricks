@@ -129,6 +129,44 @@ export const authOptions: NextAuthOptions = {
         return user;
       },
     }),
+    CredentialsProvider({
+      id: "iframe-token",
+      // The name to display on the sign in form (e.g. "Sign in with...")
+      name: "Iframe Token",
+      // The credentials is used to generate a suitable form on the sign in page.
+      // You can specify whatever fields you are expecting to be submitted.
+      // e.g. domain, username, password, 2FA token, etc.
+      // You can pass any HTML attribute to the <input> tag through the object.
+      credentials: {
+        token: {
+          label: "Verification Token",
+          type: "string",
+        },
+      },
+      async authorize(credentials, _req) {
+        if (!credentials?.token) {
+          throw new Error("Token not found");
+        }
+
+        try {
+          let user;
+          const { id } = await verifyToken(credentials?.token);
+          user = await prisma.user.findUnique({
+            where: {
+              id: id,
+            },
+          });
+
+          if (!user) {
+            throw new Error("Either a user does not match the provided token or the token is invalid");
+          }
+
+          return user;
+        } catch (e) {
+          throw new Error("Either a user does not match the provided token or the token is invalid");
+        }
+      },
+    }),
     GitHubProvider({
       clientId: GITHUB_ID || "",
       clientSecret: GITHUB_SECRET || "",
@@ -188,6 +226,10 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account }: any) {
+      if (account.provider === "iframe-token") {
+        return true;
+      }
+
       if (account.provider === "credentials" || account.provider === "token") {
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           throw new Error("Email Verification is Pending");

@@ -1,14 +1,11 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
 import { createHash, randomBytes } from "crypto";
-
 import { prisma } from "@formbricks/database";
 import { TApiKey, TApiKeyCreateInput, ZApiKeyCreateInput } from "@formbricks/types/apiKeys";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
-
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { getHash } from "../crypto";
@@ -123,6 +120,61 @@ export const getApiKeyFromKey = (apiKey: string): Promise<TApiKey | null> => {
         const apiKeyData = await prisma.apiKey.findUnique({
           where: {
             hashedKey,
+          },
+        });
+
+        return apiKeyData;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
+    },
+    [`getApiKeyFromKey-${apiKey}`],
+    {
+      tags: [apiKeyCache.tag.byHashedKey(hashedKey)],
+    }
+  )();
+};
+
+export const getApiKeyFromKeyWithOrganization = (apiKey: string) => {
+  const hashedKey = getHash(apiKey);
+
+  return cache(
+    async () => {
+      validateInputs([apiKey, ZString]);
+
+      if (!apiKey) {
+        throw new InvalidInputError("API key cannot be null or undefined.");
+      }
+
+      try {
+        const apiKeyData = await prisma.apiKey.findUnique({
+          where: {
+            hashedKey,
+          },
+          select: {
+            id: true,
+            label: true,
+            environmentId: true,
+            lastUsedAt: true,
+            environment: {
+              select: {
+                id: true,
+                createdAt: true,
+                updatedAt: true,
+                type: true,
+                // productId:true
+                product: {
+                  select: {
+                    id: true,
+                    organizationId: true,
+                  },
+                },
+              },
+            },
           },
         });
 
