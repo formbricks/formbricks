@@ -24,6 +24,21 @@ class ValidationError extends Error {
   }
 }
 
+class ValidationErrorWithDetails extends Error {
+  statusCode = 400;
+  details: { [key: string]: string } | undefined;
+  constructor(
+    message: string,
+    details?: {
+      [key: string]: string;
+    }
+  ) {
+    super(message);
+    this.details = details;
+    this.name = "ValidationErrorWithDetails";
+  }
+}
+
 class UnknownError extends Error {
   statusCode = 500;
   constructor(message: string) {
@@ -93,6 +108,7 @@ export {
   ResourceNotFoundError,
   InvalidInputError,
   ValidationError,
+  ValidationErrorWithDetails,
   DatabaseError,
   UniqueConstraintError,
   UnknownError,
