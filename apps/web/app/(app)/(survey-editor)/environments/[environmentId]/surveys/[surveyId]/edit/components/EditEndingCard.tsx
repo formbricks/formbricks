@@ -37,7 +37,7 @@ interface EditEndingCardProps {
 }
 
 const endingCardTypes = [
-  { value: "endScreen", label: "End Screen" },
+  { value: "endScreen", label: "Ending card" },
   { value: "redirectToUrl", label: "Redirect to Url" },
 ];
 
@@ -177,8 +177,8 @@ export const EditEndingCard = ({
                             attributeClasses
                           )[selectedLanguageCode]
                         )
-                      : "Ending Card")}
-                  {(endingCard.type === "redirectToUrl" && endingCard.label) ?? "Ending Card"}
+                      : "Ending card")}
+                  {endingCard.type === "redirectToUrl" && (endingCard.label || "Redirect to Url")}
                 </p>
               </div>
             </div>
