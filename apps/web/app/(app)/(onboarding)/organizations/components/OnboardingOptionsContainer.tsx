@@ -26,7 +26,7 @@ export const OnboardingOptionsContainer = ({ options }: OnboardingOptionsContain
               title={option.title}
               description={option.description}
               loading={false}>
-              <div className="flex flex-grow flex-col items-center">
+              <div className="flex flex-col items-center">
                 <Icon className="h-16 w-16 text-slate-600" strokeWidth={0.5} />
                 <p className="mt-4 w-fit rounded-xl bg-slate-200 px-4 text-sm text-slate-700">
                   {option.iconText}
