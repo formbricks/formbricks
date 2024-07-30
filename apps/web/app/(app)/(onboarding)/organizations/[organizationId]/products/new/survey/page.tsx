@@ -1,3 +1,4 @@
+// This is currently not in use. We will remove it once we are sure we won't add a link survey to the onboarding flow.
 import { OnboardingSurvey } from "@/app/(app)/(onboarding)/organizations/[organizationId]/products/new/survey/components/OnboardingSurvey";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
