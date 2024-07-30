@@ -71,7 +71,6 @@ export const RecallItemSelect = ({
   }, [recallItems]);
 
   const hiddenFieldRecallItems = useMemo(() => {
-    if (localSurvey.type !== "link") return [];
     if (localSurvey.hiddenFields.fieldIds) {
       return localSurvey.hiddenFields.fieldIds
         .filter((hiddenFieldId) => {

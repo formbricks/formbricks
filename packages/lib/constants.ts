@@ -193,8 +193,6 @@ export enum STRIPE_PRICE_LOOKUP_KEYS {
   STARTUP_YEARLY = "formbricks_startup_yearly",
   SCALE_MONTHLY = "formbricks_scale_monthly",
   SCALE_YEARLY = "formbricks_scale_yearly",
-  UNLIMITED_99 = "formbricks_unlimited_99",
-  UNLIMITED_199 = "formbricks_unlimited_199",
 }
 
 export const BILLING_LIMITS = {
