@@ -175,10 +175,7 @@ const baseSurveyProperties = {
   surveyClosedMessage: {
     enabled: false,
   },
-  verifyEmail: {
-    name: "verifyEmail",
-    subheading: "please verify your email",
-  },
+  isVerifyEmailEnabled: true,
   attributeFilters: [],
   ...commonMockProperties,
 };

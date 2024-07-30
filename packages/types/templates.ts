@@ -30,6 +30,7 @@ export const ZTemplate = z.object({
     questions: ZSurveyQuestions,
     thankYouCard: ZSurveyThankYouCard,
     hiddenFields: ZSurveyHiddenFields,
+    isVerifyEmailEnabled: z.boolean(),
   }),
 });
 

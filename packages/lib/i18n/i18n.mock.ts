@@ -293,7 +293,7 @@ export const mockSurvey: TSurvey = {
   delay: 0,
   displayPercentage: null,
   autoComplete: null,
-  verifyEmail: null,
+  isVerifyEmailEnabled: false,
   redirectUrl: null,
   productOverwrites: null,
   styling: null,

@@ -65,7 +65,7 @@ export const selectSurvey = {
   delay: true,
   displayPercentage: true,
   autoComplete: true,
-  verifyEmail: true,
+  isVerifyEmailEnabled: true,
   redirectUrl: true,
   productOverwrites: true,
   styling: true,
@@ -748,9 +748,6 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
           ? structuredClone(existingSurvey.productOverwrites)
           : Prisma.JsonNull,
         styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
-        verifyEmail: existingSurvey.verifyEmail
-          ? structuredClone(existingSurvey.verifyEmail)
-          : Prisma.JsonNull,
         // we'll update the segment later
         segment: undefined,
       },

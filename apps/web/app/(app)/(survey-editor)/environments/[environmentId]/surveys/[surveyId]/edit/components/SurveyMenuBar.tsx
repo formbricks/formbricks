@@ -139,6 +139,7 @@ export const SurveyMenuBar = ({
   };
 
   const validateSurveyWithZod = (): boolean => {
+    console.log(localSurvey);
     const localSurveyValidation = ZSurvey.safeParse(localSurvey);
     if (!localSurveyValidation.success) {
       const currentError = localSurveyValidation.error.errors[0];

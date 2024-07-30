@@ -132,15 +132,6 @@ export const ZSurveySingleUse = z
 
 export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 
-export const ZSurveyVerifyEmail = z
-  .object({
-    name: z.optional(z.string()),
-    subheading: z.optional(z.string()),
-  })
-  .optional();
-
-export type TSurveyVerifyEmail = z.infer<typeof ZSurveyVerifyEmail>;
-
 export type TSurveyWelcomeCard = z.infer<typeof ZSurveyWelcomeCard>;
 
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
@@ -588,7 +579,7 @@ export const ZSurvey = z
     surveyClosedMessage: ZSurveyClosedMessage.nullable(),
     segment: ZSegment.nullable(),
     singleUse: ZSurveySingleUse.nullable(),
-    verifyEmail: ZSurveyVerifyEmail.nullable(),
+    isVerifyEmailEnabled: z.boolean(),
     pin: z.string().min(4, { message: "PIN must be a four digit number" }).nullish(),
     resultShareKey: z.string().nullable(),
     displayPercentage: z.number().min(0.01).max(100).nullable(),
@@ -984,7 +975,7 @@ export const ZSurveyInput = z.object({
   styling: ZSurveyStyling.optional(),
   surveyClosedMessage: ZSurveyClosedMessage.nullish(),
   singleUse: ZSurveySingleUse.nullish(),
-  verifyEmail: ZSurveyVerifyEmail.optional(),
+  isVerifyEmailEnabled: z.boolean(),
   pin: z.string().nullish(),
   resultShareKey: z.string().nullish(),
   displayPercentage: z.number().min(0.01).max(100).nullish(),
