@@ -1,5 +1,5 @@
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { CircleUserRoundIcon, EarthIcon, SendHorizonalIcon, XIcon } from "lucide-react";
+import { CircleUserRoundIcon, EarthIcon, LinkIcon, XIcon } from "lucide-react";
 import { getProducts } from "@formbricks/lib/product/service";
 import { Button } from "@formbricks/ui/Button";
 import { Header } from "@formbricks/ui/Header";
@@ -14,24 +14,24 @@ const Page = async ({ params }: ChannelPageProps) => {
   const channelOptions = [
     {
       title: "Public website",
-      description: "Display surveys on public websites, well timed and targeted.",
+      description: "Run well-timed pop-up surveys.",
       icon: EarthIcon,
       iconText: "Built for scale",
       href: `/organizations/${params.organizationId}/products/new/industry?channel=website`,
     },
     {
       title: "App with sign up",
-      description: "Run highly targeted surveys with any user cohort.",
+      description: "Run highly-targeted micro-surveys.",
       icon: CircleUserRoundIcon,
       iconText: "Enrich user profiles",
       href: `/organizations/${params.organizationId}/products/new/industry?channel=app`,
     },
     {
       channel: "link",
-      title: "Anywhere online",
-      description: "Create link and email surveys, reach your people anywhere.",
-      icon: SendHorizonalIcon,
-      iconText: "100% custom branding",
+      title: "Link & email surveys",
+      description: "Reach people anywhere online.",
+      icon: LinkIcon,
+      iconText: "Anywhere online",
       href: `/organizations/${params.organizationId}/products/new/industry?channel=link`,
     },
   ];
@@ -42,7 +42,7 @@ const Page = async ({ params }: ChannelPageProps) => {
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       <Header
         title="Where do you want to survey people?"
-        subtitle="Get started with proven best practices 🚀"
+        subtitle="Run surveys on public websites, in your app, or with shareable links & emails."
       />
       <OnboardingOptionsContainer options={channelOptions} />
       {products.length >= 1 && (

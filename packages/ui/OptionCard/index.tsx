@@ -26,10 +26,10 @@ export const OptionCard: React.FC<PathwayOptionProps> = ({
   loading,
   cssId,
 }) => (
-  <div className="relative">
+  <div className="relative h-full">
     <div
       id={cssId}
-      className={`flex cursor-pointer flex-col items-center justify-center bg-white p-6 hover:scale-105 hover:border-slate-300 ${sizeClasses[size]}`}
+      className={`flex h-full cursor-pointer flex-col items-center justify-center bg-white p-6 hover:scale-105 hover:border-slate-300 ${sizeClasses[size]}`}
       onClick={onSelect}
       role="button"
       tabIndex={0}>

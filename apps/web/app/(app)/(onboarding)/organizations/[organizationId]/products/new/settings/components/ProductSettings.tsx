@@ -97,7 +97,7 @@ export const ProductSettings = ({
                 <FormItem className="w-full space-y-4">
                   <div>
                     <FormLabel>Brand color</FormLabel>
-                    <FormDescription>Change the brand color of the survey.</FormDescription>
+                    <FormDescription>Match the main color of surveys with your brand.</FormDescription>
                   </div>
                   <FormControl>
                     <div>
@@ -118,9 +118,9 @@ export const ProductSettings = ({
               render={({ field, fieldState: { error } }) => (
                 <FormItem className="w-full space-y-4">
                   <div>
-                    <FormLabel>Product Name</FormLabel>
+                    <FormLabel>Product name</FormLabel>
                     <FormDescription>
-                      What is your {getCustomHeadline(channel, industry)} called ?
+                      What is your {getCustomHeadline(channel, industry)} called?
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -128,7 +128,7 @@ export const ProductSettings = ({
                       <Input
                         value={field.value}
                         onChange={(name) => field.onChange(name)}
-                        placeholder="Formbricks Merch Store"
+                        placeholder="e.g. Formbricks"
                         className="bg-white"
                         autoFocus={true}
                       />
