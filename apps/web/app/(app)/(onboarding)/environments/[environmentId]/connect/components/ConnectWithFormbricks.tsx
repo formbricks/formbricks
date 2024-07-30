@@ -73,17 +73,20 @@ export const ConnectWithFormbricks = ({
           ) : (
             <div className="space-y-4">
               <Image src={Lost} alt="lost" height={250} />
-              <p className="pt-4 text-slate-400">Waiting for your signal...</p>
+              <p className="animate-pulse pt-4 text-sm font-semibold text-slate-700">
+                Waiting for your signal...
+              </p>
             </div>
           )}
         </div>
       </div>
       <Button
         id="finishOnboarding"
+        className="text-slate-400 hover:text-slate-700"
         variant={widgetSetupCompleted ? "darkCTA" : "minimal"}
         onClick={handleFinishOnboarding}
         EndIcon={ArrowRight}>
-        {widgetSetupCompleted ? "Finish Onboarding" : "Skip"}
+        {widgetSetupCompleted ? "Finish Onboarding" : "I don't know how to do it"}
       </Button>
     </div>
   );
