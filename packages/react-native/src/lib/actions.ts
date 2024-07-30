@@ -1,8 +1,8 @@
 import { FormbricksAPI } from "@formbricks/api";
-import { NetworkError, Result, err, okVoid } from "@formbricks/lib/errors";
-import { Logger } from "@formbricks/lib/logger";
 import { TJsActionInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { NetworkError, Result, err, okVoid } from "../../../js-core/src/shared/errors";
+import { Logger } from "../../../js-core/src/shared/logger";
 import { appConfig } from "./config";
 import { SurveyStore } from "./surveyStore";
 

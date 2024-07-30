@@ -1,5 +1,3 @@
-import { AppConfig } from "@formbricks/lib/js/config";
-import { addExpiryCheckListener, removeExpiryCheckListener } from "@formbricks/lib/js/sync";
 import {
   addClickEventListener,
   addExitIntentListener,
@@ -10,6 +8,8 @@ import {
   removePageUrlEventListeners,
   removeScrollDepthListener,
 } from "../lib/noCodeActions";
+import { AppConfig } from "./config";
+import { addExpiryCheckListener, removeExpiryCheckListener } from "./sync";
 
 let areRemoveEventListenersAdded = false;
 const appConfig = AppConfig.getInstance();

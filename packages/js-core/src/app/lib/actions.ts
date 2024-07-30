@@ -1,10 +1,10 @@
 import { FormbricksAPI } from "@formbricks/api";
-import { AppConfig } from "@formbricks/lib/js/config";
-import { InvalidCodeError, NetworkError, Result, err, okVoid } from "@formbricks/lib/js/errors";
-import { Logger } from "@formbricks/lib/js/logger";
-import { sync } from "@formbricks/lib/js/sync";
-import { getIsDebug } from "@formbricks/lib/js/utils";
 import { TJsActionInput, TJsTrackProperties } from "@formbricks/types/js";
+import { InvalidCodeError, NetworkError, Result, err, okVoid } from "../../shared/errors";
+import { Logger } from "../../shared/logger";
+import { getIsDebug } from "../../shared/utils";
+import { AppConfig } from "./config";
+import { sync } from "./sync";
 import { triggerSurvey } from "./widget";
 
 const logger = Logger.getInstance();

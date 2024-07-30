@@ -1,5 +1,5 @@
-import { NetworkError, Result, err, okVoid } from "@formbricks/lib/errors";
-import { Logger } from "@formbricks/lib/logger";
+import { NetworkError, Result, err, okVoid } from "../../../js-core/src/shared/errors";
+import { Logger } from "../../../js-core/src/shared/logger";
 import { appConfig } from "./config";
 import { deinitalize, initialize } from "./initialize";
 

@@ -1,7 +1,5 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { getDefaultLanguageCode, getLanguageCodeForSurvey } from "@formbricks/lib/i18n/utils";
-import { Logger } from "@formbricks/lib/js/logger";
-import { handleHiddenFields } from "@formbricks/lib/js/utils";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
@@ -9,6 +7,8 @@ import { TJSWebsiteStateDisplay, TJsTrackProperties } from "@formbricks/types/js
 import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { Logger } from "../../shared/logger";
+import { handleHiddenFields } from "../../shared/utils";
 import { WebsiteConfig } from "./config";
 import { filterPublicSurveys } from "./sync";
 

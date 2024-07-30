@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { AppConfig, RN_ASYNC_STORAGE_KEY, StorageHandler } from "@formbricks/lib/js/config";
+import { AppConfig, StorageHandler } from "../../../js-core/src/app/lib/config";
+import { RN_ASYNC_STORAGE_KEY } from "../../../js-core/src/shared/constants";
 
 const storageHandler: StorageHandler = {
   getItem: async (key: string) => AsyncStorage.getItem(key),

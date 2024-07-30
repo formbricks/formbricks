@@ -1,8 +1,6 @@
 import { TJSAppConfig, TJsAppConfigUpdateInput } from "@formbricks/types/js";
-import { Result, err, ok, wrapThrows } from "./errors";
-
-export const IN_APP_LOCAL_STORAGE_KEY = "formbricks-js-app";
-export const RN_ASYNC_STORAGE_KEY = "formbricks-react-native";
+import { APP_SURVEYS_LOCAL_STORAGE_KEY } from "../../shared/constants";
+import { Result, err, ok, wrapThrows } from "../../shared/errors";
 
 export interface StorageHandler {
   getItem(key: string): Promise<string | null>;
@@ -33,7 +31,7 @@ export class AppConfig {
 
   private constructor(
     storageHandler: StorageHandler = new LocalStorage(),
-    storageKey: string = IN_APP_LOCAL_STORAGE_KEY
+    storageKey: string = APP_SURVEYS_LOCAL_STORAGE_KEY
   ) {
     this.storageHandler = storageHandler;
     this.storageKey = storageKey;

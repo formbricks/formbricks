@@ -1,9 +1,9 @@
-import { NetworkError, Result, err, ok } from "@formbricks/lib/errors";
-import { Logger } from "@formbricks/lib/js/logger";
-import { getIsDebug } from "@formbricks/lib/js/utils";
 import { diffInDays } from "@formbricks/lib/utils/datetime";
 import { TJsWebsiteState, TJsWebsiteSyncParams } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { NetworkError, Result, err, ok } from "../../shared/errors";
+import { Logger } from "../../shared/logger";
+import { getIsDebug } from "../../shared/utils";
 import { WebsiteConfig } from "./config";
 
 const websiteConfig = WebsiteConfig.getInstance();

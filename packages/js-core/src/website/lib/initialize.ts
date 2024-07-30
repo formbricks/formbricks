@@ -1,3 +1,5 @@
+import type { TJSAppConfig, TJsWebsiteConfig, TJsWebsiteConfigInput } from "@formbricks/types/js";
+import { WEBSITE_SURVEYS_LOCAL_STORAGE_KEY } from "../../shared/constants";
 import {
   ErrorHandler,
   MissingFieldError,
@@ -8,12 +10,11 @@ import {
   err,
   okVoid,
   wrapThrows,
-} from "@formbricks/lib/js/errors";
-import { Logger } from "@formbricks/lib/js/logger";
-import { getIsDebug } from "@formbricks/lib/js/utils";
-import type { TJSAppConfig, TJsWebsiteConfig, TJsWebsiteConfigInput } from "@formbricks/types/js";
+} from "../../shared/errors";
+import { Logger } from "../../shared/logger";
+import { getIsDebug } from "../../shared/utils";
 import { trackNoCodeAction } from "./actions";
-import { WEBSITE_LOCAL_STORAGE_KEY, WebsiteConfig } from "./config";
+import { WebsiteConfig } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { checkPageUrl } from "./noCodeActions";
 import { sync } from "./sync";
@@ -174,7 +175,9 @@ const handleErrorOnFirstInit = () => {
     expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
   };
   // can't use config.update here because the config is not yet initialized
-  wrapThrows(() => localStorage.setItem(WEBSITE_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
+  wrapThrows(() =>
+    localStorage.setItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig))
+  )();
   throw new Error("Could not initialize formbricks");
 };
 

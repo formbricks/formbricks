@@ -1,6 +1,6 @@
-import { ErrorHandler } from "@formbricks/lib/js/errors";
-import { Logger } from "@formbricks/lib/logger";
 import { TJsAppConfigInput } from "@formbricks/types/js";
+import { ErrorHandler } from "../../../js-core/src/shared/errors";
+import { Logger } from "../../../js-core/src/shared/logger";
 import { trackAction } from "./actions";
 import { CommandQueue } from "./commandQueue";
 import { initialize } from "./initialize";

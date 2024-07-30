@@ -1,10 +1,18 @@
-import type { MissingFieldError, MissingPersonError, NetworkError, Result } from "@formbricks/lib/errors";
-import { updateAttributes } from "@formbricks/lib/js/attributes";
-import { ErrorHandler, NotInitializedError, err, okVoid } from "@formbricks/lib/js/errors";
-import { Logger } from "@formbricks/lib/js/logger";
-import { sync } from "@formbricks/lib/js/sync";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
+import { updateAttributes } from "../../../js-core/src/app/lib/attributes";
+import { sync } from "../../../js-core/src/app/lib/sync";
+import {
+  ErrorHandler,
+  MissingFieldError,
+  MissingPersonError,
+  NetworkError,
+  NotInitializedError,
+  Result,
+  err,
+  okVoid,
+} from "../../../js-core/src/shared/errors";
+import { Logger } from "../../../js-core/src/shared/logger";
 import { trackAction } from "./actions";
 import { appConfig } from "./config";
 

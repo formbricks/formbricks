@@ -1,5 +1,6 @@
-import { updateAttributes } from "@formbricks/lib/js/attributes";
-import { AppConfig, IN_APP_LOCAL_STORAGE_KEY } from "@formbricks/lib/js/config";
+import { TAttributes } from "@formbricks/types/attributes";
+import type { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
+import { APP_SURVEYS_LOCAL_STORAGE_KEY } from "../../shared/constants";
 import {
   ErrorHandler,
   MissingFieldError,
@@ -10,15 +11,15 @@ import {
   err,
   okVoid,
   wrapThrows,
-} from "@formbricks/lib/js/errors";
-import { Logger } from "@formbricks/lib/js/logger";
-import { sync } from "@formbricks/lib/js/sync";
-import { getIsDebug } from "@formbricks/lib/js/utils";
-import { TAttributes } from "@formbricks/types/attributes";
-import type { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
+} from "../../shared/errors";
+import { Logger } from "../../shared/logger";
+import { getIsDebug } from "../../shared/utils";
 import { trackNoCodeAction } from "./actions";
+import { updateAttributes } from "./attributes";
+import { AppConfig } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { checkPageUrl } from "./noCodeActions";
+import { sync } from "./sync";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
 const appConfig = AppConfig.getInstance();
@@ -210,7 +211,7 @@ const handleErrorOnFirstInit = () => {
     expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
   };
   // can't use config.update here because the config is not yet initialized
-  wrapThrows(() => localStorage.setItem(IN_APP_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
+  wrapThrows(() => localStorage.setItem(APP_SURVEYS_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
   throw new Error("Could not initialize formbricks");
 };
 

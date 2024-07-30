@@ -1,7 +1,7 @@
-import { ErrorHandler, Result } from "@formbricks/lib/js/errors";
 import { wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { TJsPackageType } from "@formbricks/types/js";
 import { checkInitialized as checkInitializedInApp } from "../app/lib/initialize";
+import { ErrorHandler, Result } from "../shared/errors";
 import { checkInitialized as checkInitializedWebsite } from "../website/lib/initialize";
 
 export class CommandQueue {

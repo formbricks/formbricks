@@ -1,6 +1,6 @@
-import { ErrorHandler, Result } from "@formbricks/lib/errors";
 import { wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { TJsPackageType } from "@formbricks/types/js";
+import { ErrorHandler, Result } from "../../../js-core/src/shared/errors";
 import { checkInitialized } from "./initialize";
 
 export class CommandQueue {

@@ -9,10 +9,11 @@ export default function App() {
     environmentId: "clyr6frui0009v2pn32q5fxd3",
     // apiHost: "http://localhost:3000",
     apiHost: process.env.EXPO_PUBLIC_API_HOST!,
-    userId: "hello-random-user",
+    userId: "hello-user",
     attributes: {
       language: "en",
       testAttr: "attr-test",
+      hello: "Hello",
     },
   };
 
