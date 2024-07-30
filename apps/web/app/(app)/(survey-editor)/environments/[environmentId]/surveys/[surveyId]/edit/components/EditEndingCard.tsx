@@ -143,7 +143,7 @@ export const EditEndingCard = ({
           "flex w-10 flex-col items-center justify-between rounded-l-lg border-b border-l border-t py-2 group-aria-expanded:rounded-bl-none",
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
-        <p>🙏</p>
+        <p>↪️</p>
         <button className="opacity-0 transition-all duration-300 hover:cursor-move group-hover:opacity-100">
           <GripIcon className="h-4 w-4" />
         </button>
@@ -154,7 +154,7 @@ export const EditEndingCard = ({
         className="flex-1 rounded-r-lg border border-slate-200 transition-all duration-300 ease-in-out">
         <Collapsible.CollapsibleTrigger
           asChild
-          className="flex cursor-pointer justify-between rounded-r-lg p-4 hover:bg-slate-50">
+          className="flex cursor-pointer justify-between rounded-r-lg p-5 hover:bg-slate-50">
           <div>
             <div className="inline-flex">
               <div>
@@ -199,7 +199,7 @@ export const EditEndingCard = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="px-4 pb-6">
+        <Collapsible.CollapsibleContent className="mt-3 px-4 pb-6">
           <TooltipRenderer
             shouldRender={endingCard.type === "endScreen" && isRedirectToUrlDisabled}
             tooltipContent={"Redirect To Url is not available on free plan"}

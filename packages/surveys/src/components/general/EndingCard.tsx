@@ -90,36 +90,39 @@ export const EndingCard = ({
       <div className="fb-text-center">
         {isResponseSendingFinished ? (
           <>
-            {media || checkmark}
-            {endingCard.type === "endScreen" && (
-              <div>
-                <Headline
-                  alignTextCenter={true}
-                  headline={replaceRecallInfo(
-                    getLocalizedValue(endingCard.headline, languageCode),
-                    responseData
-                  )}
-                  questionId="EndingCard"
-                />
-                <Subheader
-                  subheader={getLocalizedValue(endingCard.subheader, languageCode)}
-                  questionId="EndingCard"
-                />
-                {endingCard.buttonLabel && (
-                  <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
-                    <SubmitButton
-                      buttonLabel={replaceRecallInfo(
-                        getLocalizedValue(endingCard.buttonLabel, languageCode),
-                        responseData
-                      )}
-                      isLastQuestion={false}
-                      focus={autoFocusEnabled}
-                      onClick={handleSubmit}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
+            {endingCard.type === "endScreen" && (media || checkmark)}
+            <div>
+              <Headline
+                alignTextCenter={true}
+                headline={
+                  endingCard.type === "endScreen"
+                    ? replaceRecallInfo(getLocalizedValue(endingCard.headline, languageCode), responseData)
+                    : "Respondants will not see this card"
+                }
+                questionId="EndingCard"
+              />
+              <Subheader
+                subheader={
+                  endingCard.type === "endScreen"
+                    ? getLocalizedValue(endingCard.subheader, languageCode)
+                    : "They will be forwarded immediately"
+                }
+                questionId="EndingCard"
+              />
+              {endingCard.type === "endScreen" && endingCard.buttonLabel && (
+                <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
+                  <SubmitButton
+                    buttonLabel={replaceRecallInfo(
+                      getLocalizedValue(endingCard.buttonLabel, languageCode),
+                      responseData
+                    )}
+                    isLastQuestion={false}
+                    focus={autoFocusEnabled}
+                    onClick={handleSubmit}
+                  />
+                </div>
+              )}
+            </div>
           </>
         ) : (
           <>

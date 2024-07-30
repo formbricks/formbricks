@@ -56,6 +56,10 @@ export const EditorCardMenu = ({
   const [changeToType, setChangeToType] = useState(
     card.type !== "endScreen" && card.type !== "redirectToUrl" ? card.type : undefined
   );
+  const isDeleteDisabled =
+    cardType === "question"
+      ? survey.questions.length === 1
+      : survey.type === "link" && survey.endings.length === 1;
 
   const changeQuestionType = (type?: TSurveyQuestionTypeEnum) => {
     const parseResult = ZSurveyQuestion.safeParse(card);
@@ -139,12 +143,12 @@ export const EditorCardMenu = ({
       />
       <TrashIcon
         className={cn(
-          "h-4 cursor-pointer text-slate-500 hover:text-slate-600",
-          survey.type === "link" && survey.endings.length === 1 && "cursor-not-allowed"
+          "h-4 cursor-pointer text-slate-500",
+          isDeleteDisabled ? "cursor-not-allowed opacity-50" : "hover:text-slate-600"
         )}
         onClick={(e) => {
-          if (survey.type === "link" && survey.endings.length === 1) return;
           e.stopPropagation();
+          if (isDeleteDisabled) return;
           deleteCard(cardIdx);
         }}
       />
