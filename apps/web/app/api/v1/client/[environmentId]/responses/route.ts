@@ -96,7 +96,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
       meta,
     });
     logger.debug(
-      { surveyId: survey.id, environmentId: survey.environmentId, response },
+      { surveyId: survey.id, environmentId: survey.environmentId, response, responseId: response.id },
       "Survey response created"
     );
   } catch (error) {
