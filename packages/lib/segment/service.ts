@@ -3,7 +3,12 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import {
   TActionMetric,
   TAllOperators,
@@ -236,59 +241,16 @@ export const deleteSegment = async (segmentId: string): Promise<TSegment> => {
       throw new ResourceNotFoundError("segment", segmentId);
     }
 
+    if (currentSegment.surveys?.length) {
+      throw new OperationNotAllowedError("Cannot delete a segment that is associated with a survey");
+    }
+
     const segment = await prisma.segment.delete({
       where: {
         id: segmentId,
       },
       select: selectSegment,
     });
-
-    const surveyIds = segment.surveys.map((survey) => survey.id);
-    if (!!surveyIds?.length) {
-      for (const surveyId of surveyIds) {
-        let privateSegmentId: string | null = null;
-        const privateSegment = await prisma.segment.findFirst({
-          where: {
-            title: surveyId,
-            isPrivate: true,
-          },
-        });
-
-        if (privateSegment?.id) {
-          privateSegmentId = privateSegment.id;
-        } else {
-          await prisma.segment.create({
-            data: {
-              title: surveyId,
-              isPrivate: true,
-              filters: [],
-              surveys: { connect: { id: surveyId } },
-              environment: {
-                connect: {
-                  id: currentSegment.environmentId,
-                },
-              },
-            },
-          });
-        }
-
-        await prisma.survey.update({
-          where: {
-            id: surveyId,
-          },
-          data: {
-            status: "paused",
-            ...(privateSegmentId && {
-              segment: {
-                connect: {
-                  id: privateSegmentId,
-                },
-              },
-            }),
-          },
-        });
-      }
-    }
 
     segmentCache.revalidate({ id: segmentId, environmentId: segment.environmentId });
     segment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
