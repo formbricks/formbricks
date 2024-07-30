@@ -975,7 +975,7 @@ export const ZSurveyInput = z.object({
   styling: ZSurveyStyling.optional(),
   surveyClosedMessage: ZSurveyClosedMessage.nullish(),
   singleUse: ZSurveySingleUse.nullish(),
-  isVerifyEmailEnabled: z.boolean(),
+  isVerifyEmailEnabled: z.boolean().optional(),
   pin: z.string().nullish(),
   resultShareKey: z.string().nullish(),
   displayPercentage: z.number().min(0.01).max(100).nullish(),

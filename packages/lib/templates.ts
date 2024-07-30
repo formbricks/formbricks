@@ -41,7 +41,6 @@ const surveyDefault: TTemplate["preset"] = {
   thankYouCard: thankYouCardDefault,
   hiddenFields: hiddenFieldsDefault,
   questions: [],
-  isVerifyEmailEnabled: false,
 };
 
 /* export const testTemplate: TTemplate = {
