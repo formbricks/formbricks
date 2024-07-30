@@ -128,6 +128,7 @@ export const initialize = async (
 
 export const checkInitialized = (): Result<void, NotInitializedError> => {
   logger.debug("Check if initialized");
+
   if (!isInitialized || !ErrorHandler.initialized) {
     return err({
       code: "not_initialized",

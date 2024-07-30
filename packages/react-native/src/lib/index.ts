@@ -1,4 +1,4 @@
-import { ErrorHandler } from "@formbricks/lib/errors";
+import { ErrorHandler } from "@formbricks/lib/js/errors";
 import { Logger } from "@formbricks/lib/logger";
 import { TJsAppConfigInput } from "@formbricks/types/js";
 import { trackAction } from "./actions";
