@@ -1,16 +1,15 @@
-import { ErrorHandler, NotInitializedError, err, okVoid } from "@formbricks/lib/errors";
 import type { MissingFieldError, MissingPersonError, NetworkError, Result } from "@formbricks/lib/errors";
 import { updateAttributes } from "@formbricks/lib/js/attributes";
-import { RNAppConfig } from "@formbricks/lib/js/config";
+import { ErrorHandler, NotInitializedError, err, okVoid } from "@formbricks/lib/js/errors";
+import { Logger } from "@formbricks/lib/js/logger";
 import { sync } from "@formbricks/lib/js/sync";
-import { Logger } from "@formbricks/lib/logger";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
 import { trackAction } from "./actions";
+import { appConfig } from "./config";
 
-const logger = Logger.getInstance();
-const appConfig = RNAppConfig.getInstance();
 let isInitialized = false;
+const logger = Logger.getInstance();
 
 export const setIsInitialize = (state: boolean) => {
   isInitialized = state;

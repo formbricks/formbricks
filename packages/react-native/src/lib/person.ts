@@ -1,9 +1,8 @@
 import { NetworkError, Result, err, okVoid } from "@formbricks/lib/errors";
-import { RNAppConfig } from "@formbricks/lib/js/config";
 import { Logger } from "@formbricks/lib/logger";
+import { appConfig } from "./config";
 import { deinitalize, initialize } from "./initialize";
 
-const appConfig = RNAppConfig.getInstance();
 const logger = Logger.getInstance();
 
 export const logoutPerson = async (): Promise<void> => {

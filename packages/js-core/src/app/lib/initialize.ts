@@ -12,13 +12,13 @@ import {
   wrapThrows,
 } from "@formbricks/lib/js/errors";
 import { Logger } from "@formbricks/lib/js/logger";
+import { sync } from "@formbricks/lib/js/sync";
 import { getIsDebug } from "@formbricks/lib/js/utils";
 import { TAttributes } from "@formbricks/types/attributes";
 import type { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
 import { trackNoCodeAction } from "./actions";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { checkPageUrl } from "./noCodeActions";
-import { sync } from "./sync";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
 const appConfig = AppConfig.getInstance();
@@ -131,11 +131,15 @@ export const initialize = async (
       logger.debug("Configuration expired.");
 
       try {
-        await sync({
-          apiHost: configInput.apiHost,
-          environmentId: configInput.environmentId,
-          userId: configInput.userId,
-        });
+        await sync(
+          {
+            apiHost: configInput.apiHost,
+            environmentId: configInput.environmentId,
+            userId: configInput.userId,
+          },
+          undefined,
+          appConfig
+        );
       } catch (e) {
         putFormbricksInErrorState();
       }
@@ -151,11 +155,15 @@ export const initialize = async (
     logger.debug("Syncing.");
 
     try {
-      await sync({
-        apiHost: configInput.apiHost,
-        environmentId: configInput.environmentId,
-        userId: configInput.userId,
-      });
+      await sync(
+        {
+          apiHost: configInput.apiHost,
+          environmentId: configInput.environmentId,
+          userId: configInput.userId,
+        },
+        undefined,
+        appConfig
+      );
     } catch (e) {
       handleErrorOnFirstInit();
     }

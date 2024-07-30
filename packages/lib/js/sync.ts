@@ -1,7 +1,7 @@
 import { TAttributes } from "@formbricks/types/attributes";
 import { TJsAppState, TJsAppStateSync, TJsAppSyncParams } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { AppConfig, RNAppConfig } from "./config";
+import { AppConfig } from "./config";
 import { NetworkError, Result, err, ok } from "./errors";
 import { Logger } from "./logger";
 
@@ -49,7 +49,7 @@ const syncWithBackend = async (
 export const sync = async (
   params: TJsAppSyncParams,
   noCache = false,
-  appConfig: RNAppConfig | AppConfig
+  appConfig: AppConfig
 ): Promise<void> => {
   try {
     const syncResult = await syncWithBackend(params, noCache);
@@ -87,7 +87,7 @@ export const sync = async (
   }
 };
 
-export const addExpiryCheckListener = (appConfig: AppConfig | RNAppConfig): void => {
+export const addExpiryCheckListener = (appConfig: AppConfig): void => {
   const updateInterval = 1000 * 30; // every 30 seconds
   // add event listener to check sync with backend on regular interval
   if (typeof window !== "undefined" && syncIntervalId === null) {

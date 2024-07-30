@@ -1,14 +1,14 @@
 import { FormbricksAPI } from "@formbricks/api";
+import { AppConfig } from "@formbricks/lib/js/config";
 import { InvalidCodeError, NetworkError, Result, err, okVoid } from "@formbricks/lib/js/errors";
 import { Logger } from "@formbricks/lib/js/logger";
+import { sync } from "@formbricks/lib/js/sync";
 import { getIsDebug } from "@formbricks/lib/js/utils";
 import { TJsActionInput, TJsTrackProperties } from "@formbricks/types/js";
-import { AppConfig } from "./config";
-import { sync } from "./sync";
 import { triggerSurvey } from "./widget";
 
 const logger = Logger.getInstance();
-const inAppConfig = AppConfig.getInstance();
+const appConfig = AppConfig.getInstance();
 
 export const trackAction = async (
   name: string,
@@ -16,10 +16,10 @@ export const trackAction = async (
   properties?: TJsTrackProperties
 ): Promise<Result<void, NetworkError>> => {
   const aliasName = alias || name;
-  const { userId } = inAppConfig.get();
+  const { userId } = appConfig.get();
 
   const input: TJsActionInput = {
-    environmentId: inAppConfig.get().environmentId,
+    environmentId: appConfig.get().environmentId,
     userId,
     name,
   };
@@ -29,8 +29,8 @@ export const trackAction = async (
     logger.debug(`Sending action "${aliasName}" to backend`);
 
     const api = new FormbricksAPI({
-      apiHost: inAppConfig.get().apiHost,
-      environmentId: inAppConfig.get().environmentId,
+      apiHost: appConfig.get().apiHost,
+      environmentId: appConfig.get().environmentId,
     });
     const res = await api.client.action.create({
       ...input,
@@ -42,7 +42,7 @@ export const trackAction = async (
         code: "network_error",
         message: `Error tracking action ${aliasName}`,
         status: 500,
-        url: `${inAppConfig.get().apiHost}/api/v1/client/${inAppConfig.get().environmentId}/actions`,
+        url: `${appConfig.get().apiHost}/api/v1/client/${appConfig.get().environmentId}/actions`,
         responseMessage: res.error.message,
       });
     }
@@ -52,12 +52,13 @@ export const trackAction = async (
     if (getIsDebug()) {
       await sync(
         {
-          environmentId: inAppConfig.get().environmentId,
-          apiHost: inAppConfig.get().apiHost,
+          environmentId: appConfig.get().environmentId,
+          apiHost: appConfig.get().apiHost,
           userId,
-          attributes: inAppConfig.get().state.attributes,
+          attributes: appConfig.get().state.attributes,
         },
-        true
+        true,
+        appConfig
       );
     }
   }
@@ -65,7 +66,7 @@ export const trackAction = async (
   logger.debug(`Formbricks: Action "${aliasName}" tracked`);
 
   // get a list of surveys that are collecting insights
-  const activeSurveys = inAppConfig.get().state?.surveys;
+  const activeSurveys = appConfig.get().state?.surveys;
 
   if (!!activeSurveys && activeSurveys.length > 0) {
     for (const survey of activeSurveys) {
@@ -88,7 +89,7 @@ export const trackCodeAction = (
 ): Promise<Result<void, NetworkError>> | Result<void, InvalidCodeError> => {
   const {
     state: { actionClasses = [] },
-  } = inAppConfig.get();
+  } = appConfig.get();
 
   const codeActionClasses = actionClasses.filter((action) => action.type === "code");
   const action = codeActionClasses.find((action) => action.key === code);

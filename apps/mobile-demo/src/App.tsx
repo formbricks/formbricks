@@ -7,10 +7,12 @@ LogBox.ignoreAllLogs();
 export default function App() {
   const config = {
     environmentId: "clyr6frui0009v2pn32q5fxd3",
-    apiHost: "http://localhost:3000",
-    userId: "random",
+    // apiHost: "http://localhost:3000",
+    apiHost: process.env.EXPO_PUBLIC_API_HOST!,
+    userId: "hello-random-user",
     attributes: {
       language: "en",
+      testAttr: "attr-test",
     },
   };
 
@@ -21,7 +23,7 @@ export default function App() {
       <Button
         title="Trigger Code Action"
         onPress={() => {
-          track("test");
+          track("New Session");
         }}
       />
       <StatusBar style="auto" />

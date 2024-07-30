@@ -1,6 +1,6 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { TAttributes } from "@formbricks/types/attributes";
-import { AppConfig, RNAppConfig } from "./config";
+import { AppConfig } from "./config";
 import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "./errors";
 import { Logger } from "./logger";
 
@@ -9,7 +9,7 @@ const logger = Logger.getInstance();
 export const updateAttribute = async (
   key: string,
   value: string,
-  appConfig: AppConfig | RNAppConfig
+  appConfig: AppConfig
 ): Promise<Result<void, NetworkError>> => {
   const { apiHost, environmentId, userId } = appConfig.get();
 
@@ -48,7 +48,7 @@ export const updateAttributes = async (
   environmentId: string,
   userId: string,
   attributes: TAttributes,
-  appConfig: AppConfig | RNAppConfig
+  appConfig: AppConfig
 ): Promise<Result<TAttributes, NetworkError>> => {
   // clean attributes and remove existing attributes if config already exists
   const updatedAttributes = { ...attributes };
@@ -100,11 +100,7 @@ export const updateAttributes = async (
   }
 };
 
-export const isExistingAttribute = (
-  key: string,
-  value: string,
-  appConfig: AppConfig | RNAppConfig
-): boolean => {
+export const isExistingAttribute = (key: string, value: string, appConfig: AppConfig): boolean => {
   if (appConfig.get().state.attributes[key] === value) {
     return true;
   }
@@ -114,7 +110,7 @@ export const isExistingAttribute = (
 export const setAttributeInApp = async (
   key: string,
   value: any,
-  appConfig: AppConfig | RNAppConfig
+  appConfig: AppConfig
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
   if (key === "userId") {
     logger.error("Setting userId is no longer supported. Please set the userId in the init call instead.");

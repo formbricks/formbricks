@@ -3,9 +3,8 @@ import { Modal } from "react-native";
 import { WebView } from "react-native-webview";
 import { FormbricksAPI } from "@formbricks/api";
 import { getDefaultLanguageCode, getLanguageCodeForSurvey } from "@formbricks/lib/i18n/utils";
-import { RNAppConfig } from "@formbricks/lib/js/config";
+import { Logger } from "@formbricks/lib/js/logger";
 import { sync } from "@formbricks/lib/js/sync";
-import { Logger } from "@formbricks/lib/logger";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
@@ -13,10 +12,11 @@ import { SurveyInlineProps } from "@formbricks/types/formbricks-surveys";
 import { ZJsRNWebViewOnMessageData } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { appConfig } from "./lib/config";
 import { SurveyStore } from "./lib/surveyStore";
 
 const logger = Logger.getInstance();
-const appConfig = RNAppConfig.getInstance();
+
 const surveyStore = SurveyStore.getInstance();
 let isSurveyRunning = false;
 

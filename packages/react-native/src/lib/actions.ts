@@ -1,13 +1,12 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { NetworkError, Result, err, okVoid } from "@formbricks/lib/errors";
-import { RNAppConfig } from "@formbricks/lib/js/config";
 import { Logger } from "@formbricks/lib/logger";
 import { TJsActionInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { appConfig } from "./config";
 import { SurveyStore } from "./surveyStore";
 
 const logger = Logger.getInstance();
-const appConfig = RNAppConfig.getInstance();
 const surveyStore = SurveyStore.getInstance();
 
 const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
