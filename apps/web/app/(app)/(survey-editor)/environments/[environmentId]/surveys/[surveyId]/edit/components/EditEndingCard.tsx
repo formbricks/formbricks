@@ -143,7 +143,7 @@ export const EditEndingCard = ({
           "flex w-10 flex-col items-center justify-between rounded-l-lg border-b border-l border-t py-2 group-aria-expanded:rounded-bl-none",
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
-        <p>↪️</p>
+        <p>{endingCard.type === "endScreen" ? "🙏" : "↪️"}</p>
         <button className="opacity-0 transition-all duration-300 hover:cursor-move group-hover:opacity-100">
           <GripIcon className="h-4 w-4" />
         </button>
