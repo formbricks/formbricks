@@ -51,7 +51,6 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
   const isEmbed = searchParams.embed === "true" ? true : false;
-  console.log(survey);
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
   }
