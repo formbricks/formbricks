@@ -2,8 +2,8 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { headers } from "next/headers";
+import { getLogger } from "pino-logger";
 import { UAParser } from "ua-parser-js";
-
 import { getPerson } from "@formbricks/lib/person/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/response/service";
@@ -11,6 +11,8 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+
+const logger = getLogger({ path: "apps/web/app/api/v1/client/[environmentId]/responses/route.ts" });
 
 interface Context {
   params: {
@@ -93,6 +95,10 @@ export const POST = async (request: Request, context: Context): Promise<Response
       ...inputValidation.data,
       meta,
     });
+    logger.debug(
+      { surveyId: survey.id, environmentId: survey.environmentId, response },
+      "Survey response created"
+    );
   } catch (error) {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
