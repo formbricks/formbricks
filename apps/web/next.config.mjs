@@ -20,14 +20,22 @@ const getHostname = (url) => {
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
-  serverExternalPackages: ["@aws-sdk", "pino", "pino-pretty", "@davincihealthcare/microservices-core", "@sentry"],
+  serverExternalPackages: [
+    "@aws-sdk",
+    "pino",
+    "pino-pretty",
+    "@davincihealthcare/microservices-core",
+    "@sentry",
+    "next-logger",
+    "@opentelemetry",
+  ],
   logging: {
     fetches: {
       fullUrl: true,
     },
   },
   experimental: {
-    //instrumentationHook: true,
+    instrumentationHook: true,
     outputFileTracingIncludes: {
       "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
     },

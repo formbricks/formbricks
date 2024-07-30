@@ -1,8 +1,8 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { getLogger } from "next-logger.config";
 import { headers } from "next/headers";
-import { getLogger } from "pino-logger";
 import { UAParser } from "ua-parser-js";
 import { getPerson } from "@formbricks/lib/person/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";

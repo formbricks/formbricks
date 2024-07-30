@@ -51,6 +51,7 @@
     "lucide-react": "^0.379.0",
     "mime": "^4.0.3",
     "next": "15.0.0-rc.0",
+    "next-logger": "^5.0.0",
     "optional": "^0.1.4",
     "otplib": "^12.0.1",
     "papaparse": "^5.4.1",
