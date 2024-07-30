@@ -12,7 +12,7 @@ interface QuestionTypeSelectorProps {
   handleTypeChange: (value: string) => void;
 }
 
-export const OptionsSwitcher = ({
+export const OptionsSwitch = ({
   options: questionTypes,
   currentOption,
   handleTypeChange,

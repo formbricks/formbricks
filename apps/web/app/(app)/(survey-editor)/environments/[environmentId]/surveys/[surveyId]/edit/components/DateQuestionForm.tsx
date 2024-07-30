@@ -5,7 +5,7 @@ import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
+import { OptionsSwitch } from "@formbricks/ui/QuestionTypeSelector";
 
 interface IDateQuestionFormProps {
   localSurvey: TSurvey;
@@ -100,7 +100,7 @@ export const DateQuestionForm = ({
       <div className="mt-3">
         <Label htmlFor="questionType">Date Format</Label>
         <div className="mt-2 flex items-center">
-          <OptionsSwitcher
+          <OptionsSwitch
             options={dateOptions}
             currentOption={question.format}
             handleTypeChange={(value: "M-d-y" | "d-M-y" | "y-M-d") =>

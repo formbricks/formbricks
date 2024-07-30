@@ -3,7 +3,7 @@
 import { QUESTIONS_ICON_MAP, QUESTIONS_NAME_MAP, getQuestionDefaults } from "@/app/lib/questions";
 import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
 import {
@@ -154,17 +154,15 @@ export const EditorCardMenu = ({
           <EllipsisIcon className="h-4 w-4 text-slate-500 hover:text-slate-600" />
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent>
+        <DropdownMenuContent className="border border-slate-200">
           <div className="flex flex-col">
             {cardType === "question" && (
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <div className="cursor-pointer text-slate-500 hover:text-slate-600">
-                    <span className="text-xs text-slate-500">Change question type</span>
-                  </div>
+                <DropdownMenuSubTrigger className="cursor-pointer text-sm text-slate-600 hover:text-slate-700">
+                  Change question type
                 </DropdownMenuSubTrigger>
 
-                <DropdownMenuSubContent className="ml-4 border border-slate-200">
+                <DropdownMenuSubContent className="ml-2 border border-slate-200 text-slate-600 hover:text-slate-700">
                   {Object.entries(QUESTIONS_NAME_MAP).map(([type, name]) => {
                     const parsedResult = ZSurveyQuestion.safeParse(card);
                     if (parsedResult.success) {
@@ -173,7 +171,7 @@ export const EditorCardMenu = ({
                       return (
                         <DropdownMenuItem
                           key={type}
-                          className="min-h-8 cursor-pointer text-slate-500"
+                          className="min-h-8 cursor-pointer"
                           onClick={() => {
                             setChangeToType(type as TSurveyQuestionTypeEnum);
                             if (question.logic) {
@@ -194,21 +192,19 @@ export const EditorCardMenu = ({
             )}
             {cardType === "ending" && (
               <DropdownMenuItem
-                className="flex min-h-8 cursor-pointer justify-between text-slate-500 hover:text-slate-600"
+                className="flex min-h-8 cursor-pointer justify-between text-slate-600 hover:text-slate-700"
                 onClick={(e) => {
                   e.preventDefault();
                   addEndingCardBelow();
                 }}>
-                <span className="text-xs text-slate-500">Add Ending Card below</span>
+                <span className="text-sm">Add ending below</span>
               </DropdownMenuItem>
             )}
 
             {cardType === "question" && (
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <div className="cursor-pointer text-slate-500 hover:text-slate-600">
-                    <span className="text-xs text-slate-500">Add question below</span>
-                  </div>
+                <DropdownMenuSubTrigger className="cursor-pointer text-sm text-slate-600 hover:text-slate-700">
+                  Add question below
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-4 border border-slate-200">
@@ -218,7 +214,7 @@ export const EditorCardMenu = ({
                     return (
                       <DropdownMenuItem
                         key={type}
-                        className="min-h-8 cursor-pointer text-slate-500"
+                        className="min-h-8 cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (cardType === "question") {
@@ -234,7 +230,7 @@ export const EditorCardMenu = ({
               </DropdownMenuSub>
             )}
             <DropdownMenuItem
-              className={`flex min-h-8 cursor-pointer justify-between text-slate-500 hover:text-slate-600 ${
+              className={`flex min-h-8 cursor-pointer justify-between text-slate-600 hover:text-slate-700 ${
                 cardIdx === 0 ? "opacity-50" : ""
               }`}
               onClick={(e) => {
@@ -244,12 +240,12 @@ export const EditorCardMenu = ({
                 }
               }}
               disabled={cardIdx === 0}>
-              <span className="text-xs text-slate-500">Move up</span>
+              <span className="text-sm">Move up</span>
               <ArrowUpIcon className="h-4 w-4" />
             </DropdownMenuItem>
 
             <DropdownMenuItem
-              className={`flex min-h-8 cursor-pointer justify-between text-slate-500 hover:text-slate-600 ${
+              className={`flex min-h-8 cursor-pointer justify-between text-slate-600 hover:text-slate-700 ${
                 lastCard ? "opacity-50" : ""
               }`}
               onClick={(e) => {
@@ -259,7 +255,7 @@ export const EditorCardMenu = ({
                 }
               }}
               disabled={lastCard}>
-              <span className="text-xs text-slate-500">Move down</span>
+              <span className="text-sm text-slate-600 hover:text-slate-700">Move down</span>
               <ArrowDownIcon className="h-4 w-4" />
             </DropdownMenuItem>
           </div>
