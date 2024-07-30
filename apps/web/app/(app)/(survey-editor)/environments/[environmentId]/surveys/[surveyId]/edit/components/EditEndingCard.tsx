@@ -16,9 +16,9 @@ import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import { OptionsSwitch } from "@formbricks/ui/OptionsSwitch";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
-import { TabBar } from "@formbricks/ui/TabBar";
 import { TooltipRenderer } from "@formbricks/ui/Tooltip";
 
 interface EditEndingCardProps {
@@ -37,8 +37,8 @@ interface EditEndingCardProps {
 }
 
 const endingCardTypes = [
-  { id: "endScreen", label: "End Screen" },
-  { id: "redirectToUrl", label: "Redirect to Url" },
+  { value: "endScreen", label: "End Screen" },
+  { value: "redirectToUrl", label: "Redirect to Url" },
 ];
 
 export const EditEndingCard = ({
@@ -204,19 +204,17 @@ export const EditEndingCard = ({
             shouldRender={endingCard.type === "endScreen" && isRedirectToUrlDisabled}
             tooltipContent={"Redirect To Url is not available on free plan"}
             triggerClass="w-full">
-            <TabBar
-              tabs={endingCardTypes}
-              activeId={endingCard.type}
-              className="w-full"
-              disabled={isRedirectToUrlDisabled}
-              setActiveId={() => {
+            <OptionsSwitch
+              options={endingCardTypes}
+              currentOption={endingCard.type}
+              handleOptionChange={() => {
                 if (endingCard.type === "endScreen") {
                   updateSurvey({ type: "redirectToUrl" });
                 } else {
                   updateSurvey({ type: "endScreen" });
                 }
               }}
-              tabStyle="button"
+              disabled={isRedirectToUrlDisabled}
             />
           </TooltipRenderer>
           {endingCard.type === "endScreen" && (
