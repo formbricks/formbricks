@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
@@ -18,7 +17,7 @@ interface HowToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
   environment: TEnvironment;
-  organization: TOrganization;
+  organizationId: string;
   product: TProduct;
 }
 
@@ -27,7 +26,7 @@ export const HowToSendCard = ({
   setLocalSurvey,
   environment,
   product,
-  organization,
+  organizationId,
 }: HowToSendCardProps) => {
   const [open, setOpen] = useState(false);
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
@@ -230,7 +229,7 @@ export const HowToSendCard = ({
                 You can also use Formbricks to run {promotedFeaturesString} surveys.{" "}
                 <Link
                   target="_blank"
-                  href={`/organizations/${organization.id}/products/new/channel`}
+                  href={`/organizations/${organizationId}/products/new/channel`}
                   className="font-medium underline decoration-slate-400 underline-offset-2">
                   Create a new product
                 </Link>{" "}

@@ -8,7 +8,6 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
-import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -25,7 +24,7 @@ interface SurveyEditorProps {
   survey: TSurvey;
   product: TProduct;
   environment: TEnvironment;
-  organization: TOrganization;
+  organizationId: string;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   segments: TSegment[];
@@ -42,7 +41,7 @@ export const SurveyEditor = ({
   survey,
   product,
   environment,
-  organization,
+  organizationId,
   actionClasses,
   attributeClasses,
   segments,
@@ -188,7 +187,7 @@ export const SurveyEditor = ({
             {activeView === "settings" && (
               <SettingsView
                 environment={environment}
-                organization={organization}
+                organizationId={organizationId}
                 localSurvey={localSurvey}
                 setLocalSurvey={setLocalSurvey}
                 actionClasses={actionClasses}
