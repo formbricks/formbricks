@@ -59,15 +59,16 @@ function handleError(error: unknown): void {
   process.exit(1);
 }
 
-// Main execution
+function handleDisconnectError(): void {
+  console.error("Failed to disconnect Prisma client");
+  process.exit(1);
+}
+
 function main(): void {
   runMigration()
     .catch(handleError)
     .finally(() => {
-      prisma.$disconnect().catch(() => {
-        console.error("Failed to disconnect Prisma client");
-        process.exit(1);
-      });
+      prisma.$disconnect().catch(handleDisconnectError);
     });
 }
 
