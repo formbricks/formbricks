@@ -596,34 +596,154 @@ export const deleteSurvey = async (surveyId: string) => {
   }
 };
 
+// export const createSurvey = async (
+//   environmentId: string,
+//   surveyBody: TSurveyCreateInput
+// ): Promise<TSurvey> => {
+//   const [parsedEnvironmentId, parsedCreateSurveyBody] = validateInputs(
+//     [environmentId, ZId],
+//     [surveyBody, ZSurveyCreateInput]
+//   );
+
+//   try {
+//     const createdBy = surveyBody.createdBy;
+
+//     delete surveyBody.createdBy;
+
+//     // empty languages array
+//     if (!surveyBody.languages?.length) {
+//       delete surveyBody.languages;
+//     }
+
+//     const actionClasses = await getActionClasses(environmentId);
+
+//     // @ts-expect-error
+//     const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
+//       ...surveyBody,
+//       // TODO: Create with attributeFilters
+//       triggers: surveyBody.triggers
+//         ? handleTriggerUpdates(surveyBody.triggers, [], actionClasses)
+//         : undefined,
+//       attributeFilters: undefined,
+//     };
+
+//     if ((surveyBody.type === "website" || surveyBody.type === "app") && data.thankYouCard) {
+//       data.thankYouCard.buttonLabel = undefined;
+//       data.thankYouCard.buttonLink = undefined;
+//     }
+
+//     if (createdBy) {
+//       data.creator = {
+//         connect: {
+//           id: createdBy,
+//         },
+//       };
+//     }
+
+//     const survey = await prisma.survey.create({
+//       data: {
+//         ...data,
+//         environment: {
+//           connect: {
+//             id: environmentId,
+//           },
+//         },
+//       },
+//       select: selectSurvey,
+//     });
+
+//     // if the survey created is an "app" survey, we also create a private segment for it.
+//     if (survey.type === "app") {
+//       const newSegment = await createSegment({
+//         environmentId,
+//         surveyId: survey.id,
+//         filters: [],
+//         title: survey.id,
+//         isPrivate: true,
+//       });
+
+//       await prisma.survey.update({
+//         where: {
+//           id: survey.id,
+//         },
+//         data: {
+//           segment: {
+//             connect: {
+//               id: newSegment.id,
+//             },
+//           },
+//         },
+//       });
+
+//       segmentCache.revalidate({
+//         id: newSegment.id,
+//         environmentId: survey.environmentId,
+//       });
+//     }
+
+//     // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
+//     // @ts-expect-error
+//     const transformedSurvey: TSurvey = {
+//       ...survey,
+//       ...(survey.segment && {
+//         segment: {
+//           ...survey.segment,
+//           surveys: survey.segment.surveys.map((survey) => survey.id),
+//         },
+//       }),
+//     };
+
+//     surveyCache.revalidate({
+//       id: survey.id,
+//       environmentId: survey.environmentId,
+//       resultShareKey: survey.resultShareKey ?? undefined,
+//     });
+
+//     if (createdBy) {
+//       await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy);
+//     }
+
+//     return transformedSurvey;
+//   } catch (error) {
+//     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+//       console.error(error);
+//       throw new DatabaseError(error.message);
+//     }
+
+//     throw error;
+//   }
+// };
+
 export const createSurvey = async (
   environmentId: string,
   surveyBody: TSurveyCreateInput
 ): Promise<TSurvey> => {
-  validateInputs([environmentId, ZId], [surveyBody, ZSurveyCreateInput]);
+  const [parsedEnvironmentId, parsedSurveyBody] = validateInputs(
+    [environmentId, ZId],
+    [surveyBody, ZSurveyCreateInput]
+  );
 
   try {
-    const createdBy = surveyBody.createdBy;
-    delete surveyBody.createdBy;
+    const { createdBy, ...restSurveyBody } = parsedSurveyBody;
 
     // empty languages array
-    if (!surveyBody.languages?.length) {
-      delete surveyBody.languages;
+    if (!restSurveyBody.languages?.length) {
+      delete restSurveyBody.languages;
     }
 
-    const actionClasses = await getActionClasses(environmentId);
+    const actionClasses = await getActionClasses(parsedEnvironmentId);
 
     // @ts-expect-error
     const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
-      ...surveyBody,
+      ...restSurveyBody,
       // TODO: Create with attributeFilters
-      triggers: surveyBody.triggers
-        ? handleTriggerUpdates(surveyBody.triggers, [], actionClasses)
+      triggers: restSurveyBody.triggers
+        ? handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
         : undefined,
       attributeFilters: undefined,
     };
 
-    if ((surveyBody.type === "website" || surveyBody.type === "app") && data.thankYouCard) {
+    if ((restSurveyBody.type === "website" || restSurveyBody.type === "app") && data.thankYouCard) {
       data.thankYouCard.buttonLabel = undefined;
       data.thankYouCard.buttonLink = undefined;
     }
@@ -641,7 +761,7 @@ export const createSurvey = async (
         ...data,
         environment: {
           connect: {
-            id: environmentId,
+            id: parsedEnvironmentId,
           },
         },
       },
@@ -651,7 +771,7 @@ export const createSurvey = async (
     // if the survey created is an "app" survey, we also create a private segment for it.
     if (survey.type === "app") {
       const newSegment = await createSegment({
-        environmentId,
+        environmentId: parsedEnvironmentId,
         surveyId: survey.id,
         filters: [],
         title: survey.id,
@@ -705,7 +825,6 @@ export const createSurvey = async (
       console.error(error);
       throw new DatabaseError(error.message);
     }
-
     throw error;
   }
 };
