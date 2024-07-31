@@ -3,6 +3,7 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -15,6 +16,7 @@ import { WhenToSendCard } from "./WhenToSendCard";
 
 interface SettingsViewProps {
   environment: TEnvironment;
+  organization: TOrganization;
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   actionClasses: TActionClass[];
@@ -29,6 +31,7 @@ interface SettingsViewProps {
 
 export const SettingsView = ({
   environment,
+  organization,
   localSurvey,
   setLocalSurvey,
   actionClasses,
@@ -49,6 +52,7 @@ export const SettingsView = ({
         setLocalSurvey={setLocalSurvey}
         environment={environment}
         product={product}
+        organization={organization}
       />
 
       {localSurvey.type === "app" ? (

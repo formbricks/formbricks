@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
+import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
@@ -17,10 +18,17 @@ interface HowToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
   environment: TEnvironment;
+  organization: TOrganization;
   product: TProduct;
 }
 
-export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, product }: HowToSendCardProps) => {
+export const HowToSendCard = ({
+  localSurvey,
+  setLocalSurvey,
+  environment,
+  product,
+  organization,
+}: HowToSendCardProps) => {
   const [open, setOpen] = useState(false);
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
   const [websiteSetupCompleted, setWebsiteSetupCompleted] = useState(false);
@@ -215,12 +223,18 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
           </RadioGroup>
         </div>
         {promotedFeaturesString && (
-          <div className="mt-2 flex items-center space-x-3 rounded-b-lg border border-slate-200 bg-slate-50/50 px-4 py-2">
-            <AlertCircleIcon className="h-5 w-5 text-slate-500" />
-            <div className="text-slate-500">
+          <div className="mt-2 flex items-center space-x-3 rounded-b-lg border border-slate-200 bg-slate-100 px-4 py-2">
+            🤓
+            <div className="ml-2 text-slate-500">
               <p className="text-xs">
-                You can also use Formbricks to run {promotedFeaturesString} surveys. Create a new product for
-                your {promotedFeaturesString} to use this feature.
+                You can also use Formbricks to run {promotedFeaturesString} surveys.{" "}
+                <Link
+                  target="_blank"
+                  href={`/organizations/${organization.id}/products/new/channel`}
+                  className="underline decoration-slate-400 underline-offset-2">
+                  Create a new product
+                </Link>{" "}
+                for your {promotedFeaturesString} to use this feature.
               </p>
             </div>
           </div>
