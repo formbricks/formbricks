@@ -11,11 +11,11 @@ test.describe("Onboarding Flow Test", async () => {
 
     await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/channel/);
 
-    await page.getByRole("button", { name: "100% custom branding Anywhere" }).click();
+    await page.getByRole("button", { name: "Anywhere online Link" }).click();
     await page.getByRole("button", { name: "B2B and B2C E-Commerce" }).click();
-    await page.getByPlaceholder("Formbricks Merch Store").click();
-    await page.getByPlaceholder("Formbricks Merch Store").fill(productName);
-    await page.locator("form").filter({ hasText: "Brand colorChange the brand" }).getByRole("button").click();
+    await page.getByPlaceholder("e.g. Formbricks").click();
+    await page.getByPlaceholder("e.g. Formbricks").fill(productName);
+    await page.locator("form").filter({ hasText: "Brand colorMatch the main" }).getByRole("button").click();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
     await expect(page.getByText(productName)).toBeVisible();
@@ -29,12 +29,12 @@ test.describe("Onboarding Flow Test", async () => {
 
     await page.getByRole("button", { name: "Enrich user profiles App with" }).click();
     await page.getByRole("button", { name: "B2B and B2C E-Commerce" }).click();
-    await page.getByPlaceholder("Formbricks Merch Store").click();
-    await page.getByPlaceholder("Formbricks Merch Store").fill(productName);
-    await page.locator("form").filter({ hasText: "Brand colorChange the brand" }).getByRole("button").click();
-    await page.getByRole("button", { name: "Skip" }).click();
+    await page.getByPlaceholder("e.g. Formbricks").click();
+    await page.getByPlaceholder("e.g. Formbricks").fill(productName);
+    await page.locator("form").filter({ hasText: "Brand colorMatch the main" }).getByRole("button").click();
+    await page.getByRole("button", { name: "I don't know how to do it" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/connect\/invite/);
-    await page.getByRole("button", { name: "Skip" }).click();
+    await page.getByRole("button", { name: "Not now" }).click();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
     await expect(page.getByText(productName)).toBeVisible();
