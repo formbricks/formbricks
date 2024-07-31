@@ -35,6 +35,48 @@ export const PictureSelectionForm = ({
   const environmentId = localSurvey.environmentId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
+  const handleChoiceDeletion = (choiceValue: string) => {
+    // Filter out the deleted choice from the choices array
+    const newChoices = question.choices?.filter((choice) => choice.id !== choiceValue) || [];
+
+    // Update the logic, removing the deleted choice value
+    const newLogic =
+      question.logic?.map((logic) => {
+        let updatedValue = logic.value;
+
+        if (Array.isArray(logic.value)) {
+          updatedValue = logic.value.filter((value) => value !== choiceValue);
+        } else if (logic.value === choiceValue) {
+          updatedValue = undefined;
+        }
+
+        return { ...logic, value: updatedValue };
+      }) || [];
+
+    // Update the question with new choices and logic
+    updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
+  };
+
+  const handleFileInputChanges = (urls: string[]) => {
+    // Handle choice deletion
+    if (urls.length < question.choices.length) {
+      const deletedChoice = question.choices.find((choice) => !urls.includes(choice.imageUrl));
+      if (deletedChoice) {
+        handleChoiceDeletion(deletedChoice.id);
+      }
+    }
+
+    // Handle choice addition
+    const updatedChoices = urls.map((url) => {
+      const existingChoice = question.choices.find((choice) => choice.imageUrl === url);
+      return existingChoice ? { ...existingChoice } : { imageUrl: url, id: createId() };
+    });
+
+    updateQuestion(questionIdx, {
+      choices: updatedChoices,
+    });
+  };
+
   return (
     <form>
       <QuestionFormInput
@@ -99,11 +141,7 @@ export const PictureSelectionForm = ({
             id="choices-file-input"
             allowedFileExtensions={["png", "jpeg", "jpg"]}
             environmentId={environmentId}
-            onFileUpload={(urls: string[]) => {
-              updateQuestion(questionIdx, {
-                choices: urls.map((url) => ({ imageUrl: url, id: createId() })),
-              });
-            }}
+            onFileUpload={handleFileInputChanges}
             fileUrl={question?.choices?.map((choice) => choice.imageUrl)}
             multiple={true}
           />

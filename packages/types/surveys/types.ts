@@ -254,7 +254,7 @@ export const ZSurveyRatingLogic = ZSurveyLogicBase.extend({
 
 export const ZSurveyPictureSelectionLogic = ZSurveyLogicBase.extend({
   condition: z.enum(["submitted", "skipped"]).optional(),
-  value: z.undefined(),
+  value: z.union([z.array(z.string()), z.string()]).optional(),
 });
 
 export const ZSurveyCalLogic = ZSurveyLogicBase.extend({
@@ -282,6 +282,8 @@ export const ZSurveyLogic = z.union([
 ]);
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
+
+export type TSurveyPictureSelectionLogic = z.infer<typeof ZSurveyPictureSelectionLogic>;
 
 export const ZSurveyQuestionBase = z.object({
   id: z.string().superRefine((id, ctx) => {

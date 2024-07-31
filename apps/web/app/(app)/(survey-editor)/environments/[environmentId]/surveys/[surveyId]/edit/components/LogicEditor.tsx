@@ -48,6 +48,39 @@ type LogicConditions = {
   };
 };
 
+const conditions = {
+  openText: ["submitted", "skipped"],
+  multipleChoiceSingle: ["submitted", "skipped", "equals", "notEquals", "includesOne"],
+  multipleChoiceMulti: ["submitted", "skipped", "includesAll", "includesOne", "equals"],
+  nps: [
+    "equals",
+    "notEquals",
+    "lessThan",
+    "lessEqual",
+    "greaterThan",
+    "greaterEqual",
+    "submitted",
+    "skipped",
+  ],
+  rating: [
+    "equals",
+    "notEquals",
+    "lessThan",
+    "lessEqual",
+    "greaterThan",
+    "greaterEqual",
+    "submitted",
+    "skipped",
+  ],
+  cta: ["clicked", "skipped"],
+  consent: ["skipped", "accepted"],
+  pictureSelection: ["submitted", "skipped", "includesAll", "includesOne", "equals"],
+  fileUpload: ["uploaded", "notUploaded"],
+  cal: ["skipped", "booked"],
+  matrix: ["isCompletelySubmitted", "isPartiallySubmitted", "skipped"],
+  address: ["submitted", "skipped"],
+};
+
 export const LogicEditor = ({
   localSurvey,
   question,
@@ -56,53 +89,26 @@ export const LogicEditor = ({
   attributeClasses,
 }: LogicEditorProps) => {
   const [searchValue, setSearchValue] = useState<string>("");
-  localSurvey = useMemo(() => {
+  const showDropdownSearch = question.type !== "pictureSelection";
+  const transformedSurvey = useMemo(() => {
     return replaceHeadlineRecall(localSurvey, "default", attributeClasses);
   }, [localSurvey, attributeClasses]);
 
-  const questionValues = useMemo(() => {
+  const questionValues: string[] = useMemo(() => {
     if ("choices" in question) {
-      return question.choices.map((choice) => getLocalizedValue(choice.label, "default"));
+      if (question.type === "pictureSelection") {
+        return question.choices.map((choice) => choice.id);
+      } else {
+        return question.choices.map((choice) => getLocalizedValue(choice.label, "default"));
+      }
     } else if ("range" in question) {
       return Array.from({ length: question.range ? question.range : 0 }, (_, i) => (i + 1).toString());
     } else if (question.type === TSurveyQuestionTypeEnum.NPS) {
       return Array.from({ length: 11 }, (_, i) => (i + 0).toString());
     }
+
     return [];
   }, [question]);
-
-  const conditions = {
-    openText: ["submitted", "skipped"],
-    multipleChoiceSingle: ["submitted", "skipped", "equals", "notEquals", "includesOne"],
-    multipleChoiceMulti: ["submitted", "skipped", "includesAll", "includesOne", "equals"],
-    nps: [
-      "equals",
-      "notEquals",
-      "lessThan",
-      "lessEqual",
-      "greaterThan",
-      "greaterEqual",
-      "submitted",
-      "skipped",
-    ],
-    rating: [
-      "equals",
-      "notEquals",
-      "lessThan",
-      "lessEqual",
-      "greaterThan",
-      "greaterEqual",
-      "submitted",
-      "skipped",
-    ],
-    cta: ["clicked", "skipped"],
-    consent: ["skipped", "accepted"],
-    pictureSelection: ["submitted", "skipped"],
-    fileUpload: ["uploaded", "notUploaded"],
-    cal: ["skipped", "booked"],
-    matrix: ["isCompletelySubmitted", "isPartiallySubmitted", "skipped"],
-    address: ["submitted", "skipped"],
-  };
 
   const logicConditions: LogicConditions = {
     submitted: {
@@ -270,8 +276,20 @@ export const LogicEditor = ({
     return <></>;
   }
 
-  const getLogicDisplayValue = (value: string | string[]) => {
-    if (Array.isArray(value)) {
+  const getLogicDisplayValue = (value: string | string[]): string => {
+    if (question.type === "pictureSelection") {
+      if (Array.isArray(value)) {
+        return value
+          .map((val) => {
+            const choiceIndex = question.choices.findIndex((choice) => choice.id === val);
+            return `Picture ${choiceIndex + 1}`;
+          })
+          .join(", ");
+      } else {
+        const choiceIndex = question.choices.findIndex((choice) => choice.id === value);
+        return `Picture ${choiceIndex + 1}`;
+      }
+    } else if (Array.isArray(value)) {
       return value.join(", ");
     }
     return value;
@@ -330,14 +348,16 @@ export const LogicEditor = ({
                     className="w-40 bg-slate-50 text-slate-700"
                     align="start"
                     side="bottom">
-                    <Input
-                      autoFocus
-                      placeholder="Search options"
-                      className="mb-1 w-full bg-white"
-                      onChange={(e) => setSearchValue(e.target.value)}
-                      value={searchValue}
-                      onKeyDown={(e) => e.stopPropagation()}
-                    />
+                    {showDropdownSearch && (
+                      <Input
+                        autoFocus
+                        placeholder="Search options"
+                        className="mb-1 w-full bg-white"
+                        onChange={(e) => setSearchValue(e.target.value)}
+                        value={searchValue}
+                        onKeyDown={(e) => e.stopPropagation()}
+                      />
+                    )}
                     <div className="max-h-72 overflow-y-auto overflow-x-hidden">
                       {logicConditions[logic.condition].values
                         ?.filter((value) => value.includes(searchValue))
@@ -356,7 +376,7 @@ export const LogicEditor = ({
                                 ? updateLogic(logicIdx, { value })
                                 : updateMultiSelectLogic(logicIdx, e, value)
                             }>
-                            {value}
+                            {getLogicDisplayValue(value)}
                           </DropdownMenuCheckboxItem>
                         ))}
                     </div>
@@ -373,7 +393,7 @@ export const LogicEditor = ({
                   <SelectValue placeholder="Select question" />
                 </SelectTrigger>
                 <SelectContent>
-                  {localSurvey.questions.map(
+                  {transformedSurvey.questions.map(
                     (question, idx) =>
                       idx !== questionIdx && (
                         <SelectItem
