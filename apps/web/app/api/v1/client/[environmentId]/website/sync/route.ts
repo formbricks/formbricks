@@ -104,8 +104,10 @@ export const GET = async (
     } */
 
     if (!environment?.websiteSetupCompleted) {
-      await updateEnvironment(environment.id, { websiteSetupCompleted: true });
-      await capturePosthogEnvironmentEvent(environmentId, "website setup completed");
+      await Promise.all([
+        updateEnvironment(environment.id, { websiteSetupCompleted: true }),
+        capturePosthogEnvironmentEvent(environmentId, "website setup completed"),
+      ]);
     }
 
     const [surveys, actionClasses] = await Promise.all([

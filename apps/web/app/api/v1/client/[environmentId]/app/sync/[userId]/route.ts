@@ -80,8 +80,10 @@ export const GET = async (
     }
 
     if (!environment.appSetupCompleted) {
-      await updateEnvironment(environment.id, { appSetupCompleted: true });
-      await capturePosthogEnvironmentEvent(environmentId, "app setup completed");
+      await Promise.all([
+        updateEnvironment(environment.id, { appSetupCompleted: true }),
+        capturePosthogEnvironmentEvent(environmentId, "app setup completed"),
+      ]);
     }
 
     // check organization subscriptions
