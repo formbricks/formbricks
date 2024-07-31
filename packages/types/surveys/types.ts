@@ -876,7 +876,7 @@ export const ZSurvey = z
           }
 
           // logic condition and value mapping should not be repeated
-          const thisLogic = `${logic.condition ?? ""}-${String(logic.value)}`;
+          const thisLogic = `${logic.condition ?? ""}-${Array.isArray(logic.value) ? logic.value.sort().join(",") : String(logic.value)}`;
           if (existingLogicConditions.has(thisLogic)) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
