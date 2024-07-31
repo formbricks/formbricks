@@ -8,6 +8,7 @@ interface ResetProgressButtonProps {
 export const ResetProgressButton = ({ onClick }: ResetProgressButtonProps) => {
   return (
     <Button
+      type="button"
       variant="minimal"
       className="py-0.2 mr-2 bg-white px-2 font-sans text-sm text-slate-500"
       onClick={onClick}>

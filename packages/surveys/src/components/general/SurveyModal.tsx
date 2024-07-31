@@ -21,6 +21,7 @@ export const SurveyModal = ({
   languageCode,
   responseCount,
   styling,
+  hiddenFieldsRecord,
 }: SurveyModalProps) => {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -68,6 +69,7 @@ export const SurveyModal = ({
           styling={styling}
           isCardBorderVisible={!highlightBorderColor}
           clickOutside={placement === "center" ? clickOutside : undefined}
+          hiddenFieldsRecord={hiddenFieldsRecord}
         />
       </Modal>
     </div>

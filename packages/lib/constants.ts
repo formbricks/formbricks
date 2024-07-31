@@ -71,6 +71,7 @@ export const SMTP_PORT = env.SMTP_PORT;
 export const SMTP_SECURE_ENABLED = env.SMTP_SECURE_ENABLED === "1";
 export const SMTP_USER = env.SMTP_USER;
 export const SMTP_PASSWORD = env.SMTP_PASSWORD;
+export const SMTP_REJECT_UNAUTHORIZED_TLS = env.SMTP_REJECT_UNAUTHORIZED_TLS !== "0";
 export const MAIL_FROM = env.MAIL_FROM;
 
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
@@ -192,8 +193,6 @@ export enum STRIPE_PRICE_LOOKUP_KEYS {
   STARTUP_YEARLY = "formbricks_startup_yearly",
   SCALE_MONTHLY = "formbricks_scale_monthly",
   SCALE_YEARLY = "formbricks_scale_yearly",
-  UNLIMITED_99 = "formbricks_unlimited_99",
-  UNLIMITED_199 = "formbricks_unlimited_199",
 }
 
 export const BILLING_LIMITS = {
