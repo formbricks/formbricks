@@ -231,7 +231,7 @@ export const HowToSendCard = ({
                 <Link
                   target="_blank"
                   href={`/organizations/${organization.id}/products/new/channel`}
-                  className="underline decoration-slate-400 underline-offset-2">
+                  className="font-medium underline decoration-slate-400 underline-offset-2">
                   Create a new product
                 </Link>{" "}
                 for your {promotedFeaturesString} to use this feature.
