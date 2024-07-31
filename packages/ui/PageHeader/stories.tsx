@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Button } from "../v2/Button";
+import { Button } from "../Button";
 import { PageHeader } from "./index";
 
 const meta = {
