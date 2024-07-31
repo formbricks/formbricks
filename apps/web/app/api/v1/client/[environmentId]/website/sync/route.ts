@@ -8,7 +8,10 @@ import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@formbricks/lib/organization/service";
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
+import {
+  capturePosthogEnvironmentEvent,
+  sendPlanLimitsReachedEventToPosthogWeekly,
+} from "@formbricks/lib/posthogServer";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
@@ -102,6 +105,7 @@ export const GET = async (
 
     if (!environment?.websiteSetupCompleted) {
       await updateEnvironment(environment.id, { websiteSetupCompleted: true });
+      await capturePosthogEnvironmentEvent(environmentId, "website setup completed");
     }
 
     const [surveys, actionClasses] = await Promise.all([

@@ -15,7 +15,10 @@ import {
   getOrganizationByEnvironmentId,
 } from "@formbricks/lib/organization/service";
 import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@formbricks/lib/person/service";
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
+import {
+  capturePosthogEnvironmentEvent,
+  sendPlanLimitsReachedEventToPosthogWeekly,
+} from "@formbricks/lib/posthogServer";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
@@ -78,6 +81,7 @@ export const GET = async (
 
     if (!environment.appSetupCompleted) {
       await updateEnvironment(environment.id, { appSetupCompleted: true });
+      await capturePosthogEnvironmentEvent(environmentId, "app setup completed");
     }
 
     // check organization subscriptions
