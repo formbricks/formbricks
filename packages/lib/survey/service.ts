@@ -11,10 +11,10 @@ import { TPerson } from "@formbricks/types/people";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TSurvey,
+  TSurveyCreateInput,
   TSurveyFilterCriteria,
-  TSurveyInput,
   ZSurvey,
-  ZSurveyInput,
+  ZSurveyCreateInput,
 } from "@formbricks/types/surveys/types";
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
@@ -596,8 +596,11 @@ export const deleteSurvey = async (surveyId: string) => {
   }
 };
 
-export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
-  validateInputs([environmentId, ZId], [surveyBody, ZSurveyInput]);
+export const createSurvey = async (
+  environmentId: string,
+  surveyBody: TSurveyCreateInput
+): Promise<TSurvey> => {
+  validateInputs([environmentId, ZId], [surveyBody, ZSurveyCreateInput]);
 
   try {
     const createdBy = surveyBody.createdBy;

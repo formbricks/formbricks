@@ -973,14 +973,12 @@ const makeSchemaOptional = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) => 
   );
 };
 
-export const ZSurveyInput = makeSchemaOptional(ZSurvey.innerType())
+export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
   .omit({
     id: true,
     createdAt: true,
     updatedAt: true,
-    displayLimit: true,
     productOverwrites: true,
-    showLanguageSwitch: true,
     languages: true,
   })
   .extend({
@@ -989,17 +987,9 @@ export const ZSurveyInput = makeSchemaOptional(ZSurvey.innerType())
     languages: z.array(ZSurveyLanguage).default([]),
     welcomeCard: ZSurveyWelcomeCard.default({
       enabled: false,
-      headline: { default: "Welcome!" },
-      html: { default: "Thanks for providing your feedback - let's go!" },
-      timeToFinish: false,
-      showResponseCount: false,
     }),
     thankYouCard: ZSurveyThankYouCard.default({
-      enabled: true,
-      headline: { default: "Thank you!" },
-      subheader: { default: "We appreciate your feedback." },
-      buttonLabel: { default: "Create your own Survey" },
-      buttonLink: "https://formbricks.com/signup",
+      enabled: false,
     }),
     type: ZSurveyType.default("link"),
   })
@@ -1014,7 +1004,7 @@ export interface TSurveyDates {
   closeOnDate: TSurvey["closeOnDate"];
 }
 
-export type TSurveyInput = z.input<typeof ZSurveyInput>;
+export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
 
 export type TSurveyEditorTabs = "questions" | "settings" | "styling";
 
