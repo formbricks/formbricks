@@ -9,7 +9,7 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ErrorHandler } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
-import { handleHiddenFields } from "../../shared/utils";
+import { handleHiddenFields, shouldDisplayBasedOnPercentage } from "../../shared/utils";
 import { AppConfig } from "./config";
 import { putFormbricksInErrorState } from "./initialize";
 import { sync } from "./sync";
@@ -25,11 +25,6 @@ let setIsResponseSendingFinished = (_: boolean) => {};
 
 export const setIsSurveyRunning = (value: boolean) => {
   isSurveyRunning = value;
-};
-
-const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
-  const randomNum = Math.floor(Math.random() * 10000) / 100;
-  return randomNum <= displayPercentage;
 };
 
 export const triggerSurvey = async (

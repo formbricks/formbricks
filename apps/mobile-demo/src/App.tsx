@@ -24,7 +24,7 @@ export default function App() {
       <Button
         title="Trigger Code Action"
         onPress={() => {
-          track("New Session");
+          track("test");
         }}
       />
       <StatusBar style="auto" />

@@ -1,7 +1,7 @@
 import { TJsAppConfigInput } from "@formbricks/types/js";
 import { ErrorHandler } from "../../../js-core/src/shared/errors";
 import { Logger } from "../../../js-core/src/shared/logger";
-import { trackAction } from "./actions";
+import { trackCodeAction } from "./actions";
 import { CommandQueue } from "./commandQueue";
 import { initialize } from "./initialize";
 
@@ -16,6 +16,6 @@ export const init = async (initConfig: TJsAppConfigInput) => {
 };
 
 export const track = async (name: string, properties: any = {}): Promise<void> => {
-  queue.add<any>(true, "app", trackAction, name, properties);
+  queue.add<any>(true, "app", trackCodeAction, name, properties);
   await queue.wait();
 };

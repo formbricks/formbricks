@@ -107,3 +107,8 @@ export const handleHiddenFields = (
   return hiddenFieldsObject;
 };
 export const getIsDebug = () => window.location.search.includes("formbricksDebug=true");
+
+export const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
+  const randomNum = Math.floor(Math.random() * 10000) / 100;
+  return randomNum <= displayPercentage;
+};
