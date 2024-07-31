@@ -34,6 +34,16 @@ interface SurveyEditorProps {
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
   isUnsplashConfigured: boolean;
+  hideSurveyMenuBar?: boolean;
+  hideQuestionsAudienceTabs?: boolean;
+  surveyMenuBarProps?: {
+    hideFormName?: boolean;
+    hideBackButton?: boolean;
+    hideSurveyStatusDropdown?: boolean;
+    hideSaveAndClose?: boolean;
+    hideContinueToSettings?: boolean;
+    hidePublish?: boolean;
+  };
 }
 
 export const SurveyEditor = ({
@@ -50,6 +60,9 @@ export const SurveyEditor = ({
   isUserTargetingAllowed = false,
   isFormbricksCloud,
   isUnsplashConfigured,
+  hideSurveyMenuBar = false,
+  hideQuestionsAudienceTabs = false,
+  surveyMenuBarProps,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -127,26 +140,31 @@ export const SurveyEditor = ({
   return (
     <>
       <div className="flex h-full flex-col">
-        <SurveyMenuBar
-          setLocalSurvey={setLocalSurvey}
-          localSurvey={localSurvey}
-          survey={survey}
-          environment={environment}
-          activeId={activeView}
-          setActiveId={setActiveView}
-          setInvalidQuestions={setInvalidQuestions}
-          product={localProduct}
-          responseCount={responseCount}
-          selectedLanguageCode={selectedLanguageCode}
-          setSelectedLanguageCode={setSelectedLanguageCode}
-        />
+        {!hideSurveyMenuBar && (
+          <SurveyMenuBar
+            setLocalSurvey={setLocalSurvey}
+            localSurvey={localSurvey}
+            survey={survey}
+            environment={environment}
+            activeId={activeView}
+            setActiveId={setActiveView}
+            setInvalidQuestions={setInvalidQuestions}
+            product={localProduct}
+            responseCount={responseCount}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
+            {...surveyMenuBarProps}
+          />
+        )}
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1      overflow-y-auto focus:outline-none" ref={surveyEditorRef}>
-            <QuestionsAudienceTabs
-              activeId={activeView}
-              setActiveId={setActiveView}
-              isStylingTabVisible={!!product.styling.allowStyleOverwrite}
-            />
+            {!hideQuestionsAudienceTabs && (
+              <QuestionsAudienceTabs
+                activeId={activeView}
+                setActiveId={setActiveView}
+                isStylingTabVisible={!!product.styling.allowStyleOverwrite}
+              />
+            )}
 
             {activeView === "questions" && (
               <QuestionsView
