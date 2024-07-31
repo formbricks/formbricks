@@ -21,8 +21,10 @@ import {
   TI18nString,
   TSurvey,
   TSurveyChoice,
+  TSurveyEndScreenCard,
   TSurveyQuestion,
   TSurveyRecallItem,
+  TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { LanguageIndicator } from "../../ee/multi-language/components/language-indicator";
 import { createI18nString } from "../../lib/i18n/utils";
@@ -48,7 +50,7 @@ interface QuestionFormInputProps {
   localSurvey: TSurvey;
   questionIdx: number;
   updateQuestion?: (questionIdx: number, data: Partial<TSurveyQuestion>) => void;
-  updateSurvey?: (data: Partial<TSurveyQuestion>) => void;
+  updateSurvey?: (data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard>) => void;
   updateChoice?: (choiceIdx: number, data: Partial<TSurveyChoice>) => void;
   updateMatrixLabel?: (index: number, type: "row" | "column", data: Partial<TSurveyQuestion>) => void;
   isInvalid: boolean;
