@@ -43,7 +43,6 @@ export const StartFromScratchTemplate = ({
       {activeTemplate?.name === customSurvey.name && (
         <div className="text-left">
           <Button
-            variant="darkCTA"
             className="mt-6 px-6 py-3"
             disabled={activeTemplate === null}
             loading={loading}

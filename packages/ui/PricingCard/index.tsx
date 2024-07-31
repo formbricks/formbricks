@@ -72,7 +72,6 @@ export const PricingCard = ({
       if (organization.billing.plan === productFeatureKeys.FREE) {
         return (
           <Button
-            variant="darkCTA"
             loading={loading}
             onClick={async () => {
               setLoading(true);
@@ -87,7 +86,6 @@ export const PricingCard = ({
 
       return (
         <Button
-          variant="darkCTA"
           loading={loading}
           onClick={() => {
             setUpgradeModalOpen(true);
@@ -166,11 +164,7 @@ export const PricingCard = ({
           )}
 
           {organization.billing.plan !== plan.id && plan.id === productFeatureKeys.ENTERPRISE && (
-            <Button
-              variant="darkCTA"
-              loading={loading}
-              onClick={() => onUpgrade()}
-              className="flex justify-center">
+            <Button loading={loading} onClick={() => onUpgrade()} className="flex justify-center">
               Contact Us
             </Button>
           )}

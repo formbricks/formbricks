@@ -234,6 +234,7 @@ export const MainNavigation = ({
                 </Link>
               )}
               <Button
+                variant="minimal"
                 size="icon"
                 tooltipSide="right"
                 onClick={toggleSidebar}

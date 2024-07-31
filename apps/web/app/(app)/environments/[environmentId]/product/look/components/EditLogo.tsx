@@ -169,7 +169,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
         </>
       )}
       {logoUrl && (
-        <Button onClick={saveChanges} disabled={isLoading || isViewer} variant="darkCTA" size="sm">
+        <Button onClick={saveChanges} disabled={isLoading || isViewer} size="sm">
           {isEditing ? "Save" : "Edit"}
         </Button>
       )}
