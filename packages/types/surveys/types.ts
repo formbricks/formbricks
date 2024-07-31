@@ -253,7 +253,7 @@ export const ZSurveyRatingLogic = ZSurveyLogicBase.extend({
 });
 
 export const ZSurveyPictureSelectionLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped"]).optional(),
+  condition: z.enum(["submitted", "skipped", "equals", "includesOne", "includesAll"]).optional(),
   value: z.union([z.array(z.string()), z.string()]).optional(),
 });
 
