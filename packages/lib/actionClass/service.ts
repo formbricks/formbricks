@@ -196,7 +196,11 @@ export const updateActionClass = async (
       },
       select: {
         ...selectActionClass,
-        surveys: true,
+        surveys: {
+          select: {
+            surveyId: true,
+          },
+        },
       },
     });
 
