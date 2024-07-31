@@ -13,14 +13,14 @@ import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { OptionsSwitch } from "@formbricks/ui/OptionsSwitch";
 import { TooltipRenderer } from "@formbricks/ui/Tooltip";
 
 interface EditEndingCardProps {
   localSurvey: TSurvey;
   endingCardIndex: number;
-  setLocalSurvey: (survey: TSurvey) => void;
+  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId: string | null;
   isInvalid: boolean;
@@ -68,24 +68,20 @@ export const EditEndingCard = ({
     }
   };
 
-  const updateSurvey = (data) => {
-    const updatedEndings = localSurvey.endings.map((ending, idx) =>
-      idx === endingCardIndex ? { ...ending, ...data } : ending
-    );
-
-    const updatedSurvey = {
-      ...localSurvey,
-      endings: updatedEndings,
-    };
-
-    setLocalSurvey(updatedSurvey);
+  const updateSurvey = (data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard>) => {
+    setLocalSurvey((prevSurvey) => {
+      const updatedEndings = prevSurvey.endings.map((ending, idx) =>
+        idx === endingCardIndex ? { ...ending, ...data } : ending
+      );
+      return { ...prevSurvey, endings: updatedEndings };
+    });
   };
 
   const deleteEndingCard = () => {
-    const updatedEndings = localSurvey.endings.filter((_, index) => {
-      return index !== endingCardIndex;
+    setLocalSurvey((prevSurvey) => {
+      const updatedEndings = prevSurvey.endings.filter((_, index) => index !== endingCardIndex);
+      return { ...prevSurvey, endings: updatedEndings };
     });
-    setLocalSurvey({ ...localSurvey, endings: updatedEndings });
   };
 
   const style = {
@@ -95,28 +91,28 @@ export const EditEndingCard = ({
   };
 
   const duplicateEndingCard = () => {
-    const updatedSurvey = structuredClone(localSurvey);
-    const endingToDuplicate = updatedSurvey.endings[endingCardIndex];
-
-    // Create a new ending card by cloning the one to be duplicated and giving it a new ID
-    const duplicatedEndingCard = {
-      ...endingToDuplicate,
-      id: createId(),
-    };
-
-    // Insert the duplicated ending card immediately after the original
-    updatedSurvey.endings.splice(endingCardIndex + 1, 0, duplicatedEndingCard);
-
-    setLocalSurvey(updatedSurvey);
+    setLocalSurvey((prevSurvey) => {
+      const endingToDuplicate = prevSurvey.endings[endingCardIndex];
+      const duplicatedEndingCard = {
+        ...endingToDuplicate,
+        id: createId(),
+      };
+      const updatedEndings = [
+        ...prevSurvey.endings.slice(0, endingCardIndex + 1),
+        duplicatedEndingCard,
+        ...prevSurvey.endings.slice(endingCardIndex + 1),
+      ];
+      return { ...prevSurvey, endings: updatedEndings };
+    });
   };
 
-  const moveEndingCard = (endingCardIndex: number, up: boolean) => {
-    const newEndings = Array.from(localSurvey.endings);
-    const [reorderedEndings] = newEndings.splice(endingCardIndex, 1);
-    const destinationIndex = up ? endingCardIndex - 1 : endingCardIndex + 1;
-    newEndings.splice(destinationIndex, 0, reorderedEndings);
-    const updatedSurvey = { ...localSurvey, endings: newEndings };
-    setLocalSurvey(updatedSurvey);
+  const moveEndingCard = (index: number, up: boolean) => {
+    setLocalSurvey((prevSurvey) => {
+      const newEndings = [...prevSurvey.endings];
+      const [movedEnding] = newEndings.splice(index, 1);
+      newEndings.splice(up ? index - 1 : index + 1, 0, movedEnding);
+      return { ...prevSurvey, endings: newEndings };
+    });
   };
 
   return (
