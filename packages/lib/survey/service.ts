@@ -1063,8 +1063,10 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       throw new ResourceNotFoundError("survey", surveyId);
     }
 
-    const currentSegment = await getSegment(newSegmentId);
-    if (!currentSegment) {
+    const currentSurveySegment = currentSurvey.segment;
+
+    const newSegment = await getSegment(newSegmentId);
+    if (!newSegment) {
       throw new ResourceNotFoundError("segment", newSegmentId);
     }
 
@@ -1081,6 +1083,14 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
         },
       },
     });
+
+    if (
+      currentSurveySegment &&
+      currentSurveySegment.isPrivate &&
+      currentSurveySegment.title === currentSurvey.id
+    ) {
+      await deleteSegment(currentSurveySegment.id);
+    }
 
     segmentCache.revalidate({ id: newSegmentId });
     surveyCache.revalidate({ id: surveyId });

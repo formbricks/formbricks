@@ -1111,7 +1111,6 @@ export const ZSurveyQuestionSummaryRating = z.object({
   ),
   dismissed: z.object({
     count: z.number(),
-    percentage: z.number(),
   }),
 });
 
