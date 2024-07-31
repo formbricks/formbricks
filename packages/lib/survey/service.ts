@@ -9,7 +9,13 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import { TLegacySurvey } from "@formbricks/types/legacy-surveys";
 import { TPerson } from "@formbricks/types/people";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey, TSurveyFilterCriteria, TSurveyInput, ZSurvey } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyFilterCriteria,
+  TSurveyInput,
+  ZSurvey,
+  ZSurveyInput,
+} from "@formbricks/types/surveys/types";
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
 import { attributeCache } from "../attribute/cache";
@@ -591,13 +597,20 @@ export const deleteSurvey = async (surveyId: string) => {
 };
 
 export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
-  validateInputs([environmentId, ZId]);
+  validateInputs([environmentId, ZId], [surveyBody, ZSurveyInput]);
 
   try {
     const createdBy = surveyBody.createdBy;
     delete surveyBody.createdBy;
 
+    // empty languages array
+    if (!surveyBody.languages?.length) {
+      delete surveyBody.languages;
+    }
+
     const actionClasses = await getActionClasses(environmentId);
+
+    // @ts-expect-error
     const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
       ...surveyBody,
       // TODO: Create with attributeFilters
