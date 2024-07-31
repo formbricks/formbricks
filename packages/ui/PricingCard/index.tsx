@@ -206,7 +206,7 @@ export const PricingCard = ({
         text={`Are you sure you want to switch to the ${plan.name} plan? You will be charged ${
           planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly
         } per month.`}
-        buttonVariant="darkCTA"
+        buttonVariant="primary"
         buttonLoading={loading}
         closeOnOutsideClick={false}
         hideCloseButton

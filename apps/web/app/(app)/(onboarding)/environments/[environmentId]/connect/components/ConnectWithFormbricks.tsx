@@ -83,7 +83,7 @@ export const ConnectWithFormbricks = ({
       <Button
         id="finishOnboarding"
         className="text-slate-400 hover:text-slate-700"
-        variant={widgetSetupCompleted ? "darkCTA" : "minimal"}
+        variant={widgetSetupCompleted ? "primary" : "minimal"}
         onClick={handleFinishOnboarding}
         EndIcon={ArrowRight}>
         {widgetSetupCompleted ? "Finish Onboarding" : "I don't know how to do it"}
