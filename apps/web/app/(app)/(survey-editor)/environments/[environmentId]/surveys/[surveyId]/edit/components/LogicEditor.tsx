@@ -6,6 +6,7 @@ import {
   SplitIcon,
   TrashIcon,
 } from "lucide-react";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -295,6 +296,15 @@ export const LogicEditor = ({
     return value;
   };
 
+  const getOptionPreview = (value: string) => {
+    if (question.type === "pictureSelection") {
+      const choice = question.choices.find((choice) => choice.id === value);
+      if (choice) {
+        return <Image src={choice.imageUrl} alt={"Picture"} width={20} height={12} className="rounded-xs" />;
+      }
+    }
+  };
+
   return (
     <div className="mt-3">
       <Label>Logic Jumps</Label>
@@ -376,7 +386,10 @@ export const LogicEditor = ({
                                 ? updateLogic(logicIdx, { value })
                                 : updateMultiSelectLogic(logicIdx, e, value)
                             }>
-                            {getLogicDisplayValue(value)}
+                            <div className="flex space-x-2">
+                              {question.type === "pictureSelection" && getOptionPreview(value)}
+                              <p>{getLogicDisplayValue(value)}</p>
+                            </div>
                           </DropdownMenuCheckboxItem>
                         ))}
                     </div>
