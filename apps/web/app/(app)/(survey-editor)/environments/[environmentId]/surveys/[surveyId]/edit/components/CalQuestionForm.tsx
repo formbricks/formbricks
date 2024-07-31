@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys/types";
+import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
-import { Checkbox } from "@formbricks/ui/Checkbox";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
@@ -91,9 +91,9 @@ export const CalQuestionForm = ({
             Add Description
           </Button>
         )}
-        <div className="mt-3 flex flex-col gap-4">
+        <div className="mt-3 flex flex-col gap-6">
           <div className="flex flex-col gap-3">
-            <Label htmlFor="calUserName">Add your Cal.com username or username/event</Label>
+            <Label htmlFor="calUserName">Cal.com username or username/event</Label>
             <div>
               <Input
                 id="calUserName"
@@ -104,29 +104,28 @@ export const CalQuestionForm = ({
             </div>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="calHost"
-                checked={isCalHostEnabled}
-                onCheckedChange={(checked: boolean) => setIsCalHostEnabled(checked)}
-              />
-              <Label htmlFor="calHost">Do you have a self-hosted Cal.com instance?</Label>
-            </div>
-
-            {isCalHostEnabled && (
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="calHost">Enter the hostname of your self-hosted Cal.com instance</Label>
+          <AdvancedOptionToggle
+            isChecked={isCalHostEnabled}
+            onToggle={(checked: boolean) => setIsCalHostEnabled(checked)}
+            htmlId="calHost"
+            description="Needed for a self-hosted Cal.com instance"
+            childBorder
+            title="Custom hostname"
+            customContainerClass="p-0">
+            <div className="p-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="calHost">Hostname</Label>
                 <Input
                   id="calHost"
                   name="calHost"
-                  placeholder="cal.com"
+                  placeholder="my-cal-instance.com"
                   value={question.calHost}
+                  className="bg-white"
                   onChange={(e) => updateQuestion(questionIdx, { calHost: e.target.value })}
                 />
               </div>
-            )}
-          </div>
+            </div>
+          </AdvancedOptionToggle>
         </div>
       </div>
     </form>
