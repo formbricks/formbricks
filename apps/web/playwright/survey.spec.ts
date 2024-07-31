@@ -413,7 +413,7 @@ test.describe("Multi Language Survey Create", async () => {
     // Fill Thank you card in german
     await page
       .locator("div")
-      .filter({ hasText: /^Ending Card$/ })
+      .filter({ hasText: /^Redirect to Url$/ })
       .nth(1)
       .click();
     await page.getByPlaceholder("Your question here. Recall").click();

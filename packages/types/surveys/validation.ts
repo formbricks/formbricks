@@ -100,7 +100,9 @@ export const validateCardFieldsForAllLanguages = (
     return {
       code: z.ZodIssueCode.custom,
       message: `${messagePrefix}${messageField} on the ${
-        cardType === "welcome" ? "Welcome card" : `Ending Card ${((endingCardIndex ?? -1) + 1).toString()}`
+        cardType === "welcome"
+          ? "Welcome card"
+          : `Redirect to Url ${((endingCardIndex ?? -1) + 1).toString()}`
       } ${messageSuffix}`,
       path: cardType === "welcome" ? ["welcomeCard", field] : ["endings", endingCardIndex ?? -1, field],
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
