@@ -1,17 +1,31 @@
-// migration script for converting thankYouCard to survey endings
+/* eslint-disable no-console -- logging is allowed in migration scripts */
 import { createId } from "@paralleldrive/cuid2";
 import { PrismaClient } from "@prisma/client";
+import { type TSurveyEndings } from "@formbricks/types/surveys/types";
+
+interface Survey {
+  id: string;
+  thankYouCard: {
+    enabled: boolean;
+    title: string;
+    description: string;
+  } | null;
+  redirectUrl: string | null;
+}
+interface UpdatedSurvey extends Survey {
+  endings?: TSurveyEndings;
+}
 
 const prisma = new PrismaClient();
 
-const main = async () => {
+async function runMigration(): Promise<void> {
   await prisma.$transaction(
     async (tx) => {
       const startTime = Date.now();
       console.log("Starting data migration...");
 
       // Fetch all surveys
-      const surveys = await tx.survey.findMany({
+      const surveys: Survey[] = await tx.survey.findMany({
         select: {
           id: true,
           thankYouCard: true,
@@ -25,70 +39,75 @@ const main = async () => {
         return;
       }
 
-      console.log(`Total surveys found: ${surveys.length}`);
+      console.log(`Total surveys found: ${surveys.length.toString()}`);
       let transformedSurveyCount = 0;
 
-      const updatePromises = surveys.map((survey) => {
-        transformedSurveyCount++;
-        const updatedSurvey = structuredClone(survey);
+      const updatePromises = surveys
+        .filter((s) => s.thankYouCard !== null)
+        .map((survey) => {
+          transformedSurveyCount++;
+          const updatedSurvey: UpdatedSurvey = structuredClone(survey);
 
-        if (survey.redirectUrl) {
-          // @ts-expect-error
-          updatedSurvey.endings = [
-            {
-              enabled: true,
-              type: "redirectToUrl",
-              label: "Redirect Url",
-              id: createId(),
-              url: survey.redirectUrl,
-            },
-          ];
-        } else {
-          if (survey.thankYouCard.enabled) {
-            // @ts-expect-error
+          if (survey.redirectUrl) {
+            updatedSurvey.endings = [
+              {
+                type: "redirectToUrl",
+                label: "Redirect Url",
+                id: createId(),
+                url: survey.redirectUrl,
+              },
+            ];
+          } else if (survey.thankYouCard?.enabled) {
             updatedSurvey.endings = [
               {
                 ...survey.thankYouCard,
                 type: "endScreen",
-                enabled: true,
                 id: createId(),
               },
             ];
           } else {
-            // @ts-expect-error
             updatedSurvey.endings = [];
           }
-        }
 
-        // Return the update promise
-        return tx.survey.update({
-          where: { id: survey.id },
-          data: {
-            // @ts-expect-error
-            endings: updatedSurvey.endings,
-            thankYouCard: undefined,
-            redirectUrl: undefined,
-          },
+          // Return the update promise
+          return tx.survey.update({
+            where: { id: survey.id },
+            data: {
+              endings: updatedSurvey.endings,
+              thankYouCard: null,
+              redirectUrl: null,
+            },
+          });
         });
-      });
 
       await Promise.all(updatePromises);
 
-      console.log(`${transformedSurveyCount} surveys transformed`);
+      console.log(`${transformedSurveyCount.toString()} surveys transformed`);
       const endTime = Date.now();
-      console.log(`Data migration completed. Total time: ${(endTime - startTime) / 1000}s`);
+      console.log(`Data migration completed. Total time: ${((endTime - startTime) / 1000).toString()}s`);
     },
     {
       timeout: 180000, // 3 minutes
     }
   );
-};
+}
 
-main()
-  .catch((e: Error) => {
-    console.error("Error during migration: ", e.message);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+function handleError(error: unknown): void {
+  console.error("An error occurred during migration:", error);
+  process.exit(1);
+}
+
+function handleDisconnectError(): void {
+  console.error("Failed to disconnect Prisma client");
+  process.exit(1);
+}
+
+function main(): void {
+  runMigration()
+    .catch(handleError)
+    .finally(() => {
+      prisma.$disconnect().catch(handleDisconnectError);
+    });
+}
+
+main();
