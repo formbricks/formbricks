@@ -83,7 +83,6 @@ export const PanelInfoView = ({ handleInitialPageButton }: PanelInfoViewProps) =
             </p>
           </div>
           <Button
-            variant="darkCTA"
             className="justify-center"
             href="https://formbricks.com/docs/link-surveys/market-research-panel"
             target="_blank">

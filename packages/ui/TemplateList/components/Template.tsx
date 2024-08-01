@@ -44,7 +44,6 @@ export const Template = ({
       {activeTemplate?.name === template.name && (
         <div className="flex justify-start">
           <Button
-            variant="darkCTA"
             className="mt-6 px-6 py-3"
             disabled={activeTemplate === null}
             loading={loading}

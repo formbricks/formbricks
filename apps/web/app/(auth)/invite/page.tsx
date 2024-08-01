@@ -44,9 +44,7 @@ const Page = async ({ searchParams }) => {
           <Button variant="secondary" href="/support">
             Contact support
           </Button>
-          <Button variant="darkCTA" href="/">
-            Go to app
-          </Button>
+          <Button href="/">Go to app</Button>
         </ContentLayout>
       );
     } else if (!session) {
@@ -59,9 +57,7 @@ const Page = async ({ searchParams }) => {
             href={`/auth/signup?inviteToken=${searchParams.token}&email=${encodedEmail}`}>
             Create account
           </Button>
-          <Button variant="darkCTA" href={`/auth/login?callbackUrl=${redirectUrl}&email=${encodedEmail}`}>
-            Login
-          </Button>
+          <Button href={`/auth/login?callbackUrl=${redirectUrl}&email=${encodedEmail}`}>Login</Button>
         </ContentLayout>
       );
     } else if (user?.email !== email) {
@@ -72,9 +68,7 @@ const Page = async ({ searchParams }) => {
           <Button variant="secondary" href="/support">
             Contact support
           </Button>
-          <Button variant="darkCTA" href="/">
-            Go to app
-          </Button>
+          <Button href="/">Go to app</Button>
         </ContentLayout>
       );
     } else {
@@ -97,9 +91,7 @@ const Page = async ({ searchParams }) => {
       });
       return (
         <ContentLayout headline="You’re in 🎉" description="Welcome to the organization.">
-          <Button variant="darkCTA" href="/">
-            Go to app
-          </Button>
+          <Button href="/">Go to app</Button>
         </ContentLayout>
       );
     }

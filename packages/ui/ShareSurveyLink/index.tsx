@@ -53,7 +53,6 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
       <div className="mt-2 flex items-center justify-center space-x-2">
         <LanguageDropdown survey={survey} setLanguage={setLanguage} />
         <Button
-          variant="darkCTA"
           title="Copy survey link to clipboard"
           aria-label="Copy survey link to clipboard"
           onClick={() => {
@@ -65,7 +64,6 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
         </Button>
         {survey.singleUse?.enabled && (
           <Button
-            variant="darkCTA"
             title="Regenerate single use survey link"
             aria-label="Regenerate single use survey link"
             onClick={generateNewSingleUseLink}>

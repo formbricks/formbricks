@@ -20,7 +20,6 @@ import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 
 export const middleware = async (request: NextRequest) => {
   // issue with next auth types & Next 15; let's review when new fixes are available
-  // @ts-expect-error
   const token = await getToken({ req: request });
 
   if (isAuthProtectedRoute(request.nextUrl.pathname) && !token) {

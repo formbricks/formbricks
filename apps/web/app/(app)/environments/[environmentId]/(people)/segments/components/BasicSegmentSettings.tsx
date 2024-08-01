@@ -236,7 +236,6 @@ export const BasicSegmentSettings = ({
                 Delete
               </Button>
               <Button
-                variant="darkCTA"
                 type="submit"
                 loading={isUpdatingSegment}
                 onClick={() => {

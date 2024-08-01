@@ -51,7 +51,7 @@ export const Card: React.FC<CardProps> = ({
     <p className="text-xs text-slate-500">{description}</p>
     <div className="mt-4 flex space-x-2">
       {connectHref && (
-        <Button href={connectHref} target={connectNewTab ? "_blank" : "_self"} size="sm" variant="darkCTA">
+        <Button href={connectHref} target={connectNewTab ? "_blank" : "_self"} size="sm">
           {connectText}
         </Button>
       )}

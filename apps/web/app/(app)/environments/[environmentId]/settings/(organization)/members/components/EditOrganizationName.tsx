@@ -92,7 +92,6 @@ export const EditOrganizationName = ({ organization, membershipRole }: EditOrgan
       <Button
         type="submit"
         className="mt-4"
-        variant="darkCTA"
         size="sm"
         loading={isUpdatingOrganization}
         disabled={isOrganizationNameInputEmpty || currentOrganizationName === previousOrganizationName}>
