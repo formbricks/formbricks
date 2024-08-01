@@ -75,7 +75,7 @@ export const SummaryList = ({
     );
 
     if (isDuplicate) {
-      toast.error("Filter already exist", { duration: 5000 });
+      toast.error("Filter already exist");
       return;
     }
     filterObject.filter.push({
