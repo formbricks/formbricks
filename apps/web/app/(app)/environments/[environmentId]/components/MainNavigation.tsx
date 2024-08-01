@@ -170,7 +170,7 @@ export const MainNavigation = ({
         isHidden: isViewer,
       },
     ],
-    [environment.id, pathname, isViewer]
+    [environment.id, pathname, product?.config.channel, isViewer]
   );
 
   const dropdownNavigation = [
@@ -234,6 +234,7 @@ export const MainNavigation = ({
                 </Link>
               )}
               <Button
+                variant="minimal"
                 size="icon"
                 tooltipSide="right"
                 onClick={toggleSidebar}

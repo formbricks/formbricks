@@ -115,7 +115,7 @@ export const VerifyEmail = ({
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyPress={handleKeyPress}
               />
-              <Button variant="darkCTA" onClick={() => submitEmail(email)} loading={isLoading}>
+              <Button onClick={() => submitEmail(email)} loading={isLoading}>
                 Verify
               </Button>
             </div>

@@ -65,7 +65,6 @@ export const ManageIntegration = ({
           <span className="text-slate-500">Connected with {slackIntegration.config.key.team.name}</span>
         </div>
         <Button
-          variant="darkCTA"
           onClick={() => {
             refreshChannels();
             setSelectedIntegration(null);

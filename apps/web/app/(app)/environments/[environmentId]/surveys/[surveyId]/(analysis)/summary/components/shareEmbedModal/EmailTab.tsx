@@ -78,7 +78,6 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
           </>
         )}
         <Button
-          variant="darkCTA"
           title="view embed code for email"
           aria-label="view embed code for email"
           onClick={() => {

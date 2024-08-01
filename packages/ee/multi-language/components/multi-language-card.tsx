@@ -34,7 +34,7 @@ export interface ConfirmationModalProps {
   open: boolean;
   title: string;
   buttonText: string;
-  buttonVariant?: "darkCTA" | "warn";
+  buttonVariant?: "primary" | "warn";
   onConfirm: () => void;
 }
 

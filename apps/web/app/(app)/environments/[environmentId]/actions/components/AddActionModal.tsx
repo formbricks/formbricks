@@ -27,12 +27,7 @@ export const AddActionModal = ({ environmentId, actionClasses }: AddActionModalP
 
   return (
     <>
-      <Button
-        variant="darkCTA"
-        size="sm"
-        loading={isLoading}
-        onClick={() => setOpen(true)}
-        EndIcon={PlusIcon}>
+      <Button size="sm" loading={isLoading} onClick={() => setOpen(true)} EndIcon={PlusIcon}>
         Add Action
       </Button>
       <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false} restrictOverflow>

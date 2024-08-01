@@ -279,7 +279,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
             <Plus width={18} height={18} className="ml-2" />
           </Button>
           <div className="flex gap-2">
-            <Button size="sm" variant="darkCTA" onClick={handleApplyFilters}>
+            <Button size="sm" onClick={handleApplyFilters}>
               Apply filters
             </Button>
             <Button size="sm" variant="minimal" onClick={handleClearAllFilters}>

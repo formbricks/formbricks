@@ -64,11 +64,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const currentProductChannel = product.config.channel ?? null;
 
   const CreateSurveyButton = (
-    <Button
-      size="sm"
-      href={`/environments/${environment.id}/surveys/templates`}
-      variant="darkCTA"
-      EndIcon={PlusIcon}>
+    <Button size="sm" href={`/environments/${environment.id}/surveys/templates`} EndIcon={PlusIcon}>
       New survey
     </Button>
   );
