@@ -253,8 +253,8 @@ export const ZSurveyRatingLogic = ZSurveyLogicBase.extend({
 });
 
 export const ZSurveyPictureSelectionLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped"]).optional(),
-  value: z.undefined(),
+  condition: z.enum(["submitted", "skipped", "equals", "includesOne", "includesAll"]).optional(),
+  value: z.union([z.array(z.string()), z.string()]).optional(),
 });
 
 export const ZSurveyCalLogic = ZSurveyLogicBase.extend({
@@ -282,6 +282,8 @@ export const ZSurveyLogic = z.union([
 ]);
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
+
+export type TSurveyPictureSelectionLogic = z.infer<typeof ZSurveyPictureSelectionLogic>;
 
 export const ZSurveyQuestionBase = z.object({
   id: z.string().superRefine((id, ctx) => {
@@ -874,7 +876,7 @@ export const ZSurvey = z
           }
 
           // logic condition and value mapping should not be repeated
-          const thisLogic = `${logic.condition ?? ""}-${String(logic.value)}`;
+          const thisLogic = `${logic.condition ?? ""}-${Array.isArray(logic.value) ? logic.value.sort().join(",") : String(logic.value)}`;
           if (existingLogicConditions.has(thisLogic)) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
