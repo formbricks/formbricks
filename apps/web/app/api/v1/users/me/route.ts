@@ -18,7 +18,7 @@ export const GET = async () => {
 
   const user = await prisma.user.findUnique({
     where: {
-      email: sessionUser.email,
+      id: sessionUser.id,
     },
   });
 
@@ -36,7 +36,7 @@ export const PUT = async (request: NextRequest) => {
 
   const user = await prisma.user.update({
     where: {
-      email: sessionUser.email,
+      id: sessionUser.id,
     },
     data: body,
   });

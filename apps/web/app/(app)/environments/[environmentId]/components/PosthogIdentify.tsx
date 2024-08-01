@@ -5,11 +5,13 @@ import { usePostHog } from "posthog-js/react";
 import { useEffect } from "react";
 import { env } from "@formbricks/lib/env";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
+import { TUser } from "@formbricks/types/user";
 
 const posthogEnabled = env.NEXT_PUBLIC_POSTHOG_API_KEY && env.NEXT_PUBLIC_POSTHOG_API_HOST;
 
 interface PosthogIdentifyProps {
   session: Session;
+  user: TUser;
   environmentId?: string;
   organizationId?: string;
   organizationName?: string;
@@ -18,6 +20,7 @@ interface PosthogIdentifyProps {
 
 export const PosthogIdentify = ({
   session,
+  user,
   environmentId,
   organizationId,
   organizationName,
@@ -28,10 +31,10 @@ export const PosthogIdentify = ({
   useEffect(() => {
     if (posthogEnabled && session.user && posthog) {
       posthog.identify(session.user.id, {
-        name: session.user.name,
-        email: session.user.email,
-        role: session.user.role,
-        objective: session.user.objective,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        objective: user.objective,
       });
       if (environmentId) {
         posthog.group("environment", environmentId, { name: environmentId });
@@ -45,7 +48,18 @@ export const PosthogIdentify = ({
         });
       }
     }
-  }, [posthog, session.user, environmentId, organizationId, organizationName, organizationBilling]);
+  }, [
+    posthog,
+    session.user,
+    environmentId,
+    organizationId,
+    organizationName,
+    organizationBilling,
+    user.name,
+    user.email,
+    user.role,
+    user.objective,
+  ]);
 
   return null;
 };
