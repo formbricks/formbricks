@@ -90,7 +90,6 @@ export class AppConfig {
   }
 
   private async saveToStorage(): Promise<Result<Promise<void>, Error>> {
-    // return wrapThrows(() => localStorage.setItem(IN_APP_LOCAL_STORAGE_KEY, JSON.stringify(this.config)))();
     return wrapThrows(async () => {
       await this.storageHandler.setItem(this.storageKey, JSON.stringify(this.config));
     })();
