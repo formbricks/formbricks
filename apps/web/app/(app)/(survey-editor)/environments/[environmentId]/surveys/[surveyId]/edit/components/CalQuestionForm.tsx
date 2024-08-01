@@ -37,6 +37,8 @@ export const CalQuestionForm = ({
   useEffect(() => {
     if (!isCalHostEnabled) {
       updateQuestion(questionIdx, { calHost: undefined });
+    } else {
+      updateQuestion(questionIdx, { calHost: question.calHost ?? "cal.com" });
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
