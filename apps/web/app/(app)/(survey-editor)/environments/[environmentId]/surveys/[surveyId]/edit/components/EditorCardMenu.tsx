@@ -273,7 +273,6 @@ export const EditorCardMenu = ({
         text="Changing the question type will remove the logic conditions from this question"
         buttonText="Change anyway"
         onConfirm={onConfirm}
-        buttonVariant="darkCTA"
       />
     </div>
   );
