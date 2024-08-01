@@ -27,6 +27,7 @@ interface LinkSurveyProps {
   emailVerificationStatus?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
+  prevResponse?: TResponse;
   webAppUrl: string;
   responseCount?: number;
   verifiedEmail?: string;
@@ -45,6 +46,7 @@ export const LinkSurvey = ({
   emailVerificationStatus,
   singleUseId,
   singleUseResponse,
+  prevResponse,
   webAppUrl,
   responseCount,
   verifiedEmail,
@@ -55,7 +57,7 @@ export const LinkSurvey = ({
   PRIVACY_URL,
   IS_FORMBRICKS_CLOUD,
 }: LinkSurveyProps) => {
-  const responseId = singleUseResponse?.id;
+  const responseId = singleUseResponse?.id || prevResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const skipPrefilled = searchParams?.get("skipPrefilled") === "true";
@@ -84,10 +86,18 @@ export const LinkSurvey = ({
 
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   let surveyState = useMemo(() => {
-    return new SurveyState(survey.id, singleUseId, responseId, userId);
-  }, [survey.id, singleUseId, responseId, userId]);
+    const state = new SurveyState(survey.id, singleUseId, responseId, userId);
+    if (prevResponse) {
+      state.responseAcc = {
+        finished: prevResponse.finished,
+        ttc: prevResponse.ttc,
+        data: prevResponse.data,
+      };
+    }
+    return state;
+  }, [survey.id, singleUseId, responseId, userId, prevResponse]);
 
-  const prefillValue = getPrefillValue(survey, searchParams, languageCode);
+  const prefillValue = { ...getPrefillValue(survey, searchParams, languageCode), ...prevResponse?.data };
 
   const responseQueue = useMemo(
     () =>
