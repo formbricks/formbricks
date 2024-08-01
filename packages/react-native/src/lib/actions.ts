@@ -1,23 +1,31 @@
 import { FormbricksAPI } from "@formbricks/api";
-import { TJsActionInput, TJsTrackProperties } from "@formbricks/types/js";
-import { InvalidCodeError, NetworkError, Result, err, okVoid } from "../../shared/errors";
-import { Logger } from "../../shared/logger";
-import { getIsDebug } from "../../shared/utils";
-import { AppConfig } from "./config";
-import { sync } from "./sync";
-import { triggerSurvey } from "./widget";
+import { TJsActionInput } from "@formbricks/types/js";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { InvalidCodeError, NetworkError, Result, err, okVoid } from "../../../js-core/src/shared/errors";
+import { Logger } from "../../../js-core/src/shared/logger";
+import { shouldDisplayBasedOnPercentage } from "../../../js-core/src/shared/utils";
+import { appConfig } from "./config";
+import { SurveyStore } from "./surveyStore";
 
 const logger = Logger.getInstance();
-const appConfig = AppConfig.getInstance();
+const surveyStore = SurveyStore.getInstance();
 
-export const trackAction = async (
-  name: string,
-  alias?: string,
-  properties?: TJsTrackProperties
-): Promise<Result<void, NetworkError>> => {
+export const triggerSurvey = async (survey: TSurvey): Promise<void> => {
+  // Check if the survey should be displayed based on displayPercentage
+  if (survey.displayPercentage) {
+    const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
+    if (!shouldDisplaySurvey) {
+      logger.debug(`Survey display of "${survey.name}" skipped based on displayPercentage.`);
+      return; // skip displaying the survey
+    }
+  }
+
+  surveyStore.setSurvey(survey);
+};
+
+export const trackAction = async (name: string, alias?: string): Promise<Result<void, NetworkError>> => {
   const aliasName = alias || name;
   const { userId } = appConfig.get();
-
   const input: TJsActionInput = {
     environmentId: appConfig.get().environmentId,
     userId,
@@ -46,21 +54,6 @@ export const trackAction = async (
         responseMessage: res.error.message,
       });
     }
-    // we skip the resync on a new action since this leads to too many requests if the user has a lot of actions
-    // also this always leads to a second sync call on the `New Session` action
-    // when debug: sync after every action for testing purposes
-    if (getIsDebug()) {
-      await sync(
-        {
-          environmentId: appConfig.get().environmentId,
-          apiHost: appConfig.get().apiHost,
-          userId,
-          attributes: appConfig.get().state.attributes,
-        },
-        true,
-        appConfig
-      );
-    }
   }
 
   logger.debug(`Formbricks: Action "${aliasName}" tracked`);
@@ -72,7 +65,7 @@ export const trackAction = async (
     for (const survey of activeSurveys) {
       for (const trigger of survey.triggers) {
         if (trigger.actionClass.name === name) {
-          await triggerSurvey(survey, name, properties);
+          await triggerSurvey(survey);
         }
       }
     }
@@ -84,8 +77,7 @@ export const trackAction = async (
 };
 
 export const trackCodeAction = (
-  code: string,
-  properties?: TJsTrackProperties
+  code: string
 ): Promise<Result<void, NetworkError>> | Result<void, InvalidCodeError> => {
   const {
     state: { actionClasses = [] },
@@ -101,9 +93,5 @@ export const trackCodeAction = (
     });
   }
 
-  return trackAction(action.name, code, properties);
-};
-
-export const trackNoCodeAction = (name: string): Promise<Result<void, NetworkError>> => {
-  return trackAction(name);
+  return trackAction(action.name, code);
 };

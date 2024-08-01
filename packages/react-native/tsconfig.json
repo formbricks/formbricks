@@ -1,0 +1,8 @@
+{
+  "extends": "@formbricks/config-typescript/react-native-library.json",
+  "include": ["."],
+  "exclude": ["dist", "build", "node_modules"],
+  "compilerOptions": {
+    "strict": true
+  }
+}

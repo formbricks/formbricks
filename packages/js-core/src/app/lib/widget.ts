@@ -1,4 +1,5 @@
 import { FormbricksAPI } from "@formbricks/api";
+import { getDefaultLanguageCode, getLanguageCodeForSurvey } from "@formbricks/lib/i18n/utils";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
@@ -8,14 +9,14 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ErrorHandler } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
-import { getDefaultLanguageCode, getLanguageCode, handleHiddenFields } from "../../shared/utils";
+import { handleHiddenFields, shouldDisplayBasedOnPercentage } from "../../shared/utils";
 import { AppConfig } from "./config";
 import { putFormbricksInErrorState } from "./initialize";
 import { sync } from "./sync";
 
 const containerId = "formbricks-app-container";
 
-const inAppConfig = AppConfig.getInstance();
+const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let isSurveyRunning = false;
@@ -24,11 +25,6 @@ let setIsResponseSendingFinished = (_: boolean) => {};
 
 export const setIsSurveyRunning = (value: boolean) => {
   isSurveyRunning = value;
-};
-
-const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
-  const randomNum = Math.floor(Math.random() * 10000) / 100;
-  return randomNum <= displayPercentage;
 };
 
 export const triggerSurvey = async (
@@ -68,14 +64,14 @@ const renderWidget = async (
     logger.debug(`Delaying survey "${survey.name}" by ${survey.delay} seconds.`);
   }
 
-  const product = inAppConfig.get().state.product;
-  const attributes = inAppConfig.get().state.attributes;
+  const product = appConfig.get().state.product;
+  const attributes = appConfig.get().state.attributes;
 
   const isMultiLanguageSurvey = survey.languages.length > 1;
   let languageCode = "default";
 
   if (isMultiLanguageSurvey) {
-    const displayLanguage = getLanguageCode(survey, attributes);
+    const displayLanguage = getLanguageCodeForSurvey(survey, attributes);
     //if survey is not available in selected language, survey wont be shown
     if (!displayLanguage) {
       logger.debug(`Survey "${survey.name}" is not available in specified language.`);
@@ -85,12 +81,12 @@ const renderWidget = async (
     languageCode = displayLanguage;
   }
 
-  const surveyState = new SurveyState(survey.id, null, null, inAppConfig.get().userId);
+  const surveyState = new SurveyState(survey.id, null, null, appConfig.get().userId);
 
   const responseQueue = new ResponseQueue(
     {
-      apiHost: inAppConfig.get().apiHost,
-      environmentId: inAppConfig.get().environmentId,
+      apiHost: appConfig.get().apiHost,
+      environmentId: appConfig.get().environmentId,
       retryAttempts: 2,
       onResponseSendingFailed: () => {
         setIsError(true);
@@ -124,11 +120,11 @@ const renderWidget = async (
         setIsResponseSendingFinished = f;
       },
       onDisplay: async () => {
-        const { userId } = inAppConfig.get();
+        const { userId } = appConfig.get();
 
         const api = new FormbricksAPI({
-          apiHost: inAppConfig.get().apiHost,
-          environmentId: inAppConfig.get().environmentId,
+          apiHost: appConfig.get().apiHost,
+          environmentId: appConfig.get().environmentId,
         });
 
         const res = await api.client.display.create({
@@ -146,7 +142,7 @@ const renderWidget = async (
         responseQueue.updateSurveyState(surveyState);
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
-        const { userId } = inAppConfig.get();
+        const { userId } = appConfig.get();
         surveyState.updateUserId(userId);
 
         responseQueue.updateSurveyState(surveyState);
@@ -166,8 +162,8 @@ const renderWidget = async (
       onClose: closeSurvey,
       onFileUpload: async (file: File, params: TUploadFileConfig) => {
         const api = new FormbricksAPI({
-          apiHost: inAppConfig.get().apiHost,
-          environmentId: inAppConfig.get().environmentId,
+          apiHost: appConfig.get().apiHost,
+          environmentId: appConfig.get().environmentId,
         });
 
         return await api.client.storage.uploadFile(file, params);
@@ -190,12 +186,13 @@ export const closeSurvey = async (): Promise<void> => {
   try {
     await sync(
       {
-        apiHost: inAppConfig.get().apiHost,
-        environmentId: inAppConfig.get().environmentId,
-        userId: inAppConfig.get().userId,
-        attributes: inAppConfig.get().state.attributes,
+        apiHost: appConfig.get().apiHost,
+        environmentId: appConfig.get().environmentId,
+        userId: appConfig.get().userId,
+        attributes: appConfig.get().state.attributes,
       },
-      true
+      true,
+      appConfig
     );
     setIsSurveyRunning(false);
   } catch (e: any) {
@@ -220,7 +217,7 @@ const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurv
       resolve(window.formbricksSurveys);
     } else {
       const script = document.createElement("script");
-      script.src = `${inAppConfig.get().apiHost}/api/packages/surveys`;
+      script.src = `${appConfig.get().apiHost}/api/packages/surveys`;
       script.async = true;
       script.onload = () => resolve(window.formbricksSurveys);
       script.onerror = (error) => {

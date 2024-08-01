@@ -1,7 +1,6 @@
 import { TJsWebsiteConfig, TJsWebsiteConfigUpdateInput } from "@formbricks/types/js";
+import { WEBSITE_SURVEYS_LOCAL_STORAGE_KEY } from "../../shared/constants";
 import { Result, err, ok, wrapThrows } from "../../shared/errors";
-
-export const WEBSITE_LOCAL_STORAGE_KEY = "formbricks-js-website";
 
 export class WebsiteConfig {
   private static instance: WebsiteConfig | undefined;
@@ -43,11 +42,8 @@ export class WebsiteConfig {
 
   public loadFromLocalStorage(): Result<TJsWebsiteConfig, Error> {
     if (typeof window !== "undefined") {
-      const savedConfig = localStorage.getItem(WEBSITE_LOCAL_STORAGE_KEY);
+      const savedConfig = localStorage.getItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY);
       if (savedConfig) {
-        // TODO: validate config
-        // This is a hack to get around the fact that we don't have a proper
-        // way to validate the config yet.
         const parsedConfig = JSON.parse(savedConfig) as TJsWebsiteConfig;
 
         // check if the config has expired
@@ -63,7 +59,9 @@ export class WebsiteConfig {
   }
 
   private saveToLocalStorage(): Result<void, Error> {
-    return wrapThrows(() => localStorage.setItem(WEBSITE_LOCAL_STORAGE_KEY, JSON.stringify(this.config)))();
+    return wrapThrows(() =>
+      localStorage.setItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY, JSON.stringify(this.config))
+    )();
   }
 
   // reset the config
@@ -71,6 +69,6 @@ export class WebsiteConfig {
   public resetConfig(): Result<void, Error> {
     this.config = null;
 
-    return wrapThrows(() => localStorage.removeItem(WEBSITE_LOCAL_STORAGE_KEY))();
+    return wrapThrows(() => localStorage.removeItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY))();
   }
 }
