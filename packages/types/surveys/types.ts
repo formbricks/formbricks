@@ -880,6 +880,19 @@ export const ZSurvey = z
         }
       }
 
+      if (question.type === TSurveyQuestionTypeEnum.Cal) {
+        if (question.calHost !== undefined) {
+          const hostnameRegex = /^[a-zA-Z0-9]+(?<domain>\.[a-zA-Z0-9]+)+$/;
+          if (!hostnameRegex.test(question.calHost)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Question ${String(questionIndex + 1)} must have a valid host name`,
+              path: ["questions", questionIndex, "calHost"],
+            });
+          }
+        }
+      }
+
       if (question.logic) {
         question.logic.forEach((logic, logicIndex) => {
           const logicConditions = ["condition", "value", "destination"] as const;
