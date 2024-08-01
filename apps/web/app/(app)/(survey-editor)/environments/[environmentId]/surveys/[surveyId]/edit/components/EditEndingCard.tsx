@@ -117,10 +117,7 @@ export const EditEndingCard = ({
 
   return (
     <div
-      className={cn(
-        open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
-        "group z-20 flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
-      )}
+      className={cn(open ? "shadow-lg" : "shadow-md", "group z-20 flex flex-row rounded-lg bg-white")}
       ref={setNodeRef}
       style={style}
       id={endingCard.id}>
@@ -132,7 +129,7 @@ export const EditEndingCard = ({
           "flex w-10 flex-col items-center justify-between rounded-l-lg border-b border-l border-t py-2 group-aria-expanded:rounded-bl-none",
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
-        <p>{endingCard.type === "endScreen" ? "🙏" : "↪️"}</p>
+        <p className="mt-3">{endingCard.type === "endScreen" ? "🙏" : "↪️"}</p>
         <button className="opacity-0 transition-all duration-300 hover:cursor-move group-hover:opacity-100">
           <GripIcon className="h-4 w-4" />
         </button>
@@ -169,6 +166,11 @@ export const EditEndingCard = ({
                       : "Ending card")}
                   {endingCard.type === "redirectToUrl" && (endingCard.label || "Redirect to Url")}
                 </p>
+                {!open && (
+                  <p className="mt-1 truncate text-xs text-slate-500">
+                    {endingCard.type === "endScreen" ? "Ending card" : "Redirect to Url"}
+                  </p>
+                )}
               </div>
             </div>
 

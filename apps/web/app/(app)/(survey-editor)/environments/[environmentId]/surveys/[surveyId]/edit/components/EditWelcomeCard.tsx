@@ -59,11 +59,7 @@ export const EditWelcomeCard = ({
   };
 
   return (
-    <div
-      className={cn(
-        open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
-        "group flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
-      )}>
+    <div className={cn(open ? "shadow-lg" : "shadow-md", "group flex flex-row rounded-lg bg-white")}>
       <div
         className={cn(
           open ? "bg-slate-50" : "",
