@@ -2,9 +2,9 @@ import { createId } from "@paralleldrive/cuid2";
 import { TActionClass } from "@formbricks/types/action-classes";
 import {
   TSurveyCTAQuestion,
+  TSurveyCreateInput,
   TSurveyDisplayOption,
   TSurveyHiddenFields,
-  TSurveyInput,
   TSurveyOpenTextQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyStatus,
@@ -2828,7 +2828,10 @@ export const customSurvey = {
   },
 };
 
-export const getExampleWebsiteSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
+export const getExampleWebsiteSurveyTemplate = (
+  webAppUrl: string,
+  trigger: TActionClass
+): TSurveyCreateInput => ({
   ...customSurvey.preset,
   questions: customSurvey.preset.questions.map(
     (question) =>
@@ -2853,7 +2856,10 @@ export const getExampleWebsiteSurveyTemplate = (webAppUrl: string, trigger: TAct
   recontactDays: 0,
 });
 
-export const getExampleAppSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
+export const getExampleAppSurveyTemplate = (
+  webAppUrl: string,
+  trigger: TActionClass
+): TSurveyCreateInput => ({
   ...customSurvey.preset,
   questions: customSurvey.preset.questions.map(
     (question) =>
