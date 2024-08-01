@@ -6,6 +6,7 @@ import { AlertCircleIcon, BlocksIcon, CheckIcon, EarthIcon, LinkIcon, MonitorIco
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
+import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
@@ -39,6 +40,11 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
       endingsTemp.push({
         id: createId(),
         type: "endScreen",
+        headline: createI18nString("Thank you!", extractLanguageCodes(localSurvey.languages)),
+        subheader: createI18nString(
+          "We appreciate your feedback.",
+          extractLanguageCodes(localSurvey.languages)
+        ),
       });
     }
     setLocalSurvey((prevSurvey) => ({
