@@ -90,7 +90,7 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
                 }}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit" loading={loading} disabled={!isOrganizationNameValid}>
+              <Button type="submit" loading={loading} disabled={!isOrganizationNameValid}>
                 Create organization
               </Button>
             </div>

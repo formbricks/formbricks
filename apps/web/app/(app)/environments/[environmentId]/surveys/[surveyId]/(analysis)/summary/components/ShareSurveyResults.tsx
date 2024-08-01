@@ -65,7 +65,7 @@ export const ShareSurveyResults = ({
                 Unpublish
               </Button>
 
-              <Button variant="darkCTA" className="text-center" href={surveyUrl} target="_blank">
+              <Button className="text-center" href={surveyUrl} target="_blank">
                 View site
               </Button>
             </div>
@@ -84,11 +84,7 @@ export const ShareSurveyResults = ({
                 have the link.
               </p>
             </div>
-            <Button
-              type="submit"
-              variant="darkCTA"
-              className="h-full text-center"
-              onClick={() => handlePublish()}>
+            <Button type="submit" className="h-full text-center" onClick={() => handlePublish()}>
               Publish to public web
             </Button>
           </div>

@@ -96,7 +96,6 @@ export const OrganizationActions = ({
         {!isInviteDisabled && isAdminOrOwner && (
           <Button
             size="sm"
-            variant="darkCTA"
             onClick={() => {
               setAddMemberModalOpen(true);
             }}>

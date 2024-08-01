@@ -12,7 +12,7 @@ export const EditAvatar = ({ session }) => {
     <div>
       <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
 
-      <Button className="mt-4" variant="darkCTA" size="sm" disabled={true}>
+      <Button className="mt-4" size="sm" disabled={true}>
         Upload Image
       </Button>
     </div>

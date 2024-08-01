@@ -100,7 +100,7 @@ export const AttributeSettingsTab = async ({ attributeClass, setOpen }: Attribut
           </div>
           {attributeClass.type !== "automatic" && (
             <div className="flex space-x-2">
-              <Button type="submit" variant="darkCTA" loading={isAttributeBeingSubmitted}>
+              <Button type="submit" loading={isAttributeBeingSubmitted}>
                 Save changes
               </Button>
             </div>

@@ -83,8 +83,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
           onClick={() => {
             setDefaultValues(null);
             handleModal(true);
-          }}
-          variant="darkCTA">
+          }}>
           Link new table
         </Button>
       </div>

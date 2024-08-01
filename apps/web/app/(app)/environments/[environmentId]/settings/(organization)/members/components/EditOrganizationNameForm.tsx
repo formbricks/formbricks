@@ -86,7 +86,6 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
         <Button
           type="submit"
           className="mt-4"
-          variant="darkCTA"
           size="sm"
           loading={isSubmitting}
           disabled={isSubmitting || !isDirty}>

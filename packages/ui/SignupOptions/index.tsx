@@ -158,7 +158,6 @@ export const SignupOptions = ({
           {showLogin && (
             <Button
               type="submit"
-              variant="darkCTA"
               className="w-full justify-center"
               loading={signingUp}
               disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
@@ -175,7 +174,6 @@ export const SignupOptions = ({
                 // Add a slight delay before focusing the input field to ensure it's visible
                 setTimeout(() => nameRef.current?.focus(), 100);
               }}
-              variant="darkCTA"
               className="w-full justify-center">
               Continue with Email
             </Button>

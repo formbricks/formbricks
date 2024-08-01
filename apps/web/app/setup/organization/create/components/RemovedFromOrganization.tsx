@@ -34,9 +34,7 @@ export const RemovedFromOrganization = ({ session, isFormbricksCloud }: RemovedF
         isFormbricksCloud={isFormbricksCloud}
         formbricksLogout={formbricksLogout}
       />
-      <Button variant="darkCTA" onClick={() => setIsModalOpen(true)}>
-        Delete account
-      </Button>
+      <Button onClick={() => setIsModalOpen(true)}>Delete account</Button>
     </div>
   );
 };
