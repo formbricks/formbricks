@@ -17,7 +17,6 @@ export const AddWebhookButton = ({ environment, surveys }: AddWebhookButtonProps
   return (
     <>
       <Button
-        variant="darkCTA"
         size="sm"
         onClick={() => {
           setAddWebhookModalOpen(true);

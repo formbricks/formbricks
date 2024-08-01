@@ -6,9 +6,7 @@ const Loading = () => {
     <div className="mt-6 p-6">
       <GoBackButton />
       <div className="mb-6 text-right">
-        <Button
-          variant="darkCTA"
-          className="pointer-events-none animate-pulse cursor-not-allowed select-none bg-slate-200">
+        <Button className="pointer-events-none animate-pulse cursor-not-allowed select-none bg-slate-200">
           Link new sheet
         </Button>
       </div>

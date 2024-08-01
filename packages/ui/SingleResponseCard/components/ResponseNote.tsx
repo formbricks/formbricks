@@ -243,7 +243,7 @@ export const ResponseNotes = ({
                     {isTextAreaOpen ? "Hide" : "Show"}
                   </Button>
                   {isTextAreaOpen && (
-                    <Button variant="darkCTA" size="sm" type="submit" loading={isCreatingNote}>
+                    <Button size="sm" type="submit" loading={isCreatingNote}>
                       {isUpdatingNote ? "Save" : "Send"}
                     </Button>
                   )}

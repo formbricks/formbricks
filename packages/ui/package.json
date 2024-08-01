@@ -13,7 +13,7 @@
     "@formbricks/types": "workspace:*",
     "concurrently": "^8.2.2",
     "@formbricks/eslint-config": "workspace:*",
-    "postcss": "^8.4.39",
+    "postcss": "^8.4.40",
     "react": "18.3.1"
   },
   "dependencies": {
@@ -43,13 +43,13 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "lexical": "^0.16.1",
-    "lucide-react": "^0.405.0",
+    "lucide-react": "^0.418.0",
     "mime": "^4.0.4",
     "react-colorful": "^5.6.1",
     "react-confetti": "^6.1.0",
-    "react-day-picker": "^8.10.1",
+    "react-day-picker": "^9.0.6",
     "react-hot-toast": "^2.4.1",
     "react-radio-group": "^3.0.3",
-    "react-use": "^17.5.0"
+    "react-use": "^17.5.1"
   }
 }

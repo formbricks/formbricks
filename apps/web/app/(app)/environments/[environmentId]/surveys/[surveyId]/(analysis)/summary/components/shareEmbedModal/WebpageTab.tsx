@@ -21,7 +21,6 @@ export const WebpageTab = ({ surveyUrl }) => {
       <div className="flex justify-between">
         <div></div>
         <Button
-          variant="darkCTA"
           title="Embed survey in your website"
           aria-label="Embed survey in your website"
           onClick={() => {
