@@ -10,18 +10,18 @@
     "clean": "rimraf .turbo node_modules dist .turbo"
   },
   "devDependencies": {
-    "@react-native-async-storage/async-storage": "1.21.0",
+    "@react-native-async-storage/async-storage": "1.24.0",
     "@formbricks/api": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "@types/react": "^18.2.46",
+    "@types/react": "^18.3.3",
     "@types/react-native": "^0.73.0",
     "@formbricks/config-typescript": "workspace:*",
-    "tsup": "^8.0.1"
+    "tsup": "^8.2.3"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-native": "^0.73.1",
-    "react-native-webview": "13.7.0"
+    "react": "^18.3.1",
+    "react-native": "^0.74.4",
+    "react-native-webview": "13.10.5"
   }
 }

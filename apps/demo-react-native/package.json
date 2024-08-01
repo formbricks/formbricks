@@ -1,5 +1,5 @@
 {
-  "name": "@formbricks/mobile-demo",
+  "name": "@formbricks/demo-react-native",
   "version": "1.0.0",
   "main": "./index.js",
   "scripts": {
@@ -13,16 +13,16 @@
   "dependencies": {
     "@formbricks/js": "workspace:*",
     "@formbricks/react-native": "workspace:*",
-    "expo": "^51.0.22",
+    "expo": "^51.0.24",
     "expo-status-bar": "~1.12.1",
-    "react": "18.2.0",
-    "react-native": "0.74.3",
-    "react-native-webview": "13.8.6"
+    "react": "18.3.1",
+    "react-native": "0.74.4",
+    "react-native-webview": "13.10.5"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0",
-    "@types/react": "~18.2.45",
-    "typescript": "^5.3.3"
+    "@babel/core": "^7.25.2",
+    "@types/react": "~18.3.3",
+    "typescript": "^5.5.4"
   },
   "private": true
 }

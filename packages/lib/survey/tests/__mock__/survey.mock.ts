@@ -5,7 +5,7 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import {
   TSurvey,
-  TSurveyInput,
+  TSurveyCreateInput,
   TSurveyLanguage,
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
@@ -240,7 +240,7 @@ export const mockSurveyOutput: SurveyMock = {
   ...baseSurveyProperties,
 };
 
-export const createSurveyInput: TSurveyInput = {
+export const createSurveyInput: TSurveyCreateInput = {
   type: "website",
   status: "inProgress",
   displayOption: "respondMultiple",
