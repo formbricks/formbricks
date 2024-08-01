@@ -170,7 +170,7 @@ export const MainNavigation = ({
         isHidden: isViewer,
       },
     ],
-    [environment.id, pathname, isViewer]
+    [environment.id, pathname, product?.config.channel, isViewer]
   );
 
   const dropdownNavigation = [
