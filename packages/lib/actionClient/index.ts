@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { DEFAULT_SERVER_ERROR_MESSAGE, createSafeActionClient } from "next-safe-action";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { authOptions } from "../authOptions";
+import { getUser } from "../user/service";
 
 export const actionClient = createSafeActionClient({
   handleReturnedServerError(e) {
@@ -20,5 +21,13 @@ export const authenticatedActionClient = actionClient.use(async ({ next }) => {
   if (!session?.user) {
     throw new AuthenticationError("Not authenticated");
   }
-  return next({ ctx: { user: session.user } });
+
+  const userId = session.user.id;
+
+  const user = await getUser(userId);
+  if (!user) {
+    throw new AuthorizationError("User not found");
+  }
+
+  return next({ ctx: { user } });
 });

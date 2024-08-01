@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getUser } from "@formbricks/lib/user/service";
 import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 import { TTemplateRole } from "@formbricks/types/templates";
 import { TemplateContainerWithPreview } from "./components/TemplateContainer";
@@ -21,13 +22,18 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const session = await getServerSession(authOptions);
   const environmentId = params.environmentId;
 
-  const [environment, product] = await Promise.all([
+  if (!session) {
+    throw new Error("Session not found");
+  }
+
+  const [user, environment, product] = await Promise.all([
+    getUser(session.user.id),
     getEnvironment(environmentId),
     getProductByEnvironmentId(environmentId),
   ]);
 
-  if (!session) {
-    throw new Error("Session not found");
+  if (!user) {
+    throw new Error("User not found");
   }
 
   if (!product) {
@@ -43,7 +49,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   return (
     <TemplateContainerWithPreview
       environmentId={environmentId}
-      user={session.user}
+      user={user}
       environment={environment}
       product={product}
       prefilledFilters={prefilledFilters}

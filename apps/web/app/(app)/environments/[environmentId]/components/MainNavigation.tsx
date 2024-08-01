@@ -20,7 +20,6 @@ import {
   UserIcon,
   UsersIcon,
 } from "lucide-react";
-import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,6 +32,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
+import { TUser } from "@formbricks/types/user";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 import { CreateOrganizationModal } from "@formbricks/ui/CreateOrganizationModal";
@@ -53,7 +53,7 @@ import {
 interface NavigationProps {
   environment: TEnvironment;
   organizations: TOrganization[];
-  session: Session;
+  user: TUser;
   organization: TOrganization;
   products: TProduct[];
   isFormbricksCloud: boolean;
@@ -65,7 +65,7 @@ export const MainNavigation = ({
   environment,
   organizations,
   organization,
-  session,
+  user,
   products,
   isFormbricksCloud,
   membershipRole,
@@ -353,7 +353,7 @@ export const MainNavigation = ({
                       "flex cursor-pointer flex-row items-center space-x-5",
                       isCollapsed ? "pl-2" : "pl-4"
                     )}>
-                    <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
+                    <ProfileAvatar userId={user.id} imageUrl={user.imageUrl} />
                     {!isCollapsed && !isTextVisible && (
                       <>
                         <div className={cn(isTextVisible ? "opacity-0" : "opacity-100")}>
@@ -361,10 +361,10 @@ export const MainNavigation = ({
                             className={cn(
                               "ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700"
                             )}>
-                            {session?.user?.name ? (
-                              <span>{truncate(session?.user?.name, 30)}</span>
+                            {user?.name ? (
+                              <span>{truncate(user?.name, 30)}</span>
                             ) : (
-                              <span>{truncate(session?.user?.email, 30)}</span>
+                              <span>{truncate(user?.email, 30)}</span>
                             )}
                           </p>
                           <p className={cn("text-sm text-slate-500")}>
