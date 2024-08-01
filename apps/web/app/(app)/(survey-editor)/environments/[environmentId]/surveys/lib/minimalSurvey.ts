@@ -1,4 +1,4 @@
-import { createId } from "@paralleldrive/cuid2";
+import { endingCardDefault, welcomeCardDefault } from "@formbricks/lib/templates";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const minimalSurvey: TSurvey = {
@@ -15,23 +15,9 @@ export const minimalSurvey: TSurvey = {
   triggers: [],
   recontactDays: null,
   displayLimit: null,
-  welcomeCard: {
-    enabled: false,
-    headline: { default: "Welcome!" },
-    html: { default: "Thanks for providing your feedback - let's go!" },
-    timeToFinish: false,
-    showResponseCount: false,
-  },
+  welcomeCard: welcomeCardDefault,
   questions: [],
-  endings: [
-    {
-      type: "endScreen",
-      id: createId(),
-      headline: { default: "Thank you!" },
-      subheader: { default: "We appreciate your feedback." },
-      buttonLabel: { default: "Create your own Survey" },
-    },
-  ],
+  endings: [endingCardDefault],
   hiddenFields: {
     enabled: false,
   },
