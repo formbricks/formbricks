@@ -18,7 +18,7 @@ export const sendEmbedSurveyPreviewEmailAction = async (surveyId: string) => {
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new AuthenticationError("User not found");
+    throw new Error("User not found");
   }
 
   const survey = await getSurvey(surveyId);

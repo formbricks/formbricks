@@ -23,7 +23,7 @@ const Page = async () => {
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new AuthenticationError("User not found");
+    throw new Error("User not found");
   }
 
   const hasNoOrganizations = await gethasNoOrganizations();

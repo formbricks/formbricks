@@ -170,7 +170,7 @@ export const inviteUserAction = async (
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new AuthenticationError("User not found");
+    throw new Error("User not found");
   }
 
   const isUserAuthorized = await hasOrganizationAuthority(session.user.id, organizationId);

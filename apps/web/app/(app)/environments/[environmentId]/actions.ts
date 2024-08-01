@@ -41,7 +41,7 @@ export const createOrganizationAction = async (organizationName: string): Promis
   if (!session) throw new AuthorizationError("Not authorized");
 
   const user = await getUser(session.user.id);
-  if (!user) throw new AuthorizationError("User not found");
+  if (!user) throw new Error("User not found");
 
   const newOrganization = await createOrganization({
     name: organizationName,

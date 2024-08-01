@@ -14,7 +14,6 @@ import {
 import { getProducts } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { DevEnvironmentBanner } from "@formbricks/ui/DevEnvironmentBanner";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { LimitsReachedBanner } from "@formbricks/ui/LimitsReachedBanner";
 import { PendingDowngradeBanner } from "@formbricks/ui/PendingDowngradeBanner";
 
@@ -33,11 +32,11 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   ]);
 
   if (!user) {
-    return <ErrorComponent />;
+    throw new Error("User not found");
   }
 
   if (!organization || !environment) {
-    return <ErrorComponent />;
+    throw new Error("Organization or environment not found");
   }
 
   const [products, environments] = await Promise.all([
@@ -46,7 +45,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   ]);
 
   if (!products || !environments || !organizations) {
-    return <ErrorComponent />;
+    throw new Error("Products, environments or organizations not found");
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);

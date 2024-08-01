@@ -19,7 +19,7 @@ export const inviteOrganizationMemberAction = async (email: string, organization
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new AuthenticationError("User not found");
+    throw new Error("User not found");
   }
 
   const organizations = await getOrganizationsByUserId(session.user.id);

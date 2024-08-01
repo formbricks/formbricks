@@ -21,7 +21,7 @@ const EnvLayout = async ({ children, params }) => {
 
   const user = await getUser(session.user.id);
   if (!user) {
-    return redirect(`/auth/login`);
+    throw new Error("User not found");
   }
 
   const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
