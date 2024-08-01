@@ -93,7 +93,7 @@ export const IndividualInviteTab = ({
             }}>
             Cancel
           </Button>
-          <Button variant="darkCTA" type="submit" size="sm" loading={isSubmitting}>
+          <Button type="submit" size="sm" loading={isSubmitting}>
             Send Invitation
           </Button>
         </div>

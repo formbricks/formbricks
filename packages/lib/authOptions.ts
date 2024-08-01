@@ -176,7 +176,7 @@ export const authOptions: NextAuthOptions = {
 
       return {
         ...token,
-        profile: existingUser || null,
+        profile: { id: existingUser.id },
       };
     },
     async session({ session, token }) {

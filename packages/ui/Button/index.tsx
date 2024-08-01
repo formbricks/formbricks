@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Too
 type SVGComponent = React.FunctionComponent<React.SVGProps<SVGSVGElement>> | LucideIcon;
 
 export type ButtonBaseProps = {
-  variant?: "highlight" | "primary" | "secondary" | "minimal" | "warn" | "alert" | "darkCTA";
+  variant?: "highlight" | "primary" | "secondary" | "minimal" | "warn" | "alert";
   size?: "base" | "sm" | "lg" | "fab" | "icon";
   loading?: boolean;
   disabled?: boolean;
@@ -79,8 +79,8 @@ export const Button: React.ForwardRefExoticComponent<
             : "text-white bg-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900 transition ease-in-out delay-50 hover:scale-105"),
         variant === "primary" &&
           (disabled
-            ? "border border-transparent bg-slate-400 text-white"
-            : "text-white bg-brand-dark hover:bg-brand focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900"),
+            ? "text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-slate-800"
+            : "text-slate-100 hover:text-slate-50 bg-gradient-to-br from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-1  focus:bg-slate-700 focus:ring-neutral-500"),
 
         variant === "minimal" &&
           (disabled
@@ -98,10 +98,6 @@ export const Button: React.ForwardRefExoticComponent<
           (disabled
             ? "text-slate-400 bg-transparent"
             : "hover:bg-red-200 text-red-700 bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:bg-red-50 focus:ring-red-500"),
-        variant === "darkCTA" &&
-          (disabled
-            ? "text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-slate-800"
-            : "text-slate-100 hover:text-slate-50 bg-gradient-to-br from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-1  focus:bg-slate-700 focus:ring-neutral-500"),
 
         // set not-allowed cursor if disabled
         loading ? "cursor-wait" : disabled ? "cursor-not-allowed" : "",
