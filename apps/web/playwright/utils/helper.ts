@@ -284,7 +284,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   // Thank You Card
   await page
     .locator("div")
-    .filter({ hasText: /^Thank you!$/ })
+    .filter({ hasText: /^Thank you!Ending card$/ })
     .nth(1)
     .click();
   await page.getByLabel("Note*").fill(params.thankYouCard.headline);
