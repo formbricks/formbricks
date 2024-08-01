@@ -14,7 +14,7 @@ import {
 } from "@formbricks/types/surveys/types";
 import { TTemplate } from "@formbricks/types/templates";
 
-const endingCardDefault: TSurveyEndScreenCard = {
+export const endingCardDefault: TSurveyEndScreenCard = {
   id: createId(),
   type: "endScreen",
   headline: { default: "Thank you!" },
