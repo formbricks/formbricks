@@ -1,5 +1,6 @@
 // https://github.com/airbnb/javascript/#naming--uppercase
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getDefaultEndingCard } from "../templates";
 
 export const COLOR_DEFAULTS = {
   brandColor: "#64748b",
@@ -98,18 +99,7 @@ export const PREVIEW_SURVEY = {
       shuffleOption: "none",
     },
   ],
-  endings: [
-    {
-      type: "endScreen",
-      id: "bt22ypnn0agruu48k1c6ot2t",
-      headline: {
-        default: "Thank you!",
-      },
-      subheader: {
-        default: "We appreciate your feedback.",
-      },
-    },
-  ],
+  endings: [getDefaultEndingCard([])],
   hiddenFields: {
     enabled: true,
     fieldIds: [],

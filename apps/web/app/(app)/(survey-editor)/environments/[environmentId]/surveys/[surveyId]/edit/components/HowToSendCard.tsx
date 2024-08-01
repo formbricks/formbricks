@@ -1,13 +1,11 @@
 "use client";
 
-import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircleIcon, BlocksIcon, CheckIcon, EarthIcon, LinkIcon, MonitorIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { endingCardDefault } from "@formbricks/lib/templates";
+import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
@@ -38,15 +36,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, produc
   const setSurveyType = (type: TSurveyType) => {
     const endingsTemp = localSurvey.endings;
     if (type === "link" && localSurvey.endings.length === 0) {
-      endingsTemp.push({
-        id: createId(),
-        type: "endScreen",
-        headline: createI18nString("Thank you!", extractLanguageCodes(localSurvey.languages)),
-        subheader: createI18nString(
-          "We appreciate your feedback.",
-          extractLanguageCodes(localSurvey.languages)
-        ),
-      });
+      endingsTemp.push(getDefaultEndingCard(localSurvey.languages));
     }
     setLocalSurvey((prevSurvey) => ({
       ...prevSurvey,

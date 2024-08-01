@@ -14,13 +14,9 @@ import { createId } from "@paralleldrive/cuid2";
 import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { MultiLanguageCard } from "@formbricks/ee/multi-language/components/multi-language-card";
-import {
-  createI18nString,
-  extractLanguageCodes,
-  getLocalizedValue,
-  translateQuestion,
-} from "@formbricks/lib/i18n/utils";
+import { extractLanguageCodes, getLocalizedValue, translateQuestion } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
+import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
@@ -283,14 +279,7 @@ export const QuestionsView = ({
 
   const addEndingCard = (index: number) => {
     const updatedSurvey = structuredClone(localSurvey);
-    const languageSymbols = extractLanguageCodes(localSurvey.languages);
-    const newEndingCard = {
-      type: "endScreen" as "endScreen",
-      enabled: true,
-      headline: createI18nString("Thank you!", languageSymbols),
-      subheader: createI18nString("We appreciate your feedback", languageSymbols),
-      id: createId(),
-    };
+    const newEndingCard = getDefaultEndingCard(localSurvey.languages);
 
     updatedSurvey.endings.splice(index, 0, newEndingCard);
 

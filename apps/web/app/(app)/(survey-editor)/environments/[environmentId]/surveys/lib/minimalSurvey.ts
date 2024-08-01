@@ -1,4 +1,4 @@
-import { endingCardDefault, welcomeCardDefault } from "@formbricks/lib/templates";
+import { getDefaultEndingCard, welcomeCardDefault } from "@formbricks/lib/templates";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const minimalSurvey: TSurvey = {
@@ -17,7 +17,7 @@ export const minimalSurvey: TSurvey = {
   displayLimit: null,
   welcomeCard: welcomeCardDefault,
   questions: [],
-  endings: [endingCardDefault],
+  endings: [getDefaultEndingCard([])],
   hiddenFields: {
     enabled: false,
   },

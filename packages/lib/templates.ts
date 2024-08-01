@@ -6,6 +6,7 @@ import {
   TSurveyEndScreenCard,
   TSurveyHiddenFields,
   TSurveyInput,
+  TSurveyLanguage,
   TSurveyOpenTextQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyStatus,
@@ -13,14 +14,18 @@ import {
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { TTemplate } from "@formbricks/types/templates";
+import { createI18nString, extractLanguageCodes } from "./i18n/utils";
 
-export const endingCardDefault: TSurveyEndScreenCard = {
-  id: createId(),
-  type: "endScreen",
-  headline: { default: "Thank you!" },
-  subheader: { default: "We appreciate your feedback." },
-  buttonLabel: { default: "Create your own Survey" },
-  buttonLink: "https://formbricks.com/signup",
+export const getDefaultEndingCard = (languages: TSurveyLanguage[]): TSurveyEndScreenCard => {
+  const languageCodes = extractLanguageCodes(languages);
+  return {
+    id: createId(),
+    type: "endScreen",
+    headline: createI18nString("Thank you!", languageCodes),
+    subheader: createI18nString("We appreciate your feedback.", languageCodes),
+    buttonLabel: createI18nString("Create your own Survey", languageCodes),
+    buttonLink: "https://formbricks.com/signup",
+  };
 };
 
 const hiddenFieldsDefault: TSurveyHiddenFields = {
@@ -39,7 +44,7 @@ export const welcomeCardDefault: TSurveyWelcomeCard = {
 const surveyDefault: TTemplate["preset"] = {
   name: "New Survey",
   welcomeCard: welcomeCardDefault,
-  endings: [endingCardDefault],
+  endings: [getDefaultEndingCard([])],
   hiddenFields: hiddenFieldsDefault,
   questions: [],
 };
@@ -1746,7 +1751,7 @@ export const templates: TTemplate[] = [
           inputType: "text",
         },
       ],
-      endings: [endingCardDefault],
+      endings: [getDefaultEndingCard([])],
       hiddenFields: hiddenFieldsDefault,
     },
   },
