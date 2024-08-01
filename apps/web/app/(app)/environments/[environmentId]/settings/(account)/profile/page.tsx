@@ -18,6 +18,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   if (!session) {
     throw new Error("Session not found");
   }
+
   const user = session && session.user ? await getUser(session.user.id) : null;
 
   return (
@@ -33,7 +34,13 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           <SettingsCard
             title="Avatar"
             description="Assist your organization in identifying you on Formbricks.">
-            <EditProfileAvatarForm session={session} environmentId={environmentId} />
+            {user && (
+              <EditProfileAvatarForm
+                session={session}
+                environmentId={environmentId}
+                imageUrl={user.imageUrl}
+              />
+            )}
           </SettingsCard>
           {user.identityProvider === "email" && (
             <SettingsCard title="Security" description="Manage your password and other security settings.">
@@ -44,7 +51,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           <SettingsCard
             title="Delete account"
             description="Delete your account with all of your personal information and data.">
-            <DeleteAccount session={session} IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD} />
+            <DeleteAccount session={session} IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD} user={user} />
           </SettingsCard>
           <SettingsId title="Profile" id={user.id}></SettingsId>
         </div>

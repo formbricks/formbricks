@@ -5,12 +5,18 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
 import { getOrganization } from "@formbricks/lib/organization/service";
+import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { ToasterClient } from "@formbricks/ui/ToasterClient";
 
 const ProductOnboardingLayout = async ({ children, params }) => {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
+    return redirect(`/auth/login`);
+  }
+
+  const user = await getUser(session.user.id);
+  if (!user) {
     return redirect(`/auth/login`);
   }
 
@@ -31,6 +37,7 @@ const ProductOnboardingLayout = async ({ children, params }) => {
     <div className="flex-1 bg-slate-50">
       <PosthogIdentify
         session={session}
+        user={user}
         organizationId={organization.id}
         organizationName={organization.name}
         organizationBilling={organization.billing}

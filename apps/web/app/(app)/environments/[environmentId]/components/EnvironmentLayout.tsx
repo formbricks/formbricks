@@ -12,6 +12,7 @@ import {
   getOrganizationsByUserId,
 } from "@formbricks/lib/organization/service";
 import { getProducts } from "@formbricks/lib/product/service";
+import { getUser } from "@formbricks/lib/user/service";
 import { DevEnvironmentBanner } from "@formbricks/ui/DevEnvironmentBanner";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { LimitsReachedBanner } from "@formbricks/ui/LimitsReachedBanner";
@@ -24,11 +25,16 @@ interface EnvironmentLayoutProps {
 }
 
 export const EnvironmentLayout = async ({ environmentId, session, children }: EnvironmentLayoutProps) => {
-  const [environment, organizations, organization] = await Promise.all([
+  const [user, environment, organizations, organization] = await Promise.all([
+    getUser(session.user.id),
     getEnvironment(environmentId),
     getOrganizationsByUserId(session.user.id),
     getOrganizationByEnvironmentId(environmentId),
   ]);
+
+  if (!user) {
+    return <ErrorComponent />;
+  }
 
   if (!organization || !environment) {
     return <ErrorComponent />;
@@ -87,7 +93,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           organization={organization}
           organizations={organizations}
           products={products}
-          session={session}
+          user={user}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           isMultiOrgEnabled={isMultiOrgEnabled}

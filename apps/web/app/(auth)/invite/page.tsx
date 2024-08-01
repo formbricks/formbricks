@@ -5,12 +5,13 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
-import { updateUser } from "@formbricks/lib/user/service";
+import { getUser, updateUser } from "@formbricks/lib/user/service";
 import { Button } from "@formbricks/ui/Button";
 import { ContentLayout } from "./components/ContentLayout";
 
 const Page = async ({ searchParams }) => {
   const session = await getServerSession(authOptions);
+  const user = session?.user.id ? await getUser(session.user.id) : null;
 
   try {
     const { inviteId, email } = verifyInviteToken(searchParams.token);
@@ -63,7 +64,7 @@ const Page = async ({ searchParams }) => {
           </Button>
         </ContentLayout>
       );
-    } else if (session.user?.email !== email) {
+    } else if (user?.email !== email) {
       return (
         <ContentLayout
           headline="Ooops! Wrong email 🤦"
@@ -80,19 +81,15 @@ const Page = async ({ searchParams }) => {
       await createMembership(invite.organizationId, session.user.id, { accepted: true, role: invite.role });
       await deleteInvite(inviteId);
 
-      await sendInviteAcceptedEmail(
-        invite.creator.name ?? "",
-        session.user?.name ?? "",
-        invite.creator.email
-      );
+      await sendInviteAcceptedEmail(invite.creator.name ?? "", user?.name ?? "", invite.creator.email);
       await updateUser(session.user.id, {
         notificationSettings: {
-          ...session.user.notificationSettings,
-          alert: session.user.notificationSettings.alert ?? {},
-          weeklySummary: session.user.notificationSettings.weeklySummary ?? {},
+          ...user.notificationSettings,
+          alert: user.notificationSettings.alert ?? {},
+          weeklySummary: user.notificationSettings.weeklySummary ?? {},
           unsubscribedOrganizationIds: Array.from(
             new Set([
-              ...(session.user.notificationSettings?.unsubscribedOrganizationIds || []),
+              ...(user.notificationSettings?.unsubscribedOrganizationIds || []),
               invite.organizationId,
             ])
           ),

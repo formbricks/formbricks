@@ -12,7 +12,7 @@ import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { createShortUrl } from "@formbricks/lib/shortUrl/service";
-import { updateUser } from "@formbricks/lib/user/service";
+import { getUser, updateUser } from "@formbricks/lib/user/service";
 import { AuthenticationError, AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZProductUpdateInput } from "@formbricks/types/product";
 import { TUserNotificationSettings } from "@formbricks/types/user";
@@ -40,6 +40,9 @@ export const createOrganizationAction = async (organizationName: string): Promis
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
+  const user = await getUser(session.user.id);
+  if (!user) throw new AuthorizationError("User not found");
+
   const newOrganization = await createOrganization({
     name: organizationName,
   });
@@ -54,16 +57,16 @@ export const createOrganizationAction = async (organizationName: string): Promis
   });
 
   const updatedNotificationSettings: TUserNotificationSettings = {
-    ...session.user.notificationSettings,
+    ...user.notificationSettings,
     alert: {
-      ...session.user.notificationSettings?.alert,
+      ...user.notificationSettings?.alert,
     },
     weeklySummary: {
-      ...session.user.notificationSettings?.weeklySummary,
+      ...user.notificationSettings?.weeklySummary,
       [product.id]: true,
     },
     unsubscribedOrganizationIds: Array.from(
-      new Set([...(session.user.notificationSettings?.unsubscribedOrganizationIds || []), newOrganization.id])
+      new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), newOrganization.id])
     ),
   };
 

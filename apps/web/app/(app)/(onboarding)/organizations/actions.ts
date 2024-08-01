@@ -7,6 +7,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
 import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
+import { getUser } from "@formbricks/lib/user/service";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
 
@@ -20,6 +21,12 @@ export const inviteOrganizationMemberAction = async (
 
   if (!session) {
     throw new AuthenticationError("Not authenticated");
+  }
+
+  const user = await getUser(session.user.id);
+
+  if (!user) {
+    throw new AuthenticationError("User not found");
   }
 
   const isUserAuthorized = await hasOrganizationAuthority(session.user.id, organizationId);
@@ -50,7 +57,7 @@ export const inviteOrganizationMemberAction = async (
     await sendInviteMemberEmail(
       invite.id,
       email,
-      session.user.name ?? "",
+      user.name ?? "",
       "",
       true, // is onboarding invite
       inviteMessage
