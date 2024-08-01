@@ -3,9 +3,10 @@ import { useEffect, useRef, useState } from "preact/hooks";
 
 interface ScrollableContainerProps {
   children: JSX.Element;
+  fullSizeCards: boolean;
 }
 
-export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
+export const ScrollableContainer = ({ children, fullSizeCards = false }: ScrollableContainerProps) => {
   const [isOverflowHidden, setIsOverflowHidden] = useState(true);
   const [isAtBottom, setIsAtBottom] = useState(false);
   const [isAtTop, setIsAtTop] = useState(false);
@@ -57,7 +58,7 @@ export const ScrollableContainer = ({ children }: ScrollableContainerProps) => {
         ref={containerRef}
         style={{
           scrollbarGutter: "stable both-edges",
-          maxHeight: isSurveyPreview ? "40dvh" : "60dvh",
+          maxHeight: isSurveyPreview ? "40dvh" : fullSizeCards ? "80dvh" : "60dvh",
         }}
         className={cn(
           "fb-overflow-auto fb-px-4 fb-pb-1",

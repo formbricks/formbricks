@@ -24,6 +24,7 @@ interface AddressQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
+  fullSizeCards: boolean;
 }
 
 export const AddressQuestion = ({
@@ -39,6 +40,7 @@ export const AddressQuestion = ({
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
+  fullSizeCards = false,
 }: AddressQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [hasFilled, setHasFilled] = useState(false);
@@ -131,7 +133,7 @@ export const AddressQuestion = ({
 
   return (
     <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
-      <ScrollableContainer>
+      <ScrollableContainer fullSizeCards={fullSizeCards}>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
           <Headline

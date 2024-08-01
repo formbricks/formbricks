@@ -23,6 +23,7 @@ interface ConsentQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
+  fullSizeCards: boolean;
 }
 
 export const ConsentQuestion = ({
@@ -37,6 +38,7 @@ export const ConsentQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
+  fullSizeCards = false,
 }: ConsentQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -52,7 +54,7 @@ export const ConsentQuestion = ({
         setTtc(updatedTtcObj);
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}>
-      <ScrollableContainer>
+      <ScrollableContainer fullSizeCards={fullSizeCards}>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
           <Headline

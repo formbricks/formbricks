@@ -8,8 +8,7 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData } from "@formbricks/types/responses";
-import { TResponseTtc } from "@formbricks/types/responses";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TSurveyCalQuestion } from "@formbricks/types/surveys/types";
 
 interface CalQuestionProps {
@@ -25,6 +24,7 @@ interface CalQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
+  fullSizeCards: boolean;
 }
 
 export const CalQuestion = ({
@@ -39,6 +39,7 @@ export const CalQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
+  fullSizeCards = false,
 }: CalQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -69,7 +70,7 @@ export const CalQuestion = ({
         onSubmit({ [question.id]: value }, updatedttc);
       }}
       className="fb-w-full">
-      <ScrollableContainer>
+      <ScrollableContainer fullSizeCards={fullSizeCards}>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
           <Headline

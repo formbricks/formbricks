@@ -27,6 +27,7 @@ interface FileUploadQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
+  fullSizeCards: boolean;
 }
 
 export const FileUploadQuestion = ({
@@ -43,6 +44,7 @@ export const FileUploadQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
+  fullSizeCards = false,
 }: FileUploadQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -70,7 +72,7 @@ export const FileUploadQuestion = ({
         }
       }}
       className="fb-w-full">
-      <ScrollableContainer>
+      <ScrollableContainer fullSizeCards={fullSizeCards}>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
           <Headline

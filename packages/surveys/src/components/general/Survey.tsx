@@ -266,6 +266,7 @@ export const Survey = ({
             replaceRecallInfo={replaceRecallInfo}
             isCurrent={offset === 0}
             responseData={responseData}
+            fullSizeCards={fullSizeCards}
           />
         );
       } else if (questionIdx === survey.questions.length) {
@@ -290,6 +291,7 @@ export const Survey = ({
             isRedirectDisabled={isRedirectDisabled}
             autoFocusEnabled={autoFocusEnabled}
             isCurrent={offset === 0}
+            fullSizeCards={fullSizeCards}
           />
         );
       } else {
@@ -314,6 +316,7 @@ export const Survey = ({
               languageCode={selectedLanguage}
               autoFocusEnabled={autoFocusEnabled}
               currentQuestionId={questionId}
+              fullSizeCards={fullSizeCards}
             />
           )
         );

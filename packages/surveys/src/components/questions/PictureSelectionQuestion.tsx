@@ -24,6 +24,7 @@ interface PictureSelectionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
+  fullSizeCards: boolean;
 }
 
 export const PictureSelectionQuestion = ({
@@ -38,6 +39,7 @@ export const PictureSelectionQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
+  fullSizeCards = false,
 }: PictureSelectionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -95,7 +97,7 @@ export const PictureSelectionQuestion = ({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="fb-w-full">
-      <ScrollableContainer>
+      <ScrollableContainer fullSizeCards={fullSizeCards}>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
           <Headline
@@ -129,7 +131,8 @@ export const PictureSelectionQuestion = ({
                       Array.isArray(value) && value.includes(choice.id)
                         ? `fb-border-brand fb-text-brand fb-z-10 fb-border-4 fb-shadow-xl`
                         : "",
-                      "focus:fb-border-brand fb-rounded-custom fb-relative fb-inline-block fb-h-28 fb-w-full fb-cursor-pointer fb-overflow-hidden fb-border focus:fb-border-4 focus:fb-outline-none"
+                      "focus:fb-border-brand fb-rounded-custom fb-relative fb-inline-block fb-w-full fb-cursor-pointer fb-overflow-hidden fb-border focus:fb-border-4 focus:fb-outline-none",
+                      fullSizeCards ? "fb-h-[35dvh]" : "fb-h-28"
                     )}>
                     <img
                       src={choice.imageUrl}

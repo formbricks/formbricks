@@ -8,8 +8,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 import { useCallback } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData } from "@formbricks/types/responses";
-import { TResponseTtc } from "@formbricks/types/responses";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys/types";
 
 interface OpenTextQuestionProps {
@@ -26,6 +25,7 @@ interface OpenTextQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
+  fullSizeCards: boolean;
 }
 
 export const OpenTextQuestion = ({
@@ -41,6 +41,7 @@ export const OpenTextQuestion = ({
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
+  fullSizeCards = false,
 }: OpenTextQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -79,7 +80,7 @@ export const OpenTextQuestion = ({
         onSubmit({ [question.id]: value }, updatedttc);
       }}
       className="fb-w-full">
-      <ScrollableContainer>
+      <ScrollableContainer fullSizeCards={fullSizeCards}>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
           <Headline

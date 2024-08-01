@@ -24,6 +24,7 @@ interface NPSQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
+  fullSizeCards: boolean;
 }
 
 export const NPSQuestion = ({
@@ -38,6 +39,7 @@ export const NPSQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
+  fullSizeCards = false,
 }: NPSQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
@@ -72,7 +74,7 @@ export const NPSQuestion = ({
         setTtc(updatedTtcObj);
         onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}>
-      <ScrollableContainer>
+      <ScrollableContainer fullSizeCards={fullSizeCards}>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
           <Headline

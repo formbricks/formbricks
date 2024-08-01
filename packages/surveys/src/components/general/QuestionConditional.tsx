@@ -32,6 +32,7 @@ interface QuestionConditionalProps {
   surveyId: string;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
+  fullSizeCards: boolean;
 }
 
 export const QuestionConditional = ({
@@ -51,6 +52,7 @@ export const QuestionConditional = ({
   onFileUpload,
   autoFocusEnabled,
   currentQuestionId,
+  fullSizeCards = false,
 }: QuestionConditionalProps) => {
   if (!value && prefilledQuestionValue) {
     if (skipPrefilled) {
@@ -75,6 +77,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
@@ -91,6 +94,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
@@ -107,6 +111,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
     <NPSQuestion
@@ -123,6 +128,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
     <CTAQuestion
@@ -139,6 +145,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
     <RatingQuestion
@@ -155,6 +162,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
     <ConsentQuestion
@@ -171,6 +179,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Date ? (
     <DateQuestion
@@ -187,6 +196,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
     <PictureSelectionQuestion
@@ -203,6 +213,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
     <FileUploadQuestion
@@ -221,6 +232,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
     <CalQuestion
@@ -237,6 +249,7 @@ export const QuestionConditional = ({
       autoFocusEnabled={autoFocusEnabled}
       setTtc={setTtc}
       currentQuestionId={currentQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
     <MatrixQuestion
@@ -251,6 +264,7 @@ export const QuestionConditional = ({
       ttc={ttc}
       setTtc={setTtc}
       currentQuestionId={currentQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Address ? (
     <AddressQuestion
@@ -266,6 +280,7 @@ export const QuestionConditional = ({
       setTtc={setTtc}
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
+      fullSizeCards={fullSizeCards}
     />
   ) : null;
 };

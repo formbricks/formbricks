@@ -21,6 +21,7 @@ interface WelcomeCardProps {
   replaceRecallInfo: (text: string, responseData: TResponseData) => string;
   isCurrent: boolean;
   responseData: TResponseData;
+  fullSizeCards: boolean;
 }
 
 const TimerIcon = () => {
@@ -73,6 +74,7 @@ export const WelcomeCard = ({
   replaceRecallInfo,
   isCurrent,
   responseData,
+  fullSizeCards = false,
 }: WelcomeCardProps) => {
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
@@ -131,7 +133,7 @@ export const WelcomeCard = ({
 
   return (
     <div>
-      <ScrollableContainer>
+      <ScrollableContainer fullSizeCards={fullSizeCards}>
         <div>
           {fileUrl && (
             <img

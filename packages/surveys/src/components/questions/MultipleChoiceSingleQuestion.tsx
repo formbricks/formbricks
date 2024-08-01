@@ -24,6 +24,7 @@ interface MultipleChoiceSingleProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
+  fullSizeCards: boolean;
 }
 
 export const MultipleChoiceSingleQuestion = ({
@@ -39,6 +40,7 @@ export const MultipleChoiceSingleQuestion = ({
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
+  fullSizeCards = false,
 }: MultipleChoiceSingleProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherSelected, setOtherSelected] = useState(false);
@@ -107,7 +109,7 @@ export const MultipleChoiceSingleQuestion = ({
         onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}
       className="fb-w-full">
-      <ScrollableContainer>
+      <ScrollableContainer fullSizeCards={fullSizeCards}>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
           <Headline

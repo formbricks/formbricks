@@ -21,6 +21,7 @@ interface ThankYouCardProps {
   autoFocusEnabled: boolean;
   isCurrent: boolean;
   survey: TSurvey;
+  fullSizeCards: boolean;
 }
 
 export const ThankYouCard = ({
@@ -36,6 +37,7 @@ export const ThankYouCard = ({
   autoFocusEnabled,
   isCurrent,
   survey,
+  fullSizeCards = false,
 }: ThankYouCardProps) => {
   const media = imageUrl || videoUrl ? <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} /> : null;
   const checkmark = (
@@ -82,7 +84,7 @@ export const ThankYouCard = ({
   }, [isCurrent]);
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <div className="fb-text-center">
         {isResponseSendingFinished ? (
           <>
