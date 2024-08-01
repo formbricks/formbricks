@@ -2,7 +2,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TSurvey, TSurveyQuestionSummaryMultipleChoice, TSurveyType } from "@formbricks/types/surveys/types";
+import {
+  TI18nString,
+  TSurvey,
+  TSurveyQuestionSummaryMultipleChoice,
+  TSurveyQuestionTypeEnum,
+  TSurveyType,
+} from "@formbricks/types/surveys/types";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
@@ -15,6 +21,13 @@ interface MultipleChoiceSummaryProps {
   surveyType: TSurveyType;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  setFilter: (
+    questionId: string,
+    label: TI18nString,
+    questionType: TSurveyQuestionTypeEnum,
+    filterComboBoxValue: string | string[],
+    filterValue: string
+  ) => void;
 }
 
 export const MultipleChoiceSummary = ({
@@ -23,6 +36,7 @@ export const MultipleChoiceSummary = ({
   surveyType,
   survey,
   attributeClasses,
+  setFilter,
 }: MultipleChoiceSummaryProps) => {
   const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
 
@@ -55,10 +69,21 @@ export const MultipleChoiceSummary = ({
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => (
-          <div key={result.value}>
+          <div
+            key={result.value}
+            className="group cursor-pointer"
+            onClick={() =>
+              setFilter(
+                questionSummary.question.id,
+                questionSummary.question.headline,
+                questionSummary.question.type,
+                [result.value],
+                questionSummary.type === "multipleChoiceSingle" ? "Includes either" : "Includes all"
+              )
+            }>
             <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
               <div className="mr-8 flex w-full justify-between space-x-1 sm:justify-normal">
-                <p className="font-semibold text-slate-700">
+                <p className="font-semibold text-slate-700 underline-offset-4 group-hover:underline">
                   {results.length - resultsIdx} - {result.value}
                 </p>
                 <div>
@@ -71,7 +96,9 @@ export const MultipleChoiceSummary = ({
                 {result.count} {result.count === 1 ? "response" : "responses"}
               </p>
             </div>
-            <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100} />
+            <div className="group-hover:opacity-80">
+              <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100} />
+            </div>
             {result.others && result.others.length > 0 && (
               <div className="mt-4 rounded-lg border border-slate-200">
                 <div className="grid h-12 grid-cols-2 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">

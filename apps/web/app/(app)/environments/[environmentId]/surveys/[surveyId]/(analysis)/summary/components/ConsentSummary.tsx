@@ -1,5 +1,10 @@
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TSurvey, TSurveyQuestionSummaryConsent } from "@formbricks/types/surveys/types";
+import {
+  TI18nString,
+  TSurvey,
+  TSurveyQuestionSummaryConsent,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -8,9 +13,33 @@ interface ConsentSummaryProps {
   questionSummary: TSurveyQuestionSummaryConsent;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  setFilter: (
+    questionId: string,
+    label: TI18nString,
+    questionType: TSurveyQuestionTypeEnum,
+    filterComboBoxValue: string | string[],
+    filterValue: string
+  ) => void;
 }
 
-export const ConsentSummary = ({ questionSummary, survey, attributeClasses }: ConsentSummaryProps) => {
+export const ConsentSummary = ({
+  questionSummary,
+  survey,
+  attributeClasses,
+  setFilter,
+}: ConsentSummaryProps) => {
+  const summaryItems = [
+    {
+      title: "Accepted",
+      percentage: questionSummary.accepted.percentage,
+      count: questionSummary.accepted.count,
+    },
+    {
+      title: "Dismissed",
+      percentage: questionSummary.dismissed.percentage,
+      count: questionSummary.dismissed.count,
+    },
+  ];
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
@@ -19,40 +48,41 @@ export const ConsentSummary = ({ questionSummary, survey, attributeClasses }: Co
         attributeClasses={attributeClasses}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
-        <div>
-          <div className="text flex justify-between px-2 pb-2">
-            <div className="mr-8 flex space-x-1">
-              <p className="font-semibold text-slate-700">Accepted</p>
-              <div>
-                <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                  {convertFloatToNDecimal(questionSummary.accepted.percentage, 1)}%
+        {summaryItems.map((summaryItem) => {
+          return (
+            <div
+              className="group cursor-pointer"
+              key={summaryItem.title}
+              onClick={() =>
+                setFilter(
+                  questionSummary.question.id,
+                  questionSummary.question.headline,
+                  questionSummary.question.type,
+                  summaryItem.title,
+                  "is"
+                )
+              }>
+              <div className="text flex justify-between px-2 pb-2">
+                <div className="mr-8 flex space-x-1">
+                  <p className="font-semibold text-slate-700 underline-offset-4 group-hover:underline">
+                    {summaryItem.title}
+                  </p>
+                  <div>
+                    <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
+                      {convertFloatToNDecimal(summaryItem.percentage, 1)}%
+                    </p>
+                  </div>
+                </div>
+                <p className="flex w-32 items-end justify-end text-slate-600">
+                  {summaryItem.count} {summaryItem.count === 1 ? "response" : "responses"}
                 </p>
               </div>
-            </div>
-            <p className="flex w-32 items-end justify-end text-slate-600">
-              {questionSummary.accepted.count}{" "}
-              {questionSummary.accepted.count === 1 ? "response" : "responses"}
-            </p>
-          </div>
-          <ProgressBar barColor="bg-brand-dark" progress={questionSummary.accepted.percentage / 100} />
-        </div>
-        <div>
-          <div className="text flex justify-between px-2 pb-2">
-            <div className="mr-8 flex space-x-1">
-              <p className="font-semibold text-slate-700">Dismissed</p>
-              <div>
-                <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                  {convertFloatToNDecimal(questionSummary.dismissed.percentage, 1)}%
-                </p>
+              <div className="group-hover:opacity-80">
+                <ProgressBar barColor="bg-brand-dark" progress={summaryItem.percentage / 100} />
               </div>
             </div>
-            <p className="flex w-32 items-end justify-end text-slate-600">
-              {questionSummary.dismissed.count}{" "}
-              {questionSummary.dismissed.count === 1 ? "response" : "responses"}
-            </p>
-          </div>
-          <ProgressBar barColor="bg-brand-dark" progress={questionSummary.dismissed.percentage / 100} />
-        </div>
+          );
+        })}
       </div>
     </div>
   );
