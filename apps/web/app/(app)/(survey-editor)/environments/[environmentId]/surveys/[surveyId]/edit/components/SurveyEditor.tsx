@@ -24,6 +24,7 @@ interface SurveyEditorProps {
   survey: TSurvey;
   product: TProduct;
   environment: TEnvironment;
+  organizationId: string;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   segments: TSegment[];
@@ -40,6 +41,7 @@ export const SurveyEditor = ({
   survey,
   product,
   environment,
+  organizationId,
   actionClasses,
   attributeClasses,
   segments,
@@ -185,6 +187,7 @@ export const SurveyEditor = ({
             {activeView === "settings" && (
               <SettingsView
                 environment={environment}
+                organizationId={organizationId}
                 localSurvey={localSurvey}
                 setLocalSurvey={setLocalSurvey}
                 actionClasses={actionClasses}
