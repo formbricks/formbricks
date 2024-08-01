@@ -58,7 +58,7 @@ export const ScrollableContainer = ({ children, fullSizeCards = false }: Scrolla
         ref={containerRef}
         style={{
           scrollbarGutter: "stable both-edges",
-          maxHeight: isSurveyPreview ? "40dvh" : fullSizeCards ? "80dvh" : "60dvh",
+          maxHeight: isSurveyPreview ? "40dvh" : fullSizeCards ? "75dvh" : "60dvh",
         }}
         className={cn(
           "fb-overflow-auto fb-px-4 fb-pb-1",
