@@ -1,5 +1,6 @@
 // extend this object in order to add more validation rules
 import { toast } from "react-hot-toast";
+import { z } from "zod";
 import { extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { ZSegmentFilters } from "@formbricks/types/segment";
@@ -8,13 +9,14 @@ import {
   TSurvey,
   TSurveyCTAQuestion,
   TSurveyConsentQuestion,
+  TSurveyEndScreenCard,
   TSurveyLanguage,
   TSurveyMatrixQuestion,
   TSurveyMultipleChoiceQuestion,
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestion,
-  TSurveyThankYouCard,
+  TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { findLanguageCodesForDuplicateLabels } from "@formbricks/types/surveys/validation";
@@ -163,25 +165,33 @@ export const validateSurveyQuestionsInBatch = (
   return invalidQuestions;
 };
 
-export const isCardValid = (
-  card: TSurveyWelcomeCard | TSurveyThankYouCard,
-  cardType: "start" | "end",
-  surveyLanguages: TSurveyLanguage[]
-): boolean => {
-  const defaultLanguageCode = "default";
-  const isContentValid = (content: Record<string, string> | undefined) => {
-    return (
-      !content || content[defaultLanguageCode] === "" || isLabelValidForAllLanguages(content, surveyLanguages)
-    );
-  };
+const isContentValid = (content: Record<string, string> | undefined, surveyLanguages: TSurveyLanguage[]) => {
+  return !content || isLabelValidForAllLanguages(content, surveyLanguages);
+};
 
-  return (
-    (card.headline ? isLabelValidForAllLanguages(card.headline, surveyLanguages) : true) &&
-    isContentValid(
-      cardType === "start" ? (card as TSurveyWelcomeCard).html : (card as TSurveyThankYouCard).subheader
-    ) &&
-    isContentValid(card.buttonLabel)
-  );
+export const isWelcomeCardValid = (card: TSurveyWelcomeCard, surveyLanguages: TSurveyLanguage[]): boolean => {
+  return isContentValid(card.headline, surveyLanguages) && isContentValid(card.html, surveyLanguages);
+};
+
+export const isEndingCardValid = (
+  card: TSurveyEndScreenCard | TSurveyRedirectUrlCard,
+  surveyLanguages: TSurveyLanguage[]
+) => {
+  if (card.type === "endScreen") {
+    return (
+      isContentValid(card.headline, surveyLanguages) &&
+      isContentValid(card.subheader, surveyLanguages) &&
+      isContentValid(card.buttonLabel, surveyLanguages)
+    );
+  } else {
+    const parseResult = z.string().url().safeParse(card.url);
+    if (parseResult.success) {
+      return card.label?.trim() !== "";
+    } else {
+      toast.error("Invalid Redirect Url in Ending card");
+      return false;
+    }
+  }
 };
 
 export const isSurveyValid = (survey: TSurvey, selectedLanguageCode: string) => {

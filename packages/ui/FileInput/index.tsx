@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { LoadingSpinner } from "../LoadingSpinner";
-import { TabBar } from "../TabBar";
+import { OptionsSwitch } from "../OptionsSwitch";
 import { Uploader } from "./components/Uploader";
 import { VideoSettings } from "./components/VideoSettings";
 import { getAllowedFiles, uploadFile } from "./lib/utils";
@@ -16,9 +16,9 @@ const allowedFileTypesForPreview = ["png", "jpeg", "jpg", "webp"];
 const isImage = (name: string) => {
   return allowedFileTypesForPreview.includes(name.split(".").pop() as TAllowedFileExtension);
 };
-const tabs = [
-  { id: "image", label: "Image" },
-  { id: "video", label: "Video" },
+const options = [
+  { value: "image", label: "Image" },
+  { value: "video", label: "Video" },
 ];
 
 interface FileInputProps {
@@ -203,7 +203,7 @@ export const FileInput = ({
     <div className="w-full cursor-default">
       <div>
         {isVideoAllowed && (
-          <TabBar tabs={tabs} activeId={activeTab} setActiveId={setActiveTab} tabStyle="button" />
+          <OptionsSwitch options={options} currentOption={activeTab} handleOptionChange={setActiveTab} />
         )}
         <div>
           {activeTab === "video" && (

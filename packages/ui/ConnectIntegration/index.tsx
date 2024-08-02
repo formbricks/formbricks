@@ -66,7 +66,7 @@ export const ConnectIntegration = ({
             to configure it.
           </p>
         )}
-        <Button variant="darkCTA" loading={isConnecting} onClick={handleConnect} disabled={!isEnabled}>
+        <Button loading={isConnecting} onClick={handleConnect} disabled={!isEnabled}>
           {integrationDetails?.connectButtonLabel}
         </Button>
       </div>

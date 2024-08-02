@@ -18,6 +18,7 @@ import {
 } from "@formbricks/lib/membership/service";
 import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
 import { deleteOrganization, updateOrganization } from "@formbricks/lib/organization/service";
+import { getUser } from "@formbricks/lib/user/service";
 import {
   AuthenticationError,
   AuthorizationError,
@@ -167,6 +168,11 @@ export const inviteUserAction = async (
     throw new AuthenticationError("Not authenticated");
   }
 
+  const user = await getUser(session.user.id);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
   const isUserAuthorized = await hasOrganizationAuthority(session.user.id, organizationId);
 
   if (INVITE_DISABLED) {
@@ -192,7 +198,7 @@ export const inviteUserAction = async (
   });
 
   if (invite) {
-    await sendInviteMemberEmail(invite.id, email, session.user.name ?? "", name ?? "", false);
+    await sendInviteMemberEmail(invite.id, email, user.name ?? "", name ?? "", false);
   }
 
   return invite;

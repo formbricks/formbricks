@@ -6,7 +6,7 @@ import { useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { FileInput } from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
@@ -48,7 +48,7 @@ export const EditWelcomeCard = ({
     }
   };
 
-  const updateSurvey = (data: Partial<TSurvey["welcomeCard"]>) => {
+  const updateSurvey = (data: Partial<TSurveyWelcomeCard>) => {
     setLocalSurvey({
       ...localSurvey,
       welcomeCard: {
@@ -59,11 +59,7 @@ export const EditWelcomeCard = ({
   };
 
   return (
-    <div
-      className={cn(
-        open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
-        "group flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
-      )}>
+    <div className={cn(open ? "shadow-lg" : "shadow-md", "group flex flex-row rounded-lg bg-white")}>
       <div
         className={cn(
           open ? "bg-slate-50" : "",

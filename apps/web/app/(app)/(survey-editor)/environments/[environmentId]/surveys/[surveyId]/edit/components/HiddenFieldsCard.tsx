@@ -47,11 +47,7 @@ export const HiddenFieldsCard = ({
   };
 
   return (
-    <div
-      className={cn(
-        open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
-        "group z-10 flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
-      )}>
+    <div className={cn(open ? "shadow-lg" : "shadow-md", "group z-10 flex flex-row rounded-lg bg-white")}>
       <div
         className={cn(
           open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
@@ -118,11 +114,13 @@ export const HiddenFieldsCard = ({
             onSubmit={(e) => {
               e.preventDefault();
               const existingQuestionIds = localSurvey.questions.map((question) => question.id);
+              const existingEndingCardIds = localSurvey.endings.map((ending) => ending.id);
               const existingHiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
               const validateIdError = validateId(
                 "Hidden field",
                 hiddenField,
                 existingQuestionIds,
+                existingEndingCardIds,
                 existingHiddenFieldIds
               );
 

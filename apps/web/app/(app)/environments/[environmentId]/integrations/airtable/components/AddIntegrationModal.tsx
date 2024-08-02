@@ -354,9 +354,7 @@ export const AddIntegrationModal = ({
                 </Button>
               )}
 
-              <Button variant="darkCTA" type="submit">
-                Save
-              </Button>
+              <Button type="submit">Save</Button>
             </div>
           </div>
         </div>

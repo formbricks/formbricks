@@ -60,7 +60,7 @@ export const selectSurvey = {
   status: true,
   welcomeCard: true,
   questions: true,
-  thankYouCard: true,
+  endings: true,
   hiddenFields: true,
   displayOption: true,
   recontactDays: true,
@@ -366,7 +366,6 @@ export const getSurveyCount = reactCache(
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   validateInputs([updatedSurvey, ZSurvey]);
-
   try {
     const surveyId = updatedSurvey.id;
     let data: any = {};
@@ -495,6 +494,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       data.status = "scheduled";
     }
 
+    delete data.createdBy;
     const prismaSurvey = await prisma.survey.update({
       where: { id: surveyId },
       data,
@@ -625,11 +625,6 @@ export const createSurvey = async (
       attributeFilters: undefined,
     };
 
-    if ((restSurveyBody.type === "website" || restSurveyBody.type === "app") && data.thankYouCard) {
-      data.thankYouCard.buttonLabel = undefined;
-      data.thankYouCard.buttonLink = undefined;
-    }
-
     if (createdBy) {
       data.creator = {
         connect: {
@@ -735,7 +730,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
         name: `${existingSurvey.name} (copy)`,
         status: "draft",
         questions: structuredClone(existingSurvey.questions),
-        thankYouCard: structuredClone(existingSurvey.thankYouCard),
+        endings: structuredClone(existingSurvey.endings),
         languages: {
           create: existingSurvey.languages?.map((surveyLanguage) => ({
             languageId: surveyLanguage.language.id,
