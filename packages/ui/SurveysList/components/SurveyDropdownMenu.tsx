@@ -21,7 +21,6 @@ import { CopySurveyModal } from "./CopySurveyModal";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
-  productId: string;
   survey: TSurvey;
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
@@ -34,7 +33,6 @@ interface SurveyDropDownMenuProps {
 
 export const SurveyDropDownMenu = ({
   environmentId,
-  productId,
   survey,
   webAppUrl,
   singleUseId,

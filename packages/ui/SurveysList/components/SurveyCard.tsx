@@ -13,7 +13,6 @@ interface SurveyCardProps {
   survey: TSurvey;
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
-  productId: string;
   isViewer: boolean;
   WEBAPP_URL: string;
   orientation: string;
@@ -24,7 +23,6 @@ export const SurveyCard = ({
   survey,
   environment,
   otherEnvironment,
-  productId,
   isViewer,
   WEBAPP_URL,
   orientation,
@@ -94,7 +92,6 @@ export const SurveyCard = ({
             survey={survey}
             key={`surveys-${survey.id}`}
             environmentId={environment.id}
-            productId={productId}
             environment={environment}
             otherEnvironment={otherEnvironment!}
             webAppUrl={WEBAPP_URL}
@@ -158,7 +155,6 @@ export const SurveyCard = ({
               survey={survey}
               key={`surveys-${survey.id}`}
               environmentId={environment.id}
-              productId={productId}
               environment={environment}
               otherEnvironment={otherEnvironment!}
               webAppUrl={WEBAPP_URL}
