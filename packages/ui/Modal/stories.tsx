@@ -8,6 +8,23 @@ const meta = {
   tags: ["autodocs"],
   parameters: {
     layout: "centered",
+    docs: {
+      description: {
+        component: "Modal component for displaying content in an overlay.",
+      },
+      story: {
+        inline: true,
+      },
+      page: () => (
+        <>
+          <Title />
+          <Subtitle />
+          <Description />
+          <Primary />
+          <Controls />
+        </>
+      ),
+    },
   },
   argTypes: {
     open: { control: "boolean" },
@@ -32,6 +49,11 @@ export const Default: Story = {
     open: true,
     children: <div>Default Modal Content</div>,
     title: "Default Modal",
+  },
+  parameters: {
+    docs: {
+      primary: true,
+    },
   },
 };
 
@@ -82,7 +104,7 @@ export const RestrictOverflow: Story = {
     title: "Modal with Restricted Overflow",
     children: (
       <div style={{ height: "500px", overflowY: "auto" }}>
-        {Array(20).fill(0).map((_, i) => (
+        {Array(50).fill(0).map((_, i) => (
           <p key={i}>Scrollable content line {i + 1}</p>
         ))}
       </div>
