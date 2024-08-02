@@ -15,15 +15,6 @@ const meta = {
       story: {
         inline: true,
       },
-      page: () => (
-        <>
-          <Title />
-          <Subtitle />
-          <Description />
-          <Primary />
-          <Controls />
-        </>
-      ),
     },
   },
   argTypes: {
@@ -104,9 +95,11 @@ export const RestrictOverflow: Story = {
     title: "Modal with Restricted Overflow",
     children: (
       <div style={{ height: "500px", overflowY: "auto" }}>
-        {Array(50).fill(0).map((_, i) => (
-          <p key={i}>Scrollable content line {i + 1}</p>
-        ))}
+        {Array(50)
+          .fill(0)
+          .map((_, i) => (
+            <p key={i}>Scrollable content line {i + 1}</p>
+          ))}
       </div>
     ),
   },
