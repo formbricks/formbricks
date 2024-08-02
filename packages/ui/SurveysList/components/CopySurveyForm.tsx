@@ -59,9 +59,7 @@ export const CopySurveyForm = ({
     } catch (error) {
       toast.error("Failed to copy survey");
     } finally {
-      setTimeout(() => {
-        setOpen(false);
-      }, 1000);
+      setOpen(false);
     }
   };
 
@@ -153,7 +151,7 @@ export const CopySurveyForm = ({
               Cancel
             </Button>
 
-            <Button variant="darkCTA" type="submit">
+            <Button variant="primary" type="submit">
               Copy survey
             </Button>
           </div>

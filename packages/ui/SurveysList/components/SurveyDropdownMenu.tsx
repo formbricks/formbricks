@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  ArrowUpFromLineIcon,
-  CopyIcon,
-  EyeIcon,
-  LinkIcon,
-  MousePointerClickIcon,
-  SquarePenIcon,
-  TrashIcon,
-} from "lucide-react";
+import { ArrowUpFromLineIcon, CopyIcon, EyeIcon, LinkIcon, SquarePenIcon, TrashIcon } from "lucide-react";
 import { MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -24,9 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../DropdownMenu";
-import { Modal } from "../../Modal";
 import { copySurveyToOtherEnvironmentAction, deleteSurveyAction, getSurveyAction } from "../actions";
-import SurveyCopyOptions from "./SurveyCopyOptions";
+import { CopySurveyModal } from "./CopySurveyModal";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
@@ -215,33 +206,7 @@ export const SurveyDropDownMenu = ({
       )}
 
       {isCopyFormOpen && (
-        <Modal open={isCopyFormOpen} setOpen={setIsCopyFormOpen} noPadding restrictOverflow>
-          <div className="flex h-full flex-col rounded-lg">
-            <div className="fixed left-0 right-0 z-10 h-24 rounded-t-lg bg-slate-100">
-              <div className="flex w-full items-center justify-between p-6">
-                <div className="flex items-center space-x-2">
-                  <MousePointerClickIcon className="h-6 w-6 text-slate-500" />
-                  <div>
-                    <div className="text-xl font-medium text-slate-700">Copy Survey</div>
-                    <div className="text-sm text-slate-500">Copy this survey to another environment</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="h-full max-h-[500px] overflow-auto pl-4 pt-24">
-              <SurveyCopyOptions
-                survey={survey}
-                environmentId={environmentId}
-                onCancel={() => setIsCopyFormOpen(false)}
-                setOpen={(value) => {
-                  setIsCopyFormOpen(value);
-                  router.refresh();
-                }}
-              />
-            </div>
-          </div>
-        </Modal>
+        <CopySurveyModal open={isCopyFormOpen} setOpen={setIsCopyFormOpen} survey={survey} />
       )}
     </div>
   );
