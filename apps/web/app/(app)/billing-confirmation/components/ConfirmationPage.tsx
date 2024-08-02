@@ -24,10 +24,7 @@ export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
             Thanks a lot for upgrading your Formbricks subscription.
           </p>
         </div>
-        <Button
-          variant="darkCTA"
-          className="w-full justify-center"
-          href={`/environments/${environmentId}/settings/billing`}>
+        <Button className="w-full justify-center" href={`/environments/${environmentId}/settings/billing`}>
           Back to billing overview
         </Button>
       </div>

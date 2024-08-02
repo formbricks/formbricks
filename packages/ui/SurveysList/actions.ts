@@ -9,7 +9,6 @@ import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/surve
 import {
   copySurveyToOtherEnvironment,
   deleteSurvey,
-  duplicateSurvey,
   getSurvey,
   getSurveys,
 } from "@formbricks/lib/survey/service";
@@ -25,17 +24,6 @@ export const getSurveyAction = async (surveyId: string) => {
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   return await getSurvey(surveyId);
-};
-
-export const duplicateSurveyAction = async (environmentId: string, surveyId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  const duplicatedSurvey = await duplicateSurvey(environmentId, surveyId, session.user.id);
-  return duplicatedSurvey;
 };
 
 export const copySurveyToOtherEnvironmentAction = async (

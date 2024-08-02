@@ -79,8 +79,8 @@ export const UrlShortenerForm = ({ webAppUrl }: { webAppUrl: string }) => {
               onBlur={handleUrlValidation}
             />
             <Button
+              variant="secondary"
               disabled={watch("url") === ""}
-              variant="darkCTA"
               size="sm"
               type="submit"
               loading={isSubmitting}>

@@ -63,9 +63,7 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit }: MemberModalProps) =>
                 }}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit">
-                Add API Key
-              </Button>
+              <Button type="submit">Add API Key</Button>
             </div>
           </div>
         </form>

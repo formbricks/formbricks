@@ -48,7 +48,6 @@ export const SurveyAnalysisCTA = ({
       )}
       {!isViewer && (
         <Button
-          variant="darkCTA"
           size="sm"
           className="h-full w-full px-3"
           href={`/environments/${environment.id}/surveys/${survey.id}/edit`}>

@@ -15,6 +15,7 @@ import { WhenToSendCard } from "./WhenToSendCard";
 
 interface SettingsViewProps {
   environment: TEnvironment;
+  organizationId: string;
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   actionClasses: TActionClass[];
@@ -29,6 +30,7 @@ interface SettingsViewProps {
 
 export const SettingsView = ({
   environment,
+  organizationId,
   localSurvey,
   setLocalSurvey,
   actionClasses,
@@ -49,6 +51,7 @@ export const SettingsView = ({
         setLocalSurvey={setLocalSurvey}
         environment={environment}
         product={product}
+        organizationId={organizationId}
       />
 
       {localSurvey.type === "app" ? (

@@ -324,7 +324,6 @@ export function AddFilterModal({
       <>
         {allFiltersFiltered.every((filterArr) => {
           return (
-            filterArr.actions.length === 0 &&
             filterArr.attributes.length === 0 &&
             filterArr.segments.length === 0 &&
             filterArr.devices.length === 0 &&
@@ -339,25 +338,6 @@ export function AddFilterModal({
         {allFiltersFiltered.map((filters) => {
           return (
             <>
-              {filters.actions.map((actionClass) => {
-                return (
-                  <div
-                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
-                    key={actionClass.id}
-                    onClick={() => {
-                      handleAddFilter({
-                        type: "action",
-                        onAddFilter,
-                        setOpen,
-                        actionClassId: actionClass.id,
-                      });
-                    }}>
-                    <MousePointerClick className="h-4 w-4" />
-                    <p>{actionClass.name}</p>
-                  </div>
-                );
-              })}
-
               {filters.attributes.map((attributeClass) => {
                 return (
                   <div

@@ -56,7 +56,7 @@ export const selectSurvey = {
   status: true,
   welcomeCard: true,
   questions: true,
-  thankYouCard: true,
+  endings: true,
   hiddenFields: true,
   displayOption: true,
   recontactDays: true,
@@ -363,7 +363,6 @@ export const getSurveyCount = reactCache(
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   validateInputs([updatedSurvey, ZSurvey]);
-
   try {
     const surveyId = updatedSurvey.id;
     let data: any = {};
@@ -492,6 +491,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       data.status = "scheduled";
     }
 
+    delete data.createdBy;
     const prismaSurvey = await prisma.survey.update({
       where: { id: surveyId },
       data,
@@ -610,11 +610,6 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
       attributeFilters: undefined,
     };
 
-    if ((surveyBody.type === "website" || surveyBody.type === "app") && data.thankYouCard) {
-      data.thankYouCard.buttonLabel = undefined;
-      data.thankYouCard.buttonLink = undefined;
-    }
-
     if (createdBy) {
       data.creator = {
         connect: {
@@ -721,7 +716,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
         name: `${existingSurvey.name} (copy)`,
         status: "draft",
         questions: structuredClone(existingSurvey.questions),
-        thankYouCard: structuredClone(existingSurvey.thankYouCard),
+        endings: structuredClone(existingSurvey.endings),
         languages: {
           create: existingSurvey.languages?.map((surveyLanguage) => ({
             languageId: surveyLanguage.language.id,
@@ -1293,8 +1288,10 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       throw new ResourceNotFoundError("survey", surveyId);
     }
 
-    const currentSegment = await getSegment(newSegmentId);
-    if (!currentSegment) {
+    const currentSurveySegment = currentSurvey.segment;
+
+    const newSegment = await getSegment(newSegmentId);
+    if (!newSegment) {
       throw new ResourceNotFoundError("segment", newSegmentId);
     }
 
@@ -1311,6 +1308,14 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
         },
       },
     });
+
+    if (
+      currentSurveySegment &&
+      currentSurveySegment.isPrivate &&
+      currentSurveySegment.title === currentSurvey.id
+    ) {
+      await deleteSegment(currentSurveySegment.id);
+    }
 
     segmentCache.revalidate({ id: newSegmentId });
     surveyCache.revalidate({ id: surveyId });
