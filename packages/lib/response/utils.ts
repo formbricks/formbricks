@@ -220,6 +220,12 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
                   equals: "dismissed",
                 },
               },
+              {
+                data: {
+                  path: [key],
+                  equals: "",
+                },
+              },
               // For address question
               {
                 data: {
@@ -300,7 +306,7 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
           break;
         case "includesOne":
           data.push({
-            OR: val.value.map((value: string) => ({
+            OR: val.value.map((value: string | number) => ({
               OR: [
                 // for MultipleChoiceMulti
                 {

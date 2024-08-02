@@ -9,7 +9,6 @@ import { QuestionFilterComboBox } from "@/app/(app)/environments/[environmentId]
 import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
 import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
 import clsx from "clsx";
-import { isEqual } from "lodash";
 import { TrashIcon } from "lucide-react";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -174,9 +173,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
 
   const handleApplyFilters = () => {
     clearItem();
-    if (!isEqual(filterValue, selectedFilter)) {
-      setSelectedFilter(filterValue);
-    }
+    setSelectedFilter(filterValue);
     setIsOpen(false);
   };
 

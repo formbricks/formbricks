@@ -16,8 +16,8 @@ interface MatrixQuestionSummaryProps {
     questionId: string,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
-    filterComboBoxValue: string | string[],
-    filterValue: string
+    filterValue: string,
+    filterComboBoxValue?: string | string[]
   ) => void;
 }
 
@@ -93,8 +93,8 @@ export const MatrixQuestionSummary = ({
                             questionSummary.question.id,
                             questionSummary.question.headline,
                             questionSummary.question.type,
-                            rowLabel,
-                            column
+                            column,
+                            rowLabel
                           )
                         }>
                         {percentage}

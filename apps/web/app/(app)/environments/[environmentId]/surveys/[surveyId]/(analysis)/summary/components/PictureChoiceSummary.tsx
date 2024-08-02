@@ -18,8 +18,8 @@ interface PictureChoiceSummaryProps {
     questionId: string,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
-    filterComboBoxValue: string | string[],
-    filterValue: string
+    filterValue: string,
+    filterComboBoxValue?: string | string[]
   ) => void;
 }
 
@@ -39,7 +39,7 @@ export const PictureChoiceSummary = ({
         attributeClasses={attributeClasses}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
-        {results.map((result) => (
+        {results.map((result, index) => (
           <div
             className="cursor-pointer hover:opacity-80"
             key={result.id}
@@ -48,8 +48,8 @@ export const PictureChoiceSummary = ({
                 questionSummary.question.id,
                 questionSummary.question.headline,
                 questionSummary.question.type,
-                result.id,
-                "Includes all"
+                "Includes all",
+                [`Picture ${index + 1}`]
               )
             }>
             <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">

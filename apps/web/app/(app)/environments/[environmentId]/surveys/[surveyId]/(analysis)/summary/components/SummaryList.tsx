@@ -55,8 +55,8 @@ export const SummaryList = ({
     questionId: string,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
-    filterComboBoxValue: string | string[],
-    filterValue: string
+    filterValue: string,
+    filterComboBoxValue?: string | string[]
   ) => {
     const filterObject: SelectedFilterValue = selectedFilter;
     const value = {
@@ -70,7 +70,7 @@ export const SummaryList = ({
     const isDuplicate = filterObject.filter.some(
       (filter) =>
         filter.questionType.id === questionId &&
-        filter.filterType.filterComboBoxValue?.toString() === filterComboBoxValue.toString() &&
+        filter.filterType.filterComboBoxValue?.toString() === filterComboBoxValue?.toString() &&
         filter.filterType.filterValue === filterValue
     );
 
@@ -90,7 +90,7 @@ export const SummaryList = ({
       onlyComplete: filterObject.onlyComplete,
     });
     toast.success(
-      constructToastMessage(questionType, filterComboBoxValue, filterValue, survey, questionId) ??
+      constructToastMessage(questionType, filterValue, survey, questionId, filterComboBoxValue) ??
         "Filter added successfully",
       { duration: 5000 }
     );
@@ -148,6 +148,7 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                setFilter={setFilter}
               />
             );
           }

@@ -17,8 +17,8 @@ interface ConsentSummaryProps {
     questionId: string,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
-    filterComboBoxValue: string | string[],
-    filterValue: string
+    filterValue: string,
+    filterComboBoxValue?: string | string[]
   ) => void;
 }
 
@@ -58,8 +58,8 @@ export const ConsentSummary = ({
                   questionSummary.question.id,
                   questionSummary.question.headline,
                   questionSummary.question.type,
-                  summaryItem.title,
-                  "is"
+                  "is",
+                  summaryItem.title
                 )
               }>
               <div className="text flex justify-between px-2 pb-2">

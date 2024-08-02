@@ -25,8 +25,8 @@ interface MultipleChoiceSummaryProps {
     questionId: string,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
-    filterComboBoxValue: string | string[],
-    filterValue: string
+    filterValue: string,
+    filterComboBoxValue?: string | string[]
   ) => void;
 }
 
@@ -77,8 +77,8 @@ export const MultipleChoiceSummary = ({
                 questionSummary.question.id,
                 questionSummary.question.headline,
                 questionSummary.question.type,
-                [result.value],
-                questionSummary.type === "multipleChoiceSingle" ? "Includes either" : "Includes all"
+                questionSummary.type === "multipleChoiceSingle" ? "Includes either" : "Includes all",
+                [result.value]
               )
             }>
             <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">

@@ -278,6 +278,7 @@ export const getFormattedFilters = (
               op: "skipped",
             };
           }
+          break;
         }
         case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
         case TSurveyQuestionTypeEnum.MultipleChoiceMulti: {
@@ -292,6 +293,7 @@ export const getFormattedFilters = (
               value: filterType.filterComboBoxValue as string[],
             };
           }
+          break;
         }
         case TSurveyQuestionTypeEnum.NPS:
         case TSurveyQuestionTypeEnum.Rating: {
@@ -318,7 +320,13 @@ export const getFormattedFilters = (
             filters.data[questionType.id ?? ""] = {
               op: "skipped",
             };
+          } else if (filterType.filterValue === "Includes either") {
+            filters.data[questionType.id ?? ""] = {
+              op: "includesOne",
+              value: (filterType.filterComboBoxValue as string[]).map((value) => parseInt(value)),
+            };
           }
+          break;
         }
         case TSurveyQuestionTypeEnum.CTA: {
           if (filterType.filterComboBoxValue === "Clicked") {
@@ -330,6 +338,7 @@ export const getFormattedFilters = (
               op: "skipped",
             };
           }
+          break;
         }
         case TSurveyQuestionTypeEnum.Consent: {
           if (filterType.filterComboBoxValue === "Accepted") {
@@ -341,6 +350,7 @@ export const getFormattedFilters = (
               op: "skipped",
             };
           }
+          break;
         }
         case TSurveyQuestionTypeEnum.PictureSelection: {
           const questionId = questionType.id ?? "";
@@ -369,6 +379,7 @@ export const getFormattedFilters = (
               value: selectedOptions,
             };
           }
+          break;
         }
         case TSurveyQuestionTypeEnum.Matrix: {
           if (
@@ -381,6 +392,7 @@ export const getFormattedFilters = (
               value: { [filterType.filterValue]: filterType.filterComboBoxValue },
             };
           }
+          break;
         }
       }
     });
