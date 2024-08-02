@@ -272,8 +272,6 @@ model Survey {
   /// [SurveyQuestions]
   questions           Json                    @default("[]")
   endings             Json[]                  @default([])
-  /// @zod.custom(imports.ZSurveyThankYouCard)
-  /// [SurveyThankYouCard]
   thankYouCard        Json? //deprecated            
   /// @zod.custom(imports.ZSurveyHiddenFields)
   /// [SurveyHiddenFields]
@@ -313,12 +311,13 @@ model Survey {
 
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
-  verifyEmail        Json?
-  pin                String?
-  resultShareKey     String?          @unique
-  displayPercentage  Decimal?
-  languages          SurveyLanguage[]
-  showLanguageSwitch Boolean?
+  verifyEmail          Json? // deprecated
+  isVerifyEmailEnabled Boolean          @default(false)
+  pin                  String?
+  resultShareKey       String?          @unique
+  displayPercentage    Decimal?
+  languages            SurveyLanguage[]
+  showLanguageSwitch   Boolean?
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])

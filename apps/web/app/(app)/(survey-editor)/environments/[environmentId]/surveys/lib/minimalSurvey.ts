@@ -36,4 +36,5 @@ export const minimalSurvey: TSurvey = {
   segment: null,
   languages: [],
   showLanguageSwitch: false,
+  isVerifyEmailEnabled: false,
 };

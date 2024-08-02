@@ -2561,6 +2561,7 @@ export const getExampleWebsiteSurveyTemplate = (
   status: "inProgress" as TSurveyStatus,
   displayOption: "respondMultiple" as TSurveyDisplayOption,
   recontactDays: 0,
+  isVerifyEmailEnabled: false,
 });
 
 export const getExampleAppSurveyTemplate = (
@@ -2589,4 +2590,5 @@ export const getExampleAppSurveyTemplate = (
   status: "inProgress" as TSurveyStatus,
   displayOption: "respondMultiple" as TSurveyDisplayOption,
   recontactDays: 0,
+  isVerifyEmailEnabled: false,
 });

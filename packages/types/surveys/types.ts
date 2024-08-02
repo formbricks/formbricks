@@ -149,15 +149,6 @@ export const ZSurveySingleUse = z
 
 export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 
-export const ZSurveyVerifyEmail = z
-  .object({
-    name: z.optional(z.string()),
-    subheading: z.optional(z.string()),
-  })
-  .optional();
-
-export type TSurveyVerifyEmail = z.infer<typeof ZSurveyVerifyEmail>;
-
 export type TSurveyWelcomeCard = z.infer<typeof ZSurveyWelcomeCard>;
 
 export type TSurveyEndings = z.infer<typeof ZSurveyEndings>;
@@ -616,7 +607,7 @@ export const ZSurvey = z
     surveyClosedMessage: ZSurveyClosedMessage.nullable(),
     segment: ZSegment.nullable(),
     singleUse: ZSurveySingleUse.nullable(),
-    verifyEmail: ZSurveyVerifyEmail.nullable(),
+    isVerifyEmailEnabled: z.boolean(),
     pin: z.string().min(4, { message: "PIN must be a four digit number" }).nullish(),
     resultShareKey: z.string().nullable(),
     displayPercentage: z.number().min(0.01).max(100).nullable(),
@@ -756,7 +747,7 @@ export const ZSurvey = z
         if (duplicateChoicesLanguageCodes.length > 0) {
           const invalidLanguageCodes = duplicateChoicesLanguageCodes.map((invalidLanguageCode) =>
             invalidLanguageCode === "default"
-              ? languages.find((lang) => lang.default)?.language.code ?? "default"
+              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
               : invalidLanguageCode
           );
 
@@ -837,7 +828,7 @@ export const ZSurvey = z
         if (duplicateRowsLanguageCodes.length > 0) {
           const invalidLanguageCodes = duplicateRowsLanguageCodes.map((invalidLanguageCode) =>
             invalidLanguageCode === "default"
-              ? languages.find((lang) => lang.default)?.language.code ?? "default"
+              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
               : invalidLanguageCode
           );
 
@@ -854,7 +845,7 @@ export const ZSurvey = z
         if (duplicateColumnLanguageCodes.length > 0) {
           const invalidLanguageCodes = duplicateColumnLanguageCodes.map((invalidLanguageCode) =>
             invalidLanguageCode === "default"
-              ? languages.find((lang) => lang.default)?.language.code ?? "default"
+              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
               : invalidLanguageCode
           );
 
