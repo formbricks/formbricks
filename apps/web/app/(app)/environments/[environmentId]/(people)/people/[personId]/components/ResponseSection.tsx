@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getResponsesByPersonId } from "@formbricks/lib/response/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
+import { getUser } from "@formbricks/lib/user/service";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -29,13 +30,20 @@ export const ResponseSection = async ({
   if (!session) {
     throw new Error("No session found");
   }
+
+  const user = await getUser(session.user.id);
+
+  if (!user) {
+    throw new Error("No user found");
+  }
+
   if (!responses) {
     throw new Error("No responses found");
   }
 
   return (
     <ResponseTimeline
-      user={session.user}
+      user={user}
       surveys={surveys}
       responses={responses}
       environment={environment}

@@ -68,7 +68,6 @@ export const CreateOrganization = () => {
           />
           <Button
             type="submit"
-            variant="darkCTA"
             className="flex w-80 justify-center"
             loading={isSubmitting}
             disabled={isSubmitting || organizationName.trim() === ""}>

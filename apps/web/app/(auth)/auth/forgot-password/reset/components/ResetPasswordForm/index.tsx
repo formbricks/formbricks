@@ -92,12 +92,7 @@ export const ResetPasswordForm = () => {
         </div>
 
         <div>
-          <Button
-            type="submit"
-            variant="darkCTA"
-            disabled={!isValid}
-            className="w-full justify-center"
-            loading={loading}>
+          <Button type="submit" disabled={!isValid} className="w-full justify-center" loading={loading}>
             Reset password
           </Button>
         </div>

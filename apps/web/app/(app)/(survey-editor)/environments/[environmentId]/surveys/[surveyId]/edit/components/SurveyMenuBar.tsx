@@ -317,7 +317,6 @@ export const SurveyMenuBar = ({
           {localSurvey.status !== "draft" && (
             <Button
               disabled={disableSave}
-              variant="darkCTA"
               className="mr-3"
               loading={isSurveySaving}
               onClick={() => handleSaveAndGoBack()}>
@@ -326,7 +325,6 @@ export const SurveyMenuBar = ({
           )}
           {localSurvey.status === "draft" && audiencePrompt && !isLinkSurvey && (
             <Button
-              variant="darkCTA"
               onClick={() => {
                 setAudiencePrompt(false);
                 setActiveId("settings");
@@ -339,7 +337,6 @@ export const SurveyMenuBar = ({
           {localSurvey.status === "draft" && (!audiencePrompt || isLinkSurvey) && (
             <Button
               disabled={isSurveySaving || containsEmptyTriggers}
-              variant="darkCTA"
               loading={isSurveyPublishing}
               onClick={handleSurveyPublish}>
               Publish

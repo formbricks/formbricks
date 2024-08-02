@@ -6,7 +6,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { deleteFile } from "@formbricks/lib/storage/service";
 import { getFileNameWithIdFromUrl } from "@formbricks/lib/storage/utils";
-import { updateUser } from "@formbricks/lib/user/service";
+import { getUser, updateUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TUserUpdateInput } from "@formbricks/types/user";
 
@@ -81,12 +81,15 @@ export const updateAvatarAction = async (avatarUrl: string) => {
 
 export const removeAvatarAction = async (environmentId: string) => {
   const session = await getServerSession(authOptions);
-
   if (!session) {
     throw new Error("Not authenticated");
   }
-
   if (!session.user.id) {
+    throw new Error("User not found");
+  }
+
+  const user = await getUser(session.user.id);
+  if (!user) {
     throw new Error("User not found");
   }
 
@@ -96,7 +99,7 @@ export const removeAvatarAction = async (environmentId: string) => {
   }
 
   try {
-    const imageUrl = session.user.imageUrl;
+    const imageUrl = user.imageUrl;
     if (!imageUrl) {
       throw new Error("Image not found");
     }

@@ -1,30 +1,20 @@
 "use client";
 
 import { formbricksLogout } from "@/app/lib/formbricks";
-import { Session } from "next-auth";
+import type { Session } from "next-auth";
 import { useState } from "react";
-import { ProfileAvatar } from "@formbricks/ui/Avatars";
+import { TUser } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteAccountModal } from "@formbricks/ui/DeleteAccountModal";
-
-export const EditAvatar = ({ session }) => {
-  return (
-    <div>
-      <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
-
-      <Button className="mt-4" variant="darkCTA" size="sm" disabled={true}>
-        Upload Image
-      </Button>
-    </div>
-  );
-};
 
 export const DeleteAccount = ({
   session,
   IS_FORMBRICKS_CLOUD,
+  user,
 }: {
   session: Session | null;
   IS_FORMBRICKS_CLOUD: boolean;
+  user: TUser;
 }) => {
   const [isModalOpen, setModalOpen] = useState(false);
 
@@ -37,7 +27,7 @@ export const DeleteAccount = ({
       <DeleteAccountModal
         open={isModalOpen}
         setOpen={setModalOpen}
-        session={session}
+        user={user}
         isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         formbricksLogout={formbricksLogout}
       />
