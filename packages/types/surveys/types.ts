@@ -996,32 +996,34 @@ export const ZSurveyUpdateInput = ZSurvey.innerType()
   )
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => undefined);
 
-export const ZSurveyInput = z.object({
-  name: z.string(),
-  type: ZSurveyType.optional(),
-  createdBy: z.string().cuid().nullish(),
-  status: ZSurveyStatus.optional(),
-  displayOption: ZSurveyDisplayOption.optional(),
-  autoClose: z.number().nullish(),
-  redirectUrl: z.string().url().nullish(),
-  recontactDays: z.number().nullish(),
-  welcomeCard: ZSurveyWelcomeCard.optional(),
-  questions: ZSurveyQuestions.optional(),
-  endings: ZSurveyEndings.optional(),
-  hiddenFields: ZSurveyHiddenFields.optional(),
-  delay: z.number().optional(),
-  autoComplete: z.number().nullish(),
-  runOnDate: z.date().nullish(),
-  closeOnDate: z.date().nullish(),
-  styling: ZSurveyStyling.optional(),
-  surveyClosedMessage: ZSurveyClosedMessage.nullish(),
-  singleUse: ZSurveySingleUse.nullish(),
-  isVerifyEmailEnabled: z.boolean().optional(),
-  pin: z.string().nullish(),
-  resultShareKey: z.string().nullish(),
-  displayPercentage: z.number().min(0.01).max(100).nullish(),
-  triggers: z.array(z.object({ actionClass: ZActionClass })).optional(),
-});
+// Helper function to make all properties of a Zod object schema optional
+const makeSchemaOptional = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) => {
+  return schema.extend(
+    Object.fromEntries(Object.entries(schema.shape).map(([key, value]) => [key, value.optional()])) as {
+      [K in keyof T]: z.ZodOptional<T[K]>;
+    }
+  );
+};
+
+export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+    productOverwrites: true,
+    languages: true,
+  })
+  .extend({
+    name: z.string(), // Keep name required
+    questions: ZSurvey.innerType().shape.questions, // Keep questions required and with its original validation
+    languages: z.array(ZSurveyLanguage).default([]),
+    welcomeCard: ZSurveyWelcomeCard.default({
+      enabled: false,
+    }),
+    endings: ZSurveyEndings.default([]),
+    type: ZSurveyType.default("link"),
+  })
+  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 
@@ -1032,7 +1034,7 @@ export interface TSurveyDates {
   closeOnDate: TSurvey["closeOnDate"];
 }
 
-export type TSurveyInput = z.infer<typeof ZSurveyInput>;
+export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
 
 export type TSurveyEditorTabs = "questions" | "settings" | "styling";
 
