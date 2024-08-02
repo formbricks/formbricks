@@ -26,11 +26,9 @@ export const ResponseOptionsCard = ({
 }: ResponseOptionsCardProps) => {
   const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
   const autoComplete = localSurvey.autoComplete !== null;
-  const [redirectToggle, setRedirectToggle] = useState(false);
   const [runOnDateToggle, setRunOnDateToggle] = useState(false);
   const [closeOnDateToggle, setCloseOnDateToggle] = useState(false);
   useState;
-  const [redirectUrl, setRedirectUrl] = useState<string | null>("");
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(false);
 
@@ -55,15 +53,6 @@ export const ResponseOptionsCard = ({
   const isPinProtectionEnabled = localSurvey.pin !== null;
 
   const [verifyProtectWithPinError, setVerifyProtectWithPinError] = useState<string | null>(null);
-
-  const handleRedirectCheckMark = () => {
-    setRedirectToggle((prev) => !prev);
-
-    if (redirectToggle && localSurvey.redirectUrl) {
-      setRedirectUrl(null);
-      setLocalSurvey({ ...localSurvey, redirectUrl: null });
-    }
-  };
 
   const handleRunOnDateToggle = () => {
     if (runOnDateToggle) {
@@ -114,11 +103,6 @@ export const ResponseOptionsCard = ({
   const handleSurveyPinInputKeyDown: KeyboardEventHandler<HTMLInputElement> = (e) => {
     const exceptThisSymbols = ["e", "E", "+", "-", "."];
     if (exceptThisSymbols.includes(e.key)) e.preventDefault();
-  };
-
-  const handleRedirectUrlChange = (link: string) => {
-    setRedirectUrl(link);
-    setLocalSurvey({ ...localSurvey, redirectUrl: link });
   };
 
   const handleCloseSurveyMessageToggle = () => {
@@ -236,11 +220,6 @@ export const ResponseOptionsCard = ({
   };
 
   useEffect(() => {
-    if (localSurvey.redirectUrl) {
-      setRedirectUrl(localSurvey.redirectUrl);
-      setRedirectToggle(true);
-    }
-
     if (!!localSurvey.surveyClosedMessage) {
       setSurveyClosedMessage({
         heading: localSurvey.surveyClosedMessage.heading ?? surveyClosedMessage.heading,
@@ -386,26 +365,6 @@ export const ResponseOptionsCard = ({
             childBorder={true}>
             <div className="p-4">
               <DatePicker date={closeOnDate} handleDateChange={handleCloseOnDateChange} />
-            </div>
-          </AdvancedOptionToggle>
-
-          {/* Redirect on completion */}
-          <AdvancedOptionToggle
-            htmlId="redirectUrl"
-            isChecked={redirectToggle}
-            onToggle={handleRedirectCheckMark}
-            title="Redirect on completion"
-            description="Redirect user to link destination when they completed the survey"
-            childBorder={true}>
-            <div className="w-full p-4">
-              <Input
-                autoFocus
-                className="w-full bg-white"
-                type="url"
-                placeholder="https://www.example.com"
-                value={redirectUrl ? redirectUrl : ""}
-                onChange={(e) => handleRedirectUrlChange(e.target.value)}
-              />
             </div>
           </AdvancedOptionToggle>
 

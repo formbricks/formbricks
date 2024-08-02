@@ -8,6 +8,7 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -35,6 +36,7 @@ interface SurveyEditorProps {
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
   isUnsplashConfigured: boolean;
+  plan: TOrganizationBillingPlan;
 }
 
 export const SurveyEditor = ({
@@ -52,6 +54,7 @@ export const SurveyEditor = ({
   isUserTargetingAllowed = false,
   isFormbricksCloud,
   isUnsplashConfigured,
+  plan,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -144,7 +147,7 @@ export const SurveyEditor = ({
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main
-            className="relative z-0 w-1/2 flex-1 overflow-y-auto focus:outline-none"
+            className="relative z-0 w-1/2 flex-1 overflow-y-auto bg-slate-50 focus:outline-none"
             ref={surveyEditorRef}>
             <QuestionsAudienceTabs
               activeId={activeView}
@@ -166,6 +169,7 @@ export const SurveyEditor = ({
                 isMultiLanguageAllowed={isMultiLanguageAllowed}
                 isFormbricksCloud={isFormbricksCloud}
                 attributeClasses={attributeClasses}
+                plan={plan}
               />
             )}
 
@@ -202,7 +206,7 @@ export const SurveyEditor = ({
             )}
           </main>
 
-          <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6 md:flex md:flex-col">
+          <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 py-6 shadow-inner md:flex md:flex-col">
             <PreviewSurvey
               survey={localSurvey}
               questionId={activeQuestionId}

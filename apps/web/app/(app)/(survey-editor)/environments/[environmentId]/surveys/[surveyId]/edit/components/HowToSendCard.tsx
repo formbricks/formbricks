@@ -5,6 +5,7 @@ import { AlertCircleIcon, BlocksIcon, CheckIcon, EarthIcon, LinkIcon, MonitorIco
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
+import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
@@ -40,13 +41,14 @@ export const HowToSendCard = ({
   }, [environment]);
 
   const setSurveyType = (type: TSurveyType) => {
+    const endingsTemp = localSurvey.endings;
+    if (type === "link" && localSurvey.endings.length === 0) {
+      endingsTemp.push(getDefaultEndingCard(localSurvey.languages));
+    }
     setLocalSurvey((prevSurvey) => ({
       ...prevSurvey,
       type,
-      thankYouCard: {
-        ...prevSurvey.thankYouCard,
-        enabled: type === "link" ? true : prevSurvey.thankYouCard.enabled,
-      },
+      endings: endingsTemp,
     }));
 
     // if the type is "app" and the local survey does not already have a segment, we create a new temporary segment
