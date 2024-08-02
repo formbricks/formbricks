@@ -43,7 +43,8 @@
     "data-migration:v2.3": "pnpm data-migration:zh-to-zh-Hans",
     "data-migration:segments-cleanup": "ts-node ./data-migrations/20240712123456_segments_cleanup/data-migration.ts",
     "data-migration:multiple-endings": "ts-node ./data-migrations/20240801120500_thankYouCard_to_endings/data-migration.ts",
-    "data-migration:simplified-email-verification": "ts-node ./data-migrations/20240726124100_replace_verifyEmail_with_isVerifyEmailEnabled/data-migration.ts"
+    "data-migration:simplified-email-verification": "ts-node ./data-migrations/20240726124100_replace_verifyEmail_with_isVerifyEmailEnabled/data-migration.ts",
+    "data-migration:v2.4": "pnpm data-migration:segments-cleanup && pnpm data-migration:multiple-endings && pnpm data-migration:simplified-email-verification"
   },
   "dependencies": {
     "@prisma/client": "^5.17.0",
