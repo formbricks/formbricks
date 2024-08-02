@@ -1388,7 +1388,7 @@ export const ZSurveyRecallItem = z.object({
 
 export type TSurveyRecallItem = z.infer<typeof ZSurveyRecallItem>;
 
-export const CopySurveyFormValidation = z.object({
+export const ZSurveyCopyFormValidation = z.object({
   products: z.array(
     z.object({
       product: z.string(),
@@ -1397,4 +1397,4 @@ export const CopySurveyFormValidation = z.object({
   ),
 });
 
-export type TCopySurveyFormData = z.infer<typeof CopySurveyFormValidation>;
+export type TSurveyCopyFormData = z.infer<typeof ZSurveyCopyFormValidation>;

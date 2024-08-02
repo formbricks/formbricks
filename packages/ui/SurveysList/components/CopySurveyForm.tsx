@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TProduct } from "@formbricks/types/product";
-import { CopySurveyFormValidation, TCopySurveyFormData, TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyCopyFormData, ZSurveyCopyFormValidation } from "@formbricks/types/surveys/types";
 import { Button } from "../../Button";
 import { Checkbox } from "../../Checkbox";
 import { FormControl, FormField, FormItem, FormProvider } from "../../Form";
@@ -21,8 +21,8 @@ export const CopySurveyForm = ({
   onCancel: () => void;
   setOpen: (value: boolean) => void;
 }) => {
-  const form = useForm<TCopySurveyFormData>({
-    resolver: zodResolver(CopySurveyFormValidation),
+  const form = useForm<TSurveyCopyFormData>({
+    resolver: zodResolver(ZSurveyCopyFormValidation),
     defaultValues: {
       products: defaultProducts.map((product) => ({
         product: product.id,
@@ -36,7 +36,7 @@ export const CopySurveyForm = ({
     control: form.control,
   });
 
-  const onSubmit = async (data: TCopySurveyFormData) => {
+  const onSubmit = async (data: TSurveyCopyFormData) => {
     const filteredData = data.products.filter((product) => product.environments.length > 0);
 
     try {
