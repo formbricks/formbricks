@@ -113,7 +113,7 @@ export const PREVIEW_SURVEY = {
   delay: 0,
   displayPercentage: null,
   autoComplete: 50,
-  verifyEmail: null,
+  isVerifyEmailEnabled: false,
   redirectUrl: null,
   productOverwrites: null,
   surveyClosedMessage: null,

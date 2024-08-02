@@ -5,7 +5,7 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import {
   TSurvey,
-  TSurveyInput,
+  TSurveyCreateInput,
   TSurveyLanguage,
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
@@ -181,10 +181,7 @@ const baseSurveyProperties = {
   surveyClosedMessage: {
     enabled: false,
   },
-  verifyEmail: {
-    name: "verifyEmail",
-    subheading: "please verify your email",
-  },
+  isVerifyEmailEnabled: true,
   attributeFilters: [],
   ...commonMockProperties,
 };
@@ -246,7 +243,7 @@ export const mockSurveyOutput: SurveyMock = {
   ...baseSurveyProperties,
 };
 
-export const createSurveyInput: TSurveyInput = {
+export const createSurveyInput: TSurveyCreateInput = {
   type: "website",
   status: "inProgress",
   displayOption: "respondMultiple",

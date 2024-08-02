@@ -10,7 +10,13 @@ import { TLegacySurvey } from "@formbricks/types/legacy-surveys";
 import { TPerson } from "@formbricks/types/people";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey, TSurveyFilterCriteria, TSurveyInput, ZSurvey } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyCreateInput,
+  TSurveyFilterCriteria,
+  ZSurvey,
+  ZSurveyCreateInput,
+} from "@formbricks/types/surveys/types";
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
 import { attributeCache } from "../attribute/cache";
@@ -67,7 +73,7 @@ export const selectSurvey = {
   delay: true,
   displayPercentage: true,
   autoComplete: true,
-  verifyEmail: true,
+  isVerifyEmailEnabled: true,
   redirectUrl: true,
   productOverwrites: true,
   styling: true,
@@ -593,19 +599,31 @@ export const deleteSurvey = async (surveyId: string) => {
   }
 };
 
-export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
-  validateInputs([environmentId, ZId]);
+export const createSurvey = async (
+  environmentId: string,
+  surveyBody: TSurveyCreateInput
+): Promise<TSurvey> => {
+  const [parsedEnvironmentId, parsedSurveyBody] = validateInputs(
+    [environmentId, ZId],
+    [surveyBody, ZSurveyCreateInput]
+  );
 
   try {
-    const createdBy = surveyBody.createdBy;
-    delete surveyBody.createdBy;
+    const { createdBy, ...restSurveyBody } = parsedSurveyBody;
 
-    const actionClasses = await getActionClasses(environmentId);
+    // empty languages array
+    if (!restSurveyBody.languages?.length) {
+      delete restSurveyBody.languages;
+    }
+
+    const actionClasses = await getActionClasses(parsedEnvironmentId);
+
+    // @ts-expect-error
     const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
-      ...surveyBody,
+      ...restSurveyBody,
       // TODO: Create with attributeFilters
-      triggers: surveyBody.triggers
-        ? handleTriggerUpdates(surveyBody.triggers, [], actionClasses)
+      triggers: restSurveyBody.triggers
+        ? handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
         : undefined,
       attributeFilters: undefined,
     };
@@ -623,7 +641,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
         ...data,
         environment: {
           connect: {
-            id: environmentId,
+            id: parsedEnvironmentId,
           },
         },
       },
@@ -633,7 +651,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     // if the survey created is an "app" survey, we also create a private segment for it.
     if (survey.type === "app") {
       const newSegment = await createSegment({
-        environmentId,
+        environmentId: parsedEnvironmentId,
         surveyId: survey.id,
         filters: [],
         title: survey.id,
@@ -687,7 +705,6 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
       console.error(error);
       throw new DatabaseError(error.message);
     }
-
     throw error;
   }
 };
@@ -816,13 +833,25 @@ export const copySurveyToOtherEnvironment = async (
             actionClassId: actionClass.id,
           })),
         },
-        environment: { connect: { id: targetEnvironmentId } },
-        creator: { connect: { id: userId } },
-        surveyClosedMessage: existingSurvey.surveyClosedMessage ?? Prisma.JsonNull,
-        singleUse: existingSurvey.singleUse ?? Prisma.JsonNull,
-        productOverwrites: existingSurvey.productOverwrites ?? Prisma.JsonNull,
-        verifyEmail: existingSurvey.verifyEmail ?? Prisma.JsonNull,
-        styling: existingSurvey.styling ?? Prisma.JsonNull,
+        environment: {
+          connect: {
+            id: environmentId,
+          },
+        },
+        creator: {
+          connect: {
+            id: userId,
+          },
+        },
+        surveyClosedMessage: existingSurvey.surveyClosedMessage
+          ? structuredClone(existingSurvey.surveyClosedMessage)
+          : Prisma.JsonNull,
+        singleUse: existingSurvey.singleUse ? structuredClone(existingSurvey.singleUse) : Prisma.JsonNull,
+        productOverwrites: existingSurvey.productOverwrites
+          ? structuredClone(existingSurvey.productOverwrites)
+          : Prisma.JsonNull,
+        styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
+        // we'll update the segment later
         segment: undefined,
       },
     });
