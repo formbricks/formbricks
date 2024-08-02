@@ -220,20 +220,16 @@ export const SurveyDropDownMenu = ({
             <div className="fixed left-0 right-0 z-10 h-24 rounded-t-lg bg-slate-100">
               <div className="flex w-full items-center justify-between p-6">
                 <div className="flex items-center space-x-2">
-                  <div className="mr-1.5 h-6 w-6 text-slate-500">
-                    <MousePointerClickIcon className="h-5 w-5" />
-                  </div>
+                  <MousePointerClickIcon className="h-6 w-6 text-slate-500" />
                   <div>
                     <div className="text-xl font-medium text-slate-700">Copy Survey</div>
-                    <div className="text-sm text-slate-500">
-                      Copy this survey to another environment or product.
-                    </div>
+                    <div className="text-sm text-slate-500">Copy this survey to another environment</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="h-full max-h-96 overflow-auto pl-4 pt-24">
+            <div className="h-full max-h-[500px] overflow-auto pl-4 pt-24">
               <SurveyCopyOptions
                 survey={survey}
                 environmentId={environmentId}
