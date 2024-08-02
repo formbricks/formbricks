@@ -2,10 +2,10 @@ import { createId } from "@paralleldrive/cuid2";
 import { TActionClass } from "@formbricks/types/action-classes";
 import {
   TSurveyCTAQuestion,
+  TSurveyCreateInput,
   TSurveyDisplayOption,
   TSurveyEndScreenCard,
   TSurveyHiddenFields,
-  TSurveyInput,
   TSurveyLanguage,
   TSurveyOpenTextQuestion,
   TSurveyQuestionTypeEnum,
@@ -2535,7 +2535,10 @@ export const customSurvey = {
   },
 };
 
-export const getExampleWebsiteSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
+export const getExampleWebsiteSurveyTemplate = (
+  webAppUrl: string,
+  trigger: TActionClass
+): TSurveyCreateInput => ({
   ...customSurvey.preset,
   questions: customSurvey.preset.questions.map(
     (question) =>
@@ -2558,9 +2561,13 @@ export const getExampleWebsiteSurveyTemplate = (webAppUrl: string, trigger: TAct
   status: "inProgress" as TSurveyStatus,
   displayOption: "respondMultiple" as TSurveyDisplayOption,
   recontactDays: 0,
+  isVerifyEmailEnabled: false,
 });
 
-export const getExampleAppSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
+export const getExampleAppSurveyTemplate = (
+  webAppUrl: string,
+  trigger: TActionClass
+): TSurveyCreateInput => ({
   ...customSurvey.preset,
   questions: customSurvey.preset.questions.map(
     (question) =>
@@ -2583,4 +2590,5 @@ export const getExampleAppSurveyTemplate = (webAppUrl: string, trigger: TActionC
   status: "inProgress" as TSurveyStatus,
   displayOption: "respondMultiple" as TSurveyDisplayOption,
   recontactDays: 0,
+  isVerifyEmailEnabled: false,
 });
