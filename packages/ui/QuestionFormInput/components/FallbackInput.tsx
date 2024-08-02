@@ -64,7 +64,6 @@ export const FallbackInput = ({
         <Button
           className="mt-2 h-full py-2"
           disabled={containsEmptyFallback()}
-          variant="darkCTA"
           onClick={(e) => {
             e.preventDefault();
             addFallback();

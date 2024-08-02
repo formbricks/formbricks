@@ -7,12 +7,18 @@ import { sendEmbedSurveyPreviewEmail } from "@formbricks/email";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
+import { getUser } from "@formbricks/lib/user/service";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const sendEmbedSurveyPreviewEmailAction = async (surveyId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new AuthenticationError("Not authenticated");
+  }
+
+  const user = await getUser(session.user.id);
+  if (!user) {
+    throw new Error("User not found");
   }
 
   const survey = await getSurvey(surveyId);
@@ -31,7 +37,7 @@ export const sendEmbedSurveyPreviewEmailAction = async (surveyId: string) => {
     .replaceAll("?preview=true", "");
 
   return await sendEmbedSurveyPreviewEmail(
-    session.user.email,
+    user.email,
     "Formbricks Email Survey Preview",
     emailHtml,
     survey.environmentId

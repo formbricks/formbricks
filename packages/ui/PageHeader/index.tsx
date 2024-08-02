@@ -1,6 +1,6 @@
 import { cn } from "@formbricks/lib/cn";
 
-interface PageHeaderProps {
+export interface PageHeaderProps {
   pageTitle: string;
   cta?: React.ReactNode;
   children?: React.ReactNode;

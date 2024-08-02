@@ -181,7 +181,7 @@ export const copyToOtherEnvironmentAction = authenticatedActionClient
         name: `${existingSurvey.name} (copy)`,
         status: "draft",
         questions: structuredClone(existingSurvey.questions),
-        thankYouCard: structuredClone(existingSurvey.thankYouCard),
+        endings: structuredClone(existingSurvey.endings),
         languages: {
           create: existingSurvey.languages?.map((surveyLanguage) => ({
             languageId: surveyLanguage.language.id,

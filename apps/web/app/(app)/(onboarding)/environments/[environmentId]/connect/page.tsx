@@ -38,7 +38,7 @@ const Page = async ({ params }: ConnectPageProps) => {
     <div className="flex min-h-full flex-col items-center justify-center py-10">
       <Header
         title={`Let's connect your ${customHeadline} with Formbricks`}
-        subtitle="If you don't do it now, chances are low that you will ever do it!"
+        subtitle="It takes less than 4 minutes, pinky promise!"
       />
       <div className="space-y-4 text-center">
         <p className="text-4xl font-medium text-slate-800"></p>

@@ -1,9 +1,9 @@
-// migration script for replacing verifyEmail with isVerifyEmailEnabled
+/* eslint-disable no-console -- logging is allowed in migration scripts */
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const main = async () => {
+async function runMigration(): Promise<void> {
   await prisma.$transaction(
     async (tx) => {
       const startTime = Date.now();
@@ -36,6 +36,7 @@ const main = async () => {
           where: { id: survey.id },
           data: {
             isVerifyEmailEnabled: true,
+            verifyEmail: null,
           },
         });
       });
@@ -43,19 +44,30 @@ const main = async () => {
       await Promise.all(updatePromises);
       console.log(transformedSurveyCount, " surveys transformed");
       const endTime = Date.now();
-      console.log(`Data migration completed. Total time: ${(endTime - startTime) / 1000}s`);
+      console.log(`Data migration completed. Total time: ${((endTime - startTime) / 1000).toString()}s`);
     },
     {
       timeout: 180000, // 3 minutes
     }
   );
-};
+}
 
-main()
-  .catch((e: Error) => {
-    console.error("Error during migration: ", e.message);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+function handleError(error: unknown): void {
+  console.error("An error occurred during migration:", error);
+  process.exit(1);
+}
+
+function handleDisconnectError(): void {
+  console.error("Failed to disconnect Prisma client");
+  process.exit(1);
+}
+
+function main(): void {
+  runMigration()
+    .catch(handleError)
+    .finally(() => {
+      prisma.$disconnect().catch(handleDisconnectError);
+    });
+}
+
+main();

@@ -7,6 +7,7 @@ import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
 import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
+import { getUser } from "@formbricks/lib/user/service";
 import { AuthenticationError } from "@formbricks/types/errors";
 
 export const inviteOrganizationMemberAction = async (email: string, organizationId: string) => {
@@ -15,6 +16,12 @@ export const inviteOrganizationMemberAction = async (email: string, organization
   if (!session) {
     throw new AuthenticationError("Not authenticated");
   }
+
+  const user = await getUser(session.user.id);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
   const organizations = await getOrganizationsByUserId(session.user.id);
 
   if (INVITE_DISABLED) {
@@ -39,7 +46,7 @@ export const inviteOrganizationMemberAction = async (email: string, organization
     await sendInviteMemberEmail(
       invite.id,
       email,
-      session.user.name ?? "",
+      user.name ?? "",
       "",
       false // is onboarding invite
     );
