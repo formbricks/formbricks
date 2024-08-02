@@ -1,5 +1,5 @@
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { CircleUserRoundIcon, EarthIcon, LinkIcon, XIcon } from "lucide-react";
+import { GlobeIcon, GlobeLockIcon, LinkIcon, XIcon } from "lucide-react";
 import { getProducts } from "@formbricks/lib/product/service";
 import { Button } from "@formbricks/ui/Button";
 import { Header } from "@formbricks/ui/Header";
@@ -15,14 +15,14 @@ const Page = async ({ params }: ChannelPageProps) => {
     {
       title: "Public website",
       description: "Run well-timed pop-up surveys.",
-      icon: EarthIcon,
+      icon: GlobeIcon,
       iconText: "Built for scale",
       href: `/organizations/${params.organizationId}/products/new/industry?channel=website`,
     },
     {
       title: "App with sign up",
       description: "Run highly-targeted micro-surveys.",
-      icon: CircleUserRoundIcon,
+      icon: GlobeLockIcon,
       iconText: "Enrich user profiles",
       href: `/organizations/${params.organizationId}/products/new/industry?channel=app`,
     },
