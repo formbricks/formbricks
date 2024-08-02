@@ -44,7 +44,6 @@ const Page = async ({ params }) => {
     getServerSession(authOptions),
     getSegments(params.environmentId),
   ]);
-
   if (!session) {
     throw new Error("Session not found");
   }

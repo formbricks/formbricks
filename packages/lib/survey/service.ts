@@ -4,10 +4,11 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ZOptionalNumber } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/environment";
+import { TEnvironment, ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TLegacySurvey } from "@formbricks/types/legacy-surveys";
 import { TPerson } from "@formbricks/types/people";
+import { TProduct } from "@formbricks/types/product";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyFilterCriteria, TSurveyInput, ZSurvey } from "@formbricks/types/surveys/types";
 import { getActionsByPersonId } from "../action/service";
@@ -18,13 +19,14 @@ import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
+import { getEnvironment } from "../environment/service";
 import { reverseTranslateSurvey } from "../i18n/reverseTranslation";
 import { subscribeOrganizationMembersToSurveyResponses } from "../organization/service";
 import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { productCache } from "../product/cache";
-import { getProductByEnvironmentId } from "../product/service";
+import { getProduct, getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
 import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
@@ -85,6 +87,7 @@ export const selectSurvey = {
           alias: true,
           createdAt: true,
           updatedAt: true,
+          productId: true,
         },
       },
     },
@@ -115,7 +118,7 @@ export const selectSurvey = {
       },
     },
   },
-};
+} satisfies Prisma.SurveySelect;
 
 const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TActionClass[]) => {
   if (!triggers) return;
@@ -804,6 +807,228 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
         });
       }
     }
+
+    surveyCache.revalidate({
+      id: newSurvey.id,
+      environmentId: newSurvey.environmentId,
+      resultShareKey: newSurvey.resultShareKey ?? undefined,
+    });
+
+    existingSurvey.triggers.forEach((trigger) => {
+      surveyCache.revalidate({
+        actionClassId: trigger.actionClass.id,
+      });
+    });
+
+    return newSurvey;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error(error);
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const copySurveyToOtherEnvironment = async (
+  environmentId: string,
+  surveyId: string,
+  targetEnvironmentId: string,
+  targetProductId: string,
+  userId: string
+) => {
+  validateInputs(
+    [environmentId, ZId],
+    [surveyId, ZId],
+    [targetEnvironmentId, ZId],
+    [targetProductId, ZId],
+    [userId, ZId]
+  );
+
+  try {
+    const isSameEnvironment = environmentId === targetEnvironmentId;
+
+    // Fetch required resources
+    const [existingEnvironment, existingProduct, existingSurvey] = await Promise.all([
+      getEnvironment(environmentId),
+      getProductByEnvironmentId(environmentId),
+      getSurvey(surveyId),
+    ]);
+
+    if (!existingEnvironment) throw new ResourceNotFoundError("Environment", environmentId);
+    if (!existingProduct) throw new ResourceNotFoundError("Product", environmentId);
+    if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
+
+    let targetEnvironment: TEnvironment | null = null;
+    let targetProduct: TProduct | null = null;
+
+    if (isSameEnvironment) {
+      targetEnvironment = existingEnvironment;
+      targetProduct = existingProduct;
+    } else {
+      [targetEnvironment, targetProduct] = await Promise.all([
+        getEnvironment(targetEnvironmentId),
+        targetProductId === existingProduct.id ? existingProduct : getProduct(targetProductId),
+      ]);
+
+      if (!targetEnvironment) throw new ResourceNotFoundError("Environment", targetEnvironmentId);
+      if (!targetProduct) throw new ResourceNotFoundError("Product", targetProductId);
+    }
+
+    let targetEnvironmentTriggers: TActionClass[] = [];
+
+    if (!isSameEnvironment) {
+      // Setup triggers
+      targetEnvironmentTriggers = await Promise.all(
+        existingSurvey.triggers.map(async (trigger) => {
+          const targetTrigger = await prisma.actionClass.findFirst({
+            where: {
+              ...(trigger.actionClass.type === "code"
+                ? { key: trigger.actionClass.key }
+                : { name: trigger.actionClass.name }),
+              environment: { id: targetEnvironmentId },
+            },
+          });
+
+          if (!targetTrigger) {
+            return prisma.actionClass.create({
+              data: {
+                name: trigger.actionClass.name,
+                environment: { connect: { id: targetEnvironmentId } },
+                description: trigger.actionClass.description,
+                type: trigger.actionClass.type,
+                ...(trigger.actionClass.type === "code"
+                  ? { key: trigger.actionClass.key }
+                  : {
+                      noCodeConfig: trigger.actionClass.noCodeConfig
+                        ? structuredClone(trigger.actionClass.noCodeConfig)
+                        : undefined,
+                    }),
+              },
+            });
+          }
+
+          return targetTrigger;
+        })
+      );
+    } else {
+      targetEnvironmentTriggers = existingSurvey.triggers.map((trigger) => trigger.actionClass);
+    }
+
+    const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
+
+    // Create new survey
+    const newSurvey = await prisma.survey.create({
+      data: {
+        ...existingSurvey,
+        id: undefined,
+        environmentId: undefined,
+        createdBy: undefined,
+        segmentId: undefined,
+        name: `${existingSurvey.name} (copy)`,
+        status: "draft",
+        questions: structuredClone(existingSurvey.questions),
+        thankYouCard: structuredClone(existingSurvey.thankYouCard),
+        languages: hasLanguages
+          ? {
+              create: existingSurvey.languages.map((surveyLanguage) => ({
+                language: {
+                  connectOrCreate: {
+                    where: {
+                      productId_code: { code: surveyLanguage.language.code, productId: targetProduct.id },
+                    },
+                    create: {
+                      code: surveyLanguage.language.code,
+                      alias: surveyLanguage.language.alias,
+                      productId: targetProduct.id,
+                    },
+                  },
+                },
+                default: surveyLanguage.default,
+                enabled: surveyLanguage.enabled,
+              })),
+            }
+          : undefined,
+        triggers: {
+          create: targetEnvironmentTriggers.map((actionClass) => ({
+            actionClassId: actionClass.id,
+          })),
+        },
+        environment: { connect: { id: targetEnvironmentId } },
+        creator: { connect: { id: userId } },
+        surveyClosedMessage: existingSurvey.surveyClosedMessage ?? Prisma.JsonNull,
+        singleUse: existingSurvey.singleUse ?? Prisma.JsonNull,
+        productOverwrites: existingSurvey.productOverwrites ?? Prisma.JsonNull,
+        verifyEmail: existingSurvey.verifyEmail ?? Prisma.JsonNull,
+        styling: existingSurvey.styling ?? Prisma.JsonNull,
+        segment: undefined,
+      },
+    });
+
+    // Handle segment copy
+    if (existingSurvey.segment) {
+      if (existingSurvey.segment.isPrivate) {
+        const newInlineSegment = await createSegment({
+          environmentId: targetEnvironmentId,
+          title: `${newSurvey.id}`,
+          isPrivate: true,
+          surveyId: newSurvey.id,
+          filters: existingSurvey.segment.filters,
+        });
+
+        await prisma.survey.update({
+          where: { id: newSurvey.id },
+          data: { segment: { connect: { id: newInlineSegment.id } } },
+        });
+
+        segmentCache.revalidate({
+          id: newInlineSegment.id,
+          environmentId: newSurvey.environmentId,
+        });
+      } else if (isSameEnvironment) {
+        await prisma.survey.update({
+          where: { id: newSurvey.id },
+          data: { segment: { connect: { id: existingSurvey.segment.id } } },
+        });
+      } else {
+        const existingSegmentInTargetEnvironment = await prisma.segment.findFirst({
+          where: {
+            title: existingSurvey.segment.title,
+            isPrivate: false,
+            environmentId: targetEnvironmentId,
+          },
+        });
+
+        await prisma.segment.create({
+          data: {
+            title: existingSegmentInTargetEnvironment
+              ? `${existingSurvey.segment.title}-${Date.now()}`
+              : existingSurvey.segment.title,
+            environmentId: targetEnvironmentId,
+            isPrivate: false,
+            filters: existingSurvey.segment.filters,
+            surveys: { connect: { id: newSurvey.id } },
+          },
+        });
+      }
+
+      segmentCache.revalidate({
+        id: existingSurvey.segment.id,
+        environmentId: newSurvey.environmentId,
+      });
+    }
+
+    await prisma.environment.update({
+      where: { id: targetEnvironmentId },
+      data: {
+        productId: targetProduct.id,
+        surveys: { connect: { id: newSurvey.id } },
+      },
+    });
+
+    // Invalidate caches
+    productCache.revalidate({ id: targetProduct.id });
 
     surveyCache.revalidate({
       id: newSurvey.id,

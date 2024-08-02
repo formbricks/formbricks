@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -9,7 +10,7 @@ import { Button } from "../../Button";
 import { Checkbox } from "../../Checkbox";
 import { FormControl, FormField, FormItem, FormProvider } from "../../Form";
 import { TooltipRenderer } from "../../Tooltip";
-import { copyToOtherEnvironmentAction, getProductsByEnvironmentIdAction } from "../actions";
+import { copySurveyToOtherEnvironmentAction, getProductsByEnvironmentIdAction } from "../actions";
 
 interface SurveyCopyOptionsProps {
   survey: TSurvey;
@@ -59,6 +60,7 @@ const CopySurveyForm = ({
   onCancel: () => void;
   setOpen: (value: boolean) => void;
 }) => {
+  const router = useRouter();
   const form = useForm<TCopySurveyFormData>({
     resolver: zodResolver(CopySurveyFormValidation),
     defaultValues: {
@@ -80,15 +82,24 @@ const CopySurveyForm = ({
     try {
       filteredData.map(async (product) => {
         product.environments.map(async (environment) => {
-          await copyToOtherEnvironmentAction(survey.environmentId, survey.id, environment, product.product);
+          await copySurveyToOtherEnvironmentAction(
+            survey.environmentId,
+            survey.id,
+            environment,
+            product.product
+          );
         });
+
+        router.refresh();
       });
 
       toast.success("Survey copied successfully!");
     } catch (error) {
       toast.error("Failed to copy survey");
     } finally {
-      setOpen(false);
+      setTimeout(() => {
+        setOpen(false);
+      }, 1000);
     }
   };
 

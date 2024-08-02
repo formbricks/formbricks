@@ -25,11 +25,12 @@ import {
   DropdownMenuTrigger,
 } from "../../DropdownMenu";
 import { Modal } from "../../Modal";
-import { deleteSurveyAction, duplicateSurveyAction, getSurveyAction } from "../actions";
+import { copySurveyToOtherEnvironmentAction, deleteSurveyAction, getSurveyAction } from "../actions";
 import SurveyCopyOptions from "./SurveyCopyOptions";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
+  productId: string;
   survey: TSurvey;
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
@@ -42,6 +43,7 @@ interface SurveyDropDownMenuProps {
 
 export const SurveyDropDownMenu = ({
   environmentId,
+  productId,
   survey,
   webAppUrl,
   singleUseId,
@@ -74,7 +76,12 @@ export const SurveyDropDownMenu = ({
   const duplicateSurveyAndRefresh = async (surveyId: string) => {
     setLoading(true);
     try {
-      const duplicatedSurvey = await duplicateSurveyAction(environmentId, surveyId);
+      const duplicatedSurvey = await copySurveyToOtherEnvironmentAction(
+        environmentId,
+        surveyId,
+        environmentId,
+        productId
+      );
       router.refresh();
       const transformedDuplicatedSurvey = await getSurveyAction(duplicatedSurvey.id);
       if (transformedDuplicatedSurvey) duplicateSurvey(transformedDuplicatedSurvey);
@@ -208,9 +215,9 @@ export const SurveyDropDownMenu = ({
       )}
 
       {isCopyFormOpen && (
-        <Modal open={isCopyFormOpen} setOpen={setIsCopyFormOpen} noPadding>
+        <Modal open={isCopyFormOpen} setOpen={setIsCopyFormOpen} noPadding restrictOverflow>
           <div className="flex h-full flex-col rounded-lg">
-            <div className="rounded-t-lg bg-slate-100">
+            <div className="fixed left-0 right-0 z-10 h-24 rounded-t-lg bg-slate-100">
               <div className="flex w-full items-center justify-between p-6">
                 <div className="flex items-center space-x-2">
                   <div className="mr-1.5 h-6 w-6 text-slate-500">
@@ -225,15 +232,18 @@ export const SurveyDropDownMenu = ({
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="pl-4">
-            <SurveyCopyOptions
-              survey={survey}
-              environmentId={environmentId}
-              onCancel={() => setIsCopyFormOpen(false)}
-              setOpen={setIsCopyFormOpen}
-            />
+            <div className="h-full max-h-96 overflow-auto pl-4 pt-24">
+              <SurveyCopyOptions
+                survey={survey}
+                environmentId={environmentId}
+                onCancel={() => setIsCopyFormOpen(false)}
+                setOpen={(value) => {
+                  setIsCopyFormOpen(value);
+                  router.refresh();
+                }}
+              />
+            </div>
           </div>
         </Modal>
       )}
