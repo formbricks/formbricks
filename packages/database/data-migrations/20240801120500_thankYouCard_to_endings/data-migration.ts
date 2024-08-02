@@ -25,13 +25,13 @@ async function runMigration(): Promise<void> {
       console.log("Starting data migration...");
 
       // Fetch all surveys
-      const surveys: Survey[] = await tx.survey.findMany({
+      const surveys: Survey[] = (await tx.survey.findMany({
         select: {
           id: true,
           thankYouCard: true,
           redirectUrl: true,
         },
-      });
+      })) as Survey[];
 
       if (surveys.length === 0) {
         // Stop the migration if there are no surveys
@@ -46,7 +46,7 @@ async function runMigration(): Promise<void> {
         .filter((s) => s.thankYouCard !== null)
         .map((survey) => {
           transformedSurveyCount++;
-          const updatedSurvey: UpdatedSurvey = structuredClone(survey);
+          const updatedSurvey: UpdatedSurvey = structuredClone(survey) as UpdatedSurvey;
 
           if (survey.redirectUrl) {
             updatedSurvey.endings = [
