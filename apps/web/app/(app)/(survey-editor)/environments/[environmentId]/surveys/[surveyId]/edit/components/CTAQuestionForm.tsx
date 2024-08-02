@@ -6,8 +6,16 @@ import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import { OptionsSwitch } from "@formbricks/ui/OptionsSwitch";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+
+const options = [
+  {
+    value: "internal",
+    label: "Button to continue in survey",
+  },
+  { value: "external", label: "Button to link to external URL" },
+];
 
 interface CTAQuestionFormProps {
   localSurvey: TSurvey;
@@ -66,25 +74,13 @@ export const CTAQuestionForm = ({
           />
         </div>
       </div>
-
-      <RadioGroup
-        className="mt-3 flex"
-        defaultValue="internal"
-        value={question.buttonExternal ? "external" : "internal"}
-        onValueChange={(e) => updateQuestion(questionIdx, { buttonExternal: e === "external" })}>
-        <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3 dark:border-slate-500">
-          <RadioGroupItem value="internal" id="internal" className="bg-slate-50" />
-          <Label htmlFor="internal" className="cursor-pointer dark:text-slate-200">
-            Button to continue in survey
-          </Label>
-        </div>
-        <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3 dark:border-slate-500">
-          <RadioGroupItem value="external" id="external" className="bg-slate-50" />
-          <Label htmlFor="external" className="cursor-pointer dark:text-slate-200">
-            Button to link to external URL
-          </Label>
-        </div>
-      </RadioGroup>
+      <div className="mt-3">
+        <OptionsSwitch
+          options={options}
+          currentOption={question.buttonExternal ? "external" : "internal"}
+          handleOptionChange={(e) => updateQuestion(questionIdx, { buttonExternal: e === "external" })}
+        />
+      </div>
 
       <div className="mt-2 flex justify-between gap-8">
         <div className="flex w-full space-x-2">

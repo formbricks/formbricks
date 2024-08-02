@@ -219,7 +219,7 @@ export const questionTypes: TQuestion[] = [
 export const QUESTIONS_ICON_MAP = questionTypes.reduce(
   (prev, curr) => ({
     ...prev,
-    [curr.id]: <curr.icon className="h-5 w-5" />,
+    [curr.id]: <curr.icon className="h-4 w-4" />,
   }),
   {}
 );

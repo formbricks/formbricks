@@ -27,7 +27,7 @@ const FIELD_TO_LABEL_MAP: Record<string, string> = {
   html: "description",
   cardHeadline: "note",
   welcomeCardHtml: "welcome message",
-  thankYouCardButtonLabel: "button label",
+  endingCardButtonLabel: "button label",
 };
 
 const extractLanguageCodes = (surveyLanguages?: TSurveyLanguage[]): string[] => {
@@ -85,7 +85,8 @@ export const validateCardFieldsForAllLanguages = (
   field: string,
   fieldLabel: TI18nString,
   languages: TSurveyLanguage[],
-  cardType: "welcome" | "thankYou",
+  cardType: "welcome" | "end",
+  endingCardIndex?: number,
   skipArticle = false
 ): z.IssueData | null => {
   const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
@@ -99,9 +100,11 @@ export const validateCardFieldsForAllLanguages = (
     return {
       code: z.ZodIssueCode.custom,
       message: `${messagePrefix}${messageField} on the ${
-        cardType === "welcome" ? "Welcome" : "Thank You"
-      } card${messageSuffix}`,
-      path: [cardType === "welcome" ? "welcomeCard" : "thankYouCard", field],
+        cardType === "welcome"
+          ? "Welcome card"
+          : `Redirect to Url ${((endingCardIndex ?? -1) + 1).toString()}`
+      } ${messageSuffix}`,
+      path: cardType === "welcome" ? ["welcomeCard", field] : ["endings", endingCardIndex ?? -1, field],
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
     };
   }
@@ -185,13 +188,14 @@ export const validateId = (
   type: "Hidden field" | "Question",
   field: string,
   existingQuestionIds: string[],
+  existingEndingCardIds: string[],
   existingHiddenFieldIds: string[]
 ): string | null => {
   if (field.trim() === "") {
     return `Please enter a ${type} Id.`;
   }
 
-  const combinedIds = [...existingQuestionIds, ...existingHiddenFieldIds];
+  const combinedIds = [...existingQuestionIds, ...existingHiddenFieldIds, ...existingEndingCardIds];
 
   if (combinedIds.findIndex((id) => id.toLowerCase() === field.toLowerCase()) !== -1) {
     return `${type} ID already exists in questions or hidden fields.`;

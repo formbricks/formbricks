@@ -11,17 +11,19 @@ import {
   TSurveyCTAQuestion,
   TSurveyChoice,
   TSurveyConsentQuestion,
+  TSurveyEndScreenCard,
+  TSurveyEndings,
   TSurveyLanguage,
   TSurveyMultipleChoiceQuestion,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
   TSurveyQuestion,
   TSurveyRatingQuestion,
-  TSurveyThankYouCard,
   TSurveyWelcomeCard,
   ZSurveyCTAQuestion,
   ZSurveyCalQuestion,
   ZSurveyConsentQuestion,
+  ZSurveyEndScreenCard,
   ZSurveyFileUploadQuestion,
   ZSurveyMultipleChoiceQuestion,
   ZSurveyNPSQuestion,
@@ -29,7 +31,6 @@ import {
   ZSurveyPictureSelectionQuestion,
   ZSurveyQuestion,
   ZSurveyRatingQuestion,
-  ZSurveyThankYouCard,
   ZSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { structuredClone } from "../pollyfills/structuredClone";
@@ -144,24 +145,47 @@ export const translateWelcomeCard = (
 
 // LGEGACY
 // Helper function to maintain backwards compatibility for old survey objects before Multi Language
-export const translateThankYouCard = (
-  thankYouCard: TSurveyThankYouCard | TLegacySurveyThankYouCard,
+export const translateEndings = (
+  endings: TSurveyEndings | TLegacySurveyThankYouCard,
   languages: string[]
-): TSurveyThankYouCard => {
-  const clonedThankYouCard = structuredClone(thankYouCard);
+): TSurveyEndings => {
+  const isEndingsArray = Array.isArray(endings);
+  if (isEndingsArray) {
+    return endings.map((ending) => {
+      if (ending.type === "redirectToUrl") return ending;
+      else {
+        const clonedEndingCard = structuredClone(ending);
 
-  if (typeof thankYouCard.headline !== "undefined") {
-    clonedThankYouCard.headline = createI18nString(thankYouCard.headline ?? "", languages);
-  }
+        if (typeof ending.headline !== "undefined") {
+          clonedEndingCard.headline = createI18nString(ending.headline ?? "", languages);
+        }
 
-  if (typeof thankYouCard.subheader !== "undefined") {
-    clonedThankYouCard.subheader = createI18nString(thankYouCard.subheader ?? "", languages);
-  }
+        if (typeof ending.subheader !== "undefined") {
+          clonedEndingCard.subheader = createI18nString(ending.subheader ?? "", languages);
+        }
 
-  if (typeof clonedThankYouCard.buttonLabel !== "undefined") {
-    clonedThankYouCard.buttonLabel = createI18nString(thankYouCard.buttonLabel ?? "", languages);
+        if (typeof ending.buttonLabel !== "undefined") {
+          clonedEndingCard.buttonLabel = createI18nString(ending.buttonLabel ?? "", languages);
+        }
+        return ZSurveyEndScreenCard.parse(clonedEndingCard);
+      }
+    });
+  } else {
+    const clonedEndingCard = structuredClone(endings) as unknown as TSurveyEndScreenCard;
+
+    if (typeof clonedEndingCard.headline !== "undefined") {
+      clonedEndingCard.headline = createI18nString(clonedEndingCard.headline ?? "", languages);
+    }
+
+    if (typeof clonedEndingCard.subheader !== "undefined") {
+      clonedEndingCard.subheader = createI18nString(clonedEndingCard.subheader ?? "", languages);
+    }
+
+    if (typeof clonedEndingCard.buttonLabel !== "undefined") {
+      clonedEndingCard.buttonLabel = createI18nString(clonedEndingCard.buttonLabel ?? "", languages);
+    }
+    return [ZSurveyEndScreenCard.parse(clonedEndingCard)];
   }
-  return ZSurveyThankYouCard.parse(clonedThankYouCard);
 };
 
 // LGEGACY
@@ -287,20 +311,20 @@ export const extractLanguageIds = (languages: TLanguage[]): string[] => {
 // LGEGACY
 // Helper function to maintain backwards compatibility for old survey objects before Multi Language
 export const translateSurvey = (
-  survey: Pick<TSurvey, "questions" | "welcomeCard" | "thankYouCard">,
+  survey: Pick<TSurvey, "questions" | "welcomeCard" | "endings">,
   languageCodes: string[]
-): Pick<TSurvey, "questions" | "welcomeCard" | "thankYouCard"> => {
+): Pick<TSurvey, "questions" | "welcomeCard" | "endings"> => {
   const translatedQuestions = survey.questions.map((question) => {
     return translateQuestion(question, languageCodes);
   });
   const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard, languageCodes);
-  const translatedThankYouCard = translateThankYouCard(survey.thankYouCard, languageCodes);
+  const translatedEndings = translateEndings(survey.endings, languageCodes);
   const translatedSurvey = structuredClone(survey);
   return {
     ...translatedSurvey,
     questions: translatedQuestions,
     welcomeCard: translatedWelcomeCard,
-    thankYouCard: translatedThankYouCard,
+    endings: translatedEndings,
   };
 };
 
