@@ -7,29 +7,13 @@ import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
-import { createShortUrl } from "@formbricks/lib/shortUrl/service";
 import { getUser, updateUser } from "@formbricks/lib/user/service";
-import { AuthenticationError, AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZProductUpdateInput } from "@formbricks/types/product";
 import { TUserNotificationSettings } from "@formbricks/types/user";
-
-export const createShortUrlAction = async (url: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthenticationError("Not authenticated");
-
-  const regexPattern = new RegExp("^" + WEBAPP_URL);
-  const isValidUrl = regexPattern.test(url);
-
-  if (!isValidUrl) throw new Error("Only Formbricks survey URLs are allowed");
-
-  const shortUrl = await createShortUrl(url);
-  const fullShortUrl = SHORT_URL_BASE + "/" + shortUrl.id;
-  return fullShortUrl;
-};
 
 export const createOrganizationAction = async (organizationName: string): Promise<Organization> => {
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();

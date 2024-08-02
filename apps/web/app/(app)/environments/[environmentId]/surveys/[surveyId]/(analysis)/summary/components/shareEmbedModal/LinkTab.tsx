@@ -1,4 +1,3 @@
-import { UrlShortenerForm } from "@/app/(app)/environments/[environmentId]/components/UrlShortenerForm";
 import Link from "next/link";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ShareSurveyLink } from "@formbricks/ui/ShareSurveyLink";
@@ -58,12 +57,6 @@ export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: LinkTabP
               <p className="text-slate-500 hover:text-slate-700">{tip.description}</p>
             </Link>
           ))}
-        </div>
-      </div>
-      <div>
-        <p className="mb-2 pt-2 font-semibold text-slate-700">Survey link got too long? Shorten it!</p>
-        <div className="rounded-md border border-slate-200 bg-white">
-          <UrlShortenerForm webAppUrl={webAppUrl} />
         </div>
       </div>
     </div>
