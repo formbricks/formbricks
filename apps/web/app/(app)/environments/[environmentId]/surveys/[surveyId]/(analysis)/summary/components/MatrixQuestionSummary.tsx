@@ -93,8 +93,8 @@ export const MatrixQuestionSummary = ({
                             questionSummary.question.id,
                             questionSummary.question.headline,
                             questionSummary.question.type,
-                            column,
-                            rowLabel
+                            rowLabel,
+                            column
                           )
                         }>
                         {percentage}

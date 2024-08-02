@@ -15,15 +15,14 @@ import {
   TSurveyMetaFieldFilter,
   TSurveyPersonAttributes,
 } from "@formbricks/types/responses";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 
 const conditionOptions = {
   openText: ["is"],
   multipleChoiceSingle: ["Includes either"],
   multipleChoiceMulti: ["Includes all", "Includes either"],
-  nps: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped"],
+  nps: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped", "Includes either"],
   rating: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped"],
   cta: ["is"],
   tags: ["is"],
