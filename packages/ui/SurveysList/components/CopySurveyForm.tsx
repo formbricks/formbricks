@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TProduct } from "@formbricks/types/product";
@@ -22,7 +21,6 @@ export const CopySurveyForm = ({
   onCancel: () => void;
   setOpen: (value: boolean) => void;
 }) => {
-  const router = useRouter();
   const form = useForm<TCopySurveyFormData>({
     resolver: zodResolver(CopySurveyFormValidation),
     defaultValues: {
@@ -44,15 +42,8 @@ export const CopySurveyForm = ({
     try {
       filteredData.map(async (product) => {
         product.environments.map(async (environment) => {
-          await copySurveyToOtherEnvironmentAction(
-            survey.environmentId,
-            survey.id,
-            environment,
-            product.product
-          );
+          await copySurveyToOtherEnvironmentAction(survey.environmentId, survey.id, environment);
         });
-
-        router.refresh();
       });
 
       toast.success("Survey copied successfully!");

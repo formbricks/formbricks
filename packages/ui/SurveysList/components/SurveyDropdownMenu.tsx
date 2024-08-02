@@ -70,8 +70,7 @@ export const SurveyDropDownMenu = ({
       const duplicatedSurvey = await copySurveyToOtherEnvironmentAction(
         environmentId,
         surveyId,
-        environmentId,
-        productId
+        environmentId
       );
       router.refresh();
       const transformedDuplicatedSurvey = await getSurveyAction(duplicatedSurvey.id);

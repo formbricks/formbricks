@@ -29,8 +29,7 @@ export const getSurveyAction = async (surveyId: string) => {
 export const copySurveyToOtherEnvironmentAction = async (
   environmentId: string,
   surveyId: string,
-  targetEnvironmentId: string,
-  targetProductId: string
+  targetEnvironmentId: string
 ) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
@@ -52,18 +51,15 @@ export const copySurveyToOtherEnvironmentAction = async (
   const isAuthorizedForSurvey = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorizedForSurvey) throw new AuthorizationError("Not authorized");
 
-  return await copySurveyToOtherEnvironment(
-    environmentId,
-    surveyId,
-    targetEnvironmentId,
-    targetProductId,
-    session.user.id
-  );
+  return await copySurveyToOtherEnvironment(environmentId, surveyId, targetEnvironmentId, session.user.id);
 };
 
 export const getProductsByEnvironmentIdAction = async (environmentId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
 

@@ -32,7 +32,7 @@ import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { productCache } from "../product/cache";
-import { getProduct, getProductByEnvironmentId } from "../product/service";
+import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
 import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
@@ -713,16 +713,9 @@ export const copySurveyToOtherEnvironment = async (
   environmentId: string,
   surveyId: string,
   targetEnvironmentId: string,
-  targetProductId: string,
   userId: string
 ) => {
-  validateInputs(
-    [environmentId, ZId],
-    [surveyId, ZId],
-    [targetEnvironmentId, ZId],
-    [targetProductId, ZId],
-    [userId, ZId]
-  );
+  validateInputs([environmentId, ZId], [surveyId, ZId], [targetEnvironmentId, ZId], [userId, ZId]);
 
   try {
     const isSameEnvironment = environmentId === targetEnvironmentId;
@@ -747,11 +740,11 @@ export const copySurveyToOtherEnvironment = async (
     } else {
       [targetEnvironment, targetProduct] = await Promise.all([
         getEnvironment(targetEnvironmentId),
-        targetProductId === existingProduct.id ? existingProduct : getProduct(targetProductId),
+        getProductByEnvironmentId(targetEnvironmentId),
       ]);
 
       if (!targetEnvironment) throw new ResourceNotFoundError("Environment", targetEnvironmentId);
-      if (!targetProduct) throw new ResourceNotFoundError("Product", targetProductId);
+      if (!targetProduct) throw new ResourceNotFoundError("Product", targetEnvironmentId);
     }
 
     let targetEnvironmentTriggers: TActionClass[] = [];
