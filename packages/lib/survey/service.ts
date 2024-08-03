@@ -18,6 +18,7 @@ import {
   ZSurveyCreateInput,
 } from "@formbricks/types/surveys/types";
 import { getActionsByPersonId } from "../action/service";
+import { actionClassCache } from "../actionClass/cache";
 import { getActionClasses } from "../actionClass/service";
 import { attributeCache } from "../attribute/cache";
 import { getAttributes } from "../attribute/service";
@@ -747,61 +748,20 @@ export const copySurveyToOtherEnvironment = async (
       if (!targetProduct) throw new ResourceNotFoundError("Product", targetEnvironmentId);
     }
 
-    let targetEnvironmentTriggers: TActionClass[] = [];
+    const { environmentId: _, createdBy, id: existingSurveyId, ...restExistingSurvey } = existingSurvey;
 
-    if (!isSameEnvironment) {
-      // Setup triggers
-      targetEnvironmentTriggers = await Promise.all(
-        existingSurvey.triggers.map(async (trigger) => {
-          const targetTrigger = await prisma.actionClass.findFirst({
-            where: {
-              ...(trigger.actionClass.type === "code"
-                ? { key: trigger.actionClass.key }
-                : { name: trigger.actionClass.name }),
-              environment: { id: targetEnvironmentId },
-            },
-          });
-
-          if (!targetTrigger) {
-            return prisma.actionClass.create({
-              data: {
-                name: trigger.actionClass.name,
-                environment: { connect: { id: targetEnvironmentId } },
-                description: trigger.actionClass.description,
-                type: trigger.actionClass.type,
-                ...(trigger.actionClass.type === "code"
-                  ? { key: trigger.actionClass.key }
-                  : {
-                      noCodeConfig: trigger.actionClass.noCodeConfig
-                        ? structuredClone(trigger.actionClass.noCodeConfig)
-                        : undefined,
-                    }),
-              },
-            });
-          }
-
-          return targetTrigger;
-        })
-      );
-    } else {
-      targetEnvironmentTriggers = existingSurvey.triggers.map((trigger) => trigger.actionClass);
-    }
-
-    const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
-
-    // Create new survey
-    const newSurvey = await prisma.survey.create({
-      data: {
-        ...existingSurvey,
-        id: undefined,
-        environmentId: undefined,
-        createdBy: undefined,
-        segmentId: undefined,
-        name: `${existingSurvey.name} (copy)`,
-        status: "draft",
-        questions: structuredClone(existingSurvey.questions),
-        endings: structuredClone(existingSurvey.endings),
-        languages: hasLanguages
+    // Prepare survey data
+    const surveyData: Prisma.SurveyCreateInput = {
+      ...restExistingSurvey,
+      name: `${existingSurvey.name} (copy)`,
+      type: existingSurvey.type,
+      status: "draft",
+      welcomeCard: structuredClone(existingSurvey.welcomeCard),
+      questions: structuredClone(existingSurvey.questions),
+      endings: structuredClone(existingSurvey.endings),
+      hiddenFields: structuredClone(existingSurvey.hiddenFields),
+      languages:
+        existingSurvey.languages && existingSurvey.languages.length > 0
           ? {
               create: existingSurvey.languages.map((surveyLanguage) => ({
                 language: {
@@ -821,59 +781,89 @@ export const copySurveyToOtherEnvironment = async (
               })),
             }
           : undefined,
-        triggers: {
-          create: targetEnvironmentTriggers.map((actionClass) => ({
-            actionClassId: actionClass.id,
-          })),
-        },
-        environment: {
-          connect: {
-            id: environmentId,
-          },
-        },
-        creator: {
-          connect: {
-            id: userId,
-          },
-        },
-        surveyClosedMessage: existingSurvey.surveyClosedMessage
-          ? structuredClone(existingSurvey.surveyClosedMessage)
-          : Prisma.JsonNull,
-        singleUse: existingSurvey.singleUse ? structuredClone(existingSurvey.singleUse) : Prisma.JsonNull,
-        productOverwrites: existingSurvey.productOverwrites
-          ? structuredClone(existingSurvey.productOverwrites)
-          : Prisma.JsonNull,
-        styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
-        // we'll update the segment later
-        segment: undefined,
-      },
-    });
+      triggers: {
+        create: existingSurvey.triggers.map((trigger): Prisma.SurveyTriggerCreateWithoutSurveyInput => {
+          const baseActionClassData = {
+            name: trigger.actionClass.name,
+            environment: { connect: { id: targetEnvironmentId } },
+            description: trigger.actionClass.description,
+            type: trigger.actionClass.type,
+          };
 
-    // Handle segment copy
+          if (isSameEnvironment) {
+            return {
+              actionClass: { connect: { id: trigger.actionClass.id } },
+            };
+          } else if (trigger.actionClass.type === "code") {
+            return {
+              actionClass: {
+                connectOrCreate: {
+                  where: {
+                    key_environmentId: { key: trigger.actionClass.key!, environmentId: targetEnvironmentId },
+                  },
+                  create: {
+                    ...baseActionClassData,
+                    key: trigger.actionClass.key,
+                  },
+                },
+              },
+            };
+          } else {
+            return {
+              actionClass: {
+                connectOrCreate: {
+                  where: {
+                    name_environmentId: {
+                      name: trigger.actionClass.name,
+                      environmentId: targetEnvironmentId,
+                    },
+                  },
+                  create: {
+                    ...baseActionClassData,
+                    noCodeConfig: trigger.actionClass.noCodeConfig
+                      ? structuredClone(trigger.actionClass.noCodeConfig)
+                      : undefined,
+                  },
+                },
+              },
+            };
+          }
+        }),
+      },
+      environment: {
+        connect: {
+          id: targetEnvironmentId,
+        },
+      },
+      creator: {
+        connect: {
+          id: userId,
+        },
+      },
+      surveyClosedMessage: existingSurvey.surveyClosedMessage
+        ? structuredClone(existingSurvey.surveyClosedMessage)
+        : Prisma.JsonNull,
+      singleUse: existingSurvey.singleUse ? structuredClone(existingSurvey.singleUse) : Prisma.JsonNull,
+      productOverwrites: existingSurvey.productOverwrites
+        ? structuredClone(existingSurvey.productOverwrites)
+        : Prisma.JsonNull,
+      styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
+      segment: undefined,
+    };
+
+    // Handle segment
     if (existingSurvey.segment) {
       if (existingSurvey.segment.isPrivate) {
-        const newInlineSegment = await createSegment({
-          environmentId: targetEnvironmentId,
-          title: `${newSurvey.id}`,
-          isPrivate: true,
-          surveyId: newSurvey.id,
-          filters: existingSurvey.segment.filters,
-        });
-
-        await prisma.survey.update({
-          where: { id: newSurvey.id },
-          data: { segment: { connect: { id: newInlineSegment.id } } },
-        });
-
-        segmentCache.revalidate({
-          id: newInlineSegment.id,
-          environmentId: newSurvey.environmentId,
-        });
+        surveyData.segment = {
+          create: {
+            title: `Copy of ${existingSurvey.segment.title}`,
+            isPrivate: true,
+            filters: existingSurvey.segment.filters,
+            environment: { connect: { id: targetEnvironmentId } },
+          },
+        };
       } else if (isSameEnvironment) {
-        await prisma.survey.update({
-          where: { id: newSurvey.id },
-          data: { segment: { connect: { id: existingSurvey.segment.id } } },
-        });
+        surveyData.segment = { connect: { id: existingSurvey.segment.id } };
       } else {
         const existingSegmentInTargetEnvironment = await prisma.segment.findFirst({
           where: {
@@ -883,36 +873,25 @@ export const copySurveyToOtherEnvironment = async (
           },
         });
 
-        await prisma.segment.create({
-          data: {
+        surveyData.segment = {
+          create: {
             title: existingSegmentInTargetEnvironment
               ? `${existingSurvey.segment.title}-${Date.now()}`
               : existingSurvey.segment.title,
-            environmentId: targetEnvironmentId,
             isPrivate: false,
             filters: existingSurvey.segment.filters,
-            surveys: { connect: { id: newSurvey.id } },
+            environment: { connect: { id: targetEnvironmentId } },
           },
-        });
+        };
       }
-
-      segmentCache.revalidate({
-        id: existingSurvey.segment.id,
-        environmentId: newSurvey.environmentId,
-      });
     }
 
-    await prisma.environment.update({
-      where: { id: targetEnvironmentId },
-      data: {
-        productId: targetProduct.id,
-        surveys: { connect: { id: newSurvey.id } },
-      },
-    });
+    // Execute the survey creation in a transaction
+    const newSurvey = await prisma.survey.create({ data: surveyData, select: selectSurvey });
 
     // Invalidate caches
     productCache.revalidate({ id: targetProduct.id });
-
+    actionClassCache.revalidate({ environmentId: targetEnvironmentId });
     surveyCache.revalidate({
       id: newSurvey.id,
       environmentId: newSurvey.environmentId,
@@ -925,13 +904,19 @@ export const copySurveyToOtherEnvironment = async (
       });
     });
 
+    if (newSurvey.segment) {
+      segmentCache.revalidate({
+        id: newSurvey.segment.id,
+        environmentId: newSurvey.environmentId,
+      });
+    }
+
     return newSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       console.error(error);
       throw new DatabaseError(error.message);
     }
-
     throw error;
   }
 };
