@@ -138,7 +138,7 @@ export const SingleResponseCardBody = ({
         />
       )}
       <div className="space-y-6">
-        {survey.verifyEmail && response.data["verifiedEmail"] && (
+        {survey.isVerifyEmailEnabled && response.data["verifiedEmail"] && (
           <VerifiedEmail responseData={response.data} />
         )}
         {survey.questions.map((question) => {

@@ -1,8 +1,9 @@
+/* eslint-disable no-console -- logging is allowed in migration scripts */
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function main() {
+async function runMigration(): Promise<void> {
   await prisma.$transaction(
     async (tx) => {
       console.log("starting migration");
@@ -24,7 +25,7 @@ async function main() {
         },
       });
 
-      console.log(`Deleted ${segmentsWithNoSurveys.length} segments with no surveys`);
+      console.log(`Deleted ${segmentsWithNoSurveys.length.toString()} segments with no surveys`);
 
       const appSurveysWithoutSegment = await tx.survey.findMany({
         where: {
@@ -33,34 +34,42 @@ async function main() {
         },
       });
 
-      console.log(`Found ${appSurveysWithoutSegment.length} app surveys without a segment`);
+      console.log(`Found ${appSurveysWithoutSegment.length.toString()} app surveys without a segment`);
 
-      const segmentPromises = [];
-
-      for (const appSurvey of appSurveysWithoutSegment) {
-        // create a new private segment for each app survey
-
-        segmentPromises.push(
-          tx.segment.create({
-            data: {
-              title: appSurvey.id,
-              isPrivate: true,
-              environment: { connect: { id: appSurvey.environmentId } },
-              surveys: { connect: { id: appSurvey.id } },
-            },
-          })
-        );
-      }
+      const segmentPromises = appSurveysWithoutSegment.map((appSurvey) =>
+        tx.segment.create({
+          data: {
+            title: appSurvey.id,
+            isPrivate: true,
+            environment: { connect: { id: appSurvey.environmentId } },
+            surveys: { connect: { id: appSurvey.id } },
+          },
+        })
+      );
 
       await Promise.all(segmentPromises);
+      console.log("Migration completed");
     },
     { timeout: 50000 }
   );
 }
 
-main()
-  .catch(async (e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => await prisma.$disconnect());
+function handleError(error: unknown): void {
+  console.error("An error occurred during migration:", error);
+  process.exit(1);
+}
+
+function handleDisconnectError(): void {
+  console.error("Failed to disconnect Prisma client");
+  process.exit(1);
+}
+
+function main(): void {
+  runMigration()
+    .catch(handleError)
+    .finally(() => {
+      prisma.$disconnect().catch(handleDisconnectError);
+    });
+}
+
+main();

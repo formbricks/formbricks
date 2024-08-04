@@ -181,7 +181,7 @@ export const copyToOtherEnvironmentAction = authenticatedActionClient
         name: `${existingSurvey.name} (copy)`,
         status: "draft",
         questions: structuredClone(existingSurvey.questions),
-        thankYouCard: structuredClone(existingSurvey.thankYouCard),
+        endings: structuredClone(existingSurvey.endings),
         languages: {
           create: existingSurvey.languages?.map((surveyLanguage) => ({
             languageId: surveyLanguage.language.id,
@@ -210,10 +210,10 @@ export const copyToOtherEnvironmentAction = authenticatedActionClient
             id: ctx.user.id,
           },
         },
+        isVerifyEmailEnabled: existingSurvey.isVerifyEmailEnabled,
         surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,
         singleUse: existingSurvey.singleUse ?? prismaClient.JsonNull,
         productOverwrites: existingSurvey.productOverwrites ?? prismaClient.JsonNull,
-        verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
         styling: existingSurvey.styling ?? prismaClient.JsonNull,
         segment: undefined,
       },

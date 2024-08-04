@@ -29,7 +29,7 @@ export const PictureChoiceSummary = ({
   attributeClasses,
   setFilter,
 }: PictureChoiceSummaryProps) => {
-  const results = questionSummary.choices.sort((a, b) => b.count - a.count);
+  const results = questionSummary.choices;
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
