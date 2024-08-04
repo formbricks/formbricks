@@ -378,6 +378,15 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
             },
           });
           break;
+        case "matrix":
+          const rowLabel = Object.keys(val.value)[0];
+          data.push({
+            data: {
+              path: [key, rowLabel],
+              equals: val.value[rowLabel],
+            },
+          });
+          break;
       }
     });
 

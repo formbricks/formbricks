@@ -58,7 +58,7 @@ export const SummaryList = ({
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => {
-    const filterObject: SelectedFilterValue = selectedFilter;
+    const filterObject: SelectedFilterValue = { ...selectedFilter };
     const value = {
       id: questionId,
       label: getLocalizedValue(label, "default"),
@@ -66,34 +66,41 @@ export const SummaryList = ({
       type: OptionsType.QUESTIONS,
     };
 
-    // Check for duplicate filters
-    const isDuplicate = filterObject.filter.some(
-      (filter) =>
-        filter.questionType.id === questionId &&
-        filter.filterType.filterComboBoxValue?.toString() === filterComboBoxValue?.toString() &&
-        filter.filterType.filterValue === filterValue
+    // Find the index of the existing filter with the same questionId
+    const existingFilterIndex = filterObject.filter.findIndex(
+      (filter) => filter.questionType.id === questionId
     );
 
-    if (isDuplicate) {
-      toast.error("Filter already exist");
-      return;
+    if (existingFilterIndex !== -1) {
+      // Replace the existing filter
+      filterObject.filter[existingFilterIndex] = {
+        questionType: value,
+        filterType: {
+          filterComboBoxValue: filterComboBoxValue,
+          filterValue: filterValue,
+        },
+      };
+      toast.success("Filter updated successfully", { duration: 5000 });
+    } else {
+      // Add new filter
+      filterObject.filter.push({
+        questionType: value,
+        filterType: {
+          filterComboBoxValue: filterComboBoxValue,
+          filterValue: filterValue,
+        },
+      });
+      toast.success(
+        constructToastMessage(questionType, filterValue, survey, questionId, filterComboBoxValue) ??
+          "Filter added successfully",
+        { duration: 5000 }
+      );
     }
-    filterObject.filter.push({
-      questionType: value,
-      filterType: {
-        filterComboBoxValue: filterComboBoxValue,
-        filterValue: filterValue,
-      },
-    });
+
     setSelectedFilter({
       filter: [...filterObject.filter],
       onlyComplete: filterObject.onlyComplete,
     });
-    toast.success(
-      constructToastMessage(questionType, filterValue, survey, questionId, filterComboBoxValue) ??
-        "Filter added successfully",
-      { duration: 5000 }
-    );
   };
 
   return (
