@@ -59,7 +59,7 @@ const ZResponseFilterCriteriaDataGreaterThan = z.object({
 
 const ZResponseFilterCriteriaDataIncludesOne = z.object({
   op: z.literal(ZSurveyLogicCondition.Values.includesOne),
-  value: z.array(z.string()),
+  value: z.union([z.array(z.string()), z.array(z.number())]),
 });
 
 const ZResponseFilterCriteriaDataIncludesAll = z.object({

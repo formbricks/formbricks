@@ -1,3 +1,9 @@
+"use client";
+
+import {
+  SelectedFilterValue,
+  useResponseFilter,
+} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { EmptyAppSurveys } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import { CTASummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CTASummary";
 import { CalSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CalSummary";
@@ -11,9 +17,13 @@ import { NPSSummary } from "@/app/(app)/environments/[environmentId]/surveys/[su
 import { OpenTextSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/OpenTextSummary";
 import { PictureChoiceSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary";
 import { RatingSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/RatingSummary";
+import { constructToastMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
+import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
+import { toast } from "react-hot-toast";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurveySummary } from "@formbricks/types/surveys/types";
+import { TI18nString, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
@@ -25,7 +35,6 @@ interface SummaryListProps {
   responseCount: number | null;
   environment: TEnvironment;
   survey: TSurvey;
-  fetchingSummary: boolean;
   totalResponseCount: number;
   attributeClasses: TAttributeClass[];
 }
@@ -35,12 +44,64 @@ export const SummaryList = ({
   environment,
   responseCount,
   survey,
-  fetchingSummary,
   totalResponseCount,
   attributeClasses,
 }: SummaryListProps) => {
+  const { setSelectedFilter, selectedFilter } = useResponseFilter();
   const widgetSetupCompleted =
     survey.type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
+
+  const setFilter = (
+    questionId: string,
+    label: TI18nString,
+    questionType: TSurveyQuestionTypeEnum,
+    filterValue: string,
+    filterComboBoxValue?: string | string[]
+  ) => {
+    const filterObject: SelectedFilterValue = { ...selectedFilter };
+    const value = {
+      id: questionId,
+      label: getLocalizedValue(label, "default"),
+      questionType: questionType,
+      type: OptionsType.QUESTIONS,
+    };
+
+    // Find the index of the existing filter with the same questionId
+    const existingFilterIndex = filterObject.filter.findIndex(
+      (filter) => filter.questionType.id === questionId
+    );
+
+    if (existingFilterIndex !== -1) {
+      // Replace the existing filter
+      filterObject.filter[existingFilterIndex] = {
+        questionType: value,
+        filterType: {
+          filterComboBoxValue: filterComboBoxValue,
+          filterValue: filterValue,
+        },
+      };
+      toast.success("Filter updated successfully", { duration: 5000 });
+    } else {
+      // Add new filter
+      filterObject.filter.push({
+        questionType: value,
+        filterType: {
+          filterComboBoxValue: filterComboBoxValue,
+          filterValue: filterValue,
+        },
+      });
+      toast.success(
+        constructToastMessage(questionType, filterValue, survey, questionId, filterComboBoxValue) ??
+          "Filter added successfully",
+        { duration: 5000 }
+      );
+    }
+
+    setSelectedFilter({
+      filter: [...filterObject.filter],
+      onlyComplete: filterObject.onlyComplete,
+    });
+  };
 
   return (
     <div className="mt-10 space-y-8">
@@ -48,7 +109,7 @@ export const SummaryList = ({
       responseCount === 0 &&
       !widgetSetupCompleted ? (
         <EmptyAppSurveys environment={environment} surveyType={survey.type} />
-      ) : fetchingSummary ? (
+      ) : summary.length === 0 ? (
         <SkeletonLoader type="summary" />
       ) : responseCount === 0 ? (
         <EmptySpaceFiller
@@ -83,6 +144,7 @@ export const SummaryList = ({
                 surveyType={survey.type}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                setFilter={setFilter}
               />
             );
           }
@@ -93,6 +155,7 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                setFilter={setFilter}
               />
             );
           }
@@ -113,6 +176,7 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                setFilter={setFilter}
               />
             );
           }
@@ -123,6 +187,7 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                setFilter={setFilter}
               />
             );
           }
@@ -133,6 +198,7 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                setFilter={setFilter}
               />
             );
           }
@@ -176,6 +242,7 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                setFilter={setFilter}
               />
             );
           }
