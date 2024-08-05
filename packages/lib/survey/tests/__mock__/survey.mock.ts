@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import {
@@ -85,6 +86,16 @@ export const mockDisplay = {
   personId: null,
   responseId: null,
   status: null,
+};
+
+export const mockEnvironment: TEnvironment = {
+  id: mockId,
+  createdAt: currentDate,
+  updatedAt: currentDate,
+  type: "production",
+  productId: mockId,
+  appSetupCompleted: false,
+  websiteSetupCompleted: false,
 };
 
 export const mockUser: TUser = {
