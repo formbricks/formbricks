@@ -663,11 +663,10 @@ enum EmbeddingType {
 }
 
 model Embedding {
-  id          String                      @id @default(cuid())
+  referenceId String                      @id
   createdAt   DateTime                    @default(now()) @map(name: "created_at")
   updatedAt   DateTime                    @updatedAt @map(name: "updated_at")
   type        EmbeddingType
-  referenceId String                      @unique
   vector      Unsupported("vector(512)")?
 
   @@index([type, referenceId])

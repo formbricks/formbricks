@@ -1319,22 +1319,3 @@ export const getResponseHiddenFields = (
     throw error;
   }
 };
-
-export const getResponseAsDocumentString = (response: TResponse, survey: TSurvey): string => {
-  // generate text representation of response
-  let text = "";
-  let first = true;
-  survey.questions.forEach((question) => {
-    if (first) {
-      first = false;
-    } else {
-      text += "\n\n";
-    }
-    const answer = response.data[question.id];
-    if (answer) {
-      text += `${getLocalizedValue(question.headline, response.language || "default")}\nAnswer: ${answer}`;
-    }
-  });
-
-  return text;
-};
