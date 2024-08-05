@@ -106,7 +106,7 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
               Download CSV template
             </Button>
           </Link>
-          <Button onClick={onImport} size="sm" variant="darkCTA" disabled={!csvFile}>
+          <Button onClick={onImport} size="sm" disabled={!csvFile}>
             Import
           </Button>
         </div>

@@ -170,10 +170,7 @@ const Page = async ({ params }) => {
                 No call needed, no strings attached: Request a free 30-day trial license to test all features
                 by filling out this form:
               </p>
-              <Button
-                variant="darkCTA"
-                href="https://app.formbricks.com/s/clvupq3y205i5yrm3sm9v1xt5"
-                target="_blank">
+              <Button href="https://app.formbricks.com/s/clvupq3y205i5yrm3sm9v1xt5" target="_blank">
                 Request 30-day Trial License
               </Button>
               <p className="mt-2 text-xs text-slate-500">No credit card. No sales call. Just test it :)</p>

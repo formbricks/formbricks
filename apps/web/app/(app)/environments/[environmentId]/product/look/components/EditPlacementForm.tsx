@@ -182,7 +182,7 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
           </>
         )}
 
-        <Button variant="darkCTA" className="mt-4 w-fit" size="sm" loading={isSubmitting}>
+        <Button className="mt-4 w-fit" size="sm" loading={isSubmitting}>
           Save
         </Button>
       </form>

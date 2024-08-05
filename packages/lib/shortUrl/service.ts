@@ -1,5 +1,6 @@
+// DEPRECATED
+// The ShortUrl feature is deprecated and only available for backward compatibility.
 import { Prisma } from "@prisma/client";
-import { customAlphabet } from "nanoid";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
@@ -8,43 +9,6 @@ import { TShortUrl, ZShortUrlId } from "@formbricks/types/short-url";
 import { cache } from "../cache";
 import { validateInputs } from "../utils/validate";
 import { shortUrlCache } from "./cache";
-
-// Create the short url and return it
-export const createShortUrl = async (url: string): Promise<TShortUrl> => {
-  validateInputs([url, z.string().url()]);
-
-  try {
-    // Check if an entry with the provided fullUrl already exists.
-    const existingShortUrl = await getShortUrlByUrl(url);
-
-    if (existingShortUrl) {
-      return existingShortUrl;
-    }
-
-    // If an entry with the provided fullUrl does not exist, create a new one.
-    const id = customAlphabet("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 10)();
-
-    const shortUrl = await prisma.shortUrl.create({
-      data: {
-        id,
-        url,
-      },
-    });
-
-    shortUrlCache.revalidate({
-      id: shortUrl.id,
-      url: shortUrl.url,
-    });
-
-    return shortUrl;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
 
 // Get the full url from short url and return it
 export const getShortUrl = reactCache(

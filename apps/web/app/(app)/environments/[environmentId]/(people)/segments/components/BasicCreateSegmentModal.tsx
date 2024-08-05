@@ -117,7 +117,7 @@ export const BasicCreateSegmentModal = ({
 
   return (
     <>
-      <Button variant="darkCTA" size="sm" onClick={() => setOpen(true)} EndIcon={PlusIcon}>
+      <Button size="sm" onClick={() => setOpen(true)} EndIcon={PlusIcon}>
         Create segment
       </Button>
 
@@ -239,7 +239,6 @@ export const BasicCreateSegmentModal = ({
                   Cancel
                 </Button>
                 <Button
-                  variant="darkCTA"
                   type="submit"
                   loading={isCreatingSegment}
                   disabled={isSaveDisabled}

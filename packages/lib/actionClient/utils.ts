@@ -27,11 +27,11 @@ export const getRoleBasedSchema = <T extends z.ZodRawShape>(
   return typeof data === "boolean" && data === true ? schema.strict() : data;
 };
 
-export const formatErrors = (errors: ZodIssue[]) => {
+export const formatErrors = (issues: ZodIssue[]): Record<string, { _errors: string[] }> => {
   return {
-    ...errors.reduce((acc, error) => {
-      acc[error.path.join(".")] = {
-        _errors: [error.message],
+    ...issues.reduce((acc, issue) => {
+      acc[issue.path.join(".")] = {
+        _errors: [issue.message],
       };
       return acc;
     }, {}),
@@ -56,6 +56,7 @@ export const checkAuthorization = async <T extends z.ZodRawShape>({
     const resultSchema = getRoleBasedSchema(schema, role, ...rules);
     const parsedResult = resultSchema.safeParse(data);
     if (!parsedResult.success) {
+      // @ts-expect-error -- TODO: match dynamic next-safe-action types
       return returnValidationErrors(resultSchema, formatErrors(parsedResult.error.issues));
     }
   } else {

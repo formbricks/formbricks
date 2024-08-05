@@ -9,7 +9,13 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import { TLegacySurvey } from "@formbricks/types/legacy-surveys";
 import { TPerson } from "@formbricks/types/people";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey, TSurveyFilterCriteria, TSurveyInput, ZSurvey } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyCreateInput,
+  TSurveyFilterCriteria,
+  ZSurvey,
+  ZSurveyCreateInput,
+} from "@formbricks/types/surveys/types";
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
 import { attributeCache } from "../attribute/cache";
@@ -54,7 +60,7 @@ export const selectSurvey = {
   status: true,
   welcomeCard: true,
   questions: true,
-  thankYouCard: true,
+  endings: true,
   hiddenFields: true,
   displayOption: true,
   recontactDays: true,
@@ -65,7 +71,7 @@ export const selectSurvey = {
   delay: true,
   displayPercentage: true,
   autoComplete: true,
-  verifyEmail: true,
+  isVerifyEmailEnabled: true,
   redirectUrl: true,
   productOverwrites: true,
   styling: true,
@@ -360,7 +366,6 @@ export const getSurveyCount = reactCache(
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   validateInputs([updatedSurvey, ZSurvey]);
-
   try {
     const surveyId = updatedSurvey.id;
     let data: any = {};
@@ -489,6 +494,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       data.status = "scheduled";
     }
 
+    delete data.createdBy;
     const prismaSurvey = await prisma.survey.update({
       where: { id: surveyId },
       data,
@@ -590,27 +596,34 @@ export const deleteSurvey = async (surveyId: string) => {
   }
 };
 
-export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
-  validateInputs([environmentId, ZId]);
+export const createSurvey = async (
+  environmentId: string,
+  surveyBody: TSurveyCreateInput
+): Promise<TSurvey> => {
+  const [parsedEnvironmentId, parsedSurveyBody] = validateInputs(
+    [environmentId, ZId],
+    [surveyBody, ZSurveyCreateInput]
+  );
 
   try {
-    const createdBy = surveyBody.createdBy;
-    delete surveyBody.createdBy;
+    const { createdBy, ...restSurveyBody } = parsedSurveyBody;
 
-    const actionClasses = await getActionClasses(environmentId);
+    // empty languages array
+    if (!restSurveyBody.languages?.length) {
+      delete restSurveyBody.languages;
+    }
+
+    const actionClasses = await getActionClasses(parsedEnvironmentId);
+
+    // @ts-expect-error
     const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
-      ...surveyBody,
+      ...restSurveyBody,
       // TODO: Create with attributeFilters
-      triggers: surveyBody.triggers
-        ? handleTriggerUpdates(surveyBody.triggers, [], actionClasses)
+      triggers: restSurveyBody.triggers
+        ? handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
         : undefined,
       attributeFilters: undefined,
     };
-
-    if ((surveyBody.type === "website" || surveyBody.type === "app") && data.thankYouCard) {
-      data.thankYouCard.buttonLabel = undefined;
-      data.thankYouCard.buttonLink = undefined;
-    }
 
     if (createdBy) {
       data.creator = {
@@ -625,7 +638,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
         ...data,
         environment: {
           connect: {
-            id: environmentId,
+            id: parsedEnvironmentId,
           },
         },
       },
@@ -635,7 +648,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     // if the survey created is an "app" survey, we also create a private segment for it.
     if (survey.type === "app") {
       const newSegment = await createSegment({
-        environmentId,
+        environmentId: parsedEnvironmentId,
         surveyId: survey.id,
         filters: [],
         title: survey.id,
@@ -689,7 +702,6 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
       console.error(error);
       throw new DatabaseError(error.message);
     }
-
     throw error;
   }
 };
@@ -718,7 +730,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
         name: `${existingSurvey.name} (copy)`,
         status: "draft",
         questions: structuredClone(existingSurvey.questions),
-        thankYouCard: structuredClone(existingSurvey.thankYouCard),
+        endings: structuredClone(existingSurvey.endings),
         languages: {
           create: existingSurvey.languages?.map((surveyLanguage) => ({
             languageId: surveyLanguage.language.id,
@@ -748,9 +760,6 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
           ? structuredClone(existingSurvey.productOverwrites)
           : Prisma.JsonNull,
         styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
-        verifyEmail: existingSurvey.verifyEmail
-          ? structuredClone(existingSurvey.verifyEmail)
-          : Prisma.JsonNull,
         // we'll update the segment later
         segment: undefined,
       },
@@ -1068,8 +1077,10 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       throw new ResourceNotFoundError("survey", surveyId);
     }
 
-    const currentSegment = await getSegment(newSegmentId);
-    if (!currentSegment) {
+    const currentSurveySegment = currentSurvey.segment;
+
+    const newSegment = await getSegment(newSegmentId);
+    if (!newSegment) {
       throw new ResourceNotFoundError("segment", newSegmentId);
     }
 
@@ -1086,6 +1097,14 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
         },
       },
     });
+
+    if (
+      currentSurveySegment &&
+      currentSurveySegment.isPrivate &&
+      currentSurveySegment.title === currentSurvey.id
+    ) {
+      await deleteSegment(currentSurveySegment.id);
+    }
 
     segmentCache.revalidate({ id: newSegmentId });
     surveyCache.revalidate({ id: surveyId });
