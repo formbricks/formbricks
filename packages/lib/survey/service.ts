@@ -896,41 +896,32 @@ export const copySurveyToOtherEnvironment = async (
     }
 
     const targetProductLanguageCodes = targetProduct.languages.map((language) => language.code);
-    const targetActionClasses = await prisma.actionClass.findMany({
-      where: { environmentId: targetEnvironmentId },
+    const newSurvey = await prisma.survey.create({
+      data: surveyData,
+      select: selectSurvey,
     });
 
-    const newSurvey = await prisma.survey.create({ data: surveyData, select: selectSurvey });
+    // Identify newly created action classes
+    const newActionClasses = newSurvey.triggers.map((trigger) => trigger.actionClass);
+
+    // Revalidate cache only for newly created action classes
+    for (const actionClass of newActionClasses) {
+      actionClassCache.revalidate({
+        environmentId: actionClass.environmentId,
+        name: actionClass.name,
+        id: actionClass.id,
+      });
+    }
 
     let newLanguageCreated = false;
     if (existingSurvey.languages && existingSurvey.languages.length > 0) {
-      const targetProductLanguages = await prisma.language.findMany({
-        where: { productId: targetProduct.id },
-        select: { code: true },
-      });
-
-      const targetLanguageCodes = targetProductLanguages.map((lang) => lang.code);
+      const targetLanguageCodes = newSurvey.languages.map((lang) => lang.language.code);
       newLanguageCreated = targetLanguageCodes.length > targetProductLanguageCodes.length;
     }
 
     // Invalidate caches
     if (newLanguageCreated) {
-      productCache.revalidate({ id: targetProduct.id });
-    }
-
-    const targetActionClassesAfterCopy = await prisma.actionClass.findMany({
-      where: { environmentId: targetEnvironmentId },
-    });
-
-    // only revalidate the action class cache if a new action class is created
-    if (targetActionClassesAfterCopy.length > targetActionClasses.length) {
-      for (const actionClass of targetActionClassesAfterCopy) {
-        actionClassCache.revalidate({
-          environmentId: targetEnvironmentId,
-          name: actionClass.name,
-          id: actionClass.id,
-        });
-      }
+      productCache.revalidate({ id: targetProduct.id, environmentId: targetEnvironmentId });
     }
 
     surveyCache.revalidate({
