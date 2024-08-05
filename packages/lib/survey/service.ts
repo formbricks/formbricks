@@ -1,5 +1,6 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { capturePosthogEnvironmentEvent } from "posthogServer";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/action-classes";
@@ -695,6 +696,11 @@ export const createSurvey = async (
     if (createdBy) {
       await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy);
     }
+
+    await capturePosthogEnvironmentEvent(survey.environmentId, "survey created", {
+      surveyId: survey.id,
+      surveyType: survey.type,
+    });
 
     return transformedSurvey;
   } catch (error) {
