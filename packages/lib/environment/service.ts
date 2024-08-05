@@ -16,7 +16,10 @@ import {
 } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { cache } from "../cache";
+import { membershipCache } from "../membership/cache";
+import { organizationCache } from "../organization/cache";
 import { getOrganizationsByUserId } from "../organization/service";
+import { productCache } from "../product/cache";
 import { getProducts } from "../product/service";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
@@ -154,6 +157,63 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
     throw error;
   }
 };
+
+export const getProductionEnvironmentIdsByUserId = async (userId: string): Promise<string[]> =>
+  cache(
+    async () => {
+      validateInputs([userId, z.string()]);
+
+      try {
+        const memberships = await prisma.membership.findMany({
+          where: {
+            userId,
+          },
+          select: {
+            organization: {
+              select: {
+                products: {
+                  select: {
+                    environments: {
+                      where: {
+                        type: "production",
+                      },
+                      select: {
+                        id: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        // Extract environment IDs from the fetched memberships
+        const environmentIds = memberships.flatMap((membership) =>
+          membership.organization.products.flatMap((product) =>
+            product.environments.map((environment) => environment.id)
+          )
+        );
+
+        return environmentIds;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          console.error(error);
+          throw new DatabaseError(error.message);
+        }
+
+        throw new Error("Error while fetching environment IDs");
+      }
+    },
+    [`getProductionEnvironmentIdsByUserId-${userId}`],
+    {
+      tags: [
+        membershipCache.tag.byUserId(userId),
+        productCache.tag.byUserId(userId),
+        organizationCache.tag.byUserId(userId),
+      ],
+    }
+  )();
 
 export const createEnvironment = async (
   productId: string,
