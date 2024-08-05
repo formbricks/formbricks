@@ -1,10 +1,13 @@
 "use server";
 
 import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
+import { get } from "lodash";
 import { customAlphabet } from "nanoid";
 import { getServerSession } from "next-auth";
 import { sendEmbedSurveyPreviewEmail } from "@formbricks/email";
 import { authOptions } from "@formbricks/lib/authOptions";
+import { getEmbeddingsByTypeAndReferenceId } from "@formbricks/lib/embedding/service";
+import { getQuestionResponseReferenceId } from "@formbricks/lib/embedding/utils";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
@@ -104,4 +107,21 @@ export const getEmailHtmlAction = async (surveyId: string) => {
   if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
 
   return await getEmailTemplateHtml(surveyId);
+};
+
+export const getOpenTextSummaryAction = async (surveyId: string, questionId: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
+  if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
+
+  const embeddings = await getEmbeddingsByTypeAndReferenceId(
+    "questionResponse",
+    getQuestionResponseReferenceId(surveyId, questionId)
+  );
+
+  console.log(embeddings);
+
+  return;
 };

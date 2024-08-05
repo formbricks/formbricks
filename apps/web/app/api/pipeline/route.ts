@@ -6,12 +6,12 @@ import { prisma } from "@formbricks/database";
 import { sendResponseFinishedEmail } from "@formbricks/email";
 import { embeddingsModel } from "@formbricks/lib/ai";
 import { INTERNAL_SECRET, IS_AI_ENABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { createEmbedding } from "@formbricks/lib/embedding/service";
+import { getQuestionResponseReferenceId } from "@formbricks/lib/embedding/utils";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { updateResponseEmbedding } from "@formbricks/lib/response/embedding";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { getResponseAsDocumentString } from "@formbricks/lib/response/utils";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { ZPipelineInput } from "@formbricks/types/pipelines";
@@ -165,20 +165,34 @@ export const POST = async (request: Request) => {
 
     // generate embeddings for all open text question responses for enterprise and scale plans
     const hasSurveyOpenTextQuestions = survey.questions.some((question) => question.type === "openText");
+    console.log("hasSurveyOpenTextQuestions", hasSurveyOpenTextQuestions);
+    console.log("is Cloud", hasSurveyOpenTextQuestions && IS_FORMBRICKS_CLOUD && IS_AI_ENABLED);
     if (hasSurveyOpenTextQuestions && IS_FORMBRICKS_CLOUD && IS_AI_ENABLED) {
       const organization = await getOrganizationByEnvironmentId(environmentId);
       if (!organization) {
         throw new Error("Organization not found");
       }
+      console.log(
+        "valid billing plan",
+        organization.billing.plan === "enterprise" || organization.billing.plan === "scale"
+      );
       if (organization.billing.plan === "enterprise" || organization.billing.plan === "scale") {
         for (const question of survey.questions) {
           if (question.type === "openText") {
-            const isQuestionAnswered = response[question.id] !== undefined;
+            const isQuestionAnswered = response.data[question.id] !== undefined;
+            console.log("isQuestionAnswered", isQuestionAnswered);
             if (!isQuestionAnswered) {
               continue;
             }
-            const responseEmbedding = await embeddingsModel.embed(response[question.id]);
-            await updateResponseEmbedding(response.id, question.id, responseEmbedding);
+            const { embedding } = await embed({
+              model: embeddingsModel,
+              value: `${question.headline.default} Answer: ${response.data[question.id]}`,
+            });
+            await createEmbedding({
+              referenceId: getQuestionResponseReferenceId(survey.id, question.id),
+              type: "questionResponse",
+              vector: embedding,
+            });
           }
         }
       }

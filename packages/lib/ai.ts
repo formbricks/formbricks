@@ -8,5 +8,5 @@ const azure = createAzure({
 
 export const llmModel = azure(env.AI_AZURE_LLM_DEPLOYMENT_ID || "llm");
 export const embeddingsModel = azure.embedding(env.AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID || "embeddings", {
-  dimensions: 1024,
+  dimensions: 512,
 });

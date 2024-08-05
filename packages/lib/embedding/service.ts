@@ -1,29 +1,45 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { TEmbedding, TEmbeddingCreateInput, ZEmbeddingCreateInput } from "@formbricks/types/embedding";
-import { ZId } from "@formbricks/types/environment";
+import { ZString } from "@formbricks/types/common";
+import {
+  TEmbedding,
+  TEmbeddingCreateInput,
+  ZEmbeddingCreateInput,
+  ZEmbeddingType,
+} from "@formbricks/types/embedding";
 import { DatabaseError } from "@formbricks/types/errors";
+import { cache } from "../cache";
 import { validateInputs } from "../utils/validate";
 import { embeddingCache } from "./cache";
 
-export const createEmbedding = async (
-  productId: string,
-  embeddingInput: TEmbeddingCreateInput
-): Promise<TEmbedding> => {
-  validateInputs([productId, ZId], [embeddingInput, ZEmbeddingCreateInput]);
+export type TPrismaEmbedding = Omit<TEmbedding, "vector"> & {
+  vector: string;
+};
+
+export const createEmbedding = async (embeddingInput: TEmbeddingCreateInput): Promise<TEmbedding> => {
+  validateInputs([embeddingInput, ZEmbeddingCreateInput]);
 
   try {
-    const vectorString = embeddingInput.vector.join(",");
+    const { vector, ...data } = embeddingInput;
 
-    const result = await prisma.$executeRaw`
-      INSERT INTO Embedding (referenceId, created_at, updated_at, type, vector)
-      VALUES (${embeddingInput.referenceId}, NOW(), NOW(), ${embeddingInput.type}, '${vectorString}')
+    const prismaEmbedding = await prisma.embedding.create({
+      data,
+    });
+
+    const embedding = {
+      ...prismaEmbedding,
+      vector,
+    };
+
+    // update vector
+    const vectorString = `[${vector.join(",")}]`;
+    await prisma.$executeRaw`
+      UPDATE "Embedding"
+      SET "vector" = ${vectorString}::vector(512)
+      WHERE "id" = ${embedding.id};
     `;
-
-    const embedding: TEmbedding = await prisma.$queryRaw`
-SELECT * FROM Embedding WHERE referenceId = ${embeddingInput.referenceId}
-`;
 
     embeddingCache.revalidate({
       referenceId: embedding.referenceId,
@@ -37,3 +53,51 @@ SELECT * FROM Embedding WHERE referenceId = ${embeddingInput.referenceId}
     throw error;
   }
 };
+
+export const getEmbeddingsByTypeAndReferenceId = reactCache(
+  (type: string, referenceId: string): Promise<TEmbedding[]> =>
+    cache(
+      async () => {
+        validateInputs([type, ZEmbeddingType], [referenceId, ZString]);
+
+        try {
+          const prismaEmbeddings: TPrismaEmbedding[] = await prisma.$queryRaw`
+            SELECT
+              id,
+              created_at AS "createdAt",
+              updated_at AS "updatedAt",
+              type,
+              "referenceId",
+              vector::text
+            FROM "Embedding" e
+            WHERE e."type" = ${type}::"EmbeddingType"
+              AND e."referenceId" = ${referenceId}
+          `;
+
+          const embeddings = prismaEmbeddings.map((prismaEmbedding) => {
+            // Convert the string representation of the embedding back to an array of numbers
+            const vector = prismaEmbedding.vector
+              .slice(1, -1) // Remove the surrounding square brackets
+              .split(",") // Split the string into an array of strings
+              .map(Number); // Convert each string to a number
+            return {
+              ...prismaEmbedding,
+              vector,
+            };
+          });
+
+          return embeddings;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+          throw error;
+        }
+      },
+      [`getEmbeddingsByTypeAndReferenceId-${type}-${referenceId}`],
+      {
+        tags: [embeddingCache.tag.byTypeAndReferenceId(type, referenceId)],
+      }
+    )()
+);

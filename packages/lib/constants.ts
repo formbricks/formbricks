@@ -210,5 +210,8 @@ export const BILLING_LIMITS = {
   },
 } as const;
 
-export const IS_AI_ENABLED =
-  env.AI_AZURE_RESSOURCE_NAME && env.AI_AZURE_API_KEY && env.AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID;
+export const IS_AI_ENABLED = !!(
+  env.AI_AZURE_RESSOURCE_NAME &&
+  env.AI_AZURE_API_KEY &&
+  env.AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID
+);

@@ -17,7 +17,4 @@ CREATE TABLE "Embedding" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Embedding_referenceId_key" ON "Embedding"("referenceId");
-
--- CreateIndex
 CREATE INDEX "Embedding_type_referenceId_idx" ON "Embedding"("type", "referenceId");

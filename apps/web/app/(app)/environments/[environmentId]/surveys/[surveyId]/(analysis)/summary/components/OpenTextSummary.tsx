@@ -1,3 +1,4 @@
+import { getOpenTextSummaryAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
 import Link from "next/link";
 import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
@@ -30,6 +31,11 @@ export const OpenTextSummary = ({
     );
   };
 
+  const getOpenTextSummary = async () => {
+    // This function is not implemented yet
+    await getOpenTextSummaryAction(survey.id, questionSummary.question.id);
+  };
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
@@ -37,6 +43,7 @@ export const OpenTextSummary = ({
         survey={survey}
         attributeClasses={attributeClasses}
       />
+      <Button onClick={() => getOpenTextSummary()}>Create Summary</Button>
       <div className="">
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
           <div className="pl-4 md:pl-6">User</div>

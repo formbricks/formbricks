@@ -1,18 +1,26 @@
 import { revalidateTag } from "next/cache";
 
 interface RevalidateProps {
+  id?: string;
+  type?: string;
   referenceId?: string;
 }
 
 export const embeddingCache = {
   tag: {
-    byReferenceId(id: string) {
-      return `environments-${id}`;
+    byId(id: string) {
+      return `embeddings-${id}`;
+    },
+    byTypeAndReferenceId(type: string, id: string) {
+      return `embeddings-${type}-${id}`;
     },
   },
-  revalidate({ referenceId }: RevalidateProps): void {
-    if (referenceId) {
-      revalidateTag(this.tag.byReferenceId(referenceId));
+  revalidate({ id, type, referenceId }: RevalidateProps): void {
+    if (id) {
+      revalidateTag(this.tag.byId(referenceId));
+    }
+    if (type && referenceId) {
+      revalidateTag(this.tag.byTypeAndReferenceId(type, referenceId));
     }
   },
 };
