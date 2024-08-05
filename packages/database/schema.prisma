@@ -109,25 +109,24 @@ model Person {
 }
 
 model Response {
-  id               String                       @id @default(cuid())
-  createdAt        DateTime                     @default(now()) @map(name: "created_at")
-  updatedAt        DateTime                     @updatedAt @map(name: "updated_at")
-  finished         Boolean                      @default(false)
-  survey           Survey                       @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  id               String            @id @default(cuid())
+  createdAt        DateTime          @default(now()) @map(name: "created_at")
+  updatedAt        DateTime          @updatedAt @map(name: "updated_at")
+  finished         Boolean           @default(false)
+  survey           Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId         String
-  person           Person?                      @relation(fields: [personId], references: [id], onDelete: Cascade)
+  person           Person?           @relation(fields: [personId], references: [id], onDelete: Cascade)
   personId         String?
   notes            ResponseNote[]
   /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]
-  data             Json                         @default("{}")
-  embedding        Unsupported("vector(1024)")?
+  data             Json              @default("{}")
   /// @zod.custom(imports.ZResponseTtc)
   /// [ResponseTtc]
-  ttc              Json                         @default("{}")
+  ttc              Json              @default("{}")
   /// @zod.custom(imports.ZResponseMeta)
   /// [ResponseMeta]
-  meta             Json                         @default("{}")
+  meta             Json              @default("{}")
   tags             TagsOnResponses[]
   /// @zod.custom(imports.ZResponsePersonAttributes)
   /// [ResponsePersonAttributes]
@@ -657,4 +656,19 @@ model SurveyLanguage {
   @@id([languageId, surveyId])
   @@index([surveyId])
   @@index([languageId])
+}
+
+enum EmbeddingType {
+  questionResponse
+}
+
+model Embedding {
+  id          String                      @id @default(cuid())
+  createdAt   DateTime                    @default(now()) @map(name: "created_at")
+  updatedAt   DateTime                    @updatedAt @map(name: "updated_at")
+  type        EmbeddingType
+  referenceId String                      @unique
+  vector      Unsupported("vector(512)")?
+
+  @@index([type, referenceId])
 }

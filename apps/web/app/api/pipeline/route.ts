@@ -163,21 +163,24 @@ export const POST = async (request: Request) => {
 
     await updateSurveyStatus(surveyId);
 
-    console.log(getResponseAsDocumentString(response, survey));
-
-    // generate embedding for enterprise and scale plans
-    if (IS_FORMBRICKS_CLOUD && IS_AI_ENABLED) {
+    // generate embeddings for all open text question responses for enterprise and scale plans
+    const hasSurveyOpenTextQuestions = survey.questions.some((question) => question.type === "openText");
+    if (hasSurveyOpenTextQuestions && IS_FORMBRICKS_CLOUD && IS_AI_ENABLED) {
       const organization = await getOrganizationByEnvironmentId(environmentId);
       if (!organization) {
         throw new Error("Organization not found");
       }
       if (organization.billing.plan === "enterprise" || organization.billing.plan === "scale") {
-        const { embedding } = await embed({
-          model: embeddingsModel,
-          value: getResponseAsDocumentString(response, survey),
-        });
-        console.log("Embedding", embedding);
-        await updateResponseEmbedding(response.id, embedding);
+        for (const question of survey.questions) {
+          if (question.type === "openText") {
+            const isQuestionAnswered = response[question.id] !== undefined;
+            if (!isQuestionAnswered) {
+              continue;
+            }
+            const responseEmbedding = await embeddingsModel.embed(response[question.id]);
+            await updateResponseEmbedding(response.id, question.id, responseEmbedding);
+          }
+        }
       }
     }
   }
