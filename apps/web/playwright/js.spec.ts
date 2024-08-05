@@ -64,7 +64,9 @@ test.describe("JS Package Test", async () => {
       await page.goto(htmlFile);
 
       // Formbricks In App Sync has happened
-      const syncApi = await page.waitForResponse((response) => response.url().includes("/app/sync"));
+      const syncApi = await page.waitForResponse((response) => response.url().includes("/app/sync"), {
+        timeout: 20000,
+      });
       expect(syncApi.status()).toBe(200);
 
       // Formbricks Modal exists in the DOM

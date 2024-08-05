@@ -29,6 +29,7 @@ import { subscribeOrganizationMembersToSurveyResponses } from "../organization/s
 import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
 import { structuredClone } from "../pollyfills/structuredClone";
+import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
@@ -695,6 +696,11 @@ export const createSurvey = async (
     if (createdBy) {
       await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy);
     }
+
+    await capturePosthogEnvironmentEvent(survey.environmentId, "survey created", {
+      surveyId: survey.id,
+      surveyType: survey.type,
+    });
 
     return transformedSurvey;
   } catch (error) {
