@@ -1,4 +1,5 @@
 import "server-only";
+import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -748,11 +749,20 @@ export const copySurveyToOtherEnvironment = async (
       if (!targetProduct) throw new ResourceNotFoundError("Product", targetEnvironmentId);
     }
 
-    const { environmentId: _, createdBy, id: existingSurveyId, ...restExistingSurvey } = existingSurvey;
+    const {
+      environmentId: _,
+      createdBy,
+      id: existingSurveyId,
+      createdAt,
+      updatedAt,
+      ...restExistingSurvey
+    } = existingSurvey;
+    const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
 
     // Prepare survey data
     const surveyData: Prisma.SurveyCreateInput = {
       ...restExistingSurvey,
+      id: createId(),
       name: `${existingSurvey.name} (copy)`,
       type: existingSurvey.type,
       status: "draft",
@@ -760,27 +770,26 @@ export const copySurveyToOtherEnvironment = async (
       questions: structuredClone(existingSurvey.questions),
       endings: structuredClone(existingSurvey.endings),
       hiddenFields: structuredClone(existingSurvey.hiddenFields),
-      languages:
-        existingSurvey.languages && existingSurvey.languages.length > 0
-          ? {
-              create: existingSurvey.languages.map((surveyLanguage) => ({
-                language: {
-                  connectOrCreate: {
-                    where: {
-                      productId_code: { code: surveyLanguage.language.code, productId: targetProduct.id },
-                    },
-                    create: {
-                      code: surveyLanguage.language.code,
-                      alias: surveyLanguage.language.alias,
-                      productId: targetProduct.id,
-                    },
+      languages: hasLanguages
+        ? {
+            create: existingSurvey.languages.map((surveyLanguage) => ({
+              language: {
+                connectOrCreate: {
+                  where: {
+                    productId_code: { code: surveyLanguage.language.code, productId: targetProduct.id },
+                  },
+                  create: {
+                    code: surveyLanguage.language.code,
+                    alias: surveyLanguage.language.alias,
+                    productId: targetProduct.id,
                   },
                 },
-                default: surveyLanguage.default,
-                enabled: surveyLanguage.enabled,
-              })),
-            }
-          : undefined,
+              },
+              default: surveyLanguage.default,
+              enabled: surveyLanguage.enabled,
+            })),
+          }
+        : undefined,
       triggers: {
         create: existingSurvey.triggers.map((trigger): Prisma.SurveyTriggerCreateWithoutSurveyInput => {
           const baseActionClassData = {
@@ -856,7 +865,7 @@ export const copySurveyToOtherEnvironment = async (
       if (existingSurvey.segment.isPrivate) {
         surveyData.segment = {
           create: {
-            title: `Copy of ${existingSurvey.segment.title}`,
+            title: surveyData.id!,
             isPrivate: true,
             filters: existingSurvey.segment.filters,
             environment: { connect: { id: targetEnvironmentId } },
@@ -886,12 +895,44 @@ export const copySurveyToOtherEnvironment = async (
       }
     }
 
-    // Execute the survey creation in a transaction
+    const targetProductLanguageCodes = targetProduct.languages.map((language) => language.code);
+    const targetActionClasses = await prisma.actionClass.findMany({
+      where: { environmentId: targetEnvironmentId },
+    });
+
     const newSurvey = await prisma.survey.create({ data: surveyData, select: selectSurvey });
 
+    let newLanguageCreated = false;
+    if (existingSurvey.languages && existingSurvey.languages.length > 0) {
+      const targetProductLanguages = await prisma.language.findMany({
+        where: { productId: targetProduct.id },
+        select: { code: true },
+      });
+
+      const targetLanguageCodes = targetProductLanguages.map((lang) => lang.code);
+      newLanguageCreated = targetLanguageCodes.length > targetProductLanguageCodes.length;
+    }
+
     // Invalidate caches
-    productCache.revalidate({ id: targetProduct.id });
-    actionClassCache.revalidate({ environmentId: targetEnvironmentId });
+    if (newLanguageCreated) {
+      productCache.revalidate({ id: targetProduct.id });
+    }
+
+    const targetActionClassesAfterCopy = await prisma.actionClass.findMany({
+      where: { environmentId: targetEnvironmentId },
+    });
+
+    // only revalidate the action class cache if a new action class is created
+    if (targetActionClassesAfterCopy.length > targetActionClasses.length) {
+      for (const actionClass of targetActionClassesAfterCopy) {
+        actionClassCache.revalidate({
+          environmentId: targetEnvironmentId,
+          name: actionClass.name,
+          id: actionClass.id,
+        });
+      }
+    }
+
     surveyCache.revalidate({
       id: newSurvey.id,
       environmentId: newSurvey.environmentId,
