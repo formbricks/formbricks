@@ -58,7 +58,7 @@ const AppPage = ({}) => {
   return (
     <div className="h-screen bg-white px-12 py-6 dark:bg-slate-800">
       <div className="flex flex-col items-center justify-between md:flex-row">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center gap-2 sm:flex-row">
           <SurveySwitch value="website" formbricks={formbricks} />
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
