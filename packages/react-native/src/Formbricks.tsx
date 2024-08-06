@@ -1,22 +1,34 @@
 import React, { useCallback, useEffect, useSyncExternalStore } from "react";
-import { TJsAppConfigInput } from "@formbricks/types/js";
-import { SurveyWebView } from "./SurveyWebView";
+import { type TJsAppConfigInput } from "@formbricks/types/js";
+import { Logger } from "../../js-core/src/shared/logger";
 import { init } from "./lib";
-import { SurveyStore } from "./lib/surveyStore";
+import { SurveyStore } from "./lib/survey-store";
+import { SurveyWebView } from "./survey-web-view";
 
 interface FormbricksProps {
   initConfig: TJsAppConfigInput;
 }
 const surveyStore = SurveyStore.getInstance();
+const logger = Logger.getInstance();
 
-export const Formbricks = ({ initConfig }: FormbricksProps) => {
+export function Formbricks({ initConfig }: FormbricksProps): React.JSX.Element | null {
   // initializes sdk
   useEffect(() => {
-    init({
-      environmentId: initConfig.environmentId,
-      apiHost: initConfig.apiHost,
-      userId: initConfig.userId,
-      attributes: initConfig.attributes,
+    const initialize = async (): Promise<void> => {
+      try {
+        await init({
+          environmentId: initConfig.environmentId,
+          apiHost: initConfig.apiHost,
+          userId: initConfig.userId,
+          attributes: initConfig.attributes,
+        });
+      } catch (error) {
+        logger.debug("Initialization failed");
+      }
+    };
+
+    initialize().catch(() => {
+      logger.debug("Initialization error");
     });
   }, [initConfig]);
 
@@ -27,5 +39,6 @@ export const Formbricks = ({ initConfig }: FormbricksProps) => {
 
   const getSnapshot = useCallback(() => surveyStore.getSurvey(), []);
   const survey = useSyncExternalStore(subscribe, getSnapshot);
-  return survey ? <SurveyWebView survey={survey} /> : <></>;
-};
+
+  return survey ? <SurveyWebView survey={survey} /> : null;
+}

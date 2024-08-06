@@ -1,26 +1,26 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Modal } from "react-native";
-import { WebView } from "react-native-webview";
+import { WebView, WebViewMessageEvent } from "react-native-webview";
 import { FormbricksAPI } from "@formbricks/api";
 import { getDefaultLanguageCode, getLanguageCodeForSurvey } from "@formbricks/lib/i18n/utils";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
-import { SurveyInlineProps } from "@formbricks/types/formbricks-surveys";
+import { type SurveyInlineProps } from "@formbricks/types/formbricks-surveys";
 import { ZJsRNWebViewOnMessageData } from "@formbricks/types/js";
-import { TResponseUpdate } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { type TResponseUpdate } from "@formbricks/types/responses";
+import { type TSurvey } from "@formbricks/types/surveys/types";
 import { sync } from "../../js-core/src/app/lib/sync";
 import { Logger } from "../../js-core/src/shared/logger";
 import { appConfig } from "./lib/config";
-import { SurveyStore } from "./lib/surveyStore";
+import { SurveyStore } from "./lib/survey-store";
 
 const logger = Logger.getInstance();
 
 const surveyStore = SurveyStore.getInstance();
 let isSurveyRunning = false;
 
-export const setIsSurveyRunning = (value: boolean) => {
+export const setIsSurveyRunning = (value: boolean): void => {
   isSurveyRunning = value;
 };
 
@@ -28,7 +28,7 @@ interface SurveyWebViewProps {
   survey: TSurvey;
 }
 
-export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
+export function SurveyWebView({ survey }: SurveyWebViewProps): React.JSX.Element | undefined {
   const [showSurvey, setShowSurvey] = useState(false);
 
   const product = appConfig.get().state.product;
@@ -37,21 +37,10 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
   const styling = getStyling(product, survey);
   const isBrandingEnabled = product.inAppSurveyBranding;
   const isMultiLanguageSurvey = survey.languages.length > 1;
-  let languageCode = "default";
-
-  if (isMultiLanguageSurvey) {
-    const displayLanguage = getLanguageCodeForSurvey(survey, attributes);
-    //if survey is not available in selected language, survey wont be shown
-    if (!displayLanguage) {
-      logger.debug(`Survey "${survey.name}" is not available in specified language.`);
-      setIsSurveyRunning(true);
-      return;
-    }
-    languageCode = displayLanguage;
-  }
   const [surveyState, setSurveyState] = useState(
     new SurveyState(survey.id, null, null, appConfig.get().userId)
   );
+
   const responseQueue = useMemo(
     () =>
       new ResponseQueue(
@@ -59,7 +48,6 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
           apiHost: appConfig.get().apiHost,
           environmentId: appConfig.get().environmentId,
           retryAttempts: 2,
-          onResponseSendingFailed: () => {},
           setSurveyState,
         },
         surveyState
@@ -77,7 +65,20 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
     setShowSurvey(true);
   }, [survey.delay]);
 
-  const addResponseToQueue = (responseUpdate: TResponseUpdate) => {
+  let languageCode = "default";
+
+  if (isMultiLanguageSurvey) {
+    const displayLanguage = getLanguageCodeForSurvey(survey, attributes);
+    //if survey is not available in selected language, survey wont be shown
+    if (!displayLanguage) {
+      logger.debug(`Survey "${survey.name}" is not available in specified language.`);
+      setIsSurveyRunning(true);
+      return;
+    }
+    languageCode = displayLanguage;
+  }
+
+  const addResponseToQueue = (responseUpdate: TResponseUpdate): void => {
     const { userId } = appConfig.get();
     if (userId) surveyState.updateUserId(userId);
     responseQueue.updateSurveyState(surveyState);
@@ -90,7 +91,7 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
     });
   };
 
-  const onCloseSurvey = async () => {
+  const onCloseSurvey = async (): Promise<void> => {
     await sync(
       {
         apiHost: appConfig.get().apiHost,
@@ -104,7 +105,7 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
     setShowSurvey(false);
   };
 
-  const createDisplay = async (survey: TSurvey) => {
+  const createDisplay = async (surveyId: string): Promise<{ id: string }> => {
     const { userId } = appConfig.get();
 
     const api = new FormbricksAPI({
@@ -112,7 +113,7 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
       environmentId: appConfig.get().environmentId,
     });
     const res = await api.client.display.create({
-      surveyId: survey.id,
+      surveyId,
       userId,
     });
     if (!res.ok) {
@@ -124,8 +125,8 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
   return (
     <Modal
       animationType="slide"
-      visible={showSurvey && !isSurveyRunning}
-      transparent={true}
+      visible={showSurvey ? !isSurveyRunning : undefined}
+      transparent
       onRequestClose={() => {
         setShowSurvey(false);
       }}>
@@ -142,60 +143,72 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
         }}
         style={{ backgroundColor: "transparent" }}
         contentMode="mobile"
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        startInLoadingState={true}
+        mixedContentMode="always"
+        allowFileAccess={true}
+        allowFileAccessFromFileURLs={true}
+        allowUniversalAccessFromFileURLs={true}
         onShouldStartLoadWithRequest={(event) => {
           // prevent webview from redirecting if users taps on formbricks link.
           if (event.url.startsWith("https://formbricks")) {
             return false;
-          } else {
-            return true;
           }
+          return true;
         }}
-        onMessage={async (event) => {
-          const { data } = event.nativeEvent;
-          const unvalidatedMessage = JSON.parse(data);
+        onMessage={async (event: WebViewMessageEvent) => {
+          try {
+            const { data } = event.nativeEvent;
+            const unvalidatedMessage: unknown = JSON.parse(data);
 
-          // debugger
-          if (unvalidatedMessage) {
-            if (unvalidatedMessage.type === "Console") {
-              console.info(`[Console] ${JSON.stringify(unvalidatedMessage.data)}`);
-            } else {
-              console.log(unvalidatedMessage);
+            if (typeof unvalidatedMessage === "object" && unvalidatedMessage !== null) {
+              const messageObj = unvalidatedMessage as { type?: string; data?: unknown };
+              if (messageObj.type === "Console" && messageObj.data) {
+                logger.debug(`[Console] ${JSON.stringify(messageObj.data)}`);
+              }
             }
-          }
 
-          const validatedMessage = ZJsRNWebViewOnMessageData.safeParse(unvalidatedMessage);
-          if (!validatedMessage.success) {
-            logger.error("Error parsing message from WebView.");
-            return;
-          }
-          // display
-          const { onDisplay, onResponse, responseUpdate, onClose, onRetry, onFinished } =
-            validatedMessage.data;
-          if (onDisplay) {
-            const { id } = await createDisplay(survey);
-            surveyState.updateDisplayId(id);
-          }
-          if (onResponse && responseUpdate) {
-            addResponseToQueue(responseUpdate);
-          }
-          if (onClose) {
-            onCloseSurvey();
-          }
-          if (onRetry) {
-            responseQueue.processQueue();
-          }
-          if (onFinished) {
-            setTimeout(async () => {
-              onCloseSurvey();
-            }, 2500);
+            const validatedMessage = ZJsRNWebViewOnMessageData.safeParse(unvalidatedMessage);
+            if (!validatedMessage.success) {
+              logger.error("Error parsing message from WebView.");
+              return;
+            }
+
+            // Destructure the validated data
+            const { onDisplay, onResponse, responseUpdate, onClose, onRetry, onFinished } =
+              validatedMessage.data;
+
+            if (onDisplay) {
+              const { id } = await createDisplay(survey.id);
+              surveyState.updateDisplayId(id);
+            }
+            if (onResponse && responseUpdate) {
+              addResponseToQueue(responseUpdate);
+            }
+            if (onClose) {
+              await onCloseSurvey();
+            }
+            if (onRetry) {
+              await responseQueue.processQueue();
+            }
+            if (onFinished) {
+              setTimeout(() => {
+                void (async () => {
+                  await onCloseSurvey();
+                })();
+              }, 2500);
+            }
+          } catch (error) {
+            logger.error("Error handling WebView message");
           }
         }}
       />
     </Modal>
   );
-};
+}
 
-const renderHtml = (options: Partial<SurveyInlineProps> & { apiHost?: string }) => {
+const renderHtml = (options: Partial<SurveyInlineProps> & { apiHost?: string }): string => {
   return `
   <!doctype html>
   <html>
@@ -232,6 +245,7 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { apiHost?: string }) 
       };
 
       function onResponse(responseUpdate) {
+        console.log(JSON.stringify({ onResponse: true, responseUpdate }));
         window.ReactNativeWebView.postMessage(JSON.stringify({ onResponse: true, responseUpdate }));
       };
 
@@ -255,7 +269,7 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { apiHost?: string }) 
       }
 
       const script = document.createElement("script");
-      script.src = "${options.apiHost ?? "http://localhost:3000"}/api/packages/surveys";
+      script.src = "http://localhost:3000/api/packages/surveys";
       script.async = true;
       script.onload = () => loadSurvey();
       script.onerror = (error) => {

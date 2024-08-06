@@ -1,42 +1,42 @@
 import { wrapThrowsAsync } from "@formbricks/types/error-handlers";
-import { TJsPackageType } from "@formbricks/types/js";
-import { ErrorHandler, Result } from "../../../js-core/src/shared/errors";
+import { type TJsPackageType } from "@formbricks/types/js";
+import { ErrorHandler, type Result } from "../../../js-core/src/shared/errors";
 import { checkInitialized } from "./initialize";
 
 export class CommandQueue {
   private queue: {
-    command: (args: any) => Promise<Result<void, any>> | Result<void, any> | Promise<void>;
+    command: (...args: any[]) => Promise<Result<void, unknown>> | Result<void, unknown> | Promise<void>;
     packageType: TJsPackageType;
     checkInitialized: boolean;
-    commandArgs: any[any];
+    commandArgs: any[];
   }[] = [];
-  private running: boolean = false;
+  private running = false;
   private resolvePromise: (() => void) | null = null;
   private commandPromise: Promise<void> | null = null;
 
   public add<A>(
-    checkInitialized: boolean = true,
     packageType: TJsPackageType,
-    command: (...args: A[]) => Promise<Result<void, any>> | Result<void, any> | Promise<void>,
+    command: (...args: A[]) => Promise<Result<void, unknown>> | Result<void, unknown> | Promise<void>,
+    shouldCheckInitialized = true,
     ...args: A[]
-  ) {
-    this.queue.push({ command, checkInitialized, commandArgs: args, packageType });
+  ): void {
+    this.queue.push({ command, checkInitialized: shouldCheckInitialized, commandArgs: args, packageType });
 
     if (!this.running) {
       this.commandPromise = new Promise((resolve) => {
         this.resolvePromise = resolve;
-        this.run();
+        void this.run();
       });
     }
   }
 
-  public async wait() {
+  public async wait(): Promise<void> {
     if (this.running) {
       await this.commandPromise;
     }
   }
 
-  private async run() {
+  private async run(): Promise<void> {
     this.running = true;
     while (this.queue.length > 0) {
       const errorHandler = ErrorHandler.getInstance();
@@ -49,28 +49,22 @@ export class CommandQueue {
         // call different function based on package type
         const initResult = checkInitialized();
 
-        if (initResult && initResult.ok !== true) {
+        if (!initResult.ok) {
           errorHandler.handle(initResult.error);
           continue;
         }
       }
 
-      const executeCommand = async () => {
-        return (await currentItem?.command.apply(null, currentItem?.commandArgs)) as Result<void, any>;
+      const executeCommand = async (): Promise<Result<void, unknown>> => {
+        return (await currentItem.command.apply(null, currentItem.commandArgs)) as Result<void, unknown>;
       };
 
       const result = await wrapThrowsAsync(executeCommand)();
 
-      if (!result) continue;
-
-      if (result.ok) {
-        if (result.data && !result.data.ok) {
-          errorHandler.handle(result.data.error);
-        }
-      }
-
-      if (result.ok !== true) {
+      if (!result.ok) {
         errorHandler.handle(result.error);
+      } else if (!result.data.ok) {
+        errorHandler.handle(result.data.error);
       }
     }
     this.running = false;

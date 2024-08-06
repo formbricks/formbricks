@@ -1,16 +1,20 @@
-import { FormbricksAPI } from "@formbricks/api";
-import { TJsActionInput } from "@formbricks/types/js";
-import { TSurvey } from "@formbricks/types/surveys/types";
-import { InvalidCodeError, NetworkError, Result, err, okVoid } from "../../../js-core/src/shared/errors";
+import { type TSurvey } from "@formbricks/types/surveys/types";
+import {
+  type InvalidCodeError,
+  type NetworkError,
+  type Result,
+  err,
+  okVoid,
+} from "../../../js-core/src/shared/errors";
 import { Logger } from "../../../js-core/src/shared/logger";
 import { shouldDisplayBasedOnPercentage } from "../../../js-core/src/shared/utils";
 import { appConfig } from "./config";
-import { SurveyStore } from "./surveyStore";
+import { SurveyStore } from "./survey-store";
 
 const logger = Logger.getInstance();
 const surveyStore = SurveyStore.getInstance();
 
-export const triggerSurvey = async (survey: TSurvey): Promise<void> => {
+export const triggerSurvey = (survey: TSurvey): void => {
   // Check if the survey should be displayed based on displayPercentage
   if (survey.displayPercentage) {
     const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
@@ -23,49 +27,18 @@ export const triggerSurvey = async (survey: TSurvey): Promise<void> => {
   surveyStore.setSurvey(survey);
 };
 
-export const trackAction = async (name: string, alias?: string): Promise<Result<void, NetworkError>> => {
-  const aliasName = alias || name;
-  const { userId } = appConfig.get();
-  const input: TJsActionInput = {
-    environmentId: appConfig.get().environmentId,
-    userId,
-    name,
-  };
-
-  // don't send actions to the backend if the person is not identified
-  if (userId) {
-    logger.debug(`Sending action "${aliasName}" to backend`);
-
-    const api = new FormbricksAPI({
-      apiHost: appConfig.get().apiHost,
-      environmentId: appConfig.get().environmentId,
-    });
-    const res = await api.client.action.create({
-      ...input,
-      userId,
-    });
-
-    if (!res.ok) {
-      return err({
-        code: "network_error",
-        message: `Error tracking action ${aliasName}`,
-        status: 500,
-        url: `${appConfig.get().apiHost}/api/v1/client/${appConfig.get().environmentId}/actions`,
-        responseMessage: res.error.message,
-      });
-    }
-  }
-
+export const trackAction = (name: string, alias?: string): Result<void, NetworkError> => {
+  const aliasName = alias ?? name;
   logger.debug(`Formbricks: Action "${aliasName}" tracked`);
 
   // get a list of surveys that are collecting insights
-  const activeSurveys = appConfig.get().state?.surveys;
+  const activeSurveys = appConfig.get().state.surveys;
 
-  if (!!activeSurveys && activeSurveys.length > 0) {
+  if (Boolean(activeSurveys) && activeSurveys.length > 0) {
     for (const survey of activeSurveys) {
       for (const trigger of survey.triggers) {
         if (trigger.actionClass.name === name) {
-          await triggerSurvey(survey);
+          triggerSurvey(survey);
         }
       }
     }
@@ -78,20 +51,20 @@ export const trackAction = async (name: string, alias?: string): Promise<Result<
 
 export const trackCodeAction = (
   code: string
-): Promise<Result<void, NetworkError>> | Result<void, InvalidCodeError> => {
+): Result<void, NetworkError> | Result<void, InvalidCodeError> => {
   const {
     state: { actionClasses = [] },
   } = appConfig.get();
 
   const codeActionClasses = actionClasses.filter((action) => action.type === "code");
-  const action = codeActionClasses.find((action) => action.key === code);
+  const actionClass = codeActionClasses.find((action) => action.key === code);
 
-  if (!action) {
+  if (!actionClass) {
     return err({
       code: "invalid_code",
       message: `${code} action unknown. Please add this action in Formbricks first in order to use it in your code.`,
     });
   }
 
-  return trackAction(action.name, code);
+  return trackAction(actionClass.name, code);
 };

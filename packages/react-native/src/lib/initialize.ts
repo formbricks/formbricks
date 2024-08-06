@@ -1,14 +1,14 @@
-import { TAttributes } from "@formbricks/types/attributes";
-import { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
+import { type TAttributes } from "@formbricks/types/attributes";
+import { type TJSAppConfig, type TJsAppConfigInput } from "@formbricks/types/js";
 import { updateAttributes } from "../../../js-core/src/app/lib/attributes";
 import { sync } from "../../../js-core/src/app/lib/sync";
 import {
   ErrorHandler,
-  MissingFieldError,
-  MissingPersonError,
-  NetworkError,
-  NotInitializedError,
-  Result,
+  type MissingFieldError,
+  type MissingPersonError,
+  type NetworkError,
+  type NotInitializedError,
+  type Result,
   err,
   okVoid,
 } from "../../../js-core/src/shared/errors";
@@ -19,7 +19,7 @@ import { appConfig } from "./config";
 let isInitialized = false;
 const logger = Logger.getInstance();
 
-export const setIsInitialize = (state: boolean) => {
+export const setIsInitialize = (state: boolean): void => {
   isInitialized = state;
 };
 
@@ -57,7 +57,7 @@ export const initialize = async (
   if (c.userId && c.attributes) {
     const res = await updateAttributes(c.apiHost, c.environmentId, c.userId, c.attributes, appConfig);
 
-    if (res.ok !== true) {
+    if (!res.ok) {
       return err(res.error);
     }
     updatedAttributes = res.value;
@@ -71,12 +71,11 @@ export const initialize = async (
   }
 
   if (
-    existingConfig &&
-    existingConfig.state &&
+    existingConfig?.state &&
     existingConfig.environmentId === c.environmentId &&
     existingConfig.apiHost === c.apiHost &&
     existingConfig.userId === c.userId &&
-    existingConfig.expiresAt // only accept config when they follow new config version with expiresAt
+    Boolean(existingConfig.expiresAt) // only accept config when they follow new config version with expiresAt
   ) {
     logger.debug("Found existing configuration.");
     if (existingConfig.expiresAt < new Date()) {
@@ -110,7 +109,7 @@ export const initialize = async (
     );
 
     // and track the new session event
-    await trackAction("New Session");
+    trackAction("New Session");
   }
 
   // todo: update attributes
@@ -147,9 +146,9 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
   return okVoid();
 };
 
-export const deinitalize = (): void => {
+export const deinitalize = async (): Promise<void> => {
   logger.debug("Deinitializing");
   // closeSurvey();
-  appConfig.resetConfig();
+  await appConfig.resetConfig();
   setIsInitialize(false);
 };

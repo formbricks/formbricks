@@ -23,6 +23,6 @@
   "dependencies": {
     "react": "^18.3.1",
     "react-native": "^0.74.4",
-    "react-native-webview": "13.10.5"
+    "react-native-webview": "13.6.4"
   }
 }

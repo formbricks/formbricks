@@ -6,7 +6,7 @@ LogBox.ignoreAllLogs();
 
 export default function App() {
   const config = {
-    environmentId: "clyr6frui0009v2pn32q5fxd3",
+    environmentId: "clzi9vr95000ivazb5e291wlm",
     apiHost: process.env.EXPO_PUBLIC_API_HOST ?? "http://localhost:3000",
     userId: "hello-user",
     attributes: {
@@ -24,7 +24,9 @@ export default function App() {
         title="Trigger Code Action"
         onPress={() => {
           // eslint-disable-next-line no-console -- logging is allowed in demo apps
-          track("test").catch((error: unknown) => { console.error("Error tracking event:", error); });
+          track("test").catch((error: unknown) => {
+            console.error("Error tracking event:", error);
+          });
         }}
       />
       <StatusBar style="auto" />
