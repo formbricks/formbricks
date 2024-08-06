@@ -454,6 +454,18 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
         }
       } else {
         if (segment.isPrivate) {
+          // disconnect the private segment first and then delete:
+          await prisma.segment.update({
+            where: { id: segment.id },
+            data: {
+              surveys: {
+                disconnect: {
+                  id: surveyId,
+                },
+              },
+            },
+          });
+
           await deleteSegment(segment.id);
         } else {
           await prisma.survey.update({
