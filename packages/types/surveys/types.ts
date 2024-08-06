@@ -194,7 +194,7 @@ export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
 export const ZSurveyLogicBase = z.object({
   condition: ZSurveyLogicCondition.optional(),
   value: z.union([z.string(), z.array(z.string())]).optional(),
-  destination: z.string().cuid2().optional(),
+  destination: z.string().optional(),
 });
 
 export const ZSurveyFileUploadLogic = ZSurveyLogicBase.extend({
