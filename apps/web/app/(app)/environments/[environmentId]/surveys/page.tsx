@@ -9,6 +9,7 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveyCount } from "@formbricks/lib/survey/service";
+import { getUser } from "@formbricks/lib/user/service";
 import { TTemplateRole } from "@formbricks/types/templates";
 import { Button } from "@formbricks/ui/Button";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
@@ -38,6 +39,11 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
     throw new Error("Session not found");
   }
 
+  const user = await getUser(session.user.id);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
   if (!product) {
     throw new Error("Product not found");
   }
@@ -64,11 +70,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const currentProductChannel = product.config.channel ?? null;
 
   const CreateSurveyButton = (
-    <Button
-      size="sm"
-      href={`/environments/${environment.id}/surveys/templates`}
-      variant="darkCTA"
-      EndIcon={PlusIcon}>
+    <Button size="sm" href={`/environments/${environment.id}/surveys/templates`} EndIcon={PlusIcon}>
       New survey
     </Button>
   );
@@ -96,7 +98,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
           <TemplateList
             environment={environment}
             product={product}
-            user={session.user}
+            user={user}
             prefilledFilters={prefilledFilters}
           />
         </>

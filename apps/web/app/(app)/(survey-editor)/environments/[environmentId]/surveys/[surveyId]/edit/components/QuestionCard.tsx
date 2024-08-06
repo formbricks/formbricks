@@ -1,5 +1,6 @@
 "use client";
 
+import { formatTextWithSlashes } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@/app/lib/questions";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -25,13 +26,13 @@ import { CTAQuestionForm } from "./CTAQuestionForm";
 import { CalQuestionForm } from "./CalQuestionForm";
 import { ConsentQuestionForm } from "./ConsentQuestionForm";
 import { DateQuestionForm } from "./DateQuestionForm";
+import { EditorCardMenu } from "./EditorCardMenu";
 import { FileUploadQuestionForm } from "./FileUploadQuestionForm";
 import { MatrixQuestionForm } from "./MatrixQuestionForm";
 import { MultipleChoiceQuestionForm } from "./MultipleChoiceQuestionForm";
 import { NPSQuestionForm } from "./NPSQuestionForm";
 import { OpenQuestionForm } from "./OpenQuestionForm";
 import { PictureSelectionForm } from "./PictureSelectionForm";
-import { QuestionMenu } from "./QuestionMenu";
 import { RatingQuestionForm } from "./RatingQuestionForm";
 
 interface QuestionCardProps {
@@ -80,25 +81,6 @@ export const QuestionCard = ({
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
 
-  // formats the text to highlight specific parts of the text with slashes
-  const formatTextWithSlashes = (text) => {
-    const regex = /\/(.*?)\\/g;
-    const parts = text.split(regex);
-
-    return parts.map((part, index) => {
-      // Check if the part was inside slashes
-      if (index % 2 !== 0) {
-        return (
-          <span key={index} className="mx-1 rounded-md bg-slate-100 p-1 px-2 text-xs">
-            {part}
-          </span>
-        );
-      } else {
-        return part;
-      }
-    });
-  };
-
   const updateEmptyNextButtonLabels = (labelValue: TI18nString) => {
     localSurvey.questions.forEach((q, index) => {
       if (index === localSurvey.questions.length - 1) return;
@@ -140,8 +122,8 @@ export const QuestionCard = ({
   return (
     <div
       className={cn(
-        open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
-        "flex w-full flex-row rounded-lg bg-white transition-all duration-300 ease-in-out"
+        open ? "shadow-lg" : "shadow-md",
+        "flex w-full flex-row rounded-lg bg-white duration-300"
       )}
       ref={setNodeRef}
       style={style}
@@ -151,11 +133,11 @@ export const QuestionCard = ({
         {...attributes}
         className={cn(
           open ? "bg-slate-700" : "bg-slate-400",
-          "top-0 w-[5%] rounded-l-lg p-2 text-center text-sm text-white hover:cursor-grab hover:bg-slate-600",
+          "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:cursor-grab hover:bg-slate-600",
           isInvalid && "bg-red-400 hover:bg-red-600",
           "flex flex-col items-center justify-between"
         )}>
-        <span>{questionIdx + 1}</span>
+        <div className="mt-3 flex w-full justify-center">{QUESTIONS_ICON_MAP[question.type]}</div>
 
         <button className="opacity-0 hover:cursor-move group-hover:opacity-100">
           <GripIcon className="h-4 w-4" />
@@ -173,12 +155,15 @@ export const QuestionCard = ({
         className="w-[95%] flex-1 rounded-r-lg border border-slate-200">
         <Collapsible.CollapsibleTrigger
           asChild
-          className={cn(open ? "" : " ", "flex cursor-pointer justify-between gap-4 p-4 hover:bg-slate-50")}>
+          className={cn(
+            open ? "" : " ",
+            "flex cursor-pointer justify-between gap-4 rounded-r-lg p-4 hover:bg-slate-50"
+          )}>
           <div>
             <div className="flex grow">
-              <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
+              {/*  <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
                 {QUESTIONS_ICON_MAP[question.type]}
-              </div>
+              </div> */}
               <div className="grow" dir="auto">
                 <p className="text-sm font-semibold">
                   {recallToHeadline(
@@ -199,23 +184,27 @@ export const QuestionCard = ({
                       )
                     : getTSurveyQuestionTypeEnumName(question.type)}
                 </p>
-                {!open && question?.required && (
-                  <p className="mt-1 truncate text-xs text-slate-500">{question?.required && "Required"}</p>
+                {!open && (
+                  <p className="mt-1 truncate text-xs text-slate-500">
+                    {question?.required ? "Required" : "Optional"}
+                  </p>
                 )}
               </div>
             </div>
 
             <div className="flex items-center space-x-2">
-              <QuestionMenu
-                questionIdx={questionIdx}
-                lastQuestion={lastQuestion}
-                duplicateQuestion={duplicateQuestion}
-                deleteQuestion={deleteQuestion}
-                moveQuestion={moveQuestion}
-                question={question}
+              <EditorCardMenu
+                survey={localSurvey}
+                cardIdx={questionIdx}
+                lastCard={lastQuestion}
+                duplicateCard={duplicateQuestion}
+                deleteCard={deleteQuestion}
+                moveCard={moveQuestion}
+                card={question}
                 product={product}
-                updateQuestion={updateQuestion}
-                addQuestion={addQuestion}
+                updateCard={updateQuestion}
+                addCard={addQuestion}
+                cardType="question"
               />
             </div>
           </div>

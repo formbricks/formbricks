@@ -67,7 +67,6 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
 
         <Button
           type="submit"
-          variant="darkCTA"
           className="mt-4"
           size="sm"
           loading={isSubmitting}

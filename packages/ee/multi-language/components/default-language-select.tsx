@@ -34,7 +34,7 @@ export function DefaultLanguageSelect({
                 onConfirm: () => {
                   handleDefaultLanguageChange(languageCode);
                 },
-                buttonVariant: "darkCTA",
+                buttonVariant: "primary",
               });
             }}
             value={`${defaultLanguage?.code}`}>

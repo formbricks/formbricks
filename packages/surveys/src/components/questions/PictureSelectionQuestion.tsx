@@ -110,7 +110,7 @@ export const PictureSelectionQuestion = ({
           <div className="fb-mt-4">
             <fieldset>
               <legend className="fb-sr-only">Options</legend>
-              <div className="fb-bg-survey-bg fb-relative fb-grid fb-grid-cols-2 fb-gap-x-5 fb-gap-y-4">
+              <div className="fb-bg-survey-bg fb-relative fb-grid fb-grid-cols-2 fb-gap-4">
                 {questionChoices.map((choice, idx) => (
                   <label
                     key={choice.id}
@@ -126,10 +126,10 @@ export const PictureSelectionQuestion = ({
                     }}
                     onClick={() => handleChange(choice.id)}
                     className={cn(
+                      "fb-relative fb-w-full fb-cursor-pointer fb-overflow-hidden fb-border fb-rounded-custom focus:fb-outline-none fb-aspect-[4/3] fb-min-h-[7rem] fb-max-h-[50vh] focus:fb-border-brand focus:fb-border-4 group/image",
                       Array.isArray(value) && value.includes(choice.id)
-                        ? `fb-border-brand fb-text-brand fb-z-10 fb-border-4 fb-shadow-xl`
-                        : "",
-                      "focus:fb-border-brand fb-rounded-custom fb-relative fb-inline-block fb-h-28 fb-w-full fb-cursor-pointer fb-overflow-hidden fb-border focus:fb-border-4 focus:fb-outline-none"
+                        ? "fb-border-brand fb-text-brand fb-z-10 fb-border-4 fb-shadow-sm"
+                        : ""
                     )}>
                     <img
                       src={choice.imageUrl}

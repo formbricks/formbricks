@@ -20,6 +20,7 @@ interface WelcomeCardProps {
   autoFocusEnabled: boolean;
   replaceRecallInfo: (text: string, responseData: TResponseData) => string;
   isCurrent: boolean;
+  responseData: TResponseData;
 }
 
 const TimerIcon = () => {
@@ -71,6 +72,7 @@ export const WelcomeCard = ({
   autoFocusEnabled,
   replaceRecallInfo,
   isCurrent,
+  responseData,
 }: WelcomeCardProps) => {
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
@@ -140,11 +142,11 @@ export const WelcomeCard = ({
           )}
 
           <Headline
-            headline={replaceRecallInfo(getLocalizedValue(headline, languageCode), {})}
+            headline={replaceRecallInfo(getLocalizedValue(headline, languageCode), responseData)}
             questionId="welcomeCard"
           />
           <HtmlBody
-            htmlString={replaceRecallInfo(getLocalizedValue(html, languageCode), {})}
+            htmlString={replaceRecallInfo(getLocalizedValue(html, languageCode), responseData)}
             questionId="welcomeCard"
           />
         </div>

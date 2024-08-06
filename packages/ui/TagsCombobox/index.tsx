@@ -53,7 +53,7 @@ export const TagsCombobox = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="darkCTA" size="sm" aria-expanded={open}>
+        <Button size="sm" aria-expanded={open}>
           Add Tag
         </Button>
       </PopoverTrigger>

@@ -1,18 +1,18 @@
 "use client";
 
 import { formbricksLogout } from "@/app/lib/formbricks";
-import { Session } from "next-auth";
 import React, { useState } from "react";
+import { TUser } from "@formbricks/types/user";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteAccountModal } from "@formbricks/ui/DeleteAccountModal";
 
 interface RemovedFromOrganizationProps {
-  session: Session;
   isFormbricksCloud: boolean;
+  user: TUser;
 }
 
-export const RemovedFromOrganization = ({ session, isFormbricksCloud }: RemovedFromOrganizationProps) => {
+export const RemovedFromOrganization = ({ user, isFormbricksCloud }: RemovedFromOrganizationProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <div className="space-y-4">
@@ -30,13 +30,11 @@ export const RemovedFromOrganization = ({ session, isFormbricksCloud }: RemovedF
       <DeleteAccountModal
         open={isModalOpen}
         setOpen={setIsModalOpen}
-        session={session}
+        user={user}
         isFormbricksCloud={isFormbricksCloud}
         formbricksLogout={formbricksLogout}
       />
-      <Button variant="darkCTA" onClick={() => setIsModalOpen(true)}>
-        Delete account
-      </Button>
+      <Button onClick={() => setIsModalOpen(true)}>Delete account</Button>
     </div>
   );
 };
