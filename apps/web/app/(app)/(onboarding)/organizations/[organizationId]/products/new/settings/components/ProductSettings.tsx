@@ -59,6 +59,9 @@ export const ProductSettings = ({
         const productionEnvironment = createProductResponse.data.environments.find(
           (environment) => environment.type === "production"
         );
+        if (productionEnvironment) {
+          localStorage.setItem("productId", productionEnvironment.productId);
+        }
         if (channel !== "link") {
           router.push(`/environments/${productionEnvironment?.id}/connect`);
         } else {

@@ -110,6 +110,14 @@ export const MainNavigation = ({
     }
   }, [organization]);
 
+  useEffect(() => {
+    const productId = localStorage.getItem("productId");
+    const targetProduct = products.find((product) => product.id === productId);
+    if (targetProduct && productId && product && product.id !== targetProduct.id) {
+      router.push(`/products/${targetProduct.id}/`);
+    }
+  }, []);
+
   const sortedOrganizations = useMemo(() => {
     return [...organizations].sort((a, b) => a.name.localeCompare(b.name));
   }, [organizations]);
@@ -119,6 +127,7 @@ export const MainNavigation = ({
   }, [products]);
 
   const handleEnvironmentChangeByProduct = (productId: string) => {
+    localStorage.setItem("productId", productId);
     router.push(`/products/${productId}/`);
   };
 

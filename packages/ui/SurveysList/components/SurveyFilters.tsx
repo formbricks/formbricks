@@ -44,7 +44,10 @@ const sortOptions: TSortOption[] = [
     label: "Alphabetical",
     value: "name",
   },
-  // Add other sorting options as needed
+  {
+    label: "Relevance",
+    value: "relevance",
+  },
 ];
 
 const getToolTipContent = (orientation: string) => {
@@ -183,6 +186,7 @@ export const SurveyFilters = ({
             size="sm"
             onClick={() => {
               setSurveyFilters(initialFilters);
+              localStorage.removeItem("surveyFilters");
             }}
             className="h-8"
             EndIcon={X}
@@ -197,7 +201,9 @@ export const SurveyFilters = ({
           tooltipContent={getToolTipContent("List")}
           className="bg-slate-900 text-white">
           <div
-            className={`flex h-8 w-8 items-center justify-center rounded-lg border p-1 ${orientation === "list" ? "bg-slate-900 text-white" : "bg-white"}`}
+            className={`flex h-8 w-8 items-center justify-center rounded-lg border p-1 ${
+              orientation === "list" ? "bg-slate-900 text-white" : "bg-white"
+            }`}
             onClick={() => handleOrientationChange("list")}>
             <Equal className="h-5 w-5" />
           </div>
@@ -208,7 +214,9 @@ export const SurveyFilters = ({
           tooltipContent={getToolTipContent("Grid")}
           className="bg-slate-900 text-white">
           <div
-            className={`flex h-8 w-8 items-center justify-center rounded-lg border p-1 ${orientation === "grid" ? "bg-slate-900 text-white" : "bg-white"}`}
+            className={`flex h-8 w-8 items-center justify-center rounded-lg border p-1 ${
+              orientation === "grid" ? "bg-slate-900 text-white" : "bg-white"
+            }`}
             onClick={() => handleOrientationChange("grid")}>
             <Grid2X2 className="h-5 w-5" />
           </div>

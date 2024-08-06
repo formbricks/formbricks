@@ -294,6 +294,17 @@ export const getSurveys = reactCache(
             take: limit ? limit : undefined,
             skip: offset ? offset : undefined,
           });
+          if (filterCriteria?.sortBy === "relevance") {
+            surveysPrisma = surveysPrisma.sort((a, b) => {
+              if (a.status === "inProgress" && b.status !== "inProgress") {
+                return -1;
+              }
+              if (a.status !== "inProgress" && b.status === "inProgress") {
+                return 1;
+              }
+              return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+            });
+          }
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             console.error(error);
