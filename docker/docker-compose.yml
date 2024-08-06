@@ -7,6 +7,9 @@ x-environment: &environment
     # Set this to your public-facing URL, e.g., https://example.com
     WEBAPP_URL:
 
+    # Required for next-auth. Should be the same as WEBAPP_URL
+    NEXTAUTH_URL:
+
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
@@ -19,7 +22,7 @@ x-environment: &environment
     # You can use: $(openssl rand -hex 32) to generate one
     ENCRYPTION_KEY:
 
-    # Set the below to use it instead of API Key for the API & use as an auth for cronjobs
+    # API Secret for running cron jobs.
     # You can use: $(openssl rand -hex 32) to generate a secure one
     CRON_SECRET:
 

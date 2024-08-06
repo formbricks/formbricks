@@ -10,6 +10,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
+import { surveyCache } from "../survey/cache";
 import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
 
@@ -193,7 +194,14 @@ export const updateActionClass = async (
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig: actionClassInput.type === "noCode" ? actionClassInput.noCodeConfig || {} : undefined,
       },
-      select: selectActionClass,
+      select: {
+        ...selectActionClass,
+        surveys: {
+          select: {
+            surveyId: true,
+          },
+        },
+      },
     });
 
     // revalidate cache
@@ -202,6 +210,14 @@ export const updateActionClass = async (
       name: result.name,
       id: result.id,
     });
+
+    // @ts-expect-error
+    const surveyIds = result.surveys.map((survey) => survey.surveyId);
+    for (const surveyId of surveyIds) {
+      surveyCache.revalidate({
+        id: surveyId,
+      });
+    }
 
     return result;
   } catch (error) {

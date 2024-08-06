@@ -103,13 +103,9 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
                   e.preventDefault();
                   finishOnboarding();
                 }}>
-                Skip
+                Not now
               </Button>
-              <Button
-                id="onboarding-inapp-invite-send-invite"
-                variant="darkCTA"
-                type={"submit"}
-                loading={isSubmitting}>
+              <Button id="onboarding-inapp-invite-send-invite" type={"submit"} loading={isSubmitting}>
                 Invite
               </Button>
             </div>

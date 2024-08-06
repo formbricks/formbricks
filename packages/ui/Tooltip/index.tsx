@@ -37,14 +37,15 @@ interface TooltipRendererProps {
   tooltipContent: ReactNode;
   children: ReactNode;
   className?: string;
+  triggerClass?: string;
 }
 export const TooltipRenderer = (props: TooltipRendererProps) => {
-  const { children, shouldRender, tooltipContent, className } = props;
+  const { children, shouldRender, tooltipContent, className, triggerClass } = props;
   if (shouldRender) {
     return (
       <TooltipProvider delayDuration={0}>
         <Tooltip>
-          <TooltipTrigger>{children}</TooltipTrigger>
+          <TooltipTrigger className={triggerClass}>{children}</TooltipTrigger>
           <TooltipContent className={className}>{tooltipContent}</TooltipContent>
         </Tooltip>
       </TooltipProvider>

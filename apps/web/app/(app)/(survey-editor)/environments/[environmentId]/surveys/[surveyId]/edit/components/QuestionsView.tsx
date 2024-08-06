@@ -1,5 +1,6 @@
 "use client";
 
+import { AddEndingCardButton } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddEndingCardButton";
 import {
   DndContext,
   DragEndEvent,
@@ -8,20 +9,28 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { createId } from "@paralleldrive/cuid2";
 import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { MultiLanguageCard } from "@formbricks/ee/multi-language/components/multi-language-card";
 import { extractLanguageCodes, getLocalizedValue, translateQuestion } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
+import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
-import { isCardValid, validateQuestion, validateSurveyQuestionsInBatch } from "../lib/validation";
+import {
+  isEndingCardValid,
+  isWelcomeCardValid,
+  validateQuestion,
+  validateSurveyQuestionsInBatch,
+} from "../lib/validation";
 import { AddQuestionButton } from "./AddQuestionButton";
-import { EditThankYouCard } from "./EditThankYouCard";
+import { EditEndingCard } from "./EditEndingCard";
 import { EditWelcomeCard } from "./EditWelcomeCard";
 import { HiddenFieldsCard } from "./HiddenFieldsCard";
 import { QuestionsDroppable } from "./QuestionsDroppable";
@@ -39,6 +48,7 @@ interface QuestionsViewProps {
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
   attributeClasses: TAttributeClass[];
+  plan: TOrganizationBillingPlan;
 }
 
 export const QuestionsView = ({
@@ -54,6 +64,7 @@ export const QuestionsView = ({
   isMultiLanguageAllowed,
   isFormbricksCloud,
   attributeClasses,
+  plan,
 }: QuestionsViewProps) => {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -81,6 +92,36 @@ export const QuestionsView = ({
     });
     return survey;
   };
+
+  useEffect(() => {
+    if (!invalidQuestions) return;
+    let updatedInvalidQuestions: string[] = invalidQuestions;
+
+    // Check welcome card
+    if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
+      if (!updatedInvalidQuestions.includes("start")) {
+        updatedInvalidQuestions.push("start");
+      }
+    } else {
+      updatedInvalidQuestions = updatedInvalidQuestions.filter((questionId) => questionId !== "start");
+    }
+
+    // Check thank you card
+    localSurvey.endings.forEach((ending) => {
+      if (!isEndingCardValid(ending, surveyLanguages)) {
+        if (!updatedInvalidQuestions.includes(ending.id)) {
+          updatedInvalidQuestions.push(ending.id);
+        }
+      } else {
+        updatedInvalidQuestions = updatedInvalidQuestions.filter((questionId) => questionId !== ending.id);
+      }
+    });
+
+    if (JSON.stringify(updatedInvalidQuestions) !== JSON.stringify(invalidQuestions)) {
+      setInvalidQuestions(updatedInvalidQuestions);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localSurvey.languages, localSurvey.endings, localSurvey.welcomeCard]);
 
   // function to validate individual questions
   const validateSurveyQuestion = (question: TSurveyQuestion) => {
@@ -111,7 +152,7 @@ export const QuestionsView = ({
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
     let updatedSurvey = { ...localSurvey };
     if ("id" in updatedAttributes) {
-      // if the survey whose id is to be changed is linked to logic of any other survey then changing it
+      // if the survey question whose id is to be changed is linked to logic of any other survey then changing it
       const initialQuestionId = updatedSurvey.questions[questionIdx].id;
       updatedSurvey = handleQuestionLogicChange(updatedSurvey, initialQuestionId, updatedAttributes.id);
       if (invalidQuestions?.includes(initialQuestionId)) {
@@ -181,14 +222,15 @@ export const QuestionsView = ({
       }
     });
     updatedSurvey.questions.splice(questionIdx, 1);
-    updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end");
+    updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "");
+    const firstEndingCard = localSurvey.endings[0];
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];
     if (questionId === activeQuestionIdTemp) {
       if (questionIdx <= localSurvey.questions.length && localSurvey.questions.length > 0) {
         setActiveQuestionId(localSurvey.questions[questionIdx % localSurvey.questions.length].id);
-      } else if (localSurvey.thankYouCard.enabled) {
-        setActiveQuestionId("end");
+      } else if (firstEndingCard) {
+        setActiveQuestionId(firstEndingCard.id);
       }
     }
     toast.success("Question deleted.");
@@ -235,6 +277,15 @@ export const QuestionsView = ({
     internalQuestionIdMap[question.id] = createId();
   };
 
+  const addEndingCard = (index: number) => {
+    const updatedSurvey = structuredClone(localSurvey);
+    const newEndingCard = getDefaultEndingCard(localSurvey.languages);
+
+    updatedSurvey.endings.splice(index, 0, newEndingCard);
+
+    setLocalSurvey(updatedSurvey);
+  };
+
   const moveQuestion = (questionIndex: number, up: boolean) => {
     const newQuestions = Array.from(localSurvey.questions);
     const [reorderedQuestion] = newQuestions.splice(questionIndex, 1);
@@ -243,29 +294,6 @@ export const QuestionsView = ({
     const updatedSurvey = { ...localSurvey, questions: newQuestions };
     setLocalSurvey(updatedSurvey);
   };
-
-  useEffect(() => {
-    if (invalidQuestions === null) return;
-
-    const updateInvalidQuestions = (card, cardId, currentInvalidQuestions) => {
-      if (card.enabled && !isCardValid(card, cardId, surveyLanguages)) {
-        return currentInvalidQuestions.includes(cardId)
-          ? currentInvalidQuestions
-          : [...currentInvalidQuestions, cardId];
-      }
-      return currentInvalidQuestions.filter((id) => id !== cardId);
-    };
-
-    const updatedQuestionsStart = updateInvalidQuestions(localSurvey.welcomeCard, "start", invalidQuestions);
-    const updatedQuestionsEnd = updateInvalidQuestions(
-      localSurvey.thankYouCard,
-      "end",
-      updatedQuestionsStart
-    );
-
-    setInvalidQuestions(updatedQuestionsEnd);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSurvey.welcomeCard, localSurvey.thankYouCard]);
 
   //useEffect to validate survey when changes are made to languages
   useEffect(() => {
@@ -281,29 +309,11 @@ export const QuestionsView = ({
       );
     });
 
-    // Check welcome card
-    if (localSurvey.welcomeCard.enabled && !isCardValid(localSurvey.welcomeCard, "start", surveyLanguages)) {
-      if (!updatedInvalidQuestions.includes("start")) {
-        updatedInvalidQuestions.push("start");
-      }
-    } else {
-      updatedInvalidQuestions = updatedInvalidQuestions.filter((questionId) => questionId !== "start");
-    }
-
-    // Check thank you card
-    if (localSurvey.thankYouCard.enabled && !isCardValid(localSurvey.thankYouCard, "end", surveyLanguages)) {
-      if (!updatedInvalidQuestions.includes("end")) {
-        updatedInvalidQuestions.push("end");
-      }
-    } else {
-      updatedInvalidQuestions = updatedInvalidQuestions.filter((questionId) => questionId !== "end");
-    }
-
     if (JSON.stringify(updatedInvalidQuestions) !== JSON.stringify(invalidQuestions)) {
       setInvalidQuestions(updatedInvalidQuestions);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSurvey.languages, localSurvey.questions]);
+  }, [localSurvey.languages, localSurvey.questions, localSurvey.endings, localSurvey.welcomeCard]);
 
   useEffect(() => {
     const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
@@ -324,7 +334,7 @@ export const QuestionsView = ({
     })
   );
 
-  const onDragEnd = (event: DragEndEvent) => {
+  const onQuestionCardDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     const newQuestions = Array.from(localSurvey.questions);
@@ -333,6 +343,17 @@ export const QuestionsView = ({
     const [reorderedQuestion] = newQuestions.splice(sourceIndex, 1);
     newQuestions.splice(destinationIndex, 0, reorderedQuestion);
     const updatedSurvey = { ...localSurvey, questions: newQuestions };
+    setLocalSurvey(updatedSurvey);
+  };
+
+  const onEndingCardDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    const newEndings = Array.from(localSurvey.endings);
+    const sourceIndex = newEndings.findIndex((ending) => ending.id === active.id);
+    const destinationIndex = newEndings.findIndex((ending) => ending.id === over?.id);
+    const [reorderedEndings] = newEndings.splice(sourceIndex, 1);
+    newEndings.splice(destinationIndex, 0, reorderedEndings);
+    const updatedSurvey = { ...localSurvey, endings: newEndings };
     setLocalSurvey(updatedSurvey);
   };
 
@@ -351,7 +372,7 @@ export const QuestionsView = ({
         />
       </div>
 
-      <DndContext sensors={sensors} onDragEnd={onDragEnd} collisionDetection={closestCorners}>
+      <DndContext sensors={sensors} onDragEnd={onQuestionCardDragEnd} collisionDetection={closestCorners}>
         <QuestionsDroppable
           localSurvey={localSurvey}
           product={product}
@@ -373,16 +394,37 @@ export const QuestionsView = ({
 
       <AddQuestionButton addQuestion={addQuestion} product={product} />
       <div className="mt-5 flex flex-col gap-5">
-        <EditThankYouCard
+        <hr className="border-t border-dashed" />
+        <DndContext sensors={sensors} onDragEnd={onEndingCardDragEnd} collisionDetection={closestCorners}>
+          <SortableContext items={localSurvey.endings} strategy={verticalListSortingStrategy}>
+            {localSurvey.endings.map((ending, index) => {
+              return (
+                <EditEndingCard
+                  key={ending.id}
+                  localSurvey={localSurvey}
+                  endingCardIndex={index}
+                  setLocalSurvey={setLocalSurvey}
+                  setActiveQuestionId={setActiveQuestionId}
+                  activeQuestionId={activeQuestionId}
+                  isInvalid={invalidQuestions ? invalidQuestions.includes(ending.id) : false}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
+                  selectedLanguageCode={selectedLanguageCode}
+                  attributeClasses={attributeClasses}
+                  plan={plan}
+                  addEndingCard={addEndingCard}
+                  isFormbricksCloud={isFormbricksCloud}
+                />
+              );
+            })}
+          </SortableContext>
+        </DndContext>
+
+        <AddEndingCardButton
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
-          setActiveQuestionId={setActiveQuestionId}
-          activeQuestionId={activeQuestionId}
-          isInvalid={invalidQuestions ? invalidQuestions.includes("end") : false}
-          setSelectedLanguageCode={setSelectedLanguageCode}
-          selectedLanguageCode={selectedLanguageCode}
-          attributeClasses={attributeClasses}
+          addEndingCard={addEndingCard}
         />
+        <hr />
 
         <HiddenFieldsCard
           localSurvey={localSurvey}

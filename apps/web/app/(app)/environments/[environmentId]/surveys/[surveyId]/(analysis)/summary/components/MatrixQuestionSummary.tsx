@@ -1,5 +1,10 @@
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TSurvey, TSurveyQuestionSummaryMatrix } from "@formbricks/types/surveys/types";
+import {
+  TI18nString,
+  TSurvey,
+  TSurveyQuestionSummaryMatrix,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import { TooltipRenderer } from "@formbricks/ui/Tooltip";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -7,12 +12,20 @@ interface MatrixQuestionSummaryProps {
   questionSummary: TSurveyQuestionSummaryMatrix;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  setFilter: (
+    questionId: string,
+    label: TI18nString,
+    questionType: TSurveyQuestionTypeEnum,
+    filterValue: string,
+    filterComboBoxValue?: string | string[]
+  ) => void;
 }
 
 export const MatrixQuestionSummary = ({
   questionSummary,
   survey,
   attributeClasses,
+  setFilter,
 }: MatrixQuestionSummaryProps) => {
   const getOpacityLevel = (percentage: number): string => {
     const parsedPercentage = percentage;
@@ -74,7 +87,16 @@ export const MatrixQuestionSummary = ({
                       )}>
                       <div
                         style={{ backgroundColor: `rgba(0,196,184,${getOpacityLevel(percentage)})` }}
-                        className="hover:outline-brand-dark m-1 flex h-full w-40 cursor-default items-center justify-center rounded p-4 text-sm text-slate-950 hover:outline">
+                        className="hover:outline-brand-dark m-1 flex h-full w-40 cursor-pointer items-center justify-center rounded p-4 text-sm text-slate-950 hover:outline"
+                        onClick={() =>
+                          setFilter(
+                            questionSummary.question.id,
+                            questionSummary.question.headline,
+                            questionSummary.question.type,
+                            rowLabel,
+                            column
+                          )
+                        }>
                         {percentage}
                       </div>
                     </TooltipRenderer>

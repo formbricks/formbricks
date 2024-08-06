@@ -35,7 +35,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
         />
       ) : (
         <Header
-          title={`You run ${startsWithVowel(customHeadline) ? "an " + customHeadline : "a " + customHeadline}, how exciting!`}
+          title={`You maintain ${startsWithVowel(customHeadline) ? "an " + customHeadline : "a " + customHeadline}, how exciting!`}
           subtitle="Get 2x more responses matching surveys with your brand and UI"
         />
       )}

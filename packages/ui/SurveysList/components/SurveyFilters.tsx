@@ -180,7 +180,6 @@ export const SurveyFilters = ({
 
         {(createdBy.length > 0 || status.length > 0 || type.length > 0) && (
           <Button
-            variant="darkCTA"
             size="sm"
             onClick={() => {
               setSurveyFilters(initialFilters);

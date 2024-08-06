@@ -16,9 +16,7 @@ const Error = ({ error, reset }: { error: Error; reset: () => void }) => {
         <Button variant="secondary" onClick={() => reset()} className="mr-2">
           Try again
         </Button>
-        <Button variant="darkCTA" onClick={() => (window.location.href = "/")}>
-          Go to Dashboard
-        </Button>
+        <Button onClick={() => (window.location.href = "/")}>Go to Dashboard</Button>
       </div>
     </div>
   );
