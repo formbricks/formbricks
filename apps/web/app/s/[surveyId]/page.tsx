@@ -93,7 +93,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   if (isSingleUseSurvey) {
     try {
       singleUseResponse = singleUseId
-        ? (await getResponseBySingleUseId(survey.id, singleUseId)) ?? undefined
+        ? ((await getResponseBySingleUseId(survey.id, singleUseId)) ?? undefined)
         : undefined;
     } catch (error) {
       singleUseResponse = undefined;
