@@ -143,12 +143,12 @@ export const LinkSurvey = ({
   }, [searchParams, survey.hiddenFields?.fieldIds]);
 
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
-    if (survey.verifyEmail && verifiedEmail) {
+    if (survey.isVerifyEmailEnabled && verifiedEmail) {
       return { verifiedEmail: verifiedEmail };
     } else {
       return null;
     }
-  }, [survey.verifyEmail, verifiedEmail]);
+  }, [survey.isVerifyEmailEnabled, verifiedEmail]);
 
   useEffect(() => {
     responseQueue.updateSurveyState(surveyState);
@@ -158,7 +158,7 @@ export const LinkSurvey = ({
     return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
   }
 
-  if (survey.verifyEmail && emailVerificationStatus !== "verified") {
+  if (survey.isVerifyEmailEnabled && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
       return (
         <VerifyEmail

@@ -29,38 +29,29 @@ export const ConfirmDeleteSegmentModal = ({
       <div className="text-slate-900">
         {segmentHasSurveys && (
           <div className="space-y-2">
-            <p>If you delete this segment, this will happen:</p>
-            <ul className="ml-4 list-disc">
-              <li>
-                This segment will be <b>removed</b> from these surveys:
-                <ol className="my-2 ml-4 list-decimal text-sm">
-                  {segment.activeSurveys.map((survey) => (
-                    <li key={survey}>{survey}</li>
-                  ))}
-
-                  {segment.inactiveSurveys.map((survey) => (
-                    <li key={survey}>{survey}</li>
-                  ))}
-                </ol>
-              </li>
-              <li>
-                These surveys will be <b>paused.</b>
-              </li>
-            </ul>
+            <p>You cannot delete this segment since it’s still used in these surveys:</p>
+            <ol className="my-2 ml-4 list-decimal">
+              {segment.activeSurveys.map((survey) => (
+                <li key={survey}>{survey}</li>
+              ))}
+              {segment.inactiveSurveys.map((survey) => (
+                <li key={survey}>{survey}</li>
+              ))}
+            </ol>
           </div>
         )}
-        <p className="mt-2">This action cannot be undone.</p>
+        <p className="mt-2">
+          {segmentHasSurveys
+            ? "Please remove the segment from these surveys in order to delete it."
+            : "Are you sure you want to delete this segment? This action cannot be undone."}
+        </p>
       </div>
 
       <div className="mt-4 space-x-2 text-right">
         <Button variant="minimal" onClick={() => setOpen(false)}>
           Cancel
         </Button>
-        <Button
-          variant="warn"
-          onClick={() => {
-            handleDelete();
-          }}>
+        <Button variant="warn" onClick={handleDelete} disabled={segmentHasSurveys}>
           Delete
         </Button>
       </div>

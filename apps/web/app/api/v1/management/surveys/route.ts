@@ -4,7 +4,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { translateSurvey } from "@formbricks/lib/i18n/utils";
 import { createSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { DatabaseError } from "@formbricks/types/errors";
-import { ZSurveyInput } from "@formbricks/types/surveys/types";
+import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 
 export const GET = async (request: Request) => {
   try {
@@ -45,7 +45,7 @@ export const POST = async (request: Request): Promise<Response> => {
         surveyInput = translateSurvey(surveyInput, []);
       }
     }
-    const inputValidation = ZSurveyInput.safeParse(surveyInput);
+    const inputValidation = ZSurveyCreateInput.safeParse(surveyInput);
 
     if (!inputValidation.success) {
       return responses.badRequestResponse(

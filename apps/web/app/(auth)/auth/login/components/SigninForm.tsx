@@ -210,7 +210,6 @@ export const SigninForm = ({
                     formRef.current.requestSubmit();
                   }
                 }}
-                variant="darkCTA"
                 className="w-full justify-center"
                 loading={loggingIn}>
                 {totpLogin ? "Submit" : "Login with Email"}

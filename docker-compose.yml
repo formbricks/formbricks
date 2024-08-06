@@ -16,9 +16,9 @@ x-nextauth-secret: &nextauth_secret
   # Encryption key
   # You can use: `openssl rand -hex 32` to generate one
 
-  x-cron-secret: &cron_secret
-    # Set the below to use it instead of API Key for the API & use as an auth for cronjobs
-    # You can use: $(openssl rand -hex 32) to generate a secure one
+x-cron-secret: &cron_secret
+  # Set the below to use it instead of API Key for the API & use as an auth for cronjobs
+  # You can use: $(openssl rand -hex 32) to generate a secure one
 
 
 x-encryption-key: &encryption_key

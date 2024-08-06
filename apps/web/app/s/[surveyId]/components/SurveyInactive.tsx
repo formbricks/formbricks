@@ -38,7 +38,7 @@ export const SurveyInactive = ({
             : descriptions[status]}
         </p>
         {!(status === "completed" && surveyClosedMessage) && status !== "link invalid" && (
-          <Button variant="darkCTA" className="mt-2" href="https://formbricks.com">
+          <Button className="mt-2" href="https://formbricks.com">
             Create your own
           </Button>
         )}
