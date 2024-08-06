@@ -136,7 +136,7 @@ export const OnboardingSetupInstructions = ({
             <div className="mt-4 flex justify-between space-x-2">
               <Button
                 id="onboarding-inapp-connect-copy-code"
-                variant={widgetSetupCompleted ? "secondary" : "darkCTA"}
+                variant={widgetSetupCompleted ? "secondary" : "primary"}
                 onClick={() => {
                   navigator.clipboard.writeText(
                     channel === "app" ? htmlSnippetForAppSurveys : htmlSnippetForWebsiteSurveys

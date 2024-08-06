@@ -14,13 +14,10 @@ export {
 export {
   ZSurveyWelcomeCard,
   ZSurveyQuestions,
-  ZSurveyThankYouCard,
-  ZSurveyFailureCard,
   ZSurveyHiddenFields,
   ZSurveyClosedMessage,
   ZSurveyProductOverwrites,
   ZSurveyStyling,
-  ZSurveyVerifyEmail,
   ZSurveySingleUse,
   ZSurveyInlineTriggers,
 } from "@formbricks/types/surveys/types";

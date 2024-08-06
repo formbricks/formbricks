@@ -411,11 +411,7 @@ test.describe("Multi Language Survey Create", async () => {
       .fill(surveys.germanCreate.addressQuestion.question);
 
     // Fill Thank you card in german
-    await page
-      .locator("div")
-      .filter({ hasText: /^Thank You CardShown$/ })
-      .first()
-      .click();
+    await page.getByText("Ending card").first().click();
     await page.getByPlaceholder("Your question here. Recall").click();
     await page
       .getByPlaceholder("Your question here. Recall")

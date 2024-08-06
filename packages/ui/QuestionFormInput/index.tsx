@@ -21,8 +21,10 @@ import {
   TI18nString,
   TSurvey,
   TSurveyChoice,
+  TSurveyEndScreenCard,
   TSurveyQuestion,
   TSurveyRecallItem,
+  TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { LanguageIndicator } from "../../ee/multi-language/components/language-indicator";
 import { createI18nString } from "../../lib/i18n/utils";
@@ -33,11 +35,12 @@ import { FallbackInput } from "./components/FallbackInput";
 import { RecallItemSelect } from "./components/RecallItemSelect";
 import {
   determineImageUploaderVisibility,
-  getCardText,
   getChoiceLabel,
+  getEndingCardText,
   getIndex,
   getMatrixLabel,
   getPlaceHolderById,
+  getWelcomeCardText,
   isValueIncomplete,
 } from "./utils";
 
@@ -47,7 +50,7 @@ interface QuestionFormInputProps {
   localSurvey: TSurvey;
   questionIdx: number;
   updateQuestion?: (questionIdx: number, data: Partial<TSurveyQuestion>) => void;
-  updateSurvey?: (data: Partial<TSurveyQuestion>) => void;
+  updateSurvey?: (data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard>) => void;
   updateChoice?: (choiceIdx: number, data: Partial<TSurveyChoice>) => void;
   updateMatrixLabel?: (index: number, type: "row" | "column", data: Partial<TSurveyQuestion>) => void;
   isInvalid: boolean;
@@ -60,7 +63,6 @@ interface QuestionFormInputProps {
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
   attributeClasses: TAttributeClass[];
-  fail?: boolean;
 }
 
 export const QuestionFormInput = ({
@@ -81,23 +83,25 @@ export const QuestionFormInput = ({
   onBlur,
   className,
   attributeClasses,
-  fail,
 }: QuestionFormInputProps) => {
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
   const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
-
   const question: TSurveyQuestion = localSurvey.questions[questionIdx];
   const isChoice = id.includes("choice");
   const isMatrixLabelRow = id.includes("row");
   const isMatrixLabelColumn = id.includes("column");
-  const isThankYouCard = questionIdx === localSurvey.questions.length;
+  const isEndingCard = questionIdx >= localSurvey.questions.length;
   const isWelcomeCard = questionIdx === -1;
   const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
 
   const questionId = useMemo(() => {
-    return isWelcomeCard ? "start" : isThankYouCard ? "end" : question.id;
-  }, [isWelcomeCard, isThankYouCard, question?.id]);
+    return isWelcomeCard
+      ? "start"
+      : isEndingCard
+        ? localSurvey.endings[questionIdx - localSurvey.questions.length].id
+        : question.id;
+  }, [isWelcomeCard, isEndingCard, question?.id]);
 
   const enabledLanguages = useMemo(
     () => getEnabledLanguages(localSurvey.languages ?? []),
@@ -118,11 +122,12 @@ export const QuestionFormInput = ({
       return getChoiceLabel(question, index, surveyLanguageCodes);
     }
 
-    if (isThankYouCard || isWelcomeCard) {
-      if (fail) {
-        return getCardText(localSurvey, id, isThankYouCard, surveyLanguageCodes, true);
-      }
-      return getCardText(localSurvey, id, isThankYouCard, surveyLanguageCodes);
+    if (isWelcomeCard) {
+      return getWelcomeCardText(localSurvey, id, surveyLanguageCodes);
+    }
+
+    if (isEndingCard) {
+      return getEndingCardText(localSurvey, id, surveyLanguageCodes, questionIdx);
     }
 
     if ((isMatrixLabelColumn || isMatrixLabelRow) && typeof index === "number") {
@@ -356,7 +361,7 @@ export const QuestionFormInput = ({
 
     if (isChoice) {
       updateChoiceDetails(translatedText);
-    } else if (isThankYouCard || isWelcomeCard || fail) {
+    } else if (isEndingCard || isWelcomeCard) {
       updateSurveyDetails(translatedText);
     } else if (isMatrixLabelRow || isMatrixLabelColumn) {
       updateMatrixLabelDetails(translatedText);
@@ -396,16 +401,20 @@ export const QuestionFormInput = ({
     }
   };
 
-  const getFileUrl = () => {
-    if (isThankYouCard) return localSurvey.thankYouCard.imageUrl;
-    else if (isWelcomeCard) return localSurvey.welcomeCard.fileUrl;
-    else return question.imageUrl;
+  const getFileUrl = (): string | undefined => {
+    if (isWelcomeCard) return localSurvey.welcomeCard.fileUrl;
+    if (isEndingCard) {
+      const endingCard = localSurvey.endings.find((ending) => ending.id === questionId);
+      if (endingCard && endingCard.type === "endScreen") return endingCard.imageUrl;
+    } else return question.imageUrl;
   };
 
-  const getVideoUrl = () => {
-    if (isThankYouCard) return localSurvey.thankYouCard.videoUrl;
-    else if (isWelcomeCard) return localSurvey.welcomeCard.videoUrl;
-    else return question.videoUrl;
+  const getVideoUrl = (): string | undefined => {
+    if (isWelcomeCard) return localSurvey.welcomeCard.videoUrl;
+    if (isEndingCard) {
+      const endingCard = localSurvey.endings.find((ending) => ending.id === questionId);
+      if (endingCard && endingCard.type === "endScreen") return endingCard.videoUrl;
+    } else return question.videoUrl;
   };
 
   return (
@@ -427,7 +436,7 @@ export const QuestionFormInput = ({
                     fileType === "video"
                       ? { videoUrl: url[0], imageUrl: "" }
                       : { imageUrl: url[0], videoUrl: "" };
-                  if (isThankYouCard && updateSurvey) {
+                  if (isEndingCard && updateSurvey) {
                     updateSurvey(update);
                   } else if (updateQuestion) {
                     updateQuestion(questionIdx, update);

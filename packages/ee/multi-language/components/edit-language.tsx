@@ -235,7 +235,7 @@ const EditSaveButtons: React.FC<{
 }> = ({ isEditing, onEdit, onSave, onCancel }) =>
   isEditing ? (
     <div className="flex gap-4">
-      <Button onClick={onSave} size="sm" variant="darkCTA">
+      <Button onClick={onSave} size="sm">
         Save changes
       </Button>
       <Button onClick={onCancel} size="sm" variant="minimal">
@@ -243,7 +243,7 @@ const EditSaveButtons: React.FC<{
       </Button>
     </div>
   ) : (
-    <Button className="w-fit" onClick={onEdit} size="sm" variant="darkCTA">
+    <Button className="w-fit" onClick={onEdit} size="sm">
       Edit languages
     </Button>
   );

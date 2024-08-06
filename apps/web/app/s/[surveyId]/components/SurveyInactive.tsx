@@ -36,7 +36,7 @@ export const SurveyInactive = ({
             : descriptions[status]}
         </p>
         {!(status === "completed" && surveyClosedMessage) && status !== "link invalid" && (
-          <Button variant="darkCTA" className="mt-2" href="https://member.digiopinion.com/overview">
+          <Button className="mt-2" href="https://member.digiopinion.com/overview">
             Take more surveys
           </Button>
         )}

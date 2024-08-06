@@ -220,6 +220,12 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
                   equals: "dismissed",
                 },
               },
+              {
+                data: {
+                  path: [key],
+                  equals: "",
+                },
+              },
               // For address question
               {
                 data: {
@@ -300,7 +306,7 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
           break;
         case "includesOne":
           data.push({
-            OR: val.value.map((value: string) => ({
+            OR: val.value.map((value: string | number) => ({
               OR: [
                 // for MultipleChoiceMulti
                 {
@@ -369,6 +375,15 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
             data: {
               path: [key],
               equals: "booked",
+            },
+          });
+          break;
+        case "matrix":
+          const rowLabel = Object.keys(val.value)[0];
+          data.push({
+            data: {
+              path: [key, rowLabel],
+              equals: val.value[rowLabel],
             },
           });
           break;
@@ -867,7 +882,6 @@ export const getQuestionWiseSummary = (
             choiceCountMap[answer]++;
             totalRating += answer;
           } else if (response.ttc && response.ttc[question.id] > 0) {
-            totalResponseCount++;
             dismissed++;
           }
         });
@@ -884,13 +898,11 @@ export const getQuestionWiseSummary = (
         summary.push({
           type: question.type,
           question,
-          average: convertFloatTo2Decimal(totalRating / (totalResponseCount - dismissed)) || 0,
+          average: convertFloatTo2Decimal(totalRating / totalResponseCount) || 0,
           responseCount: totalResponseCount,
           choices: values,
           dismissed: {
             count: dismissed,
-            percentage:
-              totalResponseCount > 0 ? convertFloatTo2Decimal((dismissed / totalResponseCount) * 100) : 0,
           },
         });
 

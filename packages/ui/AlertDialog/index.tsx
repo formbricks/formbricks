@@ -34,7 +34,6 @@ export const AlertDialog = ({
           {declineBtnLabel || "Discard"}
         </Button>
         <Button
-          variant="darkCTA"
           onClick={() => {
             if (onConfirm) {
               onConfirm();

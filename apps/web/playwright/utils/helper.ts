@@ -86,18 +86,18 @@ export const finishOnboarding = async (
   } else if (ProductChannel === "app") {
     await page.getByRole("button", { name: "Enrich user profiles App with" }).click();
   } else {
-    await page.getByRole("button", { name: "100% custom branding Anywhere" }).click();
+    await page.getByRole("button", { name: "Anywhere online Link" }).click();
   }
 
   await page.getByRole("button", { name: "Proven methods SaaS" }).click();
-  await page.getByPlaceholder("Formbricks Merch Store").click();
-  await page.getByPlaceholder("Formbricks Merch Store").fill("My Product");
-  await page.locator("form").filter({ hasText: "Brand colorChange the brand" }).getByRole("button").click();
+  await page.getByPlaceholder("e.g. Formbricks").click();
+  await page.getByPlaceholder("e.g. Formbricks").fill("My Product");
+  await page.locator("form").filter({ hasText: "Brand colorMatch the main" }).getByRole("button").click();
 
   if (ProductChannel !== "link") {
-    await page.getByRole("button", { name: "Skip" }).click();
+    await page.getByRole("button", { name: "I don't know how to do it" }).click();
     await page.waitForTimeout(500);
-    await page.getByRole("button", { name: "Skip" }).click();
+    await page.getByRole("button", { name: "Not now" }).click();
   }
 
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
@@ -282,7 +282,11 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByLabel("Question*").fill(params.address.question);
 
   // Thank You Card
-  await page.getByText("Thank You CardShown").click();
+  await page
+    .locator("div")
+    .filter({ hasText: /^Thank you!Ending card$/ })
+    .nth(1)
+    .click();
   await page.getByLabel("Note*").fill(params.thankYouCard.headline);
   await page.getByLabel("Description").fill(params.thankYouCard.description);
 };

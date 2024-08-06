@@ -10,7 +10,7 @@ type ConfirmationModalProps = {
   text: string;
   buttonText: string;
   isButtonDisabled?: boolean;
-  buttonVariant?: "warn" | "darkCTA";
+  buttonVariant?: "warn" | "primary";
   buttonLoading?: boolean;
   closeOnOutsideClick?: boolean;
   hideCloseButton?: boolean;

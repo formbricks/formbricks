@@ -2,30 +2,30 @@ import { createId } from "@paralleldrive/cuid2";
 import { TActionClass } from "@formbricks/types/action-classes";
 import {
   TSurveyCTAQuestion,
+  TSurveyCreateInput,
   TSurveyDisplayOption,
+  TSurveyEndScreenCard,
   TSurveyHiddenFields,
-  TSurveyInput,
+  TSurveyLanguage,
   TSurveyOpenTextQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyStatus,
-  TSurveyThankYouCard,
   TSurveyType,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { TTemplate } from "@formbricks/types/templates";
+import { createI18nString, extractLanguageCodes } from "./i18n/utils";
 
-const thankYouCardDefault: TSurveyThankYouCard = {
-  enabled: true,
-  headline: { default: "Thank you!" },
-  subheader: { default: "We appreciate your feedback." },
-  buttonLabel: { default: "Take more surveys" },
-  buttonLink: "https://member.digiopinion.com/overview",
-};
-
-const failureCardDefault = {
-  enabled: false,
-  headline: { default: "Survey failed" },
-  subheader: { default: "Your submission was not successful." },
+export const getDefaultEndingCard = (languages: TSurveyLanguage[]): TSurveyEndScreenCard => {
+  const languageCodes = extractLanguageCodes(languages);
+  return {
+    id: createId(),
+    type: "endScreen",
+    headline: createI18nString("Thank you!", languageCodes),
+    subheader: createI18nString("We appreciate your feedback.", languageCodes),
+    buttonLabel: createI18nString("Take more surveys", languageCodes),
+    buttonLink: "https://member.digiopinion.com/overview",
+  };
 };
 
 const hiddenFieldsDefault: TSurveyHiddenFields = {
@@ -33,7 +33,7 @@ const hiddenFieldsDefault: TSurveyHiddenFields = {
   fieldIds: [],
 };
 
-const welcomeCardDefault: TSurveyWelcomeCard = {
+export const welcomeCardDefault: TSurveyWelcomeCard = {
   enabled: false,
   headline: { default: "Welcome!" },
   html: { default: "Thanks for providing your feedback - let's go!" },
@@ -44,319 +44,11 @@ const welcomeCardDefault: TSurveyWelcomeCard = {
 const surveyDefault: TTemplate["preset"] = {
   name: "New Survey",
   welcomeCard: welcomeCardDefault,
-  thankYouCard: thankYouCardDefault,
-  failureCard: failureCardDefault,
+  endings: [getDefaultEndingCard([])],
   hiddenFields: hiddenFieldsDefault,
   reward: 0,
   questions: [],
 };
-
-/* export const testTemplate: TTemplate = {
-  name: "Test template",
-  role: "productManager",
-  industries: ["other"],
-  description: "Test template consisting of all questions",
-  preset: {
-    ...surveyDefault,
-    name: "Test template",
-    questions: [
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "This is an open text question" },
-        subheader: { default: "Please enter some text:" },
-        required: true,
-        inputType: "text",
-        longAnswer: false,
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "This is an open text question" },
-        subheader: { default: "Please enter some text:" },
-        required: false,
-        inputType: "text",
-        longAnswer: false,
-      },
-
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "This is an open text question" },
-        subheader: { default: "Please enter an email" },
-        required: true,
-        inputType: "email",
-        longAnswer: false,
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "This is an open text question" },
-        subheader: { default: "Please enter an email" },
-        required: false,
-        inputType: "email",
-        longAnswer: false,
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "This is an open text question" },
-        subheader: { default: "Please enter a number" },
-        required: true,
-        inputType: "number",
-        longAnswer: false,
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "This is an open text question" },
-        subheader: { default: "Please enter a number" },
-        required: false,
-        inputType: "number",
-        longAnswer: false,
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "This is an open text question" },
-        subheader: { default: "Please enter a phone number" },
-        required: true,
-        inputType: "phone",
-        longAnswer: false,
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "This is an open text question" },
-        subheader: { default: "Please enter a phone number" },
-        required: false,
-        inputType: "phone",
-        longAnswer: false,
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "This is an open text question" },
-        subheader: { default: "Please enter a url" },
-        required: true,
-        inputType: "url",
-        longAnswer: false,
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "This is an open text question" },
-        subheader: { default: "Please enter a url" },
-        required: false,
-        inputType: "url",
-        longAnswer: false,
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-        headline: { default: "This ia a Multiple choice Single question" },
-        subheader: { default: "Please select one of the following" },
-        required: true,
-        shuffleOption: "none",
-        choices: [
-          {
-            id: createId(),
-            label: { default: "Option1" },
-          },
-          {
-            id: createId(),
-            label: { default: "Option2" },
-          },
-        ],
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-        headline: { default: "This ia a Multiple choice Single question" },
-        subheader: { default: "Please select one of the following" },
-        required: false,
-        shuffleOption: "none",
-        choices: [
-          {
-            id: createId(),
-            label: { default: "Option 1" },
-          },
-          {
-            id: createId(),
-            label: { default: "Option 2" },
-          },
-        ],
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-        headline: { default: "This ia a Multiple choice Multiple question" },
-        subheader: { default: "Please select some from the following" },
-        required: true,
-        shuffleOption: "none",
-        choices: [
-          {
-            id: createId(),
-            label: { default: "Option1" },
-          },
-          {
-            id: createId(),
-            label: { default: "Option2" },
-          },
-        ],
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-        headline: { default: "This ia a Multiple choice Multiple question" },
-        subheader: { default: "Please select some from the following" },
-        required: false,
-        shuffleOption: "none",
-        choices: [
-          {
-            id: createId(),
-            label: { default: "Option1" },
-          },
-          {
-            id: createId(),
-            label: { default: "Option2" },
-          },
-        ],
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.Rating,
-        headline: { default: "This is a rating question" },
-        required: true,
-        lowerLabel: { default: "Low" },
-        upperLabel: { default: "High" },
-        range: 5,
-        scale: "number",
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.Rating,
-        headline: { default: "This is a rating question" },
-        required: false,
-        lowerLabel: { default: "Low" },
-        upperLabel: { default: "High" },
-        range: 5,
-        scale: "number",
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.Rating,
-        headline: { default: "This is a rating question" },
-        required: true,
-        lowerLabel: { default: "Low" },
-        upperLabel: { default: "High" },
-        range: 5,
-        scale: "smiley",
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.Rating,
-        headline: { default: "This is a rating question" },
-        required: false,
-        lowerLabel: { default: "Low" },
-        upperLabel: { default: "High" },
-        range: 5,
-        scale: "smiley",
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.Rating,
-        headline: { default: "This is a rating question" },
-        required: true,
-        lowerLabel: { default: "Low" },
-        upperLabel: { default: "High" },
-        range: 5,
-        scale: "star",
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.Rating,
-        headline: { default: "This is a rating question" },
-        required: false,
-        lowerLabel: { default: "Low" },
-        upperLabel: { default: "High" },
-        range: 5,
-        scale: "star",
-      },
-
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.CTA,
-        headline: { default: "This is a CTA question" },
-        html: { default: "This is a test CTA" },
-        buttonLabel: { default: "Click" },
-        buttonUrl: "https://formbricks.com",
-        buttonExternal: true,
-        required: true,
-        dismissButtonLabel: { default: "Maybe later" },
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.CTA,
-        headline: { default: "This is a CTA question" },
-        html: { default: "This is a test CTA" },
-        buttonLabel: { default: "Click" },
-        buttonUrl: "https://formbricks.com",
-        buttonExternal: true,
-        required: false,
-        dismissButtonLabel: { default: "Maybe later" },
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.PictureSelection,
-        headline: { default: "This is a Picture select" },
-        allowMulti: true,
-        required: true,
-        choices: [
-          {
-            id: createId(),
-            imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg",
-          },
-          {
-            id: createId(),
-            imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg",
-          },
-        ],
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.PictureSelection,
-        headline: { default: "This is a Picture select" },
-        allowMulti: true,
-        required: false,
-        choices: [
-          {
-            id: createId(),
-            imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg",
-          },
-          {
-            id: createId(),
-            imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg",
-          },
-        ],
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.Consent,
-        headline: { default: "This is a Consent question" },
-        required: true,
-        label: { default: "I agree to the terms and conditions" },
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.Consent,
-        headline: { default: "This is a Consent question" },
-        required: false,
-        label: { default: "I agree to the terms and conditions" },
-      },
-    ],
-  },
-}; */
 
 export const templates: TTemplate[] = [
   {
@@ -376,7 +68,7 @@ export const templates: TTemplate[] = [
               '<p class="fb-editor-paragraph" dir="ltr"><span>We noticed you left some items in your cart. We would love to understand why.</span></p>',
           },
           type: TSurveyQuestionTypeEnum.CTA,
-          logic: [{ condition: "skipped", destination: "end" }],
+          logic: [{ condition: "skipped", destination: surveyDefault.endings[0].id }],
           headline: { default: "Do you have 2 minutes to help us improve?" },
           required: false,
           buttonLabel: { default: "Sure!" },
@@ -510,7 +202,7 @@ export const templates: TTemplate[] = [
               "<p class='fb-editor-paragraph' dir='ltr'><span>We noticed you're  leaving our site without making a purchase. We would love to understand why.</span></p>",
           },
           type: TSurveyQuestionTypeEnum.CTA,
-          logic: [{ condition: "skipped", destination: "end" }],
+          logic: [{ condition: "skipped", destination: surveyDefault.endings[0].id }],
           headline: { default: "Do you have a minute?" },
           required: false,
           buttonLabel: { default: "Sure!" },
@@ -644,7 +336,7 @@ export const templates: TTemplate[] = [
               '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot.</span></p>',
           },
           type: TSurveyQuestionTypeEnum.CTA,
-          logic: [{ condition: "skipped", destination: "end" }],
+          logic: [{ condition: "skipped", destination: surveyDefault.endings[0].id }],
           headline: { default: "You are one of our power users! Do you have 5 minutes?" },
           required: false,
           buttonLabel: { default: "Happy to help!" },
@@ -850,7 +542,11 @@ export const templates: TTemplate[] = [
             { value: "It's too expensive", condition: "equals", destination: "mao94214zoo6c1at5rpuz7io" },
             { value: "I am missing features", condition: "equals", destination: "l054desub14syoie7n202vq4" },
             { value: "Poor customer service", condition: "equals", destination: "hdftsos1odzjllr7flj4m3j9" },
-            { value: "I just didn't need it anymore", condition: "equals", destination: "end" },
+            {
+              value: "I just didn't need it anymore",
+              condition: "equals",
+              destination: surveyDefault.endings[0].id,
+            },
           ],
           choices: [
             { id: createId(), label: { default: "Difficult to use" } },
@@ -866,7 +562,7 @@ export const templates: TTemplate[] = [
         {
           id: "sxwpskjgzzpmkgfxzi15inif",
           type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [{ condition: "submitted", destination: "end" }],
+          logic: [{ condition: "submitted", destination: surveyDefault.endings[0].id }],
           headline: { default: "What would have made {{productName}} easier to use?" },
           required: true,
           buttonLabel: { default: "Send" },
@@ -879,7 +575,7 @@ export const templates: TTemplate[] = [
               '<p class="fb-editor-paragraph" dir="ltr"><span>We\'d love to keep you as a customer. Happy to offer a 30% discount for the next year.</span></p>',
           },
           type: TSurveyQuestionTypeEnum.CTA,
-          logic: [{ condition: "clicked", destination: "end" }],
+          logic: [{ condition: "clicked", destination: surveyDefault.endings[0].id }],
           headline: { default: "Get 30% off for the next year!" },
           required: true,
           buttonUrl: "https://formbricks.com",
@@ -890,7 +586,7 @@ export const templates: TTemplate[] = [
         {
           id: "l054desub14syoie7n202vq4",
           type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [{ condition: "submitted", destination: "end" }],
+          logic: [{ condition: "submitted", destination: surveyDefault.endings[0].id }],
           headline: { default: "What features are you missing?" },
           required: true,
           inputType: "text",
@@ -902,7 +598,7 @@ export const templates: TTemplate[] = [
               '<p class="fb-editor-paragraph" dir="ltr"><span>We aim to provide the best possible customer service. Please email our CEO and she will personally handle your issue.</span></p>',
           },
           type: TSurveyQuestionTypeEnum.CTA,
-          logic: [{ condition: "clicked", destination: "end" }],
+          logic: [{ condition: "clicked", destination: surveyDefault.endings[0].id }],
           headline: { default: "So sorry to hear 😔 Talk to our CEO directly!" },
           required: true,
           buttonUrl: "mailto:ceo@company.com",
@@ -956,7 +652,7 @@ export const templates: TTemplate[] = [
         {
           id: "yhfew1j3ng6luy7t7qynwj79",
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          logic: [{ value: "No", condition: "equals", destination: "end" }],
+          logic: [{ value: "No", condition: "equals", destination: surveyDefault.endings[0].id }],
           shuffleOption: "none",
           choices: [
             { id: createId(), label: { default: "Yes" } },
@@ -1011,7 +707,11 @@ export const templates: TTemplate[] = [
               condition: "equals",
               destination: "rbhww1pix03r6sl4xc511wqg",
             },
-            { value: "I was just looking around", condition: "equals", destination: "end" },
+            {
+              value: "I was just looking around",
+              condition: "equals",
+              destination: surveyDefault.endings[0].id,
+            },
           ],
           choices: [
             { id: createId(), label: { default: "I didn't get much value out of it" } },
@@ -1049,7 +749,7 @@ export const templates: TTemplate[] = [
               '<p class="fb-editor-paragraph" dir="ltr"><span>We\'re happy to offer you a 20% discount on a yearly plan.</span></p>',
           },
           type: TSurveyQuestionTypeEnum.CTA,
-          logic: [{ condition: "clicked", destination: "end" }],
+          logic: [{ condition: "clicked", destination: surveyDefault.endings[0].id }],
           headline: { default: "Sorry to hear! Get 20% off the first year." },
           required: true,
           buttonUrl: "https://formbricks.com/github",
@@ -1071,8 +771,8 @@ export const templates: TTemplate[] = [
           id: "bqiyml1ym74ggx6htwdo7rlu",
           type: TSurveyQuestionTypeEnum.OpenText,
           logic: [
-            { condition: "submitted", destination: "end" },
-            { condition: "skipped", destination: "end" },
+            { condition: "submitted", destination: surveyDefault.endings[0].id },
+            { condition: "skipped", destination: surveyDefault.endings[0].id },
           ],
           headline: { default: "How are you solving your problem now?" },
           required: false,
@@ -1108,7 +808,7 @@ export const templates: TTemplate[] = [
           id: createId(),
           html: { default: '<p class="fb-editor-paragraph" dir="ltr"><span>This helps us a lot.</span></p>' },
           type: TSurveyQuestionTypeEnum.CTA,
-          logic: [{ condition: "clicked", destination: "end" }],
+          logic: [{ condition: "clicked", destination: surveyDefault.endings[0].id }],
           headline: { default: "Happy to hear 🙏 Please write a review for us!" },
           required: true,
           buttonUrl: "https://formbricks.com/github",
@@ -1202,7 +902,7 @@ export const templates: TTemplate[] = [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [{ condition: "submitted", destination: "end" }],
+          logic: [{ condition: "submitted", destination: surveyDefault.endings[0].id }],
           headline: { default: "What made you think {{productName}} wouldn't be useful?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -1211,7 +911,7 @@ export const templates: TTemplate[] = [
         {
           id: "r0zvi3vburf4hm7qewimzjux",
           type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [{ condition: "submitted", destination: "end" }],
+          logic: [{ condition: "submitted", destination: surveyDefault.endings[0].id }],
           headline: { default: "What was difficult about setting up or using {{productName}}?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -1220,7 +920,7 @@ export const templates: TTemplate[] = [
         {
           id: "rbwz3y6y9avzqcfj30nu0qj4",
           type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [{ condition: "submitted", destination: "end" }],
+          logic: [{ condition: "submitted", destination: surveyDefault.endings[0].id }],
           headline: { default: "What features or functionality were missing?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -1229,7 +929,7 @@ export const templates: TTemplate[] = [
         {
           id: "gn6298zogd2ipdz7js17qy5i",
           type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [{ condition: "submitted", destination: "end" }],
+          logic: [{ condition: "submitted", destination: surveyDefault.endings[0].id }],
           headline: { default: "How could we make it easier for you to get started?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -1618,8 +1318,8 @@ export const templates: TTemplate[] = [
           },
           type: TSurveyQuestionTypeEnum.CTA,
           logic: [
-            { condition: "clicked", destination: "end" },
-            { condition: "skipped", destination: "end" },
+            { condition: "clicked", destination: surveyDefault.endings[0].id },
+            { condition: "skipped", destination: surveyDefault.endings[0].id },
           ],
           headline: { default: "Want to stay in the loop?" },
           required: false,
@@ -1827,7 +1527,7 @@ export const templates: TTemplate[] = [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [{ condition: "submitted", destination: "end" }],
+          logic: [{ condition: "submitted", destination: surveyDefault.endings[0].id }],
           headline: { default: "Lovely! Is there anything we can do to improve your experience?" },
           required: false,
           placeholder: { default: "Type your answer here..." },
@@ -2052,8 +1752,7 @@ export const templates: TTemplate[] = [
           inputType: "text",
         },
       ],
-      thankYouCard: thankYouCardDefault,
-      failureCard: failureCardDefault,
+      endings: [getDefaultEndingCard([])],
       hiddenFields: hiddenFieldsDefault,
     },
   },
@@ -2167,7 +1866,7 @@ export const templates: TTemplate[] = [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [{ condition: "submitted", destination: "end" }],
+          logic: [{ condition: "submitted", destination: surveyDefault.endings[0].id }],
           headline: { default: "Sorry about that! What would have made it easier for you?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -2210,7 +1909,7 @@ export const templates: TTemplate[] = [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [{ condition: "submitted", destination: "end" }],
+          logic: [{ condition: "submitted", destination: surveyDefault.endings[0].id }],
           headline: { default: "Ugh! What makes the results irrelevant for you?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -2253,7 +1952,7 @@ export const templates: TTemplate[] = [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [{ condition: "submitted", destination: "end" }],
+          logic: [{ condition: "submitted", destination: surveyDefault.endings[0].id }],
           headline: { default: "Hmpft! What were you hoping for?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -2314,8 +2013,8 @@ export const templates: TTemplate[] = [
           id: "s0999bhpaz8vgf7ps264piek",
           type: TSurveyQuestionTypeEnum.OpenText,
           logic: [
-            { condition: "submitted", destination: "end" },
-            { condition: "skipped", destination: "end" },
+            { condition: "submitted", destination: surveyDefault.endings[0].id },
+            { condition: "skipped", destination: surveyDefault.endings[0].id },
           ],
           headline: { default: "What made it hard?" },
           required: false,
@@ -2326,8 +2025,8 @@ export const templates: TTemplate[] = [
           id: "nq88udm0jjtylr16ax87xlyc",
           type: TSurveyQuestionTypeEnum.OpenText,
           logic: [
-            { condition: "skipped", destination: "end" },
-            { condition: "submitted", destination: "end" },
+            { condition: "skipped", destination: surveyDefault.endings[0].id },
+            { condition: "submitted", destination: surveyDefault.endings[0].id },
           ],
           headline: { default: "Great! What did you come here to do today?" },
           required: false,
@@ -2364,7 +2063,7 @@ export const templates: TTemplate[] = [
               '<p class="fb-editor-paragraph" dir="ltr"><span>You seem to be considering signing up. Answer four questions and get 10% on any plan.</span></p>',
           },
           type: TSurveyQuestionTypeEnum.CTA,
-          logic: [{ condition: "skipped", destination: "end" }],
+          logic: [{ condition: "skipped", destination: surveyDefault.endings[0].id }],
           headline: { default: "Answer this short survey, get 10% off!" },
           required: false,
           buttonLabel: { default: "Get 10% discount" },
@@ -2374,7 +2073,7 @@ export const templates: TTemplate[] = [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.Rating,
-          logic: [{ value: "5", condition: "equals", destination: "end" }],
+          logic: [{ value: "5", condition: "equals", destination: surveyDefault.endings[0].id }],
           range: 5,
           scale: "number",
           headline: { default: "How likely are you to sign up for {{productName}}?" },
@@ -2528,7 +2227,7 @@ export const templates: TTemplate[] = [
             { value: "2", condition: "lessEqual", destination: "y19mwcmstlc7pi7s4izxk1ll" },
             { value: "3", condition: "equals", destination: "zm1hs8qkeuidh3qm0hx8pnw7" },
             { value: "4", condition: "equals", destination: "zm1hs8qkeuidh3qm0hx8pnw7" },
-            { value: "5", condition: "equals", destination: "end" },
+            { value: "5", condition: "equals", destination: surveyDefault.endings[0].id },
           ],
           range: 5,
           scale: "number",
@@ -2542,8 +2241,8 @@ export const templates: TTemplate[] = [
           id: "y19mwcmstlc7pi7s4izxk1ll",
           type: TSurveyQuestionTypeEnum.OpenText,
           logic: [
-            { condition: "submitted", destination: "end" },
-            { condition: "skipped", destination: "end" },
+            { condition: "submitted", destination: surveyDefault.endings[0].id },
+            { condition: "skipped", destination: surveyDefault.endings[0].id },
           ],
           headline: { default: "Got it. What's your primary reason for visiting today?" },
           required: false,
@@ -2591,8 +2290,8 @@ export const templates: TTemplate[] = [
           id: "k3s6gm5ivkc5crpycdbpzkpa",
           type: TSurveyQuestionTypeEnum.OpenText,
           logic: [
-            { condition: "submitted", destination: "end" },
-            { condition: "skipped", destination: "end" },
+            { condition: "submitted", destination: surveyDefault.endings[0].id },
+            { condition: "skipped", destination: surveyDefault.endings[0].id },
           ],
           headline: { default: "What would have made this weeks newsletter more helpful?" },
           required: false,
@@ -2671,7 +2370,7 @@ export const templates: TTemplate[] = [
           id: "jmzgbo73cfjswlvhoynn7o0q",
           html: {
             default:
-              '<p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><b><strong class="fb-editor-text-bold">Read the text below, then answer 2 questions:</strong></b></p><p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><span>Insert concept brief here. Add neccessary details but keep it concise and easy to understand.</span></p>',
+              '<p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><b><strong class="fb-editor-text-bold">Read the text below, then answer 2 questions:</strong></b></p><p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><span>Insert concept brief here. Add necessary details but keep it concise and easy to understand.</span></p>',
           },
           type: TSurveyQuestionTypeEnum.CTA,
           headline: { default: "We're working on an idea to help with [PROBLEM AREA]." },
@@ -2770,7 +2469,7 @@ export const templates: TTemplate[] = [
         {
           id: "r0zvi3vburf4hm7qewimzjux",
           type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [{ condition: "submitted", destination: "end" }],
+          logic: [{ condition: "submitted", destination: surveyDefault.endings[0].id }],
           headline: { default: "What's difficult about using {{productName}}?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -2779,7 +2478,7 @@ export const templates: TTemplate[] = [
         {
           id: "g92s5wetp51ps6afmc6y7609",
           type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [{ condition: "submitted", destination: "end" }],
+          logic: [{ condition: "submitted", destination: surveyDefault.endings[0].id }],
           headline: { default: "Got it. Which alternative are you using instead?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -2788,7 +2487,7 @@ export const templates: TTemplate[] = [
         {
           id: "gn6298zogd2ipdz7js17qy5i",
           type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [{ condition: "submitted", destination: "end" }],
+          logic: [{ condition: "submitted", destination: surveyDefault.endings[0].id }],
           headline: { default: "Got it. How could we make it easier for you to get started?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -2797,7 +2496,7 @@ export const templates: TTemplate[] = [
         {
           id: "rbwz3y6y9avzqcfj30nu0qj4",
           type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [{ condition: "submitted", destination: "end" }],
+          logic: [{ condition: "submitted", destination: surveyDefault.endings[0].id }],
           headline: { default: "Got it. What features or functionality were missing?" },
           required: true,
           placeholder: { default: "Type your answer here..." },
@@ -2837,7 +2536,10 @@ export const customSurvey = {
   },
 };
 
-export const getExampleWebsiteSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
+export const getExampleWebsiteSurveyTemplate = (
+  webAppUrl: string,
+  trigger: TActionClass
+): TSurveyCreateInput => ({
   ...customSurvey.preset,
   questions: customSurvey.preset.questions.map(
     (question) =>
@@ -2860,9 +2562,13 @@ export const getExampleWebsiteSurveyTemplate = (webAppUrl: string, trigger: TAct
   status: "inProgress" as TSurveyStatus,
   displayOption: "respondMultiple" as TSurveyDisplayOption,
   recontactDays: 0,
+  isVerifyEmailEnabled: false,
 });
 
-export const getExampleAppSurveyTemplate = (webAppUrl: string, trigger: TActionClass): TSurveyInput => ({
+export const getExampleAppSurveyTemplate = (
+  webAppUrl: string,
+  trigger: TActionClass
+): TSurveyCreateInput => ({
   ...customSurvey.preset,
   questions: customSurvey.preset.questions.map(
     (question) =>
@@ -2885,4 +2591,5 @@ export const getExampleAppSurveyTemplate = (webAppUrl: string, trigger: TActionC
   status: "inProgress" as TSurveyStatus,
   displayOption: "respondMultiple" as TSurveyDisplayOption,
   recontactDays: 0,
+  isVerifyEmailEnabled: false,
 });

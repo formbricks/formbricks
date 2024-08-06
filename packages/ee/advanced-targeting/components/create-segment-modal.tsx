@@ -125,8 +125,7 @@ export function CreateSegmentModal({
         onClick={() => {
           setOpen(true);
         }}
-        size="sm"
-        variant="darkCTA">
+        size="sm">
         Create segment
       </Button>
 
@@ -245,8 +244,7 @@ export function CreateSegmentModal({
                   onClick={() => {
                     handleCreateSegment();
                   }}
-                  type="submit"
-                  variant="darkCTA">
+                  type="submit">
                   Create segment
                 </Button>
               </div>

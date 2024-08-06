@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
+  copySurveyToOtherEnvironment,
   createSurvey,
   deleteSurvey,
-  duplicateSurvey,
   getSurvey,
   getSurveyCount,
   getSurveys,
@@ -19,6 +19,7 @@ import {
   mockActionClass,
   mockAttributeClass,
   mockDisplay,
+  mockEnvironment,
   mockId,
   mockOrganizationOutput,
   mockPrismaPerson,
@@ -254,23 +255,34 @@ describe("Tests for duplicateSurvey", () => {
     it("Duplicates a survey successfully", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
       prisma.survey.create.mockResolvedValueOnce(mockSurveyOutput);
-      const createdSurvey = await duplicateSurvey(mockId, mockId, mockId);
+      // @ts-expect-error
+      prisma.environment.findUnique.mockResolvedValueOnce(mockEnvironment);
+      // @ts-expect-error
+      prisma.product.findFirst.mockResolvedValueOnce(mockProduct);
+      prisma.actionClass.findFirst.mockResolvedValueOnce(mockActionClass);
+      prisma.actionClass.create.mockResolvedValueOnce(mockActionClass);
+
+      const createdSurvey = await copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId, mockId);
       expect(createdSurvey).toEqual(mockSurveyOutput);
     });
   });
 
   describe("Sad Path", () => {
-    testInputValidation(duplicateSurvey, "123#", "123#");
+    testInputValidation(copySurveyToOtherEnvironment, "123#", "123#", "123#", "123#", "123#");
 
     it("Throws ResourceNotFoundError if the survey does not exist", async () => {
       prisma.survey.findUnique.mockRejectedValueOnce(new ResourceNotFoundError("Survey", mockId));
-      await expect(duplicateSurvey(mockId, mockId, mockId)).rejects.toThrow(ResourceNotFoundError);
+      await expect(copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId, mockId)).rejects.toThrow(
+        ResourceNotFoundError
+      );
     });
 
     it("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
       prisma.survey.create.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(duplicateSurvey(mockId, mockId, mockId)).rejects.toThrow(Error);
+      await expect(copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId, mockId)).rejects.toThrow(
+        Error
+      );
     });
   });
 });

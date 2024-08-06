@@ -39,9 +39,11 @@ export const StackedCardsContainer = ({
 
   const questionIdxTemp = useMemo(() => {
     if (currentQuestionId === "start") return survey.welcomeCard.enabled ? -1 : 0;
-    if (currentQuestionId === "end") return survey.thankYouCard.enabled ? survey.questions.length : 0;
+    if (!survey.questions.map((question) => question.id).includes(currentQuestionId)) {
+      return survey.questions.length;
+    }
     return survey.questions.findIndex((question) => question.id === currentQuestionId);
-  }, [currentQuestionId, survey.welcomeCard.enabled, survey.thankYouCard.enabled, survey.questions]);
+  }, [currentQuestionId, survey.welcomeCard.enabled, survey.questions]);
 
   const [prevQuestionIdx, setPrevQuestionIdx] = useState(questionIdxTemp - 1);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(questionIdxTemp);
@@ -180,12 +182,9 @@ export const StackedCardsContainer = ({
         questionIdxTemp !== undefined &&
         [prevQuestionIdx, currentQuestionIdx, nextQuestionIdx, nextQuestionIdx + 1].map(
           (questionIdxTemp, index) => {
-            //Check for hiding extra card
-            if (survey.thankYouCard.enabled) {
-              if (questionIdxTemp > survey.questions.length) return;
-            } else {
-              if (questionIdxTemp > survey.questions.length - 1) return;
-            }
+            const hasEndingCard = survey.endings.length > 0;
+            // Check for hiding extra card
+            if (questionIdxTemp > survey.questions.length + (hasEndingCard ? 0 : -1)) return;
             const offset = index - 1;
             const isHidden = offset < 0;
             return (

@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  mockEndings,
   mockLegacySurvey,
   mockSurvey,
-  mockThankYouCard,
+  mockTranslatedEndings,
   mockTranslatedSurvey,
-  mockTranslatedThankYouCard,
   mockTranslatedWelcomeCard,
   mockWelcomeCard,
 } from "./i18n.mock";
 import { reverseTranslateSurvey } from "./reverseTranslation";
-import { createI18nString, translateSurvey, translateThankYouCard, translateWelcomeCard } from "./utils";
+import { createI18nString, translateEndings, translateSurvey, translateWelcomeCard } from "./utils";
 
 describe("createI18nString", () => {
   it("should create an i18n string from a regular string", () => {
@@ -51,11 +51,11 @@ describe("translateWelcomeCard", () => {
   });
 });
 
-describe("translateThankYouCard", () => {
-  it("should translate all text fields of a Thank you card", () => {
+describe("translateEndings", () => {
+  it("should translate all text fields of first endingCard", () => {
     const languages = ["default", "de"];
-    const translatedThankYouCard = translateThankYouCard(mockThankYouCard, languages);
-    expect(translatedThankYouCard).toEqual(mockTranslatedThankYouCard);
+    const translatedEndings = translateEndings(mockEndings, languages);
+    expect(translatedEndings).toEqual(mockTranslatedEndings);
   });
 });
 

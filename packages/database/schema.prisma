@@ -273,12 +273,9 @@ model Survey {
   /// @zod.custom(imports.ZSurveyQuestions)
   /// [SurveyQuestions]
   questions           Json                    @default("[]")
-  /// @zod.custom(imports.ZSurveyThankYouCard)
-  /// [SurveyThankYouCard]
-  thankYouCard        Json                    @default("{\"enabled\": false}")
-  /// @zod.custom(imports.ZSurveyFailureCard)
-  /// [SurveyFailureCard]
-  failureCard         Json                    @default("{\"enabled\": false}")
+  endings             Json[]                  @default([])
+  thankYouCard        Json? //deprecated
+  failureCard         Json? //deprecated
   /// @zod.custom(imports.ZSurveyHiddenFields)
   /// [SurveyHiddenFields]
   hiddenFields        Json                    @default("{\"enabled\": false}")
@@ -317,14 +314,15 @@ model Survey {
 
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
-  verifyEmail        Json?
-  pin                String?
-  resultShareKey     String?          @unique
-  displayPercentage  Decimal?
-  languages          SurveyLanguage[]
-  showLanguageSwitch Boolean?
-  reward             Float            @default(0)
-  failureChance      Float            @default(0)
+  verifyEmail          Json? // deprecated
+  isVerifyEmailEnabled Boolean          @default(false)
+  pin                  String?
+  resultShareKey       String?          @unique
+  displayPercentage    Decimal?
+  languages            SurveyLanguage[]
+  showLanguageSwitch   Boolean?
+  reward               Float            @default(0)
+  failureChance        Float            @default(0)
 
   countries        Country[] @relation("SurveyCountries")
   limitedCountries Boolean   @default(false)

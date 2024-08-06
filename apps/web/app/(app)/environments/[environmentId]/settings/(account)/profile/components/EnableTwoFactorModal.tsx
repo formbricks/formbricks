@@ -100,9 +100,7 @@ const ConfirmPasswordForm = ({
             Cancel
           </Button>
 
-          <Button variant="darkCTA" size="sm">
-            Confirm
-          </Button>
+          <Button size="sm">Confirm</Button>
         </div>
       </form>
     </div>
@@ -134,7 +132,7 @@ const ScanQRCode = ({ dataUri, secret, setCurrentStep, setOpen }: TScanQRCodePro
           Cancel
         </Button>
 
-        <Button variant="darkCTA" size="sm" onClick={() => setCurrentStep("enterCode")}>
+        <Button size="sm" onClick={() => setCurrentStep("enterCode")}>
           Next
         </Button>
       </div>
@@ -207,9 +205,7 @@ const EnterCode = ({ setCurrentStep, setOpen, refreshData }: TEnableCodeProps) =
               Cancel
             </Button>
 
-            <Button variant="darkCTA" size="sm">
-              Confirm
-            </Button>
+            <Button size="sm">Confirm</Button>
           </div>
         </form>
       </div>
@@ -259,7 +255,6 @@ const DisplayBackupCodes = ({ backupCodes, setOpen }: TDisplayBackupCodesProps) 
         </Button>
 
         <Button
-          variant="darkCTA"
           size="sm"
           onClick={() => {
             navigator.clipboard.writeText(backupCodes.map((code) => formatBackupCode(code)).join("\n"));
@@ -269,7 +264,6 @@ const DisplayBackupCodes = ({ backupCodes, setOpen }: TDisplayBackupCodesProps) 
         </Button>
 
         <Button
-          variant="darkCTA"
           size="sm"
           onClick={() => {
             handleDownloadBackupCode();
