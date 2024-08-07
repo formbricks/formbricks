@@ -266,7 +266,7 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
 13. Update these environment variables in your `docker-compose.yml` or pass it like your other environment variables to the Formbricks container.
 
 <Note>
-  **IMPORTANT:** You must wrap the `AZUREAD_CLIENT_SECRET` value in double quotes!! (e.g., `"THis~iS4faKe.53CreTvALu3"`)
+  You must wrap the `AZUREAD_CLIENT_SECRET` value in double quotes (e.g., `"THis~iS4faKe.53CreTvALu3"`) to prevent issues with special characters.
 </Note>
 
 An example `.env` for Microsoft Entra ID in Formbricks would look like:
