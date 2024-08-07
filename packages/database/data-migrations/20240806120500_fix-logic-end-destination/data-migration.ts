@@ -1,5 +1,6 @@
 /* eslint-disable no-console -- logging is allowed in migration scripts */
 import { PrismaClient } from "@prisma/client";
+import { type TSurveyEnding, type TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 const prisma = new PrismaClient();
 
@@ -10,13 +11,14 @@ async function runMigration(): Promise<void> {
       console.log("Starting data migration...");
 
       // Fetch all surveys
-      const surveys = await tx.survey.findMany({
-        select: {
-          id: true,
-          questions: true,
-          endings: true,
-        },
-      });
+      const surveys: { id: string; questions: TSurveyQuestion[]; endings: TSurveyEnding[] }[] =
+        await tx.survey.findMany({
+          select: {
+            id: true,
+            questions: true,
+            endings: true,
+          },
+        });
 
       if (surveys.length === 0) {
         // Stop the migration if there are no surveys
