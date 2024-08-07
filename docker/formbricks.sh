@@ -141,7 +141,7 @@ install_formbricks() {
     acme:
       email: $email_address
       storage: acme.json
-      caServer: \"https://acme-v01.api.letsencrypt.org/directory\"
+      caServer: "https://acme-v01.api.letsencrypt.org/directory"
       tlsChallenge: {}"
   else
     certResolver=""
@@ -206,7 +206,7 @@ EOT
   fi
 
   # Prompt for email service setup
-  read -p "Do you want to set up the email service? [y/N] You will need SMTP credentials for the same! " email_service
+  read -p "📧 Do you want to set up the email service? [y/N] You will need SMTP credentials for the same! " email_service
 
   # Set default value for email service setup
   if [[ -z $email_service ]]; then
@@ -279,6 +279,7 @@ EOT
         print "      - \"traefik.http.routers.formbricks.rule=Host(\`" domain_name "\`)\"  # Use your actual domain or IP"
         print "      - \"traefik.http.routers.formbricks.entrypoints=websecure\"  # Use the websecure entrypoint (port 443 with TLS)"
         print "      - \"traefik.http.routers.formbricks.tls=true\"  # Enable TLS"
+        print "      - \"traefik.http.routers.formbricks.tls.certresolver=default\"  # Specify the certResolver"
         print "      - \"traefik.http.services.formbricks.loadbalancer.server.port=3000\"  # Forward traffic to Formbricks on port 3000"
         if (hsts_enabled == "Y") {
             print "      - \"traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000\"  # Set HSTS (HTTP Strict Transport Security) max-age to 1 year (31536000 seconds)"
