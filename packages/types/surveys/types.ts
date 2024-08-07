@@ -63,6 +63,31 @@ export enum TSurveyQuestionTypeEnum {
   Address = "address",
 }
 
+export const ZSurveyQuestionId = z.string().superRefine((id, ctx) => {
+  if (FORBIDDEN_IDS.includes(id)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Question id is not allowed`,
+    });
+  }
+
+  if (id.includes(" ")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Question id not allowed, avoid using spaces.",
+    });
+  }
+
+  if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Question id not allowed, use only alphanumeric characters, hyphens, or underscores.",
+    });
+  }
+});
+
+export type TSurveyQuestionId = z.infer<typeof ZSurveyQuestionId>;
+
 export const ZSurveyWelcomeCard = z
   .object({
     enabled: z.boolean(),
@@ -194,7 +219,7 @@ export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
 export const ZSurveyLogicBase = z.object({
   condition: ZSurveyLogicCondition.optional(),
   value: z.union([z.string(), z.array(z.string())]).optional(),
-  destination: z.string().cuid2().optional(),
+  destination: ZSurveyQuestionId.optional(),
 });
 
 export const ZSurveyFileUploadLogic = ZSurveyLogicBase.extend({
@@ -294,28 +319,7 @@ export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
 export type TSurveyPictureSelectionLogic = z.infer<typeof ZSurveyPictureSelectionLogic>;
 
 export const ZSurveyQuestionBase = z.object({
-  id: z.string().superRefine((id, ctx) => {
-    if (FORBIDDEN_IDS.includes(id)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Question id is not allowed`,
-      });
-    }
-
-    if (id.includes(" ")) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Question id not allowed, avoid using spaces.",
-      });
-    }
-
-    if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Question id not allowed, use only alphanumeric characters, hyphens, or underscores.",
-      });
-    }
-  }),
+  id: ZSurveyQuestionId,
   type: z.string(),
   headline: ZI18nString,
   subheader: ZI18nString.optional(),
