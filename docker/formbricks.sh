@@ -206,7 +206,7 @@ EOT
   fi
 
   # Prompt for email service setup
-  read -p "📧 Do you want to set up the email service? [y/N] You will need SMTP credentials for the same! " email_service
+  read -p "📧 Do you want to set up the email service? You will need SMTP credentials for the same! [y/N]" email_service
 
   # Set default value for email service setup
   if [[ -z $email_service ]]; then
