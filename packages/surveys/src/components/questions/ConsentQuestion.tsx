@@ -87,7 +87,7 @@ export const ConsentQuestion = ({
                   if (e.target instanceof HTMLInputElement && e.target.checked) {
                     onChange({ [question.id]: "accepted" });
                   } else {
-                    onChange({ [question.id]: "dismissed" });
+                    onChange({ [question.id]: "" });
                   }
                 }}
                 checked={value === "accepted"}

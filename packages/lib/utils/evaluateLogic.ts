@@ -35,7 +35,7 @@ export const evaluateCondition = (logic: TSurveyLogic, responseValue: any): bool
       return responseValue === "clicked";
     case "submitted":
       if (typeof responseValue === "string") {
-        return responseValue !== "dismissed" && responseValue !== "" && responseValue !== null;
+        return responseValue !== "" && responseValue !== null;
       } else if (Array.isArray(responseValue)) {
         return responseValue.length > 0;
       } else if (typeof responseValue === "number") {
@@ -46,8 +46,7 @@ export const evaluateCondition = (logic: TSurveyLogic, responseValue: any): bool
       return (
         (Array.isArray(responseValue) && responseValue.length === 0) ||
         responseValue === "" ||
-        responseValue === null ||
-        responseValue === "dismissed"
+        responseValue === null
       );
     default:
       return false;

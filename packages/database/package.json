@@ -44,7 +44,8 @@
     "data-migration:segments-cleanup": "ts-node ./data-migrations/20240712123456_segments_cleanup/data-migration.ts",
     "data-migration:multiple-endings": "ts-node ./data-migrations/20240801120500_thankYouCard_to_endings/data-migration.ts",
     "data-migration:simplified-email-verification": "ts-node ./data-migrations/20240726124100_replace_verifyEmail_with_isVerifyEmailEnabled/data-migration.ts",
-    "data-migration:v2.4": "pnpm data-migration:segments-cleanup && pnpm data-migration:multiple-endings && pnpm data-migration:simplified-email-verification"
+    "data-migration:v2.4": "pnpm data-migration:segments-cleanup && pnpm data-migration:multiple-endings && pnpm data-migration:simplified-email-verification",
+    "data-migration:remove-dismissed-value-inconsistency": "ts-node ./data-migrations/20240807120500_cta_consent_dismissed_inconsistency/data-migration.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.17.0",

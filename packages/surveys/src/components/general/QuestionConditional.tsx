@@ -52,7 +52,7 @@ export const QuestionConditional = ({
   autoFocusEnabled,
   currentQuestionId,
 }: QuestionConditionalProps) => {
-  if (!value && prefilledQuestionValue) {
+  if (!value && (prefilledQuestionValue || prefilledQuestionValue === "")) {
     if (skipPrefilled) {
       onSubmit({ [question.id]: prefilledQuestionValue }, { [question.id]: 0 });
     } else {

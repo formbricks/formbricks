@@ -104,9 +104,12 @@ export const transformAnswer = (
 ): string | number | string[] => {
   switch (question.type) {
     case TSurveyQuestionTypeEnum.OpenText:
-    case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
+    case TSurveyQuestionTypeEnum.MultipleChoiceSingle: {
+      return answer;
+    }
     case TSurveyQuestionTypeEnum.Consent:
     case TSurveyQuestionTypeEnum.CTA: {
+      if (answer === "dismissed") return "";
       return answer;
     }
 
@@ -143,6 +146,6 @@ export const transformAnswer = (
     }
 
     default:
-      return "dismissed";
+      return "";
   }
 };

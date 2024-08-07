@@ -42,7 +42,7 @@ export const evaluateCondition = (
       return responseValue === "clicked";
     case "submitted":
       if (typeof responseValue === "string") {
-        return responseValue !== "dismissed" && responseValue !== "" && responseValue !== null;
+        return responseValue !== "" && responseValue !== null;
       } else if (Array.isArray(responseValue)) {
         return responseValue.length > 0;
       } else if (typeof responseValue === "number") {
@@ -55,7 +55,6 @@ export const evaluateCondition = (
         responseValue === "" ||
         responseValue === null ||
         responseValue === undefined ||
-        responseValue === "dismissed" ||
         (isObject && Object.entries(responseValue).length === 0)
       );
     case "uploaded":
