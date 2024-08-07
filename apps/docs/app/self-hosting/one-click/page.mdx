@@ -65,7 +65,7 @@ File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N)
 </CodeGroup>
 </Col>
 
-2. **Domain Name**: Enter the domain name that you want to use for your Formbricks instance. This domain name will be used to create the SSL certificate.
+2. **Domain Name**: You will be asked to enter the domain name where you want to host Formbricks. This domain will be used to generate an SSL certificate.
 
 <Col>
 <CodeGroup title="Email Prompt">
@@ -94,7 +94,7 @@ File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
 </CodeGroup>
 </Col>
 
-3. **HTTPS Certificate Prompt**: The script will ask if you want to create an HTTPS certificate for your domain. Enter `Y` to proceed.(default is `Y`)
+3. **HTTPS Certificate Prompt**: The script will ask if you want to create an HTTPS certificate for your domain. Enter Y to proceed. This is highly recommended for secure access to your Formbricks instance.
 
 <Col>
 <CodeGroup>
@@ -125,7 +125,7 @@ my.hosted.url.com
 </CodeGroup>
 </Col>
 
-4. **DNS Setup Prompt**: The script will ask if you have set up the DNS records and inbound rules for your domain. Enter `Y` to proceed.(default is `Y`)
+4. **DNS Setup Prompt**: Ensure that your domain's DNS is correctly configured and ports 80 and 443 are open. Confirm this by entering Y. This step is crucial for proper SSL certificate issuance and secure server access.
 
 <Col>
 <CodeGroup>
@@ -158,7 +158,7 @@ Y
 </CodeGroup>
 </Col>
 
-5. **Email Address**: Provide your email address for SSL certificate registration with Let's Encrypt.
+5. **Email Address**: Provide an email address for SSL certificate registration. This email will be used for notifications regarding your SSL certificate from Let's Encrypt.
 
 <Col>
 <CodeGroup title="Email Prompt">
@@ -193,7 +193,7 @@ Y
 </CodeGroup>
 </Col>
 
-6. **Enforce HTTPS (HSTS) Prompt**: The script will ask if you want to enforce HTTPS (HSTS). Enter `Y` to proceed.(default is `Y`)
+6. **Enforce HTTPS (HSTS) Prompt**: Enforcing HTTPS with HSTS is a good security practice, as it ensures all communication with your server is encrypted. Enter Y to enable this setting.
 
 <Col>
 <CodeGroup title="Domain Name for SSL certificate Prompt">
