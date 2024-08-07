@@ -840,3 +840,36 @@ export const getLanguageLabel = (languageCode: string) => {
   const language = iso639Languages.find((lang) => lang.alpha2 === languageCode);
   return `${language?.english}`;
 };
+
+export const addMultiLanguageLabels = (object: any, languageSymbols: string[]): any => {
+  // Helper function to add language keys to a multi-language object
+  function addLanguageKeys(obj: { default: string; [key: string]: string }) {
+    languageSymbols.forEach((lang) => {
+      if (!obj.hasOwnProperty(lang)) {
+        obj[lang] = ""; // Add empty string for new language keys
+      }
+    });
+  }
+
+  // Recursive function to process an object or array
+  function processObject(obj: any) {
+    if (Array.isArray(obj)) {
+      obj.forEach((item) => processObject(item));
+    } else if (obj && typeof obj === "object") {
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          if (key === "default" && typeof obj[key] === "string") {
+            addLanguageKeys(obj);
+          } else {
+            processObject(obj[key]);
+          }
+        }
+      }
+    }
+  }
+
+  // Start processing the question object
+  processObject(object);
+
+  return object;
+};
