@@ -120,7 +120,7 @@ export const QuestionFilterComboBox = ({
             disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
           )}>
           {filterComboBoxValue && filterComboBoxValue?.length > 0 ? (
-            !isMultiple ? (
+            !Array.isArray(filterComboBoxValue) ? (
               <p className="text-slate-600">{filterComboBoxValue}</p>
             ) : (
               <div className="no-scrollbar flex w-[7rem] gap-3 overflow-auto md:w-[10rem] lg:w-[18rem]">
@@ -156,18 +156,14 @@ export const QuestionFilterComboBox = ({
                   {options?.map((o) => (
                     <CommandItem
                       onSelect={() => {
-                        !isMultiple
-                          ? onChangeFilterComboBoxValue(
-                              typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o
-                            )
-                          : onChangeFilterComboBoxValue(
-                              Array.isArray(filterComboBoxValue)
-                                ? [
-                                    ...filterComboBoxValue,
-                                    typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o,
-                                  ]
-                                : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o]
-                            );
+                        onChangeFilterComboBoxValue(
+                          Array.isArray(filterComboBoxValue)
+                            ? [
+                                ...filterComboBoxValue,
+                                typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o,
+                              ]
+                            : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o]
+                        );
                         !isMultiple && setOpen(false);
                       }}
                       className="cursor-pointer">

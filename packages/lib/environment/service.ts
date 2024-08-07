@@ -17,6 +17,7 @@ import {
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { cache } from "../cache";
 import { getOrganizationsByUserId } from "../organization/service";
+import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { getProducts } from "../product/service";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
@@ -190,6 +191,10 @@ export const createEnvironment = async (
     environmentCache.revalidate({
       id: environment.id,
       productId: environment.productId,
+    });
+
+    await capturePosthogEnvironmentEvent(environment.id, "environment created", {
+      environmentType: environment.type,
     });
 
     return environment;

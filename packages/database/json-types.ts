@@ -3,7 +3,11 @@ import { type TActionClassNoCodeConfig } from "@formbricks/types/action-classes"
 import { type TIntegrationConfig } from "@formbricks/types/integration";
 import { type TOrganizationBilling } from "@formbricks/types/organizations";
 import { type TProductConfig, type TProductStyling } from "@formbricks/types/product";
-import { type TResponseData, type TResponseMeta, type TResponsePersonAttributes } from "@formbricks/types/responses";
+import {
+  type TResponseData,
+  type TResponseMeta,
+  type TResponsePersonAttributes,
+} from "@formbricks/types/responses";
 import { type TBaseFilters } from "@formbricks/types/segment";
 import {
   type TSurveyClosedMessage,
