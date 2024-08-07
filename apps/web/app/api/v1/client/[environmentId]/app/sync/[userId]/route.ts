@@ -21,10 +21,10 @@ import {
 } from "@formbricks/lib/posthogServer";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
+import { getSyncSurveys } from "@formbricks/lib/survey/service";
+import { transformToLegacySurvey } from "@formbricks/lib/survey/utils";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TJsAppLegacyStateSync, TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
-import { TLegacySurvey } from "@formbricks/types/legacy-surveys";
 import { TProductLegacy } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -194,7 +194,7 @@ export const GET = async (
 
     // Scenario 1: Multi language and updated trigger action classes supported.
     // Use the surveys as they are.
-    let transformedSurveys: TLegacySurvey[] | TSurvey[] = surveys;
+    let transformedSurveys: TSurvey[] = surveys;
 
     // creating state object
     let state: TJsAppStateSync | TJsAppLegacyStateSync = {
@@ -212,7 +212,7 @@ export const GET = async (
       // Convert to legacy surveys with default language
       // convert triggers to array of actionClasses Names
       transformedSurveys = await Promise.all(
-        surveys.map((survey: TSurvey | TLegacySurvey) => {
+        surveys.map((survey) => {
           const languageCode = "default";
           return transformToLegacySurvey(survey as TSurvey, languageCode);
         })

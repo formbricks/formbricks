@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { ZActionClass } from "./action-classes";
 import { ZAttributes } from "./attributes";
-import { ZLegacySurvey } from "./legacy-surveys";
 import { ZPerson } from "./people";
 import { ZProduct } from "./product";
 import { ZResponseHiddenFieldValue } from "./responses";
@@ -34,7 +33,7 @@ export type TJSWebsiteStateDisplay = z.infer<typeof ZJSWebsiteStateDisplay>;
 export const ZJsAppStateSync = z.object({
   person: ZJsPerson.nullish(),
   userId: z.string().optional(),
-  surveys: z.union([z.array(ZSurvey), z.array(ZLegacySurvey)]),
+  surveys: z.array(ZSurvey),
   actionClasses: z.array(ZActionClass),
   product: ZProduct,
   language: z.string().optional(),
@@ -68,7 +67,7 @@ export type TJsWebsiteState = z.infer<typeof ZJsWebsiteState>;
 export const ZJsAppLegacyStateSync = z.object({
   person: ZJsPerson.nullish(),
   userId: z.string().optional(),
-  surveys: z.union([z.array(ZSurvey), z.array(ZLegacySurvey)]),
+  surveys: z.array(ZSurvey),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
   language: z.string().optional(),
