@@ -14,7 +14,7 @@ import { createId } from "@paralleldrive/cuid2";
 import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { MultiLanguageCard } from "@formbricks/ee/multi-language/components/multi-language-card";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { addMultiLanguageLabels, extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
@@ -264,10 +264,13 @@ export const QuestionsView = ({
       question.backButtonLabel = backButtonLabel;
     }
 
+    const languageSymbols = extractLanguageCodes(localSurvey.languages);
+    const updatedQuestion = addMultiLanguageLabels(question, languageSymbols);
+
     if (index) {
-      updatedSurvey.questions.splice(index, 0, { ...question, isDraft: true });
+      updatedSurvey.questions.splice(index, 0, { ...updatedQuestion, isDraft: true });
     } else {
-      updatedSurvey.questions.push({ ...question, isDraft: true });
+      updatedSurvey.questions.push({ ...updatedQuestion, isDraft: true });
     }
 
     setLocalSurvey(updatedSurvey);
