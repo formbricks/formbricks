@@ -27,7 +27,8 @@
     "lint": "turbo run lint",
     "release": "turbo run build --filter=@formbricks/js... && changeset publish",
     "test": "turbo run test --no-cache",
-    "test:e2e": "playwright test",
+    "display-js-core-dir": "node dir.js",
+    "test:e2e": "pnpm display-js-core-dir; pnpm playwright test",
     "prepare": "husky install",
     "storybook": "turbo run storybook"
   },
