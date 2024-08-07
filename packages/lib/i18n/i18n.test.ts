@@ -1,12 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  mockEndings,
-  mockLegacySurvey,
-  mockTranslatedEndings,
-  mockTranslatedSurvey,
-  mockTranslatedWelcomeCard,
-  mockWelcomeCard,
-} from "./i18n.mock";
+import { mockLegacySurvey, mockTranslatedSurvey } from "./i18n.mock";
 import { reverseTranslateSurvey } from "./reverseTranslation";
 import { createI18nString } from "./utils";
 

@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { ZActionClass } from "./action-classes";
 import { ZAttributes } from "./attributes";
-import { ZPerson } from "./people";
 import { ZProduct } from "./product";
 import { ZResponseHiddenFieldValue } from "./responses";
 import { ZSurvey } from "./surveys/types";
@@ -63,32 +62,6 @@ export const ZJsWebsiteState = z.object({
 });
 
 export type TJsWebsiteState = z.infer<typeof ZJsWebsiteState>;
-
-export const ZJsAppLegacyStateSync = z.object({
-  person: ZJsPerson.nullish(),
-  userId: z.string().optional(),
-  surveys: z.array(ZSurvey),
-  noCodeActionClasses: z.array(ZActionClass),
-  product: ZProduct,
-  language: z.string().optional(),
-});
-
-export type TJsAppLegacyStateSync = z.infer<typeof ZJsAppLegacyStateSync>;
-
-export const ZJsWebsiteLegacyStateSync = ZJsAppLegacyStateSync.omit({ person: true });
-
-export type TJsWebsiteLegacyStateSync = z.infer<typeof ZJsWebsiteLegacyStateSync>;
-
-export const ZJsLegacyState = z.object({
-  person: ZPerson.nullable().or(z.object({})),
-  session: z.object({}),
-  surveys: z.array(ZSurveyWithTriggers),
-  noCodeActionClasses: z.array(ZActionClass),
-  product: ZProduct,
-  displays: z.array(ZJSWebsiteStateDisplay).optional(),
-});
-
-export type TJsLegacyState = z.infer<typeof ZJsLegacyState>;
 
 export const ZJsWebsiteSyncInput = z.object({
   environmentId: z.string().cuid(),
@@ -178,14 +151,6 @@ export const ZJsPeopleAttributeInput = z.object({
 });
 
 export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;
-
-export const ZJsPeopleLegacyAttributeInput = z.object({
-  environmentId: z.string().cuid(),
-  key: z.string(),
-  value: z.string(),
-});
-
-export type TJsPeopleLegacyAttributeInput = z.infer<typeof ZJsPeopleLegacyAttributeInput>;
 
 export const ZJsActionInput = z.object({
   environmentId: z.string().cuid(),

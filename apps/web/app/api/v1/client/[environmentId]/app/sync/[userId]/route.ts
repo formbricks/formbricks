@@ -24,8 +24,7 @@ import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import { transformToLegacySurvey } from "@formbricks/lib/survey/utils";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
-import { TJsAppLegacyStateSync, TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
-import { TProductLegacy } from "@formbricks/types/product";
+import { TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -181,7 +180,7 @@ export const GET = async (
       throw new Error("Product not found");
     }
 
-    const updatedProduct: TProductLegacy = {
+    const updatedProduct: any = {
       ...product,
       brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
       ...(product.styling.highlightBorderColor?.light && {
@@ -197,7 +196,7 @@ export const GET = async (
     let transformedSurveys: TSurvey[] = surveys;
 
     // creating state object
-    let state: TJsAppStateSync | TJsAppLegacyStateSync = {
+    let state: TJsAppStateSync = {
       surveys: !isMonthlyResponsesLimitReached
         ? transformedSurveys.map((survey) => replaceAttributeRecall(survey, attributes))
         : [],
@@ -218,7 +217,7 @@ export const GET = async (
         })
       );
 
-      state = {
+      const legacyState: any = {
         surveys: !isMonthlyResponsesLimitReached
           ? transformedSurveys.map((survey) => replaceAttributeRecallInLegacySurveys(survey, attributes))
           : [],
@@ -227,6 +226,7 @@ export const GET = async (
         language,
         product: updatedProduct,
       };
+      return responses.successResponse({ ...legacyState }, true);
     }
 
     return responses.successResponse({ ...state }, true);
