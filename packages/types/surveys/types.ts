@@ -20,11 +20,8 @@ export const ZI18nString = z.record(z.string()).refine((obj) => "default" in obj
 
 export type TI18nString = z.infer<typeof ZI18nString>;
 
-const ZEndScreenType = z.union([z.literal("endScreen"), z.literal("redirectToUrl")]);
-
 const ZSurveyEndingBase = z.object({
   id: z.string().cuid2(),
-  type: ZEndScreenType,
 });
 
 export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
@@ -36,6 +33,7 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
+
 export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
@@ -43,9 +41,16 @@ export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   url: z.string().url("Invalid redirect Url in Ending card").optional(),
   label: z.string().optional(),
 });
+
 export type TSurveyRedirectUrlCard = z.infer<typeof ZSurveyRedirectUrlCard>;
 
-export const ZSurveyEndings = z.array(z.union([ZSurveyEndScreenCard, ZSurveyRedirectUrlCard]));
+export const ZSurveyEnding = z.union([ZSurveyEndScreenCard, ZSurveyRedirectUrlCard]);
+
+export type TSurveyEnding = z.infer<typeof ZSurveyEnding>;
+
+export const ZSurveyEndings = z.array(ZSurveyEnding);
+
+export type TSurveyEndings = z.infer<typeof ZSurveyEnding>;
 
 export enum TSurveyQuestionTypeEnum {
   FileUpload = "fileUpload",
@@ -103,6 +108,8 @@ export const ZSurveyWelcomeCard = z
     message: "Welcome card must have a headline",
   });
 
+export type TSurveyWelcomeCard = z.infer<typeof ZSurveyWelcomeCard>;
+
 export const ZSurveyHiddenFields = z.object({
   enabled: z.boolean(),
   fieldIds: z.optional(
@@ -134,6 +141,8 @@ export const ZSurveyHiddenFields = z.object({
   ),
 });
 
+export type TSurveyHiddenFields = z.infer<typeof ZSurveyHiddenFields>;
+
 export const ZSurveyProductOverwrites = z.object({
   brandColor: ZColor.nullish(),
   highlightBorderColor: ZColor.nullish(),
@@ -163,6 +172,8 @@ export const ZSurveyClosedMessage = z
   .nullable()
   .optional();
 
+export type TSurveyClosedMessage = z.infer<typeof ZSurveyClosedMessage>;
+
 export const ZSurveySingleUse = z
   .object({
     enabled: z.boolean(),
@@ -173,14 +184,6 @@ export const ZSurveySingleUse = z
   .nullable();
 
 export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
-
-export type TSurveyWelcomeCard = z.infer<typeof ZSurveyWelcomeCard>;
-
-export type TSurveyEndings = z.infer<typeof ZSurveyEndings>;
-
-export type TSurveyHiddenFields = z.infer<typeof ZSurveyHiddenFields>;
-
-export type TSurveyClosedMessage = z.infer<typeof ZSurveyClosedMessage>;
 
 export const ZSurveyChoice = z.object({
   id: z.string(),
