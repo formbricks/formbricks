@@ -78,8 +78,8 @@ export const CTAQuestion = ({
               onClick={() => {
                 const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
                 setTtc(updatedTtcObj);
-                onSubmit({ [question.id]: "dismissed" }, updatedTtcObj);
-                onChange({ [question.id]: "dismissed" });
+                onSubmit({ [question.id]: "" }, updatedTtcObj);
+                onChange({ [question.id]: "" });
               }}
               className="fb-text-heading focus:fb-ring-focus fb-mr-4 fb-flex fb-items-center fb-rounded-md fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
               {getLocalizedValue(question.dismissButtonLabel, languageCode) || "Skip"}
