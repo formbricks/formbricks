@@ -196,7 +196,7 @@ export const updateActionClass = async (
       },
       select: {
         ...selectActionClass,
-        surveys: {
+        surveyTriggers: {
           select: {
             surveyId: true,
           },
@@ -212,7 +212,7 @@ export const updateActionClass = async (
     });
 
     // @ts-expect-error
-    const surveyIds = result.surveys.map((survey) => survey.surveyId);
+    const surveyIds = result.surveyTriggers.map((survey) => survey.surveyId);
     for (const surveyId of surveyIds) {
       surveyCache.revalidate({
         id: surveyId,
