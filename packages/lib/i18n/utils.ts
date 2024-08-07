@@ -841,6 +841,8 @@ export const getLanguageLabel = (languageCode: string) => {
   return `${language?.english}`;
 };
 
+// Helper function to add language keys to a multi-language object (e.g. survey or question)
+// Iterates over the object recursively and adds empty strings for new language keys
 export const addMultiLanguageLabels = (object: any, languageSymbols: string[]): any => {
   // Helper function to add language keys to a multi-language object
   function addLanguageKeys(obj: { default: string; [key: string]: string }) {
