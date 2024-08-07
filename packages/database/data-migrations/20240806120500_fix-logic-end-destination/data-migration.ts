@@ -36,13 +36,12 @@ async function runMigration(): Promise<void> {
       let transformedSurveyCount = 0;
 
       const updatePromises = surveysWithEndDestination.map((survey) => {
-        transformedSurveyCount++;
         const updatedSurvey = structuredClone(survey);
 
         // Remove logic rule if there are no endings
-        if (survey.endings.length === 0) {
+        if (updatedSurvey.endings.length === 0) {
           // remove logic rule if there are no endings
-          survey.questions.forEach((question) => {
+          updatedSurvey.questions.forEach((question) => {
             if (typeof question.logic === "undefined") {
               return;
             }
@@ -57,7 +56,7 @@ async function runMigration(): Promise<void> {
         const firstEnding = survey.endings[0];
 
         // replace logic destination with ending id
-        survey.questions.forEach((question) => {
+        updatedSurvey.questions.forEach((question) => {
           if (typeof question.logic === "undefined") {
             return;
           }
@@ -67,6 +66,8 @@ async function runMigration(): Promise<void> {
             }
           });
         });
+
+        transformedSurveyCount++;
 
         // Return the update promise
         return tx.survey.update({
