@@ -1,5 +1,3 @@
- 
-
 /* eslint-disable @typescript-eslint/no-unsafe-call --
  * Required for dynamic function calls
  */
@@ -9,13 +7,9 @@
   * Required for logging errors
 */
 import { type Result } from "@formbricks/types/error-handlers";
-import { MethodQueue } from "../method-queue";
-
-const methodQueue = new MethodQueue();
 
 let isInitializing = false;
 let isInitialized = false;
-let apiHost: string | null = null;
 
 // Load the SDK, return the result
 const loadFormbricksSDK = async (apiHostParam: string, sdkType: "app" | "website"): Promise<Result<void>> => {
@@ -63,62 +57,48 @@ const loadFormbricksSDK = async (apiHostParam: string, sdkType: "app" | "website
   return { ok: true, data: undefined };
 };
 
+const functionsToProcess: { prop: string; args: unknown[] }[] = [];
+
 export const loadFormbricksToProxy = async (
   prop: string,
   sdkType: "app" | "website",
   ...args: unknown[]
 ): Promise<void> => {
-  const executeMethod = async (): Promise<unknown> => {
+  // all of this should happen when not initialized:
+  if (!isInitialized) {
     if (prop === "init") {
+      // reset the initialization state
+
       if (isInitializing) {
-        console.warn(
-          "🧱 Formbricks - Warning: Initialization already in progress. Skipping redundant init call."
-        );
+        console.warn("🧱 Formbricks - Warning: Formbricks is already initializing.");
         return;
       }
 
-      // store the apiHost and reset isInitialized, isInitializing
-      apiHost = (args[0] as { apiHost: string }).apiHost;
+      // reset the initialization state
       isInitializing = true;
       isInitialized = false;
-    } else if (!isInitialized) {
-      return;
-    }
 
-    if (!window.formbricks && apiHost) {
+      const apiHost = (args[0] as { apiHost: string }).apiHost;
       const loadSDKResult = await loadFormbricksSDK(apiHost, sdkType);
-      if (!loadSDKResult.ok) {
-        console.error(`🧱 Formbricks - Error: ${loadSDKResult.error.message}`);
-        return;
-      }
-    }
 
-    try {
-      if (window.formbricks) {
-        // @ts-expect-error -- Required for dynamic function calls
-        await window.formbricks[prop](...args);
-
-        // if the method was init, set isInitialized to true
-        if (prop === "init") {
+      if (loadSDKResult.ok) {
+        if (window.formbricks) {
+          // pass the queue to the formbricks object
+          // @ts-expect-error -- Required for dynamic function calls
+          await window.formbricks._initWithQueue(...args, functionsToProcess);
           isInitializing = false;
           isInitialized = true;
-          void methodQueue.run();
         }
       }
-    } catch (error: unknown) {
-      console.error("🧱 Formbricks - Global error: ", error);
-      throw error;
-    }
-  };
+    } else {
+      console.warn(
+        "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization."
+      );
 
-  if (prop === "init") {
-    await executeMethod();
-  } else if (isInitialized) {
-    methodQueue.add(executeMethod);
-  } else {
-    console.warn(
-      "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization."
-    );
-    methodQueue.add(executeMethod, false);
+      functionsToProcess.push({ prop, args });
+    }
+  } else if (window.formbricks) {
+    // @ts-expect-error -- Required for dynamic function calls
+    await window.formbricks[prop](...args);
   }
 };

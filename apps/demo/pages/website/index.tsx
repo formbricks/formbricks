@@ -37,11 +37,13 @@ const AppPage = ({}) => {
         language: "en",
       };
 
-      formbricks.init({
-        environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
-        apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
-        attributes: defaultAttributes,
-      });
+      setTimeout(() => {
+        formbricks.init({
+          environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
+          apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
+          attributes: defaultAttributes,
+        });
+      }, 5000);
     }
 
     // Connect next.js router to Formbricks
@@ -128,6 +130,14 @@ const AppPage = ({}) => {
               }}>
               Reset
             </button>
+
+            <button
+              onClick={() => {
+                formbricks.track("Test Action");
+              }}>
+              Test Action
+            </button>
+
             <p className="text-xs text-slate-700 dark:text-slate-300">
               If you made a change in Formbricks app and it does not seem to work, hit &apos;Reset&apos; and
               try again.
