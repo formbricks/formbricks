@@ -200,7 +200,8 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
                         },
                         firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
                           ? "h-[46px]"
-                          : "h-10"
+                          : "h-10",
+                        firstQuestion.scale === "star" ? "h-12" : "h-10"
                       )}
                       href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
                       key={i}>
@@ -412,11 +413,19 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
           <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
             {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
-          {Array.from({ length: 6 }).map((_, index) => (
+          {[
+            "Address Line 1",
+            "Address Line 2",
+            "City / Town",
+            "State / Region",
+            "ZIP / Post Code",
+            "Country",
+          ].map((label) => (
             <Section
-              className="border-input-border-color bg-input-color rounded-custom mt-4 block h-10 w-full border border-solid"
-              key={index}
-            />
+              className="border-input-border-color bg-input-color rounded-custom mt-4 block h-10 w-full border border-solid py-2 pl-2 text-slate-400"
+              key={label}>
+              {label}
+            </Section>
           ))}
           <EmailFooter />
         </EmailTemplateWrapper>
