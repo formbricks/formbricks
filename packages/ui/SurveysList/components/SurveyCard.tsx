@@ -143,13 +143,18 @@ export const SurveyCard = ({
           <SurveyTypeIndicator type={survey.type} />
         </div>
 
-        <div className="col-span-4 grid w-full grid-cols-5 place-items-center">
+        <div className="col-span-4 grid w-full grid-cols-7 place-items-center">
           <div className="col-span-2 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
             {convertDateString(survey.createdAt.toString())}
           </div>
           <div className="col-span-2 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
             {timeSince(survey.updatedAt.toString())}
           </div>
+          {/* overflow auto has been used to handle the edge case of long names */}
+          <div className="overflow-autotext-ellipsis col-span-2 text-sm text-slate-600">
+            {survey.creator.name}
+          </div>
+
           <div className="place-self-end">
             <SurveyDropDownMenu
               survey={survey}
