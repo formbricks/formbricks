@@ -1,9 +1,4 @@
 import { z } from "zod";
-import {
-  ZLegacySurveyQuestions,
-  ZLegacySurveyThankYouCard,
-  ZLegacySurveyWelcomeCard,
-} from "./legacy-surveys";
 import { ZProductConfigChannel, ZProductConfigIndustry } from "./product";
 import { ZSurveyEndings, ZSurveyHiddenFields, ZSurveyQuestions, ZSurveyWelcomeCard } from "./surveys/types";
 import { ZUserObjective } from "./user";
@@ -29,18 +24,6 @@ export const ZTemplate = z.object({
 });
 
 export type TTemplate = z.infer<typeof ZTemplate>;
-
-export const ZLegacyTemplate = ZTemplate.extend({
-  preset: z.object({
-    name: z.string(),
-    welcomeCard: ZLegacySurveyWelcomeCard,
-    questions: ZLegacySurveyQuestions,
-    thankYouCard: ZLegacySurveyThankYouCard,
-    hiddenFields: ZSurveyHiddenFields,
-  }),
-});
-
-export type TLegacyTemplate = z.infer<typeof ZLegacyTemplate>;
 
 export const ZTemplateFilter = z.union([
   ZProductConfigChannel,

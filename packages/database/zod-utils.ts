@@ -20,6 +20,7 @@ export {
   ZSurveyStyling,
   ZSurveySingleUse,
   ZSurveyInlineTriggers,
+  ZSurveyEnding,
 } from "@formbricks/types/surveys/types";
 
 export { ZSegmentFilters } from "@formbricks/types/segment";

@@ -14,11 +14,10 @@ import {
 } from "@formbricks/lib/posthogServer";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
+import { getSurveys } from "@formbricks/lib/survey/service";
+import { transformToLegacySurvey } from "@formbricks/lib/survey/utils";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
-import { TJsWebsiteLegacyStateSync, TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";
-import { TLegacySurvey } from "@formbricks/types/legacy-surveys";
-import { TProductLegacy } from "@formbricks/types/product";
+import { TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -122,7 +121,7 @@ export const GET = async (
       // && (!survey.segment || survey.segment.filters.length === 0)
     );
 
-    const updatedProduct: TProductLegacy = {
+    const updatedProduct: any = {
       ...product,
       brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
       ...(product.styling.highlightBorderColor?.light && {
@@ -133,8 +132,8 @@ export const GET = async (
     const noCodeActionClasses = actionClasses.filter((actionClass) => actionClass.type === "noCode");
 
     // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
-    let transformedSurveys: TLegacySurvey[] | TSurvey[] = filteredSurveys;
-    let state: TJsWebsiteStateSync | TJsWebsiteLegacyStateSync = {
+    let transformedSurveys: TSurvey[] = filteredSurveys;
+    let state: TJsWebsiteStateSync = {
       surveys: !isWebsiteSurveyResponseLimitReached ? transformedSurveys : [],
       actionClasses,
       product: updatedProduct,
@@ -152,11 +151,16 @@ export const GET = async (
         })
       );
 
-      state = {
+      const legacyState: any = {
         surveys: isWebsiteSurveyResponseLimitReached ? [] : transformedSurveys,
         noCodeActionClasses,
         product: updatedProduct,
       };
+      return responses.successResponse(
+        { ...legacyState },
+        true,
+        "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
+      );
     }
 
     return responses.successResponse(
