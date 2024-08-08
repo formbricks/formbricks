@@ -82,12 +82,15 @@ COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migrations ./
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
+# Install Prisma globally
+# RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION
+
+
+RUN npm install -g prisma
+
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
 USER nextjs
-
-# Install Prisma globally
-RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION
 
 # Prepare volume for uploads
 RUN mkdir -p /home/nextjs/apps/web/uploads/
