@@ -49,7 +49,6 @@ async function runMigration(): Promise<void> {
           const updatedSurvey: UpdatedSurvey = structuredClone(survey) as UpdatedSurvey;
 
           if (survey.redirectUrl) {
-            // @ts-expect-error -- TS is not able to infer the type of updatedSurvey
             updatedSurvey.endings = [
               {
                 type: "redirectToUrl",
@@ -59,7 +58,6 @@ async function runMigration(): Promise<void> {
               },
             ];
           } else if (survey.thankYouCard?.enabled) {
-            // @ts-expect-error -- TS is not able to infer the type of updatedSurvey
             updatedSurvey.endings = [
               {
                 ...survey.thankYouCard,
@@ -68,7 +66,6 @@ async function runMigration(): Promise<void> {
               },
             ];
           } else {
-            // @ts-expect-error -- TS is not able to infer the type of updatedSurvey
             updatedSurvey.endings = [];
           }
 

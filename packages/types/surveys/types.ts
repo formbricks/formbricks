@@ -50,7 +50,7 @@ export type TSurveyEnding = z.infer<typeof ZSurveyEnding>;
 
 export const ZSurveyEndings = z.array(ZSurveyEnding);
 
-export type TSurveyEndings = z.infer<typeof ZSurveyEnding>;
+export type TSurveyEndings = z.infer<typeof ZSurveyEndings>;
 
 export enum TSurveyQuestionTypeEnum {
   FileUpload = "fileUpload",
