@@ -65,6 +65,8 @@ export const LinkSurvey = ({
     return surveyLanguage.default === true;
   })?.language.code;
 
+  const [isSurveyLoaded, setIsSurveyLoaded] = useState(false);
+
   const startAt = searchParams?.get("startAt");
   const isStartAtValid = useMemo(() => {
     if (!startAt) return false;
@@ -213,7 +215,8 @@ export const LinkSurvey = ({
       webAppUrl={webAppUrl}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       IMPRINT_URL={IMPRINT_URL}
-      PRIVACY_URL={PRIVACY_URL}>
+      PRIVACY_URL={PRIVACY_URL}
+      isSurveyLoaded={isSurveyLoaded}>
       <SurveyInline
         survey={survey}
         styling={determineStyling()}
@@ -292,6 +295,7 @@ export const LinkSurvey = ({
         startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
         fullSizeCards={isEmbed ? true : false}
         hiddenFieldsRecord={hiddenFieldsRecord}
+        setIsSurveyLoaded={setIsSurveyLoaded}
       />
     </LinkSurveyWrapper>
   );
