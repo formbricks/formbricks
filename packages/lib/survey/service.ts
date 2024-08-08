@@ -286,6 +286,7 @@ export const getSurveys = reactCache(
   ): Promise<TSurvey[]> =>
     cache(
       async () => {
+        console.log({ offset });
         validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
         try {
@@ -306,9 +307,18 @@ export const getSurveys = reactCache(
 
             surveys = inProgressSurveys.map(transformPrismaSurvey);
 
-            // Check if additional surveys need to be fetched to fill the limit
-            if (limit && inProgressSurveys.length < limit) {
+            const inProgressSurveyCount = await prisma.survey.count({
+              where: {
+                environmentId,
+                status: "inProgress",
+                ...buildWhereClause(filterCriteria),
+              },
+            });
+            // Determine if additional surveys are needed
+            if (offset !== undefined && limit && inProgressSurveys.length < limit) {
               const remainingLimit = limit - inProgressSurveys.length;
+              const newOffset = Math.max(0, offset - inProgressSurveyCount);
+              console.log(newOffset);
               const additionalSurveys = await prisma.survey.findMany({
                 where: {
                   environmentId,
@@ -318,11 +328,13 @@ export const getSurveys = reactCache(
                 select: selectSurvey,
                 orderBy: buildOrderByClause("updatedAt"),
                 take: remainingLimit,
+                skip: newOffset,
               });
 
               surveys = [...surveys, ...additionalSurveys.map(transformPrismaSurvey)];
             }
           } else {
+            // Fetch surveys normally with pagination
             const surveysPrisma = await prisma.survey.findMany({
               where: {
                 environmentId,
