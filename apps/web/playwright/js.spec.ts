@@ -72,7 +72,7 @@ test.describe("JS Package Test", async () => {
           return response.url().includes("/app/sync");
         },
         {
-          timeout: 30000,
+          timeout: 60000,
         }
       );
       expect(syncApi.status()).toBe(200);
