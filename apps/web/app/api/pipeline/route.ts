@@ -106,8 +106,9 @@ export const POST = async (request: Request) => {
     const survey = surveyData ?? undefined;
 
     if (integrations.length > 0 && survey) {
-      handleIntegrations(integrations, inputValidation.data, survey);
+      await handleIntegrations(integrations, inputValidation.data, survey);
     }
+
     // filter all users that have email notifications enabled for this survey
     const usersWithNotifications = users.filter((user) => {
       const notificationSettings: TUserNotificationSettings | null = user.notificationSettings;

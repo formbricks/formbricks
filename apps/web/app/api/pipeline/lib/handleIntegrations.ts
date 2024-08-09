@@ -4,6 +4,7 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
 import { processResponseData } from "@formbricks/lib/responses";
 import { writeDataToSlack } from "@formbricks/lib/slack/service";
+import { Result } from "@formbricks/types/error-handlers";
 import { TIntegration } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
@@ -54,16 +55,36 @@ export const handleIntegrations = async (
   for (const integration of integrations) {
     switch (integration.type) {
       case "googleSheets":
-        await handleGoogleSheetsIntegration(integration as TIntegrationGoogleSheets, data, survey);
+        const googleResult = await handleGoogleSheetsIntegration(
+          integration as TIntegrationGoogleSheets,
+          data,
+          survey
+        );
+        if (!googleResult.ok) {
+          console.error("Error in google sheets integration: ", googleResult.error);
+        }
         break;
       case "slack":
-        await handleSlackIntegration(integration as TIntegrationSlack, data, survey);
+        const slackResult = await handleSlackIntegration(integration as TIntegrationSlack, data, survey);
+        if (!slackResult.ok) {
+          console.error("Error in slack integration: ", slackResult.error);
+        }
         break;
       case "airtable":
-        await handleAirtableIntegration(integration as TIntegrationAirtable, data, survey);
+        const airtableResult = await handleAirtableIntegration(
+          integration as TIntegrationAirtable,
+          data,
+          survey
+        );
+        if (!airtableResult.ok) {
+          console.error("Error in airtable integration: ", airtableResult.error);
+        }
         break;
       case "notion":
-        await handleNotionIntegration(integration as TIntegrationNotion, data, survey);
+        const notionResult = await handleNotionIntegration(integration as TIntegrationNotion, data, survey);
+        if (!notionResult.ok) {
+          console.error("Error in notion integration: ", notionResult.error);
+        }
         break;
     }
   }
@@ -73,20 +94,32 @@ const handleAirtableIntegration = async (
   integration: TIntegrationAirtable,
   data: TPipelineInput,
   survey: TSurvey
-) => {
-  if (integration.config.data.length > 0) {
-    for (const element of integration.config.data) {
-      if (element.surveyId === data.surveyId) {
-        const values = await processDataForIntegration(
-          data,
-          survey,
-          !!element.includeMetadata,
-          !!element.includeHiddenFields,
-          element.questionIds
-        );
-        await airtableWriteData(integration.config.key, element, values);
+): Promise<Result<void, Error>> => {
+  try {
+    if (integration.config.data.length > 0) {
+      for (const element of integration.config.data) {
+        if (element.surveyId === data.surveyId) {
+          const values = await processDataForIntegration(
+            data,
+            survey,
+            !!element.includeMetadata,
+            !!element.includeHiddenFields,
+            element.questionIds
+          );
+          await airtableWriteData(integration.config.key, element, values);
+        }
       }
     }
+
+    return {
+      ok: true,
+      data: undefined,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err,
+    };
   }
 };
 
@@ -94,25 +127,37 @@ const handleGoogleSheetsIntegration = async (
   integration: TIntegrationGoogleSheets,
   data: TPipelineInput,
   survey: TSurvey
-) => {
-  if (integration.config.data.length > 0) {
-    for (const element of integration.config.data) {
-      if (element.surveyId === data.surveyId) {
-        const values = await processDataForIntegration(
-          data,
-          survey,
-          !!element.includeMetadata,
-          !!element.includeHiddenFields,
-          element.questionIds
-        );
-        const integrationData = structuredClone(integration);
-        integrationData.config.data.forEach((data) => {
-          data.createdAt = new Date(data.createdAt);
-        });
+): Promise<Result<void, Error>> => {
+  try {
+    if (integration.config.data.length > 0) {
+      for (const element of integration.config.data) {
+        if (element.surveyId === data.surveyId) {
+          const values = await processDataForIntegration(
+            data,
+            survey,
+            !!element.includeMetadata,
+            !!element.includeHiddenFields,
+            element.questionIds
+          );
+          const integrationData = structuredClone(integration);
+          integrationData.config.data.forEach((data) => {
+            data.createdAt = new Date(data.createdAt);
+          });
 
-        await writeData(integrationData, element.spreadsheetId, values);
+          await writeData(integrationData, element.spreadsheetId, values);
+        }
       }
     }
+
+    return {
+      ok: true,
+      data: undefined,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err,
+    };
   }
 };
 
@@ -120,20 +165,32 @@ const handleSlackIntegration = async (
   integration: TIntegrationSlack,
   data: TPipelineInput,
   survey: TSurvey
-) => {
-  if (integration.config.data.length > 0) {
-    for (const element of integration.config.data) {
-      if (element.surveyId === data.surveyId) {
-        const values = await processDataForIntegration(
-          data,
-          survey,
-          !!element.includeMetadata,
-          !!element.includeHiddenFields,
-          element.questionIds
-        );
-        await writeDataToSlack(integration.config.key, element.channelId, values, survey?.name);
+): Promise<Result<void, Error>> => {
+  try {
+    if (integration.config.data.length > 0) {
+      for (const element of integration.config.data) {
+        if (element.surveyId === data.surveyId) {
+          const values = await processDataForIntegration(
+            data,
+            survey,
+            !!element.includeMetadata,
+            !!element.includeHiddenFields,
+            element.questionIds
+          );
+          await writeDataToSlack(integration.config.key, element.channelId, values, survey?.name);
+        }
       }
     }
+
+    return {
+      ok: true,
+      data: undefined,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err,
+    };
   }
 };
 
@@ -185,14 +242,26 @@ const handleNotionIntegration = async (
   integration: TIntegrationNotion,
   data: TPipelineInput,
   surveyData: TSurvey
-) => {
-  if (integration.config.data.length > 0) {
-    for (const element of integration.config.data) {
-      if (element.surveyId === data.surveyId) {
-        const properties = buildNotionPayloadProperties(element.mapping, data, surveyData);
-        await writeNotionData(element.databaseId, properties, integration.config);
+): Promise<Result<void, Error>> => {
+  try {
+    if (integration.config.data.length > 0) {
+      for (const element of integration.config.data) {
+        if (element.surveyId === data.surveyId) {
+          const properties = buildNotionPayloadProperties(element.mapping, data, surveyData);
+          await writeNotionData(element.databaseId, properties, integration.config);
+        }
       }
     }
+
+    return {
+      ok: true,
+      data: undefined,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err,
+    };
   }
 };
 
