@@ -63,20 +63,26 @@ test.describe("JS Package Test", async () => {
       let htmlFile = replaceEnvironmentIdInHtml(htmlFilePath, environmentId);
       await page.goto(htmlFile);
 
-      page.on("requestfailed", (request) => {
-        console.log(`Request failed: ${request.url()}`);
+      page.on("request", async (request) => {
+        console.log("Request URL: ", request.url());
+        const isSyncRequest = request.url().includes("/app/sync");
+        if (isSyncRequest) {
+          console.log("Sync Request URL: ", request.url());
+          const res = await request.response();
+          console.log("res status: ", res?.status());
+        }
       });
 
       // Formbricks In App Sync has happened
       const syncApi = await page.waitForResponse(
         (response) => {
-          console.log({ response: JSON.stringify(response, null, 2) });
           return response.url().includes("/app/sync");
         },
         {
           timeout: 120000,
         }
       );
+      console.log("response status aa gaya: ", syncApi.status());
 
       expect(syncApi.status()).toBe(200);
 
