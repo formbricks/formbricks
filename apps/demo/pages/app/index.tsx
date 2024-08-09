@@ -40,12 +40,14 @@ const AppPage = ({}) => {
         "Init Attribute 2": "two",
       };
 
-      formbricks.init({
-        environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
-        apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
-        userId,
-        attributes: userInitAttributes,
-      });
+      setTimeout(() => {
+        formbricks.init({
+          environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
+          apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
+          userId,
+          attributes: userInitAttributes,
+        });
+      }, 5000);
     }
 
     // Connect next.js router to Formbricks
@@ -140,6 +142,14 @@ const AppPage = ({}) => {
 
           <div className="p-6">
             <div>
+              <button
+                onClick={() => {
+                  formbricks.track("code", { hiddenFields: { hf1: "Hey!" } });
+                }}
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
+                Test action
+              </button>
+
               <button className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 No-Code Action
               </button>
