@@ -63,6 +63,8 @@ test.describe("JS Package Test", async () => {
       let htmlFile = replaceEnvironmentIdInHtml(htmlFilePath, environmentId);
       await page.goto(htmlFile);
 
+      console.log("Page URL: ", page.url());
+
       page.on("request", async (request) => {
         console.log("Request URL: ", request.url());
         const isSyncRequest = request.url().includes("/app/sync");
