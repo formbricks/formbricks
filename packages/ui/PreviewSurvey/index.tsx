@@ -143,6 +143,14 @@ export const PreviewSurvey = ({
     return product.styling;
   }, [product.styling, survey.styling]);
 
+  const cardArrangement = useMemo(() => {
+    if (survey.type === "link") {
+      return styling.cardArrangement?.linkSurveys ?? "simple";
+    } else {
+      return styling.cardArrangement?.appSurveys ?? "simple";
+    }
+  }, [survey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.appSurveys]);
+
   const updateQuestionId = useCallback(
     (newQuestionId: string) => {
       if (!newQuestionId || newQuestionId === "hidden" || newQuestionId === "multiLanguage") return;
@@ -246,7 +254,8 @@ export const PreviewSurvey = ({
                   darkOverlay={darkOverlay}
                   clickOutsideClose={clickOutsideClose}
                   borderRadius={styling?.roundness ?? 8}
-                  background={styling?.cardBackgroundColor?.light}>
+                  background={styling?.cardBackgroundColor?.light}
+                  cardArrangement={cardArrangement}>
                   <SurveyInline
                     survey={survey}
                     isBrandingEnabled={product.inAppSurveyBranding}

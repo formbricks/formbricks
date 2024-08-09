@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
+import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { getPlacementStyle } from "../lib/utils";
 
 interface ModalProps {
@@ -14,6 +15,7 @@ interface ModalProps {
   darkOverlay: boolean;
   borderRadius?: number;
   background?: string;
+  cardArrangement?: TCardArrangementOptions;
 }
 
 export const Modal = ({
@@ -25,6 +27,7 @@ export const Modal = ({
   darkOverlay,
   borderRadius,
   background,
+  cardArrangement,
 }: ModalProps) => {
   const [show, setShow] = useState(true);
   const modalRef = useRef<HTMLDivElement | null>(null);
@@ -148,6 +151,8 @@ export const Modal = ({
         className={cn(
           "no-scrollbar pointer-events-auto absolute max-h-[90%] w-full max-w-sm transition-all duration-500 ease-in-out",
           previewMode === "desktop" ? getPlacementStyle(placement) : "max-w-full",
+          previewMode === "desktop" || cardArrangement === "simple" ? "h-fit" : "h-full",
+          previewMode === "mobile" && "overflow-hidden",
           slidingAnimationClass
         )}>
         {children}
