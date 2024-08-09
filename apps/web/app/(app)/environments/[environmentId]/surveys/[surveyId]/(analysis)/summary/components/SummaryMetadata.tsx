@@ -18,7 +18,7 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
             {percentage && percentage !== "NaN%" && (
               <>
                 <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">{percentage}</span>
-                {percentage > 100 && (
+                {Number(percentage) > 100 && (
                   <TooltipProvider delayDuration={50}>
                     <Tooltip>
                       <TooltipTrigger>
@@ -26,8 +26,8 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>
-                          The percentage is greater than 100% because the responses are created using API and
-                          not through the survey.
+                          The percentage is greater than 100% because the responses were created via API and
+                          not through a survey (there are less displays than responses).
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -80,7 +80,7 @@ export const SummaryMetadata = ({ setShowDropOffs, showDropOffs, surveySummary }
           label="Impressions"
           percentage={null}
           value={displayCount === 0 ? <span>-</span> : displayCount}
-          tooltipText="Number of times the survey has been viewed.\n test"
+          tooltipText="Number of times the survey has been viewed."
         />
         <StatCard
           label="Starts"
@@ -114,8 +114,8 @@ export const SummaryMetadata = ({ setShowDropOffs, showDropOffs, surveySummary }
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>
-                                The percentage is greater than 100% because the responses are created using
-                                API and not through the survey.
+                                The percentage is greater than 100% because the responses were created via API
+                                and not through a survey (there are less displays than responses).
                               </p>
                             </TooltipContent>
                           </Tooltip>
