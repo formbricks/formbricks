@@ -108,6 +108,8 @@ export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: stri
   let htmlContent = readFileSync(filePath, "utf-8");
   htmlContent = htmlContent.replace(/environmentId: ".*?"/, `environmentId: "${environmentId}"`);
 
+  console.log({ filePath });
+
   writeFileSync(filePath, htmlContent, { mode: 1 });
   return "file:///" + filePath;
 };
