@@ -10,7 +10,7 @@ import {
   Text,
 } from "@react-email/components";
 import { render } from "@react-email/render";
-import { CalendarDaysIcon } from "lucide-react";
+import { CalendarDaysIcon, UploadIcon } from "lucide-react";
 import React from "react";
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -303,13 +303,13 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
             {firstQuestion.choices.map((choice) =>
               firstQuestion.allowMulti ? (
                 <Img
-                  className="rounded-custom mb-1 mr-1 inline-block h-[110px] w-[220px]"
+                  className="rounded-custom mb-1 mr-1 inline-block h-[140px] w-[220px]"
                   key={choice.id}
                   src={choice.imageUrl}
                 />
               ) : (
                 <Link
-                  className="rounded-custom mb-1 mr-1 inline-block h-[110px] w-[220px]"
+                  className="rounded-custom mb-1 mr-1 inline-block h-[140px] w-[220px]"
                   href={`${urlWithPrefilling}${firstQuestion.id}=${choice.id}`}
                   key={choice.id}
                   target="_blank">
@@ -439,7 +439,12 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
           <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
             {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
-          <Section className="border-input-border-color rounded-custom mt-4 block h-20 w-full border border-solid bg-slate-50" />
+          <Section className="border-input-border-color rounded-custom mt-4 block flex h-24 w-full items-center justify-center border border-dashed bg-slate-50">
+            <Container className="mx-auto flex items-center text-center">
+              <UploadIcon className="mt-6 inline h-5 w-5 text-slate-400" />
+              <Text className="text-slate-400">Click or drag to upload files.</Text>
+            </Container>
+          </Section>
           <EmailFooter />
         </EmailTemplateWrapper>
       );
