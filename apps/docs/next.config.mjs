@@ -1,5 +1,4 @@
 import nextMDX from "@next/mdx";
-
 import { recmaPlugins } from "./mdx/recma.mjs";
 import { rehypePlugins } from "./mdx/rehype.mjs";
 import { remarkPlugins } from "./mdx/remark.mjs";
@@ -105,15 +104,16 @@ const nextConfig = {
         destination: "/app-surveys/user-identification",
         permanent: true,
       },
+      // Global Features
+      {
+        source: "/global/custom-start-end-conditions",
+        destination: "/global/schedule-start-end-dates",
+        permanent: true,
+      },
       // Integrations
       {
         source: "/integrations/:path",
         destination: "/developer-docs/integrations/:path",
-        permanent: true,
-      },
-      {
-        source: "/global/custom-styling",
-        destination: "/global/overwrite-styling",
         permanent: true,
       },
     ];
