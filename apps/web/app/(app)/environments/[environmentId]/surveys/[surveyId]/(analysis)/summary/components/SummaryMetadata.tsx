@@ -13,12 +13,12 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
     <Tooltip>
       <TooltipTrigger>
         <div className="flex h-full cursor-default flex-col justify-between space-y-2 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm">
-          <p className="item-center flex gap-1 text-sm text-slate-600">
+          <p className="flex items-center gap-1 text-sm text-slate-600">
             {label}
-            {percentage && percentage !== "NaN%" && (
+            {typeof percentage === "number" && !isNaN(percentage) && (
               <>
-                <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">{percentage}</span>
-                {Number(percentage) > 100 && (
+                <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">{percentage}%</span>
+                {percentage > 100 && (
                   <TooltipProvider delayDuration={50}>
                     <Tooltip>
                       <TooltipTrigger>
@@ -84,13 +84,13 @@ export const SummaryMetadata = ({ setShowDropOffs, showDropOffs, surveySummary }
         />
         <StatCard
           label="Starts"
-          percentage={`${Math.round(startsPercentage)}%`}
+          percentage={displayCount === 0 && totalResponses > 0 ? null : Math.round(startsPercentage)}
           value={totalResponses === 0 ? <span>-</span> : totalResponses}
           tooltipText="Number of times the survey has been started."
         />
         <StatCard
           label="Completed"
-          percentage={`${Math.round(completedPercentage)}%`}
+          percentage={displayCount === 0 && completedResponses > 0 ? null : Math.round(completedPercentage)}
           value={completedResponses === 0 ? <span>-</span> : completedResponses}
           tooltipText="Number of times the survey has been completed."
         />
@@ -106,21 +106,6 @@ export const SummaryMetadata = ({ setShowDropOffs, showDropOffs, surveySummary }
                   {`${Math.round(dropOffPercentage)}%` !== "NaN%" && (
                     <div className="flex items-center gap-1">
                       <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">{`${Math.round(dropOffPercentage)}%`}</span>
-                      {dropOffPercentage > 100 && (
-                        <TooltipProvider delayDuration={50}>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <InfoIcon className="h-4 w-4 text-slate-600" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>
-                                The percentage is greater than 100% because the responses were created via API
-                                and not through a survey (there are less displays than responses).
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
                     </div>
                   )}
                 </div>
