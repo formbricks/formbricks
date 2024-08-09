@@ -129,6 +129,7 @@ export const SURVEY_BG_COLORS = [
   "#FFCF96",
   "#F6FDC3",
   "#CDFAD5",
+  "transparent",
 ];
 
 // Rate Limiting
