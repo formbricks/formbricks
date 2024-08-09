@@ -51,5 +51,6 @@ export const updateResponse = async (
 };
 
 export const formbricksLogout = async () => {
+  localStorage.clear();
   return await formbricks.logout();
 };

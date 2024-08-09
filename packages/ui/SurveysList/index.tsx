@@ -25,7 +25,7 @@ export const initialFilters: TSurveyFilters = {
   createdBy: [],
   status: [],
   type: [],
-  sortBy: "updatedAt",
+  sortBy: "relevance",
 };
 
 export const SurveysList = ({
@@ -42,36 +42,52 @@ export const SurveysList = ({
   const [hasMore, setHasMore] = useState<boolean>(true);
 
   const [surveyFilters, setSurveyFilters] = useState<TSurveyFilters>(initialFilters);
+  const [isFilterInitialized, setIsFilterInitialized] = useState(false);
 
   const filters = useMemo(() => getFormattedFilters(surveyFilters, userId), [surveyFilters, userId]);
 
   const [orientation, setOrientation] = useState("");
 
   useEffect(() => {
-    // Initialize orientation state with a function that checks if window is defined
-    const orientationFromLocalStorage = localStorage.getItem("surveyOrientation");
-    if (orientationFromLocalStorage) {
-      setOrientation(orientationFromLocalStorage);
-    } else {
-      setOrientation("grid");
-      localStorage.setItem("surveyOrientation", "list");
+    if (typeof window !== "undefined") {
+      const orientationFromLocalStorage = localStorage.getItem("surveyOrientation");
+      if (orientationFromLocalStorage) {
+        setOrientation(orientationFromLocalStorage);
+      } else {
+        setOrientation("grid");
+        localStorage.setItem("surveyOrientation", "grid");
+      }
+
+      const savedFilters = localStorage.getItem("surveyFilters");
+      if (savedFilters) {
+        setSurveyFilters(JSON.parse(savedFilters));
+      }
+      setIsFilterInitialized(true);
     }
   }, []);
 
   useEffect(() => {
-    const fetchInitialSurveys = async () => {
-      setIsFetching(true);
-      const res = await getSurveysAction(environment.id, surveysLimit, undefined, filters);
-      if (res.length < surveysLimit) {
-        setHasMore(false);
-      } else {
-        setHasMore(true);
-      }
-      setSurveys(res);
-      setIsFetching(false);
-    };
-    fetchInitialSurveys();
-  }, [environment.id, surveysLimit, filters]);
+    if (isFilterInitialized) {
+      localStorage.setItem("surveyFilters", JSON.stringify(surveyFilters));
+    }
+  }, [surveyFilters, isFilterInitialized]);
+
+  useEffect(() => {
+    if (isFilterInitialized) {
+      const fetchInitialSurveys = async () => {
+        setIsFetching(true);
+        const res = await getSurveysAction(environment.id, surveysLimit, undefined, filters);
+        if (res.length < surveysLimit) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
+        setSurveys(res);
+        setIsFetching(false);
+      };
+      fetchInitialSurveys();
+    }
+  }, [environment.id, surveysLimit, filters, isFilterInitialized]);
 
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);
