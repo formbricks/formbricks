@@ -1,4 +1,5 @@
 import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
+import { SurveyLoadingAnimation } from "@/app/s/[surveyId]/components/SurveyLoadingAnimation";
 import React from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
@@ -19,6 +20,7 @@ interface LinkSurveyWrapperProps {
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
   webAppUrl: string;
+  isSurveyLoaded: boolean;
 }
 
 export const LinkSurveyWrapper = ({
@@ -33,6 +35,7 @@ export const LinkSurveyWrapper = ({
   PRIVACY_URL,
   IS_FORMBRICKS_CLOUD,
   webAppUrl,
+  isSurveyLoaded,
 }: LinkSurveyWrapperProps) => {
   //for embedded survey strip away all surrounding css
   const styling = determineStyling();
@@ -44,12 +47,14 @@ export const LinkSurveyWrapper = ({
           styling.cardArrangement?.linkSurveys === "straight" && "pt-6",
           styling.cardArrangement?.linkSurveys === "casual" && "px-6 py-10"
         )}>
+        <SurveyLoadingAnimation isSurveyLoaded={isSurveyLoaded} />
         {children}
       </div>
     );
   else
     return (
       <div>
+        <SurveyLoadingAnimation isSurveyLoaded={isSurveyLoaded} />
         <MediaBackground survey={survey} product={product}>
           <div className="flex max-h-dvh min-h-dvh items-end justify-center overflow-clip md:items-center">
             {!styling.isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
