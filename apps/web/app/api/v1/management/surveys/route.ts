@@ -1,7 +1,6 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { translateSurvey } from "@formbricks/lib/i18n/utils";
 import { createSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
@@ -38,13 +37,6 @@ export const POST = async (request: Request): Promise<Response> => {
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
 
-    if (surveyInput?.questions && surveyInput.questions[0].headline) {
-      const questionHeadline = surveyInput.questions[0].headline;
-      if (typeof questionHeadline === "string") {
-        // its a legacy survey
-        surveyInput = translateSurvey(surveyInput, []);
-      }
-    }
     const inputValidation = ZSurveyCreateInput.safeParse(surveyInput);
 
     if (!inputValidation.success) {
