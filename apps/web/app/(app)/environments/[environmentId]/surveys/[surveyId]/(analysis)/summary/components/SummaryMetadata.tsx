@@ -101,14 +101,12 @@ export const SummaryMetadata = ({ setShowDropOffs, showDropOffs, surveySummary }
               <div
                 onClick={() => setShowDropOffs(!showDropOffs)}
                 className="group flex h-full w-full cursor-pointer flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
-                <div className="flex items-center text-sm text-slate-600">
+                <span className="text-sm text-slate-600">
                   Drop-Offs
                   {`${Math.round(dropOffPercentage)}%` !== "NaN%" && (
-                    <div className="flex items-center gap-1">
-                      <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">{`${Math.round(dropOffPercentage)}%`}</span>
-                    </div>
+                    <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">{`${Math.round(dropOffPercentage)}%`}</span>
                   )}
-                </div>
+                </span>
                 <div className="flex w-full items-end justify-between">
                   <span className="text-2xl font-bold text-slate-800">
                     {dropOffCount === 0 ? <span>-</span> : dropOffCount}
