@@ -10,6 +10,7 @@ import { MultipleChoiceSingleQuestion } from "@/components/questions/MultipleCho
 import { NPSQuestion } from "@/components/questions/NPSQuestion";
 import { OpenTextQuestion } from "@/components/questions/OpenTextQuestion";
 import { PictureSelectionQuestion } from "@/components/questions/PictureSelectionQuestion";
+import { RankingQuestion } from "@/components/questions/RankingQuestion";
 import { RatingQuestion } from "@/components/questions/RatingQuestion";
 import { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
@@ -256,6 +257,21 @@ export const QuestionConditional = ({
     <AddressQuestion
       question={question}
       value={Array.isArray(value) ? value : undefined}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
+    <RankingQuestion
+      question={question}
+      value={Array.isArray(value) ? value : []}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
