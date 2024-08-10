@@ -9,6 +9,7 @@ import {
   TSurvey,
   TSurveyLanguage,
   TSurveyMultipleChoiceQuestion,
+  TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { isLabelValidForAllLanguages } from "../lib/validation";
@@ -28,8 +29,11 @@ interface ChoiceProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   surveyLanguages: TSurveyLanguage[];
-  question: TSurveyMultipleChoiceQuestion;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceQuestion>) => void;
+  question: TSurveyMultipleChoiceQuestion | TSurveyRankingQuestion;
+  updateQuestion: (
+    questionIdx: number,
+    updatedAttributes: Partial<TSurveyMultipleChoiceQuestion> | Partial<TSurveyRankingQuestion>
+  ) => void;
   surveyLanguageCodes: string[];
   attributeClasses: TAttributeClass[];
 }

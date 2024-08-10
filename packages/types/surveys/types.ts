@@ -66,6 +66,7 @@ export enum TSurveyQuestionTypeEnum {
   Date = "date",
   Matrix = "matrix",
   Address = "address",
+  Ranking = "ranking",
 }
 
 export const ZSurveyQuestionId = z.string().superRefine((id, ctx) => {
@@ -240,6 +241,11 @@ export const ZSurveyAddressLogic = ZSurveyLogicBase.extend({
   value: z.undefined(),
 });
 
+export const ZSurveyRankingLogic = ZSurveyLogicBase.extend({
+  condition: z.enum(["submitted", "skipped"]).optional(),
+  value: z.union([z.array(z.string()), z.string()]).optional(),
+});
+
 export const ZSurveyConsentLogic = ZSurveyLogicBase.extend({
   condition: z.enum(["skipped", "accepted"]).optional(),
   value: z.undefined(),
@@ -315,6 +321,7 @@ export const ZSurveyLogic = z.union([
   ZSurveyCalLogic,
   ZSurveyMatrixLogic,
   ZSurveyAddressLogic,
+  ZSurveyRankingLogic,
 ]);
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
@@ -485,6 +492,14 @@ export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
 });
 export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 
+export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionTypeEnum.Ranking),
+  choices: z.array(ZSurveyChoice).min(2, { message: "Ranking Question must have at least two options" }),
+  otherOptionPlaceholder: ZI18nString.optional(),
+});
+
+export type TSurveyRankingQuestion = z.infer<typeof ZSurveyRankingQuestion>;
+
 export const ZSurveyQuestion = z.union([
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
@@ -498,6 +513,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyCalQuestion,
   ZSurveyMatrixQuestion,
   ZSurveyAddressQuestion,
+  ZSurveyRankingQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
@@ -520,6 +536,7 @@ export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.PictureSelection,
   TSurveyQuestionTypeEnum.Rating,
   TSurveyQuestionTypeEnum.Cal,
+  TSurveyQuestionTypeEnum.Ranking,
 ]);
 
 export type TSurveyQuestionType = z.infer<typeof ZSurveyQuestionType>;
@@ -1306,6 +1323,28 @@ export const ZSurveyQuestionSummaryAddress = z.object({
 
 export type TSurveyQuestionSummaryAddress = z.infer<typeof ZSurveyQuestionSummaryAddress>;
 
+export const ZSurveyQuestionSummaryRanking = z.object({
+  type: z.literal("ranking"),
+  question: ZSurveyAddressQuestion,
+  responseCount: z.number(),
+  samples: z.array(
+    z.object({
+      id: z.string(),
+      updatedAt: z.date(),
+      value: z.array(z.string()),
+      person: z
+        .object({
+          id: ZId,
+          userId: z.string(),
+        })
+        .nullable(),
+      personAttributes: ZAttributes.nullable(),
+    })
+  ),
+});
+
+export type TSurveyQuestionSummaryRanking = z.infer<typeof ZSurveyQuestionSummaryRanking>;
+
 export const ZSurveyQuestionSummary = z.union([
   ZSurveyQuestionSummaryOpenText,
   ZSurveyQuestionSummaryMultipleChoice,
@@ -1319,6 +1358,7 @@ export const ZSurveyQuestionSummary = z.union([
   ZSurveyQuestionSummaryCal,
   ZSurveyQuestionSummaryMatrix,
   ZSurveyQuestionSummaryAddress,
+  ZSurveyQuestionSummaryRanking,
 ]);
 
 export type TSurveyQuestionSummary = z.infer<typeof ZSurveyQuestionSummary>;

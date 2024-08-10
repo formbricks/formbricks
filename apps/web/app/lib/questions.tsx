@@ -7,6 +7,7 @@ import {
   HomeIcon,
   ImageIcon,
   ListIcon,
+  ListOrderedIcon,
   MessageSquareTextIcon,
   MousePointerClickIcon,
   PhoneIcon,
@@ -28,6 +29,7 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestionTypeEnum,
+  TSurveyRankingQuestion,
   TSurveyRatingQuestion,
 } from "@formbricks/types/surveys/types";
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -213,6 +215,19 @@ export const questionTypes: TQuestion[] = [
       isZipRequired: false,
       isCountryRequired: false,
     } as Partial<TSurveyAddressQuestion>,
+  },
+  {
+    id: QuestionId.Ranking,
+    label: "Ranking",
+    description: "Allow respondents to rank items",
+    icon: ListOrderedIcon,
+    preset: {
+      headline: { default: "Which is better?" },
+      choices: [
+        { id: createId(), label: { default: "🍰" } },
+        { id: createId(), label: { default: "🎂" } },
+      ],
+    } as Partial<TSurveyRankingQuestion>,
   },
 ];
 
