@@ -5,7 +5,7 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 interface NotificatonFooterProps {
   environmentId: string;
 }
-export function NotificationFooter({ environmentId }: NotificatonFooterProps) {
+export function NotificationFooter({ environmentId }: NotificatonFooterProps): React.JSX.Element {
   return (
     <Tailwind>
       <Container className="w-full">
