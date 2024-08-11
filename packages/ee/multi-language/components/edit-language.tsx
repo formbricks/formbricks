@@ -3,6 +3,7 @@
 import { InfoIcon, PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { iso639Languages } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
@@ -88,23 +89,33 @@ export function EditLanguage({ product, environmentId }: EditLanguageProps) {
 
   const handleDeleteLanguage = async (languageId: string) => {
     try {
-      const surveysUsingLanguage = await getSurveysUsingGivenLanguageAction(product.id, languageId);
+      const surveysUsingLanguageResponse = await getSurveysUsingGivenLanguageAction({
+        productId: product.id,
+        languageId,
+      });
 
-      if (surveysUsingLanguage.length > 0) {
-        const surveyList = surveysUsingLanguage.map((surveyName) => `• ${surveyName}`).join("\n");
-        setConfirmationModal({
-          isOpen: true,
-          languageId,
-          text: `You cannot remove this language since it’s still used in these surveys:\n\n${surveyList}\n\nPlease remove the language from these surveys in order to remove it from the product.`,
-          isButtonDisabled: true,
-        });
+      if (surveysUsingLanguageResponse.data) {
+        if (surveysUsingLanguageResponse.data.length > 0) {
+          const surveyList = surveysUsingLanguageResponse.data
+            .map((surveyName) => `• ${surveyName}`)
+            .join("\n");
+          setConfirmationModal({
+            isOpen: true,
+            languageId,
+            text: `You cannot remove this language since it’s still used in these surveys:\n\n${surveyList}\n\nPlease remove the language from these surveys in order to remove it from the product.`,
+            isButtonDisabled: true,
+          });
+        } else {
+          setConfirmationModal({
+            isOpen: true,
+            languageId,
+            text: "Are you sure you want to delete this language? This action cannot be undone.",
+            isButtonDisabled: false,
+          });
+        }
       } else {
-        setConfirmationModal({
-          isOpen: true,
-          languageId,
-          text: "Are you sure you want to delete this language? This action cannot be undone.",
-          isButtonDisabled: false,
-        });
+        const errorMessage = getFormattedErrorMessage(surveysUsingLanguageResponse);
+        toast.error(errorMessage);
       }
     } catch (err) {
       toast.error("Something went wrong. Please try again later.");
@@ -113,7 +124,7 @@ export function EditLanguage({ product, environmentId }: EditLanguageProps) {
 
   const performLanguageDeletion = async (languageId: string) => {
     try {
-      await deleteLanguageAction(product.id, environmentId, languageId);
+      await deleteLanguageAction({ environmentId, languageId });
       setLanguages((prev) => prev.filter((lang) => lang.id !== languageId));
       toast.success("Language deleted successfully.");
       // Close the modal after deletion
@@ -134,8 +145,16 @@ export function EditLanguage({ product, environmentId }: EditLanguageProps) {
     await Promise.all(
       languages.map((lang) => {
         return lang.id === "new"
-          ? createLanguageAction(product.id, environmentId, { code: lang.code, alias: lang.alias })
-          : updateLanguageAction(product.id, environmentId, lang.id, { code: lang.code, alias: lang.alias });
+          ? createLanguageAction({
+              productId: product.id,
+              environmentId,
+              languageInput: { code: lang.code, alias: lang.alias },
+            })
+          : updateLanguageAction({
+              environmentId,
+              languageId: lang.id,
+              languageInput: { code: lang.code, alias: lang.alias },
+            });
       })
     );
     toast.success("Languages updated successfully.");

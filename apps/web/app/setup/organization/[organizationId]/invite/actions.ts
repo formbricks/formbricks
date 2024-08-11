@@ -1,49 +1,52 @@
 "use server";
 
-import { getServerSession } from "next-auth";
+import { z } from "zod";
 import { sendInviteMemberEmail } from "@formbricks/email";
-import { authOptions } from "@formbricks/lib/authOptions";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
-import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { AuthenticationError } from "@formbricks/types/errors";
 
-export const inviteOrganizationMemberAction = async (email: string, organizationId: string) => {
-  const session = await getServerSession(authOptions);
+const ZInviteOrganizationMemberAction = z.object({
+  email: z.string(),
+  organizationId: z.string(),
+});
 
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
-  const organizations = await getOrganizationsByUserId(session.user.id);
+export const inviteOrganizationMemberAction = authenticatedActionClient
+  .schema(ZInviteOrganizationMemberAction)
+  .action(async ({ ctx, parsedInput }) => {
+    if (INVITE_DISABLED) {
+      throw new AuthenticationError("Invite disabled");
+    }
 
-  if (INVITE_DISABLED) {
-    throw new AuthenticationError("Invite disabled");
-  }
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["membership", "create"],
+    });
 
-  const { hasCreateOrUpdateMembersAccess } = await verifyUserRoleAccess(organizationId, session.user.id);
-  if (!hasCreateOrUpdateMembersAccess) {
-    throw new AuthenticationError("Not authorized");
-  }
+    const organizations = await getOrganizationsByUserId(ctx.user.id);
 
-  const invite = await inviteUser({
-    organizationId: organizations[0].id,
-    invitee: {
-      email,
-      name: "",
-      role: "admin",
-    },
+    const invite = await inviteUser({
+      organizationId: organizations[0].id,
+      invitee: {
+        email: parsedInput.email,
+        name: "",
+        role: "admin",
+      },
+    });
+
+    if (invite) {
+      await sendInviteMemberEmail(
+        invite.id,
+        parsedInput.email,
+        ctx.user.name ?? "",
+        "",
+        false // is onboarding invite
+      );
+    }
+
+    return invite;
   });
-
-  if (invite) {
-    await sendInviteMemberEmail(
-      invite.id,
-      email,
-      session.user.name ?? "",
-      "",
-      false // is onboarding invite
-    );
-  }
-
-  return invite;
-};

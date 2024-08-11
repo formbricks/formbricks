@@ -1,13 +1,10 @@
 "use server";
 
-import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { sendInviteMemberEmail } from "@formbricks/email";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { hasOrganizationAuthority } from "@formbricks/lib/auth";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";
 import { createInviteToken } from "@formbricks/lib/jwt";
@@ -16,15 +13,10 @@ import {
   getMembershipByUserIdOrganizationId,
   getMembershipsByUserId,
 } from "@formbricks/lib/membership/service";
-import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
 import { deleteOrganization, updateOrganization } from "@formbricks/lib/organization/service";
-import {
-  AuthenticationError,
-  AuthorizationError,
-  OperationNotAllowedError,
-  ValidationError,
-} from "@formbricks/types/errors";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { getOrganizationIdFromInviteId } from "@formbricks/lib/organization/utils";
+import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
+import { ZMembershipRole } from "@formbricks/types/memberships";
 import { ZOrganizationUpdateInput } from "@formbricks/types/organizations";
 
 const ZUpdateOrganizationNameAction = z.object({
@@ -45,172 +37,189 @@ export const updateOrganizationNameAction = authenticatedActionClient
     return await updateOrganization(parsedInput.organizationId, parsedInput.data);
   });
 
-export const deleteInviteAction = async (inviteId: string, organizationId: string) => {
-  const session = await getServerSession(authOptions);
+const ZDeleteInviteAction = z.object({
+  inviteId: z.string(),
+  organizationId: z.string(),
+});
 
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
-
-  const isUserAuthorized = await hasOrganizationAuthority(session.user.id, organizationId);
-
-  if (!isUserAuthorized) {
-    throw new AuthenticationError("Not authorized");
-  }
-
-  return await deleteInvite(inviteId);
-};
-
-export const deleteMembershipAction = async (userId: string, organizationId: string) => {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
-
-  const isUserAuthorized = await hasOrganizationAuthority(session.user.id, organizationId);
-
-  if (!isUserAuthorized) {
-    throw new AuthenticationError("Not authorized");
-  }
-
-  const { hasDeleteMembersAccess } = await verifyUserRoleAccess(organizationId, session.user.id);
-  if (!hasDeleteMembersAccess) {
-    throw new AuthenticationError("Not authorized");
-  }
-
-  if (userId === session.user.id) {
-    throw new AuthenticationError("You cannot delete yourself from the organization");
-  }
-
-  return await deleteMembership(userId, organizationId);
-};
-
-export const leaveOrganizationAction = async (organizationId: string) => {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
-
-  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organizationId);
-
-  if (!membership) {
-    throw new AuthenticationError("Not a member of this organization");
-  }
-
-  if (membership.role === "owner") {
-    throw new ValidationError("You cannot leave a organization you own");
-  }
-
-  const memberships = await getMembershipsByUserId(session.user.id);
-  if (!memberships || memberships?.length <= 1) {
-    throw new ValidationError("You cannot leave the only organization you are a member of");
-  }
-
-  await deleteMembership(session.user.id, organizationId);
-};
-
-export const createInviteTokenAction = async (inviteId: string) => {
-  const invite = await getInvite(inviteId);
-  if (!invite) {
-    throw new ValidationError("Invite not found");
-  }
-  const inviteToken = createInviteToken(inviteId, invite.email, {
-    expiresIn: "7d",
+export const deleteInviteAction = authenticatedActionClient
+  .schema(ZDeleteInviteAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["invite", "delete"],
+    });
+    return await deleteInvite(parsedInput.inviteId);
   });
 
-  return { inviteToken: encodeURIComponent(inviteToken) };
-};
+const ZDeleteMembershipAction = z.object({
+  userId: z.string(),
+  organizationId: z.string(),
+});
 
-export const resendInviteAction = async (inviteId: string, organizationId: string) => {
-  const session = await getServerSession(authOptions);
+export const deleteMembershipAction = authenticatedActionClient
+  .schema(ZDeleteMembershipAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["membership", "delete"],
+    });
 
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
-
-  const isUserAuthorized = await hasOrganizationAuthority(session.user.id, organizationId);
-
-  if (INVITE_DISABLED) {
-    throw new AuthenticationError("Invite disabled");
-  }
-
-  if (!isUserAuthorized) {
-    throw new AuthenticationError("Not authorized");
-  }
-
-  const { hasCreateOrUpdateMembersAccess } = await verifyUserRoleAccess(organizationId, session.user.id);
-  if (!hasCreateOrUpdateMembersAccess) {
-    throw new AuthenticationError("Not authorized");
-  }
-  const invite = await getInvite(inviteId);
-
-  const updatedInvite = await resendInvite(inviteId);
-  await sendInviteMemberEmail(
-    inviteId,
-    updatedInvite.email,
-    invite?.creator.name ?? "",
-    updatedInvite.name ?? ""
-  );
-};
-
-export const inviteUserAction = async (
-  organizationId: string,
-  email: string,
-  name: string,
-  role: TMembershipRole
-) => {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
-
-  const isUserAuthorized = await hasOrganizationAuthority(session.user.id, organizationId);
-
-  if (INVITE_DISABLED) {
-    throw new AuthenticationError("Invite disabled");
-  }
-
-  if (!isUserAuthorized) {
-    throw new AuthenticationError("Not authorized");
-  }
-
-  const { hasCreateOrUpdateMembersAccess } = await verifyUserRoleAccess(organizationId, session.user.id);
-  if (!hasCreateOrUpdateMembersAccess) {
-    throw new AuthenticationError("Not authorized");
-  }
-
-  const invite = await inviteUser({
-    organizationId,
-    invitee: {
-      email,
-      name,
-      role,
-    },
+    if (parsedInput.userId === ctx.user.id) {
+      throw new AuthenticationError("You cannot delete yourself from the organization");
+    }
+    return await deleteMembership(parsedInput.userId, parsedInput.organizationId);
   });
 
-  if (invite) {
-    await sendInviteMemberEmail(invite.id, email, session.user.name ?? "", name ?? "", false);
-  }
+const ZLeaveOrganizationAction = z.object({
+  organizationId: z.string(),
+});
 
-  return invite;
-};
+export const leaveOrganizationAction = authenticatedActionClient
+  .schema(ZLeaveOrganizationAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["membership", "delete"],
+    });
 
-export const deleteOrganizationAction = async (organizationId: string) => {
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  if (!isMultiOrgEnabled) throw new OperationNotAllowedError("Organization deletion disabled");
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
+    const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
 
-  const { hasDeleteAccess } = await verifyUserRoleAccess(organizationId, session.user.id);
+    if (!membership) {
+      throw new AuthenticationError("Not a member of this organization");
+    }
 
-  if (!hasDeleteAccess) {
-    throw new AuthorizationError("Not authorized");
-  }
+    if (membership.role === "owner") {
+      throw new ValidationError("You cannot leave a organization you own");
+    }
 
-  return await deleteOrganization(organizationId);
-};
+    const memberships = await getMembershipsByUserId(ctx.user.id);
+    if (!memberships || memberships?.length <= 1) {
+      throw new ValidationError("You cannot leave the only organization you are a member of");
+    }
+
+    return await deleteMembership(ctx.user.id, parsedInput.organizationId);
+  });
+
+const ZCreateInviteTokenAction = z.object({
+  inviteId: z.string(),
+});
+
+export const createInviteTokenAction = authenticatedActionClient
+  .schema(ZCreateInviteTokenAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromInviteId(parsedInput.inviteId),
+      rules: ["invite", "read"],
+    });
+
+    const invite = await getInvite(parsedInput.inviteId);
+    if (!invite) {
+      throw new ValidationError("Invite not found");
+    }
+    const inviteToken = createInviteToken(parsedInput.inviteId, invite.email, {
+      expiresIn: "7d",
+    });
+
+    return { inviteToken: encodeURIComponent(inviteToken) };
+  });
+
+const ZResendInviteAction = z.object({
+  inviteId: z.string(),
+  organizationId: z.string(),
+});
+
+export const resendInviteAction = authenticatedActionClient
+  .schema(ZResendInviteAction)
+  .action(async ({ parsedInput, ctx }) => {
+    if (INVITE_DISABLED) {
+      throw new AuthenticationError("Invite disabled");
+    }
+
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["invite", "update"],
+    });
+
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromInviteId(parsedInput.inviteId),
+      rules: ["invite", "update"],
+    });
+
+    const invite = await getInvite(parsedInput.inviteId);
+
+    const updatedInvite = await resendInvite(parsedInput.inviteId);
+    await sendInviteMemberEmail(
+      parsedInput.inviteId,
+      updatedInvite.email,
+      invite?.creator.name ?? "",
+      updatedInvite.name ?? ""
+    );
+  });
+
+const ZInviteUserAction = z.object({
+  organizationId: z.string(),
+  email: z.string(),
+  name: z.string(),
+  role: ZMembershipRole,
+});
+
+export const inviteUserAction = authenticatedActionClient
+  .schema(ZInviteUserAction)
+  .action(async ({ parsedInput, ctx }) => {
+    if (INVITE_DISABLED) {
+      throw new AuthenticationError("Invite disabled");
+    }
+
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["invite", "create"],
+    });
+
+    const invite = await inviteUser({
+      organizationId: parsedInput.organizationId,
+      invitee: {
+        email: parsedInput.email,
+        name: parsedInput.name,
+        role: parsedInput.role,
+      },
+    });
+
+    if (invite) {
+      await sendInviteMemberEmail(
+        invite.id,
+        parsedInput.email,
+        ctx.user.name ?? "",
+        parsedInput.name ?? "",
+        false
+      );
+    }
+
+    return invite;
+  });
+
+const ZDeleteOrganizationAction = z.object({
+  organizationId: z.string(),
+});
+
+export const deleteOrganizationAction = authenticatedActionClient
+  .schema(ZDeleteOrganizationAction)
+  .action(async ({ parsedInput, ctx }) => {
+    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+    if (!isMultiOrgEnabled) throw new OperationNotAllowedError("Organization deletion disabled");
+
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["organization", "delete"],
+    });
+
+    return await deleteOrganization(parsedInput.organizationId);
+  });

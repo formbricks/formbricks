@@ -47,7 +47,7 @@ export const OrganizationActions = ({
   const handleLeaveOrganization = async () => {
     setLoading(true);
     try {
-      await leaveOrganizationAction(organization.id);
+      await leaveOrganizationAction({ organizationId: organization.id });
       toast.success("You left the organization successfully");
       router.refresh();
       setLoading(false);
@@ -62,7 +62,7 @@ export const OrganizationActions = ({
     try {
       await Promise.all(
         data.map(async ({ name, email, role }) => {
-          await inviteUserAction(organization.id, email, name, role);
+          await inviteUserAction({ organizationId: organization.id, email, name, role });
         })
       );
       toast.success("Member invited successfully");

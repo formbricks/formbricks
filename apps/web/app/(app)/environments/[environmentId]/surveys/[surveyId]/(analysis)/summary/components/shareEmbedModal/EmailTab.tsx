@@ -28,8 +28,8 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
 
   useEffect(() => {
     const getData = async () => {
-      const emailHtml = await getEmailHtmlAction(surveyId);
-      setEmailHtmlPreview(emailHtml);
+      const emailHtml = await getEmailHtmlAction({ surveyId });
+      setEmailHtmlPreview(emailHtml?.data || "");
     };
 
     getData();
@@ -37,7 +37,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
 
   const sendPreviewEmail = async () => {
     try {
-      await sendEmbedSurveyPreviewEmailAction(surveyId);
+      await sendEmbedSurveyPreviewEmailAction({ surveyId });
       toast.success("Email sent!");
     } catch (err) {
       if (err instanceof AuthenticationError) {

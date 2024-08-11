@@ -1,56 +1,71 @@
 "use server";
 
-import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
-import { authOptions } from "@formbricks/lib/authOptions";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { getOrganizationIdFromSurveyId } from "@formbricks/lib/organization/utils";
 import { getResponseCountBySurveyId, getResponses, getSurveySummary } from "@formbricks/lib/response/service";
-import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { TResponse, TResponseFilterCriteria } from "@formbricks/types/responses";
-import { TSurveySummary } from "@formbricks/types/surveys/types";
+import { ZResponseFilterCriteria } from "@formbricks/types/responses";
 
 export const revalidateSurveyIdPath = async (environmentId: string, surveyId: string) => {
   revalidatePath(`/environments/${environmentId}/surveys/${surveyId}`);
 };
 
-export const getResponsesAction = async (
-  surveyId: string,
-  limit: number = 10,
-  offset: number = 0,
-  filterCriteria?: TResponseFilterCriteria
-): Promise<TResponse[]> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZGetResponsesAction = z.object({
+  surveyId: z.string(),
+  limit: z.number().optional(),
+  offset: z.number().optional(),
+  filterCriteria: ZResponseFilterCriteria.optional(),
+});
 
-  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const getResponsesAction = authenticatedActionClient
+  .schema(ZGetResponsesAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "read"],
+    });
 
-  const responses = await getResponses(surveyId, limit, offset, filterCriteria);
-  return responses;
-};
+    return getResponses(
+      parsedInput.surveyId,
+      parsedInput.limit,
+      parsedInput.offset,
+      parsedInput.filterCriteria
+    );
+  });
 
-export const getSurveySummaryAction = async (
-  surveyId: string,
-  filterCriteria?: TResponseFilterCriteria
-): Promise<TSurveySummary> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZGetSurveySummaryAction = z.object({
+  surveyId: z.string(),
+  filterCriteria: ZResponseFilterCriteria.optional(),
+});
 
-  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const getSurveySummaryAction = authenticatedActionClient
+  .schema(ZGetSurveySummaryAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "read"],
+    });
 
-  return await getSurveySummary(surveyId, filterCriteria);
-};
+    return getSurveySummary(parsedInput.surveyId, parsedInput.filterCriteria);
+  });
 
-export const getResponseCountAction = async (
-  surveyId: string,
-  filters?: TResponseFilterCriteria
-): Promise<number> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZGetResponseCountAction = z.object({
+  surveyId: z.string(),
+  filterCriteria: ZResponseFilterCriteria.optional(),
+});
 
-  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const getResponseCountAction = authenticatedActionClient
+  .schema(ZGetResponseCountAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "read"],
+    });
 
-  return await getResponseCountBySurveyId(surveyId, filters);
-};
+    return getResponseCountBySurveyId(parsedInput.surveyId, parsedInput.filterCriteria);
+  });

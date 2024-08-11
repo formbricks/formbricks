@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { createOrganizationAction } from "../../../apps/web/app/(app)/environments/[environmentId]/actions";
 import { Button } from "../Button";
 import { Input } from "../Input";
@@ -29,22 +30,19 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
     data.name = data.name.trim();
     if (!data.name) return;
 
-    try {
-      setLoading(true);
-      const newOrganization = await createOrganizationAction(data.name);
-      if (!newOrganization) {
-        toast.error(`Unable to create organization`);
-        return;
-      }
+    setLoading(true);
+    const createOrganizationResponse = await createOrganizationAction({ organizationName: data.name });
+    if (createOrganizationResponse?.data) {
       toast.success("Organization created successfully!");
-      router.push(`/organizations/${newOrganization.id}`);
+      router.push(`/organizations/${createOrganizationResponse.data.id}`);
       setOpen(false);
-    } catch (error) {
-      console.error(error);
-      toast.error(`Unable to create organization`);
-    } finally {
-      setLoading(false);
+    } else {
+      const errorMessage = getFormattedErrorMessage(createOrganizationResponse);
+      toast.error(errorMessage);
+      console.error(errorMessage);
     }
+
+    setLoading(false);
   };
 
   return (

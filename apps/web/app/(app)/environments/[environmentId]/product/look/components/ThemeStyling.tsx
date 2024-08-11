@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { COLOR_DEFAULTS, PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
 import { TProduct, TProductStyling, ZProductStyling } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
@@ -24,7 +25,7 @@ import {
   FormProvider,
 } from "@formbricks/ui/Form";
 import { Switch } from "@formbricks/ui/Switch";
-import { updateProductAction } from "../actions";
+import { updateProductAction } from "../../actions";
 
 type ThemeStylingProps = {
   product: TProduct;
@@ -111,8 +112,11 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
       },
     };
 
-    await updateProductAction(product.id, {
-      styling: { ...defaultStyling },
+    await updateProductAction({
+      productId: product.id,
+      data: {
+        styling: { ...defaultStyling },
+      },
     });
 
     form.reset({ ...defaultStyling });
@@ -122,15 +126,19 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
   }, [form, product.id, router]);
 
   const onSubmit: SubmitHandler<TProductStyling> = async (data) => {
-    try {
-      const updatedProduct = await updateProductAction(product.id, {
+    const updatedProductResponse = await updateProductAction({
+      productId: product.id,
+      data: {
         styling: data,
-      });
+      },
+    });
 
-      form.reset({ ...updatedProduct.styling });
+    if (updatedProductResponse?.data) {
+      form.reset({ ...updatedProductResponse.data.styling });
       toast.success("Styling updated successfully.");
-    } catch (err) {
-      toast.error("Error updating styling.");
+    } else {
+      const errorMessage = getFormattedErrorMessage(updatedProductResponse);
+      toast.error(errorMessage);
     }
   };
 

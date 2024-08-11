@@ -38,7 +38,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
     for (const email of emails) {
       try {
         if (!email) continue;
-        await inviteOrganizationMemberAction(email, organizationId);
+        await inviteOrganizationMemberAction({ email, organizationId });
         if (IS_SMTP_CONFIGURED) {
           toast.success(`Invitation sent to ${email}!`);
         }

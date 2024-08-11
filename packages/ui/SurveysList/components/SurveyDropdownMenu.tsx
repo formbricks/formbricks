@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { DeleteDialog } from "../../DeleteDialog";
@@ -57,7 +58,7 @@ export const SurveyDropDownMenu = ({
   const handleDeleteSurvey = async (survey: TSurvey) => {
     setLoading(true);
     try {
-      await deleteSurveyAction(survey.id);
+      await deleteSurveyAction({ surveyId: survey.id });
       deleteSurvey(survey.id);
       router.refresh();
       setDeleteDialogOpen(false);
@@ -71,11 +72,19 @@ export const SurveyDropDownMenu = ({
   const duplicateSurveyAndRefresh = async (surveyId: string) => {
     setLoading(true);
     try {
-      const duplicatedSurvey = await duplicateSurveyAction(environmentId, surveyId);
+      const duplicatedSurveyResponse = await duplicateSurveyAction({ surveyId });
       router.refresh();
-      const transformedDuplicatedSurvey = await getSurveyAction(duplicatedSurvey.id);
-      if (transformedDuplicatedSurvey) duplicateSurvey(transformedDuplicatedSurvey);
-      toast.success("Survey duplicated successfully.");
+
+      if (duplicatedSurveyResponse?.data) {
+        const transformedDuplicatedSurvey = await getSurveyAction({
+          surveyId: duplicatedSurveyResponse.data.id,
+        });
+        if (transformedDuplicatedSurvey?.data) duplicateSurvey(transformedDuplicatedSurvey.data);
+        toast.success("Survey duplicated successfully.");
+      } else {
+        const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
+        toast.error(errorMessage);
+      }
     } catch (error) {
       toast.error("Failed to duplicate the survey.");
     }
@@ -85,7 +94,6 @@ export const SurveyDropDownMenu = ({
   const copyToOtherEnvironment = async (surveyId: string) => {
     setLoading(true);
     try {
-      // await copyToOtherEnvironmentAction(environmentId, surveyId, otherEnvironment.id);
       await copyToOtherEnvironmentAction({
         environmentId,
         surveyId,

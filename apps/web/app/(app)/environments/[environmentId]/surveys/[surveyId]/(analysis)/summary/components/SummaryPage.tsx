@@ -79,19 +79,35 @@ export const SummaryPage = ({
     const handleInitialData = async () => {
       try {
         setFetchingSummary(true);
-        let updatedResponseCount;
+        let updatedResponseCount: number;
         if (isSharingPage) {
-          updatedResponseCount = await getResponseCountBySurveySharingKeyAction(sharingKey, filters);
+          const getResponseCountActionResponse = await getResponseCountBySurveySharingKeyAction({
+            sharingKey,
+            filterCriteria: filters,
+          });
+          updatedResponseCount = getResponseCountActionResponse?.data || 0;
         } else {
-          updatedResponseCount = await getResponseCountAction(surveyId, filters);
+          const getResponseCountActionResponse = await getResponseCountAction({
+            surveyId,
+            filterCriteria: filters,
+          });
+          updatedResponseCount = getResponseCountActionResponse?.data || 0;
         }
         setResponseCount(updatedResponseCount);
 
         let updatedSurveySummary;
         if (isSharingPage) {
-          updatedSurveySummary = await getSummaryBySurveySharingKeyAction(sharingKey, filters);
+          const getSummaryActionResponse = await getSummaryBySurveySharingKeyAction({
+            sharingKey,
+            filterCriteria: filters,
+          });
+          updatedSurveySummary = getSummaryActionResponse?.data;
         } else {
-          updatedSurveySummary = await getSurveySummaryAction(surveyId, filters);
+          const getSummaryActionResponse = await getSurveySummaryAction({
+            surveyId,
+            filterCriteria: filters,
+          });
+          updatedSurveySummary = getSummaryActionResponse?.data;
         }
 
         setSurveySummary(updatedSurveySummary);

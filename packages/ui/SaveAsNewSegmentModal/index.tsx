@@ -18,7 +18,7 @@ interface SaveAsNewSegmentModalProps {
   setSegment: (segment: TSegment) => void;
   setIsSegmentEditorOpen: (isOpen: boolean) => void;
   onCreateSegment: (data: TSegmentCreateInput) => Promise<TSegment>;
-  onUpdateSegment: (environmentId: string, segmentId: string, data: TSegmentUpdateInput) => Promise<TSegment>;
+  onUpdateSegment: (segmentId: string, data: TSegmentUpdateInput) => Promise<TSegment>;
 }
 
 type SaveAsNewSegmentModalForm = {
@@ -75,7 +75,7 @@ export const SaveAsNewSegmentModal = ({
 
     const updateSegment = async () => {
       if (!!segment && segment?.isPrivate) {
-        const updatedSegment = await onUpdateSegment(segment.environmentId, segment.id, {
+        const updatedSegment = await onUpdateSegment(segment.id, {
           ...segment,
           title: data.title,
           description: data.description,

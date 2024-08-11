@@ -1,28 +1,27 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { createSurvey } from "@formbricks/lib/survey/service";
-import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
-import { TSurveyInput } from "@formbricks/types/surveys/types";
+import { ZSurveyInput } from "@formbricks/types/surveys/types";
 
-export const createSurveyAction = async (environmentId: string, surveyBody: TSurveyInput) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authenticated");
+const ZCreateSurveyAction = z.object({
+  environmentId: z.string(),
+  surveyBody: ZSurveyInput,
+});
 
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const createSurveyAction = authenticatedActionClient
+  .schema(ZCreateSurveyAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      data: parsedInput.surveyBody,
+      schema: ZSurveyInput,
+      rules: ["survey", "create"],
+    });
 
-  const organization = await getOrganizationByEnvironmentId(environmentId);
-  if (!organization) throw new Error("Organization not found");
-
-  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
-  if (!membership || membership.role === "viewer") {
-    throw OperationNotAllowedError;
-  }
-
-  return await createSurvey(environmentId, surveyBody);
-};
+    return await createSurvey(parsedInput.environmentId, parsedInput.surveyBody);
+  });

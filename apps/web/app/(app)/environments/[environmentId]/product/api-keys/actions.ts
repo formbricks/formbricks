@@ -1,28 +1,44 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { canUserAccessApiKey } from "@formbricks/lib/apiKey/auth";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { createApiKey, deleteApiKey } from "@formbricks/lib/apiKey/service";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { TApiKeyCreateInput } from "@formbricks/types/api-keys";
-import { AuthorizationError } from "@formbricks/types/errors";
+import {
+  getOrganizationIdFromApiKeyId,
+  getOrganizationIdFromEnvironmentId,
+} from "@formbricks/lib/organization/utils";
+import { ZApiKeyCreateInput } from "@formbricks/types/api-keys";
 
-export const deleteApiKeyAction = async (id: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZDeleteApiKeyAction = z.object({
+  id: z.string(),
+});
 
-  const isAuthorized = await canUserAccessApiKey(session.user.id, id);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const deleteApiKeyAction = authenticatedActionClient
+  .schema(ZDeleteApiKeyAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromApiKeyId(parsedInput.id),
+      rules: ["apiKey", "delete"],
+    });
 
-  return await deleteApiKey(id);
-};
-export const createApiKeyAction = async (environmentId: string, apiKeyData: TApiKeyCreateInput) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+    return await deleteApiKey(parsedInput.id);
+  });
 
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+const ZCreateApiKeyAction = z.object({
+  environmentId: z.string(),
+  apiKeyData: ZApiKeyCreateInput,
+});
 
-  return await createApiKey(environmentId, apiKeyData);
-};
+export const createApiKeyAction = authenticatedActionClient
+  .schema(ZCreateApiKeyAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      rules: ["apiKey", "create"],
+    });
+
+    return await createApiKey(parsedInput.environmentId, parsedInput.apiKeyData);
+  });

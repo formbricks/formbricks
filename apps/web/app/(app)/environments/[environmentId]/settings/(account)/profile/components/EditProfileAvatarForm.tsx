@@ -59,7 +59,7 @@ export const EditProfileAvatarForm = ({ session, environmentId }: EditProfileAva
     try {
       if (session?.user.imageUrl) {
         // If avatar image already exists, then remove it before update action
-        await removeAvatarAction(environmentId);
+        await removeAvatarAction({ environmentId });
       }
       const { url, error } = await handleFileUpload(file, environmentId);
 
@@ -69,7 +69,7 @@ export const EditProfileAvatarForm = ({ session, environmentId }: EditProfileAva
         return;
       }
 
-      await updateAvatarAction(url);
+      await updateAvatarAction({ avatarUrl: url });
       router.refresh();
     } catch (err) {
       toast.error("Avatar update failed. Please try again.");
@@ -83,7 +83,7 @@ export const EditProfileAvatarForm = ({ session, environmentId }: EditProfileAva
     setIsLoading(true);
 
     try {
-      await removeAvatarAction(environmentId);
+      await removeAvatarAction({ environmentId });
     } catch (err) {
       toast.error("Avatar update failed. Please try again.");
     } finally {

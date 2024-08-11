@@ -1,61 +1,53 @@
 "use server";
 
-import { getServerSession } from "next-auth";
+import { z } from "zod";
 import { sendInviteMemberEmail } from "@formbricks/email";
-import { hasOrganizationAuthority } from "@formbricks/lib/auth";
-import { authOptions } from "@formbricks/lib/authOptions";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
-import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
 import { AuthenticationError } from "@formbricks/types/errors";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { ZMembershipRole } from "@formbricks/types/memberships";
 
-export const inviteOrganizationMemberAction = async (
-  organizationId: string,
-  email: string,
-  role: TMembershipRole,
-  inviteMessage: string
-) => {
-  const session = await getServerSession(authOptions);
+const ZInviteOrganizationMemberAction = z.object({
+  organizationId: z.string(),
+  email: z.string(),
+  role: ZMembershipRole,
+  inviteMessage: z.string(),
+});
 
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
+export const inviteOrganizationMemberAction = authenticatedActionClient
+  .schema(ZInviteOrganizationMemberAction)
+  .action(async ({ ctx, parsedInput }) => {
+    if (INVITE_DISABLED) {
+      throw new AuthenticationError("Invite disabled");
+    }
 
-  const isUserAuthorized = await hasOrganizationAuthority(session.user.id, organizationId);
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["membership", "create"],
+    });
 
-  if (INVITE_DISABLED) {
-    throw new AuthenticationError("Invite disabled");
-  }
+    const invite = await inviteUser({
+      organizationId: parsedInput.organizationId,
+      invitee: {
+        email: parsedInput.email,
+        name: "",
+        role: parsedInput.role,
+      },
+    });
 
-  if (!isUserAuthorized) {
-    throw new AuthenticationError("Not authorized");
-  }
+    if (invite) {
+      await sendInviteMemberEmail(
+        invite.id,
+        parsedInput.email,
+        ctx.user.name ?? "",
+        "",
+        true, // is onboarding invite
+        parsedInput.inviteMessage
+      );
+    }
 
-  const { hasCreateOrUpdateMembersAccess } = await verifyUserRoleAccess(organizationId, session.user.id);
-  if (!hasCreateOrUpdateMembersAccess) {
-    throw new AuthenticationError("Not authorized");
-  }
-
-  const invite = await inviteUser({
-    organizationId,
-    invitee: {
-      email,
-      name: "",
-      role,
-    },
+    return invite;
   });
-
-  if (invite) {
-    await sendInviteMemberEmail(
-      invite.id,
-      email,
-      session.user.name ?? "",
-      "",
-      true, // is onboarding invite
-      inviteMessage
-    );
-  }
-
-  return invite;
-};

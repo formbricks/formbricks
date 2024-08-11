@@ -11,6 +11,7 @@ import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon } from "lucid
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Calendar } from "@formbricks/ui/Calendar";
@@ -172,13 +173,20 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   const handleDowndloadResponses = async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
     try {
       const responseFilters = filter === FilterDownload.ALL ? {} : filters;
-      const fileUrl = await getResponsesDownloadUrlAction(survey.id, filetype, responseFilters);
-      if (fileUrl) {
+      const responsesDownloadUrlResponse = await getResponsesDownloadUrlAction({
+        surveyId: survey.id,
+        format: filetype,
+        filterCriteria: responseFilters,
+      });
+      if (responsesDownloadUrlResponse?.data) {
         const link = document.createElement("a");
-        link.href = fileUrl;
+        link.href = responsesDownloadUrlResponse.data;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+      } else {
+        const errorMessage = getFormattedErrorMessage(responsesDownloadUrlResponse);
+        toast.error(errorMessage);
       }
     } catch (error) {
       toast.error("Error downloading responses");

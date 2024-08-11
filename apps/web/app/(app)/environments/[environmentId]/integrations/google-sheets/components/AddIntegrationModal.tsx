@@ -136,7 +136,7 @@ export const AddIntegrationModal = ({
         // create action
         googleSheetIntegrationData.config!.data.push(integrationData);
       }
-      await createOrUpdateIntegrationAction(environmentId, googleSheetIntegrationData);
+      await createOrUpdateIntegrationAction({ environmentId, integrationData: googleSheetIntegrationData });
       toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`);
       resetForm();
       setOpen(false);
@@ -172,7 +172,7 @@ export const AddIntegrationModal = ({
     googleSheetIntegrationData.config!.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      await createOrUpdateIntegrationAction(environmentId, googleSheetIntegrationData);
+      await createOrUpdateIntegrationAction({ environmentId, integrationData: googleSheetIntegrationData });
       toast.success("Integration removed successfully");
       setOpen(false);
     } catch (error) {

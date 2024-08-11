@@ -163,7 +163,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
     try {
       handleBgChange(imageUrl, "image");
       if (downloadImageUrl) {
-        await triggerDownloadUnsplashImageAction(downloadImageUrl);
+        await triggerDownloadUnsplashImageAction({ downloadUrl: downloadImageUrl });
       }
     } catch (error) {
       toast.error(error.message);

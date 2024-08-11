@@ -11,7 +11,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@form
 import { Label } from "@formbricks/ui/Label";
 import { getPlacementStyle } from "@formbricks/ui/PreviewSurvey/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
-import { updateProductAction } from "../actions";
+import { updateProductAction } from "../../actions";
 
 const placements = [
   { name: "Bottom Right", value: "bottomRight", disabled: false },
@@ -53,10 +53,13 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
 
   const onSubmit: SubmitHandler<EditPlacementFormValues> = async (data) => {
     try {
-      await updateProductAction(product.id, {
-        placement: data.placement,
-        darkOverlay: data.darkOverlay,
-        clickOutsideClose: data.clickOutsideClose,
+      await updateProductAction({
+        productId: product.id,
+        data: {
+          placement: data.placement,
+          darkOverlay: data.darkOverlay,
+          clickOutsideClose: data.clickOutsideClose,
+        },
       });
 
       toast.success("Placement updated successfully.");

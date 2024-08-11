@@ -50,8 +50,8 @@ export const VerifyEmail = ({
     }
     const data = {
       surveyId: survey.id,
-      email: email,
-      surveyData: survey.verifyEmail,
+      email: email as string,
+      surveyData: survey.verifyEmail || {},
       suId: singleUseId ?? "",
     };
     try {

@@ -14,6 +14,7 @@ import {
 } from "@formbricks/lib/constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import type { TLinkSurveyEmailData } from "@formbricks/types/email";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
@@ -43,19 +44,6 @@ interface SendEmailDataProps {
 interface TEmailUser {
   id: string;
   email: string;
-}
-
-export interface LinkSurveyEmailData {
-  surveyId: string;
-  email: string;
-  suId: string;
-  surveyData?:
-    | {
-        name?: string;
-        subheading?: string;
-      }
-    | null
-    | undefined;
 }
 
 const getEmailSubject = (productName: string): string => {
@@ -207,7 +195,7 @@ export const sendEmbedSurveyPreviewEmail = async (
   });
 };
 
-export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) => {
+export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData) => {
   const surveyId = data.surveyId;
   const email = data.email;
   const surveyData = data.surveyData;

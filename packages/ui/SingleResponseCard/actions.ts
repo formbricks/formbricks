@@ -1,66 +1,84 @@
 "use server";
 
-import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { getOrganizationIdFromResponseId } from "@formbricks/lib/organization/utils";
-import { canUserAccessResponse } from "@formbricks/lib/response/auth";
+import {
+  getOrganizationIdFromResponseId,
+  getOrganizationIdFromResponseNoteId,
+  getOrganizationIdFromTagId,
+} from "@formbricks/lib/organization/utils";
 import { deleteResponse, getResponse } from "@formbricks/lib/response/service";
-import { canUserModifyResponseNote, canUserResolveResponseNote } from "@formbricks/lib/responseNote/auth";
 import {
   createResponseNote,
   resolveResponseNote,
   updateResponseNote,
 } from "@formbricks/lib/responseNote/service";
-import { createTag, getTag } from "@formbricks/lib/tag/service";
-import { canUserAccessTagOnResponse, verifyUserRoleAccess } from "@formbricks/lib/tagOnResponse/auth";
+import { createTag } from "@formbricks/lib/tag/service";
 import { addTagToRespone, deleteTagOnResponse } from "@formbricks/lib/tagOnResponse/service";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { TResponse } from "@formbricks/types/responses";
 
-export const createTagAction = async (environmentId: string, tagName: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZCreateTagAction = z.object({
+  environmentId: z.string(),
+  tagName: z.string(),
+});
 
-  const isAuthorized = await hasUserEnvironmentAccess(session.user!.id, environmentId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const createTagAction = authenticatedActionClient
+  .schema(ZCreateTagAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromResponseId(parsedInput.environmentId),
+      rules: ["tag", "create"],
+    });
 
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(environmentId, session.user!.id);
-  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
+    return await createTag(parsedInput.environmentId, parsedInput.tagName);
+  });
 
-  return await createTag(environmentId, tagName);
-};
+const ZCreateTagToResponeAction = z.object({
+  responseId: z.string(),
+  tagId: z.string(),
+});
 
-export const createTagToResponeAction = async (responseId: string, tagId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+export const createTagToResponeAction = authenticatedActionClient
+  .schema(ZCreateTagToResponeAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
+      rules: ["response", "update"],
+    });
 
-  const isAuthorized = await canUserAccessTagOnResponse(session.user!.id, tagId, responseId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromTagId(parsedInput.responseId),
+      rules: ["tag", "read"],
+    });
 
-  const tag = await getTag(tagId);
-  const { hasDeleteAccess } = await verifyUserRoleAccess(tag!.environmentId, session.user!.id);
-  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
+    return await addTagToRespone(parsedInput.responseId, parsedInput.tagId);
+  });
 
-  return await addTagToRespone(responseId, tagId);
-};
+const ZDeleteTagOnResponseAction = z.object({
+  responseId: z.string(),
+  tagId: z.string(),
+});
 
-export const deleteTagOnResponseAction = async (responseId: string, tagId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+export const deleteTagOnResponseAction = authenticatedActionClient
+  .schema(ZDeleteTagOnResponseAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
+      rules: ["response", "update"],
+    });
 
-  const isAuthorized = await canUserAccessTagOnResponse(session.user!.id, tagId, responseId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromTagId(parsedInput.responseId),
+      rules: ["tag", "read"],
+    });
 
-  const tag = await getTag(tagId);
-  const { hasDeleteAccess } = await verifyUserRoleAccess(tag!.environmentId, session.user!.id);
-  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
-
-  return await deleteTagOnResponse(responseId, tagId);
-};
+    return await deleteTagOnResponse(parsedInput.responseId, parsedInput.tagId);
+  });
 
 const ZDeleteResponseAction = z.object({
   responseId: z.string(),
@@ -78,38 +96,68 @@ export const deleteResponseAction = authenticatedActionClient
     return await deleteResponse(parsedInput.responseId);
   });
 
-export const updateResponseNoteAction = async (responseNoteId: string, text: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZUpdateResponseNoteAction = z.object({
+  responseNoteId: z.string(),
+  text: z.string(),
+});
 
-  const isAuthorized = await canUserModifyResponseNote(session.user!.id, responseNoteId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const updateResponseNoteAction = authenticatedActionClient
+  .schema(ZUpdateResponseNoteAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromResponseId(parsedInput.responseNoteId),
+      rules: ["response", "update"],
+    });
 
-  await updateResponseNote(responseNoteId, text);
-};
+    return await updateResponseNote(parsedInput.responseNoteId, parsedInput.text);
+  });
 
-export const resolveResponseNoteAction = async (responseId: string, responseNoteId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZResolveResponseNoteAction = z.object({
+  responseNoteId: z.string(),
+});
 
-  const isAuthorized = await canUserResolveResponseNote(session.user!.id, responseId, responseNoteId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const resolveResponseNoteAction = authenticatedActionClient
+  .schema(ZResolveResponseNoteAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromResponseNoteId(parsedInput.responseNoteId),
+      rules: ["responseNote", "update"],
+    });
 
-  await resolveResponseNote(responseNoteId);
-};
+    await resolveResponseNote(parsedInput.responseNoteId);
+  });
 
-export const createResponseNoteAction = async (responseId: string, userId: string, text: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-  const authotized = await canUserAccessResponse(session.user!.id, responseId);
-  if (!authotized) throw new AuthorizationError("Not authorized");
-  return await createResponseNote(responseId, userId, text);
-};
+const ZCreateResponseNoteAction = z.object({
+  responseId: z.string(),
+  text: z.string(),
+});
 
-export const getResponseAction = async (responseId: string): Promise<TResponse | null> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-  const authotized = await canUserAccessResponse(session.user!.id, responseId);
-  if (!authotized) throw new AuthorizationError("Not authorized");
-  return await getResponse(responseId);
-};
+export const createResponseNoteAction = authenticatedActionClient
+  .schema(ZCreateResponseNoteAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
+      rules: ["responseNote", "create"],
+    });
+
+    return await createResponseNote(parsedInput.responseId, ctx.user.id, parsedInput.text);
+  });
+
+const ZGetResponseAction = z.object({
+  responseId: z.string(),
+});
+
+export const getResponseAction = authenticatedActionClient
+  .schema(ZGetResponseAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
+      rules: ["response", "read"],
+    });
+
+    return await getResponse(parsedInput.responseId);
+  });

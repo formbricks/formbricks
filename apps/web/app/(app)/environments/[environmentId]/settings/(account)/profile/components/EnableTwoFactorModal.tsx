@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { Button } from "@formbricks/ui/Button";
 import { Modal } from "@formbricks/ui/Modal";
 import { OTPInput } from "@formbricks/ui/OTPInput";
@@ -46,16 +47,17 @@ const ConfirmPasswordForm = ({
   const { control, handleSubmit, setError } = useForm<TConfirmPasswordFormState>();
 
   const onSubmit: SubmitHandler<TConfirmPasswordFormState> = async (data) => {
-    try {
-      const { backupCodes, dataUri, secret } = await setupTwoFactorAuthAction(data.password);
+    const setupTwoFactorAuthResponse = await setupTwoFactorAuthAction({ password: data.password });
 
+    if (setupTwoFactorAuthResponse?.data) {
+      const { backupCodes, dataUri, secret } = setupTwoFactorAuthResponse.data;
       setBackupCodes(backupCodes);
       setDataUri(dataUri);
       setSecret(secret);
-
       setCurrentStep("scanQRCode");
-    } catch (err) {
-      setError("password", { message: err.message });
+    } else {
+      const errorMessage = getFormattedErrorMessage(setupTwoFactorAuthResponse);
+      setError("password", { message: errorMessage });
     }
   };
 
@@ -156,12 +158,14 @@ const EnterCode = ({ setCurrentStep, setOpen, refreshData }: TEnableCodeProps) =
 
   const onSubmit: SubmitHandler<TEnterCodeFormState> = async (data) => {
     try {
-      const { message } = await enableTwoFactorAuthAction(data.code);
-      toast.success(message);
-      setCurrentStep("backupCodes");
+      const enableTwoFactorAuthResponse = await enableTwoFactorAuthAction({ code: data.code });
+      if (enableTwoFactorAuthResponse?.data) {
+        toast.success(enableTwoFactorAuthResponse.data.message);
+        setCurrentStep("backupCodes");
 
-      // refresh data to update the UI
-      refreshData();
+        // refresh data to update the UI
+        refreshData();
+      }
     } catch (err) {
       toast.error(err.message);
     }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
@@ -43,14 +44,16 @@ export const DisableTwoFactorModal = ({ open, setOpen }: TDisableTwoFactorModalP
   const onSubmit: SubmitHandler<TDisableTwoFactorFormState> = async (data) => {
     const { code, password, backupCode } = data;
 
-    try {
-      const { message } = await disableTwoFactorAuthAction({ code, password, backupCode });
-      toast.success(message);
+    const disableTwoFactorAuthResponse = await disableTwoFactorAuthAction({ code, password, backupCode });
+
+    if (disableTwoFactorAuthResponse?.data) {
+      toast.success(disableTwoFactorAuthResponse.data.message);
 
       router.refresh();
       resetState();
-    } catch (err) {
-      toast.error(err.message);
+    } else {
+      const errorMessage = getFormattedErrorMessage(disableTwoFactorAuthResponse);
+      toast.error(errorMessage);
     }
   };
 

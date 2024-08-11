@@ -2,6 +2,7 @@
 
 import { TagIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -24,20 +25,20 @@ export const AttributeActivityTab = ({ attributeClass }: EventActivityTabProps) 
     setLoading(true);
 
     const getSurveys = async () => {
-      try {
-        setLoading(true);
-        const segmentsWithAttributeClassName = await getSegmentsByAttributeClassAction(
-          attributeClass.environmentId,
-          attributeClass
-        );
+      setLoading(true);
+      const segmentsWithAttributeClassNameResponse = await getSegmentsByAttributeClassAction({
+        environmentId: attributeClass.environmentId,
+        attributeClass,
+      });
 
-        setActiveSurveys(segmentsWithAttributeClassName.activeSurveys);
-        setInactiveSurveys(segmentsWithAttributeClassName.inactiveSurveys);
-      } catch (err) {
-        setError(err);
-      } finally {
-        setLoading(false);
+      if (segmentsWithAttributeClassNameResponse?.data) {
+        setActiveSurveys(segmentsWithAttributeClassNameResponse.data.activeSurveys);
+        setInactiveSurveys(segmentsWithAttributeClassNameResponse.data.inactiveSurveys);
+      } else {
+        const errorMessage = getFormattedErrorMessage(segmentsWithAttributeClassNameResponse);
+        setError(new Error(errorMessage));
       }
+      setLoading(false);
     };
 
     getSurveys();

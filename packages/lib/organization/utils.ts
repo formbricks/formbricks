@@ -1,3 +1,12 @@
+import { getActionClass } from "actionClass/service";
+import { getApiKey } from "apiKey/service";
+import { getAttributeClass } from "attributeClass/service";
+import { getIntegration } from "integration/service";
+import { getInvite } from "invite/service";
+import { getResponseNote } from "responseNote/service";
+import { getSegment } from "segment/service";
+import { getTag } from "tag/service";
+import { getWebhook } from "webhook/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getEnvironment } from "../environment/service";
 import { getPerson } from "../person/service";
@@ -24,8 +33,7 @@ export const getOrganizationIdFromEnvironmentId = async (environmentId: string) 
     throw new ResourceNotFoundError("environment", environmentId);
   }
 
-  const organizationId = await getOrganizationIdFromProductId(environment.productId);
-  return organizationId;
+  return await getOrganizationIdFromProductId(environment.productId);
 };
 
 export const getOrganizationIdFromSurveyId = async (surveyId: string) => {
@@ -34,8 +42,7 @@ export const getOrganizationIdFromSurveyId = async (surveyId: string) => {
     throw new ResourceNotFoundError("survey", surveyId);
   }
 
-  const organizationId = await getOrganizationIdFromEnvironmentId(survey.environmentId);
-  return organizationId;
+  return await getOrganizationIdFromEnvironmentId(survey.environmentId);
 };
 
 export const getOrganizationIdFromResponseId = async (responseId: string) => {
@@ -44,8 +51,7 @@ export const getOrganizationIdFromResponseId = async (responseId: string) => {
     throw new ResourceNotFoundError("response", responseId);
   }
 
-  const organizationId = await getOrganizationIdFromSurveyId(response.surveyId);
-  return organizationId;
+  return await getOrganizationIdFromSurveyId(response.surveyId);
 };
 
 export const getOrganizationIdFromPersonId = async (personId: string) => {
@@ -54,6 +60,86 @@ export const getOrganizationIdFromPersonId = async (personId: string) => {
     throw new ResourceNotFoundError("person", personId);
   }
 
-  const organizationId = await getOrganizationIdFromEnvironmentId(person.environmentId);
-  return organizationId;
+  return await getOrganizationIdFromEnvironmentId(person.environmentId);
+};
+
+export const getOrganizationIdFromTagId = async (tagId: string) => {
+  const tag = await getTag(tagId);
+  if (!tag) {
+    throw new ResourceNotFoundError("tag", tagId);
+  }
+
+  return await getOrganizationIdFromEnvironmentId(tag.environmentId);
+};
+
+export const getOrganizationIdFromResponseNoteId = async (responseNoteId: string) => {
+  const responseNote = await getResponseNote(responseNoteId);
+  if (!responseNote) {
+    throw new ResourceNotFoundError("responseNote", responseNoteId);
+  }
+
+  return await getOrganizationIdFromResponseId(responseNote.response.id);
+};
+
+export const getOrganizationIdFromAttributeClassId = async (attributeClassId: string) => {
+  const attributeClass = await getAttributeClass(attributeClassId);
+  if (!attributeClass) {
+    throw new ResourceNotFoundError("attributeClass", attributeClassId);
+  }
+
+  return await getOrganizationIdFromEnvironmentId(attributeClass.environmentId);
+};
+
+export const getOrganizationIdFromSegmentId = async (segmentId: string) => {
+  const segment = await getSegment(segmentId);
+  if (!segment) {
+    throw new ResourceNotFoundError("segment", segmentId);
+  }
+
+  return await getOrganizationIdFromEnvironmentId(segment.environmentId);
+};
+
+export const getOrganizationIdFromActionClassId = async (actionClassId: string) => {
+  const actionClass = await getActionClass(actionClassId);
+  if (!actionClass) {
+    throw new ResourceNotFoundError("actionClass", actionClassId);
+  }
+
+  return await getOrganizationIdFromEnvironmentId(actionClass.environmentId);
+};
+
+export const getOrganizationIdFromIntegrationId = async (integrationId: string) => {
+  const integration = await getIntegration(integrationId);
+  if (!integration) {
+    throw new ResourceNotFoundError("integration", integrationId);
+  }
+
+  return await getOrganizationIdFromEnvironmentId(integration.environmentId);
+};
+
+export const getOrganizationIdFromWebhookId = async (webhookId: string) => {
+  const webhook = await getWebhook(webhookId);
+  if (!webhook) {
+    throw new ResourceNotFoundError("webhook", webhookId);
+  }
+
+  return await getOrganizationIdFromEnvironmentId(webhook.environmentId);
+};
+
+export const getOrganizationIdFromApiKeyId = async (apiKeyId: string) => {
+  const apiKeyFromServer = await getApiKey(apiKeyId);
+  if (!apiKeyFromServer) {
+    throw new ResourceNotFoundError("apiKey", apiKeyId);
+  }
+
+  return await getOrganizationIdFromEnvironmentId(apiKeyFromServer.environmentId);
+};
+
+export const getOrganizationIdFromInviteId = async (inviteId: string) => {
+  const invite = await getInvite(inviteId);
+  if (!invite) {
+    throw new ResourceNotFoundError("invite", inviteId);
+  }
+
+  return invite.organizationId;
 };

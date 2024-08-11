@@ -73,11 +73,15 @@ export function SegmentSettings({
 
     try {
       setIsUpdatingSegment(true);
-      await updateSegmentAction(segment.environmentId, segment.id, {
-        title: segment.title,
-        description: segment.description ?? "",
-        isPrivate: segment.isPrivate,
-        filters: segment.filters,
+      await updateSegmentAction({
+        environmentId: segment.environmentId,
+        segmentId: segment.id,
+        data: {
+          title: segment.title,
+          description: segment.description ?? "",
+          isPrivate: segment.isPrivate,
+          filters: segment.filters,
+        },
       });
 
       setIsUpdatingSegment(false);
@@ -101,7 +105,7 @@ export function SegmentSettings({
   const handleDeleteSegment = async () => {
     try {
       setIsDeletingSegment(true);
-      await deleteSegmentAction(segment.environmentId, segment.id);
+      await deleteSegmentAction({ segmentId: segment.id });
 
       setIsDeletingSegment(false);
       toast.success("Segment deleted successfully!");

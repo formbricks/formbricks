@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { createSegmentAction } from "@formbricks/ee/advanced-targeting/lib/actions";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
@@ -125,7 +126,7 @@ export const SurveyMenuBar = ({
         title: localSurvey.id,
       });
 
-      return newSegment;
+      return newSegment?.data;
     }
   };
 
@@ -205,12 +206,16 @@ export const SurveyMenuBar = ({
       });
 
       const segment = await handleSegmentUpdate();
-      const updatedSurvey = await updateSurveyAction({ ...localSurvey, segment });
+      const updatedSurveyResponse = await updateSurveyAction({ ...localSurvey, segment });
 
       setIsSurveySaving(false);
-      setLocalSurvey(updatedSurvey);
-
-      toast.success("Changes saved.");
+      if (updatedSurveyResponse?.data) {
+        setLocalSurvey(updatedSurveyResponse.data);
+        toast.success("Changes saved.");
+      } else {
+        const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
+        toast.error(errorMessage);
+      }
 
       return true;
     } catch (e) {

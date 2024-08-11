@@ -9,11 +9,17 @@ const Page = async ({ params }) => {
     throw new Error("Organization not found");
   }
 
-  const { status, newPlan, url } = await upgradePlanAction(
-    organization.id,
-    params.environmentId,
-    STRIPE_PRICE_LOOKUP_KEYS.UNLIMITED_199
-  );
+  const upgradePlanResponse = await upgradePlanAction({
+    organizationId: organization.id,
+    environmentId: params.environmentId,
+    priceLookupKey: STRIPE_PRICE_LOOKUP_KEYS.UNLIMITED_199,
+  });
+
+  if (!upgradePlanResponse?.data) {
+    throw new Error("Something went wrong");
+  }
+
+  const { status, newPlan, url } = upgradePlanResponse.data;
 
   if (status != 200) {
     throw new Error("Something went wrong");

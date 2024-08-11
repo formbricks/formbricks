@@ -47,8 +47,10 @@ export const UrlShortenerForm = ({ webAppUrl }: { webAppUrl: string }) => {
   const shortenUrl = async (data: UrlShortenerFormDataProps) => {
     if (urlValidationState !== "valid") return;
 
-    const shortUrl = await createShortUrlAction(data.url.trim());
-    setShortUrl(shortUrl);
+    const createShortUrlResponse = await createShortUrlAction({ url: data.url.trim() });
+    if (createShortUrlResponse?.data) {
+      setShortUrl(createShortUrlResponse.data);
+    }
   };
 
   const copyShortUrlToClipboard = () => {

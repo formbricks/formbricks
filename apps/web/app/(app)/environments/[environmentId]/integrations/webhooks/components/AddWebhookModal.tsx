@@ -43,7 +43,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
   const handleTestEndpoint = async (sendSuccessToast: boolean) => {
     try {
       setHittingEndpoint(true);
-      await testEndpointAction(testEndpointInput);
+      await testEndpointAction({ url: testEndpointInput });
       setHittingEndpoint(false);
       if (sendSuccessToast) toast.success("Yay! We are able to ping the webhook!");
       setEndpointAccessible(true);
@@ -107,7 +107,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
           surveyIds: selectedSurveys,
         };
 
-        await createWebhookAction(environmentId, updatedData);
+        await createWebhookAction({ environmentId, webhookInput: updatedData });
         router.refresh();
         setOpenWithStates(false);
         toast.success("Webhook added successfully.");

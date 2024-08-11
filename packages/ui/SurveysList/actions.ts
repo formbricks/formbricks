@@ -1,44 +1,54 @@
 "use server";
 
 import { Prisma as prismaClient } from "@prisma/client";
-import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
+import {
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromSurveyId,
+} from "@formbricks/lib/organization/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { segmentCache } from "@formbricks/lib/segment/cache";
 import { createSegment } from "@formbricks/lib/segment/service";
-import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { deleteSurvey, duplicateSurvey, getSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
-import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 
-export const getSurveyAction = async (surveyId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZGetSurveyAction = z.object({
+  surveyId: z.string(),
+});
 
-  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const getSurveyAction = authenticatedActionClient
+  .schema(ZGetSurveyAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "read"],
+    });
 
-  return await getSurvey(surveyId);
-};
+    return await getSurvey(parsedInput.surveyId);
+  });
 
-export const duplicateSurveyAction = async (environmentId: string, surveyId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZDuplicateSurveyAction = z.object({
+  surveyId: z.string(),
+});
 
-  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const duplicateSurveyAction = authenticatedActionClient
+  .schema(ZDuplicateSurveyAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "create"],
+    });
 
-  const duplicatedSurvey = await duplicateSurvey(environmentId, surveyId, session.user.id);
-  return duplicatedSurvey;
-};
+    return await duplicateSurvey(parsedInput.surveyId, ctx.user.id);
+  });
 
 const ZCopyToOtherEnvironmentAction = z.object({
   environmentId: z.string(),
@@ -275,43 +285,61 @@ export const copyToOtherEnvironmentAction = authenticatedActionClient
     return newSurvey;
   });
 
-export const deleteSurveyAction = async (surveyId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZDeleteSurveyAction = z.object({
+  surveyId: z.string(),
+});
 
-  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const deleteSurveyAction = authenticatedActionClient
+  .schema(ZDeleteSurveyAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "delete"],
+    });
 
-  const survey = await getSurvey(surveyId);
+    await deleteSurvey(parsedInput.surveyId);
+  });
 
-  const { hasDeleteAccess } = await verifyUserRoleAccess(survey!.environmentId, session.user.id);
-  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
+const ZGenerateSingleUseIdAction = z.object({
+  surveyId: z.string(),
+  isEncrypted: z.boolean(),
+});
 
-  await deleteSurvey(surveyId);
-};
+export const generateSingleUseIdAction = authenticatedActionClient
+  .schema(ZGenerateSingleUseIdAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "read"],
+    });
 
-export const generateSingleUseIdAction = async (surveyId: string, isEncrypted: boolean): Promise<string> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+    return generateSurveySingleUseId(parsedInput.isEncrypted);
+  });
 
-  const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
+const ZGetSurveysAction = z.object({
+  environmentId: z.string(),
+  limit: z.number().optional(),
+  offset: z.number().optional(),
+  filterCriteria: ZSurveyFilterCriteria.optional(),
+});
 
-  if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
+export const getSurveysAction = authenticatedActionClient
+  .schema(ZGetSurveysAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      data: parsedInput.filterCriteria,
+      schema: ZSurveyFilterCriteria,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      rules: ["survey", "read"],
+    });
 
-  return generateSurveySingleUseId(isEncrypted);
-};
-
-export const getSurveysAction = async (
-  environmentId: string,
-  limit?: number,
-  offset?: number,
-  filterCriteria?: TSurveyFilterCriteria
-) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  return await getSurveys(environmentId, limit, offset, filterCriteria);
-};
+    return await getSurveys(
+      parsedInput.environmentId,
+      parsedInput.limit,
+      parsedInput.offset,
+      parsedInput.filterCriteria
+    );
+  });

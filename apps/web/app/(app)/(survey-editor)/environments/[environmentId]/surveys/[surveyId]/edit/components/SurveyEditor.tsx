@@ -63,9 +63,9 @@ export const SurveyEditor = ({
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
   const fetchLatestProduct = useCallback(async () => {
-    const latestProduct = await refetchProductAction(localProduct.id);
-    if (latestProduct) {
-      setLocalProduct(latestProduct);
+    const refetchProductResponse = await refetchProductAction({ productId: localProduct.id });
+    if (refetchProductResponse?.data) {
+      setLocalProduct(refetchProductResponse.data);
     }
   }, [localProduct.id]);
 
@@ -90,9 +90,9 @@ export const SurveyEditor = ({
     const listener = () => {
       if (document.visibilityState === "visible") {
         const fetchLatestProduct = async () => {
-          const latestProduct = await refetchProductAction(localProduct.id);
-          if (latestProduct) {
-            setLocalProduct(latestProduct);
+          const refetchProductResponse = await refetchProductAction({ productId: localProduct.id });
+          if (refetchProductResponse?.data) {
+            setLocalProduct(refetchProductResponse.data);
           }
         };
         fetchLatestProduct();

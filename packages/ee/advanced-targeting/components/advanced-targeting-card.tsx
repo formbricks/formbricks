@@ -79,8 +79,13 @@ export function AdvancedTargetingCard({
     if (!segment) return;
 
     try {
-      const clonedSegment = await cloneSegmentAction(segment.id, localSurvey.id);
-      setSegment(clonedSegment);
+      const clonedSegmentResponse = await cloneSegmentAction({
+        segmentId: segment.id,
+        surveyId: localSurvey.id,
+      });
+      if (clonedSegmentResponse.data) {
+        setSegment(clonedSegmentResponse.data);
+      }
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -113,8 +118,8 @@ export function AdvancedTargetingCard({
   };
 
   const handleLoadNewSegment = async (surveyId: string, segmentId: string) => {
-    const updatedSurvey = await loadNewSegmentAction(surveyId, segmentId);
-    return updatedSurvey;
+    const updatedSurvey = await loadNewSegmentAction({ surveyId: surveyId, segmentId });
+    return updatedSurvey?.data;
   };
 
   const handleSaveAsNewSegmentUpdate = async (
@@ -122,19 +127,19 @@ export function AdvancedTargetingCard({
     segmentId: string,
     data: TSegmentUpdateInput
   ) => {
-    const updatedSegment = await updateSegmentAction(environmentId, segmentId, data);
-    return updatedSegment;
+    const updatedSegment = await updateSegmentAction({ environmentId, segmentId, data });
+    return updatedSegment?.data;
   };
 
   const handleSaveAsNewSegmentCreate = async (data: TSegmentCreateInput) => {
     const createdSegment = await createSegmentAction(data);
-    return createdSegment;
+    return createdSegment?.data;
   };
 
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
     try {
       if (!segment) throw new Error("Invalid segment");
-      await updateSegmentAction(environmentId, segment.id, data);
+      await updateSegmentAction({ environmentId: environmentId, segmentId: segment.id, data });
       toast.success("Segment saved successfully");
 
       setIsSegmentEditorOpen(false);
@@ -146,7 +151,8 @@ export function AdvancedTargetingCard({
 
   const handleResetAllFilters = async () => {
     try {
-      return await resetSegmentFiltersAction(localSurvey.id);
+      const segmentResponse = await resetSegmentFiltersAction({ surveyId: localSurvey.id });
+      return segmentResponse?.data;
     } catch (err) {
       toast.error("Error resetting filters");
     }

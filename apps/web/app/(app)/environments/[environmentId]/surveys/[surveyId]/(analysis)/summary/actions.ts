@@ -2,100 +2,128 @@
 
 import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
 import { customAlphabet } from "nanoid";
-import { getServerSession } from "next-auth";
+import { z } from "zod";
 import { sendEmbedSurveyPreviewEmail } from "@formbricks/email";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { getOrganizationIdFromSurveyId } from "@formbricks/lib/organization/utils";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
-import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 
-export const sendEmbedSurveyPreviewEmailAction = async (surveyId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
+const ZSendEmbedSurveyPreviewEmailAction = z.object({
+  surveyId: z.string(),
+});
 
-  const survey = await getSurvey(surveyId);
-  if (!survey) {
-    throw new ResourceNotFoundError("Survey", surveyId);
-  }
+export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
+  .schema(ZSendEmbedSurveyPreviewEmailAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "read"],
+    });
 
-  const isUserAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!isUserAuthorized) {
-    throw new AuthorizationError("Not authorized");
-  }
-  const rawEmailHtml = await getEmailTemplateHtml(surveyId);
-  const emailHtml = rawEmailHtml
-    .replaceAll("?preview=true&amp;", "?")
-    .replaceAll("?preview=true&;", "?")
-    .replaceAll("?preview=true", "");
+    const survey = await getSurvey(parsedInput.surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
 
-  return await sendEmbedSurveyPreviewEmail(
-    session.user.email,
-    "Formbricks Email Survey Preview",
-    emailHtml,
-    survey.environmentId
-  );
-};
+    const rawEmailHtml = await getEmailTemplateHtml(parsedInput.surveyId);
+    const emailHtml = rawEmailHtml
+      .replaceAll("?preview=true&amp;", "?")
+      .replaceAll("?preview=true&;", "?")
+      .replaceAll("?preview=true", "");
 
-export const generateResultShareUrlAction = async (surveyId: string): Promise<string> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+    return await sendEmbedSurveyPreviewEmail(
+      ctx.user.email,
+      "Formbricks Email Survey Preview",
+      emailHtml,
+      survey.environmentId
+    );
+  });
 
-  const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
+const ZGenerateResultShareUrlAction = z.object({
+  surveyId: z.string(),
+});
 
-  const survey = await getSurvey(surveyId);
-  if (!survey?.id) {
-    throw new ResourceNotFoundError("Survey", surveyId);
-  }
+export const generateResultShareUrlAction = authenticatedActionClient
+  .schema(ZGenerateResultShareUrlAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "update"],
+    });
 
-  const resultShareKey = customAlphabet(
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-    20
-  )();
+    const survey = await getSurvey(parsedInput.surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
 
-  await updateSurvey({ ...survey, resultShareKey });
+    const resultShareKey = customAlphabet(
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+      20
+    )();
 
-  return resultShareKey;
-};
+    await updateSurvey({ ...survey, resultShareKey });
 
-export const getResultShareUrlAction = async (surveyId: string): Promise<string | null> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+    return resultShareKey;
+  });
 
-  const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
+const ZGetResultShareUrlAction = z.object({
+  surveyId: z.string(),
+});
 
-  const survey = await getSurvey(surveyId);
-  if (!survey?.id) {
-    throw new ResourceNotFoundError("Survey", surveyId);
-  }
+export const getResultShareUrlAction = authenticatedActionClient
+  .schema(ZGetResultShareUrlAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "read"],
+    });
 
-  return survey.resultShareKey;
-};
+    const survey = await getSurvey(parsedInput.surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
 
-export const deleteResultShareUrlAction = async (surveyId: string): Promise<void> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+    return survey.resultShareKey;
+  });
 
-  const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
+const ZDeleteResultShareUrlAction = z.object({
+  surveyId: z.string(),
+});
 
-  const survey = await getSurvey(surveyId);
-  if (!survey?.id) {
-    throw new ResourceNotFoundError("Survey", surveyId);
-  }
+export const deleteResultShareUrlAction = authenticatedActionClient
+  .schema(ZDeleteResultShareUrlAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "update"],
+    });
 
-  await updateSurvey({ ...survey, resultShareKey: null });
-};
+    const survey = await getSurvey(parsedInput.surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
 
-export const getEmailHtmlAction = async (surveyId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+    await updateSurvey({ ...survey, resultShareKey: null });
+  });
 
-  const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
+const ZGetEmailHtmlAction = z.object({
+  surveyId: z.string(),
+});
 
-  return await getEmailTemplateHtml(surveyId);
-};
+export const getEmailHtmlAction = authenticatedActionClient
+  .schema(ZGetEmailHtmlAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "read"],
+    });
+
+    return await getEmailTemplateHtml(parsedInput.surveyId);
+  });

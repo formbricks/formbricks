@@ -202,7 +202,7 @@ export const AddIntegrationModal = ({
         notionIntegrationData.config!.data.push(integrationData);
       }
 
-      await createOrUpdateIntegrationAction(environmentId, notionIntegrationData);
+      await createOrUpdateIntegrationAction({ environmentId, integrationData: notionIntegrationData });
       toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`);
       resetForm();
       setOpen(false);
@@ -217,7 +217,7 @@ export const AddIntegrationModal = ({
     notionIntegrationData.config!.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      await createOrUpdateIntegrationAction(environmentId, notionIntegrationData);
+      await createOrUpdateIntegrationAction({ environmentId, integrationData: notionIntegrationData });
       toast.success("Integration removed successfully");
       setOpen(false);
     } catch (error) {

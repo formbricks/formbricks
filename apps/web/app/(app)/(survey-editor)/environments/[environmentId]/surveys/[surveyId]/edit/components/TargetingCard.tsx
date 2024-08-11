@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
@@ -81,23 +82,27 @@ export const TargetingCard = ({
   const handleCloneSegment = async () => {
     if (!segment) return;
 
-    try {
-      const clonedSegment = await cloneBasicSegmentAction(segment.id, localSurvey.id);
+    const cloneBasicSegmentResponse = await cloneBasicSegmentAction({
+      segmentId: segment.id,
+      surveyId: localSurvey.id,
+    });
 
-      setSegment(clonedSegment);
-    } catch (err) {
-      toast.error(err.message);
+    if (cloneBasicSegmentResponse?.data) {
+      setSegment(cloneBasicSegmentResponse.data);
+    } else {
+      const errorMessage = getFormattedErrorMessage(cloneBasicSegmentResponse);
+      toast.error(errorMessage);
     }
   };
 
   const handleLoadNewSegment = async (surveyId: string, segmentId: string) => {
-    const updatedSurvey = await loadNewBasicSegmentAction(surveyId, segmentId);
-    return updatedSurvey;
+    const loadNewBasicSegmentResponse = await loadNewBasicSegmentAction({ surveyId, segmentId });
+    return loadNewBasicSegmentResponse?.data as TSurvey;
   };
 
-  const handleSegmentUpdate = async (environmentId: string, segmentId: string, data: TSegmentUpdateInput) => {
-    const updatedSegment = await updateBasicSegmentAction(environmentId, segmentId, data);
-    return updatedSegment;
+  const handleSegmentUpdate = async (segmentId: string, data: TSegmentUpdateInput) => {
+    const updateBasicSegmentResponse = await updateBasicSegmentAction({ segmentId, data });
+    return updateBasicSegmentResponse?.data as TSegment;
   };
 
   const handleSegmentCreate = async (data: TSegmentCreateInput) => {
@@ -108,7 +113,7 @@ export const TargetingCard = ({
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
     try {
       if (!segment) throw new Error("Invalid segment");
-      await updateBasicSegmentAction(environmentId, segment?.id, data);
+      await updateBasicSegmentAction({ segmentId: segment?.id, data });
 
       router.refresh();
       toast.success("Segment saved successfully");
@@ -122,7 +127,10 @@ export const TargetingCard = ({
 
   const handleResetAllFilters = async () => {
     try {
-      return await resetBasicSegmentFiltersAction(localSurvey.id);
+      const resetBasicSegmentFiltersResponse = await resetBasicSegmentFiltersAction({
+        surveyId: localSurvey.id,
+      });
+      return resetBasicSegmentFiltersResponse?.data;
     } catch (err) {
       toast.error("Error resetting filters");
     }

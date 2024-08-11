@@ -1,32 +1,41 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { canUserAccessIntegration } from "@formbricks/lib/integration/auth";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { TIntegrationInput } from "@formbricks/types/integration";
+import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
+import { ZIntegrationInput } from "@formbricks/types/integration";
 
-export const createOrUpdateIntegrationAction = async (
-  environmentId: string,
-  integrationData: TIntegrationInput
-) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authenticated");
+const ZCreateOrUpdateIntegrationAction = z.object({
+  environmentId: z.string(),
+  integrationData: ZIntegrationInput,
+});
 
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const createOrUpdateIntegrationAction = authenticatedActionClient
+  .schema(ZCreateOrUpdateIntegrationAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      rules: ["integration", "create"],
+    });
 
-  return await createOrUpdateIntegration(environmentId, integrationData);
-};
+    return await createOrUpdateIntegration(parsedInput.environmentId, parsedInput.integrationData);
+  });
 
-export const deleteIntegrationAction = async (integrationId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZDeleteIntegrationAction = z.object({
+  integrationId: z.string(),
+});
 
-  const isAuthorized = await canUserAccessIntegration(session.user.id, integrationId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const deleteIntegrationAction = authenticatedActionClient
+  .schema(ZDeleteIntegrationAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.integrationId),
+      rules: ["integration", "delete"],
+    });
 
-  return await deleteIntegration(integrationId);
-};
+    return await deleteIntegration(parsedInput.integrationId);
+  });

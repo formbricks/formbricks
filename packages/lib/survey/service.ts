@@ -694,11 +694,12 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
   }
 };
 
-export const duplicateSurvey = async (environmentId: string, surveyId: string, userId: string) => {
-  validateInputs([environmentId, ZId], [surveyId, ZId]);
+export const duplicateSurvey = async (surveyId: string, userId: string) => {
+  validateInputs([surveyId, ZId]);
 
   try {
     const existingSurvey = await getSurvey(surveyId);
+
     const currentDate = new Date();
     if (!existingSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);
@@ -732,7 +733,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
         },
         environment: {
           connect: {
-            id: environmentId,
+            id: existingSurvey.environmentId,
           },
         },
         creator: {
@@ -760,7 +761,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
     if (existingSurvey.segment) {
       if (existingSurvey.segment.isPrivate) {
         const newInlineSegment = await createSegment({
-          environmentId,
+          environmentId: existingSurvey.environmentId,
           title: `${newSurvey.id}`,
           isPrivate: true,
           surveyId: newSurvey.id,

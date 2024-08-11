@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { templates } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { type TProduct, ZProductConfigIndustry } from "@formbricks/types/product";
@@ -43,8 +45,17 @@ export const TemplateList = ({
       type: surveyType,
       createdBy: user.id,
     };
-    const survey = await createSurveyAction(environment.id, augmentedTemplate);
-    router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
+    const createSurveyResponse = await createSurveyAction({
+      environmentId: environment.id,
+      surveyBody: augmentedTemplate,
+    });
+
+    if (createSurveyResponse?.data) {
+      router.push(`/environments/${environment.id}/surveys/${createSurveyResponse.data.id}/edit`);
+    } else {
+      const errorMessage = getFormattedErrorMessage(createSurveyResponse);
+      toast.error(errorMessage);
+    }
   };
 
   const filteredTemplates = useMemo(() => {

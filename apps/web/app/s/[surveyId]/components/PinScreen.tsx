@@ -53,12 +53,15 @@ export const PinScreen = (props: PinScreenProps) => {
   const [survey, setSurvey] = useState<TSurvey>();
 
   const _validateSurveyPinAsync = useCallback(async (surveyId: string, pin: string) => {
-    const response = await validateSurveyPinAction(surveyId, pin);
-    if (response.error) {
-      setError(response.error);
-    } else if (response.survey) {
-      setSurvey(response.survey);
+    const response = await validateSurveyPinAction({ surveyId, pin });
+
+    if (response?.data) {
+      setSurvey(response.data.survey);
+    } else {
+      const errorMessage = getFormattedErrorMessage(response);
+      setError(errorMessage);
     }
+
     setLoading(false);
   }, []);
 

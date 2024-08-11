@@ -104,7 +104,11 @@ export const ActionSettingsTab = ({
             },
           }),
       };
-      await updateActionClassAction(environmentId, actionClass.id, updatedData);
+      await updateActionClassAction({
+        environmentId,
+        actionClassId: actionClass.id,
+        updatedAction: updatedData,
+      });
       setOpen(false);
       router.refresh();
       toast.success("Action updated successfully");
@@ -118,7 +122,7 @@ export const ActionSettingsTab = ({
   const handleDeleteAction = async () => {
     try {
       setIsDeletingAction(true);
-      await deleteActionClassAction(environmentId, actionClass.id);
+      await deleteActionClassAction({ environmentId, actionClassId: actionClass.id });
       router.refresh();
       toast.success("Action deleted successfully");
       setOpen(false);

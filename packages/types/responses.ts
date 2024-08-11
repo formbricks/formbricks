@@ -201,6 +201,10 @@ export const ZResponseNote = z.object({
   user: ZResponseNoteUser,
   isResolved: z.boolean(),
   isEdited: z.boolean(),
+  response: z.object({
+    id: z.string().cuid2(),
+    surveyId: z.string().cuid2(),
+  }),
 });
 
 export type TResponseNote = z.infer<typeof ZResponseNote>;
