@@ -43,7 +43,7 @@ export const StackedCardsContainer = ({
       return survey.questions.length;
     }
     return survey.questions.findIndex((question) => question.id === currentQuestionId);
-  }, [currentQuestionId, survey.welcomeCard.enabled, survey.questions]);
+  }, [currentQuestionId, survey.welcomeCard.enabled, survey.questions.length]);
 
   const [prevQuestionIdx, setPrevQuestionIdx] = useState(questionIdxTemp - 1);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(questionIdxTemp);
