@@ -9,7 +9,9 @@ interface CreateReminderNotificationBodyProps {
   notificationData: TWeeklySummaryNotificationResponse;
 }
 
-export function CreateReminderNotificationBody({ notificationData }: CreateReminderNotificationBodyProps) {
+export function CreateReminderNotificationBody({
+  notificationData,
+}: CreateReminderNotificationBodyProps): React.JSX.Element {
   return (
     <Container>
       <Text>
