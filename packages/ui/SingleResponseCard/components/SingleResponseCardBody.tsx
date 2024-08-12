@@ -113,6 +113,10 @@ export const SingleResponseCardBody = ({
         if (Array.isArray(responseData)) {
           return <AddressResponse value={responseData} />;
         }
+      // case TSurveyQuestionTypeEnum.Ranking:
+      //   if (Array.isArray(responseData)) {
+      //     return <AddressResponse value={responseData} />;
+      //   }
       default:
         if (
           typeof responseData === "string" ||

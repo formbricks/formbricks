@@ -77,6 +77,21 @@ export const QuestionConditional = ({
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
+  ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
+    <RankingQuestion
+      question={question}
+      value={Array.isArray(value) ? value : []}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
   ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
       key={question.id}
@@ -257,21 +272,6 @@ export const QuestionConditional = ({
     <AddressQuestion
       question={question}
       value={Array.isArray(value) ? value : undefined}
-      onChange={onChange}
-      onSubmit={onSubmit}
-      onBack={onBack}
-      isFirstQuestion={isFirstQuestion}
-      isLastQuestion={isLastQuestion}
-      languageCode={languageCode}
-      ttc={ttc}
-      setTtc={setTtc}
-      autoFocusEnabled={autoFocusEnabled}
-      currentQuestionId={currentQuestionId}
-    />
-  ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
-    <RankingQuestion
-      question={question}
-      value={Array.isArray(value) ? value : []}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}

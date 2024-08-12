@@ -6,7 +6,7 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyRankingQuestion } from "@formbricks/types/surveys/types";
@@ -44,94 +44,76 @@ export const RankingQuestion = ({
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
-  const getChoicesWithoutOtherLabels = useCallback(
-    () =>
-      question.choices
-        .filter((choice) => choice.id !== "other")
-        .map((item) => getLocalizedValue(item.label, languageCode)),
-    [question, languageCode]
-  );
-  const [otherSelected, setOtherSelected] = useState<boolean>(false);
-  const [otherValue, setOtherValue] = useState("");
-
-  useEffect(() => {
-    setOtherSelected(
-      !!value &&
-        ((Array.isArray(value) ? value : [value]) as string[]).some((item) => {
-          return getChoicesWithoutOtherLabels().includes(item) === false;
-        })
-    );
-    setOtherValue(
-      (Array.isArray(value) &&
-        value.filter((v) => !question.choices.find((c) => c.label[languageCode] === v))[0]) ||
-        ""
-    );
-  }, [question.id, getChoicesWithoutOtherLabels, question.choices, value, languageCode]);
+  const [sortedItems, setSortedItems] = useState<string[]>([]);
+  const [unsortedItems, setUnsortedItems] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const questionChoices = useMemo(() => {
-    if (!question.choices) {
-      return [];
-    }
-    return question.choices;
+    return question.choices.filter((choice) => choice.id !== "other");
   }, [question.choices]);
 
-  const questionChoiceLabels = questionChoices.map((questionChoice) => {
-    return questionChoice?.label[languageCode];
-  });
+  useEffect(() => {
+    if (value.length > 0) {
+      setSortedItems(value);
+      setUnsortedItems(questionChoices.map((c) => c.id).filter((id) => !value.includes(id)));
+    } else {
+      setUnsortedItems(questionChoices.map((c) => c.id));
+    }
+  }, [value, questionChoices]);
 
-  const otherOption = useMemo(
-    () => question.choices.find((choice) => choice.id === "other"),
-    [question.choices]
+  const handleItemClick = useCallback(
+    (itemId: string) => {
+      setSortedItems((prev) => {
+        let newSorted;
+        if (prev.length === 0) {
+          // First click: just add the item to sortedItems
+          newSorted = [itemId];
+        } else if (prev.length === 1) {
+          // Second click: sort both items
+          newSorted = [prev[0], itemId];
+        } else {
+          // Subsequent clicks: add item to the end
+          newSorted = [...prev, itemId];
+        }
+        setUnsortedItems((unsorted) => unsorted.filter((id) => id !== itemId));
+        onChange({ [question.id]: newSorted });
+        return newSorted;
+      });
+      setError(null);
+    },
+    [onChange, question.id]
   );
 
-  const otherSpecify = useRef<HTMLInputElement | null>(null);
-  const choicesContainerRef = useRef<HTMLDivElement | null>(null);
+  const handleMove = useCallback(
+    (itemId: string, direction: "up" | "down") => {
+      setSortedItems((prev) => {
+        const index = prev.indexOf(itemId);
+        if (index === -1) return prev;
+        const newIndex = direction === "up" ? Math.max(0, index - 1) : Math.min(prev.length - 1, index + 1);
+        const newSortedItems = [...prev];
+        newSortedItems.splice(index, 1);
+        newSortedItems.splice(newIndex, 0, itemId);
+        onChange({ [question.id]: newSortedItems });
+        return newSortedItems;
+      });
+      setError(null);
+    },
+    [onChange, question.id]
+  );
 
-  useEffect(() => {
-    // Scroll to the bottom of choices container and focus on 'otherSpecify' input when 'otherSelected' is true
-    if (otherSelected && choicesContainerRef.current && otherSpecify.current) {
-      choicesContainerRef.current.scrollTop = choicesContainerRef.current.scrollHeight;
-      otherSpecify.current.focus();
+  const handleSubmit = (e: Event) => {
+    e.preventDefault();
+    console.log(sortedItems);
+    if (question.required && sortedItems.length !== questionChoices.length) {
+      setError("Please rank all items before submitting.");
+      return;
     }
-  }, [otherSelected]);
-
-  const addItem = (item: string) => {
-    const isOtherValue = !questionChoiceLabels.includes(item);
-    if (Array.isArray(value)) {
-      if (isOtherValue) {
-        const newValue = value.filter((v) => {
-          return questionChoiceLabels.includes(v);
-        });
-        return onChange({ [question.id]: [...newValue, item] });
-      } else {
-        return onChange({ [question.id]: [...value, item] });
-      }
-    }
-    return onChange({ [question.id]: [item] }); // if not array, make it an array
+    const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
+    onSubmit({ [question.id]: sortedItems }, updatedTtcObj);
   };
-
-  const removeItem = (item: string) => {
-    if (Array.isArray(value)) {
-      return onChange({ [question.id]: value.filter((i) => i !== item) });
-    }
-    return onChange({ [question.id]: [] }); // if not array, make it an array
-  };
-
   return (
-    <form
-      key={question.id}
-      onSubmit={(e) => {
-        e.preventDefault();
-        const newValue = (value as string[])?.filter((item) => {
-          return getChoicesWithoutOtherLabels().includes(item) || item === otherValue;
-        }); // filter out all those values which are either in getChoicesWithoutOtherLabels() (i.e. selected by checkbox) or the latest entered otherValue
-        onChange({ [question.id]: newValue });
-        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-        setTtc(updatedTtcObj);
-        onSubmit({ [question.id]: value }, updatedTtcObj);
-      }}
-      className="fb-w-full">
-      <div>Hello World</div>
+    <form onSubmit={handleSubmit} className="fb-w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -145,128 +127,49 @@ export const RankingQuestion = ({
             questionId={question.id}
           />
           <div className="fb-mt-4">
-            <fieldset>
-              <legend className="fb-sr-only">Options</legend>
-              <div className="fb-bg-survey-bg fb-relative fb-space-y-2" ref={choicesContainerRef}>
-                {questionChoices.map((choice, idx) => {
-                  if (!choice || choice.id === "other") return;
-                  return (
-                    <label
-                      key={choice.id}
-                      tabIndex={idx + 1}
-                      className={cn(
-                        value.includes(getLocalizedValue(choice.label, languageCode))
-                          ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
-                          : "fb-border-border",
-                        "fb-text-heading fb-bg-input-bg focus-within:fb-border-brand hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
-                      )}
-                      onKeyDown={(e) => {
-                        // Accessibility: if spacebar was pressed pass this down to the input
-                        if (e.key === " ") {
-                          e.preventDefault();
-                          document.getElementById(choice.id)?.click();
-                          document.getElementById(choice.id)?.focus();
-                        }
-                      }}
-                      autoFocus={idx === 0 && autoFocusEnabled}>
-                      <span className="fb-flex fb-items-center fb-text-sm" dir="auto">
-                        <input
-                          type="checkbox"
-                          id={choice.id}
-                          name={question.id}
-                          tabIndex={-1}
-                          value={getLocalizedValue(choice.label, languageCode)}
-                          className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
-                          aria-labelledby={`${choice.id}-label`}
-                          onChange={(e) => {
-                            if ((e.target as HTMLInputElement)?.checked) {
-                              addItem(getLocalizedValue(choice.label, languageCode));
-                            } else {
-                              removeItem(getLocalizedValue(choice.label, languageCode));
-                            }
-                          }}
-                          checked={
-                            Array.isArray(value) &&
-                            value.includes(getLocalizedValue(choice.label, languageCode))
-                          }
-                          required={
-                            question.required && Array.isArray(value) && value.length
-                              ? false
-                              : question.required
-                          }
-                        />
-                        <span id={`${choice.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
-                          {getLocalizedValue(choice.label, languageCode)}
-                        </span>
-                      </span>
-                    </label>
-                  );
-                })}
-                {otherOption && (
-                  <label
-                    tabIndex={questionChoices.length + 1}
-                    className={cn(
-                      value.includes(getLocalizedValue(otherOption.label, languageCode))
-                        ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
-                        : "fb-border-border",
-                      "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
-                    )}
-                    onKeyDown={(e) => {
-                      // Accessibility: if spacebar was pressed pass this down to the input
-                      if (e.key === " ") {
-                        if (otherSelected) return;
-                        document.getElementById(otherOption.id)?.click();
-                        document.getElementById(otherOption.id)?.focus();
-                      }
-                    }}>
-                    <span className="fb-flex fb-items-center fb-text-sm" dir="auto">
-                      <input
-                        type="checkbox"
-                        tabIndex={-1}
-                        id={otherOption.id}
-                        name={question.id}
-                        value={getLocalizedValue(otherOption.label, languageCode)}
-                        className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
-                        aria-labelledby={`${otherOption.id}-label`}
-                        onChange={() => {
-                          setOtherSelected(!otherSelected);
-                          if (!value.includes(otherValue)) {
-                            addItem(otherValue);
-                          } else {
-                            removeItem(otherValue);
-                          }
-                        }}
-                        checked={otherSelected}
-                      />
-                      <span id={`${otherOption.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
-                        {getLocalizedValue(otherOption.label, languageCode)}
-                      </span>
-                    </span>
-                    {otherSelected && (
-                      <input
-                        ref={otherSpecify}
-                        dir="auto"
-                        id={`${otherOption.id}-label`}
-                        name={question.id}
-                        tabIndex={questionChoices.length + 1}
-                        value={otherValue}
-                        onChange={(e) => {
-                          setOtherValue(e.currentTarget.value);
-                          addItem(e.currentTarget.value);
-                        }}
-                        className="placeholder:fb-text-placeholder fb-border-border fb-bg-survey-bg fb-text-heading focus:fb-ring-focus fb-rounded-custom fb-mt-3 fb-flex fb-h-10 fb-w-full fb-border fb-px-3 fb-py-2 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50"
-                        placeholder={
-                          getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
-                        }
-                        required={question.required}
-                        aria-labelledby={`${otherOption.id}-label`}
-                      />
-                    )}
-                  </label>
-                )}
-              </div>
-            </fieldset>
+            {[...sortedItems, ...unsortedItems].map((itemId, idx) => {
+              const choice = questionChoices.find((c) => c.id === itemId);
+              if (!choice) return null;
+              const isSorted = sortedItems.includes(itemId);
+              return (
+                <div
+                  autoFocus={idx === 0 && autoFocusEnabled}
+                  key={choice.id}
+                  tabIndex={idx + 1}
+                  onClick={() => !isSorted && handleItemClick(itemId)}
+                  className={cn(
+                    "fb-flex fb-items-center fb-mb-2 fb-p-4 fb-rounded-custom fb-border fb-transition-all",
+                    isSorted ? "fb-border-brand fb-bg-input-bg-selected" : "fb-border-border fb-bg-input-bg"
+                  )}>
+                  <span className="fb-mr-4 fb-w-6 fb-h-6 fb-flex fb-items-center fb-justify-center fb-border fb-border-dashed fb-rounded-full">
+                    {isSorted && sortedItems.indexOf(itemId) + 1}
+                  </span>
+                  <div className={cn("fb-flex-grow", !isSorted ? "fb-cursor-pointer" : "")}>
+                    {getLocalizedValue(choice.label, languageCode)}
+                  </div>
+                  {isSorted && (
+                    <div className="fb-ml-2 fb-flex fb-flex-col">
+                      <button
+                        type="button"
+                        onClick={() => handleMove(itemId, "up")}
+                        className="fb-p-1 fb-text-sm fb-bg-gray-100 fb-rounded-t"
+                        disabled={sortedItems.indexOf(itemId) === 0}>
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMove(itemId, "down")}
+                        className="fb-p-1 fb-text-sm fb-bg-gray-100 fb-rounded-b"
+                        disabled={sortedItems.indexOf(itemId) === sortedItems.length - 1}>
+                        ↓
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
+          {error && <div className="fb-text-red-500 fb-mt-2">{error}</div>}
         </div>
       </ScrollableContainer>
 

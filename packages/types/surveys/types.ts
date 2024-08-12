@@ -496,6 +496,7 @@ export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Ranking),
   choices: z.array(ZSurveyChoice).min(2, { message: "Ranking Question must have at least two options" }),
   otherOptionPlaceholder: ZI18nString.optional(),
+  shuffleOption: ZShuffleOption.optional(),
 });
 
 export type TSurveyRankingQuestion = z.infer<typeof ZSurveyRankingQuestion>;
@@ -1327,18 +1328,25 @@ export const ZSurveyQuestionSummaryRanking = z.object({
   type: z.literal("ranking"),
   question: ZSurveyAddressQuestion,
   responseCount: z.number(),
-  samples: z.array(
+  choices: z.array(
     z.object({
-      id: z.string(),
-      updatedAt: z.date(),
-      value: z.array(z.string()),
-      person: z
-        .object({
-          id: ZId,
-          userId: z.string(),
-        })
-        .nullable(),
-      personAttributes: ZAttributes.nullable(),
+      value: z.string(),
+      count: z.number(),
+      percentage: z.number(),
+      others: z
+        .array(
+          z.object({
+            value: z.string(),
+            person: z
+              .object({
+                id: ZId,
+                userId: z.string(),
+              })
+              .nullable(),
+            personAttributes: ZAttributes.nullable(),
+          })
+        )
+        .optional(),
     })
   ),
 });
