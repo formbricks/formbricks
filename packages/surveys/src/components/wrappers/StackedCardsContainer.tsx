@@ -45,35 +45,9 @@ export const StackedCardsContainer = ({
     return survey.questions.findIndex((question) => question.id === currentQuestionId);
   }, [currentQuestionId, survey.welcomeCard.enabled, survey.questions]);
 
-  const [prevQuestionIdx, setPrevQuestionIdx] = useState(questionIdxTemp - 1);
-  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(questionIdxTemp);
-  const [nextQuestionIdx, setNextQuestionIdx] = useState(questionIdxTemp + 1);
-  const [visitedQuestions, setVisitedQuestions] = useState<number[]>([]);
-
-  useEffect(() => {
-    if (questionIdxTemp > currentQuestionIdx) {
-      // Next button is clicked
-      setPrevQuestionIdx(currentQuestionIdx);
-      setCurrentQuestionIdx(questionIdxTemp);
-      setNextQuestionIdx(questionIdxTemp + 1);
-      setVisitedQuestions((prev) => {
-        return [...prev, currentQuestionIdx];
-      });
-    } else if (questionIdxTemp < currentQuestionIdx) {
-      // Back button is clicked
-      setNextQuestionIdx(currentQuestionIdx);
-      setCurrentQuestionIdx(questionIdxTemp);
-      setPrevQuestionIdx(visitedQuestions[visitedQuestions.length - 2]);
-      setVisitedQuestions((prev) => {
-        if (prev.length > 0) {
-          const newStack = prev.slice(0, -1);
-          return newStack;
-        }
-        return prev;
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionIdxTemp]);
+  const prevQuestionIdx = questionIdxTemp - 1;
+  const currentQuestionIdx = questionIdxTemp;
+  const nextQuestionIdx = questionIdxTemp + 1;
 
   const borderStyles = useMemo(() => {
     const baseStyle = {
