@@ -78,6 +78,7 @@ test.describe("JS Package Test", async () => {
       // Formbricks In App Sync has happened
       const syncApi = await page.waitForResponse(
         (response) => {
+          console.log({ responseUrl: response.url() });
           return response.url().includes("/app/sync");
         },
         {
