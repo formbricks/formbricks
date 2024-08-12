@@ -198,7 +198,7 @@ export const sendEmbedSurveyPreviewEmail = async (
 export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData) => {
   const surveyId = data.surveyId;
   const email = data.email;
-  const surveyData = data.surveyData;
+  const surveyName = data.surveyName;
   const singleUseId = data.suId;
   const token = createTokenForLinkSurvey(surveyId, email);
   const getSurveyLink = () => {
@@ -210,7 +210,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData) 
   await sendEmail({
     to: data.email,
     subject: "Your Formbricks Survey",
-    html: render(EmailTemplate({ content: LinkSurveyEmail({ surveyData, getSurveyLink }) })),
+    html: render(EmailTemplate({ content: LinkSurveyEmail({ surveyName, getSurveyLink }) })),
   });
 };
 

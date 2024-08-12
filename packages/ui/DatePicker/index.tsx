@@ -42,13 +42,13 @@ export const DatePicker = ({
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
         <Calendar
+          autoFocus
           mode="single"
           selected={formattedDate}
           disabled={{
             before: addDays(new Date(), 1),
           }}
           onSelect={handleDateSelect}
-          initialFocus
         />
       </PopoverContent>
     </Popover>

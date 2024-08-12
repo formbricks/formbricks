@@ -63,7 +63,6 @@ export const ManageIntegration = ({
           </span>
         </div>
         <Button
-          variant="darkCTA"
           onClick={() => {
             setSelectedIntegration(null);
             setOpenAddIntegrationModal(true);

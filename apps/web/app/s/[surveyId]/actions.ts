@@ -4,17 +4,24 @@ import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import { z } from "zod";
 import { sendLinkSurveyToVerifiedEmail } from "@formbricks/email";
 import { actionClient } from "@formbricks/lib/actionClient";
+import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZLinkSurveyEmailData } from "@formbricks/types/email";
 
 export const sendLinkSurveyEmailAction = actionClient
   .schema(ZLinkSurveyEmailData)
   .action(async ({ parsedInput }) => {
-    if (!parsedInput.surveyData) {
-      throw new Error("No survey data provided");
-    }
     return await sendLinkSurveyToVerifiedEmail(parsedInput);
   });
+
+const ZVerifyTokenAction = z.object({
+  surveyId: z.string(),
+  token: z.string(),
+});
+
+export const verifyTokenAction = actionClient.schema(ZVerifyTokenAction).action(async ({ parsedInput }) => {
+  return await verifyTokenForLinkSurvey(parsedInput.token, parsedInput.surveyId);
+});
 
 const ZValidateSurveyPinAction = z.object({
   surveyId: z.string(),

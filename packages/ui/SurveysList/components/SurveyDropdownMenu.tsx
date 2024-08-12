@@ -17,13 +17,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../DropdownMenu";
-import { LoadingSpinner } from "../../LoadingSpinner";
-import {
-  copyToOtherEnvironmentAction,
-  deleteSurveyAction,
-  duplicateSurveyAction,
-  getSurveyAction,
-} from "../actions";
+import { copySurveyToOtherEnvironmentAction, deleteSurveyAction, getSurveyAction } from "../actions";
+import { CopySurveyModal } from "./CopySurveyModal";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
@@ -40,8 +35,6 @@ interface SurveyDropDownMenuProps {
 export const SurveyDropDownMenu = ({
   environmentId,
   survey,
-  environment,
-  otherEnvironment,
   webAppUrl,
   singleUseId,
   isSurveyCreationDeletionDisabled,
@@ -51,6 +44,7 @@ export const SurveyDropDownMenu = ({
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
+  const [isCopyFormOpen, setIsCopyFormOpen] = useState(false);
   const router = useRouter();
 
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey.id, webAppUrl]);
@@ -72,7 +66,11 @@ export const SurveyDropDownMenu = ({
   const duplicateSurveyAndRefresh = async (surveyId: string) => {
     setLoading(true);
     try {
-      const duplicatedSurveyResponse = await duplicateSurveyAction({ surveyId });
+      const duplicatedSurveyResponse = await copySurveyToOtherEnvironmentAction({
+        environmentId,
+        surveyId,
+        targetEnvironmentId: environmentId,
+      });
       router.refresh();
 
       if (duplicatedSurveyResponse?.data) {
@@ -91,32 +89,6 @@ export const SurveyDropDownMenu = ({
     setLoading(false);
   };
 
-  const copyToOtherEnvironment = async (surveyId: string) => {
-    setLoading(true);
-    try {
-      await copyToOtherEnvironmentAction({
-        environmentId,
-        surveyId,
-        targetEnvironmentId: otherEnvironment.id,
-      });
-      if (otherEnvironment.type === "production") {
-        toast.success("Survey copied to production env.");
-      } else if (otherEnvironment.type === "development") {
-        toast.success("Survey copied to development env.");
-      }
-      router.replace(`/environments/${otherEnvironment.id}`);
-    } catch (error) {
-      toast.error(`Failed to copy to ${otherEnvironment.type}`);
-    }
-    setLoading(false);
-  };
-  if (loading) {
-    return (
-      <div className="opacity-0.2 absolute left-0 top-0 h-full w-full bg-slate-100">
-        <LoadingSpinner />
-      </div>
-    );
-  }
   return (
     <div
       id={`${survey.name.toLowerCase().split(" ").join("-")}-survey-actions`}
@@ -158,35 +130,20 @@ export const SurveyDropDownMenu = ({
             )}
             {!isSurveyCreationDeletionDisabled && (
               <>
-                {environment.type === "development" ? (
-                  <DropdownMenuItem>
-                    <button
-                      type="button"
-                      className="flex w-full items-center"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setIsDropDownOpen(false);
-                        copyToOtherEnvironment(survey.id);
-                      }}>
-                      <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
-                      Copy to Prod
-                    </button>
-                  </DropdownMenuItem>
-                ) : environment.type === "production" ? (
-                  <DropdownMenuItem>
-                    <button
-                      type="button"
-                      className="flex w-full items-center"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setIsDropDownOpen(false);
-                        copyToOtherEnvironment(survey.id);
-                      }}>
-                      <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
-                      Copy to Dev
-                    </button>
-                  </DropdownMenuItem>
-                ) : null}
+                <DropdownMenuItem>
+                  <button
+                    type="button"
+                    className="flex w-full items-center"
+                    disabled={loading}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
+                      setIsCopyFormOpen(true);
+                    }}>
+                    <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
+                    Copy...
+                  </button>
+                </DropdownMenuItem>
               </>
             )}
             {survey.type === "link" && survey.status !== "draft" && (
@@ -252,6 +209,10 @@ export const SurveyDropDownMenu = ({
           onDelete={() => handleDeleteSurvey(survey)}
           text="Are you sure you want to delete this survey and all of its responses? This action cannot be undone."
         />
+      )}
+
+      {isCopyFormOpen && (
+        <CopySurveyModal open={isCopyFormOpen} setOpen={setIsCopyFormOpen} survey={survey} />
       )}
     </div>
   );

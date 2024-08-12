@@ -233,8 +233,7 @@ export function SegmentSettings({
               onClick={() => {
                 handleUpdateSegment();
               }}
-              type="submit"
-              variant="darkCTA">
+              type="submit">
               Save changes
             </Button>
 

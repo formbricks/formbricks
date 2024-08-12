@@ -284,7 +284,7 @@ export const AddChannelMappingModal = ({
                   Cancel
                 </Button>
               )}
-              <Button variant="darkCTA" type="submit" loading={isLinkingChannel}>
+              <Button type="submit" loading={isLinkingChannel}>
                 {selectedIntegration ? "Update" : "Link Channel"}
               </Button>
             </div>

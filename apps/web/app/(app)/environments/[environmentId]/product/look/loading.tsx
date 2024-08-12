@@ -199,9 +199,7 @@ const Loading = () => {
                 <div className={cn("absolute bottom-3 h-16 w-16 rounded bg-slate-700 sm:right-3")}></div>
               </div>
             </div>
-            <Button
-              variant="darkCTA"
-              className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-slate-200">
+            <Button className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-slate-200">
               Loading
             </Button>
           </div>

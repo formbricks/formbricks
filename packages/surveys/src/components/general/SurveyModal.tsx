@@ -21,6 +21,7 @@ export const SurveyModal = ({
   languageCode,
   responseCount,
   styling,
+  hiddenFieldsRecord,
 }: SurveyModalProps) => {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -54,11 +55,15 @@ export const SurveyModal = ({
           onClose={close}
           onFinished={() => {
             onFinished();
-            setTimeout(() => {
-              if (!survey.redirectUrl) {
-                close();
-              }
-            }, 3000); // close modal automatically after 3 seconds
+            setTimeout(
+              () => {
+                const firstEnabledEnding = survey.endings[0];
+                if (firstEnabledEnding?.type !== "redirectToUrl") {
+                  close();
+                }
+              },
+              survey.endings.length ? 3000 : 0 // close modal automatically after 3 seconds if no ending is enabled; otherwise, close immediately
+            );
           }}
           onRetry={onRetry}
           getSetIsError={getSetIsError}
@@ -68,6 +73,7 @@ export const SurveyModal = ({
           styling={styling}
           isCardBorderVisible={!highlightBorderColor}
           clickOutside={placement === "center" ? clickOutside : undefined}
+          hiddenFieldsRecord={hiddenFieldsRecord}
         />
       </Modal>
     </div>

@@ -4,32 +4,13 @@ import { z } from "zod";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
-import { createShortUrl } from "@formbricks/lib/shortUrl/service";
 import { updateUser } from "@formbricks/lib/user/service";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZProductUpdateInput } from "@formbricks/types/product";
 import { TUserNotificationSettings } from "@formbricks/types/user";
-
-const ZCreateShortUrlAction = z.object({
-  url: z.string(),
-});
-
-export const createShortUrlAction = authenticatedActionClient
-  .schema(ZCreateShortUrlAction)
-  .action(async ({ parsedInput }) => {
-    const regexPattern = new RegExp("^" + WEBAPP_URL);
-    const isValidUrl = regexPattern.test(parsedInput.url);
-
-    if (!isValidUrl) throw new Error("Only Formbricks survey URLs are allowed");
-
-    const shortUrl = await createShortUrl(parsedInput.url);
-    const fullShortUrl = SHORT_URL_BASE + "/" + shortUrl.id;
-    return fullShortUrl;
-  });
 
 const ZCreateOrganizationAction = z.object({
   organizationName: z.string(),

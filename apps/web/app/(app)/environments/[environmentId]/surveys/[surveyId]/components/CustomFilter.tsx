@@ -308,7 +308,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
         {isDatePickerOpen && (
           <div ref={datePickerRef} className="absolute top-full z-50 my-2 rounded-md border bg-white">
             <Calendar
-              initialFocus
+              autoFocus
               mode="range"
               defaultMonth={dateRange?.from}
               selected={hoveredRange ? hoveredRange : dateRange}

@@ -9,9 +9,7 @@ import { QuestionFilterComboBox } from "@/app/(app)/environments/[environmentId]
 import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
 import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
 import clsx from "clsx";
-import { isEqual } from "lodash";
-import { TrashIcon } from "lucide-react";
-import { ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -180,9 +178,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
 
   const handleApplyFilters = () => {
     clearItem();
-    if (!isEqual(filterValue, selectedFilter)) {
-      setSelectedFilter(filterValue);
-    }
+    setSelectedFilter(filterValue);
     setIsOpen(false);
   };
 
@@ -193,10 +189,16 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     setIsOpen(open);
   };
 
+  useEffect(() => {
+    setFilterValue(selectedFilter);
+  }, [selectedFilter]);
+
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger className="flex min-w-[8rem] items-center justify-between rounded border border-slate-200 bg-white p-3 text-sm text-slate-600 hover:border-slate-300 sm:min-w-[11rem] sm:px-6 sm:py-3">
-        Filter {filterValue.filter.length > 0 && `(${filterValue.filter.length})`}
+        <span>
+          Filter <b>{filterValue.filter.length > 0 && `(${filterValue.filter.length})`}</b>
+        </span>
         <div className="ml-3">
           {isOpen ? (
             <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
@@ -209,7 +211,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
         align="start"
         className="w-[300px] border-slate-200 bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px]">
         <div className="mb-8 flex flex-wrap items-start justify-between">
-          <p className="hidden text-lg font-bold text-black sm:block">Show all responses that match</p>
+          <p className="text-slate800 hidden text-lg font-semibold sm:block">Show all responses that match</p>
           <p className="block text-base text-slate-500 sm:hidden">Show all responses where...</p>
           <div className="flex items-center space-x-2">
             <label className="text-sm font-normal text-slate-600">Only completed</label>
@@ -285,7 +287,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
             <Plus width={18} height={18} className="ml-2" />
           </Button>
           <div className="flex gap-2">
-            <Button size="sm" variant="darkCTA" onClick={handleApplyFilters}>
+            <Button size="sm" onClick={handleApplyFilters}>
               Apply filters
             </Button>
             <Button size="sm" variant="minimal" onClick={handleClearAllFilters}>

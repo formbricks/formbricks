@@ -148,9 +148,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: TDisableTwoFactorModalP
                   Cancel
                 </Button>
 
-                <Button variant="darkCTA" size="sm">
-                  Disable
-                </Button>
+                <Button size="sm">Disable</Button>
               </div>
             </div>
           </form>

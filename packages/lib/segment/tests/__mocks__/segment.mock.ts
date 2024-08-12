@@ -10,6 +10,7 @@ import {
 } from "@formbricks/types/segment";
 
 export const mockSegmentId = "rh2eual2apby2bx0r027ru70";
+export const mockDeleteSegmentId = "to336z1uth9cvyb1sh7k9i77";
 export const mockEnvironmentId = "t7fszh4tsotoe87ppa6lqhie";
 export const mockSurveyId = "phz5mjwvatwc0dqwuip90qpv";
 export const mockFilterGroupId = "wi6zz4ekmcwi08bhv1hmgqcr";
@@ -162,6 +163,18 @@ export const mockSegmentPrisma = {
   createdAt: new Date(),
   updatedAt: new Date(),
   surveys: [{ id: mockSurveyId }],
+};
+
+export const mockDeleteSegmentPrisma = {
+  ...mockSegmentPrisma,
+  id: mockDeleteSegmentId,
+  surveys: [],
+};
+
+export const mockDeleteSegment = {
+  ...mockSegment,
+  id: mockDeleteSegmentId,
+  surveys: [],
 };
 
 export const mockSegmentActiveInactiveSurves = {

@@ -15,11 +15,12 @@ import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TTag, TTagsCount } from "@formbricks/types/tags";
 import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
 import { Input } from "@formbricks/ui/Input";
 import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 
-interface IEditTagsWrapperProps {
+interface EditTagsWrapperProps {
   environment: TEnvironment;
   environmentTags: TTag[];
   environmentTagsCount: TTagsCount;
@@ -41,10 +42,21 @@ const SingleTag: React.FC<{
   environmentTags,
 }) => {
   const router = useRouter();
-  // const { updateTag, updateTagError } = useUpdateTag(environment.id, tagId);
-  // const { mergeTags, isMergingTags } = useMergeTags(environment.id);
   const [updateTagError, setUpdateTagError] = useState(false);
   const [isMergingTags, setIsMergingTags] = useState(false);
+  const [openDeleteTagDialog, setOpenDeleteTagDialog] = useState(false);
+
+  const confirmDeleteTag = async () => {
+    const deleteTagResponse = await deleteTagAction({ tagId });
+    if (deleteTagResponse?.data) {
+      toast.success(`${deleteTagResponse?.data.name ?? "Tag"} tag deleted`);
+      updateTagsCount();
+      router.refresh();
+    } else {
+      const errorMessage = getFormattedErrorMessage(deleteTagResponse);
+      toast.error(errorMessage ?? "Something went wrong");
+    }
+  };
 
   return (
     <div className="w-full" key={tagId}>
@@ -126,17 +138,16 @@ const SingleTag: React.FC<{
               size="sm"
               // loading={isDeletingTag}
               className="font-medium text-slate-50 focus:border-transparent focus:shadow-transparent focus:outline-transparent focus:ring-0 focus:ring-transparent"
-              onClick={() => {
-                if (confirm("Are you sure you want to delete this tag?")) {
-                  deleteTagAction({ tagId }).then(() => {
-                    toast.success("Tag deleted");
-                    updateTagsCount();
-                    router.refresh();
-                  });
-                }
-              }}>
+              onClick={() => setOpenDeleteTagDialog(true)}>
               Delete
             </Button>
+            <DeleteDialog
+              open={openDeleteTagDialog}
+              setOpen={setOpenDeleteTagDialog}
+              deleteWhat={tagName}
+              text="Are you sure you want to delete this tag?"
+              onDelete={confirmDeleteTag}
+            />
           </div>
         </div>
       </div>
@@ -144,7 +155,7 @@ const SingleTag: React.FC<{
   );
 };
 
-export const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
+export const EditTagsWrapper: React.FC<EditTagsWrapperProps> = (props) => {
   const { environment, environmentTags, environmentTagsCount } = props;
   return (
     <div className="">

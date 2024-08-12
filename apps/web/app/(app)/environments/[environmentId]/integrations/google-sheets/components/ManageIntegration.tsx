@@ -67,7 +67,6 @@ export const ManageIntegration = ({
           <span className="text-slate-500">Connected with {googleSheetIntegration.config.email}</span>
         </div>
         <Button
-          variant="darkCTA"
           onClick={() => {
             setSelectedIntegration(null);
             setOpenAddIntegrationModal(true);

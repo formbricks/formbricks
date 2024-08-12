@@ -208,7 +208,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
             </div>
 
             <div className="mt-4 flex items-center gap-2">
-              <Button variant="darkCTA" size="sm" type="submit">
+              <Button size="sm" type="submit">
                 Save
               </Button>
               <Button

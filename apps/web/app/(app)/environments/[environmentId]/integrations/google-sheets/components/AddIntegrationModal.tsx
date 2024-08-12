@@ -288,7 +288,7 @@ export const AddIntegrationModal = ({
                   Cancel
                 </Button>
               )}
-              <Button variant="darkCTA" type="submit" loading={isLinkingSheet}>
+              <Button type="submit" loading={isLinkingSheet}>
                 {selectedIntegration ? "Update" : "Link Sheet"}
               </Button>
             </div>

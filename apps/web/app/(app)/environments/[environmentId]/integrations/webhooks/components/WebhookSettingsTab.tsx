@@ -218,7 +218,7 @@ export const WebhookSettingsTab = ({ environmentId, webhook, surveys, setOpen }:
           </div>
 
           <div className="flex space-x-2">
-            <Button type="submit" variant="darkCTA" loading={isUpdatingWebhook}>
+            <Button type="submit" loading={isUpdatingWebhook}>
               Save changes
             </Button>
           </div>

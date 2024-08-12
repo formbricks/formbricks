@@ -51,7 +51,7 @@ export const VerifyEmail = ({
     const data = {
       surveyId: survey.id,
       email: email as string,
-      surveyData: survey.verifyEmail || {},
+      surveyName: survey.name,
       suId: singleUseId ?? "",
     };
     try {
@@ -115,7 +115,7 @@ export const VerifyEmail = ({
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyPress={handleKeyPress}
               />
-              <Button variant="darkCTA" onClick={() => submitEmail(email)} loading={isLoading}>
+              <Button onClick={() => submitEmail(email)} loading={isLoading}>
                 Verify
               </Button>
             </div>

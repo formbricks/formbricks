@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { FC } from "react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { extractLanguageCodes, translateSurvey } from "@formbricks/lib/i18n/utils";
+import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import type { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
@@ -34,7 +34,7 @@ export interface ConfirmationModalProps {
   open: boolean;
   title: string;
   buttonText: string;
-  buttonVariant?: "darkCTA" | "warn";
+  buttonVariant?: "primary" | "warn";
   onConfirm: () => void;
 }
 
@@ -74,7 +74,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   };
 
   const updateSurveyTranslations = (survey: TSurvey, updatedLanguages: TSurveyLanguage[]) => {
-    const translatedSurveyResult = translateSurvey(survey, extractLanguageCodes(updatedLanguages));
+    const translatedSurveyResult = addMultiLanguageLabels(survey, extractLanguageCodes(updatedLanguages));
 
     const updatedSurvey = { ...translatedSurveyResult, languages: updatedLanguages };
     setLocalSurvey(updatedSurvey as TSurvey);
@@ -169,8 +169,8 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   return (
     <div
       className={cn(
-        open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
-        "group z-10 flex flex-row rounded-lg bg-white text-slate-900 transition-transform duration-300 ease-in-out"
+        open ? "shadow-lg" : "shadow-md",
+        "group z-10 flex flex-row rounded-lg bg-white text-slate-900"
       )}>
       <div
         className={cn(

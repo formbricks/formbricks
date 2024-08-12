@@ -45,29 +45,8 @@ export const mockDisplayInputWithResponseId = {
   responseId: mockResponseId,
 };
 
-export const mockDisplayLegacyInput = {
-  responseId: mockResponseId,
-  surveyId: mockSurveyId,
-};
-export const mockDisplayLegacyInputWithPersonId = {
-  ...mockDisplayLegacyInput,
-  personId: mockPersonId,
-};
-
 export const mockDisplayUpdate = {
   environmentId: mockEnvironmentId,
   userId: mockUserId,
   responseId: mockResponseId,
-};
-
-export const mockDisplayLegacyUpdateInput = {
-  personId: mockPersonId,
-  responseId: mockResponseId,
-};
-
-export const mockDisplayLegacyWithRespondedStatus: Prisma.DisplayGetPayload<{
-  select: typeof selectDisplay;
-}> = {
-  ...mockDisplayWithPersonId,
-  status: "responded",
 };

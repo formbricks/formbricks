@@ -1,6 +1,9 @@
 import { prisma } from "../../__mocks__/database";
 import {
   getMockSegmentFilters,
+  mockDeleteSegment,
+  mockDeleteSegmentId,
+  mockDeleteSegmentPrisma,
   mockEnvironmentId,
   mockEvaluateSegmentUserData,
   mockSegment,
@@ -13,7 +16,7 @@ import {
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   cloneSegment,
   createSegment,
@@ -255,9 +258,10 @@ describe("Tests for updateSegment service", () => {
 describe("Tests for deleteSegment service", () => {
   describe("Happy Path", () => {
     it("Deletes a user segment", async () => {
-      prisma.segment.delete.mockResolvedValue(mockSegmentPrisma);
-      const result = await deleteSegment(mockSegmentId);
-      expect(result).toEqual(mockSegment);
+      prisma.segment.findUnique.mockResolvedValue(mockDeleteSegmentPrisma);
+      prisma.segment.delete.mockResolvedValue(mockDeleteSegmentPrisma);
+      const result = await deleteSegment(mockDeleteSegmentId);
+      expect(result).toEqual(mockDeleteSegment);
     });
   });
 
@@ -266,7 +270,7 @@ describe("Tests for deleteSegment service", () => {
 
     it("Throws a ResourceNotFoundError error if the user segment does not exist", async () => {
       prisma.segment.findUnique.mockResolvedValue(null);
-      await expect(deleteSegment(mockSegmentId)).rejects.toThrow(ResourceNotFoundError);
+      await expect(deleteSegment(mockDeleteSegmentId)).rejects.toThrow(ResourceNotFoundError);
     });
 
     it("Throws a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
@@ -276,16 +280,21 @@ describe("Tests for deleteSegment service", () => {
         clientVersion: "0.0.1",
       });
 
+      prisma.segment.findUnique.mockResolvedValue(mockDeleteSegmentPrisma);
       prisma.segment.delete.mockRejectedValue(errToThrow);
 
-      await expect(deleteSegment(mockSegmentId)).rejects.toThrow(DatabaseError);
+      await expect(deleteSegment(mockDeleteSegmentId)).rejects.toThrow(DatabaseError);
+    });
+
+    it("Throws an OperationNotAllowedError if the segment is associated with a survey", async () => {
+      await expect(deleteSegment(mockSegmentId)).rejects.toThrow(OperationNotAllowedError);
     });
 
     it("Throws a generic Error for unexpected exceptions", async () => {
       const mockErrorMessage = "Mock error message";
       prisma.segment.delete.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(deleteSegment(mockSegmentId)).rejects.toThrow(Error);
+      await expect(deleteSegment(mockDeleteSegmentId)).rejects.toThrow(Error);
     });
   });
 });

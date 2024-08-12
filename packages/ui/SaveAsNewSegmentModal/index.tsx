@@ -185,7 +185,7 @@ export const SaveAsNewSegmentModal = ({
                 }}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit" loading={isLoading}>
+              <Button type="submit" loading={isLoading}>
                 Save
               </Button>
             </div>

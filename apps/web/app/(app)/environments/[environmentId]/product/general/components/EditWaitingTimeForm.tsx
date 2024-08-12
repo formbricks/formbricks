@@ -78,7 +78,6 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product })
 
         <Button
           type="submit"
-          variant="darkCTA"
           size="sm"
           className="w-fit"
           loading={isSubmitting}

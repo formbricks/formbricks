@@ -19,9 +19,10 @@ import { FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/For
 interface EditProfileAvatarFormProps {
   session: Session;
   environmentId: string;
+  imageUrl: string | null;
 }
 
-export const EditProfileAvatarForm = ({ session, environmentId }: EditProfileAvatarFormProps) => {
+export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: EditProfileAvatarFormProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -57,7 +58,7 @@ export const EditProfileAvatarForm = ({ session, environmentId }: EditProfileAva
   const handleUpload = async (file: File, environmentId: string) => {
     setIsLoading(true);
     try {
-      if (session?.user.imageUrl) {
+      if (imageUrl) {
         // If avatar image already exists, then remove it before update action
         await removeAvatarAction({ environmentId });
       }
@@ -115,7 +116,7 @@ export const EditProfileAvatarForm = ({ session, environmentId }: EditProfileAva
           </div>
         )}
 
-        <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
+        <ProfileAvatar userId={session.user.id} imageUrl={imageUrl} />
       </div>
 
       <FormProvider {...form}>
@@ -134,7 +135,7 @@ export const EditProfileAvatarForm = ({ session, environmentId }: EditProfileAva
                     onClick={() => {
                       inputRef.current?.click();
                     }}>
-                    {session?.user.imageUrl ? "Change Image" : "Upload Image"}
+                    {imageUrl ? "Change Image" : "Upload Image"}
                     <input
                       type="file"
                       id="hiddenFileInput"
@@ -152,7 +153,7 @@ export const EditProfileAvatarForm = ({ session, environmentId }: EditProfileAva
                     />
                   </Button>
 
-                  {session?.user?.imageUrl && (
+                  {imageUrl && (
                     <Button type="button" className="mr-2" variant="warn" size="sm" onClick={handleRemove}>
                       Remove Image
                     </Button>

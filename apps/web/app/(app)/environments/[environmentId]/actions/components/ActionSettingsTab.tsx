@@ -228,7 +228,7 @@ export const ActionSettingsTab = ({
 
             {actionClass.type !== "automatic" && (
               <div className="flex space-x-2">
-                <Button type="submit" variant="darkCTA" loading={isUpdatingAction}>
+                <Button type="submit" loading={isUpdatingAction}>
                   Save changes
                 </Button>
               </div>

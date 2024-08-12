@@ -228,7 +228,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
                 }}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit" loading={creatingWebhook}>
+              <Button type="submit" loading={creatingWebhook}>
                 Add Webhook
               </Button>
             </div>

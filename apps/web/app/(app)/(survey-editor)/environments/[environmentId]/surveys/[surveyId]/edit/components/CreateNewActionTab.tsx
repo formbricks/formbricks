@@ -253,7 +253,7 @@ export const CreateNewActionTab = ({
               <Button type="button" variant="minimal" onClick={resetAllStates}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit" loading={isSubmitting}>
+              <Button type="submit" loading={isSubmitting}>
                 Create action
               </Button>
             </div>

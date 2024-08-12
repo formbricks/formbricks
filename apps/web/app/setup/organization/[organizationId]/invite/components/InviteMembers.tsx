@@ -108,7 +108,6 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
 
           <div className="space-y-2">
             <Button
-              variant="darkCTA"
               className="flex w-80 justify-center"
               type="submit"
               loading={isSubmitting}

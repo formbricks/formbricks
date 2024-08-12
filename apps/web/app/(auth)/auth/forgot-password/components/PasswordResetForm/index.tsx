@@ -59,7 +59,7 @@ export const PasswordResetForm = ({}) => {
         </div>
 
         <div>
-          <Button type="submit" variant="darkCTA" className="w-full justify-center" loading={loading}>
+          <Button type="submit" className="w-full justify-center" loading={loading}>
             Reset password
           </Button>
           <div className="mt-3 text-center">

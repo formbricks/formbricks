@@ -518,7 +518,6 @@ export const AddIntegrationModal = ({
                 </Button>
               )}
               <Button
-                variant="darkCTA"
                 type="submit"
                 loading={isLinkingDatabase}
                 disabled={mapping.filter((m) => m.error).length > 0}>

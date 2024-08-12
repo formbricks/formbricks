@@ -7,7 +7,7 @@ import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { templates } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { type TProduct, ZProductConfigIndustry } from "@formbricks/types/product";
-import { TSurveyInput, ZSurveyType } from "@formbricks/types/surveys/types";
+import { TSurveyCreateInput, ZSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { createSurveyAction } from "./actions";
@@ -40,7 +40,7 @@ export const TemplateList = ({
   const createSurvey = async (activeTemplate: TTemplate) => {
     setLoading(true);
     const surveyType = product.config.channel ?? "link";
-    const augmentedTemplate: TSurveyInput = {
+    const augmentedTemplate: TSurveyCreateInput = {
       ...activeTemplate.preset,
       type: surveyType,
       createdBy: user.id,
