@@ -203,6 +203,14 @@ export const PreviewSurvey = ({
     }, 1000);
   };
 
+  const handleMobilePreviewModalClose = () => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      setIsModalOpen(true);
+      resetQuestionProgress();
+    }, 1000);
+  };
+
   if (!previewType) {
     previewType = widgetSetupCompleted ? "modal" : "fullwidth";
 
@@ -255,7 +263,7 @@ export const PreviewSurvey = ({
                     onFileUpload={onFileUpload}
                     styling={styling}
                     isCardBorderVisible={!styling.highlightBorderColor?.light}
-                    onClose={handlePreviewModalClose}
+                    onClose={handleMobilePreviewModalClose}
                     getSetQuestionId={(f: (value: string) => void) => {
                       setQuestionId = f;
                     }}
