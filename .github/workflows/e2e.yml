@@ -24,7 +24,6 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     steps:
-      - uses: actions/checkout@v3
       - uses: ./.github/actions/dangerous-git-checkout
 
       - name: Build & Cache Web Binaries
