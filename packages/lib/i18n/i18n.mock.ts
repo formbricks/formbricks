@@ -1,13 +1,12 @@
 import { mockSegment } from "segment/tests/__mocks__/segment.mock";
 import { mockSurveyLanguages } from "survey/tests/__mock__/survey.mock";
-import { TLegacySurveyThankYouCard } from "@formbricks/types/legacySurveys";
 import {
   TSurvey,
   TSurveyCTAQuestion,
   TSurveyCalQuestion,
   TSurveyConsentQuestion,
   TSurveyDateQuestion,
-  TSurveyEndings,
+  TSurveyEndScreenCard,
   TSurveyFileUploadQuestion,
   TSurveyMultipleChoiceQuestion,
   TSurveyNPSQuestion,
@@ -139,6 +138,7 @@ export const mockRatingQuestion: TSurveyRatingQuestion = {
   subheader: {
     default: "Don't worry, be honest.",
   },
+  isColorCodingEnabled: false,
   scale: "star",
   range: 5,
   lowerLabel: {
@@ -166,6 +166,7 @@ export const mockNpsQuestion: TSurveyNPSQuestion = {
   id: "m9pemgdih2p4exvkmeeqq6jf",
   type: TSurveyQuestionTypeEnum.NPS,
   isDraft: true,
+  isColorCodingEnabled: false,
 };
 
 export const mockCtaQuestion: TSurveyCTAQuestion = {
@@ -235,10 +236,10 @@ export const mockCalQuestion: TSurveyCalQuestion = {
   isDraft: true,
 };
 
-export const mockEndings: TSurveyEndings = [
+export const mockEndings = [
   {
-    type: "endScreen",
     id: "umyknohldc7w26ocjdhaa62c",
+    type: "endScreen",
     headline: {
       default: "Thank you!",
     },
@@ -247,7 +248,7 @@ export const mockEndings: TSurveyEndings = [
     },
     buttonLink: "https://digiopinion.com",
     buttonLabel: { default: "Create your own Survey" },
-  },
+  } as TSurveyEndScreenCard,
 ];
 
 export const mockSurvey: TSurvey = {
@@ -511,7 +512,7 @@ export const mockTranslatedEndings = [
   },
 ];
 
-export const mockLegacyThankYouCard: TLegacySurveyThankYouCard = {
+export const mockLegacyThankYouCard = {
   buttonLink: "https://digiopinion.com",
   enabled: true,
   headline: "Thank you!",
@@ -559,4 +560,5 @@ export const mockLegacySurvey = {
   thankYouCard: mockLegacyThankYouCard,
   failureCard: { enabled: false },
   endings: undefined,
+  redirectUrl: null,
 };

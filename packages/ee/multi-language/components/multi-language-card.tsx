@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { FC } from "react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { extractLanguageCodes, translateSurvey } from "@formbricks/lib/i18n/utils";
+import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import type { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
@@ -74,7 +74,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   };
 
   const updateSurveyTranslations = (survey: TSurvey, updatedLanguages: TSurveyLanguage[]) => {
-    const translatedSurveyResult = translateSurvey(survey, extractLanguageCodes(updatedLanguages));
+    const translatedSurveyResult = addMultiLanguageLabels(survey, extractLanguageCodes(updatedLanguages));
 
     const updatedSurvey = { ...translatedSurveyResult, languages: updatedLanguages };
     setLocalSurvey(updatedSurvey as TSurvey);
