@@ -1,5 +1,4 @@
 import "server-only";
-import { TLegacySurvey, TLegacySurveyThankYouCard, ZLegacySurvey } from "@formbricks/types/legacy-surveys";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { getLocalizedValue, isI18nObject } from "./utils";
@@ -28,7 +27,7 @@ const reverseTranslateObject = <T extends Record<string, any>>(obj: T, languageC
   return clonedObj;
 };
 
-const reverseTranslateEndings = (survey: TSurvey, languageCode: string): TLegacySurveyThankYouCard => {
+const reverseTranslateEndings = (survey: TSurvey, languageCode: string): any => {
   const firstEndingCard = survey.endings[0];
   if (firstEndingCard && firstEndingCard.type === "endScreen") {
     return {
@@ -43,7 +42,7 @@ const reverseTranslateEndings = (survey: TSurvey, languageCode: string): TLegacy
   }
 };
 
-export const reverseTranslateSurvey = (survey: TSurvey, languageCode: string = "default"): TLegacySurvey => {
+export const reverseTranslateSurvey = (survey: TSurvey, languageCode: string = "default"): any => {
   const reversedSurvey = structuredClone(survey);
   reversedSurvey.questions = reversedSurvey.questions.map((question) =>
     reverseTranslateObject(question, languageCode)
@@ -67,5 +66,5 @@ export const reverseTranslateSurvey = (survey: TSurvey, languageCode: string = "
   }
   // @ts-expect-error
   reversedSurvey.endings = undefined;
-  return ZLegacySurvey.parse(reversedSurvey);
+  return reversedSurvey;
 };

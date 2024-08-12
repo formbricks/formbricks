@@ -56,5 +56,5 @@ Zone.Identifier
 packages/lib/uploads
 
 # Vite Timestamps
-vite.config.*.timestamp-*
+*vite.config.*.timestamp-*
 

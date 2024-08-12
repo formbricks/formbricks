@@ -1,3 +1,4 @@
+/* eslint-disable -- leacy support workaround for now to avoid rewrite after eslint rules have been changed */
 // migration script to convert range field in rating question from string to number
 import { PrismaClient } from "@prisma/client";
 

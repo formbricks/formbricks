@@ -1,6 +1,5 @@
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TAttributes } from "@formbricks/types/attributes";
-import { TLegacySurvey } from "@formbricks/types/legacy-surveys";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const replaceAttributeRecall = (survey: TSurvey, attributes: TAttributes): TSurvey => {
@@ -42,10 +41,7 @@ export const replaceAttributeRecall = (survey: TSurvey, attributes: TAttributes)
   return surveyTemp;
 };
 
-export const replaceAttributeRecallInLegacySurveys = (
-  survey: TLegacySurvey,
-  attributes: TAttributes
-): TLegacySurvey => {
+export const replaceAttributeRecallInLegacySurveys = (survey: any, attributes: TAttributes): any => {
   const surveyTemp = structuredClone(survey);
   surveyTemp.questions.forEach((question) => {
     if (question.headline.includes("recall:")) {

@@ -1,3 +1,4 @@
+/* eslint-disable -- leacy support workaround for now to avoid rewrite after eslint rules have been changed */
 // migration script to translate surveys where thankYouCard buttonLabel is a string or question subheaders are strings
 import { PrismaClient } from "@prisma/client";
 import { hasStringSubheaders, translateSurvey } from "./lib/i18n";
@@ -8,7 +9,7 @@ const main = async () => {
   await prisma.$transaction(
     async (tx) => {
       // Translate Surveys
-      const surveys = await tx.survey.findMany({
+      const surveys: any = await tx.survey.findMany({
         select: {
           id: true,
           questions: true,
@@ -16,11 +17,6 @@ const main = async () => {
           welcomeCard: true,
         },
       });
-
-      if (!surveys) {
-        // stop the migration if there are no surveys
-        return;
-      }
 
       for (const survey of surveys) {
         if (typeof survey.thankYouCard.buttonLabel === "string" || hasStringSubheaders(survey.questions)) {
