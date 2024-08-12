@@ -1,4 +1,5 @@
 import { EndingCard } from "@/components/general/EndingCard";
+import { FailureCard } from "@/components/general/FailureCard.tsx";
 import { FormbricksBranding } from "@/components/general/FormbricksBranding";
 import { LanguageSwitch } from "@/components/general/LanguageSwitch";
 import { ProgressBar } from "@/components/general/ProgressBar";
@@ -201,7 +202,7 @@ export const Survey = ({
     const updatedResponseData = { ...responseData, ...responseDataUpdate };
     setResponseData(updatedResponseData);
   };
-  //marko
+
   const [failed, setFailed] = useState(false);
 
   const onSubmit = (responseData: TResponseData, ttc: TResponseTtc) => {
@@ -293,6 +294,31 @@ export const Survey = ({
         const endingCard = survey.endings.find((ending) => {
           return ending.id === questionId;
         });
+        if (survey.failureCard.enabled && failed) {
+          return (
+            <FailureCard
+              key="end"
+              headline={replaceRecallInfo(
+                getLocalizedValue(survey.failureCard.headline, selectedLanguage),
+                responseData
+              )}
+              subheader={replaceRecallInfo(
+                getLocalizedValue(survey.failureCard.subheader, selectedLanguage),
+                responseData
+              )}
+              isResponseSendingFinished={isResponseSendingFinished}
+              buttonLabel={getLocalizedValue(survey.failureCard.buttonLabel, selectedLanguage)}
+              buttonLink={survey.failureCard.buttonLink}
+              survey={survey}
+              imageUrl={survey.failureCard.imageUrl}
+              redirectUrl={appendSurveyAndPanelistQueryParamsToRedirectUrl(survey.redirectOnFailUrl)}
+              isRedirectDisabled={isRedirectDisabled}
+              autoFocusEnabled={autoFocusEnabled}
+              isCurrent={offset === 0}
+              failed={true}
+            />
+          );
+        }
         if (endingCard) {
           return (
             <EndingCard

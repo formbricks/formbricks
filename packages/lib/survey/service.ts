@@ -65,6 +65,7 @@ export const selectSurvey = {
   status: true,
   welcomeCard: true,
   questions: true,
+  failureCard: true,
   endings: true,
   hiddenFields: true,
   displayOption: true,

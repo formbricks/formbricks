@@ -13,10 +13,14 @@ export const minimalSurvey: TSurvey = {
   displayOption: "displayOnce",
   autoClose: null,
   triggers: [],
+  redirectOnFailUrl: null,
   recontactDays: null,
   displayLimit: null,
   welcomeCard: welcomeCardDefault,
   questions: [],
+  failureCard: {
+    enabled: false,
+  },
   endings: [getDefaultEndingCard([])],
   hiddenFields: {
     enabled: false,

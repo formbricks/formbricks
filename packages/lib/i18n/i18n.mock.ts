@@ -245,7 +245,7 @@ export const mockEndings: TSurveyEndings = [
     subheader: {
       default: "We appreciate your feedback.",
     },
-    buttonLink: "https://formbricks.com/signup",
+    buttonLink: "https://digiopinion.com",
     buttonLabel: { default: "Create your own Survey" },
   },
 ];
@@ -284,7 +284,7 @@ export const mockSurvey: TSurvey = {
       subheader: {
         default: "We appreciate your feedback.",
       },
-      buttonLink: "https://formbricks.com/signup",
+      buttonLink: "https://digiopinion.com",
       buttonLabel: { default: "Create your own Survey" },
     },
   ],
@@ -292,7 +292,7 @@ export const mockSurvey: TSurvey = {
   countries: [],
   limitedCountries: false,
   reward: 0,
-  redirectOnFailUrl: null,
+  redirectOnFailUrl: "https://member.digiopinion.com/overview",
   hiddenFields: {
     enabled: true,
     fieldIds: [],
@@ -557,5 +557,6 @@ export const mockLegacySurvey = {
   ],
   welcomeCard: mockLegacyWelcomeCard,
   thankYouCard: mockLegacyThankYouCard,
+  failureCard: { enabled: false },
   endings: undefined,
 };

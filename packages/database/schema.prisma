@@ -274,8 +274,8 @@ model Survey {
   /// [SurveyQuestions]
   questions           Json                    @default("[]")
   endings             Json[]                  @default([])
-  thankYouCard        Json? //deprecated
-  failureCard         Json? //deprecated
+  thankYouCard        Json? // deprecated
+  failureCard         Json?                   @default("{\"enabled\": false}")
   /// @zod.custom(imports.ZSurveyHiddenFields)
   /// [SurveyHiddenFields]
   hiddenFields        Json                    @default("{\"enabled\": false}")

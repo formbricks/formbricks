@@ -7,6 +7,7 @@ import {
   ZSurveyCalLogic,
   ZSurveyConsentLogic,
   ZSurveyEndings,
+  ZSurveyFailureCard,
   ZSurveyFileUploadLogic,
   ZSurveyMultipleChoiceLogic,
   ZSurveyNPSLogic,
@@ -188,6 +189,7 @@ export const ZLegacySurveyQuestions = z.array(ZLegacySurveyQuestion);
 export const ZLegacySurvey = ZSurvey.innerType().extend({
   questions: ZLegacySurveyQuestions,
   thankYouCard: ZLegacySurveyThankYouCard,
+  failureCard: ZSurveyFailureCard,
   welcomeCard: ZLegacySurveyWelcomeCard,
   triggers: z.array(z.string()),
   endings: ZSurveyEndings.optional(),

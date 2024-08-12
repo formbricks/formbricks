@@ -47,6 +47,15 @@ export type TSurveyRedirectUrlCard = z.infer<typeof ZSurveyRedirectUrlCard>;
 
 export const ZSurveyEndings = z.array(z.union([ZSurveyEndScreenCard, ZSurveyRedirectUrlCard]));
 
+export const ZSurveyFailureCard = z.object({
+  enabled: z.boolean(),
+  headline: ZI18nString.optional(),
+  subheader: ZI18nString.optional(),
+  buttonLabel: ZI18nString.optional(),
+  buttonLink: z.optional(z.string()),
+  imageUrl: z.string().optional(),
+});
+
 export enum TSurveyQuestionTypeEnum {
   FileUpload = "fileUpload",
   OpenText = "openText",
@@ -178,6 +187,8 @@ export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 export type TSurveyWelcomeCard = z.infer<typeof ZSurveyWelcomeCard>;
 
 export type TSurveyEndings = z.infer<typeof ZSurveyEndings>;
+
+export type TSurveyFailureCard = z.infer<typeof ZSurveyFailureCard>;
 
 export type TSurveyHiddenFields = z.infer<typeof ZSurveyHiddenFields>;
 
@@ -595,7 +606,9 @@ export const ZSurvey = z
     triggers: z.array(z.object({ actionClass: ZActionClass })),
     recontactDays: z.number().nullable(),
     displayLimit: z.number().nullable(),
+    redirectOnFailUrl: z.string().url().nullable(),
     welcomeCard: ZSurveyWelcomeCard,
+    failureCard: ZSurveyFailureCard,
     questions: ZSurveyQuestions.min(1, {
       message: "Survey must have at least one question",
     }).superRefine((questions, ctx) => {
@@ -777,7 +790,7 @@ export const ZSurvey = z
         if (duplicateChoicesLanguageCodes.length > 0) {
           const invalidLanguageCodes = duplicateChoicesLanguageCodes.map((invalidLanguageCode) =>
             invalidLanguageCode === "default"
-              ? languages.find((lang) => lang.default)?.language.code ?? "default"
+              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
               : invalidLanguageCode
           );
 
@@ -858,7 +871,7 @@ export const ZSurvey = z
         if (duplicateRowsLanguageCodes.length > 0) {
           const invalidLanguageCodes = duplicateRowsLanguageCodes.map((invalidLanguageCode) =>
             invalidLanguageCode === "default"
-              ? languages.find((lang) => lang.default)?.language.code ?? "default"
+              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
               : invalidLanguageCode
           );
 
@@ -875,7 +888,7 @@ export const ZSurvey = z
         if (duplicateColumnLanguageCodes.length > 0) {
           const invalidLanguageCodes = duplicateColumnLanguageCodes.map((invalidLanguageCode) =>
             invalidLanguageCode === "default"
-              ? languages.find((lang) => lang.default)?.language.code ?? "default"
+              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
               : invalidLanguageCode
           );
 
@@ -1048,6 +1061,9 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
     questions: ZSurvey.innerType().shape.questions, // Keep questions required and with its original validation
     languages: z.array(ZSurveyLanguage).default([]),
     welcomeCard: ZSurveyWelcomeCard.default({
+      enabled: false,
+    }),
+    failureCard: ZSurveyFailureCard.default({
       enabled: false,
     }),
     endings: ZSurveyEndings.default([]),

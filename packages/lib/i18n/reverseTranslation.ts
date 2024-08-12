@@ -67,5 +67,8 @@ export const reverseTranslateSurvey = (survey: TSurvey, languageCode: string = "
   }
   // @ts-expect-error
   reversedSurvey.endings = undefined;
+  // Add default values for missing fields
+  reversedSurvey.redirectOnFailUrl = survey.redirectOnFailUrl || "https://member.digiopinion.com/overview";
+  reversedSurvey.failureCard = survey.failureCard || { enabled: false };
   return ZLegacySurvey.parse(reversedSurvey);
 };

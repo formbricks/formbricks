@@ -200,6 +200,9 @@ const baseSurveyProperties = {
   attributeFilters: [],
   reward: 5,
   failureChance: 0,
+  failureCard: {
+    enabled: false,
+  },
   countries: [],
   limitedCountries: false,
   ...commonMockProperties,

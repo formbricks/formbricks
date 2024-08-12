@@ -100,6 +100,9 @@ export const PREVIEW_SURVEY = {
     },
   ],
   endings: [getDefaultEndingCard([])],
+  failureCard: {
+    enabled: false,
+  },
   failureChance: 0,
   redirectOnFailUrl: null,
   countries: [],
