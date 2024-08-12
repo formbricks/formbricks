@@ -32,8 +32,5 @@ jobs:
           sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
           sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
 
-      - name: Cat .env
-        run: cat .env
-
       - name: Lint
         run: pnpm lint
