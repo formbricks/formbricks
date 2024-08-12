@@ -26,7 +26,6 @@ import {
   ZSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 
-//todo:marko
 // Helper function to create an i18nString from a regular string.
 export const createI18nString = (text: string | TI18nString, languages: string[]): TI18nString => {
   if (typeof text === "object") {
