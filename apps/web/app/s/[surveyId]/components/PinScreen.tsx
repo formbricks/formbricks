@@ -4,6 +4,7 @@ import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
 import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import { useCallback, useEffect, useState } from "react";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProduct } from "@formbricks/types/product";
@@ -58,7 +59,7 @@ export const PinScreen = (props: PinScreenProps) => {
     if (response?.data) {
       setSurvey(response.data.survey);
     } else {
-      const errorMessage = getFormattedErrorMessage(response);
+      const errorMessage = getFormattedErrorMessage(response) as TSurveyPinValidationResponseError;
       setError(errorMessage);
     }
 

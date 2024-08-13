@@ -34,13 +34,13 @@ export const createTagAction = authenticatedActionClient
     return await createTag(parsedInput.environmentId, parsedInput.tagName);
   });
 
-const ZCreateTagToResponeAction = z.object({
+const ZCreateTagToResponseAction = z.object({
   responseId: z.string(),
   tagId: z.string(),
 });
 
-export const createTagToResponeAction = authenticatedActionClient
-  .schema(ZCreateTagToResponeAction)
+export const createTagToResponseAction = authenticatedActionClient
+  .schema(ZCreateTagToResponseAction)
   .action(async ({ parsedInput, ctx }) => {
     await checkAuthorization({
       userId: ctx.user.id,

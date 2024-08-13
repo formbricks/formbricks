@@ -1,7 +1,9 @@
+"use server";
+
 import "server-only";
-import { authenticatedActionClient } from "actionClient";
-import { checkAuthorization } from "actionClient/utils";
 import { z } from "zod";
+import { authenticatedActionClient } from "../../actionClient";
+import { checkAuthorization } from "../../actionClient/utils";
 import { getOrganization } from "../service";
 
 const ZGetOrganizationBillingInfoAction = z.object({

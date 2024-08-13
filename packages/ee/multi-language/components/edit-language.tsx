@@ -94,7 +94,7 @@ export function EditLanguage({ product, environmentId }: EditLanguageProps) {
         languageId,
       });
 
-      if (surveysUsingLanguageResponse.data) {
+      if (surveysUsingLanguageResponse?.data) {
         if (surveysUsingLanguageResponse.data.length > 0) {
           const surveyList = surveysUsingLanguageResponse.data
             .map((surveyName) => `• ${surveyName}`)

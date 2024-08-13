@@ -16,7 +16,7 @@ import {
   updateSegment,
 } from "@formbricks/lib/segment/service";
 import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
-import { ZSegmentCreateInput, ZSegmentFilters } from "@formbricks/types/segment";
+import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 
 export const createSegmentAction = authenticatedActionClient
   .schema(ZSegmentCreateInput)
@@ -39,9 +39,8 @@ export const createSegmentAction = authenticatedActionClient
   });
 
 const ZUpdateSegmentAction = z.object({
-  environmentId: z.string(),
   segmentId: z.string(),
-  data: ZSegmentCreateInput,
+  data: ZSegmentUpdateInput,
 });
 
 export const updateSegmentAction = authenticatedActionClient
@@ -49,9 +48,9 @@ export const updateSegmentAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorization({
       data: parsedInput.data,
-      schema: ZSegmentCreateInput,
+      schema: ZSegmentUpdateInput,
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.data.environmentId),
+      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
       rules: ["segment", "update"],
     });
 

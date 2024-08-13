@@ -2,7 +2,6 @@ import "server-only";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
-import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ZOptionalNumber } from "@formbricks/types/common";
@@ -715,13 +714,6 @@ export const createSurvey = async (
     throw error;
   }
 };
-
-const ZCopySurveyToOtherEnvironmentAction = z.object({
-  environmentId: z.string(),
-  surveyId: z.string(),
-  targetEnvironmentId: z.string(),
-  userId: z.string(),
-});
 
 export const copySurveyToOtherEnvironment = async (
   environmentId: string,

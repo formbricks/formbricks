@@ -1,18 +1,18 @@
-import { getActionClass } from "actionClass/service";
-import { getApiKey } from "apiKey/service";
-import { getAttributeClass } from "attributeClass/service";
-import { getIntegration } from "integration/service";
-import { getInvite } from "invite/service";
-import { getResponseNote } from "responseNote/service";
-import { getSegment } from "segment/service";
-import { getTag } from "tag/service";
-import { getWebhook } from "webhook/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { getActionClass } from "../actionClass/service";
+import { getApiKey } from "../apiKey/service";
+import { getAttributeClass } from "../attributeClass/service";
 import { getEnvironment } from "../environment/service";
+import { getIntegration } from "../integration/service";
+import { getInvite } from "../invite/service";
 import { getPerson } from "../person/service";
 import { getProduct } from "../product/service";
 import { getResponse } from "../response/service";
+import { getResponseNote } from "../responseNote/service";
+import { getSegment } from "../segment/service";
 import { getSurvey } from "../survey/service";
+import { getTag } from "../tag/service";
+import { getWebhook } from "../webhook/service";
 
 /**
  * GET organization ID from RESOURCE ID

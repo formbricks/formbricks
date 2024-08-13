@@ -83,7 +83,7 @@ export function AdvancedTargetingCard({
         segmentId: segment.id,
         surveyId: localSurvey.id,
       });
-      if (clonedSegmentResponse.data) {
+      if (clonedSegmentResponse?.data) {
         setSegment(clonedSegmentResponse.data);
       }
     } catch (err: any) {
@@ -119,27 +119,23 @@ export function AdvancedTargetingCard({
 
   const handleLoadNewSegment = async (surveyId: string, segmentId: string) => {
     const updatedSurvey = await loadNewSegmentAction({ surveyId: surveyId, segmentId });
-    return updatedSurvey?.data;
+    return updatedSurvey?.data as TSurvey;
   };
 
-  const handleSaveAsNewSegmentUpdate = async (
-    environmentId: string,
-    segmentId: string,
-    data: TSegmentUpdateInput
-  ) => {
-    const updatedSegment = await updateSegmentAction({ environmentId, segmentId, data });
-    return updatedSegment?.data;
+  const handleSaveAsNewSegmentUpdate = async (segmentId: string, data: TSegmentUpdateInput) => {
+    const updatedSegment = await updateSegmentAction({ segmentId, data });
+    return updatedSegment?.data as TSegment;
   };
 
   const handleSaveAsNewSegmentCreate = async (data: TSegmentCreateInput) => {
     const createdSegment = await createSegmentAction(data);
-    return createdSegment?.data;
+    return createdSegment?.data as TSegment;
   };
 
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
     try {
       if (!segment) throw new Error("Invalid segment");
-      await updateSegmentAction({ environmentId: environmentId, segmentId: segment.id, data });
+      await updateSegmentAction({ segmentId: segment.id, data });
       toast.success("Segment saved successfully");
 
       setIsSegmentEditorOpen(false);
