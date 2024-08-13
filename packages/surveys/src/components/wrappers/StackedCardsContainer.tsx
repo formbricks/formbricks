@@ -43,7 +43,8 @@ export const StackedCardsContainer = ({
       return survey.questions.length;
     }
     return survey.questions.findIndex((question) => question.id === currentQuestionId);
-  }, [currentQuestionId, survey.welcomeCard.enabled, survey.questions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestionId, survey.welcomeCard.enabled, survey.questions.length]);
 
   const [prevQuestionIdx, setPrevQuestionIdx] = useState(questionIdxTemp - 1);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(questionIdxTemp);
