@@ -6,5 +6,6 @@ module.exports = {
   },
   rules: {
     "@typescript-eslint/no-explicit-any": "off",
+    "import/no-relative-packages": "off",
   },
 };

@@ -23,8 +23,8 @@ export default function App() {
       <Button
         title="Trigger Code Action"
         onPress={() => {
-          // eslint-disable-next-line no-console -- logging is allowed in demo apps
           track("test").catch((error: unknown) => {
+            // eslint-disable-next-line no-console -- logging is allowed in demo apps
             console.error("Error tracking event:", error);
           });
         }}

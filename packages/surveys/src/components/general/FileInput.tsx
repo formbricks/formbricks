@@ -4,6 +4,7 @@ import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { isFulfilled, isRejected } from "@formbricks/lib/utils/promises";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { TUploadFileConfig } from "@formbricks/types/storage";
+import { FormbricksAPI } from "../../../../api";
 
 interface FileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
@@ -22,7 +23,6 @@ export const FileInput = ({
   allowedFileExtensions,
   surveyId,
   onUploadCallback,
-  onFileUpload,
   fileUrls,
   maxSizeInMB,
   allowMultipleFiles,
@@ -30,7 +30,6 @@ export const FileInput = ({
 }: FileInputProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-
   const validateFileSize = async (file: File): Promise<boolean> => {
     if (maxSizeInMB) {
       const fileBuffer = await file.arrayBuffer();
@@ -56,8 +55,12 @@ export const FileInput = ({
     const filteredFiles = validFiles.filter((file) => file !== null) as File[];
 
     try {
+      const api = new FormbricksAPI({
+        apiHost: "http://localhost:3000",
+        environmentId: "clzr04nkd000bcdl110j0ijyq",
+      });
       const uploadPromises = filteredFiles.map((file) =>
-        onFileUpload(file, { allowedFileExtensions, surveyId })
+        api.client.storage.uploadFile(file, { allowedFileExtensions, surveyId })
       );
 
       const uploadedFiles = await Promise.allSettled(uploadPromises);

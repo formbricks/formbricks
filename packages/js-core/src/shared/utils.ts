@@ -3,6 +3,7 @@ import {
   TActionClassNoCodeConfig,
   TActionClassPageUrlRule,
 } from "@formbricks/types/action-classes";
+import { TAttributes } from "@formbricks/types/attributes";
 import { TJsTrackProperties } from "@formbricks/types/js";
 import { TResponseHiddenFieldValue } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -111,4 +112,36 @@ export const getIsDebug = () => window.location.search.includes("formbricksDebug
 export const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
   const randomNum = Math.floor(Math.random() * 10000) / 100;
   return randomNum <= displayPercentage;
+};
+
+export const getLanguageCode = (survey: TSurvey, attributes: TAttributes): string | undefined => {
+  const language = attributes.language;
+  const availableLanguageCodes = survey.languages.map((surveyLanguage) => surveyLanguage.language.code);
+  if (!language) return "default";
+  else {
+    const selectedLanguage = survey.languages.find((surveyLanguage) => {
+      return (
+        surveyLanguage.language.code === language.toLowerCase() ||
+        surveyLanguage.language.alias?.toLowerCase() === language.toLowerCase()
+      );
+    });
+    if (selectedLanguage?.default) {
+      return "default";
+    }
+    if (
+      !selectedLanguage ||
+      !selectedLanguage?.enabled ||
+      !availableLanguageCodes.includes(selectedLanguage.language.code)
+    ) {
+      return undefined;
+    }
+    return selectedLanguage.language.code;
+  }
+};
+
+export const getDefaultLanguageCode = (survey: TSurvey) => {
+  const defaultSurveyLanguage = survey.languages?.find((surveyLanguage) => {
+    return surveyLanguage.default === true;
+  });
+  if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
 };

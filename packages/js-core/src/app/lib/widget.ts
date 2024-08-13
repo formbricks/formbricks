@@ -1,5 +1,4 @@
 import { FormbricksAPI } from "@formbricks/api";
-import { getDefaultLanguageCode, getLanguageCodeForSurvey } from "@formbricks/lib/i18n/utils";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
@@ -9,7 +8,12 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ErrorHandler } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
-import { handleHiddenFields, shouldDisplayBasedOnPercentage } from "../../shared/utils";
+import {
+  getDefaultLanguageCode,
+  getLanguageCode,
+  handleHiddenFields,
+  shouldDisplayBasedOnPercentage,
+} from "../../shared/utils";
 import { AppConfig } from "./config";
 import { putFormbricksInErrorState } from "./initialize";
 import { sync } from "./sync";
@@ -71,7 +75,7 @@ const renderWidget = async (
   let languageCode = "default";
 
   if (isMultiLanguageSurvey) {
-    const displayLanguage = getLanguageCodeForSurvey(survey, attributes);
+    const displayLanguage = getLanguageCode(survey, attributes);
     //if survey is not available in selected language, survey wont be shown
     if (!displayLanguage) {
       logger.debug(`Survey "${survey.name}" is not available in specified language.`);

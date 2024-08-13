@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Modal } from "react-native";
-import { WebView, WebViewMessageEvent } from "react-native-webview";
+import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { FormbricksAPI } from "@formbricks/api";
-import { getDefaultLanguageCode, getLanguageCodeForSurvey } from "@formbricks/lib/i18n/utils";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
@@ -12,11 +11,11 @@ import { type TResponseUpdate } from "@formbricks/types/responses";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import { sync } from "../../js-core/src/app/lib/sync";
 import { Logger } from "../../js-core/src/shared/logger";
+import { getDefaultLanguageCode, getLanguageCode } from "../../js-core/src/shared/utils";
 import { appConfig } from "./lib/config";
 import { SurveyStore } from "./lib/survey-store";
 
 const logger = Logger.getInstance();
-
 const surveyStore = SurveyStore.getInstance();
 let isSurveyRunning = false;
 
@@ -68,7 +67,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): React.JSX.Element
   let languageCode = "default";
 
   if (isMultiLanguageSurvey) {
-    const displayLanguage = getLanguageCodeForSurvey(survey, attributes);
+    const displayLanguage = getLanguageCode(survey, attributes);
     //if survey is not available in selected language, survey wont be shown
     if (!displayLanguage) {
       logger.debug(`Survey "${survey.name}" is not available in specified language.`);
@@ -143,13 +142,13 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): React.JSX.Element
         }}
         style={{ backgroundColor: "transparent" }}
         contentMode="mobile"
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        startInLoadingState={true}
+        javaScriptEnabled
+        domStorageEnabled
+        startInLoadingState
         mixedContentMode="always"
-        allowFileAccess={true}
-        allowFileAccessFromFileURLs={true}
-        allowUniversalAccessFromFileURLs={true}
+        allowFileAccess
+        allowFileAccessFromFileURLs
+        allowUniversalAccessFromFileURLs
         onShouldStartLoadWithRequest={(event) => {
           // prevent webview from redirecting if users taps on formbricks link.
           if (event.url.startsWith("https://formbricks")) {

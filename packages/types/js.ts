@@ -195,5 +195,3 @@ export const ZJsRNWebViewOnMessageData = z.object({
   onRetry: z.boolean().nullish(),
   onClose: z.boolean().nullish(),
 });
-
-export type TJsRNWebViewOnMessageData = z.infer<typeof ZJsRNWebViewOnMessageData>;

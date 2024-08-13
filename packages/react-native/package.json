@@ -6,18 +6,18 @@
   "scripts": {
     "build": "tsup",
     "build:dev": "tsup --watch",
-    "lint": "eslint src --fix --ext .ts,.js,.tsx,.jsx",
+    "lint": "eslint src --ext .ts,.js,.tsx,.jsx",
     "go": "tsup --watch",
     "clean": "rimraf .turbo node_modules dist .turbo"
   },
   "devDependencies": {
-    "@react-native-async-storage/async-storage": "1.24.0",
     "@formbricks/api": "workspace:*",
+    "@formbricks/config-typescript": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/types": "workspace:*",
+    "@react-native-async-storage/async-storage": "1.24.0",
     "@types/react": "^18.3.3",
     "@types/react-native": "^0.73.0",
-    "@formbricks/config-typescript": "workspace:*",
     "tsup": "^8.2.3"
   },
   "dependencies": {
