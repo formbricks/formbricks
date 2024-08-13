@@ -635,6 +635,17 @@ export const ZSurvey = z
     }),
     hiddenFields: ZSurveyHiddenFields,
     variables: ZSurveyVariables.superRefine((variables, ctx) => {
+      // variable ids must be unique
+      const variableIds = variables.map((v) => v.id);
+      const uniqueVariableIds = new Set(variableIds);
+      if (uniqueVariableIds.size !== variableIds.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Variable IDs must be unique",
+          path: ["variables"],
+        });
+      }
+
       // variable names must be unique
       const variableNames = variables.map((v) => v.name);
       const uniqueVariableNames = new Set(variableNames);

@@ -1,16 +1,15 @@
 "use client";
 
+import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
-import { TSurvey, TSurveyHiddenFields, TSurveyVariable } from "@formbricks/types/surveys/types";
-import { validateId } from "@formbricks/types/surveys/validation";
+import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { Tag } from "@formbricks/ui/Tag";
 
 interface SurveyVariablesCardProps {
   localSurvey: TSurvey;
@@ -27,7 +26,8 @@ export const SurveyVariablesCard = ({
 }: SurveyVariablesCardProps) => {
   const open = activeQuestionId == "hidden";
   const [variableName, setVariableName] = useState("");
-  const [variableValue, setVariableValue] = useState("");
+  const [variableType, setVariableType] = useState<TSurveyVariable["type"]>("number");
+  const [variableValue, setVariableValue] = useState<string | number>(variableType === "number" ? 0 : "");
 
   const setOpen = (open: boolean) => {
     if (open) {
@@ -38,11 +38,14 @@ export const SurveyVariablesCard = ({
   };
 
   const updateSurvey = (data: TSurveyVariable) => {
+    console.log({ data });
     setLocalSurvey({
       ...localSurvey,
       variables: [...localSurvey.variables, data],
     });
   };
+
+  console.log("localSurvey.variables", localSurvey.variables);
 
   return (
     <div className={cn(open ? "shadow-lg" : "shadow-md", "group z-10 flex flex-row rounded-lg bg-white")}>
@@ -96,28 +99,41 @@ export const SurveyVariablesCard = ({
             className="mt-5"
             onSubmit={(e) => {
               e.preventDefault();
-              const existingQuestionIds = localSurvey.questions.map((question) => question.id);
-              const existingEndingCardIds = localSurvey.endings.map((ending) => ending.id);
-              const existingHiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
-              const validateIdError = validateId(
-                "Hidden field",
-                hiddenField,
-                existingQuestionIds,
-                existingEndingCardIds,
-                existingHiddenFieldIds
-              );
+              // const existingQuestionIds = localSurvey.questions.map((question) => question.id);
+              // const existingEndingCardIds = localSurvey.endings.map((ending) => ending.id);
+              // const existingHiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
+              // const validateIdError = validateId(
+              //   "Hidden field",
+              //   hiddenField,
+              //   existingQuestionIds,
+              //   existingEndingCardIds,
+              //   existingHiddenFieldIds
+              // );
 
-              if (validateIdError) {
-                toast.error(validateIdError);
-                return;
+              // if (validateIdError) {
+              //   toast.error(validateIdError);
+              //   return;
+              // }
+
+              if (variableType === "number") {
+                updateSurvey({
+                  id: createId(),
+                  name: variableName,
+                  value: Number(variableValue),
+                  type: variableType,
+                });
+              } else {
+                updateSurvey({
+                  id: createId(),
+                  name: variableName,
+                  value: String(variableValue),
+                  type: variableType,
+                });
               }
 
-              updateSurvey({
-                fieldIds: [...(localSurvey.hiddenFields?.fieldIds || []), hiddenField],
-                enabled: true,
-              });
-              toast.success("Hidden field added successfully");
-              setHiddenField("");
+              toast.success("Variable added successfully");
+              setVariableName("");
+              setVariableValue("");
             }}>
             <Label htmlFor="headline">Variable</Label>
             <div className="mt-2 flex items-center justify-center gap-2">
@@ -130,16 +146,17 @@ export const SurveyVariablesCard = ({
                 placeholder="Field name e.g, score, price"
               />
 
-              <Select value={"number"}>
+              <Select
+                value={variableType}
+                onValueChange={(value: "number" | "text") => {
+                  setVariableType(value);
+                }}>
                 <SelectTrigger className="min-w-fit flex-1">
-                  <SelectValue placeholder="Select type" className="text-xs capitalize lg:text-sm" />
+                  <SelectValue placeholder="Select type" className="text-sm" />
                 </SelectTrigger>
                 <SelectContent>
-                  {["number", "text"].map((type) => (
-                    <SelectItem value={type} className="capitalize" key={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value={"number"}>Number</SelectItem>
+                  <SelectItem value={"text"}>Text</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -152,6 +169,7 @@ export const SurveyVariablesCard = ({
                 value={variableValue}
                 onChange={(e) => setVariableValue(e.target.value.trim())}
                 placeholder="Initial value"
+                type={variableType === "number" ? "number" : "text"}
               />
               <Button variant="secondary" type="submit" size="sm" className="whitespace-nowrap">
                 Add variable
