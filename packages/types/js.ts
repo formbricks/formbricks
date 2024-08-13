@@ -70,6 +70,22 @@ export const ZJsWebsiteSyncInput = z.object({
 
 export type TJsWebsiteSyncInput = z.infer<typeof ZJsWebsiteSyncInput>;
 
+export const ZJsWebsitePersonState = z.object({
+  userId: z.string(),
+  displays: z.array(z.string()), // displayed survey ids
+  responses: z.array(z.string()), // responded survey ids
+  lastDisplayAt: z.date().nullable(),
+});
+
+export type TJsWebsitePersonState = z.infer<typeof ZJsWebsitePersonState>;
+
+export const ZJsWebsiteIdentifyInput = z.object({
+  environmentId: z.string().cuid(),
+  userId: z.string().optional(),
+});
+
+export type TJsWebsiteIdentifyInput = z.infer<typeof ZJsWebsiteIdentifyInput>;
+
 export const ZJsWebsiteConfig = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
