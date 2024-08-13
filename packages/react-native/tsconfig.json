@@ -8,9 +8,6 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
-    "paths": {
-      "@formbricks/js-core/*": ["../js-core/dist/*"]
-    }
+    "noEmit": true
   }
 }

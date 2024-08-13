@@ -18,8 +18,16 @@
   "author": "Formbricks <hola@formbricks.com>",
   "sideEffects": false,
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
   "scripts": {
     "build": "tsc && vite build",
     "build:dev": "tsc && vite build --mode dev",
@@ -35,13 +43,17 @@
     "@react-native-async-storage/async-storage": "1.24.0",
     "@types/react": "^18.3.3",
     "@types/react-native": "^0.73.0",
+    "react": "^18.3.1",
+    "react-native": "^0.74.5",
     "terser": "^5.31.3",
     "vite": "^5.3.5",
     "vite-plugin-dts": "^3.9.1"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-native": "^0.74.5",
     "react-native-webview": "13.10.5"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-native": ">=0.60.0"
   }
 }

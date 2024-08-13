@@ -12,7 +12,7 @@ const config = () => {
       minify: "terser",
       sourcemap: true,
       rollupOptions: {
-        external: ["react-native"],
+        external: ["react", "react-native", "react-dom"],
       },
       lib: {
         entry: resolve(__dirname, "src/index.ts"),
@@ -21,7 +21,7 @@ const config = () => {
         fileName: "index",
       },
     },
-    plugins: [dts({ rollupTypes: true, bundledPackages: ["@formbricks/js-core"] })],
+    plugins: [dts({ rollupTypes: true, bundledPackages: ["@formbricks/api", "@formbricks/types"] })],
   });
 };
 
