@@ -22,7 +22,7 @@ const SurveyCopyOptions = ({ environmentId, survey, onCancel, setOpen }: SurveyC
     const fetchProducts = async () => {
       const getProductsByEnvironmentIdResponse = await getProductsByEnvironmentIdAction({ environmentId });
       if (getProductsByEnvironmentIdResponse?.data) {
-        setProducts(products);
+        setProducts(getProductsByEnvironmentIdResponse?.data);
       } else {
         const errorMessage = getFormattedErrorMessage(getProductsByEnvironmentIdResponse);
         toast.error(errorMessage);

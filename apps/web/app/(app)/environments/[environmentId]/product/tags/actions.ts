@@ -4,7 +4,7 @@ import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromTagId } from "@formbricks/lib/organization/utils";
-import { deleteTag, mergeTags } from "@formbricks/lib/tag/service";
+import { deleteTag, mergeTags, updateTagName } from "@formbricks/lib/tag/service";
 
 const ZDeleteTagAction = z.object({
   tagId: z.string(),
@@ -36,7 +36,7 @@ export const updateTagNameAction = authenticatedActionClient
       rules: ["tag", "update"],
     });
 
-    return await updateTagNameAction(parsedInput.tagId, parsedInput.name);
+    return await updateTagName(parsedInput.tagId, parsedInput.name);
   });
 
 const ZMergeTagsAction = z.object({

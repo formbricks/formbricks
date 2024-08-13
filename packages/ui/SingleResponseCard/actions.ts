@@ -4,6 +4,7 @@ import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import {
+  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromResponseId,
   getOrganizationIdFromResponseNoteId,
   getOrganizationIdFromTagId,
@@ -27,7 +28,7 @@ export const createTagAction = authenticatedActionClient
   .action(async ({ parsedInput, ctx }) => {
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromResponseId(parsedInput.environmentId),
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
       rules: ["tag", "create"],
     });
 
@@ -50,7 +51,7 @@ export const createTagToResponseAction = authenticatedActionClient
 
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTagId(parsedInput.responseId),
+      organizationId: await getOrganizationIdFromTagId(parsedInput.tagId),
       rules: ["tag", "read"],
     });
 
@@ -73,7 +74,7 @@ export const deleteTagOnResponseAction = authenticatedActionClient
 
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTagId(parsedInput.responseId),
+      organizationId: await getOrganizationIdFromTagId(parsedInput.tagId),
       rules: ["tag", "read"],
     });
 
@@ -106,7 +107,7 @@ export const updateResponseNoteAction = authenticatedActionClient
   .action(async ({ parsedInput, ctx }) => {
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromResponseId(parsedInput.responseNoteId),
+      organizationId: await getOrganizationIdFromResponseNoteId(parsedInput.responseNoteId),
       rules: ["response", "update"],
     });
 

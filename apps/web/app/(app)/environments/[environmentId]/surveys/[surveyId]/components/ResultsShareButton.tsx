@@ -63,9 +63,6 @@ export const ResultsShareButton = ({ survey, webAppUrl, user }: ResultsShareButt
       if (resultShareUrlResponse?.data) {
         setSurveyUrl(webAppUrl + "/share/" + resultShareUrlResponse.data);
         setShowPublishModal(true);
-      } else {
-        const errorMessage = getFormattedErrorMessage(resultShareUrlResponse);
-        toast.error(errorMessage);
       }
     };
 

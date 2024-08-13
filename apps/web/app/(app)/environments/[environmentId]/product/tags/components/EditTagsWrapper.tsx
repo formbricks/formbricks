@@ -72,7 +72,6 @@ const SingleTag: React.FC<{
               )}
               defaultValue={tagName}
               onBlur={(e) => {
-                // !@gupta-piyush19- check this
                 updateTagNameAction({ tagId, name: e.target.value.trim() }).then((updateTagNameResponse) => {
                   if (updateTagNameResponse?.data) {
                     setUpdateTagError(false);

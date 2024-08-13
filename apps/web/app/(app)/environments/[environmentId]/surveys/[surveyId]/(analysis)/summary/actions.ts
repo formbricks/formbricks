@@ -109,7 +109,7 @@ export const deleteResultShareUrlAction = authenticatedActionClient
       throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
     }
 
-    await updateSurvey({ ...survey, resultShareKey: null });
+    return await updateSurvey({ ...survey, resultShareKey: null });
   });
 
 const ZGetEmailHtmlAction = z.object({

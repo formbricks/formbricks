@@ -79,13 +79,14 @@ const ZGetProductsByEnvironmentIdAction = z.object({
 export const getProductsByEnvironmentIdAction = authenticatedActionClient
   .schema(ZGetProductsByEnvironmentIdAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId: organizationId,
       rules: ["product", "read"],
     });
 
-    return await getProducts(parsedInput.environmentId);
+    return await getProducts(organizationId);
   });
 
 const ZDeleteSurveyAction = z.object({
