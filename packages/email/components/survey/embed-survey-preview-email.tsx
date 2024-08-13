@@ -6,7 +6,10 @@ interface EmbedSurveyPreviewEmailProps {
   environmentId: string;
 }
 
-export function EmbedSurveyPreviewEmail({ html, environmentId }: EmbedSurveyPreviewEmailProps) {
+export function EmbedSurveyPreviewEmail({
+  html,
+  environmentId,
+}: EmbedSurveyPreviewEmailProps): React.JSX.Element {
   return (
     <Container>
       <Heading>Preview Email Embed</Heading>
