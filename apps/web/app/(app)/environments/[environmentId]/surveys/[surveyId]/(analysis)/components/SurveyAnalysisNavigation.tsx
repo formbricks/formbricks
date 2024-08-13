@@ -68,7 +68,7 @@ export const SurveyAnalysisNavigation = ({
 
       return () => clearInterval(interval);
     }
-  }, []);
+  }, [isShareEmbedModalOpen]);
 
   const getResponseCountString = () => {
     if (totalResponseCount === null) return "";
