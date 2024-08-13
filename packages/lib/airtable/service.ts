@@ -180,45 +180,42 @@ export const writeData = async (
   configData: TIntegrationAirtableConfigData,
   values: string[][]
 ) => {
-  try {
-    const responses = values[0];
-    const questions = values[1];
+  const responses = values[0];
+  const questions = values[1];
 
-    const data: Record<string, string> = {};
-    for (let i = 0; i < questions.length; i++) {
-      data[questions[i]] = responses[i];
-    }
-
-    const req = await tableFetcher(key, configData.baseId);
-    const tables = ZIntegrationAirtableTablesWithFields.parse(req).tables;
-
-    const currentTable = tables.find((table) => table.id === configData.tableId);
-    if (currentTable) {
-      const currentFields = new Set(currentTable.fields.map((field) => field.name));
-      const fieldsToCreate = new Set<string>();
-      for (const field of questions) {
-        const hasField = currentFields.has(field);
-        if (!hasField) {
-          fieldsToCreate.add(field);
-        }
-      }
-
-      if (fieldsToCreate.size > 0) {
-        const createFieldPromise: Promise<any>[] = [];
-        fieldsToCreate.forEach((fieldName) => {
-          createFieldPromise.push(
-            addField(key, configData.baseId, configData.tableId, {
-              name: fieldName,
-              type: "singleLineText",
-            })
-          );
-        });
-
-        await Promise.all(createFieldPromise);
-      }
-    }
-    await addRecords(key, configData.baseId, configData.tableId, data);
-  } catch (error: any) {
-    console.error(error?.message);
+  const data: Record<string, string> = {};
+  for (let i = 0; i < questions.length; i++) {
+    data[questions[i]] = responses[i];
   }
+
+  const req = await tableFetcher(key, configData.baseId);
+  const tables = ZIntegrationAirtableTablesWithFields.parse(req).tables;
+
+  const currentTable = tables.find((table) => table.id === configData.tableId);
+  if (currentTable) {
+    const currentFields = new Set(currentTable.fields.map((field) => field.name));
+    const fieldsToCreate = new Set<string>();
+    for (const field of questions) {
+      const hasField = currentFields.has(field);
+      if (!hasField) {
+        fieldsToCreate.add(field);
+      }
+    }
+
+    if (fieldsToCreate.size > 0) {
+      const createFieldPromise: Promise<any>[] = [];
+      fieldsToCreate.forEach((fieldName) => {
+        createFieldPromise.push(
+          addField(key, configData.baseId, configData.tableId, {
+            name: fieldName,
+            type: "singleLineText",
+          })
+        );
+      });
+
+      await Promise.all(createFieldPromise);
+    }
+  }
+
+  await addRecords(key, configData.baseId, configData.tableId, data);
 };
