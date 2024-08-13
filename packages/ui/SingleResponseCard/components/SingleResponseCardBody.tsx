@@ -14,6 +14,7 @@ import {
 import { AddressResponse } from "../../AddressResponse";
 import { FileUploadResponse } from "../../FileUploadResponse";
 import { PictureSelectionResponse } from "../../PictureSelectionResponse";
+import { RankingRespone } from "../../RankingResponse";
 import { RatingResponse } from "../../RatingResponse";
 import { isValidValue } from "../util";
 import { HiddenFields } from "./HiddenFields";
@@ -113,10 +114,10 @@ export const SingleResponseCardBody = ({
         if (Array.isArray(responseData)) {
           return <AddressResponse value={responseData} />;
         }
-      // case TSurveyQuestionTypeEnum.Ranking:
-      //   if (Array.isArray(responseData)) {
-      //     return <AddressResponse value={responseData} />;
-      //   }
+      case TSurveyQuestionTypeEnum.Ranking:
+        if (Array.isArray(responseData)) {
+          return <RankingRespone value={responseData} />;
+        }
       default:
         if (
           typeof responseData === "string" ||

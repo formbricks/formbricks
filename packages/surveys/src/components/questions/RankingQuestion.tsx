@@ -44,8 +44,8 @@ export const RankingQuestion = ({
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
-  const [sortedItems, setSortedItems] = useState<string[]>([]);
-  const [unsortedItems, setUnsortedItems] = useState<string[]>([]);
+  const [sortedItems, setSortedItems] = useState<Array<{ id: string; label: string }>>([]);
+  const [unsortedItems, setUnsortedItems] = useState<Array<{ id: string; label: string }>>([]);
   const [error, setError] = useState<string | null>(null);
 
   const questionChoices = useMemo(() => {
@@ -54,63 +54,71 @@ export const RankingQuestion = ({
 
   useEffect(() => {
     if (value.length > 0) {
-      setSortedItems(value);
-      setUnsortedItems(questionChoices.map((c) => c.id).filter((id) => !value.includes(id)));
+      setSortedItems(
+        value.map((id) => {
+          const choice = questionChoices.find((c) => c.id === id);
+          return { id, label: getLocalizedValue(choice?.label, languageCode) };
+        })
+      );
+      setUnsortedItems(
+        questionChoices
+          .filter((c) => !value.includes(c.id))
+          .map((c) => ({ id: c.id, label: getLocalizedValue(c.label, languageCode) }))
+      );
     } else {
-      setUnsortedItems(questionChoices.map((c) => c.id));
+      setUnsortedItems(
+        questionChoices.map((c) => ({
+          id: c.id,
+          label: getLocalizedValue(c.label, languageCode),
+        }))
+      );
     }
-  }, [value, questionChoices]);
+  }, [value, questionChoices, languageCode]);
 
   const handleItemClick = useCallback(
-    (itemId: string) => {
+    (item: { id: string; label: string }) => {
       setSortedItems((prev) => {
         let newSorted;
         if (prev.length === 0) {
-          // First click: just add the item to sortedItems
-          newSorted = [itemId];
+          newSorted = [item];
         } else if (prev.length === 1) {
-          // Second click: sort both items
-          newSorted = [prev[0], itemId];
+          newSorted = [prev[0], item];
         } else {
-          // Subsequent clicks: add item to the end
-          newSorted = [...prev, itemId];
+          newSorted = [...prev, item];
         }
-        setUnsortedItems((unsorted) => unsorted.filter((id) => id !== itemId));
-        onChange({ [question.id]: newSorted });
+        setUnsortedItems((unsorted) => unsorted.filter((i) => i.id !== item.id));
+        onChange({ [question.id]: newSorted.map((i) => i.id) });
         return newSorted;
       });
       setError(null);
     },
     [onChange, question.id]
   );
-
   const handleMove = useCallback(
     (itemId: string, direction: "up" | "down") => {
       setSortedItems((prev) => {
-        const index = prev.indexOf(itemId);
+        const index = prev.findIndex((item) => item.id === itemId);
         if (index === -1) return prev;
         const newIndex = direction === "up" ? Math.max(0, index - 1) : Math.min(prev.length - 1, index + 1);
         const newSortedItems = [...prev];
-        newSortedItems.splice(index, 1);
-        newSortedItems.splice(newIndex, 0, itemId);
-        onChange({ [question.id]: newSortedItems });
+        const [movedItem] = newSortedItems.splice(index, 1);
+        newSortedItems.splice(newIndex, 0, movedItem);
+        onChange({ [question.id]: newSortedItems.map((item) => item.id) });
         return newSortedItems;
       });
       setError(null);
     },
     [onChange, question.id]
   );
-
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    console.log(sortedItems);
     if (question.required && sortedItems.length !== questionChoices.length) {
       setError("Please rank all items before submitting.");
       return;
     }
     const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
-    onSubmit({ [question.id]: sortedItems }, updatedTtcObj);
+    onSubmit({ [question.id]: sortedItems.map((item) => item.label) }, updatedTtcObj);
   };
   return (
     <form onSubmit={handleSubmit} className="fb-w-full">
@@ -127,44 +135,40 @@ export const RankingQuestion = ({
             questionId={question.id}
           />
           <div className="fb-mt-4">
-            {[...sortedItems, ...unsortedItems].map((itemId, idx) => {
-              const choice = questionChoices.find((c) => c.id === itemId);
-              if (!choice) return null;
-              const isSorted = sortedItems.includes(itemId);
+            {[...sortedItems, ...unsortedItems].map((item, idx) => {
+              const isSorted = sortedItems.includes(item);
               return (
                 <div
                   autoFocus={idx === 0 && autoFocusEnabled}
-                  key={choice.id}
+                  key={item.id}
                   tabIndex={idx + 1}
-                  onClick={() => !isSorted && handleItemClick(itemId)}
+                  onClick={() => !isSorted && handleItemClick(item)}
                   className={cn(
-                    "fb-flex fb-items-center fb-mb-2 fb-p-4 fb-rounded-custom fb-border fb-transition-all",
-                    isSorted ? "fb-border-brand fb-bg-input-bg-selected" : "fb-border-border fb-bg-input-bg"
+                    "fb-flex fb-items-center fb-mb-2 fb-px-4 fb-py-2 fb-rounded-lg fb-border fb-transition-all",
+                    isSorted ? "fb-border-brand fb-bg-white" : "fb-border-gray-300 fb-bg-white"
                   )}>
-                  <span className="fb-mr-4 fb-w-6 fb-h-6 fb-flex fb-items-center fb-justify-center fb-border fb-border-dashed fb-rounded-full">
-                    {isSorted && sortedItems.indexOf(itemId) + 1}
+                  <span className="fb-mr-4 fb-w-4 fb-h-4 fb-flex fb-items-center fb-justify-center fb-border fb-border-dashed fb-rounded-full">
+                    {isSorted && sortedItems.findIndex((i) => i.id === item.id) + 1}
                   </span>
-                  <div className={cn("fb-flex-grow", !isSorted ? "fb-cursor-pointer" : "")}>
-                    {getLocalizedValue(choice.label, languageCode)}
+                  <div className={cn("fb-flex-grow fb-text-gray-700", !isSorted ? "fb-cursor-pointer" : "")}>
+                    {item.label}
                   </div>
-                  {isSorted && (
-                    <div className="fb-ml-2 fb-flex fb-flex-col">
-                      <button
-                        type="button"
-                        onClick={() => handleMove(itemId, "up")}
-                        className="fb-p-1 fb-text-sm fb-bg-gray-100 fb-rounded-t"
-                        disabled={sortedItems.indexOf(itemId) === 0}>
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleMove(itemId, "down")}
-                        className="fb-p-1 fb-text-sm fb-bg-gray-100 fb-rounded-b"
-                        disabled={sortedItems.indexOf(itemId) === sortedItems.length - 1}>
-                        ↓
-                      </button>
-                    </div>
-                  )}
+                  <div className="fb-ml-auto fb-flex fb-flex-col fb-border-l fb-border-gray-300">
+                    <button
+                      type="button"
+                      onClick={() => handleMove(item.id, "up")}
+                      className="fb-p-1 fb-text-sm fb-bg-gray-100 fb-rounded-none fb-border-b fb-border-gray-300"
+                      disabled={sortedItems.findIndex((i) => i.id === item.id) === 0}>
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMove(item.id, "down")}
+                      className="fb-p-1 fb-text-sm fb-bg-gray-100 fb-rounded-none"
+                      disabled={sortedItems.findIndex((i) => i.id === item.id) === sortedItems.length - 1}>
+                      ↓
+                    </button>
+                  </div>
                 </div>
               );
             })}

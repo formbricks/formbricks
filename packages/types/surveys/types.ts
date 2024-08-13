@@ -1326,13 +1326,14 @@ export type TSurveyQuestionSummaryAddress = z.infer<typeof ZSurveyQuestionSummar
 
 export const ZSurveyQuestionSummaryRanking = z.object({
   type: z.literal("ranking"),
-  question: ZSurveyAddressQuestion,
+  question: ZSurveyRankingQuestion,
   responseCount: z.number(),
+
   choices: z.array(
     z.object({
       value: z.string(),
       count: z.number(),
-      percentage: z.number(),
+      avgRanking: z.number(),
       others: z
         .array(
           z.object({
@@ -1350,7 +1351,6 @@ export const ZSurveyQuestionSummaryRanking = z.object({
     })
   ),
 });
-
 export type TSurveyQuestionSummaryRanking = z.infer<typeof ZSurveyQuestionSummaryRanking>;
 
 export const ZSurveyQuestionSummary = z.union([

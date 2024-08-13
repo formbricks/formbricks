@@ -19,6 +19,7 @@ import {
   TSurveyQuestionSummaryMultipleChoice,
   TSurveyQuestionSummaryOpenText,
   TSurveyQuestionSummaryPictureSelection,
+  TSurveyQuestionSummaryRanking,
   TSurveyQuestionSummaryRating,
   TSurveyQuestionTypeEnum,
   TSurveySummary,
@@ -1196,6 +1197,75 @@ export const getQuestionWiseSummary = (
         });
 
         values = [];
+        break;
+      }
+      case TSurveyQuestionTypeEnum.Ranking: {
+        let values: TSurveyQuestionSummaryRanking["choices"] = [];
+        const questionChoices = question.choices.map((choice) => getLocalizedValue(choice.label, "default"));
+
+        let totalResponseCount = 0;
+        const choiceRankSums: Record<string, number> = {};
+        const choiceCountMap: Record<string, number> = {};
+        questionChoices.forEach((choice) => {
+          choiceRankSums[choice] = 0;
+          choiceCountMap[choice] = 0;
+        });
+
+        const otherValues: TSurveyQuestionSummaryRanking["choices"][number]["others"] = [];
+
+        responses.forEach((response) => {
+          const responseLanguageCode = getLanguageCode(survey.languages, response.language);
+
+          const answer =
+            responseLanguageCode === "default"
+              ? response.data[question.id]
+              : checkForI18n(response, question.id, survey, responseLanguageCode);
+
+          if (Array.isArray(answer)) {
+            totalResponseCount++;
+            answer.forEach((value, index) => {
+              const ranking = index + 1; // Calculate ranking based on index
+              if (questionChoices.includes(value)) {
+                choiceRankSums[value] += ranking;
+                choiceCountMap[value]++;
+              } else {
+                otherValues.push({
+                  value,
+                  person: response.person,
+                  personAttributes: response.personAttributes,
+                });
+              }
+            });
+          }
+        });
+
+        questionChoices.forEach((choice) => {
+          const count = choiceCountMap[choice];
+          const avgRanking = count > 0 ? choiceRankSums[choice] / count : 0;
+          values.push({
+            value: choice,
+            count,
+            avgRanking: convertFloatTo2Decimal(avgRanking),
+          });
+        });
+
+        // Add "Other" values if present
+        if (otherValues.length > 0) {
+          values.push({
+            value: "Other",
+            count: otherValues.length,
+            avgRanking: 0, // We can't calculate average ranking for "Other" values
+            others: otherValues.slice(0, VALUES_LIMIT),
+          });
+        }
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: totalResponseCount,
+          choices: values,
+        });
+
         break;
       }
     }

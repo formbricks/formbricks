@@ -5,7 +5,6 @@ import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryRanking, TSurveyType } from "@formbricks/types/surveys/types";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
-import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -31,7 +30,7 @@ export const RankingSummary = ({
     if (a.others) return 1; // Always put a after b if a has 'others'
     if (b.others) return -1; // Always put b after a if b has 'others'
 
-    return b.count - a.count; // Sort by count
+    return a.avgRanking - b.avgRanking; // Sort by count
   });
 
   const handleLoadMore = () => {
@@ -58,22 +57,19 @@ export const RankingSummary = ({
           <div key={result.value} className="group cursor-pointer">
             <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
               <div className="mr-8 flex w-full justify-between space-x-1 sm:justify-normal">
-                <p className="font-semibold text-slate-700 underline-offset-4 group-hover:underline">
-                  {results.length - resultsIdx} - {result.value}
-                </p>
-                <div>
-                  <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {convertFloatToNDecimal(result.percentage, 1)}%
-                  </p>
+                <div className="flex w-full items-center">
+                  <span className="mr-2 text-gray-400">#{resultsIdx + 1}</span>
+                  <div className="rounded bg-gray-100 px-2 py-1">{result.value}</div>
+                  <span className="ml-auto flex items-center space-x-1">
+                    <span className="font-bold text-slate-600">
+                      #{convertFloatToNDecimal(result.avgRanking, 1)}
+                    </span>
+                    <span>average</span>
+                  </span>
                 </div>
               </div>
-              <p className="flex w-full pt-1 text-slate-600 sm:items-end sm:justify-end sm:pt-0">
-                {result.count} {result.count === 1 ? "response" : "responses"}
-              </p>
             </div>
-            <div className="group-hover:opacity-80">
-              <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100} />
-            </div>
+
             {result.others && result.others.length > 0 && (
               <div className="mt-4 rounded-lg border border-slate-200">
                 <div className="grid h-12 grid-cols-2 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
