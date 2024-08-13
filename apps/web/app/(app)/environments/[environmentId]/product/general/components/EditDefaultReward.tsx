@@ -30,6 +30,7 @@ export const EditDefaultReward: React.FC<EditDefaultRewardProps> = ({ product })
   });
 
   const { errors, isDirty } = form.formState;
+
   const rewardError = errors.defaultRewardInUSD?.message;
   const isSubmitting = form.formState.isSubmitting;
 
@@ -85,7 +86,6 @@ export const EditDefaultReward: React.FC<EditDefaultRewardProps> = ({ product })
                   autoComplete="off"
                   required
                   isInvalid={!!rewardError}
-                  value={field.value ?? ""}
                   onChange={(e) => field.onChange(e.target.valueAsNumber)}
                 />
               </FormControl>
