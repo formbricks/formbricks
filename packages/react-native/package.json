@@ -17,13 +17,14 @@
   ],
   "author": "Formbricks <hola@formbricks.com>",
   "sideEffects": false,
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsup",
-    "build:dev": "tsup --watch",
+    "build": "tsc && vite build",
+    "build:dev": "tsc && vite build --mode dev",
     "lint": "eslint src --ext .ts,.js,.tsx,.jsx",
-    "go": "tsup --watch",
+    "go": "vite build --watch --mode dev",
     "clean": "rimraf .turbo node_modules dist .turbo"
   },
   "devDependencies": {
@@ -34,7 +35,9 @@
     "@react-native-async-storage/async-storage": "1.24.0",
     "@types/react": "^18.3.3",
     "@types/react-native": "^0.73.0",
-    "tsup": "^8.2.4"
+    "terser": "^5.31.3",
+    "vite": "^5.3.5",
+    "vite-plugin-dts": "^3.9.1"
   },
   "dependencies": {
     "react": "^18.3.1",

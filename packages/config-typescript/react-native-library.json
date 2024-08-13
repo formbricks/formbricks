@@ -3,11 +3,16 @@
   "display": "React Native Library",
   "extends": "./base.json",
   "compilerOptions": {
-    "allowJs": true,
-    "jsx": "react-native",
-    "lib": ["dom", "dom.iterable", "ES2022"],
-    "noEmit": true,
-    "resolveJsonModule": true,
-    "target": "ESNext"
+    "outDir": "./dist",
+    "declaration": true,
+    "moduleResolution": "node",
+    "jsx": "react-jsx",
+    "lib": ["ES2015", "DOM"],
+    "module": "ESNext",
+    "target": "ESNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   }
 }

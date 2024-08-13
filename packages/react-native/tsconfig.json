@@ -1,8 +1,16 @@
 {
   "extends": "@formbricks/config-typescript/react-native-library.json",
-  "include": ["."],
+  "include": ["src", "vite.config.ts", "package.json"],
   "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    "declaration": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "paths": {
+      "@formbricks/js-core/*": ["../js-core/dist/*"]
+    }
   }
 }
