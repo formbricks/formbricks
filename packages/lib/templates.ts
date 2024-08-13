@@ -24,7 +24,7 @@ export const getDefaultEndingCard = (languages: TSurveyLanguage[]): TSurveyEndSc
     headline: createI18nString("Thank you!", languageCodes),
     subheader: createI18nString("We appreciate your feedback.", languageCodes),
     buttonLabel: createI18nString("Take more surveys", languageCodes),
-    buttonLink: "https://member.digiopinion.com/overview",
+    buttonLink: undefined,
   };
 };
 

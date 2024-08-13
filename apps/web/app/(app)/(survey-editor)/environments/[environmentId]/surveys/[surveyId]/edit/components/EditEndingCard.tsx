@@ -30,6 +30,7 @@ interface EditEndingCardProps {
   plan: TOrganizationBillingPlan;
   addEndingCard: (index: number) => void;
   isFormbricksCloud: boolean;
+  defaultRedirect: string;
 }
 
 const endingCardTypes = [
@@ -50,6 +51,7 @@ export const EditEndingCard = ({
   plan,
   addEndingCard,
   isFormbricksCloud,
+  defaultRedirect,
 }: EditEndingCardProps) => {
   const endingCard = localSurvey.endings[endingCardIndex];
   const isRedirectToUrlDisabled = isFormbricksCloud
@@ -218,10 +220,15 @@ export const EditEndingCard = ({
               attributeClasses={attributeClasses}
               updateSurvey={updateSurvey}
               endingCard={endingCard}
+              defaultRedirect={defaultRedirect}
             />
           )}
           {endingCard.type === "redirectToUrl" && (
-            <RedirectUrlForm endingCard={endingCard} updateSurvey={updateSurvey} />
+            <RedirectUrlForm
+              endingCard={endingCard}
+              updateSurvey={updateSurvey}
+              defaultRedirect={defaultRedirect}
+            />
           )}
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>

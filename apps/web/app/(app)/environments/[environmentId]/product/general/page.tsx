@@ -14,7 +14,9 @@ import { PageHeader } from "@formbricks/ui/PageHeader";
 import { SettingsId } from "@formbricks/ui/SettingsId";
 import { SettingsCard } from "../../settings/components/SettingsCard";
 import { DeleteProduct } from "./components/DeleteProduct";
+import { EditDefaultReward } from "./components/EditDefaultReward";
 import { EditProductNameForm } from "./components/EditProductNameForm";
+import { EditRedirects } from "./components/EditRedirects";
 import { EditWaitingTimeForm } from "./components/EditWaitingTimeForm";
 
 const Page = async ({ params }: { params: { environmentId: string } }) => {
@@ -66,6 +68,16 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           <EditWaitingTimeForm product={product} />
         </SettingsCard>
       )}
+      <SettingsCard
+        title="Edit Default Reward"
+        description="Define the default reward for a survey in dollars.">
+        <EditDefaultReward environmentId={params.environmentId} product={product} />
+      </SettingsCard>
+      <SettingsCard
+        title="Callback and Redirect URLs"
+        description="Define the default redirect and callback url">
+        <EditRedirects product={product} />
+      </SettingsCard>
       <SettingsCard
         title="Delete Product"
         description="Delete product with all surveys, responses, people, actions and attributes. This cannot be undone.">

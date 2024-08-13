@@ -414,6 +414,9 @@ export const QuestionsView = ({
                   plan={plan}
                   addEndingCard={addEndingCard}
                   isFormbricksCloud={isFormbricksCloud}
+                  defaultRedirect={
+                    product.defaultRedirectOnCompleteUrl ?? "https://member.digiopinion.com/overview"
+                  }
                 />
               );
             })}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
@@ -18,6 +18,7 @@ interface EndScreenFormProps {
   attributeClasses: TAttributeClass[];
   updateSurvey: (input: Partial<TSurveyEndScreenCard>) => void;
   endingCard: TSurveyEndScreenCard;
+  defaultRedirect: string;
 }
 
 export const EndScreenForm = ({
@@ -29,11 +30,21 @@ export const EndScreenForm = ({
   attributeClasses,
   updateSurvey,
   endingCard,
+  defaultRedirect,
 }: EndScreenFormProps) => {
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&
       (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
   );
+
+  // Ensure buttonLink is always included in the form state
+  useEffect(() => {
+    console.log("marko");
+    if (!endingCard.buttonLink) {
+      updateSurvey({ buttonLink: defaultRedirect });
+    }
+  }, [endingCard.buttonLink, defaultRedirect, updateSurvey]);
+
   return (
     <form>
       <QuestionFormInput
@@ -71,8 +82,8 @@ export const EndScreenForm = ({
                 updateSurvey({ buttonLabel: undefined, buttonLink: undefined });
               } else {
                 updateSurvey({
-                  buttonLabel: { default: "Create your own Survey" },
-                  buttonLink: "https://formbricks.com/signup",
+                  buttonLabel: { default: "Take More Surveys" },
+                  buttonLink: defaultRedirect,
                 });
               }
               setshowEndingCardCTA(!showEndingCardCTA);
@@ -111,8 +122,8 @@ export const EndScreenForm = ({
                 id="buttonLink"
                 name="buttonLink"
                 className="bg-white"
-                placeholder="https://formbricks.com/signup"
-                value={endingCard.buttonLink}
+                placeholder={defaultRedirect}
+                value={endingCard.buttonLink ?? defaultRedirect}
                 onChange={(e) => updateSurvey({ buttonLink: e.target.value })}
               />
             </div>

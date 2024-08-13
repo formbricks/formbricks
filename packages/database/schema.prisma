@@ -277,7 +277,7 @@ model Survey {
   /// [SurveyEnding]
   endings             Json[]                  @default([])
   thankYouCard        Json? // deprecated
-  failureCard         Json?                   @default("{\"enabled\": false}")
+  failureCard         Json                    @default("{\"enabled\": false}")
   /// @zod.custom(imports.ZSurveyHiddenFields)
   /// [SurveyHiddenFields]
   hiddenFields        Json                    @default("{\"enabled\": false}")
@@ -325,9 +325,8 @@ model Survey {
   showLanguageSwitch   Boolean?
   reward               Float            @default(0)
   failureChance        Float            @default(0)
-
-  countries        Country[] @relation("SurveyCountries")
-  limitedCountries Boolean   @default(false)
+  countries            Country[]        @relation("SurveyCountries")
+  limitedCountries     Boolean          @default(false)
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])

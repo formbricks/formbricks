@@ -41,6 +41,16 @@ const Loading = () => {
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
     },
     {
+      title: "Edit Default Reward",
+      description: "Change the default reward for completing a survey.",
+      skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
+    },
+    {
+      title: "Callback and Redirect URLs",
+      description: "Define the default redirect and callback url",
+      skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
+    },
+    {
       title: "Delete Product",
       description:
         "Delete product with all surveys, responses, people, actions and attributes. This cannot be undone.",
