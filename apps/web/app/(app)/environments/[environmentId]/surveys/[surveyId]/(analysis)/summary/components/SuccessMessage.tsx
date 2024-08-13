@@ -5,20 +5,16 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUser } from "@formbricks/types/user";
 import { Confetti } from "@formbricks/ui/Confetti";
-import { ShareEmbedSurvey } from "./ShareEmbedSurvey";
 
 interface SummaryMetadataProps {
   environment: TEnvironment;
   survey: TSurvey;
-  webAppUrl: string;
-  user: TUser;
+  setShowShareSurveyModal: (value: boolean) => void;
 }
 
-export const SuccessMessage = ({ environment, survey, webAppUrl, user }: SummaryMetadataProps) => {
+export const SuccessMessage = ({ environment, survey, setShowShareSurveyModal }: SummaryMetadataProps) => {
   const searchParams = useSearchParams();
-  const [showLinkModal, setShowLinkModal] = useState(false);
   const [confetti, setConfetti] = useState(false);
 
   const isAppSurvey = survey.type === "app" || survey.type === "website";
@@ -40,7 +36,7 @@ export const SuccessMessage = ({ environment, survey, webAppUrl, user }: Summary
         }
       );
       if (survey.type === "link") {
-        setShowLinkModal(true);
+        setShowShareSurveyModal(true);
       }
       // Remove success param from url
       const url = new URL(window.location.href);
@@ -49,16 +45,5 @@ export const SuccessMessage = ({ environment, survey, webAppUrl, user }: Summary
     }
   }, [environment, isAppSurvey, searchParams, survey, widgetSetupCompleted]);
 
-  return (
-    <>
-      <ShareEmbedSurvey
-        survey={survey}
-        open={showLinkModal}
-        setOpen={setShowLinkModal}
-        webAppUrl={webAppUrl}
-        user={user}
-      />
-      {confetti && <Confetti />}
-    </>
-  );
+  return <>{confetti && <Confetti />}</>;
 };
