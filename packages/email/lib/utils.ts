@@ -4,7 +4,7 @@ export const getNPSOptionColor = (idx: number): string => {
   return "bg-rose-100";
 };
 
-export const getRatingNumberOptionColor = (range: number, idx: number) => {
+export const getRatingNumberOptionColor = (range: number, idx: number): string => {
   if (range > 5) {
     if (range - idx < 2) return "bg-emerald-100";
     if (range - idx < 4) return "bg-orange-100";

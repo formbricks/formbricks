@@ -33,8 +33,13 @@ interface LiveSurveyNotificationProps {
   surveys: TWeeklySummaryNotificationDataSurvey[];
 }
 
-export const LiveSurveyNotification = ({ environmentId, surveys }: LiveSurveyNotificationProps) => {
-  const createSurveyFields = (surveyResponses: TWeeklySummarySurveyResponseData[]) => {
+export const LiveSurveyNotification = ({
+  environmentId,
+  surveys,
+}: LiveSurveyNotificationProps): React.JSX.Element[] => {
+  const createSurveyFields = (
+    surveyResponses: TWeeklySummarySurveyResponseData[]
+  ): React.JSX.Element | React.JSX.Element[] => {
     if (surveyResponses.length === 0) {
       return (
         <Container className="mt-4">
@@ -66,14 +71,14 @@ export const LiveSurveyNotification = ({ environmentId, surveys }: LiveSurveyNot
     return surveyFields;
   };
 
-  if (!surveys.length) return "";
+  if (!surveys.length) return [];
 
-  return surveys.map((survey, index) => {
+  return surveys.map((survey) => {
     const displayStatus = convertSurveyStatus(survey.status);
     const isInProgress = displayStatus === "In Progress";
     const noResponseLastWeek = isInProgress && survey.responses.length === 0;
     return (
-      <Tailwind key={index}>
+      <Tailwind key={survey.id}>
         <Container className="mt-12">
           <Text className="mb-0 inline">
             <Link
