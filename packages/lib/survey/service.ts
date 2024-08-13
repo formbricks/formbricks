@@ -1209,17 +1209,6 @@ export const getSurveyIdByResultShareKey = reactCache(
     )()
 );
 
-export async function getAllDbCountries() {
-  try {
-    return await prisma.country.findMany();
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-}
-
 export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: string): Promise<TSurvey> => {
   validateInputs([surveyId, ZId], [newSegmentId, ZId]);
   try {
@@ -1317,3 +1306,14 @@ export const getSurveysBySegmentId = reactCache(
       }
     )()
 );
+
+export async function getAllDbCountries() {
+  try {
+    return await prisma.country.findMany();
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+}

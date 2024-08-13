@@ -256,12 +256,17 @@ export const Survey = ({
     if (!url) return null;
     const urlObj = new URL(url);
     urlObj.searchParams.append("survey_id", survey.id);
-    const urlParams = new URLSearchParams(window.location.search);
-    const user_id = urlParams.get("userId");
+    const user_id = getPanelistId();
     if (user_id) {
       urlObj.searchParams.append("panelist_id", user_id);
     }
     return urlObj.toString();
+  };
+
+  const getPanelistId = (): string | null => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const user_id = urlParams.get("userId");
+    return user_id;
   };
 
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
@@ -330,6 +335,7 @@ export const Survey = ({
               languageCode={selectedLanguage}
               isResponseSendingFinished={isResponseSendingFinished}
               responseData={responseData}
+              panelistId={getPanelistId()}
             />
           );
         }

@@ -19,6 +19,7 @@ interface EndingCardProps {
   isCurrent: boolean;
   languageCode: string;
   responseData: TResponseData;
+  panelistId: string | null;
 }
 
 export const EndingCard = ({
@@ -30,6 +31,7 @@ export const EndingCard = ({
   isCurrent,
   languageCode,
   responseData,
+  panelistId,
 }: EndingCardProps) => {
   const media =
     endingCard.type === "endScreen" && (endingCard.imageUrl || endingCard.videoUrl) ? (
@@ -54,16 +56,27 @@ export const EndingCard = ({
     </div>
   );
 
+  const appendQueryParams = (url: string, surveyId: string, panelistId: string | null): string => {
+    const urlObj = new URL(url);
+    urlObj.searchParams.append("survey_id", surveyId);
+    if (panelistId) {
+      urlObj.searchParams.append("panelist_id", panelistId);
+    }
+    return urlObj.toString();
+  };
+
   const handleSubmit = () => {
     if (!isRedirectDisabled && endingCard.type === "endScreen" && endingCard.buttonLink) {
-      window.top?.location.replace(endingCard.buttonLink);
+      const urlWithParams = appendQueryParams(endingCard.buttonLink, survey.id, panelistId);
+      window.top?.location.replace(urlWithParams);
     }
   };
 
   useEffect(() => {
     if (isCurrent) {
       if (!isRedirectDisabled && endingCard.type === "redirectToUrl" && endingCard.url) {
-        window.top?.location.replace(endingCard.url);
+        const urlWithParams = appendQueryParams(endingCard.url, survey.id, panelistId);
+        window.top?.location.replace(urlWithParams);
       }
     }
     const handleEnter = (e: KeyboardEvent) => {
