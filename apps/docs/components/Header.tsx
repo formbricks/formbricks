@@ -15,6 +15,7 @@ const TopLevelNavItem = ({ href, children }: { href: string; children: React.Rea
     <li>
       <Link
         href={href}
+        target="_blank"
         className="text-sm leading-5 text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
         {children}
       </Link>
