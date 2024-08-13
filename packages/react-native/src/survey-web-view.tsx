@@ -16,6 +16,8 @@ import { appConfig } from "./lib/config";
 import { SurveyStore } from "./lib/survey-store";
 
 const logger = Logger.getInstance();
+logger.configure({ logLevel: "debug" });
+
 const surveyStore = SurveyStore.getInstance();
 let isSurveyRunning = false;
 

@@ -6,13 +6,12 @@ LogBox.ignoreAllLogs();
 
 export default function App() {
   const config = {
-    environmentId: "clzi9vr95000ivazb5e291wlm",
+    environmentId: process.env.EXPO_PUBLIC_FORMBRICKS_ENVIRONMENT_ID ?? "default-env-id",
     apiHost: process.env.EXPO_PUBLIC_API_HOST ?? "http://localhost:3000",
     userId: "hello-user",
     attributes: {
       language: "en",
       testAttr: "attr-test",
-      hello: "Hello",
     },
   };
 
