@@ -1,10 +1,11 @@
+import { EndingCard } from "@/components/general/EndingCard";
+import { FailureCard } from "@/components/general/FailureCard.tsx";
 import { FormbricksBranding } from "@/components/general/FormbricksBranding";
 import { LanguageSwitch } from "@/components/general/LanguageSwitch";
 import { ProgressBar } from "@/components/general/ProgressBar";
 import { QuestionConditional } from "@/components/general/QuestionConditional";
 import { ResponseErrorComponent } from "@/components/general/ResponseErrorComponent";
 import { SurveyCloseButton } from "@/components/general/SurveyCloseButton";
-import { ThankYouCard } from "@/components/general/ThankYouCard";
 import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
@@ -62,6 +63,7 @@ export const Survey = ({
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
   const [ttc, setTtc] = useState<TResponseTtc>({});
+  const questionIds = useMemo(() => survey.questions.map((question) => question.id), [survey.questions]);
   const cardArrangement = useMemo(() => {
     if (survey.type === "link") {
       return styling.cardArrangement?.linkSurveys ?? "straight";
@@ -72,7 +74,7 @@ export const Survey = ({
 
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = useMemo(() => {
-    if (questionId === "end" && !survey.thankYouCard.enabled) {
+    if (!questionIds.includes(questionId)) {
       const newHistory = [...history];
       const prevQuestionId = newHistory.pop();
       return survey.questions.find((q) => q.id === prevQuestionId);
@@ -134,12 +136,11 @@ export const Survey = ({
   let currIdxTemp = currentQuestionIndex;
   let currQuesTemp = currentQuestion;
 
-  const getNextQuestionId = (data: TResponseData): string => {
+  const getNextQuestionId = (data: TResponseData): string | undefined => {
     const questions = survey.questions;
     const responseValue = data[questionId];
-
-    if (questionId === "start") return questions[0]?.id || "end";
-
+    const firstEndingId = survey.endings.length > 0 ? survey.endings[0].id : undefined;
+    if (questionId === "start") return questions[0]?.id || firstEndingId;
     if (currIdxTemp === -1) throw new Error("Question not found");
     if (currQuesTemp?.logic && currQuesTemp?.logic.length > 0 && currentQuestion) {
       for (let logic of currQuesTemp.logic) {
@@ -194,7 +195,7 @@ export const Survey = ({
       }
     }
 
-    return questions[currIdxTemp + 1]?.id || "end";
+    return questions[currIdxTemp + 1]?.id || firstEndingId;
   };
 
   const onChange = (responseDataUpdate: TResponseData) => {
@@ -208,7 +209,9 @@ export const Survey = ({
     const questionId = Object.keys(responseData)[0];
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId(responseData);
-    const finished = nextQuestionId === "end";
+    const finished =
+      nextQuestionId === undefined ||
+      !survey.questions.map((question) => question.id).includes(nextQuestionId);
     const random = Math.random() * 100;
     const surveyFailed = finished && random <= survey.failureChance;
     setFailed(surveyFailed);
@@ -219,7 +222,9 @@ export const Survey = ({
       window.parent.postMessage("formbricksSurveyCompleted", "*");
       onFinished();
     }
-    setQuestionId(nextQuestionId);
+    if (nextQuestionId) {
+      setQuestionId(nextQuestionId);
+    }
     // add to history
     setHistory([...history, questionId]);
     setLoadingElement(false);
@@ -251,12 +256,17 @@ export const Survey = ({
     if (!url) return null;
     const urlObj = new URL(url);
     urlObj.searchParams.append("survey_id", survey.id);
-    const urlParams = new URLSearchParams(window.location.search);
-    const user_id = urlParams.get("userId");
+    const user_id = getPanelistId();
     if (user_id) {
       urlObj.searchParams.append("panelist_id", user_id);
     }
     return urlObj.toString();
+  };
+
+  const getPanelistId = (): string | null => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const user_id = urlParams.get("userId");
+    return user_id;
   };
 
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
@@ -282,28 +292,31 @@ export const Survey = ({
             autoFocusEnabled={autoFocusEnabled}
             replaceRecallInfo={replaceRecallInfo}
             isCurrent={offset === 0}
+            responseData={responseData}
           />
         );
-      } else if (questionIdx === survey.questions.length) {
+      } else if (questionIdx >= survey.questions.length) {
+        const endingCard = survey.endings.find((ending) => {
+          return ending.id === questionId;
+        });
         if (survey.failureCard.enabled && failed) {
           return (
-            <ThankYouCard
+            <FailureCard
               key="end"
               headline={replaceRecallInfo(
-                getLocalizedValue(survey.thankYouCard.headline, selectedLanguage),
+                getLocalizedValue(survey.failureCard.headline, selectedLanguage),
                 responseData
               )}
               subheader={replaceRecallInfo(
-                getLocalizedValue(survey.thankYouCard.subheader, selectedLanguage),
+                getLocalizedValue(survey.failureCard.subheader, selectedLanguage),
                 responseData
               )}
               isResponseSendingFinished={isResponseSendingFinished}
-              buttonLabel={getLocalizedValue(survey.thankYouCard.buttonLabel, selectedLanguage)}
-              buttonLink={survey.thankYouCard.buttonLink}
+              buttonLabel={getLocalizedValue(survey.failureCard.buttonLabel, selectedLanguage)}
+              buttonLink={survey.failureCard.buttonLink}
               survey={survey}
-              imageUrl={survey.thankYouCard.imageUrl}
-              videoUrl={survey.thankYouCard.videoUrl}
-              redirectUrl={appendSurveyAndPanelistQueryParamsToRedirectUrl(survey.redirectUrl)}
+              imageUrl={survey.failureCard.imageUrl}
+              redirectUrl={appendSurveyAndPanelistQueryParamsToRedirectUrl(survey.redirectOnFailUrl)}
               isRedirectDisabled={isRedirectDisabled}
               autoFocusEnabled={autoFocusEnabled}
               isCurrent={offset === 0}
@@ -311,30 +324,21 @@ export const Survey = ({
             />
           );
         }
-        return (
-          <ThankYouCard
-            key="end"
-            headline={replaceRecallInfo(
-              getLocalizedValue(survey.thankYouCard.headline, selectedLanguage),
-              responseData
-            )}
-            subheader={replaceRecallInfo(
-              getLocalizedValue(survey.thankYouCard.subheader, selectedLanguage),
-              responseData
-            )}
-            isResponseSendingFinished={isResponseSendingFinished}
-            buttonLabel={getLocalizedValue(survey.thankYouCard.buttonLabel, selectedLanguage)}
-            buttonLink={survey.thankYouCard.buttonLink}
-            survey={survey}
-            imageUrl={survey.thankYouCard.imageUrl}
-            videoUrl={survey.thankYouCard.videoUrl}
-            redirectUrl={appendSurveyAndPanelistQueryParamsToRedirectUrl(survey.redirectUrl)}
-            isRedirectDisabled={isRedirectDisabled}
-            autoFocusEnabled={autoFocusEnabled}
-            isCurrent={offset === 0}
-            failed={false}
-          />
-        );
+        if (endingCard) {
+          return (
+            <EndingCard
+              survey={survey}
+              endingCard={endingCard}
+              isRedirectDisabled={isRedirectDisabled}
+              autoFocusEnabled={autoFocusEnabled}
+              isCurrent={offset === 0}
+              languageCode={selectedLanguage}
+              isResponseSendingFinished={isResponseSendingFinished}
+              responseData={responseData}
+              panelistId={getPanelistId()}
+            />
+          );
+        }
       } else {
         const question = survey.questions[questionIdx];
         return (

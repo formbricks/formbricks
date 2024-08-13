@@ -1,7 +1,6 @@
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
 import { HeartIcon, MonitorIcon, ShoppingCart, XIcon } from "lucide-react";
 import { notFound } from "next/navigation";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getProducts } from "@formbricks/lib/product/service";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
@@ -27,32 +26,33 @@ const Page = async ({ params, searchParams }: IndustryPageProps) => {
   const industryOptions = [
     {
       title: "E-Commerce",
-      description: "Implement proven best practices to understand why people buy.",
+      description: "Understand why people buy.",
       icon: ShoppingCart,
       iconText: "B2B and B2C",
       href: `/organizations/${params.organizationId}/products/new/settings?channel=${channel}&industry=eCommerce`,
     },
     {
       title: "SaaS",
-      description: "Gather contextualized feedback to improve product-market fit.",
+      description: "Improve product-market fit.",
       icon: MonitorIcon,
       iconText: "Proven methods",
       href: `/organizations/${params.organizationId}/products/new/settings?channel=${channel}&industry=saas`,
     },
     {
       title: "Other",
-      description: "Universal Formricks experience with features for every industry.",
+      description: "Listen to your customers.",
       icon: HeartIcon,
       iconText: "Customer insights",
-      href: IS_FORMBRICKS_CLOUD
-        ? `/organizations/${params.organizationId}/products/new/survey?channel=${channel}&industry=other`
-        : `/organizations/${params.organizationId}/products/new/settings?channel=${channel}&industry=other`,
+      href: `/organizations/${params.organizationId}/products/new/settings?channel=${channel}&industry=other`,
     },
   ];
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
-      <Header title="Which industry do you work for?" subtitle="Get started with proven best practices 🚀" />
+      <Header
+        title="Which industry do you work for?"
+        subtitle="Get started with battle-tested best practices."
+      />
       <OnboardingOptionsContainer options={industryOptions} />
       {products.length >= 1 && (
         <Button

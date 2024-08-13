@@ -1,4 +1,4 @@
-import SurveyGeneralSettings from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyGeneralSettings";
+import { SurveyGeneralSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyGeneralSettings";
 import { AdvancedTargetingCard } from "@formbricks/ee/advanced-targeting/components/advanced-targeting-card";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -15,6 +15,7 @@ import { WhenToSendCard } from "./WhenToSendCard";
 
 interface SettingsViewProps {
   environment: TEnvironment;
+  organizationId: string;
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   actionClasses: TActionClass[];
@@ -54,7 +55,6 @@ export const SettingsView = ({
       <SurveyGeneralSettings
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        environment={environment}
         product={product}
         isInvalid={invalidQuestions ? invalidQuestions.includes("end") : false}
         setSelectedLanguageCode={setSelectedLanguageCode}
@@ -100,7 +100,6 @@ export const SettingsView = ({
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         responseCount={responseCount}
-        product={product}
       />
 
       <RecontactOptionsCard

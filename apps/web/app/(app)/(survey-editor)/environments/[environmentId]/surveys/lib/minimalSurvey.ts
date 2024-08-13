@@ -1,3 +1,4 @@
+import { getDefaultEndingCard, welcomeCardDefault } from "@formbricks/lib/templates";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const minimalSurvey: TSurvey = {
@@ -12,24 +13,15 @@ export const minimalSurvey: TSurvey = {
   displayOption: "displayOnce",
   autoClose: null,
   triggers: [],
-  redirectUrl: null,
   redirectOnFailUrl: null,
   recontactDays: null,
   displayLimit: null,
-  welcomeCard: {
-    enabled: false,
-    headline: { default: "Welcome!" },
-    html: { default: "Thanks for providing your feedback - let's go!" },
-    timeToFinish: false,
-    showResponseCount: false,
-  },
+  welcomeCard: welcomeCardDefault,
   questions: [],
-  thankYouCard: {
-    enabled: false,
-  },
   failureCard: {
     enabled: false,
   },
+  endings: [getDefaultEndingCard([])],
   hiddenFields: {
     enabled: false,
   },
@@ -48,6 +40,7 @@ export const minimalSurvey: TSurvey = {
   segment: null,
   languages: [],
   showLanguageSwitch: false,
+  isVerifyEmailEnabled: false,
   countries: [],
   limitedCountries: false,
   reward: 0,

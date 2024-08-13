@@ -64,7 +64,6 @@ export const SummaryPage = ({
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
-  const [isFetchingSummary, setFetchingSummary] = useState<boolean>(true);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
@@ -78,7 +77,6 @@ export const SummaryPage = ({
   useEffect(() => {
     const handleInitialData = async () => {
       try {
-        setFetchingSummary(true);
         let updatedResponseCount;
         if (isSharingPage) {
           updatedResponseCount = await getResponseCountBySurveySharingKeyAction(sharingKey, filters);
@@ -95,8 +93,8 @@ export const SummaryPage = ({
         }
 
         setSurveySummary(updatedSurveySummary);
-      } finally {
-        setFetchingSummary(false);
+      } catch (error) {
+        console.error(error);
       }
     };
 
@@ -132,7 +130,6 @@ export const SummaryPage = ({
         responseCount={responseCount}
         survey={surveyMemoized}
         environment={environment}
-        fetchingSummary={isFetchingSummary}
         totalResponseCount={totalResponseCount}
         attributeClasses={attributeClasses}
       />

@@ -1,6 +1,7 @@
 "use client";
 
 import { formbricksEnabled } from "@/app/lib/formbricks";
+import type { Session } from "next-auth";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
 import formbricks from "@formbricks/js/app";
@@ -10,7 +11,7 @@ type UsageAttributesUpdaterProps = {
   numSurveys: number;
 };
 
-export const FormbricksClient = ({ session }) => {
+export const FormbricksClient = ({ session, userEmail }: { session: Session; userEmail: string }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -20,13 +21,13 @@ export const FormbricksClient = ({ session }) => {
       apiHost: env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
       userId: session.user.id,
     });
-    formbricks.setEmail(session.user.email);
+    formbricks.setEmail(userEmail);
 
     formbricks.registerRouteChange();
-  }, [session.user.email, session.user.id]);
+  }, [session.user.id, userEmail]);
 
   useEffect(() => {
-    if (formbricksEnabled && session?.user && formbricks) {
+    if (formbricksEnabled && session?.user?.id && formbricks) {
       initializeFormbricksAndSetupRouteChanges();
     }
   }, [session, pathname, searchParams, initializeFormbricksAndSetupRouteChanges]);

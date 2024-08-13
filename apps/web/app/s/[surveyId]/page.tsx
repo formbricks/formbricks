@@ -55,7 +55,6 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
   const isEmbed = searchParams.embed === "true" ? true : false;
-
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
   }
@@ -109,7 +108,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   let emailVerificationStatus: string = "";
   let verifiedEmail: string | undefined = undefined;
 
-  if (survey.verifyEmail) {
+  if (survey.isVerifyEmailEnabled) {
     const token =
       searchParams && Object.keys(searchParams).length !== 0 && searchParams.hasOwnProperty("verify")
         ? searchParams.verify

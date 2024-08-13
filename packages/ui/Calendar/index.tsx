@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
-import { DayPicker } from "react-day-picker";
+import { Chevron, DayPicker } from "react-day-picker";
 import { cn } from "@formbricks/lib/cn";
 
 // import { buttonVariants } from "@/components/ui/button";
@@ -40,8 +40,14 @@ export const Calendar = ({ className, classNames, showOutsideDays = true, ...pro
         ...classNames,
       }}
       components={{
-        IconLeft: () => <ChevronLeft className="h-4 w-4" />,
-        IconRight: () => <ChevronRight className="h-4 w-4" />,
+        Chevron: (props) => {
+          if (props.orientation === "left") {
+            return <ChevronLeft className="h-4 w-4" />;
+          } else if (props.orientation === "right") {
+            return <ChevronRight className="h-4 w-4" />;
+          }
+          return <Chevron {...props} />;
+        },
       }}
       {...props}
     />

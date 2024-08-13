@@ -12,9 +12,6 @@ interface TSurveyPinValidationResponse {
 }
 
 export const sendLinkSurveyEmailAction = async (data: LinkSurveyEmailData) => {
-  if (!data.surveyData) {
-    throw new Error("No survey data provided");
-  }
   return await sendLinkSurveyToVerifiedEmail(data);
 };
 export const verifyTokenAction = async (token: string, surveyId: string): Promise<boolean> => {

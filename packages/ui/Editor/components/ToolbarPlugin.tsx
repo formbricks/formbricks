@@ -189,7 +189,7 @@ const FloatingLinkEditor = ({ editor }: { editor: LexicalEditor }) => {
               }
             }}
           />
-          <Button variant="darkCTA" className="py-2" onClick={handleSubmit}>
+          <Button className="py-2" onClick={handleSubmit}>
             Add
           </Button>
         </div>

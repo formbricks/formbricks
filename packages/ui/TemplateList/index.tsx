@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { templates } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { type TProduct, ZProductConfigIndustry } from "@formbricks/types/product";
-import { TSurveyInput, ZSurveyType } from "@formbricks/types/surveys/types";
+import { TSurveyCreateInput, ZSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { createSurveyAction } from "./actions";
@@ -39,9 +39,7 @@ export const TemplateList = ({
     setLoading(true);
     const surveyType = product.config.channel ?? "link";
     activeTemplate.preset.reward = product.defaultRewardInUSD;
-    activeTemplate.preset.redirectOnFailUrl = product.defaultRedirectOnFailUrl;
-    activeTemplate.preset.redirectUrl = product.defaultRedirectOnCompleteUrl;
-    const augmentedTemplate: TSurveyInput = {
+    const augmentedTemplate: TSurveyCreateInput = {
       ...activeTemplate.preset,
       type: surveyType,
       createdBy: user.id,

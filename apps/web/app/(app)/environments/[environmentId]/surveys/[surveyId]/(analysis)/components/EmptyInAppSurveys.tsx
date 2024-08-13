@@ -23,7 +23,7 @@ export const EmptyAppSurveys = ({ environment, surveyType = "app" }: TEmptyAppSu
         </p>
 
         <Link className="mt-2" href={`/environments/${environment.id}/product/${surveyType}-connection`}>
-          <Button variant="darkCTA" size="sm" className="flex w-[120px] justify-center">
+          <Button size="sm" className="flex w-[120px] justify-center">
             Connect
           </Button>
         </Link>

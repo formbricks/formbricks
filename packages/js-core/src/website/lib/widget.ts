@@ -207,6 +207,7 @@ const renderWidget = async (
         setIsError(false);
         responseQueue.processQueue();
       },
+      hiddenFieldsRecord: hiddenFields,
     });
   }, survey.delay * 1000);
 };
