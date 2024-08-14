@@ -12,34 +12,45 @@ interface SurveyLoadingAnimationProps {
 export const SurveyLoadingAnimation = ({ survey }: SurveyLoadingAnimationProps) => {
   const [isHidden, setIsHidden] = useState(false);
   const [minTimePassed, setMinTimePassed] = useState(false);
-  const [isMediaLoaded, setIsMediaLoaded] = useState(false);
-  const [isSurveyPackageLoaded, setIsSurveyPackageLoaded] = useState(false);
+  const [isMediaLoaded, setIsMediaLoaded] = useState(false); // Tracks if all media (images, iframes) are fully loaded
+  const [isSurveyPackageLoaded, setIsSurveyPackageLoaded] = useState(false); // Tracks if the survey package has been loaded into the DOM
 
   const cardId = survey.welcomeCard.enabled ? `questionCard--1` : `questionCard-0`;
 
+  // Function to check if all media elements (images and iframes) within the survey card are loaded
   const checkMediaLoaded = useCallback(() => {
     const cardElement = document.getElementById(cardId);
     const images = cardElement ? Array.from(cardElement.getElementsByTagName("img")) : [];
-    const allLoaded = images.every((img) => img.complete && img.naturalHeight !== 0);
+    const iframes = cardElement ? Array.from(cardElement.getElementsByTagName("iframe")) : [];
 
-    if (allLoaded) {
+    const allImagesLoaded = images.every((img) => img.complete && img.naturalHeight !== 0);
+    const allIframesLoaded = iframes.every((iframe) => {
+      const contentWindow = iframe.contentWindow;
+      return contentWindow && contentWindow.document.readyState === "complete";
+    });
+
+    if (allImagesLoaded && allIframesLoaded) {
       setIsMediaLoaded(true);
     }
   }, [cardId]);
 
+  // Effect to monitor when the survey package is loaded and media elements are fully loaded
   useEffect(() => {
-    if (!isSurveyPackageLoaded) return;
+    if (!isSurveyPackageLoaded) return; // Exit early if the survey package is not yet loaded
 
-    checkMediaLoaded();
+    checkMediaLoaded(); // Initial check when the survey package is loaded
 
-    const imgElements = document.querySelectorAll(`#${cardId} img`);
-    imgElements.forEach((img) => img.addEventListener("load", checkMediaLoaded));
+    // Add event listeners to detect when individual media elements finish loading
+    const mediaElements = document.querySelectorAll(`#${cardId} img, #${cardId} iframe`);
+    mediaElements.forEach((element) => element.addEventListener("load", checkMediaLoaded));
 
     return () => {
-      imgElements.forEach((img) => img.removeEventListener("load", checkMediaLoaded));
+      // Cleanup event listeners when the component unmounts or dependencies change
+      mediaElements.forEach((element) => element.removeEventListener("load", checkMediaLoaded));
     };
   }, [isSurveyPackageLoaded, checkMediaLoaded, cardId]);
 
+  // Effect to handle the hiding of the animation once both media are loaded and the minimum time has passed
   useEffect(() => {
     if (isMediaLoaded && minTimePassed) {
       const hideTimer = setTimeout(() => {
@@ -57,6 +68,8 @@ export const SurveyLoadingAnimation = ({ survey }: SurveyLoadingAnimationProps) 
     const minTimeTimer = setTimeout(() => {
       setMinTimePassed(true);
     }, 1500);
+
+    // Observe the DOM for when the survey package (child elements) is added to the target node
     const observer = new MutationObserver((mutations) => {
       mutations.some((mutation) => {
         if (mutation.addedNodes.length) {
