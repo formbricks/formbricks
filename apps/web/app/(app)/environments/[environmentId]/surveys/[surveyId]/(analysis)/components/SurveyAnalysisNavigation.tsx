@@ -16,19 +16,20 @@ import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
 interface SurveyAnalysisNavigationProps {
   environmentId: string;
   survey: TSurvey;
-  totalResponseCount: number | null;
+  initialTotalResponseCount: number | null;
   activeId: string;
 }
 
 export const SurveyAnalysisNavigation = ({
   environmentId,
   survey,
-  totalResponseCount,
+  initialTotalResponseCount,
   activeId,
 }: SurveyAnalysisNavigationProps) => {
   const pathname = usePathname();
   const params = useParams();
   const [filteredResponseCount, setFilteredResponseCount] = useState<number | null>(null);
+  const [totalResponseCount, setTotalResponseCount] = useState<number | null>(initialTotalResponseCount);
   const sharingKey = params.sharingKey as string;
   const isSharingPage = !!sharingKey;
 
@@ -45,6 +46,16 @@ export const SurveyAnalysisNavigation = ({
 
   const latestFiltersRef = useRef(filters);
   latestFiltersRef.current = filters;
+
+  const getResponseCount = () => {
+    if (isSharingPage) return getResponseCountBySurveySharingKeyAction(sharingKey);
+    return getResponseCountAction(survey.id);
+  };
+
+  const fetchResponseCount = async () => {
+    const count = await getResponseCount();
+    setTotalResponseCount(count);
+  };
 
   const getFilteredResponseCount = () => {
     if (isSharingPage) return getResponseCountBySurveySharingKeyAction(sharingKey, latestFiltersRef.current);
@@ -63,6 +74,7 @@ export const SurveyAnalysisNavigation = ({
   useEffect(() => {
     if (!isShareEmbedModalOpen) {
       const interval = setInterval(() => {
+        fetchResponseCount();
         fetchFilteredResponseCount();
       }, 10000);
 

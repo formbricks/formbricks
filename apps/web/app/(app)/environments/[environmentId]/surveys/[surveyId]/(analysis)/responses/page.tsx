@@ -68,9 +68,9 @@ const Page = async ({ params }) => {
         }>
         <SurveyAnalysisNavigation
           environmentId={environment.id}
-          totalResponseCount={totalResponseCount}
           survey={survey}
           activeId="responses"
+          initialTotalResponseCount={totalResponseCount}
         />
       </PageHeader>
       <ResponsePage

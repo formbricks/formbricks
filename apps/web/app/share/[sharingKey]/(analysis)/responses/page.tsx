@@ -44,7 +44,7 @@ const Page = async ({ params }) => {
             survey={survey}
             environmentId={environment.id}
             activeId="responses"
-            totalResponseCount={totalResponseCount}
+            initialTotalResponseCount={totalResponseCount}
           />
         </PageHeader>
         <ResponsePage
