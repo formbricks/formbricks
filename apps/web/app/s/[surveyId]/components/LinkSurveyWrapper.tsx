@@ -20,7 +20,6 @@ interface LinkSurveyWrapperProps {
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
   webAppUrl: string;
-  isSurveyLoaded: boolean;
 }
 
 export const LinkSurveyWrapper = ({
@@ -35,7 +34,6 @@ export const LinkSurveyWrapper = ({
   PRIVACY_URL,
   IS_FORMBRICKS_CLOUD,
   webAppUrl,
-  isSurveyLoaded,
 }: LinkSurveyWrapperProps) => {
   //for embedded survey strip away all surrounding css
   const styling = determineStyling();
@@ -47,14 +45,14 @@ export const LinkSurveyWrapper = ({
           styling.cardArrangement?.linkSurveys === "straight" && "pt-6",
           styling.cardArrangement?.linkSurveys === "casual" && "px-6 py-10"
         )}>
-        <SurveyLoadingAnimation isSurveyLoaded={isSurveyLoaded} />
+        <SurveyLoadingAnimation survey={survey} />
         {children}
       </div>
     );
   else
     return (
       <div>
-        <SurveyLoadingAnimation isSurveyLoaded={isSurveyLoaded} />
+        <SurveyLoadingAnimation survey={survey} />
         <MediaBackground survey={survey} product={product}>
           <div className="flex max-h-dvh min-h-dvh items-end justify-center overflow-clip md:items-center">
             {!styling.isLogoHidden && product.logo?.url && <ClientLogo product={product} />}

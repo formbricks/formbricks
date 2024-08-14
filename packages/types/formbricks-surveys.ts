@@ -32,7 +32,6 @@ export interface SurveyBaseProps {
 
 export interface SurveyInlineProps extends SurveyBaseProps {
   containerId: string;
-  setIsSurveyLoaded?: (isLoaded: boolean) => void;
 }
 
 export interface SurveyModalProps extends SurveyBaseProps {

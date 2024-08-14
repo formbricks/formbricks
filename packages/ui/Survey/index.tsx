@@ -56,28 +56,6 @@ export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
   }, [containerId, props, renderInline]);
 
   useEffect(() => {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.addedNodes.length && props.setIsSurveyLoaded) {
-          props.setIsSurveyLoaded(true);
-          observer.disconnect();
-        }
-      });
-    });
-
-    const targetNode = document.getElementById(containerId);
-    if (targetNode) {
-      observer.observe(targetNode, { childList: true });
-    }
-
-    return () => {
-      if (targetNode) {
-        observer.disconnect();
-      }
-    };
-  }, [containerId]);
-
-  useEffect(() => {
     if (isScriptLoaded) {
       renderInline();
     }
