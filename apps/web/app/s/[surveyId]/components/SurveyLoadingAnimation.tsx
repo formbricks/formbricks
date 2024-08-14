@@ -101,9 +101,8 @@ export const SurveyLoadingAnimation = ({ survey }: SurveyLoadingAnimationProps) 
       )}>
       <div
         className={cn(
-          isMediaLoaded && minTimePassed
-            ? "animate-surveyExit flex flex-col items-center space-y-4"
-            : "animate-surveyLoading flex flex-col items-center space-y-4"
+          "flex flex-col items-center space-y-4",
+          isMediaLoaded && minTimePassed ? "animate-surveyExit" : "animate-surveyLoading"
         )}>
         <Image src={Logo} alt="Logo" className={cn("w-32 transition-all duration-1000 md:w-40")} />
         <LoadingSpinner />
