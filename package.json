@@ -27,7 +27,7 @@
     "lint": "turbo run lint",
     "release": "turbo run build --filter=@formbricks/js... && changeset publish",
     "test": "turbo run test --no-cache",
-    "test:e2e": "pnpm playwright test",
+    "test:e2e": "playwright test",
     "prepare": "husky install",
     "storybook": "turbo run storybook"
   },
