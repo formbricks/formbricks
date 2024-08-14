@@ -133,16 +133,3 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: 50%;
   -webkit-appearance: none;
 }
-
-
-@keyframes surveyLoadingAnimation {
-  from {
-    transform: translateY(200px);
-    opacity: 0;
-    color: red;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
