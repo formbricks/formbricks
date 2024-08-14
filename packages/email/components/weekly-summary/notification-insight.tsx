@@ -6,7 +6,7 @@ interface NotificationInsightProps {
   insights: TWeeklySummaryInsights;
 }
 
-export function NotificationInsight({ insights }: NotificationInsightProps) {
+export function NotificationInsight({ insights }: NotificationInsightProps): React.JSX.Element {
   return (
     <Container>
       <Section className="my-4 rounded-md bg-slate-100">
