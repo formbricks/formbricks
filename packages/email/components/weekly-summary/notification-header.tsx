@@ -15,8 +15,8 @@ export function NotificationHeader({
   endDate,
   startYear,
   endYear,
-}: NotificationHeaderProps) {
-  const getNotificationHeaderimePeriod = () => {
+}: NotificationHeaderProps): React.JSX.Element {
+  const getNotificationHeaderimePeriod = (): React.JSX.Element => {
     if (startYear === endYear) {
       return (
         <Text className="m-0 text-right">

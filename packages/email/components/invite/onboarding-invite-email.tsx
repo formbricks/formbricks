@@ -12,7 +12,7 @@ export function OnboardingInviteEmail({
   inviteMessage,
   inviterName,
   verifyLink,
-}: OnboardingInviteEmailProps) {
+}: OnboardingInviteEmailProps): React.JSX.Element {
   return (
     <Container>
       <Heading>Hey 👋</Heading>

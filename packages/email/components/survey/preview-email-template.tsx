@@ -18,7 +18,7 @@ import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
 import { type TSurvey, TSurveyQuestionTypeEnum, type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { RatingSmiley } from "@formbricks/ui/RatingSmiley";
-import { getNPSOptionColor, getRatingNumberOptionColor } from "../../utils";
+import { getNPSOptionColor, getRatingNumberOptionColor } from "../../lib/utils";
 
 interface PreviewEmailTemplateProps {
   survey: TSurvey;
@@ -26,13 +26,21 @@ interface PreviewEmailTemplateProps {
   styling: TSurveyStyling;
 }
 
-export const getPreviewEmailTemplateHtml = (survey: TSurvey, surveyUrl: string, styling: TSurveyStyling) => {
+export const getPreviewEmailTemplateHtml = (
+  survey: TSurvey,
+  surveyUrl: string,
+  styling: TSurveyStyling
+): string => {
   return render(<PreviewEmailTemplate styling={styling} survey={survey} surveyUrl={surveyUrl} />, {
     pretty: true,
   });
 };
 
-export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmailTemplateProps) {
+export function PreviewEmailTemplate({
+  survey,
+  surveyUrl,
+  styling,
+}: PreviewEmailTemplateProps): React.JSX.Element {
   const url = `${surveyUrl}?preview=true`;
   const urlWithPrefilling = `${surveyUrl}?preview=true&skipPrefilled=true&`;
   const defaultLanguageCode = "default";
@@ -371,11 +379,11 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
             <Section className="w-full table-auto">
               <Row>
                 <Column className="w-40 break-words px-4 py-2" />
-                {firstQuestion.columns.map((column, columnIndex) => {
+                {firstQuestion.columns.map((column) => {
                   return (
                     <Column
                       className="text-question-color max-w-40 break-words px-4 py-2 text-center"
-                      key={columnIndex}>
+                      key={getLocalizedValue(column, "default")}>
                       {getLocalizedValue(column, "default")}
                     </Column>
                   );
@@ -385,13 +393,15 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
                 return (
                   <Row
                     className={`${rowIndex % 2 === 0 ? "bg-input-color" : ""} rounded-custom`}
-                    key={rowIndex}>
+                    key={getLocalizedValue(row, "default")}>
                     <Column className="w-40 break-words px-4 py-2">
                       {getLocalizedValue(row, "default")}
                     </Column>
-                    {firstQuestion.columns.map((_, index) => {
+                    {firstQuestion.columns.map((_) => {
                       return (
-                        <Column className="text-question-color px-4 py-2" key={index}>
+                        <Column
+                          className="text-question-color px-4 py-2"
+                          key={getLocalizedValue(_, "default")}>
                           <Section className="bg-card-bg-color h-4 w-4 rounded-full p-2 outline" />
                         </Column>
                       );
@@ -459,7 +469,7 @@ function EmailTemplateWrapper({
   children: React.ReactNode;
   surveyUrl: string;
   styling: TSurveyStyling;
-}) {
+}): React.JSX.Element {
   let signatureColor = "";
   const colors = {
     "brand-color": styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
@@ -501,7 +511,7 @@ function EmailTemplateWrapper({
   );
 }
 
-function EmailFooter() {
+function EmailFooter(): React.JSX.Element {
   return (
     <Container className="m-auto mt-8 text-center">
       <Link className="text-signature-color text-xs" href="https://formbricks.com/" target="_blank">
