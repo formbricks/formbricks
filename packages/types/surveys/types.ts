@@ -195,8 +195,6 @@ export const ZSurveySingleUse = z
 
 export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 
-export type TSurveyFailureCard = z.infer<typeof ZSurveyFailureCard>;
-
 export const ZSurveyChoice = z.object({
   id: z.string(),
   label: ZI18nString,

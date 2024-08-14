@@ -37,9 +37,7 @@ export const EndScreenForm = ({
       (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
   );
 
-  // Ensure buttonLink is always included in the form state
   useEffect(() => {
-    console.log("marko");
     if (!endingCard.buttonLink) {
       updateSurvey({ buttonLink: defaultRedirect });
     }
@@ -122,7 +120,7 @@ export const EndScreenForm = ({
                 id="buttonLink"
                 name="buttonLink"
                 className="bg-white"
-                placeholder={defaultRedirect}
+                placeholder="https://member.digiopinion.com/overview"
                 value={endingCard.buttonLink ?? defaultRedirect}
                 onChange={(e) => updateSurvey({ buttonLink: e.target.value })}
               />

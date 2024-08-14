@@ -25,7 +25,7 @@ export const RedirectUrlForm = ({ endingCard, updateSurvey, defaultRedirect }: R
           id="redirectUrl"
           name="redirectUrl"
           className="bg-white"
-          placeholder={defaultRedirect}
+          placeholder="https://member.digiopinion.com/overview"
           value={endingCard.url ?? defaultRedirect}
           onChange={(e) => updateSurvey({ url: e.target.value })}
         />
