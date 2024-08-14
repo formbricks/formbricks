@@ -1,3 +1,5 @@
+"use client";
+
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
@@ -26,15 +28,26 @@ export const Modal = ({
 }: ModalProps) => {
   const [show, setShow] = useState(true);
   const modalRef = useRef<HTMLDivElement | null>(null);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [windowWidth, setWindowWidth] = useState<number | null>(null);
   const [overlayVisible, setOverlayVisible] = useState(true);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setWindowWidth(window.innerWidth);
+
+      const handleResize = () => setWindowWidth(window.innerWidth);
+      window.addEventListener("resize", handleResize);
+
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, []);
+
   const calculateScaling = () => {
+    if (windowWidth === null) return {};
+
     let scaleValue = "1";
 
-    if (previewMode === "mobile") {
-      scaleValue = "1";
-    } else {
+    if (previewMode !== "mobile") {
       if (windowWidth > 1600) {
         scaleValue = "1";
       } else if (windowWidth > 1200) {
@@ -68,19 +81,14 @@ export const Modal = ({
   const overlayStyle = overlayVisible && darkOverlay ? "bg-gray-700/80" : "bg-white/50";
 
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
     if (!clickOutsideClose) {
       setOverlayVisible(true);
       setShow(true);
     }
-    const previewBase = document.getElementById("preview-survey-base");
+
     const handleClickOutside = (e: MouseEvent) => {
-      // Checks if the positioning is center, clickOutsideClose is set & if the click is inside the preview screen but outside the survey modal
+      const previewBase = document.getElementById("preview-survey-base");
+
       if (
         scalingClasses.transformOrigin === "" &&
         clickOutsideClose &&
@@ -95,6 +103,7 @@ export const Modal = ({
         }, 500);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -105,7 +114,6 @@ export const Modal = ({
     setShow(isOpen);
   }, [isOpen]);
 
-  // scroll to top whenever question in modal changes
   useEffect(() => {
     if (modalRef.current) {
       modalRef.current.scrollTop = 0;

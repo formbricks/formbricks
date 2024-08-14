@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import {
@@ -87,6 +88,16 @@ export const mockDisplay = {
   status: null,
 };
 
+export const mockEnvironment: TEnvironment = {
+  id: mockId,
+  createdAt: currentDate,
+  updatedAt: currentDate,
+  type: "production",
+  productId: mockId,
+  appSetupCompleted: false,
+  websiteSetupCompleted: false,
+};
+
 export const mockUser: TUser = {
   id: mockId,
   name: "mock User",
@@ -170,15 +181,18 @@ const baseSurveyProperties = {
   displayLimit: 3,
   welcomeCard: mockWelcomeCard,
   questions: [mockQuestion],
-  thankYouCard: { enabled: false },
+  endings: [
+    {
+      id: "umyknohldc7w26ocjdhaa62c",
+      type: "endScreen",
+      headline: { default: "Thank You!", de: "Danke!" },
+    },
+  ],
   hiddenFields: { enabled: false },
   surveyClosedMessage: {
     enabled: false,
   },
-  verifyEmail: {
-    name: "verifyEmail",
-    subheading: "please verify your email",
-  },
+  isVerifyEmailEnabled: true,
   attributeFilters: [],
   ...commonMockProperties,
 };

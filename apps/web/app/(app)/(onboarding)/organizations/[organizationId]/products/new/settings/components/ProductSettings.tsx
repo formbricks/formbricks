@@ -140,7 +140,7 @@ export const ProductSettings = ({
             />
 
             <div className="flex w-full justify-end">
-              <Button variant="darkCTA" loading={isSubmitting} type="submit">
+              <Button loading={isSubmitting} type="submit">
                 Next
               </Button>
             </div>

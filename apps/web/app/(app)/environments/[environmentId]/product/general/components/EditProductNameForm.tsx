@@ -90,12 +90,7 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
           )}
         />
 
-        <Button
-          type="submit"
-          variant="darkCTA"
-          size="sm"
-          loading={isSubmitting}
-          disabled={isSubmitting || !isDirty}>
+        <Button type="submit" size="sm" loading={isSubmitting} disabled={isSubmitting || !isDirty}>
           Update
         </Button>
       </form>

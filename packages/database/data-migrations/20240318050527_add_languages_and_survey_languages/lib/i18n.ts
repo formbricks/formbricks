@@ -1,24 +1,17 @@
+/* eslint-disable -- leacy support workaround for now to avoid rewrite after eslint rules have been changed */
+import { type TLanguage } from "@formbricks/types/product";
 import {
-  TLegacySurveyChoice,
-  TLegacySurveyQuestion,
-  TLegacySurveyThankYouCard,
-  TLegacySurveyWelcomeCard,
-} from "@formbricks/types/legacy-surveys";
-import { TLanguage } from "@formbricks/types/product";
-import {
-  TI18nString,
-  TSurvey,
-  TSurveyCTAQuestion,
-  TSurveyChoice,
-  TSurveyConsentQuestion,
-  TSurveyMultipleChoiceQuestion,
-  TSurveyNPSQuestion,
-  TSurveyOpenTextQuestion,
-  TSurveyQuestion,
-  TSurveyQuestions,
-  TSurveyRatingQuestion,
-  TSurveyThankYouCard,
-  TSurveyWelcomeCard,
+  type TI18nString,
+  type TSurveyCTAQuestion,
+  type TSurveyChoice,
+  type TSurveyConsentQuestion,
+  type TSurveyMultipleChoiceQuestion,
+  type TSurveyNPSQuestion,
+  type TSurveyOpenTextQuestion,
+  type TSurveyQuestion,
+  type TSurveyQuestions,
+  type TSurveyRatingQuestion,
+  type TSurveyWelcomeCard,
   ZSurveyCTAQuestion,
   ZSurveyCalQuestion,
   ZSurveyConsentQuestion,
@@ -29,7 +22,6 @@ import {
   ZSurveyPictureSelectionQuestion,
   ZSurveyQuestion,
   ZSurveyRatingQuestion,
-  ZSurveyThankYouCard,
   ZSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 
@@ -71,7 +63,7 @@ export const createI18nString = (text: string | TI18nString, languages: string[]
 };
 
 // Function to translate a choice label
-const translateChoice = (choice: TSurveyChoice | TLegacySurveyChoice, languages: string[]): TSurveyChoice => {
+const translateChoice = (choice: TSurveyChoice, languages: string[]): TSurveyChoice => {
   if (typeof choice.label !== "undefined") {
     return {
       ...choice,
@@ -86,7 +78,7 @@ const translateChoice = (choice: TSurveyChoice | TLegacySurveyChoice, languages:
 };
 
 export const translateWelcomeCard = (
-  welcomeCard: TSurveyWelcomeCard | TLegacySurveyWelcomeCard,
+  welcomeCard: TSurveyWelcomeCard,
   languages: string[]
 ): TSurveyWelcomeCard => {
   const clonedWelcomeCard = structuredClone(welcomeCard);
@@ -103,10 +95,7 @@ export const translateWelcomeCard = (
   return ZSurveyWelcomeCard.parse(clonedWelcomeCard);
 };
 
-const translateThankYouCard = (
-  thankYouCard: TSurveyThankYouCard | TLegacySurveyThankYouCard,
-  languages: string[]
-): TSurveyThankYouCard => {
+const translateThankYouCard = (thankYouCard: any, languages: string[]): any => {
   const clonedThankYouCard = structuredClone(thankYouCard);
 
   if (typeof thankYouCard.headline !== "undefined") {
@@ -120,14 +109,11 @@ const translateThankYouCard = (
   if (typeof clonedThankYouCard.buttonLabel !== "undefined") {
     clonedThankYouCard.buttonLabel = createI18nString(thankYouCard.buttonLabel ?? "", languages);
   }
-  return ZSurveyThankYouCard.parse(clonedThankYouCard);
+  return clonedThankYouCard;
 };
 
 // Function that will translate a single question
-const translateQuestion = (
-  question: TLegacySurveyQuestion | TSurveyQuestion,
-  languages: string[]
-): TSurveyQuestion => {
+const translateQuestion = (question: TSurveyQuestion, languages: string[]): TSurveyQuestion => {
   // Clone the question to avoid mutating the original
   const clonedQuestion = structuredClone(question);
 
@@ -250,12 +236,9 @@ export const extractLanguageIds = (languages: TLanguage[]): string[] => {
   return languages.map((language) => language.id);
 };
 
-// Function to translate an entire survey
-export const translateSurvey = (
-  survey: Pick<TSurvey, "questions" | "welcomeCard" | "thankYouCard">,
-  languageCodes: string[]
-): Pick<TSurvey, "questions" | "welcomeCard" | "thankYouCard"> => {
-  const translatedQuestions = survey.questions.map((question) => {
+// Function to translate an entire survey (from old survey format to new survey format)
+export const translateSurvey = (survey: any, languageCodes: string[]) => {
+  const translatedQuestions = survey.questions.map((question: any) => {
     return translateQuestion(question, languageCodes);
   });
   const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard, languageCodes);

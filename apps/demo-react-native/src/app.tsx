@@ -6,13 +6,12 @@ LogBox.ignoreAllLogs();
 
 export default function App() {
   const config = {
-    environmentId: "clzsd2f780008ovz17skail0p",
+    environmentId: process.env.EXPO_PUBLIC_FORMBRICKS_ENVIRONMENT_ID ?? "default-env-id",
     apiHost: process.env.EXPO_PUBLIC_API_HOST ?? "http://localhost:3000",
     userId: "random user id",
     attributes: {
       language: "en",
       testAttr: "attr-test",
-      hello: "Hello",
     },
   };
 
@@ -23,8 +22,8 @@ export default function App() {
       <Button
         title="Trigger Code Action"
         onPress={() => {
-          // eslint-disable-next-line no-console -- logging is allowed in demo apps
-          track("New Session").catch((error: unknown) => {
+          track("code").catch((error: unknown) => {
+            // eslint-disable-next-line no-console -- logging is allowed in demo apps
             console.error("Error tracking event:", error);
           });
         }}

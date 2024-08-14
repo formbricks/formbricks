@@ -76,6 +76,7 @@ export const PUT = async (
       true
     );
   } catch (err) {
+    console.error(err);
     if (err.statusCode === 403) {
       return responses.forbiddenResponse(err.message || "Forbidden", true, { ignore: true });
     }

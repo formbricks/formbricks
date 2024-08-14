@@ -8,7 +8,10 @@ interface VerificationEmailProps {
   verificationRequestLink: string;
 }
 
-export function VerificationEmail({ verifyLink, verificationRequestLink }: VerificationEmailProps) {
+export function VerificationEmail({
+  verifyLink,
+  verificationRequestLink,
+}: VerificationEmailProps): React.JSX.Element {
   return (
     <Container>
       <Heading>Almost there!</Heading>

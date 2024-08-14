@@ -1,3 +1,16 @@
+import { MdxImage } from "@/components/MdxImage";
+
+import EntraIDAppReg01 from "./images/entra_app_reg_01.png";
+import EntraIDAppReg02 from "./images/entra_app_reg_02.png";
+import EntraIDAppReg03 from "./images/entra_app_reg_03.png";
+import EntraIDAppReg04 from "./images/entra_app_reg_04.png";
+import EntraIDAppReg05 from "./images/entra_app_reg_05.png";
+import EntraIDAppReg06 from "./images/entra_app_reg_06.png";
+import EntraIDAppReg07 from "./images/entra_app_reg_07.png";
+import EntraIDAppReg08 from "./images/entra_app_reg_08.png";
+import EntraIDAppReg09 from "./images/entra_app_reg_09.png";
+import EntraIDAppReg10 from "./images/entra_app_reg_10.png";
+
 export const metadata = {
   title: "Configure Formbricks with External auth providers",
   description:
@@ -48,8 +61,6 @@ These variables are present inside your machine’s docker-compose file. Restart
 | STRIPE_SECRET_KEY            | Secret key for Stripe integration.                                                                             | optional                                                |                           |
 | STRIPE_WEBHOOK_SECRET        | Webhook secret for Stripe integration.                                                                         | optional                                                |                           |
 | TELEMETRY_DISABLED           | Disables telemetry if set to 1.                                                                                | optional                                                |                           |
-| INSTANCE_ID                  | Instance ID for Formbricks Cloud to be sent to Telemetry.                                                      | optional                                                |                           |
-| INTERNAL_SECRET              | Internal Secret (Currently we overwrite the value with a random value).                                        | optional                                                |                           |
 | DEFAULT_BRAND_COLOR          | Default brand color for your app (Can be overwritten from the UI as well).                                     | optional                                                | #64748b                   |
 | DEFAULT_ORGANIZATION_ID      | Automatically assign new users to a specific organization when joining                                         | optional                                                |                           |
 | DEFAULT_ORGANIZATION_ROLE    | Role of the user in the default organization.                                                                  | optional                                                | admin                     |
@@ -135,26 +146,141 @@ GOOGLE_CLIENT_SECRET=your-client-secret-here
    - Navigate to your Docker setup directory where your `docker-compose.yml` file is located.
    - Run the following command to bring down your current Docker containers and then bring them back up with the updated environment configuration:
 
-### Azure SSO OAuth
+### Microsoft Entra ID (Azure Active Directory) SSO OAuth
 
-Have an Azure Active Directory (AAD) instance? Integrate it with your Formbricks instance to allow users to log in using their existing AAD credentials. This guide will walk you through the process of setting up Azure SSO for your Formbricks instance.
+Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks instance to allow users to log in using their existing Microsoft credentials. This guide will walk you through the process of setting up an Application Registration for your Formbricks instance.
 
-### Requirements
+#### Requirements
 
-- An Azure Active Directory (AAD) instance.
+- A Microsoft Entra ID Tenant populated with users. [Create a tenant as per Microsoft's documentation](https://learn.microsoft.com/en-us/entra/fundamentals/create-new-tenant).
 - A Formbricks instance running and accessible.
+- The callback URI for your Formbricks instance: `{WEBAPP_URL}/api/auth/callback/azure-ad`
 
-### Steps
+#### Creating an App Registration
 
-1. Create a new Tenant in Azure Active Directory as per their [official documentation](https://learn.microsoft.com/en-us/entra/fundamentals/create-new-tenant).
-2. Add Users & Groups to your AAD instance.
-3. Now we need to fill the below environment variables in our Formbricks instance so get them from your AD configuration:
-   - `AZUREAD_CLIENT_ID`
-   - `AZUREAD_CLIENT_SECRET`
-   - `AZUREAD_TENANT_ID`
-4. Update these environment variables in your `docker-compose.yml` or pass it like your other environment variables to the Formbricks container.
-5. Restart your Formbricks instance.
-6. You're all set! Users can now signup & log in using their AAD credentials.
+1. Login to the [Microsoft Entra admin center](https://entra.microsoft.com/).
+2. Go to **Applications** > **App registrations** in the left menu.
+
+<MdxImage
+  src={EntraIDAppReg01}
+  alt="App Registration Name Field"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+3. Click the **New registration** button at the top.
+
+<MdxImage
+  src={EntraIDAppReg02}
+  alt="App Registration Name Field"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+4. Name your application something descriptive, such as `Formbricks SSO`.
+
+<MdxImage
+  src={EntraIDAppReg03}
+  alt="App Registration Name Field"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+5. If you have multiple tenants/organizations, choose the appropriate **Supported account types** option. Otherwise, leave the default option for _Single Tenant_.
+
+<MdxImage
+  src={EntraIDAppReg04}
+  alt="Supported Account Types List"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+6. Under **Redirect URI**, select **Web** for the platform and paste your Formbricks callback URI (see Requirements above).
+
+<MdxImage
+  src={EntraIDAppReg05}
+  alt="Redirect URI Field"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+7. Click **Register** to create the App registration. You will be redirected to your new app's _Overview_ page after it is created.
+
+8. On the _Overview_ page, under **Essentials**:
+  - Copy the entry for **Application (client) ID** to populate the `AZUREAD_CLIENT_ID` variable.
+  - Copy the entry for **Directory (tenant) ID** to populate the `AZUREAD_TENANT_ID` variable.
+
+<MdxImage
+  src={EntraIDAppReg06}
+  alt="Client and Tenant ID Fields"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+9. From your App registration's _Overview_ page, go to **Manage** > **Certificates & secrets**.
+
+<MdxImage
+  src={EntraIDAppReg07}
+  alt="Certificates & secrets link"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+10. Make sure you have the **Client secrets** tab active, and click **New client secret**.
+
+<MdxImage
+  src={EntraIDAppReg08}
+  alt="New Client Secret Tab & Button"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+11. Enter a **Description**, set an **Expires** period, then click **Add**.
+
+<Note>
+  You will need to create a new client secret using these steps whenever your chosen expiry period ends.
+</Note>
+
+<MdxImage
+  src={EntraIDAppReg09}
+  alt="Description & Expires Fields"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+12. Copy the entry under **Value** to populate the `AZUREAD_CLIENT_SECRET` variable.
+
+<Note>
+  Microsoft will only show this value to you immediately after creation, and you will not be able to access it again. If you lose it, simply start from step 9 to create a new secret.
+</Note>
+
+<MdxImage
+  src={EntraIDAppReg10}
+  alt="Client Secret Value Field"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+13. Update these environment variables in your `docker-compose.yml` or pass it like your other environment variables to the Formbricks container.
+
+<Note>
+  You must wrap the `AZUREAD_CLIENT_SECRET` value in double quotes (e.g., `"THis~iS4faKe.53CreTvALu3"`) to prevent issues with special characters.
+</Note>
+
+An example `.env` for Microsoft Entra ID in Formbricks would look like:
+
+<Col>
+  <CodeGroup title="Formbricks Env for Microsoft Entra ID SSO">
+    ```yml {{ title: ".env" }}
+    AZUREAD_CLIENT_ID=a25cadbd-f049-4690-ada3-56a163a72f4c
+    AZUREAD_TENANT_ID=2746c29a-a3a6-4ea1-8762-37816d4b7885
+    AZUREAD_CLIENT_SECRET="THis~iS4faKe.53CreTvALu3"
+    ```
+  </CodeGroup>
+</Col>
+
+14. Restart your Formbricks instance.
+15. You're all set! Users can now sign up & log in using their Microsoft credentials associated with your Entra ID Tenant.
 
 ## OpenID Configuration
 

@@ -1,4 +1,4 @@
-import { NetworkError, Result, err, okVoid } from "../../../js-core/src/shared/errors";
+import { type NetworkError, type Result, err, okVoid } from "../../../js-core/src/shared/errors";
 import { Logger } from "../../../js-core/src/shared/logger";
 import { appConfig } from "./config";
 import { deinitalize, initialize } from "./initialize";
@@ -6,8 +6,8 @@ import { deinitalize, initialize } from "./initialize";
 const logger = Logger.getInstance();
 
 export const logoutPerson = async (): Promise<void> => {
-  deinitalize();
-  appConfig.resetConfig();
+  await deinitalize();
+  await appConfig.resetConfig();
 };
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {

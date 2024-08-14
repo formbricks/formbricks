@@ -1,5 +1,5 @@
 {
-  "extends": "@formbricks/config-typescript/base.json",
+  "extends": "@formbricks/config-typescript/node16.json",
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {

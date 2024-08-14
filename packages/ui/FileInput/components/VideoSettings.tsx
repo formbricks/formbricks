@@ -100,7 +100,7 @@ export const VideoSettings = ({
             Remove
           </Button>
         ) : (
-          <Button variant="darkCTA" onClick={(e) => handleAddVideo(e)} disabled={isAddButtonDisabled()}>
+          <Button onClick={(e) => handleAddVideo(e)} disabled={isAddButtonDisabled()}>
             Add
           </Button>
         )}

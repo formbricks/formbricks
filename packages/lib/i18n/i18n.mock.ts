@@ -6,6 +6,7 @@ import {
   TSurveyCalQuestion,
   TSurveyConsentQuestion,
   TSurveyDateQuestion,
+  TSurveyEndScreenCard,
   TSurveyFileUploadQuestion,
   TSurveyMultipleChoiceQuestion,
   TSurveyNPSQuestion,
@@ -13,7 +14,6 @@ import {
   TSurveyPictureSelectionQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyRatingQuestion,
-  TSurveyThankYouCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 
@@ -138,6 +138,7 @@ export const mockRatingQuestion: TSurveyRatingQuestion = {
   subheader: {
     default: "Don't worry, be honest.",
   },
+  isColorCodingEnabled: false,
   scale: "star",
   range: 5,
   lowerLabel: {
@@ -165,6 +166,7 @@ export const mockNpsQuestion: TSurveyNPSQuestion = {
   id: "m9pemgdih2p4exvkmeeqq6jf",
   type: TSurveyQuestionTypeEnum.NPS,
   isDraft: true,
+  isColorCodingEnabled: false,
 };
 
 export const mockCtaQuestion: TSurveyCTAQuestion = {
@@ -234,17 +236,20 @@ export const mockCalQuestion: TSurveyCalQuestion = {
   isDraft: true,
 };
 
-export const mockThankYouCard: TSurveyThankYouCard = {
-  enabled: true,
-  headline: {
-    default: "Thank you!",
-  },
-  subheader: {
-    default: "We appreciate your feedback.",
-  },
-  buttonLink: "https://formbricks.com/signup",
-  buttonLabel: { default: "Create your own Survey" },
-} as unknown as TSurveyThankYouCard;
+export const mockEndings = [
+  {
+    id: "umyknohldc7w26ocjdhaa62c",
+    type: "endScreen",
+    headline: {
+      default: "Thank you!",
+    },
+    subheader: {
+      default: "We appreciate your feedback.",
+    },
+    buttonLink: "https://formbricks.com/signup",
+    buttonLabel: { default: "Create your own Survey" },
+  } as TSurveyEndScreenCard,
+];
 
 export const mockSurvey: TSurvey = {
   id: "eddb4fbgaml6z52eomejy77w",
@@ -269,17 +274,21 @@ export const mockSurvey: TSurvey = {
     mockFileUploadQuestion,
     mockCalQuestion,
   ],
-  thankYouCard: {
-    enabled: true,
-    headline: {
-      default: "Thank you!",
+  endings: [
+    {
+      type: "endScreen",
+      id: "umyknohldc7w26ocjdhaa62c",
+      enabled: true,
+      headline: {
+        default: "Thank you!",
+      },
+      subheader: {
+        default: "We appreciate your feedback.",
+      },
+      buttonLink: "https://formbricks.com/signup",
+      buttonLabel: { default: "Create your own Survey" },
     },
-    subheader: {
-      default: "We appreciate your feedback.",
-    },
-    buttonLink: "https://formbricks.com/signup",
-    buttonLabel: { default: "Create your own Survey" },
-  },
+  ],
   hiddenFields: {
     enabled: true,
     fieldIds: [],
@@ -293,8 +302,7 @@ export const mockSurvey: TSurvey = {
   delay: 0,
   displayPercentage: null,
   autoComplete: null,
-  verifyEmail: null,
-  redirectUrl: null,
+  isVerifyEmailEnabled: false,
   productOverwrites: null,
   styling: null,
   surveyClosedMessage: null,
@@ -490,15 +498,18 @@ export const mockLegacyCalQuestion = {
   buttonLabel: "Skip",
 };
 
-export const mockTranslatedThankYouCard = {
-  ...mockThankYouCard,
-  headline: { default: "Thank you!", de: "" },
-  subheader: { default: "We appreciate your feedback.", de: "" },
-  buttonLabel: { default: "Create your own Survey", de: "" },
-};
+export const mockTranslatedEndings = [
+  {
+    ...mockEndings[0],
+    headline: { default: "Thank you!", de: "" },
+    subheader: { default: "We appreciate your feedback.", de: "" },
+    buttonLabel: { default: "Create your own Survey", de: "" },
+  },
+];
 
 export const mockLegacyThankYouCard = {
-  ...mockThankYouCard,
+  buttonLink: "https://formbricks.com/signup",
+  enabled: true,
   headline: "Thank you!",
   subheader: "We appreciate your feedback.",
   buttonLabel: "Create your own Survey",
@@ -520,7 +531,7 @@ export const mockTranslatedSurvey = {
     mockTranslatedCalQuestion,
   ],
   welcomeCard: mockTranslatedWelcomeCard,
-  thankYouCard: mockTranslatedThankYouCard,
+  endings: mockTranslatedEndings,
 };
 
 export const mockLegacySurvey = {
@@ -542,4 +553,6 @@ export const mockLegacySurvey = {
   ],
   welcomeCard: mockLegacyWelcomeCard,
   thankYouCard: mockLegacyThankYouCard,
+  endings: undefined,
+  redirectUrl: null,
 };

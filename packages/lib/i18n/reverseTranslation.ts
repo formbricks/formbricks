@@ -1,8 +1,7 @@
 import "server-only";
-import { TLegacySurvey, ZLegacySurvey } from "@formbricks/types/legacy-surveys";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
 import { structuredClone } from "../pollyfills/structuredClone";
-import { isI18nObject } from "./utils";
+import { getLocalizedValue, isI18nObject } from "./utils";
 
 // Helper function to extract a regular string from an i18nString.
 const extractStringFromI18n = (i18nString: TI18nString, languageCode: string): string => {
@@ -28,7 +27,22 @@ const reverseTranslateObject = <T extends Record<string, any>>(obj: T, languageC
   return clonedObj;
 };
 
-export const reverseTranslateSurvey = (survey: TSurvey, languageCode: string = "default"): TLegacySurvey => {
+const reverseTranslateEndings = (survey: TSurvey, languageCode: string): any => {
+  const firstEndingCard = survey.endings[0];
+  if (firstEndingCard && firstEndingCard.type === "endScreen") {
+    return {
+      headline: getLocalizedValue(firstEndingCard.headline, languageCode),
+      subheader: getLocalizedValue(firstEndingCard.subheader, languageCode),
+      buttonLabel: getLocalizedValue(firstEndingCard.buttonLabel, languageCode),
+      buttonLink: firstEndingCard.buttonLink,
+      enabled: true,
+    };
+  } else {
+    return { enabled: false };
+  }
+};
+
+export const reverseTranslateSurvey = (survey: TSurvey, languageCode: string = "default"): any => {
   const reversedSurvey = structuredClone(survey);
   reversedSurvey.questions = reversedSurvey.questions.map((question) =>
     reverseTranslateObject(question, languageCode)
@@ -41,7 +55,16 @@ export const reverseTranslateSurvey = (survey: TSurvey, languageCode: string = "
   }
 
   reversedSurvey.welcomeCard = reverseTranslateObject(reversedSurvey.welcomeCard, languageCode);
-  reversedSurvey.thankYouCard = reverseTranslateObject(reversedSurvey.thankYouCard, languageCode);
-  // validate the type with zod
-  return ZLegacySurvey.parse(reversedSurvey);
+  // @ts-expect-error
+  reversedSurvey.thankYouCard = reverseTranslateEndings(reversedSurvey, languageCode);
+  const firstEndingCard = survey.endings[0];
+  // @ts-expect-error
+  reversedSurvey.redirectUrl = null;
+  if (firstEndingCard?.type === "redirectToUrl") {
+    // @ts-expect-error
+    reversedSurvey.redirectUrl = firstEnabledEnding.url;
+  }
+  // @ts-expect-error
+  reversedSurvey.endings = undefined;
+  return reversedSurvey;
 };

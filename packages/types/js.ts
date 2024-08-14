@@ -1,8 +1,6 @@
 import { z } from "zod";
 import { ZActionClass } from "./action-classes";
 import { ZAttributes } from "./attributes";
-import { ZLegacySurvey } from "./legacy-surveys";
-import { ZPerson } from "./people";
 import { ZProduct } from "./product";
 import { ZResponseHiddenFieldValue, ZResponseUpdate } from "./responses";
 import { ZUploadFileConfig } from "./storage";
@@ -35,7 +33,7 @@ export type TJSWebsiteStateDisplay = z.infer<typeof ZJSWebsiteStateDisplay>;
 export const ZJsAppStateSync = z.object({
   person: ZJsPerson.nullish(),
   userId: z.string().optional(),
-  surveys: z.union([z.array(ZSurvey), z.array(ZLegacySurvey)]),
+  surveys: z.array(ZSurvey),
   actionClasses: z.array(ZActionClass),
   product: ZProduct,
   language: z.string().optional(),
@@ -65,32 +63,6 @@ export const ZJsWebsiteState = z.object({
 });
 
 export type TJsWebsiteState = z.infer<typeof ZJsWebsiteState>;
-
-export const ZJsAppLegacyStateSync = z.object({
-  person: ZJsPerson.nullish(),
-  userId: z.string().optional(),
-  surveys: z.union([z.array(ZSurvey), z.array(ZLegacySurvey)]),
-  noCodeActionClasses: z.array(ZActionClass),
-  product: ZProduct,
-  language: z.string().optional(),
-});
-
-export type TJsAppLegacyStateSync = z.infer<typeof ZJsAppLegacyStateSync>;
-
-export const ZJsWebsiteLegacyStateSync = ZJsAppLegacyStateSync.omit({ person: true });
-
-export type TJsWebsiteLegacyStateSync = z.infer<typeof ZJsWebsiteLegacyStateSync>;
-
-export const ZJsLegacyState = z.object({
-  person: ZPerson.nullable().or(z.object({})),
-  session: z.object({}),
-  surveys: z.array(ZSurveyWithTriggers),
-  noCodeActionClasses: z.array(ZActionClass),
-  product: ZProduct,
-  displays: z.array(ZJSWebsiteStateDisplay).optional(),
-});
-
-export type TJsLegacyState = z.infer<typeof ZJsLegacyState>;
 
 export const ZJsWebsiteSyncInput = z.object({
   environmentId: z.string().cuid(),
@@ -181,14 +153,6 @@ export const ZJsPeopleAttributeInput = z.object({
 
 export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;
 
-export const ZJsPeopleLegacyAttributeInput = z.object({
-  environmentId: z.string().cuid(),
-  key: z.string(),
-  value: z.string(),
-});
-
-export type TJsPeopleLegacyAttributeInput = z.infer<typeof ZJsPeopleLegacyAttributeInput>;
-
 export const ZJsActionInput = z.object({
   environmentId: z.string().cuid(),
   userId: z.string().optional(),
@@ -242,5 +206,3 @@ export const ZJsRNWebViewOnMessageData = z.object({
   fileUploadParams: ZJsFileUploadParams.nullish(),
   uploadId: z.string().nullish(),
 });
-
-export type TJsRNWebViewOnMessageData = z.infer<typeof ZJsRNWebViewOnMessageData>;

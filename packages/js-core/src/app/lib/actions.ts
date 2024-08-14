@@ -1,5 +1,4 @@
-import { FormbricksAPI } from "@formbricks/api";
-import { TJsActionInput, TJsTrackProperties } from "@formbricks/types/js";
+import { TJsTrackProperties } from "@formbricks/types/js";
 import { InvalidCodeError, NetworkError, Result, err, okVoid } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import { getIsDebug } from "../../shared/utils";
@@ -18,38 +17,12 @@ export const trackAction = async (
   const aliasName = alias || name;
   const { userId } = appConfig.get();
 
-  const input: TJsActionInput = {
-    environmentId: appConfig.get().environmentId,
-    userId,
-    name,
-  };
-
-  // don't send actions to the backend if the person is not identified
   if (userId) {
-    logger.debug(`Sending action "${aliasName}" to backend`);
-
-    const api = new FormbricksAPI({
-      apiHost: appConfig.get().apiHost,
-      environmentId: appConfig.get().environmentId,
-    });
-    const res = await api.client.action.create({
-      ...input,
-      userId,
-    });
-
-    if (!res.ok) {
-      return err({
-        code: "network_error",
-        message: `Error tracking action ${aliasName}`,
-        status: 500,
-        url: `${appConfig.get().apiHost}/api/v1/client/${appConfig.get().environmentId}/actions`,
-        responseMessage: res.error.message,
-      });
-    }
     // we skip the resync on a new action since this leads to too many requests if the user has a lot of actions
     // also this always leads to a second sync call on the `New Session` action
     // when debug: sync after every action for testing purposes
     if (getIsDebug()) {
+      logger.debug(`Resync after action "${aliasName} in debug mode"`);
       await sync(
         {
           environmentId: appConfig.get().environmentId,

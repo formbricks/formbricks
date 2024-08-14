@@ -5,11 +5,15 @@ import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import {
   ArrowUpRightIcon,
+  BlendIcon,
   BlocksIcon,
   ChevronRightIcon,
   Cog,
   CreditCardIcon,
+  GlobeIcon,
+  GlobeLockIcon,
   KeyIcon,
+  LinkIcon,
   LogOutIcon,
   MessageCircle,
   MousePointerClick,
@@ -20,7 +24,6 @@ import {
   UserIcon,
   UsersIcon,
 } from "lucide-react";
-import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,11 +31,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { capitalizeFirstLetter, truncate } from "@formbricks/lib/utils/strings";
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
+import { TUser } from "@formbricks/types/user";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 import { CreateOrganizationModal } from "@formbricks/ui/CreateOrganizationModal";
@@ -53,7 +57,7 @@ import {
 interface NavigationProps {
   environment: TEnvironment;
   organizations: TOrganization[];
-  session: Session;
+  user: TUser;
   organization: TOrganization;
   products: TProduct[];
   isFormbricksCloud: boolean;
@@ -65,7 +69,7 @@ export const MainNavigation = ({
   environment,
   organizations,
   organization,
-  session,
+  user,
   products,
   isFormbricksCloud,
   membershipRole,
@@ -115,7 +119,24 @@ export const MainNavigation = ({
   }, [organizations]);
 
   const sortedProducts = useMemo(() => {
-    return [...products].sort((a, b) => a.name.localeCompare(b.name));
+    const channelOrder: (string | null)[] = ["website", "app", "link", null];
+
+    const groupedProducts = products.reduce(
+      (acc, product) => {
+        const channel = product.config.channel;
+        const key = channel !== null ? channel : "null";
+        acc[key] = acc[key] || [];
+        acc[key].push(product);
+        return acc;
+      },
+      {} as Record<string, typeof products>
+    );
+
+    Object.keys(groupedProducts).forEach((channel) => {
+      groupedProducts[channel].sort((a, b) => a.name.localeCompare(b.name));
+    });
+
+    return channelOrder.flatMap((channel) => groupedProducts[channel !== null ? channel : "null"] || []);
   }, [products]);
 
   const handleEnvironmentChangeByProduct = (productId: string) => {
@@ -170,7 +191,7 @@ export const MainNavigation = ({
         isHidden: isViewer,
       },
     ],
-    [environment.id, pathname, isViewer]
+    [environment.id, pathname, product?.config.channel, isViewer]
   );
 
   const dropdownNavigation = [
@@ -234,6 +255,7 @@ export const MainNavigation = ({
                 </Link>
               )}
               <Button
+                variant="minimal"
                 size="icon"
                 tooltipSide="right"
                 onClick={toggleSidebar}
@@ -276,18 +298,27 @@ export const MainNavigation = ({
                 <div
                   tabIndex={0}
                   className={cn(
-                    "flex cursor-pointer flex-row items-center space-x-5",
+                    "flex cursor-pointer flex-row items-center space-x-3",
                     isCollapsed ? "pl-2" : "pl-4"
                   )}>
-                  <div className="rounded-lg border border-slate-800 bg-slate-900 p-1.5 font-bold text-slate-50">
-                    XM
+                  <div className="rounded-lg bg-slate-900 p-1.5 text-slate-50">
+                    {product.config.channel === "website" ? (
+                      <GlobeIcon strokeWidth={1.5} />
+                    ) : product.config.channel === "app" ? (
+                      <GlobeLockIcon strokeWidth={1.5} />
+                    ) : product.config.channel === "link" ? (
+                      <LinkIcon strokeWidth={1.5} />
+                    ) : (
+                      <BlendIcon strokeWidth={1.5} />
+                    )}
                   </div>
                   {!isCollapsed && !isTextVisible && (
                     <>
                       <div>
                         <p
+                          title={product.name}
                           className={cn(
-                            "ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700 transition-opacity duration-200",
+                            "ph-no-capture ph-no-capture -mb-0.5 max-w-28 truncate text-sm font-bold text-slate-700 transition-opacity duration-200",
                             isTextVisible ? "opacity-0" : "opacity-100"
                           )}>
                           {product.name}
@@ -297,7 +328,9 @@ export const MainNavigation = ({
                             "text-sm text-slate-500 transition-opacity duration-200",
                             isTextVisible ? "opacity-0" : "opacity-100"
                           )}>
-                          Product
+                          {product.config.channel === "link"
+                            ? "Link & Email"
+                            : capitalizeFirstLetter(product.config.channel)}
                         </p>
                       </div>
                       <ChevronRightIcon
@@ -311,7 +344,7 @@ export const MainNavigation = ({
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-56 space-y-1 rounded-xl border border-slate-200 shadow-sm"
+                className="w-fit space-y-1 rounded-xl border border-slate-200 shadow-sm"
                 id="userDropdownInnerContentWrapper"
                 side="right"
                 sideOffset={10}
@@ -323,15 +356,28 @@ export const MainNavigation = ({
                   {sortedProducts.map((product) => (
                     <DropdownMenuRadioItem
                       value={product.id}
-                      className="cursor-pointer break-all rounded-lg"
+                      className="cursor-pointer break-all rounded-lg font-normal"
                       key={product.id}>
-                      {product?.name}
+                      <div>
+                        {product.config.channel === "website" ? (
+                          <GlobeIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                        ) : product.config.channel === "app" ? (
+                          <GlobeLockIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                        ) : product.config.channel === "link" ? (
+                          <LinkIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                        ) : (
+                          <BlendIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                        )}
+                      </div>
+                      <div className="">{product?.name}</div>
                     </DropdownMenuRadioItem>
                   ))}
                 </DropdownMenuRadioGroup>
                 <DropdownMenuSeparator />
                 {isOwnerOrAdmin && (
-                  <DropdownMenuItem onClick={() => handleAddProduct(organization.id)} className="rounded-lg">
+                  <DropdownMenuItem
+                    onClick={() => handleAddProduct(organization.id)}
+                    className="rounded-lg font-normal">
                     <PlusIcon className="mr-2 h-4 w-4" />
                     <span>Add product</span>
                   </DropdownMenuItem>
@@ -349,24 +395,23 @@ export const MainNavigation = ({
                   <div
                     tabIndex={0}
                     className={cn(
-                      "flex cursor-pointer flex-row items-center space-x-5",
+                      "flex cursor-pointer flex-row items-center space-x-3",
                       isCollapsed ? "pl-2" : "pl-4"
                     )}>
-                    <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
+                    <ProfileAvatar userId={user.id} imageUrl={user.imageUrl} />
                     {!isCollapsed && !isTextVisible && (
                       <>
                         <div className={cn(isTextVisible ? "opacity-0" : "opacity-100")}>
                           <p
+                            title={user?.email}
                             className={cn(
-                              "ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700"
+                              "ph-no-capture ph-no-capture -mb-0.5 max-w-28 truncate text-sm font-bold text-slate-700"
                             )}>
-                            {session?.user?.name ? (
-                              <span>{truncate(session?.user?.name, 30)}</span>
-                            ) : (
-                              <span>{truncate(session?.user?.email, 30)}</span>
-                            )}
+                            {user?.name ? <span>{user?.name}</span> : <span>{user?.email}</span>}
                           </p>
-                          <p className={cn("text-sm text-slate-500")}>
+                          <p
+                            title={capitalizeFirstLetter(organization?.name)}
+                            className="max-w-28 truncate text-sm text-slate-500">
                             {capitalizeFirstLetter(organization?.name)}
                           </p>
                         </div>

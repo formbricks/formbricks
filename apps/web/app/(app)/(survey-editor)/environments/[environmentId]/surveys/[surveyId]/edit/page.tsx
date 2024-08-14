@@ -44,7 +44,6 @@ const Page = async ({ params }) => {
     getServerSession(authOptions),
     getSegments(params.environmentId),
   ]);
-
   if (!session) {
     throw new Error("Session not found");
   }
@@ -80,10 +79,12 @@ const Page = async ({ params }) => {
       attributeClasses={attributeClasses}
       responseCount={responseCount}
       membershipRole={currentUserMembership?.role}
+      organizationId={organization.id}
       colors={SURVEY_BG_COLORS}
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
       isMultiLanguageAllowed={isMultiLanguageAllowed}
+      plan={organization.billing.plan}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
     />

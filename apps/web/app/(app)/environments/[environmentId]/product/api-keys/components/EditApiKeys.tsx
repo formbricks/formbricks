@@ -117,7 +117,6 @@ export const EditAPIKeys = ({
 
       <div>
         <Button
-          variant="darkCTA"
           size="sm"
           disabled={environmentId !== environmentTypeId}
           onClick={() => {

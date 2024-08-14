@@ -26,11 +26,9 @@ export const ResponseOptionsCard = ({
 }: ResponseOptionsCardProps) => {
   const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
   const autoComplete = localSurvey.autoComplete !== null;
-  const [redirectToggle, setRedirectToggle] = useState(false);
   const [runOnDateToggle, setRunOnDateToggle] = useState(false);
   const [closeOnDateToggle, setCloseOnDateToggle] = useState(false);
   useState;
-  const [redirectUrl, setRedirectUrl] = useState<string | null>("");
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(false);
 
@@ -45,25 +43,12 @@ export const ResponseOptionsCard = ({
   });
 
   const [singleUseEncryption, setSingleUseEncryption] = useState(true);
-  const [verifyEmailSurveyDetails, setVerifyEmailSurveyDetails] = useState({
-    name: "",
-    subheading: "",
-  });
   const [runOnDate, setRunOnDate] = useState<Date | null>(null);
   const [closeOnDate, setCloseOnDate] = useState<Date | null>(null);
 
   const isPinProtectionEnabled = localSurvey.pin !== null;
 
   const [verifyProtectWithPinError, setVerifyProtectWithPinError] = useState<string | null>(null);
-
-  const handleRedirectCheckMark = () => {
-    setRedirectToggle((prev) => !prev);
-
-    if (redirectToggle && localSurvey.redirectUrl) {
-      setRedirectUrl(null);
-      setLocalSurvey({ ...localSurvey, redirectUrl: null });
-    }
-  };
 
   const handleRunOnDateToggle = () => {
     if (runOnDateToggle) {
@@ -116,11 +101,6 @@ export const ResponseOptionsCard = ({
     if (exceptThisSymbols.includes(e.key)) e.preventDefault();
   };
 
-  const handleRedirectUrlChange = (link: string) => {
-    setRedirectUrl(link);
-    setLocalSurvey({ ...localSurvey, redirectUrl: link });
-  };
-
   const handleCloseSurveyMessageToggle = () => {
     setSurveyClosedMessageToggle((prev) => !prev);
 
@@ -130,11 +110,8 @@ export const ResponseOptionsCard = ({
   };
 
   const handleVerifyEmailToogle = () => {
-    setVerifyEmailToggle((prev) => !prev);
-
-    if (verifyEmailToggle && localSurvey.verifyEmail) {
-      setLocalSurvey({ ...localSurvey, verifyEmail: null });
-    }
+    setVerifyEmailToggle(!verifyEmailToggle);
+    setLocalSurvey({ ...localSurvey, isVerifyEmailEnabled: !localSurvey.isVerifyEmailEnabled });
   };
 
   const handleRunOnDateChange = (date: Date) => {
@@ -219,28 +196,7 @@ export const ResponseOptionsCard = ({
     }
   };
 
-  const handleVerifyEmailSurveyDetailsChange = ({
-    name,
-    subheading,
-  }: {
-    name?: string;
-    subheading?: string;
-  }) => {
-    const message = {
-      name: name || verifyEmailSurveyDetails.name,
-      subheading: subheading || verifyEmailSurveyDetails.subheading,
-    };
-
-    setVerifyEmailSurveyDetails(message);
-    setLocalSurvey({ ...localSurvey, verifyEmail: message });
-  };
-
   useEffect(() => {
-    if (localSurvey.redirectUrl) {
-      setRedirectUrl(localSurvey.redirectUrl);
-      setRedirectToggle(true);
-    }
-
     if (!!localSurvey.surveyClosedMessage) {
       setSurveyClosedMessage({
         heading: localSurvey.surveyClosedMessage.heading ?? surveyClosedMessage.heading,
@@ -257,11 +213,7 @@ export const ResponseOptionsCard = ({
       setSingleUseEncryption(localSurvey.singleUse.isEncrypted);
     }
 
-    if (localSurvey.verifyEmail) {
-      setVerifyEmailSurveyDetails({
-        name: localSurvey.verifyEmail.name!,
-        subheading: localSurvey.verifyEmail.subheading!,
-      });
+    if (localSurvey.isVerifyEmailEnabled) {
       setVerifyEmailToggle(true);
     }
 
@@ -389,26 +341,6 @@ export const ResponseOptionsCard = ({
             </div>
           </AdvancedOptionToggle>
 
-          {/* Redirect on completion */}
-          <AdvancedOptionToggle
-            htmlId="redirectUrl"
-            isChecked={redirectToggle}
-            onToggle={handleRedirectCheckMark}
-            title="Redirect on completion"
-            description="Redirect user to link destination when they completed the survey"
-            childBorder={true}>
-            <div className="w-full p-4">
-              <Input
-                autoFocus
-                className="w-full bg-white"
-                type="url"
-                placeholder="https://www.example.com"
-                value={redirectUrl ? redirectUrl : ""}
-                onChange={(e) => handleRedirectUrlChange(e.target.value)}
-              />
-            </div>
-          </AdvancedOptionToggle>
-
           {localSurvey.type === "link" && (
             <>
               {/* Adjust Survey Closed Message */}
@@ -518,36 +450,8 @@ export const ResponseOptionsCard = ({
                 onToggle={handleVerifyEmailToogle}
                 title="Verify email before submission"
                 description="Only let people with a real email respond."
-                childBorder={true}>
-                <div className="flex w-full items-center space-x-1 p-4 pb-4">
-                  <div className="w-full cursor-pointer items-center bg-slate-50">
-                    <Label htmlFor="howItWorks">How it works</Label>
-                    <p className="mb-4 mt-2 text-sm text-slate-500">
-                      Respondants will receive the survey link via email.
-                    </p>
-                    <Label htmlFor="headline">Survey Name (Public)</Label>
-                    <Input
-                      autoFocus
-                      id="heading"
-                      className="mb-4 mt-2 bg-white"
-                      name="heading"
-                      placeholder="Job Application Form"
-                      defaultValue={verifyEmailSurveyDetails.name}
-                      onChange={(e) => handleVerifyEmailSurveyDetailsChange({ name: e.target.value })}
-                    />
-
-                    <Label htmlFor="headline">Subheader (Public)</Label>
-                    <Input
-                      className="mt-2 bg-white"
-                      id="subheading"
-                      name="subheading"
-                      placeholder="Thanks for applying as a full stack engineer"
-                      defaultValue={verifyEmailSurveyDetails.subheading}
-                      onChange={(e) => handleVerifyEmailSurveyDetailsChange({ subheading: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </AdvancedOptionToggle>
+                childBorder={true}
+              />
               <AdvancedOptionToggle
                 htmlId="protectSurveyWithPin"
                 isChecked={isPinProtectionEnabled}

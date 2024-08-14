@@ -1,15 +1,7 @@
 import { describe, expect, it } from "vitest";
-import {
-  mockLegacySurvey,
-  mockSurvey,
-  mockThankYouCard,
-  mockTranslatedSurvey,
-  mockTranslatedThankYouCard,
-  mockTranslatedWelcomeCard,
-  mockWelcomeCard,
-} from "./i18n.mock";
+import { mockLegacySurvey, mockTranslatedSurvey } from "./i18n.mock";
 import { reverseTranslateSurvey } from "./reverseTranslation";
-import { createI18nString, translateSurvey, translateThankYouCard, translateWelcomeCard } from "./utils";
+import { createI18nString } from "./utils";
 
 describe("createI18nString", () => {
   it("should create an i18n string from a regular string", () => {
@@ -40,30 +32,6 @@ describe("createI18nString", () => {
     expect(result).toEqual({
       default: "Hello",
     });
-  });
-});
-
-describe("translateWelcomeCard", () => {
-  it("should translate all text fields of a welcome card", () => {
-    const languages = ["default", "de"];
-    const translatedWelcomeCard = translateWelcomeCard(mockWelcomeCard, languages);
-    expect(translatedWelcomeCard).toEqual(mockTranslatedWelcomeCard);
-  });
-});
-
-describe("translateThankYouCard", () => {
-  it("should translate all text fields of a Thank you card", () => {
-    const languages = ["default", "de"];
-    const translatedThankYouCard = translateThankYouCard(mockThankYouCard, languages);
-    expect(translatedThankYouCard).toEqual(mockTranslatedThankYouCard);
-  });
-});
-
-describe("translateSurvey", () => {
-  it("should translate all questions of a Survey", () => {
-    const languageCodes = ["default", "de"];
-    const translatedSurvey = translateSurvey(mockSurvey, languageCodes);
-    expect(translatedSurvey).toEqual(mockTranslatedSurvey);
   });
 });
 

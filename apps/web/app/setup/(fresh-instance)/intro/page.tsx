@@ -24,7 +24,7 @@ const Page = () => {
           <b>full control over your data.</b> Always.
         </p>
       </div>
-      <Button variant="darkCTA" href="/setup/signup" className="mt-6">
+      <Button href="/setup/signup" className="mt-6">
         Get started
       </Button>
 

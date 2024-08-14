@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { AppConfig, StorageHandler } from "../../../js-core/src/app/lib/config";
+import { AppConfig, type StorageHandler } from "../../../js-core/src/app/lib/config";
 import { RN_ASYNC_STORAGE_KEY } from "../../../js-core/src/shared/constants";
 
 const storageHandler: StorageHandler = {

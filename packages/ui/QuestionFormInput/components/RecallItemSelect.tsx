@@ -99,10 +99,10 @@ export const RecallItemSelect = ({
   }, [attributeClasses]);
 
   const surveyQuestionRecallItems = useMemo(() => {
-    const idx =
-      questionId === "end"
-        ? localSurvey.questions.length
-        : localSurvey.questions.findIndex((recallQuestion) => recallQuestion.id === questionId);
+    const isEndingCard = !localSurvey.questions.map((question) => question.id).includes(questionId);
+    const idx = isEndingCard
+      ? localSurvey.questions.length
+      : localSurvey.questions.findIndex((recallQuestion) => recallQuestion.id === questionId);
     const filteredQuestions = localSurvey.questions
       .filter((question, index) => {
         const notAllowed = isNotAllowedQuestionType(question);

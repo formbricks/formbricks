@@ -22,7 +22,6 @@ export const FileInput = ({
   allowedFileExtensions,
   surveyId,
   onUploadCallback,
-  onFileUpload,
   fileUrls,
   maxSizeInMB,
   allowMultipleFiles,
@@ -30,7 +29,6 @@ export const FileInput = ({
 }: FileInputProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-
   const validateFileSize = async (file: File): Promise<boolean> => {
     if (maxSizeInMB) {
       const fileBuffer = await file.arrayBuffer();

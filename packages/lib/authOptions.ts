@@ -5,6 +5,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@formbricks/database";
+import { TUserNotificationSettings } from "@formbricks/types/user";
 import { createAccount } from "./account/service";
 import { verifyPassword } from "./auth/utils";
 import {
@@ -176,7 +177,7 @@ export const authOptions: NextAuthOptions = {
 
       return {
         ...token,
-        profile: existingUser || null,
+        profile: { id: existingUser.id },
       };
     },
     async session({ session, token }) {
@@ -275,7 +276,7 @@ export const authOptions: NextAuthOptions = {
             userId: userProfile.id,
           });
 
-          const updatedNotificationSettings = {
+          const updatedNotificationSettings: TUserNotificationSettings = {
             ...userProfile.notificationSettings,
             alert: {
               ...userProfile.notificationSettings?.alert,
@@ -286,6 +287,9 @@ export const authOptions: NextAuthOptions = {
                 organization.id,
               ])
             ),
+            weeklySummary: {
+              ...userProfile.notificationSettings?.weeklySummary,
+            },
           };
 
           await updateUser(userProfile.id, {

@@ -1,4 +1,4 @@
-import { Formbricks } from "./Formbricks";
+import { Formbricks } from "./formbricks";
 import { track } from "./lib";
 
 export default Formbricks;
