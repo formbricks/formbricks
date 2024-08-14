@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment -- required */
+ 
 
 /* eslint-disable @typescript-eslint/no-unsafe-call -- required */
 
@@ -246,7 +246,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
 
                   if (fileUploadResult) {
                     // @ts-expect-error -- injectJavaScript is not typed
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- injectJavaScript is not typed
+                     
                     webViewRef.current?.injectJavaScript(`
                     window.onFileUploadComplete(${JSON.stringify({
                       success: true,
@@ -256,7 +256,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
                   `);
                   } else {
                     // @ts-expect-error -- injectJavaScript is not typed
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- injectJavaScript is not typed
+                     
                     webViewRef.current?.injectJavaScript(`
                     window.onFileUploadComplete(${JSON.stringify({
                       success: false,
@@ -378,7 +378,7 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { apiHost?: string }):
       }
 
       const script = document.createElement("script");
-      script.src = "http://localhost:3000/api/packages/surveys";
+      script.src = "${options.apiHost ?? "http://localhost:3000"}/api/packages/surveys";
       script.async = true;
       script.onload = () => loadSurvey();
       script.onerror = (error) => {

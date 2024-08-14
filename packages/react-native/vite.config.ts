@@ -12,7 +12,7 @@ const config = () => {
       minify: "terser",
       sourcemap: true,
       rollupOptions: {
-        external: ["react", "react-native", "react-dom"],
+        external: ["react", "react-native", "react-dom", "react-native-webview"],
       },
       lib: {
         entry: resolve(__dirname, "src/index.ts"),

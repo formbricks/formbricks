@@ -40,17 +40,16 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "@react-native-async-storage/async-storage": "1.24.0",
-    "@types/react": "^18.3.3",
-    "@types/react-native": "^0.73.0",
-    "react": "^18.3.1",
+    "@react-native-async-storage/async-storage": "1.23.1",
+    "@types/react": "^18.2.79",
+    "react": "18.2.0",
     "react-native": "^0.74.5",
     "terser": "^5.31.3",
     "vite": "^5.3.5",
     "vite-plugin-dts": "^3.9.1"
   },
   "dependencies": {
-    "react-native-webview": "13.10.5"
+    "react-native-webview": "^13.8.6"
   },
   "peerDependencies": {
     "react": ">=16.8.0",
