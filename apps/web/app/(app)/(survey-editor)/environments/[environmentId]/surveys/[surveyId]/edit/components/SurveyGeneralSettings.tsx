@@ -2,6 +2,7 @@ import { getAllCountries } from "@/app/(app)/environments/[environmentId]/action
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import Select from "react-select";
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -89,7 +90,7 @@ export function SurveyGeneralSettings({
     isoCode: string;
   }
 
-  const [, setCountries] = useState<Country[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -100,30 +101,30 @@ export function SurveyGeneralSettings({
     fetchCountries();
   }, []);
 
-  // const handleCountryChange = (selectedCountries) => {
-  //   const updatedCountries = selectedCountries.map((country) => ({
-  //     isoCode: country.value,
-  //     name: country.label,
-  //   }));
-  //
-  //   setLocalSurvey((prevState) => ({
-  //     ...prevState,
-  //     countries: updatedCountries,
-  //     limitedCountries: updatedCountries.length > 0,
-  //   }));
-  // };
+  const handleCountryChange = (selectedCountries) => {
+    const updatedCountries = selectedCountries.map((country) => ({
+      isoCode: country.value,
+      name: country.label,
+    }));
 
-  // const [limitedToCountries, setLimitedToCountries] = useState(localSurvey.countries.length > 0);
-  //
-  // const toggleLimitedToCountries = (isChecked) => {
-  //   setLimitedToCountries(isChecked);
-  //   const newCountries = !isChecked ? [] : localSurvey.countries;
-  //   setLocalSurvey((prevState) => ({
-  //     ...prevState,
-  //     countries: newCountries,
-  //     limitedCountries: newCountries.length > 0,
-  //   }));
-  // };
+    setLocalSurvey((prevState) => ({
+      ...prevState,
+      countries: updatedCountries,
+      limitedCountries: updatedCountries.length > 0,
+    }));
+  };
+
+  const [limitedToCountries, setLimitedToCountries] = useState(localSurvey.countries.length > 0);
+
+  const toggleLimitedToCountries = (isChecked) => {
+    setLimitedToCountries(isChecked);
+    const newCountries = !isChecked ? [] : localSurvey.countries;
+    setLocalSurvey((prevState) => ({
+      ...prevState,
+      countries: newCountries,
+      limitedCountries: newCountries.length > 0,
+    }));
+  };
 
   // const [failureCardMessage, setFailureCardMessage] = useState({
   //   headline: SURVEY_FAILED_HEADLINE,
@@ -431,40 +432,43 @@ export function SurveyGeneralSettings({
               </AdvancedOptionToggle>
             )}
           </div>
-          {/*<div className="p-3">*/}
-          {/*  <div className="ml-2 flex items-center space-x-1">*/}
-          {/*    <Switch*/}
-          {/*      id="limitedToCountries"*/}
-          {/*      checked={limitedToCountries}*/}
-          {/*      onCheckedChange={toggleLimitedToCountries}*/}
-          {/*      className={"mr-2"}*/}
-          {/*    />*/}
-          {/*    <Label htmlFor="countries" className="cursor-pointer">*/}
-          {/*      <div className="ml-2">*/}
-          {/*        <h3 className="text-sm font-semibold text-slate-700">Limit to Countries</h3>*/}
-          {/*        <p className="text-xs font-normal text-slate-500">*/}
-          {/*          Make the survey available only to certain countries.*/}
-          {/*        </p>*/}
-          {/*      </div>*/}
-          {/*    </Label>*/}
-
-          {/*    {limitedToCountries && (*/}
-          {/*      <Select*/}
-          {/*        options={countries.map((country) => ({*/}
-          {/*          value: country.isoCode,*/}
-          {/*          label: country.name,*/}
-          {/*        }))}*/}
-          {/*        isMulti*/}
-          {/*        isSearchable*/}
-          {/*        onChange={handleCountryChange}*/}
-          {/*        value={localSurvey.countries.map((country) => ({*/}
-          {/*          value: country.isoCode,*/}
-          {/*          label: country.name,*/}
-          {/*        }))}*/}
-          {/*      />*/}
-          {/*    )}*/}
-          {/*  </div>*/}
-          {/*</div>*/}
+          <div className="p-3">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch
+                id="limitedToCountries"
+                checked={limitedToCountries}
+                onCheckedChange={toggleLimitedToCountries}
+                className={"mr-2"}
+              />
+              <Label htmlFor="countries" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Limit to Countries</h3>
+                  <p className="text-xs font-normal text-slate-500">
+                    Make the survey available only to certain countries.
+                  </p>
+                </div>
+              </Label>
+            </div>
+            {limitedToCountries && (
+              <div className="mt-4">
+                {" "}
+                {/* Add margin-top to create space */}
+                <Select
+                  options={countries.map((country) => ({
+                    value: country.isoCode,
+                    label: country.name,
+                  }))}
+                  isMulti
+                  isSearchable
+                  onChange={handleCountryChange}
+                  value={localSurvey.countries.map((country) => ({
+                    value: country.isoCode,
+                    label: country.name,
+                  }))}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
