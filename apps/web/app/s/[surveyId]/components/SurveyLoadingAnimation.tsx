@@ -17,14 +17,6 @@ export const SurveyLoadingAnimation = ({ survey }: SurveyLoadingAnimationProps) 
 
   const cardId = survey.welcomeCard.enabled ? `questionCard--1` : `questionCard-0`;
 
-  useEffect(() => {
-    const minTimeTimer = setTimeout(() => {
-      setMinTimePassed(true);
-    }, 1500);
-
-    return () => clearTimeout(minTimeTimer);
-  }, []);
-
   const checkMediaLoaded = useCallback(() => {
     const cardElement = document.getElementById(cardId);
     const images = cardElement ? Array.from(cardElement.getElementsByTagName("img")) : [];
@@ -46,7 +38,7 @@ export const SurveyLoadingAnimation = ({ survey }: SurveyLoadingAnimationProps) 
     return () => {
       imgElements.forEach((img) => img.removeEventListener("load", checkMediaLoaded));
     };
-  }, [isSurveyPackageLoaded, checkMediaLoaded]);
+  }, [isSurveyPackageLoaded, checkMediaLoaded, cardId]);
 
   useEffect(() => {
     if (isMediaLoaded && minTimePassed) {
@@ -61,6 +53,10 @@ export const SurveyLoadingAnimation = ({ survey }: SurveyLoadingAnimationProps) 
   }, [isMediaLoaded, minTimePassed]);
 
   useEffect(() => {
+    // Ensure the animation is shown for at least 1.5 seconds
+    const minTimeTimer = setTimeout(() => {
+      setMinTimePassed(true);
+    }, 1500);
     const observer = new MutationObserver((mutations) => {
       mutations.some((mutation) => {
         if (mutation.addedNodes.length) {
@@ -79,6 +75,7 @@ export const SurveyLoadingAnimation = ({ survey }: SurveyLoadingAnimationProps) 
 
     return () => {
       observer.disconnect();
+      clearTimeout(minTimeTimer);
     };
   }, []);
 
