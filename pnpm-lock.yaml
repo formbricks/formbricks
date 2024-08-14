@@ -88,6 +88,9 @@ importers:
       react-native:
         specifier: ^0.74.4
         version: 0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0)
+      react-native-webview:
+        specifier: 13.8.6
+        version: 13.8.6(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
     devDependencies:
       '@babel/core':
         specifier: ^7.25.2
@@ -912,6 +915,10 @@ importers:
         version: 2.0.0(typescript@5.4.5)(vitest@2.0.5(@types/node@22.0.2)(jsdom@24.1.1)(terser@5.31.6))
 
   packages/react-native:
+    dependencies:
+      react-native-webview:
+        specifier: '>=13.0.0'
+        version: 13.8.6(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
     devDependencies:
       '@formbricks/api':
         specifier: workspace:*
@@ -937,9 +944,6 @@ importers:
       react-native:
         specifier: ^0.74.5
         version: 0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0)
-      react-native-webview:
-        specifier: ^13.8.6
-        version: 13.8.6(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       terser:
         specifier: ^5.31.3
         version: 5.31.6
