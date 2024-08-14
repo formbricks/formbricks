@@ -10,10 +10,9 @@ import { Confetti } from "@formbricks/ui/Confetti";
 interface SummaryMetadataProps {
   environment: TEnvironment;
   survey: TSurvey;
-  setShowShareSurveyModal: (value: boolean) => void;
 }
 
-export const SuccessMessage = ({ environment, survey, setShowShareSurveyModal }: SummaryMetadataProps) => {
+export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) => {
   const searchParams = useSearchParams();
   const [confetti, setConfetti] = useState(false);
 
@@ -35,12 +34,15 @@ export const SuccessMessage = ({ environment, survey, setShowShareSurveyModal }:
           position: "bottom-right",
         }
       );
-      if (survey.type === "link") {
-        setShowShareSurveyModal(true);
-      }
+
       // Remove success param from url
       const url = new URL(window.location.href);
       url.searchParams.delete("success");
+      if (survey.type === "link") {
+        // Add share param to url to open share embed modal
+        url.searchParams.set("share", "true");
+      }
+
       window.history.replaceState({}, "", url.toString());
     }
   }, [environment, isAppSurvey, searchParams, survey, widgetSetupCompleted]);

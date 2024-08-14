@@ -92,13 +92,7 @@ export const SurveyAnalysisCTA = ({
         />
       )}
 
-      {user && (
-        <SuccessMessage
-          environment={environment}
-          survey={survey}
-          setShowShareSurveyModal={setOpenShareSurveyModal}
-        />
-      )}
+      {user && <SuccessMessage environment={environment} survey={survey} />}
     </div>
   );
 };
