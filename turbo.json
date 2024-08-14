@@ -83,9 +83,6 @@
         "HTTP_PROXY",
         "HTTPS_PROXY",
         "IMPRINT_URL",
-        "INSTANCE_ID",
-        "INTERNAL_SECRET",
-        "WEBHOOK_SECRET",
         "INVITE_DISABLED",
         "IS_FORMBRICKS_CLOUD",
         "MAIL_FROM",
@@ -147,6 +144,7 @@
         "VERCEL_URL",
         "VERSION",
         "WEBAPP_URL",
+        "WEBHOOK_SECRET",
         "UNSPLASH_ACCESS_KEY"
       ]
     },
