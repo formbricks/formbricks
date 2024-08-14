@@ -3,7 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { sendResponseFinishedEmail } from "@formbricks/email";
-import { INTERNAL_SECRET } from "@formbricks/lib/constants";
+import { CRON_SECRET } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
@@ -15,7 +15,7 @@ import { handleIntegrations } from "./lib/handleIntegrations";
 
 export const POST = async (request: Request) => {
   // check authentication with x-api-key header and CRON_SECRET env variable
-  if (headers().get("x-api-key") !== INTERNAL_SECRET) {
+  if (headers().get("x-api-key") !== CRON_SECRET) {
     return responses.notAuthenticatedResponse();
   }
   const jsonInput = await request.json();
@@ -106,8 +106,9 @@ export const POST = async (request: Request) => {
     const survey = surveyData ?? undefined;
 
     if (integrations.length > 0 && survey) {
-      handleIntegrations(integrations, inputValidation.data, survey);
+      await handleIntegrations(integrations, inputValidation.data, survey);
     }
+
     // filter all users that have email notifications enabled for this survey
     const usersWithNotifications = users.filter((user) => {
       const notificationSettings: TUserNotificationSettings | null = user.notificationSettings;

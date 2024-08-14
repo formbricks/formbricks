@@ -5,6 +5,7 @@ import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import {
   ArrowUpRightIcon,
+  BlendIcon,
   BlocksIcon,
   ChevronRightIcon,
   Cog,
@@ -126,15 +127,14 @@ export const MainNavigation = ({
   }, [organizations]);
 
   const sortedProducts = useMemo(() => {
-    const channelOrder = ["website", "app", "link"];
+    const channelOrder: (string | null)[] = ["website", "app", "link", null];
 
     const groupedProducts = products.reduce(
       (acc, product) => {
         const channel = product.config.channel;
-        if (channel) {
-          acc[channel] = acc[channel] || [];
-          acc[channel].push(product);
-        }
+        const key = channel !== null ? channel : "null";
+        acc[key] = acc[key] || [];
+        acc[key].push(product);
         return acc;
       },
       {} as Record<string, typeof products>
@@ -144,7 +144,7 @@ export const MainNavigation = ({
       groupedProducts[channel].sort((a, b) => a.name.localeCompare(b.name));
     });
 
-    return channelOrder.flatMap((channel) => groupedProducts[channel] || []);
+    return channelOrder.flatMap((channel) => groupedProducts[channel !== null ? channel : "null"] || []);
   }, [products]);
 
   const handleEnvironmentChangeByProduct = (productId: string) => {
@@ -311,9 +311,15 @@ export const MainNavigation = ({
                     isCollapsed ? "pl-2" : "pl-4"
                   )}>
                   <div className="rounded-lg bg-slate-900 p-1.5 text-slate-50">
-                    {product.config.channel === "website" && <GlobeIcon strokeWidth={1.5} />}
-                    {product.config.channel === "app" && <GlobeLockIcon strokeWidth={1.5} />}
-                    {product.config.channel === "link" && <LinkIcon strokeWidth={1.5} />}
+                    {product.config.channel === "website" ? (
+                      <GlobeIcon strokeWidth={1.5} />
+                    ) : product.config.channel === "app" ? (
+                      <GlobeLockIcon strokeWidth={1.5} />
+                    ) : product.config.channel === "link" ? (
+                      <LinkIcon strokeWidth={1.5} />
+                    ) : (
+                      <BlendIcon strokeWidth={1.5} />
+                    )}
                   </div>
                   {!isCollapsed && !isTextVisible && (
                     <>
@@ -362,14 +368,14 @@ export const MainNavigation = ({
                       className="cursor-pointer break-all rounded-lg font-normal"
                       key={product.id}>
                       <div>
-                        {product.config.channel === "website" && (
+                        {product.config.channel === "website" ? (
                           <GlobeIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                        )}
-                        {product.config.channel === "app" && (
+                        ) : product.config.channel === "app" ? (
                           <GlobeLockIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                        )}
-                        {product.config.channel === "link" && (
+                        ) : product.config.channel === "link" ? (
                           <LinkIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                        ) : (
+                          <BlendIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
                         )}
                       </div>
                       <div className="">{product?.name}</div>

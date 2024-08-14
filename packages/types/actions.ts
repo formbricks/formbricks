@@ -18,13 +18,3 @@ export const ZActionInput = z.object({
 });
 
 export type TActionInput = z.infer<typeof ZActionInput>;
-
-export const ZActionLegacyInput = z.object({
-  environmentId: z.string().cuid2(),
-  personId: z.string().optional(),
-  sessionId: z.string().optional(),
-  name: z.string(),
-  properties: z.record(z.string()),
-});
-
-export type TActionLegacyInput = z.infer<typeof ZActionLegacyInput>;

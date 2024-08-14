@@ -7,7 +7,6 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { TEnvironment, ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TLegacySurvey } from "@formbricks/types/legacy-surveys";
 import { TPerson } from "@formbricks/types/people";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
@@ -28,7 +27,6 @@ import { ITEMS_PER_PAGE } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
 import { getEnvironment } from "../environment/service";
-import { reverseTranslateSurvey } from "../i18n/reverseTranslation";
 import { subscribeOrganizationMembersToSurveyResponses } from "../organization/service";
 import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
@@ -364,23 +362,6 @@ export const getSurveys = reactCache(
       }
     )()
 );
-
-export const transformToLegacySurvey = async (
-  survey: TSurvey,
-  languageCode?: string
-): Promise<TLegacySurvey> => {
-  const targetLanguage = languageCode ?? "default";
-
-  // workaround to handle triggers for legacy surveys
-  // because we dont wanna do this in the `reverseTranslateSurvey` function
-  const surveyToTransform: any = {
-    ...structuredClone(survey),
-    triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
-  };
-
-  const transformedSurvey = reverseTranslateSurvey(surveyToTransform as TSurvey, targetLanguage);
-  return transformedSurvey;
-};
 
 export const getSurveyCount = reactCache(
   (environmentId: string): Promise<number> =>
@@ -1025,7 +1006,7 @@ export const getSyncSurveys = reactCache(
     options?: {
       version?: string;
     }
-  ): Promise<TSurvey[] | TLegacySurvey[]> =>
+  ): Promise<TSurvey[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -1042,7 +1023,7 @@ export const getSyncSurveys = reactCache(
             throw new Error("Person not found");
           }
 
-          let surveys: TSurvey[] | TLegacySurvey[] = await getSurveys(environmentId);
+          let surveys = await getSurveys(environmentId);
 
           // filtered surveys for running and web
           surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "app");

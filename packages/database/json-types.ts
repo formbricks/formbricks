@@ -11,7 +11,7 @@ import {
 import { type TBaseFilters } from "@formbricks/types/segment";
 import {
   type TSurveyClosedMessage,
-  type TSurveyEndings,
+  type TSurveyEnding,
   type TSurveyHiddenFields,
   type TSurveyProductOverwrites,
   type TSurveyQuestions,
@@ -32,7 +32,7 @@ declare global {
     export type ResponsePersonAttributes = TResponsePersonAttributes;
     export type SurveyWelcomeCard = TSurveyWelcomeCard;
     export type SurveyQuestions = TSurveyQuestions;
-    export type SurveyEndings = TSurveyEndings;
+    export type SurveyEnding = TSurveyEnding;
     export type SurveyHiddenFields = TSurveyHiddenFields;
     export type SurveyProductOverwrites = TSurveyProductOverwrites;
     export type SurveyStyling = TSurveyStyling;

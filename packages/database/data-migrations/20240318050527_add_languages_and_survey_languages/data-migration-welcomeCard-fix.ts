@@ -1,3 +1,4 @@
+/* eslint-disable -- leacy support workaround for now to avoid rewrite after eslint rules have been changed */
 // migration script to add empty strings to welcome card headline in default language, if it does not exist
 // WelcomeCard.headline = {} -> WelcomeCard.headline = {"default":""}
 import { PrismaClient } from "@prisma/client";

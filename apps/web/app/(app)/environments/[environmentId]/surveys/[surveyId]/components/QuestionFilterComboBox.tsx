@@ -48,7 +48,8 @@ export const QuestionFilterComboBox = ({
   const isMultiple =
     type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
     type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
-    type === TSurveyQuestionTypeEnum.PictureSelection;
+    type === TSurveyQuestionTypeEnum.PictureSelection ||
+    (type === TSurveyQuestionTypeEnum.NPS && filterValue === "Includes either");
 
   // when question type is multi selection so we remove the option from the options which has been already selected
   const options = isMultiple
@@ -156,14 +157,18 @@ export const QuestionFilterComboBox = ({
                   {options?.map((o) => (
                     <CommandItem
                       onSelect={() => {
-                        onChangeFilterComboBoxValue(
-                          Array.isArray(filterComboBoxValue)
-                            ? [
-                                ...filterComboBoxValue,
-                                typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o,
-                              ]
-                            : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o]
-                        );
+                        !isMultiple
+                          ? onChangeFilterComboBoxValue(
+                              typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o
+                            )
+                          : onChangeFilterComboBoxValue(
+                              Array.isArray(filterComboBoxValue)
+                                ? [
+                                    ...filterComboBoxValue,
+                                    typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o,
+                                  ]
+                                : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o]
+                            );
                         !isMultiple && setOpen(false);
                       }}
                       className="cursor-pointer">
