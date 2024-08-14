@@ -43,22 +43,60 @@ export const FileInput = ({
     return true;
   };
 
-  const handleFileUpload = async (files: File[]) => {
-    setIsUploading(true);
+  const handleFileSelection = async (files: FileList) => {
+    const fileArray = Array.from(files);
 
-    const validFiles = await Promise.all(
-      files.map(async (file) => {
-        if (await validateFileSize(file)) return file;
-        return null;
-      })
-    );
+    if (!allowMultipleFiles && fileArray.length > 1) {
+      alert("Only one file can be uploaded at a time.");
+      return;
+    }
 
-    const filteredFiles = validFiles.filter((file) => file !== null) as File[];
+    if (allowMultipleFiles && selectedFiles.length + fileArray.length > FILE_LIMIT) {
+      alert(`You can only upload a maximum of ${FILE_LIMIT} files.`);
+      return;
+    }
+
+    // filter out files that are not allowed
+    const validFiles = Array.from(files).filter((file) => {
+      const fileExtension = file.type.substring(file.type.lastIndexOf("/") + 1) as TAllowedFileExtension;
+      if (allowedFileExtensions) {
+        return allowedFileExtensions?.includes(fileExtension);
+      } else {
+        return true;
+      }
+    });
+
+    const filteredFiles: File[] = [];
+
+    for (const validFile of validFiles) {
+      const isAllowed = await validateFileSize(validFile);
+      if (isAllowed) {
+        filteredFiles.push(validFile);
+      }
+    }
 
     try {
-      const uploadPromises = filteredFiles.map((file) =>
-        onFileUpload(file, { allowedFileExtensions, surveyId })
-      );
+      setIsUploading(true);
+      const toBase64 = (file: File) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+        });
+
+      const filePromises = filteredFiles.map(async (file) => {
+        const base64 = await toBase64(file);
+        return { name: file.name, type: file.type, base64: base64 as string };
+      });
+
+      const filesToUpload = await Promise.all(filePromises);
+      const uploadPromises = filesToUpload.map((file) => {
+        return (
+          // @ts-expect-error
+          onFileUpload(file, { allowedFileExtensions, surveyId })
+        );
+      });
 
       const uploadedFiles = await Promise.allSettled(uploadPromises);
 
@@ -74,37 +112,10 @@ export const FileInput = ({
         }
       }
     } catch (err: any) {
+      console.error("error in uploading file: ", err);
       alert("Upload failed! Please try again.");
     } finally {
       setIsUploading(false);
-    }
-  };
-
-  const handleFileSelection = (files: FileList) => {
-    const fileArray = Array.from(files);
-
-    if (!allowMultipleFiles && fileArray.length > 1) {
-      alert("Only one file can be uploaded at a time.");
-      return;
-    }
-
-    if (allowMultipleFiles && selectedFiles.length + fileArray.length > FILE_LIMIT) {
-      alert(`You can only upload a maximum of ${FILE_LIMIT} files.`);
-      return;
-    }
-
-    const validFiles = fileArray.filter((file) =>
-      allowedFileExtensions?.length
-        ? allowedFileExtensions.includes(
-            file.type.substring(file.type.lastIndexOf("/") + 1) as TAllowedFileExtension
-          )
-        : true
-    );
-
-    if (validFiles.length > 0) {
-      handleFileUpload(validFiles);
-    } else {
-      alert("No selected files are valid");
     }
   };
 
@@ -149,8 +160,8 @@ export const FileInput = ({
     <div
       className={`fb-items-left fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-relative fb-mt-3 fb-flex fb-w-full fb-flex-col fb-justify-center fb-rounded-lg fb-border-2 fb-border-dashed dark:fb-border-slate-600 dark:fb-bg-slate-700 dark:hover:fb-border-slate-500 dark:hover:fb-bg-slate-800`}>
       <div>
-        {fileUrls?.map((file, index) => {
-          const fileName = getOriginalFileNameFromUrl(file);
+        {fileUrls?.map((fileUrl, index) => {
+          const fileName = getOriginalFileNameFromUrl(fileUrl);
           return (
             <div
               key={index}
@@ -237,7 +248,7 @@ export const FileInput = ({
                 name={uniqueHtmlFor}
                 accept={allowedFileExtensions?.map((ext) => `.${ext}`).join(",")}
                 className="fb-hidden"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const inputElement = e.target as HTMLInputElement;
                   if (inputElement.files) {
                     handleFileSelection(inputElement.files);
