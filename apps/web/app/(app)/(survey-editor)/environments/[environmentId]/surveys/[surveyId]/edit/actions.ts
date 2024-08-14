@@ -1,13 +1,10 @@
 "use server";
 
-import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { actionClient, authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromProductId,
@@ -24,8 +21,7 @@ import {
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { loadNewSegmentInSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { TBaseFilters, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
+import { ZBaseFilters, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 import { ZSurvey } from "@formbricks/types/surveys/types";
 
 export const updateSurveyAction = authenticatedActionClient
@@ -55,48 +51,44 @@ export const refetchProductAction = authenticatedActionClient
     return await getProduct(parsedInput.productId);
   });
 
-// !@gupta-piyush19
-export const createBasicSegmentAction = async ({
-  description,
-  environmentId,
-  filters,
-  isPrivate,
-  surveyId,
-  title,
-}: {
-  environmentId: string;
-  surveyId: string;
-  title: string;
-  description?: string;
-  isPrivate: boolean;
-  filters: TBaseFilters;
-}) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZCreateBasicSegmentAction = z.object({
+  description: z.string().optional(),
+  environmentId: z.string(),
+  filters: ZBaseFilters,
+  isPrivate: z.boolean(),
+  surveyId: z.string(),
+  title: z.string(),
+});
 
-  const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
+export const createBasicSegmentAction = authenticatedActionClient
+  .schema(ZCreateBasicSegmentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      rules: ["segment", "create"],
+    });
 
-  const parsedFilters = ZSegmentFilters.safeParse(filters);
+    const parsedFilters = ZSegmentFilters.safeParse(parsedInput.filters);
 
-  if (!parsedFilters.success) {
-    const errMsg =
-      parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
-    throw new Error(errMsg);
-  }
+    if (!parsedFilters.success) {
+      const errMsg =
+        parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
+      throw new Error(errMsg);
+    }
 
-  const segment = await createSegment({
-    environmentId,
-    surveyId,
-    title,
-    description: description || "",
-    isPrivate,
-    filters,
+    const segment = await createSegment({
+      environmentId: parsedInput.environmentId,
+      surveyId: parsedInput.surveyId,
+      title: parsedInput.title,
+      description: parsedInput.description || "",
+      isPrivate: parsedInput.isPrivate,
+      filters: parsedInput.filters,
+    });
+    surveyCache.revalidate({ id: parsedInput.surveyId });
+
+    return segment;
   });
-  surveyCache.revalidate({ id: surveyId });
-
-  return segment;
-};
 
 const ZUpdateBasicSegmentAction = z.object({
   segmentId: z.string(),

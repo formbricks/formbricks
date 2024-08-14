@@ -107,7 +107,7 @@ export const TargetingCard = ({
 
   const handleSegmentCreate = async (data: TSegmentCreateInput) => {
     const createdSegment = await createBasicSegmentAction(data);
-    return createdSegment;
+    return createdSegment?.data as TSegment;
   };
 
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
