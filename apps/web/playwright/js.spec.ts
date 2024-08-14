@@ -47,13 +47,6 @@ test.describe("JS Package Test", async () => {
         })();
 
       await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary/);
-
-      // await expect(page.getByRole("link", { name: "Surveys" })).toBeVisible();
-      // await page.getByRole("link", { name: "Surveys" }).click();
-
-      // await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-
-      // await expect(page.getByRole("heading", { name: "Surveys" })).toBeVisible();
     });
 
     await test.step("JS display survey on page and submit response", async () => {
@@ -63,40 +56,20 @@ test.describe("JS Package Test", async () => {
       let htmlFile = replaceEnvironmentIdInHtml(htmlFilePath, environmentId);
       await page.goto(htmlFile);
 
-      console.log("Page URL: ", page.url());
-
-      page.on("request", async (request) => {
-        console.log("Request URL: ", request.url());
-        const isSyncRequest = request.url().includes("/app/sync");
-        if (isSyncRequest) {
-          console.log("Sync Request URL: ", request.url());
-          const res = await request.response();
-          console.log("res status: ", res?.status());
-        }
-      });
-
       // Formbricks In App Sync has happened
       const syncApi = await page.waitForResponse(
         (response) => {
-          console.log({ responseUrl: response.url() });
           return response.url().includes("/app/sync");
         },
         {
           timeout: 120000,
         }
       );
-      console.log("response status aa gaya: ", syncApi.status());
 
       expect(syncApi.status()).toBe(200);
 
       // Formbricks Modal exists in the DOM
       await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
-
-      // const displayApi = await page.waitForResponse((response) => response.url().includes("/display"));
-      // expect(displayApi.status()).toBe(200);
-
-      // Formbricks Modal exists in the DOM
-      // await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
 
       // Formbricks Modal is visible
       await expect(
