@@ -275,6 +275,71 @@ export const getSurveysByActionClassId = reactCache(
     )()
 );
 
+export const getSurveysSortedByRelevance = reactCache(
+  (
+    environmentId: string,
+    limit?: number,
+    offset?: number,
+    filterCriteria?: TSurveyFilterCriteria
+  ): Promise<TSurvey[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+
+        try {
+          let surveys: TSurvey[] = [];
+
+          // Fetch surveys that are in progress first
+          const inProgressSurveys = await prisma.survey.findMany({
+            where: {
+              environmentId,
+              status: "inProgress",
+              ...buildWhereClause(filterCriteria),
+            },
+            select: selectSurvey,
+            orderBy: buildOrderByClause("updatedAt"),
+            take: limit,
+            skip: offset,
+          });
+
+          surveys = inProgressSurveys.map(transformPrismaSurvey);
+
+          const inProgressSurveyCount = await getInProgressSurveyCount(environmentId, filterCriteria);
+          // Determine if additional surveys are needed
+          if (offset !== undefined && limit && inProgressSurveys.length < limit) {
+            const remainingLimit = limit - inProgressSurveys.length;
+            const newOffset = Math.max(0, offset - inProgressSurveyCount);
+            const additionalSurveys = await prisma.survey.findMany({
+              where: {
+                environmentId,
+                status: { not: "inProgress" },
+                ...buildWhereClause(filterCriteria),
+              },
+              select: selectSurvey,
+              orderBy: buildOrderByClause("updatedAt"),
+              take: remainingLimit,
+              skip: newOffset,
+            });
+
+            surveys = [...surveys, ...additionalSurveys.map(transformPrismaSurvey)];
+          }
+
+          return surveys;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+          throw error;
+        }
+      },
+      [`getSurveysSortedByRelevance-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
+      {
+        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);
+
 export const getSurveys = reactCache(
   (
     environmentId: string,
@@ -284,53 +349,14 @@ export const getSurveys = reactCache(
   ): Promise<TSurvey[]> =>
     cache(
       async () => {
-        console.log({ offset });
         validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
         try {
           let surveys: TSurvey[] = [];
+
           if (filterCriteria?.sortBy === "relevance") {
-            // Fetch surveys that are in progress first
-            const inProgressSurveys = await prisma.survey.findMany({
-              where: {
-                environmentId,
-                status: "inProgress",
-                ...buildWhereClause(filterCriteria),
-              },
-              select: selectSurvey,
-              orderBy: buildOrderByClause("updatedAt"),
-              take: limit,
-              skip: offset,
-            });
-
-            surveys = inProgressSurveys.map(transformPrismaSurvey);
-
-            const inProgressSurveyCount = await prisma.survey.count({
-              where: {
-                environmentId,
-                status: "inProgress",
-                ...buildWhereClause(filterCriteria),
-              },
-            });
-            // Determine if additional surveys are needed
-            if (offset !== undefined && limit && inProgressSurveys.length < limit) {
-              const remainingLimit = limit - inProgressSurveys.length;
-              const newOffset = Math.max(0, offset - inProgressSurveyCount);
-              console.log(newOffset);
-              const additionalSurveys = await prisma.survey.findMany({
-                where: {
-                  environmentId,
-                  status: { not: "inProgress" },
-                  ...buildWhereClause(filterCriteria),
-                },
-                select: selectSurvey,
-                orderBy: buildOrderByClause("updatedAt"),
-                take: remainingLimit,
-                skip: newOffset,
-              });
-
-              surveys = [...surveys, ...additionalSurveys.map(transformPrismaSurvey)];
-            }
+            // Call the sortByRelevance function
+            surveys = await getSurveysSortedByRelevance(environmentId, limit, offset ?? 0, filterCriteria);
           } else {
             // Fetch surveys normally with pagination
             const surveysPrisma = await prisma.survey.findMany({
@@ -386,6 +412,37 @@ export const getSurveyCount = reactCache(
         }
       },
       [`getSurveyCount-${environmentId}`],
+      {
+        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);
+
+export const getInProgressSurveyCount = reactCache(
+  (environmentId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId]);
+        try {
+          const surveyCount = await prisma.survey.count({
+            where: {
+              environmentId: environmentId,
+              status: "inProgress",
+              ...buildWhereClause(filterCriteria),
+            },
+          });
+
+          return surveyCount;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getSurveyCount-${environmentId}-${JSON.stringify(filterCriteria)}`],
       {
         tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       }
