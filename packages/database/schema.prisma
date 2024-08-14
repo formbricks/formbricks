@@ -463,8 +463,8 @@ model Product {
   darkOverlay                  Boolean         @default(false)
   languages                    Language[]
   defaultRewardInUSD           Float           @default(0)
-  defaultRedirectOnCompleteUrl String?
-  defaultRedirectOnFailUrl     String?
+  defaultRedirectOnCompleteUrl String          @default("https://member.digiopinion.com/overview")
+  defaultRedirectOnFailUrl     String          @default("https://member.digiopinion.com/overview")
   /// @zod.custom(imports.ZLogo)
   /// [Logo]
   logo                         Json?

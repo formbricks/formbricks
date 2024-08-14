@@ -39,6 +39,7 @@ export const TemplateList = ({
     setLoading(true);
     const surveyType = product.config.channel ?? "link";
     activeTemplate.preset.reward = product.defaultRewardInUSD;
+    activeTemplate.preset.redirectOnFailUrl = product.defaultRedirectOnFailUrl;
     const augmentedTemplate: TSurveyCreateInput = {
       ...activeTemplate.preset,
       type: surveyType,

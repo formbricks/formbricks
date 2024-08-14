@@ -84,7 +84,7 @@ export const EditRedirects: React.FC<EditRedirectsProps> = ({ product }) => {
                   type="url"
                   id="defaultRedirectOnCompleteUrl"
                   {...field}
-                  placeholder={field.value ?? "https://member.digiopinion.com/overview"}
+                  placeholder="https://member.digiopinion.com/overview"
                   autoComplete="off"
                   required
                   isInvalid={!!completeUrlError}
@@ -107,7 +107,7 @@ export const EditRedirects: React.FC<EditRedirectsProps> = ({ product }) => {
                   type="url"
                   id="defaultRedirectOnFailUrl"
                   {...field}
-                  placeholder={field.value ?? "https://member.digiopinion.com/overview"}
+                  placeholder="https://member.digiopinion.com/overview"
                   autoComplete="off"
                   required
                   isInvalid={!!failUrlError}
