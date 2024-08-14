@@ -7,7 +7,10 @@ interface InviteAcceptedEmailProps {
   inviteeName: string;
 }
 
-export function InviteAcceptedEmail({ inviterName, inviteeName }: InviteAcceptedEmailProps) {
+export function InviteAcceptedEmail({
+  inviterName,
+  inviteeName,
+}: InviteAcceptedEmailProps): React.JSX.Element {
   return (
     <Container>
       <Text>Hey {inviterName},</Text>

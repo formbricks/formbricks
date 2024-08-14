@@ -67,31 +67,34 @@ install_formbricks() {
 
   echo "🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]"
   read https_setup
+  https_setup=$(echo "$https_setup" | tr '[:upper:]' '[:lower:]')
 
   # Set default value for HTTPS setup
   if [[ -z $https_setup ]]; then
-    https_setup="Y"
+    https_setup="y"
   fi
 
-  if [[ $https_setup == "Y" ]]; then
+  if [[ $https_setup == "y" ]]; then
     echo "🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]"
     read dns_setup
+    dns_setup=$(echo "$dns_setup" | tr '[:upper:]' '[:lower:]')
 
     # Set default value for DNS setup
     if [[ -z $dns_setup ]]; then
-      dns_setup="Y"
+      dns_setup="y"
     fi
 
-    if [[ $dns_setup == "Y" ]]; then
+    if [[ $dns_setup == "y" ]]; then
       echo "💡 Please enter your email address for the SSL certificate:"
       read email_address
 
       echo "🔗 Do you want to enforce HTTPS (HSTS)? [Y/n]"
       read hsts_enabled
+      hsts_enabled=$(echo "$hsts_enabled" | tr '[:upper:]' '[:lower:]')
 
       #  Set default value for HSTS
       if [[ -z $hsts_enabled ]]; then
-        hsts_enabled="Y"
+        hsts_enabled="y"
       fi
       
     else
@@ -110,17 +113,18 @@ install_formbricks() {
 
     echo "🔗 Do you want to enforce HTTPS (HSTS)? [Y/n]"
     read hsts_enabled
+    hsts_enabled=$(echo "$hsts_enabled" | tr '[:upper:]' '[:lower:]')
 
     #  Set default value for HSTS
     if [[ -z $hsts_enabled ]]; then
-      hsts_enabled="Y"
+      hsts_enabled="y"
     fi
   fi
 
   # Installing Traefik
   echo "🚗 Configuring Traefik..."
 
-  if [[ $hsts_enabled == "Y" ]]; then
+  if [[ $hsts_enabled == "y" ]]; then
     hsts_middlewares="middlewares:
         - hstsHeader"
     http_redirection="http:
@@ -134,7 +138,7 @@ install_formbricks() {
     http_redirection=""
   fi
 
-  if [[ $https_setup == "Y" ]]; then
+  if [[ $https_setup == "y" ]]; then
     certResolver="certResolver: default"
     certificates_resolvers="certificatesResolvers:
   default:
@@ -199,7 +203,7 @@ EOT
 
   echo "💡 Created traefik.yaml and traefik-dynamic.yaml file."
 
-  if [[ $https_setup == "Y" ]]; then
+  if [[ $https_setup == "y" ]]; then
     touch acme.json
     chmod 600 acme.json
     echo "💡 Created acme.json file with correct permissions."
@@ -207,10 +211,11 @@ EOT
 
   # Prompt for email service setup
   read -p "📧 Do you want to set up the email service? You will need SMTP credentials for the same! [y/N]" email_service
+  email_service=$(echo "$email_service" | tr '[:upper:]' '[:lower:]')
 
   # Set default value for email service setup
   if [[ -z $email_service ]]; then
-    email_service="N"
+    email_service="n"
   fi
 
   if [[ $email_service == "y" ]]; then
@@ -276,19 +281,19 @@ EOT
     if (inserting_labels && ($0 ~ /ports:/)) {
         print "    labels:"
         print "      - \"traefik.enable=true\"  # Enable Traefik for this service"
-        print "      - \"traefik.http.routers.formbricks.rule=Host(\`" domain_name "\`)\"  # Use your actual domain or IP"
+        print "      - \"traefik.http.routers.formbricks.rule=Host(`" domain_name "`)\"  # Use your actual domain or IP"
         print "      - \"traefik.http.routers.formbricks.entrypoints=websecure\"  # Use the websecure entrypoint (port 443 with TLS)"
         print "      - \"traefik.http.routers.formbricks.tls=true\"  # Enable TLS"
         print "      - \"traefik.http.routers.formbricks.tls.certresolver=default\"  # Specify the certResolver"
         print "      - \"traefik.http.services.formbricks.loadbalancer.server.port=3000\"  # Forward traffic to Formbricks on port 3000"
-        if (hsts_enabled == "Y") {
+        if (hsts_enabled == "y") {
             print "      - \"traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000\"  # Set HSTS (HTTP Strict Transport Security) max-age to 1 year (31536000 seconds)"
             print "      - \"traefik.http.middlewares.hstsHeader.headers.forceSTSHeader=true\"  # Ensure the HSTS header is always included in responses"
             print "      - \"traefik.http.middlewares.hstsHeader.headers.stsPreload=true\"  # Allow the domain to be preloaded in browser HSTS preload list"
             print "      - \"traefik.http.middlewares.hstsHeader.headers.stsIncludeSubdomains=true\"  # Apply HSTS policy to all subdomains as well"
         } else {
             print "      - \"traefik.http.routers.formbricks_http.entrypoints=web\"  # Use the web entrypoint (port 80)"
-            print "      - \"traefik.http.routers.formbricks_http.rule=Host(\`" domain_name "\`)\"  # Use your actual domain or IP"
+            print "      - \"traefik.http.routers.formbricks_http.rule=Host(`" domain_name "`)\"  # Use your actual domain or IP"
         }
         inserting_labels=0
     }
@@ -333,6 +338,7 @@ END
 uninstall_formbricks() {
   echo "🗑️ Preparing to Uninstalling Formbricks..."
   read -p "Are you sure you want to uninstall Formbricks? This will delete all the data associated with it! (yes/no): " uninstall_confirmation
+  uninstall_confirmation=$(echo "$uninstall_confirmation" | tr '[:upper:]' '[:lower:]')
   if [[ $uninstall_confirmation == "yes" ]]; then
     cd formbricks
     sudo docker compose down
