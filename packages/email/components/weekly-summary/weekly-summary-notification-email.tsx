@@ -19,7 +19,7 @@ export function WeeklySummaryNotificationEmail({
   endDate,
   startYear,
   endYear,
-}: WeeklySummaryNotificationEmailProps) {
+}: WeeklySummaryNotificationEmailProps): React.JSX.Element {
   return (
     <div>
       <NotificationHeader

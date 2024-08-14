@@ -2,6 +2,8 @@ name: E2E Tests
 on:
   workflow_call:
   workflow_dispatch:
+env:
+  TELEMETRY_DISABLED: 1
 jobs:
   build:
     name: Run E2E Tests
