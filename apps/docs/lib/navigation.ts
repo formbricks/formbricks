@@ -40,7 +40,8 @@ export const navigation: Array<NavGroup> = [
           { title: "User Metadata", href: "/global/metadata" }, // global
           { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/global/conditional-logic" }, // global
-          { title: "Custom Start & End Conditions", href: "/global/custom-start-end-conditions" }, // global
+          { title: "Start & End Dates", href: "/global/custom-start-end-conditions" }, // global
+          { title: "Limit submissions", href: "/global/limit-submissions" }, // global
           { title: "Recall Functionality", href: "/global/recall" }, // global
           { title: "Partial Submissions", href: "/global/partial-submissions" }, // global
         ],
@@ -63,7 +64,8 @@ export const navigation: Array<NavGroup> = [
           { title: "User Metadata", href: "/global/metadata" }, // global
           { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/global/conditional-logic" }, // global
-          { title: "Custom Start & End Conditions", href: "/global/custom-start-end-conditions" }, // global
+          { title: "Start & End Dates", href: "/global/custom-start-end-conditions" }, // global
+          { title: "Limit submissions", href: "/global/limit-submissions" }, // global
           { title: "Recall Functionality", href: "/global/recall" }, // global
           { title: "Partial Submissions", href: "/global/partial-submissions" }, // global
         ],
@@ -89,7 +91,8 @@ export const navigation: Array<NavGroup> = [
           { title: "User Metadata", href: "/global/metadata" },
           { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/global/conditional-logic" },
-          { title: "Custom Start & End Conditions", href: "/global/custom-start-end-conditions" },
+          { title: "Start & End Dates", href: "/global/custom-start-end-conditions" },
+          { title: "Limit submissions", href: "/global/limit-submissions" }, // global
           { title: "Recall Functionality", href: "/global/recall" },
           { title: "Verify Email before Survey", href: "/link-surveys/verify-email-before-survey" },
           { title: "PIN Protected Surveys", href: "/link-surveys/pin-protected-surveys" },

@@ -1,3 +1,4 @@
+/* eslint-disable -- leacy support workaround for now to avoid rewrite after eslint rules have been changed */
 import { PrismaClient } from "@prisma/client";
 import { AttributeType } from "@prisma/client";
 import { translateSurvey } from "./lib/i18n";

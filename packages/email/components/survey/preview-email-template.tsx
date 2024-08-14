@@ -10,7 +10,7 @@ import {
   Text,
 } from "@react-email/components";
 import { render } from "@react-email/render";
-import { CalendarDaysIcon } from "lucide-react";
+import { CalendarDaysIcon, UploadIcon } from "lucide-react";
 import React from "react";
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -18,7 +18,7 @@ import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
 import { type TSurvey, TSurveyQuestionTypeEnum, type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { RatingSmiley } from "@formbricks/ui/RatingSmiley";
-import { getNPSOptionColor, getRatingNumberOptionColor } from "../../utils";
+import { getNPSOptionColor, getRatingNumberOptionColor } from "../../lib/utils";
 
 interface PreviewEmailTemplateProps {
   survey: TSurvey;
@@ -26,13 +26,21 @@ interface PreviewEmailTemplateProps {
   styling: TSurveyStyling;
 }
 
-export const getPreviewEmailTemplateHtml = (survey: TSurvey, surveyUrl: string, styling: TSurveyStyling) => {
+export const getPreviewEmailTemplateHtml = (
+  survey: TSurvey,
+  surveyUrl: string,
+  styling: TSurveyStyling
+): string => {
   return render(<PreviewEmailTemplate styling={styling} survey={survey} surveyUrl={surveyUrl} />, {
     pretty: true,
   });
 };
 
-export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmailTemplateProps) {
+export function PreviewEmailTemplate({
+  survey,
+  surveyUrl,
+  styling,
+}: PreviewEmailTemplateProps): React.JSX.Element {
   const url = `${surveyUrl}?preview=true`;
   const urlWithPrefilling = `${surveyUrl}?preview=true&skipPrefilled=true&`;
   const defaultLanguageCode = "default";
@@ -200,7 +208,8 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
                         },
                         firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
                           ? "h-[46px]"
-                          : "h-10"
+                          : "h-10",
+                        firstQuestion.scale === "star" ? "h-12" : "h-10"
                       )}
                       href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
                       key={i}>
@@ -302,13 +311,13 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
             {firstQuestion.choices.map((choice) =>
               firstQuestion.allowMulti ? (
                 <Img
-                  className="rounded-custom mb-1 mr-1 inline-block h-[110px] w-[220px]"
+                  className="rounded-custom mb-1 mr-1 inline-block h-[140px] w-[220px]"
                   key={choice.id}
                   src={choice.imageUrl}
                 />
               ) : (
                 <Link
-                  className="rounded-custom mb-1 mr-1 inline-block h-[110px] w-[220px]"
+                  className="rounded-custom mb-1 mr-1 inline-block h-[140px] w-[220px]"
                   href={`${urlWithPrefilling}${firstQuestion.id}=${choice.id}`}
                   key={choice.id}
                   target="_blank">
@@ -370,11 +379,11 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
             <Section className="w-full table-auto">
               <Row>
                 <Column className="w-40 break-words px-4 py-2" />
-                {firstQuestion.columns.map((column, columnIndex) => {
+                {firstQuestion.columns.map((column) => {
                   return (
                     <Column
                       className="text-question-color max-w-40 break-words px-4 py-2 text-center"
-                      key={columnIndex}>
+                      key={getLocalizedValue(column, "default")}>
                       {getLocalizedValue(column, "default")}
                     </Column>
                   );
@@ -384,13 +393,15 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
                 return (
                   <Row
                     className={`${rowIndex % 2 === 0 ? "bg-input-color" : ""} rounded-custom`}
-                    key={rowIndex}>
+                    key={getLocalizedValue(row, "default")}>
                     <Column className="w-40 break-words px-4 py-2">
                       {getLocalizedValue(row, "default")}
                     </Column>
-                    {firstQuestion.columns.map((_, index) => {
+                    {firstQuestion.columns.map((_) => {
                       return (
-                        <Column className="text-question-color px-4 py-2" key={index}>
+                        <Column
+                          className="text-question-color px-4 py-2"
+                          key={getLocalizedValue(_, "default")}>
                           <Section className="bg-card-bg-color h-4 w-4 rounded-full p-2 outline" />
                         </Column>
                       );
@@ -412,11 +423,19 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
           <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
             {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
-          {Array.from({ length: 6 }).map((_, index) => (
+          {[
+            "Address Line 1",
+            "Address Line 2",
+            "City / Town",
+            "State / Region",
+            "ZIP / Post Code",
+            "Country",
+          ].map((label) => (
             <Section
-              className="border-input-border-color bg-input-color rounded-custom mt-4 block h-10 w-full border border-solid"
-              key={index}
-            />
+              className="border-input-border-color bg-input-color rounded-custom mt-4 block h-10 w-full border border-solid py-2 pl-2 text-slate-400"
+              key={label}>
+              {label}
+            </Section>
           ))}
           <EmailFooter />
         </EmailTemplateWrapper>
@@ -430,7 +449,12 @@ export function PreviewEmailTemplate({ survey, surveyUrl, styling }: PreviewEmai
           <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
             {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
-          <Section className="border-input-border-color rounded-custom mt-4 block h-20 w-full border border-solid bg-slate-50" />
+          <Section className="border-input-border-color rounded-custom mt-4 block flex h-24 w-full items-center justify-center border border-dashed bg-slate-50">
+            <Container className="mx-auto flex items-center text-center">
+              <UploadIcon className="mt-6 inline h-5 w-5 text-slate-400" />
+              <Text className="text-slate-400">Click or drag to upload files.</Text>
+            </Container>
+          </Section>
           <EmailFooter />
         </EmailTemplateWrapper>
       );
@@ -445,7 +469,7 @@ function EmailTemplateWrapper({
   children: React.ReactNode;
   surveyUrl: string;
   styling: TSurveyStyling;
-}) {
+}): React.JSX.Element {
   let signatureColor = "";
   const colors = {
     "brand-color": styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
@@ -487,7 +511,7 @@ function EmailTemplateWrapper({
   );
 }
 
-function EmailFooter() {
+function EmailFooter(): React.JSX.Element {
   return (
     <Container className="m-auto mt-8 text-center">
       <Link className="text-signature-color text-xs" href="https://formbricks.com/" target="_blank">

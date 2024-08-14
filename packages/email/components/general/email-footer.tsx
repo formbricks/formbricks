@@ -1,6 +1,6 @@
 import { Text } from "@react-email/components";
 
-export function EmailFooter() {
+export function EmailFooter(): React.JSX.Element {
   return (
     <Text>
       Have a great day!

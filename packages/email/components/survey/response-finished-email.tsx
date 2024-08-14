@@ -10,7 +10,10 @@ import {
 } from "@formbricks/types/surveys/types";
 import { EmailButton } from "../general/email-button";
 
-export const renderEmailResponseValue = (response: string | string[], questionType: TSurveyQuestionType) => {
+export const renderEmailResponseValue = (
+  response: string | string[],
+  questionType: TSurveyQuestionType
+): React.JSX.Element => {
   switch (questionType) {
     case TSurveyQuestionTypeEnum.FileUpload:
       return (
@@ -67,7 +70,7 @@ export function ResponseFinishedEmail({
   WEBAPP_URL,
   environmentId,
   organization,
-}: ResponseFinishedEmailProps) {
+}: ResponseFinishedEmailProps): React.JSX.Element {
   const questions = getQuestionResponseMapping(survey, response);
 
   return (
@@ -143,7 +146,7 @@ export function ResponseFinishedEmail({
   );
 }
 
-function FileIcon() {
+function FileIcon(): React.JSX.Element {
   return (
     <svg
       className="lucide lucide-file"
@@ -162,7 +165,7 @@ function FileIcon() {
   );
 }
 
-function EyeOffIcon() {
+function EyeOffIcon(): React.JSX.Element {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

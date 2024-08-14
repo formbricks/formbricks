@@ -1,4 +1,5 @@
 import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
+import { SurveyLoadingAnimation } from "@/app/s/[surveyId]/components/SurveyLoadingAnimation";
 import React from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
@@ -44,12 +45,14 @@ export const LinkSurveyWrapper = ({
           styling.cardArrangement?.linkSurveys === "straight" && "pt-6",
           styling.cardArrangement?.linkSurveys === "casual" && "px-6 py-10"
         )}>
+        <SurveyLoadingAnimation survey={survey} />
         {children}
       </div>
     );
   else
     return (
       <div>
+        <SurveyLoadingAnimation survey={survey} />
         <MediaBackground survey={survey} product={product}>
           <div className="flex max-h-dvh min-h-dvh items-end justify-center overflow-clip md:items-center">
             {!styling.isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
