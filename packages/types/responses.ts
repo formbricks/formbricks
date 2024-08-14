@@ -238,6 +238,7 @@ export const ZResponse = z.object({
   meta: ZResponseMeta,
   singleUseId: z.string().nullable(),
   language: z.string().nullable(),
+  panelistId: z.string().nullable(),
 });
 
 export type TResponse = z.infer<typeof ZResponse>;
@@ -254,6 +255,7 @@ export const ZResponseInput = z.object({
   language: z.string().optional(),
   data: ZResponseData,
   ttc: ZResponseTtc.optional(),
+  panelistId: z.string().optional(),
   meta: z
     .object({
       source: z.string().optional(),

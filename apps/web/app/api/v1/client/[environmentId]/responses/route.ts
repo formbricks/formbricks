@@ -91,6 +91,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     response = await createResponse({
       ...inputValidation.data,
       meta,
+      panelistId: inputValidation.data.userId || "",
     });
   } catch (error) {
     if (error instanceof InvalidInputError) {

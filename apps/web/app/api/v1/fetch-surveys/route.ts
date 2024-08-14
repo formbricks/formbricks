@@ -2,6 +2,7 @@ import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { getResponseCountBySurveyIdAndPanelistId } from "@formbricks/lib/response/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -71,58 +72,67 @@ export async function GET(request: Request) {
       return responses.validationResponse({ email: "required" });
     }
 
-    //TODO FILTER surveys if panelist already completed
-    const activeSurveys = surveys
-      .filter((survey) => {
-        return survey.status === "inProgress" && survey.type === "link";
-      })
-      .filter((survey) => {
-        if (survey.countries.length > 0) {
-          const found = survey.countries.find((country) => {
-            return country.isoCode === searchParams.get("country");
+    const activeSurveys = await Promise.all(
+      surveys
+        .filter((survey) => {
+          return survey.status === "inProgress" && survey.type === "link";
+        })
+        .filter((survey) => {
+          if (survey.countries.length > 0) {
+            const found = survey.countries.find((country) => {
+              return country.isoCode === searchParams.get("country");
+            });
+
+            //If panelist doesn't belong to survey country, then skip it.
+            if (!found) return false;
+          }
+
+          const requestedLanguage = searchParams.get("language");
+          if (requestedLanguage == "en" && survey.languages.length === 0) {
+            return true;
+          }
+          return survey.languages.some((lang) => {
+            return lang.language.code === requestedLanguage && lang.enabled;
           });
+        })
+        .map(async (survey) => {
+          const responseCount = await getResponseCountBySurveyIdAndPanelistId(
+            survey.id,
+            searchParams.get("panelist_id") || ""
+          );
+          if (responseCount !== 0) {
+            return null;
+          }
+          let url = WEBAPP_URL + "/s/" + survey.id;
+          if (survey.singleUse?.enabled) {
+            const singleUseId = generateSurveySingleUseId(survey.singleUse.isEncrypted);
+            url += `?suId=${singleUseId}`;
+            url += `&email=${encodeURIComponent(searchParams.get("email") ?? "")}`;
+            url += `&userId=${searchParams.get("panelist_id")}`;
+            url += `&country=${searchParams.get("country")}`;
+            url += `&lang=${searchParams.get("language")}`;
+            url += `&source=[SOURCE]`;
+          }
 
-          //If panelist doesn't belong to survey country, then skip it.
-          if (!found) return false;
-        }
+          return {
+            id: survey.id,
+            name: survey.name,
+            created_at: survey.createdAt,
+            updated_at: survey.updatedAt,
+            reward: survey.reward,
+            survey_url: url,
+            loi: calculateTimeToComplete(survey),
+            country: survey.countries.reduce((acc, country) => {
+              acc[country.isoCode] = country.name;
 
-        const requestedLanguage = searchParams.get("language");
-        if (requestedLanguage == "en" && survey.languages.length === 0) {
-          return true;
-        }
-        return survey.languages.some((lang) => {
-          return lang.language.code === requestedLanguage && lang.enabled;
-        });
-      })
-      .map((survey) => {
-        let url = WEBAPP_URL + "/s/" + survey.id;
-        if (survey.singleUse?.enabled) {
-          const singleUseId = generateSurveySingleUseId(survey.singleUse.isEncrypted);
-          url += `?suId=${singleUseId}`;
-          url += `&email=${encodeURIComponent(searchParams.get("email") ?? "")}`;
-          url += `&userId=${searchParams.get("panelist_id")}`;
-          url += `&country=${searchParams.get("country")}`;
-          url += `&lang=${searchParams.get("language")}`;
-          url += `&source=[SOURCE]`;
-        }
+              return acc;
+            }, {}),
+          };
+        })
+    );
 
-        return {
-          id: survey.id,
-          name: survey.name,
-          created_at: survey.createdAt,
-          updated_at: survey.updatedAt,
-          reward: survey.reward,
-          survey_url: url,
-          loi: calculateTimeToComplete(survey),
-          country: survey.countries.reduce((acc, country) => {
-            acc[country.isoCode] = country.name;
-
-            return acc;
-          }, {}),
-        };
-      });
-
-    return responses.successResponse(activeSurveys);
+    const filteredSurveys = activeSurveys.filter((survey) => survey !== null);
+    return responses.successResponse(filteredSurveys);
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);

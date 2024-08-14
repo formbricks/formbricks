@@ -256,17 +256,17 @@ export const Survey = ({
     if (!url) return null;
     const urlObj = new URL(url);
     urlObj.searchParams.append("survey_id", survey.id);
-    const user_id = getPanelistId();
-    if (user_id) {
-      urlObj.searchParams.append("panelist_id", user_id);
+    const panelistId = getPanelistId();
+    if (panelistId) {
+      urlObj.searchParams.append("panelist_id", panelistId);
     }
     return urlObj.toString();
   };
 
   const getPanelistId = (): string | null => {
     const urlParams = new URLSearchParams(window.location.search);
-    const user_id = urlParams.get("userId");
-    return user_id;
+    const panelistId = urlParams.get("userId");
+    return panelistId;
   };
 
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {

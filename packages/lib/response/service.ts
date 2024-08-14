@@ -63,6 +63,7 @@ export const responseSelection = {
   personAttributes: true,
   singleUseId: true,
   language: true,
+  panelistId: true,
   person: {
     select: {
       id: true,
@@ -206,6 +207,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     data,
     meta,
     singleUseId,
+    panelistId,
     ttc: initialTtc,
   } = responseInput;
 
@@ -240,6 +242,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       },
       finished: finished,
       failed: failed,
+      panelistId: panelistId,
       data: data,
       language: language,
       ...(person?.id && {
@@ -742,6 +745,36 @@ export const getResponseCountBySurveyId = reactCache(
           const responseCount = await prisma.response.count({
             where: {
               surveyId: surveyId,
+              ...buildWhereClause(filterCriteria),
+            },
+          });
+          return responseCount;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getResponseCountBySurveyId-${surveyId}-${JSON.stringify(filterCriteria)}`],
+      {
+        tags: [responseCache.tag.bySurveyId(surveyId)],
+      }
+    )()
+);
+
+export const getResponseCountBySurveyIdAndPanelistId = reactCache(
+  (surveyId: string, panelistId: string, filterCriteria?: TResponseFilterCriteria): Promise<number> =>
+    cache(
+      async () => {
+        validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
+
+        try {
+          const responseCount = await prisma.response.count({
+            where: {
+              surveyId: surveyId,
+              panelistId: panelistId,
               ...buildWhereClause(filterCriteria),
             },
           });
