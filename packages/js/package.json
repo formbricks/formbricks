@@ -55,9 +55,9 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "terser": "^5.31.3",
-    "vite": "^5.3.5",
-    "vite-plugin-dts": "^3.9.1"
+    "terser": "^5.31.6",
+    "vite": "^5.4.1",
+    "vite-plugin-dts": "^4.0.3"
   },
   "peerDependencies": {
     "zod": "3.x"
