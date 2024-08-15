@@ -1,4 +1,4 @@
-import { ChevronDownIcon, ChevronUpIcon, InfoIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { TSurveySummary } from "@formbricks/types/surveys/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
@@ -16,24 +16,7 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
           <p className="flex items-center gap-1 text-sm text-slate-600">
             {label}
             {typeof percentage === "number" && !isNaN(percentage) && (
-              <>
-                <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">{percentage}%</span>
-                {percentage > 100 && (
-                  <TooltipProvider delayDuration={50}>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <InfoIcon className="h-4 w-4 text-slate-600" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          The percentage is greater than 100% because the responses were created via API and
-                          not through a survey (there are less displays than responses).
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </>
+              <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">{percentage}%</span>
             )}
           </p>
           <p className="text-2xl font-bold text-slate-800">{value}</p>
@@ -84,13 +67,13 @@ export const SummaryMetadata = ({ setShowDropOffs, showDropOffs, surveySummary }
         />
         <StatCard
           label="Starts"
-          percentage={displayCount === 0 && totalResponses > 0 ? null : Math.round(startsPercentage)}
+          percentage={Math.round(startsPercentage) > 100 ? null : Math.round(startsPercentage)}
           value={totalResponses === 0 ? <span>-</span> : totalResponses}
           tooltipText="Number of times the survey has been started."
         />
         <StatCard
           label="Completed"
-          percentage={displayCount === 0 && completedResponses > 0 ? null : Math.round(completedPercentage)}
+          percentage={Math.round(completedPercentage) > 100 ? null : Math.round(completedPercentage)}
           value={completedResponses === 0 ? <span>-</span> : completedResponses}
           tooltipText="Number of times the survey has been completed."
         />
