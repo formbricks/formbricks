@@ -7,6 +7,7 @@ import {
   TSurveyQuestion,
   TSurveyQuestionsObject,
   TSurveyRecallItem,
+  TSurveyVariables,
 } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
 import { structuredClone } from "../pollyfills/structuredClone";
@@ -64,7 +65,8 @@ const getRecallItemLabel = <T extends TSurveyQuestionsObject>(
   recallItemId: string,
   survey: T,
   languageCode: string,
-  attributeClasses: TAttributeClass[]
+  attributeClasses: TAttributeClass[],
+  variables: TSurveyVariables
 ): string | undefined => {
   const isHiddenField = survey.hiddenFields.fieldIds?.includes(recallItemId);
   if (isHiddenField) return recallItemId;
@@ -75,19 +77,24 @@ const getRecallItemLabel = <T extends TSurveyQuestionsObject>(
   const attributeClass = attributeClasses.find(
     (attributeClass) => attributeClass.name.replaceAll(" ", "nbsp") === recallItemId
   );
-  return attributeClass?.name;
+  if (attributeClass) return attributeClass?.name;
+
+  const variable = variables?.find((variable) => variable.id === recallItemId);
+  if (variable) return variable.name;
 };
 
 // Converts recall information in a headline to a corresponding recall question headline, with or without a slash.
-export const recallToHeadline = <T extends TSurveyQuestionsObject>(
+export const recallToHeadline = <T extends TSurvey>(
   headline: TI18nString,
   survey: T,
   withSlash: boolean,
   languageCode: string,
   attributeClasses: TAttributeClass[]
+  // variables: TSurveyVariables
 ): TI18nString => {
   let newHeadline = structuredClone(headline);
   const localizedHeadline = newHeadline[languageCode];
+  const variables = survey.variables;
 
   if (!localizedHeadline?.includes("#recall:")) return headline;
 
@@ -100,7 +107,7 @@ export const recallToHeadline = <T extends TSurveyQuestionsObject>(
       if (!recallItemId) break;
 
       let recallItemLabel =
-        getRecallItemLabel(recallItemId, survey, languageCode, attributeClasses) || recallItemId;
+        getRecallItemLabel(recallItemId, survey, languageCode, attributeClasses, variables) || recallItemId;
 
       while (recallItemLabel.includes("#recall:")) {
         const nestedRecallInfo = extractRecallInfo(recallItemLabel);
@@ -149,7 +156,7 @@ export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): T
 };
 
 // Processes each question in a survey to ensure headlines are formatted correctly for recall and return the modified survey.
-export const replaceHeadlineRecall = <T extends TSurveyQuestionsObject>(
+export const replaceHeadlineRecall = <T extends TSurvey>(
   survey: T,
   language: string,
   attributeClasses: TAttributeClass[]
@@ -172,7 +179,8 @@ export const getRecallItems = (
   text: string,
   survey: TSurvey,
   languageCode: string,
-  attributeClasses: TAttributeClass[]
+  attributeClasses: TAttributeClass[],
+  variables: TSurveyVariables
 ): TSurveyRecallItem[] => {
   if (!text.includes("#recall:")) return [];
 
@@ -181,15 +189,30 @@ export const getRecallItems = (
   ids.forEach((recallItemId) => {
     const isHiddenField = survey.hiddenFields.fieldIds?.includes(recallItemId);
     const isSurveyQuestion = survey.questions.find((question) => question.id === recallItemId);
+    const isVariable = survey.variables.find((variable) => variable.id === recallItemId);
 
-    const recallItemLabel = getRecallItemLabel(recallItemId, survey, languageCode, attributeClasses);
+    const recallItemLabel = getRecallItemLabel(
+      recallItemId,
+      survey,
+      languageCode,
+      attributeClasses,
+      variables
+    );
+
+    const getRecallItemType = () => {
+      if (isHiddenField) return "hiddenField";
+      if (isSurveyQuestion) return "question";
+      if (isVariable) return "variable";
+      return "attributeClass";
+    };
+
     if (recallItemLabel) {
       let recallItemLabelTemp = recallItemLabel;
       recallItemLabelTemp = replaceRecallInfoWithUnderline(recallItemLabelTemp);
       recallItems.push({
         id: recallItemId,
         label: recallItemLabelTemp,
-        type: isHiddenField ? "hiddenField" : isSurveyQuestion ? "question" : "attributeClass",
+        type: getRecallItemType(),
       });
     }
   });
@@ -228,6 +251,7 @@ export const parseRecallInfo = (
   text: string,
   attributes?: TAttributes,
   responseData?: TResponseData,
+  variables?: TSurveyVariables,
   withSlash: boolean = false
 ) => {
   let modifiedText = text;
@@ -253,6 +277,29 @@ export const parseRecallInfo = (
       }
     });
   }
+
+  if (variables && variables.length > 0) {
+    variables.forEach((variable) => {
+      const recallPattern = `#recall:`;
+      while (modifiedText.includes(recallPattern)) {
+        const recallInfo = extractRecallInfo(modifiedText, variable.id);
+        if (!recallInfo) break; // Exit the loop if no recall info is found
+
+        const recallItemId = extractId(recallInfo);
+        if (!recallItemId) continue; // Skip to the next iteration if no ID could be extracted
+
+        const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
+
+        let value = variable.value?.toString() || fallback;
+        if (withSlash) {
+          modifiedText = modifiedText.replace(recallInfo, "#/" + value + "\\#");
+        } else {
+          modifiedText = modifiedText.replace(recallInfo, value);
+        }
+      }
+    });
+  }
+
   if (responseData && questionIds.length > 0) {
     while (modifiedText.includes("recall:")) {
       const recallInfo = extractRecallInfo(modifiedText);

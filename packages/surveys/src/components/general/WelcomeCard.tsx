@@ -4,7 +4,7 @@ import { calculateElementIdx } from "@/lib/utils";
 import { useEffect } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
+import { TI18nString, TSurvey, TSurveyVariables } from "@formbricks/types/surveys/types";
 import { Headline } from "./Headline";
 import { HtmlBody } from "./HtmlBody";
 
@@ -18,7 +18,7 @@ interface WelcomeCardProps {
   languageCode: string;
   responseCount?: number;
   autoFocusEnabled: boolean;
-  replaceRecallInfo: (text: string, responseData: TResponseData) => string;
+  replaceRecallInfo: (text: string, responseData: TResponseData, variables: TSurveyVariables) => string;
   isCurrent: boolean;
   responseData: TResponseData;
 }
@@ -142,11 +142,19 @@ export const WelcomeCard = ({
           )}
 
           <Headline
-            headline={replaceRecallInfo(getLocalizedValue(headline, languageCode), responseData)}
+            headline={replaceRecallInfo(
+              getLocalizedValue(headline, languageCode),
+              responseData,
+              survey.variables
+            )}
             questionId="welcomeCard"
           />
           <HtmlBody
-            htmlString={replaceRecallInfo(getLocalizedValue(html, languageCode), responseData)}
+            htmlString={replaceRecallInfo(
+              getLocalizedValue(html, languageCode),
+              responseData,
+              survey.variables
+            )}
             questionId="welcomeCard"
           />
         </div>

@@ -1443,7 +1443,7 @@ export type TSurveySummary = z.infer<typeof ZSurveySummary>;
 export const ZSurveyRecallItem = z.object({
   id: z.string(),
   label: z.string(),
-  type: z.enum(["question", "hiddenField", "attributeClass"]),
+  type: z.enum(["question", "hiddenField", "attributeClass", "variable"]),
 });
 
 export type TSurveyRecallItem = z.infer<typeof ZSurveyRecallItem>;

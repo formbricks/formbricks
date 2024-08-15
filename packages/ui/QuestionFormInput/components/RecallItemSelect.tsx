@@ -10,6 +10,7 @@ import {
   Rows3Icon,
   StarIcon,
   TagIcon,
+  VariableIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
@@ -19,6 +20,7 @@ import {
   TSurveyHiddenFields,
   TSurveyQuestion,
   TSurveyRecallItem,
+  TSurveyVariables,
 } from "@formbricks/types/surveys/types";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../../DropdownMenu";
 import { Input } from "../../Input";
@@ -43,6 +45,7 @@ interface RecallItemSelectProps {
   selectedLanguageCode: string;
   hiddenFields: TSurveyHiddenFields;
   attributeClasses: TAttributeClass[];
+  variables: TSurveyVariables;
 }
 
 export const RecallItemSelect = ({
@@ -53,6 +56,7 @@ export const RecallItemSelect = ({
   recallItems,
   selectedLanguageCode,
   attributeClasses,
+  variables,
 }: RecallItemSelectProps) => {
   const [searchValue, setSearchValue] = useState("");
   const isNotAllowedQuestionType = (question: TSurveyQuestion): boolean => {
@@ -98,6 +102,22 @@ export const RecallItemSelect = ({
       });
   }, [attributeClasses]);
 
+  const variableRecallItems = useMemo(() => {
+    if (localSurvey.variables.length) {
+      return localSurvey.variables
+        .filter((variable) => !recallItemIds.includes(variable.id))
+        .map((variable) => {
+          return {
+            id: variable.id,
+            label: variable.name,
+            type: "variable" as const,
+          };
+        });
+    }
+
+    return [];
+  }, [localSurvey.variables, recallItemIds]);
+
   const surveyQuestionRecallItems = useMemo(() => {
     const isEndingCard = !localSurvey.questions.map((question) => question.id).includes(questionId);
     const idx = isEndingCard
@@ -118,22 +138,31 @@ export const RecallItemSelect = ({
   }, [localSurvey.questions, questionId, recallItemIds]);
 
   const filteredRecallItems: TSurveyRecallItem[] = useMemo(() => {
-    return [...surveyQuestionRecallItems, ...hiddenFieldRecallItems, ...attributeClassRecallItems].filter(
-      (recallItems) => {
-        if (searchValue.trim() === "") return true;
-        else {
-          return recallItems.label.toLowerCase().startsWith(searchValue.toLowerCase());
-        }
+    return [
+      ...surveyQuestionRecallItems,
+      ...hiddenFieldRecallItems,
+      ...attributeClassRecallItems,
+      ...variableRecallItems,
+    ].filter((recallItems) => {
+      if (searchValue.trim() === "") return true;
+      else {
+        return recallItems.label.toLowerCase().startsWith(searchValue.toLowerCase());
       }
-    );
-  }, [surveyQuestionRecallItems, hiddenFieldRecallItems, attributeClassRecallItems, searchValue]);
+    });
+  }, [
+    surveyQuestionRecallItems,
+    hiddenFieldRecallItems,
+    attributeClassRecallItems,
+    variableRecallItems,
+    searchValue,
+  ]);
 
   // function to modify headline (recallInfo to corresponding headline)
   const getRecallLabel = (label: string): string => {
     return replaceRecallInfoWithUnderline(label);
   };
 
-  const getQuestionIcon = (recallItem: TSurveyRecallItem) => {
+  const getRecallItemIcon = (recallItem: TSurveyRecallItem) => {
     switch (recallItem.type) {
       case "question":
         const question = localSurvey.questions.find((question) => question.id === recallItem.id);
@@ -144,6 +173,8 @@ export const RecallItemSelect = ({
         return EyeOffIcon;
       case "attributeClass":
         return TagIcon;
+      case "variable":
+        return VariableIcon;
     }
   };
 
@@ -170,7 +201,7 @@ export const RecallItemSelect = ({
           />
           <div className="max-h-72 overflow-y-auto overflow-x-hidden">
             {filteredRecallItems.map((recallItem, index) => {
-              const IconComponent = getQuestionIcon(recallItem);
+              const IconComponent = getRecallItemIcon(recallItem);
               return (
                 <DropdownMenuItem
                   id={"recallItem-" + index}
