@@ -13,7 +13,7 @@ export const ProgressBar = ({ survey, questionId }: ProgressBarProps) => {
     () => survey.questions.findIndex((q) => q.id === questionId),
     [survey, questionId]
   );
-  const questionIds = useMemo(() => survey.questions.map((question) => question.id), [survey.questions]);
+  const endingCardIds = useMemo(() => survey.endings.map((ending) => ending.id), [survey.endings]);
 
   const calculateProgress = useCallback(
     (index: number, questionsLength: number) => {
@@ -30,11 +30,15 @@ export const ProgressBar = ({ survey, questionId }: ProgressBarProps) => {
     return survey.questions.map((_, index) => calculateProgress(index, survey.questions.length));
   }, [calculateProgress, survey]);
 
-  return (
-    <Progress
-      progress={
-        !questionIds.includes(questionId) ? 1 : questionId === "start" ? 0 : progressArray[currentQuestionIdx]
-      }
-    />
-  );
+  const progressValue = useMemo(() => {
+    if (questionId === "start") {
+      return 0;
+    } else if (endingCardIds.includes(questionId)) {
+      return 1;
+    } else {
+      return progressArray[currentQuestionIdx];
+    }
+  }, [questionId, endingCardIds, progressArray, currentQuestionIdx]);
+
+  return <Progress progress={progressValue} />;
 };
