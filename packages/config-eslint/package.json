@@ -4,8 +4,8 @@
   "private": true,
   "devDependencies": {
     "@next/eslint-plugin-next": "^14.2.5",
-    "@typescript-eslint/eslint-plugin": "^8.1.0",
-    "@typescript-eslint/parser": "^8.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
     "@vercel/style-guide": "^6.0.0",
     "eslint-config-next": "^14.2.5",
     "eslint-config-prettier": "^9.1.0",
