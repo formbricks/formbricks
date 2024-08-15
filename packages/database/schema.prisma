@@ -132,7 +132,6 @@ model Response {
   // singleUseId, used to prevent multiple responses
   singleUseId      String?
   language         String?
-  display          Display?
 
   @@unique([surveyId, singleUseId])
   @@index([surveyId, createdAt]) // to determine monthly response count
@@ -200,7 +199,6 @@ model Display {
   person     Person?        @relation(fields: [personId], references: [id], onDelete: Cascade)
   personId   String?
   responseId String?        @unique
-  response   Response?      @relation(fields: [responseId], references: [id], onDelete: Cascade)
   status     DisplayStatus?
 
   @@index([surveyId])
