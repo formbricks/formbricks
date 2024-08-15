@@ -14,29 +14,6 @@ const logger = Logger.getInstance();
 logger.debug("Create command queue");
 const queue = new CommandQueue();
 
-type QueuedMethod = {
-  prop: string;
-  args: unknown[];
-};
-
-const _initWithQueue = async (initConfig: TJsWebsiteConfigInput, queuedMethods: QueuedMethod[]) => {
-  try {
-    await init(initConfig);
-  } catch (err) {
-    logger.error(`Failed to initialize formbricks: ${err}`);
-    return;
-  }
-
-  for (const { prop, args } of queuedMethods) {
-    if ((formbricks as any)[prop] === undefined || typeof (formbricks as any)[prop] !== "function") {
-      logger.error(`Method ${prop} does not exist on formbricks`);
-      continue;
-    }
-
-    await (formbricks as any)[prop](...args);
-  }
-};
-
 const init = async (initConfig: TJsWebsiteConfigInput) => {
   ErrorHandler.init(initConfig.errorHandler);
   queue.add(false, "website", initialize, initConfig);
@@ -63,8 +40,7 @@ const formbricks = {
   track,
   reset,
   registerRouteChange,
-  _initWithQueue,
 };
 
-export type TFormbricksWebsite = Omit<typeof formbricks, "_initWithQueue">;
+export type TFormbricksWebsite = typeof formbricks;
 export default formbricks as TFormbricksWebsite;
