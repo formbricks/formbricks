@@ -87,7 +87,7 @@ RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VE
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
-USER nextjs
+# USER nextjs
 
 # Prepare volume for uploads
 RUN mkdir -p /home/nextjs/apps/web/uploads/

@@ -8,7 +8,7 @@ interface LinkSurveyEmailProps {
   getSurveyLink: () => string;
 }
 
-export function LinkSurveyEmail({ surveyName, getSurveyLink }: LinkSurveyEmailProps) {
+export function LinkSurveyEmail({ surveyName, getSurveyLink }: LinkSurveyEmailProps): React.JSX.Element {
   return (
     <Container>
       <Heading>Hey 👋</Heading>
