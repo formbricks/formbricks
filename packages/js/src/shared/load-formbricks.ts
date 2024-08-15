@@ -80,16 +80,11 @@ export const loadFormbricksToProxy = async (
 
       if (loadSDKResult.ok) {
         if (window.formbricks) {
-          try {
-            // @ts-expect-error -- Required for dynamic function calls
-            await window.formbricks.init(...args);
+          // @ts-expect-error -- Required for dynamic function calls
+          void window.formbricks.init(...args);
 
-            isInitializing = false;
-            isInitialized = true;
-          } catch (err) {
-            console.error(`🧱 Formbricks - Error during Initializing: ${err as string}`);
-            return;
-          }
+          isInitializing = false;
+          isInitialized = true;
 
           // process the queued functions
           for (const { prop: functionProp, args: functionArgs } of functionsToProcess) {
