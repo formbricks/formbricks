@@ -41,10 +41,10 @@ const Page = async ({ params }) => {
       <PageContentWrapper className="w-full">
         <PageHeader pageTitle={survey.name}>
           <SurveyAnalysisNavigation
-            surveyId={survey.id}
+            survey={survey}
             environmentId={environment.id}
             activeId="responses"
-            responseCount={totalResponseCount}
+            initialTotalResponseCount={totalResponseCount}
           />
         </PageHeader>
         <ResponsePage
