@@ -551,7 +551,6 @@ export const QuestionFormInput = ({
             selectedLanguageCode={usedLanguageCode}
             hiddenFields={localSurvey.hiddenFields}
             attributeClasses={attributeClasses}
-            variables={localSurvey.variables}
           />
         )}
       </div>

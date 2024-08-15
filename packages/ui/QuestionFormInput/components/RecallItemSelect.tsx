@@ -2,6 +2,8 @@ import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import {
   CalendarDaysIcon,
   EyeOffIcon,
+  FileDigitIcon,
+  FileTextIcon,
   HomeIcon,
   ListIcon,
   MessageSquareTextIcon,
@@ -10,7 +12,6 @@ import {
   Rows3Icon,
   StarIcon,
   TagIcon,
-  VariableIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
@@ -20,7 +21,6 @@ import {
   TSurveyHiddenFields,
   TSurveyQuestion,
   TSurveyRecallItem,
-  TSurveyVariables,
 } from "@formbricks/types/surveys/types";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../../DropdownMenu";
 import { Input } from "../../Input";
@@ -45,7 +45,6 @@ interface RecallItemSelectProps {
   selectedLanguageCode: string;
   hiddenFields: TSurveyHiddenFields;
   attributeClasses: TAttributeClass[];
-  variables: TSurveyVariables;
 }
 
 export const RecallItemSelect = ({
@@ -56,7 +55,6 @@ export const RecallItemSelect = ({
   recallItems,
   selectedLanguageCode,
   attributeClasses,
-  variables,
 }: RecallItemSelectProps) => {
   const [searchValue, setSearchValue] = useState("");
   const isNotAllowedQuestionType = (question: TSurveyQuestion): boolean => {
@@ -174,7 +172,8 @@ export const RecallItemSelect = ({
       case "attributeClass":
         return TagIcon;
       case "variable":
-        return VariableIcon;
+        const variable = localSurvey.variables.find((variable) => variable.id === recallItem.id);
+        return variable?.type === "number" ? FileDigitIcon : FileTextIcon;
     }
   };
 
