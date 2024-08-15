@@ -99,7 +99,6 @@ export const loadFormbricksToProxy = async (
               // @ts-expect-error -- Required for dynamic function calls
               typeof window.formbricks[functionProp] !== "function"
             ) {
-              // logger.error(`Method ${prop} does not exist on formbricks`);
               console.error(`🧱 Formbricks - Error: Method ${functionProp} does not exist on formbricks`);
               continue;
             }
