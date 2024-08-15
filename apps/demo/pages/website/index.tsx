@@ -37,13 +37,11 @@ const AppPage = ({}) => {
         language: "en",
       };
 
-      setTimeout(() => {
-        formbricks.init({
-          environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
-          apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
-          attributes: defaultAttributes,
-        });
-      }, 5000);
+      formbricks.init({
+        environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
+        apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
+        attributes: defaultAttributes,
+      });
     }
 
     // Connect next.js router to Formbricks
@@ -129,13 +127,6 @@ const AppPage = ({}) => {
                 formbricks.reset();
               }}>
               Reset
-            </button>
-
-            <button
-              onClick={() => {
-                formbricks.track("Test Action");
-              }}>
-              Test Action
             </button>
 
             <p className="text-xs text-slate-700 dark:text-slate-300">
