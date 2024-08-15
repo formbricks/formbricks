@@ -27,29 +27,35 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/dangerous-git-checkout
 
-      - name: Build & Cache Web Binaries
-        uses: ./.github/actions/cache-build-web
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v3
         with:
-          e2e_testing_mode: "1"
-
-      - name: Check if pnpm is installed
-        id: pnpm-check
-        run: |
-          if pnpm --version; then
-            echo "pnpm is installed."
-            echo "PNPM_INSTALLED=true" >> $GITHUB_ENV
-          else
-            echo "pnpm is not installed."
-            echo "PNPM_INSTALLED=false" >> $GITHUB_ENV
-          fi
+          node-version: 20.x
 
       - name: Install pnpm
-        if: env.PNPM_INSTALLED == 'false'
         uses: pnpm/action-setup@v4
 
       - name: Install dependencies
-        if: env.PNPM_INSTALLED == 'false'
-        run: pnpm install
+        run: pnpm install --config.platform=linux --config.architecture=x64
+        shell: bash
+
+      - name: create .env
+        run: cp .env.example .env
+        shell: bash
+
+      - name: Fill ENCRYPTION_KEY, ENTERPRISE_LICENSE_KEY and E2E_TESTING in .env
+        run: |
+          RANDOM_KEY=$(openssl rand -hex 32)
+          sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
+          sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
+          sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
+          sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${RANDOM_KEY}/" .env
+          echo "E2E_TESTING=1" >> .env
+        shell: bash
+
+      - name: Build App
+        run: |
+          pnpm build --filter=@formbricks/web...
 
       - name: Apply Prisma Migrations
         run: |
@@ -72,15 +78,7 @@ jobs:
             sleep 10
           done
 
-      - name: Cache Playwright
-        uses: actions/cache@v3
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
-
       - name: Install Playwright
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps
 
       - name: Run E2E Tests
