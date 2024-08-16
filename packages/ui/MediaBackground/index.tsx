@@ -13,6 +13,7 @@ interface MediaBackgroundProps {
   isEditorView?: boolean;
   isMobilePreview?: boolean;
   ContentRef?: React.RefObject<HTMLDivElement>;
+  onBackgroundLoaded?: (isLoaded: boolean) => void;
 }
 
 export const MediaBackground: React.FC<MediaBackgroundProps> = ({
@@ -22,6 +23,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   isEditorView = false,
   isMobilePreview = false,
   ContentRef,
+  onBackgroundLoaded,
 }) => {
   const animatedBackgroundRef = useRef<HTMLVideoElement>(null);
   const [backgroundLoaded, setBackgroundLoaded] = useState(false);
@@ -74,6 +76,12 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
       setBackgroundLoaded(true);
     }
   }, [background?.bg, background?.bgType]);
+
+  useEffect(() => {
+    if (backgroundLoaded && onBackgroundLoaded) {
+      onBackgroundLoaded(true);
+    }
+  }, [backgroundLoaded, onBackgroundLoaded]);
 
   const baseClasses = "absolute inset-0 h-full w-full transition-opacity duration-500";
   const loadedClass = backgroundLoaded ? "opacity-100" : "opacity-0";
