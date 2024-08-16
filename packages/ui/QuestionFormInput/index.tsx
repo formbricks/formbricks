@@ -153,8 +153,7 @@ export const QuestionFormInput = ({
           getLocalizedValue(text, usedLanguageCode),
           localSurvey,
           usedLanguageCode,
-          attributeClasses,
-          localSurvey.variables
+          attributeClasses
         )
       : []
   );
@@ -182,8 +181,7 @@ export const QuestionFormInput = ({
             getLocalizedValue(text, usedLanguageCode),
             localSurvey,
             usedLanguageCode,
-            attributeClasses,
-            localSurvey.variables
+            attributeClasses
           )
         : []
     );

@@ -145,7 +145,13 @@ export const PreviewSurvey = ({
 
   const updateQuestionId = useCallback(
     (newQuestionId: string) => {
-      if (!newQuestionId || newQuestionId === "hidden" || newQuestionId === "multiLanguage") return;
+      if (
+        !newQuestionId ||
+        newQuestionId === "hidden" ||
+        newQuestionId === "multiLanguage" ||
+        newQuestionId === "variables"
+      )
+        return;
       if (newQuestionId === "start" && !survey.welcomeCard.enabled) return;
       setQuestionId(newQuestionId);
     },

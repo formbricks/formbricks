@@ -19,7 +19,7 @@ interface SurveyVariableCardsItemProps {
   mode: "create" | "edit";
 }
 
-export const SurveyVariableCardsItem = ({
+export const SurveyVariableCardItem = ({
   variable,
   localSurvey,
   setLocalSurvey,
