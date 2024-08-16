@@ -4,9 +4,10 @@ import { createId } from "@paralleldrive/cuid2";
 import { TrashIcon } from "lucide-react";
 import React, { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/Form";
+import { FormControl, FormField, FormItem, FormProvider } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
@@ -70,6 +71,28 @@ export const SurveyVariableCardsItem = ({
     const subscription = form.watch(() => form.handleSubmit(editSurveyVariable)());
     return () => subscription.unsubscribe();
   }, [form, mode, editSurveyVariable]);
+
+  const onVaribleDelete = (variable: TSurveyVariable) => {
+    const questions = [...localSurvey.questions];
+
+    // find if this variable is used in any question's recall and remove it for every language
+
+    questions.forEach((question) => {
+      for (const [languageCode, headline] of Object.entries(question.headline)) {
+        if (headline.includes(`recall:${variable.id}`)) {
+          const recallInfo = extractRecallInfo(headline);
+          if (recallInfo) {
+            question.headline[languageCode] = headline.replace(recallInfo, "");
+          }
+        }
+      }
+    });
+
+    setLocalSurvey((prevSurvey) => {
+      const updatedVariables = prevSurvey.variables.filter((v) => v.id !== variable.id);
+      return { ...prevSurvey, variables: updatedVariables, questions };
+    });
+  };
 
   if (mode === "edit" && !variable) {
     return null;
@@ -187,12 +210,7 @@ export const SurveyVariableCardsItem = ({
                 type="button"
                 size="sm"
                 className="whitespace-nowrap"
-                onClick={() => {
-                  setLocalSurvey((prevSurvey) => {
-                    const updatedVariables = prevSurvey.variables.filter((v) => v.id !== variable.id);
-                    return { ...prevSurvey, variables: updatedVariables };
-                  });
-                }}>
+                onClick={() => onVaribleDelete(variable)}>
                 <TrashIcon className="h-4 w-4" />
               </Button>
             )}
