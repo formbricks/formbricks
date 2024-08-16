@@ -434,12 +434,7 @@ export const QuestionsView = ({
           activeQuestionId={activeQuestionId}
         />
 
-        <SurveyVariablesCard
-          localSurvey={localSurvey}
-          setLocalSurvey={setLocalSurvey}
-          setActiveQuestionId={setActiveQuestionId}
-          activeQuestionId={activeQuestionId}
-        />
+        <SurveyVariablesCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
 
         <MultiLanguageCard
           localSurvey={localSurvey}

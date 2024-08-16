@@ -1,32 +1,18 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { SurveyVariableCardItem } from "./SurveyVariableCardItem";
+import { SurveyVariablesCardItem } from "./SurveyVariablesCardItem";
 
 interface SurveyVariablesCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  activeQuestionId: string | null;
-  setActiveQuestionId: (questionId: string | null) => void;
 }
 
-export const SurveyVariablesCard = ({
-  activeQuestionId,
-  localSurvey,
-  setActiveQuestionId,
-  setLocalSurvey,
-}: SurveyVariablesCardProps) => {
-  const open = activeQuestionId == "variables";
-
-  const setOpen = (open: boolean) => {
-    if (open) {
-      setActiveQuestionId("variables");
-    } else {
-      setActiveQuestionId(null);
-    }
-  };
+export const SurveyVariablesCard = ({ localSurvey, setLocalSurvey }: SurveyVariablesCardProps) => {
+  const [open, setOpen] = useState(false);
 
   return (
     <div className={cn(open ? "shadow-lg" : "shadow-md", "group z-10 flex flex-row rounded-lg bg-white")}>
@@ -56,7 +42,7 @@ export const SurveyVariablesCard = ({
           <div className="flex flex-col gap-2">
             {localSurvey.variables.length > 0 ? (
               localSurvey.variables.map((variable) => (
-                <SurveyVariableCardItem
+                <SurveyVariablesCardItem
                   key={variable.id}
                   mode="edit"
                   variable={variable}
@@ -69,7 +55,7 @@ export const SurveyVariablesCard = ({
             )}
           </div>
 
-          <SurveyVariableCardItem mode="create" localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+          <SurveyVariablesCardItem mode="create" localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
     </div>

@@ -12,19 +12,19 @@ import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
-interface SurveyVariableCardsItemProps {
+interface SurveyVariablesCardItemProps {
   variable?: TSurveyVariable;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   mode: "create" | "edit";
 }
 
-export const SurveyVariableCardItem = ({
+export const SurveyVariablesCardItem = ({
   variable,
   localSurvey,
   setLocalSurvey,
   mode,
-}: SurveyVariableCardsItemProps) => {
+}: SurveyVariablesCardItemProps) => {
   const form = useForm<TSurveyVariable>({
     defaultValues: variable ?? {
       id: createId(),
