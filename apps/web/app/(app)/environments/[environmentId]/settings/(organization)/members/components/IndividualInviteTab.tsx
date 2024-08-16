@@ -70,7 +70,7 @@ export const IndividualInviteTab = ({
                 <UpgradePlanNotice
                   message="To manage access roles,"
                   url={`/environments/${environmentId}/settings/billing`}
-                  textForUrl="please add your credit card (free)."
+                  textForUrl="please upgrade your plan."
                 />
               ) : (
                 <UpgradePlanNotice
