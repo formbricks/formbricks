@@ -14,7 +14,7 @@ import {
   getSummaryBySurveySharingKeyAction,
 } from "@/app/share/[sharingKey]/actions";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -53,13 +53,15 @@ export const SummaryPage = ({
   survey,
   surveyId,
   webAppUrl,
-  user,
   totalResponseCount,
   attributeClasses,
 }: SummaryPageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
   const isSharingPage = !!sharingKey;
+
+  const searchParams = useSearchParams();
+  const isShareEmbedModalOpen = searchParams.get("share") === "true";
 
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
@@ -69,55 +71,66 @@ export const SummaryPage = ({
 
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectedFilter, dateRange]
   );
 
+  // Use a ref to keep the latest state and props
+  const latestFiltersRef = useRef(filters);
+  latestFiltersRef.current = filters;
+
+  const getResponseCount = () => {
+    if (isSharingPage)
+      return getResponseCountBySurveySharingKeyAction({
+        sharingKey,
+        filterCriteria: latestFiltersRef.current,
+      });
+    return getResponseCountAction({
+      surveyId,
+      filterCriteria: latestFiltersRef.current,
+    });
+  };
+
+  const getSummary = () => {
+    if (isSharingPage)
+      return getSummaryBySurveySharingKeyAction({
+        sharingKey,
+        filterCriteria: latestFiltersRef.current,
+      });
+
+    return getSurveySummaryAction({
+      surveyId,
+      filterCriteria: latestFiltersRef.current,
+    });
+  };
+
+  const handleInitialData = async () => {
+    try {
+      const updatedResponseCountData = await getResponseCount();
+      const updatedSurveySummary = await getSummary();
+
+      const responseCount = updatedResponseCountData?.data ?? 0;
+      const surveySummary = updatedSurveySummary?.data ?? initialSurveySummary;
+
+      setResponseCount(responseCount);
+      setSurveySummary(surveySummary);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
-    const handleInitialData = async () => {
-      try {
-        let updatedResponseCount: number;
-        if (isSharingPage) {
-          const getResponseCountActionResponse = await getResponseCountBySurveySharingKeyAction({
-            sharingKey,
-            filterCriteria: filters,
-          });
-          updatedResponseCount = getResponseCountActionResponse?.data || 0;
-        } else {
-          const getResponseCountActionResponse = await getResponseCountAction({
-            surveyId,
-            filterCriteria: filters,
-          });
-          updatedResponseCount = getResponseCountActionResponse?.data || 0;
-        }
-        setResponseCount(updatedResponseCount);
-
-        let updatedSurveySummary;
-        if (isSharingPage) {
-          const getSummaryActionResponse = await getSummaryBySurveySharingKeyAction({
-            sharingKey,
-            filterCriteria: filters,
-          });
-          updatedSurveySummary = getSummaryActionResponse?.data;
-        } else {
-          const getSummaryActionResponse = await getSurveySummaryAction({
-            surveyId,
-            filterCriteria: filters,
-          });
-          updatedSurveySummary = getSummaryActionResponse?.data;
-        }
-
-        setSurveySummary(updatedSurveySummary);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
     handleInitialData();
   }, [filters, isSharingPage, sharingKey, surveyId]);
 
-  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (!isShareEmbedModalOpen) {
+      const interval = setInterval(() => {
+        handleInitialData();
+      }, 10000);
+
+      return () => clearInterval(interval);
+    }
+  }, [isShareEmbedModalOpen]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default", attributeClasses);
@@ -139,7 +152,7 @@ export const SummaryPage = ({
       {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
       <div className="flex gap-1.5">
         <CustomFilter survey={surveyMemoized} />
-        {!isSharingPage && <ResultsShareButton survey={surveyMemoized} webAppUrl={webAppUrl} user={user} />}
+        {!isSharingPage && <ResultsShareButton survey={surveyMemoized} webAppUrl={webAppUrl} />}
       </div>
       <SummaryList
         summary={surveySummary.summary}

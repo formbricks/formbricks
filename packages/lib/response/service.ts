@@ -463,8 +463,12 @@ export const getSurveySummary = reactCache(
           }
 
           const batchSize = 3000;
-          const responseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
-          const pages = Math.ceil(responseCount / batchSize);
+          const totalResponseCount = await getResponseCountBySurveyId(surveyId);
+          const filteredResponseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
+
+          const hasFilter = totalResponseCount !== filteredResponseCount;
+
+          const pages = Math.ceil(filteredResponseCount / batchSize);
 
           const responsesArray = await Promise.all(
             Array.from({ length: pages }, (_, i) => {
@@ -473,8 +477,11 @@ export const getSurveySummary = reactCache(
           );
           const responses = responsesArray.flat();
 
+          const responseIds = hasFilter ? responses.map((response) => response.id) : [];
+
           const displayCount = await getDisplayCountBySurveyId(surveyId, {
             createdAt: filterCriteria?.createdAt,
+            ...(hasFilter && { responseIds }),
           });
 
           const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);

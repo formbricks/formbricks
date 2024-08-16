@@ -7,14 +7,18 @@ import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 
 interface SurveyLoadingAnimationProps {
   survey: TSurvey;
+  isBackgroundLoaded?: boolean;
 }
 
-export const SurveyLoadingAnimation = ({ survey }: SurveyLoadingAnimationProps) => {
+export const SurveyLoadingAnimation = ({
+  survey,
+  isBackgroundLoaded = true,
+}: SurveyLoadingAnimationProps) => {
   const [isHidden, setIsHidden] = useState(false);
   const [minTimePassed, setMinTimePassed] = useState(false);
   const [isMediaLoaded, setIsMediaLoaded] = useState(false); // Tracks if all media (images, iframes) are fully loaded
   const [isSurveyPackageLoaded, setIsSurveyPackageLoaded] = useState(false); // Tracks if the survey package has been loaded into the DOM
-
+  const isReadyToTransition = isMediaLoaded && minTimePassed && isBackgroundLoaded;
   const cardId = survey.welcomeCard.enabled ? `questionCard--1` : `questionCard-0`;
 
   // Function to check if all media elements (images and iframes) within the survey card are loaded
@@ -96,13 +100,13 @@ export const SurveyLoadingAnimation = ({ survey }: SurveyLoadingAnimationProps) 
     <div
       className={cn(
         "absolute inset-0 z-[5000] flex items-center justify-center transition-colors duration-1000",
-        isMediaLoaded && minTimePassed ? "bg-transparent" : "bg-white",
+        isReadyToTransition ? "bg-transparent" : "bg-white",
         isHidden && "hidden"
       )}>
       <div
         className={cn(
           "flex flex-col items-center space-y-4",
-          isMediaLoaded && minTimePassed ? "animate-surveyExit" : "animate-surveyLoading"
+          isReadyToTransition ? "animate-surveyExit" : "animate-surveyLoading"
         )}>
         <Image src={Logo} alt="Logo" className={cn("w-32 transition-all duration-1000 md:w-40")} />
         <LoadingSpinner />

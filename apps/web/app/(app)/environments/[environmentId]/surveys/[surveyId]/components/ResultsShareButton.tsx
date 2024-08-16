@@ -10,24 +10,20 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUser } from "@formbricks/types/user";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { ShareEmbedSurvey } from "../(analysis)/summary/components/ShareEmbedSurvey";
 import { ShareSurveyResults } from "../(analysis)/summary/components/ShareSurveyResults";
 
 interface ResultsShareButtonProps {
   survey: TSurvey;
   webAppUrl: string;
-  user?: TUser;
 }
 
-export const ResultsShareButton = ({ survey, webAppUrl, user }: ResultsShareButtonProps) => {
-  const [showLinkModal, setShowLinkModal] = useState(false);
+export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProps) => {
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
   const [showPublishModal, setShowPublishModal] = useState(false);
@@ -49,7 +45,6 @@ export const ResultsShareButton = ({ survey, webAppUrl, user }: ResultsShareButt
       if (deleteResultShareUrlResponse?.data) {
         toast.success("Results unpublished successfully.");
         setShowPublishModal(false);
-        setShowLinkModal(false);
       } else {
         const errorMessage = getFormattedErrorMessage(deleteResultShareUrlResponse);
         toast.error(errorMessage);
@@ -68,12 +63,6 @@ export const ResultsShareButton = ({ survey, webAppUrl, user }: ResultsShareButt
 
     fetchSharingKey();
   }, [survey.id, webAppUrl]);
-
-  useEffect(() => {
-    if (showResultsLinkModal) {
-      setShowLinkModal(false);
-    }
-  }, [showResultsLinkModal]);
 
   const copyUrlToClipboard = () => {
     if (typeof window !== "undefined") {
@@ -141,16 +130,6 @@ export const ResultsShareButton = ({ survey, webAppUrl, user }: ResultsShareButt
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      {showLinkModal && user && (
-        <ShareEmbedSurvey
-          survey={survey}
-          open={showLinkModal}
-          setOpen={setShowLinkModal}
-          webAppUrl={webAppUrl}
-          user={user}
-        />
-      )}
       {showResultsLinkModal && (
         <ShareSurveyResults
           open={showResultsLinkModal}
