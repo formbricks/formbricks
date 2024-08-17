@@ -198,14 +198,6 @@ export const PreviewSurvey = ({
   const handlePreviewModalClose = () => {
     setIsModalOpen(false);
     setTimeout(() => {
-      setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
-      setIsModalOpen(true);
-    }, 1000);
-  };
-
-  const handleMobilePreviewModalClose = () => {
-    setIsModalOpen(false);
-    setTimeout(() => {
       setIsModalOpen(true);
       resetQuestionProgress();
     }, 1000);
@@ -263,7 +255,7 @@ export const PreviewSurvey = ({
                     onFileUpload={onFileUpload}
                     styling={styling}
                     isCardBorderVisible={!styling.highlightBorderColor?.light}
-                    onClose={handleMobilePreviewModalClose}
+                    onClose={handlePreviewModalClose}
                     getSetQuestionId={(f: (value: string) => void) => {
                       setQuestionId = f;
                     }}
