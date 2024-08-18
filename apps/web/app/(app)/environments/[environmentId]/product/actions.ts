@@ -5,10 +5,11 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromProductId } from "@formbricks/lib/organization/utils";
 import { updateProduct } from "@formbricks/lib/product/service";
+import { ZId } from "@formbricks/types/environment";
 import { ZProductUpdateInput } from "@formbricks/types/product";
 
 const ZUpdateProductAction = z.object({
-  productId: z.string(),
+  productId: ZId,
   data: ZProductUpdateInput,
 });
 

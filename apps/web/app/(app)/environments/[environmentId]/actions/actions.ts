@@ -1,19 +1,17 @@
 "use server";
 
 import { z } from "zod";
-import { deleteActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
+import { deleteActionClass, getActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import {
-  getOrganizationIdFromActionClassId,
-  getOrganizationIdFromEnvironmentId,
-} from "@formbricks/lib/organization/utils";
+import { getOrganizationIdFromActionClassId } from "@formbricks/lib/organization/utils";
 import { getSurveysByActionClassId } from "@formbricks/lib/survey/service";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
+import { ZId } from "@formbricks/types/environment";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 
 const ZDeleteActionClassAction = z.object({
-  environmentId: z.string(),
-  actionClassId: z.string(),
+  actionClassId: ZId,
 });
 
 export const deleteActionClassAction = authenticatedActionClient
@@ -25,45 +23,37 @@ export const deleteActionClassAction = authenticatedActionClient
       rules: ["actionClass", "delete"],
     });
 
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["environment", "read"],
-    });
-
-    await deleteActionClass(parsedInput.environmentId, parsedInput.actionClassId);
+    await deleteActionClass(parsedInput.actionClassId);
   });
 
 const ZUpdateActionClassAction = z.object({
-  environmentId: z.string(),
-  actionClassId: z.string(),
+  actionClassId: ZId,
   updatedAction: ZActionClassInput,
 });
 
 export const updateActionClassAction = authenticatedActionClient
   .schema(ZUpdateActionClassAction)
   .action(async ({ ctx, parsedInput }) => {
+    const actionClass = await getActionClass(parsedInput.actionClassId);
+    if (actionClass === null) {
+      throw new ResourceNotFoundError("ActionClass", parsedInput.actionClassId);
+    }
+
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromActionClassId(parsedInput.actionClassId),
       rules: ["actionClass", "update"],
     });
 
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["environment", "read"],
-    });
-
     return await updateActionClass(
-      parsedInput.environmentId,
+      actionClass.environmentId,
       parsedInput.actionClassId,
       parsedInput.updatedAction
     );
   });
 
 const ZGetActiveInactiveSurveysAction = z.object({
-  actionClassId: z.string(),
+  actionClassId: ZId,
 });
 
 export const getActiveInactiveSurveysAction = authenticatedActionClient

@@ -5,9 +5,10 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { getSlackChannels } from "@formbricks/lib/slack/service";
+import { ZId } from "@formbricks/types/environment";
 
 const ZRefreshChannelsAction = z.object({
-  environmentId: z.string(),
+  environmentId: ZId,
 });
 
 export const refreshChannelsAction = authenticatedActionClient
@@ -16,7 +17,7 @@ export const refreshChannelsAction = authenticatedActionClient
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["environment", "read"],
+      rules: ["integration", "update"],
     });
 
     return await getSlackChannels(parsedInput.environmentId);

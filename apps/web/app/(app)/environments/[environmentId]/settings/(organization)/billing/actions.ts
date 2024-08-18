@@ -9,11 +9,12 @@ import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrganization } from "@formbricks/lib/organization/service";
+import { ZId } from "@formbricks/types/environment";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 const ZUpgradePlanAction = z.object({
-  organizationId: z.string(),
-  environmentId: z.string(),
+  organizationId: ZId,
+  environmentId: ZId,
   priceLookupKey: z.nativeEnum(STRIPE_PRICE_LOOKUP_KEYS),
 });
 
@@ -38,8 +39,8 @@ export const upgradePlanAction = authenticatedActionClient
   });
 
 const ZManageSubscriptionAction = z.object({
-  organizationId: z.string(),
-  environmentId: z.string(),
+  organizationId: ZId,
+  environmentId: ZId,
 });
 
 export const manageSubscriptionAction = authenticatedActionClient
@@ -66,7 +67,7 @@ export const manageSubscriptionAction = authenticatedActionClient
   });
 
 const ZIsSubscriptionCancelledAction = z.object({
-  organizationId: z.string(),
+  organizationId: ZId,
 });
 
 export const isSubscriptionCancelledAction = authenticatedActionClient

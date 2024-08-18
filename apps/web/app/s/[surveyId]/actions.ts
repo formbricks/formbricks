@@ -7,6 +7,7 @@ import { actionClient } from "@formbricks/lib/actionClient";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZLinkSurveyEmailData } from "@formbricks/types/email";
+import { ZId } from "@formbricks/types/environment";
 
 export const sendLinkSurveyEmailAction = actionClient
   .schema(ZLinkSurveyEmailData)
@@ -15,7 +16,7 @@ export const sendLinkSurveyEmailAction = actionClient
   });
 
 const ZVerifyTokenAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
   token: z.string(),
 });
 
@@ -24,7 +25,7 @@ export const verifyTokenAction = actionClient.schema(ZVerifyTokenAction).action(
 });
 
 const ZValidateSurveyPinAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
   pin: z.string(),
 });
 

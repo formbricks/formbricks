@@ -7,11 +7,12 @@ import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
+import { ZId } from "@formbricks/types/environment";
 import { AuthenticationError } from "@formbricks/types/errors";
 
 const ZInviteOrganizationMemberAction = z.object({
   email: z.string(),
-  organizationId: z.string(),
+  organizationId: ZId,
 });
 
 export const inviteOrganizationMemberAction = authenticatedActionClient

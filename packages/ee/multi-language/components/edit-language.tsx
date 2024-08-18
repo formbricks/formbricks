@@ -90,7 +90,6 @@ export function EditLanguage({ product, environmentId }: EditLanguageProps) {
   const handleDeleteLanguage = async (languageId: string) => {
     try {
       const surveysUsingLanguageResponse = await getSurveysUsingGivenLanguageAction({
-        productId: product.id,
         languageId,
       });
 
@@ -146,7 +145,6 @@ export function EditLanguage({ product, environmentId }: EditLanguageProps) {
       languages.map((lang) => {
         return lang.id === "new"
           ? createLanguageAction({
-              productId: product.id,
               environmentId,
               languageInput: { code: lang.code, alias: lang.alias },
             })

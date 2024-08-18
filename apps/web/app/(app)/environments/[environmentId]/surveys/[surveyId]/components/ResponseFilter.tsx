@@ -47,7 +47,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
               sharingKey,
               environmentId: survey.environmentId,
             })
-          : await getSurveyFilterDataAction({ surveyId: survey.id, environmentId: survey.environmentId });
+          : await getSurveyFilterDataAction({ surveyId: survey.id });
 
         if (!surveyFilterData?.data) return;
 

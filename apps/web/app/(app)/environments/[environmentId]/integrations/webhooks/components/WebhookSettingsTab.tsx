@@ -113,7 +113,7 @@ export const WebhookSettingsTab = ({ environmentId, webhook, surveys, setOpen }:
       surveyIds: selectedSurveys,
     };
     setIsUpdatingWebhook(true);
-    await updateWebhookAction({ environmentId, webhookId: webhook.id, webhookInput: updatedData });
+    await updateWebhookAction({ webhookId: webhook.id, webhookInput: updatedData });
     toast.success("Webhook updated successfully.");
     router.refresh();
     setIsUpdatingWebhook(false);

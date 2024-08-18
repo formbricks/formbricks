@@ -9,9 +9,10 @@ import {
   getOrganizationIdFromEnvironmentId,
 } from "@formbricks/lib/organization/utils";
 import { ZApiKeyCreateInput } from "@formbricks/types/api-keys";
+import { ZId } from "@formbricks/types/environment";
 
 const ZDeleteApiKeyAction = z.object({
-  id: z.string(),
+  id: ZId,
 });
 
 export const deleteApiKeyAction = authenticatedActionClient
@@ -27,7 +28,7 @@ export const deleteApiKeyAction = authenticatedActionClient
   });
 
 const ZCreateApiKeyAction = z.object({
-  environmentId: z.string(),
+  environmentId: ZId,
   apiKeyData: ZApiKeyCreateInput,
 });
 

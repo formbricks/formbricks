@@ -21,6 +21,7 @@ import {
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { loadNewSegmentInSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
+import { ZId } from "@formbricks/types/environment";
 import { ZBaseFilters, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 import { ZSurvey } from "@formbricks/types/surveys/types";
 
@@ -36,7 +37,7 @@ export const updateSurveyAction = authenticatedActionClient
   });
 
 const ZRefetchProductAction = z.object({
-  productId: z.string(),
+  productId: ZId,
 });
 
 export const refetchProductAction = authenticatedActionClient
@@ -53,10 +54,10 @@ export const refetchProductAction = authenticatedActionClient
 
 const ZCreateBasicSegmentAction = z.object({
   description: z.string().optional(),
-  environmentId: z.string(),
+  environmentId: ZId,
   filters: ZBaseFilters,
   isPrivate: z.boolean(),
-  surveyId: z.string(),
+  surveyId: ZId,
   title: z.string(),
 });
 
@@ -91,7 +92,7 @@ export const createBasicSegmentAction = authenticatedActionClient
   });
 
 const ZUpdateBasicSegmentAction = z.object({
-  segmentId: z.string(),
+  segmentId: ZId,
   data: ZSegmentUpdateInput,
 });
 
@@ -119,8 +120,8 @@ export const updateBasicSegmentAction = authenticatedActionClient
   });
 
 const ZLoadNewBasicSegmentAction = z.object({
-  surveyId: z.string(),
-  segmentId: z.string(),
+  surveyId: ZId,
+  segmentId: ZId,
 });
 
 export const loadNewBasicSegmentAction = authenticatedActionClient
@@ -142,8 +143,8 @@ export const loadNewBasicSegmentAction = authenticatedActionClient
   });
 
 const ZCloneBasicSegmentAction = z.object({
-  segmentId: z.string(),
-  surveyId: z.string(),
+  segmentId: ZId,
+  surveyId: ZId,
 });
 
 export const cloneBasicSegmentAction = authenticatedActionClient
@@ -165,7 +166,7 @@ export const cloneBasicSegmentAction = authenticatedActionClient
   });
 
 const ZResetBasicSegmentFiltersAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
 });
 
 export const resetBasicSegmentFiltersAction = authenticatedActionClient

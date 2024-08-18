@@ -6,11 +6,12 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
+import { ZId } from "@formbricks/types/environment";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { ZMembershipRole } from "@formbricks/types/memberships";
 
 const ZInviteOrganizationMemberAction = z.object({
-  organizationId: z.string(),
+  organizationId: ZId,
   email: z.string(),
   role: ZMembershipRole,
   inviteMessage: z.string(),

@@ -16,6 +16,7 @@ import {
   updateSegment,
 } from "@formbricks/lib/segment/service";
 import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
+import { ZId } from "@formbricks/types/environment";
 import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 
 export const createSegmentAction = authenticatedActionClient
@@ -39,7 +40,7 @@ export const createSegmentAction = authenticatedActionClient
   });
 
 const ZUpdateSegmentAction = z.object({
-  segmentId: z.string(),
+  segmentId: ZId,
   data: ZSegmentUpdateInput,
 });
 
@@ -69,8 +70,8 @@ export const updateSegmentAction = authenticatedActionClient
   });
 
 const ZLoadNewSegmentAction = z.object({
-  surveyId: z.string(),
-  segmentId: z.string(),
+  surveyId: ZId,
+  segmentId: ZId,
 });
 
 export const loadNewSegmentAction = authenticatedActionClient
@@ -92,8 +93,8 @@ export const loadNewSegmentAction = authenticatedActionClient
   });
 
 const ZCloneSegmentAction = z.object({
-  segmentId: z.string(),
-  surveyId: z.string(),
+  segmentId: ZId,
+  surveyId: ZId,
 });
 
 export const cloneSegmentAction = authenticatedActionClient
@@ -115,7 +116,7 @@ export const cloneSegmentAction = authenticatedActionClient
   });
 
 const ZDeleteSegmentAction = z.object({
-  segmentId: z.string(),
+  segmentId: ZId,
 });
 
 export const deleteSegmentAction = authenticatedActionClient
@@ -131,7 +132,7 @@ export const deleteSegmentAction = authenticatedActionClient
   });
 
 const ZResetSegmentFiltersAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
 });
 
 export const resetSegmentFiltersAction = authenticatedActionClient

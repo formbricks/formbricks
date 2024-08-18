@@ -5,10 +5,11 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { createSurvey } from "@formbricks/lib/survey/service";
+import { ZId } from "@formbricks/types/environment";
 import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 
 const ZCreateSurveyAction = z.object({
-  environmentId: z.string(),
+  environmentId: ZId,
   surveyBody: ZSurveyCreateInput,
 });
 

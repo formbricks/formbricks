@@ -5,9 +5,10 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromTagId } from "@formbricks/lib/organization/utils";
 import { deleteTag, mergeTags, updateTagName } from "@formbricks/lib/tag/service";
+import { ZId } from "@formbricks/types/environment";
 
 const ZDeleteTagAction = z.object({
-  tagId: z.string(),
+  tagId: ZId,
 });
 
 export const deleteTagAction = authenticatedActionClient
@@ -23,7 +24,7 @@ export const deleteTagAction = authenticatedActionClient
   });
 
 const ZUpdateTagNameAction = z.object({
-  tagId: z.string(),
+  tagId: ZId,
   name: z.string(),
 });
 
@@ -40,8 +41,8 @@ export const updateTagNameAction = authenticatedActionClient
   });
 
 const ZMergeTagsAction = z.object({
-  originalTagId: z.string(),
-  newTagId: z.string(),
+  originalTagId: ZId,
+  newTagId: ZId,
 });
 
 export const mergeTagsAction = authenticatedActionClient

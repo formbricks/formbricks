@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import {
   createLanguage,
   deleteLanguage,
@@ -10,34 +11,39 @@ import {
   updateLanguage,
 } from "@formbricks/lib/language/service";
 import {
-  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromLanguageId,
   getOrganizationIdFromProductId,
 } from "@formbricks/lib/organization/utils";
+import { ZId } from "@formbricks/types/environment";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZLanguageInput } from "@formbricks/types/product";
 
 const ZCreateLanguageAction = z.object({
-  productId: z.string(),
-  environmentId: z.string(),
+  environmentId: ZId,
   languageInput: ZLanguageInput,
 });
 
 export const createLanguageAction = authenticatedActionClient
   .schema(ZCreateLanguageAction)
   .action(async ({ ctx, parsedInput }) => {
+    const environment = await getEnvironment(parsedInput.environmentId);
+    if (!environment) {
+      throw new ResourceNotFoundError("Environment", parsedInput.environmentId);
+    }
     await checkAuthorization({
       data: parsedInput.languageInput,
       schema: ZLanguageInput,
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
+      organizationId: await getOrganizationIdFromProductId(environment.productId),
       rules: ["language", "create"],
     });
 
-    return await createLanguage(parsedInput.productId, parsedInput.environmentId, parsedInput.languageInput);
+    return await createLanguage(environment.productId, parsedInput.environmentId, parsedInput.languageInput);
   });
 
 const ZDeleteLanguageAction = z.object({
-  environmentId: z.string(),
-  languageId: z.string(),
+  environmentId: ZId,
+  languageId: ZId,
 });
 
 export const deleteLanguageAction = authenticatedActionClient
@@ -45,7 +51,7 @@ export const deleteLanguageAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId: await getOrganizationIdFromLanguageId(parsedInput.languageId),
       rules: ["language", "delete"],
     });
 
@@ -53,8 +59,7 @@ export const deleteLanguageAction = authenticatedActionClient
   });
 
 const ZGetSurveysUsingGivenLanguageAction = z.object({
-  productId: z.string(),
-  languageId: z.string(),
+  languageId: ZId,
 });
 
 export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
@@ -62,7 +67,7 @@ export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
+      organizationId: await getOrganizationIdFromLanguageId(parsedInput.languageId),
       rules: ["survey", "read"],
     });
 
@@ -70,8 +75,8 @@ export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
   });
 
 const ZUpdateLanguageAction = z.object({
-  environmentId: z.string(),
-  languageId: z.string(),
+  environmentId: ZId,
+  languageId: ZId,
   languageInput: ZLanguageInput,
 });
 
@@ -82,7 +87,7 @@ export const updateLanguageAction = authenticatedActionClient
       data: parsedInput.languageInput,
       schema: ZLanguageInput,
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId: await getOrganizationIdFromLanguageId(parsedInput.languageId),
       rules: ["language", "update"],
     });
 

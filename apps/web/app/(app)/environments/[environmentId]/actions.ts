@@ -8,6 +8,7 @@ import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { updateUser } from "@formbricks/lib/user/service";
+import { ZId } from "@formbricks/types/environment";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZProductUpdateInput } from "@formbricks/types/product";
 import { TUserNotificationSettings } from "@formbricks/types/user";
@@ -60,7 +61,7 @@ export const createOrganizationAction = authenticatedActionClient
   });
 
 const ZCreateProductAction = z.object({
-  organizationId: z.string(),
+  organizationId: ZId,
   data: ZProductUpdateInput,
 });
 

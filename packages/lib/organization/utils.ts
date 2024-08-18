@@ -5,6 +5,7 @@ import { getAttributeClass } from "../attributeClass/service";
 import { getEnvironment } from "../environment/service";
 import { getIntegration } from "../integration/service";
 import { getInvite } from "../invite/service";
+import { getLanguage } from "../language/service";
 import { getPerson } from "../person/service";
 import { getProduct } from "../product/service";
 import { getResponse } from "../response/service";
@@ -142,4 +143,13 @@ export const getOrganizationIdFromInviteId = async (inviteId: string) => {
   }
 
   return invite.organizationId;
+};
+
+export const getOrganizationIdFromLanguageId = async (languageId: string) => {
+  const language = await getLanguage(languageId);
+  if (!language) {
+    throw new ResourceNotFoundError("language", languageId);
+  }
+
+  return await getOrganizationIdFromProductId(language.productId);
 };

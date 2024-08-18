@@ -9,9 +9,10 @@ import {
 } from "@formbricks/lib/organization/utils";
 import { getSegmentsByAttributeClassName } from "@formbricks/lib/segment/service";
 import { ZAttributeClass } from "@formbricks/types/attribute-classes";
+import { ZId } from "@formbricks/types/environment";
 
 const ZGetSegmentsByAttributeClassAction = z.object({
-  environmentId: z.string(),
+  environmentId: ZId,
   attributeClass: ZAttributeClass,
 });
 

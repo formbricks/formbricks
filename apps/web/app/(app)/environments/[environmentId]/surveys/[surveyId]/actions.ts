@@ -5,13 +5,15 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromSurveyId } from "@formbricks/lib/organization/utils";
 import { getResponseDownloadUrl, getResponseFilteringValues } from "@formbricks/lib/response/service";
-import { updateSurvey } from "@formbricks/lib/survey/service";
+import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
+import { ZId } from "@formbricks/types/environment";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
 import { ZSurvey } from "@formbricks/types/surveys/types";
 
 const ZGetResponsesDownloadUrlAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
   format: z.union([z.literal("csv"), z.literal("xlsx")]),
   filterCriteria: ZResponseFilterCriteria,
 });
@@ -22,20 +24,25 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["survey", "read"],
+      rules: ["response", "read"],
     });
 
     return getResponseDownloadUrl(parsedInput.surveyId, parsedInput.format, parsedInput.filterCriteria);
   });
 
 const ZGetSurveyFilterDataAction = z.object({
-  surveyId: z.string(),
-  environmentId: z.string(),
+  surveyId: ZId,
 });
 
 export const getSurveyFilterDataAction = authenticatedActionClient
   .schema(ZGetSurveyFilterDataAction)
   .action(async ({ ctx, parsedInput }) => {
+    const survey = await getSurvey(parsedInput.surveyId);
+
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
+
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
@@ -43,7 +50,7 @@ export const getSurveyFilterDataAction = authenticatedActionClient
     });
 
     const [tags, { personAttributes: attributes, meta, hiddenFields }] = await Promise.all([
-      getTagsByEnvironmentId(parsedInput.environmentId),
+      getTagsByEnvironmentId(survey.environmentId),
       getResponseFilteringValues(parsedInput.surveyId),
     ]);
 

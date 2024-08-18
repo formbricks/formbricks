@@ -17,9 +17,10 @@ import {
 } from "@formbricks/lib/responseNote/service";
 import { createTag } from "@formbricks/lib/tag/service";
 import { addTagToRespone, deleteTagOnResponse } from "@formbricks/lib/tagOnResponse/service";
+import { ZId } from "@formbricks/types/environment";
 
 const ZCreateTagAction = z.object({
-  environmentId: z.string(),
+  environmentId: ZId,
   tagName: z.string(),
 });
 
@@ -36,8 +37,8 @@ export const createTagAction = authenticatedActionClient
   });
 
 const ZCreateTagToResponseAction = z.object({
-  responseId: z.string(),
-  tagId: z.string(),
+  responseId: ZId,
+  tagId: ZId,
 });
 
 export const createTagToResponseAction = authenticatedActionClient
@@ -59,8 +60,8 @@ export const createTagToResponseAction = authenticatedActionClient
   });
 
 const ZDeleteTagOnResponseAction = z.object({
-  responseId: z.string(),
-  tagId: z.string(),
+  responseId: ZId,
+  tagId: ZId,
 });
 
 export const deleteTagOnResponseAction = authenticatedActionClient
@@ -82,7 +83,7 @@ export const deleteTagOnResponseAction = authenticatedActionClient
   });
 
 const ZDeleteResponseAction = z.object({
-  responseId: z.string(),
+  responseId: ZId,
 });
 
 export const deleteResponseAction = authenticatedActionClient
@@ -98,7 +99,7 @@ export const deleteResponseAction = authenticatedActionClient
   });
 
 const ZUpdateResponseNoteAction = z.object({
-  responseNoteId: z.string(),
+  responseNoteId: ZId,
   text: z.string(),
 });
 
@@ -115,7 +116,7 @@ export const updateResponseNoteAction = authenticatedActionClient
   });
 
 const ZResolveResponseNoteAction = z.object({
-  responseNoteId: z.string(),
+  responseNoteId: ZId,
 });
 
 export const resolveResponseNoteAction = authenticatedActionClient
@@ -131,7 +132,7 @@ export const resolveResponseNoteAction = authenticatedActionClient
   });
 
 const ZCreateResponseNoteAction = z.object({
-  responseId: z.string(),
+  responseId: ZId,
   text: z.string(),
 });
 
@@ -148,7 +149,7 @@ export const createResponseNoteAction = authenticatedActionClient
   });
 
 const ZGetResponseAction = z.object({
-  responseId: z.string(),
+  responseId: ZId,
 });
 
 export const getResponseAction = authenticatedActionClient

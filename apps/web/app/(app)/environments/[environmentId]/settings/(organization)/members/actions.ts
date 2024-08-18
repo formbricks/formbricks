@@ -15,12 +15,13 @@ import {
 } from "@formbricks/lib/membership/service";
 import { deleteOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { getOrganizationIdFromInviteId } from "@formbricks/lib/organization/utils";
+import { ZId } from "@formbricks/types/environment";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { ZMembershipRole } from "@formbricks/types/memberships";
 import { ZOrganizationUpdateInput } from "@formbricks/types/organizations";
 
 const ZUpdateOrganizationNameAction = z.object({
-  organizationId: z.string(),
+  organizationId: ZId,
   data: ZOrganizationUpdateInput.pick({ name: true }),
 });
 
@@ -38,8 +39,8 @@ export const updateOrganizationNameAction = authenticatedActionClient
   });
 
 const ZDeleteInviteAction = z.object({
-  inviteId: z.string(),
-  organizationId: z.string(),
+  inviteId: ZId,
+  organizationId: ZId,
 });
 
 export const deleteInviteAction = authenticatedActionClient
@@ -54,8 +55,8 @@ export const deleteInviteAction = authenticatedActionClient
   });
 
 const ZDeleteMembershipAction = z.object({
-  userId: z.string(),
-  organizationId: z.string(),
+  userId: ZId,
+  organizationId: ZId,
 });
 
 export const deleteMembershipAction = authenticatedActionClient
@@ -74,7 +75,7 @@ export const deleteMembershipAction = authenticatedActionClient
   });
 
 const ZLeaveOrganizationAction = z.object({
-  organizationId: z.string(),
+  organizationId: ZId,
 });
 
 export const leaveOrganizationAction = authenticatedActionClient
@@ -83,7 +84,7 @@ export const leaveOrganizationAction = authenticatedActionClient
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["membership", "delete"],
+      rules: ["organization", "read"],
     });
 
     const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
@@ -105,7 +106,7 @@ export const leaveOrganizationAction = authenticatedActionClient
   });
 
 const ZCreateInviteTokenAction = z.object({
-  inviteId: z.string(),
+  inviteId: ZId,
 });
 
 export const createInviteTokenAction = authenticatedActionClient
@@ -114,7 +115,7 @@ export const createInviteTokenAction = authenticatedActionClient
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromInviteId(parsedInput.inviteId),
-      rules: ["invite", "read"],
+      rules: ["invite", "create"],
     });
 
     const invite = await getInvite(parsedInput.inviteId);
@@ -129,8 +130,8 @@ export const createInviteTokenAction = authenticatedActionClient
   });
 
 const ZResendInviteAction = z.object({
-  inviteId: z.string(),
-  organizationId: z.string(),
+  inviteId: ZId,
+  organizationId: ZId,
 });
 
 export const resendInviteAction = authenticatedActionClient
@@ -164,7 +165,7 @@ export const resendInviteAction = authenticatedActionClient
   });
 
 const ZInviteUserAction = z.object({
-  organizationId: z.string(),
+  organizationId: ZId,
   email: z.string(),
   name: z.string(),
   role: ZMembershipRole,
@@ -206,7 +207,7 @@ export const inviteUserAction = authenticatedActionClient
   });
 
 const ZDeleteOrganizationAction = z.object({
-  organizationId: z.string(),
+  organizationId: ZId,
 });
 
 export const deleteOrganizationAction = authenticatedActionClient

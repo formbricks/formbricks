@@ -57,6 +57,7 @@ export const Permissions = {
     },
     integration: {
       create: true,
+      update: true,
       delete: true,
     },
     webhook: {
@@ -144,6 +145,7 @@ export const Permissions = {
     },
     integration: {
       create: true,
+      update: true,
       delete: true,
     },
     webhook: {
@@ -231,6 +233,7 @@ export const Permissions = {
     },
     integration: {
       create: true,
+      update: true,
       delete: true,
     },
     webhook: {
@@ -320,6 +323,7 @@ export const Permissions = {
     },
     integration: {
       create: true,
+      update: true,
       delete: true,
     },
     webhook: {
@@ -407,11 +411,12 @@ export const Permissions = {
     },
     integration: {
       create: false,
+      update: true,
       delete: false,
     },
     webhook: {
       create: false,
-      update: true,
+      update: false,
       delete: false,
     },
     apiKey: {

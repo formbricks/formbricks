@@ -15,10 +15,11 @@ import {
   getSurveys,
 } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
+import { ZId } from "@formbricks/types/environment";
 import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 
 const ZGetSurveyAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
 });
 
 export const getSurveyAction = authenticatedActionClient
@@ -34,9 +35,9 @@ export const getSurveyAction = authenticatedActionClient
   });
 
 const ZCopySurveyToOtherEnvironmentAction = z.object({
-  environmentId: z.string(),
-  surveyId: z.string(),
-  targetEnvironmentId: z.string(),
+  environmentId: ZId,
+  surveyId: ZId,
+  targetEnvironmentId: ZId,
 });
 
 export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
@@ -73,7 +74,7 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
   });
 
 const ZGetProductsByEnvironmentIdAction = z.object({
-  environmentId: z.string(),
+  environmentId: ZId,
 });
 
 export const getProductsByEnvironmentIdAction = authenticatedActionClient
@@ -90,7 +91,7 @@ export const getProductsByEnvironmentIdAction = authenticatedActionClient
   });
 
 const ZDeleteSurveyAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
 });
 
 export const deleteSurveyAction = authenticatedActionClient
@@ -106,7 +107,7 @@ export const deleteSurveyAction = authenticatedActionClient
   });
 
 const ZGenerateSingleUseIdAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
   isEncrypted: z.boolean(),
 });
 
@@ -123,7 +124,7 @@ export const generateSingleUseIdAction = authenticatedActionClient
   });
 
 const ZGetSurveysAction = z.object({
-  environmentId: z.string(),
+  environmentId: ZId,
   limit: z.number().optional(),
   offset: z.number().optional(),
   filterCriteria: ZSurveyFilterCriteria.optional(),

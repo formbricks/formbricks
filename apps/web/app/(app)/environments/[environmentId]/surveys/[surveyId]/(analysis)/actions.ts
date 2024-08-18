@@ -6,6 +6,7 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromSurveyId } from "@formbricks/lib/organization/utils";
 import { getResponseCountBySurveyId, getResponses, getSurveySummary } from "@formbricks/lib/response/service";
+import { ZId } from "@formbricks/types/environment";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
 
 export const revalidateSurveyIdPath = async (environmentId: string, surveyId: string) => {
@@ -13,7 +14,7 @@ export const revalidateSurveyIdPath = async (environmentId: string, surveyId: st
 };
 
 const ZGetResponsesAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
   limit: z.number().optional(),
   offset: z.number().optional(),
   filterCriteria: ZResponseFilterCriteria.optional(),
@@ -25,7 +26,7 @@ export const getResponsesAction = authenticatedActionClient
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["survey", "read"],
+      rules: ["response", "read"],
     });
 
     return getResponses(
@@ -37,7 +38,7 @@ export const getResponsesAction = authenticatedActionClient
   });
 
 const ZGetSurveySummaryAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
   filterCriteria: ZResponseFilterCriteria.optional(),
 });
 
@@ -47,14 +48,14 @@ export const getSurveySummaryAction = authenticatedActionClient
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["survey", "read"],
+      rules: ["response", "read"],
     });
 
     return getSurveySummary(parsedInput.surveyId, parsedInput.filterCriteria);
   });
 
 const ZGetResponseCountAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
   filterCriteria: ZResponseFilterCriteria.optional(),
 });
 
@@ -64,7 +65,7 @@ export const getResponseCountAction = authenticatedActionClient
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["survey", "read"],
+      rules: ["response", "read"],
     });
 
     return getResponseCountBySurveyId(parsedInput.surveyId, parsedInput.filterCriteria);

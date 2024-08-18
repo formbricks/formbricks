@@ -5,9 +5,10 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromProductId } from "@formbricks/lib/organization/utils";
 import { deleteProduct, getProducts } from "@formbricks/lib/product/service";
+import { ZId } from "@formbricks/types/environment";
 
 const ZProductDeleteAction = z.object({
-  productId: z.string(),
+  productId: ZId,
 });
 
 export const deleteProductAction = authenticatedActionClient

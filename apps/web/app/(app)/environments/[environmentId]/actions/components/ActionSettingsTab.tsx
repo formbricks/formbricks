@@ -105,7 +105,6 @@ export const ActionSettingsTab = ({
           }),
       };
       await updateActionClassAction({
-        environmentId,
         actionClassId: actionClass.id,
         updatedAction: updatedData,
       });
@@ -122,7 +121,7 @@ export const ActionSettingsTab = ({
   const handleDeleteAction = async () => {
     try {
       setIsDeletingAction(true);
-      await deleteActionClassAction({ environmentId, actionClassId: actionClass.id });
+      await deleteActionClassAction({ actionClassId: actionClass.id });
       router.refresh();
       toast.success("Action deleted successfully");
       setOpen(false);

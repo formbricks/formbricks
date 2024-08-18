@@ -10,6 +10,7 @@ import {
 } from "@formbricks/lib/response/service";
 import { getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
+import { ZId } from "@formbricks/types/environment";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
 
@@ -65,7 +66,7 @@ export const getResponseCountBySurveySharingKeyAction = actionClient
 
 const ZGetSurveyFilterDataBySurveySharingKeyAction = z.object({
   sharingKey: z.string(),
-  environmentId: z.string(),
+  environmentId: ZId,
 });
 
 export const getSurveyFilterDataBySurveySharingKeyAction = actionClient

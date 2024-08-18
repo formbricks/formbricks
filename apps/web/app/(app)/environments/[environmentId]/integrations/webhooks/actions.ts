@@ -9,10 +9,11 @@ import {
 } from "@formbricks/lib/organization/utils";
 import { createWebhook, deleteWebhook, updateWebhook } from "@formbricks/lib/webhook/service";
 import { testEndpoint } from "@formbricks/lib/webhook/utils";
+import { ZId } from "@formbricks/types/environment";
 import { ZWebhookInput } from "@formbricks/types/webhooks";
 
 const ZCreateWebhookAction = z.object({
-  environmentId: z.string(),
+  environmentId: ZId,
   webhookInput: ZWebhookInput,
 });
 
@@ -29,7 +30,7 @@ export const createWebhookAction = authenticatedActionClient
   });
 
 const ZDeleteWebhookAction = z.object({
-  id: z.string(),
+  id: ZId,
 });
 
 export const deleteWebhookAction = authenticatedActionClient
@@ -45,8 +46,7 @@ export const deleteWebhookAction = authenticatedActionClient
   });
 
 const ZUpdateWebhookAction = z.object({
-  environmentId: z.string(),
-  webhookId: z.string(),
+  webhookId: ZId,
   webhookInput: ZWebhookInput,
 });
 
@@ -59,13 +59,7 @@ export const updateWebhookAction = authenticatedActionClient
       rules: ["webhook", "update"],
     });
 
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["environment", "read"],
-    });
-
-    return await updateWebhook(parsedInput.environmentId, parsedInput.webhookId, parsedInput.webhookInput);
+    return await updateWebhook(parsedInput.webhookId, parsedInput.webhookInput);
   });
 
 const ZTestEndpointAction = z.object({

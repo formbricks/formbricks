@@ -8,10 +8,11 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromSurveyId } from "@formbricks/lib/organization/utils";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
+import { ZId } from "@formbricks/types/environment";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 
 const ZSendEmbedSurveyPreviewEmailAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
 });
 
 export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
@@ -43,12 +44,18 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
   });
 
 const ZGenerateResultShareUrlAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
 });
 
 export const generateResultShareUrlAction = authenticatedActionClient
   .schema(ZGenerateResultShareUrlAction)
   .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["response", "update"],
+    });
+
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
@@ -71,7 +78,7 @@ export const generateResultShareUrlAction = authenticatedActionClient
   });
 
 const ZGetResultShareUrlAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
 });
 
 export const getResultShareUrlAction = authenticatedActionClient
@@ -80,7 +87,7 @@ export const getResultShareUrlAction = authenticatedActionClient
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["survey", "read"],
+      rules: ["response", "read"],
     });
 
     const survey = await getSurvey(parsedInput.surveyId);
@@ -92,12 +99,18 @@ export const getResultShareUrlAction = authenticatedActionClient
   });
 
 const ZDeleteResultShareUrlAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
 });
 
 export const deleteResultShareUrlAction = authenticatedActionClient
   .schema(ZDeleteResultShareUrlAction)
   .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["response", "update"],
+    });
+
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
@@ -113,7 +126,7 @@ export const deleteResultShareUrlAction = authenticatedActionClient
   });
 
 const ZGetEmailHtmlAction = z.object({
-  surveyId: z.string(),
+  surveyId: ZId,
 });
 
 export const getEmailHtmlAction = authenticatedActionClient

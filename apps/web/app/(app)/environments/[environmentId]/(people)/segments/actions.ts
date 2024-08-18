@@ -5,10 +5,11 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromSegmentId } from "@formbricks/lib/organization/utils";
 import { deleteSegment, updateSegment } from "@formbricks/lib/segment/service";
+import { ZId } from "@formbricks/types/environment";
 import { ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 
 const ZDeleteBasicSegmentAction = z.object({
-  segmentId: z.string(),
+  segmentId: ZId,
 });
 
 export const deleteBasicSegmentAction = authenticatedActionClient
@@ -24,7 +25,7 @@ export const deleteBasicSegmentAction = authenticatedActionClient
   });
 
 const ZUpdateBasicSegmentAction = z.object({
-  segmentId: z.string(),
+  segmentId: ZId,
   data: ZSegmentUpdateInput,
 });
 
