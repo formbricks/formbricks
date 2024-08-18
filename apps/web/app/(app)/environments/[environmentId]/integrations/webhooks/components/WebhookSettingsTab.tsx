@@ -19,13 +19,12 @@ import { Label } from "@formbricks/ui/Label";
 import { deleteWebhookAction, testEndpointAction, updateWebhookAction } from "../actions";
 
 interface ActionSettingsTabProps {
-  environmentId: string;
   webhook: TWebhook;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
 }
 
-export const WebhookSettingsTab = ({ environmentId, webhook, surveys, setOpen }: ActionSettingsTabProps) => {
+export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettingsTabProps) => {
   const router = useRouter();
   const { register, handleSubmit } = useForm({
     defaultValues: {

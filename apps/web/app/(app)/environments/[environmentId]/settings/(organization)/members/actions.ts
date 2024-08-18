@@ -106,7 +106,7 @@ export const leaveOrganizationAction = authenticatedActionClient
   });
 
 const ZCreateInviteTokenAction = z.object({
-  inviteId: ZId,
+  inviteId: z.string(),
 });
 
 export const createInviteTokenAction = authenticatedActionClient

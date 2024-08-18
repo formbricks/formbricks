@@ -48,23 +48,29 @@ export const SurveyAnalysisNavigation = ({
   latestFiltersRef.current = filters;
 
   const getResponseCount = () => {
-    if (isSharingPage) return getResponseCountBySurveySharingKeyAction(sharingKey);
-    return getResponseCountAction(survey.id);
+    if (isSharingPage) return getResponseCountBySurveySharingKeyAction({ sharingKey });
+    return getResponseCountAction({ surveyId: survey.id });
   };
 
   const fetchResponseCount = async () => {
     const count = await getResponseCount();
-    setTotalResponseCount(count);
+    const responseCount = count?.data ?? 0;
+    setTotalResponseCount(responseCount);
   };
 
   const getFilteredResponseCount = () => {
-    if (isSharingPage) return getResponseCountBySurveySharingKeyAction(sharingKey, latestFiltersRef.current);
-    return getResponseCountAction(survey.id, latestFiltersRef.current);
+    if (isSharingPage)
+      return getResponseCountBySurveySharingKeyAction({
+        sharingKey,
+        filterCriteria: latestFiltersRef.current,
+      });
+    return getResponseCountAction({ surveyId: survey.id, filterCriteria: latestFiltersRef.current });
   };
 
   const fetchFilteredResponseCount = async () => {
     const count = await getFilteredResponseCount();
-    setFilteredResponseCount(count);
+    const responseCount = count?.data ?? 0;
+    setFilteredResponseCount(responseCount);
   };
 
   useEffect(() => {

@@ -95,12 +95,6 @@ export const responseSelection = {
       },
       isResolved: true,
       isEdited: true,
-      response: {
-        select: {
-          id: true,
-          surveyId: true,
-        },
-      },
     },
   },
 };

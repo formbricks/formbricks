@@ -79,7 +79,7 @@ export const getOrganizationIdFromResponseNoteId = async (responseNoteId: string
     throw new ResourceNotFoundError("responseNote", responseNoteId);
   }
 
-  return await getOrganizationIdFromResponseId(responseNote.response.id);
+  return await getOrganizationIdFromResponseId(responseNote.responseId);
 };
 
 export const getOrganizationIdFromAttributeClassId = async (attributeClassId: string) => {
