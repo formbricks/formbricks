@@ -79,22 +79,40 @@ export const SummaryPage = ({
   latestFiltersRef.current = filters;
 
   const getResponseCount = () => {
-    if (isSharingPage) return getResponseCountBySurveySharingKeyAction(sharingKey, latestFiltersRef.current);
-    return getResponseCountAction(surveyId, latestFiltersRef.current);
+    if (isSharingPage)
+      return getResponseCountBySurveySharingKeyAction({
+        sharingKey,
+        filterCriteria: latestFiltersRef.current,
+      });
+    return getResponseCountAction({
+      surveyId,
+      filterCriteria: latestFiltersRef.current,
+    });
   };
 
   const getSummary = () => {
-    if (isSharingPage) return getSummaryBySurveySharingKeyAction(sharingKey, latestFiltersRef.current);
-    return getSurveySummaryAction(surveyId, latestFiltersRef.current);
+    if (isSharingPage)
+      return getSummaryBySurveySharingKeyAction({
+        sharingKey,
+        filterCriteria: latestFiltersRef.current,
+      });
+
+    return getSurveySummaryAction({
+      surveyId,
+      filterCriteria: latestFiltersRef.current,
+    });
   };
 
   const handleInitialData = async () => {
     try {
-      const updatedResponseCount = await getResponseCount();
+      const updatedResponseCountData = await getResponseCount();
       const updatedSurveySummary = await getSummary();
 
-      setResponseCount(updatedResponseCount);
-      setSurveySummary(updatedSurveySummary);
+      const responseCount = updatedResponseCountData?.data ?? 0;
+      const surveySummary = updatedSurveySummary?.data ?? initialSurveySummary;
+
+      setResponseCount(responseCount);
+      setSurveySummary(surveySummary);
     } catch (error) {
       console.error(error);
     }

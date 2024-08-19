@@ -122,7 +122,7 @@ export const AddChannelMappingModal = ({
         // create action
         slackIntegrationData.config!.data.push(integrationData);
       }
-      await createOrUpdateIntegrationAction(environmentId, slackIntegrationData);
+      await createOrUpdateIntegrationAction({ environmentId, integrationData: slackIntegrationData });
       toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`);
       resetForm();
       setOpen(false);
@@ -155,7 +155,7 @@ export const AddChannelMappingModal = ({
     slackIntegrationData.config!.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      await createOrUpdateIntegrationAction(environmentId, slackIntegrationData);
+      await createOrUpdateIntegrationAction({ environmentId, integrationData: slackIntegrationData });
       toast.success("Integration removed successfully");
       setOpen(false);
     } catch (error) {

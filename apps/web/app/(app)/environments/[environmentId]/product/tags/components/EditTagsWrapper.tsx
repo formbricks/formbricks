@@ -10,6 +10,7 @@ import { AlertCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TTag, TTagsCount } from "@formbricks/types/tags";
@@ -45,16 +46,16 @@ const SingleTag: React.FC<{
   const [isMergingTags, setIsMergingTags] = useState(false);
   const [openDeleteTagDialog, setOpenDeleteTagDialog] = useState(false);
 
-  const confirmDeleteTag = () => {
-    deleteTagAction(tagId)
-      .then((response) => {
-        toast.success(`${response?.name ?? "Tag"} tag deleted`);
-        updateTagsCount();
-        router.refresh();
-      })
-      .catch((error) => {
-        toast.error(error?.message ?? "Something went wrong");
-      });
+  const confirmDeleteTag = async () => {
+    const deleteTagResponse = await deleteTagAction({ tagId });
+    if (deleteTagResponse?.data) {
+      toast.success(`${deleteTagResponse?.data.name ?? "Tag"} tag deleted`);
+      updateTagsCount();
+      router.refresh();
+    } else {
+      const errorMessage = getFormattedErrorMessage(deleteTagResponse);
+      toast.error(errorMessage ?? "Something went wrong");
+    }
   };
 
   return (
@@ -71,24 +72,25 @@ const SingleTag: React.FC<{
               )}
               defaultValue={tagName}
               onBlur={(e) => {
-                updateTagNameAction(tagId, e.target.value.trim())
-                  .then(() => {
+                updateTagNameAction({ tagId, name: e.target.value.trim() }).then((updateTagNameResponse) => {
+                  if (updateTagNameResponse?.data) {
                     setUpdateTagError(false);
                     toast.success("Tag updated");
-                  })
-                  .catch((error) => {
-                    if (error?.message.includes("Unique constraint failed on the fields")) {
+                  } else {
+                    const errorMessage = getFormattedErrorMessage(updateTagNameResponse);
+                    if (errorMessage.includes("Unique constraint failed on the fields")) {
                       toast.error("Tag already exists", {
                         duration: 2000,
                         icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
                       });
                     } else {
-                      toast.error(error?.message ?? "Something went wrong", {
+                      toast.error(errorMessage ?? "Something went wrong", {
                         duration: 2000,
                       });
                     }
                     setUpdateTagError(true);
-                  });
+                  }
+                });
               }}
             />
           </div>
@@ -113,18 +115,17 @@ const SingleTag: React.FC<{
                 }
                 onSelect={(newTagId) => {
                   setIsMergingTags(true);
-                  mergeTagsAction(tagId, newTagId)
-                    .then(() => {
+                  mergeTagsAction({ originalTagId: tagId, newTagId }).then((mergeTagsResponse) => {
+                    if (mergeTagsResponse?.data) {
                       toast.success("Tags merged");
                       updateTagsCount();
                       router.refresh();
-                    })
-                    .catch((error) => {
-                      toast.error(error?.message ?? "Something went wrong");
-                    })
-                    .finally(() => {
-                      setIsMergingTags(false);
-                    });
+                    } else {
+                      const errorMessage = getFormattedErrorMessage(mergeTagsResponse);
+                      toast.error(errorMessage ?? "Something went wrong");
+                    }
+                    setIsMergingTags(false);
+                  });
                 }}
               />
             )}

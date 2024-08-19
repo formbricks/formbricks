@@ -8,6 +8,7 @@ import {
 import { CopyIcon, DownloadIcon, GlobeIcon, LinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   DropdownMenu,
@@ -29,27 +30,33 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
   const [surveyUrl, setSurveyUrl] = useState("");
 
   const handlePublish = async () => {
-    const key = await generateResultShareUrlAction(survey.id);
-    setSurveyUrl(webAppUrl + "/share/" + key);
-    setShowPublishModal(true);
+    const resultShareKeyResponse = await generateResultShareUrlAction({ surveyId: survey.id });
+    if (resultShareKeyResponse?.data) {
+      setSurveyUrl(webAppUrl + "/share/" + resultShareKeyResponse.data);
+      setShowPublishModal(true);
+    } else {
+      const errorMessage = getFormattedErrorMessage(resultShareKeyResponse);
+      toast.error(errorMessage);
+    }
   };
 
   const handleUnpublish = () => {
-    deleteResultShareUrlAction(survey.id)
-      .then(() => {
+    deleteResultShareUrlAction({ surveyId: survey.id }).then((deleteResultShareUrlResponse) => {
+      if (deleteResultShareUrlResponse?.data) {
         toast.success("Results unpublished successfully.");
         setShowPublishModal(false);
-      })
-      .catch((error) => {
-        toast.error(`Error: ${error.message}`);
-      });
+      } else {
+        const errorMessage = getFormattedErrorMessage(deleteResultShareUrlResponse);
+        toast.error(errorMessage);
+      }
+    });
   };
 
   useEffect(() => {
     const fetchSharingKey = async () => {
-      const sharingKey = await getResultShareUrlAction(survey.id);
-      if (sharingKey) {
-        setSurveyUrl(webAppUrl + "/share/" + sharingKey);
+      const resultShareUrlResponse = await getResultShareUrlAction({ surveyId: survey.id });
+      if (resultShareUrlResponse?.data) {
+        setSurveyUrl(webAppUrl + "/share/" + resultShareUrlResponse.data);
         setShowPublishModal(true);
       }
     };

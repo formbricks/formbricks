@@ -1,6 +1,7 @@
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getProductsByEnvironmentIdAction } from "../actions";
@@ -19,14 +20,15 @@ const SurveyCopyOptions = ({ environmentId, survey, onCancel, setOpen }: SurveyC
 
   useEffect(() => {
     const fetchProducts = async () => {
-      try {
-        const products = await getProductsByEnvironmentIdAction(environmentId);
-        setProducts(products);
-      } catch (error) {
-        toast.error("Error fetching products");
-      } finally {
-        setProductLoading(false);
+      const getProductsByEnvironmentIdResponse = await getProductsByEnvironmentIdAction({ environmentId });
+      if (getProductsByEnvironmentIdResponse?.data) {
+        setProducts(getProductsByEnvironmentIdResponse?.data);
+      } else {
+        const errorMessage = getFormattedErrorMessage(getProductsByEnvironmentIdResponse);
+        toast.error(errorMessage);
       }
+
+      setProductLoading(false);
     };
 
     fetchProducts();

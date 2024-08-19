@@ -206,19 +206,13 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
             },
           });
           break;
-        case "skipped": // need to handle dismissed case for CTA type question, that would hinder other ques(eg open text)
+        case "skipped":
           data.push({
             OR: [
               {
                 data: {
                   path: [key],
                   equals: Prisma.DbNull,
-                },
-              },
-              {
-                data: {
-                  path: [key],
-                  equals: "dismissed",
                 },
               },
               {

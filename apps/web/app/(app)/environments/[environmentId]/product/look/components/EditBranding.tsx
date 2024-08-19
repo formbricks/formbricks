@@ -6,7 +6,7 @@ import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
-import { updateProductAction } from "../actions";
+import { updateProductAction } from "../../actions";
 
 interface EditFormbricksBrandingProps {
   type: "linkSurvey" | "inAppSurvey";
@@ -34,7 +34,7 @@ export const EditFormbricksBranding = ({
       let inputProduct: Partial<TProductUpdateInput> = {
         [type === "linkSurvey" ? "linkSurveyBranding" : "inAppSurveyBranding"]: newBrandingState,
       };
-      await updateProductAction(product.id, inputProduct);
+      await updateProductAction({ productId: product.id, data: inputProduct });
       toast.success(newBrandingState ? "Formbricks branding is shown." : "Formbricks branding is hidden.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);

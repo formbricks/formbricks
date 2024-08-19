@@ -67,7 +67,6 @@ export const WebhookTable = ({
         </div>
       )}
       <WebhookModal
-        environmentId={environment.id}
         open={isWebhookDetailModalOpen}
         setOpen={setWebhookDetailModalOpen}
         webhook={activeWebhook}

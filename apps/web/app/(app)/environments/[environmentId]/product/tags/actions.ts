@@ -1,50 +1,64 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { canUserAccessTag, verifyUserRoleAccess } from "@formbricks/lib/tag/auth";
-import { deleteTag, getTag, mergeTags, updateTagName } from "@formbricks/lib/tag/service";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { getOrganizationIdFromTagId } from "@formbricks/lib/organization/utils";
+import { deleteTag, mergeTags, updateTagName } from "@formbricks/lib/tag/service";
+import { ZId } from "@formbricks/types/environment";
 
-export const deleteTagAction = async (tagId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZDeleteTagAction = z.object({
+  tagId: ZId,
+});
 
-  const isAuthorized = await canUserAccessTag(session.user.id, tagId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const deleteTagAction = authenticatedActionClient
+  .schema(ZDeleteTagAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromTagId(parsedInput.tagId),
+      rules: ["tag", "delete"],
+    });
 
-  const tag = await getTag(tagId);
-  const { hasDeleteAccess } = await verifyUserRoleAccess(tag!.environmentId, session.user!.id);
-  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
+    return await deleteTag(parsedInput.tagId);
+  });
 
-  return await deleteTag(tagId);
-};
+const ZUpdateTagNameAction = z.object({
+  tagId: ZId,
+  name: z.string(),
+});
 
-export const updateTagNameAction = async (tagId: string, name: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+export const updateTagNameAction = authenticatedActionClient
+  .schema(ZUpdateTagNameAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromTagId(parsedInput.tagId),
+      rules: ["tag", "update"],
+    });
 
-  const isAuthorized = await canUserAccessTag(session.user.id, tagId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+    return await updateTagName(parsedInput.tagId, parsedInput.name);
+  });
 
-  const tag = await getTag(tagId);
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(tag!.environmentId, session.user.id);
-  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
+const ZMergeTagsAction = z.object({
+  originalTagId: ZId,
+  newTagId: ZId,
+});
 
-  return await updateTagName(tagId, name);
-};
+export const mergeTagsAction = authenticatedActionClient
+  .schema(ZMergeTagsAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromTagId(parsedInput.originalTagId),
+      rules: ["tag", "update"],
+    });
 
-export const mergeTagsAction = async (originalTagId: string, newTagId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromTagId(parsedInput.newTagId),
+      rules: ["tag", "update"],
+    });
 
-  const isAuthorizedForOld = await canUserAccessTag(session.user.id, originalTagId);
-  const isAuthorizedForNew = await canUserAccessTag(session.user.id, newTagId);
-  if (!isAuthorizedForOld || !isAuthorizedForNew) throw new AuthorizationError("Not authorized");
-
-  const tag = await getTag(originalTagId);
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(tag!.environmentId, session.user.id);
-  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
-
-  return await mergeTags(originalTagId, newTagId);
-};
+    return await mergeTags(parsedInput.originalTagId, parsedInput.newTagId);
+  });
