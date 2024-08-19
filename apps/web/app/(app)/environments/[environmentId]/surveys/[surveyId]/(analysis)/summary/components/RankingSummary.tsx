@@ -27,9 +27,6 @@ export const RankingSummary = ({
 
   // sort by count and transform to array
   const results = Object.values(questionSummary.choices).sort((a, b) => {
-    if (a.others) return 1; // Always put a after b if a has 'others'
-    if (b.others) return -1; // Always put b after a if b has 'others'
-
     return a.avgRanking - b.avgRanking; // Sort by count
   });
 

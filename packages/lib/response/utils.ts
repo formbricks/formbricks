@@ -1201,8 +1201,9 @@ export const getQuestionWiseSummary = (
       }
       case TSurveyQuestionTypeEnum.Ranking: {
         let values: TSurveyQuestionSummaryRanking["choices"] = [];
-        const questionChoices = question.choices.map((choice) => getLocalizedValue(choice.label, "default"));
-
+        const questionChoices = question.choices
+          .filter((choice) => choice.label.default !== "Other")
+          .map((choice) => getLocalizedValue(choice.label, "default"));
         let totalResponseCount = 0;
         const choiceRankSums: Record<string, number> = {};
         const choiceCountMap: Record<string, number> = {};
@@ -1210,7 +1211,7 @@ export const getQuestionWiseSummary = (
           choiceRankSums[choice] = 0;
           choiceCountMap[choice] = 0;
         });
-
+        choiceRankSums["Other"] = 0;
         const otherValues: TSurveyQuestionSummaryRanking["choices"][number]["others"] = [];
 
         responses.forEach((response) => {
@@ -1229,6 +1230,7 @@ export const getQuestionWiseSummary = (
                 choiceRankSums[value] += ranking;
                 choiceCountMap[value]++;
               } else {
+                choiceRankSums["Other"] += ranking;
                 otherValues.push({
                   value,
                   person: response.person,
@@ -1249,12 +1251,11 @@ export const getQuestionWiseSummary = (
           });
         });
 
-        // Add "Other" values if present
         if (otherValues.length > 0) {
           values.push({
             value: "Other",
             count: otherValues.length,
-            avgRanking: 0, // We can't calculate average ranking for "Other" values
+            avgRanking: choiceRankSums["Other"] / otherValues.length,
             others: otherValues.slice(0, VALUES_LIMIT),
           });
         }
