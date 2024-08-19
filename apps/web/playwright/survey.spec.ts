@@ -25,7 +25,7 @@ test.describe("Survey Create & Submit Response", async () => {
       await page.getByRole("button", { name: "Publish" }).click();
 
       // Get URL
-      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
+      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
       await page.getByLabel("Copy survey link to clipboard").click();
       url = await page.evaluate("navigator.clipboard.readText()");
     });
@@ -435,7 +435,8 @@ test.describe("Multi Language Survey Create", async () => {
 
     await page.getByRole("button", { name: "Publish" }).click();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
+    // await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
+    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
     await page.getByLabel("Select Language").click();
     await page.getByText("German").click();
     await page.getByLabel("Copy survey link to clipboard").click();
