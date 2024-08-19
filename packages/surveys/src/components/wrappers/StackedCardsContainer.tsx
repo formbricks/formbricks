@@ -43,7 +43,8 @@ export const StackedCardsContainer = ({
       return survey.questions.length;
     }
     return survey.questions.findIndex((question) => question.id === currentQuestionId);
-  }, [currentQuestionId, survey.welcomeCard.enabled, survey.questions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestionId, survey.welcomeCard.enabled, survey.questions.length]);
 
   const [prevQuestionIdx, setPrevQuestionIdx] = useState(questionIdxTemp - 1);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(questionIdxTemp);
@@ -172,6 +173,7 @@ export const StackedCardsContainer = ({
       <div style={{ height: cardHeight }}></div>
       {cardArrangement === "simple" ? (
         <div
+          id={`questionCard-${questionIdxTemp}`}
           className={cn("fb-w-full", fullSizeCards ? "fb-h-full" : "")}
           style={{
             ...borderStyles,
