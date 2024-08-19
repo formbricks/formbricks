@@ -44,36 +44,30 @@ async function runMigration(): Promise<void> {
           )
           .map((ques: TSurveyQuestion) => ques.id);
 
-        // Get all responses for this survey
-        const responses = await prisma.response.findMany({
-          where: {
-            surveyId: survey.id,
-          },
-          select: {
-            id: true,
-            data: true,
-          },
+        const responses = await tx.response.findMany({
+          where: { surveyId: survey.id },
+          select: { id: true, data: true },
         });
 
-        // Update each response
-        return responses.map(async (response) => {
-          const updatedData = { ...response.data };
+        return Promise.all(
+          responses.map(async (response) => {
+            const updatedData = { ...response.data };
 
-          ctaOrConsentQuestionIds.forEach((questionId: string) => {
-            if (updatedData[questionId] && updatedData[questionId] === "dismissed") {
-              updatedData[questionId] = "";
-            }
-          });
+            ctaOrConsentQuestionIds.forEach((questionId: string) => {
+              if (updatedData[questionId] && updatedData[questionId] === "dismissed") {
+                updatedData[questionId] = "";
+              }
+            });
 
-          return prisma.response.update({
-            where: { id: response.id },
-            data: { data: updatedData },
-          });
-        });
+            return tx.response.update({
+              where: { id: response.id },
+              data: { data: updatedData },
+            });
+          })
+        );
       });
 
-      const migrationPromisesFlat = migrationPromises.flat();
-      await Promise.all(migrationPromisesFlat);
+      await Promise.all(migrationPromises);
 
       const endTime = Date.now();
       console.log(`Data migration completed. Total time: ${((endTime - startTime) / 1000).toString()}s`);
