@@ -278,6 +278,16 @@ export interface TBaseFilter {
 
 export type TBaseFilters = TBaseFilter[];
 
+export const ZBaseFilter: z.ZodType<TBaseFilter> = z.lazy(() =>
+  z.object({
+    id: z.string().cuid2(),
+    connector: ZSegmentConnector,
+    resource: z.union([ZSegmentFilter, ZBaseFilters]),
+  })
+);
+
+export const ZBaseFilters: z.ZodType<TBaseFilters> = z.lazy(() => z.array(ZBaseFilter));
+
 // here again, we refine the filters to make sure that the filters are valid
 const refineFilters = (filters: TBaseFilters): boolean => {
   let result = true;

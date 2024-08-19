@@ -1,23 +1,40 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { canUserAccessAttributeClass } from "@formbricks/lib/attributeClass/auth";
-import { authOptions } from "@formbricks/lib/authOptions";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import {
+  getOrganizationIdFromAttributeClassId,
+  getOrganizationIdFromEnvironmentId,
+} from "@formbricks/lib/organization/utils";
 import { getSegmentsByAttributeClassName } from "@formbricks/lib/segment/service";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { ZAttributeClass } from "@formbricks/types/attribute-classes";
+import { ZId } from "@formbricks/types/environment";
 
-export const getSegmentsByAttributeClassAction = async (
-  environmentId: string,
-  attributeClass: TAttributeClass
-): Promise<{ activeSurveys: string[]; inactiveSurveys: string[] }> => {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) throw new AuthorizationError("Not authorized");
+const ZGetSegmentsByAttributeClassAction = z.object({
+  environmentId: ZId,
+  attributeClass: ZAttributeClass,
+});
 
-    const isAuthorized = await canUserAccessAttributeClass(session.user.id, attributeClass.id);
-    if (!isAuthorized) throw new AuthorizationError("Not authorized");
-    const segments = await getSegmentsByAttributeClassName(environmentId, attributeClass.name);
+export const getSegmentsByAttributeClassAction = authenticatedActionClient
+  .schema(ZGetSegmentsByAttributeClassAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromAttributeClassId(parsedInput.attributeClass.id),
+      rules: ["attributeClass", "read"],
+    });
+
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      rules: ["environment", "read"],
+    });
+
+    const segments = await getSegmentsByAttributeClassName(
+      parsedInput.environmentId,
+      parsedInput.attributeClass.name
+    );
 
     // segments is an array of segments, each segment has a survey array with objects with properties: id, name and status.
     // We need the name of the surveys only and we need to filter out the surveys that are both in progress and not in progress.
@@ -34,8 +51,4 @@ export const getSegmentsByAttributeClassAction = async (
       .flat();
 
     return { activeSurveys, inactiveSurveys };
-  } catch (err) {
-    console.error(`Error getting segments by attribute class: ${err}`);
-    throw err;
-  }
-};
+  });

@@ -1,76 +1,74 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { canUserUpdateActionClass, verifyUserRoleAccess } from "@formbricks/lib/actionClass/auth";
-import { deleteActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { z } from "zod";
+import { deleteActionClass, getActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { getOrganizationIdFromActionClassId } from "@formbricks/lib/organization/utils";
 import { getSurveysByActionClassId } from "@formbricks/lib/survey/service";
-import { TActionClassInput } from "@formbricks/types/action-classes";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { ZActionClassInput } from "@formbricks/types/action-classes";
+import { ZId } from "@formbricks/types/environment";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 
-export const deleteActionClassAction = async (environmentId, actionClassId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZDeleteActionClassAction = z.object({
+  actionClassId: ZId,
+});
 
-  const organization = await getOrganizationByEnvironmentId(environmentId);
+export const deleteActionClassAction = authenticatedActionClient
+  .schema(ZDeleteActionClassAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromActionClassId(parsedInput.actionClassId),
+      rules: ["actionClass", "delete"],
+    });
 
-  if (!organization) {
-    throw new Error("Organization not found");
-  }
+    await deleteActionClass(parsedInput.actionClassId);
+  });
 
-  const isAuthorized = await canUserUpdateActionClass(session.user.id, actionClassId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+const ZUpdateActionClassAction = z.object({
+  actionClassId: ZId,
+  updatedAction: ZActionClassInput,
+});
 
-  const { hasDeleteAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
-  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
+export const updateActionClassAction = authenticatedActionClient
+  .schema(ZUpdateActionClassAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const actionClass = await getActionClass(parsedInput.actionClassId);
+    if (actionClass === null) {
+      throw new ResourceNotFoundError("ActionClass", parsedInput.actionClassId);
+    }
 
-  await deleteActionClass(environmentId, actionClassId);
-};
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromActionClassId(parsedInput.actionClassId),
+      rules: ["actionClass", "update"],
+    });
 
-export const updateActionClassAction = async (
-  environmentId: string,
-  actionClassId: string,
-  updatedAction: Partial<TActionClassInput>
-) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+    return await updateActionClass(
+      actionClass.environmentId,
+      parsedInput.actionClassId,
+      parsedInput.updatedAction
+    );
+  });
 
-  const organization = await getOrganizationByEnvironmentId(environmentId);
+const ZGetActiveInactiveSurveysAction = z.object({
+  actionClassId: ZId,
+});
 
-  if (!organization) {
-    throw new Error("Organization not found");
-  }
+export const getActiveInactiveSurveysAction = authenticatedActionClient
+  .schema(ZGetActiveInactiveSurveysAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromActionClassId(parsedInput.actionClassId),
+      rules: ["survey", "read"],
+    });
 
-  const isAuthorized = await canUserUpdateActionClass(session.user.id, actionClassId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
-  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
-
-  return await updateActionClass(environmentId, actionClassId, updatedAction);
-};
-
-export const getActiveInactiveSurveysAction = async (
-  actionClassId: string,
-  environmentId: string
-): Promise<{ activeSurveys: string[]; inactiveSurveys: string[] }> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const organization = await getOrganizationByEnvironmentId(environmentId);
-
-  if (!organization) {
-    throw new Error("Organization not found");
-  }
-
-  const isAuthorized = await canUserUpdateActionClass(session.user.id, actionClassId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  const surveys = await getSurveysByActionClassId(actionClassId);
-  const response = {
-    activeSurveys: surveys.filter((s) => s.status === "inProgress").map((survey) => survey.name),
-    inactiveSurveys: surveys.filter((s) => s.status !== "inProgress").map((survey) => survey.name),
-  };
-  return response;
-};
+    const surveys = await getSurveysByActionClassId(parsedInput.actionClassId);
+    const response = {
+      activeSurveys: surveys.filter((s) => s.status === "inProgress").map((survey) => survey.name),
+      inactiveSurveys: surveys.filter((s) => s.status !== "inProgress").map((survey) => survey.name),
+    };
+    return response;
+  });

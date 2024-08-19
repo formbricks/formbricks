@@ -70,7 +70,7 @@ export const createResponseNote = async (
 };
 
 export const getResponseNote = reactCache(
-  (responseNoteId: string): Promise<TResponseNote | null> =>
+  (responseNoteId: string): Promise<(TResponseNote & { responseId: string }) | null> =>
     cache(
       async () => {
         try {
@@ -78,7 +78,10 @@ export const getResponseNote = reactCache(
             where: {
               id: responseNoteId,
             },
-            select: responseNoteSelect,
+            select: {
+              ...responseNoteSelect,
+              responseId: true,
+            },
           });
           return responseNote;
         } catch (error) {

@@ -11,6 +11,7 @@ import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TInvite } from "@formbricks/types/invites";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -39,14 +40,14 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       if (!member && invite) {
         // This is an invite
 
-        await deleteInviteAction(invite?.id, organization.id);
+        await deleteInviteAction({ inviteId: invite?.id, organizationId: organization.id });
         toast.success("Invite deleted successfully");
       }
 
       if (member && !invite) {
         // This is a member
 
-        await deleteMembershipAction(member.userId, organization.id);
+        await deleteMembershipAction({ userId: member.userId, organizationId: organization.id });
         toast.success("Member deleted successfully");
       }
 
@@ -74,9 +75,14 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
   const handleShareInvite = async () => {
     try {
       if (!invite) return;
-      const { inviteToken } = await createInviteTokenAction(invite.id);
-      setShareInviteToken(inviteToken);
-      setShowShareInviteModal(true);
+      const createInviteTokenResponse = await createInviteTokenAction({ inviteId: invite.id });
+      if (createInviteTokenResponse?.data) {
+        setShareInviteToken(createInviteTokenResponse.data.inviteToken);
+        setShowShareInviteModal(true);
+      } else {
+        const errorMessage = getFormattedErrorMessage(createInviteTokenResponse);
+        toast.error(errorMessage);
+      }
     } catch (err) {
       toast.error(`Error: ${err.message}`);
     }
@@ -86,7 +92,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
     try {
       if (!invite) return;
 
-      await resendInviteAction(invite.id, organization.id);
+      await resendInviteAction({ inviteId: invite.id, organizationId: organization.id });
       toast.success("Invitation sent once more.");
     } catch (err) {
       toast.error(`Error: ${err.message}`);

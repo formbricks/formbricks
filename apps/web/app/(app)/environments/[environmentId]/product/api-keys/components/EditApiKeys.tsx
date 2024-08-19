@@ -3,6 +3,7 @@
 import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { timeSince } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TApiKey } from "@formbricks/types/api-keys";
@@ -35,7 +36,7 @@ export const EditAPIKeys = ({
 
   const handleDeleteKey = async () => {
     try {
-      await deleteApiKeyAction(activeKey.id);
+      await deleteApiKeyAction({ id: activeKey.id });
       const updatedApiKeys = apiKeysLocal?.filter((apiKey) => apiKey.id !== activeKey.id) || [];
       setApiKeysLocal(updatedApiKeys);
       toast.success("API Key deleted");
@@ -47,16 +48,20 @@ export const EditAPIKeys = ({
   };
 
   const handleAddAPIKey = async (data) => {
-    try {
-      const apiKey = await createApiKeyAction(environmentTypeId, { label: data.label });
-      const updatedApiKeys = [...apiKeysLocal!, apiKey];
+    const createApiKeyResponse = await createApiKeyAction({
+      environmentId: environmentTypeId,
+      apiKeyData: { label: data.label },
+    });
+    if (createApiKeyResponse?.data) {
+      const updatedApiKeys = [...apiKeysLocal!, createApiKeyResponse.data];
       setApiKeysLocal(updatedApiKeys);
       toast.success("API key created");
-    } catch (e) {
-      toast.error("Unable to create API Key");
-    } finally {
-      setOpenAddAPIKeyModal(false);
+    } else {
+      const errorMessage = getFormattedErrorMessage(createApiKeyResponse);
+      toast.error(errorMessage);
     }
+
+    setOpenAddAPIKeyModal(false);
   };
 
   const ApiKeyDisplay = ({ apiKey }) => {
