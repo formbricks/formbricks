@@ -123,7 +123,13 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
     const fetchData = async (searchQuery: string, currentPage: number) => {
       try {
         setIsLoading(true);
-        const imagesFromUnsplash = await getImagesFromUnsplashAction(searchQuery, currentPage);
+        const getImagesFromUnsplashResponse = await getImagesFromUnsplashAction({
+          searchQuery: searchQuery,
+          page: currentPage,
+        });
+        if (!getImagesFromUnsplashResponse?.data) return;
+
+        const imagesFromUnsplash = getImagesFromUnsplashResponse.data;
         for (let i = 0; i < imagesFromUnsplash.length; i++) {
           const authorName = new URL(imagesFromUnsplash[i].urls.regularWithAttribution).searchParams.get(
             "authorName"
@@ -163,7 +169,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
     try {
       handleBgChange(imageUrl, "image");
       if (downloadImageUrl) {
-        await triggerDownloadUnsplashImageAction(downloadImageUrl);
+        await triggerDownloadUnsplashImageAction({ downloadUrl: downloadImageUrl });
       }
     } catch (error) {
       toast.error(error.message);

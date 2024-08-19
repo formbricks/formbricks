@@ -49,7 +49,7 @@ export const NotificationSwitch = ({
         !updatedNotificationSettings[notificationType][surveyOrProductOrOrganizationId];
     }
 
-    await updateNotificationSettingsAction(updatedNotificationSettings);
+    await updateNotificationSettingsAction({ notificationSettings: updatedNotificationSettings });
     setIsLoading(false);
   };
 

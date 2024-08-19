@@ -52,7 +52,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
   const handleDeleteIntegration = async () => {
     try {
       setisDeleting(true);
-      await deleteIntegrationAction(airtableIntegration.id);
+      await deleteIntegrationAction({ integrationId: airtableIntegration.id });
       setIsConnected(false);
       toast.success("Integration removed successfully");
     } catch (error) {

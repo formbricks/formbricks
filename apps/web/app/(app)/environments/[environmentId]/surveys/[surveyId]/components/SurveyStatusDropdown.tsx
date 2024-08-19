@@ -36,7 +36,7 @@ export const SurveyStatusDropdown = ({
           disabled={isStatusChangeDisabled}
           onValueChange={(value) => {
             const castedValue = value as TSurvey["status"];
-            updateSurveyAction({ ...survey, status: castedValue })
+            updateSurveyAction({ survey: { ...survey, status: castedValue } })
               .then(() => {
                 toast.success(
                   value === "inProgress"

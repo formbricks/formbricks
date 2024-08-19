@@ -45,10 +45,11 @@
     "data-migration:multiple-endings": "ts-node ./data-migrations/20240801120500_thankYouCard_to_endings/data-migration.ts",
     "data-migration:simplified-email-verification": "ts-node ./data-migrations/20240726124100_replace_verifyEmail_with_isVerifyEmailEnabled/data-migration.ts",
     "data-migration:fix-logic-end-destination": "ts-node ./data-migrations/20240806120500_fix-logic-end-destination/data-migration.ts",
-    "data-migration:v2.4": "pnpm data-migration:segments-cleanup && pnpm data-migration:multiple-endings && pnpm data-migration:simplified-email-verification && pnpm data-migration:fix-logic-end-destination"
+    "data-migration:v2.4": "pnpm data-migration:segments-cleanup && pnpm data-migration:multiple-endings && pnpm data-migration:simplified-email-verification && pnpm data-migration:fix-logic-end-destination",
+    "data-migration:remove-dismissed-value-inconsistency": "ts-node ./data-migrations/20240807120500_cta_consent_dismissed_inconsistency/data-migration.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.17.0",
+    "@prisma/client": "^5.18.0",
     "@prisma/extension-accelerate": "^1.1.0",
     "dotenv-cli": "^7.4.2"
   },
@@ -57,7 +58,7 @@
     "@formbricks/types": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
     "@formbricks/eslint-config": "workspace:*",
-    "prisma": "^5.17.0",
+    "prisma": "^5.18.0",
     "prisma-dbml-generator": "^0.12.0",
     "prisma-json-types-generator": "^3.0.4",
     "ts-node": "^10.9.2",

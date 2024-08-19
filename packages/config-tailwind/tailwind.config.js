@@ -15,6 +15,8 @@ module.exports = {
         "accordion-up": "accordion-up 0.2s ease-out",
         fadeIn: "fadeIn 0.2s ease-out",
         fadeOut: "fadeOut 0.2s ease-out",
+        surveyLoading: "surveyLoadingAnimation 0.5s ease-out forwards",
+        surveyExit: "surveyExitAnimation 0.5s ease-out forwards",
       },
       blur: {
         xxs: "0.33px",
@@ -86,6 +88,14 @@ module.exports = {
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: 0 },
+        },
+        surveyLoadingAnimation: {
+          "0%": { transform: "translateY(50px)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        surveyExitAnimation: {
+          "0%": { transform: "translateY(0)", opacity: "1" },
+          "100%": { transform: "translateY(-50px)", opacity: "0" },
         },
       },
       width: {
