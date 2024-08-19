@@ -9,7 +9,7 @@ import { TProduct, ZProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
-import { updateProductAction } from "../actions";
+import { updateProductAction } from "../../actions";
 
 type EditRedirectsProps = {
   product: TProduct;

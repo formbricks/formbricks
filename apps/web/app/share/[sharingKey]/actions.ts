@@ -1,5 +1,7 @@
 "use server";
 
+import { z } from "zod";
+import { actionClient } from "@formbricks/lib/actionClient";
 import {
   getResponseCountBySurveyId,
   getResponseFilteringValues,
@@ -8,54 +10,75 @@ import {
 } from "@formbricks/lib/response/service";
 import { getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
+import { ZId } from "@formbricks/types/environment";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { TResponse, TResponseFilterCriteria } from "@formbricks/types/responses";
-import { TSurveySummary } from "@formbricks/types/surveys/types";
+import { ZResponseFilterCriteria } from "@formbricks/types/responses";
 
-export const getResponsesBySurveySharingKeyAction = async (
-  sharingKey: string,
-  limit: number = 10,
-  offset: number = 0,
-  filterCriteria?: TResponseFilterCriteria
-): Promise<TResponse[]> => {
-  const surveyId = await getSurveyIdByResultShareKey(sharingKey);
-  if (!surveyId) throw new AuthorizationError("Not authorized");
+const ZGetResponsesBySurveySharingKeyAction = z.object({
+  sharingKey: z.string(),
+  limit: z.number().optional(),
+  offset: z.number().optional(),
+  filterCriteria: ZResponseFilterCriteria.optional(),
+});
 
-  const responses = await getResponses(surveyId, limit, offset, filterCriteria);
-  return responses;
-};
+export const getResponsesBySurveySharingKeyAction = actionClient
+  .schema(ZGetResponsesBySurveySharingKeyAction)
+  .action(async ({ parsedInput }) => {
+    const surveyId = await getSurveyIdByResultShareKey(parsedInput.sharingKey);
+    if (!surveyId) throw new AuthorizationError("Not authorized");
 
-export const getSummaryBySurveySharingKeyAction = async (
-  sharingKey: string,
-  filterCriteria?: TResponseFilterCriteria
-): Promise<TSurveySummary> => {
-  const surveyId = await getSurveyIdByResultShareKey(sharingKey);
-  if (!surveyId) throw new AuthorizationError("Not authorized");
+    const responses = await getResponses(
+      surveyId,
+      parsedInput.limit,
+      parsedInput.offset,
+      parsedInput.filterCriteria
+    );
+    return responses;
+  });
 
-  return await getSurveySummary(surveyId, filterCriteria);
-};
+const ZGetSummaryBySurveySharingKeyAction = z.object({
+  sharingKey: z.string(),
+  filterCriteria: ZResponseFilterCriteria.optional(),
+});
 
-export const getResponseCountBySurveySharingKeyAction = async (
-  sharingKey: string,
-  filterCriteria?: TResponseFilterCriteria
-): Promise<number> => {
-  const surveyId = await getSurveyIdByResultShareKey(sharingKey);
-  if (!surveyId) throw new AuthorizationError("Not authorized");
+export const getSummaryBySurveySharingKeyAction = actionClient
+  .schema(ZGetSummaryBySurveySharingKeyAction)
+  .action(async ({ parsedInput }) => {
+    const surveyId = await getSurveyIdByResultShareKey(parsedInput.sharingKey);
+    if (!surveyId) throw new AuthorizationError("Not authorized");
 
-  return await getResponseCountBySurveyId(surveyId, filterCriteria);
-};
+    return await getSurveySummary(surveyId, parsedInput.filterCriteria);
+  });
 
-export const getSurveyFilterDataBySurveySharingKeyAction = async (
-  sharingKey: string,
-  environmentId: string
-) => {
-  const surveyId = await getSurveyIdByResultShareKey(sharingKey);
-  if (!surveyId) throw new AuthorizationError("Not authorized");
+const ZGetResponseCountBySurveySharingKeyAction = z.object({
+  sharingKey: z.string(),
+  filterCriteria: ZResponseFilterCriteria.optional(),
+});
 
-  const [tags, { personAttributes: attributes, meta, hiddenFields }] = await Promise.all([
-    getTagsByEnvironmentId(environmentId),
-    getResponseFilteringValues(surveyId),
-  ]);
+export const getResponseCountBySurveySharingKeyAction = actionClient
+  .schema(ZGetResponseCountBySurveySharingKeyAction)
+  .action(async ({ parsedInput }) => {
+    const surveyId = await getSurveyIdByResultShareKey(parsedInput.sharingKey);
+    if (!surveyId) throw new AuthorizationError("Not authorized");
 
-  return { environmentTags: tags, attributes, meta, hiddenFields };
-};
+    return await getResponseCountBySurveyId(surveyId, parsedInput.filterCriteria);
+  });
+
+const ZGetSurveyFilterDataBySurveySharingKeyAction = z.object({
+  sharingKey: z.string(),
+  environmentId: ZId,
+});
+
+export const getSurveyFilterDataBySurveySharingKeyAction = actionClient
+  .schema(ZGetSurveyFilterDataBySurveySharingKeyAction)
+  .action(async ({ parsedInput }) => {
+    const surveyId = await getSurveyIdByResultShareKey(parsedInput.sharingKey);
+    if (!surveyId) throw new AuthorizationError("Not authorized");
+
+    const [tags, { personAttributes: attributes, meta, hiddenFields }] = await Promise.all([
+      getTagsByEnvironmentId(parsedInput.environmentId),
+      getResponseFilteringValues(surveyId),
+    ]);
+
+    return { environmentTags: tags, attributes, meta, hiddenFields };
+  });
