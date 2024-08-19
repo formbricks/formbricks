@@ -72,6 +72,7 @@ export type TJsWebsiteSyncInput = z.infer<typeof ZJsWebsiteSyncInput>;
 
 export const ZJsWebsitePersonState = z.object({
   userId: z.string(),
+  segments: z.array(z.string()), // segment ids the person belongs to
   displays: z.array(z.string()), // displayed survey ids
   responses: z.array(z.string()), // responded survey ids
   lastDisplayAt: z.date().nullable(),

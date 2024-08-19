@@ -1,6 +1,7 @@
+import { getPersonSegmentIds } from "@/app/api/v1/client/[environmentId]/website/people/[userId]/lib/segments";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextRequest } from "next/server";
+import { NextRequest, userAgent } from "next/server";
 import { getDisplaysByPersonId } from "@formbricks/lib/display/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPersonByUserId } from "@formbricks/lib/person/service";
@@ -51,12 +52,17 @@ export const GET = async (
       );
     }
 
+    const { device } = userAgent(request);
+    const deviceType = device.type === "mobile" ? "phone" : "desktop";
+
     const personResponses = await getResponsesByPersonId(person.id);
     const personDisplays = await getDisplaysByPersonId(person.id);
+    const segments = await getPersonSegmentIds(environmentId, person, deviceType);
 
     // If the person exists, return the persons's state
     const userState: TJsWebsitePersonState = {
       userId: person.userId,
+      segments,
       displays: personDisplays?.map((display) => display.surveyId) ?? [],
       responses: personResponses?.map((response) => response.surveyId) ?? [],
       lastDisplayAt: personDisplays.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]
