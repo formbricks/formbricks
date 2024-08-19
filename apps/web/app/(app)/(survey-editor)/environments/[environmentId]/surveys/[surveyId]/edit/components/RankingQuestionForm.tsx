@@ -5,8 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
@@ -79,10 +78,7 @@ export const RankingQuestionForm = ({
   const addChoice = (choiceIdx?: number) => {
     setIsNew(false); // This question is no longer new.
     let newChoices = !question.choices ? [] : question.choices;
-    const otherChoice = newChoices.find((choice) => choice.id === "other");
-    if (otherChoice) {
-      newChoices = newChoices.filter((choice) => choice.id !== "other");
-    }
+
     const newChoice = {
       id: createId(),
       label: createI18nString("", surveyLanguageCodes),
@@ -92,9 +88,7 @@ export const RankingQuestionForm = ({
     } else {
       newChoices.push(newChoice);
     }
-    if (otherChoice) {
-      newChoices.push(otherChoice);
-    }
+
     updateQuestion(questionIdx, { choices: newChoices });
   };
 
@@ -118,18 +112,6 @@ export const RankingQuestionForm = ({
     updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
   };
 
-  const addOther = () => {
-    if (question.choices.filter((c) => c.id === "other").length === 0) {
-      const newChoices = !question.choices ? [] : question.choices.filter((c) => c.id !== "other");
-      newChoices.push({
-        id: "other",
-        label: createI18nString("Other", surveyLanguageCodes),
-      });
-      updateQuestion(questionIdx, {
-        choices: newChoices,
-      });
-    }
-  };
   const shuffleOptionsTypes = {
     none: {
       id: "none",
@@ -139,12 +121,7 @@ export const RankingQuestionForm = ({
     all: {
       id: "all",
       label: "Randomize all",
-      show: question.choices.filter((c) => c.id === "other").length === 0,
-    },
-    exceptLast: {
-      id: "exceptLast",
-      label: "Randomize all except last option",
-      show: true,
+      show: question.choices.length > 0,
     },
   };
 
@@ -219,10 +196,6 @@ export const RankingQuestionForm = ({
             onDragEnd={(event) => {
               const { active, over } = event;
 
-              if (active.id === "other" || over?.id === "other") {
-                return;
-              }
-
               if (!active || !over) {
                 return;
               }
@@ -263,21 +236,23 @@ export const RankingQuestionForm = ({
               </div>
             </SortableContext>
           </DndContext>
-          <div className="flex items-center justify-between space-x-2">
-            {question.choices.filter((c) => c.id === "other").length === 0 && (
-              <Button size="sm" variant="minimal" type="button" onClick={() => addOther()}>
-                Add &quot;Other&quot;
-              </Button>
-            )}
-          </div>
-          <div className="flex flex-1 items-center justify-end gap-2">
+
+          <div className="mt-2 flex flex-1 items-center justify-between gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              EndIcon={PlusIcon}
+              type="button"
+              onClick={() => addChoice()}>
+              Add option
+            </Button>
             <Select
               defaultValue={question.shuffleOption}
               value={question.shuffleOption}
               onValueChange={(e: TShuffleOption) => {
                 updateQuestion(questionIdx, { shuffleOption: e });
               }}>
-              <SelectTrigger className="w-fit space-x-2 overflow-hidden border-0 font-semibold text-slate-600">
+              <SelectTrigger className="w-fit space-x-2 overflow-hidden border-0 font-medium text-slate-600">
                 <SelectValue placeholder="Select ordering" />
               </SelectTrigger>
               <SelectContent>

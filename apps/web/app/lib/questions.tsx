@@ -222,10 +222,13 @@ export const questionTypes: TQuestion[] = [
     description: "Allow respondents to rank items",
     icon: ListOrderedIcon,
     preset: {
-      headline: { default: "Which is better?" },
+      headline: { default: "What is most important for you in life?" },
       choices: [
-        { id: createId(), label: { default: "🍰" } },
-        { id: createId(), label: { default: "🎂" } },
+        { id: createId(), label: { default: "Work" } },
+        { id: createId(), label: { default: "Money" } },
+        { id: createId(), label: { default: "Travel" } },
+        { id: createId(), label: { default: "Family" } },
+        { id: createId(), label: { default: "Friends" } },
       ],
     } as Partial<TSurveyRankingQuestion>,
   },

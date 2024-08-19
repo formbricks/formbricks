@@ -5,8 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
@@ -267,7 +266,7 @@ export const MultipleChoiceQuestionForm = ({
               </div>
             </SortableContext>
           </DndContext>
-          <div className="flex items-center justify-between space-x-2">
+          <div className="mt-2 flex items-center justify-between space-x-2">
             {question.choices.filter((c) => c.id === "other").length === 0 && (
               <Button size="sm" variant="minimal" type="button" onClick={() => addOther()}>
                 Add &quot;Other&quot;
@@ -296,7 +295,7 @@ export const MultipleChoiceQuestionForm = ({
                 onValueChange={(e: TShuffleOption) => {
                   updateQuestion(questionIdx, { shuffleOption: e });
                 }}>
-                <SelectTrigger className="w-fit space-x-2 overflow-hidden border-0 font-semibold text-slate-600">
+                <SelectTrigger className="w-fit space-x-2 overflow-hidden border-0 font-medium text-slate-600">
                   <SelectValue placeholder="Select ordering" />
                 </SelectTrigger>
                 <SelectContent>
