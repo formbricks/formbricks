@@ -1,5 +1,5 @@
 import { render } from "@react-email/render";
-import nodemailer from "nodemailer";
+import { createTransport } from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import {
   DEBUG,
@@ -14,6 +14,7 @@ import {
 } from "@formbricks/lib/constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import type { TLinkSurveyEmailData } from "@formbricks/types/email";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
@@ -45,21 +46,14 @@ interface TEmailUser {
   email: string;
 }
 
-export interface LinkSurveyEmailData {
-  surveyId: string;
-  email: string;
-  suId: string;
-  surveyName: string;
-}
-
 const getEmailSubject = (productName: string): string => {
   return `${productName} User Insights - Last Week by Formbricks`;
 };
 
-export const sendEmail = async (emailData: SendEmailDataProps) => {
+export const sendEmail = async (emailData: SendEmailDataProps): Promise<void> => {
   if (!IS_SMTP_CONFIGURED) return;
 
-  const transporter = nodemailer.createTransport({
+  const transporter = createTransport({
     host: SMTP_HOST,
     port: SMTP_PORT,
     secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
@@ -79,7 +73,7 @@ export const sendEmail = async (emailData: SendEmailDataProps) => {
   await transporter.sendMail({ ...emailDefaults, ...emailData });
 };
 
-export const sendVerificationEmail = async (user: TEmailUser) => {
+export const sendVerificationEmail = async (user: TEmailUser): Promise<void> => {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
   });
@@ -94,7 +88,7 @@ export const sendVerificationEmail = async (user: TEmailUser) => {
   });
 };
 
-export const sendForgotPasswordEmail = async (user: TEmailUser) => {
+export const sendForgotPasswordEmail = async (user: TEmailUser): Promise<void> => {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
   });
@@ -106,7 +100,7 @@ export const sendForgotPasswordEmail = async (user: TEmailUser) => {
   });
 };
 
-export const sendPasswordResetNotifyEmail = async (user: TEmailUser) => {
+export const sendPasswordResetNotifyEmail = async (user: TEmailUser): Promise<void> => {
   await sendEmail({
     to: user.email,
     subject: "Your Formbricks password has been changed",
@@ -121,7 +115,7 @@ export const sendInviteMemberEmail = async (
   inviteeName: string,
   isOnboardingInvite?: boolean,
   inviteMessage?: string
-) => {
+): Promise<void> => {
   const token = createInviteToken(inviteId, email, {
     expiresIn: "7d",
   });
@@ -145,7 +139,11 @@ export const sendInviteMemberEmail = async (
   }
 };
 
-export const sendInviteAcceptedEmail = async (inviterName: string, inviteeName: string, email: string) => {
+export const sendInviteAcceptedEmail = async (
+  inviterName: string,
+  inviteeName: string,
+  email: string
+): Promise<void> => {
   await sendEmail({
     to: email,
     subject: `You've got a new organization member!`,
@@ -159,7 +157,7 @@ export const sendResponseFinishedEmail = async (
   survey: TSurvey,
   response: TResponse,
   responseCount: number
-) => {
+): Promise<void> => {
   const personEmail = response.personAttributes?.email;
   const organization = await getOrganizationByEnvironmentId(environmentId);
 
@@ -193,7 +191,7 @@ export const sendEmbedSurveyPreviewEmail = async (
   subject: string,
   html: string,
   environmentId: string
-) => {
+): Promise<void> => {
   await sendEmail({
     to,
     subject,
@@ -201,13 +199,13 @@ export const sendEmbedSurveyPreviewEmail = async (
   });
 };
 
-export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) => {
+export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData): Promise<void> => {
   const surveyId = data.surveyId;
   const email = data.email;
   const surveyName = data.surveyName;
   const singleUseId = data.suId;
   const token = createTokenForLinkSurvey(surveyId, email);
-  const getSurveyLink = () => {
+  const getSurveyLink = (): string => {
     if (singleUseId) {
       return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
     }
@@ -223,7 +221,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) =
 export const sendWeeklySummaryNotificationEmail = async (
   email: string,
   notificationData: TWeeklySummaryNotificationResponse
-) => {
+): Promise<void> => {
   const startDate = `${notificationData.lastWeekDate.getDate().toString()} ${notificationData.lastWeekDate.toLocaleString(
     "default",
     { month: "short" }
@@ -254,7 +252,7 @@ export const sendWeeklySummaryNotificationEmail = async (
 export const sendNoLiveSurveyNotificationEmail = async (
   email: string,
   notificationData: TWeeklySummaryNotificationResponse
-) => {
+): Promise<void> => {
   const startDate = `${notificationData.lastWeekDate.getDate().toString()} ${notificationData.lastWeekDate.toLocaleString(
     "default",
     { month: "short" }

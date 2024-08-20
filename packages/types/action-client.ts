@@ -9,6 +9,18 @@ export const ZResource = z.enum([
   "response",
   "survey",
   "person",
+  "tag",
+  "responseNote",
+  "membership",
+  "attributeClass",
+  "segment",
+  "actionClass",
+  "integration",
+  "webhook",
+  "apiKey",
+  "subscription",
+  "invite",
+  "language",
 ]);
 export type TResource = z.infer<typeof ZResource>;
 

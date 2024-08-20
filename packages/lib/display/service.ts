@@ -7,12 +7,8 @@ import {
   TDisplay,
   TDisplayCreateInput,
   TDisplayFilters,
-  TDisplayLegacyCreateInput,
-  TDisplayLegacyUpdateInput,
   TDisplayUpdateInput,
   ZDisplayCreateInput,
-  ZDisplayLegacyCreateInput,
-  ZDisplayLegacyUpdateInput,
   ZDisplayUpdateInput,
 } from "@formbricks/types/displays";
 import { ZId } from "@formbricks/types/environment";
@@ -88,50 +84,12 @@ export const updateDisplay = async (
         },
       }),
       ...(displayInput.responseId && {
-        responseId: displayInput.responseId,
-      }),
-    };
-    const display = await prisma.display.update({
-      where: {
-        id: displayId,
-      },
-      data,
-      select: selectDisplay,
-    });
-
-    displayCache.revalidate({
-      id: display.id,
-      surveyId: display.surveyId,
-    });
-
-    return display;
-  } catch (error) {
-    console.error(error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
-
-export const updateDisplayLegacy = async (
-  displayId: string,
-  displayInput: TDisplayLegacyUpdateInput
-): Promise<TDisplay> => {
-  validateInputs([displayInput, ZDisplayLegacyUpdateInput]);
-  try {
-    const data = {
-      ...(displayInput.personId && {
-        person: {
+        response: {
           connect: {
-            id: displayInput.personId,
+            id: displayInput.responseId,
           },
         },
       }),
-      ...(displayInput.responseId && {
-        responseId: displayInput.responseId,
-      }),
     };
     const display = await prisma.display.update({
       where: {
@@ -140,6 +98,7 @@ export const updateDisplayLegacy = async (
       data,
       select: selectDisplay,
     });
+
     displayCache.revalidate({
       id: display.id,
       surveyId: display.surveyId,
@@ -191,80 +150,6 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
       personId: display.personId,
       surveyId: display.surveyId,
     });
-    return display;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
-
-export const createDisplayLegacy = async (displayInput: TDisplayLegacyCreateInput): Promise<TDisplay> => {
-  validateInputs([displayInput, ZDisplayLegacyCreateInput]);
-  try {
-    const display = await prisma.display.create({
-      data: {
-        survey: {
-          connect: {
-            id: displayInput.surveyId,
-          },
-        },
-
-        ...(displayInput.personId && {
-          person: {
-            connect: {
-              id: displayInput.personId,
-            },
-          },
-        }),
-      },
-      select: selectDisplay,
-    });
-
-    displayCache.revalidate({
-      id: display.id,
-      personId: display.personId,
-      surveyId: display.surveyId,
-    });
-
-    return display;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
-
-export const markDisplayRespondedLegacy = async (displayId: string): Promise<TDisplay> => {
-  validateInputs([displayId, ZId]);
-
-  try {
-    if (!displayId) throw new Error("Display ID is required");
-
-    const display = await prisma.display.update({
-      where: {
-        id: displayId,
-      },
-      data: {
-        status: "responded",
-      },
-      select: selectDisplay,
-    });
-
-    if (!display) {
-      throw new ResourceNotFoundError("Display", displayId);
-    }
-
-    displayCache.revalidate({
-      id: display.id,
-      personId: display.personId,
-      surveyId: display.surveyId,
-    });
-
     return display;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -353,6 +238,12 @@ export const getDisplayCountBySurveyId = reactCache(
                   createdAt: {
                     gte: filters.createdAt.min,
                     lte: filters.createdAt.max,
+                  },
+                }),
+              ...(filters &&
+                filters.responseIds && {
+                  responseId: {
+                    in: filters.responseIds,
                   },
                 }),
             },

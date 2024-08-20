@@ -19,13 +19,12 @@ import { Label } from "@formbricks/ui/Label";
 import { deleteWebhookAction, testEndpointAction, updateWebhookAction } from "../actions";
 
 interface ActionSettingsTabProps {
-  environmentId: string;
   webhook: TWebhook;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
 }
 
-export const WebhookSettingsTab = ({ environmentId, webhook, surveys, setOpen }: ActionSettingsTabProps) => {
+export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettingsTabProps) => {
   const router = useRouter();
   const { register, handleSubmit } = useForm({
     defaultValues: {
@@ -48,7 +47,7 @@ export const WebhookSettingsTab = ({ environmentId, webhook, surveys, setOpen }:
   const handleTestEndpoint = async (sendSuccessToast: boolean) => {
     try {
       setHittingEndpoint(true);
-      await testEndpointAction(testEndpointInput);
+      await testEndpointAction({ url: testEndpointInput });
       setHittingEndpoint(false);
       if (sendSuccessToast) toast.success("Yay! We are able to ping the webhook!");
       setEndpointAccessible(true);
@@ -113,7 +112,7 @@ export const WebhookSettingsTab = ({ environmentId, webhook, surveys, setOpen }:
       surveyIds: selectedSurveys,
     };
     setIsUpdatingWebhook(true);
-    await updateWebhookAction(environmentId, webhook.id, updatedData);
+    await updateWebhookAction({ webhookId: webhook.id, webhookInput: updatedData });
     toast.success("Webhook updated successfully.");
     router.refresh();
     setIsUpdatingWebhook(false);
@@ -232,7 +231,7 @@ export const WebhookSettingsTab = ({ environmentId, webhook, surveys, setOpen }:
         onDelete={async () => {
           setOpen(false);
           try {
-            await deleteWebhookAction(webhook.id);
+            await deleteWebhookAction({ id: webhook.id });
             router.refresh();
             toast.success("Webhook deleted successfully");
           } catch (error) {

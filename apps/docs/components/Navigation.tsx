@@ -171,6 +171,13 @@ const NavigationGroup = ({
 
   const isParentOpen = (title: string) => openGroups.includes(title);
 
+  const sortedLinks = group.links.map((link) => {
+    if (link.children) {
+      link.children.sort((a, b) => a.title.localeCompare(b.title));
+    }
+    return link;
+  });
+
   return (
     <li className={clsx("relative mt-6", className)}>
       <motion.h2 layout="position" className="font-semibold text-slate-900 dark:text-white">
@@ -185,7 +192,7 @@ const NavigationGroup = ({
           {isActiveGroup && <ActivePageMarker group={group} pathname={pathname || "/docs"} />}
         </AnimatePresence>
         <ul role="list" className="border-l border-transparent">
-          {group.links.map((link) => (
+          {sortedLinks.map((link) => (
             <motion.li key={link.title} layout="position" className="relative">
               {link.href ? (
                 <NavLink

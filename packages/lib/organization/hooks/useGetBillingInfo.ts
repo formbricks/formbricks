@@ -11,16 +11,15 @@ export const useGetBillingInfo = (organizationId: string) => {
     const getBillingInfo = async () => {
       try {
         setIsLoading(true);
-        const billingInfo = await getOrganizationBillingInfoAction(organizationId);
+        const billingInfo = await getOrganizationBillingInfoAction({ organizationId });
 
-        if (!billingInfo) {
-          setError("No billing info found");
+        if (billingInfo?.data) {
           setIsLoading(false);
-          return;
+          setBillingInfo(billingInfo.data);
         }
 
+        setError("No billing info found");
         setIsLoading(false);
-        setBillingInfo(billingInfo);
       } catch (err: any) {
         setIsLoading(false);
         setError(err.message);

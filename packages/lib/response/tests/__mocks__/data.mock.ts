@@ -55,6 +55,9 @@ export const mockResponseNote: ResponseNoteMock = {
 export const mockPerson = {
   id: mockPersonId,
   userId: mockUserId,
+  createdAt: new Date(2000, 1, 1, 19),
+  updatedAt: new Date(2000, 1, 1, 19),
+  environmentId: mockEnvironmentId,
 };
 
 export const mockTags = [

@@ -21,14 +21,6 @@ export const ZDisplayCreateInput = z.object({
 
 export type TDisplayCreateInput = z.infer<typeof ZDisplayCreateInput>;
 
-export const ZDisplayLegacyCreateInput = z.object({
-  surveyId: z.string().cuid(),
-  personId: z.string().cuid().optional(),
-  responseId: z.string().cuid().optional(),
-});
-
-export type TDisplayLegacyCreateInput = z.infer<typeof ZDisplayLegacyCreateInput>;
-
 export const ZDisplayUpdateInput = z.object({
   environmentId: z.string().cuid(),
   userId: z.string().optional(),
@@ -36,13 +28,6 @@ export const ZDisplayUpdateInput = z.object({
 });
 
 export type TDisplayUpdateInput = z.infer<typeof ZDisplayUpdateInput>;
-
-export const ZDisplayLegacyUpdateInput = z.object({
-  personId: z.string().cuid().optional(),
-  responseId: z.string().cuid().optional(),
-});
-
-export type TDisplayLegacyUpdateInput = z.infer<typeof ZDisplayLegacyUpdateInput>;
 
 export const ZDisplaysWithSurveyName = ZDisplay.extend({
   surveyName: z.string(),
@@ -57,6 +42,7 @@ export const ZDisplayFilters = z.object({
       max: z.date().optional(),
     })
     .optional(),
+  responseIds: z.array(z.string().cuid()).optional(),
 });
 
 export type TDisplayFilters = z.infer<typeof ZDisplayFilters>;

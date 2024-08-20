@@ -9,7 +9,7 @@ interface InviteEmailProps {
   verifyLink: string;
 }
 
-export function InviteEmail({ inviteeName, inviterName, verifyLink }: InviteEmailProps) {
+export function InviteEmail({ inviteeName, inviterName, verifyLink }: InviteEmailProps): React.JSX.Element {
   return (
     <Container>
       <Text>Hey {inviteeName},</Text>

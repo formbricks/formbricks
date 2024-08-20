@@ -1,18 +1,18 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { updateUser } from "@formbricks/lib/user/service";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { TUserNotificationSettings } from "@formbricks/types/user";
+import { ZUserNotificationSettings } from "@formbricks/types/user";
 
-export const updateNotificationSettingsAction = async (notificationSettings: TUserNotificationSettings) => {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    throw new AuthorizationError("Not authenticated");
-  }
+const ZUpdateNotificationSettingsAction = z.object({
+  notificationSettings: ZUserNotificationSettings,
+});
 
-  await updateUser(session.user.id, {
-    notificationSettings,
+export const updateNotificationSettingsAction = authenticatedActionClient
+  .schema(ZUpdateNotificationSettingsAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await updateUser(ctx.user.id, {
+      notificationSettings: parsedInput.notificationSettings,
+    });
   });
-};
