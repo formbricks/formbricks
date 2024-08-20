@@ -73,7 +73,7 @@ test.describe("JS Package Test", async () => {
 
       // Formbricks Modal is visible
       await expect(
-        page.locator("#questionCard-0").getByRole("link", { name: "Powered by Formbricks" })
+        page.locator("#questionCard-0").getByRole("link", { name: "Powered by Opinodo Surveys" })
       ).toBeVisible();
 
       // Fill the Survey
