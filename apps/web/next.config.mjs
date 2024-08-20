@@ -158,21 +158,12 @@ const nextConfig = {
             key: "X-Content-Type-Options",
             value: "nosniff",
           },
-          // Content Security Policy (CSP): Enhance security by restricting content sources
-          // This policy is designed to mitigate risks of XSS and other injection attacks
-          // Directives explanation:
-          // - default-src 'self': Restrict default loading of resources to same origin
-          // - script-src 'self' 'unsafe-inline': Allow JavaScript from same origin and inline scripts (required for existing functionality)
-          // - style-src 'self' 'unsafe-inline': Allow styles from same origin and inline styles (required for existing functionality)
-          // - img-src 'self' data: https:: Allow images from same origin, data URIs, and any HTTPS source (matches remotePatterns config)
-          // - font-src 'self': Allow fonts only from same origin
-          // - frame-src 'none': Disallow embedding the site in iframes
-          // - object-src 'none': Disallow loading plugins
-          // Note: This CSP is designed to balance security with maintaining existing app functionality.
-          // Future adjustments may be needed based on specific resource requirements.
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; frame-src 'none'; object-src 'none';",
+            value: () => {
+              const nonce = crypto.randomBytes(16).toString('base64');
+              return `default-src 'self'; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'nonce-${nonce}'; img-src 'self' data: https:; font-src 'self'; frame-src 'none'; object-src 'none';`;
+            },
           },
         ],
       },

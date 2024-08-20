@@ -19,6 +19,7 @@ interface OnboardingSetupInstructionsProps {
   webAppUrl: string;
   channel: TProductConfigChannel;
   widgetSetupCompleted: boolean;
+  nonce: string;
 }
 
 export const OnboardingSetupInstructions = ({
@@ -26,25 +27,26 @@ export const OnboardingSetupInstructions = ({
   webAppUrl,
   channel,
   widgetSetupCompleted,
+  nonce,
 }: OnboardingSetupInstructionsProps) => {
   const [activeTab, setActiveTab] = useState(tabs[0].id);
   const htmlSnippetForAppSurveys = `<!-- START Formbricks Surveys -->
-  <script type="text/javascript">
+  <script type="text/javascript" nonce="\${nonce}">
   !function(){
       var apiHost = "${webAppUrl}";
       var environmentId = "${environmentId}";
       var userId = "testUser";
-      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/api/packages/app";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})},500)}();
+      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/api/packages/app",t.nonce="\${nonce}";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})},500)}();
   </script>
   <!-- END Formbricks Surveys -->
   `;
 
   const htmlSnippetForWebsiteSurveys = `<!-- START Formbricks Surveys -->
-  <script type="text/javascript">
+  <script type="text/javascript" nonce="\${nonce}">
   !function(){
     var apiHost = "${webAppUrl}";
     var environmentId = "${environmentId}";
-      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/api/packages/website";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost})},500)}();
+      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/api/packages/website",t.nonce="\${nonce}";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost})},500)}();
   </script>
   <!-- END Formbricks Surveys -->
   `;
@@ -100,17 +102,17 @@ export const OnboardingSetupInstructions = ({
       <div>
         {activeTab === "npm" ? (
           <div className="prose prose-slate w-full">
-            <CodeBlock customEditorClass="!bg-white border border-slate-200" language="sh">
+            <CodeBlock nonce={nonce} customEditorClass="!bg-white border border-slate-200" language="sh">
               npm install @formbricks/js
             </CodeBlock>
             <p>or</p>
-            <CodeBlock customEditorClass="!bg-white border border-slate-200" language="sh">
+            <CodeBlock nonce={nonce} customEditorClass="!bg-white border border-slate-200" language="sh">
               yarn add @formbricks/js
             </CodeBlock>
             <p className="text-sm text-slate-700">
               Import Formbricks and initialize the widget in your Component (e.g. App.tsx):
             </p>
-            <CodeBlock customEditorClass="!bg-white border border-slate-200" language="js">
+            <CodeBlock nonce={nonce} customEditorClass="!bg-white border border-slate-200" language="js">
               {channel === "app" ? npmSnippetForAppSurveys : npmSnippetForWebsiteSurveys}
             </CodeBlock>
             <Button
@@ -128,7 +130,7 @@ export const OnboardingSetupInstructions = ({
               Insert this code into the &lt;head&gt; tag of your website:
             </p>
             <div>
-              <CodeBlock customEditorClass="!bg-white border border-slate-200" language="js">
+              <CodeBlock nonce={nonce} customEditorClass="!bg-white border border-slate-200" language="js">
                 {channel === "app" ? htmlSnippetForAppSurveys : htmlSnippetForWebsiteSurveys}
               </CodeBlock>
             </div>

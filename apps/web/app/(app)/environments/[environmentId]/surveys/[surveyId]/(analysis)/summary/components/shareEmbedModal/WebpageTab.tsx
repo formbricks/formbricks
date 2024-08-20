@@ -7,10 +7,16 @@ import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { CodeBlock } from "@formbricks/ui/CodeBlock";
 
-export const WebpageTab = ({ surveyUrl }) => {
+interface WebpageTabProps {
+  surveyUrl: string;
+  nonce: string;
+}
+
+export const WebpageTab = ({ surveyUrl, nonce }: WebpageTabProps) => {
   const [embedModeEnabled, setEmbedModeEnabled] = useState(false);
   const iframeCode = `<div style="position: relative; height:80dvh; overflow:auto;"> 
   <iframe 
+    nonce="${nonce}"
     src="${surveyUrl}${embedModeEnabled ? "?embed=true" : ""}" 
     frameborder="0" style="position: absolute; left:0; top:0; width:100%; height:100%; border:0;">
   </iframe>
@@ -33,6 +39,7 @@ export const WebpageTab = ({ surveyUrl }) => {
       </div>
       <div className="prose prose-slate max-w-full">
         <CodeBlock
+          nonce={nonce}
           customCodeClass="text-sm h-48 overflow-y-scroll text-sm"
           language="html"
           showCopyToClipboard={false}>
