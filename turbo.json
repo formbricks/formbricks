@@ -56,6 +56,9 @@
       "persistent": true,
       "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"]
     },
+    "@formbricks/react-native#lint": {
+      "dependsOn": ["@formbricks/api#build"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
