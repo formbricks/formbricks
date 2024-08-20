@@ -27,6 +27,8 @@ export const ZEnvironmentUpdateInput = z.object({
 
 export const ZId = z.string().cuid2();
 
+export const ZUuid = z.string().uuid();
+
 export const ZEnvironmentCreateInput = z.object({
   type: z.enum(["development", "production"]).optional(),
   appSetupCompleted: z.boolean().optional(),

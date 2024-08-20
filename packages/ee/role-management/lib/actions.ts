@@ -10,7 +10,7 @@ import {
   transferOwnership,
   updateMembership,
 } from "@formbricks/lib/membership/service";
-import { ZId } from "@formbricks/types/environment";
+import { ZId, ZUuid } from "@formbricks/types/environment";
 import { AuthorizationError, ValidationError } from "@formbricks/types/errors";
 import { ZInviteUpdateInput } from "@formbricks/types/invites";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
@@ -44,7 +44,7 @@ export const transferOwnershipAction = authenticatedActionClient
   });
 
 const ZUpdateInviteAction = z.object({
-  inviteId: ZId,
+  inviteId: ZUuid,
   organizationId: ZId,
   data: ZInviteUpdateInput,
 });
