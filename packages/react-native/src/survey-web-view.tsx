@@ -1,5 +1,3 @@
- 
-
 /* eslint-disable @typescript-eslint/no-unsafe-call -- required */
 
 /* eslint-disable no-console -- debugging*/
@@ -246,7 +244,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
 
                   if (fileUploadResult) {
                     // @ts-expect-error -- injectJavaScript is not typed
-                     
+
                     webViewRef.current?.injectJavaScript(`
                     window.onFileUploadComplete(${JSON.stringify({
                       success: true,
@@ -256,7 +254,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
                   `);
                   } else {
                     // @ts-expect-error -- injectJavaScript is not typed
-                     
+
                     webViewRef.current?.injectJavaScript(`
                     window.onFileUploadComplete(${JSON.stringify({
                       success: false,

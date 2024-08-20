@@ -4,10 +4,18 @@ import Formbricks, { track } from "@formbricks/react-native";
 
 LogBox.ignoreAllLogs();
 
-export default function App() {
+export default function App(): JSX.Element {
+  if (!process.env.EXPO_PUBLIC_FORMBRICKS_ENVIRONMENT_ID) {
+    throw new Error("EXPO_PUBLIC_FORMBRICKS_ENVIRONMENT_ID is required");
+  }
+
+  if (!process.env.EXPO_PUBLIC_API_HOST) {
+    throw new Error("EXPO_PUBLIC_API_HOST is required");
+  }
+
   const config = {
-    environmentId: process.env.EXPO_PUBLIC_FORMBRICKS_ENVIRONMENT_ID ?? "default-env-id",
-    apiHost: process.env.EXPO_PUBLIC_API_HOST ?? "http://localhost:3000",
+    environmentId: process.env.EXPO_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
+    apiHost: process.env.EXPO_PUBLIC_API_HOST,
     userId: "random user id",
     attributes: {
       language: "en",

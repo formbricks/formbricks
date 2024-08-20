@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/react-native",
-  "version": "1.0.0",
+  "version": "1.0.0-beta.4",
   "license": "MIT",
   "description": "Formbricks React Native SDK allows you to connect your app to Formbricks, display surveys and trigger events.",
   "homepage": "https://formbricks.com",
@@ -21,6 +21,9 @@
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -48,11 +51,9 @@
     "vite": "^5.3.5",
     "vite-plugin-dts": "^3.9.1"
   },
-  "dependencies": {
-    "react-native-webview": "^13.8.6"
-  },
   "peerDependencies": {
     "react": ">=16.8.0",
-    "react-native": ">=0.60.0"
+    "react-native": ">=0.60.0",
+    "react-native-webview": ">=13.0.0"
   }
 }
