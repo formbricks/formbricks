@@ -25,6 +25,7 @@ import {
   UPLOADS_DIR,
   WEBAPP_URL,
   isS3Configured,
+  S3_FORCE_PATH_STYLE,
 } from "../constants";
 import { generateLocalSignedUrl } from "../crypto";
 import { env } from "../env";
@@ -43,6 +44,7 @@ export const getS3Client = () => {
       credentials,
       region: S3_REGION,
       ...(S3_ENDPOINT_URL && { endpoint: S3_ENDPOINT_URL }),
+      forcePathStyle: S3_FORCE_PATH_STYLE,
     });
   }
 
