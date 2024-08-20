@@ -149,7 +149,7 @@ export const PreviewSurvey = ({
         !newQuestionId ||
         newQuestionId === "hidden" ||
         newQuestionId === "multiLanguage" ||
-        newQuestionId === "variables"
+        newQuestionId.includes("fb-variables-")
       )
         return;
       if (newQuestionId === "start" && !survey.welcomeCard.enabled) return;

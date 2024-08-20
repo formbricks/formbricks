@@ -1,7 +1,6 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { SurveyVariablesCardItem } from "./SurveyVariablesCardItem";
@@ -9,10 +8,27 @@ import { SurveyVariablesCardItem } from "./SurveyVariablesCardItem";
 interface SurveyVariablesCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
+  activeQuestionId: string | null;
+  setActiveQuestionId: (id: string | null) => void;
 }
 
-export const SurveyVariablesCard = ({ localSurvey, setLocalSurvey }: SurveyVariablesCardProps) => {
-  const [open, setOpen] = useState(false);
+const variablesCardId = `fb-variables-${Date.now()}`;
+
+export const SurveyVariablesCard = ({
+  localSurvey,
+  setLocalSurvey,
+  activeQuestionId,
+  setActiveQuestionId,
+}: SurveyVariablesCardProps) => {
+  const open = activeQuestionId === variablesCardId;
+
+  const setOpenState = (state: boolean) => {
+    if (state) {
+      setActiveQuestionId(variablesCardId);
+    } else {
+      setActiveQuestionId(null);
+    }
+  };
 
   return (
     <div className={cn(open ? "shadow-lg" : "shadow-md", "group z-10 flex flex-row rounded-lg bg-white")}>
@@ -25,7 +41,7 @@ export const SurveyVariablesCard = ({ localSurvey, setLocalSurvey }: SurveyVaria
       </div>
       <Collapsible.Root
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={setOpenState}
         className="flex-1 rounded-r-lg border border-slate-200 transition-all duration-300 ease-in-out">
         <Collapsible.CollapsibleTrigger
           asChild
