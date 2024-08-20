@@ -40,7 +40,9 @@ export const MatrixQuestion = ({
 }: MatrixQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-  const isSubmitButtonVisible = question.required ? Object.entries(value).length !== 0 : true;
+  const isSubmitButtonVisible = question.required
+    ? Object.values(value).filter((answer) => answer.trim() !== "").length === question.rows.length
+    : true;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const handleSelect = useCallback(
