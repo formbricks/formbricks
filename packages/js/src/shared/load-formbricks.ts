@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call --
- * Required for dynamic function calls
- */
-
 /*
   eslint-disable no-console --
   * Required for logging errors
@@ -96,7 +92,7 @@ export const loadFormbricksToProxy = async (
             }
 
             // @ts-expect-error -- Required for dynamic function calls
-            window.formbricks[functionProp](...functionArgs);
+            (window.formbricks[functionProp] as unknown)(...functionArgs);
           }
         }
       }
