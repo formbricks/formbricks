@@ -1,6 +1,7 @@
 import { Copy, RefreshCcw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "../Button";
 import { generateSingleUseIdAction } from "./actions";
@@ -22,8 +23,17 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
     const queryParams: string[] = [];
 
     if (survey.singleUse?.enabled) {
-      const singleUseId = await generateSingleUseIdAction(survey.id, survey.singleUse.isEncrypted);
-      queryParams.push(`suId=${singleUseId}`);
+      const singleUseIdResponse = await generateSingleUseIdAction({
+        surveyId: survey.id,
+        isEncrypted: survey.singleUse.isEncrypted,
+      });
+
+      if (singleUseIdResponse?.data) {
+        queryParams.push(`suId=${singleUseIdResponse.data}`);
+      } else {
+        const errorMessage = getFormattedErrorMessage(singleUseIdResponse);
+        toast.error(errorMessage);
+      }
     }
 
     if (language !== "default") {

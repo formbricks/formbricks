@@ -30,7 +30,7 @@ export const DeleteOrganization = ({
     setIsDeleting(true);
 
     try {
-      await deleteOrganizationAction(organization.id);
+      await deleteOrganizationAction({ organizationId: organization.id });
       toast.success("Organization deleted successfully.");
       router.push("/");
     } catch (err) {

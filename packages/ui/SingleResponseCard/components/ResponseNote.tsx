@@ -41,7 +41,7 @@ export const ResponseNotes = ({
     e.preventDefault();
     setIsCreatingNote(true);
     try {
-      await createResponseNoteAction(responseId, user.id, noteText);
+      await createResponseNoteAction({ responseId: responseId, text: noteText });
       updateFetchedResponses();
       setIsCreatingNote(false);
       setNoteText("");
@@ -53,7 +53,7 @@ export const ResponseNotes = ({
 
   const handleResolveNote = (note: TResponseNote) => {
     try {
-      resolveResponseNoteAction(responseId, note.id);
+      resolveResponseNoteAction({ responseNoteId: note.id });
       // when this was the last note, close the notes panel
       if (unresolvedNotes.length === 1) {
         setIsOpen(false);
@@ -76,7 +76,7 @@ export const ResponseNotes = ({
     e.preventDefault();
     setIsUpdatingNote(true);
     try {
-      await updateResponseNoteAction(noteId, noteText);
+      await updateResponseNoteAction({ responseNoteId: noteId, text: noteText });
       updateFetchedResponses();
       setIsUpdatingNote(false);
       setNoteText("");

@@ -1,17 +1,24 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { getSlackChannels } from "@formbricks/lib/slack/service";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { ZId } from "@formbricks/types/environment";
 
-export const refreshChannelsAction = async (environmentId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZRefreshChannelsAction = z.object({
+  environmentId: ZId,
+});
 
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const refreshChannelsAction = authenticatedActionClient
+  .schema(ZRefreshChannelsAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      rules: ["integration", "update"],
+    });
 
-  return await getSlackChannels(environmentId);
-};
+    return await getSlackChannels(parsedInput.environmentId);
+  });

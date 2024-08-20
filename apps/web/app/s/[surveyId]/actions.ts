@@ -1,39 +1,44 @@
 "use server";
 
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
-import { LinkSurveyEmailData, sendLinkSurveyToVerifiedEmail } from "@formbricks/email";
+import { z } from "zod";
+import { sendLinkSurveyToVerifiedEmail } from "@formbricks/email";
+import { actionClient } from "@formbricks/lib/actionClient";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { ZLinkSurveyEmailData } from "@formbricks/types/email";
+import { ZId } from "@formbricks/types/environment";
 
-interface TSurveyPinValidationResponse {
-  error?: TSurveyPinValidationResponseError;
-  survey?: TSurvey;
-}
+export const sendLinkSurveyEmailAction = actionClient
+  .schema(ZLinkSurveyEmailData)
+  .action(async ({ parsedInput }) => {
+    return await sendLinkSurveyToVerifiedEmail(parsedInput);
+  });
 
-export const sendLinkSurveyEmailAction = async (data: LinkSurveyEmailData) => {
-  return await sendLinkSurveyToVerifiedEmail(data);
-};
-export const verifyTokenAction = async (token: string, surveyId: string): Promise<boolean> => {
-  return await verifyTokenForLinkSurvey(token, surveyId);
-};
+const ZVerifyTokenAction = z.object({
+  surveyId: ZId,
+  token: z.string(),
+});
 
-export const validateSurveyPinAction = async (
-  surveyId: string,
-  pin: string
-): Promise<TSurveyPinValidationResponse> => {
-  try {
-    const survey = await getSurvey(surveyId);
+export const verifyTokenAction = actionClient.schema(ZVerifyTokenAction).action(async ({ parsedInput }) => {
+  return await verifyTokenForLinkSurvey(parsedInput.token, parsedInput.surveyId);
+});
+
+const ZValidateSurveyPinAction = z.object({
+  surveyId: ZId,
+  pin: z.string(),
+});
+
+export const validateSurveyPinAction = actionClient
+  .schema(ZValidateSurveyPinAction)
+  .action(async ({ parsedInput }) => {
+    const survey = await getSurvey(parsedInput.surveyId);
     if (!survey) return { error: TSurveyPinValidationResponseError.NOT_FOUND };
 
     const originalPin = survey.pin?.toString();
 
     if (!originalPin) return { survey };
-
-    if (originalPin !== pin) return { error: TSurveyPinValidationResponseError.INCORRECT_PIN };
+    if (originalPin !== parsedInput.pin) return { error: TSurveyPinValidationResponseError.INCORRECT_PIN };
 
     return { survey };
-  } catch (error) {
-    return { error: TSurveyPinValidationResponseError.INTERNAL_SERVER_ERROR };
-  }
-};
+  });

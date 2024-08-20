@@ -47,7 +47,9 @@ export const createSubscription = async (
         trial_period_days: 30,
       },
       metadata: { organizationId, responses, miu },
+      billing_address_collection: "required",
       automatic_tax: { enabled: true },
+      tax_id_collection: { enabled: true },
       payment_method_data: { allow_redisplay: "always" },
       ...(!isNewOrganization && {
         customer: organization.billing.stripeCustomerId ?? undefined,

@@ -1,5 +1,6 @@
 import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
-import React from "react";
+import { SurveyLoadingAnimation } from "@/app/s/[surveyId]/components/SurveyLoadingAnimation";
+import React, { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -35,6 +36,13 @@ export const LinkSurveyWrapper = ({
   webAppUrl,
 }: LinkSurveyWrapperProps) => {
   //for embedded survey strip away all surrounding css
+  const [isBackgroundLoaded, setIsBackgroundLoaded] = useState(false);
+
+  const handleBackgroundLoaded = (isLoaded: boolean) => {
+    if (isLoaded) {
+      setIsBackgroundLoaded(true);
+    }
+  };
   const styling = determineStyling();
   if (isEmbed)
     return (
@@ -44,13 +52,15 @@ export const LinkSurveyWrapper = ({
           styling.cardArrangement?.linkSurveys === "straight" && "pt-6",
           styling.cardArrangement?.linkSurveys === "casual" && "px-6 py-10"
         )}>
+        <SurveyLoadingAnimation survey={survey} />
         {children}
       </div>
     );
   else
     return (
       <div>
-        <MediaBackground survey={survey} product={product}>
+        <SurveyLoadingAnimation survey={survey} isBackgroundLoaded={isBackgroundLoaded} />
+        <MediaBackground survey={survey} product={product} onBackgroundLoaded={handleBackgroundLoaded}>
           <div className="flex max-h-dvh min-h-dvh items-end justify-center overflow-clip md:items-center">
             {!styling.isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
             <div className="h-full w-full space-y-6 p-0 md:max-w-md">
