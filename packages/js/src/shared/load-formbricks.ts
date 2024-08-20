@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access --
+ * Required for dynamic function calls
+ */
+
 /* eslint-disable @typescript-eslint/no-unsafe-call --
  * Required for dynamic function calls
  */
@@ -80,7 +84,6 @@ export const loadFormbricksToProxy = async (
 
       if (loadSDKResult.ok) {
         if (window.formbricks) {
-          // @ts-expect-error -- Required for dynamic function calls
           void window.formbricks.init(...args);
 
           isInitializing = false;
@@ -89,16 +92,13 @@ export const loadFormbricksToProxy = async (
           // process the queued functions
           for (const { prop: functionProp, args: functionArgs } of functionsToProcess) {
             if (
-              // @ts-expect-error -- Required for dynamic function calls
               window.formbricks[functionProp] === undefined ||
-              // @ts-expect-error -- Required for dynamic function calls
               typeof window.formbricks[functionProp] !== "function"
             ) {
               console.error(`🧱 Formbricks - Error: Method ${functionProp} does not exist on formbricks`);
               continue;
             }
 
-            // @ts-expect-error -- Required for dynamic function calls
             window.formbricks[functionProp](...functionArgs);
           }
         }
@@ -111,7 +111,6 @@ export const loadFormbricksToProxy = async (
       functionsToProcess.push({ prop, args });
     }
   } else if (window.formbricks) {
-    // @ts-expect-error -- Required for dynamic function calls
     await window.formbricks[prop](...args);
   }
 };
