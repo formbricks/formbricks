@@ -3,13 +3,14 @@ import { JSXInternal } from "preact/src/jsx";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { isFulfilled, isRejected } from "@formbricks/lib/utils/promises";
 import { TAllowedFileExtension } from "@formbricks/types/common";
+import { TJsFileUploadParams } from "@formbricks/types/js";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 
 interface FileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
   surveyId: string | undefined;
   onUploadCallback: (uploadedUrls: string[]) => void;
-  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
+  onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   fileUrls: string[] | undefined;
   maxSizeInMB?: number;
   allowMultipleFiles?: boolean;
@@ -21,6 +22,7 @@ const FILE_LIMIT = 25;
 export const FileInput = ({
   allowedFileExtensions,
   surveyId,
+  onFileUpload,
   onUploadCallback,
   fileUrls,
   maxSizeInMB,
@@ -90,10 +92,7 @@ export const FileInput = ({
 
       const filesToUpload = await Promise.all(filePromises);
       const uploadPromises = filesToUpload.map((file) => {
-        return (
-          // @ts-expect-error
-          onFileUpload(file, { allowedFileExtensions, surveyId })
-        );
+        return onFileUpload(file, { allowedFileExtensions, surveyId });
       });
 
       const uploadedFiles = await Promise.allSettled(uploadPromises);

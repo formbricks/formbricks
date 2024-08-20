@@ -5,6 +5,7 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TJsFileUploadParams } from "@formbricks/types/js";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
@@ -18,7 +19,7 @@ interface FileUploadQuestionProps {
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
-  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
+  onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   surveyId: string;
@@ -87,7 +88,6 @@ export const FileUploadQuestion = ({
             surveyId={surveyId}
             onFileUpload={onFileUpload}
             onUploadCallback={(urls: string[]) => {
-              console.log(urls);
               if (urls) {
                 onChange({ [question.id]: urls });
               } else {
