@@ -1,41 +1,12 @@
-import { handleErrorResponse } from "@/app/api/v1/auth";
+import { getApiKeyDataOrFail, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
-import { getApiKeyFromKeyWithOrganization } from "@formbricks/lib/apiKey/service";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { createToken } from "@formbricks/lib/jwt";
-import { createMembership, getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
+import { getOrCreateAdminUserForOrganization } from "@formbricks/lib/user/service";
 import { AuthenticationError, ValidationError, ValidationErrorWithDetails } from "@formbricks/types/errors";
-import { TSurvey } from "@formbricks/types/surveys";
-
-const fetchAndAuthorizeSurvey = async (authentication: any, surveyId: string): Promise<TSurvey | null> => {
-  const survey = await getSurvey(surveyId);
-  if (!survey) {
-    return null;
-  }
-  if (survey.environmentId !== authentication.environmentId) {
-    throw new Error("Unauthorized");
-  }
-  return survey;
-};
-
-const getApiKeyDataOrFail = async (request: Request) => {
-  const apiKey = request.headers.get("x-api-key");
-  if (!apiKey) {
-    throw new AuthenticationError("Missing Api Key header");
-  }
-
-  const apiKeyData = await getApiKeyFromKeyWithOrganization(apiKey);
-
-  if (!apiKeyData) {
-    throw new AuthenticationError("Missing Api Key");
-  }
-
-  return apiKeyData;
-};
+import { fetchAndAuthorizeSurvey } from "../fetchAndAuthorizeSurvey";
 
 const getValidatedInput = async (request: Request) => {
   let jsonInput;
@@ -62,37 +33,6 @@ const getValidatedInput = async (request: Request) => {
   }
 
   return inputValidation.data;
-};
-
-const getOrCreateAdminUserForOrganization = async (userData: { email: string }, organizationId: string) => {
-  let user = await prisma.user.findUnique({
-    where: {
-      email: userData.email.toLowerCase(),
-    },
-  });
-
-  if (user) {
-    const membership = await getMembershipByUserIdOrganizationId(user.id, organizationId);
-    if (!membership) {
-      await createMembership(organizationId, user.id, { accepted: true, role: "admin" });
-    }
-  } else {
-    user = await prisma.user.create({
-      data: {
-        email: userData.email.toLowerCase(),
-        name: userData.email.toLowerCase(),
-        memberships: {
-          create: {
-            role: "admin",
-            accepted: true,
-            organizationId,
-          },
-        },
-      },
-    });
-  }
-
-  return user;
 };
 
 export const POST = async (
