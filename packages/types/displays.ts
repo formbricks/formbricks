@@ -42,6 +42,7 @@ export const ZDisplayFilters = z.object({
       max: z.date().optional(),
     })
     .optional(),
+  responseIds: z.array(z.string().cuid()).optional(),
 });
 
 export type TDisplayFilters = z.infer<typeof ZDisplayFilters>;

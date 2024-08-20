@@ -42,7 +42,11 @@ export const CopySurveyForm = ({
     try {
       filteredData.map(async (product) => {
         product.environments.map(async (environment) => {
-          await copySurveyToOtherEnvironmentAction(survey.environmentId, survey.id, environment);
+          await copySurveyToOtherEnvironmentAction({
+            environmentId: survey.environmentId,
+            surveyId: survey.id,
+            targetEnvironmentId: environment,
+          });
         });
       });
 

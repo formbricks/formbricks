@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { ZActionClass } from "./action-classes";
+import { ZId } from "./environment";
 
 export const ZAction = z.object({
-  id: z.string(),
+  id: ZId,
   createdAt: z.date(),
-  personId: z.string(),
+  personId: ZId,
   properties: z.record(z.string()),
   actionClass: ZActionClass.nullable(),
 });
@@ -12,8 +13,8 @@ export const ZAction = z.object({
 export type TAction = z.infer<typeof ZAction>;
 
 export const ZActionInput = z.object({
-  environmentId: z.string().cuid(),
-  userId: z.string(),
+  environmentId: ZId,
+  userId: ZId,
   name: z.string(),
 });
 

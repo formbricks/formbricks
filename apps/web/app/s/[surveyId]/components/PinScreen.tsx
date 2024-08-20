@@ -4,6 +4,7 @@ import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
 import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import { useCallback, useEffect, useState } from "react";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProduct } from "@formbricks/types/product";
@@ -53,12 +54,15 @@ export const PinScreen = (props: PinScreenProps) => {
   const [survey, setSurvey] = useState<TSurvey>();
 
   const _validateSurveyPinAsync = useCallback(async (surveyId: string, pin: string) => {
-    const response = await validateSurveyPinAction(surveyId, pin);
-    if (response.error) {
-      setError(response.error);
-    } else if (response.survey) {
-      setSurvey(response.survey);
+    const response = await validateSurveyPinAction({ surveyId, pin });
+
+    if (response?.data) {
+      setSurvey(response.data.survey);
+    } else {
+      const errorMessage = getFormattedErrorMessage(response) as TSurveyPinValidationResponseError;
+      setError(errorMessage);
     }
+
     setLoading(false);
   }, []);
 

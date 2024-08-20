@@ -134,11 +134,10 @@ export const createWebhook = async (
 };
 
 export const updateWebhook = async (
-  environmentId: string,
   webhookId: string,
   webhookInput: Partial<TWebhookInput>
 ): Promise<TWebhook> => {
-  validateInputs([environmentId, ZId], [webhookId, ZId], [webhookInput, ZWebhookInput]);
+  validateInputs([webhookId, ZId], [webhookInput, ZWebhookInput]);
   try {
     const updatedWebhook = await prisma.webhook.update({
       where: {

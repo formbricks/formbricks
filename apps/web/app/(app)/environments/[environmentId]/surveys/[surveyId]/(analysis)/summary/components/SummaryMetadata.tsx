@@ -13,10 +13,10 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
     <Tooltip>
       <TooltipTrigger>
         <div className="flex h-full cursor-default flex-col justify-between space-y-2 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm">
-          <p className="text-sm text-slate-600">
+          <p className="flex items-center gap-1 text-sm text-slate-600">
             {label}
-            {percentage && percentage !== "NaN%" && (
-              <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">{percentage}</span>
+            {typeof percentage === "number" && !isNaN(percentage) && (
+              <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">{percentage}%</span>
             )}
           </p>
           <p className="text-2xl font-bold text-slate-800">{value}</p>
@@ -67,13 +67,13 @@ export const SummaryMetadata = ({ setShowDropOffs, showDropOffs, surveySummary }
         />
         <StatCard
           label="Starts"
-          percentage={`${Math.round(startsPercentage)}%`}
+          percentage={Math.round(startsPercentage) > 100 ? null : Math.round(startsPercentage)}
           value={totalResponses === 0 ? <span>-</span> : totalResponses}
           tooltipText="Number of times the survey has been started."
         />
         <StatCard
           label="Completed"
-          percentage={`${Math.round(completedPercentage)}%`}
+          percentage={Math.round(completedPercentage) > 100 ? null : Math.round(completedPercentage)}
           value={completedResponses === 0 ? <span>-</span> : completedResponses}
           tooltipText="Number of times the survey has been completed."
         />

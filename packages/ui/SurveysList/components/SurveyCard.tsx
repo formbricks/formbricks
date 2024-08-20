@@ -1,6 +1,8 @@
 import { Code, EarthIcon, Link2Icon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { convertDateString, timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -42,11 +44,24 @@ export const SurveyCard = ({
   const [singleUseId, setSingleUseId] = useState<string | undefined>();
 
   useEffect(() => {
-    if (survey.singleUse?.enabled) {
-      generateSingleUseIdAction(survey.id, survey.singleUse?.isEncrypted ? true : false).then(setSingleUseId);
-    } else {
-      setSingleUseId(undefined);
-    }
+    const fetchSingleUseId = async () => {
+      if (survey.singleUse?.enabled) {
+        const generateSingleUseIdResponse = await generateSingleUseIdAction({
+          surveyId: survey.id,
+          isEncrypted: survey.singleUse?.isEncrypted ? true : false,
+        });
+        if (generateSingleUseIdResponse?.data) {
+          setSingleUseId(generateSingleUseIdResponse.data);
+        } else {
+          const errorMessage = getFormattedErrorMessage(generateSingleUseIdResponse);
+          toast.error(errorMessage);
+        }
+      } else {
+        setSingleUseId(undefined);
+      }
+    };
+
+    fetchSingleUseId();
   }, [survey]);
 
   const linkHref = useMemo(() => {
