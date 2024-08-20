@@ -108,7 +108,7 @@ export const EndingCard = ({
               <Subheader
                 subheader={
                   endingCard.type === "endScreen"
-                    ? getLocalizedValue(endingCard.subheader, languageCode)
+                    ? replaceRecallInfo(getLocalizedValue(endingCard.subheader, languageCode), responseData)
                     : "They will be forwarded immediately"
                 }
                 questionId="EndingCard"
