@@ -47,6 +47,12 @@
       "persistent": true,
       "dependsOn": ["@formbricks/api#build"]
     },
+    "@formbricks/js#lint": {
+      "dependsOn": ["@formbricks/js-core#build"]
+    },
+    "@formbricks/database#lint": {
+      "dependsOn": ["@formbricks/database#build"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
