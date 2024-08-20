@@ -92,6 +92,7 @@ const Page = async ({ params }) => {
         hideBackButton: true,
         hideSaveAndClose: true,
         hideFormName: true,
+        hidePublish: true,
       }}
     />
   );

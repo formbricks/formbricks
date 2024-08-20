@@ -176,6 +176,7 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       const updatedSurvey = await updateSurveyAction({ ...localSurvey, segment });
 
+      window.parent.postMessage({ type: "Survey.updated", data: { updatedSurvey } }, "*");
       setIsSurveySaving(false);
       setLocalSurvey(updatedSurvey);
 
