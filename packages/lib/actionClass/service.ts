@@ -109,11 +109,8 @@ export const getActionClass = reactCache(
     )()
 );
 
-export const deleteActionClass = async (
-  environmentId: string,
-  actionClassId: string
-): Promise<TActionClass> => {
-  validateInputs([environmentId, ZId], [actionClassId, ZId]);
+export const deleteActionClass = async (actionClassId: string): Promise<TActionClass> => {
+  validateInputs([actionClassId, ZId]);
 
   try {
     const actionClass = await prisma.actionClass.delete({
@@ -125,16 +122,17 @@ export const deleteActionClass = async (
     if (actionClass === null) throw new ResourceNotFoundError("Action", actionClassId);
 
     actionClassCache.revalidate({
-      environmentId,
+      environmentId: actionClass.environmentId,
       id: actionClassId,
       name: actionClass.name,
     });
 
     return actionClass;
   } catch (error) {
-    throw new DatabaseError(
-      `Database error when deleting an action with id ${actionClassId} for environment ${environmentId}`
-    );
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
   }
 };
 

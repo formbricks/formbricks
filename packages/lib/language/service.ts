@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import {
   TLanguage,
   TLanguageInput,
@@ -21,6 +21,29 @@ const languageSelect = {
   productId: true,
   createdAt: true,
   updatedAt: true,
+};
+
+export const getLanguage = async (languageId: string): Promise<TLanguage & { productId: string }> => {
+  try {
+    validateInputs([languageId, ZId]);
+
+    const language = await prisma.language.findFirst({
+      where: { id: languageId },
+      select: { ...languageSelect, productId: true },
+    });
+
+    if (!language) {
+      throw new ResourceNotFoundError("Language", languageId);
+    }
+
+    return language;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error(error);
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
 };
 
 export const createLanguage = async (

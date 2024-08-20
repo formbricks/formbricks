@@ -1,98 +1,84 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { hasOrganizationAccess, hasOrganizationAuthority, isOwner } from "@formbricks/lib/auth";
-import { authOptions } from "@formbricks/lib/authOptions";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { isOwner } from "@formbricks/lib/auth";
 import { updateInvite } from "@formbricks/lib/invite/service";
 import {
   getMembershipByUserIdOrganizationId,
   transferOwnership,
   updateMembership,
 } from "@formbricks/lib/membership/service";
-import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/errors";
-import type { TInviteUpdateInput } from "@formbricks/types/invites";
-import type { TMembershipUpdateInput } from "@formbricks/types/memberships";
-import type { TUser } from "@formbricks/types/user";
+import { ZId } from "@formbricks/types/environment";
+import { AuthorizationError, ValidationError } from "@formbricks/types/errors";
+import { ZInviteUpdateInput } from "@formbricks/types/invites";
+import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
 
-export const transferOwnershipAction = async (organizationId: string, newOwnerId: string) => {
-  const session = await getServerSession(authOptions);
-  const user = session?.user as TUser;
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
+const ZTransferOwnershipAction = z.object({
+  organizationId: ZId,
+  newOwnerId: ZId,
+});
 
-  if (!user) {
-    throw new AuthenticationError("Not authenticated");
-  }
+export const transferOwnershipAction = authenticatedActionClient
+  .schema(ZTransferOwnershipAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const isUserOwner = await isOwner(ctx.user.id, parsedInput.organizationId);
+    if (!isUserOwner) {
+      throw new AuthorizationError("Not authorized");
+    }
 
-  const hasAccess = await hasOrganizationAccess(user.id, organizationId);
-  if (!hasAccess) {
-    throw new AuthorizationError("Not authorized");
-  }
+    if (parsedInput.newOwnerId === ctx.user.id) {
+      throw new ValidationError("You are already the owner of this organization");
+    }
 
-  const isUserOwner = await isOwner(user.id, organizationId);
-  if (!isUserOwner) {
-    throw new AuthorizationError("Not authorized");
-  }
+    const membership = await getMembershipByUserIdOrganizationId(
+      parsedInput.newOwnerId,
+      parsedInput.organizationId
+    );
+    if (!membership) {
+      throw new ValidationError("User is not a member of this organization");
+    }
 
-  if (newOwnerId === user.id) {
-    throw new ValidationError("You are already the owner of this organization");
-  }
+    await transferOwnership(ctx.user.id, parsedInput.newOwnerId, parsedInput.organizationId);
+  });
 
-  const membership = await getMembershipByUserIdOrganizationId(newOwnerId, organizationId);
-  if (!membership) {
-    throw new ValidationError("User is not a member of this organization");
-  }
+const ZUpdateInviteAction = z.object({
+  inviteId: ZId,
+  organizationId: ZId,
+  data: ZInviteUpdateInput,
+});
 
-  await transferOwnership(user.id, newOwnerId, organizationId);
-};
+export const updateInviteAction = authenticatedActionClient
+  .schema(ZUpdateInviteAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      data: parsedInput.data,
+      schema: ZInviteUpdateInput,
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["invite", "update"],
+    });
 
-export const updateInviteAction = async (
-  inviteId: string,
-  organizationId: string,
-  data: TInviteUpdateInput
-) => {
-  const session = await getServerSession(authOptions);
-  const user = session?.user as TUser;
+    return await updateInvite(parsedInput.inviteId, parsedInput.data);
+  });
 
-  if (!user) {
-    throw new AuthenticationError("Not authenticated");
-  }
+const ZUpdateMembershipAction = z.object({
+  userId: ZId,
+  organizationId: ZId,
+  data: ZMembershipUpdateInput,
+});
 
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
+export const updateMembershipAction = authenticatedActionClient
+  .schema(ZUpdateMembershipAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      data: parsedInput.data,
+      schema: ZMembershipUpdateInput,
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["membership", "update"],
+    });
 
-  const isUserAuthorized = await hasOrganizationAuthority(user.id, organizationId);
-
-  if (!isUserAuthorized) {
-    throw new AuthenticationError("Not authorized");
-  }
-
-  return await updateInvite(inviteId, data);
-};
-
-export const updateMembershipAction = async (
-  userId: string,
-  organizationId: string,
-  data: TMembershipUpdateInput
-) => {
-  const session = await getServerSession(authOptions);
-  const user = session?.user as TUser;
-
-  if (!user) {
-    throw new AuthenticationError("Not authenticated");
-  }
-
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
-
-  const isUserAuthorized = await hasOrganizationAuthority(user.id, organizationId);
-
-  if (!isUserAuthorized) {
-    throw new AuthenticationError("Not authorized");
-  }
-
-  return await updateMembership(userId, organizationId, data);
-};
+    return await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data);
+  });

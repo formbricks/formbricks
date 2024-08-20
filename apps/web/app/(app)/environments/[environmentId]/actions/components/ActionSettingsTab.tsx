@@ -23,7 +23,6 @@ import { CodeActionForm } from "@formbricks/ui/organisms/CodeActionForm";
 import { NoCodeActionForm } from "@formbricks/ui/organisms/NoCodeActionForm";
 
 interface ActionSettingsTabProps {
-  environmentId: string;
   actionClass: TActionClass;
   actionClasses: TActionClass[];
   setOpen: (v: boolean) => void;
@@ -31,7 +30,6 @@ interface ActionSettingsTabProps {
 }
 
 export const ActionSettingsTab = ({
-  environmentId,
   actionClass,
   actionClasses,
   setOpen,
@@ -104,7 +102,10 @@ export const ActionSettingsTab = ({
             },
           }),
       };
-      await updateActionClassAction(environmentId, actionClass.id, updatedData);
+      await updateActionClassAction({
+        actionClassId: actionClass.id,
+        updatedAction: updatedData,
+      });
       setOpen(false);
       router.refresh();
       toast.success("Action updated successfully");
@@ -118,7 +119,7 @@ export const ActionSettingsTab = ({
   const handleDeleteAction = async () => {
     try {
       setIsDeletingAction(true);
-      await deleteActionClassAction(environmentId, actionClass.id);
+      await deleteActionClassAction({ actionClassId: actionClass.id });
       router.refresh();
       toast.success("Action deleted successfully");
       setOpen(false);
