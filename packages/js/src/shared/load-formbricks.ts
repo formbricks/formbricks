@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access --
- * Required for dynamic function calls
+ * Required because not working if not built
+ */
+
+/* eslint-disable @typescript-eslint/no-unsafe-assignment --
+ * Required because not working if not built
  */
 
 /* eslint-disable @typescript-eslint/no-unsafe-call --
@@ -84,6 +88,7 @@ export const loadFormbricksToProxy = async (
 
       if (loadSDKResult.ok) {
         if (window.formbricks) {
+          // @ts-expect-error -- Required for dynamic function calls
           void window.formbricks.init(...args);
 
           isInitializing = false;
@@ -91,15 +96,19 @@ export const loadFormbricksToProxy = async (
 
           // process the queued functions
           for (const { prop: functionProp, args: functionArgs } of functionsToProcess) {
+            type Formbricks = typeof window.formbricks;
+            type FunctionProp = keyof Formbricks;
+            const functionPropTyped = functionProp as FunctionProp;
             if (
-              window.formbricks[functionProp] === undefined ||
-              typeof window.formbricks[functionProp] !== "function"
+              window.formbricks[functionPropTyped] === undefined ||
+              typeof window.formbricks[functionPropTyped] !== "function"
             ) {
               console.error(`🧱 Formbricks - Error: Method ${functionProp} does not exist on formbricks`);
               continue;
             }
 
-            window.formbricks[functionProp](...functionArgs);
+            // @ts-expect-error -- Required for dynamic function calls
+            window.formbricks[functionPropTyped](...functionArgs);
           }
         }
       }
@@ -111,6 +120,11 @@ export const loadFormbricksToProxy = async (
       functionsToProcess.push({ prop, args });
     }
   } else if (window.formbricks) {
-    await window.formbricks[prop](...args);
+    type Formbricks = typeof window.formbricks;
+    type FunctionProp = keyof Formbricks;
+    const functionPropTyped = prop as FunctionProp;
+
+    // @ts-expect-error -- Required for dynamic function calls
+    await window.formbricks[functionPropTyped](...args);
   }
 };
