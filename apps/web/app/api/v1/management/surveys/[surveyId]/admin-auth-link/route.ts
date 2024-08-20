@@ -101,6 +101,8 @@ export const POST = async (
 ): Promise<Response> => {
   try {
     const apiKeyData = await getApiKeyDataOrFail(request);
+    const organizationId = apiKeyData.environment.product.organizationId;
+
     const inputData = await getValidatedInput(request);
 
     const survey = await fetchAndAuthorizeSurvey(apiKeyData, params.surveyId);
@@ -108,10 +110,13 @@ export const POST = async (
       return responses.notFoundResponse("Survey", params.surveyId);
     }
 
-    const user = await getOrCreateAdminUserForOrganization(
-      inputData,
-      apiKeyData.environment.product.organizationId
-    );
+    const user = await getOrCreateAdminUserForOrganization(inputData, organizationId);
+    if (!user) {
+      return responses.internalServerErrorResponse(
+        `Failed to get or create admin user for organization with ID: ${organizationId}. ` +
+          `Input data: ${JSON.stringify(inputData)}. Please verify the input and try again.`
+      );
+    }
 
     const authToken = createToken(user.id, user.email);
     const iframeEditUrl = `${WEBAPP_URL}/admin-iframe/${apiKeyData.environmentId}/surveys/${survey.id}/edit?token=${encodeURIComponent(authToken)}`;

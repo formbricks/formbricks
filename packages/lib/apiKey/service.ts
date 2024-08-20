@@ -187,7 +187,7 @@ export const getApiKeyFromKeyWithOrganization = (apiKey: string) => {
         throw error;
       }
     },
-    [`getApiKeyFromKey-${apiKey}`],
+    [`getApiKeyFromKeyWithOrganization-${apiKey}`],
     {
       tags: [apiKeyCache.tag.byHashedKey(hashedKey)],
     }
