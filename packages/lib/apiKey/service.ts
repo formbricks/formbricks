@@ -160,6 +160,7 @@ export const getApiKeyFromKeyWithOrganization = (apiKey: string) => {
             label: true,
             environmentId: true,
             lastUsedAt: true,
+            hashedKey: true,
             environment: {
               select: {
                 id: true,

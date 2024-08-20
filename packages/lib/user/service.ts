@@ -8,7 +8,12 @@ import { TMembership } from "@formbricks/types/memberships";
 import { TUser, TUserCreateInput, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
 import { cache } from "../cache";
 import { createCustomerIoCustomer } from "../customerio";
-import { deleteMembership, updateMembership } from "../membership/service";
+import {
+  createMembership,
+  deleteMembership,
+  getMembershipByUserIdOrganizationId,
+  updateMembership,
+} from "../membership/service";
 import { deleteOrganization } from "../organization/service";
 import { validateInputs } from "../utils/validate";
 import { userCache } from "./cache";
@@ -281,4 +286,38 @@ export const userIdRelatedToApiKey = async (apiKey: string) => {
     }
     throw error;
   }
+};
+
+export const getOrCreateAdminUserForOrganization = async (
+  userData: { email: string; name?: string },
+  organizationId: string
+) => {
+  let user = await prisma.user.findUnique({
+    where: {
+      email: userData.email.toLowerCase(),
+    },
+  });
+
+  if (user) {
+    const membership = await getMembershipByUserIdOrganizationId(user.id, organizationId);
+    if (!membership) {
+      await createMembership(organizationId, user.id, { accepted: true, role: "admin" });
+    }
+  } else {
+    user = await prisma.user.create({
+      data: {
+        email: userData.email.toLowerCase(),
+        name: userData.name || userData.email.toLowerCase(),
+        memberships: {
+          create: {
+            role: "admin",
+            accepted: true,
+            organizationId,
+          },
+        },
+      },
+    });
+  }
+
+  return user;
 };
