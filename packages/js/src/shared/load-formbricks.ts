@@ -1,11 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access --
- * Required because not working if not built
- */
-
-/* eslint-disable @typescript-eslint/no-unsafe-assignment --
- * Required because not working if not built
- */
-
 /* eslint-disable @typescript-eslint/no-unsafe-call --
  * Required for dynamic function calls
  */
@@ -96,19 +88,15 @@ export const loadFormbricksToProxy = async (
 
           // process the queued functions
           for (const { prop: functionProp, args: functionArgs } of functionsToProcess) {
-            type Formbricks = typeof window.formbricks;
-            type FunctionProp = keyof Formbricks;
-            const functionPropTyped = functionProp as FunctionProp;
-            if (
-              window.formbricks[functionPropTyped] === undefined ||
-              typeof window.formbricks[functionPropTyped] !== "function"
-            ) {
+            type FormbricksProp = keyof typeof window.formbricks;
+
+            if (typeof window.formbricks[functionProp as FormbricksProp] !== "function") {
               console.error(`🧱 Formbricks - Error: Method ${functionProp} does not exist on formbricks`);
               continue;
             }
 
             // @ts-expect-error -- Required for dynamic function calls
-            window.formbricks[functionPropTyped](...functionArgs);
+            window.formbricks[functionProp](...functionArgs);
           }
         }
       }
