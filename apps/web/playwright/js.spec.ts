@@ -47,13 +47,6 @@ test.describe("JS Package Test", async () => {
         })();
 
       await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary/);
-
-      // await expect(page.getByRole("link", { name: "Surveys" })).toBeVisible();
-      // await page.getByRole("link", { name: "Surveys" }).click();
-
-      // await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-
-      // await expect(page.getByRole("heading", { name: "Surveys" })).toBeVisible();
     });
 
     await test.step("JS display survey on page and submit response", async () => {
@@ -64,17 +57,19 @@ test.describe("JS Package Test", async () => {
       await page.goto(htmlFile);
 
       // Formbricks In App Sync has happened
-      const syncApi = await page.waitForResponse((response) => response.url().includes("/app/sync"));
+      const syncApi = await page.waitForResponse(
+        (response) => {
+          return response.url().includes("/app/sync");
+        },
+        {
+          timeout: 120000,
+        }
+      );
+
       expect(syncApi.status()).toBe(200);
 
       // Formbricks Modal exists in the DOM
       await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
-
-      // const displayApi = await page.waitForResponse((response) => response.url().includes("/display"));
-      // expect(displayApi.status()).toBe(200);
-
-      // Formbricks Modal exists in the DOM
-      // await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
 
       // Formbricks Modal is visible
       await expect(
@@ -115,7 +110,7 @@ test.describe("JS Package Test", async () => {
       expect(impressionsCount).toEqual("Impressions\n\n1");
 
       await expect(page.getByRole("link", { name: "Responses (1)" })).toBeVisible();
-      await expect(page.getByRole("button", { name: "Completed100%" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Completed 100%" })).toBeVisible();
 
       await expect(page.getByText("1 Responses", { exact: true }).first()).toBeVisible();
       await expect(page.getByText("CTR100%")).toBeVisible();

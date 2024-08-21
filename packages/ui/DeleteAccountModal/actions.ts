@@ -1,13 +1,8 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { deleteUser } from "@formbricks/lib/user/service";
-import { AuthenticationError } from "@formbricks/types/errors";
 
-export const deleteUserAction = async () => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthenticationError("Not Authenticated");
-
-  return await deleteUser(session.user.id);
-};
+export const deleteUserAction = authenticatedActionClient.action(async ({ ctx }) => {
+  return await deleteUser(ctx.user.id);
+});

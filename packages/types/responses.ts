@@ -59,7 +59,7 @@ const ZResponseFilterCriteriaDataGreaterThan = z.object({
 
 const ZResponseFilterCriteriaDataIncludesOne = z.object({
   op: z.literal(ZSurveyLogicCondition.Values.includesOne),
-  value: z.array(z.string()),
+  value: z.union([z.array(z.string()), z.array(z.number())]),
 });
 
 const ZResponseFilterCriteriaDataIncludesAll = z.object({
@@ -269,12 +269,6 @@ export const ZResponseInput = z.object({
 });
 
 export type TResponseInput = z.infer<typeof ZResponseInput>;
-
-export const ZResponseLegacyInput = ZResponseInput.omit({ userId: true, environmentId: true }).extend({
-  personId: z.string().cuid2().nullable(),
-});
-
-export type TResponseLegacyInput = z.infer<typeof ZResponseLegacyInput>;
 
 export const ZResponseUpdateInput = z.object({
   finished: z.boolean(),

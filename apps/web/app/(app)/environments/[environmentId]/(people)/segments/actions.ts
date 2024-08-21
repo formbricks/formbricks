@@ -1,49 +1,53 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { deleteSegment, getSegment, updateSegment } from "@formbricks/lib/segment/service";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { getOrganizationIdFromSegmentId } from "@formbricks/lib/organization/utils";
+import { deleteSegment, updateSegment } from "@formbricks/lib/segment/service";
+import { ZId } from "@formbricks/types/environment";
+import { ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 
-export const deleteBasicSegmentAction = async (environmentId: string, segmentId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZDeleteBasicSegmentAction = z.object({
+  segmentId: ZId,
+});
 
-  const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
+export const deleteBasicSegmentAction = authenticatedActionClient
+  .schema(ZDeleteBasicSegmentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
+      rules: ["segment", "delete"],
+    });
 
-  const foundSegment = await getSegment(segmentId);
+    return await deleteSegment(parsedInput.segmentId);
+  });
 
-  if (!foundSegment) {
-    throw new Error(`Segment with id ${segmentId} not found`);
-  }
+const ZUpdateBasicSegmentAction = z.object({
+  segmentId: ZId,
+  data: ZSegmentUpdateInput,
+});
 
-  return await deleteSegment(segmentId);
-};
+export const updateBasicSegmentAction = authenticatedActionClient
+  .schema(ZUpdateBasicSegmentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
+      rules: ["segment", "update"],
+    });
 
-export const updateBasicSegmentAction = async (
-  environmentId: string,
-  segmentId: string,
-  data: TSegmentUpdateInput
-) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+    const { filters } = parsedInput.data;
+    if (filters) {
+      const parsedFilters = ZSegmentFilters.safeParse(filters);
 
-  const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
-
-  const { filters } = data;
-  if (filters) {
-    const parsedFilters = ZSegmentFilters.safeParse(filters);
-
-    if (!parsedFilters.success) {
-      const errMsg =
-        parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
-      throw new Error(errMsg);
+      if (!parsedFilters.success) {
+        const errMsg =
+          parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
+        throw new Error(errMsg);
+      }
     }
-  }
 
-  return await updateSegment(segmentId, data);
-};
+    return await updateSegment(parsedInput.segmentId, parsedInput.data);
+  });

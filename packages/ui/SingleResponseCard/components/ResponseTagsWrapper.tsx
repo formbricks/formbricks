@@ -4,11 +4,12 @@ import { AlertCircleIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TTag } from "@formbricks/types/tags";
 import { Button } from "../../Button";
 import { Tag } from "../../Tag";
 import { TagsCombobox } from "../../TagsCombobox";
-import { createTagAction, createTagToResponeAction, deleteTagOnResponseAction } from "../actions";
+import { createTagAction, createTagToResponseAction, deleteTagOnResponseAction } from "../actions";
 
 interface ResponseTagsWrapperProps {
   tags: {
@@ -38,7 +39,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
   const onDelete = async (tagId: string) => {
     try {
-      await deleteTagOnResponseAction(responseId, tagId);
+      await deleteTagOnResponseAction({ responseId, tagId });
       updateFetchedResponses();
     } catch (e) {
       toast.error("An error occurred deleting the tag");
@@ -92,34 +93,43 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
             currentTags={tagsState.map((tag) => ({ value: tag.tagId, label: tag.tagName }))}
             createTag={async (tagName) => {
               setOpen(false);
-              await createTagAction(environmentId, tagName?.trim() ?? "")
-                .then((tag) => {
-                  setTagsState((prevTags) => [
-                    ...prevTags,
-                    {
-                      tagId: tag.id,
-                      tagName: tag.name,
-                    },
-                  ]);
-                  createTagToResponeAction(responseId, tag.id).then(() => {
-                    updateFetchedResponses();
-                    setSearchValue("");
-                  });
-                })
-                .catch((err) => {
-                  if (err?.message.includes("Unique constraint failed on the fields")) {
-                    toast.error("Tag already exists", {
-                      duration: 2000,
-                      icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
-                    });
-                  } else {
-                    toast.error(err?.message ?? "Something went wrong", {
-                      duration: 2000,
-                    });
-                  }
 
-                  setSearchValue("");
+              const createTagResponse = await createTagAction({
+                environmentId,
+                tagName: tagName?.trim() ?? "",
+              });
+              if (createTagResponse?.data) {
+                setTagsState((prevTags) => [
+                  ...prevTags,
+                  {
+                    tagId: createTagResponse.data?.id ?? "",
+                    tagName: createTagResponse.data?.name ?? "",
+                  },
+                ]);
+                const createTagToResponseActionResponse = await createTagToResponseAction({
+                  responseId,
+                  tagId: createTagResponse.data.id,
                 });
+
+                if (createTagToResponseActionResponse?.data) {
+                  updateFetchedResponses();
+                  setSearchValue("");
+                }
+              } else {
+                const errorMessage = getFormattedErrorMessage(createTagResponse);
+                if (errorMessage.includes("Unique constraint failed on the fields")) {
+                  toast.error("Tag already exists", {
+                    duration: 2000,
+                    icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
+                  });
+                } else {
+                  toast.error(errorMessage ?? "Something went wrong", {
+                    duration: 2000,
+                  });
+                }
+
+                setSearchValue("");
+              }
             }}
             addTag={(tagId) => {
               setTagsState((prevTags) => [
@@ -130,7 +140,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                 },
               ]);
 
-              createTagToResponeAction(responseId, tagId).then(() => {
+              createTagToResponseAction({ responseId, tagId }).then(() => {
                 updateFetchedResponses();
                 setSearchValue("");
                 setOpen(false);

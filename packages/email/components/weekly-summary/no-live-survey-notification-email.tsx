@@ -17,7 +17,7 @@ export function NoLiveSurveyNotificationEmail({
   endDate,
   startYear,
   endYear,
-}: NoLiveSurveyNotificationEmailProps) {
+}: NoLiveSurveyNotificationEmailProps): React.JSX.Element {
   return (
     <div>
       <NotificationHeader

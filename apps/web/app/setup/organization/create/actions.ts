@@ -1,33 +1,35 @@
 "use server";
 
-import { Organization } from "@prisma/client";
-import { getServerSession } from "next-auth";
+import { z } from "zod";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
-import { authOptions } from "@formbricks/lib/authOptions";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { gethasNoOrganizations } from "@formbricks/lib/instance/service";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization } from "@formbricks/lib/organization/service";
-import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 
-export const createOrganizationAction = async (organizationName: string): Promise<Organization> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZCreateOrganizationAction = z.object({
+  organizationName: z.string(),
+});
 
-  const hasNoOrganizations = await gethasNoOrganizations();
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+export const createOrganizationAction = authenticatedActionClient
+  .schema(ZCreateOrganizationAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const hasNoOrganizations = await gethasNoOrganizations();
+    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
-  if (!hasNoOrganizations && !isMultiOrgEnabled) {
-    throw new OperationNotAllowedError("This action can only be performed on a fresh instance.");
-  }
+    if (!hasNoOrganizations && !isMultiOrgEnabled) {
+      throw new OperationNotAllowedError("This action can only be performed on a fresh instance.");
+    }
 
-  const newOrganization = await createOrganization({
-    name: organizationName,
+    const newOrganization = await createOrganization({
+      name: parsedInput.organizationName,
+    });
+
+    await createMembership(newOrganization.id, ctx.user.id, {
+      role: "owner",
+      accepted: true,
+    });
+
+    return newOrganization;
   });
-
-  await createMembership(newOrganization.id, session.user.id, {
-    role: "owner",
-    accepted: true,
-  });
-
-  return newOrganization;
-};

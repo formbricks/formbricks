@@ -7,7 +7,7 @@ interface ForgotPasswordEmailProps {
   verifyLink: string;
 }
 
-export function ForgotPasswordEmail({ verifyLink }: ForgotPasswordEmailProps) {
+export function ForgotPasswordEmail({ verifyLink }: ForgotPasswordEmailProps): React.JSX.Element {
   return (
     <Container>
       <Heading>Change password</Heading>

@@ -1,4 +1,4 @@
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { CRON_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { TPipelineInput } from "@formbricks/types/pipelines";
 
 export const sendToPipeline = async ({ event, surveyId, environmentId, response }: TPipelineInput) => {
@@ -6,7 +6,7 @@ export const sendToPipeline = async ({ event, surveyId, environmentId, response 
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": INTERNAL_SECRET,
+      "x-api-key": CRON_SECRET,
     },
     body: JSON.stringify({
       environmentId: environmentId,

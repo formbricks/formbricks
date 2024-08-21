@@ -2369,7 +2369,7 @@ export const templates: TTemplate[] = [
           id: "jmzgbo73cfjswlvhoynn7o0q",
           html: {
             default:
-              '<p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><b><strong class="fb-editor-text-bold">Read the text below, then answer 2 questions:</strong></b></p><p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><span>Insert concept brief here. Add neccessary details but keep it concise and easy to understand.</span></p>',
+              '<p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><b><strong class="fb-editor-text-bold">Read the text below, then answer 2 questions:</strong></b></p><p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><span>Insert concept brief here. Add necessary details but keep it concise and easy to understand.</span></p>',
           },
           type: TSurveyQuestionTypeEnum.CTA,
           headline: { default: "We're working on an idea to help with [PROBLEM AREA]." },

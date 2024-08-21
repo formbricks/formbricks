@@ -31,7 +31,6 @@ export const ActionDetailModal = ({
       title: "Settings",
       children: (
         <ActionSettingsTab
-          environmentId={environmentId}
           actionClass={actionClass}
           actionClasses={actionClasses}
           setOpen={setOpen}

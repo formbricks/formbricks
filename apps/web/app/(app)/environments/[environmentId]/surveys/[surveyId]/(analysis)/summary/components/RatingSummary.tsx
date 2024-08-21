@@ -2,7 +2,12 @@ import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]
 import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
 import { useMemo } from "react";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TSurvey, TSurveyQuestionSummaryRating } from "@formbricks/types/surveys/types";
+import {
+  TI18nString,
+  TSurvey,
+  TSurveyQuestionSummaryRating,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { RatingResponse } from "@formbricks/ui/RatingResponse";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -11,9 +16,21 @@ interface RatingSummaryProps {
   questionSummary: TSurveyQuestionSummaryRating;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  setFilter: (
+    questionId: string,
+    label: TI18nString,
+    questionType: TSurveyQuestionTypeEnum,
+    filterValue: string,
+    filterComboBoxValue?: string | string[]
+  ) => void;
 }
 
-export const RatingSummary = ({ questionSummary, survey, attributeClasses }: RatingSummaryProps) => {
+export const RatingSummary = ({
+  questionSummary,
+  survey,
+  attributeClasses,
+  setFilter,
+}: RatingSummaryProps) => {
   const getIconBasedOnScale = useMemo(() => {
     const scale = questionSummary.question.scale;
     if (scale === "number") return <CircleSlash2 className="h-4 w-4" />;
@@ -36,7 +53,18 @@ export const RatingSummary = ({ questionSummary, survey, attributeClasses }: Rat
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {questionSummary.choices.map((result) => (
-          <div key={result.rating}>
+          <div
+            className="cursor-pointer hover:opacity-80"
+            key={result.rating}
+            onClick={() =>
+              setFilter(
+                questionSummary.question.id,
+                questionSummary.question.headline,
+                questionSummary.question.type,
+                "Is equal to",
+                result.rating.toString()
+              )
+            }>
             <div className="text flex justify-between px-2 pb-2">
               <div className="mr-8 flex items-center space-x-1">
                 <div className="font-semibold text-slate-700">

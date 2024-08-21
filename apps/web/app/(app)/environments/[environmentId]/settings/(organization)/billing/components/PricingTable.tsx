@@ -57,26 +57,39 @@ export const PricingTable = ({
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
-      const isCancelled = await isSubscriptionCancelledAction(organization.id);
-      if (isCancelled) {
-        setCancellingOn(isCancelled.date);
+      const isSubscriptionCancelledResponse = await isSubscriptionCancelledAction({
+        organizationId: organization.id,
+      });
+      if (isSubscriptionCancelledResponse?.data) {
+        setCancellingOn(isSubscriptionCancelledResponse.data.date);
       }
     };
     checkSubscriptionStatus();
   }, [organization.id]);
 
   const openCustomerPortal = async () => {
-    const sessionUrl = await manageSubscriptionAction(organization.id, environmentId);
-    router.push(sessionUrl);
+    const manageSubscriptionResponse = await manageSubscriptionAction({
+      organizationId: organization.id,
+      environmentId,
+    });
+    if (manageSubscriptionResponse?.data) {
+      router.push(manageSubscriptionResponse.data);
+    }
   };
 
   const upgradePlan = async (priceLookupKey) => {
     try {
-      const { status, newPlan, url } = await upgradePlanAction(
-        organization.id,
+      const upgradePlanResponse = await upgradePlanAction({
+        organizationId: organization.id,
         environmentId,
-        priceLookupKey
-      );
+        priceLookupKey,
+      });
+
+      if (!upgradePlanResponse?.data) {
+        throw new Error("Something went wrong");
+      }
+
+      const { status, newPlan, url } = upgradePlanResponse.data;
 
       if (status != 200) {
         throw new Error("Something went wrong");

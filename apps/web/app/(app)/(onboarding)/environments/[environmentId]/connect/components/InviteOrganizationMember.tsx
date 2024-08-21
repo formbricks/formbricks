@@ -36,7 +36,12 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
 
   const handleInvite = async (data: TInviteOrganizationMemberDetails) => {
     try {
-      await inviteOrganizationMemberAction(organization.id, data.email, "developer", data.inviteMessage);
+      await inviteOrganizationMemberAction({
+        organizationId: organization.id,
+        email: data.email,
+        role: "developer",
+        inviteMessage: data.inviteMessage,
+      });
       toast.success("Invite sent successful");
       await finishOnboarding();
     } catch (error) {

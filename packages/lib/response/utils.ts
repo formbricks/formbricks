@@ -205,7 +205,7 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
             },
           });
           break;
-        case "skipped": // need to handle dismissed case for CTA type question, that would hinder other ques(eg open text)
+        case "skipped":
           data.push({
             OR: [
               {
@@ -217,7 +217,7 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
               {
                 data: {
                   path: [key],
-                  equals: "dismissed",
+                  equals: "",
                 },
               },
               // For address question
@@ -300,7 +300,7 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
           break;
         case "includesOne":
           data.push({
-            OR: val.value.map((value: string) => ({
+            OR: val.value.map((value: string | number) => ({
               OR: [
                 // for MultipleChoiceMulti
                 {
@@ -369,6 +369,15 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
             data: {
               path: [key],
               equals: "booked",
+            },
+          });
+          break;
+        case "matrix":
+          const rowLabel = Object.keys(val.value)[0];
+          data.push({
+            data: {
+              path: [key, rowLabel],
+              equals: val.value[rowLabel],
             },
           });
           break;

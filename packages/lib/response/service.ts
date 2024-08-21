@@ -11,11 +11,9 @@ import {
   TResponse,
   TResponseFilterCriteria,
   TResponseInput,
-  TResponseLegacyInput,
   TResponseUpdateInput,
   ZResponseFilterCriteria,
   ZResponseInput,
-  ZResponseLegacyInput,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
 import { TSurveySummary } from "@formbricks/types/surveys/types";
@@ -26,7 +24,7 @@ import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { displayCache } from "../display/cache";
 import { deleteDisplayByResponseId, getDisplayCountBySurveyId } from "../display/service";
 import { getMonthlyOrganizationResponseCount, getOrganizationByEnvironmentId } from "../organization/service";
-import { createPerson, getPerson, getPersonByUserId } from "../person/service";
+import { createPerson, getPersonByUserId } from "../person/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "../posthogServer";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
@@ -307,82 +305,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
   }
 };
 
-export const createResponseLegacy = async (responseInput: TResponseLegacyInput): Promise<TResponse> => {
-  validateInputs([responseInput, ZResponseLegacyInput]);
-  captureTelemetry("response created");
-
-  try {
-    let person: TPerson | null = null;
-    let attributes: TAttributes | null = null;
-
-    if (responseInput.personId) {
-      person = await getPerson(responseInput.personId);
-    }
-    const ttcTemp = responseInput.ttc ?? {};
-    const questionId = Object.keys(ttcTemp)[0];
-    const ttc =
-      responseInput.finished && responseInput.ttc
-        ? {
-            ...ttcTemp,
-            _total: ttcTemp[questionId], // Add _total property with the same value
-          }
-        : ttcTemp;
-
-    if (person?.id) {
-      attributes = await getAttributes(person?.id as string);
-    }
-
-    const responsePrisma = await prisma.response.create({
-      data: {
-        survey: {
-          connect: {
-            id: responseInput.surveyId,
-          },
-        },
-        finished: responseInput.finished,
-        data: responseInput.data,
-        ttc,
-        ...(responseInput.personId && {
-          person: {
-            connect: {
-              id: responseInput.personId,
-            },
-          },
-          personAttributes: attributes,
-        }),
-
-        ...(responseInput.meta && ({ meta: responseInput?.meta } as Prisma.JsonObject)),
-        singleUseId: responseInput.singleUseId,
-        language: responseInput.language,
-      },
-      select: responseSelection,
-    });
-
-    const response: TResponse = {
-      ...responsePrisma,
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
-
-    responseCache.revalidate({
-      id: response.id,
-      personId: response.person?.id,
-      surveyId: response.surveyId,
-    });
-
-    responseNoteCache.revalidate({
-      responseId: response.id,
-    });
-
-    return response;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
-
 export const getResponse = reactCache(
   (responseId: string): Promise<TResponse | null> =>
     cache(
@@ -535,8 +457,12 @@ export const getSurveySummary = reactCache(
           }
 
           const batchSize = 3000;
-          const responseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
-          const pages = Math.ceil(responseCount / batchSize);
+          const totalResponseCount = await getResponseCountBySurveyId(surveyId);
+          const filteredResponseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
+
+          const hasFilter = totalResponseCount !== filteredResponseCount;
+
+          const pages = Math.ceil(filteredResponseCount / batchSize);
 
           const responsesArray = await Promise.all(
             Array.from({ length: pages }, (_, i) => {
@@ -545,8 +471,11 @@ export const getSurveySummary = reactCache(
           );
           const responses = responsesArray.flat();
 
+          const responseIds = hasFilter ? responses.map((response) => response.id) : [];
+
           const displayCount = await getDisplayCountBySurveyId(surveyId, {
             createdAt: filterCriteria?.createdAt,
+            ...(hasFilter && { responseIds }),
           });
 
           const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);

@@ -191,12 +191,12 @@ docker compose up -d
 <CodeGroup title="Migrate the data">
 
 ```bash
-docker pull ghcr.io/formbricks/data-migrations:latest && \
+docker pull ghcr.io/formbricks/data-migrations:v2.3.0 && \
 docker run --rm \
   --network=formbricks_default \
   -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
   -e UPGRADE_TO_VERSION="v2.3" \
-  ghcr.io/formbricks/data-migrations:latest
+  ghcr.io/formbricks/data-migrations:v2.3.0
 ```
 
 </CodeGroup>
@@ -286,12 +286,12 @@ docker compose up -d
 <CodeGroup title="Migrate the data">
 
 ```bash
-docker pull ghcr.io/formbricks/data-migrations:latest && \
+docker pull ghcr.io/formbricks/data-migrations:v2.2 && \
 docker run --rm \
   --network=formbricks_default \
   -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
   -e UPGRADE_TO_VERSION="v2.2" \
-  ghcr.io/formbricks/data-migrations:latest
+  ghcr.io/formbricks/data-migrations:v2.2
 ```
 
 </CodeGroup>
@@ -390,12 +390,12 @@ docker compose up -d
 <CodeGroup title="Migrate the data">
 
 ```bash
-docker pull ghcr.io/formbricks/data-migrations:latest && \
+docker pull ghcr.io/formbricks/data-migrations:v2.1.0 && \
 docker run --rm \
   --network=formbricks_default \
   -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
   -e UPGRADE_TO_VERSION="v2.1" \
-  ghcr.io/formbricks/data-migrations:latest
+  ghcr.io/formbricks/data-migrations:v2.1.0
 ```
 
 </CodeGroup>
@@ -504,12 +504,12 @@ docker compose up -d
 <CodeGroup title="Migrate the data">
 
 ```bash
-docker pull ghcr.io/formbricks/data-migrations:latest && \
+docker pull ghcr.io/formbricks/data-migrations:v2.0.3 && \
 docker run --rm \
   --network=formbricks_default \
   -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
   -e UPGRADE_TO_VERSION="v2.0" \
-  ghcr.io/formbricks/data-migrations:latest
+  ghcr.io/formbricks/data-migrations:v2.0.3
 ```
 
 </CodeGroup>

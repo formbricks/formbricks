@@ -48,7 +48,8 @@ export const QuestionFilterComboBox = ({
   const isMultiple =
     type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
     type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
-    type === TSurveyQuestionTypeEnum.PictureSelection;
+    type === TSurveyQuestionTypeEnum.PictureSelection ||
+    (type === TSurveyQuestionTypeEnum.NPS && filterValue === "Includes either");
 
   // when question type is multi selection so we remove the option from the options which has been already selected
   const options = isMultiple
@@ -120,7 +121,7 @@ export const QuestionFilterComboBox = ({
             disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
           )}>
           {filterComboBoxValue && filterComboBoxValue?.length > 0 ? (
-            !isMultiple ? (
+            !Array.isArray(filterComboBoxValue) ? (
               <p className="text-slate-600">{filterComboBoxValue}</p>
             ) : (
               <div className="no-scrollbar flex w-[7rem] gap-3 overflow-auto md:w-[10rem] lg:w-[18rem]">

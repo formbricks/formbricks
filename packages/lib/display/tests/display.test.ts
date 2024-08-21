@@ -4,10 +4,6 @@ import {
   mockDisplay,
   mockDisplayInput,
   mockDisplayInputWithUserId,
-  mockDisplayLegacyInput,
-  mockDisplayLegacyInputWithPersonId,
-  mockDisplayLegacyUpdateInput,
-  mockDisplayLegacyWithRespondedStatus,
   mockDisplayUpdate,
   mockDisplayWithPersonId,
   mockDisplayWithResponseId,
@@ -20,14 +16,11 @@ import { testInputValidation } from "vitestSetup";
 import { DatabaseError } from "@formbricks/types/errors";
 import {
   createDisplay,
-  createDisplayLegacy,
   deleteDisplayByResponseId,
   getDisplay,
   getDisplayCountBySurveyId,
   getDisplaysByPersonId,
-  markDisplayRespondedLegacy,
   updateDisplay,
-  updateDisplayLegacy,
 } from "../service";
 
 beforeEach(() => {
@@ -173,88 +166,6 @@ describe("Tests for updateDisplay Service", () => {
   });
 });
 
-describe("Tests for createDisplayLegacy service", () => {
-  describe("Happy Path", () => {
-    it("Creates a display when a person ID exist", async () => {
-      prisma.display.create.mockResolvedValue(mockDisplayWithPersonId);
-
-      const display = await createDisplayLegacy(mockDisplayLegacyInputWithPersonId);
-      expect(display).toEqual(mockDisplayWithPersonId);
-    });
-    it("Creates a display when a person ID does not exist", async () => {
-      prisma.display.create.mockResolvedValue(mockDisplay);
-
-      const display = await createDisplayLegacy(mockDisplayLegacyInput);
-      expect(display).toEqual(mockDisplay);
-    });
-  });
-  describe("Sad Path", () => {
-    testInputValidation(createDisplayLegacy, "123");
-
-    it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
-      const mockErrorMessage = "Mock error message";
-      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
-        clientVersion: "0.0.1",
-      });
-
-      prisma.display.create.mockRejectedValue(errToThrow);
-
-      await expect(createDisplayLegacy(mockDisplayLegacyInputWithPersonId)).rejects.toThrow(DatabaseError);
-    });
-
-    it("Throws a generic Error for other exceptions", async () => {
-      const mockErrorMessage = "Mock error message";
-      prisma.display.create.mockRejectedValue(new Error(mockErrorMessage));
-
-      await expect(createDisplayLegacy(mockDisplayLegacyInputWithPersonId)).rejects.toThrow(Error);
-    });
-  });
-});
-
-describe("Tests for updateDisplayLegacy Service", () => {
-  describe("Happy Path", () => {
-    it("Updates a display", async () => {
-      prisma.display.update.mockResolvedValue(mockDisplayWithPersonId);
-
-      const display = await updateDisplayLegacy(mockDisplay.id, mockDisplayLegacyUpdateInput);
-      expect(display).toEqual(mockDisplayWithPersonId);
-    });
-
-    it("marks display as responded legacy", async () => {
-      prisma.display.update.mockResolvedValue(mockDisplayLegacyWithRespondedStatus);
-
-      const display = await markDisplayRespondedLegacy(mockDisplay.id);
-      expect(display).toEqual(mockDisplayLegacyWithRespondedStatus);
-    });
-  });
-
-  describe("Sad Path", () => {
-    testInputValidation(updateDisplayLegacy, "123", "123");
-
-    it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
-      const mockErrorMessage = "Mock error message";
-      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
-        clientVersion: "0.0.1",
-      });
-
-      prisma.display.update.mockRejectedValue(errToThrow);
-
-      await expect(updateDisplayLegacy(mockDisplay.id, mockDisplayLegacyUpdateInput)).rejects.toThrow(
-        DatabaseError
-      );
-    });
-
-    it("Throws a generic Error for other unexpected issues", async () => {
-      const mockErrorMessage = "Mock error message";
-      prisma.display.update.mockRejectedValue(new Error(mockErrorMessage));
-
-      await expect(updateDisplayLegacy(mockDisplay.id, mockDisplayLegacyUpdateInput)).rejects.toThrow(Error);
-    });
-  });
-});
-
 describe("Tests for deleteDisplayByResponseId service", () => {
   describe("Happy Path", () => {
     it("Deletes a display when a response associated to it is deleted", async () => {
@@ -265,8 +176,6 @@ describe("Tests for deleteDisplayByResponseId service", () => {
     });
   });
   describe("Sad Path", () => {
-    testInputValidation(createDisplayLegacy, "123");
-
     it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {

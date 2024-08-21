@@ -14,7 +14,6 @@ export const FORMBRICKS_ENCRYPTION_KEY = env.FORMBRICKS_ENCRYPTION_KEY || undefi
 export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
 
 // Other
-export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
 export const CRON_SECRET = env.CRON_SECRET;
 export const DEFAULT_BRAND_COLOR = "#64748b";
 
@@ -89,6 +88,7 @@ export const S3_SECRET_KEY = env.S3_SECRET_KEY;
 export const S3_REGION = env.S3_REGION;
 export const S3_ENDPOINT_URL = env.S3_ENDPOINT_URL;
 export const S3_BUCKET_NAME = env.S3_BUCKET_NAME;
+export const S3_FORCE_PATH_STYLE = env.S3_FORCE_PATH_STYLE === "1";
 export const UPLOADS_DIR = env.UPLOADS_DIR || "./uploads";
 export const MAX_SIZES = {
   standard: 1024 * 1024 * 10, // 10MB
