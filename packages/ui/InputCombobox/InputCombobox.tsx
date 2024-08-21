@@ -9,11 +9,11 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@formbricks/ui/Command";
-import { Input } from "@formbricks/ui/Input";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
+} from "../Command";
+import { Input } from "../Input";
+import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
 
-interface LogicInputProps {
+interface InputComboboxProps {
   showSearch?: boolean;
   searchPlaceholder?: string;
   options?: { label: string | ReactNode; value: string }[];
@@ -30,7 +30,7 @@ interface LogicInputProps {
   allowMultiSelect?: boolean;
 }
 
-export const LogicInput = ({
+export const InputCombobox = ({
   showSearch = true,
   searchPlaceholder = "Search...",
   options,
@@ -41,7 +41,7 @@ export const LogicInput = ({
   withInput = false,
   size = "sm",
   allowMultiSelect = false,
-}: LogicInputProps) => {
+}: InputComboboxProps) => {
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState<string | string[] | null>(() => {
     if (!selected) {
@@ -83,7 +83,7 @@ export const LogicInput = ({
             className={cn(
               "flex h-10 cursor-pointer items-center justify-center rounded-md border border-slate-300",
               {
-                "rounded-r-none": withInput,
+                "rounded-l-none": withInput,
                 "w-10": size === "sm",
                 "w-[200px] justify-between gap-2 p-2": size === "lg",
               }
@@ -106,7 +106,7 @@ export const LogicInput = ({
         </PopoverTrigger>
         <PopoverContent
           className={cn("w-[200px] border border-slate-400 bg-slate-50 p-0 shadow-none", {
-            "pt-2": size === "sm",
+            "pt-2": showSearch,
           })}>
           <Command>
             {showSearch && (
@@ -120,7 +120,8 @@ export const LogicInput = ({
               <CommandGroup>
                 {options?.map((option) => (
                   <CommandItem key={option.value} onSelect={() => handleSelect(option.value)}>
-                    {allowMultiSelect && Array.isArray(value) && value.includes(option.value) && (
+                    {((allowMultiSelect && Array.isArray(value) && value.includes(option.value)) ||
+                      (!allowMultiSelect && value === option.value)) && (
                       <CheckIcon className="mr-2 h-4 w-4 text-slate-300" />
                     )}
                     {option.label}
