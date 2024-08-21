@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/common";
 import {
   TDisplay,
   TDisplayCreateInput,
@@ -11,7 +12,6 @@ import {
   ZDisplayCreateInput,
   ZDisplayUpdateInput,
 } from "@formbricks/types/displays";
-import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { cache } from "../cache";

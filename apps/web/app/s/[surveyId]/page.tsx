@@ -13,7 +13,7 @@ import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service"
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { TResponse } from "@formbricks/types/responses";
 import { getEmailVerificationDetails } from "./lib/helpers";
 

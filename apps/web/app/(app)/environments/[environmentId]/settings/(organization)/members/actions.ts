@@ -15,7 +15,7 @@ import {
 } from "@formbricks/lib/membership/service";
 import { deleteOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { getOrganizationIdFromInviteId } from "@formbricks/lib/organization/utils";
-import { ZId, ZUuid } from "@formbricks/types/environment";
+import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { ZMembershipRole } from "@formbricks/types/memberships";
 import { ZOrganizationUpdateInput } from "@formbricks/types/organizations";

@@ -10,7 +10,7 @@ import {
   transferOwnership,
   updateMembership,
 } from "@formbricks/lib/membership/service";
-import { ZId, ZUuid } from "@formbricks/types/environment";
+import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthorizationError, ValidationError } from "@formbricks/types/errors";
 import { ZInviteUpdateInput } from "@formbricks/types/invites";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
