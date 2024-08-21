@@ -6,6 +6,7 @@ import { ZId } from "../environment";
 import { ZLanguage } from "../product";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
+import { ZSurveyAdvancedLogic } from "./logic";
 import {
   FORBIDDEN_IDS,
   findLanguageCodesForDuplicateLabels,
@@ -334,6 +335,7 @@ export const ZSurveyQuestionBase = z.object({
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   logic: z.array(ZSurveyLogic).optional(),
+  advancedLogic: z.array(ZSurveyAdvancedLogic).optional(),
   isDraft: z.boolean().optional(),
 });
 

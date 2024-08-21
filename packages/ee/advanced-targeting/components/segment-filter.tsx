@@ -653,7 +653,6 @@ function ActionSegmentFilter({
         setSegment={setSegment}
         viewOnly={viewOnly}
       />
-
       <Select
         disabled={viewOnly}
         onValueChange={(value) => {
@@ -676,7 +675,6 @@ function ActionSegmentFilter({
           ))}
         </SelectContent>
       </Select>
-
       <Select
         disabled={viewOnly}
         onValueChange={(value: TActionMetric) => {
@@ -695,7 +693,6 @@ function ActionSegmentFilter({
           ))}
         </SelectContent>
       </Select>
-
       <Select
         disabled={viewOnly}
         onValueChange={(operator: TBaseOperator) => {
@@ -718,7 +715,6 @@ function ActionSegmentFilter({
           ))}
         </SelectContent>
       </Select>
-
       <div className="relative flex flex-col gap-1">
         <Input
           className={cn("w-auto bg-white", valueError && "border border-red-500 focus:border-red-500")}
@@ -734,7 +730,6 @@ function ActionSegmentFilter({
           <p className="absolute right-2 -mt-1 rounded-md bg-white px-2 text-xs text-red-500">{valueError}</p>
         ) : null}
       </div>
-
       <SegmentFilterItemContextMenu
         filterId={resource.id}
         onAddFilterBelow={onAddFilterBelow}

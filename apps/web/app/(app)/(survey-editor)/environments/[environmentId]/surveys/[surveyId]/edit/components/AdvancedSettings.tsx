@@ -1,3 +1,4 @@
+import { ConditionalLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/ConditionalLogic";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { LogicEditor } from "./LogicEditor";
@@ -22,6 +23,13 @@ export const AdvancedSettings = ({
     <div>
       <div className="mb-4">
         <LogicEditor
+          question={question}
+          updateQuestion={updateQuestion}
+          localSurvey={localSurvey}
+          questionIdx={questionIdx}
+          attributeClasses={attributeClasses}
+        />
+        <ConditionalLogic
           question={question}
           updateQuestion={updateQuestion}
           localSurvey={localSurvey}

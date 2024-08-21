@@ -1,5 +1,24 @@
 import { z } from "zod";
-import { TSurveyQuestionTypeEnum, ZSurveyOpenTextQuestionInputType } from "./types";
+
+// import { TSurveyQuestionTypeEnum, ZSurveyOpenTextQuestionInputType } from "./types";
+
+export const ZSurveyOpenTextQuestionInputType = z.enum(["text", "email", "url", "number", "phone"]);
+
+export enum TSurveyQuestionTypeEnum {
+  FileUpload = "fileUpload",
+  OpenText = "openText",
+  MultipleChoiceSingle = "multipleChoiceSingle",
+  MultipleChoiceMulti = "multipleChoiceMulti",
+  NPS = "nps",
+  CTA = "cta",
+  Rating = "rating",
+  Consent = "consent",
+  PictureSelection = "pictureSelection",
+  Cal = "cal",
+  Date = "date",
+  Matrix = "matrix",
+  Address = "address",
+}
 
 export const ZSurveyLogicCondition = z.enum([
   "equals",
@@ -58,6 +77,8 @@ const ZConditionBase = z.object({
   conditionOperator: ZSurveyLogicCondition,
   matchValue: ZMatchValue,
 });
+
+export type TConditionBase = z.infer<typeof ZConditionBase>;
 
 const ZConditionQuestionBase = ZConditionBase.extend({
   type: z.literal("question"),
@@ -363,14 +384,14 @@ const ZGroupedConditions: z.ZodType<TGroupedConditions> = z.object({
   conditions: z.array(z.union([ZCondition, z.lazy(() => ZGroupedConditions)])),
 });
 
-const ZSurveyLogic = z.object({
+export const ZSurveyAdvancedLogic = z.object({
   id: z.string().cuid2(),
   conditions: z.array(z.union([ZCondition, ZGroupedConditions])),
   actions: z.array(ZAction),
 });
 
-export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
+export type TSurveyAdvancedLogic = z.infer<typeof ZSurveyAdvancedLogic>;
 
 export const ZSurveyQuestionBase = z.object({
-  logic: z.array(ZSurveyLogic).optional(),
+  logic: z.array(ZSurveyAdvancedLogic).optional(),
 });
