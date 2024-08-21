@@ -413,6 +413,7 @@ model Environment {
   tags                  Tag[]
   segments              Segment[]
   integration           Integration[]
+  embeddings            Embedding[]
 
   @@index([productId])
 }
@@ -663,12 +664,14 @@ enum EmbeddingType {
 }
 
 model Embedding {
-  id          String                      @id @default(cuid())
-  createdAt   DateTime                    @default(now()) @map(name: "created_at")
-  updatedAt   DateTime                    @updatedAt @map(name: "updated_at")
-  type        EmbeddingType
-  referenceId String
-  vector      Unsupported("vector(512)")?
+  id            String                      @id @default(cuid())
+  createdAt     DateTime                    @default(now()) @map(name: "created_at")
+  updatedAt     DateTime                    @updatedAt @map(name: "updated_at")
+  environmentId String
+  environment   Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  type          EmbeddingType
+  referenceId   String
+  vector        Unsupported("vector(512)")?
 
   @@index([type, referenceId])
 }
