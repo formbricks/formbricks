@@ -2,6 +2,7 @@
 
 import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
 import { customAlphabet } from "nanoid";
+import { AuthOptions } from "next-auth";
 import { z } from "zod";
 import { sendEmbedSurveyPreviewEmail } from "@formbricks/email";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
@@ -13,7 +14,7 @@ import { getOrganizationIdFromSurveyId } from "@formbricks/lib/organization/util
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/environment";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 const ZSendEmbedSurveyPreviewEmailAction = z.object({
   surveyId: ZId,
@@ -145,19 +146,26 @@ export const getEmailHtmlAction = authenticatedActionClient
     return await getEmailTemplateHtml(parsedInput.surveyId);
   });
 
-export const getOpenTextSummaryAction = async (surveyId: string, questionId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZGetOpenTextSummaryAction = z.object({
+  surveyId: ZId,
+  questionId: ZId,
+});
 
-  const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
+export const getOpenTextSummaryAction = authenticatedActionClient
+  .schema(ZGetOpenTextSummaryAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "read"],
+    });
 
-  const embeddings = await getEmbeddingsByTypeAndReferenceId(
-    "questionResponse",
-    getQuestionResponseReferenceId(surveyId, questionId)
-  );
+    const embeddings = await getEmbeddingsByTypeAndReferenceId(
+      "questionResponse",
+      getQuestionResponseReferenceId(parsedInput.surveyId, parsedInput.questionId)
+    );
 
-  console.log(embeddings);
+    console.log(embeddings);
 
-  return;
-};
+    return;
+  });
