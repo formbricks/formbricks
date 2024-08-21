@@ -415,7 +415,7 @@ model Environment {
   tags                  Tag[]
   segments              Segment[]
   integration           Integration[]
-  embeddings            Embedding[]
+  documents             Document[]
 
   @@index([productId])
 }
@@ -661,18 +661,19 @@ model SurveyLanguage {
   @@index([languageId])
 }
 
-enum EmbeddingType {
+enum DocumentType {
   questionResponse
 }
 
-model Embedding {
+model Document {
   id            String                      @id @default(cuid())
   createdAt     DateTime                    @default(now()) @map(name: "created_at")
   updatedAt     DateTime                    @updatedAt @map(name: "updated_at")
   environmentId String
   environment   Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  type          EmbeddingType
+  type          DocumentType
   referenceId   String
+  text          String
   vector        Unsupported("vector(512)")?
 
   @@index([type, referenceId])

@@ -4,48 +4,50 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZString } from "@formbricks/types/common";
 import {
-  TEmbedding,
-  TEmbeddingCreateInput,
-  ZEmbeddingCreateInput,
-  ZEmbeddingType,
-} from "@formbricks/types/embedding";
+  TDocument,
+  TDocumentCreateInput,
+  ZDocumentCreateInput,
+  ZDocumentType,
+} from "@formbricks/types/documents";
 import { DatabaseError } from "@formbricks/types/errors";
 import { cache } from "../cache";
 import { validateInputs } from "../utils/validate";
-import { embeddingCache } from "./cache";
+import { documentCache } from "./cache";
 
-export type TPrismaEmbedding = Omit<TEmbedding, "vector"> & {
+export type TPrismaDocument = Omit<TDocument, "vector"> & {
   vector: string;
 };
 
-export const createEmbedding = async (embeddingInput: TEmbeddingCreateInput): Promise<TEmbedding> => {
-  validateInputs([embeddingInput, ZEmbeddingCreateInput]);
+export const createDocument = async (documentInput: TDocumentCreateInput): Promise<TDocument> => {
+  validateInputs([documentInput, ZDocumentCreateInput]);
 
   try {
-    const { vector, ...data } = embeddingInput;
+    const { vector, ...data } = documentInput;
 
-    const prismaEmbedding = await prisma.embedding.create({
+    const prismaDocument = await prisma.document.create({
       data,
     });
 
-    const embedding = {
-      ...prismaEmbedding,
+    const document = {
+      ...prismaDocument,
       vector,
     };
 
     // update vector
     const vectorString = `[${vector.join(",")}]`;
     await prisma.$executeRaw`
-      UPDATE "Embedding"
+      UPDATE "Document"
       SET "vector" = ${vectorString}::vector(512)
-      WHERE "id" = ${embedding.id};
+      WHERE "id" = ${document.id};
     `;
 
-    embeddingCache.revalidate({
-      referenceId: embedding.referenceId,
+    documentCache.revalidate({
+      id: document.id,
+      type: document.type,
+      referenceId: document.referenceId,
     });
 
-    return embedding;
+    return document;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -54,39 +56,40 @@ export const createEmbedding = async (embeddingInput: TEmbeddingCreateInput): Pr
   }
 };
 
-export const getEmbeddingsByTypeAndReferenceId = reactCache(
-  (type: string, referenceId: string): Promise<TEmbedding[]> =>
+export const getDocumentsByTypeAndReferenceId = reactCache(
+  (type: string, referenceId: string): Promise<TDocument[]> =>
     cache(
       async () => {
-        validateInputs([type, ZEmbeddingType], [referenceId, ZString]);
+        validateInputs([type, ZDocumentType], [referenceId, ZString]);
 
         try {
-          const prismaEmbeddings: TPrismaEmbedding[] = await prisma.$queryRaw`
+          const prismaDocuments: TPrismaDocument[] = await prisma.$queryRaw`
             SELECT
               id,
               created_at AS "createdAt",
               updated_at AS "updatedAt",
               type,
+              text,
               "referenceId",
               vector::text
-            FROM "Embedding" e
-            WHERE e."type" = ${type}::"EmbeddingType"
+            FROM "Document" e
+            WHERE e."type" = ${type}::"DocumentType"
               AND e."referenceId" = ${referenceId}
           `;
 
-          const embeddings = prismaEmbeddings.map((prismaEmbedding) => {
-            // Convert the string representation of the embedding back to an array of numbers
-            const vector = prismaEmbedding.vector
+          const documents = prismaDocuments.map((prismaDocument) => {
+            // Convert the string representation of the vector back to an array of numbers
+            const vector = prismaDocument.vector
               .slice(1, -1) // Remove the surrounding square brackets
               .split(",") // Split the string into an array of strings
               .map(Number); // Convert each string to a number
             return {
-              ...prismaEmbedding,
+              ...prismaDocument,
               vector,
             };
           });
 
-          return embeddings;
+          return documents;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             console.error(error);
@@ -95,9 +98,9 @@ export const getEmbeddingsByTypeAndReferenceId = reactCache(
           throw error;
         }
       },
-      [`getEmbeddingsByTypeAndReferenceId-${type}-${referenceId}`],
+      [`getDocumentsByTypeAndReferenceId-${type}-${referenceId}`],
       {
-        tags: [embeddingCache.tag.byTypeAndReferenceId(type, referenceId)],
+        tags: [documentCache.tag.byTypeAndReferenceId(type, referenceId)],
       }
     )()
 );

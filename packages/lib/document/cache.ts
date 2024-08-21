@@ -6,13 +6,13 @@ interface RevalidateProps {
   referenceId?: string;
 }
 
-export const embeddingCache = {
+export const documentCache = {
   tag: {
     byId(id: string) {
-      return `embeddings-${id}`;
+      return `documents-${id}`;
     },
     byTypeAndReferenceId(type: string, id: string) {
-      return `embeddings-${type}-${id}`;
+      return `documents-${type}-${id}`;
     },
   },
   revalidate({ id, type, referenceId }: RevalidateProps): void {

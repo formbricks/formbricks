@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -60,6 +60,9 @@ const Page = async ({ params }) => {
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const isAiEnabled =
+    IS_FORMBRICKS_CLOUD &&
+    (organization.billing.plan === "scale" || organization.billing.plan === "enterprise");
 
   return (
     <PageContentWrapper>
@@ -89,6 +92,7 @@ const Page = async ({ params }) => {
         user={user}
         totalResponseCount={totalResponseCount}
         attributeClasses={attributeClasses}
+        isAiEnabled={isAiEnabled}
       />
     </PageContentWrapper>
   );

@@ -1,12 +1,15 @@
 import { getOpenTextSummaryAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
+import Markdown from "markdown-to-jsx";
 import Link from "next/link";
 import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
+import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
+import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface OpenTextSummaryProps {
@@ -14,6 +17,7 @@ interface OpenTextSummaryProps {
   environmentId: string;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  isAiEnabled: boolean;
 }
 
 export const OpenTextSummary = ({
@@ -21,8 +25,11 @@ export const OpenTextSummary = ({
   environmentId,
   survey,
   attributeClasses,
+  isAiEnabled,
 }: OpenTextSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
+  const [isLoadingAiSummary, setIsLoadingAiSummary] = useState(false);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
 
   const handleLoadMore = () => {
     // Increase the number of visible responses by 10, not exceeding the total number of responses
@@ -32,8 +39,19 @@ export const OpenTextSummary = ({
   };
 
   const getOpenTextSummary = async () => {
+    setIsLoadingAiSummary(true);
     // This function is not implemented yet
-    await getOpenTextSummaryAction(survey.id, questionSummary.question.id);
+    const res = await getOpenTextSummaryAction({
+      surveyId: survey.id,
+      questionId: questionSummary.question.id,
+    });
+    const openTextSummary = res?.data;
+    if (openTextSummary) {
+      setAiSummary(openTextSummary);
+    } else {
+      setAiSummary("No summary available");
+    }
+    setIsLoadingAiSummary(false);
   };
 
   return (
@@ -43,7 +61,32 @@ export const OpenTextSummary = ({
         survey={survey}
         attributeClasses={attributeClasses}
       />
-      <Button onClick={() => getOpenTextSummary()}>Create Summary</Button>
+      <div className="p-4">
+        {isAiEnabled && (
+          <>
+            <Alert variant="info">
+              <AlertTitle>✨ AI Summary</AlertTitle>
+              {isLoadingAiSummary && <LoadingSpinner />}
+              {!isLoadingAiSummary && aiSummary && (
+                <>
+                  <hr className="my-4 text-slate-200" />
+                  <AlertDescription>
+                    <Markdown>{aiSummary}</Markdown>
+                  </AlertDescription>
+                </>
+              )}
+              <hr className="my-4 text-slate-200" />
+              {questionSummary.responseCount < 10 ? (
+                <p className="text-sm">This question needs at least 10 responses to access AI summaries</p>
+              ) : (
+                <Button onClick={() => getOpenTextSummary()} disabled={isLoadingAiSummary}>
+                  Generate Summary
+                </Button>
+              )}
+            </Alert>
+          </>
+        )}
+      </div>
       <div className="">
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
           <div className="pl-4 md:pl-6">User</div>

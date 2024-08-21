@@ -5,10 +5,9 @@ import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { sendResponseFinishedEmail } from "@formbricks/email";
 import { embeddingsModel } from "@formbricks/lib/ai";
-import { IS_AI_ENABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { CRON_SECRET } from "@formbricks/lib/constants";
-import { createEmbedding } from "@formbricks/lib/embedding/service";
-import { getQuestionResponseReferenceId } from "@formbricks/lib/embedding/utils";
+import { CRON_SECRET, IS_AI_ENABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { createDocument } from "@formbricks/lib/document/service";
+import { getQuestionResponseReferenceId } from "@formbricks/lib/document/utils";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -167,17 +166,11 @@ export const POST = async (request: Request) => {
 
     // generate embeddings for all open text question responses for enterprise and scale plans
     const hasSurveyOpenTextQuestions = survey.questions.some((question) => question.type === "openText");
-    console.log("hasSurveyOpenTextQuestions", hasSurveyOpenTextQuestions);
-    console.log("is Cloud", hasSurveyOpenTextQuestions && IS_FORMBRICKS_CLOUD && IS_AI_ENABLED);
     if (hasSurveyOpenTextQuestions && IS_FORMBRICKS_CLOUD && IS_AI_ENABLED) {
       const organization = await getOrganizationByEnvironmentId(environmentId);
       if (!organization) {
         throw new Error("Organization not found");
       }
-      console.log(
-        "valid billing plan",
-        organization.billing.plan === "enterprise" || organization.billing.plan === "scale"
-      );
       if (organization.billing.plan === "enterprise" || organization.billing.plan === "scale") {
         for (const question of survey.questions) {
           if (question.type === "openText") {
@@ -186,13 +179,17 @@ export const POST = async (request: Request) => {
             if (!isQuestionAnswered) {
               continue;
             }
+            const text = `${question.headline.default} Answer: ${response.data[question.id]}`;
             const { embedding } = await embed({
               model: embeddingsModel,
-              value: `${question.headline.default} Answer: ${response.data[question.id]}`,
+              value: text,
             });
-            await createEmbedding({
+            console.log("creating embedding for question response", question.id);
+            await createDocument({
+              environmentId,
               referenceId: getQuestionResponseReferenceId(survey.id, question.id),
               type: "questionResponse",
+              text,
               vector: embedding,
             });
           }

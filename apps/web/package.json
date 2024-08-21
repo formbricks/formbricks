@@ -44,6 +44,7 @@
     "lodash": "^4.17.21",
     "lru-cache": "^11.0.0",
     "lucide-react": "^0.427.0",
+    "markdown-to-jsx": "^7.5.0",
     "mime": "^4.0.4",
     "next": "14.2.5",
     "next-safe-action": "^7.6.2",
