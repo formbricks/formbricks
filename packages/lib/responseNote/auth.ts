@@ -1,4 +1,4 @@
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { cache } from "../cache";
 import { canUserAccessResponse } from "../response/auth";
 import { getResponse } from "../response/service";
