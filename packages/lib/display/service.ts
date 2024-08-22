@@ -84,11 +84,7 @@ export const updateDisplay = async (
         },
       }),
       ...(displayInput.responseId && {
-        response: {
-          connect: {
-            id: displayInput.responseId,
-          },
-        },
+        responseId: displayInput.responseId,
       }),
     };
     const display = await prisma.display.update({
