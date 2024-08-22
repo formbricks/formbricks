@@ -4,7 +4,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TAttributes, ZAttributes } from "@formbricks/types/attributes";
 import { ZString } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { attributeCache } from "../attribute/cache";
 import { attributeClassCache } from "../attributeClass/cache";
