@@ -9,6 +9,7 @@ import {
   ZDocumentCreateInput,
   ZDocumentType,
 } from "@formbricks/types/documents";
+import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { cache } from "../cache";
 import { validateInputs } from "../utils/validate";
@@ -72,9 +73,9 @@ export const getDocumentsByTypeAndReferenceId = reactCache(
               text,
               "referenceId",
               vector::text
-            FROM "Document" e
-            WHERE e."type" = ${type}::"DocumentType"
-              AND e."referenceId" = ${referenceId}
+            FROM "Document" d
+            WHERE d."type" = ${type}::"DocumentType"
+              AND d."referenceId" = ${referenceId}
           `;
 
           const documents = prismaDocuments.map((prismaDocument) => {
@@ -104,3 +105,45 @@ export const getDocumentsByTypeAndReferenceId = reactCache(
       }
     )()
 );
+
+export const findNearestDocuments = async (
+  environmentId: string,
+  vector: number[],
+  limit: number = 5
+): Promise<TDocument[]> => {
+  validateInputs([environmentId, ZId]);
+  const threshold = 0.8; //0.2;
+  // Convert the embedding array to a JSON-like string representation
+  const vectorString = `[${vector.join(",")}]`;
+
+  // Execute raw SQL query to find nearest neighbors and exclude the vector column
+  const prismaDocuments: TPrismaDocument[] = await prisma.$queryRaw`
+    SELECT
+      id,
+      created_at AS "createdAt",
+      updated_at AS "updatedAt",
+      type,
+      text,
+      "referenceId",
+      vector::text
+    FROM "Document" d
+    WHERE d."environmentId" = ${environmentId}
+      AND d."vector" <=> ${vectorString}::vector(512) <= ${threshold}
+    ORDER BY d."vector" <=> ${vectorString}::vector(512)
+    LIMIT ${limit};
+  `;
+
+  const documents = prismaDocuments.map((prismaDocument) => {
+    // Convert the string representation of the vector back to an array of numbers
+    const vector = prismaDocument.vector
+      .slice(1, -1) // Remove the surrounding square brackets
+      .split(",") // Split the string into an array of strings
+      .map(Number); // Convert each string to a number
+    return {
+      ...prismaDocument,
+      vector,
+    };
+  });
+
+  return documents;
+};
