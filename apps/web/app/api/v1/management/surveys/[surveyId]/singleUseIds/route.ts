@@ -35,7 +35,12 @@ export const GET = async (
 
     const singleUseIds = generateSurveySingleUseIds(limit, survey.singleUse.isEncrypted);
 
-    return responses.successResponse(singleUseIds);
+    // map single use ids to survey links
+    const surveyLinks = singleUseIds.map(
+      (singleUseId) => `${process.env.WEBAPP_URL}/s/${survey.id}?suId=${singleUseId}`
+    );
+
+    return responses.successResponse(surveyLinks);
   } catch (error) {
     return handleErrorResponse(error);
   }
