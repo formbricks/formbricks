@@ -14,7 +14,7 @@ import {
   getOrganizationIdFromLanguageId,
   getOrganizationIdFromProductId,
 } from "@formbricks/lib/organization/utils";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZLanguageInput } from "@formbricks/types/product";
 
