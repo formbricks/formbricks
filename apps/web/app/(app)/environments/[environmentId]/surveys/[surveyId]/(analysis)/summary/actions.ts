@@ -186,11 +186,4 @@ export const getOpenTextSummaryAction = authenticatedActionClient
       console.error(error);
       throw new Error("Failed to generate summary");
     }
-
-    /*     return `Users report mixed experiences with the app's performance, with particular concerns about the dashboard's load time and afternoon slowdowns.
-
-### Insights:
-1. **Dashboard Performance**: The most common feedback is that the dashboard is slow to load, impacting user experience.
-2. **Afternoon Slowdown**: Several users notice that the app slows down in the afternoon, while it runs smoothly in the morning.
-3. **Varied Experiences**: Some users do not experience any performance issues, indicating that the problem may not be universal.`; */
   });
