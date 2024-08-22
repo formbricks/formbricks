@@ -5,7 +5,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TAction, TActionInput, ZActionInput } from "@formbricks/types/actions";
 import { ZOptionalNumber } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { actionClassCache } from "../actionClass/cache";
 import { getActionClassByEnvironmentIdAndName } from "../actionClass/service";

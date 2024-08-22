@@ -1,5 +1,5 @@
 import "server-only";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getMembershipByUserIdOrganizationId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";

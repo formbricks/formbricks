@@ -37,3 +37,7 @@ export const ZAllowedFileExtension = z.enum([
 ]);
 
 export type TAllowedFileExtension = z.infer<typeof ZAllowedFileExtension>;
+
+export const ZId = z.string().cuid2();
+
+export const ZUuid = z.string().uuid();
