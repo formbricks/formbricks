@@ -109,7 +109,11 @@ export const EndingCard = ({
                 alignTextCenter={true}
                 headline={
                   endingCard.type === "endScreen"
-                    ? replaceRecallInfo(getLocalizedValue(endingCard.headline, languageCode), responseData)
+                    ? replaceRecallInfo(
+                        getLocalizedValue(endingCard.headline, languageCode),
+                        responseData,
+                        survey.variables
+                      )
                     : "Respondants will not see this card"
                 }
                 questionId="EndingCard"
@@ -117,7 +121,11 @@ export const EndingCard = ({
               <Subheader
                 subheader={
                   endingCard.type === "endScreen"
-                    ? replaceRecallInfo(getLocalizedValue(endingCard.subheader, languageCode), responseData)
+                    ? replaceRecallInfo(
+                        getLocalizedValue(endingCard.subheader, languageCode),
+                        responseData,
+                        survey.variables
+                      )
                     : "They will be forwarded immediately"
                 }
                 questionId="EndingCard"
@@ -127,7 +135,8 @@ export const EndingCard = ({
                   <SubmitButton
                     buttonLabel={replaceRecallInfo(
                       getLocalizedValue(endingCard.buttonLabel, languageCode),
-                      responseData
+                      responseData,
+                      survey.variables
                     )}
                     isLastQuestion={false}
                     focus={autoFocusEnabled}

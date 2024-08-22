@@ -9,7 +9,7 @@ import {
 } from "@formbricks/lib/organization/utils";
 import { createWebhook, deleteWebhook, updateWebhook } from "@formbricks/lib/webhook/service";
 import { testEndpoint } from "@formbricks/lib/webhook/utils";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { ZWebhookInput } from "@formbricks/types/webhooks";
 
 const ZCreateWebhookAction = z.object({

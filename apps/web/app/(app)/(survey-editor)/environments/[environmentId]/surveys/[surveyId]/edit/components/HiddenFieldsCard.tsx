@@ -4,6 +4,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
+import { extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyHiddenFields } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
 import { Button } from "@formbricks/ui/Button";
@@ -36,9 +37,26 @@ export const HiddenFieldsCard = ({
     }
   };
 
-  const updateSurvey = (data: TSurveyHiddenFields) => {
+  const updateSurvey = (data: TSurveyHiddenFields, currentFieldId?: string) => {
+    const questions = [...localSurvey.questions];
+
+    // Remove recall info from question headlines
+    if (currentFieldId) {
+      questions.forEach((question) => {
+        for (const [languageCode, headline] of Object.entries(question.headline)) {
+          if (headline.includes(`recall:${currentFieldId}`)) {
+            const recallInfo = extractRecallInfo(headline);
+            if (recallInfo) {
+              question.headline[languageCode] = headline.replace(recallInfo, "");
+            }
+          }
+        }
+      });
+    }
+
     setLocalSurvey({
       ...localSurvey,
+      questions,
       hiddenFields: {
         ...localSurvey.hiddenFields,
         ...data,
@@ -93,10 +111,13 @@ export const HiddenFieldsCard = ({
                   <Tag
                     key={fieldId}
                     onDelete={() => {
-                      updateSurvey({
-                        enabled: true,
-                        fieldIds: localSurvey.hiddenFields?.fieldIds?.filter((q) => q !== fieldId),
-                      });
+                      updateSurvey(
+                        {
+                          enabled: true,
+                          fieldIds: localSurvey.hiddenFields?.fieldIds?.filter((q) => q !== fieldId),
+                        },
+                        fieldId
+                      );
                     }}
                     tagId={fieldId}
                     tagName={fieldId}
