@@ -5,7 +5,7 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromTagId } from "@formbricks/lib/organization/utils";
 import { deleteTag, mergeTags, updateTagName } from "@formbricks/lib/tag/service";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 
 const ZDeleteTagAction = z.object({
   tagId: ZId,

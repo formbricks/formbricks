@@ -13,6 +13,16 @@ export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
   return encryptedCuid;
 };
 
+export const generateSurveySingleUseIds = (count: number, isEncrypted: boolean): string[] => {
+  const singleUseIds: string[] = [];
+
+  for (let i = 0; i < count; i++) {
+    singleUseIds.push(generateSurveySingleUseId(isEncrypted));
+  }
+
+  return singleUseIds;
+};
+
 // validate the survey single use id
 export const validateSurveySingleUseId = (surveySingleUseId: string): string | undefined => {
   try {

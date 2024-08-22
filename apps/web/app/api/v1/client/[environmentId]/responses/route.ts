@@ -7,7 +7,7 @@ import { getPerson } from "@formbricks/lib/person/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 

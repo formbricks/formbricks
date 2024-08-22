@@ -5,7 +5,8 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ZOptionalNumber } from "@formbricks/types/common";
-import { TEnvironment, ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
+import { TEnvironment } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { TProduct } from "@formbricks/types/product";
@@ -66,6 +67,7 @@ export const selectSurvey = {
   failureCard: true,
   endings: true,
   hiddenFields: true,
+  variables: true,
   displayOption: true,
   recontactDays: true,
   displayLimit: true,

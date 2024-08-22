@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAttributes } from "../attributes";
-import { ZAllowedFileExtension, ZColor, ZPlacement } from "../common";
-import { ZId } from "../environment";
+import { ZAllowedFileExtension, ZColor, ZPlacement , ZId } from "../common";
 import { ZLanguage } from "../product";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
@@ -152,6 +151,36 @@ export const ZSurveyHiddenFields = z.object({
 });
 
 export type TSurveyHiddenFields = z.infer<typeof ZSurveyHiddenFields>;
+
+export const ZSurveyVariable = z
+  .discriminatedUnion("type", [
+    z.object({
+      id: z.string().cuid2(),
+      name: z.string(),
+      type: z.literal("number"),
+      value: z.number().default(0),
+    }),
+    z.object({
+      id: z.string().cuid2(),
+      name: z.string(),
+      type: z.literal("text"),
+      value: z.string().default(""),
+    }),
+  ])
+  .superRefine((data, ctx) => {
+    // variable name can only contain lowercase letters, numbers, and underscores
+    if (!/^[a-z0-9_]+$/.test(data.name)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Variable name can only contain lowercase letters, numbers, and underscores",
+        path: ["variables"],
+      });
+    }
+  });
+export const ZSurveyVariables = z.array(ZSurveyVariable);
+
+export type TSurveyVariable = z.infer<typeof ZSurveyVariable>;
+export type TSurveyVariables = z.infer<typeof ZSurveyVariables>;
 
 export const ZSurveyProductOverwrites = z.object({
   brandColor: ZColor.nullish(),
@@ -635,6 +664,29 @@ export const ZSurvey = z
       }
     }),
     hiddenFields: ZSurveyHiddenFields,
+    variables: ZSurveyVariables.superRefine((variables, ctx) => {
+      // variable ids must be unique
+      const variableIds = variables.map((v) => v.id);
+      const uniqueVariableIds = new Set(variableIds);
+      if (uniqueVariableIds.size !== variableIds.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Variable IDs must be unique",
+          path: ["variables"],
+        });
+      }
+
+      // variable names must be unique
+      const variableNames = variables.map((v) => v.name);
+      const uniqueVariableNames = new Set(variableNames);
+      if (uniqueVariableNames.size !== variableNames.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Variable names must be unique",
+          path: ["variables"],
+        });
+      }
+    }),
     delay: z.number(),
     autoComplete: z.number().min(1, { message: "Response limit must be greater than 0" }).nullable(),
     runOnDate: z.date().nullable(),
@@ -1446,7 +1498,7 @@ export type TSurveySummary = z.infer<typeof ZSurveySummary>;
 export const ZSurveyRecallItem = z.object({
   id: z.string(),
   label: z.string(),
-  type: z.enum(["question", "hiddenField", "attributeClass"]),
+  type: z.enum(["question", "hiddenField", "attributeClass", "variable"]),
 });
 
 export type TSurveyRecallItem = z.infer<typeof ZSurveyRecallItem>;

@@ -12,7 +12,7 @@ import {
   ZAttributeClassUpdateInput,
 } from "@formbricks/types/attribute-classes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE, MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "../constants";

@@ -15,7 +15,7 @@ import {
   getSurveys,
 } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 
 const ZGetSurveyAction = z.object({
