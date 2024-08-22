@@ -104,9 +104,9 @@ export const SingleResponseCard = ({
   };
 
   const updateFetchedResponses = async () => {
-    const updatedResponse = await getResponseAction(response.id);
-    if (updatedResponse !== null && updateResponse) {
-      updateResponse(response.id, updatedResponse);
+    const updatedResponse = await getResponseAction({ responseId: response.id });
+    if (updatedResponse?.data && updatedResponse.data !== null && updateResponse) {
+      updateResponse(response.id, updatedResponse.data);
     }
   };
 

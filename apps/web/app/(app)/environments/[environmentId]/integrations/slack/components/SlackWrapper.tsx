@@ -40,8 +40,11 @@ export const SlackWrapper = ({
   >(null);
 
   const refreshChannels = async () => {
-    const latestSlackChannels = await refreshChannelsAction(environment.id);
-    setSlackChannels(latestSlackChannels);
+    const refreshChannelsResponse = await refreshChannelsAction({ environmentId: environment.id });
+
+    if (refreshChannelsResponse?.data) {
+      setSlackChannels(refreshChannelsResponse.data);
+    }
   };
 
   const handleSlackAuthorization = async () => {
